@@ -1,11 +1,51 @@
-import type { ProjPointType } from '@noble/curves/abstract/weierstrass'
-import { bls12_381 as bls } from '@noble/curves/bls12-381'
+import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
-import type * as BlsPoint from './BlsPoint.js'
+import * as BlsPoint from './BlsPoint.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
+
+/**
+ * Coerces a serialized or structured BLS point into a structured
+ * {@link ox#BlsPoint.BlsPoint}.
+ *
+ * @internal
+ */
+function normalizeBlsPoint<group extends 'G1' | 'G2'>(
+  value: Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint,
+  group: group,
+): BlsPoint.BlsPoint {
+  if (typeof value === 'string') return BlsPoint.fromHex(value, group)
+  if (value instanceof Uint8Array) return BlsPoint.fromBytes(value, group)
+  return value
+}
+
+/**
+ * Formats a structured BLS point as the requested representation.
+ *
+ * @internal
+ */
+function formatBlsPoint<point extends BlsPoint.BlsPoint>(
+  point: point,
+  as: 'Hex' | 'Bytes' | 'Object',
+): unknown {
+  if (as === 'Hex') return BlsPoint.toHex(point as BlsPoint.G1 | BlsPoint.G2)
+  if (as === 'Bytes')
+    return BlsPoint.toBytes(point as BlsPoint.G1 | BlsPoint.G2)
+  return point
+}
+
+/**
+ * Returns the byte length of a serialized BLS point. Hex strings are measured
+ * minus the `0x` prefix, divided by two; `Uint8Array`s use `byteLength`.
+ *
+ * @internal
+ */
+function signatureByteLength(value: Hex.Hex | Bytes.Bytes): number {
+  if (typeof value === 'string') return (value.length - 2) / 2
+  return value.byteLength
+}
 
 export type Size = 'short-key:long-sig' | 'long-key:short-sig'
 
@@ -25,7 +65,7 @@ export const noble = bls
  *
  * const signatures = [
  *   Bls.sign({ payload, privateKey: '0x...' }),
- *   Bls.sign({ payload, privateKey: '0x...' }),
+ *   Bls.sign({ payload, privateKey: '0x...' })
  * ]
  * const signature = Bls.aggregate(signatures)
  * ```
@@ -38,7 +78,7 @@ export const noble = bls
  *
  * const publicKeys = [
  *   Bls.getPublicKey({ privateKey: '0x...' }),
- *   Bls.getPublicKey({ privateKey: '0x...' }),
+ *   Bls.getPublicKey({ privateKey: '0x...' })
  * ]
  * const publicKey = Bls.aggregate(publicKeys)
  * ```
@@ -49,24 +89,66 @@ export const noble = bls
 export function aggregate<const points extends readonly BlsPoint.BlsPoint[]>(
   points: points,
 ): points extends readonly BlsPoint.G1[] ? BlsPoint.G1 : BlsPoint.G2
-// eslint-disable-next-line jsdoc/require-jsdoc
 export function aggregate(
-  points: readonly BlsPoint.BlsPoint[],
+  points: readonly (Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint)[],
+  options?: aggregate.Options,
+): BlsPoint.BlsPoint
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function aggregate(
+  points: readonly (Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint)[],
+  options: aggregate.Options = {},
 ): BlsPoint.BlsPoint {
-  const group = typeof points[0]?.x === 'bigint' ? bls.G1 : bls.G2
-  const point = points.reduce(
-    (acc, point) =>
-      acc.add(new (group as any).ProjectivePoint(point.x, point.y, point.z)),
-    group.ProjectivePoint.ZERO,
-  )
-  return {
-    x: point.px,
-    y: point.py,
-    z: point.pz,
+  if (points.length === 0)
+    throw new Errors.BaseError(
+      'Bls.aggregate expects a non-empty array of points.',
+    )
+
+  // Normalize once -- accept structured points, hex strings, or `Uint8Array`s.
+  const groupHint = options.group
+  const normalized: BlsPoint.BlsPoint[] = points.map((point) => {
+    if (typeof point === 'string' || point instanceof Uint8Array) {
+      if (!groupHint)
+        throw new Errors.BaseError(
+          'Bls.aggregate requires `options.group` (`"G1"` or `"G2"`) when passing serialized points.',
+        )
+      return normalizeBlsPoint(point, groupHint)
+    }
+    return point
+  })
+
+  const first = normalized[0]!
+
+  // Fast path: a single point aggregates to itself.
+  if (normalized.length === 1) return first
+
+  const isG1 = typeof first.x === 'string'
+  for (let i = 1; i < normalized.length; i++) {
+    if ((typeof normalized[i]!.x === 'string') !== isG1)
+      throw new Errors.BaseError(
+        'Bls.aggregate expects all points to be from the same group (G1 or G2).',
+      )
   }
+
+  const groupName = isG1 ? 'G1' : 'G2'
+  const group = isG1 ? bls.G1 : bls.G2
+  let acc = group.Point.ZERO
+  for (let i = 0; i < normalized.length; i++) {
+    const p = normalized[i]!
+    acc = acc.add(BlsPoint.toNoblePoint(p as any, groupName) as any)
+  }
+  return BlsPoint.fromNoblePoint(acc, groupName) as BlsPoint.BlsPoint
 }
 
 export declare namespace aggregate {
+  type Options = {
+    /**
+     * Curve group of the input points. Required when any input is serialized
+     * (`Hex.Hex` or `Uint8Array`); ignored when all inputs are structured
+     * {@link ox#BlsPoint.BlsPoint}.
+     */
+    group?: 'G1' | 'G2' | undefined
+  }
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -88,13 +170,6 @@ export declare namespace aggregate {
  *
  * const { publicKey } = Bls.createKeyPair()
  * //      ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -108,27 +183,11 @@ export declare namespace aggregate {
  * import { Bls } from 'ox'
  *
  * const { publicKey } = Bls.createKeyPair({
- *   size: 'long-key:short-sig',
+ *   size: 'long-key:short-sig'
  * })
  *
  * publicKey
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * ### Serializing
@@ -143,10 +202,8 @@ export declare namespace aggregate {
  * const publicKeyHex = BlsPoint.toHex(publicKey)
  * //    ^?
  *
- *
  * const publicKeyBytes = BlsPoint.toBytes(publicKey)
  * //    ^?
- *
  * ```
  *
  * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
@@ -158,13 +215,6 @@ export declare namespace aggregate {
  *
  * const publicKey = BlsPoint.fromHex(publicKeyHex, 'G1')
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param options - The options to generate the key pair.
@@ -240,13 +290,6 @@ export declare namespace createKeyPair {
  *
  * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -261,27 +304,11 @@ export declare namespace createKeyPair {
  *
  * const publicKey = Bls.getPublicKey({
  *   privateKey: '0x...',
- *   size: 'long-key:short-sig',
+ *   size: 'long-key:short-sig'
  * })
  *
  * publicKey
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * ### Serializing
@@ -296,10 +323,8 @@ export declare namespace createKeyPair {
  * const publicKeyHex = BlsPoint.toHex(publicKey)
  * //    ^?
  *
- *
  * const publicKeyBytes = BlsPoint.toBytes(publicKey)
  * //    ^?
- *
  * ```
  *
  * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
@@ -311,33 +336,40 @@ export declare namespace createKeyPair {
  *
  * const publicKey = BlsPoint.fromHex(publicKeyHex, 'G1')
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param options - The options to compute the public key.
  * @returns The computed public key.
  */
-export function getPublicKey<size extends Size = 'short-key:long-sig'>(
-  options: getPublicKey.Options<size>,
-): size extends 'short-key:long-sig' ? BlsPoint.G1 : BlsPoint.G2
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function getPublicKey(options: getPublicKey.Options): BlsPoint.BlsPoint {
-  const { privateKey, size = 'short-key:long-sig' } = options
-  const group = size === 'short-key:long-sig' ? bls.G1 : bls.G2
-  const { px, py, pz } = group.ProjectivePoint.fromPrivateKey(
-    Hex.from(privateKey).slice(2),
+export function getPublicKey<
+  as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
+  size extends Size = 'short-key:long-sig',
+>(options: getPublicKey.Options<as, size>): getPublicKey.ReturnType<as, size>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function getPublicKey(options: getPublicKey.Options): unknown {
+  const { as = 'Object', privateKey, size = 'short-key:long-sig' } = options
+  const groupName = size === 'short-key:long-sig' ? 'G1' : 'G2'
+  const group = groupName === 'G1' ? bls.G1 : bls.G2
+  const point = group.Point.BASE.multiply(
+    group.Point.Fn.fromBytes(Bytes.from(privateKey)),
   )
-  return { x: px, y: py, z: pz }
+  const publicKey = BlsPoint.fromNoblePoint(
+    point,
+    groupName,
+  ) as BlsPoint.BlsPoint
+  return formatBlsPoint(publicKey, as)
 }
 
 export declare namespace getPublicKey {
-  type Options<size extends Size = 'short-key:long-sig'> = {
+  type Options<
+    as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
+    size extends Size = 'short-key:long-sig',
+  > = {
+    /**
+     * Format of the returned public key.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /**
      * Private key to compute the public key from.
      */
@@ -352,6 +384,23 @@ export declare namespace getPublicKey {
      */
     size?: size | Size | undefined
   }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object', size extends Size> =
+    | (as extends 'Bytes'
+        ? size extends 'short-key:long-sig'
+          ? BlsPoint.G1Bytes
+          : BlsPoint.G2Bytes
+        : never)
+    | (as extends 'Hex'
+        ? size extends 'short-key:long-sig'
+          ? BlsPoint.G1Hex
+          : BlsPoint.G2Hex
+        : never)
+    | (as extends 'Object'
+        ? size extends 'short-key:long-sig'
+          ? BlsPoint.G1
+          : BlsPoint.G2
+        : never)
 
   type ErrorType = Hex.from.ErrorType | Errors.GlobalErrorType
 }
@@ -373,7 +422,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = bls.utils.randomPrivateKey()
+  const bytes = bls.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -401,7 +450,8 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Bls, Hex } from 'ox'
  *
- * const signature = Bls.sign({ // [!code focus]
+ * const signature = Bls.sign({
+ *   // [!code focus]
  *   payload: Hex.random(32), // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -415,17 +465,16 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Bls, BlsPoint, Hex } from 'ox'
  *
- * const signature = Bls.sign({ payload: Hex.random(32), privateKey: '0x...' })
+ * const signature = Bls.sign({
+ *   payload: Hex.random(32),
+ *   privateKey: '0x...'
+ * })
  *
  * const signatureHex = BlsPoint.toHex(signature)
  * //    ^?
  *
- *
- *
  * const signatureBytes = BlsPoint.toBytes(signature)
  * //    ^?
- *
- *
  * ```
  *
  * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
@@ -437,32 +486,28 @@ export declare namespace randomPrivateKey {
  *
  * const signature = BlsPoint.fromHex(signatureHex, 'G2')
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param options - The signing options.
  * @returns BLS Point.
  */
-export function sign<size extends Size = 'short-key:long-sig'>(
-  options: sign.Options<size>,
-): size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function sign(options: sign.Options): BlsPoint.BlsPoint {
-  const { payload, privateKey, suite, size = 'short-key:long-sig' } = options
+export function sign<
+  as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
+  size extends Size = 'short-key:long-sig',
+>(options: sign.Options<as, size>): sign.ReturnType<as, size>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function sign(options: sign.Options): unknown {
+  const {
+    as = 'Object',
+    payload,
+    privateKey,
+    suite,
+    size = 'short-key:long-sig',
+  } = options
 
-  const payloadGroup = size === 'short-key:long-sig' ? bls.G2 : bls.G1
+  const signatureGroupName: 'G1' | 'G2' =
+    size === 'short-key:long-sig' ? 'G2' : 'G1'
+  const payloadGroup = signatureGroupName === 'G2' ? bls.G2 : bls.G1
   const payloadPoint = payloadGroup.hashToCurve(
     Bytes.from(payload),
     suite ? { DST: Bytes.fromString(suite) } : undefined,
@@ -470,18 +515,26 @@ export function sign(options: sign.Options): BlsPoint.BlsPoint {
 
   const privateKeyGroup = size === 'short-key:long-sig' ? bls.G1 : bls.G2
   const signature = payloadPoint.multiply(
-    privateKeyGroup.normPrivateKeyToScalar(privateKey.slice(2)),
-  ) as ProjPointType<any>
+    privateKeyGroup.Point.Fn.fromBytes(Bytes.from(privateKey)),
+  )
 
-  return {
-    x: signature.px,
-    y: signature.py,
-    z: signature.pz,
-  }
+  const result = BlsPoint.fromNoblePoint(
+    signature,
+    signatureGroupName,
+  ) as BlsPoint.BlsPoint
+  return formatBlsPoint(result, as)
 }
 
 export declare namespace sign {
-  type Options<size extends Size = 'short-key:long-sig'> = {
+  type Options<
+    as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
+    size extends Size = 'short-key:long-sig',
+  > = {
+    /**
+     * Format of the returned signature.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /**
      * Payload to sign.
      */
@@ -508,6 +561,23 @@ export declare namespace sign {
     size?: size | Size | undefined
   }
 
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object', size extends Size> =
+    | (as extends 'Bytes'
+        ? size extends 'short-key:long-sig'
+          ? BlsPoint.G2Bytes
+          : BlsPoint.G1Bytes
+        : never)
+    | (as extends 'Hex'
+        ? size extends 'short-key:long-sig'
+          ? BlsPoint.G2Hex
+          : BlsPoint.G1Hex
+        : never)
+    | (as extends 'Object'
+        ? size extends 'short-key:long-sig'
+          ? BlsPoint.G2
+          : BlsPoint.G1
+        : never)
+
   type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
 }
 
@@ -525,10 +595,11 @@ export declare namespace sign {
  * const publicKey = Bls.getPublicKey({ privateKey })
  * const signature = Bls.sign({ payload, privateKey })
  *
- * const verified = Bls.verify({ // [!code focus]
+ * const verified = Bls.verify({
+ *   // [!code focus]
  *   payload, // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -541,13 +612,15 @@ export declare namespace sign {
  * import { Bls, Hex } from 'ox'
  *
  * const payload = Hex.random(32)
- * const privateKeys = Array.from({ length: 100 }, () => Bls.randomPrivateKey())
+ * const privateKeys = Array.from({ length: 100 }, () =>
+ *   Bls.randomPrivateKey()
+ * )
  *
  * const publicKeys = privateKeys.map((privateKey) =>
- *   Bls.getPublicKey({ privateKey }),
+ *   Bls.getPublicKey({ privateKey })
  * )
  * const signatures = privateKeys.map((privateKey) =>
- *   Bls.sign({ payload, privateKey }),
+ *   Bls.sign({ payload, privateKey })
  * )
  *
  * const publicKey = Bls.aggregate(publicKeys) // [!code focus]
@@ -562,42 +635,84 @@ export declare namespace sign {
 export function verify(options: verify.Options): boolean {
   const { payload, suite } = options
 
-  const publicKey = options.publicKey as unknown as BlsPoint.BlsPoint<any>
-  const signature = options.signature as unknown as BlsPoint.BlsPoint<any>
+  // Accept structured / hex / bytes inputs. Inspect the *signature* group
+  // first when structured, otherwise fall back to the explicit `group` /
+  // pair-shape hint to know how to deserialize.
+  const signatureRaw = options.signature
+  const publicKeyRaw = options.publicKey
 
-  const isShortSig = typeof signature.x === 'bigint'
+  // If signature is structured, infer signature group via field shape.
+  const signatureIsStructured =
+    typeof signatureRaw === 'object' &&
+    !(signatureRaw instanceof Uint8Array) &&
+    'z' in signatureRaw
+  const publicKeyIsStructured =
+    typeof publicKeyRaw === 'object' &&
+    !(publicKeyRaw instanceof Uint8Array) &&
+    'z' in publicKeyRaw
+
+  // Determine signature group: G1 (short sig, x is hex string) or G2 (long
+  // sig, x is `{ c0, c1 }`). For serialized signatures, infer from the
+  // byte/hex length.
+  const signatureGroup: 'G1' | 'G2' = signatureIsStructured
+    ? typeof (signatureRaw as BlsPoint.BlsPoint).x === 'string'
+      ? 'G1'
+      : 'G2'
+    : signatureByteLength(signatureRaw as Hex.Hex | Bytes.Bytes) === 48
+      ? 'G1'
+      : 'G2'
+  const publicKeyGroup: 'G1' | 'G2' = signatureGroup === 'G1' ? 'G2' : 'G1'
+
+  const signature = (
+    signatureIsStructured
+      ? (signatureRaw as BlsPoint.BlsPoint)
+      : normalizeBlsPoint(signatureRaw as Hex.Hex | Bytes.Bytes, signatureGroup)
+  ) as BlsPoint.BlsPoint<any>
+  const publicKey = (
+    publicKeyIsStructured
+      ? (publicKeyRaw as BlsPoint.BlsPoint)
+      : normalizeBlsPoint(publicKeyRaw as Hex.Hex | Bytes.Bytes, publicKeyGroup)
+  ) as BlsPoint.BlsPoint<any>
+
+  const isShortSig = signatureGroup === 'G1'
 
   const group = isShortSig ? bls.G1 : bls.G2
   const payloadPoint = group.hashToCurve(
     Bytes.from(payload),
     suite ? { DST: Bytes.fromString(suite) } : undefined,
-  ) as ProjPointType<any>
+  )
 
   const shortSigPairing = () =>
     bls.pairingBatch([
       {
-        g1: payloadPoint,
-        g2: new bls.G2.ProjectivePoint(publicKey.x, publicKey.y, publicKey.z),
+        g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
+        g2: BlsPoint.toNoblePoint(publicKey as any, 'G2') as InstanceType<
+          typeof bls.G2.Point
+        >,
       },
       {
-        g1: new bls.G1.ProjectivePoint(signature.x, signature.y, signature.z),
-        g2: bls.G2.ProjectivePoint.BASE.negate(),
+        g1: BlsPoint.toNoblePoint(signature as any, 'G1') as InstanceType<
+          typeof bls.G1.Point
+        >,
+        g2: bls.G2.Point.BASE.negate(),
       },
     ])
 
   const longSigPairing = () =>
     bls.pairingBatch([
       {
-        g1: new bls.G1.ProjectivePoint(
-          publicKey.x,
-          publicKey.y,
-          publicKey.z,
+        g1: (
+          BlsPoint.toNoblePoint(publicKey as any, 'G1') as InstanceType<
+            typeof bls.G1.Point
+          >
         ).negate(),
-        g2: payloadPoint,
+        g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
       },
       {
-        g1: bls.G1.ProjectivePoint.BASE,
-        g2: new bls.G2.ProjectivePoint(signature.x, signature.y, signature.z),
+        g1: bls.G1.Point.BASE,
+        g2: BlsPoint.toNoblePoint(signature as any, 'G2') as InstanceType<
+          typeof bls.G2.Point
+        >,
       },
     ])
 
@@ -622,12 +737,28 @@ export declare namespace verify {
     suite?: string | undefined
   } & OneOf<
     | {
-        publicKey: BlsPoint.G1
-        signature: BlsPoint.G2
+        /**
+         * Public key (G1). Accepts a structured {@link ox#BlsPoint.G1}, a hex
+         * string, or a `Uint8Array`.
+         */
+        publicKey: Hex.Hex | Bytes.Bytes | BlsPoint.G1
+        /**
+         * Signature (G2). Accepts a structured {@link ox#BlsPoint.G2}, a hex
+         * string, or a `Uint8Array`.
+         */
+        signature: Hex.Hex | Bytes.Bytes | BlsPoint.G2
       }
     | {
-        publicKey: BlsPoint.G2
-        signature: BlsPoint.G1
+        /**
+         * Public key (G2). Accepts a structured {@link ox#BlsPoint.G2}, a hex
+         * string, or a `Uint8Array`.
+         */
+        publicKey: Hex.Hex | Bytes.Bytes | BlsPoint.G2
+        /**
+         * Signature (G1). Accepts a structured {@link ox#BlsPoint.G1}, a hex
+         * string, or a `Uint8Array`.
+         */
+        signature: Hex.Hex | Bytes.Bytes | BlsPoint.G1
       }
   >
 

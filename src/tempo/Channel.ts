@@ -3,7 +3,6 @@ import * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import * as TokenId from './TokenId.js'
 
 const channelIdParameters = AbiParameters.from(
   'address, address, address, address, bytes32, address, bytes32, address, uint256',
@@ -44,45 +43,39 @@ export const voucherTypehash = Hash.keccak256(
 /**
  * TIP-20 channel descriptor.
  */
-export type Channel<
-  addressType = Address.Address,
-  tokenType = TokenId.TokenIdOrAddress<addressType>,
-> = {
+export type Channel = {
   /** Optional signer for vouchers. Zero means `payer` signs. */
-  authorizedSigner: addressType
+  authorizedSigner: Address.Address
   /** Transaction-derived hash assigned when the channel was opened. */
   expiringNonceHash: Hex.Hex
   /** Optional relayer allowed to submit `settle` for the payee. */
-  operator: addressType
+  operator: Address.Address
   /** Account that receives settled voucher payments. */
-  payee: addressType
+  payee: Address.Address
   /** Account that funded the channel and receives refunds. */
-  payer: addressType
+  payer: Address.Address
   /** User-supplied salt to distinguish otherwise identical channels. */
   salt: Hex.Hex
   /** TIP-20 token address held by the channel. */
-  token: tokenType
+  token: Address.Address
 }
-
-/** Hex-address-normalized {@link ox#Channel.Channel}. */
-export type Resolved = Channel<Address.Address, Address.Address>
 
 /**
  * Instantiates a TIP-20 channel reserve descriptor.
  *
- * Accepts a TIP-20 token ID or address, and defaults `operator` and
- * `authorizedSigner` to the zero address.
+ * Defaults `operator` and `authorizedSigner` to the zero address.
  *
  * @example
  * ```ts twoslash
  * import { Channel } from 'ox/tempo'
  *
  * const channel = Channel.from({
- *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000002',
+ *   expiringNonceHash:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000002',
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n,
+ *   token: '0x20c0000000000000000000000000000000000001'
  * })
  * ```
  *
@@ -107,10 +100,7 @@ export function from(value: from.Value): from.ReturnType {
     payee: resolveAddress(payee),
     payer: resolveAddress(payer),
     salt,
-    token:
-      typeof token === 'string'
-        ? resolveAddress(token)
-        : TokenId.toAddress(token),
+    token: resolveAddress(token),
   }
 }
 
@@ -128,17 +118,13 @@ export declare namespace from {
     payer: Address.Address
     /** User-supplied salt to distinguish otherwise identical channels. */
     salt: Hex.Hex
-    /** TIP-20 token address or ID held by the channel. */
-    token: TokenId.TokenIdOrAddress<Address.Address>
+    /** TIP-20 token address held by the channel. */
+    token: Address.Address
   }
 
-  type ReturnType = Resolved
+  type ReturnType = Channel
 
-  type ErrorType =
-    | Address.from.ErrorType
-    | Hex.concat.ErrorType
-    | Hex.fromNumber.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Address.from.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -151,17 +137,22 @@ export declare namespace from {
  * ```ts twoslash
  * import { Channel } from 'ox/tempo'
  *
- * const channelId = Channel.computeId({
- *   authorizedSigner: '0x0000000000000000000000000000000000000000',
- *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
- *   operator: '0x0000000000000000000000000000000000000000',
- *   payee: '0x2222222222222222222222222222222222222222',
- *   payer: '0x1111111111111111111111111111111111111111',
- *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n,
- * }, {
- *   chainId: 4217,
- * })
+ * const channelId = Channel.computeId(
+ *   {
+ *     authorizedSigner:
+ *       '0x0000000000000000000000000000000000000000',
+ *     expiringNonceHash:
+ *       '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     operator: '0x0000000000000000000000000000000000000000',
+ *     payee: '0x2222222222222222222222222222222222222222',
+ *     payer: '0x1111111111111111111111111111111111111111',
+ *     salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *     token: '0x20c0000000000000000000000000000000000001'
+ *   },
+ *   {
+ *     chainId: 4217
+ *   }
+ * )
  * ```
  *
  * @param channel - Channel descriptor.
@@ -251,8 +242,9 @@ export declare namespace domainSeparator {
  *
  * const payload = Channel.getVoucherSignPayload({
  *   chainId: 4217,
- *   channelId: '0x0000000000000000000000000000000000000000000000000000000000000000',
- *   cumulativeAmount: 1n,
+ *   channelId:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *   cumulativeAmount: 1n
  * })
  * ```
  *

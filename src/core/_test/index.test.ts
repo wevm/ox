@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { expect, test } from 'vp/test'
 import * as exports from '../../index.js'
 
 test('exports', () => {
@@ -10,6 +10,7 @@ test('exports', () => {
       "AbiEvent",
       "AbiFunction",
       "AbiItem",
+      "AbiParameter",
       "AbiParameters",
       "AccessList",
       "AccountProof",
@@ -21,6 +22,7 @@ test('exports', () => {
       "Base64",
       "Bech32m",
       "BinaryStateTree",
+      "BlobCells",
       "Blobs",
       "Block",
       "BlockOverrides",

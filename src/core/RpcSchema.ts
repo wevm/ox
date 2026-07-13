@@ -1,3 +1,4 @@
+import type * as z from 'zod/mini'
 import type { ResolvedRegister } from './internal/register.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 
@@ -21,15 +22,15 @@ export type { Wallet } from './internal/rpcSchemas/wallet.js'
  *   | RpcSchema.Default
  *   | {
  *       Request: {
- *         method: 'abe_foo',
- *         params: [id: number],
+ *         method: 'abe_foo'
+ *         params: [id: number]
  *       }
  *       ReturnType: string
  *     }
  *   | {
  *       Request: {
- *         method: 'abe_bar',
- *         params: [id: string],
+ *         method: 'abe_bar'
+ *         params: [id: string]
  *       }
  *       ReturnType: string
  *     }
@@ -39,11 +40,6 @@ export type { Wallet } from './internal/rpcSchemas/wallet.js'
  *
  * const blockNumber = await provider.request({ method: 'e' })
  * //                                                    ^|
- *
- *
- *
- *
- *
  * ```
  */
 export function from<schema extends Generic>(): schema {
@@ -57,21 +53,12 @@ export function from<schema extends Generic>(): schema {
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Item = RpcSchema.ExtractItem<RpcSchema.Eth, 'eth_getBlockByNumber'>
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
+ * type Item = RpcSchema.ExtractItem<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
+ * const item = null as unknown as Item
+ * //    ^?
  * ```
  */
 export type ExtractItem<
@@ -89,19 +76,12 @@ export type ExtractItem<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Request = RpcSchema.ExtractRequest<RpcSchema.Eth, 'eth_getBlockByNumber'>
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
+ * type Request = RpcSchema.ExtractRequest<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
+ * const request = null as unknown as Request
+ * //    ^?
  * ```
  */
 export type ExtractRequest<
@@ -116,16 +96,9 @@ export type ExtractRequest<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type MethodName = RpcSchema.ExtractMethodName<RpcSchema.Default>
+ * type MethodName =
+ *   RpcSchema.ExtractMethodName<RpcSchema.Default>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type ExtractMethodName<schema extends Generic> =
@@ -138,13 +111,12 @@ export type ExtractMethodName<schema extends Generic> =
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<RpcSchema.Eth, 'eth_getBlockByNumber'>
- * //   ^?
- *
- *
- *
- *
- *
+ * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
+ * const parameters = null as unknown as Eth_GetBlockByNumber
+ * //    ^?
  * ```
  */
 export type ExtractParams<
@@ -159,19 +131,12 @@ export type ExtractParams<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type ReturnType = RpcSchema.ExtractReturnType<RpcSchema.Eth, 'eth_getBlockByNumber'>
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
+ * type ReturnType = RpcSchema.ExtractReturnType<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
+ * const returnType = null as unknown as ReturnType
+ * //    ^?
  * ```
  */
 export type ExtractReturnType<
@@ -192,8 +157,8 @@ export type ExtractReturnType<
  *
  * type Schema = RpcSchema.From<{
  *   Request: {
- *     method: 'eth_foobar',
- *     params: [id: number],
+ *     method: 'eth_foobar'
+ *     params: [id: number]
  *   }
  *   ReturnType: string
  * }>
@@ -210,12 +175,6 @@ export type From<schema extends Generic> = schema
  *
  * type Schema = RpcSchema.Generic
  * //   ^?
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Generic<name extends string = string, params = unknown> = {
@@ -235,19 +194,6 @@ export type Generic<name extends string = string, params = unknown> = {
  *
  * type Schema = RpcSchema.Default
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Default = ResolvedRegister['RpcSchema']
@@ -261,11 +207,6 @@ export type Default = ResolvedRegister['RpcSchema']
  *
  * type Name = RpcSchema.MethodNameGeneric
  * //   ^?
- *
- *
- *
- *
- *
  * ```
  */
 export type MethodNameGeneric<schema extends Generic = Generic> =
@@ -282,7 +223,10 @@ export type MethodNameGeneric<schema extends Generic = Generic> =
  *
  * type ViemSchema = RpcSchema.ToViem<
  *   | {
- *       Request: { method: 'eth_blockNumber'; params?: undefined }
+ *       Request: {
+ *         method: 'eth_blockNumber'
+ *         params?: undefined
+ *       }
  *       ReturnType: `0x${string}`
  *     }
  *   | {
@@ -310,10 +254,20 @@ export type ToViem<schema extends Generic> = UnionToTuple<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type OxSchema = RpcSchema.FromViem<[
- *   { Method: 'eth_blockNumber'; Parameters?: undefined; ReturnType: `0x${string}` },
- *   { Method: 'eth_chainId'; Parameters?: undefined; ReturnType: `0x${string}` },
- * ]>
+ * type OxSchema = RpcSchema.FromViem<
+ *   [
+ *     {
+ *       Method: 'eth_blockNumber'
+ *       Parameters?: undefined
+ *       ReturnType: `0x${string}`
+ *     },
+ *     {
+ *       Method: 'eth_chainId'
+ *       Parameters?: undefined
+ *       ReturnType: `0x${string}`
+ *     }
+ *   ]
+ * >
  * ```
  */
 export type FromViem<schema extends readonly ViemSchemaItem[]> = {
@@ -328,6 +282,65 @@ export type FromViem<schema extends readonly ViemSchemaItem[]> = {
     : never
 }[number]
 
+/**
+ * Converts a record of Zod `params`/`returns` schemas (keyed by method name) to
+ * an Ox {@link ox#RpcSchema.Generic} (union of `{ Request, ReturnType }`).
+ *
+ * Each method's name comes from its key. Both `params` and `ReturnType` are
+ * derived from the Zod schema's input (wire) type, since raw JSON-RPC clients
+ * send and receive wire values. Decode wire results to their native
+ * representation explicitly via `zod.RpcSchema.decodeReturns`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ * import { z } from 'ox/zod'
+ *
+ * type Schema = RpcSchema.FromZod<typeof z.RpcSchema.Eth>
+ * //   ^?
+ * ```
+ */
+export type FromZod<namespace extends FromZod.Namespace> = {
+  [method in keyof namespace & string]: Compute<{
+    Request: {
+      method: method
+      params: z.input<namespace[method]['params']>
+    }
+    ReturnType: z.input<namespace[method]['returns']>
+  }>
+}[keyof namespace & string]
+
+export declare namespace FromZod {
+  /** A single method schema: Zod `params`/`returns`, keyed by method name. */
+  type Item = {
+    params: z.ZodMiniType
+    returns: z.ZodMiniType
+  }
+
+  /** A record of Zod method schemas keyed by method name. */
+  type Namespace = Record<string, Item>
+}
+
+/**
+ * Schema input accepted by APIs that statically type JSON-RPC requests
+ * (e.g. {@link ox#Provider.(from:function)}, {@link ox#RpcTransport.(fromHttp:function)}):
+ * either an Ox {@link ox#RpcSchema.Generic} or a record of Zod `params`/`returns`
+ * schemas (keyed by method name) from `ox/zod`.
+ */
+export type Schema = Generic | FromZod.Namespace
+
+/**
+ * Resolves a {@link ox#RpcSchema.Schema} input to an Ox {@link ox#RpcSchema.Generic}.
+ * A Zod namespace is converted via {@link ox#RpcSchema.(FromZod:type)}; a `Generic` is
+ * passed through; otherwise falls back to {@link ox#RpcSchema.Default}.
+ */
+export type ToGeneric<schema extends Schema | undefined> =
+  schema extends FromZod.Namespace
+    ? FromZod<schema>
+    : schema extends Generic
+      ? schema
+      : Default
+
 /** @internal */
 type ViemSchemaItem = {
   Method: string
@@ -338,17 +351,14 @@ type ViemSchemaItem = {
 // --- Union-to-tuple helpers (order is not guaranteed, but stable) ---
 /** @internal */
 type UnionToIntersection<union> = (
-  union extends unknown
-    ? (arg: () => union) => void
-    : never
+  union extends unknown ? (arg: () => union) => void : never
 ) extends (arg: infer intersection) => void
   ? intersection
   : never
 
 /** @internal */
-type UnionLast<union> = UnionToIntersection<union> extends () => infer last
-  ? last
-  : never
+type UnionLast<union> =
+  UnionToIntersection<union> extends () => infer last ? last : never
 
 /** @internal */
 type UnionToTuple<union, last = UnionLast<union>> = [union] extends [never]

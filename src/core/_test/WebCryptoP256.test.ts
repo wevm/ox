@@ -1,5 +1,5 @@
 import { Hex, PublicKey, WebCryptoP256 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
 
@@ -155,13 +155,17 @@ describe('getSharedSecret', () => {
         publicKey: publicKeyB,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '[Error: privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.]',
+      '[WebCryptoP256.InvalidPrivateKeyAlgorithmError: privateKey is not compatible with ECDH. Please use `createKeyPairECDH` to create an ECDH key.]',
     )
   })
 
   test('error: invalid public key', async () => {
     const { privateKey: privateKeyA } = await WebCryptoP256.createKeyPairECDH()
-    const invalidPublicKey = { prefix: 4, x: 0n, y: 0n } as const
+    const invalidPublicKey = {
+      prefix: 4,
+      x: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      y: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    } as const
 
     await expect(
       WebCryptoP256.getSharedSecret({
@@ -192,6 +196,23 @@ describe('verify', () => {
       await WebCryptoP256.verify({ publicKey, payload, signature: { r, s } }),
     ).toBe(true)
   })
+
+  test('behavior: signature with leading-zero r/s is verified', async () => {
+    // Sign repeatedly until we hit a signature whose r or s value has its
+    // most-significant byte equal to zero. With variable-width number
+    // encoding such signatures fail to verify; with fixed-width 32-byte
+    // encoding (the regression fix) they verify correctly.
+    const payload = '0xdeadbeef'
+    for (let i = 0; i < 256; i++) {
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      if (signature.r.startsWith('0x00') || signature.s.startsWith('0x00')) {
+        expect(
+          await WebCryptoP256.verify({ publicKey, payload, signature }),
+        ).toBe(true)
+        return
+      }
+    }
+  })
 })
 
 test('exports', () => {
@@ -202,6 +223,57 @@ test('exports', () => {
       "getSharedSecret",
       "sign",
       "verify",
+      "InvalidPrivateKeyAlgorithmError",
     ]
   `)
+})
+
+describe('as option / serialized inputs', () => {
+  test("sign: as 'Hex' returns hex string", async () => {
+    const { privateKey } = await WebCryptoP256.createKeyPair()
+    const sigHex = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+    expect((sigHex as Hex.Hex).startsWith('0x')).toBe(true)
+  })
+
+  test("sign: as 'Bytes' returns Uint8Array", async () => {
+    const { privateKey } = await WebCryptoP256.createKeyPair()
+    const sigBytes = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('default as remains Object', async () => {
+    const { privateKey } = await WebCryptoP256.createKeyPair()
+    const sig = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+    })
+    expect(typeof sig).toBe('object')
+    expect('r' in sig).toBe(true)
+  })
+
+  test('verify accepts Hex publicKey + Hex signature', async () => {
+    const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+    const sigHex = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    const pkHex = PublicKey.toHex(publicKey)
+    expect(
+      await WebCryptoP256.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
 })

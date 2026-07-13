@@ -16,44 +16,47 @@ import type {
 export type ExtractArgs<
   abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
   name extends AbiItem.Name<abi> = AbiItem.Name<abi>,
-> = abitype.AbiParametersToPrimitiveTypes<
-  AbiItem.FromAbi<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
-  'inputs'
-> extends infer args
-  ? [args] extends [never]
-    ? readonly unknown[]
-    : args
-  : readonly unknown[]
+> =
+  abitype.AbiParametersToPrimitiveTypes<
+    AbiItem.FromAbi<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
+    'inputs'
+  > extends infer args
+    ? [args] extends [never]
+      ? readonly unknown[]
+      : args
+    : readonly unknown[]
 
 /** @internal */
 export type ExtractForArgs<
   abi extends Abi.Abi,
   name extends AbiItem.Name<abi>,
   args extends ExtractArgs<abi, name>,
-> = IsUnion<name> extends true
-  ? {
-      [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
-    }[number]
-  : AbiItem.FromAbi<abi, name> extends infer abiItem extends AbiItem.AbiItem & {
-        inputs: readonly abitype.AbiParameter[]
-      }
-    ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
-      ? UnionToTuple<abiItem> extends infer abiItems extends
-          readonly (AbiItem.AbiItem & {
+> =
+  IsUnion<name> extends true
+    ? {
+        [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
+      }[number]
+    : AbiItem.FromAbi<abi, name> extends infer abiItem extends
+          AbiItem.AbiItem & {
             inputs: readonly abitype.AbiParameter[]
-          })[]
-        ? IsNever<TupleToUnion<abiItems, abi, name, args>> extends true
-          ? Compute<
-              abiItems[0] & {
-                readonly overloads: UnionToTuple<
-                  Exclude<abiItems[number], abiItems[0]>
-                >
-              }
-            >
-          : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
-        : never
-      : abiItem
-    : never
+          }
+      ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
+        ? UnionToTuple<abiItem> extends infer abiItems extends
+            readonly (AbiItem.AbiItem & {
+              inputs: readonly abitype.AbiParameter[]
+            })[]
+          ? IsNever<TupleToUnion<abiItems, abi, name, args>> extends true
+            ? Compute<
+                abiItems[0] & {
+                  readonly overloads: UnionToTuple<
+                    Exclude<abiItems[number], abiItems[0]>
+                  >
+                }
+              >
+            : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
+          : never
+        : abiItem
+      : never
 
 /** @internal */
 export type TupleToUnion<
@@ -196,13 +199,14 @@ export type IsSignature<type extends string> =
 export type Signature<
   string1 extends string,
   string2 extends string | unknown = unknown,
-> = IsSignature<string1> extends true
-  ? string1
-  : string extends string1 // if exactly `string` (not narrowed), then pass through as valid
+> =
+  IsSignature<string1> extends true
     ? string1
-    : TypeErrorMessage<`Signature "${string1}" is invalid${string2 extends string
-        ? ` at position ${string2}`
-        : ''}.`>
+    : string extends string1 // if exactly `string` (not narrowed), then pass through as valid
+      ? string1
+      : TypeErrorMessage<`Signature "${string1}" is invalid${string2 extends string
+          ? ` at position ${string2}`
+          : ''}.`>
 
 /** @internal */
 export type Signatures<signatures extends readonly string[]> = {
@@ -316,13 +320,73 @@ export type IsValidCharacter<character extends string> =
 /** @internal */
 export type ValidCharacters =
   // uppercase letters
-  | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+  | 'A'
+  | 'B'
+  | 'C'
+  | 'D'
+  | 'E'
+  | 'F'
+  | 'G'
+  | 'H'
+  | 'I'
+  | 'J'
+  | 'K'
+  | 'L'
+  | 'M'
+  | 'N'
+  | 'O'
+  | 'P'
+  | 'Q'
+  | 'R'
+  | 'S'
+  | 'T'
+  | 'U'
+  | 'V'
+  | 'W'
+  | 'X'
+  | 'Y'
+  | 'Z'
   // lowercase letters
-  | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+  | 'a'
+  | 'b'
+  | 'c'
+  | 'd'
+  | 'e'
+  | 'f'
+  | 'g'
+  | 'h'
+  | 'i'
+  | 'j'
+  | 'k'
+  | 'l'
+  | 'm'
+  | 'n'
+  | 'o'
+  | 'p'
+  | 'q'
+  | 'r'
+  | 's'
+  | 't'
+  | 'u'
+  | 'v'
+  | 'w'
+  | 'x'
+  | 'y'
+  | 'z'
   // numbers
-  | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+  | '0'
+  | '1'
+  | '2'
+  | '3'
+  | '4'
+  | '5'
+  | '6'
+  | '7'
+  | '8'
+  | '9'
   // special characters
-  | '_' | '$'
+  | '_'
+  | '$'
 
 // Template string inference can absorb `returns`:
 // type Result = `function foo(string) return s (uint256)` extends `function ${string}(${infer Parameters})` ? Parameters : never
@@ -488,6 +552,37 @@ export declare namespace normalizeSignature {
   export type ErrorType = Errors.BaseError | Errors.GlobalErrorType
 }
 
+/**
+ * `(u)int<M>` regex: (un)signed integer type of `M` bits, `0 < M <= 256`,
+ * `M % 8 == 0`. Hoisted to module scope; the prior literal at the call
+ * site was recompiled per overload-resolution iteration.
+ *
+ * @internal
+ */
+const integerTypeRegex =
+  /^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/
+
+/**
+ * `bytes<M>` regex: binary type of `M` bytes, `0 < M <= 32`.
+ *
+ * @internal
+ */
+const fixedBytesTypeRegex = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/
+
+/**
+ * Fixed-length (`<type>[M]`) / dynamic (`<type>[]`) array regex.
+ *
+ * @internal
+ */
+const arrayTypeRegex = /[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/
+
+/**
+ * Strips a single trailing `[...]` array suffix from a type.
+ *
+ * @internal
+ */
+const arraySuffixStripRegex = /(\[[0-9]{0,}\])$/
+
 /** @internal */
 export function isArgOfType(
   arg: unknown,
@@ -515,30 +610,20 @@ export function isArgOfType(
           },
         )
 
-      // `(u)int<M>`: (un)signed integer type of `M` bits, `0 < M <= 256`, `M % 8 == 0`
-      // https://regexr.com/6v8hp
-      if (
-        /^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/.test(
-          abiParameterType,
-        )
-      )
+      if (integerTypeRegex.test(abiParameterType))
         return argType === 'number' || argType === 'bigint'
 
-      // `bytes<M>`: binary type of `M` bytes, `0 < M <= 32`
-      // https://regexr.com/6va55
-      if (/^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/.test(abiParameterType))
+      if (fixedBytesTypeRegex.test(abiParameterType))
         return argType === 'string' || arg instanceof Uint8Array
 
-      // fixed-length (`<type>[M]`) and dynamic (`<type>[]`) arrays
-      // https://regexr.com/6va6i
-      if (/[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/.test(abiParameterType)) {
+      if (arrayTypeRegex.test(abiParameterType)) {
         return (
           Array.isArray(arg) &&
           arg.every((x: unknown) =>
             isArgOfType(x, {
               ...abiParameter,
               // Pop off `[]` or `[M]` from end of type
-              type: abiParameterType.replace(/(\[[0-9]{0,}\])$/, ''),
+              type: abiParameterType.replace(arraySuffixStripRegex, ''),
             } as AbiParameters.Parameter),
           )
         )
@@ -555,7 +640,13 @@ export function getAmbiguousTypes(
   targetParameters: readonly AbiParameters.Parameter[],
   args: ExtractArgs,
 ): AbiParameters.Parameter['type'][] | undefined {
-  for (const parameterIndex in sourceParameters) {
+  // Indexed `for` loop instead of `for...in` (which iterates inherited
+  // enumerable keys and is materially slower on arrays).
+  for (
+    let parameterIndex = 0;
+    parameterIndex < sourceParameters.length;
+    parameterIndex++
+  ) {
     const sourceParameter = sourceParameters[parameterIndex]!
     const targetParameter = targetParameters[parameterIndex]!
 
@@ -571,22 +662,25 @@ export function getAmbiguousTypes(
         (args as any)[parameterIndex],
       )
 
-    const types = [sourceParameter.type, targetParameter.type]
+    const sourceType = sourceParameter.type
+    const targetType = targetParameter.type
+    const arg = args[parameterIndex] as Address.Address
 
-    const ambiguous = (() => {
-      if (types.includes('address') && types.includes('bytes20')) return true
-      if (types.includes('address') && types.includes('string'))
-        return Address.validate(args[parameterIndex] as Address.Address, {
-          strict: false,
-        })
-      if (types.includes('address') && types.includes('bytes'))
-        return Address.validate(args[parameterIndex] as Address.Address, {
-          strict: false,
-        })
-      return false
-    })()
+    let ambiguous = false
+    if (
+      (sourceType === 'address' && targetType === 'bytes20') ||
+      (sourceType === 'bytes20' && targetType === 'address')
+    )
+      ambiguous = true
+    else if (
+      (sourceType === 'address' && targetType === 'string') ||
+      (sourceType === 'string' && targetType === 'address') ||
+      (sourceType === 'address' && targetType === 'bytes') ||
+      (sourceType === 'bytes' && targetType === 'address')
+    )
+      ambiguous = Address.validate(arg, { strict: false })
 
-    if (ambiguous) return types
+    if (ambiguous) return [sourceType, targetType]
   }
 
   return

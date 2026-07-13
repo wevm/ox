@@ -2,7 +2,7 @@ name: Prune NPM tags
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 0 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
   prune:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with: 
+        with:
           submodules: 'recursive'
 
       - name: Setup .npmrc file

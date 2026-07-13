@@ -1,5 +1,5 @@
 import { AbiConstructor } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { Constructor } from '../../../contracts/generated.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
@@ -20,6 +20,13 @@ describe('decode', () => {
         }),
       ).toBe(undefined)
     }
+
+    expect(
+      AbiConstructor.decode([], {
+        bytecode: '0xdeadbeef',
+        data: '0xdeadbeef',
+      }),
+    ).toBe(undefined)
 
     {
       const encoded = AbiConstructor.encode(
@@ -55,7 +62,7 @@ describe('decode', () => {
         }),
       ).toMatchInlineSnapshot(`
       [
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
         123n,
       ]
     `)
@@ -74,11 +81,32 @@ describe('decode', () => {
         }),
       ).toMatchInlineSnapshot(`
       [
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
         123n,
       ]
     `)
     }
+  })
+
+  test('options: checksumAddress = false', () => {
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+    const encoded = AbiConstructor.encode(abiConstructor, {
+      bytecode: Constructor.bytecode.object,
+      args: [address.vitalik, 123n],
+    })
+
+    expect(
+      AbiConstructor.decode(abiConstructor, {
+        bytecode: Constructor.bytecode.object,
+        checksumAddress: false,
+        data: encoded,
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        123n,
+      ]
+    `)
   })
 
   test('behavior: network', async () => {
@@ -115,10 +143,36 @@ describe('decode', () => {
       }),
     ).toMatchInlineSnapshot(`
       [
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
         123n,
       ]
     `)
+  })
+
+  test('error: bytecode does not match data prefix', () => {
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+    expect(() =>
+      AbiConstructor.decode(abiConstructor, {
+        bytecode: '0x6080604052deadbeef',
+        data: '0xcafebabe000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000000000000000000000000000000000000000007b',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiConstructor.BytecodeMismatchError: Provided \`data\` does not start with the provided \`bytecode\`.
+
+      Bytecode: 0x6080604052deadbe...
+      Data:     0xcafebabe00000000...]
+    `)
+  })
+
+  test('error: no constructor with encoded args', () => {
+    expect(() =>
+      AbiConstructor.decode([], {
+        bytecode: '0xdeadbeef',
+        data: '0xdeadbeef00',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiItem.NotFoundError: ABI item with name "constructor" not found.]`,
+    )
   })
 })
 
@@ -136,6 +190,12 @@ describe('encode', () => {
 
     expect(
       AbiConstructor.encode([AbiConstructor.from('constructor()')], {
+        bytecode: '0xdeadbeef',
+      }),
+    ).toBe('0xdeadbeef')
+
+    expect(
+      AbiConstructor.encode([], {
         bytecode: '0xdeadbeef',
       }),
     ).toBe('0xdeadbeef')
@@ -314,6 +374,7 @@ test('exports', () => {
       "format",
       "from",
       "fromAbi",
+      "BytecodeMismatchError",
     ]
   `)
 })

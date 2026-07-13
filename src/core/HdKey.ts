@@ -74,7 +74,9 @@ export declare namespace fromJson {
  * ```ts twoslash
  * import { HdKey, Mnemonic } from 'ox'
  *
- * const seed = Mnemonic.toSeed('test test test test test test test test test test test junk')
+ * const seed = Mnemonic.toSeed(
+ *   'test test test test test test test test test test test junk'
+ * )
  * const hdKey = HdKey.fromSeed(seed)
  * ```
  *
@@ -86,7 +88,9 @@ export declare namespace fromJson {
  * ```ts twoslash
  * import { HdKey, Mnemonic } from 'ox'
  *
- * const mnemonic = Mnemonic.toSeed('test test test test test test test test test test test junk')
+ * const mnemonic = Mnemonic.toSeed(
+ *   'test test test test test test test test test test test junk'
+ * )
  * const hdKey = HdKey.fromSeed(mnemonic).derive(HdKey.path())
  *
  * console.log(hdKey.privateKey)

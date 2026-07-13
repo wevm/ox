@@ -1,8 +1,11 @@
 import * as AccessList from './AccessList.js'
 import * as Address from './Address.js'
+import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -55,7 +58,7 @@ export type Type = typeof type
  *   gasPrice: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @error: GasPriceTooHighError:
  * // @error: The gas price (`gasPrice` = 115792089237316195423570985008687907853269984665640564039457584007913 gwei) cannot be
@@ -88,7 +91,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TxEnvelopeEip2930.deserialize('0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip2930.deserialize(
+ *   '0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0'
+ * )
  * // @log: {
  * // @log:   type: 'eip2930',
  * // @log:   nonce: 785n,
@@ -103,7 +108,7 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -117,7 +122,7 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
     yParity,
     r,
     s,
-  ] = transactionArray as readonly Hex.Hex[]
+  ] = transactionArray as readonly Bytes.Bytes[]
 
   if (!(transactionArray.length === 8 || transactionArray.length === 11))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -143,22 +148,33 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
     })
 
   let transaction = {
-    chainId: Number(chainId as Hex.Hex),
+    chainId: Number(Tx.bytesToBigIntOrZero(chainId)),
     type,
   } as TxEnvelopeEip2930
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(gasPrice) && gasPrice !== '0x')
-    transaction.gasPrice = BigInt(gasPrice)
-  if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as any)
+  const to_ = Tx.bytesToHexOrUndefined(to)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.bytesToHexOrUndefined(data)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
+  const value_ = Tx.bytesToBigIntOrUndefined(value)
+  if (value_ !== undefined) transaction.value = value_
+  const gasPrice_ = Tx.bytesToBigIntOrUndefined(gasPrice)
+  if (gasPrice_ !== undefined) transaction.gasPrice = gasPrice_
+  if ((accessList as unknown as readonly unknown[]).length !== 0)
+    transaction.accessList = AccessList.fromTupleList(
+      Tx.bytesTreeToHex(accessList as never) as never,
+    )
 
   const signature =
-    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
+    r && s && yParity
+      ? Signature.fromTuple([
+          Tx.bytesToHex(yParity),
+          Tx.bytesToHex(r),
+          Tx.bytesToHex(s),
+        ])
+      : undefined
   if (signature)
     transaction = {
       ...transaction,
@@ -203,16 +219,17 @@ export declare namespace deserialize {
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip2930.from(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const envelope_signed = TxEnvelopeEip2930.from(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   chainId: 1,
@@ -234,7 +251,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TxEnvelopeEip2930.from('0x01f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip2930.from(
+ *   '0x01f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261'
+ * )
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   gasPrice: 10000000000n,
@@ -314,13 +333,16 @@ export declare namespace from {
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const payload = TxEnvelopeEip2930.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -351,16 +373,16 @@ export declare namespace getSignPayload {
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * const envelope_signed = TxEnvelopeEip2930.from(envelope, {
- *   signature,
+ *   signature
  * })
  *
  * const hash = TxEnvelopeEip2930.hash(envelope_signed) // [!code focus]
@@ -415,7 +437,7 @@ export declare namespace hash {
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip2930.serialize(envelope) // [!code focus]
@@ -433,16 +455,17 @@ export declare namespace hash {
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = TxEnvelopeEip2930.serialize(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const serialized = TxEnvelopeEip2930.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
@@ -467,11 +490,11 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    gasPrice ? Hex.fromNumber(gasPrice) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(gasPrice),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
     accessTupleList,
     ...(signature ? Signature.toTuple(signature) : []),
@@ -508,7 +531,7 @@ export declare namespace serialize {
  *   gas: 21000n,
  *   maxFeePerGas: Value.fromGwei('20'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const envelope_rpc = TxEnvelopeEip2930.toRpc(envelope) // [!code focus]
@@ -516,31 +539,31 @@ export declare namespace serialize {
  * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
  * @param envelope - The EIP-2930 transaction envelope to convert.
  * @returns An RPC-formatted EIP-2930 transaction envelope.
  */
-export function toRpc(envelope: Omit<TxEnvelopeEip2930, 'type'>): Rpc {
+export function toRpc(envelope: toRpc.Input): Rpc {
   const signature = Signature.extract(envelope)!
 
   return {
     ...envelope,
-    chainId: Hex.fromNumber(envelope.chainId),
+    chainId: Quantity.fromNumberish(envelope.chainId),
     data: envelope.data ?? envelope.input,
-    ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex.fromNumber(envelope.gas) }
+    ...(envelope.gas !== undefined
+      ? { gas: Quantity.fromNumberish(envelope.gas) }
       : {}),
-    ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex.fromNumber(envelope.nonce) }
+    ...(envelope.nonce !== undefined
+      ? { nonce: Quantity.fromNumberish(envelope.nonce) }
       : {}),
-    ...(typeof envelope.value === 'bigint'
-      ? { value: Hex.fromNumber(envelope.value) }
+    ...(envelope.value !== undefined
+      ? { value: Quantity.fromNumberish(envelope.value) }
       : {}),
-    ...(typeof envelope.gasPrice === 'bigint'
-      ? { gasPrice: Hex.fromNumber(envelope.gasPrice) }
+    ...(envelope.gasPrice !== undefined
+      ? { gasPrice: Quantity.fromNumberish(envelope.gasPrice) }
       : {}),
     type: '0x1',
     ...(signature ? Signature.toRpc(signature) : {}),
@@ -548,6 +571,12 @@ export function toRpc(envelope: Omit<TxEnvelopeEip2930, 'type'>): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TxEnvelopeEip2930.(toRpc:function)}. */
+  export type Input = Omit<
+    TxEnvelopeEip2930<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
+    'type'
+  >
+
   export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
@@ -562,7 +591,7 @@ export declare namespace toRpc {
  *   gasPrice: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @log: false
  * ```

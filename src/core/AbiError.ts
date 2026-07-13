@@ -6,6 +6,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable, IsNever } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `error` type. */
@@ -21,7 +22,7 @@ export function decode<
 >(
   abiError: abiError,
   data: Hex.Hex,
-  options?: decode.Options<as> | undefined,
+  options?: decode.Options<as>,
 ): decode.ReturnType<abiError, as>
 /**
  * ABI-decodes the provided error input (`inputs`).
@@ -38,9 +39,14 @@ export function decode<
  * ```ts twoslash
  * import { AbiError } from 'ox'
  *
- * const error = AbiError.from('error InvalidSignature(uint r, uint s, uint8 yParity)')
+ * const error = AbiError.from(
+ *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
+ * )
  *
- * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
+ * const value = AbiError.decode(
+ *   error,
+ *   '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ * )
  * // @log: [420n, 69n, 1]
  * ```
  *
@@ -109,22 +115,22 @@ export function decode<
  *   {
  *     inputs: [
  *       { name: 'to', type: 'address' },
- *       { name: 'tokenId', type: 'uint256' },
+ *       { name: 'tokenId', type: 'uint256' }
  *     ],
  *     name: 'approve',
  *     outputs: [],
  *     stateMutability: 'nonpayable',
- *     type: 'function',
- *   },
+ *     type: 'function'
+ *   }
  *   // ...
  * ])
  * const approve = AbiFunction.fromAbi(abi, 'approve')
  *
  * // 2. Encode the Function Input.
- * const data = AbiFunction.encodeData(
- *   approve,
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
- * )
+ * const data = AbiFunction.encodeData(approve, [
+ *   '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *   69420n
+ * ])
  *
  * try {
  *   // 3. Attempt to perform the the Contract Call.
@@ -133,16 +139,17 @@ export function decode<
  *     params: [
  *       {
  *         data,
- *         to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *       },
- *     ],
+ *         to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+ *       }
+ *     ]
  *   })
- * } catch (e) { // [!code focus]
+ * } catch (e) {
+ *   // [!code focus]
  *   // 4. Extract and decode the Error. // [!code focus]
  *   const error = AbiError.fromAbi(abi, e.data) // [!code focus]
  *   const value = AbiError.decode(error, e.data) // [!code focus]
  *   console.error(`${error.name}(${value})`) // [!code focus]
- * // @error:   Error(ERC721: approve caller is not owner nor approved for all)
+ *   // @error:   Error(ERC721: approve caller is not owner nor approved for all)
  * } // [!code focus]
  * ```
  *
@@ -161,9 +168,8 @@ export function decode<
 export function decode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   as extends 'Object' | 'Array' = 'Array',
   //
   abiError extends AbiError = AbiItem.fromAbi.ReturnType<
@@ -177,7 +183,7 @@ export function decode<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   data: Hex.Hex,
-  options?: decode.Options<as> | undefined,
+  options?: decode.Options<as>,
 ): decode.ReturnType<abiError, as>
 export function decode<
   const abiError extends AbiError,
@@ -185,9 +191,9 @@ export function decode<
 >(
   abiError: abiError | AbiError,
   data: Hex.Hex,
-  options?: decode.Options<as> | undefined,
+  options?: decode.Options<as>,
 ): decode.ReturnType<abiError, as>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   ...parameters:
     | [
@@ -233,33 +239,129 @@ export declare namespace decode {
      * @default "Array"
      */
     as?: as | 'Array' | 'Object' | undefined
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<
     abiError extends AbiError = AbiError,
     as extends 'Object' | 'Array' = 'Array',
-  > = IsNarrowable<abiError, AbiError> extends true
-    ? abiError['inputs'] extends readonly []
-      ? undefined
-      : abiError['inputs'] extends readonly [
-            infer type extends abitype.AbiParameter,
-          ]
-        ? abitype.AbiParameterToPrimitiveType<type>
-        : AbiParameters.decode.ReturnType<
-              abiError['inputs'],
-              as
-            > extends infer types
-          ? types extends readonly []
-            ? undefined
-            : types extends readonly [infer type]
-              ? type
-              : types
-          : never
-    : unknown | readonly unknown[] | undefined
+  > =
+    IsNarrowable<abiError, AbiError> extends true
+      ? abiError['inputs'] extends readonly []
+        ? undefined
+        : abiError['inputs'] extends readonly [
+              infer type extends abitype.AbiParameter,
+            ]
+          ? abitype.AbiParameterToPrimitiveType<type>
+          : AbiParameters.decode.ReturnType<
+                abiError['inputs'],
+                as
+              > extends infer types
+            ? types extends readonly []
+              ? undefined
+              : types extends readonly [infer type]
+                ? type
+                : types
+            : never
+      : unknown | readonly unknown[] | undefined
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
     | Hex.size.ErrorType
+    | typeof AbiItem.InvalidSelectorSizeError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} and decodes its arguments from error data.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
+ * ])
+ *
+ * const { error, args } = AbiError.extract(
+ *   abi,
+ *   '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ * )
+ * // @log: {
+ * // @log:   error: { name: 'InvalidSignature', type: 'error', ... },
+ * // @log:   args: [420n, 69n, 1],
+ * // @log: }
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param data - The error data.
+ * @param options - Extraction options.
+ * @returns The extracted ABI Error and decoded arguments.
+ */
+export function extract<
+  const abi extends Abi.Abi | readonly unknown[],
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  data: Hex.Hex,
+  options: extract.Options<as> = {},
+): extract.ReturnType<extract.ExtractError<abi>, as> {
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
+  const error = fromAbi(abi, data as never) as AbiError
+  if (error.inputs.length === 0)
+    return {
+      args: undefined,
+      error,
+    } as never
+  return {
+    args: AbiParameters.decode(error.inputs, Hex.slice(data, 4), options),
+    error,
+  } as never
+}
+
+export declare namespace extract {
+  type ExtractError<abi extends Abi.Abi | readonly unknown[]> =
+    | (abi extends Abi.Abi
+        ? Abi.Abi extends abi
+          ? AbiError
+          : abitype.ExtractAbiError<abi, abitype.ExtractAbiErrorNames<abi>>
+        : AbiError)
+    | typeof solidityError
+    | typeof solidityPanic
+
+  type Options<as extends 'Object' | 'Array' = 'Array'> = decode.Options<as>
+
+  type ReturnType<
+    abiError extends AbiError = AbiError,
+    as extends 'Object' | 'Array' = 'Array',
+  > = abiError extends AbiError
+    ? {
+        args: Args<abiError, as>
+        error: abiError
+      }
+    : never
+
+  type Args<
+    abiError extends AbiError = AbiError,
+    as extends 'Object' | 'Array' = 'Array',
+  > = abiError extends AbiError
+    ? IsNarrowable<abiError, AbiError> extends true
+      ? abiError['inputs'] extends readonly []
+        ? undefined
+        : AbiParameters.decode.ReturnType<abiError['inputs'], as>
+      : unknown | readonly unknown[] | undefined
+    : never
+
+  type ErrorType =
+    | AbiParameters.decode.ErrorType
+    | fromAbi.ErrorType
+    | Hex.size.ErrorType
+    | Hex.slice.ErrorType
     | typeof AbiItem.InvalidSelectorSizeError
     | Errors.GlobalErrorType
 }
@@ -275,7 +377,8 @@ export declare namespace decode {
  *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
  * )
  *
- * const data = AbiError.encode( // [!code focus]
+ * const data = AbiError.encode(
+ *   // [!code focus]
  *   error, // [!code focus]
  *   [1n, 2n, 0] // [!code focus]
  * ) // [!code focus]
@@ -307,9 +410,8 @@ export declare namespace decode {
 export function encode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiError extends AbiError = AbiItem.fromAbi.ReturnType<
     abi,
@@ -327,7 +429,7 @@ export function encode<const abiError extends AbiError>(
   abiError: abiError,
   ...args: encode.Args<abiError>
 ): encode.ReturnType
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encode(
   ...parameters:
     | [
@@ -364,16 +466,14 @@ export function encode(
 }
 
 export declare namespace encode {
-  type Args<abiError extends AbiError = AbiError> = IsNarrowable<
-    abiError,
-    AbiError
-  > extends true
-    ? abitype.AbiParametersToPrimitiveTypes<
-        abiError['inputs']
-      > extends readonly []
-      ? []
-      : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
-    : readonly unknown[]
+  type Args<abiError extends AbiError = AbiError> =
+    IsNarrowable<abiError, AbiError> extends true
+      ? abitype.AbiParametersToPrimitiveTypes<
+          abiError['inputs']
+        > extends readonly []
+        ? []
+        : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
+      : readonly unknown[]
 
   type ReturnType = Hex.Hex
 
@@ -393,19 +493,17 @@ export declare namespace encode {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
- *   ],
+ *       type: 'uint256'
+ *     }
+ *   ]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiError - The ABI Error to format.
@@ -413,11 +511,14 @@ export declare namespace encode {
  */
 export function format<const abiError extends AbiError>(
   abiError: abiError | AbiError,
-): abitype.FormatAbiItem<abiError> {
-  return abitype.formatAbiItem(abiError) as never
+): format.ReturnType<abiError> {
+  return formatAbiItem.formatAbiItem(abiError) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiError extends AbiError = AbiError> =
+    formatAbiItem.FormatAbiItem<abiError>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -433,23 +534,11 @@ export declare namespace format {
  * const badSignatureVError = AbiError.from({
  *   inputs: [{ name: 'v', type: 'uint8' }],
  *   name: 'BadSignatureV',
- *   type: 'error',
+ *   type: 'error'
  * })
  *
  * badSignatureVError
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -466,19 +555,6 @@ export declare namespace format {
  *
  * badSignatureVError
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -489,23 +565,11 @@ export declare namespace format {
  *
  * const badSignatureVError = AbiError.from([
  *   'struct Signature { uint8 v; }', // [!code hl]
- *   'error BadSignatureV(Signature signature)',
+ *   'error BadSignatureV(Signature signature)'
  * ])
  *
  * badSignatureVError
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -560,17 +624,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiError.fromAbi(abi, 'BadSignatureV') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -584,19 +642,10 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  * const item = AbiError.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -613,9 +662,8 @@ export declare namespace from {
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   allNames = Name<abi>,
 >(
@@ -646,23 +694,23 @@ export declare namespace fromAbi {
   type ReturnType<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
-    args extends
-      | AbiItem_internal.ExtractArgs<abi, name>
-      | undefined = AbiItem_internal.ExtractArgs<abi, name>,
-  > = IsNarrowable<name, Name<abi>> extends true
-    ?
-        | (name extends 'Error' ? typeof solidityError : never)
-        | (name extends 'Panic'
-            ? typeof solidityPanic
-            : never) extends infer result
-      ? IsNever<result> extends true
-        ? AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
-        : result
-      : never
-    :
-        | AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
-        | typeof solidityError
-        | typeof solidityPanic
+    args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+      AbiItem_internal.ExtractArgs<abi, name>,
+  > =
+    IsNarrowable<name, Name<abi>> extends true
+      ?
+          | (name extends 'Error' ? typeof solidityError : never)
+          | (name extends 'Panic'
+              ? typeof solidityPanic
+              : never) extends infer result
+        ? IsNever<result> extends true
+          ? AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
+          : result
+        : never
+      :
+          | AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
+          | typeof solidityError
+          | typeof solidityPanic
 
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
 }
@@ -674,7 +722,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiError } from 'ox'
  *
- * const selector = AbiError.getSelector('error BadSignatureV(uint8 v)')
+ * const selector = AbiError.getSelector(
+ *   'error BadSignatureV(uint8 v)'
+ * )
  * // @log: '0x6352211e'
  * ```
  *
@@ -749,19 +799,11 @@ export const solidityPanicSelector = '0x4e487b71'
  *
  * const abi = Abi.from([
  *   'error Foo(string)',
- *   'error Bar(uint256)',
+ *   'error Bar(uint256)'
  * ])
  *
  * type Foo = AbiError.FromAbi<typeof abi, 'Foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -778,7 +820,7 @@ export type FromAbi<
  *
  * const abi = Abi.from([
  *   'error Foo(string)',
- *   'error Bar(uint256)',
+ *   'error Bar(uint256)'
  * ])
  *
  * type names = AbiError.Name<typeof abi>

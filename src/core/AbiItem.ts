@@ -1,13 +1,20 @@
-import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
+import * as parseAbiItem from './internal/human-readable/parseAbiItem.js'
 import * as internal from './internal/abiItem.js'
 import type { UnionCompute } from './internal/types.js'
 
 /** Root type for an item on an {@link ox#Abi.Abi}. */
 export type AbiItem = Abi.Abi[number]
+
+export {
+  InvalidAbiItemError,
+  UnknownSolidityTypeError,
+  UnknownTypeError,
+} from './internal/human-readable/errors.js'
 
 /**
  * Extracts an {@link ox#AbiItem.AbiItem} item from an {@link ox#Abi.Abi}, given a name.
@@ -19,19 +26,11 @@ export type AbiItem = Abi.Abi[number]
  * const abi = Abi.from([
  *   'error Foo(string)',
  *   'function foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type Foo = AbiItem.FromAbi<typeof abi, 'Foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -49,12 +48,11 @@ export type FromAbi<
  * const abi = Abi.from([
  *   'error Foo(string)',
  *   'function foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type names = AbiItem.Name<typeof abi>
  * //   ^?
- *
  * ```
  */
 export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
@@ -79,20 +77,18 @@ export type ExtractNames<abi extends Abi.Abi> = Extract<
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiItem - The ABI Item to format.
@@ -100,11 +96,14 @@ export type ExtractNames<abi extends Abi.Abi> = Extract<
  */
 export function format<const abiItem extends AbiItem>(
   abiItem: abiItem | AbiItem,
-): abitype.FormatAbiItem<abiItem> {
-  return abitype.formatAbiItem(abiItem) as never
+): format.ReturnType<abiItem> {
+  return formatAbiItem.formatAbiItem(abiItem) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiItem extends AbiItem = AbiItem> =
+    formatAbiItem.FormatAbiItem<abiItem>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -124,30 +123,18 @@ export declare namespace format {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -164,19 +151,6 @@ export declare namespace format {
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -187,23 +161,11 @@ export declare namespace format {
  *
  * const abiItem = AbiItem.from([
  *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'function approve(Foo foo) returns (bool)',
+ *   'function approve(Foo foo) returns (bool)'
  * ])
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -226,9 +188,9 @@ export function from<
 ): from.ReturnType<abiItem> {
   const { prepare = true } = options
   const item = (() => {
-    if (Array.isArray(abiItem)) return abitype.parseAbiItem(abiItem)
+    if (Array.isArray(abiItem)) return parseAbiItem.parseAbiItem(abiItem)
     if (typeof abiItem === 'string')
-      return abitype.parseAbiItem(abiItem as never)
+      return parseAbiItem.parseAbiItem(abiItem as never)
     return abiItem
   })() as AbiItem
   return {
@@ -250,9 +212,9 @@ export declare namespace from {
 
   type ReturnType<abiItem extends AbiItem | string | readonly string[]> =
     abiItem extends string
-      ? abitype.ParseAbiItem<abiItem>
+      ? parseAbiItem.ParseAbiItem<abiItem>
       : abiItem extends readonly string[]
-        ? abitype.ParseAbiItem<abiItem>
+        ? parseAbiItem.ParseAbiItem<abiItem>
         : abiItem
 
   type ErrorType = Errors.GlobalErrorType
@@ -270,17 +232,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiItem.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -294,23 +250,10 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  * const item = AbiItem.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -340,15 +283,28 @@ export function fromAbi<
     {}) as unknown as fromAbi.Options
 
   const isSelector = Hex.validate(name, { strict: false })
-  const abiItems = (abi as Abi.Abi).filter((abiItem) => {
-    if (isSelector) {
+
+  // Selector lookups are always unique on the ABI: precompute the
+  // function/error 4-byte selector once and short-circuit via `find`
+  // instead of building a full `filter` result we'd discard.
+  if (isSelector) {
+    const selector = Hex.slice(name, 0, 4)
+    const abiItem = (abi as Abi.Abi).find((abiItem) => {
       if (abiItem.type === 'function' || abiItem.type === 'error')
-        return getSelector(abiItem) === Hex.slice(name, 0, 4)
+        return getSelector(abiItem) === selector
       if (abiItem.type === 'event') return getSignatureHash(abiItem) === name
       return false
-    }
-    return 'name' in abiItem && abiItem.name === name
-  })
+    })
+    if (!abiItem) throw new NotFoundError({ name: name as string })
+    return {
+      ...abiItem,
+      ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
+    } as never
+  }
+
+  const abiItems = (abi as Abi.Abi).filter(
+    (abiItem) => 'name' in abiItem && abiItem.name === name,
+  )
 
   if (abiItems.length === 0) throw new NotFoundError({ name: name as string })
   if (abiItems.length === 1)
@@ -422,9 +378,8 @@ export declare namespace fromAbi {
   type Options<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
-    args extends
-      | internal.ExtractArgs<abi, name>
-      | undefined = internal.ExtractArgs<abi, name>,
+    args extends internal.ExtractArgs<abi, name> | undefined =
+      internal.ExtractArgs<abi, name>,
     ///
     allArgs = internal.ExtractArgs<abi, name>,
   > = {
@@ -459,9 +414,8 @@ export declare namespace fromAbi {
   type ReturnType<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
-    args extends
-      | internal.ExtractArgs<abi, name>
-      | undefined = internal.ExtractArgs<abi, name>,
+    args extends internal.ExtractArgs<abi, name> | undefined =
+      internal.ExtractArgs<abi, name>,
     fallback = AbiItem,
   > = abi extends Abi.Abi
     ? Abi.Abi extends abi
@@ -487,7 +441,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const selector = AbiItem.getSelector('function ownerOf(uint256 tokenId)')
+ * const selector = AbiItem.getSelector(
+ *   'function ownerOf(uint256 tokenId)'
+ * )
  * // @log: '0x6352211e'
  * ```
  *
@@ -524,7 +480,7 @@ export function getSelector<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
 export function getSelector(abiItem: string | AbiItem): Hex.Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSelector(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -554,7 +510,9 @@ export declare namespace getSelector {
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const signature = AbiItem.getSignature('function ownerOf(uint256 tokenId)')
+ * const signature = AbiItem.getSignature(
+ *   'function ownerOf(uint256 tokenId)'
+ * )
  * // @log: 'ownerOf(uint256)'
  * ```
  *
@@ -578,7 +536,7 @@ export declare namespace getSelector {
  *   type: 'function',
  *   inputs: [{ name: 'tokenId', type: 'uint256' }],
  *   outputs: [],
- *   stateMutability: 'view',
+ *   stateMutability: 'view'
  * })
  * // @log: 'ownerOf(uint256)'
  * ```
@@ -591,7 +549,7 @@ export function getSignature<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): string
 export function getSignature(abiItem: string | AbiItem): string
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignature(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -606,7 +564,7 @@ export function getSignature(
   })()
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
-    return abitype.formatAbiItem(abiItem)
+    return formatAbiItem.formatAbiItem(abiItem)
   })()
   return internal.normalizeSignature(signature)
 }
@@ -626,7 +584,9 @@ export declare namespace getSignature {
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const hash = AbiItem.getSignatureHash('event Transfer(address indexed from, address indexed to, uint256 amount)')
+ * const hash = AbiItem.getSignatureHash(
+ *   'event Transfer(address indexed from, address indexed to, uint256 amount)'
+ * )
  * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
  *
@@ -651,8 +611,8 @@ export declare namespace getSignature {
  *   inputs: [
  *     { name: 'from', type: 'address', indexed: true },
  *     { name: 'to', type: 'address', indexed: true },
- *     { name: 'amount', type: 'uint256', indexed: false },
- *   ],
+ *     { name: 'amount', type: 'uint256', indexed: false }
+ *   ]
  * })
  * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
@@ -665,7 +625,7 @@ export function getSignatureHash<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
 export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignatureHash(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -698,9 +658,12 @@ export declare namespace getSignatureHash {
  * ```ts twoslash
  * import { Abi, AbiFunction } from 'ox'
  *
- * const foo = Abi.from(['function foo(address)', 'function foo(bytes20)'])
+ * const foo = Abi.from([
+ *   'function foo(address)',
+ *   'function foo(bytes20)'
+ * ])
  * AbiFunction.fromAbi(foo, 'foo', {
- *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+ *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']
  * })
  * // @error: AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
  * // @error: `bytes20` in `foo(bytes20)`, and
@@ -721,7 +684,7 @@ export declare namespace getSignatureHash {
  *   'function foo(bytes20)' // [!code --]
  * ])
  * AbiFunction.fromAbi(foo, 'foo', {
- *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+ *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']
  * })
  * // @error: AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
  * // @error: `bytes20` in `foo(bytes20)`, and
@@ -739,8 +702,8 @@ export class AmbiguityError extends Errors.BaseError {
     super('Found ambiguous types in overloaded ABI Items.', {
       metaMessages: [
         // TODO: abitype to add support for signature-formatted ABI items.
-        `\`${x.type}\` in \`${internal.normalizeSignature(abitype.formatAbiItem(x.abiItem))}\`, and`,
-        `\`${y.type}\` in \`${internal.normalizeSignature(abitype.formatAbiItem(y.abiItem))}\``,
+        `\`${x.type}\` in \`${internal.normalizeSignature(formatAbiItem.formatAbiItem(x.abiItem))}\`, and`,
+        `\`${y.type}\` in \`${internal.normalizeSignature(formatAbiItem.formatAbiItem(y.abiItem))}\``,
         '',
         'These types encode differently and cannot be distinguished at runtime.',
         'Remove one of the ambiguous items in the ABI.',

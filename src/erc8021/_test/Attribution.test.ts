@@ -1,5 +1,5 @@
 import { Attribution } from 'ox/erc8021'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('getSchemaId', () => {
   test('returns 0 for canonical registry (no codeRegistry)', () => {

@@ -4,8 +4,9 @@ import type * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
 
 /**
- * @internal
  * Encodes a [DNS packet](https://docs.ens.domains/resolution/names#dns) into a ByteArray containing a UDP payload.
+ *
+ * @internal
  */
 export function packetToBytes(packet: string): Bytes.Bytes {
   // strip leading and trailing `.`

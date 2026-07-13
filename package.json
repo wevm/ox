@@ -1,88 +1,77 @@
 {
-  "name": "ox",
   "private": true,
-  "type": "module",
   "scripts": {
-    "bench": "vitest -c ./test/vitest.config.ts bench",
-    "bench:types": "TYPES=true vitest -c ./test/vitest.config.ts src/**/*.bench-d.ts",
-    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
-    "build:esm": "tsc --project ./tsconfig.build.json --outDir ./src/_esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
-    "build:cjs": "tsc --project ./tsconfig.build.json --module commonjs --moduleResolution node10 --outDir ./src/_cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\"}' > ./src/_cjs/package.json",
-    "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
-    "changeset:prepublish": "pnpm version:update && pnpm build && tsx scripts/prepublish.ts",
-    "changeset:publish": "pnpm changeset:prepublish && changeset publish",
+    "build": "pnpm exports:update && zile",
+    "changeset:publish": "zile publish:prepare && changeset publish && zile publish:post",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
-    "check": "biome check . --fix --unsafe",
+    "check": "vp check --fix",
+    "check:examples": "zile examples:check --fix",
     "check:repo": "sherif",
-    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js --ignore-pattern 'src/_esm/**/*.js'",
-    "check:types": "tsc --noEmit",
-    "clean": "rimraf src/_types src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
-    "contracts:build": "forge build --config-path ./contracts/foundry.toml && tsx contracts/scripts/generate-typed-artifacts.ts",
+    "check:types": "tsc -b",
+    "contracts:build": "forge build --config-path ./contracts/foundry.toml && node --import tsx contracts/scripts/generate-typed-artifacts.ts",
     "deps": "pnpx taze -r",
     "deps:ci": "pnpx actions-up",
-    "dev": "pnpm preconstruct",
+    "dev": "pnpm exports:update && zile dev",
     "docs:dev": "pnpm --filter site dev",
-    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json && tsx scripts/docgen/build.ts",
-    "docs:gen": "pnpm clean && pnpm build:types && pnpm docs:extract",
+    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && node --import tsx scripts/docgen/build.ts",
+    "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
+    "exports:update": "node --import tsx ./scripts/exports:update.ts",
     "knip": "knip --production",
-    "format": "biome format --write",
-    "postinstall": "git submodule update --init --recursive && pnpm contracts:build && pnpm preconstruct",
-    "preconstruct": "tsx ./scripts/preconstruct.ts",
+    "postinstall": "git submodule update --init --recursive && pnpm contracts:build && pnpm dev",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
-    "test": "vitest -c ./test/vitest.config.ts",
-    "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
-    "test:types": "TYPES=true vitest -c ./test/vitest.config.ts",
+    "bench": "vp test bench",
+    "test": "vp test",
+    "test:cov": "vp test --coverage",
+    "test:fuzz": "FUZZ=true vp test --project fuzz",
+    "test:fuzz:ci": "FUZZ=true FC_NUM_RUNS=200 vp test run --project fuzz --bail=1",
+    "test:types": "TYPES=true vp test",
     "vectors": "bun test vectors/**/*.test.ts",
     "vectors:generate": "bun vectors/generate.ts",
-    "version:update": "tsx ./scripts/update-version.ts"
+    "version:update": "node --import tsx ./scripts/version:update.ts"
   },
   "devDependencies": {
-    "@ark/attest": "^0.16.0",
-    "@biomejs/biome": "^2.2.2",
-    "@changesets/changelog-github": "^0.5.0",
-    "@changesets/cli": "^2.27.7",
-    "@ethereumjs/rlp": "^5.0.2",
-    "@ethereumjs/util": "^9.0.3",
-    "@microsoft/api-extractor": "^7.47.7",
-    "@microsoft/api-extractor-model": "^7.29.6",
-    "@microsoft/tsdoc": "^0.15.0",
-    "@microsoft/tsdoc-config": "^0.17.0",
-    "@paulmillr/trusted-setups": "^0.2.0",
-    "@size-limit/preset-big-lib": "^11.1.4",
-    "@types/bun": "^1.1.6",
-    "@types/fs-extra": "^11.0.4",
-    "@types/node": "^22.5.4",
-    "@vitest/browser-playwright": "^4.0.18",
-    "@vitest/coverage-v8": "^4.0.18",
-    "bun": "^1.1.24",
-    "eslint": "^9.9.0",
-    "eslint-plugin-jsdoc": "^50.0.1",
-    "eslint-plugin-tsdoc": "^0.3.0",
-    "ethers": "^6.13.2",
-    "fs-extra": "^11.2.0",
-    "knip": "^5.27.2",
-    "micro-eth-signer": "^0.15.0",
-    "playwright": "^1.58.2",
-    "prool": "~0.2.3",
-    "rimraf": "^5.0.10",
-    "sherif": "^0.11.0",
-    "simple-git-hooks": "^2.11.1",
-    "size-limit": "^11.1.4",
-    "testcontainers": "^11.10.0",
-    "ts-morph": "^24.0.0",
-    "tsx": "^4.17.0",
-    "typescript": "^5.5.4",
-    "typescript-eslint": "^8.1.0",
-    "viem": "^2.45.0",
-    "vite-tsconfig-paths": "^5.0.1",
-    "vitest": "^4.0.18",
-    "vocs": "^1.0.13",
-    "web3": "^4.12.1"
+    "@ark/attest": "catalog:",
+    "@changesets/changelog-github": "catalog:",
+    "@changesets/cli": "catalog:",
+    "@fast-check/vitest": "catalog:",
+    "@microsoft/api-extractor": "catalog:",
+    "@microsoft/api-extractor-model": "catalog:",
+    "@microsoft/tsdoc": "catalog:",
+    "@microsoft/tsdoc-config": "catalog:",
+    "@paulmillr/trusted-setups": "catalog:",
+    "@size-limit/preset-big-lib": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/fs-extra": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "bun": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-jsdoc": "catalog:",
+    "eslint-plugin-tsdoc": "catalog:",
+    "fast-check": "catalog:",
+    "fs-extra": "catalog:",
+    "knip": "catalog:",
+    "micro-eth-signer": "catalog:",
+    "playwright": "catalog:",
+    "prool": "catalog:",
+    "rollup": "catalog:",
+    "sherif": "catalog:",
+    "simple-git-hooks": "catalog:",
+    "size-limit": "catalog:",
+    "testcontainers": "catalog:",
+    "ts-morph": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "viem": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "vp": "catalog:",
+    "zile": "catalog:"
   },
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@11.0.8",
   "engines": {
     "node": ">=22"
   },
@@ -97,9 +86,7 @@
       "src/_test/**",
       "site/**",
       "test/**",
-      "vectors/**",
-      "src/package.json",
-      "tsdoc.config.js"
+      "vectors/**"
     ],
     "ignoreBinaries": [
       "dev",
@@ -112,46 +99,986 @@
     ],
     "vitest": {
       "config": [
-        "test/vitest.config.ts"
+        "vite.config.ts"
       ],
       "entry": [
         "**/*.{bench,bench-d,test,test-d,spec}.?(c|m)[jt]s?(x)"
       ]
-    },
-    "workspaces": {
-      "src": {
-        "entry": [
-          "index.ts!",
-          "trusted-setups/index.ts!",
-          "window/index.ts!"
-        ]
-      }
     }
-  },
-  "pnpm": {
-    "overrides": {
-      "viem>ox": "npm:ox@0.11.1",
-      "@microsoft/api-extractor>typescript": "^5.5.4",
-      "hono@<4.2.7": ">=4.2.7",
-      "ws@>=8.0.0 <8.17.1": ">=8.17.1",
-      "hono@<4.5.8": ">=4.5.8",
-      "micromatch@<4.0.8": ">=4.0.8",
-      "webpack@>=5.0.0-alpha.0 <5.94.0": ">=5.94.0",
-      "rollup@>=4.0.0 <4.22.4": ">=4.22.4",
-      "hono@<4.6.5": ">=4.6.5"
-    },
-    "patchedDependencies": {}
   },
   "size-limit": [
     {
       "name": "import * from 'ox'",
-      "path": "./src/_esm/index.js",
+      "path": "./dist/index.js",
       "import": "*"
     },
     {
       "name": "import { Hex } from 'ox'; console.log(Hex.assert)",
-      "path": "./src/_esm/index.js",
+      "path": "./dist/index.js",
       "import": "{ Hex.assert }"
     }
-  ]
+  ],
+  "[!start-pkg]": "",
+  "name": "ox",
+  "description": "Ethereum Standard Library",
+  "type": "module",
+  "version": "1.0.0-beta.22",
+  "main": "./dist/index.js",
+  "sideEffects": false,
+  "license": "MIT",
+  "homepage": "https://wevm.dev",
+  "repository": "wevm/ox",
+  "authors": [
+    "awkweb",
+    "jxom"
+  ],
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/wevm"
+    }
+  ],
+  "keywords": [
+    "ethereum",
+    "standard",
+    "library",
+    "typescript",
+    "evm"
+  ],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "dependencies": {
+    "@adraffy/ens-normalize": "^1.11.0",
+    "@noble/ciphers": "^2.2.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
+    "@scure/bip32": "^2.0.0",
+    "@scure/bip39": "^2.0.0",
+    "abitype": "^1.2.3",
+    "eventemitter3": "5.0.1",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.4.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "exports": {
+    ".": {
+      "src": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./index.docs": {
+      "src": "./src/index.docs.ts",
+      "types": "./dist/index.docs.d.ts",
+      "default": "./dist/index.docs.js"
+    },
+    "./Abi": {
+      "src": "./src/core/Abi.ts",
+      "types": "./dist/core/Abi.d.ts",
+      "default": "./dist/core/Abi.js"
+    },
+    "./AbiConstructor": {
+      "src": "./src/core/AbiConstructor.ts",
+      "types": "./dist/core/AbiConstructor.d.ts",
+      "default": "./dist/core/AbiConstructor.js"
+    },
+    "./AbiError": {
+      "src": "./src/core/AbiError.ts",
+      "types": "./dist/core/AbiError.d.ts",
+      "default": "./dist/core/AbiError.js"
+    },
+    "./AbiEvent": {
+      "src": "./src/core/AbiEvent.ts",
+      "types": "./dist/core/AbiEvent.d.ts",
+      "default": "./dist/core/AbiEvent.js"
+    },
+    "./AbiFunction": {
+      "src": "./src/core/AbiFunction.ts",
+      "types": "./dist/core/AbiFunction.d.ts",
+      "default": "./dist/core/AbiFunction.js"
+    },
+    "./AbiItem": {
+      "src": "./src/core/AbiItem.ts",
+      "types": "./dist/core/AbiItem.d.ts",
+      "default": "./dist/core/AbiItem.js"
+    },
+    "./AbiParameter": {
+      "src": "./src/core/AbiParameter.ts",
+      "types": "./dist/core/AbiParameter.d.ts",
+      "default": "./dist/core/AbiParameter.js"
+    },
+    "./AbiParameters": {
+      "src": "./src/core/AbiParameters.ts",
+      "types": "./dist/core/AbiParameters.d.ts",
+      "default": "./dist/core/AbiParameters.js"
+    },
+    "./AccessList": {
+      "src": "./src/core/AccessList.ts",
+      "types": "./dist/core/AccessList.d.ts",
+      "default": "./dist/core/AccessList.js"
+    },
+    "./AccountProof": {
+      "src": "./src/core/AccountProof.ts",
+      "types": "./dist/core/AccountProof.d.ts",
+      "default": "./dist/core/AccountProof.js"
+    },
+    "./Address": {
+      "src": "./src/core/Address.ts",
+      "types": "./dist/core/Address.d.ts",
+      "default": "./dist/core/Address.js"
+    },
+    "./AesGcm": {
+      "src": "./src/core/AesGcm.ts",
+      "types": "./dist/core/AesGcm.d.ts",
+      "default": "./dist/core/AesGcm.js"
+    },
+    "./Authorization": {
+      "src": "./src/core/Authorization.ts",
+      "types": "./dist/core/Authorization.d.ts",
+      "default": "./dist/core/Authorization.js"
+    },
+    "./Base32": {
+      "src": "./src/core/Base32.ts",
+      "types": "./dist/core/Base32.d.ts",
+      "default": "./dist/core/Base32.js"
+    },
+    "./Base58": {
+      "src": "./src/core/Base58.ts",
+      "types": "./dist/core/Base58.d.ts",
+      "default": "./dist/core/Base58.js"
+    },
+    "./Base64": {
+      "src": "./src/core/Base64.ts",
+      "types": "./dist/core/Base64.d.ts",
+      "default": "./dist/core/Base64.js"
+    },
+    "./Bech32m": {
+      "src": "./src/core/Bech32m.ts",
+      "types": "./dist/core/Bech32m.d.ts",
+      "default": "./dist/core/Bech32m.js"
+    },
+    "./BinaryStateTree": {
+      "src": "./src/core/BinaryStateTree.ts",
+      "types": "./dist/core/BinaryStateTree.d.ts",
+      "default": "./dist/core/BinaryStateTree.js"
+    },
+    "./BlobCells": {
+      "src": "./src/core/BlobCells.ts",
+      "types": "./dist/core/BlobCells.d.ts",
+      "default": "./dist/core/BlobCells.js"
+    },
+    "./Blobs": {
+      "src": "./src/core/Blobs.ts",
+      "types": "./dist/core/Blobs.d.ts",
+      "default": "./dist/core/Blobs.js"
+    },
+    "./Block": {
+      "src": "./src/core/Block.ts",
+      "types": "./dist/core/Block.d.ts",
+      "default": "./dist/core/Block.js"
+    },
+    "./BlockOverrides": {
+      "src": "./src/core/BlockOverrides.ts",
+      "types": "./dist/core/BlockOverrides.d.ts",
+      "default": "./dist/core/BlockOverrides.js"
+    },
+    "./Bloom": {
+      "src": "./src/core/Bloom.ts",
+      "types": "./dist/core/Bloom.d.ts",
+      "default": "./dist/core/Bloom.js"
+    },
+    "./Bls": {
+      "src": "./src/core/Bls.ts",
+      "types": "./dist/core/Bls.d.ts",
+      "default": "./dist/core/Bls.js"
+    },
+    "./BlsPoint": {
+      "src": "./src/core/BlsPoint.ts",
+      "types": "./dist/core/BlsPoint.d.ts",
+      "default": "./dist/core/BlsPoint.js"
+    },
+    "./Bytes": {
+      "src": "./src/core/Bytes.ts",
+      "types": "./dist/core/Bytes.d.ts",
+      "default": "./dist/core/Bytes.js"
+    },
+    "./Caches": {
+      "src": "./src/core/Caches.ts",
+      "types": "./dist/core/Caches.d.ts",
+      "default": "./dist/core/Caches.js"
+    },
+    "./Cbor": {
+      "src": "./src/core/Cbor.ts",
+      "types": "./dist/core/Cbor.d.ts",
+      "default": "./dist/core/Cbor.js"
+    },
+    "./CompactSize": {
+      "src": "./src/core/CompactSize.ts",
+      "types": "./dist/core/CompactSize.d.ts",
+      "default": "./dist/core/CompactSize.js"
+    },
+    "./ContractAddress": {
+      "src": "./src/core/ContractAddress.ts",
+      "types": "./dist/core/ContractAddress.d.ts",
+      "default": "./dist/core/ContractAddress.js"
+    },
+    "./CoseKey": {
+      "src": "./src/core/CoseKey.ts",
+      "types": "./dist/core/CoseKey.d.ts",
+      "default": "./dist/core/CoseKey.js"
+    },
+    "./Ed25519": {
+      "src": "./src/core/Ed25519.ts",
+      "types": "./dist/core/Ed25519.d.ts",
+      "default": "./dist/core/Ed25519.js"
+    },
+    "./Ens": {
+      "src": "./src/core/Ens.ts",
+      "types": "./dist/core/Ens.d.ts",
+      "default": "./dist/core/Ens.js"
+    },
+    "./Errors": {
+      "src": "./src/core/Errors.ts",
+      "types": "./dist/core/Errors.d.ts",
+      "default": "./dist/core/Errors.js"
+    },
+    "./Fee": {
+      "src": "./src/core/Fee.ts",
+      "types": "./dist/core/Fee.d.ts",
+      "default": "./dist/core/Fee.js"
+    },
+    "./Filter": {
+      "src": "./src/core/Filter.ts",
+      "types": "./dist/core/Filter.d.ts",
+      "default": "./dist/core/Filter.js"
+    },
+    "./Hash": {
+      "src": "./src/core/Hash.ts",
+      "types": "./dist/core/Hash.d.ts",
+      "default": "./dist/core/Hash.js"
+    },
+    "./HdKey": {
+      "src": "./src/core/HdKey.ts",
+      "types": "./dist/core/HdKey.d.ts",
+      "default": "./dist/core/HdKey.js"
+    },
+    "./Hex": {
+      "src": "./src/core/Hex.ts",
+      "types": "./dist/core/Hex.d.ts",
+      "default": "./dist/core/Hex.js"
+    },
+    "./Json": {
+      "src": "./src/core/Json.ts",
+      "types": "./dist/core/Json.d.ts",
+      "default": "./dist/core/Json.js"
+    },
+    "./Keystore": {
+      "src": "./src/core/Keystore.ts",
+      "types": "./dist/core/Keystore.d.ts",
+      "default": "./dist/core/Keystore.js"
+    },
+    "./Kzg": {
+      "src": "./src/core/Kzg.ts",
+      "types": "./dist/core/Kzg.d.ts",
+      "default": "./dist/core/Kzg.js"
+    },
+    "./Log": {
+      "src": "./src/core/Log.ts",
+      "types": "./dist/core/Log.d.ts",
+      "default": "./dist/core/Log.js"
+    },
+    "./Mnemonic": {
+      "src": "./src/core/Mnemonic.ts",
+      "types": "./dist/core/Mnemonic.d.ts",
+      "default": "./dist/core/Mnemonic.js"
+    },
+    "./P256": {
+      "src": "./src/core/P256.ts",
+      "types": "./dist/core/P256.d.ts",
+      "default": "./dist/core/P256.js"
+    },
+    "./PersonalMessage": {
+      "src": "./src/core/PersonalMessage.ts",
+      "types": "./dist/core/PersonalMessage.d.ts",
+      "default": "./dist/core/PersonalMessage.js"
+    },
+    "./Provider": {
+      "src": "./src/core/Provider.ts",
+      "types": "./dist/core/Provider.d.ts",
+      "default": "./dist/core/Provider.js"
+    },
+    "./PublicKey": {
+      "src": "./src/core/PublicKey.ts",
+      "types": "./dist/core/PublicKey.d.ts",
+      "default": "./dist/core/PublicKey.js"
+    },
+    "./Rlp": {
+      "src": "./src/core/Rlp.ts",
+      "types": "./dist/core/Rlp.d.ts",
+      "default": "./dist/core/Rlp.js"
+    },
+    "./RpcRequest": {
+      "src": "./src/core/RpcRequest.ts",
+      "types": "./dist/core/RpcRequest.d.ts",
+      "default": "./dist/core/RpcRequest.js"
+    },
+    "./RpcResponse": {
+      "src": "./src/core/RpcResponse.ts",
+      "types": "./dist/core/RpcResponse.d.ts",
+      "default": "./dist/core/RpcResponse.js"
+    },
+    "./RpcSchema": {
+      "src": "./src/core/RpcSchema.ts",
+      "types": "./dist/core/RpcSchema.d.ts",
+      "default": "./dist/core/RpcSchema.js"
+    },
+    "./RpcTransport": {
+      "src": "./src/core/RpcTransport.ts",
+      "types": "./dist/core/RpcTransport.d.ts",
+      "default": "./dist/core/RpcTransport.js"
+    },
+    "./Secp256k1": {
+      "src": "./src/core/Secp256k1.ts",
+      "types": "./dist/core/Secp256k1.d.ts",
+      "default": "./dist/core/Secp256k1.js"
+    },
+    "./Signature": {
+      "src": "./src/core/Signature.ts",
+      "types": "./dist/core/Signature.d.ts",
+      "default": "./dist/core/Signature.js"
+    },
+    "./Siwe": {
+      "src": "./src/core/Siwe.ts",
+      "types": "./dist/core/Siwe.d.ts",
+      "default": "./dist/core/Siwe.js"
+    },
+    "./Solidity": {
+      "src": "./src/core/Solidity.ts",
+      "types": "./dist/core/Solidity.d.ts",
+      "default": "./dist/core/Solidity.js"
+    },
+    "./StateOverrides": {
+      "src": "./src/core/StateOverrides.ts",
+      "types": "./dist/core/StateOverrides.d.ts",
+      "default": "./dist/core/StateOverrides.js"
+    },
+    "./Transaction": {
+      "src": "./src/core/Transaction.ts",
+      "types": "./dist/core/Transaction.d.ts",
+      "default": "./dist/core/Transaction.js"
+    },
+    "./TransactionReceipt": {
+      "src": "./src/core/TransactionReceipt.ts",
+      "types": "./dist/core/TransactionReceipt.d.ts",
+      "default": "./dist/core/TransactionReceipt.js"
+    },
+    "./TransactionRequest": {
+      "src": "./src/core/TransactionRequest.ts",
+      "types": "./dist/core/TransactionRequest.d.ts",
+      "default": "./dist/core/TransactionRequest.js"
+    },
+    "./TxEnvelope": {
+      "src": "./src/core/TxEnvelope.ts",
+      "types": "./dist/core/TxEnvelope.d.ts",
+      "default": "./dist/core/TxEnvelope.js"
+    },
+    "./TxEnvelopeEip1559": {
+      "src": "./src/core/TxEnvelopeEip1559.ts",
+      "types": "./dist/core/TxEnvelopeEip1559.d.ts",
+      "default": "./dist/core/TxEnvelopeEip1559.js"
+    },
+    "./TxEnvelopeEip2930": {
+      "src": "./src/core/TxEnvelopeEip2930.ts",
+      "types": "./dist/core/TxEnvelopeEip2930.d.ts",
+      "default": "./dist/core/TxEnvelopeEip2930.js"
+    },
+    "./TxEnvelopeEip4844": {
+      "src": "./src/core/TxEnvelopeEip4844.ts",
+      "types": "./dist/core/TxEnvelopeEip4844.d.ts",
+      "default": "./dist/core/TxEnvelopeEip4844.js"
+    },
+    "./TxEnvelopeEip7702": {
+      "src": "./src/core/TxEnvelopeEip7702.ts",
+      "types": "./dist/core/TxEnvelopeEip7702.d.ts",
+      "default": "./dist/core/TxEnvelopeEip7702.js"
+    },
+    "./TxEnvelopeLegacy": {
+      "src": "./src/core/TxEnvelopeLegacy.ts",
+      "types": "./dist/core/TxEnvelopeLegacy.d.ts",
+      "default": "./dist/core/TxEnvelopeLegacy.js"
+    },
+    "./TypedData": {
+      "src": "./src/core/TypedData.ts",
+      "types": "./dist/core/TypedData.d.ts",
+      "default": "./dist/core/TypedData.js"
+    },
+    "./ValidatorData": {
+      "src": "./src/core/ValidatorData.ts",
+      "types": "./dist/core/ValidatorData.d.ts",
+      "default": "./dist/core/ValidatorData.js"
+    },
+    "./Value": {
+      "src": "./src/core/Value.ts",
+      "types": "./dist/core/Value.d.ts",
+      "default": "./dist/core/Value.js"
+    },
+    "./WebAuthnP256": {
+      "src": "./src/core/WebAuthnP256.ts",
+      "types": "./dist/core/WebAuthnP256.d.ts",
+      "default": "./dist/core/WebAuthnP256.js"
+    },
+    "./WebCryptoP256": {
+      "src": "./src/core/WebCryptoP256.ts",
+      "types": "./dist/core/WebCryptoP256.d.ts",
+      "default": "./dist/core/WebCryptoP256.js"
+    },
+    "./Withdrawal": {
+      "src": "./src/core/Withdrawal.ts",
+      "types": "./dist/core/Withdrawal.d.ts",
+      "default": "./dist/core/Withdrawal.js"
+    },
+    "./X25519": {
+      "src": "./src/core/X25519.ts",
+      "types": "./dist/core/X25519.d.ts",
+      "default": "./dist/core/X25519.js"
+    },
+    "./erc4337": {
+      "src": "./src/erc4337/index.ts",
+      "types": "./dist/erc4337/index.d.ts",
+      "default": "./dist/erc4337/index.js"
+    },
+    "./erc4337/EntryPoint": {
+      "src": "./src/erc4337/EntryPoint.ts",
+      "types": "./dist/erc4337/EntryPoint.d.ts",
+      "default": "./dist/erc4337/EntryPoint.js"
+    },
+    "./erc4337/RpcSchema": {
+      "src": "./src/erc4337/RpcSchema.ts",
+      "types": "./dist/erc4337/RpcSchema.d.ts",
+      "default": "./dist/erc4337/RpcSchema.js"
+    },
+    "./erc4337/UserOperation": {
+      "src": "./src/erc4337/UserOperation.ts",
+      "types": "./dist/erc4337/UserOperation.d.ts",
+      "default": "./dist/erc4337/UserOperation.js"
+    },
+    "./erc4337/UserOperationGas": {
+      "src": "./src/erc4337/UserOperationGas.ts",
+      "types": "./dist/erc4337/UserOperationGas.d.ts",
+      "default": "./dist/erc4337/UserOperationGas.js"
+    },
+    "./erc4337/UserOperationReceipt": {
+      "src": "./src/erc4337/UserOperationReceipt.ts",
+      "types": "./dist/erc4337/UserOperationReceipt.d.ts",
+      "default": "./dist/erc4337/UserOperationReceipt.js"
+    },
+    "./erc6492": {
+      "src": "./src/erc6492/index.ts",
+      "types": "./dist/erc6492/index.d.ts",
+      "default": "./dist/erc6492/index.js"
+    },
+    "./erc6492/SignatureErc6492": {
+      "src": "./src/erc6492/SignatureErc6492.ts",
+      "types": "./dist/erc6492/SignatureErc6492.d.ts",
+      "default": "./dist/erc6492/SignatureErc6492.js"
+    },
+    "./erc7821": {
+      "src": "./src/erc7821/index.ts",
+      "types": "./dist/erc7821/index.d.ts",
+      "default": "./dist/erc7821/index.js"
+    },
+    "./erc7821/Calls": {
+      "src": "./src/erc7821/Calls.ts",
+      "types": "./dist/erc7821/Calls.d.ts",
+      "default": "./dist/erc7821/Calls.js"
+    },
+    "./erc7821/Execute": {
+      "src": "./src/erc7821/Execute.ts",
+      "types": "./dist/erc7821/Execute.d.ts",
+      "default": "./dist/erc7821/Execute.js"
+    },
+    "./erc8010": {
+      "src": "./src/erc8010/index.ts",
+      "types": "./dist/erc8010/index.d.ts",
+      "default": "./dist/erc8010/index.js"
+    },
+    "./erc8010/SignatureErc8010": {
+      "src": "./src/erc8010/SignatureErc8010.ts",
+      "types": "./dist/erc8010/SignatureErc8010.d.ts",
+      "default": "./dist/erc8010/SignatureErc8010.js"
+    },
+    "./erc8021": {
+      "src": "./src/erc8021/index.ts",
+      "types": "./dist/erc8021/index.d.ts",
+      "default": "./dist/erc8021/index.js"
+    },
+    "./erc8021/Attribution": {
+      "src": "./src/erc8021/Attribution.ts",
+      "types": "./dist/erc8021/Attribution.d.ts",
+      "default": "./dist/erc8021/Attribution.js"
+    },
+    "./tempo": {
+      "src": "./src/tempo/index.ts",
+      "types": "./dist/tempo/index.d.ts",
+      "default": "./dist/tempo/index.js"
+    },
+    "./tempo/AuthorizationTempo": {
+      "src": "./src/tempo/AuthorizationTempo.ts",
+      "types": "./dist/tempo/AuthorizationTempo.d.ts",
+      "default": "./dist/tempo/AuthorizationTempo.js"
+    },
+    "./tempo/Channel": {
+      "src": "./src/tempo/Channel.ts",
+      "types": "./dist/tempo/Channel.d.ts",
+      "default": "./dist/tempo/Channel.js"
+    },
+    "./tempo/KeyAuthorization": {
+      "src": "./src/tempo/KeyAuthorization.ts",
+      "types": "./dist/tempo/KeyAuthorization.d.ts",
+      "default": "./dist/tempo/KeyAuthorization.js"
+    },
+    "./tempo/MultisigConfig": {
+      "src": "./src/tempo/MultisigConfig.ts",
+      "types": "./dist/tempo/MultisigConfig.d.ts",
+      "default": "./dist/tempo/MultisigConfig.js"
+    },
+    "./tempo/Period": {
+      "src": "./src/tempo/Period.ts",
+      "types": "./dist/tempo/Period.d.ts",
+      "default": "./dist/tempo/Period.js"
+    },
+    "./tempo/PoolId": {
+      "src": "./src/tempo/PoolId.ts",
+      "types": "./dist/tempo/PoolId.d.ts",
+      "default": "./dist/tempo/PoolId.js"
+    },
+    "./tempo/ReceivePolicyReceipt": {
+      "src": "./src/tempo/ReceivePolicyReceipt.ts",
+      "types": "./dist/tempo/ReceivePolicyReceipt.d.ts",
+      "default": "./dist/tempo/ReceivePolicyReceipt.js"
+    },
+    "./tempo/RpcSchemaTempo": {
+      "src": "./src/tempo/RpcSchemaTempo.ts",
+      "types": "./dist/tempo/RpcSchemaTempo.d.ts",
+      "default": "./dist/tempo/RpcSchemaTempo.js"
+    },
+    "./tempo/SignatureEnvelope": {
+      "src": "./src/tempo/SignatureEnvelope.ts",
+      "types": "./dist/tempo/SignatureEnvelope.d.ts",
+      "default": "./dist/tempo/SignatureEnvelope.js"
+    },
+    "./tempo/Tick": {
+      "src": "./src/tempo/Tick.ts",
+      "types": "./dist/tempo/Tick.d.ts",
+      "default": "./dist/tempo/Tick.js"
+    },
+    "./tempo/TokenRole": {
+      "src": "./src/tempo/TokenRole.ts",
+      "types": "./dist/tempo/TokenRole.d.ts",
+      "default": "./dist/tempo/TokenRole.js"
+    },
+    "./tempo/Transaction": {
+      "src": "./src/tempo/Transaction.ts",
+      "types": "./dist/tempo/Transaction.d.ts",
+      "default": "./dist/tempo/Transaction.js"
+    },
+    "./tempo/TransactionReceipt": {
+      "src": "./src/tempo/TransactionReceipt.ts",
+      "types": "./dist/tempo/TransactionReceipt.d.ts",
+      "default": "./dist/tempo/TransactionReceipt.js"
+    },
+    "./tempo/TransactionRequest": {
+      "src": "./src/tempo/TransactionRequest.ts",
+      "types": "./dist/tempo/TransactionRequest.d.ts",
+      "default": "./dist/tempo/TransactionRequest.js"
+    },
+    "./tempo/TxEnvelopeTempo": {
+      "src": "./src/tempo/TxEnvelopeTempo.ts",
+      "types": "./dist/tempo/TxEnvelopeTempo.d.ts",
+      "default": "./dist/tempo/TxEnvelopeTempo.js"
+    },
+    "./tempo/VirtualAddress": {
+      "src": "./src/tempo/VirtualAddress.ts",
+      "types": "./dist/tempo/VirtualAddress.d.ts",
+      "default": "./dist/tempo/VirtualAddress.js"
+    },
+    "./tempo/VirtualMaster": {
+      "src": "./src/tempo/VirtualMaster.ts",
+      "types": "./dist/tempo/VirtualMaster.d.ts",
+      "default": "./dist/tempo/VirtualMaster.js"
+    },
+    "./tempo/ZoneId": {
+      "src": "./src/tempo/ZoneId.ts",
+      "types": "./dist/tempo/ZoneId.d.ts",
+      "default": "./dist/tempo/ZoneId.js"
+    },
+    "./tempo/ZoneRpcAuthentication": {
+      "src": "./src/tempo/ZoneRpcAuthentication.ts",
+      "types": "./dist/tempo/ZoneRpcAuthentication.d.ts",
+      "default": "./dist/tempo/ZoneRpcAuthentication.js"
+    },
+    "./trusted-setups": {
+      "src": "./src/trusted-setups/index.ts",
+      "types": "./dist/trusted-setups/index.d.ts",
+      "default": "./dist/trusted-setups/index.js"
+    },
+    "./trusted-setups/Paths": {
+      "src": "./src/trusted-setups/Paths.ts",
+      "types": "./dist/trusted-setups/Paths.d.ts",
+      "default": "./dist/trusted-setups/Paths.js"
+    },
+    "./webauthn": {
+      "src": "./src/webauthn/index.ts",
+      "types": "./dist/webauthn/index.d.ts",
+      "default": "./dist/webauthn/index.js"
+    },
+    "./webauthn/Authentication": {
+      "src": "./src/webauthn/Authentication.ts",
+      "types": "./dist/webauthn/Authentication.d.ts",
+      "default": "./dist/webauthn/Authentication.js"
+    },
+    "./webauthn/Authenticator": {
+      "src": "./src/webauthn/Authenticator.ts",
+      "types": "./dist/webauthn/Authenticator.d.ts",
+      "default": "./dist/webauthn/Authenticator.js"
+    },
+    "./webauthn/Credential": {
+      "src": "./src/webauthn/Credential.ts",
+      "types": "./dist/webauthn/Credential.d.ts",
+      "default": "./dist/webauthn/Credential.js"
+    },
+    "./webauthn/Registration": {
+      "src": "./src/webauthn/Registration.ts",
+      "types": "./dist/webauthn/Registration.d.ts",
+      "default": "./dist/webauthn/Registration.js"
+    },
+    "./webauthn/Types": {
+      "src": "./src/webauthn/Types.ts",
+      "types": "./dist/webauthn/Types.d.ts",
+      "default": "./dist/webauthn/Types.js"
+    },
+    "./window": {
+      "src": "./src/window/index.ts",
+      "types": "./dist/window/index.d.ts",
+      "default": "./dist/window/index.js"
+    },
+    "./zod": {
+      "src": "./src/zod/index.ts",
+      "types": "./dist/zod/index.d.ts",
+      "default": "./dist/zod/index.js"
+    },
+    "./zod/Abi": {
+      "src": "./src/zod/Abi.ts",
+      "types": "./dist/zod/Abi.d.ts",
+      "default": "./dist/zod/Abi.js"
+    },
+    "./zod/AbiConstructor": {
+      "src": "./src/zod/AbiConstructor.ts",
+      "types": "./dist/zod/AbiConstructor.d.ts",
+      "default": "./dist/zod/AbiConstructor.js"
+    },
+    "./zod/AbiError": {
+      "src": "./src/zod/AbiError.ts",
+      "types": "./dist/zod/AbiError.d.ts",
+      "default": "./dist/zod/AbiError.js"
+    },
+    "./zod/AbiEvent": {
+      "src": "./src/zod/AbiEvent.ts",
+      "types": "./dist/zod/AbiEvent.d.ts",
+      "default": "./dist/zod/AbiEvent.js"
+    },
+    "./zod/AbiFallback": {
+      "src": "./src/zod/AbiFallback.ts",
+      "types": "./dist/zod/AbiFallback.d.ts",
+      "default": "./dist/zod/AbiFallback.js"
+    },
+    "./zod/AbiFunction": {
+      "src": "./src/zod/AbiFunction.ts",
+      "types": "./dist/zod/AbiFunction.d.ts",
+      "default": "./dist/zod/AbiFunction.js"
+    },
+    "./zod/AbiItem": {
+      "src": "./src/zod/AbiItem.ts",
+      "types": "./dist/zod/AbiItem.d.ts",
+      "default": "./dist/zod/AbiItem.js"
+    },
+    "./zod/AbiParameter": {
+      "src": "./src/zod/AbiParameter.ts",
+      "types": "./dist/zod/AbiParameter.d.ts",
+      "default": "./dist/zod/AbiParameter.js"
+    },
+    "./zod/AbiParameters": {
+      "src": "./src/zod/AbiParameters.ts",
+      "types": "./dist/zod/AbiParameters.d.ts",
+      "default": "./dist/zod/AbiParameters.js"
+    },
+    "./zod/AbiReceive": {
+      "src": "./src/zod/AbiReceive.ts",
+      "types": "./dist/zod/AbiReceive.d.ts",
+      "default": "./dist/zod/AbiReceive.js"
+    },
+    "./zod/AccessList": {
+      "src": "./src/zod/AccessList.ts",
+      "types": "./dist/zod/AccessList.d.ts",
+      "default": "./dist/zod/AccessList.js"
+    },
+    "./zod/AccountProof": {
+      "src": "./src/zod/AccountProof.ts",
+      "types": "./dist/zod/AccountProof.d.ts",
+      "default": "./dist/zod/AccountProof.js"
+    },
+    "./zod/Address": {
+      "src": "./src/zod/Address.ts",
+      "types": "./dist/zod/Address.d.ts",
+      "default": "./dist/zod/Address.js"
+    },
+    "./zod/Authorization": {
+      "src": "./src/zod/Authorization.ts",
+      "types": "./dist/zod/Authorization.d.ts",
+      "default": "./dist/zod/Authorization.js"
+    },
+    "./zod/BigInt": {
+      "src": "./src/zod/BigInt.ts",
+      "types": "./dist/zod/BigInt.d.ts",
+      "default": "./dist/zod/BigInt.js"
+    },
+    "./zod/Block": {
+      "src": "./src/zod/Block.ts",
+      "types": "./dist/zod/Block.d.ts",
+      "default": "./dist/zod/Block.js"
+    },
+    "./zod/BlockOverrides": {
+      "src": "./src/zod/BlockOverrides.ts",
+      "types": "./dist/zod/BlockOverrides.d.ts",
+      "default": "./dist/zod/BlockOverrides.js"
+    },
+    "./zod/Bytes": {
+      "src": "./src/zod/Bytes.ts",
+      "types": "./dist/zod/Bytes.d.ts",
+      "default": "./dist/zod/Bytes.js"
+    },
+    "./zod/Fee": {
+      "src": "./src/zod/Fee.ts",
+      "types": "./dist/zod/Fee.d.ts",
+      "default": "./dist/zod/Fee.js"
+    },
+    "./zod/Filter": {
+      "src": "./src/zod/Filter.ts",
+      "types": "./dist/zod/Filter.d.ts",
+      "default": "./dist/zod/Filter.js"
+    },
+    "./zod/Hash": {
+      "src": "./src/zod/Hash.ts",
+      "types": "./dist/zod/Hash.d.ts",
+      "default": "./dist/zod/Hash.js"
+    },
+    "./zod/Hex": {
+      "src": "./src/zod/Hex.ts",
+      "types": "./dist/zod/Hex.d.ts",
+      "default": "./dist/zod/Hex.js"
+    },
+    "./zod/Int": {
+      "src": "./src/zod/Int.ts",
+      "types": "./dist/zod/Int.d.ts",
+      "default": "./dist/zod/Int.js"
+    },
+    "./zod/Log": {
+      "src": "./src/zod/Log.ts",
+      "types": "./dist/zod/Log.d.ts",
+      "default": "./dist/zod/Log.js"
+    },
+    "./zod/Number": {
+      "src": "./src/zod/Number.ts",
+      "types": "./dist/zod/Number.d.ts",
+      "default": "./dist/zod/Number.js"
+    },
+    "./zod/RpcResponse": {
+      "src": "./src/zod/RpcResponse.ts",
+      "types": "./dist/zod/RpcResponse.d.ts",
+      "default": "./dist/zod/RpcResponse.js"
+    },
+    "./zod/RpcSchema": {
+      "src": "./src/zod/RpcSchema.ts",
+      "types": "./dist/zod/RpcSchema.d.ts",
+      "default": "./dist/zod/RpcSchema.js"
+    },
+    "./zod/Signature": {
+      "src": "./src/zod/Signature.ts",
+      "types": "./dist/zod/Signature.d.ts",
+      "default": "./dist/zod/Signature.js"
+    },
+    "./zod/Solidity": {
+      "src": "./src/zod/Solidity.ts",
+      "types": "./dist/zod/Solidity.d.ts",
+      "default": "./dist/zod/Solidity.js"
+    },
+    "./zod/StateOverrides": {
+      "src": "./src/zod/StateOverrides.ts",
+      "types": "./dist/zod/StateOverrides.d.ts",
+      "default": "./dist/zod/StateOverrides.js"
+    },
+    "./zod/Transaction": {
+      "src": "./src/zod/Transaction.ts",
+      "types": "./dist/zod/Transaction.d.ts",
+      "default": "./dist/zod/Transaction.js"
+    },
+    "./zod/TransactionEnvelope": {
+      "src": "./src/zod/TransactionEnvelope.ts",
+      "types": "./dist/zod/TransactionEnvelope.d.ts",
+      "default": "./dist/zod/TransactionEnvelope.js"
+    },
+    "./zod/TransactionReceipt": {
+      "src": "./src/zod/TransactionReceipt.ts",
+      "types": "./dist/zod/TransactionReceipt.d.ts",
+      "default": "./dist/zod/TransactionReceipt.js"
+    },
+    "./zod/TransactionRequest": {
+      "src": "./src/zod/TransactionRequest.ts",
+      "types": "./dist/zod/TransactionRequest.d.ts",
+      "default": "./dist/zod/TransactionRequest.js"
+    },
+    "./zod/TxEnvelopeEip1559": {
+      "src": "./src/zod/TxEnvelopeEip1559.ts",
+      "types": "./dist/zod/TxEnvelopeEip1559.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip1559.js"
+    },
+    "./zod/TxEnvelopeEip2930": {
+      "src": "./src/zod/TxEnvelopeEip2930.ts",
+      "types": "./dist/zod/TxEnvelopeEip2930.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip2930.js"
+    },
+    "./zod/TxEnvelopeEip4844": {
+      "src": "./src/zod/TxEnvelopeEip4844.ts",
+      "types": "./dist/zod/TxEnvelopeEip4844.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip4844.js"
+    },
+    "./zod/TxEnvelopeEip7702": {
+      "src": "./src/zod/TxEnvelopeEip7702.ts",
+      "types": "./dist/zod/TxEnvelopeEip7702.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip7702.js"
+    },
+    "./zod/TxEnvelopeLegacy": {
+      "src": "./src/zod/TxEnvelopeLegacy.ts",
+      "types": "./dist/zod/TxEnvelopeLegacy.d.ts",
+      "default": "./dist/zod/TxEnvelopeLegacy.js"
+    },
+    "./zod/TypedData": {
+      "src": "./src/zod/TypedData.ts",
+      "types": "./dist/zod/TypedData.d.ts",
+      "default": "./dist/zod/TypedData.js"
+    },
+    "./zod/Uint": {
+      "src": "./src/zod/Uint.ts",
+      "types": "./dist/zod/Uint.d.ts",
+      "default": "./dist/zod/Uint.js"
+    },
+    "./zod/Withdrawal": {
+      "src": "./src/zod/Withdrawal.ts",
+      "types": "./dist/zod/Withdrawal.d.ts",
+      "default": "./dist/zod/Withdrawal.js"
+    },
+    "./zod/z": {
+      "src": "./src/zod/z.ts",
+      "types": "./dist/zod/z.d.ts",
+      "default": "./dist/zod/z.js"
+    },
+    "./zod/tempo/AuthorizationTempo": {
+      "src": "./src/zod/tempo/AuthorizationTempo.ts",
+      "types": "./dist/zod/tempo/AuthorizationTempo.d.ts",
+      "default": "./dist/zod/tempo/AuthorizationTempo.js"
+    },
+    "./zod/tempo/KeyAuthorization": {
+      "src": "./src/zod/tempo/KeyAuthorization.ts",
+      "types": "./dist/zod/tempo/KeyAuthorization.d.ts",
+      "default": "./dist/zod/tempo/KeyAuthorization.js"
+    },
+    "./zod/tempo/MultisigConfig": {
+      "src": "./src/zod/tempo/MultisigConfig.ts",
+      "types": "./dist/zod/tempo/MultisigConfig.d.ts",
+      "default": "./dist/zod/tempo/MultisigConfig.js"
+    },
+    "./zod/tempo/PoolId": {
+      "src": "./src/zod/tempo/PoolId.ts",
+      "types": "./dist/zod/tempo/PoolId.d.ts",
+      "default": "./dist/zod/tempo/PoolId.js"
+    },
+    "./zod/tempo/RpcSchemaTempo": {
+      "src": "./src/zod/tempo/RpcSchemaTempo.ts",
+      "types": "./dist/zod/tempo/RpcSchemaTempo.d.ts",
+      "default": "./dist/zod/tempo/RpcSchemaTempo.js"
+    },
+    "./zod/tempo/SignatureEnvelope": {
+      "src": "./src/zod/tempo/SignatureEnvelope.ts",
+      "types": "./dist/zod/tempo/SignatureEnvelope.d.ts",
+      "default": "./dist/zod/tempo/SignatureEnvelope.js"
+    },
+    "./zod/tempo/Tick": {
+      "src": "./src/zod/tempo/Tick.ts",
+      "types": "./dist/zod/tempo/Tick.d.ts",
+      "default": "./dist/zod/tempo/Tick.js"
+    },
+    "./zod/tempo/TokenRole": {
+      "src": "./src/zod/tempo/TokenRole.ts",
+      "types": "./dist/zod/tempo/TokenRole.d.ts",
+      "default": "./dist/zod/tempo/TokenRole.js"
+    },
+    "./zod/tempo/Transaction": {
+      "src": "./src/zod/tempo/Transaction.ts",
+      "types": "./dist/zod/tempo/Transaction.d.ts",
+      "default": "./dist/zod/tempo/Transaction.js"
+    },
+    "./zod/tempo/TransactionReceipt": {
+      "src": "./src/zod/tempo/TransactionReceipt.ts",
+      "types": "./dist/zod/tempo/TransactionReceipt.d.ts",
+      "default": "./dist/zod/tempo/TransactionReceipt.js"
+    },
+    "./zod/tempo/TransactionRequest": {
+      "src": "./src/zod/tempo/TransactionRequest.ts",
+      "types": "./dist/zod/tempo/TransactionRequest.d.ts",
+      "default": "./dist/zod/tempo/TransactionRequest.js"
+    },
+    "./zod/tempo/TxEnvelopeTempo": {
+      "src": "./src/zod/tempo/TxEnvelopeTempo.ts",
+      "types": "./dist/zod/tempo/TxEnvelopeTempo.d.ts",
+      "default": "./dist/zod/tempo/TxEnvelopeTempo.js"
+    },
+    "./zod/tempo/VirtualAddress": {
+      "src": "./src/zod/tempo/VirtualAddress.ts",
+      "types": "./dist/zod/tempo/VirtualAddress.d.ts",
+      "default": "./dist/zod/tempo/VirtualAddress.js"
+    },
+    "./zod/tempo/ZoneId": {
+      "src": "./src/zod/tempo/ZoneId.ts",
+      "types": "./dist/zod/tempo/ZoneId.d.ts",
+      "default": "./dist/zod/tempo/ZoneId.js"
+    },
+    "./zod/tempo/ZoneRpcAuthentication": {
+      "src": "./src/zod/tempo/ZoneRpcAuthentication.ts",
+      "types": "./dist/zod/tempo/ZoneRpcAuthentication.d.ts",
+      "default": "./dist/zod/tempo/ZoneRpcAuthentication.js"
+    },
+    "./zod/tempo/z": {
+      "src": "./src/zod/tempo/z.ts",
+      "types": "./dist/zod/tempo/z.d.ts",
+      "default": "./dist/zod/tempo/z.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*",
+        "./dist/*/index.d.ts",
+        "./dist/core/*"
+      ]
+    }
+  }
 }

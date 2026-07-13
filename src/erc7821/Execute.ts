@@ -1,5 +1,5 @@
 import * as AbiFunction from '../core/AbiFunction.js'
-import type * as Hex from '../core/Hex.js'
+import * as Hex from '../core/Hex.js'
 import { AbiParameters } from '../index.js'
 import * as Calls from './Calls.js'
 
@@ -9,6 +9,9 @@ export type Batch = {
 }
 
 export type Call = Calls.Call
+
+/** Cached ABI parameters for the encoded `bytes[]` payload of batch-of-batches. */
+const batchesParameters = /*#__PURE__*/ AbiParameters.from('bytes[]')
 
 export const abiFunction = {
   type: 'function',
@@ -86,27 +89,24 @@ export function decodeBatchOfBatchesData(
   ]
 
   const [encodedBatches] = AbiParameters.decode(
-    AbiParameters.from('bytes[]'),
+    batchesParameters,
     executionData,
   ) as readonly [Hex.Hex[]]
 
   return encodedBatches.map((encodedBatch) => {
-    // Try decoding with opData first
-    try {
-      const decoded = Calls.decode(encodedBatch, { opData: true })
-      if (decoded.opData) {
-        return {
-          calls: decoded.calls,
-          opData: decoded.opData,
-        }
-      }
-      // If opData is undefined, return without it
-      return { calls: decoded.calls }
-    } catch {
-      // If decoding with opData fails, decode without it
-      const decoded = Calls.decode(encodedBatch, { opData: false })
-      return { calls: decoded.calls }
-    }
+    // Structurally detect whether the batch was encoded with opData by
+    // inspecting the first ABI head word (the offset to the first dynamic
+    // param). For a single dynamic param tuple `(Call[] calls)` the head
+    // is one word, so the offset is 0x20. For a two dynamic param tuple
+    // `(Call[] calls, bytes opData)` the head is two words, so the offset
+    // is 0x40.
+    const firstHead = Hex.toBigInt(Hex.slice(encodedBatch, 0, 32))
+    const withOpData = firstHead === 64n
+
+    const decoded = Calls.decode(encodedBatch, { opData: withOpData })
+    if (withOpData && decoded.opData)
+      return { calls: decoded.calls, opData: decoded.opData }
+    return { calls: decoded.calls }
   })
 }
 
@@ -127,7 +127,7 @@ export declare namespace decodeBatchOfBatchesData {
  *       {
  *         data: '0xcafebabe',
  *         to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
- *         value: 1n,
+ *         value: 1n
  *       }
  *     ]
  *   },
@@ -136,10 +136,10 @@ export declare namespace decodeBatchOfBatchesData {
  *       {
  *         data: '0xdeadbeef',
  *         to: '0xcafebabecafebabecafebabecafebabecafebabe',
- *         value: 2n,
+ *         value: 2n
  *       }
  *     ],
- *     opData: '0xcafebabe',
+ *     opData: '0xcafebabe'
  *   }
  * ])
  * ```
@@ -149,7 +149,7 @@ export declare namespace decodeBatchOfBatchesData {
  * @returns The encoded data.
  */
 export function encodeBatchOfBatchesData(batches: readonly Batch[]) {
-  const b = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+  const b = AbiParameters.encode(batchesParameters, [
     batches.map((b) => {
       const batch = b as Batch
       return Calls.encode(batch.calls, {
@@ -171,7 +171,7 @@ export function encodeBatchOfBatchesData(batches: readonly Batch[]) {
  *   {
  *     data: '0xcafebabe',
  *     to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
- *     value: 1n,
+ *     value: 1n
  *   }
  * ])
  * ```

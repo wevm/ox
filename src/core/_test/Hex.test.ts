@@ -1,11 +1,10 @@
 import { Bytes, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('assert', () => {
   test('default', () => {
-    expect(() =>
-      Hex.assert({ foo: 'bar' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Hex.assert({ foo: 'bar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Hex.InvalidHexTypeError: Value \`{"foo":"bar"}\` of type \`object\` is an invalid hex type.
 
     Hex types must be represented as \`"0x\${string}"\`.]
@@ -20,9 +19,8 @@ describe('assert', () => {
 
     Hex types must be represented as \`"0x\${string}"\`.]
   `)
-    expect(() =>
-      Hex.assert('0x0123456789abcdefg', { strict: true }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Hex.assert('0x0123456789abcdefg', { strict: true }))
+      .toThrowErrorMatchingInlineSnapshot(`
   [Hex.InvalidHexValueError: Value \`0x0123456789abcdefg\` is an invalid hex value.
 
   Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
@@ -140,6 +138,7 @@ describe('fromNumber', () => {
 
     expect(() =>
       // biome-ignore lint/correctness/noPrecisionLoss: precision loss expected for test
+      // oxlint-disable-next-line no-loss-of-precision
       Hex.fromNumber(420182738912731283712937129),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Hex.IntegerOutOfRangeError: Number `4.2018273891273126e+26` is not in safe unsigned integer range (`0` to `9007199254740991`)]',
@@ -586,7 +585,11 @@ describe('toBytes', () => {
     expect(() =>
       Hex.toBytes('0x420fggf11a'),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[BaseError: Invalid byte sequence ("gg" in "420fggf11a").]`,
+      `
+      [Hex.InvalidHexValueError: Value \`0x420fggf11a\` is an invalid hex value.
+
+      Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+    `,
     )
   })
 })

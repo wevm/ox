@@ -1,5 +1,5 @@
 import { AesGcm, Bytes, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('decrypt', () => {
   test('default', async () => {
@@ -13,7 +13,7 @@ describe('decrypt', () => {
     expect(decrypted).toEqual(Hex.fromString('i am a secret message'))
 
     const key_invalid = await AesGcm.getKey({ password: 'qwerty1' })
-    expect(() =>
+    await expect(() =>
       AesGcm.decrypt(encrypted, key_invalid),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       '[OperationError: The operation failed for an operation-specific reason]',
@@ -31,7 +31,7 @@ describe('decrypt', () => {
     expect(decrypted).toEqual(Hex.fromString('i am a secret message'))
 
     const key_invalid = await AesGcm.getKey({ password: 'qwerty1' })
-    expect(() =>
+    await expect(() =>
       AesGcm.decrypt(encrypted, key_invalid),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       '[OperationError: The operation failed for an operation-specific reason]',

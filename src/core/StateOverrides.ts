@@ -1,5 +1,6 @@
 import type * as Address from './Address.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, OneOf } from './internal/types.js'
 
 /**
@@ -60,8 +61,8 @@ export type AccountStorage = Compute<{
  *
  * const stateOverrides = StateOverrides.fromRpc({
  *   '0x0000000000000000000000000000000000000000': {
- *     balance: '0x1',
- *   },
+ *     balance: '0x1'
+ *   }
  * })
  * ```
  *
@@ -74,15 +75,15 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
     rpcStateOverrides,
   )) {
     const accountOverrides: AccountOverrides = {}
-    if (accountOverridesRpc.balance)
-      accountOverrides.balance = BigInt(accountOverridesRpc.balance)
+    if (accountOverridesRpc.balance !== undefined)
+      accountOverrides.balance = Quantity.toBigInt(accountOverridesRpc.balance)
     if (accountOverridesRpc.code)
       accountOverrides.code = accountOverridesRpc.code
     if (accountOverridesRpc.movePrecompileToAddress)
       accountOverrides.movePrecompileToAddress =
         accountOverridesRpc.movePrecompileToAddress
-    if (accountOverridesRpc.nonce)
-      accountOverrides.nonce = BigInt(accountOverridesRpc.nonce)
+    if (accountOverridesRpc.nonce !== undefined)
+      accountOverrides.nonce = Quantity.toBigInt(accountOverridesRpc.nonce)
     if (accountOverridesRpc.state)
       accountOverrides.state = accountOverridesRpc.state
     if (accountOverridesRpc.stateDiff)
@@ -101,26 +102,28 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
  *
  * const stateOverrides = StateOverrides.toRpc({
  *   '0x0000000000000000000000000000000000000000': {
- *     balance: 1n,
- *   },
+ *     balance: 1n
+ *   }
  * })
  * ```
  *
  * @param stateOverrides - The state overrides to convert.
  * @returns An instantiated {@link ox#StateOverrides.Rpc}.
  */
-export function toRpc(stateOverrides: StateOverrides): Rpc {
+export function toRpc(stateOverrides: toRpc.Input): Rpc {
   const rpcStateOverrides: Rpc = {}
   for (const [address, accountOverrides] of Object.entries(stateOverrides)) {
     const accountOverridesRpc: RpcAccountOverrides = {}
-    if (typeof accountOverrides.balance === 'bigint')
-      accountOverridesRpc.balance = Hex.fromNumber(accountOverrides.balance)
+    if (accountOverrides.balance !== undefined)
+      accountOverridesRpc.balance = Quantity.fromNumberish(
+        accountOverrides.balance,
+      )
     if (accountOverrides.code) accountOverridesRpc.code = accountOverrides.code
     if (accountOverrides.movePrecompileToAddress)
       accountOverridesRpc.movePrecompileToAddress =
         accountOverrides.movePrecompileToAddress
-    if (typeof accountOverrides.nonce === 'bigint')
-      accountOverridesRpc.nonce = Hex.fromNumber(accountOverrides.nonce)
+    if (accountOverrides.nonce !== undefined)
+      accountOverridesRpc.nonce = Quantity.fromNumberish(accountOverrides.nonce)
     if (accountOverrides.state)
       accountOverridesRpc.state = accountOverrides.state
     if (accountOverrides.stateDiff)
@@ -128,4 +131,9 @@ export function toRpc(stateOverrides: StateOverrides): Rpc {
     ;(rpcStateOverrides as any)[address] = accountOverridesRpc
   }
   return rpcStateOverrides
+}
+
+export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#StateOverrides.(toRpc:function)}. */
+  type Input = StateOverrides<Hex.Hex | bigint | number>
 }

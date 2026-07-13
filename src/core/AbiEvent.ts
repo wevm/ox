@@ -11,12 +11,105 @@ import type * as internal from './internal/abiEvent.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 import * as Cursor from './internal/cursor.js'
 import { prettyPrint } from './internal/errors.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype.AbiEvent & {
   hash?: Hex.Hex | undefined
   overloads?: readonly AbiEvent[] | undefined
+}
+
+/**
+ * Module-scope regex for matching an array suffix on an indexed event
+ * parameter type (e.g. `uint256[]`, `bytes32[3]`). Hoisted out of
+ * `decode` / `encode` so we don't recompile per call.
+ *
+ * @internal
+ */
+const arraySuffixRegex = /^(.*)\[(\d+)?\]$/
+
+/**
+ * Encodes a primitive (32-byte) indexed event topic directly to a
+ * left-padded 32-byte hex word, skipping the `AbiParameters.encode`
+ * → `prepareParameters` → `Hex.concat` round-trip used for general
+ * parameters. Returns `undefined` if the parameter type isn't a
+ * supported primitive.
+ *
+ * @internal
+ */
+function encodePrimitiveTopic(
+  type: string,
+  value: unknown,
+): Hex.Hex | undefined {
+  if (type === 'address') {
+    Address.assert(value as Address.Address, { strict: false })
+    return `0x000000000000000000000000${(value as string).slice(2).toLowerCase()}` as Hex.Hex
+  }
+  if (type === 'bool') {
+    if (typeof value !== 'boolean') return undefined
+    return value
+      ? '0x0000000000000000000000000000000000000000000000000000000000000001'
+      : '0x0000000000000000000000000000000000000000000000000000000000000000'
+  }
+  // `uintN` / `intN` (covers all 8-bit-aligned widths up to 256).
+  if (type.startsWith('uint') || type.startsWith('int')) {
+    const signed = type[0] === 'i'
+    const sizeStr = signed ? type.slice(3) : type.slice(4)
+    const size = sizeStr === '' ? 256 : Number(sizeStr)
+    if (!Number.isFinite(size)) return undefined
+    return Hex.fromNumber(value as number | bigint, { size: 32, signed })
+  }
+  // `bytesN` (fixed): right-pad to 32 bytes.
+  if (type.startsWith('bytes') && type.length > 5) {
+    if (typeof value !== 'string') return undefined
+    return Hex.padRight(value as Hex.Hex, 32)
+  }
+  return undefined
+}
+
+/**
+ * Decodes a primitive (32-byte) indexed event topic directly to a
+ * primitive value, skipping the `AbiParameters.decode` round-trip.
+ * Returns a `[value]` tuple on hit, or `undefined` on miss.
+ *
+ * @internal
+ */
+function decodePrimitiveTopic(
+  type: string,
+  topic: Hex.Hex,
+  options: decode.Options = {},
+): [value: unknown] | undefined {
+  if (type === 'address') {
+    // Trailing 20 bytes; topic is always 66 chars (`0x` + 64 hex).
+    const address = `0x${topic.slice(26)}` as Address.Address
+    return [
+      options.checksumAddress === false ? address : Address.checksum(address),
+    ]
+  }
+  if (type === 'bool') {
+    // Last byte determines truthiness (Solidity left-pads booleans).
+    return [topic.charCodeAt(65) === 49 /* '1' */]
+  }
+  if (type.startsWith('uint') || type.startsWith('int')) {
+    const signed = type[0] === 'i'
+    const sizeStr = signed ? type.slice(3) : type.slice(4)
+    const size = sizeStr === '' ? 256 : Number(sizeStr)
+    if (!Number.isFinite(size)) return undefined
+    const big =
+      size > 48
+        ? Hex.toBigInt(topic, { signed })
+        : Hex.toNumber(topic, { signed })
+    return [big]
+  }
+  if (type.startsWith('bytes') && type.length > 5) {
+    const sizeStr = type.slice(5)
+    const size = Number(sizeStr)
+    if (!Number.isFinite(size)) return undefined
+    // Take leading `size` bytes of the 32-byte topic.
+    return [`0x${topic.slice(2, 2 + size * 2)}` as Hex.Hex]
+  }
+  return undefined
 }
 
 /**
@@ -28,19 +121,11 @@ export type AbiEvent = abitype.AbiEvent & {
  *
  * const abi = Abi.from([
  *   'event Foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type Foo = AbiEvent.FromAbi<typeof abi, 'Foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -57,7 +142,7 @@ export type FromAbi<
  *
  * const abi = Abi.from([
  *   'event Foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type names = AbiEvent.Name<typeof abi>
@@ -77,21 +162,23 @@ export type ExtractNames<abi extends Abi.Abi> =
  * ```ts twoslash
  * import { AbiEvent } from 'ox'
  *
- * const abiEvent = AbiEvent.from('event Transfer(address indexed from, address indexed to, uint256 value)')
+ * const abiEvent = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
  *
  * const args = AbiEvent.decode(abiEvent, {
  *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   value: 1n,
+ *   value: 1n
  * })
  *
  * // @error: AbiEvent.ArgsMismatchError: Given arguments to not match the arguments decoded from the log.
@@ -137,8 +224,16 @@ export function assertArgs<const abiEvent extends AbiEvent>(
     if (input.type === 'address')
       return Address.isEqual(value as Address.Address, arg as Address.Address)
     if (input.type === 'string')
-      return Hash.keccak256(Bytes.fromString(value as string)) === arg
-    if (input.type === 'bytes') return Hash.keccak256(value as Hex.Hex) === arg
+      return (
+        Hash.keccak256(Bytes.fromString(value as string), { as: 'Hex' }) === arg
+      )
+    if (input.type === 'bytes') {
+      const hex =
+        typeof value === 'string'
+          ? (value as Hex.Hex)
+          : Hex.fromBytes(value as Bytes.Bytes)
+      return Hash.keccak256(hex, { as: 'Hex' }) === arg
+    }
     return value === arg
   }
 
@@ -224,14 +319,14 @@ export declare namespace assertArgs {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * } as const
  *
  * const decoded = AbiEvent.decode(transfer, log)
  * // @log: {
- * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:   to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:   value: 1n
  * // @log: }
  * ```
@@ -262,8 +357,8 @@ export declare namespace assertArgs {
  *   log
  * )
  * // @log: {
- * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:   to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:   value: 1n
  * // @log: }
  * ```
@@ -279,7 +374,7 @@ export declare namespace assertArgs {
  *
  * // 1. Instantiate the `Transfer` ABI Event.
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * // 2. Encode the ABI Event into Event Topics.
@@ -293,16 +388,16 @@ export declare namespace assertArgs {
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  *
  * // 4. Decode the Log. // [!code focus]
  * const decoded = AbiEvent.decode(transfer, logs[0]!) // [!code focus]
  * // @log: {
- * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:   to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:   value: 603n
  * // @log: }
  * ```
@@ -316,14 +411,14 @@ export declare namespace assertArgs {
  *
  * @param abiEvent - The ABI Event to decode.
  * @param log - `topics` & `data` to decode.
+ * @param options - Decoding options.
  * @returns The decoded event.
  */
 export function decode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiEvent extends AbiEvent = AbiItem.fromAbi.ReturnType<
     abi,
@@ -336,52 +431,83 @@ export function decode<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   log: decode.Log,
+  options?: decode.Options,
 ): decode.ReturnType<abiEvent>
 export function decode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   log: decode.Log,
+  options?: decode.Options,
 ): decode.ReturnType<abiEvent>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   ...parameters:
     | [
         abi: Abi.Abi | readonly unknown[],
         name: Hex.Hex | string,
         log: decode.Log,
+        options?: decode.Options | undefined,
       ]
-    | [abiEvent: AbiEvent, log: decode.Log]
+    | [
+        abiEvent: AbiEvent,
+        log: decode.Log,
+        options?: decode.Options | undefined,
+      ]
 ): decode.ReturnType {
-  const [abiEvent, log] = (() => {
+  const [abiEvent, log, options] = (() => {
     if (Array.isArray(parameters[0])) {
-      const [abi, name, log] = parameters as [
+      const [abi, name, log, options] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
         decode.Log,
+        decode.Options | undefined,
       ]
-      return [fromAbi(abi, name), log]
+      return [fromAbi(abi, name), log, options] as const
     }
-    return parameters as [AbiEvent, decode.Log]
+    const [abiEvent, log, options] = parameters as [
+      AbiEvent,
+      decode.Log,
+      decode.Options | undefined,
+    ]
+    return [abiEvent, log, options] as const
   })()
 
   const { data, topics } = log
 
-  const [selector_, ...argTopics] = topics
+  const isAnonymous = abiEvent.anonymous === true
+  const argTopics = isAnonymous ? [...topics] : topics.slice(1)
 
-  const selector = getSelector(abiEvent)
-  if (selector_ !== selector)
-    throw new SelectorTopicMismatchError({
-      abiEvent,
-      actual: selector_,
-      expected: selector,
-    })
+  if (!isAnonymous) {
+    const selector_ = topics[0]
+    const selector = getSelector(abiEvent)
+    if (selector_ !== selector)
+      throw new SelectorTopicMismatchError({
+        abiEvent,
+        actual: selector_,
+        expected: selector,
+      })
+  }
 
   const { inputs } = abiEvent
   const isUnnamed = inputs?.every((x) => !('name' in x && x.name))
 
   let args: any = isUnnamed ? [] : {}
 
+  // Single-pass partition: keep both the input and its original index so we
+  // don't have to call `inputs.indexOf(...)` per non-indexed entry below
+  // (which is O(n^2) on event width).
+  const indexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedOriginalIndex: number[] = []
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!
+    if ('indexed' in input && input.indexed) indexedInputs.push(input)
+    else {
+      nonIndexedInputs.push(input)
+      nonIndexedOriginalIndex.push(i)
+    }
+  }
+
   // Decode topics (indexed args).
-  const indexedInputs = inputs.filter((x) => 'indexed' in x && x.indexed)
   for (let i = 0; i < indexedInputs.length; i++) {
     const param = indexedInputs[i]!
     const topic = argTopics[i]
@@ -391,29 +517,38 @@ export function decode(
         param: param as abitype.AbiParameter & { indexed: boolean },
       })
     args[isUnnamed ? i : param.name || i] = (() => {
+      const t = param.type
       if (
-        param.type === 'string' ||
-        param.type === 'bytes' ||
-        param.type === 'tuple' ||
-        param.type.match(/^(.*)\[(\d+)?\]$/)
+        t === 'string' ||
+        t === 'bytes' ||
+        t === 'tuple' ||
+        arraySuffixRegex.test(t)
       )
         return topic
-      const decoded = AbiParameters.decode([param], topic) || []
+      // Fast path: 32-byte primitive (`address`, `bool`, `uintN`,
+      // `intN`, `bytesN`). Reads the topic word directly without
+      // allocating a `Cursor` or running `Bytes.fromHex`.
+      const fast = decodePrimitiveTopic(t, topic, options)
+      if (fast) return fast[0]
+      const decoded = AbiParameters.decode([param], topic, options) || []
       return decoded[0]
     })()
   }
 
   // Decode data (non-indexed args).
-  const nonIndexedInputs = inputs.filter((x) => !('indexed' in x && x.indexed))
   if (nonIndexedInputs.length > 0) {
     if (data && data !== '0x') {
       try {
-        const decodedData = AbiParameters.decode(nonIndexedInputs, data)
+        const decodedData = AbiParameters.decode(
+          nonIndexedInputs,
+          data,
+          options,
+        )
         if (decodedData) {
           if (isUnnamed) args = [...args, ...decodedData]
           else {
             for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const index = inputs.indexOf(nonIndexedInputs[i]!)
+              const index = nonIndexedOriginalIndex[i]!
               args[nonIndexedInputs[i]!.name! || index] = decodedData[i]
             }
           }
@@ -450,17 +585,24 @@ export declare namespace decode {
     topics: readonly Hex.Hex[]
   }
 
-  type ReturnType<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<
-    abiEvent,
-    AbiEvent
-  > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? undefined
-      : internal.ParametersToPrimitiveTypes<
-          abiEvent['inputs'],
-          { EnableUnion: false; IndexedOnly: false; Required: true }
-        >
-    : unknown
+  type Options = {
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
+  }
+
+  type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? undefined
+        : internal.ParametersToPrimitiveTypes<
+            abiEvent['inputs'],
+            { EnableUnion: false; IndexedOnly: false; Required: true }
+          >
+      : unknown
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
@@ -469,6 +611,446 @@ export declare namespace decode {
     | SelectorTopicMismatchError
     | TopicsMismatchError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} and decodes its arguments from a Log.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * ])
+ *
+ * const decoded = AbiEvent.decodeLog(abi, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
+ * })
+ * // @log: {
+ * // @log:   event: { name: 'Transfer', type: 'event', ... },
+ * // @log:   args: {
+ * // @log:     from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     value: 1n,
+ * // @log:   },
+ * // @log: }
+ * ```
+ *
+ * @param abi - The ABI to extract an event from.
+ * @param log - `topics` & `data` to decode.
+ * @param options - Decoding options.
+ * @returns The decoded event and arguments.
+ */
+export function decodeLog<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  log: decodeLog.Log,
+  options?: decodeLog.Options,
+): decodeLog.ReturnType<decodeLog.ExtractEvent<abi>> {
+  const selector = log.topics[0]
+  if (!selector) throw new SelectorTopicNotFoundError()
+  const abiEvent = fromAbi(abi, selector) as decodeLog.ExtractEvent<abi>
+  return {
+    event: abiEvent,
+    args: decode(abiEvent, log, options),
+  }
+}
+
+export declare namespace decodeLog {
+  type ExtractEvent<abi extends Abi.Abi | readonly unknown[]> =
+    AbiItem.fromAbi.ReturnType<abi, Name<abi>, undefined, AbiEvent>
+
+  type Log = decode.Log
+
+  type Options = decode.Options
+
+  type ReturnType<abiEvent extends AbiEvent = AbiEvent> = {
+    event: abiEvent
+    args: decode.ReturnType<abiEvent>
+  }
+
+  type ErrorType =
+    | decode.ErrorType
+    | fromAbi.ErrorType
+    | SelectorTopicNotFoundError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts and decodes Logs that match an ABI Event in an ABI.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * ])
+ *
+ * const logs = AbiEvent.extractLogs(abi, [
+ *   {
+ *     data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *     topics: [
+ *       '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *     ]
+ *   }
+ * ])
+ * // @log: [{
+ * // @log:   eventName: 'Transfer',
+ * // @log:   args: {
+ * // @log:     from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     value: 1n,
+ * // @log:   },
+ * // @log:   topics: [...],
+ * // @log:   data: '0x...',
+ * // @log: }]
+ * ```
+ *
+ * @param abi - The ABI to extract events from.
+ * @param logs - Logs to extract.
+ * @param options - Extraction options.
+ * @returns The extracted logs.
+ */
+export function extractLogs<
+  const abi extends Abi.Abi | readonly unknown[],
+  const logs extends readonly extractLogs.Log[],
+  eventName extends
+    | extractLogs.EventName<abi>
+    | readonly extractLogs.EventName<abi>[]
+    | undefined = undefined,
+  strict extends boolean | undefined = true,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  logs: logs | readonly extractLogs.Log[],
+  options: extractLogs.Options<abi, eventName, strict> = {},
+): extractLogs.ReturnType<
+  extractLogs.ExtractEvent<abi, eventName>,
+  logs[number],
+  strict
+>[] {
+  const {
+    args,
+    checksumAddress,
+    strict = true,
+  } = options as extractLogs.Options
+  const eventName = (() => {
+    if (!options.eventName) return undefined
+    if (Array.isArray(options.eventName)) return options.eventName
+    return [options.eventName as string]
+  })()
+  const abiEvents = (abi as Abi.Abi).filter(
+    (item): item is AbiEvent => item.type === 'event',
+  )
+  const out: extractLogs.ReturnType[] = []
+  for (const log of logs) {
+    const log_ = formatExtractLog(log)
+    const selector = log_.topics[0]
+    if (!selector) continue
+
+    const items = abiEvents.filter((item) => getSelector(item) === selector)
+    if (items.length === 0) continue
+
+    let event:
+      | {
+          args: unknown
+          event: AbiEvent
+        }
+      | undefined
+
+    for (const item of items) {
+      try {
+        event = {
+          args: decodeForExtract(item, log_, {
+            checksumAddress,
+            strict: true,
+          }),
+          event: item,
+        }
+        break
+      } catch {}
+    }
+
+    if (!event && !strict) {
+      const item = items[0]!
+      try {
+        event = {
+          args: decodeForExtract(item, log_, {
+            checksumAddress,
+            strict: false,
+          }),
+          event: item,
+        }
+      } catch {
+        const isUnnamed = item.inputs.some((x) => !('name' in x && x.name))
+        event = {
+          args: isUnnamed ? [] : {},
+          event: item,
+        }
+      }
+    }
+
+    if (!event) continue
+    if (eventName && !eventName.includes(event.event.name)) continue
+    if (!includesArgs(event.event, event.args, args)) continue
+
+    out.push({
+      ...log_,
+      args: event.args,
+      eventName: event.event.name,
+    })
+  }
+  return out as never
+}
+
+export declare namespace extractLogs {
+  type EventName<abi extends Abi.Abi | readonly unknown[]> = Name<abi>
+
+  type ExtractEvent<
+    abi extends Abi.Abi | readonly unknown[],
+    eventName extends EventName<abi> | readonly EventName<abi>[] | undefined =
+      EventName<abi>,
+  > = AbiItem.fromAbi.ReturnType<
+    abi,
+    eventName extends readonly (infer name)[]
+      ? name & EventName<abi>
+      : eventName extends EventName<abi>
+        ? eventName
+        : EventName<abi>,
+    undefined,
+    AbiEvent
+  >
+
+  type Args<abiEvent extends AbiEvent = AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? never
+        : internal.ParametersToPrimitiveTypes<
+            abiEvent['inputs'],
+            { EnableUnion: true; IndexedOnly: false; Required: false }
+          >
+      : unknown
+
+  type Log = decode.Log & {
+    address?: Address.Address | undefined
+    blockHash?: Hex.Hex | null | undefined
+    blockNumber?: bigint | Hex.Hex | null | undefined
+    blockTimestamp?: bigint | Hex.Hex | null | undefined
+    logIndex?: number | Hex.Hex | null | undefined
+    removed?: boolean | undefined
+    transactionHash?: Hex.Hex | null | undefined
+    transactionIndex?: number | Hex.Hex | null | undefined
+  }
+
+  type Options<
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
+    eventName extends EventName<abi> | readonly EventName<abi>[] | undefined =
+      EventName<abi>,
+    strict extends boolean | undefined = boolean | undefined,
+    abiEvent extends AbiEvent = ExtractEvent<abi, eventName>,
+  > = decode.Options & {
+    /** Arguments to match against decoded event arguments. */
+    args?: Args<abiEvent> | undefined
+    /** Event name, or event names, to extract. */
+    eventName?:
+      | eventName
+      | EventName<abi>
+      | readonly EventName<abi>[]
+      | undefined
+    /**
+     * Whether to strictly decode log topics and data.
+     *
+     * @default true
+     */
+    strict?: strict | boolean | undefined
+  }
+
+  type ReturnType<
+    abiEvent extends AbiEvent = AbiEvent,
+    log extends Log = Log,
+    strict extends boolean | undefined = boolean | undefined,
+  > = Compute<
+    log & {
+      args: IsNarrowable<abiEvent, AbiEvent> extends true
+        ? abiEvent['inputs'] extends readonly []
+          ? undefined
+          : internal.ParametersToPrimitiveTypes<
+              abiEvent['inputs'],
+              {
+                EnableUnion: false
+                IndexedOnly: false
+                Required: strict extends boolean ? strict : false
+              }
+            >
+        : unknown
+      eventName: abiEvent['name']
+    }
+  >
+
+  type ErrorType =
+    | AbiParameters.decode.ErrorType
+    | decode.ErrorType
+    | getSelector.ErrorType
+    | Errors.GlobalErrorType
+}
+
+function decodeForExtract(
+  abiEvent: AbiEvent,
+  log: decode.Log,
+  options: decode.Options & { strict: boolean },
+) {
+  const { data, topics } = log
+  const { strict } = options
+
+  const selector = topics[0]
+  if (selector !== getSelector(abiEvent))
+    throw new SelectorTopicMismatchError({
+      abiEvent,
+      actual: selector,
+      expected: getSelector(abiEvent),
+    })
+
+  const { inputs } = abiEvent
+  const isUnnamed = inputs.some((x) => !('name' in x && x.name))
+  const args: any = isUnnamed ? [] : {}
+
+  const argTopics = topics.slice(1)
+  const indexedInputs: [abitype.AbiEventParameter, number][] = []
+  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const missingIndexedInputs: [abitype.AbiEventParameter, number][] = []
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!
+    if ('indexed' in input && input.indexed) indexedInputs.push([input, i])
+    else nonIndexedInputs.push(input)
+  }
+
+  for (let i = 0; i < indexedInputs.length; i++) {
+    const [param, index] = indexedInputs[i]!
+    const topic = argTopics[i]
+    if (!topic) {
+      if (strict)
+        throw new TopicsMismatchError({
+          abiEvent,
+          param: param as abitype.AbiParameter & { indexed: boolean },
+        })
+      missingIndexedInputs.push([param, index])
+      continue
+    }
+    args[isUnnamed ? index : param.name || index] = decodeTopic(param, topic, {
+      checksumAddress: options.checksumAddress,
+    })
+  }
+
+  const inputsToDecode = strict
+    ? nonIndexedInputs
+    : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs]
+
+  if (inputsToDecode.length > 0) {
+    if (data && data !== '0x') {
+      try {
+        const decodedData = AbiParameters.decode(inputsToDecode, data, {
+          checksumAddress: options.checksumAddress,
+        })
+        if (decodedData) {
+          let dataIndex = 0
+          if (!strict) {
+            for (const [param, index] of missingIndexedInputs) {
+              args[isUnnamed ? index : param.name || index] =
+                decodedData[dataIndex++]
+            }
+          }
+          if (isUnnamed) {
+            for (let i = 0; i < inputs.length; i++)
+              if (args[i] === undefined && dataIndex < decodedData.length)
+                args[i] = decodedData[dataIndex++]
+          } else {
+            for (let i = 0; i < nonIndexedInputs.length; i++) {
+              const input = nonIndexedInputs[i]!
+              args[input.name!] = decodedData[dataIndex++]
+            }
+          }
+        }
+      } catch (err) {
+        if (strict) {
+          if (
+            err instanceof AbiParameters.DataSizeTooSmallError ||
+            err instanceof Cursor.PositionOutOfBoundsError
+          )
+            throw new DataMismatchError({
+              abiEvent,
+              data: data,
+              parameters: inputsToDecode,
+              size: Hex.size(data),
+            })
+          throw err
+        }
+      }
+    } else if (strict) {
+      throw new DataMismatchError({
+        abiEvent,
+        data: '0x',
+        parameters: inputsToDecode,
+        size: 0,
+      })
+    }
+  }
+
+  return Object.values(args).length > 0 ? args : undefined
+}
+
+function decodeTopic(
+  param: abitype.AbiEventParameter,
+  topic: Hex.Hex,
+  options: decode.Options,
+) {
+  const type = param.type
+  if (
+    type === 'string' ||
+    type === 'bytes' ||
+    type === 'tuple' ||
+    arraySuffixRegex.test(type)
+  )
+    return topic
+  const fast = decodePrimitiveTopic(type, topic, options)
+  if (fast) return fast[0]
+  const decoded = AbiParameters.decode([param], topic, options) || []
+  return decoded[0]
+}
+
+function formatExtractLog<const log extends extractLogs.Log>(log: log) {
+  if (typeof log.blockNumber !== 'string') return log
+  return {
+    ...log,
+    blockHash: log.blockHash ? log.blockHash : null,
+    blockNumber: log.blockNumber ? BigInt(log.blockNumber) : null,
+    blockTimestamp: log.blockTimestamp
+      ? BigInt(log.blockTimestamp)
+      : log.blockTimestamp === null
+        ? null
+        : undefined,
+    logIndex: log.logIndex ? Number(log.logIndex) : null,
+    transactionHash: log.transactionHash ? log.transactionHash : null,
+    transactionIndex: log.transactionIndex
+      ? Number(log.transactionIndex)
+      : null,
+  }
+}
+
+function includesArgs(abiEvent: AbiEvent, args: unknown, matchArgs: unknown) {
+  try {
+    if (!matchArgs) return true
+    assertArgs(abiEvent, args, matchArgs)
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -558,7 +1140,7 @@ export declare namespace decode {
  *
  * // 1. Instantiate the `Transfer` ABI Event.
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * // 2. Encode the ABI Event into Event Topics.
@@ -572,9 +1154,9 @@ export declare namespace decode {
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  * // @log: [
  * // @log:   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
@@ -598,9 +1180,8 @@ export declare namespace decode {
 export function encode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiEvent extends AbiEvent = AbiItem.fromAbi.ReturnType<
     abi,
@@ -618,7 +1199,7 @@ export function encode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   ...[args]: encode.Args<abiEvent>
 ): encode.ReturnType
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encode(
   ...parameters:
     | [
@@ -659,11 +1240,21 @@ export function encode(
 
     if (args_.length > 0) {
       const encode = (param: abitype.AbiParameter, value: unknown) => {
-        if (param.type === 'string')
-          return Hash.keccak256(Hex.fromString(value as string))
-        if (param.type === 'bytes') return Hash.keccak256(value as Hex.Hex)
-        if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
-          throw new FilterTypeNotSupportedError(param.type)
+        const t = param.type
+        if (t === 'string')
+          return Hash.keccak256(Hex.fromString(value as string), { as: 'Hex' })
+        if (t === 'bytes') {
+          const hex =
+            typeof value === 'string'
+              ? (value as Hex.Hex)
+              : Hex.fromBytes(value as Bytes.Bytes)
+          return Hash.keccak256(hex, { as: 'Hex' })
+        }
+        if (t === 'tuple' || arraySuffixRegex.test(t))
+          throw new FilterTypeNotSupportedError(t)
+        // Fast path for 32-byte primitives.
+        const fast = encodePrimitiveTopic(t, value)
+        if (fast) return fast
         return AbiParameters.encode([param], [value])
       }
 
@@ -680,6 +1271,8 @@ export function encode(
     }
   }
 
+  if (abiEvent.anonymous === true) return { topics }
+
   const selector = (() => {
     if (abiEvent.hash) return abiEvent.hash
     return getSelector(abiEvent)
@@ -689,25 +1282,23 @@ export function encode(
 }
 
 export declare namespace encode {
-  type Args<abiEvent extends AbiEvent> = IsNarrowable<
-    abiEvent,
-    AbiEvent
-  > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? []
-      : internal.ParametersToPrimitiveTypes<
-            abiEvent['inputs']
-          > extends infer result
-        ? result extends readonly []
-          ? []
-          : [result] | []
-        : []
-    : [readonly unknown[] | Record<string, unknown>] | []
+  type Args<abiEvent extends AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? []
+        : internal.ParametersToPrimitiveTypes<
+              abiEvent['inputs']
+            > extends infer result
+          ? result extends readonly []
+            ? []
+            : [result] | []
+          : []
+      : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
-    topics: Compute<
-      [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
-    >
+    topics:
+      | Compute<[selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]>
+      | readonly (Hex.Hex | readonly Hex.Hex[] | null)[]
   }
 
   type ErrorType =
@@ -731,14 +1322,12 @@ export declare namespace encode {
  *   inputs: [
  *     { name: 'from', type: 'address', indexed: true },
  *     { name: 'to', type: 'address', indexed: true },
- *     { name: 'value', type: 'uint256' },
- *   ],
+ *     { name: 'value', type: 'uint256' }
+ *   ]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiEvent - The ABI Event to format.
@@ -746,11 +1335,14 @@ export declare namespace encode {
  */
 export function format<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
-): abitype.FormatAbiItem<abiEvent> {
-  return abitype.formatAbiItem(abiEvent) as never
+): format.ReturnType<abiEvent> {
+  return formatAbiItem.formatAbiItem(abiEvent) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
+    formatAbiItem.FormatAbiItem<abiEvent>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -769,24 +1361,12 @@ export declare namespace format {
  *   inputs: [
  *     { name: 'from', type: 'address', indexed: true },
  *     { name: 'to', type: 'address', indexed: true },
- *     { name: 'value', type: 'uint256' },
- *   ],
+ *     { name: 'value', type: 'uint256' }
+ *   ]
  * })
  *
  * transfer
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -803,19 +1383,6 @@ export declare namespace format {
  *
  * transfer
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param abiEvent - The ABI Event to parse.
@@ -868,17 +1435,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -892,19 +1453,12 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
- * const item = AbiEvent.fromAbi(abi, '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') // [!code focus]
+ * const selector =
+ *   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * const item = AbiEvent.fromAbi(abi, selector) // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -921,9 +1475,8 @@ export declare namespace from {
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   allNames = Name<abi>,
 >(
@@ -953,7 +1506,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiEvent } from 'ox'
  *
- * const selector = AbiEvent.getSelector('event Transfer(address indexed from, address indexed to, uint256 value)')
+ * const selector = AbiEvent.getSelector(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
  * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f556a2'
  * ```
  *
@@ -992,7 +1547,7 @@ export declare namespace getSelector {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1000,14 +1555,14 @@ export declare namespace getSelector {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   value: 1n,
+ *   value: 1n
  * })
  * // @error: AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
  * // @error: Event: event Transfer(address indexed from, address indexed to, uint256 value)
@@ -1030,7 +1585,7 @@ export declare namespace getSelector {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1038,8 +1593,8 @@ export declare namespace getSelector {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
@@ -1047,7 +1602,7 @@ export declare namespace getSelector {
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac', // [!code ++]
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac', // [!code --]
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad', // [!code ++]
- *   value: 1n,
+ *   value: 1n
  * })
  * ```
  */
@@ -1084,7 +1639,7 @@ export class ArgsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1092,15 +1647,15 @@ export class ArgsMismatchError extends Errors.BaseError {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   a: 'b',
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   value: 1n,
+ *   value: 1n
  * })
  * // @error: AbiEvent.InputNotFoundError: Parameter "a" not found on `event Transfer(address indexed from, address indexed to, uint256 value)`.
  * ```
@@ -1114,7 +1669,7 @@ export class ArgsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1122,28 +1677,22 @@ export class ArgsMismatchError extends Errors.BaseError {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   a: 'b', // [!code --]
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   value: 1n,
+ *   value: 1n
  * })
  * ```
  */
 export class InputNotFoundError extends Errors.BaseError {
   override readonly name = 'AbiEvent.InputNotFoundError'
 
-  constructor({
-    abiEvent,
-    name,
-  }: {
-    abiEvent: AbiEvent
-    name: string
-  }) {
+  constructor({ abiEvent, name }: { abiEvent: AbiEvent; name: string }) {
     super(`Parameter "${name}" not found on \`${format(abiEvent)}\`.`)
   }
 }
@@ -1156,7 +1705,7 @@ export class InputNotFoundError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address to, uint256 value)',
+ *   'event Transfer(address indexed from, address to, uint256 value)'
  *   //                                    ↑ 32 bytes + ↑ 32 bytes = 64 bytes
  * )
  *
@@ -1165,8 +1714,8 @@ export class InputNotFoundError extends Errors.BaseError {
  *   //       ↑ 32 bytes ❌
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * // @error: AbiEvent.DataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
  * // @error: Non-indexed Parameters: (address to, uint256 value)
@@ -1181,7 +1730,7 @@ export class InputNotFoundError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address to, uint256 value)',
+ *   'event Transfer(address indexed from, address to, uint256 value)'
  *   //                                    ↑ 32 bytes + ↑ 32 bytes = 64 bytes
  * )
  *
@@ -1190,8 +1739,8 @@ export class InputNotFoundError extends Errors.BaseError {
  *   //       ↑ 64 bytes ✅
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * ```
  */
@@ -1241,15 +1790,15 @@ export class DataMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
  *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * })
  * // @error: AbiEvent.TopicsMismatchError: Expected a topic for indexed event parameter "to" for "event Transfer(address indexed from, address indexed to, uint256 value)".
  * ```
@@ -1262,7 +1811,7 @@ export class DataMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1270,8 +1819,8 @@ export class DataMismatchError extends Errors.BaseError {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code ++]
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266' // [!code ++]
+ *   ]
  * })
  * ```
  *
@@ -1308,15 +1857,15 @@ export class TopicsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, bool sender)',
+ *   'event Transfer(address indexed from, address indexed to, bool sender)'
  * )
  *
  * AbiEvent.decode(transfer, {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * // @error: AbiEvent.SelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f".
  * // @error: Event: event Transfer(address indexed from, address indexed to, bool sender)
@@ -1331,7 +1880,7 @@ export class TopicsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, bool sender)',
+ *   'event Transfer(address indexed from, address indexed to, bool sender)'
  * )
  *
  * AbiEvent.decode(transfer, {
@@ -1339,8 +1888,8 @@ export class TopicsMismatchError extends Errors.BaseError {
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // [!code --]
  *     '0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f', // [!code ++]
  *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * ```
  */
@@ -1366,16 +1915,41 @@ export class SelectorTopicMismatchError extends Errors.BaseError {
 }
 
 /**
+ * Thrown when the selector topic is not found.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Transfer(address indexed from)'
+ * ])
+ *
+ * AbiEvent.decodeLog(abi, { topics: [], data: '0x' })
+ * // @error: AbiEvent.SelectorTopicNotFoundError: Selector topic not found.
+ * ```
+ */
+export class SelectorTopicNotFoundError extends Errors.BaseError {
+  override readonly name = 'AbiEvent.SelectorTopicNotFoundError'
+
+  constructor() {
+    super('Selector topic not found.')
+  }
+}
+
+/**
  * Thrown when the provided filter type is not supported.
  *
  * @example
  * ```ts twoslash
  * import { AbiEvent } from 'ox'
  *
- * const transfer = AbiEvent.from('event Transfer((string) indexed a, string b)')
+ * const transfer = AbiEvent.from(
+ *   'event Transfer((string) indexed a, string b)'
+ * )
  *
  * AbiEvent.encode(transfer, {
- *   a: ['hello'],
+ *   a: ['hello']
  * })
  * // @error: AbiEvent.FilterTypeNotSupportedError: Filter type "tuple" is not supported.
  * ```
@@ -1388,8 +1962,12 @@ export class SelectorTopicMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiEvent } from 'ox'
  *
- * const transfer = AbiEvent.from('event Transfer((string) indexed a, string b)') // [!code --]
- * const transfer = AbiEvent.from('event Transfer(string indexed a, string b)') // [!code ++]
+ * const transfer = AbiEvent.from(
+ *   'event Transfer((string) indexed a, string b)'
+ * ) // [!code --]
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(string indexed a, string b)'
+ * ) // [!code ++]
  * ```
  *
  *

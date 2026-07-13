@@ -1,8 +1,11 @@
 import * as AccessList from './AccessList.js'
 import * as Address from './Address.js'
+import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -57,7 +60,7 @@ export type Type = typeof type
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @error: FeeCapTooHighError:
  * // @error: The fee cap (`masFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913 gwei) cannot be
@@ -100,7 +103,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeEip1559 } from 'ox'
  *
- * const envelope = TxEnvelopeEip1559.deserialize('0x02ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip1559.deserialize(
+ *   '0x02ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0'
+ * )
  * // @log: {
  * // @log:   type: 'eip1559',
  * // @log:   nonce: 785n,
@@ -117,7 +122,7 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip1559> {
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -132,7 +137,7 @@ export function deserialize(
     yParity,
     r,
     s,
-  ] = transactionArray as readonly Hex.Hex[]
+  ] = transactionArray as readonly Bytes.Bytes[]
 
   if (!(transactionArray.length === 9 || transactionArray.length === 12))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -159,24 +164,37 @@ export function deserialize(
     })
 
   let transaction = {
-    chainId: Number(chainId),
+    chainId: Number(Tx.bytesToBigIntOrZero(chainId)),
     type,
   } as TxEnvelopeEip1559
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
-    transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
-    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as any)
+  const to_ = Tx.bytesToHexOrUndefined(to)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.bytesToHexOrUndefined(data)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
+  const value_ = Tx.bytesToBigIntOrUndefined(value)
+  if (value_ !== undefined) transaction.value = value_
+  const maxFeePerGas_ = Tx.bytesToBigIntOrUndefined(maxFeePerGas)
+  if (maxFeePerGas_ !== undefined) transaction.maxFeePerGas = maxFeePerGas_
+  const maxPriorityFeePerGas_ =
+    Tx.bytesToBigIntOrUndefined(maxPriorityFeePerGas)
+  if (maxPriorityFeePerGas_ !== undefined)
+    transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  if ((accessList as unknown as readonly unknown[]).length !== 0)
+    transaction.accessList = AccessList.fromTupleList(
+      Tx.bytesTreeToHex(accessList as never) as never,
+    )
 
   const signature =
-    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
+    r && s && yParity
+      ? Signature.fromTuple([
+          Tx.bytesToHex(yParity),
+          Tx.bytesToHex(r),
+          Tx.bytesToHex(s),
+        ])
+      : undefined
   if (signature)
     transaction = {
       ...transaction,
@@ -204,7 +222,7 @@ export declare namespace deserialize {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * ```
  *
@@ -221,16 +239,17 @@ export declare namespace deserialize {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip1559.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip1559.from(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const envelope_signed = TxEnvelopeEip1559.from(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   chainId: 1,
@@ -253,7 +272,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeEip1559 } from 'ox'
  *
- * const envelope = TxEnvelopeEip1559.from('0x02f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip1559.from(
+ *   '0x02f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261'
+ * )
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   maxFeePerGas: 10000000000n,
@@ -334,13 +355,16 @@ export declare namespace from {
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const payload = TxEnvelopeEip1559.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -371,7 +395,7 @@ export declare namespace getSignPayload {
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const signature = Secp256k1.sign({
@@ -379,7 +403,9 @@ export declare namespace getSignPayload {
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip1559.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip1559.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeEip1559.hash(envelope_signed) // [!code focus]
  * ```
@@ -434,7 +460,7 @@ export declare namespace hash {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip1559.serialize(envelope) // [!code focus]
@@ -453,16 +479,17 @@ export declare namespace hash {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip1559.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = TxEnvelopeEip1559.serialize(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const serialized = TxEnvelopeEip1559.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
@@ -497,12 +524,12 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex.fromNumber(maxFeePerGas) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(maxPriorityFeePerGas),
+    Tx.quantityToHex(maxFeePerGas),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
     accessTupleList,
     ...(signature ? Signature.toTuple(signature) : []),
@@ -538,7 +565,7 @@ export declare namespace serialize {
  *   nonce: 0n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const envelope_rpc = TxEnvelopeEip1559.toRpc(envelope) // [!code focus]
@@ -546,36 +573,38 @@ export declare namespace serialize {
  * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
  * @param envelope - The EIP-1559 transaction envelope to convert.
  * @returns An RPC-formatted EIP-1559 transaction envelope.
  */
-export function toRpc(envelope: Omit<TxEnvelopeEip1559, 'type'>): Rpc {
+export function toRpc(envelope: toRpc.Input): Rpc {
   const signature = Signature.extract(envelope)
 
   return {
     ...envelope,
-    chainId: Hex.fromNumber(envelope.chainId),
+    chainId: Quantity.fromNumberish(envelope.chainId),
     data: envelope.data ?? envelope.input,
     type: '0x2',
-    ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex.fromNumber(envelope.gas) }
+    ...(envelope.gas !== undefined
+      ? { gas: Quantity.fromNumberish(envelope.gas) }
       : {}),
-    ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex.fromNumber(envelope.nonce) }
+    ...(envelope.nonce !== undefined
+      ? { nonce: Quantity.fromNumberish(envelope.nonce) }
       : {}),
-    ...(typeof envelope.value === 'bigint'
-      ? { value: Hex.fromNumber(envelope.value) }
+    ...(envelope.value !== undefined
+      ? { value: Quantity.fromNumberish(envelope.value) }
       : {}),
-    ...(typeof envelope.maxFeePerGas === 'bigint'
-      ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
+    ...(envelope.maxFeePerGas !== undefined
+      ? { maxFeePerGas: Quantity.fromNumberish(envelope.maxFeePerGas) }
       : {}),
-    ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
+    ...(envelope.maxPriorityFeePerGas !== undefined
       ? {
-          maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas),
+          maxPriorityFeePerGas: Quantity.fromNumberish(
+            envelope.maxPriorityFeePerGas,
+          ),
         }
       : {}),
     ...(signature ? Signature.toRpc(signature) : {}),
@@ -583,6 +612,12 @@ export function toRpc(envelope: Omit<TxEnvelopeEip1559, 'type'>): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TxEnvelopeEip1559.(toRpc:function)}. */
+  export type Input = Omit<
+    TxEnvelopeEip1559<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
+    'type'
+  >
+
   export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
@@ -597,7 +632,7 @@ export declare namespace toRpc {
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @log: false
  * ```

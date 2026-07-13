@@ -1,5 +1,5 @@
 import { Abi, AbiEvent, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
@@ -63,18 +63,18 @@ describe('assertArgs', () => {
         value: 1n,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
 
-    Event: event Transfer(address indexed from, address indexed to, uint256 value)
-    Expected Arguments: 
-      from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
-      value:  1
-    Given Arguments: 
-      from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
-      to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      value:  1]
-  `)
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        from:   0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        to:     0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad
+        value:  1
+      Given Arguments: 
+        from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+        value:  1]
+    `)
   })
 
   test('error: args mismatch, unnamed', () => {
@@ -94,16 +94,16 @@ describe('assertArgs', () => {
         '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
       ]),
     ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
 
-    Event: event Transfer(address indexed, address indexed, uint256)
-    Expected Arguments: 
-      0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      2:  1
-    Given Arguments: 
-      0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad]
-  `)
+      Event: event Transfer(address indexed, address indexed, uint256)
+      Expected Arguments: 
+        0:  0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        1:  0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        2:  1
+      Given Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad]
+    `)
   })
 
   test('error: args mismatch, string', () => {
@@ -220,12 +220,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "value": 1n,
-    }
-  `)
+      {
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "value": 1n,
+      }
+    `)
   })
 
   test('behavior: unnamed', () => {
@@ -241,12 +241,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    [
-      "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      1n,
-    ]
-  `)
+      [
+        "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        1n,
+      ]
+    `)
   })
 
   test('behavior: named + unnamed', () => {
@@ -262,12 +262,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "2": 1n,
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-    }
-  `)
+      {
+        "2": 1n,
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
   })
 
   test('behavior: named + unnamed', () => {
@@ -283,12 +283,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "1": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "value": 1n,
-    }
-  `)
+      {
+        "1": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "value": 1n,
+      }
+    `)
   })
 
   test('behavior: named + unnamed', () => {
@@ -304,13 +304,13 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "1": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "3": 1n,
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "value": 1n,
-    }
-  `)
+      {
+        "1": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "3": 1n,
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "value": 1n,
+      }
+    `)
   })
 
   test('behavior: string inputs', () => {
@@ -502,8 +502,8 @@ describe('decode', () => {
     expect(decoded1).toEqual(decoded2)
     expect(decoded2).toMatchInlineSnapshot(`
       {
-        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "value": 1n,
       }
     `)
@@ -531,10 +531,416 @@ describe('decode', () => {
 
     expect(decoded).toMatchInlineSnapshot(`
       {
-        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "value": 1n,
       }
+    `)
+  })
+
+  test('behavior: anonymous event', () => {
+    const abiEvent = AbiEvent.from({
+      type: 'event',
+      name: 'Transfer',
+      anonymous: true,
+      inputs: [
+        { name: 'from', type: 'address', indexed: true },
+        { name: 'to', type: 'address', indexed: true },
+        { name: 'value', type: 'uint256', indexed: false },
+      ],
+    })
+    const decoded = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+        "value": 1n,
+      }
+    `)
+  })
+})
+
+describe('decodeLog', () => {
+  test('behavior: decodes event from selector topic', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const decoded = AbiEvent.decodeLog([transfer], {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    })
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "args": {
+          "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          "value": 1n,
+        },
+        "event": {
+          "hash": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "from",
+              "type": "address",
+            },
+            {
+              "indexed": true,
+              "name": "to",
+              "type": "address",
+            },
+            {
+              "name": "value",
+              "type": "uint256",
+            },
+          ],
+          "name": "Transfer",
+          "type": "event",
+        },
+      }
+    `)
+  })
+
+  test('error: selector topic not found', () => {
+    const transfer = AbiEvent.from('event Transfer(address indexed from)')
+
+    expect(() => AbiEvent.decodeLog([transfer], { data: '0x', topics: [] }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.SelectorTopicNotFoundError: Selector topic not found.]
+    `)
+  })
+})
+
+describe('extractLogs', () => {
+  test('behavior: decodes matching logs', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+    const decoded = AbiEvent.extractLogs([transfer], [log])
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "value": 1n,
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "eventName": "Transfer",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: skips non-matching logs in strict mode', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const approval = AbiEvent.from(
+      'event Approval(address indexed owner, address indexed spender, uint256 value)',
+    )
+    const decoded = AbiEvent.extractLogs(
+      [transfer],
+      [
+        {
+          data: '0x',
+          topics: [AbiEvent.getSelector(approval)],
+        },
+        {
+          data: '0x',
+          topics: [],
+        },
+      ],
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`[]`)
+  })
+
+  test('behavior: filters by event name', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const approval = AbiEvent.from(
+      'event Approval(address indexed owner, address indexed spender, uint256 value)',
+    )
+    const decoded = AbiEvent.extractLogs(
+      [transfer, approval],
+      [
+        {
+          data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          topics: [
+            AbiEvent.getSelector(transfer),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          ],
+        },
+        {
+          data: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          topics: [
+            AbiEvent.getSelector(approval),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          ],
+        },
+      ],
+      { eventName: 'Approval' },
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "owner": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "spender": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "value": 2n,
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "eventName": "Approval",
+          "topics": [
+            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: filters by arguments', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const decoded = AbiEvent.extractLogs(
+      [transfer],
+      [
+        {
+          data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          topics: [
+            AbiEvent.getSelector(transfer),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          ],
+        },
+        {
+          data: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          topics: [
+            AbiEvent.getSelector(transfer),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          ],
+        },
+      ],
+      {
+        args: {
+          from: '0xa5CC3c03994Db5b0D9a5eeDd10CaBaB0813678Ac',
+        },
+      },
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "value": 1n,
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "eventName": "Transfer",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: tries ABI events with matching selectors', () => {
+    const erc20Transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const erc721Transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+    )
+    const decoded = AbiEvent.extractLogs(
+      [erc20Transfer, erc721Transfer],
+      [
+        {
+          data: '0x',
+          topics: [
+            AbiEvent.getSelector(erc721Transfer),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+          ],
+        },
+      ],
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "tokenId": 1n,
+          },
+          "data": "0x",
+          "eventName": "Transfer",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: non-strict mode decodes missing indexed topics from data', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const decoded = AbiEvent.extractLogs(
+      [transfer],
+      [
+        {
+          data: '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad0000000000000000000000000000000000000000000000000000000000000001',
+          topics: [
+            AbiEvent.getSelector(transfer),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          ],
+        },
+      ],
+      { strict: false },
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "value": 1n,
+          },
+          "data": "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad0000000000000000000000000000000000000000000000000000000000000001",
+          "eventName": "Transfer",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: non-strict mode returns partial logs when decoding fails', () => {
+    const transfer = AbiEvent.from('event Transfer(address indexed from)')
+    const decoded = AbiEvent.extractLogs(
+      [transfer],
+      [
+        {
+          data: '0x',
+          topics: [AbiEvent.getSelector(transfer), '0xdead'],
+        },
+      ],
+      { strict: false },
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {},
+          "data": "0x",
+          "eventName": "Transfer",
+          "topics": [
+            "0x2d339b1e3334d3f43e7aa6d5b1fa3ca5e4228b2dd547d1710c726019d98e53fa",
+            "0xdead",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: formats RPC logs', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const decoded = AbiEvent.extractLogs(
+      [transfer],
+      [
+        {
+          address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+          blockHash:
+            '0xabe69134e80a12f6a93d0aa18215b5b86c2fb338bae911790ca374a8716e01a4',
+          blockNumber: '0x12d846c',
+          data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          logIndex: '0x10f',
+          removed: false,
+          topics: [
+            AbiEvent.getSelector(transfer),
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+            '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          ],
+          transactionHash:
+            '0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93',
+          transactionIndex: '0x91',
+        },
+      ],
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "address": "0xfba3912ca04dd458c843e2ee08967fc04f3579c2",
+          "args": {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "value": 1n,
+          },
+          "blockHash": "0xabe69134e80a12f6a93d0aa18215b5b86c2fb338bae911790ca374a8716e01a4",
+          "blockNumber": 19760236n,
+          "blockTimestamp": undefined,
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "eventName": "Transfer",
+          "logIndex": 271,
+          "removed": false,
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+          ],
+          "transactionHash": "0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93",
+          "transactionIndex": 145,
+        },
+      ]
     `)
   })
 })
@@ -553,9 +959,8 @@ describe('encode', () => {
 
   test('behavior: no hash', () => {
     const transfer = AbiEvent.from('event Transfer()')
-    expect(
-      AbiEvent.encode({ ...transfer, hash: undefined }),
-    ).toMatchInlineSnapshot(`
+    expect(AbiEvent.encode({ ...transfer, hash: undefined }))
+      .toMatchInlineSnapshot(`
     {
       "topics": [
         "0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0",
@@ -863,12 +1268,12 @@ describe('encode', () => {
     })
 
     expect(AbiEvent.decode(transfer, logs[0]!)).toMatchInlineSnapshot(`
-    {
-      "from": "0x0000000000000000000000000000000000000000",
-      "to": "0x0c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
-      "value": 603n,
-    }
-  `)
+      {
+        "from": "0x0000000000000000000000000000000000000000",
+        "to": "0x0C04D9e9278EC5e4D424476D3Ebec70Cb5d648D1",
+        "value": 603n,
+      }
+    `)
   })
 
   test('error: tuple input', () => {
@@ -912,12 +1317,12 @@ describe('encode', () => {
     })
 
     expect(AbiEvent.decode(transfer, logs[0]!)).toMatchInlineSnapshot(`
-    {
-      "from": "0x634cf119d1964b88a426e1e782bd09f37b51d949",
-      "to": "0xb77c2290c5e5acd8ca4778876b3caae593741bab",
-      "value": 714357880932609n,
-    }
-  `)
+      {
+        "from": "0x634cf119d1964b88a426E1E782Bd09f37b51d949",
+        "to": "0xB77c2290C5e5ACD8Ca4778876b3CAaE593741BAB",
+        "value": 714357880932609n,
+      }
+    `)
   })
 
   test('https://github.com/wevm/viem/issues/3278', () => {
@@ -1136,9 +1541,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    expect(
-      AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval'),
-    ).toMatchInlineSnapshot(`
+    expect(AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval'))
+      .toMatchInlineSnapshot(`
     {
       "anonymous": false,
       "hash": "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
@@ -1514,6 +1918,8 @@ test('exports', () => {
     [
       "assertArgs",
       "decode",
+      "decodeLog",
+      "extractLogs",
       "encode",
       "format",
       "from",
@@ -1524,6 +1930,7 @@ test('exports', () => {
       "DataMismatchError",
       "TopicsMismatchError",
       "SelectorTopicMismatchError",
+      "SelectorTopicNotFoundError",
       "FilterTypeNotSupportedError",
     ]
   `)

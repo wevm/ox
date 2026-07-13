@@ -1,8 +1,16 @@
-import { Blobs, Hex, Rlp, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
-import { assertType, describe, expect, test } from 'vitest'
+import {
+  Address,
+  Blobs,
+  Hex,
+  Rlp,
+  RpcTransport,
+  Secp256k1,
+  TxEnvelopeEip4844,
+  Value,
+} from 'ox'
+import { assertType, describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { kzg } from '../../../test/kzg.js'
-import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assert', () => {
   test('empty blobs', () => {
@@ -63,8 +71,7 @@ describe('assert', () => {
 
 describe('deserialize', () => {
   const blobs = Blobs.from(Hex.fromString('abcd'))
-  const sidecars = Blobs.toSidecars(blobs, { kzg })
-  const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+  const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
   const transaction = TxEnvelopeEip4844.from({
     to: accounts[1].address,
     nonce: 785n,
@@ -137,31 +144,62 @@ describe('deserialize', () => {
     expect(deserialized).toEqual(transaction_data)
   })
 
-  test('sidecars', () => {
-    const transaction_sidecars = TxEnvelopeEip4844.from({
-      ...transaction,
-      sidecars,
-    })
-    const serialized = TxEnvelopeEip4844.serialize(transaction_sidecars)
-    const deserialized = TxEnvelopeEip4844.deserialize(serialized)
-    assertType<TxEnvelopeEip4844.TxEnvelopeEip4844>(deserialized)
-    expect(deserialized).toEqual(transaction_sidecars)
-  })
-
   test('signature', async () => {
     const signature = Secp256k1.sign({
       payload: TxEnvelopeEip4844.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TxEnvelopeEip4844.serialize(transaction, {
-      sidecars,
       signature,
     })
     expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
       ...transaction,
       ...signature,
+    })
+  })
+
+  test('sidecars', () => {
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeEip4844.getSignPayload(transaction),
+      privateKey: accounts[0].privateKey,
+    })
+    const sidecars = {
+      blobs,
+      commitments: Blobs.toCommitments(blobs, { kzg }),
+      cellProofs: Blobs.toCellProofs(blobs, { kzg }),
+    }
+    const serialized = TxEnvelopeEip4844.serialize(transaction, {
+      signature,
       sidecars,
     })
+    const deserialized = TxEnvelopeEip4844.deserialize(serialized)
+    expect(deserialized).toEqual({
+      ...transaction,
+      ...signature,
+      sidecars,
+    })
+    expect(deserialized.sidecars?.cellProofs.length).toBe(128 * blobs.length)
+  })
+
+  test('errors: legacy 4-element wrapper rejected', () => {
+    const txBody: readonly (Hex.Hex | Hex.Hex[])[] = [
+      Hex.fromNumber(1),
+      Hex.fromNumber(0),
+      '0x',
+      '0x',
+      '0x',
+      '0x',
+      '0x',
+      '0x',
+      [] as Hex.Hex[],
+      '0x',
+      ['0x0100000000000000000000000000000000000000000000000000000000000000'],
+    ]
+    expect(() =>
+      TxEnvelopeEip4844.deserialize(
+        `0x03${Rlp.fromHex([txBody, [], [], []] as never).slice(2)}`,
+      ),
+    ).toThrowError(TxEnvelopeEip4844.LegacyBlobSidecarWrapperError)
   })
 
   describe('errors', () => {
@@ -225,7 +263,7 @@ describe('deserialize', () => {
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
       Serialized Transaction: "0x03c0"
-      Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+      Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, maxFeePerBlobGas, blobVersionedHashes]
     `)
     })
 
@@ -238,7 +276,7 @@ describe('deserialize', () => {
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
       Serialized Transaction: "0x03c20001"
-      Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+      Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, maxFeePerBlobGas, blobVersionedHashes]
     `)
     })
 
@@ -302,8 +340,8 @@ describe('from', () => {
         ],
         chainId: 1,
         nonce: 0n,
-        r: 0n,
-        s: 1n,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000001',
         yParity: 0,
       })
       expect(envelope).toMatchInlineSnapshot(`
@@ -313,8 +351,8 @@ describe('from', () => {
           ],
           "chainId": 1,
           "nonce": 0n,
-          "r": 0n,
-          "s": 1n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
           "type": "eip4844",
           "yParity": 0,
         }
@@ -336,8 +374,8 @@ describe('from', () => {
       },
       {
         signature: {
-          r: 0n,
-          s: 1n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
           yParity: 0,
         },
       },
@@ -349,8 +387,8 @@ describe('from', () => {
         ],
         "chainId": 1,
         "nonce": 0n,
-        "r": 0n,
-        "s": 1n,
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
         "type": "eip4844",
         "yParity": 0,
       }
@@ -417,12 +455,8 @@ describe('hash', () => {
       value: 1000000000000000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       type: 'eip4844',
-      r: BigInt(
-        '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-      ),
-      s: BigInt(
-        '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-      ),
+      r: '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
+      s: '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
       yParity: 0,
     })
 
@@ -435,8 +469,7 @@ describe('hash', () => {
 
 describe('serialize', () => {
   const blobs = Blobs.from(Hex.fromString('abcd'))
-  const sidecars = Blobs.toSidecars(blobs, { kzg })
-  const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+  const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
   const transaction = TxEnvelopeEip4844.from({
     chainId: 1,
     nonce: 785n,
@@ -498,13 +531,15 @@ describe('serialize', () => {
   })
 
   test('no blobVersionedHashes', () => {
-    // @ts-expect-error
-    const transaction = TxEnvelopeEip4844.from({
-      chainId: 1,
-      nonce: 0n,
-    })
-    const serialized = TxEnvelopeEip4844.serialize(transaction)
-    expect(serialized).toMatchInlineSnapshot(`"0x03cb0180808080808080c080c0"`)
+    expect(() =>
+      // @ts-expect-error
+      TxEnvelopeEip4844.from({
+        chainId: 1,
+        nonce: 0n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Blobs.EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.]`,
+    )
   })
 
   test('options: signature', async () => {
@@ -521,16 +556,57 @@ describe('serialize', () => {
     })
   })
 
+  test('options: sidecars', () => {
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeEip4844.getSignPayload(transaction),
+      privateKey: accounts[0].privateKey,
+    })
+    const sidecars = {
+      blobs,
+      commitments: Blobs.toCommitments(blobs, { kzg }),
+      cellProofs: Blobs.toCellProofs(blobs, { kzg }),
+    }
+    const serialized = TxEnvelopeEip4844.serialize(transaction, {
+      signature,
+      sidecars,
+    })
+
+    // Wrapper RLP must decode into exactly 5 elements: tx_body,
+    // wrapper_version=0x01, blobs, commitments, cell_proofs.
+    const wrapper = Rlp.toHex(Hex.slice(serialized, 1))
+    expect(Array.isArray(wrapper)).toBe(true)
+    expect(wrapper.length).toBe(5)
+    expect(wrapper[1]).toBe('0x01')
+    const wrapperBlobs = wrapper[2] as readonly Hex.Hex[]
+    const wrapperCommitments = wrapper[3] as readonly Hex.Hex[]
+    const wrapperCellProofs = wrapper[4] as readonly Hex.Hex[]
+    expect(wrapperBlobs.length).toBe(blobs.length)
+    expect(wrapperCommitments.length).toBe(blobs.length)
+    expect(wrapperCellProofs.length).toBe(128 * blobs.length)
+
+    expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
+      ...transaction,
+      ...signature,
+      sidecars,
+    })
+
+    // Hash must ignore sidecars (must equal hash of bare envelope).
+    const signed = TxEnvelopeEip4844.from(transaction, { signature })
+    const signedWithSidecars = TxEnvelopeEip4844.from(transaction, {
+      signature,
+    })
+    ;(signedWithSidecars as { sidecars?: typeof sidecars }).sidecars = sidecars
+    expect(TxEnvelopeEip4844.hash(signedWithSidecars)).toBe(
+      TxEnvelopeEip4844.hash(signed),
+    )
+  })
+
   test('options: signature', () => {
     expect(
       TxEnvelopeEip4844.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 1,
         },
       }),
@@ -543,12 +619,8 @@ describe('serialize', () => {
 
         {
           signature: {
-            r: BigInt(
-              '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-            ),
-            s: BigInt(
-              '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-            ),
+            r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+            s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
             yParity: 0,
           },
         },
@@ -556,127 +628,6 @@ describe('serialize', () => {
     ).toEqual(
       '0x03f88d018203118080809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed8026180a060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
     )
-  })
-
-  test('options: sidecars', () => {
-    const serialized = TxEnvelopeEip4844.serialize(transaction, {
-      sidecars,
-    })
-    assertType<TxEnvelopeEip4844.Serialized>(serialized)
-    expect(serialized).toMatchSnapshot()
-    expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
-      ...transaction,
-      sidecars,
-    })
-  })
-
-  test('options: signature', async () => {
-    const signature = Secp256k1.sign({
-      payload: TxEnvelopeEip4844.getSignPayload(transaction),
-      privateKey: accounts[0].privateKey,
-    })
-    const serialized = TxEnvelopeEip4844.serialize(transaction, {
-      signature,
-      sidecars,
-    })
-    expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
-      ...transaction,
-      ...signature,
-      sidecars,
-    })
-  })
-
-  test('behavior: network', async () => {
-    const nonce = await anvilMainnet.request({
-      method: 'eth_getTransactionCount',
-      params: [accounts[0].address, 'pending'],
-    })
-
-    const blobs = Blobs.from('0xdeadbeef')
-    const sidecars = Blobs.toSidecars(blobs, { kzg })
-    const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
-
-    const transaction = TxEnvelopeEip4844.from({
-      blobVersionedHashes,
-      chainId: 1,
-      nonce: BigInt(nonce),
-      gas: 1_000_000n,
-      to: accounts[1].address,
-      value: Value.fromEther('1'),
-      maxFeePerBlobGas: Value.fromGwei('30'),
-      maxFeePerGas: Value.fromGwei('20'),
-      maxPriorityFeePerGas: Value.fromGwei('10'),
-    })
-
-    const signature = Secp256k1.sign({
-      payload: TxEnvelopeEip4844.getSignPayload(transaction),
-      privateKey: accounts[0].privateKey,
-    })
-
-    const serialized_signed = TxEnvelopeEip4844.serialize(transaction, {
-      sidecars,
-      signature,
-    })
-
-    const hash = await anvilMainnet.request({
-      method: 'eth_sendRawTransaction',
-      params: [serialized_signed],
-    })
-
-    expect(hash).toBeDefined()
-
-    await anvilMainnet.request({
-      method: 'anvil_mine',
-      params: ['0x1', '0x0'],
-    })
-
-    const tx = await anvilMainnet.request({
-      method: 'eth_getTransactionByHash',
-      params: [hash],
-    })
-
-    expect(tx).toMatchObject({
-      accessList: [],
-      blobVersionedHashes: [
-        '0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09',
-      ],
-      chainId: '0x1',
-      commitments: [
-        '0xb3d3f2a683d9cd83a03f1727d0fc21970157d5de4ba4afb0f86436ccd117768b2c1340ffe83533dbdfb060e8fb94e8a3',
-      ],
-      from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-      gas: '0xf4240',
-      input: '0x',
-      maxFeePerBlobGas: '0x6fc23ac00',
-      maxFeePerGas: '0x4a817c800',
-      maxPriorityFeePerGas: '0x2540be400',
-      proofs: [
-        '0xb2127959bc7499de4dbcbbb994c7e833683fe4ce21bc37c84c5727c2aa9d89bb7dd2c9b345d6f2c2f7f182ee8f9c4e1e',
-      ],
-      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      transactionIndex: '0x0',
-      type: '0x3',
-      value: '0xde0b6b3a7640000',
-    })
-
-    const receipt = await anvilMainnet.request({
-      method: 'eth_getTransactionReceipt',
-      params: [hash],
-    })
-
-    expect(receipt).toMatchObject({
-      blobGasPrice: '0x1',
-      blobGasUsed: '0x20000',
-      contractAddress: null,
-      cumulativeGasUsed: '0x5208',
-      from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-      gasUsed: '0x5208',
-      logs: [],
-      status: '0x1',
-      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      transactionIndex: '0x0',
-      type: '0x3',
-    })
   })
 })
 
@@ -694,8 +645,8 @@ describe('toRpc', () => {
       maxPriorityFeePerGas: 100000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       value: 1000000000000000000n,
-      r: 1n,
-      s: 2n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
       yParity: 0,
     })
     expect(transaction).toMatchInlineSnapshot(`
@@ -717,6 +668,53 @@ describe('toRpc', () => {
         "yParity": "0x0",
       }
     `)
+  })
+
+  test('numberish inputs', () => {
+    const fromBigint = TxEnvelopeEip4844.toRpc({
+      blobVersionedHashes,
+      chainId: 1,
+      nonce: 0n,
+      maxFeePerGas: 1000n,
+      gas: 21000n,
+      maxPriorityFeePerGas: 100n,
+      maxFeePerBlobGas: 1000n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromNumber = TxEnvelopeEip4844.toRpc({
+      blobVersionedHashes,
+      chainId: 1,
+      nonce: 0,
+      maxFeePerGas: 1000,
+      gas: 21000,
+      maxPriorityFeePerGas: 100,
+      maxFeePerBlobGas: 1000,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromHex = TxEnvelopeEip4844.toRpc({
+      blobVersionedHashes,
+      chainId: '0x1',
+      nonce: '0x0',
+      maxFeePerGas: '0x3e8',
+      gas: '0x5208',
+      maxPriorityFeePerGas: '0x64',
+      maxFeePerBlobGas: '0x3e8',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: '0x3e8',
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: '0x0',
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
   })
 
   test('behavior: nullish', () => {
@@ -761,6 +759,7 @@ describe('validate', () => {
 test('exports', () => {
   expect(Object.keys(TxEnvelopeEip4844)).toMatchInlineSnapshot(`
     [
+      "wrapperVersion",
       "serializedType",
       "type",
       "assert",
@@ -771,6 +770,73 @@ test('exports', () => {
       "serialize",
       "toRpc",
       "validate",
+      "LegacyBlobSidecarWrapperError",
     ]
   `)
+})
+
+describe.skip('sepolia blob (PeerDAS network wrapper)', () => {
+  const rpcUrl = process.env.VITE_SEPOLIA_RPC_URL ?? ''
+  const privateKey = (process.env.VITE_SEPOLIA_PRIVATE_KEY ??
+    '0x') as `0x${string}`
+
+  test('send blob transaction via eth_sendRawTransaction', async () => {
+    const transport = RpcTransport.fromHttp(rpcUrl)
+
+    // 1. Build a small blob from a string payload.
+    const payload = Hex.fromString(
+      `ox PeerDAS sepolia e2e ${new Date().toISOString()}`,
+    )
+    const blobs = Blobs.from(payload)
+
+    // 2. Compute commitments, versioned hashes, and cell proofs.
+    const commitments = Blobs.toCommitments(blobs, { kzg })
+    const blobVersionedHashes = Blobs.commitmentsToVersionedHashes(commitments)
+    const cellProofs = Blobs.toCellProofs(blobs, { kzg })
+
+    const address = Address.fromPublicKey(
+      Secp256k1.getPublicKey({ privateKey }),
+    )
+
+    // 3. Pull nonce from RPC.
+    const nonceHex = await transport.request({
+      method: 'eth_getTransactionCount',
+      params: [address, 'pending'],
+    })
+    const nonce = BigInt(nonceHex)
+
+    // 4. Build the unsigned envelope.
+    const envelope = TxEnvelopeEip4844.from({
+      chainId: 11155111,
+      nonce,
+      to: address,
+      value: 0n,
+      gas: 21000n,
+      maxFeePerGas: Value.fromGwei('50'),
+      maxPriorityFeePerGas: Value.fromGwei('1'),
+      maxFeePerBlobGas: Value.fromGwei('10'),
+      blobVersionedHashes,
+    })
+
+    // 5. Sign and serialize WITH sidecars (5-element wrapper).
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeEip4844.getSignPayload(envelope),
+      privateKey,
+    })
+    const serialized = TxEnvelopeEip4844.serialize(envelope, {
+      signature,
+      sidecars: { blobs, commitments, cellProofs },
+    })
+
+    // 6. Broadcast and wait for inclusion.
+    const receipt = await transport.request({
+      method: 'eth_sendRawTransactionSync',
+      params: [serialized],
+    })
+
+    // 7. Assert success.
+    expect(receipt.status).toBe('0x1')
+    expect(receipt.blobGasUsed).toBeDefined()
+    expect(BigInt(receipt.blobGasUsed!)).toBeGreaterThan(0n)
+  }, 180_000)
 })

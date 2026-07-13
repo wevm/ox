@@ -1,14 +1,14 @@
-name: "Install dependencies"
-description: "Prepare repository and all dependencies"
+name: 'Install dependencies'
+description: 'Prepare repository and all dependencies'
 
 inputs:
   skip-cache:
-    description: "Skip dependency cache restore/save"
+    description: 'Skip dependency cache restore/save'
     required: false
-    default: "false"
+    default: 'false'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Set up foundry
       uses: foundry-rs/foundry-toolchain@8b0419c685ef46cb79ec93fbdc131174afceb730 # v1.6.0

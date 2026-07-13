@@ -1,0 +1,13 @@
+```ts twoslash
+// @noErrors
+import { Ed25519, Hex } from 'ox'
+
+const { privateKey, publicKey } = Ed25519.createKeyPair()
+
+const payload = Hex.fromString('agree to terms')
+const signature = Ed25519.sign({ payload, privateKey })
+// @log: '0x7b4f…c0a1'
+
+const valid = Ed25519.verify({ payload, publicKey, signature })
+// @log: true
+```

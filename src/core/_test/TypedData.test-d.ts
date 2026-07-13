@@ -1,5 +1,5 @@
 import { TypedData } from 'ox'
-import { describe, test } from 'vitest'
+import { describe, test } from 'vp/test'
 
 describe('assert', () => {
   const EIP712Domain = [

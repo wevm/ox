@@ -1,5 +1,6 @@
-import type { RpcSchema } from 'ox'
-import { expectTypeOf, test } from 'vitest'
+import { RpcSchema } from 'ox'
+import { z } from 'ox/zod'
+import { expectTypeOf, test } from 'vp/test'
 
 test('ToViem: converts ox schema to viem schema', () => {
   type OxSchema =
@@ -115,4 +116,101 @@ test('roundtrip: FromViem -> ToViem preserves schema', () => {
 
   expectTypeOf<Roundtrip[0]['Method']>().toEqualTypeOf<'eth_blockNumber'>()
   expectTypeOf<Roundtrip[0]['ReturnType']>().toEqualTypeOf<`0x${string}`>()
+})
+
+test('FromZod: derives Generic from a record of zod schemas', () => {
+  const namespace = {
+    eth_blockNumber: {
+      params: z.optional(z.tuple([])),
+      returns: z.Hex.Hex,
+    },
+    abe_foo: {
+      params: z.tuple([z.number()]),
+      returns: z.string(),
+    },
+  }
+
+  type Schema = RpcSchema.FromZod<typeof namespace>
+
+  type MethodName = RpcSchema.ExtractMethodName<Schema>
+  expectTypeOf<MethodName>().toEqualTypeOf<'eth_blockNumber' | 'abe_foo'>()
+
+  expectTypeOf<
+    RpcSchema.ExtractReturnType<Schema, 'eth_blockNumber'>
+  >().toEqualTypeOf<`0x${string}`>()
+  expectTypeOf<
+    RpcSchema.ExtractReturnType<Schema, 'abe_foo'>
+  >().toEqualTypeOf<string>()
+  expectTypeOf<RpcSchema.ExtractParams<Schema, 'abe_foo'>>().toEqualTypeOf<
+    [number]
+  >()
+})
+
+test('FromZod: accepts an ox/zod namespace', () => {
+  type Schema = RpcSchema.FromZod<typeof z.RpcSchema.Eth>
+
+  expectTypeOf<
+    RpcSchema.ExtractReturnType<Schema, 'eth_blockNumber'>
+  >().toEqualTypeOf<`0x${string}`>()
+})
+
+test('ToGeneric: resolves a zod namespace to a Generic', () => {
+  const namespace = {
+    abe_foo: {
+      params: z.tuple([z.number()]),
+      returns: z.string(),
+    },
+  }
+
+  type Schema = RpcSchema.ToGeneric<typeof namespace>
+
+  expectTypeOf<
+    RpcSchema.ExtractReturnType<Schema, 'abe_foo'>
+  >().toEqualTypeOf<string>()
+  expectTypeOf<RpcSchema.ExtractParams<Schema, 'abe_foo'>>().toEqualTypeOf<
+    [number]
+  >()
+})
+
+test('ToGeneric: passes a Generic through', () => {
+  type Schema = RpcSchema.ToGeneric<{
+    Request: { method: 'abe_bar'; params: [id: string] }
+    ReturnType: string
+  }>
+
+  expectTypeOf<
+    RpcSchema.ExtractReturnType<Schema, 'abe_bar'>
+  >().toEqualTypeOf<string>()
+})
+
+test('ToGeneric: falls back to Default for undefined', () => {
+  expectTypeOf<
+    RpcSchema.ToGeneric<undefined>
+  >().toEqualTypeOf<RpcSchema.Default>()
+})
+
+test('from: no-arg type tag still works', () => {
+  const schema = RpcSchema.from<
+    | RpcSchema.Default
+    | {
+        Request: { method: 'abe_bar'; params: [id: string] }
+        ReturnType: string
+      }
+  >()
+
+  expectTypeOf<
+    RpcSchema.ExtractReturnType<typeof schema, 'abe_bar'>
+  >().toEqualTypeOf<string>()
+})
+
+test('eth_call accepts a 4-tuple with state + block overrides', () => {
+  type Params = RpcSchema.ExtractParams<RpcSchema.Default, 'eth_call'>
+  expectTypeOf<
+    [
+      transaction: { to: `0x${string}` },
+      block: 'latest',
+      stateOverrides: {},
+      blockOverrides: { number: `0x${string}` },
+    ]
+  >().toExtend<Params>()
 })

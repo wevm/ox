@@ -79,21 +79,22 @@ export type MessageDefinition<
  *     name: 'Ether!',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *     verifyingContract:
+ *       '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  *   },
  *   primaryType: 'Foo',
  *   types: {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   message: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * ```
  *
@@ -106,53 +107,75 @@ export function assert<
   const { domain, message, primaryType, types } =
     value as unknown as assert.Value
 
+  const validateValue = (type: string, value: unknown, name: string) => {
+    // Array types: validate length (if fixed) and recurse into each element.
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    if (arrayMatch) {
+      const [, elementType, lengthStr] = arrayMatch
+      if (!Array.isArray(value))
+        throw new InvalidArrayError({ name, type, value })
+      if (lengthStr) {
+        const expected = Number.parseInt(lengthStr, 10)
+        if (value.length !== expected)
+          throw new InvalidArrayLengthError({
+            name,
+            type,
+            expectedLength: expected,
+            givenLength: value.length,
+          })
+      }
+      for (const element of value) validateValue(elementType!, element, name)
+      return
+    }
+
+    const integerMatch = type.match(Solidity.integerRegex)
+    if (
+      integerMatch &&
+      (typeof value === 'number' || typeof value === 'bigint')
+    ) {
+      const [, base, size_] = integerMatch
+      // If number cannot be cast to a sized hex value, it is out of range
+      // and will throw.
+      Hex.fromNumber(value, {
+        signed: base === 'int',
+        size: Number.parseInt(size_ ?? '', 10) / 8,
+      })
+    }
+
+    if (
+      type === 'address' &&
+      typeof value === 'string' &&
+      !Address.validate(value)
+    )
+      throw new Address.InvalidAddressError({
+        address: value,
+        cause: new Address.InvalidInputError(),
+      })
+
+    const bytesMatch = type.match(Solidity.bytesRegex)
+    if (bytesMatch) {
+      const [, size] = bytesMatch
+      if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
+        throw new BytesSizeMismatchError({
+          expectedSize: Number.parseInt(size, 10),
+          givenSize: Hex.size(value as Hex.Hex),
+        })
+    }
+
+    const struct = types[type]
+    if (struct) {
+      validateReference(type)
+      validateData(struct, value as Record<string, unknown>)
+    }
+  }
+
   const validateData = (
     struct: readonly Parameter[],
     data: Record<string, unknown>,
   ) => {
     for (const param of struct) {
       const { name, type } = param
-      const value = data[name]
-
-      const integerMatch = type.match(Solidity.integerRegex)
-      if (
-        integerMatch &&
-        (typeof value === 'number' || typeof value === 'bigint')
-      ) {
-        const [, base, size_] = integerMatch
-        // If number cannot be cast to a sized hex value, it is out of range
-        // and will throw.
-        Hex.fromNumber(value, {
-          signed: base === 'int',
-          size: Number.parseInt(size_ ?? '', 10) / 8,
-        })
-      }
-
-      if (
-        type === 'address' &&
-        typeof value === 'string' &&
-        !Address.validate(value)
-      )
-        throw new Address.InvalidAddressError({
-          address: value,
-          cause: new Address.InvalidInputError(),
-        })
-
-      const bytesMatch = type.match(Solidity.bytesRegex)
-      if (bytesMatch) {
-        const [, size] = bytesMatch
-        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
-          throw new BytesSizeMismatchError({
-            expectedSize: Number.parseInt(size, 10),
-            givenSize: Hex.size(value as Hex.Hex),
-          })
-      }
-
-      const struct = types[type]
-      if (struct) {
-        validateReference(type)
-        validateData(struct, value as Record<string, unknown>)
-      }
+      validateValue(type, data[name], name)
     }
   }
 
@@ -178,6 +201,8 @@ export declare namespace assert {
   type ErrorType =
     | Address.InvalidAddressError
     | BytesSizeMismatchError
+    | InvalidArrayError
+    | InvalidArrayLengthError
     | InvalidPrimaryTypeError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
@@ -195,7 +220,8 @@ export declare namespace assert {
  *   name: 'Ether!',
  *   version: '1',
  *   chainId: 1,
- *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *   verifyingContract:
+ *     '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  * })
  * // @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
  * ```
@@ -220,36 +246,38 @@ export declare namespace domainSeparator {
  * ```ts twoslash
  * import { TypedData, Hash } from 'ox'
  *
- * const data = TypedData.encode({ // [!code focus:33]
+ * const data = TypedData.encode({
+ *   // [!code focus:33]
  *   domain: {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
  *   },
  *   types: {
  *     Person: [
  *       { name: 'name', type: 'string' },
- *       { name: 'wallet', type: 'address' },
+ *       { name: 'wallet', type: 'address' }
  *     ],
  *     Mail: [
  *       { name: 'from', type: 'Person' },
  *       { name: 'to', type: 'Person' },
- *       { name: 'contents', type: 'string' },
- *     ],
+ *       { name: 'contents', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Mail',
  *   message: {
  *     from: {
  *       name: 'Cow',
- *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+ *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
  *     },
  *     to: {
  *       name: 'Bob',
- *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+ *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
  *     },
- *     contents: 'Hello, Bob!',
- *   },
+ *     contents: 'Hello, Bob!'
+ *   }
  * })
  * // @log: '0x19012fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413c52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e'
  * // @log: (0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message))
@@ -280,6 +308,11 @@ export function encode<
     types,
   })
 
+  // Memoize `keccak256(encodeType(t))` per type for the duration of this
+  // encode call. Same `(primaryType, types)` is hashed once instead of once
+  // per nested struct / array element.
+  const typeHashes = new Map<string, Hex.Hex>()
+
   // Typed Data Format: `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`
   const parts: Hex.Hex[] = ['0x19', '0x01']
   if (domain)
@@ -287,6 +320,7 @@ export function encode<
       hashDomain({
         domain,
         types,
+        typeHashes,
       }),
     )
   if (primaryType !== 'EIP712Domain')
@@ -295,6 +329,7 @@ export function encode<
         data: message,
         primaryType,
         types,
+        typeHashes,
       }),
     )
 
@@ -327,10 +362,10 @@ export declare namespace encode {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
- *   primaryType: 'Foo',
+ *   primaryType: 'Foo'
  * })
  * // @log: 'Foo(address address,string name,string foo)'
  * ```
@@ -375,7 +410,8 @@ export declare namespace encodeType {
  *   name: 'Ether!',
  *   version: '1',
  *   chainId: 1,
- *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *   verifyingContract:
+ *     '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  * })
  * // @log: [
  * // @log:   { 'name': 'name', 'type': 'string' },
@@ -418,39 +454,44 @@ export declare namespace extractEip712DomainTypes {
  * ```ts twoslash
  * import { Secp256k1, TypedData, Hash } from 'ox'
  *
- * const payload = TypedData.getSignPayload({ // [!code focus:99]
+ * const payload = TypedData.getSignPayload({
+ *   // [!code focus:99]
  *   domain: {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
  *   },
  *   types: {
  *     Person: [
  *       { name: 'name', type: 'string' },
- *       { name: 'wallet', type: 'address' },
+ *       { name: 'wallet', type: 'address' }
  *     ],
  *     Mail: [
  *       { name: 'from', type: 'Person' },
  *       { name: 'to', type: 'Person' },
- *       { name: 'contents', type: 'string' },
- *     ],
+ *       { name: 'contents', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Mail',
  *   message: {
  *     from: {
  *       name: 'Cow',
- *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+ *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
  *     },
  *     to: {
  *       name: 'Bob',
- *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+ *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
  *     },
- *     contents: 'Hello, Bob!',
- *   },
+ *     contents: 'Hello, Bob!'
+ *   }
  * })
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param value - The typed data to get the sign payload for.
@@ -482,8 +523,9 @@ export declare namespace getSignPayload {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
- *   },
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
+ *   }
  * })
  * // @log: '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
  * ```
@@ -492,7 +534,7 @@ export declare namespace getSignPayload {
  * @returns The hashed domain.
  */
 export function hashDomain(value: hashDomain.Value): Hex.Hex {
-  const { domain, types } = value
+  const { domain, types, typeHashes } = value
   return hashStruct({
     data: domain,
     primaryType: 'EIP712Domain',
@@ -500,6 +542,7 @@ export function hashDomain(value: hashDomain.Value): Hex.Hex {
       ...types,
       EIP712Domain: types?.EIP712Domain || extractEip712DomainTypes(domain),
     },
+    typeHashes,
   })
 }
 
@@ -514,6 +557,8 @@ export declare namespace hashDomain {
           [key: string]: readonly Parameter[] | undefined
         }
       | undefined
+    /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
+    typeHashes?: Map<string, Hex.Hex> | undefined
   }
 
   type ErrorType = hashStruct.ErrorType | Errors.GlobalErrorType
@@ -531,15 +576,15 @@ export declare namespace hashDomain {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Foo',
  *   data: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * // @log: '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
  * ```
@@ -548,11 +593,12 @@ export declare namespace hashDomain {
  * @returns The hashed Typed Data struct.
  */
 export function hashStruct(value: hashStruct.Value): Hex.Hex {
-  const { data, primaryType, types } = value
+  const { data, primaryType, types, typeHashes } = value
   const encoded = encodeData({
     data,
     primaryType,
     types,
+    typeHashes,
   })
   return Hash.keccak256(encoded)
 }
@@ -565,6 +611,8 @@ export declare namespace hashStruct {
     primaryType: string
     /** The types of the Typed Data struct. */
     types: TypedData
+    /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
+    typeHashes?: Map<string, Hex.Hex> | undefined
   }
 
   type ErrorType =
@@ -585,21 +633,22 @@ export declare namespace hashStruct {
  *     name: 'Ether!',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *     verifyingContract:
+ *       '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  *   },
  *   primaryType: 'Foo',
  *   types: {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   message: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * // @log: "{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"
  * ```
@@ -669,21 +718,22 @@ export declare namespace serialize {
  *     name: 'Ether!',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *     verifyingContract:
+ *       '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  *   },
  *   primaryType: 'Foo',
  *   types: {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   message: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * // @log: true
  * ```
@@ -713,7 +763,10 @@ export class BytesSizeMismatchError extends Errors.BaseError {
   constructor({
     expectedSize,
     givenSize,
-  }: { expectedSize: number; givenSize: number }) {
+  }: {
+    expectedSize: number
+    givenSize: number
+  }) {
     super(`Expected bytes${expectedSize}, got bytes${givenSize}.`)
   }
 }
@@ -736,7 +789,10 @@ export class InvalidPrimaryTypeError extends Errors.BaseError {
   constructor({
     primaryType,
     types,
-  }: { primaryType: string; types: TypedData | Record<string, unknown> }) {
+  }: {
+    primaryType: string
+    types: TypedData | Record<string, unknown>
+  }) {
     super(
       `Invalid primary type \`${primaryType}\` must be one of \`${JSON.stringify(Object.keys(types))}\`.`,
       {
@@ -757,15 +813,59 @@ export class InvalidStructTypeError extends Errors.BaseError {
   }
 }
 
+/** Thrown when an array-typed value is not an array. */
+export class InvalidArrayError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidArrayError'
+
+  constructor({
+    name,
+    type,
+    value,
+  }: {
+    name: string
+    type: string
+    value: unknown
+  }) {
+    super(
+      `Value for field \`${name}\` of type \`${type}\` is not an array. Got \`${typeof value}\`.`,
+    )
+  }
+}
+
+/** Thrown when a fixed-length array does not match its declared length. */
+export class InvalidArrayLengthError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidArrayLengthError'
+
+  constructor({
+    name,
+    type,
+    expectedLength,
+    givenLength,
+  }: {
+    name: string
+    type: string
+    expectedLength: number
+    givenLength: number
+  }) {
+    super(
+      `Expected fixed-length array \`${type}\` for field \`${name}\` to have ${expectedLength} elements, got ${givenLength}.`,
+    )
+  }
+}
+
 /** @internal */
 export function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string
   types: TypedData
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
   const { data, primaryType, types } = value
+  const typeHashes = value.typeHashes ?? new Map<string, Hex.Hex>()
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
-  const encodedValues: unknown[] = [hashType({ primaryType, types })]
+  const encodedValues: unknown[] = [
+    hashType({ primaryType, types, typeHashes }),
+  ]
 
   for (const field of types[primaryType] ?? []) {
     const [type, value] = encodeField({
@@ -773,6 +873,7 @@ export function encodeData(value: {
       name: field.name,
       type: field.type,
       value: data[field.name],
+      typeHashes,
     })
     encodedTypes.push(type)
     encodedValues.push(value)
@@ -794,10 +895,15 @@ export declare namespace encodeData {
 export function hashType(value: {
   primaryType: string
   types: TypedData
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
-  const { primaryType, types } = value
+  const { primaryType, types, typeHashes } = value
+  const cached = typeHashes?.get(primaryType)
+  if (cached) return cached
   const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  return Hash.keccak256(encodedHashType)
+  const hash = Hash.keccak256(encodedHashType)
+  typeHashes?.set(primaryType, hash)
+  return hash
 }
 
 /** @internal */
@@ -815,13 +921,16 @@ export function encodeField(properties: {
   name: string
   type: string
   value: any
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): [type: AbiParameters.Parameter, value: Hex.Hex] {
-  let { types, name, type, value } = properties
+  let { types, name, type, value, typeHashes } = properties
 
   if (types[type] !== undefined)
     return [
       { type: 'bytes32' },
-      Hash.keccak256(encodeData({ data: value, primaryType: type, types })),
+      Hash.keccak256(
+        encodeData({ data: value, primaryType: type, types, typeHashes }),
+      ),
     ]
 
   if (type === 'bytes') {
@@ -837,7 +946,22 @@ export function encodeField(properties: {
     ]
 
   if (type.lastIndexOf(']') === type.length - 1) {
-    const parsedType = type.slice(0, type.lastIndexOf('['))
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    const parsedType = arrayMatch
+      ? arrayMatch[1]!
+      : type.slice(0, type.lastIndexOf('['))
+    const fixedLength = arrayMatch?.[2]
+      ? Number.parseInt(arrayMatch[2], 10)
+      : undefined
+    if (!Array.isArray(value))
+      throw new InvalidArrayError({ name, type, value })
+    if (fixedLength !== undefined && value.length !== fixedLength)
+      throw new InvalidArrayLengthError({
+        name,
+        type,
+        expectedLength: fixedLength,
+        givenLength: value.length,
+      })
     const typeValuePairs = (value as [AbiParameters.Parameter, any][]).map(
       (item) =>
         encodeField({
@@ -845,6 +969,7 @@ export function encodeField(properties: {
           type: parsedType,
           types,
           value: item,
+          typeHashes,
         }),
     )
     return [
@@ -867,6 +992,8 @@ export declare namespace encodeField {
     | AbiParameters.encode.ErrorType
     | Hash.keccak256.ErrorType
     | Bytes.fromString.ErrorType
+    | InvalidArrayError
+    | InvalidArrayLengthError
     | Errors.GlobalErrorType
 }
 
@@ -879,8 +1006,9 @@ export function findTypeDependencies(
   results: Set<string> = new Set(),
 ): Set<string> {
   const { primaryType: primaryType_, types } = value
-  const match = primaryType_.match(/^\w*/u)
-  const primaryType = match?.[0]!
+  // `/^\w*/u` always matches, so `match` is never null.
+  const match = primaryType_.match(/^\w*/u)!
+  const primaryType = match[0]!
   if (results.has(primaryType) || types[primaryType] === undefined)
     return results
 

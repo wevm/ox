@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as Base64 from '../../core/Base64.js'
 import * as Bytes from '../../core/Bytes.js'
 import * as Cbor from '../../core/Cbor.js'
@@ -28,8 +28,8 @@ describe('create + verify', () => {
     })
 
     expect(result.credential.id).toBe(credential.id)
-    expect(result.credential.publicKey.x).toBeTypeOf('bigint')
-    expect(result.credential.publicKey.y).toBeTypeOf('bigint')
+    expect(result.credential.publicKey.x).toBeTypeOf('string')
+    expect(result.credential.publicKey.y).toBeTypeOf('string')
     expect(result.counter).toBeTypeOf('number')
     expect(result.userVerified).toBe(true)
   })

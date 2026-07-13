@@ -1,0 +1,21 @@
+```ts twoslash
+// @noErrors
+import { Hash, Hex, WebAuthnP256 } from 'ox'
+
+const credential = await WebAuthnP256.createCredential({ name: 'Ox' })
+
+const challenge = Hash.keccak256(Hex.fromString('login:nonce-1234'))
+
+const { metadata, signature } = await WebAuthnP256.sign({
+  credentialId: credential.id,
+  challenge,
+})
+
+const valid = WebAuthnP256.verify({
+  challenge,
+  metadata,
+  publicKey: credential.publicKey,
+  signature,
+})
+// @log: true
+```

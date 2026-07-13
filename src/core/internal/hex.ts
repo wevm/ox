@@ -3,11 +3,11 @@ import * as Hex from '../Hex.js'
 
 /** @internal */
 export function assertSize(hex: Hex.Hex, size_: number): void {
-  if (Hex.size(hex) > size_)
-    throw new Hex.SizeOverflowError({
-      givenSize: Hex.size(hex),
-      maxSize: size_,
-    })
+  const len = hex.length - 2
+  // Ceil to match `Hex.size` semantics for odd-nibble inputs (e.g. `0x0`).
+  const size = (len + 1) >> 1
+  if (size > size_)
+    throw new Hex.SizeOverflowError({ givenSize: size, maxSize: size_ })
 }
 
 /** @internal */
@@ -19,12 +19,14 @@ export declare namespace assertSize {
 }
 
 /** @internal */
-export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
-  if (typeof start === 'number' && start > 0 && start > Hex.size(value) - 1)
+export function assertStartOffset(value: Hex.Hex, start?: number) {
+  if (typeof start !== 'number' || start <= 0) return
+  const size = (value.length - 2 + 1) >> 1
+  if (start > size - 1)
     throw new Hex.SliceOffsetOutOfBoundsError({
       offset: start,
       position: 'start',
-      size: Hex.size(value),
+      size,
     })
 }
 
@@ -36,22 +38,15 @@ export declare namespace assertStartOffset {
 }
 
 /** @internal */
-export function assertEndOffset(
-  value: Hex.Hex,
-  start?: number | undefined,
-  end?: number | undefined,
-) {
-  if (
-    typeof start === 'number' &&
-    typeof end === 'number' &&
-    Hex.size(value) !== end - start
-  ) {
+export function assertEndOffset(value: Hex.Hex, start?: number, end?: number) {
+  if (typeof start !== 'number' || typeof end !== 'number') return
+  const size = (value.length - 2 + 1) >> 1
+  if (size !== end - start)
     throw new Hex.SliceOffsetOutOfBoundsError({
       offset: end,
       position: 'end',
-      size: Hex.size(value),
+      size,
     })
-  }
 }
 
 export declare namespace assertEndOffset {
@@ -67,15 +62,16 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   if (size === 0) return hex_
 
-  const hex = hex_.replace('0x', '')
-  if (hex.length > size * 2)
+  const hex = hex_.slice(2)
+  const target = size * 2
+  if (hex.length > target)
     throw new Hex.SizeExceedsPaddingSizeError({
-      size: Math.ceil(hex.length / 2),
+      size: (hex.length + 1) >> 1,
       targetSize: size,
       type: 'Hex',
     })
 
-  return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex.Hex
+  return `0x${dir === 'right' ? hex.padEnd(target, '0') : hex.padStart(target, '0')}` as Hex.Hex
 }
 
 /** @internal */
@@ -94,22 +90,18 @@ export function trim(
 ): trim.ReturnType {
   const { dir = 'left' } = options
 
-  let data = value.replace('0x', '')
+  const data = value.slice(2)
 
-  let sliceLength = 0
-  for (let i = 0; i < data.length - 1; i++) {
-    if (data[dir === 'left' ? i : data.length - i - 1]!.toString() === '0')
-      sliceLength++
-    else break
-  }
-  data =
-    dir === 'left'
-      ? data.slice(sliceLength)
-      : data.slice(0, data.length - sliceLength)
+  let start = 0
+  let end = data.length
+  if (dir === 'left')
+    while (start < end && data.charCodeAt(start) === 48 /* '0' */) start++
+  else while (end > start && data.charCodeAt(end - 1) === 48 /* '0' */) end--
 
-  if (data === '0') return '0x'
-  if (dir === 'right' && data.length % 2 === 1) return `0x${data}0`
-  return `0x${data}` as trim.ReturnType
+  if (start >= end) return '0x'
+  if (dir === 'right' && (end - start) % 2 === 1)
+    return `0x${data.slice(start, end)}0` as trim.ReturnType
+  return `0x${data.slice(start, end)}` as trim.ReturnType
 }
 
 /** @internal */

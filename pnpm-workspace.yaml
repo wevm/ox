@@ -1,8 +1,146 @@
+allowBuilds:
+  bun: true
+  cpu-features: true
+  es5-ext: true
+  esbuild: true
+  protobufjs: true
+  simple-git-hooks: true
+  ssh2: true
+  vue-demi: false
+
+autoInstallPeers: false
+
+catalog:
+  '@ark/attest': ^0.16.0
+  '@changesets/changelog-github': ^0.5.0
+  '@changesets/cli': ^2.31.0
+  '@fast-check/vitest': ^0.3.0
+  '@microsoft/api-extractor': ^7.47.7
+  '@microsoft/api-extractor-model': ^7.29.6
+  '@microsoft/tsdoc': ^0.15.0
+  '@microsoft/tsdoc-config': ^0.17.0
+  '@paulmillr/trusted-setups': ^0.2.0
+  '@size-limit/preset-big-lib': ^11.1.4
+  '@types/bun': ^1.1.6
+  '@types/fs-extra': ^11.0.4
+  '@types/node': 24.10.2
+  '@vitest/coverage-v8': ^4.1.8
+  bun: ^1.1.24
+  eslint: ^9.9.0
+  eslint-plugin-jsdoc: ^50.0.1
+  eslint-plugin-tsdoc: ^0.3.0
+  fast-check: ^4.8.0
+  fs-extra: ^11.2.0
+  knip: ^5.27.2
+  micro-eth-signer: ^0.18.1
+  playwright: ^1.58.2
+  prool: ~0.2.3
+  rollup: ^4.61.1
+  sherif: ^0.11.0
+  simple-git-hooks: ^2.11.1
+  size-limit: ^11.1.4
+  testcontainers: ^11.10.0
+  ts-morph: ^24.0.0
+  tsx: ^4.17.0
+  typescript: ^5.5.4
+  viem: ^2.45.0
+  vite: npm:@voidzero-dev/vite-plus-core@0.1.24
+  vite-plus: 0.1.24
+  vitest: npm:@voidzero-dev/vite-plus-test@0.1.24
+  vp: npm:vite-plus@0.1.24
+  zile: ^0.0.29
+  zod: ^4.4.3
+
+linkWorkspacePackages: true
+
 minimumReleaseAge: 1440
+
 minimumReleaseAgeExclude:
+  - '@oxfmt/*'
+  - '@oxlint-tsgolint/*'
+  - '@oxlint/*'
+  - '@voidzero-dev/*'
   - abitype
+  - oxfmt
+  - oxlint
+  - oxlint-tsgolint
+  - vite-plus
+  - vocs
+  - zile
+
+overrides:
+  '@types/node': 24.10.2
+  '@babel/helpers@<7.26.10': '>=7.26.10'
+  '@babel/runtime@<7.26.10': '>=7.26.10'
+  '@microsoft/api-extractor>typescript': ^5.5.4
+  '@protobufjs/utf8@<1.1.1': '>=1.1.1'
+  # Keep within 6.x — `>=6.14.0` (unbounded) resolves to ajv@8.x, which
+  # breaks `@eslint/eslintrc@3.1.0` (uses the ajv@6 API).
+  ajv@<6.14.0: ^6.14.0
+  ajv@>=7.0.0-alpha.0 <8.18.0: '>=8.18.0'
+  basic-ftp@<5.3.1: '>=5.3.1'
+  brace-expansion@<1.1.13: '>=1.1.13'
+  brace-expansion@>=2.0.0 <2.0.3: '>=2.0.3'
+  bun@<1.1.30: '>=1.1.30'
+  cross-spawn@<6.0.6: '>=6.0.6'
+  cross-spawn@>=7.0.0 <7.0.6: '>=7.0.6'
+  esbuild@<=0.24.2: '>=0.24.3'
+  estree-util-value-to-estree@<3.3.3: '>=3.3.3'
+  flatted@<3.4.2: '>=3.4.2'
+  follow-redirects@<=1.15.11: '>=1.15.12'
+  glob@>=10.2.0 <10.5.0: '>=10.5.0'
+  hono@<4.2.7: '>=4.2.7'
+  hono@<4.5.8: '>=4.5.8'
+  hono@<4.6.5: '>=4.6.5'
+  ip-address@<=10.1.0: '>=10.1.1'
+  js-yaml@<3.14.2: 3.14.2
+  js-yaml@4: 4.1.1
+  lodash@<4.17.24: '>=4.17.24'
+  mdast-util-to-hast@>=13.0.0 <13.2.1: '>=13.2.1'
+  micromatch@<4.0.8: '>=4.0.8'
+  minimatch@<3.1.4: '>=3.1.4'
+  minimatch@5: 5.1.8
+  minimatch@9: 9.0.7
+  nanoid@>=4.0.0 <5.0.9: '>=5.0.9'
+  picomatch@<2.3.2: '>=2.3.2'
+  picomatch@>=4.0.0 <4.0.4: '>=4.0.4'
+  protobufjs@<7.5.6: '>=7.5.6'
+  # Pin to last version with npm provenance — 5.1.1 lost trust evidence.
+  reselect: '5.1.0'
+  rollup@>=4.0.0 <4.22.4: '>=4.22.4'
+  serialize-javascript@<7.0.5: '>=7.0.5'
+  smol-toml@<1.6.1: '>=1.6.1'
+  tar@<7.5.11: '>=7.5.11'
+  tar-fs@>=3.0.0 <3.1.1: '>=3.1.1'
+  tmp@<=0.2.3: '>=0.2.4'
+  undici@>=7.0.0 <7.24.0: '>=7.24.0'
+  viem>ox: npm:ox@0.11.1
+  vite: 'catalog:'
+  vitest: 'catalog:'
+  webpack@5: 5.104.1
+  webpack@>=5.0.0-alpha.0 <5.94.0: '>=5.94.0'
+  ws@>=8.0.0 <8.17.1: '>=8.17.1'
+  yaml@>=2.0.0 <2.8.3: '>=2.8.3'
+
 packages:
-  - examples/*
+  - .
   - site
-  - src
+
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: '*'
+    vitest: '*'
+
+provenance: false
+
+strictPeerDependencies: false
+
 trustPolicy: no-downgrade
+
+trustPolicyExclude:
+  - semver@6.3.1
+
+verifyDepsBeforeRun: false

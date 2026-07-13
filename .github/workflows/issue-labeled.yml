@@ -17,4 +17,3 @@ jobs:
         [Minimal reproductions are required](https://antfu.me/posts/why-reproductions-are-required) as they save us a lot of time reproducing your config/environment and issue, and allow us to help you faster.
 
         Once a minimal reproduction is added, a team member will confirm it works, then re-open the issue.
-

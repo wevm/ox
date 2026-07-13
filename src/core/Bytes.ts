@@ -1,12 +1,21 @@
-import { equalBytes } from '@noble/curves/abstract/utils'
+import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
 import * as internal from './internal/bytes.js'
+import {
+  bytesToHex,
+  hexToBytes,
+  type InvalidHexValueError,
+  type InvalidLengthError,
+} from './internal/codec/hex.js'
+import {
+  bigIntToBytes,
+  bytesToBigInt,
+  bytesToSafeNumber,
+} from './internal/codec/int.js'
+import { decoder, encoder } from './internal/codec/utf8.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
-
-const decoder = /*#__PURE__*/ new TextDecoder()
-const encoder = /*#__PURE__*/ new TextEncoder()
 
 /** Root type for a Bytes array. */
 export type Bytes = Uint8Array
@@ -49,7 +58,7 @@ export declare namespace assert {
  * const bytes = Bytes.concat(
  *   Bytes.from([1]),
  *   Bytes.from([69]),
- *   Bytes.from([420, 69]),
+ *   Bytes.from([420, 69])
  * )
  * // @log: Uint8Array [ 1, 69, 420, 69 ]
  * ```
@@ -201,7 +210,9 @@ export declare namespace fromBoolean {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', { size: 32 })
+ * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', {
+ *   size: 32
+ * })
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
@@ -211,29 +222,13 @@ export declare namespace fromBoolean {
  */
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
-
-  let hex = value
-  if (size) {
+  if (typeof size === 'number') {
     internal_hex.assertSize(value, size)
-    hex = Hex.padRight(value, size)
+    // Right-pad the hex string before parsing to preserve odd-nibble
+    // semantics of the previous implementation.
+    return hexToBytes(internal_hex.pad(value, { dir: 'right', size }))
   }
-
-  let hexString = hex.slice(2) as string
-  if (hexString.length % 2) hexString = `0${hexString}`
-
-  const length = hexString.length / 2
-  const bytes = new Uint8Array(length)
-  for (let index = 0, j = 0; index < length; index++) {
-    const nibbleLeft = internal.charCodeToBase16(hexString.charCodeAt(j++))
-    const nibbleRight = internal.charCodeToBase16(hexString.charCodeAt(j++))
-    if (nibbleLeft === undefined || nibbleRight === undefined) {
-      throw new Errors.BaseError(
-        `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
-      )
-    }
-    bytes[index] = (nibbleLeft << 4) | nibbleRight
-  }
-  return bytes
+  return hexToBytes(value)
 }
 
 export declare namespace fromHex {
@@ -244,7 +239,9 @@ export declare namespace fromHex {
 
   type ErrorType =
     | internal_hex.assertSize.ErrorType
-    | Hex.padRight.ErrorType
+    | internal_hex.pad.ErrorType
+    | InvalidHexValueError
+    | InvalidLengthError
     | Errors.GlobalErrorType
 }
 
@@ -273,19 +270,15 @@ export declare namespace fromHex {
  */
 export function fromNumber(
   value: bigint | number,
-  options?: fromNumber.Options | undefined,
+  options?: fromNumber.Options,
 ) {
-  const hex = Hex.fromNumber(value, options)
-  return fromHex(hex)
+  return bigIntToBytes(value, options)
 }
 
 export declare namespace fromNumber {
-  export type Options = Hex.fromNumber.Options
+  export type Options = bigIntToBytes.Options
 
-  export type ErrorType =
-    | Hex.fromNumber.ErrorType
-    | fromHex.ErrorType
-    | Errors.GlobalErrorType
+  export type ErrorType = bigIntToBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -378,10 +371,7 @@ export declare namespace isEqual {
  * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
  * @returns Padded {@link ox#Bytes.Bytes} value.
  */
-export function padLeft(
-  value: Bytes,
-  size?: number | undefined,
-): padLeft.ReturnType {
+export function padLeft(value: Bytes, size?: number): padLeft.ReturnType {
   return internal.pad(value, { dir: 'left', size })
 }
 
@@ -405,10 +395,7 @@ export declare namespace padLeft {
  * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
  * @returns Padded {@link ox#Bytes.Bytes} value.
  */
-export function padRight(
-  value: Bytes,
-  size?: number | undefined,
-): padRight.ReturnType {
+export function padRight(value: Bytes, size?: number): padRight.ReturnType {
   return internal.pad(value, { dir: 'right', size })
 }
 
@@ -468,11 +455,7 @@ export declare namespace size {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * Bytes.slice(
- *   Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]),
- *   1,
- *   4,
- * )
+ * Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
  * // @log: Uint8Array([2, 3, 4])
  * ```
  *
@@ -484,8 +467,8 @@ export declare namespace size {
  */
 export function slice(
   value: Bytes,
-  start?: number | undefined,
-  end?: number | undefined,
+  start?: number,
+  end?: number,
   options: slice.Options = {},
 ): Bytes {
   const { strict } = options
@@ -496,7 +479,7 @@ export function slice(
 }
 
 export declare namespace slice {
-  type Options = {
+  export type Options = {
     /** Asserts that the sliced value is the same size as the given start/end offsets. */
     strict?: boolean | undefined
   }
@@ -523,10 +506,9 @@ export declare namespace slice {
  * @returns Decoded bigint.
  */
 export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
-  const { size } = options
+  const { signed, size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
-  const hex = Hex.fromBytes(bytes, options)
-  return Hex.toBigInt(hex, options)
+  return bytesToBigInt(bytes, signed)
 }
 
 export declare namespace toBigInt {
@@ -538,8 +520,8 @@ export declare namespace toBigInt {
   }
 
   type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | Hex.toBigInt.ErrorType
+    | internal.assertSize.ErrorType
+    | bytesToBigInt.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -592,7 +574,11 @@ export declare namespace toBoolean {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * Bytes.toHex(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -601,7 +587,13 @@ export declare namespace toBoolean {
  * @returns Decoded {@link ox#Hex.Hex} value.
  */
 export function toHex(value: Bytes, options: toHex.Options = {}): Hex.Hex {
-  return Hex.fromBytes(value, options)
+  const hex = bytesToHex(value)
+  const { size } = options
+  if (typeof size === 'number') {
+    internal_hex.assertSize(hex, size)
+    return internal_hex.pad(hex, { dir: 'right', size })
+  }
+  return hex
 }
 
 export declare namespace toHex {
@@ -610,7 +602,11 @@ export declare namespace toHex {
     size?: number | undefined
   }
 
-  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | internal_hex.assertSize.ErrorType
+    | internal_hex.pad.ErrorType
+    | bytesToHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -625,10 +621,9 @@ export declare namespace toHex {
  * ```
  */
 export function toNumber(bytes: Bytes, options: toNumber.Options = {}): number {
-  const { size } = options
+  const { signed, size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
-  const hex = Hex.fromBytes(bytes, options)
-  return Hex.toNumber(hex, options)
+  return bytesToSafeNumber(bytes, signed)
 }
 
 export declare namespace toNumber {
@@ -640,8 +635,8 @@ export declare namespace toNumber {
   }
 
   type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | Hex.toNumber.ErrorType
+    | internal.assertSize.ErrorType
+    | bytesToSafeNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -652,7 +647,11 @@ export declare namespace toNumber {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const data = Bytes.toString(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: 'Hello world'
  * ```
  *
@@ -845,7 +844,11 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
     offset,
     position,
     size,
-  }: { offset: number; position: 'start' | 'end'; size: number }) {
+  }: {
+    offset: number
+    position: 'start' | 'end'
+    size: number
+  }) {
     super(
       `Slice ${
         position === 'start' ? 'starting' : 'ending'

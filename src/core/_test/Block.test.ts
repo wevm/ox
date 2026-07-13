@@ -1,5 +1,5 @@
 import { Block } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('fromRpc', () => {
@@ -83,70 +83,34 @@ describe('fromRpc', () => {
     expect(block).toBeNull()
   })
 
-  test('behavior: nullish values', () => {
-    // @ts-expect-error
+  test('behavior: optional totalDifficulty preserved as undefined', () => {
     const block = Block.fromRpc({
       extraData: '0x',
+      gasLimit: '0x1c9c347',
+      gasUsed: '0x0',
       hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
-      logsBloom:
-        '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+      logsBloom: '0x',
       miner: '0x0000000000000000000000000000000000000000',
       mixHash:
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       nonce: '0x0000000000000000',
+      number: '0xec6fc6',
       parentHash:
         '0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6',
       receiptsRoot:
         '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-      sealFields: [
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000',
-      ],
       sha3Uncles:
         '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+      size: '0x208',
       stateRoot:
         '0x0000000000000000000000000000000000000000000000000000000000000000',
+      timestamp: '0x63198f6f',
       transactions: [],
       transactionsRoot:
         '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
       uncles: [],
-      withdrawals: [],
-      withdrawalsRoot:
-        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
     })
-    expect(block).toMatchInlineSnapshot(`
-    {
-      "baseFeePerGas": undefined,
-      "blobGasUsed": undefined,
-      "difficulty": undefined,
-      "excessBlobGas": undefined,
-      "extraData": "0x",
-      "gasLimit": 0n,
-      "gasUsed": 0n,
-      "hash": "0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd",
-      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-      "miner": "0x0000000000000000000000000000000000000000",
-      "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "nonce": "0x0000000000000000",
-      "number": null,
-      "parentHash": "0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6",
-      "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-      "sealFields": [
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "0x0000000000000000",
-      ],
-      "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-      "size": 0n,
-      "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "timestamp": 0n,
-      "totalDifficulty": 0n,
-      "transactions": [],
-      "transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-      "uncles": [],
-      "withdrawals": [],
-      "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-    }
-  `)
+    expect(block?.totalDifficulty).toBeUndefined()
   })
 
   test('behavior: network', async () => {
@@ -179,7 +143,7 @@ describe('fromRpc', () => {
         "size": 56024n,
         "stateRoot": "0x115fd5eac921e6728825958b2b87da8aaf17edc0085164f11de798f6ed00abbd",
         "timestamp": 1715686979n,
-        "totalDifficulty": 0n,
+        "totalDifficulty": undefined,
         "transactions": [
           "0x5d374a026007c13e901765497b9164d44822902463efdf7b574b10c476ee2ad6",
           "0x2762a7fb7c973e888edc457a3808d3882b5c8fc4f6c43a082d823319b126b91a",
@@ -493,8 +457,8 @@ describe('toRpc', () => {
             maxFeePerGas: 10483885608n,
             maxPriorityFeePerGas: 10483885608n,
             nonce: 5605n,
-            r: 48548894853377191393229998580111995791186108897022932938401107173191692765603n,
-            s: 25081418149156968932126781864579158719689112603561985214464814356390485145801n,
+            r: '0x6b55b361fe0329871a1654ba2c6bf4174aa8cffaa69dc912e36f2b5a722ec9a3',
+            s: '0x37739460ab0ca1c2007b48d1442601ac1bae40957ceaf7212966f857af6fb8c9',
             to: '0xd42b0ecf8a9f8ba9db7b0c989d73cf0bd5f83b66',
             transactionIndex: 12,
             type: 'eip1559',
@@ -582,6 +546,104 @@ describe('toRpc', () => {
         "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
       }
     `)
+  })
+
+  test('numberish inputs', () => {
+    const input = {
+      extraData: '0x',
+      hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+      logsBloom:
+        '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+      miner: '0x0000000000000000000000000000000000000000',
+      mixHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      nonce: '0x0000000000000000',
+      parentBeaconBlockRoot: undefined,
+      parentHash:
+        '0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6',
+      receiptsRoot:
+        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      sealFields: [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000',
+      ],
+      sha3Uncles:
+        '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+      stateRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      transactions: [],
+      transactionsRoot:
+        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      uncles: [],
+      withdrawalsRoot:
+        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+    } satisfies Partial<Parameters<typeof Block.toRpc>[0]>
+    const fromBigint = Block.toRpc({
+      ...input,
+      baseFeePerGas: 1n,
+      blobGasUsed: 2n,
+      difficulty: 3n,
+      excessBlobGas: 4n,
+      gasLimit: 5n,
+      gasUsed: 6n,
+      number: 7n,
+      size: 8n,
+      timestamp: 9n,
+      totalDifficulty: 10n,
+      withdrawals: [
+        {
+          address: '0xb9d7934878b5fb9610b3fe8a5e441e8fad7e293f',
+          amount: 11n,
+          index: 12,
+          validatorIndex: 13,
+        },
+      ],
+    })
+    const fromNumber = Block.toRpc({
+      ...input,
+      baseFeePerGas: 1,
+      blobGasUsed: 2,
+      difficulty: 3,
+      excessBlobGas: 4,
+      gasLimit: 5,
+      gasUsed: 6,
+      number: 7,
+      size: 8,
+      timestamp: 9,
+      totalDifficulty: 10,
+      withdrawals: [
+        {
+          address: '0xb9d7934878b5fb9610b3fe8a5e441e8fad7e293f',
+          amount: 11,
+          index: 12,
+          validatorIndex: 13,
+        },
+      ],
+    })
+    const fromHex = Block.toRpc({
+      ...input,
+      baseFeePerGas: '0x1',
+      blobGasUsed: '0x2',
+      difficulty: '0x3',
+      excessBlobGas: '0x4',
+      gasLimit: '0x5',
+      gasUsed: '0x6',
+      number: '0x7',
+      size: '0x8',
+      timestamp: '0x9',
+      totalDifficulty: '0xa',
+      withdrawals: [
+        {
+          address: '0xb9d7934878b5fb9610b3fe8a5e441e8fad7e293f',
+          amount: '0xb',
+          index: '0xc',
+          validatorIndex: '0xd',
+        },
+      ],
+    })
+
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
   })
 
   test('behavior: nullish values', () => {

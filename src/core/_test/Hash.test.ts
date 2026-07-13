@@ -1,5 +1,5 @@
 import { Hash } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('hmac256', () => {
   test('default', () => {
@@ -63,9 +63,8 @@ describe('hmac256', () => {
   })
 
   test('as: Bytes', () => {
-    expect(
-      Hash.hmac256('0x6b6579', '0x48656c6c6f', { as: 'Bytes' }),
-    ).toMatchInlineSnapshot(`
+    expect(Hash.hmac256('0x6b6579', '0x48656c6c6f', { as: 'Bytes' }))
+      .toMatchInlineSnapshot(`
       Uint8Array [
         199,
         11,

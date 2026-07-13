@@ -1,96 +1,91 @@
 import { attest } from '@ark/attest'
 import { Hex, Signature } from 'ox'
-import { test } from 'vitest'
+import { test } from 'vp/test'
+
+const r = '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
+const s = '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
 
 test('default', () => {
   const signature = Signature.from({
-    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    r,
+    s,
     yParity: 1,
   })
 
   attest(signature).type.toString.snap(`{
-  readonly r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n
-  readonly s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n
+  readonly r: "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf"
+  readonly s: "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"
   readonly yParity: 1
 }`)
 })
 
 test('behavior: unrecovered', () => {
   const signature = Signature.from({
-    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    r,
+    s,
   })
 
   attest(signature).type.toString.snap(`{
-  readonly r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n
-  readonly s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n
+  readonly r: "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf"
+  readonly s: "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"
 }`)
 })
 
 test('behavior: legacy', () => {
   const signature = Signature.from({
-    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    r,
+    s,
     v: 27,
   })
 
   attest(signature).type.toString.snap(
-    '{ r: bigint; s: bigint; yParity: number }',
+    '{ r: `0x${string}`; s: `0x${string}`; yParity: number }',
   )
 })
 
 test('behavior: rpc', () => {
   const signature = Signature.from({
-    r: Hex.fromNumber(
-      49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    ),
-    s: Hex.fromNumber(
-      33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-    ),
+    r,
+    s,
     yParity: Hex.fromNumber(1),
   })
 
   attest(signature).type.toString.snap(
-    '{ r: bigint; s: bigint; yParity: number }',
+    '{ r: `0x${string}`; s: `0x${string}`; yParity: number }',
   )
 })
 
 test('behavior: rpc legacy', () => {
   const signature = Signature.from({
-    r: Hex.fromNumber(
-      49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    ),
-    s: Hex.fromNumber(
-      33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-    ),
+    r,
+    s,
     v: Hex.fromNumber(27),
   })
 
   attest(signature).type.toString.snap(
-    '{ r: bigint; s: bigint; yParity: number }',
+    '{ r: `0x${string}`; s: `0x${string}`; yParity: number }',
   )
 })
 
 test('behavior: widened', () => {
   const signature = Signature.from({
-    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    r,
+    s,
     yParity: 1,
   } as Signature.Signature)
 
   attest(signature).type.toString.snap(
-    '{ r: bigint; s: bigint; yParity: number }',
+    '{ r: `0x${string}`; s: `0x${string}`; yParity: number }',
   )
 })
 
 test('behavior: widened, unrecovered', () => {
   const signature = Signature.from({
-    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    r,
+    s,
   } as Signature.Signature<false>)
 
   attest(signature).type.toString.snap(
-    '{ r: bigint; s: bigint; yParity?: undefined }',
+    '{ r: `0x${string}`; s: `0x${string}`; yParity?: undefined }',
   )
 })

@@ -1,6 +1,6 @@
 import { AbiEvent, AbiParameters } from 'ox'
 import { ReceivePolicyReceipt } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vite-plus/test'
 
 const token = '0x20c0000000000000000000000000000000000001'
 const originator = '0x0000000000000000000000000000000000000aaa'
@@ -76,9 +76,9 @@ describe('decode', () => {
         "kind": "transfer",
         "memo": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "originator": "0x0000000000000000000000000000000000000aaa",
-        "recipient": "0x0000000000000000000000000000000000000bbb",
+        "recipient": "0x0000000000000000000000000000000000000bBB",
         "recoveryAuthority": "0x0000000000000000000000000000000000000000",
-        "token": "0x20c0000000000000000000000000000000000001",
+        "token": "0x20C0000000000000000000000000000000000001",
         "version": 1,
       }
     `)

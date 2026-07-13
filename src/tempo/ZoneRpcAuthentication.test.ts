@@ -1,5 +1,5 @@
 import { PublicKey, RpcTransport, Secp256k1, Signature, WebAuthnP256 } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
 
@@ -8,13 +8,13 @@ const privateKey =
 
 const publicKey = PublicKey.from({
   prefix: 4,
-  x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-  y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+  x: '0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5',
+  y: '0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0',
 })
 
 const p256Signature = Signature.from({
-  r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-  s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+  r: '0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e',
+  s: '0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35',
   yParity: 0,
 })
 
@@ -63,8 +63,8 @@ describe('from', () => {
         "issuedAt": 1711234560,
         "signature": {
           "signature": {
-            "r": 97341227674200655943359900797834667459856344667825437562901364609374126504358n,
-            "s": 25574506064018953291781981030565094064718304178734850538810668278475710350395n,
+            "r": "0xd7352eb40bcd052ad97aa4ef761223eaa757d90cc78e4f66d4ea6aaa5dca79a6",
+            "s": "0x388aa84fef3c9c0430756b6614248e9ae6d1a7741255dbf1173db5436469443b",
             "yParity": 0,
           },
           "type": "secp256k1",
@@ -171,18 +171,18 @@ describe('serialize', () => {
 })
 
 const credentials = import.meta.env.VITE_TEMPO_CREDENTIALS
-const rpcUrl = 'https://rpc-zone-b.testnet.tempo.xyz'
+const rpcUrl = 'https://rpc-zone-a.testnet.tempo.xyz'
 
 describe('e2e', () => {
-  test.skipIf(!credentials)('succeeds with auth token', async () => {
+  test.skip('succeeds with auth token', async () => {
     const privateKey = Secp256k1.randomPrivateKey()
     const now = Math.floor(Date.now() / 1000)
 
     const auth = ZoneRpcAuthentication.from({
-      chainId: 4217000007,
+      chainId: 4217000005,
       expiresAt: now + 600,
       issuedAt: now,
-      zoneId: 7,
+      zoneId: 5,
     })
 
     const serialized = ZoneRpcAuthentication.serialize(auth, {

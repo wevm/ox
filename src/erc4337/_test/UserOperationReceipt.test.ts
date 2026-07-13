@@ -1,5 +1,5 @@
 import { UserOperationReceipt } from 'ox/erc4337'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromRpc', () => {
   test('default', () => {

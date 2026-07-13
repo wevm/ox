@@ -22,7 +22,10 @@ const bigIntSuffix = '#__bigint'
  * ```ts twoslash
  * import { Json } from 'ox'
  *
- * const json = Json.canonicalize({ z: [3, { y: 1, x: 2 }], a: 'hello' })
+ * const json = Json.canonicalize({
+ *   z: [3, { y: 1, x: 2 }],
+ *   a: 'hello'
+ * })
  * // @log: '{"a":"hello","z":[3,{"x":2,"y":1}]}'
  * ```
  *
@@ -30,6 +33,15 @@ const bigIntSuffix = '#__bigint'
  * @returns The canonical JSON string.
  */
 export function canonicalize(value: unknown): string {
+  const result = canonicalizeInner(value)
+  if (result === undefined)
+    throw new TypeError(
+      `Cannot canonicalize value of type \`${typeof value}\`.`,
+    )
+  return result
+}
+
+function canonicalizeInner(value: unknown): string | undefined {
   if (value === null || typeof value === 'boolean' || typeof value === 'string')
     return JSON.stringify(value)
   if (typeof value === 'number') {
@@ -39,20 +51,26 @@ export function canonicalize(value: unknown): string {
   }
   if (typeof value === 'bigint')
     throw new TypeError('Cannot canonicalize bigint')
-  if (Array.isArray(value))
-    return `[${value.map((item) => canonicalize(item)).join(',')}]`
+  if (Array.isArray(value)) {
+    const items = value.map((item) => {
+      const v = canonicalizeInner(item)
+      // Per JSON.stringify semantics, unsupported array slots become `null`.
+      return v === undefined ? 'null' : v
+    })
+    return `[${items.join(',')}]`
+  }
   if (typeof value === 'object') {
     const entries = Object.keys(value as Record<string, unknown>)
       .sort()
       .reduce<string[]>((acc, key) => {
         const v = (value as Record<string, unknown>)[key]
-        if (v !== undefined)
-          acc.push(`${JSON.stringify(key)}:${canonicalize(v)}`)
+        const inner = canonicalizeInner(v)
+        if (inner !== undefined) acc.push(`${JSON.stringify(key)}:${inner}`)
         return acc
       }, [])
     return `{${entries.join(',')}}`
   }
-  return undefined as never
+  return undefined
 }
 
 export declare namespace canonicalize {
@@ -66,7 +84,9 @@ export declare namespace canonicalize {
  * ```ts twoslash
  * import { Json } from 'ox'
  *
- * const json = Json.parse('{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}')
+ * const json = Json.parse(
+ *   '{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}'
+ * )
  * // @log: {
  * // @log:   foo: 'bar',
  * // @log:   baz: 69420694206942069420694206942069420694206942069420n
@@ -79,8 +99,15 @@ export declare namespace canonicalize {
  */
 export function parse(
   string: string,
-  reviver?: ((this: any, key: string, value: any) => any) | undefined,
+  reviver?: (this: any, key: string, value: any) => any,
 ) {
+  // Fast path: when the bigint sentinel is absent, skip the reviver wrapper
+  // entirely. `JSON.parse` is dramatically faster without a reviver because
+  // engines avoid materializing intermediate values for every key.
+  if (!string.includes(bigIntSuffix)) {
+    if (typeof reviver === 'function') return JSON.parse(string, reviver)
+    return JSON.parse(string)
+  }
   return JSON.parse(string, (key, value_) => {
     const value = value_
     if (typeof value === 'string' && value.endsWith(bigIntSuffix))
@@ -102,7 +129,7 @@ export declare namespace parse {
  *
  * const json = Json.stringify({
  *   foo: 'bar',
- *   baz: 69420694206942069420694206942069420694206942069420n,
+ *   baz: 69420694206942069420694206942069420694206942069420n
  * })
  * // @log: '{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}'
  * ```
@@ -114,8 +141,8 @@ export declare namespace parse {
  */
 export function stringify(
   value: any,
-  replacer?: ((this: any, key: string, value: any) => any) | null | undefined,
-  space?: string | number | undefined,
+  replacer?: ((this: any, key: string, value: any) => any) | null,
+  space?: string | number,
 ) {
   return JSON.stringify(
     value,

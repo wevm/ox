@@ -3,6 +3,8 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as formatAbiParameters from './internal/human-readable/formatAbiParameters.js'
+import * as parseAbiParameters from './internal/human-readable/parseAbiParameters.js'
 import * as internal from './internal/abiParameters.js'
 import * as Cursor from './internal/cursor.js'
 import * as Solidity from './Solidity.js'
@@ -12,6 +14,16 @@ export type AbiParameters = readonly abitype.AbiParameter[]
 
 /** A parameter on an {@link ox#AbiParameters.AbiParameters}. */
 export type Parameter = abitype.AbiParameter
+
+export {
+  InvalidAbiParametersError,
+  InvalidAbiTypeParameterError,
+  InvalidFunctionModifierError,
+  InvalidModifierError,
+  InvalidParameterError,
+  SolidityProtectedKeywordError,
+} from './internal/human-readable/errors.js'
+export { InvalidParenthesisError } from './internal/human-readable/errors.js'
 
 /** A packed ABI type. */
 export type PackedAbiType =
@@ -31,7 +43,7 @@ export type PackedAbiType =
  *
  * const data = AbiParameters.decode(
  *   AbiParameters.from(['string', 'uint', 'bool']),
- *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000'
  * )
  * // @log: ['wagmi', 420n, true]
  * ```
@@ -48,9 +60,9 @@ export type PackedAbiType =
  *   [
  *     { name: 'x', type: 'string' },
  *     { name: 'y', type: 'uint' },
- *     { name: 'z', type: 'bool' },
+ *     { name: 'z', type: 'bool' }
  *   ],
- *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000'
  * )
  * // @log: ['wagmi', 420n, true]
  * ```
@@ -69,7 +81,7 @@ export function decode<
   options?: decode.Options<as>,
 ): decode.ReturnType<parameters, as>
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   parameters: AbiParameters,
   data: Bytes.Bytes | Hex.Hex,
@@ -78,7 +90,7 @@ export function decode(
     checksumAddress?: boolean | undefined
   } = {},
 ): readonly unknown[] | Record<string, unknown> {
-  const { as = 'Array', checksumAddress = false } = options
+  const { as = 'Array', checksumAddress = true } = options
 
   const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
   const cursor = Cursor.create(bytes)
@@ -96,16 +108,26 @@ export function decode(
   const values: any = as === 'Array' ? [] : {}
   for (let i = 0; i < parameters.length; ++i) {
     const param = parameters[i] as Parameter
-    // Zero-width types (e.g. `uint256[0]`, empty tuples) at the end of the
-    // data consume no bytes, so the cursor may already be exhausted.
-    if (consumed < bytes.length) cursor.setPosition(consumed)
-    const [data, consumed_] = internal.decodeParameter(cursor, param, {
-      checksumAddress,
-      staticPosition: 0,
-    })
-    consumed += consumed_
-    if (as === 'Array') values.push(data)
-    else values[param.name ?? i] = data
+    try {
+      // Zero-width types (e.g. `uint256[0]`, empty tuples) at the end of the
+      // data consume no bytes, so the cursor may already be exhausted.
+      if (consumed < bytes.length) cursor.setPosition(consumed)
+      const [data_, consumed_] = internal.decodeParameter(cursor, param, {
+        checksumAddress,
+        staticPosition: 0,
+      })
+      consumed += consumed_
+      if (as === 'Array') values.push(data_)
+      else values[param.name ?? i] = data_
+    } catch (err) {
+      if (err instanceof Cursor.PositionOutOfBoundsError)
+        throw new DataSizeTooSmallError({
+          data: typeof data === 'string' ? data : Hex.fromBytes(data),
+          parameters: parameters as readonly Parameter[],
+          size: Bytes.size(bytes),
+        })
+      throw err
+    }
   }
   return values
 }
@@ -121,7 +143,7 @@ export declare namespace decode {
     /**
      * Whether decoded addresses should be checksummed.
      *
-     * @default false
+     * @default true
      */
     checksumAddress?: boolean | undefined
   }
@@ -154,7 +176,7 @@ export declare namespace decode {
  *
  * const data = AbiParameters.encode(
  *   AbiParameters.from(['string', 'uint', 'bool']),
- *   ['wagmi', 420n, true],
+ *   ['wagmi', 420n, true]
  * )
  * ```
  *
@@ -170,9 +192,9 @@ export declare namespace decode {
  *   [
  *     { type: 'string', name: 'name' },
  *     { type: 'uint', name: 'age' },
- *     { type: 'bool', name: 'isOwner' },
+ *     { type: 'bool', name: 'isOwner' }
  *   ],
- *   ['wagmi', 420n, true],
+ *   ['wagmi', 420n, true]
  * )
  * ```
  *
@@ -233,7 +255,10 @@ export declare namespace encode {
  *
  * const encoded = AbiParameters.encodePacked(
  *   ['address', 'string'],
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world'],
+ *   [
+ *     '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *     'hello world'
+ *   ]
  * )
  * // @log: '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
  * ```
@@ -274,7 +299,7 @@ export namespace encodePacked {
       : unknown
   }
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
+  // eslint-disable-next-line jsdoc-js/require-jsdoc
   export function encode<const packedAbiType extends PackedAbiType | unknown>(
     type: packedAbiType,
     value: Values<[packedAbiType]>[0],
@@ -316,7 +341,16 @@ export namespace encodePacked {
 
     const arrayMatch = (type as string).match(Solidity.arrayRegex)
     if (arrayMatch && Array.isArray(value)) {
-      const [_type, childType] = arrayMatch
+      const [_type, childType, lengthMatch] = arrayMatch
+      if (lengthMatch) {
+        const declaredLength = Number.parseInt(lengthMatch, 10)
+        if (value.length !== declaredLength)
+          throw new ArrayLengthMismatchError({
+            expectedLength: declaredLength,
+            givenLength: value.length,
+            type: type as string,
+          })
+      }
       const data: Hex.Hex[] = []
       for (let i = 0; i < value.length; i++) {
         data.push(encode(childType, value[i], true))
@@ -339,18 +373,16 @@ export namespace encodePacked {
  * const formatted = AbiParameters.format([
  *   {
  *     name: 'spender',
- *     type: 'address',
+ *     type: 'address'
  *   },
  *   {
  *     name: 'amount',
- *     type: 'uint256',
- *   },
+ *     type: 'uint256'
+ *   }
  * ])
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param parameters - The ABI Parameters to format.
@@ -368,11 +400,18 @@ export function format<
         Parameter | abitype.AbiEventParameter,
         ...(readonly (Parameter | abitype.AbiEventParameter)[]),
       ],
-): abitype.FormatAbiParameters<parameters> {
-  return abitype.formatAbiParameters(parameters)
+): format.ReturnType<parameters> {
+  return formatAbiParameters.formatAbiParameters(parameters)
 }
 
 export declare namespace format {
+  type ReturnType<
+    parameters extends readonly [
+      Parameter | abitype.AbiEventParameter,
+      ...(readonly (Parameter | abitype.AbiEventParameter)[]),
+    ] = readonly [Parameter, ...(readonly Parameter[])],
+  > = formatAbiParameters.FormatAbiParameters<parameters>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -388,23 +427,32 @@ export declare namespace format {
  * const parameters = AbiParameters.from([
  *   {
  *     name: 'spender',
- *     type: 'address',
+ *     type: 'address'
  *   },
  *   {
  *     name: 'amount',
- *     type: 'uint256',
- *   },
+ *     type: 'uint256'
+ *   }
  * ])
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  * @example
@@ -415,17 +463,28 @@ export declare namespace format {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * const parameters = AbiParameters.from('address spender, uint256 amount')
+ * const parameters = AbiParameters.from(
+ *   'address spender, uint256 amount'
+ * )
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  * @example
@@ -436,23 +495,27 @@ export declare namespace format {
  *
  * const parameters = AbiParameters.from([
  *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'Foo foo, address bar',
+ *   'Foo foo, address bar'
  * ])
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  *
@@ -466,9 +529,9 @@ export function from<
   parameters: parameters | AbiParameters | string | readonly string[],
 ): from.ReturnType<parameters> {
   if (Array.isArray(parameters) && typeof parameters[0] === 'string')
-    return abitype.parseAbiParameters(parameters) as never
+    return parseAbiParameters.parseAbiParameters(parameters) as never
   if (typeof parameters === 'string')
-    return abitype.parseAbiParameters(parameters) as never
+    return parseAbiParameters.parseAbiParameters(parameters) as never
   return parameters as never
 }
 
@@ -476,9 +539,9 @@ export declare namespace from {
   type ReturnType<
     parameters extends AbiParameters | string | readonly string[],
   > = parameters extends string
-    ? abitype.ParseAbiParameters<parameters>
+    ? parseAbiParameters.ParseAbiParameters<parameters>
     : parameters extends readonly string[]
-      ? abitype.ParseAbiParameters<parameters>
+      ? parseAbiParameters.ParseAbiParameters<parameters>
       : parameters
 
   type ErrorType = Errors.GlobalErrorType
@@ -505,7 +568,10 @@ export declare namespace from {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * AbiParameters.decode([{ type: 'uint256' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * AbiParameters.decode(
+ *   [{ type: 'uint256' }],
+ *   '0x00000000000000000000000000000000000000000000000000000000000010f'
+ * )
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
@@ -515,10 +581,14 @@ export class DataSizeTooSmallError extends Errors.BaseError {
     data,
     parameters,
     size,
-  }: { data: Hex.Hex; parameters: readonly Parameter[]; size: number }) {
+  }: {
+    data: Hex.Hex
+    parameters: readonly Parameter[]
+    size: number
+  }) {
     super(`Data size of ${size} bytes is too small for given parameters.`, {
       metaMessages: [
-        `Params: (${abitype.formatAbiParameters(parameters as readonly [Parameter])})`,
+        `Params: (${formatAbiParameters.formatAbiParameters(parameters as readonly [Parameter])})`,
         `Data:   ${data} (${size} bytes)`,
       ],
     })
@@ -546,7 +616,10 @@ export class DataSizeTooSmallError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * AbiParameters.decode([{ type: 'uint256' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * AbiParameters.decode(
+ *   [{ type: 'uint256' }],
+ *   '0x00000000000000000000000000000000000000000000000000000000000010f'
+ * )
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
@@ -566,7 +639,9 @@ export class ZeroDataError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from('uint256[3]'), [[69n, 420n]])
+ * AbiParameters.encode(AbiParameters.from('uint256[3]'), [
+ *   [69n, 420n]
+ * ])
  * //                                               ↑ expected: 3  ↑ ❌ length: 2
  * // @error: AbiParameters.ArrayLengthMismatchError: ABI encoding array length mismatch
  * // @error: for type `uint256[3]`. Expected: `3`. Given: `2`.
@@ -579,7 +654,9 @@ export class ZeroDataError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [[69n, 420n, 69n]])
+ * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [
+ *   [69n, 420n, 69n]
+ * ])
  * //                                                         ↑ ✅ length: 3
  * ```
  */
@@ -589,7 +666,11 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
     expectedLength,
     givenLength,
     type,
-  }: { expectedLength: number; givenLength: number; type: string }) {
+  }: {
+    expectedLength: number
+    givenLength: number
+    type: string
+  }) {
     super(
       `Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`,
     )
@@ -605,7 +686,9 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from('bytes8'), [['0xdeadbeefdeadbeefdeadbeef']])
+ * AbiParameters.encode(AbiParameters.from('bytes8'), [
+ *   ['0xdeadbeefdeadbeefdeadbeef']
+ * ])
  * //                                            ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
  * // @error: BytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
  * // @error: (bytes12) does not match expected size (bytes8).
@@ -618,7 +701,9 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['bytes8']), ['0xdeadbeefdeadbeef'])
+ * AbiParameters.encode(AbiParameters.from(['bytes8']), [
+ *   '0xdeadbeefdeadbeef'
+ * ])
  * //                                                       ↑ ✅ size: 8 bytes
  * ```
  */
@@ -627,7 +712,10 @@ export class BytesSizeMismatchError extends Errors.BaseError {
   constructor({
     expectedSize,
     value,
-  }: { expectedSize: number; value: Hex.Hex }) {
+  }: {
+    expectedSize: number
+    value: Hex.Hex
+  }) {
     super(
       `Size of bytes "${value}" (bytes${Hex.size(
         value,
@@ -645,7 +733,10 @@ export class BytesSizeMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['string', 'uint256']), ['hello'])
+ * AbiParameters.encode(
+ *   AbiParameters.from(['string', 'uint256']),
+ *   ['hello']
+ * )
  * // @error: LengthMismatchError: ABI encoding params/values length mismatch.
  * // @error: Expected length (params): 2
  * // @error: Given length (values): 1
@@ -664,7 +755,10 @@ export class LengthMismatchError extends Errors.BaseError {
   constructor({
     expectedLength,
     givenLength,
-  }: { expectedLength: number; givenLength: number }) {
+  }: {
+    expectedLength: number
+    givenLength: number
+  }) {
     super(
       [
         'ABI encoding parameters/values length mismatch.',
@@ -684,7 +778,10 @@ export class LengthMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [69])
+ * AbiParameters.encode(
+ *   AbiParameters.from(['uint256[3]']),
+ *   [69]
+ * )
  * ```
  *
  * ### Solution
@@ -705,7 +802,10 @@ export class InvalidArrayError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * AbiParameters.decode([{ type: 'lol' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * AbiParameters.decode(
+ *   [{ type: 'lol' }],
+ *   '0x00000000000000000000000000000000000000000000000000000000000010f'
+ * )
  * //                             ↑ ❌ invalid type
  * // @error: AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.
  * ```

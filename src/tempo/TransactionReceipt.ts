@@ -13,7 +13,7 @@ import * as ox_TransactionReceipt from '../core/TransactionReceipt.js'
  */
 export type TransactionReceipt<
   status = ox_TransactionReceipt.Status,
-  type = ox_TransactionReceipt.Type,
+  type = Type,
   bigintType = bigint,
   numberType = number,
 > = Compute<
@@ -32,7 +32,7 @@ export type TransactionReceipt<
 
 export type Rpc = TransactionReceipt<
   ox_TransactionReceipt.RpcStatus,
-  ox_TransactionReceipt.RpcType,
+  RpcType,
   Hex.Hex,
   Hex.Hex
 >
@@ -87,7 +87,7 @@ export const toRpcType = {
  *   transactionHash:
  *     '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
  *   transactionIndex: '0x2',
- *   type: '0x2',
+ *   type: '0x2'
  * })
  * // @log: {
  * // @log:   blobGasPrice: 270441n,
@@ -118,9 +118,14 @@ export const toRpcType = {
 export function fromRpc<const receipt extends Rpc | null>(
   receipt: receipt | Rpc | null,
 ): receipt extends Rpc ? TransactionReceipt : null {
-  return ox_TransactionReceipt.fromRpc(
+  const decoded = ox_TransactionReceipt.fromRpc(
     receipt as ox_TransactionReceipt.Rpc,
-  ) as never
+  )
+  if (!decoded) return null as never
+  return {
+    ...decoded,
+    type: (fromRpcType as any)[receipt!.type] ?? receipt!.type,
+  } as never
 }
 
 export declare namespace fromRpc {
@@ -156,7 +161,7 @@ export declare namespace fromRpc {
  *   transactionHash:
  *     '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
  *   transactionIndex: 2,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * // @log: {
  * // @log:   blobGasPrice: "0x042069",
@@ -184,7 +189,7 @@ export declare namespace fromRpc {
  * @param receipt - The receipt to convert.
  * @returns An RPC receipt.
  */
-export function toRpc(receipt: TransactionReceipt): Rpc {
+export function toRpc(receipt: toRpc.Input): Rpc {
   const rpc = ox_TransactionReceipt.toRpc(
     receipt as ox_TransactionReceipt.TransactionReceipt,
   ) as Rpc
@@ -192,9 +197,18 @@ export function toRpc(receipt: TransactionReceipt): Rpc {
     ...rpc,
     feePayer: receipt.feePayer,
     feeToken: receipt.feeToken,
+    type: (toRpcType as any)[receipt.type] ?? receipt.type,
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TransactionReceipt.(toRpc:function)}. */
+  export type Input = TransactionReceipt<
+    ox_TransactionReceipt.Status,
+    Type,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   export type ErrorType = ox_TransactionReceipt.toRpc.ErrorType
 }

@@ -1,5 +1,5 @@
 import { Bytes, Hex, Rlp } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 test('exports', () => {
   expect(Object.keys(Rlp)).toMatchInlineSnapshot(`
@@ -13,6 +13,9 @@ test('exports', () => {
       "from",
       "fromBytes",
       "fromHex",
+      "DepthLimitExceededError",
+      "ListBoundaryExceededError",
+      "TrailingBytesError",
     ]
   `)
 })
@@ -334,6 +337,104 @@ describe('Rlp.to', () => {
 
     It must be an even length.]
   `,
+    )
+  })
+})
+
+describe('decode depth limit', () => {
+  // Builds an RLP-encoded value of `depth` nested empty lists without recursing
+  // (so we can exceed the decoder's depth limit without overflowing the encoder).
+  const nestedEmptyLists = (depth: number) => {
+    let bytes = Uint8Array.from([0xc0])
+    for (let i = 0; i < depth; i++) {
+      const length = bytes.length
+      const prefix =
+        length <= 55
+          ? [0xc0 + length]
+          : (() => {
+              const lengthBytes: number[] = []
+              let n = length
+              while (n > 0) {
+                lengthBytes.unshift(n & 0xff)
+                n >>= 8
+              }
+              return [0xf7 + lengthBytes.length, ...lengthBytes]
+            })()
+      const next = new Uint8Array(prefix.length + bytes.length)
+      next.set(prefix, 0)
+      next.set(bytes, prefix.length)
+      bytes = next
+    }
+    return bytes
+  }
+
+  test('decodes up to the depth limit', () => {
+    expect(() => Rlp.toBytes(nestedEmptyLists(1_023))).not.toThrow()
+  })
+
+  test('throws when the depth limit is exceeded', () => {
+    expect(() =>
+      Rlp.toBytes(nestedEmptyLists(2_000)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.DepthLimitExceededError: RLP depth limit of \`1024\` exceeded.]`,
+    )
+  })
+})
+
+describe('trailing bytes', () => {
+  // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
+  test('after string item', () => {
+    expect(() => Rlp.toHex('0x80deadbeef')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`4\` trailing bytes remain.]`,
+    )
+  })
+
+  test('after list item', () => {
+    expect(() => Rlp.toHex('0xc2010203')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
+    )
+  })
+
+  test('after empty list', () => {
+    expect(() => Rlp.toHex('0xc000')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
+    )
+  })
+
+  test('bytes input', () => {
+    expect(() =>
+      Rlp.toHex(Uint8Array.from([0x80, 0xde, 0xad])),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`2\` trailing bytes remain.]`,
+    )
+  })
+
+  test('valid single items still decode', () => {
+    expect(Rlp.toHex('0x80')).toEqual('0x')
+    expect(Rlp.toHex('0xc0')).toEqual([])
+    expect(Rlp.toHex('0xc1c0')).toEqual([[]])
+    expect(Rlp.toHex('0x83646f67')).toEqual('0x646f67')
+  })
+})
+
+describe('list boundary', () => {
+  // Items must consume exactly the declared list length.
+  test('item extends beyond list', () => {
+    // `0xc1` declares 1 payload byte; `0x82aabb` consumes 3.
+    expect(() => Rlp.toHex('0xc182aabb')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.ListBoundaryExceededError: RLP list items consumed \`3\` bytes but the list declared a length of \`1\`.]`,
+    )
+  })
+
+  test('item extends beyond nested list', () => {
+    expect(() => Rlp.toHex('0xc3c182aabb')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.ListBoundaryExceededError: RLP list items consumed \`3\` bytes but the list declared a length of \`1\`.]`,
+    )
+  })
+
+  test('item extends beyond list with trailing bytes', () => {
+    expect(() => Rlp.toHex('0xc182aabbff')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.ListBoundaryExceededError: RLP list items consumed \`3\` bytes but the list declared a length of \`1\`.]`,
     )
   })
 })

@@ -1,5 +1,5 @@
 import { Bytes, type Hex, Rlp } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 import type { RecursiveArray } from '../internal/types.js'
 
 describe('Rlp.to', () => {

@@ -2,19 +2,31 @@ import type * as Address from './Address.js'
 import type * as Block from './Block.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import type { Compute } from './internal/types.js'
+import type { Compute, OneOf } from './internal/types.js'
 
 /** A Filter as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml). */
-export type Filter<bigintType = bigint> = Compute<{
-  /** Address to filter for logs. */
-  address?: Address.Address | readonly Address.Address[] | null | undefined
-  /** Block number or tag to filter logs from. */
-  fromBlock?: Block.Number<bigintType> | Block.Tag | undefined
-  /** Block number or tag to filter logs to. */
-  toBlock?: Block.Number<bigintType> | Block.Tag | undefined
-  /** Topics to filter for logs. */
-  topics?: Topics | undefined
-}>
+export type Filter<bigintType = bigint> = Compute<
+  {
+    /** Address to filter for logs. */
+    address?: Address.Address | readonly Address.Address[] | null | undefined
+    /** Topics to filter for logs. */
+    topics?: Topics | undefined
+  } & OneOf<
+    | {
+        /** Block number or tag to filter logs from. */
+        fromBlock?: Block.Number<bigintType> | Block.Tag | undefined
+        /** Block number or tag to filter logs to. */
+        toBlock?: Block.Number<bigintType> | Block.Tag | undefined
+      }
+    | {
+        /**
+         * Hash of the block to filter logs from. Mutually exclusive with
+         * `fromBlock`/`toBlock`. Added by EIP-234.
+         */
+        blockHash: Block.Hash
+      }
+  >
+>
 
 /** RPC representation of a {@link ox#Filter.Filter}. */
 export type Rpc = Filter<Hex.Hex>
@@ -45,8 +57,8 @@ export type Topic = Hex.Hex | readonly Hex.Hex[] | null
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     null,
- *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
- *   ],
+ *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1'
+ *   ]
  * })
  * // @log: {
  * // @log:   address: '0xd3cda913deb6f67967b99d671a681250403edf27',
@@ -91,12 +103,14 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { AbiEvent, Filter } from 'ox'
  *
- * const transfer = AbiEvent.from('event Transfer(address indexed, address indexed, uint256)')
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed, address indexed, uint256)'
+ * )
  * const { topics } = AbiEvent.encode(transfer)
  *
  * const filter = Filter.toRpc({
  *   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *   topics,
+ *   topics
  * })
  * // @log: {
  * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
@@ -109,28 +123,32 @@ export declare namespace fromRpc {
  * @param filter - The filter to convert.
  * @returns An RPC filter.
  */
-export function toRpc(filter: Filter): Rpc {
-  const { address, topics, fromBlock, toBlock } = filter
+export function toRpc(filter: toRpc.Input): Rpc {
+  const { address, topics, fromBlock, toBlock, blockHash } = filter
   return {
-    ...(address && { address }),
-    ...(topics && { topics }),
+    ...(typeof address !== 'undefined' ? { address } : {}),
+    ...(typeof topics !== 'undefined' ? { topics } : {}),
+    ...(typeof blockHash !== 'undefined' ? { blockHash } : {}),
     ...(typeof fromBlock !== 'undefined'
       ? {
           fromBlock:
-            typeof fromBlock === 'bigint'
-              ? Hex.fromNumber(fromBlock)
-              : fromBlock,
+            typeof fromBlock === 'string'
+              ? fromBlock
+              : Hex.fromNumber(fromBlock),
         }
       : {}),
     ...(typeof toBlock !== 'undefined'
       ? {
           toBlock:
-            typeof toBlock === 'bigint' ? Hex.fromNumber(toBlock) : toBlock,
+            typeof toBlock === 'string' ? toBlock : Hex.fromNumber(toBlock),
         }
       : {}),
-  }
+  } as unknown as Rpc
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Filter.(toRpc:function)}. */
+  type Input = Filter<Hex.Hex | bigint | number>
+
   type ErrorType = Errors.GlobalErrorType
 }

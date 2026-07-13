@@ -1,6 +1,6 @@
 import { attest } from '@ark/attest'
 import { Ed25519 } from 'ox'
-import { expectTypeOf, test } from 'vitest'
+import { expectTypeOf, test } from 'vp/test'
 
 test('createKeyPair', () => {
   // Default behavior (Hex)
@@ -150,6 +150,6 @@ test('verify', () => {
 
 test('noble export', () => {
   expectTypeOf(Ed25519.noble).toMatchTypeOf<
-    typeof import('@noble/curves/ed25519').ed25519
+    typeof import('@noble/curves/ed25519.js').ed25519
   >()
 })

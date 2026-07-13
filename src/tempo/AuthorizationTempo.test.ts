@@ -1,5 +1,5 @@
 import { P256, Secp256k1 } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -41,8 +41,8 @@ describe('from', () => {
         nonce: 40n,
         signature: {
           signature: {
-            r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-            s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+            r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+            s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
             yParity: 0,
           },
           type: 'secp256k1' as const,
@@ -54,8 +54,8 @@ describe('from', () => {
         readonly nonce: 40n
         readonly signature: {
           readonly signature: {
-            readonly r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n
-            readonly s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n
+            readonly r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
+            readonly s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
             readonly yParity: 0
           }
           readonly type: 'secp256k1'
@@ -66,35 +66,22 @@ describe('from', () => {
       >()
       expect(authorization).toMatchInlineSnapshot(
         `
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 1,
-        "nonce": 40n,
-        "signature": {
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1,
+          "nonce": 40n,
           "signature": {
-            "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-            "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+              "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
-        },
-      }
-    `,
+        }
+      `,
       )
     }
-  })
-
-  test('tempo address input', () => {
-    const tempoAddr = 'tempox0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
-
-    const authorization = AuthorizationTempo.from({
-      address: tempoAddr,
-      chainId: 1,
-      nonce: 40n,
-    })
-    expect(authorization.address).toBe(
-      '0xBE95c3f554e9Fc85ec51bE69a3D807A0D55BCF2C',
-    )
   })
 
   test('options: signature (secp256k1)', () => {
@@ -125,13 +112,41 @@ describe('from', () => {
         "chainId": 1,
         "nonce": 40n,
         "signature": {
-          "r": 74666311849961653398815470296948700361392062371901161364182304079113687952627n,
-          "s": 24912990662134805731506157958890440652926649106845286943280690489391727501383n,
-          "yParity": 1,
+          "signature": {
+            "r": "0xa513a287a156a99f2be4023466d401589e33add75c057e5fd376d11ed8946cf3",
+            "s": "0x371440c5f5c845ae5260bffccf9e28307b9204216faeaa0e27a6608bcdd7e047",
+            "yParity": 1,
+          },
+          "type": "secp256k1",
         },
       }
     `,
     )
+  })
+
+  test('options: serialized signature is normalized into an envelope', () => {
+    const authorization = AuthorizationTempo.from({
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      chainId: 1,
+      nonce: 40n,
+    })
+    const signature = Secp256k1.sign({
+      payload: AuthorizationTempo.getSignPayload(authorization),
+      privateKey: testPrivateKey,
+    })
+    const serialized = SignatureEnvelope.serialize(
+      SignatureEnvelope.from(signature),
+    )
+
+    const authorization_signed = AuthorizationTempo.from(authorization, {
+      signature: serialized,
+    })
+
+    // The signature should be a normalized envelope object, not a raw string.
+    expect(typeof authorization_signed.signature).toBe('object')
+    expect(authorization_signed.signature).toMatchObject({
+      type: 'secp256k1',
+    })
   })
 
   test('options: signature (secp256k1)', () => {
@@ -161,20 +176,20 @@ describe('from', () => {
     >()
     expect(authorization_signed).toMatchInlineSnapshot(
       `
-    {
-      "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-      "chainId": 1,
-      "nonce": 40n,
-      "signature": {
+      {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1,
+        "nonce": 40n,
         "signature": {
-          "r": 74666311849961653398815470296948700361392062371901161364182304079113687952627n,
-          "s": 24912990662134805731506157958890440652926649106845286943280690489391727501383n,
-          "yParity": 1,
+          "signature": {
+            "r": "0xa513a287a156a99f2be4023466d401589e33add75c057e5fd376d11ed8946cf3",
+            "s": "0x371440c5f5c845ae5260bffccf9e28307b9204216faeaa0e27a6608bcdd7e047",
+            "yParity": 1,
+          },
+          "type": "secp256k1",
         },
-        "type": "secp256k1",
-      },
-    }
-  `,
+      }
+    `,
     )
   })
 
@@ -223,8 +238,15 @@ describe('from', () => {
         clientDataJSON:
           '{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}',
       },
-      publicKey: { prefix: 4, x: 1n, y: 2n },
-      signature: { r: 3n, s: 4n },
+      publicKey: {
+        prefix: 4,
+        x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000003',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000004',
+      },
       type: 'webAuthn',
     })
 
@@ -260,20 +282,20 @@ describe('from', () => {
       ).toExtend<AuthorizationTempo.AuthorizationTempo>()
       expect(authorization).toMatchInlineSnapshot(
         `
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 1,
-        "nonce": 1n,
-        "signature": {
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1,
+          "nonce": 1n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
-        },
-      }
-    `,
+        }
+      `,
       )
     }
   })
@@ -294,20 +316,20 @@ describe('fromRpc', () => {
         },
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "address": "0x0000000000000000000000000000000000000000",
-      "chainId": 1,
-      "nonce": 1n,
-      "signature": {
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 1,
+        "nonce": 1n,
         "signature": {
-          "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-          "yParity": 0,
+          "signature": {
+            "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+            "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+            "yParity": 0,
+          },
+          "type": "secp256k1",
         },
-        "type": "secp256k1",
-      },
-    }
-  `)
+      }
+    `)
   })
 
   test('p256', () => {
@@ -382,35 +404,35 @@ describe('fromRpcList', () => {
         },
       ]),
     ).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "signature": {
+      [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
         },
-      },
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "signature": {
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
         },
-      },
-    ]
-  `)
+      ]
+    `)
   })
 
   test('p256', () => {
@@ -448,45 +470,45 @@ describe('fromRpcList', () => {
         },
       ]),
     ).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "signature": {
-          "prehash": true,
-          "publicKey": {
-            "prefix": 4,
-            "x": 1n,
-            "y": 2n,
-          },
+      [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            "prehash": true,
+            "publicKey": {
+              "prefix": 4,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            },
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+            },
+            "type": "p256",
           },
-          "type": "p256",
         },
-      },
-      {
-        "address": "0x0000000000000000000000000000000000000001",
-        "chainId": 2,
-        "nonce": 2n,
-        "signature": {
-          "prehash": false,
-          "publicKey": {
-            "prefix": 4,
-            "x": 3n,
-            "y": 4n,
-          },
+        {
+          "address": "0x0000000000000000000000000000000000000001",
+          "chainId": 2,
+          "nonce": 2n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            "prehash": false,
+            "publicKey": {
+              "prefix": 4,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000004",
+            },
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+            },
+            "type": "p256",
           },
-          "type": "p256",
         },
-      },
-    ]
-  `)
+      ]
+    `)
   })
 
   test('webAuthn', () => {
@@ -526,51 +548,51 @@ describe('fromRpcList', () => {
         },
       ]),
     ).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "signature": {
-          "metadata": {
-            "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
-            "clientDataJSON": "{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}",
-          },
-          "publicKey": {
-            "prefix": 4,
-            "x": 1n,
-            "y": 2n,
-          },
+      [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            "metadata": {
+              "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+              "clientDataJSON": "{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}",
+            },
+            "publicKey": {
+              "prefix": 4,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            },
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+            },
+            "type": "webAuthn",
           },
-          "type": "webAuthn",
         },
-      },
-      {
-        "address": "0x0000000000000000000000000000000000000001",
-        "chainId": 2,
-        "nonce": 2n,
-        "signature": {
-          "metadata": {
-            "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
-            "clientDataJSON": "{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}",
-          },
-          "publicKey": {
-            "prefix": 4,
-            "x": 3n,
-            "y": 4n,
-          },
+        {
+          "address": "0x0000000000000000000000000000000000000001",
+          "chainId": 2,
+          "nonce": 2n,
           "signature": {
-            "r": 1n,
-            "s": 2n,
+            "metadata": {
+              "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+              "clientDataJSON": "{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}",
+            },
+            "publicKey": {
+              "prefix": 4,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000004",
+            },
+            "signature": {
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            },
+            "type": "webAuthn",
           },
-          "type": "webAuthn",
         },
-      },
-    ]
-  `)
+      ]
+    `)
   })
 
   test('mixed signature types', () => {
@@ -620,61 +642,61 @@ describe('fromRpcList', () => {
         },
       ]),
     ).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "signature": {
+      [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
         },
-      },
-      {
-        "address": "0x0000000000000000000000000000000000000001",
-        "chainId": 2,
-        "nonce": 2n,
-        "signature": {
-          "prehash": true,
-          "publicKey": {
-            "prefix": 4,
-            "x": 3n,
-            "y": 4n,
-          },
+        {
+          "address": "0x0000000000000000000000000000000000000001",
+          "chainId": 2,
+          "nonce": 2n,
           "signature": {
-            "r": 1n,
-            "s": 2n,
+            "prehash": true,
+            "publicKey": {
+              "prefix": 4,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000004",
+            },
+            "signature": {
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            },
+            "type": "p256",
           },
-          "type": "p256",
         },
-      },
-      {
-        "address": "0x0000000000000000000000000000000000000002",
-        "chainId": 3,
-        "nonce": 3n,
-        "signature": {
-          "metadata": {
-            "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
-            "clientDataJSON": "{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}",
-          },
-          "publicKey": {
-            "prefix": 4,
-            "x": 5n,
-            "y": 6n,
-          },
+        {
+          "address": "0x0000000000000000000000000000000000000002",
+          "chainId": 3,
+          "nonce": 3n,
           "signature": {
-            "r": 3n,
-            "s": 4n,
+            "metadata": {
+              "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+              "clientDataJSON": "{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}",
+            },
+            "publicKey": {
+              "prefix": 4,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000005",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000006",
+            },
+            "signature": {
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000004",
+            },
+            "type": "webAuthn",
           },
-          "type": "webAuthn",
         },
-      },
-    ]
-  `)
+      ]
+    `)
   })
 })
 
@@ -713,7 +735,11 @@ describe('fromTuple', () => {
 
   test('behavior: signature (secp256k1)', () => {
     const signatureEnvelope = SignatureEnvelope.from({
-      signature: { r: 1n, s: 2n, yParity: 0 },
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        yParity: 0,
+      },
       type: 'secp256k1',
     })
     const serialized = SignatureEnvelope.serialize(signatureEnvelope)
@@ -726,27 +752,34 @@ describe('fromTuple', () => {
     ] as const satisfies AuthorizationTempo.Tuple
     const authorization = AuthorizationTempo.fromTuple(tuple)
     expect(authorization).toMatchInlineSnapshot(`
-    {
-      "address": "0x0000000000000000000000000000000000000000",
-      "chainId": 1,
-      "nonce": 3n,
-      "signature": {
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 1,
+        "nonce": 3n,
         "signature": {
-          "r": 1n,
-          "s": 2n,
-          "yParity": 0,
+          "signature": {
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "yParity": 0,
+          },
+          "type": "secp256k1",
         },
-        "type": "secp256k1",
-      },
-    }
-  `)
+      }
+    `)
   })
 
   test('behavior: signature (p256)', () => {
     const signatureEnvelope = SignatureEnvelope.from({
       prehash: true,
-      publicKey: { prefix: 4, x: 1n, y: 2n },
-      signature: { r: 3n, s: 4n },
+      publicKey: {
+        prefix: 4,
+        x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000003',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000004',
+      },
       type: 'p256',
     })
     const serialized = SignatureEnvelope.serialize(signatureEnvelope)
@@ -787,11 +820,19 @@ describe('fromTupleList', () => {
 
   test('behavior: signature', () => {
     const signatureEnvelope1 = SignatureEnvelope.from({
-      signature: { r: 1n, s: 2n, yParity: 0 },
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        yParity: 0,
+      },
       type: 'secp256k1',
     })
     const signatureEnvelope2 = SignatureEnvelope.from({
-      signature: { r: 4n, s: 5n, yParity: 0 },
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000004',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        yParity: 0,
+      },
       type: 'secp256k1',
     })
 
@@ -810,35 +851,35 @@ describe('fromTupleList', () => {
       ],
     ])
     expect(authorization).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 5,
-        "nonce": 42n,
-        "signature": {
+      [
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 5,
+          "nonce": 42n,
           "signature": {
-            "r": 1n,
-            "s": 2n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
         },
-      },
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 2,
-        "nonce": 43n,
-        "signature": {
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 2,
+          "nonce": 43n,
           "signature": {
-            "r": 4n,
-            "s": 5n,
-            "yParity": 0,
+            "signature": {
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000004",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000005",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
           },
-          "type": "secp256k1",
         },
-      },
-    ]
-  `)
+      ]
+    `)
   })
 })
 
@@ -912,8 +953,8 @@ describe('toRpc', () => {
         nonce: 1n,
         signature: {
           signature: {
-            r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+            s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
             yParity: 0,
           },
           type: 'secp256k1',
@@ -941,10 +982,14 @@ describe('toRpc', () => {
       nonce: 1n,
       signature: {
         prehash: true,
-        publicKey: { prefix: 4, x: 1n, y: 2n },
+        publicKey: {
+          prefix: 4,
+          x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        },
         signature: {
-          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         },
         type: 'p256',
       },
@@ -962,10 +1007,14 @@ describe('toRpc', () => {
           authenticatorData: '0x1234',
           clientDataJSON: '0x5678',
         },
-        publicKey: { prefix: 4, x: 1n, y: 2n },
+        publicKey: {
+          prefix: 4,
+          x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        },
         signature: {
-          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         },
         type: 'webAuthn',
       },
@@ -984,8 +1033,8 @@ describe('toRpcList', () => {
           nonce: 1n,
           signature: {
             signature: {
-              r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-              s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+              r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+              s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
               yParity: 0,
             },
             type: 'secp256k1',
@@ -1030,7 +1079,11 @@ describe('toTuple', () => {
 
     {
       const signatureEnvelope: SignatureEnvelope.Secp256k1 = {
-        signature: { r: 1n, s: 2n, yParity: 0 },
+        signature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          yParity: 0,
+        },
         type: 'secp256k1',
       }
       const authorization = AuthorizationTempo.from({
@@ -1108,11 +1161,19 @@ describe('toTupleList', () => {
 
     {
       const signatureEnvelope1 = SignatureEnvelope.from({
-        signature: { r: 1n, s: 2n, yParity: 0 },
+        signature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          yParity: 0,
+        },
         type: 'secp256k1',
       })
       const signatureEnvelope2 = SignatureEnvelope.from({
-        signature: { r: 4n, s: 5n, yParity: 0 },
+        signature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000004',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000005',
+          yParity: 0,
+        },
         type: 'secp256k1',
       })
       const authorization_3 = AuthorizationTempo.from({
@@ -1236,10 +1297,14 @@ describe('signature type interoperability', () => {
         clientDataJSON:
           '{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}',
       },
-      publicKey: { prefix: 4, x: 1n, y: 2n },
+      publicKey: {
+        prefix: 4,
+        x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
       signature: {
-        r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
       },
       type: 'webAuthn',
     })
@@ -1268,8 +1333,15 @@ describe('signature type interoperability', () => {
   test('tuple serialization preserves signature type', () => {
     const signatureEnvelope = SignatureEnvelope.from({
       prehash: true,
-      publicKey: { prefix: 4, x: 1n, y: 2n },
-      signature: { r: 3n, s: 4n },
+      publicKey: {
+        prefix: 4,
+        x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000003',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000004',
+      },
       type: 'p256',
     })
 

@@ -7,6 +7,7 @@ import * as Hex from './Hex.js'
 import type * as internal from './internal/abiFunction.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 import type * as AbiParameters_internal from './internal/abiParameters.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `function` type. */
@@ -24,19 +25,11 @@ export type AbiFunction = abitype.AbiFunction & {
  *
  * const abi = Abi.from([
  *   'function foo(string)',
- *   'function bar(uint256)',
+ *   'function bar(uint256)'
  * ])
  *
  * type Foo = AbiFunction.FromAbi<typeof abi, 'foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -53,13 +46,11 @@ export type FromAbi<
  *
  * const abi = Abi.from([
  *   'function foo(string)',
- *   'function bar(uint256)',
+ *   'function bar(uint256)'
  * ])
  *
  * type names = AbiFunction.Name<typeof abi>
  * //   ^?
- *
- *
  * ```
  */
 export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
@@ -67,8 +58,8 @@ export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
 
 export type ExtractNames<
   abi extends Abi.Abi,
-  abiStateMutability extends
-    abitype.AbiStateMutability = abitype.AbiStateMutability,
+  abiStateMutability extends abitype.AbiStateMutability =
+    abitype.AbiStateMutability,
 > = abitype.ExtractAbiFunctionNames<abi, abiStateMutability>
 
 /**
@@ -78,16 +69,18 @@ export type ExtractNames<
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const approve = AbiFunction.from('function approve(address, uint256)')
- *
- * const data = AbiFunction.encodeData(
- *   approve,
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * const approve = AbiFunction.from(
+ *   'function approve(address, uint256)'
  * )
+ *
+ * const data = AbiFunction.encodeData(approve, [
+ *   '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *   69420n
+ * ])
  * // '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
  *
  * const input = AbiFunction.decodeData(approve, data) // [!code focus]
- * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
  * ```
  *
  * @example
@@ -107,18 +100,42 @@ export type ExtractNames<
  *   'approve', // [!code focus]
  *   data
  * )
- * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
+ * ```
+ *
+ * @example
+ * ### ABI selector shorthand
+ *
+ * You can also specify an entire ABI object and calldata. The ABI Function is extracted from the 4-byte selector:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ * const data = '0x095ea7b3...
+ *
+ * const input = AbiFunction.decodeData(
+ *   abi, // [!code focus]
+ *   data // [!code focus]
+ * )
+ * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
  * ```
  *
  * @param abiFunction - The ABI Item to decode.
  * @param data - The data to decode.
+ * @param options - Decoding options.
  */
+export function decodeData<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  data: Hex.Hex,
+  options?: decodeData.Options,
+): decodeData.ReturnType<decodeData.ExtractForSelector<abi>>
 export function decodeData<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
     abi,
@@ -131,27 +148,52 @@ export function decodeData<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   data: Hex.Hex,
+  options?: decodeData.Options,
 ): decodeData.ReturnType<abiFunction>
 export function decodeData<const abiItem extends AbiFunction>(
   abiFunction: abiItem | AbiFunction,
   data: Hex.Hex,
+  options?: decodeData.Options,
 ): decodeData.ReturnType<abiItem>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decodeData(
   ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: Hex.Hex | string, data: Hex.Hex]
-    | [abiFunction: AbiFunction, data: Hex.Hex]
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        data: Hex.Hex,
+        options?: decodeData.Options | undefined,
+      ]
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        data: Hex.Hex,
+        options?: decodeData.Options | undefined,
+      ]
+    | [
+        abiFunction: AbiFunction,
+        data: Hex.Hex,
+        options?: decodeData.Options | undefined,
+      ]
 ) {
-  const [abiFunction, data] = (() => {
+  const [abiFunction, data, options] = (() => {
     if (Array.isArray(parameters[0])) {
-      const [abi, name, data] = parameters as [
+      if (typeof parameters[2] !== 'string') {
+        const [abi, data, options] = parameters as [
+          Abi.Abi | readonly unknown[],
+          Hex.Hex,
+          decodeData.Options | undefined,
+        ]
+        return [fromAbi(abi, data), data, options]
+      }
+      const [abi, name, data, options] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
         Hex.Hex,
+        decodeData.Options | undefined,
       ]
-      return [fromAbi(abi, name), data]
+      return [fromAbi(abi, name), data, options]
     }
-    return parameters as [AbiFunction, Hex.Hex]
+    return parameters as [AbiFunction, Hex.Hex, decodeData.Options | undefined]
   })()
 
   const { overloads } = abiFunction
@@ -163,25 +205,50 @@ export function decodeData(
     ? fromAbi([abiFunction, ...overloads], data as never)
     : abiFunction
 
+  if (item.inputs.length > 0 && Hex.size(data) <= 4)
+    throw new AbiParameters.DataSizeTooSmallError({
+      data,
+      parameters: item.inputs as never,
+      size: Math.max(0, Hex.size(data) - 4),
+    })
   if (Hex.size(data) <= 4) return undefined
-  return AbiParameters.decode(item.inputs, Hex.slice(data, 4))
+  return AbiParameters.decode(item.inputs, Hex.slice(data, 4), options)
 }
 
 export declare namespace decodeData {
-  type ReturnType<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
-    abiFunction,
-    AbiFunction
-  > extends true
-    ? abiFunction['inputs'] extends readonly []
-      ? undefined
-      :
-          | AbiParameters_internal.ToPrimitiveTypes<abiFunction['inputs']>
-          | (abiFunction['overloads'] extends readonly AbiFunction[]
-              ? AbiParameters_internal.ToPrimitiveTypes<
-                  abiFunction['overloads'][number]['inputs']
-                >
-              : never)
-    : unknown
+  type Options = {
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
+  }
+
+  type ExtractForSelector<abi extends Abi.Abi | readonly unknown[]> =
+    AbiItem.fromAbi.ReturnType<
+      abi,
+      Name<abi>,
+      undefined,
+      AbiFunction
+    > extends infer abiFunction
+      ? abiFunction extends AbiFunction
+        ? abiFunction
+        : AbiFunction
+      : AbiFunction
+
+  type ReturnType<abiFunction extends AbiFunction = AbiFunction> =
+    IsNarrowable<abiFunction, AbiFunction> extends true
+      ? abiFunction['inputs'] extends readonly []
+        ? undefined
+        :
+            | AbiParameters_internal.ToPrimitiveTypes<abiFunction['inputs']>
+            | (abiFunction['overloads'] extends readonly AbiFunction[]
+                ? AbiParameters_internal.ToPrimitiveTypes<
+                    abiFunction['overloads'][number]['inputs']
+                  >
+                : never)
+      : unknown
 
   type ErrorType =
     | fromAbi.ErrorType
@@ -206,9 +273,12 @@ export declare namespace decodeData {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * const data =
+ *   '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
- * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
+ * const totalSupply = AbiFunction.from(
+ *   'function totalSupply() returns (uint256)'
+ * )
  *
  * const output = AbiFunction.decodeResult(totalSupply, data)
  * // @log: 42n
@@ -268,17 +338,16 @@ export declare namespace decodeData {
  *     type: 'function',
  *     inputs: [{ name: 'account', type: 'address' }],
  *     outputs: [{ name: 'balance', type: 'uint256' }],
- *     stateMutability: 'view',
- *   },
+ *     stateMutability: 'view'
+ *   }
  *   // ...
  * ])
  * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input.
- * const data = AbiFunction.encodeData(
- *   balanceOf,
- *   ['0xd2135CfB216b74109775236E36d4b433F1DF507B']
- * )
+ * const data = AbiFunction.encodeData(balanceOf, [
+ *   '0xd2135CfB216b74109775236E36d4b433F1DF507B'
+ * ])
  *
  * // 3. Perform the Contract Call.
  * const response = await window.ethereum!.request({
@@ -286,13 +355,16 @@ export declare namespace decodeData {
  *   params: [
  *     {
  *       data,
- *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *     },
- *   ],
+ *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+ *     }
+ *   ]
  * })
  *
  * // 4. Decode the Function Output. // [!code focus]
- * const balance = AbiFunction.decodeResult(balanceOf, response) // [!code focus]
+ * const balance = AbiFunction.decodeResult(
+ *   balanceOf,
+ *   response
+ * ) // [!code focus]
  * // @log: 42n
  * ```
  *
@@ -311,9 +383,8 @@ export declare namespace decodeData {
 export function decodeResult<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
     abi,
@@ -327,7 +398,7 @@ export function decodeResult<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   data: Hex.Hex,
-  options?: decodeResult.Options<as> | undefined,
+  options?: decodeResult.Options<as>,
 ): decodeResult.ReturnType<abiFunction, as>
 export function decodeResult<
   const abiFunction extends AbiFunction,
@@ -335,9 +406,9 @@ export function decodeResult<
 >(
   abiFunction: abiFunction | AbiFunction,
   data: Hex.Hex,
-  options?: decodeResult.Options<as> | undefined,
+  options?: decodeResult.Options<as>,
 ): decodeResult.ReturnType<abiFunction, as>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decodeResult(
   ...parameters:
     | [
@@ -386,29 +457,36 @@ export declare namespace decodeResult {
      * @default "Array"
      */
     as?: as | 'Array' | 'Object' | undefined
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<
     abiFunction extends AbiFunction = AbiFunction,
     as extends 'Object' | 'Array' = 'Array',
-  > = IsNarrowable<abiFunction, AbiFunction> extends true
-    ? abiFunction['outputs'] extends readonly []
-      ? undefined
-      : abiFunction['outputs'] extends readonly [
-            infer type extends abitype.AbiParameter,
-          ]
-        ? abitype.AbiParameterToPrimitiveType<type>
-        : AbiParameters.decode.ReturnType<
-              abiFunction['outputs'],
-              as
-            > extends infer types
-          ? types extends readonly []
-            ? undefined
-            : types extends readonly [infer type]
-              ? type
-              : types
-          : never
-    : unknown
+  > =
+    IsNarrowable<abiFunction, AbiFunction> extends true
+      ? abiFunction['outputs'] extends readonly []
+        ? undefined
+        : abiFunction['outputs'] extends readonly [
+              infer type extends abitype.AbiParameter,
+            ]
+          ? abitype.AbiParameterToPrimitiveType<type>
+          : AbiParameters.decode.ReturnType<
+                abiFunction['outputs'],
+                as
+              > extends infer types
+            ? types extends readonly []
+              ? undefined
+              : types extends readonly [infer type]
+                ? type
+                : types
+            : never
+      : unknown
 
   type ErrorType = AbiParameters.decode.ErrorType | Errors.GlobalErrorType
 }
@@ -428,9 +506,12 @@ export declare namespace decodeResult {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const approve = AbiFunction.from('function approve(address, uint256)')
+ * const approve = AbiFunction.from(
+ *   'function approve(address, uint256)'
+ * )
  *
- * const data = AbiFunction.encodeData( // [!code focus]
+ * const data = AbiFunction.encodeData(
+ *   // [!code focus]
  *   approve, // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
  * ) // [!code focus]
@@ -489,14 +570,15 @@ export declare namespace decodeResult {
  *     type: 'function',
  *     inputs: [{ name: 'account', type: 'address' }],
  *     outputs: [{ name: 'balance', type: 'uint256' }],
- *     stateMutability: 'view',
- *   },
+ *     stateMutability: 'view'
+ *   }
  *   // ...
  * ])
  * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input. // [!code focus]
- * const data = AbiFunction.encodeData( // [!code focus]
+ * const data = AbiFunction.encodeData(
+ *   // [!code focus]
  *   balanceOf, // [!code focus]
  *   ['0xd2135CfB216b74109775236E36d4b433F1DF507B'] // [!code focus]
  * ) // [!code focus]
@@ -507,13 +589,16 @@ export declare namespace decodeResult {
  *   params: [
  *     {
  *       data,
- *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *     },
- *   ],
+ *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+ *     }
+ *   ]
  * })
  *
  * // 4. Decode the Function Output.
- * const balance = AbiFunction.decodeResult(balanceOf, response)
+ * const balance = AbiFunction.decodeResult(
+ *   balanceOf,
+ *   response
+ * )
  * ```
  *
  * :::note
@@ -530,9 +615,8 @@ export declare namespace decodeResult {
 export function encodeData<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
     abi,
@@ -550,7 +634,7 @@ export function encodeData<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
   ...args: encodeData.Args<abiFunction>
 ): Hex.Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encodeData(
   ...parameters:
     | [
@@ -560,16 +644,19 @@ export function encodeData(
       ]
     | [abiFunction: AbiFunction, ...args: readonly unknown[]]
 ) {
-  const [abiFunction, args = []] = (() => {
+  const [abiFunction, args] = (() => {
     if (Array.isArray(parameters[0])) {
-      const [abi, name, args] = parameters as [
+      const [abi, name, args = []] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
-        readonly unknown[],
+        readonly unknown[] | undefined,
       ]
       return [fromAbi(abi, name, { args }), args]
     }
-    const [abiFunction, args] = parameters as [AbiFunction, readonly unknown[]]
+    const [abiFunction, args = []] = parameters as [
+      AbiFunction,
+      readonly unknown[] | undefined,
+    ]
     return [abiFunction, args]
   })()
 
@@ -590,24 +677,22 @@ export function encodeData(
 }
 
 export declare namespace encodeData {
-  type Args<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
-    abiFunction,
-    AbiFunction
-  > extends true
-    ?
-        | (abitype.AbiParametersToPrimitiveTypes<
-            abiFunction['inputs']
-          > extends readonly []
-            ? []
-            : [abitype.AbiParametersToPrimitiveTypes<abiFunction['inputs']>])
-        | (abiFunction['overloads'] extends readonly AbiFunction[]
-            ? [
-                abitype.AbiParametersToPrimitiveTypes<
-                  abiFunction['overloads'][number]['inputs']
-                >,
-              ]
-            : [])
-    : readonly unknown[]
+  type Args<abiFunction extends AbiFunction = AbiFunction> =
+    IsNarrowable<abiFunction, AbiFunction> extends true
+      ?
+          | (abitype.AbiParametersToPrimitiveTypes<
+              abiFunction['inputs']
+            > extends readonly []
+              ? []
+              : [abitype.AbiParametersToPrimitiveTypes<abiFunction['inputs']>])
+          | (abiFunction['overloads'] extends readonly AbiFunction[]
+              ? [
+                  abitype.AbiParametersToPrimitiveTypes<
+                    abiFunction['overloads'][number]['inputs']
+                  >,
+                ]
+              : [])
+      : readonly unknown[]
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -619,8 +704,13 @@ export declare namespace encodeData {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
- * const output = AbiFunction.decodeResult(totalSupply, '0x000000000000000000000000000000000000000000000000000000000000002a')
+ * const totalSupply = AbiFunction.from(
+ *   'function totalSupply() returns (uint256)'
+ * )
+ * const output = AbiFunction.decodeResult(
+ *   totalSupply,
+ *   '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * )
  * // 42n
  *
  * const data = AbiFunction.encodeResult(totalSupply, 42n) // [!code focus]
@@ -654,9 +744,8 @@ export declare namespace encodeData {
 export function encodeResult<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   as extends 'Object' | 'Array' = 'Array',
   //
   abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
@@ -680,7 +769,7 @@ export function encodeResult<
   output: encodeResult.Output<abiFunction, as>,
   options?: encodeResult.Options<as>,
 ): Hex.Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encodeResult(
   ...parameters:
     | [
@@ -757,20 +846,18 @@ export declare namespace encodeResult {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiFunction - The ABI Function to format.
@@ -778,11 +865,14 @@ export declare namespace encodeResult {
  */
 export function format<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
-): abitype.FormatAbiItem<abiFunction> {
-  return abitype.formatAbiItem(abiFunction) as never
+): format.ReturnType<abiFunction> {
+  return formatAbiItem.formatAbiItem(abiFunction) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiFunction extends AbiFunction = AbiFunction> =
+    formatAbiItem.FormatAbiItem<abiFunction>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -802,30 +892,18 @@ export declare namespace format {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * approve
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -842,19 +920,6 @@ export declare namespace format {
  *
  * approve
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -865,23 +930,11 @@ export declare namespace format {
  *
  * const approve = AbiFunction.from([
  *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'function approve(Foo foo) returns (bool)',
+ *   'function approve(Foo foo) returns (bool)'
  * ])
  *
  * approve
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -937,17 +990,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiFunction.fromAbi(abi, 'foo') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -961,19 +1008,10 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  * const item = AbiFunction.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -991,9 +1029,8 @@ export declare namespace from {
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   allNames = Name<abi>,
 >(
@@ -1025,7 +1062,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const selector = AbiFunction.getSelector('function ownerOf(uint256 tokenId)')
+ * const selector = AbiFunction.getSelector(
+ *   'function ownerOf(uint256 tokenId)'
+ * )
  * // @log: '0x6352211e'
  * ```
  *

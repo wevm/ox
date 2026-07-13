@@ -1,8 +1,4 @@
-import {
-  ed25519,
-  edwardsToMontgomeryPriv,
-  edwardsToMontgomeryPub,
-} from '@noble/curves/ed25519'
+import { ed25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -68,7 +64,9 @@ export declare namespace createKeyPair {
  * ```ts twoslash
  * import { Ed25519 } from 'ox'
  *
- * const publicKey = Ed25519.getPublicKey({ privateKey: '0x...' })
+ * const publicKey = Ed25519.getPublicKey({
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param options - The options to compute the public key.
@@ -124,7 +122,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = ed25519.utils.randomPrivateKey()
+  const bytes = ed25519.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -152,7 +150,8 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Ed25519 } from 'ox'
  *
- * const signature = Ed25519.sign({ // [!code focus]
+ * const signature = Ed25519.sign({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -207,12 +206,16 @@ export declare namespace sign {
  * import { Ed25519 } from 'ox'
  *
  * const { privateKey, publicKey } = Ed25519.createKeyPair()
- * const signature = Ed25519.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Ed25519.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const verified = Ed25519.verify({ // [!code focus]
+ * const verified = Ed25519.verify({
+ *   // [!code focus]
  *   publicKey, // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -252,7 +255,9 @@ export declare namespace verify {
  *
  * const { privateKey, publicKey } = Ed25519.createKeyPair()
  *
- * const x25519PublicKey = Ed25519.toX25519PublicKey({ publicKey })
+ * const x25519PublicKey = Ed25519.toX25519PublicKey({
+ *   publicKey
+ * })
  * ```
  *
  * @param options - The options.
@@ -263,7 +268,7 @@ export function toX25519PublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): toX25519PublicKey.ReturnType<as> {
   const { as = 'Hex', publicKey } = options
   const publicKeyBytes = Bytes.from(publicKey)
-  const x25519PublicKeyBytes = edwardsToMontgomeryPub(publicKeyBytes)
+  const x25519PublicKeyBytes = ed25519.utils.toMontgomery(publicKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(x25519PublicKeyBytes) as never
   return x25519PublicKeyBytes as never
 }
@@ -301,7 +306,9 @@ export declare namespace toX25519PublicKey {
  *
  * const { privateKey, publicKey } = Ed25519.createKeyPair()
  *
- * const x25519PrivateKey = Ed25519.toX25519PrivateKey({ privateKey })
+ * const x25519PrivateKey = Ed25519.toX25519PrivateKey({
+ *   privateKey
+ * })
  * ```
  *
  * @param options - The options.
@@ -312,7 +319,8 @@ export function toX25519PrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): toX25519PrivateKey.ReturnType<as> {
   const { as = 'Hex', privateKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
-  const x25519PrivateKeyBytes = edwardsToMontgomeryPriv(privateKeyBytes)
+  const x25519PrivateKeyBytes =
+    ed25519.utils.toMontgomerySecret(privateKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(x25519PrivateKeyBytes) as never
   return x25519PrivateKeyBytes as never
 }

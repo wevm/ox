@@ -1,5 +1,5 @@
 import { Execute } from 'ox/erc7821'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('encodeData', () => {
   test('default', () => {
@@ -7,12 +7,12 @@ describe('encodeData', () => {
       Execute.encodeData([
         {
           data: '0xdeadbeef',
-          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
           value: 1n,
         },
         {
           data: '0xcafebabe',
-          to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
           value: 2n,
         },
       ]),
@@ -26,7 +26,7 @@ describe('encodeData', () => {
       Execute.encodeData([
         {
           data: '0xdeadbeef',
-          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
           value: 1000000000000000000n,
         },
       ]),
@@ -39,11 +39,11 @@ describe('encodeData', () => {
     expect(
       Execute.encodeData([
         {
-          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
           value: 1n,
         },
         {
-          to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
           value: 2n,
         },
       ]),
@@ -57,11 +57,11 @@ describe('encodeData', () => {
       Execute.encodeData([
         {
           data: '0xdeadbeef',
-          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         },
         {
           data: '0xcafebabe',
-          to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
         },
       ]),
     ).toMatchInlineSnapshot(
@@ -81,7 +81,7 @@ describe('encodeData', () => {
         [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 1n,
           },
         ],
@@ -98,7 +98,7 @@ describe('encodeData', () => {
         [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 1n,
           },
         ],
@@ -113,12 +113,12 @@ describe('encodeData', () => {
     expect(
       Execute.encodeData([
         {
-          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
           value: 100n,
         },
         {
           data: '0xdeadbeef',
-          to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
         },
         {
           data: '0xcafebabe',
@@ -137,12 +137,12 @@ describe('decodeData', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1n,
       },
       {
         data: '0xcafebabe',
-        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
         value: 2n,
       },
     ] as const
@@ -157,7 +157,7 @@ describe('decodeData', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1000000000000000000n,
       },
     ] as const
@@ -181,7 +181,7 @@ describe('decodeData', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1n,
       },
     ] as const
@@ -197,7 +197,7 @@ describe('decodeData', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1n,
       },
     ] as const
@@ -215,7 +215,7 @@ describe('decodeData', () => {
   test('behavior: no data or value', () => {
     const calls = [
       {
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 0n,
         data: '0x',
       },
@@ -230,13 +230,13 @@ describe('decodeData', () => {
   test('behavior: round trip with mixed calls', () => {
     const calls = [
       {
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 100n,
         data: '0x',
       },
       {
         data: '0xdeadbeef',
-        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
         value: 0n,
       },
       {
@@ -261,7 +261,7 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xcafebabe',
-              to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+              to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
               value: 1n,
             },
           ],
@@ -270,7 +270,7 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xdeadbeef',
-              to: '0xcafebabecafebabecafebabecafebabecafebabe',
+              to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
               value: 2n,
             },
           ],
@@ -289,7 +289,7 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xdeadbeef',
-              to: '0xcafebabecafebabecafebabecafebabecafebabe',
+              to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
               value: 1n,
             },
           ],
@@ -307,7 +307,7 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xcafebabe',
-              to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+              to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
               value: 1n,
             },
           ],
@@ -316,7 +316,7 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xdeadbeef',
-              to: '0xcafebabecafebabecafebabecafebabecafebabe',
+              to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
               value: 2n,
             },
           ],
@@ -334,7 +334,7 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xdeadbeef',
-              to: '0xcafebabecafebabecafebabecafebabecafebabe',
+              to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
               value: 1n,
             },
           ],
@@ -353,12 +353,12 @@ describe('encodeBatchOfBatchesData', () => {
           calls: [
             {
               data: '0xcafebabe',
-              to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+              to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
               value: 1n,
             },
             {
               data: '0xdeadbeef',
-              to: '0xcafebabecafebabecafebabecafebabecafebabe',
+              to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
               value: 2n,
             },
           ],
@@ -383,7 +383,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xcafebabe',
-            to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+            to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
             value: 1n,
           },
         ],
@@ -392,7 +392,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 2n,
           },
         ],
@@ -412,7 +412,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 1n,
           },
         ],
@@ -431,7 +431,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xcafebabe',
-            to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+            to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
             value: 1n,
           },
         ],
@@ -440,7 +440,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 2n,
           },
         ],
@@ -459,7 +459,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 1n,
           },
         ],
@@ -481,12 +481,12 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xcafebabe',
-            to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+            to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
             value: 1n,
           },
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 2n,
           },
         ],
@@ -514,7 +514,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xcafebabe',
-            to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+            to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
             value: 100n,
           },
         ],
@@ -523,7 +523,7 @@ describe('decodeBatchOfBatchesData', () => {
         calls: [
           {
             data: '0xdeadbeef',
-            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
             value: 200n,
           },
         ],

@@ -1,5 +1,5 @@
 import { MultisigConfig } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vite-plus/test'
 
 // Ground-truth vectors independently computed via `cast keccak` over the exact
 // preimages defined by TIP-1061 / the Tempo reference implementation.

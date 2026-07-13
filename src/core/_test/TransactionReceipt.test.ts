@@ -1,5 +1,5 @@
 import { TransactionReceipt } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('fromRpc', () => {
@@ -148,7 +148,7 @@ describe('fromRpc', () => {
             "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x00000000000000000000000000000000000000000000000009b6e64a8ec60000",
             "logIndex": 17,
             "removed": false,
@@ -163,7 +163,7 @@ describe('fromRpc', () => {
             "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x00000000000000000000000000000000000000000000000009b6e64a8ec60000",
             "logIndex": 18,
             "removed": false,
@@ -179,7 +179,7 @@ describe('fromRpc', () => {
             "address": "0xc56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x000000000000000000000000000000000000000000000000019124be4a8f00a6",
             "logIndex": 19,
             "removed": false,
@@ -195,7 +195,7 @@ describe('fromRpc', () => {
             "address": "0x2aeee741fa1e21120a21e57db9ee545428e683c9",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x000000000000000000000000000000000000000000000004901b436cc0e2d1b8000000000000000000000000000000000000000000000000bb69f9aa54feb579",
             "logIndex": 20,
             "removed": false,
@@ -209,7 +209,7 @@ describe('fromRpc', () => {
             "address": "0x2aeee741fa1e21120a21e57db9ee545428e683c9",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x00000000000000000000000000000000000000000000000009b6e64a8ec6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000019124be4a8f00a6",
             "logIndex": 21,
             "removed": false,
@@ -225,7 +225,7 @@ describe('fromRpc', () => {
             "address": "0xc56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x000000000000000000000000000000000000000000000000000100bb5b10ff5c",
             "logIndex": 22,
             "removed": false,
@@ -241,7 +241,7 @@ describe('fromRpc', () => {
             "address": "0xc56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8",
             "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
             "blockNumber": 19868015n,
-            "blockTimestamp": "0x66434e07",
+            "blockTimestamp": 1715686919n,
             "data": "0x00000000000000000000000000000000000000000000000001902402ef7e014a",
             "logIndex": 23,
             "removed": false,
@@ -310,6 +310,60 @@ describe('toRpc', () => {
         "type": "0x2",
       }
     `)
+  })
+
+  test('numberish inputs', () => {
+    const base = {
+      blockHash:
+        '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+      contractAddress: null,
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      logs: [],
+      logsBloom:
+        '0x00200000000000000000008080000000000000000040000000000000000000000000000000000000000000000000000022000000080000000000000000000000000000080000000000000008000000200000000000000000000200008020400000000000000000280000000000100000000000000000000000000010000000000000000000020000000000000020000000000001000000080000004000000000000000000000000000000000000000000000400000000000001000000000000000000002000000000000000020000000000000000000001000000000000000000000200000000000000000000000000000001000000000c00000000000000000',
+      root: undefined,
+      status: 'success',
+      to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+      transactionHash:
+        '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      type: 'eip1559',
+    } as const
+    const fromBigint = TransactionReceipt.toRpc({
+      ...base,
+      blobGasPrice: 1000n,
+      blobGasUsed: 100n,
+      blockNumber: 100n,
+      cumulativeGasUsed: 21000n,
+      effectiveGasPrice: 1000n,
+      gasUsed: 21000n,
+      logs: [],
+      transactionIndex: 3,
+    })
+    const fromNumber = TransactionReceipt.toRpc({
+      ...base,
+      blobGasPrice: 1000,
+      blobGasUsed: 100,
+      blockNumber: 100,
+      cumulativeGasUsed: 21000,
+      effectiveGasPrice: 1000,
+      gasUsed: 21000,
+      logs: [],
+      transactionIndex: 3,
+    })
+    const fromHex = TransactionReceipt.toRpc({
+      ...base,
+      blobGasPrice: '0x3e8',
+      blobGasUsed: '0x64',
+      blockNumber: '0x64',
+      cumulativeGasUsed: '0x5208',
+      effectiveGasPrice: '0x3e8',
+      gasUsed: '0x5208',
+      logs: [],
+      transactionIndex: '0x3',
+    })
+
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
   })
 
   test('behavior: nullish values', () => {

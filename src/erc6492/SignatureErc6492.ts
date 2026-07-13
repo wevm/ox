@@ -24,6 +24,11 @@ export type Wrapped = Hex.Hex
 export const magicBytes =
   '0x6492649264926492649264926492649264926492649264926492649264926492' as const
 
+/** Cached ABI parameters for ERC-6492 wrapped signature payloads. */
+const wrappedParameters = /*#__PURE__*/ AbiParameters.from(
+  'address, bytes, bytes',
+)
+
 /**
  * Deployless ERC-6492 signature verification bytecode.
  */
@@ -91,16 +96,29 @@ export const universalSignatureValidatorAbi = [
  * // @error: InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-6492 wrapped signature.
  * ```
  *
- * @param wrapped - The wrapped signature to assert.
+ * @param value - The value to assert.
  */
-export function assert(wrapped: Wrapped) {
-  if (Hex.slice(wrapped, -32) !== magicBytes)
-    throw new InvalidWrappedSignatureError(wrapped)
+export function assert(value: Unwrapped | Wrapped) {
+  if (typeof value === 'string') {
+    if (Hex.slice(value, -32) !== magicBytes)
+      throw new InvalidWrappedSignatureError(value)
+    return
+  }
+  if (value === null || typeof value !== 'object')
+    throw new InvalidUnwrappedSignatureError(value as never)
+  const { data, signature, to } = value as Unwrapped
+  if (
+    typeof to !== 'string' ||
+    typeof data !== 'string' ||
+    typeof signature !== 'string'
+  )
+    throw new InvalidUnwrappedSignatureError(value as Unwrapped)
 }
 
 export declare namespace assert {
   type ErrorType =
     | InvalidWrappedSignatureError
+    | InvalidUnwrappedSignatureError
     | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
@@ -116,7 +134,7 @@ export declare namespace assert {
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Instantiate from serialized format. // [!code focus]
@@ -124,10 +142,11 @@ export declare namespace assert {
  * // @log: { data: '0x...', signature: { ... }, to: '0x...', } // [!code focus]
  *
  * // Instantiate from constituent parts. // [!code focus]
- * const wrapped = SignatureErc6492.from({ // [!code focus]
+ * const wrapped = SignatureErc6492.from({
+ *   // [!code focus]
  *   data: '0x...', // [!code focus]
  *   signature, // [!code focus]
- *   to: '0x...', // [!code focus]
+ *   to: '0x...' // [!code focus]
  * })
  * // @log: { data: '0x...', signature: { ... }, to: '0x...', }
  * ```
@@ -137,6 +156,7 @@ export declare namespace assert {
  */
 export function from(wrapped: Unwrapped | Wrapped): Unwrapped {
   if (typeof wrapped === 'string') return unwrap(wrapped)
+  assert(wrapped)
   return wrapped
 }
 
@@ -157,7 +177,8 @@ export declare namespace from {
  * ```ts twoslash
  * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * const { data, signature, to } = SignatureErc6492.unwrap('0x...')
+ * const { data, signature, to } =
+ *   SignatureErc6492.unwrap('0x...')
  * ```
  *
  * @param wrapped - Wrapped signature to parse.
@@ -166,10 +187,8 @@ export declare namespace from {
 export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
-  const [to, data, signature] = AbiParameters.decode(
-    AbiParameters.from('address, bytes, bytes'),
-    wrapped,
-  )
+  const body = Hex.slice(wrapped, 0, -32)
+  const [to, data, signature] = AbiParameters.decode(wrappedParameters, body)
 
   return { data, signature, to }
 }
@@ -192,13 +211,14 @@ export declare namespace unwrap {
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const wrapped = SignatureErc6492.wrap({ // [!code focus]
+ * const wrapped = SignatureErc6492.wrap({
+ *   // [!code focus]
  *   data: '0xdeadbeef', // [!code focus]
  *   signature: Signature.toHex(signature), // [!code focus]
- *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa', // [!code focus]
+ *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa' // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -209,11 +229,7 @@ export function wrap(value: Unwrapped): Wrapped {
   const { data, signature, to } = value
 
   return Hex.concat(
-    AbiParameters.encode(AbiParameters.from('address, bytes, bytes'), [
-      to,
-      data,
-      signature,
-    ]),
+    AbiParameters.encode(wrappedParameters, [to, data, signature]),
     magicBytes,
   )
 }
@@ -259,5 +275,16 @@ export class InvalidWrappedSignatureError extends Errors.BaseError {
 
   constructor(wrapped: Wrapped) {
     super(`Value \`${wrapped}\` is an invalid ERC-6492 wrapped signature.`)
+  }
+}
+
+/** Thrown when an ERC-6492 unwrapped signature object is malformed. */
+export class InvalidUnwrappedSignatureError extends Errors.BaseError {
+  override readonly name = 'SignatureErc6492.InvalidUnwrappedSignatureError'
+
+  constructor(value: Unwrapped) {
+    super(
+      `Value \`${JSON.stringify(value)}\` is an invalid ERC-6492 unwrapped signature.`,
+    )
   }
 }

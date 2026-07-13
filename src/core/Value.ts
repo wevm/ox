@@ -25,6 +25,9 @@ export const exponents = {
  * @returns The string representation of the Value.
  */
 export function format(value: bigint, decimals = 0) {
+  if (!Number.isInteger(decimals) || decimals < 0)
+    throw new InvalidDecimalsError({ decimals })
+
   let display = value.toString()
 
   const negative = display.startsWith('-')
@@ -111,45 +114,78 @@ export declare namespace formatGwei {
  * @returns The `bigint` representation of the Value.
  */
 export function from(value: string, decimals = 0) {
-  if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
+  if (!Number.isInteger(decimals) || decimals < 0)
+    throw new InvalidDecimalsError({ decimals })
+
+  // Require at least one digit overall. Rejects '', '.', '-', '-.' which
+  // the previous regex accepted (and which then either produced garbage or
+  // threw a raw `SyntaxError` from `BigInt('')`).
+  if (!/^-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$/.test(value))
     throw new InvalidDecimalNumberError({ value })
 
   let [integer = '', fraction = '0'] = value.split('.')
 
   const negative = integer.startsWith('-')
   if (negative) integer = integer.slice(1)
+  if (integer === '') integer = '0'
 
   // trim trailing zeros.
   fraction = fraction.replace(/(0+)$/, '')
 
   // round off if the fraction is larger than the number of decimals.
   if (decimals === 0) {
-    if (Math.round(Number(`.${fraction}`)) === 1)
+    // Round half-away-from-zero by inspecting the first fractional digit.
+    if (fraction.length > 0 && Number.parseInt(fraction[0]!, 10) >= 5)
       integer = `${BigInt(integer) + 1n}`
     fraction = ''
   } else if (fraction.length > decimals) {
-    const [left, unit, right] = [
-      fraction.slice(0, decimals - 1),
-      fraction.slice(decimals - 1, decimals),
-      fraction.slice(decimals),
-    ]
+    const left = fraction.slice(0, decimals)
+    const roundDigit = Number.parseInt(
+      fraction.slice(decimals, decimals + 1)!,
+      10,
+    )
 
-    const rounded = Math.round(Number(`${unit}.${right}`))
-    if (rounded > 9)
-      fraction = `${BigInt(left) + BigInt(1)}0`.padStart(left.length + 1, '0')
-    else fraction = `${left}${rounded}`
-
-    if (fraction.length > decimals) {
-      fraction = fraction.slice(1)
-      integer = `${BigInt(integer) + 1n}`
+    if (roundDigit >= 5) {
+      // Carry through the truncated fraction digits into the integer part
+      // without converting to a JS Number (avoids float precision loss).
+      const carried = carry(left)
+      if (carried.length > decimals) {
+        // Carry overflowed into the integer part.
+        fraction = carried.slice(1)
+        integer = `${BigInt(integer) + 1n}`
+      } else {
+        fraction = carried
+      }
+    } else {
+      fraction = left
     }
-
-    fraction = fraction.slice(0, decimals)
   } else {
     fraction = fraction.padEnd(decimals, '0')
   }
 
   return BigInt(`${negative ? '-' : ''}${integer}${fraction}`)
+}
+
+/**
+ * Adds 1 to a digit string with carry, returning a string of the same length
+ * unless the carry overflows past the most-significant digit (in which case
+ * the returned string is one digit longer).
+ *
+ * @internal
+ */
+function carry(digits: string): string {
+  const out = digits.split('')
+  let i = out.length - 1
+  while (i >= 0) {
+    const d = Number.parseInt(out[i]!, 10) + 1
+    if (d < 10) {
+      out[i] = String(d)
+      return out.join('')
+    }
+    out[i] = '0'
+    i--
+  }
+  return `1${out.join('')}`
 }
 
 export declare namespace from {
@@ -220,5 +256,23 @@ export class InvalidDecimalNumberError extends Errors.BaseError {
   override readonly name = 'Value.InvalidDecimalNumberError'
   constructor({ value }: { value: string }) {
     super(`Value \`${value}\` is not a valid decimal number.`)
+  }
+}
+
+/**
+ * Thrown when the `decimals` argument is not a non-negative integer.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ *
+ * Value.from('1', -1)
+ * // @error: Value.InvalidDecimalsError: `decimals` must be a non-negative integer. Got `-1`.
+ * ```
+ */
+export class InvalidDecimalsError extends Errors.BaseError {
+  override readonly name = 'Value.InvalidDecimalsError'
+  constructor({ decimals }: { decimals: number }) {
+    super(`\`decimals\` must be a non-negative integer. Got \`${decimals}\`.`)
   }
 }

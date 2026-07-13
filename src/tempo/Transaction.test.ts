@@ -1,5 +1,5 @@
 import { Transaction } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromRpc', () => {
   test('default', () => {
@@ -49,7 +49,6 @@ describe('fromRpc', () => {
           },
         ],
         "chainId": 1,
-        "data": undefined,
         "feeToken": "0x20c0000000000000000000000000000000000000",
         "from": "0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6",
         "gas": 278365n,
@@ -60,15 +59,14 @@ describe('fromRpc', () => {
         "nonce": 855n,
         "signature": {
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+            "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
             "yParity": 0,
           },
           "type": "secp256k1",
         },
         "transactionIndex": 2,
         "type": "tempo",
-        "value": 0n,
       }
     `)
   })
@@ -125,10 +123,9 @@ describe('fromRpc', () => {
           },
         ],
         "chainId": 1,
-        "data": undefined,
         "feePayerSignature": {
-          "r": 8574245934337799659042750864278046211314109527666697413298781631396794530078n,
-          "s": 22549658598721143185960614158212618570884225122794367192341714237232002247296n,
+          "r": "0x12f4d9e9924f62b19de816252efc125006298f43e62d394151e62600e2c2f91e",
+          "s": "0x31daa78bb3e95dd22f6370e59617c60d109bf28e55c92b25994ddbed420e2a80",
           "v": 27,
           "yParity": 0,
         },
@@ -142,15 +139,14 @@ describe('fromRpc', () => {
         "nonce": 855n,
         "signature": {
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+            "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
             "yParity": 0,
           },
           "type": "secp256k1",
         },
         "transactionIndex": 2,
         "type": "tempo",
-        "value": 0n,
       }
     `)
   })
@@ -219,7 +215,6 @@ describe('fromRpc', () => {
           },
         ],
         "chainId": 1,
-        "data": undefined,
         "feeToken": "0x20c0000000000000000000000000000000000000",
         "from": "0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6",
         "gas": 278365n,
@@ -237,8 +232,8 @@ describe('fromRpc', () => {
           ],
           "signature": {
             "signature": {
-              "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-              "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+              "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+              "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
               "yParity": 0,
             },
             "type": "secp256k1",
@@ -250,15 +245,14 @@ describe('fromRpc', () => {
         "nonce": 855n,
         "signature": {
           "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+            "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
             "yParity": 0,
           },
           "type": "secp256k1",
         },
         "transactionIndex": 2,
         "type": "tempo",
-        "value": 0n,
       }
     `)
   })
@@ -291,8 +285,8 @@ describe('toRpc', () => {
       nonce: 855n,
       signature: {
         signature: {
-          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
         type: 'secp256k1',
@@ -319,7 +313,6 @@ describe('toRpc', () => {
         "gas": "0x43f5d",
         "gasPrice": "0x2ca6ae494",
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
-        "input": undefined,
         "maxFeePerGas": "0x2",
         "maxPriorityFeePerGas": "0x1",
         "nonce": "0x357",
@@ -329,10 +322,8 @@ describe('toRpc', () => {
           "type": "secp256k1",
           "yParity": "0x0",
         },
-        "to": undefined,
         "transactionIndex": "0x2",
         "type": "0x76",
-        "value": "0x0",
       }
     `)
   })
@@ -353,8 +344,8 @@ describe('toRpc', () => {
       chainId: 1,
       data: undefined,
       feePayerSignature: {
-        r: 8574245934337799659042750864278046211314109527666697413298781631396794530078n,
-        s: 22549658598721143185960614158212618570884225122794367192341714237232002247296n,
+        r: '0x12f4d9e9924f62b19de816252efc125006298f43e62d394151e62600e2c2f91e',
+        s: '0x31daa78bb3e95dd22f6370e59617c60d109bf28e55c92b25994ddbed420e2a80',
         v: 27,
         yParity: 0,
       },
@@ -368,8 +359,8 @@ describe('toRpc', () => {
       nonce: 855n,
       signature: {
         signature: {
-          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
         type: 'secp256k1',
@@ -401,7 +392,6 @@ describe('toRpc', () => {
         "gas": "0x43f5d",
         "gasPrice": "0x2ca6ae494",
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
-        "input": undefined,
         "maxFeePerGas": "0x2",
         "maxPriorityFeePerGas": "0x1",
         "nonce": "0x357",
@@ -411,10 +401,8 @@ describe('toRpc', () => {
           "type": "secp256k1",
           "yParity": "0x0",
         },
-        "to": undefined,
         "transactionIndex": "0x2",
         "type": "0x76",
-        "value": "0x0",
       }
     `)
   })
@@ -447,8 +435,8 @@ describe('toRpc', () => {
         ],
         signature: {
           signature: {
-            r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+            r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+            s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
             yParity: 0,
           },
           type: 'secp256k1',
@@ -464,8 +452,8 @@ describe('toRpc', () => {
       nonce: 855n,
       signature: {
         signature: {
-          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
         type: 'secp256k1',
@@ -491,7 +479,6 @@ describe('toRpc', () => {
         "gas": "0x43f5d",
         "gasPrice": "0x2ca6ae494",
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
-        "input": undefined,
         "keyAuthorization": {
           "chainId": "0x1",
           "expiry": "0xffffffffffff",
@@ -519,10 +506,8 @@ describe('toRpc', () => {
           "type": "secp256k1",
           "yParity": "0x0",
         },
-        "to": undefined,
         "transactionIndex": "0x2",
         "type": "0x76",
-        "value": "0x0",
       }
     `)
   })

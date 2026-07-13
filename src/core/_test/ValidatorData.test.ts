@@ -1,5 +1,5 @@
 import { Bytes, Hex, Secp256k1, ValidatorData } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('encode', () => {
@@ -20,6 +20,19 @@ describe('encode', () => {
     ).toMatchInlineSnapshot(
       `"0x1900d8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64"`,
     )
+  })
+
+  test('error: invalid validator address', () => {
+    expect(() =>
+      ValidatorData.encode({
+        data: Hex.fromString('hello world'),
+        validator: '0xnope' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xnope" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
   })
 })
 
@@ -47,12 +60,12 @@ describe('getSignPayload', () => {
     })
 
     expect(signature).toMatchInlineSnapshot(`
-    {
-      "r": 68091374341839800456303976073526891582562581240638500897335670993181392578160n,
-      "s": 5314928325393385878350538135103735910463811711406436189774790168957633678215n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x968a5a252cd492163d4cd6b503157839ad28cc55eaa3bf96fcb3757e0e192670",
+        "s": "0x0bc0249059a16d6176ece20090dc8ad77ea46627281ec1b3c04aa54058c3cb87",
+        "yParity": 0,
+      }
+    `)
   })
 })
 

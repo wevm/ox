@@ -3,6 +3,7 @@ import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, OneOf, UnionCompute } from './internal/types.js'
 import * as Signature from './Signature.js'
 
@@ -49,7 +50,7 @@ export type Base<
   blockHash: pending extends true ? null : Hex.Hex
   /** Number of block containing this transaction or `null` if pending */
   blockNumber: pending extends true ? null : bigintType
-  /** Timestamp of the block containing this transaction, or `null` if pending. */
+  /** Timestamp (in seconds) of the block containing this transaction, or `null` if pending. */
   blockTimestamp?: pending extends true ? null : bigintType | undefined
   /** Chain ID that this transaction is valid on. */
   chainId: numberType
@@ -74,9 +75,9 @@ export type Base<
   /** Value in wei sent with this transaction */
   value: bigintType
   /** ECDSA signature r. */
-  r: bigintType
+  r: Hex.Hex
   /** ECDSA signature s. */
-  s: bigintType
+  s: Hex.Hex
   /** ECDSA signature yParity. */
   yParity: numberType
   /** @deprecated ECDSA signature v (for backwards compatibility). */
@@ -265,7 +266,7 @@ export type FromRpcType = typeof fromRpcType & {
  *   yParity: '0x0',
  *   chainId: '0x1',
  *   accessList: [],
- *   type: '0x2',
+ *   type: '0x2'
  * })
  * ```
  *
@@ -320,7 +321,11 @@ export function fromRpc<
   if (transaction.type)
     transaction_.type =
       (fromRpcType as any)[transaction.type] ?? transaction.type
-  if (signature) transaction_.v = Signature.yParityToV(signature.yParity)
+  if (signature)
+    transaction_.v =
+      transaction.type === '0x0' && typeof transaction.v !== 'undefined'
+        ? Number(transaction.v)
+        : Signature.yParityToV(signature.yParity)
 
   return transaction_ as never
 }
@@ -354,14 +359,14 @@ export declare namespace fromRpc {
  *   maxFeePerGas: 11985937556n,
  *   maxPriorityFeePerGas: 68993984n,
  *   nonce: 855n,
- *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
  *   transactionIndex: 2,
  *   type: 'eip1559',
  *   v: 27,
  *   value: 700000000000000000n,
- *   yParity: 0,
+ *   yParity: 0
  * })
  * ```
  *
@@ -369,30 +374,31 @@ export declare namespace fromRpc {
  * @returns An RPC-formatted transaction.
  */
 export function toRpc<pending extends boolean = false>(
-  transaction: Transaction<pending>,
+  transaction: toRpc.Input<pending>,
   _options?: toRpc.Options<pending>,
 ): Rpc<pending> {
   const rpc = {} as Rpc<boolean>
 
   rpc.blockHash = transaction.blockHash
   rpc.blockNumber =
-    typeof transaction.blockNumber === 'bigint'
-      ? Hex.fromNumber(transaction.blockNumber)
-      : null
-  if (typeof transaction.blockTimestamp === 'bigint')
-    rpc.blockTimestamp = Hex.fromNumber(transaction.blockTimestamp)
-  else if (transaction.blockTimestamp === null) rpc.blockTimestamp = null
+    transaction.blockNumber == null
+      ? null
+      : Quantity.fromNumberish(transaction.blockNumber)
+  if (transaction.blockTimestamp === null) rpc.blockTimestamp = null
+  else if (transaction.blockTimestamp !== undefined)
+    rpc.blockTimestamp = Quantity.fromNumberish(transaction.blockTimestamp)
   rpc.from = transaction.from
-  rpc.gas = Hex.fromNumber(transaction.gas ?? 0n)
+  rpc.gas = Quantity.fromNumberish(transaction.gas ?? 0n)
   rpc.hash = transaction.hash
   rpc.input = transaction.input
-  rpc.nonce = Hex.fromNumber(transaction.nonce ?? 0n)
+  rpc.nonce = Quantity.fromNumberish(transaction.nonce ?? 0n)
   rpc.to = transaction.to
-  rpc.transactionIndex = transaction.transactionIndex
-    ? Hex.fromNumber(transaction.transactionIndex)
-    : null
+  rpc.transactionIndex =
+    transaction.transactionIndex == null
+      ? null
+      : Quantity.fromNumberish(transaction.transactionIndex)
   rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
-  rpc.value = Hex.fromNumber(transaction.value ?? 0n)
+  rpc.value = Quantity.fromNumberish(transaction.value ?? 0n)
 
   if (transaction.accessList) rpc.accessList = transaction.accessList
   if (transaction.authorizationList)
@@ -401,28 +407,36 @@ export function toRpc<pending extends boolean = false>(
     )
   if (transaction.blobVersionedHashes)
     rpc.blobVersionedHashes = transaction.blobVersionedHashes
-  if (transaction.chainId) rpc.chainId = Hex.fromNumber(transaction.chainId)
-  if (typeof transaction.gasPrice === 'bigint')
-    rpc.gasPrice = Hex.fromNumber(transaction.gasPrice)
-  if (typeof transaction.maxFeePerBlobGas === 'bigint')
-    rpc.maxFeePerBlobGas = Hex.fromNumber(transaction.maxFeePerBlobGas)
-  if (typeof transaction.maxFeePerGas === 'bigint')
-    rpc.maxFeePerGas = Hex.fromNumber(transaction.maxFeePerGas)
-  if (typeof transaction.maxPriorityFeePerGas === 'bigint')
-    rpc.maxPriorityFeePerGas = Hex.fromNumber(transaction.maxPriorityFeePerGas)
-  if (typeof transaction.r === 'bigint')
-    rpc.r = Hex.fromNumber(transaction.r, { size: 32 })
-  if (typeof transaction.s === 'bigint')
-    rpc.s = Hex.fromNumber(transaction.s, { size: 32 })
-  if (typeof transaction.v === 'number')
-    rpc.v = Hex.fromNumber(transaction.v, { size: 1 })
-  if (typeof transaction.yParity === 'number')
-    rpc.yParity = transaction.yParity === 0 ? '0x0' : '0x1'
+  if (transaction.chainId)
+    rpc.chainId = Quantity.fromNumberish(transaction.chainId)
+  if (transaction.gasPrice !== undefined)
+    rpc.gasPrice = Quantity.fromNumberish(transaction.gasPrice)
+  if (transaction.maxFeePerBlobGas !== undefined)
+    rpc.maxFeePerBlobGas = Quantity.fromNumberish(transaction.maxFeePerBlobGas)
+  if (transaction.maxFeePerGas !== undefined)
+    rpc.maxFeePerGas = Quantity.fromNumberish(transaction.maxFeePerGas)
+  if (transaction.maxPriorityFeePerGas !== undefined)
+    rpc.maxPriorityFeePerGas = Quantity.fromNumberish(
+      transaction.maxPriorityFeePerGas,
+    )
+  if (typeof transaction.r === 'string') rpc.r = transaction.r
+  if (typeof transaction.s === 'string') rpc.s = transaction.s
+  if (transaction.v !== undefined)
+    rpc.v = Quantity.fromNumberish(transaction.v, { size: 1 })
+  if (transaction.yParity !== undefined)
+    rpc.yParity = Quantity.fromNumberish(transaction.yParity)
 
   return rpc as Rpc<pending>
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Transaction.(toRpc:function)}. */
+  type Input<pending extends boolean = false> = Transaction<
+    pending,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   type Options<pending extends boolean = false> = {
     pending?: pending | boolean | undefined
   }

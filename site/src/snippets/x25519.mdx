@@ -1,0 +1,20 @@
+```ts twoslash
+// @noErrors
+import { Ed25519, X25519 } from 'ox'
+
+// Alice has a long-lived Ed25519 identity she reuses for X25519.
+const alice = Ed25519.createKeyPair()
+const alicePrivateKey = Ed25519.toX25519PrivateKey({
+  privateKey: alice.privateKey,
+})
+
+// Bob generates an ephemeral X25519 keypair for this session.
+const bob = X25519.createKeyPair()
+
+// Each side derives the same shared secret.
+const sharedSecret = X25519.getSharedSecret({
+  privateKey: alicePrivateKey,
+  publicKey: bob.publicKey,
+})
+// @log: '0x9f3c8b…41ae'
+```

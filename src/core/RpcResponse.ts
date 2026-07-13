@@ -37,7 +37,7 @@ export type ErrorObject = {
  * const response = RpcResponse.from({
  *   id: 0,
  *   jsonrpc: '2.0',
- *   result: '0x69420',
+ *   result: '0x69420'
  * })
  * ```
  *
@@ -50,11 +50,14 @@ export type ErrorObject = {
  * ```ts twoslash
  * import { RpcRequest, RpcResponse } from 'ox'
  *
- * const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
+ * const request = RpcRequest.from({
+ *   id: 0,
+ *   method: 'eth_blockNumber'
+ * })
  *
  * const response = RpcResponse.from(
  *   { result: '0x69420' },
- *   { request },
+ *   { request }
  * )
  * ```
  *
@@ -73,14 +76,21 @@ export function from<
   response: from.Response<request, response>,
   options?: from.Options<request>,
 ): Compute<from.ReturnType<response>>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function from(response: RpcResponse, options: any = {}): RpcResponse {
   const { request } = options
-  return {
-    ...response,
-    id: response.id ?? request?.id,
-    jsonrpc: response.jsonrpc ?? request.jsonrpc,
+  if (request) {
+    const needsId = response.id === undefined
+    const needsJsonrpc = response.jsonrpc === undefined
+    if (!needsId && !needsJsonrpc) return response
+    if (needsId && needsJsonrpc)
+      return { ...response, id: request.id, jsonrpc: request.jsonrpc }
+    if (needsId) return { ...response, id: request.id }
+    return { ...response, jsonrpc: request.jsonrpc }
   }
+  if (response.id === undefined || response.jsonrpc === undefined)
+    throw new ParseError({ message: 'Invalid JSON-RPC response.' })
+  return response
 }
 
 export declare namespace from {
@@ -100,9 +110,10 @@ export declare namespace from {
     request?: request | RpcRequest.RpcRequest | undefined
   }
 
-  type ReturnType<response> = IsNarrowable<response, RpcResponse> extends true
-    ? RpcResponse
-    : response & Readonly<{ id: number; jsonrpc: '2.0' }>
+  type ReturnType<response> =
+    IsNarrowable<response, RpcResponse> extends true
+      ? RpcResponse
+      : response & Readonly<{ id: number; jsonrpc: '2.0' }>
 }
 
 /**
@@ -118,34 +129,25 @@ export declare namespace from {
  * // 2. Get a request object.
  * const request = store.prepare({
  *   method: 'eth_getBlockByNumber',
- *   params: ['0x1', false],
+ *   params: ['0x1', false]
  * })
  *
  * // 3. Send the JSON-RPC request via HTTP.
  * const block = await fetch('https://1.rpc.thirdweb.com', {
  *   body: JSON.stringify(request),
  *   headers: {
- *     'Content-Type': 'application/json',
+ *     'Content-Type': 'application/json'
  *   },
- *   method: 'POST',
+ *   method: 'POST'
  * })
- *  .then((response) => response.json())
- *  // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
- *  .then((response) => RpcResponse.parse(response, { request })) // [!code focus]
+ *   .then((response) => response.json())
+ *   // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
+ *   .then((response) =>
+ *     RpcResponse.parse(response, { request })
+ *   ) // [!code focus]
  *
  * block // [!code focus]
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::tip
@@ -157,9 +159,11 @@ export declare namespace from {
  * import { RpcResponse } from 'ox'
  *
  * const block = await fetch('https://1.rpc.thirdweb.com', {})
- *  .then((response) => response.json())
- *  .then((response) => RpcResponse.parse(response, { request })) // [!code --]
- *  .then(RpcResponse.parse) // [!code ++]
+ *   .then((response) => response.json())
+ *   .then((response) =>
+ *     RpcResponse.parse(response, { request })
+ *   ) // [!code --]
+ *   .then(RpcResponse.parse) // [!code ++]
  * ```
  * :::
  *
@@ -174,22 +178,22 @@ export declare namespace from {
  * const store = RpcRequest.createStore()
  *
  * const request = store.prepare({
- *   method: 'eth_blockNumber',
+ *   method: 'eth_blockNumber'
  * })
  *
- * const response = RpcResponse.parse({}, {
- *   request,
- *   raw: true, // [!code hl]
- * })
+ * const response = RpcResponse.parse(
+ *   {},
+ *   {
+ *     request,
+ *     raw: true // [!code hl]
+ *   }
+ * )
  *
  * response.result
  * //       ^?
  *
- *
  * response.error
  * //       ^?
- *
- *
  * ```
  *
  * @param response - Opaque JSON-RPC response object.
@@ -214,7 +218,15 @@ export function parse<
   raw
 > {
   const { raw = false } = options
-  const response_ = response as RpcResponse
+  const response_ = response as RpcResponse | null | undefined
+  if (
+    !response_ ||
+    typeof response_ !== 'object' ||
+    response_.jsonrpc !== '2.0' ||
+    response_.id === undefined ||
+    (!('result' in response_) && !('error' in response_))
+  )
+    throw new ParseError({ message: 'Invalid JSON-RPC response.' })
   if (raw) return response as never
   if (response_.error) throw parseError(response_.error)
   return response_.result as never
@@ -270,11 +282,13 @@ export declare namespace parse {
  * ```ts twoslash
  * import { RpcResponse } from 'ox'
  *
- * const error = RpcResponse.parseError({ code: -32000, message: 'unsupported method' })
+ * const error = RpcResponse.parseError({
+ *   code: -32000,
+ *   message: 'unsupported method'
+ * })
  *
  * error
  * // ^?
- *
  * ```
  *
  * @param error - Error.
@@ -285,6 +299,8 @@ export function parseError<const error extends Error | ErrorObject | unknown>(
 ): parseError.ReturnType<error> {
   const error_ = error as Error | ErrorObject
 
+  if (error_ instanceof BaseError) return error_ as never
+
   if (error_ instanceof Error && !('code' in error_))
     return new InternalError({
       cause: error_,
@@ -293,30 +309,9 @@ export function parseError<const error extends Error | ErrorObject | unknown>(
       stack: error_.stack,
     }) as never
 
-  const { code } = error_
-  if (code === InternalError.code)
-    return new InternalError(error_ as never) as never
-  if (code === InvalidInputError.code)
-    return new InvalidInputError(error_) as never
-  if (code === InvalidParamsError.code)
-    return new InvalidParamsError(error_) as never
-  if (code === InvalidRequestError.code)
-    return new InvalidRequestError(error_) as never
-  if (code === LimitExceededError.code)
-    return new LimitExceededError(error_) as never
-  if (code === MethodNotFoundError.code)
-    return new MethodNotFoundError(error_) as never
-  if (code === MethodNotSupportedError.code)
-    return new MethodNotSupportedError(error_) as never
-  if (code === ParseError.code) return new ParseError(error_) as never
-  if (code === ResourceNotFoundError.code)
-    return new ResourceNotFoundError(error_) as never
-  if (code === ResourceUnavailableError.code)
-    return new ResourceUnavailableError(error_) as never
-  if (code === TransactionRejectedError.code)
-    return new TransactionRejectedError(error_) as never
-  if (code === VersionNotSupportedError.code)
-    return new VersionNotSupportedError(error_) as never
+  const code = (error_ as ErrorObject).code
+  const Constructor = errorCodeMap[code]
+  if (Constructor) return new Constructor(error_ as never) as never
   return new InternalError({
     cause: error_ instanceof Error ? error_ : undefined,
     data: error_,
@@ -623,4 +618,23 @@ export class ParseError extends BaseError {
       message: parameters.message ?? 'Failed to parse JSON-RPC response.',
     })
   }
+}
+
+/** @internal */
+const errorCodeMap: Record<
+  number,
+  new (parameters: Partial<Omit<ErrorObject, 'code'>>) => BaseError
+> = {
+  [InternalError.code]: InternalError as never,
+  [InvalidInputError.code]: InvalidInputError,
+  [InvalidParamsError.code]: InvalidParamsError,
+  [InvalidRequestError.code]: InvalidRequestError,
+  [LimitExceededError.code]: LimitExceededError,
+  [MethodNotFoundError.code]: MethodNotFoundError,
+  [MethodNotSupportedError.code]: MethodNotSupportedError,
+  [ParseError.code]: ParseError,
+  [ResourceNotFoundError.code]: ResourceNotFoundError,
+  [ResourceUnavailableError.code]: ResourceUnavailableError,
+  [TransactionRejectedError.code]: TransactionRejectedError,
+  [VersionNotSupportedError.code]: VersionNotSupportedError,
 }

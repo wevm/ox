@@ -1,6 +1,6 @@
 import { Hex, Signature } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('from', () => {
   test('default', () => {
@@ -30,8 +30,8 @@ describe('from', () => {
       verificationGasLimit: 0n,
     } as const satisfies UserOperation.UserOperation
     const signature = Signature.from({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       yParity: 1,
     })
     const userOperation = UserOperation.from(input, { signature })
@@ -215,6 +215,52 @@ describe('getSignPayload', () => {
 })
 
 describe('hash', () => {
+  describe('v0.9', () => {
+    const userOperation = {
+      callData: '0x',
+      callGasLimit: 6942069n,
+      maxFeePerGas: 69420n,
+      maxPriorityFeePerGas: 69n,
+      nonce: 0n,
+      paymaster: '0x1234567890123456789012345678901234567890',
+      paymasterData: '0xdeadbeef',
+      paymasterPostOpGasLimit: 6942069n,
+      paymasterVerificationGasLimit: 6942069n,
+      preVerificationGas: 6942069n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: 6942069n,
+    } as const satisfies UserOperation.UserOperation<'0.9', true>
+
+    test('args: paymasterSignature', () => {
+      const options = {
+        chainId: 1,
+        entryPointAddress: '0x433709009B8330FDa32311DF1C2AFA402eD8D009',
+        entryPointVersion: '0.9',
+      } as const
+
+      expect(
+        UserOperation.hash(
+          { ...userOperation, paymasterSignature: '0xcafebabe' },
+          options,
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x802c25af5d98cd349b2118227faa93172fb791c4130a482272095cec45c4fc6e"`,
+      )
+      expect(
+        UserOperation.hash(
+          { ...userOperation, paymasterSignature: '0xdeadbeef' },
+          options,
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x802c25af5d98cd349b2118227faa93172fb791c4130a482272095cec45c4fc6e"`,
+      )
+      expect(UserOperation.hash(userOperation, options)).toMatchInlineSnapshot(
+        `"0xde381ae0368b77df677808c3a2da72abd68a07eab11ef31c35923f56a75bbe6d"`,
+      )
+    })
+  })
+
   describe('v0.8', () => {
     test('default', () => {
       expect(
@@ -402,8 +448,8 @@ describe('hash', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 0n,
-              s: 0n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
           },
           {
@@ -438,8 +484,8 @@ describe('hash', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 0n,
-              s: 0n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
           },
           {
@@ -818,6 +864,54 @@ describe('toPacked', () => {
       }
     `)
   })
+
+  describe('v0.9 paymasterSignature', () => {
+    const userOperation = {
+      callData: '0x',
+      callGasLimit: 6942069n,
+      maxFeePerGas: 69420n,
+      maxPriorityFeePerGas: 69n,
+      nonce: 0n,
+      paymaster: '0x1234567890123456789012345678901234567890',
+      paymasterData: '0xdeadbeef',
+      paymasterPostOpGasLimit: 6942069n,
+      paymasterSignature: '0xcafebabe',
+      paymasterVerificationGasLimit: 6942069n,
+      preVerificationGas: 6942069n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: 6942069n,
+    } as const satisfies UserOperation.UserOperation<'0.9', true>
+
+    test('default', () => {
+      expect(
+        UserOperation.toPacked(userOperation).paymasterAndData,
+      ).toMatchInlineSnapshot(
+        `"0x12345678901234567890123456789012345678900000000000000000000000000069ed750000000000000000000000000069ed75deadbeefcafebabe000422e325a297439656"`,
+      )
+    })
+
+    test('options: forHash', () => {
+      expect(
+        UserOperation.toPacked(userOperation, { forHash: true })
+          .paymasterAndData,
+      ).toMatchInlineSnapshot(
+        `"0x12345678901234567890123456789012345678900000000000000000000000000069ed750000000000000000000000000069ed75deadbeef22e325a297439656"`,
+      )
+    })
+
+    test('encodes a uint16 signature length', () => {
+      const paymasterSignature = Hex.fromBytes(new Uint8Array(65).fill(0x11))
+      const paymasterAndData = UserOperation.toPacked({
+        ...userOperation,
+        paymasterSignature,
+      }).paymasterAndData
+
+      expect(
+        Hex.slice(paymasterAndData, Hex.size(paymasterAndData) - 10),
+      ).toMatchInlineSnapshot(`"0x004122e325a297439656"`)
+    })
+  })
 })
 
 describe('toInitCode', () => {
@@ -881,8 +975,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 69n,
           yParity: 0,
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         },
       }),
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
@@ -898,8 +992,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 69n,
           yParity: 0,
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         },
       }),
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
@@ -915,8 +1009,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 42n,
           yParity: 1,
-          r: 123n,
-          s: 456n,
+          r: '0x000000000000000000000000000000000000000000000000000000000000007b',
+          s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
         },
       }),
     ).toBe('0x1234567890123456789012345678901234567890cafebabe')
@@ -1170,6 +1264,96 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('v0.6 preserves paymasterAndData', () => {
+    expect(
+      UserOperation.toRpc({
+        callData: '0x',
+        callGasLimit: 0n,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+        nonce: 0n,
+        paymasterAndData: '0x1234567890123456789012345678901234567890deadbeef',
+        preVerificationGas: 0n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 0n,
+      } satisfies UserOperation.UserOperation<'0.6', true>),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0x",
+        "callGasLimit": "0x0",
+        "maxFeePerGas": "0x0",
+        "maxPriorityFeePerGas": "0x0",
+        "nonce": "0x0",
+        "paymasterAndData": "0x1234567890123456789012345678901234567890deadbeef",
+        "preVerificationGas": "0x0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x0",
+      }
+    `)
+  })
+
+  test('v0.6 preserves empty paymasterAndData', () => {
+    expect(
+      UserOperation.toRpc({
+        callData: '0x',
+        callGasLimit: 0n,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+        nonce: 0n,
+        paymasterAndData: '0x',
+        preVerificationGas: 0n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 0n,
+      } satisfies UserOperation.UserOperation<'0.6', true>),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0x",
+        "callGasLimit": "0x0",
+        "maxFeePerGas": "0x0",
+        "maxPriorityFeePerGas": "0x0",
+        "nonce": "0x0",
+        "paymasterAndData": "0x",
+        "preVerificationGas": "0x0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x0",
+      }
+    `)
+  })
+
+  test('v0.9 preserves paymasterSignature', () => {
+    expect(
+      UserOperation.toRpc({
+        callData: '0x',
+        callGasLimit: 0n,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+        nonce: 0n,
+        paymasterSignature: '0xcafebabe',
+        preVerificationGas: 0n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 0n,
+      } satisfies UserOperation.UserOperation<'0.9', true>),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0x",
+        "callGasLimit": "0x0",
+        "maxFeePerGas": "0x0",
+        "maxPriorityFeePerGas": "0x0",
+        "nonce": "0x0",
+        "paymasterSignature": "0xcafebabe",
+        "preVerificationGas": "0x0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x0",
+      }
+    `)
+  })
 })
 
 describe('toTypedData', () => {
@@ -1279,8 +1463,8 @@ describe('toTypedData', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 1n,
-              s: 2n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000002',
             },
           },
           {
@@ -1371,8 +1555,8 @@ describe('toTypedData', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 1n,
-              s: 2n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000002',
             },
           },
           {
@@ -1441,5 +1625,94 @@ describe('toTypedData', () => {
       `,
       )
     })
+  })
+})
+
+describe('v0.8 authorization round-trip', () => {
+  const userOperation = {
+    authorization: {
+      address: '0x1234567890123456789012345678901234567890',
+      chainId: 1,
+      nonce: 0n,
+      yParity: 0,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+    },
+    callData: '0xdeadbeef',
+    callGasLimit: 300_000n,
+    maxFeePerGas: 100_000n,
+    maxPriorityFeePerGas: 100_000n,
+    nonce: 0n,
+    preVerificationGas: 100_000n,
+    sender: '0x1234567890123456789012345678901234567890',
+    signature: '0x',
+    verificationGasLimit: 100_000n,
+  } as const satisfies UserOperation.UserOperation<'0.8', true>
+
+  test('toRpc serializes eip7702Auth', () => {
+    const rpc = UserOperation.toRpc(userOperation) as UserOperation.Rpc<'0.8'>
+    expect(rpc.eip7702Auth).toMatchInlineSnapshot(`
+      {
+        "address": "0x1234567890123456789012345678901234567890",
+        "chainId": "0x1",
+        "nonce": "0x0",
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "yParity": "0x0",
+      }
+    `)
+  })
+
+  test('fromRpc parses eip7702Auth', () => {
+    const rpc = UserOperation.toRpc(userOperation) as UserOperation.Rpc<'0.8'>
+    const parsed = UserOperation.fromRpc(rpc) as UserOperation.UserOperation<
+      '0.8',
+      true
+    >
+    expect(parsed.authorization).toEqual(userOperation.authorization)
+  })
+
+  test('round-trip preserves authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation)
+    const parsed = UserOperation.fromRpc(rpc)
+    expect(parsed).toEqual(userOperation)
+  })
+
+  test('toRpc omits eip7702Auth when absent', () => {
+    const { authorization: _omit, ...rest } = userOperation
+    const rpc = UserOperation.toRpc(rest)
+    expect('eip7702Auth' in rpc).toBe(false)
+  })
+})
+
+describe('v0.9 RPC round-trip', () => {
+  test('preserves paymasterSignature and parses eip7702Auth', () => {
+    const userOperation = {
+      authorization: {
+        address: '0x1234567890123456789012345678901234567890',
+        chainId: 1,
+        nonce: 0n,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        yParity: 0,
+      },
+      callData: '0x',
+      callGasLimit: 0n,
+      maxFeePerGas: 0n,
+      maxPriorityFeePerGas: 0n,
+      nonce: 0n,
+      paymasterSignature: '0xcafebabe',
+      preVerificationGas: 0n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: 0n,
+    } as const satisfies UserOperation.UserOperation<'0.9', true>
+
+    const rpc = UserOperation.toRpc(userOperation)
+    const parsed = UserOperation.fromRpc(rpc)
+
+    expect(rpc).toHaveProperty('eip7702Auth')
+    expect(rpc).not.toHaveProperty('authorization')
+    expect(parsed).toEqual(userOperation)
   })
 })

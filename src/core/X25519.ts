@@ -1,4 +1,4 @@
-import { x25519 } from '@noble/curves/ed25519'
+import { x25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -64,7 +64,9 @@ export declare namespace createKeyPair {
  * ```ts twoslash
  * import { X25519 } from 'ox'
  *
- * const publicKey = X25519.getPublicKey({ privateKey: '0x...' })
+ * const publicKey = X25519.getPublicKey({
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param options - The options to compute the public key.
@@ -180,7 +182,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = x25519.utils.randomPrivateKey()
+  const bytes = x25519.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }

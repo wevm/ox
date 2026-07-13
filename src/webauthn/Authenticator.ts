@@ -25,10 +25,11 @@ import type * as Types from './Types.js'
  * ```ts twoslash
  * import { Authenticator } from 'ox/webauthn'
  *
- * const authenticatorData = Authenticator.getAuthenticatorData({
- *   rpId: 'example.com',
- *   signCount: 420,
- * })
+ * const authenticatorData =
+ *   Authenticator.getAuthenticatorData({
+ *     rpId: 'example.com',
+ *     signCount: 420
+ *   })
  * // @log: "0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194705000001a4"
  * ```
  *
@@ -43,50 +44,86 @@ import type * as Types from './Types.js'
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const authenticatorData = Authenticator.getAuthenticatorData({
- *   rpId: 'example.com',
- *   flag: 0x41, // UP + AT
- *   credential: {
- *     id: new Uint8Array(32),
- *     publicKey,
- *   },
- * })
+ * const authenticatorData =
+ *   Authenticator.getAuthenticatorData({
+ *     rpId: 'example.com',
+ *     flag: 0x41, // UP + AT
+ *     credential: {
+ *       id: new Uint8Array(32),
+ *       publicKey
+ *     }
+ *   })
  * ```
  *
  * @param options - Options to construct the authenticator data.
  * @returns The authenticator data.
  */
-export function getAuthenticatorData(
-  options: getAuthenticatorData.Options = {},
-): Hex.Hex {
+export function getAuthenticatorData<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: getAuthenticatorData.Options<as> = {},
+): getAuthenticatorData.ReturnType<as> {
   const {
+    as = 'Hex',
     credential,
     flag = 5,
     rpId = window.location.hostname,
     signCount = 0,
   } = options
+
+  // base layout: rpIdHash (32) + flags (1) + signCount (4) = 37 bytes
+  const baseLength = 37
+
+  if (as === 'Bytes') {
+    // Bytes-first path: build the result directly into a single `Uint8Array`
+    // so byte-consuming callers (verifier, sign payload builder) skip the
+    // trailing `Hex.fromBytes`.
+    const rpIdHash = Hash.sha256(Bytes.fromString(rpId), { as: 'Bytes' })
+    if (!credential) {
+      const out = new Uint8Array(baseLength)
+      out.set(rpIdHash, 0)
+      out[32] = flag & 0xff
+      out[33] = (signCount >>> 24) & 0xff
+      out[34] = (signCount >>> 16) & 0xff
+      out[35] = (signCount >>> 8) & 0xff
+      out[36] = signCount & 0xff
+      return out as never
+    }
+    const credentialId = credential.id
+    const coseKey = Bytes.fromHex(CoseKey.fromPublicKey(credential.publicKey))
+    const credLen = credentialId.length
+    const out = new Uint8Array(baseLength + 16 + 2 + credLen + coseKey.length)
+    out.set(rpIdHash, 0)
+    out[32] = flag & 0xff
+    out[33] = (signCount >>> 24) & 0xff
+    out[34] = (signCount >>> 16) & 0xff
+    out[35] = (signCount >>> 8) & 0xff
+    out[36] = signCount & 0xff
+    // AAGUID (offset 53..68) is 16 zero bytes; already zero from `new Uint8Array`.
+    out[baseLength + 16] = (credLen >>> 8) & 0xff
+    out[baseLength + 16 + 1] = credLen & 0xff
+    out.set(credentialId, baseLength + 16 + 2)
+    out.set(coseKey, baseLength + 16 + 2 + credLen)
+    return out as never
+  }
+
+  // Hex output path: keep all intermediates as hex to avoid `Bytes <-> Hex`
+  // round trips for the legacy default. CoseKey.fromPublicKey already returns
+  // hex, so concatenation stays in string space.
   const rpIdHash = Hash.sha256(Hex.fromString(rpId))
   const flag_bytes = Hex.fromNumber(flag, { size: 1 })
   const signCount_bytes = Hex.fromNumber(signCount, { size: 4 })
   const base = Hex.concat(rpIdHash, flag_bytes, signCount_bytes)
-
-  if (!credential) return base
-
-  // AAGUID (16 bytes of zeros)
+  if (!credential) return base as never
   const aaguid = Hex.fromBytes(new Uint8Array(16))
-
-  // Credential ID
   const credentialId = Hex.fromBytes(credential.id)
   const credIdLen = Hex.fromNumber(credential.id.length, { size: 2 })
-
-  // COSE public key
   const coseKey = CoseKey.fromPublicKey(credential.publicKey)
-
-  return Hex.concat(base, aaguid, credIdLen, credentialId, coseKey)
+  return Hex.concat(base, aaguid, credIdLen, credentialId, coseKey) as never
 }
 
 export declare namespace getAuthenticatorData {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** Output representation. @default 'Hex' */
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** Attested credential data to include (credential ID + public key). When set, the AT flag (0x40) should also be set. */
     credential?:
       | {
@@ -104,6 +141,10 @@ export declare namespace getAuthenticatorData {
     signCount?: number | undefined
   }
 
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Bytes' ? Uint8Array : never)
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -119,7 +160,7 @@ export declare namespace getAuthenticatorData {
  * import { Authenticator } from 'ox/webauthn'
  *
  * const signCount = Authenticator.getSignCount(
- *   '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000001',
+ *   '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000001'
  * )
  * // @log: 1
  * ```
@@ -127,9 +168,14 @@ export declare namespace getAuthenticatorData {
  * @param authenticatorData - The authenticator data hex string.
  * @returns The signature counter.
  */
-export function getSignCount(authenticatorData: Hex.Hex): number {
-  const bytes = Bytes.fromHex(authenticatorData)
+export function getSignCount(authenticatorData: Hex.Hex | Uint8Array): number {
+  const bytes =
+    typeof authenticatorData === 'string'
+      ? Bytes.fromHex(authenticatorData)
+      : authenticatorData
   if (bytes.length < 37) return 0
+  // Inline read of the 4-byte big-endian counter at offset 33. Avoids
+  // allocating a parsed object for callers that only want signCount.
   return (
     ((bytes[33]! << 24) |
       (bytes[34]! << 16) |
@@ -161,7 +207,7 @@ export declare namespace getSignCount {
  *
  * const clientDataJSON = Authenticator.getClientDataJSON({
  *   challenge: '0xdeadbeef',
- *   origin: 'https://example.com',
+ *   origin: 'https://example.com'
  * })
  * // @log: "{"type":"webauthn.get","challenge":"3q2-7w","origin":"https://example.com","crossOrigin":false}"
  * ```
@@ -222,13 +268,14 @@ export declare namespace getClientDataJSON {
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const attestationObject = Authenticator.getAttestationObject({
- *   authData: Authenticator.getAuthenticatorData({
- *     rpId: 'example.com',
- *     flag: 0x41,
- *     credential: { id: new Uint8Array(32), publicKey },
- *   }),
- * })
+ * const attestationObject =
+ *   Authenticator.getAttestationObject({
+ *     authData: Authenticator.getAuthenticatorData({
+ *       rpId: 'example.com',
+ *       flag: 0x41,
+ *       credential: { id: new Uint8Array(32), publicKey }
+ *     })
+ *   })
  * ```
  *
  * @param options - Options to construct the attestation object.

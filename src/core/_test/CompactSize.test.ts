@@ -1,5 +1,5 @@
 import { CompactSize } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('toBytes', () => {
   test('single byte (0-252)', () => {
@@ -169,6 +169,8 @@ test('exports', () => {
       "fromHex",
       "NegativeValueError",
       "InsufficientBytesError",
+      "InvalidValueError",
+      "NonMinimalEncodingError",
     ]
   `)
 })

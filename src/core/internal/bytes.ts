@@ -19,10 +19,7 @@ export declare namespace assertSize {
 }
 
 /** @internal */
-export function assertStartOffset(
-  value: Bytes.Bytes,
-  start?: number | undefined,
-) {
+export function assertStartOffset(value: Bytes.Bytes, start?: number) {
   if (typeof start === 'number' && start > 0 && start > Bytes.size(value) - 1)
     throw new Bytes.SliceOffsetOutOfBoundsError({
       offset: start,
@@ -41,8 +38,8 @@ export declare namespace assertStartOffset {
 /** @internal */
 export function assertEndOffset(
   value: Bytes.Bytes,
-  start?: number | undefined,
-  end?: number | undefined,
+  start?: number,
+  end?: number,
 ) {
   if (
     typeof start === 'number' &&
@@ -97,11 +94,7 @@ export function pad(bytes: Bytes.Bytes, options: pad.Options = {}) {
       type: 'Bytes',
     })
   const paddedBytes = new Uint8Array(size)
-  for (let i = 0; i < size; i++) {
-    const padEnd = dir === 'right'
-    paddedBytes[padEnd ? i : size - i - 1] =
-      bytes[padEnd ? i : bytes.length - i - 1]!
-  }
+  paddedBytes.set(bytes, dir === 'right' ? 0 : size - bytes.length)
   return paddedBytes
 }
 
@@ -124,20 +117,14 @@ export function trim(
 ): trim.ReturnType {
   const { dir = 'left' } = options
 
-  let data = value
+  let start = 0
+  let end = value.length
+  if (dir === 'left') while (start < end && value[start] === 0) start++
+  else while (end > start && value[end - 1] === 0) end--
 
-  let sliceLength = 0
-  for (let i = 0; i < data.length - 1; i++) {
-    if (data[dir === 'left' ? i : data.length - i - 1]!.toString() === '0')
-      sliceLength++
-    else break
-  }
-  data =
-    dir === 'left'
-      ? data.slice(sliceLength)
-      : data.slice(0, data.length - sliceLength)
-
-  return data as trim.ReturnType
+  return (
+    start === 0 && end === value.length ? value : value.slice(start, end)
+  ) as trim.ReturnType
 }
 
 /** @internal */

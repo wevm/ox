@@ -1,5 +1,5 @@
 import { BinaryStateTree, Bytes, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import type { Node } from '../BinaryStateTree.js'
 
 function getHeight(node: Node): number {

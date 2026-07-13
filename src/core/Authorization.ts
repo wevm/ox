@@ -2,6 +2,7 @@ import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, Mutable, Undefined } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
@@ -20,7 +21,7 @@ export type Authorization<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? Signature.Signature<true, bigintType, numberType>
+    ? Signature.Signature<true, numberType>
     : Undefined<Signature.Signature>)
 >
 
@@ -85,7 +86,7 @@ export type TupleListSigned = TupleList<true>
  * const authorization = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  * ```
  *
@@ -101,15 +102,18 @@ export type TupleListSigned = TupleList<true>
  * const authorization = Authorization.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorization_signed = Authorization.from(authorization, { signature }) // [!code focus]
+ * const authorization_signed = Authorization.from(
+ *   authorization,
+ *   { signature }
+ * ) // [!code focus]
  * ```
  *
  * @param authorization - An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple in object format.
@@ -166,7 +170,7 @@ export declare namespace from {
  *   nonce: '0x1',
  *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *   yParity: '0x0',
+ *   yParity: '0x0'
  * })
  * ```
  *
@@ -196,14 +200,16 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { Authorization } from 'ox'
  *
- * const authorizationList = Authorization.fromRpcList([{
- *   address: '0x0000000000000000000000000000000000000000',
- *   chainId: '0x1',
- *   nonce: '0x1',
- *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
- *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *   yParity: '0x0',
- * }])
+ * const authorizationList = Authorization.fromRpcList([
+ *   {
+ *     address: '0x0000000000000000000000000000000000000000',
+ *     chainId: '0x1',
+ *     nonce: '0x1',
+ *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *     yParity: '0x0'
+ *   }
+ * ])
  * ```
  *
  * @param authorizationList - The RPC-formatted Authorization list.
@@ -248,14 +254,14 @@ export declare namespace fromRpcList {
  *   '0x3',
  *   '0x1',
  *   '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
- *   '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+ *   '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
  * ])
  * // @log: {
  * // @log:   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:   chainId: 1,
  * // @log:   nonce: 3n
- * // @log:   r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:   s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:   r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:   s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:   yParity: 0,
  * // @log: }
  * ```
@@ -293,8 +299,16 @@ export declare namespace fromTuple {
  * import { Authorization } from 'ox'
  *
  * const authorizationList = Authorization.fromTupleList([
- *   ['0x1', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x3'],
- *   ['0x3', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x14'],
+ *   [
+ *     '0x1',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x3'
+ *   ],
+ *   [
+ *     '0x3',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x14'
+ *   ]
  * ])
  * // @log: [
  * // @log:   {
@@ -317,24 +331,38 @@ export declare namespace fromTuple {
  * import { Authorization } from 'ox'
  *
  * const authorizationList = Authorization.fromTupleList([
- *   ['0x1', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x3', '0x1', '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90', '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'],
- *   ['0x3', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x14', '0x1', '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90', '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'],
+ *   [
+ *     '0x1',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x3',
+ *     '0x1',
+ *     '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ *     '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
+ *   ],
+ *   [
+ *     '0x3',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x14',
+ *     '0x1',
+ *     '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ *     '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
+ *   ]
  * ])
  * // @log: [
  * // @log:   {
  * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 1,
  * // @log:     nonce: 3n,
- * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:     r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:     s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:     yParity: 0,
  * // @log:   },
  * // @log:   {
  * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 3,
  * // @log:     nonce: 20n,
- * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:     r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:     s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:     yParity: 0,
  * // @log:   },
  * // @log: ]
@@ -353,7 +381,7 @@ export function fromTupleList<const tupleList extends TupleList>(
 
 export declare namespace fromTupleList {
   type ReturnType<tupleList extends TupleList> = Compute<
-    TupleList<tupleList extends TupleList<true> ? true : false>
+    List<tupleList extends TupleList<true> ? true : false>
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -372,14 +400,14 @@ export declare namespace fromTupleList {
  * const authorization = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
  * const payload = Authorization.getSignPayload(authorization) // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload,
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  * ```
  *
@@ -404,7 +432,7 @@ export declare namespace getSignPayload {
  * const authorization = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
  * const hash = Authorization.hash(authorization) // [!code focus]
@@ -461,27 +489,30 @@ export declare namespace hash {
  *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: 1,
  *   nonce: 1n,
- *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
- *   yParity: 0,
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   yParity: 0
  * })
  * ```
  *
  * @param authorization - An Authorization.
  * @returns An RPC-formatted Authorization.
  */
-export function toRpc(authorization: Signed): Rpc {
+export function toRpc(authorization: toRpc.Input): Rpc {
   const { address, chainId, nonce, ...signature } = authorization
 
   return {
     address,
-    chainId: Hex.fromNumber(chainId),
-    nonce: Hex.fromNumber(nonce),
+    chainId: Quantity.fromNumberish(chainId),
+    nonce: Quantity.fromNumberish(nonce),
     ...Signature.toRpc(signature),
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Authorization.(toRpc:function)}. */
+  type Input = Signed<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -492,24 +523,29 @@ export declare namespace toRpc {
  * ```ts twoslash
  * import { Authorization } from 'ox'
  *
- * const authorization = Authorization.toRpcList([{
- *   address: '0x0000000000000000000000000000000000000000',
- *   chainId: 1,
- *   nonce: 1n,
- *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
- *   yParity: 0,
- * }])
+ * const authorization = Authorization.toRpcList([
+ *   {
+ *     address: '0x0000000000000000000000000000000000000000',
+ *     chainId: 1,
+ *     nonce: 1n,
+ *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *     yParity: 0
+ *   }
+ * ])
  * ```
  *
  * @param authorizationList - An Authorization List.
  * @returns An RPC-formatted Authorization List.
  */
-export function toRpcList(authorizationList: ListSigned): ListRpc {
+export function toRpcList(authorizationList: toRpcList.Input): ListRpc {
   return authorizationList.map(toRpc)
 }
 
 export declare namespace toRpcList {
+  /** Numberish input accepted by {@link ox#Authorization.(toRpcList:function)}. */
+  type Input = ListSigned<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -523,7 +559,7 @@ export declare namespace toRpcList {
  * const authorization = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
  * const tuple = Authorization.toTuple(authorization) // [!code focus]
@@ -567,15 +603,18 @@ export declare namespace toTuple {
  * const authorization_1 = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  * const authorization_2 = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 3,
- *   nonce: 20n,
+ *   nonce: 20n
  * })
  *
- * const tuple = Authorization.toTupleList([authorization_1, authorization_2]) // [!code focus]
+ * const tuple = Authorization.toTupleList([
+ *   authorization_1,
+ *   authorization_2
+ * ]) // [!code focus]
  * // @log: [
  * // @log:   [
  * // @log:     address: '0x1234567890abcdef1234567890abcdef12345678',
@@ -597,7 +636,7 @@ export function toTupleList<
   const list extends
     | readonly Authorization<true>[]
     | readonly Authorization<false>[],
->(list?: list | undefined): toTupleList.ReturnType<list> {
+>(list?: list): toTupleList.ReturnType<list> {
   if (!list || list.length === 0) return []
 
   const tupleList: Mutable<TupleList> = []

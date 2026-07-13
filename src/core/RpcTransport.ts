@@ -47,7 +47,7 @@ export type RequestFn<
   parameters: Compute<
     RpcSchema_internal.ExtractRequestOpaque<schema, methodName>
   >,
-  options?: internal.Options<raw_override, options, schema> | undefined,
+  options?: internal.Options<raw_override, options, schema>,
 ) => Promise<
   raw_override extends boolean
     ? raw_override extends true
@@ -65,9 +65,13 @@ export type RequestFn<
  * ```ts twoslash
  * import { RpcTransport } from 'ox'
  *
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * )
  *
- * const blockNumber = await transport.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await transport.request({
+ *   method: 'eth_blockNumber'
+ * })
  * // @log: '0x1a2b3c'
  * ```
  *
@@ -77,9 +81,12 @@ export type RequestFn<
  */
 export function fromHttp<
   raw extends boolean = false,
-  schema extends RpcSchema.Generic = RpcSchema.Default,
->(url: string, options: fromHttp.Options<raw, schema> = {}): Http<raw, schema> {
-  return internal.create<HttpOptions, schema, raw>(
+  schema extends RpcSchema.Schema = RpcSchema.Default,
+>(
+  url: string,
+  options: fromHttp.Options<raw, schema> = {},
+): Http<raw, RpcSchema.ToGeneric<schema>> {
+  return internal.create<HttpOptions, RpcSchema.ToGeneric<schema>, raw>(
     {
       async request(body_, options_) {
         const {
@@ -97,18 +104,28 @@ export function fromHttp<
 
         const response = await promise.withTimeout(
           ({ signal }) => {
+            const externalSignal = fetchOptions?.signal
+            const timeoutSignal = timeout > 0 ? signal : null
+            const signals = [externalSignal, timeoutSignal].filter(
+              (s): s is AbortSignal => Boolean(s),
+            )
+            const composedSignal =
+              signals.length === 0
+                ? null
+                : signals.length === 1
+                  ? signals[0]!
+                  : AbortSignal.any(signals)
             const init: RequestInit = {
               ...fetchOptions,
               body,
               headers: {
                 'Content-Type': 'application/json',
-                ...fetchOptions?.headers,
+                ...Object.fromEntries(new Headers(fetchOptions?.headers)),
               },
               method: fetchOptions?.method ?? 'POST',
-              signal: fetchOptions?.signal ?? (timeout > 0 ? signal : null),
+              signal: composedSignal,
             }
-            const request = new Request(url, init)
-            return fetchFn(request)
+            return fetchFn(url, init)
           },
           {
             timeout,
@@ -116,31 +133,40 @@ export function fromHttp<
           },
         )
 
-        const data = await (async () => {
-          if (
-            response.headers.get('Content-Type')?.startsWith('application/json')
-          )
-            return response.json()
-          return response.text().then((data) => {
-            try {
-              return JSON.parse(data || '{}')
-            } catch (_err) {
-              if (response.ok)
-                throw new MalformedResponseError({
-                  response: data,
-                })
-              return { error: data }
-            }
-          })
-        })()
+        // Always read as text so we can handle empty bodies and non-JSON
+        // payloads (some servers return `Content-Type: application/json` with
+        // an empty body for error responses).
+        const data = await response.text().then((data) => {
+          if (data === '') {
+            if (response.ok)
+              throw new MalformedResponseError({ response: data })
+            return { error: undefined }
+          }
+          try {
+            return JSON.parse(data)
+          } catch {
+            if (response.ok)
+              throw new MalformedResponseError({
+                response: data,
+              })
+            return { error: data }
+          }
+        })
 
-        if (!response.ok)
+        if (!response.ok) {
+          const error = (data as { error?: unknown })?.error
           throw new HttpError({
             body,
-            details: JSON.stringify(data.error) ?? response.statusText,
+            details:
+              typeof error === 'string'
+                ? error
+                : error
+                  ? JSON.stringify(error)
+                  : response.statusText,
             response,
             url,
           })
+        }
 
         return data as never
       },
@@ -152,7 +178,7 @@ export function fromHttp<
 export declare namespace fromHttp {
   type Options<
     raw extends boolean = false,
-    schema extends RpcSchema.Generic = RpcSchema.Default,
+    schema extends RpcSchema.Schema = RpcSchema.Default,
   > = internal.Options<raw, HttpOptions, schema>
 
   type ErrorType =
@@ -170,7 +196,12 @@ export class HttpError extends Errors.BaseError {
     details,
     response,
     url,
-  }: { body: unknown; details: string; response: Response; url: string }) {
+  }: {
+    body: unknown
+    details: string
+    response: Response
+    url: string
+  }) {
     super('HTTP request failed.', {
       details,
       metaMessages: [

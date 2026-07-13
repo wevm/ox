@@ -1,6 +1,5 @@
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
-import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import type { Compute, Mutable } from './internal/types.js'
 
@@ -29,9 +28,9 @@ export type Tuple = readonly ItemTuple[]
  *     '0x0000000000000000000000000000000000000000',
  *     [
  *       '0x0000000000000000000000000000000000000000000000000000000000000001',
- *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
- *     ],
- *   ],
+ *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe'
+ *     ]
+ *   ]
  * ])
  * // @log: [
  * // @log:   {
@@ -54,11 +53,15 @@ export function fromTupleList(accessList: Tuple): AccessList {
 
     if (address) Address.assert(address, { strict: false })
 
+    for (let j = 0; j < storageKeys.length; j++)
+      if (Hex.size(storageKeys[j]!) !== 32)
+        throw new InvalidStorageKeySizeError({
+          storageKey: storageKeys[j]!,
+        })
+
     list.push({
       address: address,
-      storageKeys: storageKeys.map((key) =>
-        Hash.validate(key) ? key : Hex.trimLeft(key),
-      ),
+      storageKeys,
     })
   }
   return list
@@ -76,8 +79,9 @@ export function fromTupleList(accessList: Tuple): AccessList {
  *     address: '0x0000000000000000000000000000000000000000',
  *     storageKeys: [
  *       '0x0000000000000000000000000000000000000000000000000000000000000001',
- *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe'],
- *   },
+ *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe'
+ *     ]
+ *   }
  * ])
  * // @log: [
  * // @log:   [
@@ -93,9 +97,7 @@ export function fromTupleList(accessList: Tuple): AccessList {
  * @param accessList - Access list.
  * @returns List of tuples.
  */
-export function toTupleList(
-  accessList?: AccessList | undefined,
-): Compute<Tuple> {
+export function toTupleList(accessList?: AccessList): Compute<Tuple> {
   if (!accessList || accessList.length === 0) return []
 
   const tuple: Mutable<Tuple> = []

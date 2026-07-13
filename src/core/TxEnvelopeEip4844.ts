@@ -1,8 +1,11 @@
 import * as AccessList from './AccessList.js'
 import * as Blobs from './Blobs.js'
-import type * as Errors from './Errors.js'
+import type * as Bytes from './Bytes.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -32,10 +35,36 @@ export type TxEnvelopeEip4844<
     maxFeePerGas?: bigintType | undefined
     /** Max priority fee per gas (in wei). */
     maxPriorityFeePerGas?: bigintType | undefined
-    /** The sidecars associated with this transaction. When defined, the envelope is in the "network wrapper" format. */
-    sidecars?: readonly Blobs.BlobSidecar<Hex.Hex>[] | undefined
+    /**
+     * PeerDAS (EIP-7594) sidecars associated with this transaction. When
+     * defined, the envelope serializes into the 5-element "PooledTransactions"
+     * network wrapper (`rlp([tx_body, wrapper_version, blobs, commitments,
+     * cell_proofs])`).
+     */
+    sidecars?: Sidecars<Hex.Hex> | undefined
   }
 >
+
+/**
+ * PeerDAS (EIP-7594) sidecars carried alongside a type-3 transaction in the
+ * `PooledTransactions` p2p message.
+ *
+ * - `blobs` — one 131,072-byte payload per blob (same shape as 4844).
+ * - `commitments` — one KZG commitment per blob.
+ * - `cellProofs` — flat list of `CELLS_PER_EXT_BLOB * blobs.length` cell KZG
+ *   proofs (128 per blob). `cellProofs[i * 128 + j]` is the proof for cell
+ *   `j` of `blobs[i]`'s extended form.
+ */
+export type Sidecars<
+  type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes,
+> = {
+  blobs: readonly Blobs.Blob<type>[]
+  commitments: readonly type[]
+  cellProofs: readonly type[]
+}
+
+/** Current wire `wrapper_version` for the PeerDAS PooledTransactions wrapper. */
+export const wrapperVersion = '0x01' as const
 
 export type Rpc<signed extends boolean = boolean> = TxEnvelopeEip4844<
   signed,
@@ -65,7 +94,7 @@ export type Type = 'eip4844'
  *   blobVersionedHashes: [],
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @error: EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.
  * ```
@@ -74,20 +103,21 @@ export type Type = 'eip4844'
  */
 export function assert(envelope: PartialBy<TxEnvelopeEip4844, 'type'>) {
   const { blobVersionedHashes } = envelope
-  if (blobVersionedHashes) {
-    if (blobVersionedHashes.length === 0)
-      throw new Blobs.EmptyBlobVersionedHashesError()
-    for (const hash of blobVersionedHashes) {
-      const size = Hex.size(hash)
-      const version = Hex.toNumber(Hex.slice(hash, 0, 1))
-      if (size !== 32)
-        throw new Blobs.InvalidVersionedHashSizeError({ hash, size })
-      if (version !== Kzg.versionedHashVersion)
-        throw new Blobs.InvalidVersionedHashVersionError({
-          hash,
-          version,
-        })
-    }
+  // EIP-4844 requires at least one versioned blob hash. Treat a missing
+  // field as an empty list to give callers a single, descriptive error
+  // rather than a downstream RLP/serialization failure.
+  if (!blobVersionedHashes || blobVersionedHashes.length === 0)
+    throw new Blobs.EmptyBlobVersionedHashesError()
+  for (const hash of blobVersionedHashes) {
+    const size = Hex.size(hash)
+    const version = Hex.toNumber(Hex.slice(hash, 0, 1))
+    if (size !== 32)
+      throw new Blobs.InvalidVersionedHashSizeError({ hash, size })
+    if (version !== Kzg.versionedHashVersion)
+      throw new Blobs.InvalidVersionedHashVersionError({
+        hash,
+        version,
+      })
   }
   TxEnvelopeEip1559.assert(
     envelope as {} as TxEnvelopeEip1559.TxEnvelopeEip1559,
@@ -113,7 +143,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeEip4844 } from 'ox'
  *
- * const envelope = TxEnvelopeEip4844.deserialize('0x03ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip4844.deserialize(
+ *   '0x03ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0'
+ * )
  * // @log: {
  * // @log:   blobVersionedHashes: [...],
  * // @log:   type: 'eip4844',
@@ -131,16 +163,42 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip4844> {
-  const transactionOrWrapperArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionOrWrapperArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
-  const hasNetworkWrapper = transactionOrWrapperArray.length === 4
+  // PeerDAS (EIP-7594) PooledTransactions wrapper:
+  //   rlp([tx_body, wrapper_version, blobs, commitments, cell_proofs])
+  const hasWrapper =
+    transactionOrWrapperArray.length === 5 &&
+    Array.isArray(transactionOrWrapperArray[0]) &&
+    !Array.isArray(transactionOrWrapperArray[1]) &&
+    transactionOrWrapperArray[1] instanceof Uint8Array &&
+    transactionOrWrapperArray[1].length === 1 &&
+    transactionOrWrapperArray[1][0] === 0x01
 
-  const transactionArray = hasNetworkWrapper
-    ? transactionOrWrapperArray[0]!
-    : transactionOrWrapperArray
-  const wrapperArray = hasNetworkWrapper
-    ? transactionOrWrapperArray.slice(1)
-    : []
+  // Legacy 4-element wrapper (pre-PeerDAS) is no longer accepted.
+  if (
+    !hasWrapper &&
+    transactionOrWrapperArray.length === 4 &&
+    Array.isArray(transactionOrWrapperArray[0])
+  )
+    throw new LegacyBlobSidecarWrapperError({ serialized })
+
+  const transactionArray = (
+    hasWrapper
+      ? (transactionOrWrapperArray[0] as ReadonlyArray<Bytes.Bytes>)
+      : transactionOrWrapperArray
+  ) as readonly (Bytes.Bytes | ReadonlyArray<Bytes.Bytes>)[]
+
+  let wrapperBlobs: ReadonlyArray<Bytes.Bytes> | undefined
+  let wrapperCommitments: ReadonlyArray<Bytes.Bytes> | undefined
+  let wrapperCellProofs: ReadonlyArray<Bytes.Bytes> | undefined
+  if (hasWrapper) {
+    wrapperBlobs = transactionOrWrapperArray[2] as ReadonlyArray<Bytes.Bytes>
+    wrapperCommitments =
+      transactionOrWrapperArray[3] as ReadonlyArray<Bytes.Bytes>
+    wrapperCellProofs =
+      transactionOrWrapperArray[4] as ReadonlyArray<Bytes.Bytes>
+  }
 
   const [
     chainId,
@@ -158,7 +216,6 @@ export function deserialize(
     r,
     s,
   ] = transactionArray
-  const [blobs, commitments, proofs] = wrapperArray
 
   if (!(transactionArray.length === 11 || transactionArray.length === 14))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -172,7 +229,9 @@ export function deserialize(
         value,
         data,
         accessList,
-        ...(transactionArray.length > 9
+        maxFeePerBlobGas,
+        blobVersionedHashes,
+        ...(transactionArray.length > 11
           ? {
               yParity,
               r,
@@ -185,33 +244,76 @@ export function deserialize(
     })
 
   let transaction = {
-    blobVersionedHashes: blobVersionedHashes as Hex.Hex[],
-    chainId: Number(chainId),
+    blobVersionedHashes: (
+      blobVersionedHashes as ReadonlyArray<Bytes.Bytes>
+    ).map((b) => Tx.bytesToHex(b)),
+    chainId: Number(Tx.bytesToBigIntOrZero(chainId as Bytes.Bytes)),
     type,
   } as TxEnvelopeEip4844
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
-    transaction.maxFeePerBlobGas = BigInt(maxFeePerBlobGas)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
-    transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
-    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  if (accessList?.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as any)
-  if (blobs && commitments && proofs)
-    transaction.sidecars = Blobs.toSidecars(blobs as Hex.Hex[], {
-      commitments: commitments as Hex.Hex[],
-      proofs: proofs as Hex.Hex[],
-    })
+  const to_ = Tx.bytesToHexOrUndefined(to as Bytes.Bytes | undefined)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas as Bytes.Bytes | undefined)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.bytesToHexOrUndefined(data as Bytes.Bytes | undefined)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined)
+    transaction.nonce = Tx.bytesToBigIntOrZero(nonce as Bytes.Bytes)
+  const value_ = Tx.bytesToBigIntOrUndefined(value as Bytes.Bytes | undefined)
+  if (value_ !== undefined) transaction.value = value_
+  const maxFeePerBlobGas_ = Tx.bytesToBigIntOrUndefined(
+    maxFeePerBlobGas as Bytes.Bytes | undefined,
+  )
+  if (maxFeePerBlobGas_ !== undefined)
+    transaction.maxFeePerBlobGas = maxFeePerBlobGas_
+  const maxFeePerGas_ = Tx.bytesToBigIntOrUndefined(
+    maxFeePerGas as Bytes.Bytes | undefined,
+  )
+  if (maxFeePerGas_ !== undefined) transaction.maxFeePerGas = maxFeePerGas_
+  const maxPriorityFeePerGas_ = Tx.bytesToBigIntOrUndefined(
+    maxPriorityFeePerGas as Bytes.Bytes | undefined,
+  )
+  if (maxPriorityFeePerGas_ !== undefined)
+    transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  if (accessList && (accessList as readonly unknown[]).length !== 0)
+    transaction.accessList = AccessList.fromTupleList(
+      Tx.bytesTreeToHex(accessList as never) as never,
+    )
+
+  if (hasWrapper) {
+    const blobs = wrapperBlobs as ReadonlyArray<Bytes.Bytes>
+    const commitments = wrapperCommitments as ReadonlyArray<Bytes.Bytes>
+    const cellProofs = wrapperCellProofs as ReadonlyArray<Bytes.Bytes>
+    // PeerDAS cardinality: one commitment per blob, 128 cell proofs per blob,
+    // one versioned hash per blob.
+    if (
+      blobs.length !== commitments.length ||
+      cellProofs.length !== blobs.length * 128 ||
+      blobs.length !== transaction.blobVersionedHashes.length
+    )
+      throw new TransactionEnvelope.InvalidSerializedError({
+        attributes: {
+          blobs: blobs.length,
+          blobVersionedHashes: transaction.blobVersionedHashes.length,
+          cellProofs: cellProofs.length,
+          commitments: commitments.length,
+        },
+        serialized,
+        type,
+      })
+    transaction.sidecars = {
+      blobs: blobs.map((b) => Tx.bytesToHex(b)),
+      commitments: commitments.map((c) => Tx.bytesToHex(c)),
+      cellProofs: cellProofs.map((p) => Tx.bytesToHex(p)),
+    }
+  }
 
   const signature =
     r && s && yParity
-      ? Signature.fromTuple([yParity as Hex.Hex, r as Hex.Hex, s as Hex.Hex])
+      ? Signature.fromTuple([
+          Tx.bytesToHex(yParity as Bytes.Bytes),
+          Tx.bytesToHex(r as Bytes.Bytes),
+          Tx.bytesToHex(s as Bytes.Bytes),
+        ])
       : undefined
   if (signature)
     transaction = {
@@ -238,7 +340,9 @@ export declare namespace deserialize {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   chainId: 1,
@@ -247,7 +351,7 @@ export declare namespace deserialize {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * ```
  *
@@ -258,12 +362,18 @@ export declare namespace deserialize {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   Secp256k1,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -272,17 +382,17 @@ export declare namespace deserialize {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip4844.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip4844.from(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
- *   signature, // [!code focus]
+ * const envelope_signed = TxEnvelopeEip4844.from(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   blobVersionedHashes: [...],
@@ -307,7 +417,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeEip4844 } from 'ox'
  *
- * const envelope = TxEnvelopeEip4844.from('0x03f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip4844.from(
+ *   '0x03f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261'
+ * )
  * // @log: {
  * // @log:   blobVersionedHashes: [...],
  * // @log:   chainId: 1,
@@ -385,7 +497,9 @@ export declare namespace from {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -394,13 +508,16 @@ export declare namespace from {
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const payload = TxEnvelopeEip4844.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -428,7 +545,9 @@ export declare namespace getSignPayload {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -437,7 +556,7 @@ export declare namespace getSignPayload {
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const hash = TxEnvelopeEip4844.hash(envelope) // [!code focus]
@@ -455,9 +574,11 @@ export function hash<presign extends boolean = false>(
   return Hash.keccak256(
     serialize({
       ...envelope,
+      // Hashing must operate on the bare type-3 envelope, never the
+      // PeerDAS PooledTransactions network wrapper.
+      sidecars: undefined,
       ...(presign
         ? {
-            sidecars: undefined,
             r: undefined,
             s: undefined,
             yParity: undefined,
@@ -492,14 +613,16 @@ export declare namespace hash {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip4844.serialize(envelope) // [!code focus]
@@ -512,12 +635,18 @@ export declare namespace hash {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   Secp256k1,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(blobs)
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -526,17 +655,17 @@ export declare namespace hash {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip4844.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = TxEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
- *   signature, // [!code focus]
+ * const serialized = TxEnvelopeEip4844.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
@@ -562,6 +691,7 @@ export function serialize(
     maxPriorityFeePerGas,
     accessList,
     data,
+    input,
   } = envelope
 
   assert(envelope)
@@ -572,47 +702,44 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex.fromNumber(maxFeePerGas) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(maxPriorityFeePerGas),
+    Tx.quantityToHex(maxFeePerGas),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
-    data ?? '0x',
+    Tx.quantityToHex(value),
+    data ?? input ?? '0x',
     accessTupleList,
-    maxFeePerBlobGas ? Hex.fromNumber(maxFeePerBlobGas) : '0x',
+    Tx.quantityToHex(maxFeePerBlobGas),
     blobVersionedHashes ?? [],
     ...(signature ? Signature.toTuple(signature) : []),
   ] as const
 
   const sidecars = options.sidecars || envelope.sidecars
-  const blobs: Hex.Hex[] = []
-  const commitments: Hex.Hex[] = []
-  const proofs: Hex.Hex[] = []
-  if (sidecars)
-    for (let i = 0; i < sidecars.length; i++) {
-      const { blob, commitment, proof } = sidecars[i]!
-      blobs.push(blob)
-      commitments.push(commitment)
-      proofs.push(proof)
-    }
+  if (sidecars) {
+    // PeerDAS (EIP-7594) PooledTransactions wrapper:
+    //   rlp([tx_body, wrapper_version, blobs, commitments, cell_proofs])
+    return Hex.concat(
+      '0x03',
+      Rlp.fromHex([
+        serialized,
+        wrapperVersion,
+        sidecars.blobs as readonly Hex.Hex[],
+        sidecars.commitments as readonly Hex.Hex[],
+        sidecars.cellProofs as readonly Hex.Hex[],
+      ]),
+    ) as Serialized
+  }
 
-  return Hex.concat(
-    '0x03',
-    sidecars
-      ? // If sidecars are provided, envelope turns into a "network wrapper":
-        Rlp.fromHex([serialized, blobs, commitments, proofs])
-      : // Otherwise, standard envelope is used:
-        Rlp.fromHex(serialized),
-  ) as Serialized
+  return Hex.concat('0x03', Rlp.fromHex(serialized)) as Serialized
 }
 
 export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature.Signature | undefined
-    /** Sidecars to append to the serialized Transaction Envelope. */
-    sidecars?: Blobs.BlobSidecars<Hex.Hex> | undefined
+    /** PeerDAS sidecars to append, producing the 5-element network wrapper. */
+    sidecars?: Sidecars<Hex.Hex> | undefined
   }
 
   type ErrorType =
@@ -630,11 +757,18 @@ export declare namespace serialize {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, RpcRequest, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   RpcRequest,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -643,7 +777,7 @@ export declare namespace serialize {
  *   gas: 21000n,
  *   maxFeePerBlobGas: Value.fromGwei('20'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const envelope_rpc = TxEnvelopeEip4844.toRpc(envelope) // [!code focus]
@@ -651,37 +785,41 @@ export declare namespace serialize {
  * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
  * @param envelope - The EIP-4844 transaction envelope to convert.
  * @returns An RPC-formatted EIP-4844 transaction envelope.
  */
-export function toRpc(envelope: Omit<TxEnvelopeEip4844, 'type'>): Rpc {
+export function toRpc(envelope: toRpc.Input): Rpc {
   const signature = Signature.extract(envelope)
 
   return {
     ...envelope,
-    chainId: Hex.fromNumber(envelope.chainId),
+    chainId: Quantity.fromNumberish(envelope.chainId),
     data: envelope.data ?? envelope.input,
-    ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex.fromNumber(envelope.gas) }
+    ...(envelope.gas !== undefined
+      ? { gas: Quantity.fromNumberish(envelope.gas) }
       : {}),
-    ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex.fromNumber(envelope.nonce) }
+    ...(envelope.nonce !== undefined
+      ? { nonce: Quantity.fromNumberish(envelope.nonce) }
       : {}),
-    ...(typeof envelope.value === 'bigint'
-      ? { value: Hex.fromNumber(envelope.value) }
+    ...(envelope.value !== undefined
+      ? { value: Quantity.fromNumberish(envelope.value) }
       : {}),
-    ...(typeof envelope.maxFeePerBlobGas === 'bigint'
-      ? { maxFeePerBlobGas: Hex.fromNumber(envelope.maxFeePerBlobGas) }
+    ...(envelope.maxFeePerBlobGas !== undefined
+      ? { maxFeePerBlobGas: Quantity.fromNumberish(envelope.maxFeePerBlobGas) }
       : {}),
-    ...(typeof envelope.maxFeePerGas === 'bigint'
-      ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
+    ...(envelope.maxFeePerGas !== undefined
+      ? { maxFeePerGas: Quantity.fromNumberish(envelope.maxFeePerGas) }
       : {}),
-    ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
-      ? { maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas) }
+    ...(envelope.maxPriorityFeePerGas !== undefined
+      ? {
+          maxPriorityFeePerGas: Quantity.fromNumberish(
+            envelope.maxPriorityFeePerGas,
+          ),
+        }
       : {}),
     type: '0x3',
     ...(signature ? Signature.toRpc(signature) : {}),
@@ -689,6 +827,12 @@ export function toRpc(envelope: Omit<TxEnvelopeEip4844, 'type'>): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TxEnvelopeEip4844.(toRpc:function)}. */
+  export type Input = Omit<
+    TxEnvelopeEip4844<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
+    'type'
+  >
+
   export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
@@ -703,7 +847,7 @@ export declare namespace toRpc {
  *   blobVersionedHashes: [],
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @log: false
  * ```
@@ -721,4 +865,24 @@ export function validate(envelope: PartialBy<TxEnvelopeEip4844, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Thrown when attempting to deserialize a legacy 4-element EIP-4844 network
+ * wrapper. Only the PeerDAS (EIP-7594) 5-element wrapper with
+ * `wrapper_version = 0x01` is accepted.
+ */
+export class LegacyBlobSidecarWrapperError extends Errors.BaseError {
+  override readonly name = 'TxEnvelopeEip4844.LegacyBlobSidecarWrapperError'
+  constructor({ serialized }: { serialized: Hex.Hex }) {
+    super(
+      'Legacy 4-element EIP-4844 blob-sidecar network wrapper is not supported.',
+      {
+        metaMessages: [
+          `Serialized Transaction: "${serialized}"`,
+          'Expected: PeerDAS 5-element wrapper `rlp([tx_body, wrapper_version=0x01, blobs, commitments, cell_proofs])`.',
+        ],
+      },
+    )
+  }
 }

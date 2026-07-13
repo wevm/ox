@@ -1,6 +1,6 @@
 import { Secp256k1, Signature } from 'ox'
 import { SignatureErc6492 } from 'ox/erc6492'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('assert', () => {
@@ -70,7 +70,7 @@ describe('from', () => {
     const args = {
       data: '0xdeadbeef',
       signature: Signature.toHex(signature),
-      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
     } as const
 
     const serialized = SignatureErc6492.wrap(args)
@@ -89,7 +89,7 @@ describe('unwrap', () => {
     const args = {
       data: '0xdeadbeef',
       signature: Signature.toHex(signature),
-      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
     } as const
 
     const wrapped = SignatureErc6492.wrap(args)
@@ -114,5 +114,48 @@ describe('validate', () => {
     const valid = SignatureErc6492.validate(wrapped)
     expect(valid).toBe(true)
     expect(SignatureErc6492.validate('0xdeadbeef')).toBe(false)
+  })
+})
+
+describe('unwrap: strips trailing magic bytes', () => {
+  test('round-trip with long signature payload', () => {
+    const args = {
+      data: '0xdeadbeef',
+      signature: `0x${'ab'.repeat(96)}`,
+      to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
+    } as const
+
+    const wrapped = SignatureErc6492.wrap(args)
+    expect(wrapped.endsWith(SignatureErc6492.magicBytes.slice(2))).toBe(true)
+    const unwrapped = SignatureErc6492.unwrap(wrapped)
+    expect(unwrapped).toEqual(args)
+  })
+})
+
+describe('from: validates object inputs', () => {
+  test('throws on malformed object', () => {
+    expect(() =>
+      // @ts-expect-error
+      SignatureErc6492.from({ data: '0xdeadbeef', signature: '0x00' }),
+    ).toThrow(SignatureErc6492.InvalidUnwrappedSignatureError)
+
+    expect(() =>
+      // @ts-expect-error
+      SignatureErc6492.from({}),
+    ).toThrow(SignatureErc6492.InvalidUnwrappedSignatureError)
+
+    expect(() =>
+      // @ts-expect-error
+      SignatureErc6492.from(null),
+    ).toThrow(SignatureErc6492.InvalidUnwrappedSignatureError)
+  })
+
+  test('accepts valid object', () => {
+    const args = {
+      data: '0xdeadbeef',
+      signature: '0x00',
+      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+    } as const
+    expect(SignatureErc6492.from(args)).toEqual(args)
   })
 })

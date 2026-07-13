@@ -3,10 +3,10 @@ import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { Compute, OneOf } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TempoAddress from './TempoAddress.js'
 
 /**
  * Key authorization for provisioning access keys.
@@ -33,18 +33,15 @@ export type KeyAuthorization<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  addressType = Address.Address,
 > = {
   /** Address derived from the public key of the key type. */
-  address: addressType
+  address: Address.Address
   /** Chain ID for replay protection. */
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
-  limits?:
-    | readonly TokenLimit<bigintType, numberType, addressType>[]
-    | undefined
+  limits?: readonly TokenLimit<bigintType, numberType>[] | undefined
   /**
    * Call scopes restricting which contracts/selectors this key can call.
    *
@@ -52,7 +49,7 @@ export type KeyAuthorization<
    * - `[]` = scoped mode with no calls allowed
    * - `[...]` = only listed contract+selector combinations allowed
    */
-  scopes?: readonly Scope<addressType>[] | undefined
+  scopes?: readonly Scope[] | undefined
   /** Key type. (secp256k1, P256, WebAuthn). */
   type: SignatureEnvelope.Type
   /**
@@ -74,34 +71,27 @@ export type KeyAuthorization<
   // [TIP-1049 Specification](https://tips.sh/1049)
   | {
       /** Account address this authorization is bound to. */
-      account: addressType
+      account: Address.Address
       /** Whether this authorization provisions an admin access key. */
       isAdmin: boolean
     }
   | {}
 > &
   (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.SignatureEnvelope<numberType> }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 
 /** Input type for a Key Authorization. */
-export type Input = KeyAuthorization<
-  false,
-  bigint,
-  number,
-  TempoAddress.Address
->
+export type Input = KeyAuthorization<false, bigint, number>
 
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
   /** Optional account address binding (TIP-1049). */
   account?: Address.Address | null | undefined
   /** Allowed call scopes (node field: `allowedCalls`). */
-  allowedCalls?: readonly RpcCallScope[] | undefined
+  allowedCalls?: readonly RpcCallScope[] | null | undefined
   /** Chain ID (hex quantity). */
   chainId: Hex.Hex
   /** Expiry timestamp (hex quantity or null). */
@@ -113,7 +103,7 @@ export type Rpc = {
   /** Key type. */
   keyType: SignatureEnvelope.Type
   /** Token spending limits. */
-  limits?: readonly RpcTokenLimit[] | undefined
+  limits?: readonly RpcTokenLimit[] | null | undefined
   /** Signature envelope. */
   signature: SignatureEnvelope.SignatureEnvelopeRpc
   /** Optional 32-byte witness (hex). */
@@ -124,27 +114,27 @@ export type Rpc = {
 export type RpcTokenLimit = {
   token: Address.Address
   limit: Hex.Hex
-  period?: Hex.Hex | undefined
+  period?: Hex.Hex | null | undefined
 }
 
 /** RPC representation of a call scope (matches node's `CallScope` serde). */
 export type RpcCallScope = {
   target: Address.Address
-  selectorRules?: readonly RpcSelectorRule[]
+  selectorRules?: readonly RpcSelectorRule[] | null | undefined
 }
 
 /** RPC representation of a selector rule (matches node's `SelectorRule` serde). */
 export type RpcSelectorRule = {
   selector: Hex.Hex
-  recipients?: readonly Address.Address[]
+  recipients?: readonly Address.Address[] | null | undefined
 }
 
 /** Signed representation of a Key Authorization. */
-export type Signed<
-  bigintType = bigint,
-  numberType = number,
-  addressType = Address.Address,
-> = KeyAuthorization<true, bigintType, numberType, addressType>
+export type Signed<bigintType = bigint, numberType = number> = KeyAuthorization<
+  true,
+  bigintType,
+  numberType
+>
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
@@ -217,9 +207,9 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
  *
  * [TIP-1011 Specification](https://docs.tempo.xyz/protocol/transactions/tip-1011)
  */
-export type Scope<addressType = Address.Address> = {
+export type Scope = {
   /** Target contract address. */
-  address: addressType
+  address: Address.Address
   /**
    * 4-byte function selector, or a human-readable ABI signature
    * (e.g. `'transfer(address,uint256)'` or `'function transfer(address,uint256)'`).
@@ -236,7 +226,7 @@ export type Scope<addressType = Address.Address> = {
    *
    * Only valid for constrained selectors: `transfer`, `approve`, `transferWithMemo`.
    */
-  recipients?: readonly addressType[] | undefined
+  recipients?: readonly Address.Address[] | undefined
 }
 
 /**
@@ -247,13 +237,9 @@ export type Scope<addressType = Address.Address> = {
  *
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
-export type TokenLimit<
-  bigintType = bigint,
-  numberType = number,
-  addressType = Address.Address,
-> = {
+export type TokenLimit<bigintType = bigint, numberType = number> = {
   /** Address of the TIP-20 token. */
-  token: addressType
+  token: Address.Address
   /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` \> 0). */
   limit: bigintType
   /**
@@ -285,17 +271,21 @@ export type TokenLimit<
  * import { KeyAuthorization } from 'ox/tempo'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
- * const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+ * const address = Address.fromPublicKey(
+ *   Secp256k1.getPublicKey({ privateKey })
+ * )
  *
  * const authorization = KeyAuthorization.from({
  *   address,
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6),
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  * ```
  *
@@ -314,10 +304,12 @@ export type TokenLimit<
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'p256',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6),
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  * ```
  *
@@ -332,26 +324,33 @@ export type TokenLimit<
  * import { KeyAuthorization } from 'ox/tempo'
  *
  * const privateKey = '0x...'
- * const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+ * const address = Address.fromPublicKey(
+ *   Secp256k1.getPublicKey({ privateKey })
+ * )
  *
  * const authorization = KeyAuthorization.from({
  *   address,
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6),
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
  * const rootPrivateKey = '0x...'
  * const signature = Secp256k1.sign({
  *   payload: KeyAuthorization.getSignPayload(authorization),
- *   privateKey: rootPrivateKey,
+ *   privateKey: rootPrivateKey
  * })
  *
- * const authorization_signed = KeyAuthorization.from(authorization, { signature })
+ * const authorization_signed = KeyAuthorization.from(
+ *   authorization,
+ *   { signature }
+ * )
  * ```
  *
  * @example
@@ -362,8 +361,16 @@ export type TokenLimit<
  *
  * ```ts twoslash
  * // @noErrors
- * import { Address, Value, WebCryptoP256, WebAuthnP256 } from 'ox'
- * import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   Address,
+ *   Value,
+ *   WebCryptoP256,
+ *   WebAuthnP256
+ * } from 'ox'
+ * import {
+ *   KeyAuthorization,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const keyPair = await WebCryptoP256.createKeyPair()
  * const address = Address.fromPublicKey(keyPair.publicKey)
@@ -373,27 +380,32 @@ export type TokenLimit<
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'p256',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6),
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
- * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example'
+ * })
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   challenge: KeyAuthorization.getSignPayload(authorization),
- *   credentialId: credential.id,
+ *   credentialId: credential.id
  * })
  *
- * const signatureEnvelope = SignatureEnvelope.from({ // [!code focus]
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   // [!code focus]
  *   signature, // [!code focus]
  *   publicKey: credential.publicKey, // [!code focus]
- *   metadata, // [!code focus]
+ *   metadata // [!code focus]
  * })
  * const authorization_signed = KeyAuthorization.from(
  *   authorization,
- *   { signature: signatureEnvelope }, // [!code focus]
+ *   { signature: signatureEnvelope } // [!code focus]
  * )
  * ```
  *
@@ -410,38 +422,21 @@ export function from<
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
   const auth = authorization as KeyAuthorization & {
-    limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
+    limits?: readonly { token: Address.Address; limit: bigint }[]
     scopes?: readonly {
-      address: TempoAddress.Address
+      address: Address.Address
       selector?: Hex.Hex | string
-      recipients?: readonly TempoAddress.Address[]
+      recipients?: readonly Address.Address[]
     }[]
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
   const resolved = {
     ...auth,
-    address: TempoAddress.resolve(auth.address as TempoAddress.Address),
-    ...(auth.limits
-      ? {
-          limits: auth.limits.map((l) => ({
-            ...l,
-            token: TempoAddress.resolve(l.token as TempoAddress.Address),
-          })),
-        }
-      : {}),
     ...(auth.scopes
       ? {
           scopes: auth.scopes.map((scope) => ({
             ...scope,
-            address: TempoAddress.resolve(scope.address),
             selector: resolveSelector(scope.selector),
-            ...(scope.recipients
-              ? {
-                  recipients: scope.recipients.map((r) =>
-                    TempoAddress.resolve(r),
-                  ),
-                }
-              : {}),
           })),
         }
       : {}),
@@ -472,12 +467,10 @@ export declare namespace from {
   > = Compute<
     authorization extends Rpc
       ? Signed
-      : TempoAddress.ResolveAddresses<
-          authorization &
-            (signature extends SignatureEnvelope.from.Value
-              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-              : {})
-        >
+      : authorization &
+          (signature extends SignatureEnvelope.from.Value
+            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+            : {})
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -495,13 +488,18 @@ export declare namespace from {
  *   expiry: '0x174876e800',
  *   keyId: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   keyType: 'secp256k1',
- *   limits: [{ token: '0x20c0000000000000000000000000000000000001', limit: '0xf4240' }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: '0xf4240'
+ *     }
+ *   ],
  *   signature: {
  *     type: 'secp256k1',
  *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *     yParity: '0x0'
- *   },
+ *   }
  * })
  * ```
  *
@@ -576,9 +574,14 @@ export declare namespace fromRpc {
  *     '0x00',
  *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *     '0x174876e800',
- *     [['0x20c0000000000000000000000000000000000001', '0xf4240']],
+ *     [
+ *       [
+ *         '0x20c0000000000000000000000000000000000001',
+ *         '0xf4240'
+ *       ]
+ *     ]
  *   ],
- *   '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+ *   '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
  * ])
  * ```
  *
@@ -594,8 +597,13 @@ export declare namespace fromRpc {
  *     '0x00',
  *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *     '0x174876e800',
- *     [['0x20c0000000000000000000000000000000000001', '0xf4240']],
- *   ],
+ *     [
+ *       [
+ *         '0x20c0000000000000000000000000000000000001',
+ *         '0xf4240'
+ *       ]
+ *     ]
+ *   ]
  * ])
  * ```
  *
@@ -720,20 +728,25 @@ export declare namespace fromTuple {
  * import { KeyAuthorization } from 'ox/tempo'
  *
  * const privateKey = '0x...'
- * const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+ * const address = Address.fromPublicKey(
+ *   Secp256k1.getPublicKey({ privateKey })
+ * )
  *
  * const authorization = KeyAuthorization.from({
  *   address,
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6),
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
- * const payload = KeyAuthorization.getSignPayload(authorization) // [!code focus]
+ * const payload =
+ *   KeyAuthorization.getSignPayload(authorization) // [!code focus]
  * ```
  *
  * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.
@@ -760,14 +773,17 @@ export declare namespace getSignPayload {
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
  * const serialized = KeyAuthorization.serialize(authorization)
- * const deserialized = KeyAuthorization.deserialize(serialized) // [!code focus]
+ * const deserialized =
+ *   KeyAuthorization.deserialize(serialized) // [!code focus]
  * ```
  *
  * @param serialized - The RLP-encoded Key Authorization.
@@ -798,10 +814,12 @@ export declare namespace deserialize {
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
  * const hash = KeyAuthorization.hash(authorization) // [!code focus]
@@ -838,10 +856,12 @@ export declare namespace hash {
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
  * const serialized = KeyAuthorization.serialize(authorization) // [!code focus]
@@ -875,25 +895,27 @@ export declare namespace serialize {
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ],
  *   signature: {
  *     type: 'secp256k1',
  *     signature: {
- *       r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *       s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
- *       yParity: 0,
- *     },
- *   },
+ *       r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *       s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *       yParity: 0
+ *     }
+ *   }
  * })
  * ```
  *
  * @param authorization - A Key Authorization.
  * @returns An RPC-formatted Key Authorization.
  */
-export function toRpc(authorization: Signed): Rpc {
+export function toRpc(authorization: toRpc.Input): Rpc {
   const {
     address,
     scopes,
@@ -932,15 +954,17 @@ export function toRpc(authorization: Signed): Rpc {
     )
   })()
 
+  const chainIdHex = Quantity.fromNumberish(chainId)
+
   return {
-    chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
-    expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : null,
-    keyId: TempoAddress.resolve(address),
+    chainId: chainIdHex === '0x0' ? '0x' : chainIdHex,
+    expiry: expiry != null ? Quantity.fromNumberish(expiry) : null,
+    keyId: address,
     keyType: type,
     limits: limits?.map(({ token, limit, period }) => ({
       token,
-      limit: Hex.fromNumber(limit),
-      ...(period ? { period: numberToHex(period) } : {}),
+      limit: Quantity.fromNumberish(limit),
+      ...(period ? { period: Quantity.fromNumberish(period) } : {}),
     })),
     signature: SignatureEnvelope.toRpc(signature),
     ...(allowedCalls ? { allowedCalls } : {}),
@@ -951,6 +975,9 @@ export function toRpc(authorization: Signed): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#KeyAuthorization.(toRpc:function)}. */
+  type Input = Signed<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -967,10 +994,12 @@ export declare namespace toRpc {
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
  * const tuple = KeyAuthorization.toTuple(authorization) // [!code focus]

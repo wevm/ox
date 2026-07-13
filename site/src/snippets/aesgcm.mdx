@@ -1,0 +1,16 @@
+```ts twoslash
+// @noErrors
+import { AesGcm, Hex } from 'ox'
+
+const key = await AesGcm.getKey({
+  password: 'correct horse battery staple',
+})
+
+const data = Hex.fromString('top-secret message')
+const encrypted = await AesGcm.encrypt(data, key)
+// @log: '0x4a8c2f…b3e1'
+
+const decrypted = await AesGcm.decrypt(encrypted, key)
+Hex.toString(decrypted)
+// @log: 'top-secret message'
+```

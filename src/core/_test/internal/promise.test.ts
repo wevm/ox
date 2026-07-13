@@ -1,5 +1,5 @@
 import { setTimeout } from 'node:timers/promises'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 import { createHttpServer } from '../../../../test/http.js'
 import { withTimeout } from '../../internal/promise.js'
@@ -33,6 +33,32 @@ describe('withTimeout', () => {
       ),
     ).rejects.toThrowError('timed out')
 
-    server.close()
+    await server.close()
+  })
+
+  test('behavior: does not double-reject on inner error', async () => {
+    // Regression: the catch path used to call reject() twice when fn threw
+    // a non-AbortError. The unhandled rejection would crash the process.
+    const innerError = new Error('inner failure')
+    let unhandled: unknown
+    const onUnhandled = (reason: unknown) => {
+      unhandled = reason
+    }
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      await expect(() =>
+        withTimeout(
+          async () => {
+            throw innerError
+          },
+          { timeout: 1000 },
+        ),
+      ).rejects.toBe(innerError)
+      // Allow microtasks to flush so a stray reject would surface.
+      await new Promise((resolve) => setImmediate(resolve))
+      expect(unhandled).toBe(undefined)
+    } finally {
+      process.off('unhandledRejection', onUnhandled)
+    }
   })
 })

@@ -1,7 +1,8 @@
 import { Abi, AbiError, AbiFunction, AbiItem } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { Errors } from '../../../contracts/generated.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
+import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('decode', () => {
@@ -34,6 +35,17 @@ describe('decode', () => {
 
     const decoded = AbiError.decode(error, data)
     expect(decoded).toEqual([420n, 69n, 1])
+  })
+
+  test('options: checksumAddress = false', () => {
+    const error = AbiError.from('error Unauthorized(address account)')
+    const data = AbiError.encode(error, [address.vitalik])
+    expect(AbiError.decode(error, data)).toMatchInlineSnapshot(
+      `"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"`,
+    )
+    expect(
+      AbiError.decode(error, data, { checksumAddress: false }),
+    ).toMatchInlineSnapshot(`"0xd8da6bf26964af9d7eed9e03e53415d37aa96045"`)
   })
 
   test('behavior: as = Object', () => {
@@ -311,6 +323,153 @@ describe('decode', () => {
   })
 })
 
+describe('extract', () => {
+  test('behavior: custom error', () => {
+    const abi = Abi.from([
+      'error InvalidSignature(uint r, uint s, uint8 yParity)',
+    ])
+    const data = AbiError.encode(abi, 'InvalidSignature', [420n, 69n, 1])
+
+    expect(AbiError.extract(abi, data)).toMatchInlineSnapshot(`
+      {
+        "args": [
+          420n,
+          69n,
+          1,
+        ],
+        "error": {
+          "hash": "0xe466f0a53c37b5089ce66fd75a6718bd144152a536445d8822cc0425aed52ebe",
+          "inputs": [
+            {
+              "name": "r",
+              "type": "uint256",
+            },
+            {
+              "name": "s",
+              "type": "uint256",
+            },
+            {
+              "name": "yParity",
+              "type": "uint8",
+            },
+          ],
+          "name": "InvalidSignature",
+          "type": "error",
+        },
+      }
+    `)
+  })
+
+  test('behavior: as = Object', () => {
+    const abi = Abi.from([
+      'error InvalidSignature(uint r, uint s, uint8 yParity)',
+    ])
+    const data = AbiError.encode(abi, 'InvalidSignature', [420n, 69n, 1])
+
+    expect(AbiError.extract(abi, data, { as: 'Object' }))
+      .toMatchInlineSnapshot(`
+      {
+        "args": {
+          "r": 420n,
+          "s": 69n,
+          "yParity": 1,
+        },
+        "error": {
+          "hash": "0xe466f0a53c37b5089ce66fd75a6718bd144152a536445d8822cc0425aed52ebe",
+          "inputs": [
+            {
+              "name": "r",
+              "type": "uint256",
+            },
+            {
+              "name": "s",
+              "type": "uint256",
+            },
+            {
+              "name": "yParity",
+              "type": "uint8",
+            },
+          ],
+          "name": "InvalidSignature",
+          "type": "error",
+        },
+      }
+    `)
+  })
+
+  test('behavior: single arg does not collapse args', () => {
+    const abi = Abi.from(['error InvalidSignature(uint8 yParity)'])
+    const data = AbiError.encode(abi, 'InvalidSignature', [1])
+
+    expect(AbiError.extract(abi, data)).toMatchInlineSnapshot(`
+      {
+        "args": [
+          1,
+        ],
+        "error": {
+          "hash": "0x480770dfc505483359f8914e589d0b76d7110062ebac15888f32c59220803b1e",
+          "inputs": [
+            {
+              "name": "yParity",
+              "type": "uint8",
+            },
+          ],
+          "name": "InvalidSignature",
+          "type": "error",
+        },
+      }
+    `)
+  })
+
+  test('behavior: solidity Error', () => {
+    const data = AbiError.encode(AbiError.solidityError, ['execution reverted'])
+
+    expect(AbiError.extract([], data)).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "execution reverted",
+        ],
+        "error": {
+          "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
+          "inputs": [
+            {
+              "name": "message",
+              "type": "string",
+            },
+          ],
+          "name": "Error",
+          "type": "error",
+        },
+      }
+    `)
+  })
+
+  test('behavior: no args', () => {
+    const abi = Abi.from(['error InvalidSignature()'])
+    const data = AbiError.encode(abi, 'InvalidSignature')
+
+    expect(AbiError.extract(abi, data)).toMatchInlineSnapshot(`
+      {
+        "args": undefined,
+        "error": {
+          "hash": "0x8baa579fce362245063d36f11747a89dd489c54795634fc673cc0e0db51fedc5",
+          "inputs": [],
+          "name": "InvalidSignature",
+          "type": "error",
+        },
+      }
+    `)
+  })
+
+  test('error: invalid data', () => {
+    expect(() =>
+      AbiError.extract([], '0xaaa'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiItem.InvalidSelectorSizeError: Selector size is invalid. Expected 4 bytes. Received 2 bytes ("0xaaa").]`,
+    )
+  })
+})
+
 describe('encode', () => {
   test('default', () => {
     const error = AbiError.from('error Example()')
@@ -476,9 +635,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    expect(
-      AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV'),
-    ).toMatchInlineSnapshot(`
+    expect(AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV'))
+      .toMatchInlineSnapshot(`
     {
       "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
       "inputs": [
@@ -515,9 +673,8 @@ describe('fromAbi', () => {
   test('behavior: selector as name', () => {
     const item = AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV')
     const selector = AbiItem.getSelector(item)
-    expect(
-      AbiError.fromAbi(seaportContractConfig.abi, selector),
-    ).toMatchInlineSnapshot(`
+    expect(AbiError.fromAbi(seaportContractConfig.abi, selector))
+      .toMatchInlineSnapshot(`
     {
       "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
       "inputs": [
@@ -971,6 +1128,7 @@ test('exports', () => {
   expect(Object.keys(AbiError)).toMatchInlineSnapshot(`
     [
       "decode",
+      "extract",
       "encode",
       "format",
       "from",

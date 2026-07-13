@@ -14,7 +14,7 @@ export type Options = {
    *
    * @default `RpcSchema.Generic`
    */
-  schema?: RpcSchema.Generic | undefined
+  schema?: RpcSchema.Schema | undefined
 }
 
 /** Root type for an EIP-1193 Provider. */
@@ -23,9 +23,9 @@ export type Provider<
   eventMap extends boolean | Record<string, unknown> = false,
   ///
   _schema extends RpcSchema.Generic = options extends {
-    schema: infer schema extends RpcSchema.Generic
+    schema: infer schema extends RpcSchema.Schema
   }
-    ? schema
+    ? RpcSchema.ToGeneric<schema>
     : RpcSchema.Default,
 > = Compute<
   {
@@ -271,12 +271,12 @@ export class AtomicityNotSupportedError extends ProviderRpcError {
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
  * // 3. Emit Provider Events. // [!code focus]
@@ -326,7 +326,9 @@ export declare namespace createEmitter {
  * ```ts twoslash
  * import { Provider, RpcTransport } from 'ox'
  *
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * )
  * const provider = Provider.from(transport)
  * ```
  *
@@ -342,7 +344,9 @@ export declare namespace createEmitter {
  *
  * const provider = Provider.from(window.ethereum)
  *
- * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await provider.request({
+ *   method: 'eth_blockNumber'
+ * })
  * ```
  *
  * :::tip
@@ -380,15 +384,17 @@ export declare namespace createEmitter {
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
- * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await provider.request({
+ *   method: 'eth_blockNumber'
+ * })
  * ```
  *
  * @example
@@ -405,15 +411,15 @@ export declare namespace createEmitter {
  *   | RpcSchema.Default
  *   | {
  *       Request: {
- *         method: 'abe_foo',
- *         params: [id: number],
+ *         method: 'abe_foo'
+ *         params: [id: number]
  *       }
  *       ReturnType: string
  *     }
  *   | {
  *       Request: {
- *         method: 'abe_bar',
- *         params: [id: string],
+ *         method: 'abe_bar'
+ *         params: [id: string]
  *       }
  *       ReturnType: string
  *     }
@@ -423,11 +429,6 @@ export declare namespace createEmitter {
  *
  * const blockNumber = await provider.request({ method: 'e' })
  * //                                                    ^|
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -454,12 +455,12 @@ export declare namespace createEmitter {
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
  * // 3. Emit Provider Events.
@@ -477,26 +478,19 @@ export function from<
   provider: provider | from.Value<options> | undefined,
   options?: options | Options,
 ): from.ReturnType<options, provider>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function from(provider: any, _options: Options = {}): Provider {
   if (!provider) throw new IsUndefinedError()
-  return {
-    ...provider,
-    async request(args) {
-      try {
-        const result = await provider.request(args)
-        if (
-          result &&
-          typeof result === 'object' &&
-          'jsonrpc' in (result as { jsonrpc?: unknown })
-        )
-          return RpcResponse.parse(result) as never
-        return result
-      } catch (error) {
-        throw parseError(error)
-      }
-    },
+  const wrapped = Object.create(Object.getPrototypeOf(provider))
+  Object.defineProperties(wrapped, Object.getOwnPropertyDescriptors(provider))
+  wrapped.request = async (args: any) => {
+    try {
+      return await provider.request(args)
+    } catch (error) {
+      throw parseError(error)
+    }
   }
+  return wrapped
 }
 
 export declare namespace from {
@@ -505,9 +499,9 @@ export declare namespace from {
   > & {
     request: (
       parameters: options extends {
-        schema: infer schema extends RpcSchema.Generic
+        schema: infer schema extends RpcSchema.Schema
       }
-        ? schema['Request']
+        ? RpcSchema.ToGeneric<schema>['Request']
         : RpcSchema.Generic['Request'],
     ) => unknown
   }
@@ -519,8 +513,8 @@ export declare namespace from {
       | undefined,
   > = Omit<provider, 'request'> & {
     request: RequestFn<
-      options extends { schema: infer schema extends RpcSchema.Generic }
-        ? schema
+      options extends { schema: infer schema extends RpcSchema.Schema }
+        ? RpcSchema.ToGeneric<schema>
         : RpcSchema.Default
     >
   }
@@ -535,11 +529,13 @@ export declare namespace from {
  * ```ts twoslash
  * import { Provider } from 'ox'
  *
- * const error = Provider.parseError({ code: 4200, message: 'foo' })
+ * const error = Provider.parseError({
+ *   code: 4200,
+ *   message: 'foo'
+ * })
  *
  * error
  * // ^?
- *
  * ```
  *
  * @param error - The error object to parse.
@@ -555,34 +551,32 @@ export function parseError<
     if (!error_.data) return error_ as never
 
     const { code } = error_.data as RpcResponse.ErrorObject
-    if (code === DisconnectedError.code)
-      return new DisconnectedError(error_) as never
-    if (code === ChainDisconnectedError.code)
-      return new ChainDisconnectedError(error_) as never
-    if (code === UserRejectedRequestError.code)
-      return new UserRejectedRequestError(error_) as never
-    if (code === UnauthorizedError.code)
-      return new UnauthorizedError(error_) as never
-    if (code === UnsupportedMethodError.code)
-      return new UnsupportedMethodError(error_) as never
-    if (code === SwitchChainError.code)
-      return new SwitchChainError(error_) as never
-    if (code === AtomicReadyWalletRejectedUpgradeError.code)
-      return new AtomicReadyWalletRejectedUpgradeError(error_) as never
-    if (code === AtomicityNotSupportedError.code)
-      return new AtomicityNotSupportedError(error_) as never
-    if (code === BundleTooLargeError.code)
-      return new BundleTooLargeError(error_) as never
-    if (code === UnknownBundleIdError.code)
-      return new UnknownBundleIdError(error_) as never
-    if (code === DuplicateIdError.code)
-      return new DuplicateIdError(error_) as never
-    if (code === UnsupportedChainIdError.code)
-      return new UnsupportedChainIdError(error_) as never
-    if (code === UnsupportedNonOptionalCapabilityError.code)
-      return new UnsupportedNonOptionalCapabilityError(error_) as never
+    const Constructor = providerErrorCodeMap[code]
+    if (Constructor) return new Constructor(error_) as never
   }
   return error_ as never
+}
+
+/** @internal */
+const providerErrorCodeMap: Record<
+  number,
+  new (parameters: { message?: string | undefined }) => ProviderRpcError
+> = {
+  [DisconnectedError.code]: DisconnectedError,
+  [ChainDisconnectedError.code]: ChainDisconnectedError,
+  [UserRejectedRequestError.code]: UserRejectedRequestError,
+  [UnauthorizedError.code]: UnauthorizedError,
+  [UnsupportedMethodError.code]: UnsupportedMethodError,
+  [SwitchChainError.code]: SwitchChainError,
+  [AtomicReadyWalletRejectedUpgradeError.code]:
+    AtomicReadyWalletRejectedUpgradeError,
+  [AtomicityNotSupportedError.code]: AtomicityNotSupportedError,
+  [BundleTooLargeError.code]: BundleTooLargeError,
+  [UnknownBundleIdError.code]: UnknownBundleIdError,
+  [DuplicateIdError.code]: DuplicateIdError,
+  [UnsupportedChainIdError.code]: UnsupportedChainIdError,
+  [UnsupportedNonOptionalCapabilityError.code]:
+    UnsupportedNonOptionalCapabilityError,
 }
 
 export declare namespace parseError {
@@ -670,9 +664,10 @@ export declare namespace parseError {
               ? UnsupportedNonOptionalCapabilityError
               : never)
       : RpcResponse.parseError.ReturnType<RpcResponse.ErrorObject>,
-  > = IsNever<error> extends true
-    ? RpcResponse.parseError.ReturnType<errorObject>
-    : error
+  > =
+    IsNever<error> extends true
+      ? RpcResponse.parseError.ReturnType<errorObject>
+      : error
 }
 
 /** Thrown when the provider is undefined. */

@@ -1,6 +1,5 @@
 /** @entrypointCategory WebAuthn */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utility functions and types for WebAuthn authentication ceremonies (signing and verification).

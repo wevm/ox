@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as Bytes from '../../core/Bytes.js'
 import * as Hash from '../../core/Hash.js'
 import * as Hex from '../../core/Hex.js'
@@ -29,8 +29,8 @@ describe('sign', () => {
     expect(result.metadata.challengeIndex).toBeTypeOf('number')
     expect(result.metadata.typeIndex).toBeTypeOf('number')
     expect(result.metadata.userVerificationRequired).toBe(true)
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(result.signature.r).toBeTypeOf('string')
+    expect(result.signature.s).toBeTypeOf('string')
     expect(result.raw).toBeDefined()
   })
 
@@ -44,8 +44,8 @@ describe('sign', () => {
       rpId,
     })
 
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(result.signature.r).toBeTypeOf('string')
+    expect(result.signature.s).toBeTypeOf('string')
   })
 
   test('signs with CredentialRequestOptions', async () => {
@@ -60,8 +60,8 @@ describe('sign', () => {
 
     const result = await Authentication.sign(options)
 
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(result.signature.r).toBeTypeOf('string')
+    expect(result.signature.s).toBeTypeOf('string')
 
     const verified = Authentication.verify({
       metadata: result.metadata,
@@ -682,7 +682,10 @@ describe('behavior: signature validation', () => {
 
     const n =
       0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
-    const highS = { r: signature.r, s: n - signature.s }
+    const highS = {
+      r: signature.r,
+      s: Hex.fromNumber(n - Hex.toBigInt(signature.s), { size: 32 }),
+    }
 
     const verified = Authentication.verify({
       metadata,

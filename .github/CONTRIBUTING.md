@@ -6,7 +6,7 @@ If you want to contribute, but aren't sure where to start, you can create a [new
 
 ## Rules
 
-1. Significant changes to the API or implementation must be reviewed before a Pull Request is created. Create a [Feature Request](https://github.com/wevm/ox/discussions/new?category=ideas) first to discuss any API changes or new ideas. 
+1. Significant changes to the API or implementation must be reviewed before a Pull Request is created. Create a [Feature Request](https://github.com/wevm/ox/discussions/new?category=ideas) first to discuss any API changes or new ideas.
 2. Contributors must be humans, not bots.
 3. Contributor GitHub Accounts must have at least one non-trivial contribution to another repository.
 
@@ -17,11 +17,11 @@ This guide is intended to help you get started with contributing. By following t
 1. [Cloning the repository](#cloning-the-repository)
 2. [Installing Node.js and pnpm](#installing-nodejs-and-pnpm)
 3. [Installing Foundry & Tempo](#installing-foundry--tempo)
-5. [Installing dependencies](#installing-dependencies)
-6. [Running the test suite](#running-the-test-suite)
-7. [Writing documentation](#writing-documentation)
-8. [Submitting a pull request](#submitting-a-pull-request)
-9. [Versioning](#versioning)
+4. [Installing dependencies](#installing-dependencies)
+5. [Running the test suite](#running-the-test-suite)
+6. [Writing documentation](#writing-documentation)
+7. [Submitting a pull request](#submitting-a-pull-request)
+8. [Versioning](#versioning)
 
 ---
 
@@ -69,7 +69,7 @@ If the versions are not correct or you don't have Node.js or pnpm installed, dow
 
 ### Installing Foundry & Tempo
 
-Ox uses [Foundry](https://book.getfoundry.sh/) & [Tempo](https://github.com/tempoxyz/tempo) for testing. 
+Ox uses [Foundry](https://book.getfoundry.sh/) & [Tempo](https://github.com/tempoxyz/tempo) for testing.
 
 We run a local [Anvil](https://github.com/foundry-rs/foundry/tree/master/anvil) instance against a forked Ethereum node, where we can also use tools like [Forge](https://book.getfoundry.sh/forge/) to deploy test contracts to it.
 
@@ -129,7 +129,7 @@ When adding new features or fixing bugs, it's important to add test cases to cov
 Documentation is crucial to helping developers of all experience levels use Ox. Ox uses [Vocs](https://vocs.dev) and Markdown for the documentation site (located at [`site`](../site)). To start the site in dev mode, run:
 
 ```bash
-pnpm docs:dev 
+pnpm docs:dev
 ```
 
 Try to keep documentation brief and use plain language so folks of all experience levels can understand. If you think something is unclear or could be explained better, you are welcome to open a pull request.
@@ -182,4 +182,3 @@ If your PR is making changes to an area that already has a changeset (e.g. there
 <div align="right">
   <a href="#advanced-guide">&uarr; back to top</a></b>
 </div>
-

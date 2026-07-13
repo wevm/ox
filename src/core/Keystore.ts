@@ -1,13 +1,13 @@
-import { ctr } from '@noble/ciphers/aes'
+import { ctr } from '@noble/ciphers/aes.js'
 import {
   pbkdf2 as pbkdf2_noble,
   pbkdf2Async as pbkdf2Async_noble,
-} from '@noble/hashes/pbkdf2'
+} from '@noble/hashes/pbkdf2.js'
 import {
   scrypt as scrypt_noble,
   scryptAsync as scryptAsync_noble,
-} from '@noble/hashes/scrypt'
-import { sha256 } from '@noble/hashes/sha2'
+} from '@noble/hashes/scrypt.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
@@ -149,7 +149,9 @@ export declare namespace decrypt {
  * const privateKey = Secp256k1.randomPrivateKey()
  *
  * // Derive key from password.
- * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({
+ *   password: 'testpassword'
+ * })
  *
  * // Encrypt the private key.
  * const encrypted = Keystore.encrypt(privateKey, key, opts)
@@ -223,7 +225,9 @@ export declare namespace encrypt {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - PBKDF2 options.
@@ -231,6 +235,7 @@ export declare namespace encrypt {
  */
 export function pbkdf2(options: pbkdf2.Options) {
   const { iv, iterations = 262_144, password } = options
+  assertPbkdf2Iterations(iterations)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -269,7 +274,9 @@ export declare namespace pbkdf2 {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = await Keystore.pbkdf2Async({ password: 'testpassword' })
+ * const [key, opts] = await Keystore.pbkdf2Async({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - PBKDF2 options.
@@ -277,6 +284,7 @@ export declare namespace pbkdf2 {
  */
 export async function pbkdf2Async(options: pbkdf2.Options) {
   const { iv, iterations = 262_144, password } = options
+  assertPbkdf2Iterations(iterations)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -309,7 +317,9 @@ export declare namespace pbkdf2Async {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = Keystore.scrypt({ password: 'testpassword' })
+ * const [key, opts] = Keystore.scrypt({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - Scrypt options.
@@ -317,6 +327,7 @@ export declare namespace pbkdf2Async {
  */
 export function scrypt(options: scrypt.Options) {
   const { iv, n = 262_144, password, p = 8, r = 1 } = options
+  assertScryptParams(n, r, p)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -360,17 +371,17 @@ export declare namespace scrypt {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = await Keystore.scryptAsync({ password: 'testpassword' })
+ * const [key, opts] = await Keystore.scryptAsync({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - Scrypt options.
  * @returns Scrypt key.
  */
 export async function scryptAsync(options: scrypt.Options) {
-  const { iv, n = 262_144, password } = options
-
-  const p = 8
-  const r = 1
+  const { iv, n = 262_144, password, p = 8, r = 1 } = options
+  assertScryptParams(n, r, p)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -500,7 +511,7 @@ export async function toKeyAsync(
           password,
         })
       case 'pbkdf2':
-        return await pbkdf2({
+        return await pbkdf2Async({
           iv: Bytes.from(`0x${iv}`),
           iterations: c,
           password,
@@ -522,6 +533,28 @@ export declare namespace toKeyAsync {
 }
 
 ///////////////////////////////////////////////////////////////////////////
+
+/** @internal */
+// biome-ignore lint/correctness/noUnusedVariables: called above
+function assertPbkdf2Iterations(iterations: number) {
+  if (!Number.isInteger(iterations) || iterations < 1_000)
+    throw new Error(
+      `Keystore: PBKDF2 iterations must be an integer >= 1000, got ${iterations}.`,
+    )
+}
+
+/** @internal */
+// biome-ignore lint/correctness/noUnusedVariables: called above
+function assertScryptParams(n: number, r: number, p: number) {
+  if (!Number.isInteger(n) || n < 1_024 || (n & (n - 1)) !== 0)
+    throw new Error(
+      `Keystore: scrypt n must be a power of two >= 1024, got ${n}.`,
+    )
+  if (!Number.isInteger(r) || r <= 0)
+    throw new Error(`Keystore: scrypt r must be a positive integer, got ${r}.`)
+  if (!Number.isInteger(p) || p <= 0)
+    throw new Error(`Keystore: scrypt p must be a positive integer, got ${p}.`)
+}
 
 /** @internal */
 // biome-ignore lint/correctness/noUnusedVariables: _

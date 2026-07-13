@@ -5,7 +5,7 @@ import { AbiParameters, Hex, Json, Solidity } from '../../src/index.js'
 
 export async function generateAbiVectors() {
   const generatedPath = join(import.meta.dir, './abi.json')
-  Bun.write(generatedPath, '')
+  await Bun.write(generatedPath, '')
 
   const generated = Bun.file(generatedPath)
   const writer = generated.writer()
@@ -31,10 +31,10 @@ export async function generateAbiVectors() {
   }
 
   writer.write(']\n')
-  writer.end()
+  await writer.end()
 
   const gzipped = Bun.gzipSync(new Uint8Array(await generated.arrayBuffer()))
-  Bun.write(`${generatedPath}.gz`, gzipped)
+  await Bun.write(`${generatedPath}.gz`, gzipped)
 }
 
 function generateAddress() {

@@ -1,7 +1,7 @@
 // Vectors from https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 
 import { Bytes, Keystore } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('encrypt/decrypt', () => {
   test('behavior: pbkdf2', async () => {
@@ -426,6 +426,64 @@ describe('pbkdf2Async', () => {
   })
 })
 
+describe('validation', () => {
+  test('pbkdf2 rejects iterations < 1000', () => {
+    expect(() =>
+      Keystore.pbkdf2({ password: 'x', iterations: 1 }),
+    ).toThrowError(
+      'Keystore: PBKDF2 iterations must be an integer >= 1000, got 1.',
+    )
+  })
+
+  test('pbkdf2 rejects non-integer iterations', () => {
+    expect(() =>
+      Keystore.pbkdf2({ password: 'x', iterations: 1.5 }),
+    ).toThrowError(
+      'Keystore: PBKDF2 iterations must be an integer >= 1000, got 1.5.',
+    )
+  })
+
+  test('pbkdf2Async rejects iterations < 1000', async () => {
+    await expect(
+      Keystore.pbkdf2Async({ password: 'x', iterations: 1 }),
+    ).rejects.toThrowError(
+      'Keystore: PBKDF2 iterations must be an integer >= 1000, got 1.',
+    )
+  })
+
+  test('scrypt rejects n < 1024', () => {
+    expect(() => Keystore.scrypt({ password: 'x', n: 2 })).toThrowError(
+      'Keystore: scrypt n must be a power of two >= 1024, got 2.',
+    )
+  })
+
+  test('scrypt rejects n that is not a power of two', () => {
+    expect(() => Keystore.scrypt({ password: 'x', n: 1500 })).toThrowError(
+      'Keystore: scrypt n must be a power of two >= 1024, got 1500.',
+    )
+  })
+
+  test('scrypt rejects r <= 0', () => {
+    expect(() =>
+      Keystore.scrypt({ password: 'x', n: 1024, r: 0 }),
+    ).toThrowError('Keystore: scrypt r must be a positive integer, got 0.')
+  })
+
+  test('scrypt rejects p <= 0', () => {
+    expect(() =>
+      Keystore.scrypt({ password: 'x', n: 1024, p: 0 }),
+    ).toThrowError('Keystore: scrypt p must be a positive integer, got 0.')
+  })
+
+  test('scryptAsync rejects n that is not a power of two', async () => {
+    await expect(
+      Keystore.scryptAsync({ password: 'x', n: 1500 }),
+    ).rejects.toThrowError(
+      'Keystore: scrypt n must be a power of two >= 1024, got 1500.',
+    )
+  })
+})
+
 describe.skip('scrypt', () => {
   test('default', async () => {
     const [key, opts] = Keystore.scrypt({
@@ -480,7 +538,42 @@ describe.skip('scrypt', () => {
   })
 })
 
-describe.skip('scryptAsync', () => {
+describe('scryptAsync', () => {
+  test('behavior: respects p and r options', async () => {
+    const [, opts] = await Keystore.scryptAsync({
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      p: 1,
+      r: 8,
+    })
+    expect(opts.kdfparams.p).toBe(1)
+    expect(opts.kdfparams.r).toBe(8)
+    expect(opts.kdfparams.n).toBe(1024)
+  })
+
+  test('behavior: matches sync scrypt for identical params', async () => {
+    const [keySync] = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      p: 2,
+      r: 4,
+    })
+    const [keyAsync] = await Keystore.scryptAsync({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      p: 2,
+      r: 4,
+    })
+    expect(keyAsync()).toEqual(keySync())
+  })
+})
+
+describe.skip('scryptAsync legacy snapshot', () => {
   test('default', async () => {
     const [key, opts] = await Keystore.scryptAsync({
       salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as Bytes from '../Bytes.js'
 import * as Hex from '../Hex.js'
 import * as X25519 from '../X25519.js'
@@ -8,7 +8,7 @@ describe('noble', () => {
     expect(X25519.noble).toBeDefined()
     expect(typeof X25519.noble.getPublicKey).toBe('function')
     expect(typeof X25519.noble.getSharedSecret).toBe('function')
-    expect(typeof X25519.noble.utils.randomPrivateKey).toBe('function')
+    expect(typeof X25519.noble.utils.randomSecretKey).toBe('function')
   })
 })
 

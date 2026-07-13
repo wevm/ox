@@ -1,0 +1,22 @@
+```ts twoslash
+// @noErrors
+import { Hex, Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
+
+declare const privateKey: Hex.Hex
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  to: '0x7099970C51812dc3A010C7d01b50e0d17dc79C8',
+  value: Value.fromEther('0.1'),
+  maxFeePerGas: Value.fromGwei('20'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip1559.getSignPayload(envelope),
+  privateKey,
+})
+
+TxEnvelopeEip1559.serialize(envelope, { signature })
+// @log: '0x02f8…1a2b'
+```

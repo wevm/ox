@@ -14,17 +14,6 @@ import type { Compute } from '../types.js'
  *
  * type Schema = RpcSchema.Wallet
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Wallet = RpcSchema.From<

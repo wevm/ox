@@ -1,0 +1,18 @@
+```ts twoslash
+// @noErrors
+import { Address, Secp256k1 } from 'ox'
+
+const { publicKey } = Secp256k1.createKeyPair()
+
+const address = Address.fromPublicKey(publicKey)
+// @log: '0x71be63f3384f5fb98995898a86b02fb2426c5788'
+
+const checksummed = Address.checksum(address)
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
+
+Address.validate(checksummed)
+// @log: true
+
+Address.isEqual(address, '0x71BE63F3384F5FB98995898A86B02FB2426C5788')
+// @log: true
+```

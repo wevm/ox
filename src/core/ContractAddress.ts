@@ -18,7 +18,7 @@ import * as Rlp from './Rlp.js'
  * import { ContractAddress } from 'ox'
  * ContractAddress.from({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  * // @log: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
  * ```
@@ -32,8 +32,9 @@ import * as Rlp from './Rlp.js'
  * import { ContractAddress, Hex } from 'ox'
  * ContractAddress.from({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   bytecode: '0x6394198df16000526103ff60206004601c335afa6040516060f3',
- *   salt: Hex.fromString('hello world'),
+ *   bytecode:
+ *     '0x6394198df16000526103ff60206004601c335afa6040516060f3',
+ *   salt: Hex.fromString('hello world')
  * })
  * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```
@@ -49,7 +50,7 @@ export function from(options: from.Options): Address.Address {
 export declare namespace from {
   export type Options = OneOf<fromCreate.Options | fromCreate2.Options>
 
-  type ErrorType =
+  export type ErrorType =
     | fromCreate.ErrorType
     | fromCreate2.ErrorType
     | Errors.GlobalErrorType
@@ -64,7 +65,7 @@ export declare namespace from {
  *
  * ContractAddress.fromCreate({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  * // @log: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
  * ```
@@ -109,8 +110,9 @@ export declare namespace fromCreate {
  *
  * ContractAddress.fromCreate2({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   bytecode: '0x6394198df16000526103ff60206004601c335afa6040516060f3',
- *   salt: Hex.fromString('hello world'),
+ *   bytecode:
+ *     '0x6394198df16000526103ff60206004601c335afa6040516060f3',
+ *   salt: Hex.fromString('hello world')
  * })
  * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```

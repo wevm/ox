@@ -4,16 +4,30 @@
   "type": "module",
   "scripts": {
     "dev": "vocs dev",
-    "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" vocs build --searchIndex false && vocs search-index",
-    "preview": "vocs preview"
+    "build": "node --import tsx scripts/copy-vocs-theme.ts && NODE_OPTIONS='--max-old-space-size=8192' vocs build",
+    "preview": "vocs preview",
+    "sync:vocs": "node --import tsx scripts/copy-vocs-theme.ts"
+  },
+  "dependencies": {
+    "@takumi-rs/image-response": "0.62.8",
+    "@takumi-rs/wasm": "0.62.8",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-server-dom-webpack": "19.2.7",
+    "tailwindcss": "^4.3.0",
+    "vocs": "2.5.3",
+    "waku": "1.0.0-beta.6"
   },
   "devDependencies": {
-    "@types/react": "^19",
-    "neverthrow": "^7.0.1",
+    "@iconify-json/vscode-icons": "^1.2.50",
+    "@types/node": "24.10.2",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
     "ox": "workspace:*",
-    "react": "^19",
-    "react-dom": "^19",
-    "vocs": "^1.0.13"
+    "rollup": "catalog:",
+    "shiki": "3.23.0",
+    "tsx": "^4.17.0",
+    "typescript": "^5"
   },
-  "packageManager": "pnpm@10.15.0"
+  "packageManager": "pnpm@11.0.8"
 }

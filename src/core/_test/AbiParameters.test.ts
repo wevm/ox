@@ -1,5 +1,5 @@
 import { AbiParameters } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { address } from '../../../test/constants/addresses.js'
 
 describe('encodePacked', () => {
@@ -216,9 +216,8 @@ describe('encodePacked', () => {
   )
 
   test('error: invalid address', () => {
-    expect(() =>
-      AbiParameters.encodePacked(['address'], ['0xdeadbeef']),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => AbiParameters.encodePacked(['address'], ['0xdeadbeef']))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xdeadbeef" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
@@ -250,6 +249,15 @@ describe('encodePacked', () => {
       () => AbiParameters.encodePacked(['function'], ['0x']),
     ).toThrowErrorMatchingInlineSnapshot(
       '[AbiParameters.InvalidTypeError: Type `function` is not a valid ABI Type.]',
+    )
+  })
+
+  test('error: fixed-array length mismatch', () => {
+    expect(() =>
+      // @ts-expect-error
+      AbiParameters.encodePacked(['uint256[2]'], [[1n, 2n, 3n]]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[AbiParameters.ArrayLengthMismatchError: Array length mismatch for type `uint256[2]`. Expected: `2`. Given: `3`.]',
     )
   })
 })
@@ -352,6 +360,13 @@ describe('format', () => {
 test('exports', () => {
   expect(Object.keys(AbiParameters)).toMatchInlineSnapshot(`
     [
+      "InvalidAbiParametersError",
+      "InvalidAbiTypeParameterError",
+      "InvalidFunctionModifierError",
+      "InvalidModifierError",
+      "InvalidParameterError",
+      "SolidityProtectedKeywordError",
+      "InvalidParenthesisError",
       "decode",
       "encode",
       "encodePacked",

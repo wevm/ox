@@ -1,4 +1,5 @@
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { OneOf } from '../core/internal/types.js'
 import type * as EntryPoint from './EntryPoint.js'
 
@@ -9,9 +10,11 @@ export type UserOperationGas<
 > = OneOf<
   | (entryPointVersion extends '0.6' ? V06<bigintType> : never)
   | (entryPointVersion extends '0.7' ? V07<bigintType> : never)
+  | (entryPointVersion extends '0.8' ? V08<bigintType> : never)
+  | (entryPointVersion extends '0.9' ? V09<bigintType> : never)
 >
 
-/** RPC User Operation Gas on EntryPoint 0.6 */
+/** RPC User Operation Gas. */
 export type Rpc<
   entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
 > = UserOperationGas<entryPointVersion, Hex.Hex>
@@ -38,6 +41,18 @@ export type V07<bigintType = bigint> = {
 /** RPC User Operation Gas on EntryPoint 0.7 */
 export type RpcV07 = V07<Hex.Hex>
 
+/** Type for User Operation Gas on EntryPoint 0.8 */
+export type V08<bigintType = bigint> = V07<bigintType>
+
+/** RPC User Operation Gas on EntryPoint 0.8 */
+export type RpcV08 = V08<Hex.Hex>
+
+/** Type for User Operation Gas on EntryPoint 0.9 */
+export type V09<bigintType = bigint> = V08<bigintType>
+
+/** RPC User Operation Gas on EntryPoint 0.9 */
+export type RpcV09 = V09<Hex.Hex>
+
 /**
  * Converts an {@link ox#UserOperationGas.Rpc} to an {@link ox#UserOperationGas.UserOperationGas}.
  *
@@ -48,26 +63,29 @@ export type RpcV07 = V07<Hex.Hex>
  * const userOperationGas = UserOperationGas.fromRpc({
  *   callGasLimit: '0x69420',
  *   preVerificationGas: '0x69420',
- *   verificationGasLimit: '0x69420',
+ *   verificationGasLimit: '0x69420'
  * })
  * ```
  *
  * @param rpc - The RPC user operation gas to convert.
  * @returns An instantiated {@link ox#UserOperationGas.UserOperationGas}.
  */
-export function fromRpc(rpc: Rpc): UserOperationGas {
+export function fromRpc<
+  entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+>(rpc: Rpc<entryPointVersion>): UserOperationGas<entryPointVersion> {
+  const gas = rpc as Rpc
   return {
-    ...rpc,
-    callGasLimit: BigInt(rpc.callGasLimit),
-    preVerificationGas: BigInt(rpc.preVerificationGas),
-    verificationGasLimit: BigInt(rpc.verificationGasLimit),
-    ...(rpc.paymasterVerificationGasLimit && {
-      paymasterVerificationGasLimit: BigInt(rpc.paymasterVerificationGasLimit),
+    ...gas,
+    callGasLimit: BigInt(gas.callGasLimit),
+    preVerificationGas: BigInt(gas.preVerificationGas),
+    verificationGasLimit: BigInt(gas.verificationGasLimit),
+    ...(gas.paymasterVerificationGasLimit && {
+      paymasterVerificationGasLimit: BigInt(gas.paymasterVerificationGasLimit),
     }),
-    ...(rpc.paymasterPostOpGasLimit && {
-      paymasterPostOpGasLimit: BigInt(rpc.paymasterPostOpGasLimit),
+    ...(gas.paymasterPostOpGasLimit && {
+      paymasterPostOpGasLimit: BigInt(gas.paymasterPostOpGasLimit),
     }),
-  } as UserOperationGas
+  } as UserOperationGas<entryPointVersion>
 }
 
 /**
@@ -80,30 +98,38 @@ export function fromRpc(rpc: Rpc): UserOperationGas {
  * const userOperationGas = UserOperationGas.toRpc({
  *   callGasLimit: 300_000n,
  *   preVerificationGas: 100_000n,
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  * ```
  *
  * @param userOperationGas - The user operation gas to convert.
  * @returns An RPC-formatted user operation gas.
  */
-export function toRpc(userOperationGas: UserOperationGas): Rpc {
+export function toRpc<
+  entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+>(userOperationGas: toRpc.Input<entryPointVersion>): Rpc<entryPointVersion> {
+  const gas = userOperationGas as toRpc.Input
   const rpc = {} as Rpc
 
-  rpc.callGasLimit = Hex.fromNumber(userOperationGas.callGasLimit)
-  rpc.preVerificationGas = Hex.fromNumber(userOperationGas.preVerificationGas)
-  rpc.verificationGasLimit = Hex.fromNumber(
-    userOperationGas.verificationGasLimit,
-  )
+  rpc.callGasLimit = Quantity.fromNumberish(gas.callGasLimit)
+  rpc.preVerificationGas = Quantity.fromNumberish(gas.preVerificationGas)
+  rpc.verificationGasLimit = Quantity.fromNumberish(gas.verificationGasLimit)
 
-  if (typeof userOperationGas.paymasterVerificationGasLimit === 'bigint')
-    rpc.paymasterVerificationGasLimit = Hex.fromNumber(
-      userOperationGas.paymasterVerificationGasLimit,
+  if (gas.paymasterVerificationGasLimit !== undefined)
+    rpc.paymasterVerificationGasLimit = Quantity.fromNumberish(
+      gas.paymasterVerificationGasLimit,
     )
-  if (typeof userOperationGas.paymasterPostOpGasLimit === 'bigint')
-    rpc.paymasterPostOpGasLimit = Hex.fromNumber(
-      userOperationGas.paymasterPostOpGasLimit,
+  if (gas.paymasterPostOpGasLimit !== undefined)
+    rpc.paymasterPostOpGasLimit = Quantity.fromNumberish(
+      gas.paymasterPostOpGasLimit,
     )
 
-  return rpc
+  return rpc as Rpc<entryPointVersion>
+}
+
+export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#UserOperationGas.(toRpc:function)}. */
+  export type Input<
+    entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+  > = UserOperationGas<entryPointVersion, Hex.Hex | bigint | number>
 }

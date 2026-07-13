@@ -18,7 +18,9 @@ export const createChallenge = Registration.createChallenge
  * ```ts twoslash
  * import { WebAuthnP256 } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({ name: 'Example' }) // [!code focus]
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example'
+ * }) // [!code focus]
  * // @log: {
  * // @log:   id: 'oZ48...',
  * // @log:   publicKey: { x: 51421...5123n, y: 12345...6789n },
@@ -27,7 +29,7 @@ export const createChallenge = Registration.createChallenge
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   credentialId: credential.id,
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  * ```
  *
@@ -62,10 +64,12 @@ export declare namespace createCredential {
  * ```ts twoslash
  * import { WebAuthnP256 } from 'ox'
  *
- * const authenticatorData = WebAuthnP256.getAuthenticatorData({
- *   rpId: 'example.com',
- *   signCount: 420,
- * })
+ * const authenticatorData = WebAuthnP256.getAuthenticatorData(
+ *   {
+ *     rpId: 'example.com',
+ *     signCount: 420
+ *   }
+ * )
  * // @log: "0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194705000001a4"
  * ```
  *
@@ -79,14 +83,16 @@ export declare namespace createCredential {
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const authenticatorData = WebAuthnP256.getAuthenticatorData({
- *   rpId: 'example.com',
- *   flag: 0x41, // UP + AT
- *   credential: {
- *     id: new Uint8Array(32),
- *     publicKey,
- *   },
- * })
+ * const authenticatorData = WebAuthnP256.getAuthenticatorData(
+ *   {
+ *     rpId: 'example.com',
+ *     flag: 0x41, // UP + AT
+ *     credential: {
+ *       id: new Uint8Array(32),
+ *       publicKey
+ *     }
+ *   }
+ * )
  * ```
  *
  * @param options - Options to construct the authenticator data.
@@ -119,7 +125,7 @@ export declare namespace getAuthenticatorData {
  *
  * const clientDataJSON = WebAuthnP256.getClientDataJSON({
  *   challenge: '0xdeadbeef',
- *   origin: 'https://example.com',
+ *   origin: 'https://example.com'
  * })
  * // @log: "{"type":"webauthn.get","challenge":"3q2-7w","origin":"https://example.com","crossOrigin":false}"
  * ```
@@ -152,13 +158,15 @@ export declare namespace getClientDataJSON {
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const attestationObject = WebAuthnP256.getAttestationObject({
- *   authData: WebAuthnP256.getAuthenticatorData({
- *     rpId: 'example.com',
- *     flag: 0x41,
- *     credential: { id: new Uint8Array(32), publicKey },
- *   }),
- * })
+ * const attestationObject = WebAuthnP256.getAttestationObject(
+ *   {
+ *     authData: WebAuthnP256.getAuthenticatorData({
+ *       rpId: 'example.com',
+ *       flag: 0x41,
+ *       credential: { id: new Uint8Array(32), publicKey }
+ *     })
+ *   }
+ * )
  * ```
  *
  * @param options - Options to construct the attestation object.
@@ -180,9 +188,12 @@ export declare namespace getAttestationObject {
  * ```ts twoslash
  * import { WebAuthnP256 } from 'ox'
  *
- * const options = WebAuthnP256.getCredentialCreationOptions({ name: 'Example' })
+ * const options = WebAuthnP256.getCredentialCreationOptions({
+ *   name: 'Example'
+ * })
  *
- * const credential = await window.navigator.credentials.create(options)
+ * const credential =
+ *   await window.navigator.credentials.create(options)
  * ```
  *
  * @param options - Options.
@@ -204,10 +215,11 @@ export declare namespace getCredentialCreationOptions {
  * import { WebAuthnP256 } from 'ox'
  *
  * const options = WebAuthnP256.getCredentialRequestOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const credential = await window.navigator.credentials.get(options)
+ * const credential =
+ *   await window.navigator.credentials.get(options)
  * ```
  *
  * @param options - Options.
@@ -238,8 +250,9 @@ export declare namespace getCredentialRequestOptions {
  * ```ts twoslash
  * import { WebAuthnP256, WebCryptoP256 } from 'ox'
  *
- * const { metadata, payload } = WebAuthnP256.getSignPayload({ // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
+ * const { metadata, payload } = WebAuthnP256.getSignPayload({
+ *   // [!code focus]
+ *   challenge: '0xdeadbeef' // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   metadata: {
@@ -252,11 +265,12 @@ export declare namespace getCredentialRequestOptions {
  * // @log:   payload: "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763050000000045086dcb06a5f234db625bcdc94e657f86b76b6fd3eb9c30543eabc1e577a4b0",
  * // @log: }
  *
- * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const { publicKey, privateKey } =
+ *   await WebCryptoP256.createKeyPair()
  *
  * const signature = await WebCryptoP256.sign({
  *   payload,
- *   privateKey,
+ *   privateKey
  * })
  * ```
  *
@@ -283,12 +297,13 @@ export declare namespace getSignPayload {
  * import { WebAuthnP256 } from 'ox'
  *
  * const credential = await WebAuthnP256.createCredential({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({ // [!code focus]
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   // [!code focus]
  *   credentialId: credential.id, // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
+ *   challenge: '0xdeadbeef' // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   metadata: {
@@ -325,19 +340,20 @@ export declare namespace sign {
  * import { WebAuthnP256 } from 'ox'
  *
  * const credential = await WebAuthnP256.createCredential({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   credentialId: credential.id,
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const result = await WebAuthnP256.verify({ // [!code focus]
+ * const result = await WebAuthnP256.verify({
+ *   // [!code focus]
  *   metadata, // [!code focus]
  *   challenge: '0xdeadbeef', // [!code focus]
  *   publicKey: credential.publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```

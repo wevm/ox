@@ -1,5 +1,5 @@
 import { AccessList } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromTupleList', () => {
   test('default', () => {
@@ -8,8 +8,6 @@ describe('fromTupleList', () => {
         [
           '0x1234512345123451234512345123451234512345',
           [
-            '0x1234512345123451234512345123451234512345',
-            '0x0000512345123451234512345123451234512345',
             '0x1234512345123451234512345123451234512345123451234512345123423232',
           ],
         ],
@@ -19,13 +17,24 @@ describe('fromTupleList', () => {
         {
           "address": "0x1234512345123451234512345123451234512345",
           "storageKeys": [
-            "0x1234512345123451234512345123451234512345",
-            "0x512345123451234512345123451234512345",
             "0x1234512345123451234512345123451234512345123451234512345123423232",
           ],
         },
       ]
     `)
+  })
+
+  test('error: invalid storage key size', () => {
+    expect(() =>
+      AccessList.fromTupleList([
+        [
+          '0x1234512345123451234512345123451234512345',
+          ['0x1234512345123451234512345123451234512345'],
+        ],
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AccessList.InvalidStorageKeySizeError: Size for storage key "0x1234512345123451234512345123451234512345" is invalid. Expected 32 bytes. Got 20 bytes.]`,
+    )
   })
 })
 

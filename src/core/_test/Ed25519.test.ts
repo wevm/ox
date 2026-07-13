@@ -1,5 +1,5 @@
 import { Bytes, Ed25519, Hex, X25519 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('createKeyPair', () => {
   test('default', () => {

@@ -32,4 +32,3 @@ body:
       description: Please provide the URL(s) where you found this issue.
     validations:
       required: true
-

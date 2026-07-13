@@ -1,10 +1,10 @@
 import { Siwe } from 'ox'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vp/test'
 
 describe('createMessage', () => {
   const message = {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-    chainId: 1,
+    chainId: 1n,
     domain: 'example.com',
     nonce: 'foobarbaz',
     uri: 'https://example.com/path',
@@ -268,9 +268,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid address', () => {
-    expect(() =>
-      Siwe.createMessage({ ...message, address: '0xfoobarbaz' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, address: '0xfoobarbaz' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xfoobarbaz" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
@@ -279,6 +278,7 @@ describe('createMessage', () => {
 
   test('behavior: invalid chainId', () => {
     expect(() =>
+      // @ts-expect-error chain IDs must be bigint.
       Siwe.createMessage({ ...message, chainId: 1.1 }),
     ).toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "chainId".
@@ -291,9 +291,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid domain', () => {
-    expect(() =>
-      Siwe.createMessage({ ...message, domain: '#foo' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, domain: '#foo' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "domain".
 
     - Domain must be an RFC 3986 authority.
@@ -304,9 +303,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid nonce', () => {
-    expect(() =>
-      Siwe.createMessage({ ...message, nonce: '#foo' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, nonce: '#foo' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "nonce".
 
     - Nonce must be at least 8 characters.
@@ -317,9 +315,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid uri', () => {
-    expect(() =>
-      Siwe.createMessage({ ...message, uri: '#foo' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, uri: '#foo' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "uri".
 
     - URI must be a RFC 3986 URI referring to the resource that is the subject of the signing.
@@ -343,9 +340,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid scheme', () => {
-    expect(() =>
-      Siwe.createMessage({ ...message, scheme: 'foo_bar' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, scheme: 'foo_bar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "scheme".
 
     - Scheme must be an RFC 3986 URI scheme.
@@ -356,9 +352,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid statement', () => {
-    expect(() =>
-      Siwe.createMessage({ ...message, statement: 'foo\nbar' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, statement: 'foo\nbar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
 
     - Statement must not include '\\n'.
@@ -483,7 +478,7 @@ Issued At: 2023-02-01T00:00:00.000Z`
     expect(parsed).toMatchInlineSnapshot(`
     {
       "address": "0xA0Cf798816D4b9b9866b5330EEa46a18382f251e",
-      "chainId": 1,
+      "chainId": 1n,
       "domain": "example.com",
       "issuedAt": 2023-02-01T00:00:00.000Z,
       "nonce": "foobarbaz",
@@ -631,7 +626,7 @@ Request ID: 123e4567-e89b-12d3-a456-426614174000`
     const parsed = Siwe.parseMessage(message)
     expect(parsed).toMatchInlineSnapshot(`
     {
-      "chainId": 1,
+      "chainId": 1n,
       "issuedAt": 2023-02-01T00:00:00.000Z,
       "nonce": "foobarbaz",
       "requestId": "123e4567-e89b-12d3-a456-426614174000",
@@ -651,7 +646,7 @@ Request ID: 123e4567-e89b-12d3-a456-426614174000`
 describe('validateMessage', () => {
   const message = {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-    chainId: 1,
+    chainId: 1n,
     domain: 'example.com',
     nonce: 'foobarbaz',
     uri: 'https://example.com/path',

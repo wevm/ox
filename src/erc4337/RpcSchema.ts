@@ -12,21 +12,11 @@ import type * as UserOperationReceipt from './UserOperationReceipt.js'
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { RpcSchema } from 'ox'
  *
  * type Schema = RpcSchema.Bundler
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Bundler<
@@ -60,7 +50,7 @@ export type Bundler<
         method: 'eth_getUserOperationByHash'
         params: [hash: Hex.Hex]
       }
-      ReturnType: UserOperation.Rpc<entryPointVersion> | null
+      ReturnType: UserOperation.RpcTransactionInfo<entryPointVersion> | null
     }
   | {
       Request: {
@@ -93,21 +83,11 @@ export type Bundler<
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { RpcSchema } from 'ox'
  *
  * type Schema = RpcSchema.BundlerDebug
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type BundlerDebug<
@@ -125,7 +105,9 @@ export type BundlerDebug<
         method: 'debug_bundler_dumpMempool'
         params: [entryPoint: Address.Address]
       }
-      ReturnType: readonly { userOp: UserOperation.Rpc }[]
+      ReturnType: readonly {
+        userOp: UserOperation.Rpc<entryPointVersion>
+      }[]
     }
   | {
       Request: {

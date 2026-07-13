@@ -1,0 +1,40 @@
+---
+layout: blank
+description: 'A minimal, type-safe Ethereum standard library for TypeScript.'
+---
+
+import { Landing } from '../components/Landing'
+import { installCommands, installHtml } from '../components/install-highlight'
+import Abi from '../snippets/abi.mdx'
+import Address from '../snippets/address.mdx'
+import AesGcm from '../snippets/aesgcm.mdx'
+import Ed25519 from '../snippets/ed25519.mdx'
+import Hash from '../snippets/hash.mdx'
+import Hex from '../snippets/hex.mdx'
+import Mnemonic from '../snippets/mnemonic.mdx'
+import Provider from '../snippets/provider.mdx'
+import Secp256k1 from '../snippets/secp256k1.mdx'
+import Signature from '../snippets/signature.mdx'
+import TxEnvelope from '../snippets/txenvelope.mdx'
+import WebAuthn from '../snippets/webauthn.mdx'
+import X25519 from '../snippets/x25519.mdx'
+
+<Landing
+  installCommands={installCommands}
+  installHtml={installHtml}
+  snippets={{
+    abi: <Abi />,
+    address: <Address />,
+    aesgcm: <AesGcm />,
+    ed25519: <Ed25519 />,
+    hash: <Hash />,
+    hex: <Hex />,
+    mnemonic: <Mnemonic />,
+    provider: <Provider />,
+    secp256k1: <Secp256k1 />,
+    signature: <Signature />,
+    txenvelope: <TxEnvelope />,
+    webauthn: <WebAuthn />,
+    x25519: <X25519 />,
+  }}
+/>

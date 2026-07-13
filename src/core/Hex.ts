@@ -1,15 +1,16 @@
-import { equalBytes } from '@noble/curves/abstract/utils'
-import * as Bytes from './Bytes.js'
+import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
-import * as internal_bytes from './internal/bytes.js'
+import { BytesSizeOverflowError } from './internal/codec/errors.js'
+import {
+  bytesToHex,
+  hexToBytes,
+  InvalidHexValueError as InvalidHexValueError_codec,
+  InvalidLengthError as InvalidLengthError_codec,
+} from './internal/codec/hex.js'
+import { IntegerOutOfRangeError as IntegerOutOfRangeError_codec } from './internal/codec/int.js'
+import { decoder, encoder } from './internal/codec/utf8.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
-
-const encoder = /*#__PURE__*/ new TextEncoder()
-
-const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
-  i.toString(16).padStart(2, '0'),
-)
 
 /** Root type for a Hex string. */
 export type Hex = `0x${string}`
@@ -35,7 +36,6 @@ export function assert(
   options: assert.Options = {},
 ): asserts value is Hex {
   const { strict = false } = options
-  if (!value) throw new InvalidHexTypeError(value)
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
     if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
@@ -70,7 +70,14 @@ export declare namespace assert {
  * @returns The concatenated {@link ox#Hex.Hex} value.
  */
 export function concat(...values: readonly Hex[]): Hex {
-  return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
+  if (values.length === 0) return '0x'
+  if (values.length === 1) return values[0]!
+  if (values.length === 2)
+    return `0x${(values[0] as string).slice(2)}${(values[1] as string).slice(2)}` as Hex
+  const parts = Array.from<string>({ length: values.length })
+  for (let i = 0; i < values.length; i++)
+    parts[i] = (values[i] as string).slice(2)
+  return `0x${parts.join('')}` as Hex
 }
 
 export declare namespace concat {
@@ -99,17 +106,22 @@ export declare namespace concat {
  * Hex.from('0x48656c6c6f20576f726c6421')
  * // @log: '0x48656c6c6f20576f726c6421'
  *
- * Hex.from(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * Hex.from(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
  * @param value - The {@link ox#Bytes.Bytes} value to encode.
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function from(value: Hex | Bytes.Bytes | readonly number[]): Hex {
+export function from(value: Hex | Uint8Array | readonly number[]): Hex {
   if (value instanceof Uint8Array) return fromBytes(value)
   if (Array.isArray(value)) return fromBytes(new Uint8Array(value))
-  return value as never
+  assert(value)
+  return value
 }
 
 export declare namespace from {
@@ -173,7 +185,11 @@ export declare namespace fromBoolean {
  * ```ts twoslash
  * import { Bytes, Hex } from 'ox'
  *
- * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * Hex.fromBytes(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -182,12 +198,10 @@ export declare namespace fromBoolean {
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function fromBytes(
-  value: Bytes.Bytes,
+  value: Uint8Array,
   options: fromBytes.Options = {},
 ): Hex {
-  let string = ''
-  for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
-  const hex = `0x${string}` as const
+  const hex = bytesToHex(value)
 
   if (typeof options.size === 'number') {
     internal.assertSize(hex, options.size)
@@ -231,6 +245,29 @@ export function fromNumber(
   options: fromNumber.Options = {},
 ): Hex {
   const { signed, size } = options
+
+  // Safe-integer unsigned fast path: skip BigInt conversion entirely.
+  if (
+    !signed &&
+    typeof value === 'number' &&
+    value >= 0 &&
+    Number.isSafeInteger(value)
+  ) {
+    if (size) {
+      const maxValue = 2n ** (BigInt(size) * 8n) - 1n
+      if (BigInt(value) > maxValue)
+        throw new IntegerOutOfRangeError({
+          max: `${maxValue}`,
+          min: '0',
+          signed: false,
+          size,
+          value: `${value}`,
+        })
+      const hex = `0x${value.toString(16)}` as Hex
+      return padLeft(hex, size)
+    }
+    return `0x${value.toString(16)}` as Hex
+  }
 
   const value_ = BigInt(value)
 
@@ -336,11 +373,11 @@ export declare namespace fromString {
  * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function isEqual(hexA: Hex, hexB: Hex) {
-  return equalBytes(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
+  return equalBytes(hexToBytes(hexA), hexToBytes(hexB))
 }
 
 export declare namespace isEqual {
-  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
+  type ErrorType = hexToBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -358,10 +395,7 @@ export declare namespace isEqual {
  * @param size - The size (in bytes) of the output hex value.
  * @returns The padded {@link ox#Hex.Hex} value.
  */
-export function padLeft(
-  value: Hex,
-  size?: number | undefined,
-): padLeft.ReturnType {
+export function padLeft(value: Hex, size?: number): padLeft.ReturnType {
   return internal.pad(value, { dir: 'left', size })
 }
 
@@ -385,10 +419,7 @@ export declare namespace padLeft {
  * @param size - The size (in bytes) of the output hex value.
  * @returns The padded {@link ox#Hex.Hex} value.
  */
-export function padRight(
-  value: Hex,
-  size?: number | undefined,
-): padRight.ReturnType {
+export function padRight(value: Hex, size?: number): padRight.ReturnType {
   return internal.pad(value, { dir: 'right', size })
 }
 
@@ -411,7 +442,7 @@ export declare namespace padRight {
  * @returns Random {@link ox#Hex.Hex} value.
  */
 export function random(length: number): Hex {
-  return fromBytes(Bytes.random(length))
+  return fromBytes(crypto.getRandomValues(new Uint8Array(length)))
 }
 
 export declare namespace random {
@@ -437,15 +468,27 @@ export declare namespace random {
  */
 export function slice(
   value: Hex,
-  start?: number | undefined,
-  end?: number | undefined,
+  start?: number,
+  end?: number,
   options: slice.Options = {},
 ): Hex {
   const { strict } = options
   internal.assertStartOffset(value, start)
-  const value_ = `0x${value
-    .replace('0x', '')
-    .slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
+  let value_: Hex
+  if (end === undefined && (start === undefined || start >= 0)) {
+    // Non-negative-start, no-end fast path: avoid the intermediate
+    // `replace('0x', '')` / `slice(0, length)` allocation chain.
+    if (start === undefined || start === 0) value_ = value
+    else value_ = `0x${value.slice(2 + start * 2)}` as Hex
+  } else {
+    // Strip the `0x` prefix once and offset against the data (post-`0x`).
+    // Negative offsets fall through here (rare) so they can rely on
+    // `String.prototype.slice`'s negative-offset semantics.
+    const data = value.slice(2)
+    const startOffset = (start ?? 0) * 2
+    const endOffset = end !== undefined ? end * 2 : undefined
+    value_ = `0x${data.slice(startOffset, endOffset)}` as Hex
+  }
   if (strict) internal.assertEndOffset(value_, start, end)
   return value_
 }
@@ -542,7 +585,10 @@ export declare namespace trimRight {
  * Hex.toBigInt('0x1a4')
  * // @log: 420n
  *
- * Hex.toBigInt('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
+ * Hex.toBigInt(
+ *   '0x00000000000000000000000000000000000000000000000000000000000001a4',
+ *   { size: 32 }
+ * )
  * // @log: 420n
  * ```
  *
@@ -588,7 +634,10 @@ export declare namespace toBigInt {
  * Hex.toBoolean('0x01')
  * // @log: true
  *
- * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
+ * Hex.toBoolean(
+ *   '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   { size: 32 }
+ * )
  * // @log: true
  * ```
  *
@@ -632,8 +681,14 @@ export declare namespace toBoolean {
  * @param options - Options.
  * @returns The decoded {@link ox#Bytes.Bytes}.
  */
-export function toBytes(hex: Hex, options: toBytes.Options = {}): Bytes.Bytes {
-  return Bytes.fromHex(hex, options)
+export function toBytes(hex: Hex, options: toBytes.Options = {}): Uint8Array {
+  const { size } = options
+  let value = hex
+  if (typeof size === 'number') {
+    internal.assertSize(value, size)
+    value = padRight(value, size)
+  }
+  return hexToBytes(value)
 }
 
 export declare namespace toBytes {
@@ -642,7 +697,10 @@ export declare namespace toBytes {
     size?: number | undefined
   }
 
-  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | internal.assertSize.ErrorType
+    | hexToBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -655,7 +713,10 @@ export declare namespace toBytes {
  * Hex.toNumber('0x1a4')
  * // @log: 420
  *
- * Hex.toNumber('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
+ * Hex.toNumber(
+ *   '0x00000000000000000000000000000000000000000000000000000000000001a4',
+ *   { size: 32 }
+ * )
  * // @log: 420
  * ```
  *
@@ -665,8 +726,16 @@ export declare namespace toBytes {
  */
 export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
   const { signed, size } = options
-  if (!signed && !size) return Number(hex)
-  return Number(toBigInt(hex, options))
+  const value = !signed && !size ? Number(hex) : Number(toBigInt(hex, options))
+  if (!Number.isSafeInteger(value))
+    throw new IntegerOutOfRangeError({
+      max: `${Number.MAX_SAFE_INTEGER}`,
+      min: signed ? `${Number.MIN_SAFE_INTEGER}` : '0',
+      signed,
+      size,
+      value: `${value}`,
+    })
+  return value
 }
 
 export declare namespace toNumber {
@@ -685,9 +754,12 @@ export declare namespace toNumber {
  * Hex.toString('0x48656c6c6f20576f726c6421')
  * // @log: 'Hello world!'
  *
- * Hex.toString('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', {
- *  size: 32,
- * })
+ * Hex.toString(
+ *   '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000',
+ *   {
+ *     size: 32
+ *   }
+ * )
  * // @log: 'Hello world'
  * ```
  *
@@ -698,12 +770,18 @@ export declare namespace toNumber {
 export function toString(hex: Hex, options: toString.Options = {}): string {
   const { size } = options
 
-  let bytes = Bytes.fromHex(hex)
-  if (size) {
-    internal_bytes.assertSize(bytes, size)
-    bytes = Bytes.trimRight(bytes)
-  }
-  return new TextDecoder().decode(bytes)
+  const bytes = hexToBytes(hex)
+  if (!size) return decoder.decode(bytes)
+
+  // Match legacy semantics: assert against bytes length so the thrown class
+  // matches `Bytes.SizeOverflowError` rather than `Hex.SizeOverflowError`.
+  if (bytes.length > size)
+    throw new BytesSizeOverflowError({ givenSize: bytes.length, maxSize: size })
+
+  // Trim trailing zero bytes when a `size` is given.
+  let end = bytes.length
+  while (end > 0 && bytes[end - 1] === 0) end--
+  return decoder.decode(bytes.subarray(0, end))
 }
 
 export declare namespace toString {
@@ -713,9 +791,8 @@ export declare namespace toString {
   }
 
   type ErrorType =
-    | internal_bytes.assertSize.ErrorType
-    | Bytes.fromHex.ErrorType
-    | Bytes.trimRight.ErrorType
+    | internal.assertSize.ErrorType
+    | hexToBytes.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -762,37 +839,13 @@ export declare namespace validate {
 /**
  * Thrown when the provided integer is out of range, and cannot be represented as a hex value.
  *
- * @example
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.fromNumber(420182738912731283712937129)
- * // @error: Hex.IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe unsigned integer range (`0` to `9007199254740991`)
- * ```
+ * Re-exported from `internal/codec/int.ts` to break the `Bytes` <-> `Hex` runtime cycle.
  */
-export class IntegerOutOfRangeError extends Errors.BaseError {
-  override readonly name = 'Hex.IntegerOutOfRangeError'
-
-  constructor({
-    max,
-    min,
-    signed,
-    size,
-    value,
-  }: {
-    max?: string | undefined
-    min: string
-    signed?: boolean | undefined
-    size?: number | undefined
-    value: string
-  }) {
-    super(
-      `Number \`${value}\` is not in safe${
-        size ? ` ${size * 8}-bit` : ''
-      }${signed ? ' signed' : ' unsigned'} integer range ${max ? `(\`${min}\` to \`${max}\`)` : `(above \`${min}\`)`}`,
-    )
-  }
-}
+export const IntegerOutOfRangeError = IntegerOutOfRangeError_codec
+/** Re-exported from `internal/codec/int.ts`. */
+export type IntegerOutOfRangeError = InstanceType<
+  typeof IntegerOutOfRangeError_codec
+>
 
 /**
  * Thrown when the provided hex value cannot be represented as a boolean.
@@ -845,50 +898,22 @@ export class InvalidHexTypeError extends Errors.BaseError {
 /**
  * Thrown when the provided hex value is invalid.
  *
- * @example
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.assert('0x0123456789abcdefg')
- * // @error: Hex.InvalidHexValueError: Value `0x0123456789abcdefg` is an invalid hex value.
- * // @error: Hex values must start with `"0x"` and contain only hexadecimal characters (0-9, a-f, A-F).
- * ```
+ * Re-exported from `internal/codec/hex.ts` to break the `Bytes` <-> `Hex` runtime cycle.
  */
-export class InvalidHexValueError extends Errors.BaseError {
-  override readonly name = 'Hex.InvalidHexValueError'
-
-  constructor(value: unknown) {
-    super(`Value \`${value}\` is an invalid hex value.`, {
-      metaMessages: [
-        'Hex values must start with `"0x"` and contain only hexadecimal characters (0-9, a-f, A-F).',
-      ],
-    })
-  }
-}
+export const InvalidHexValueError = InvalidHexValueError_codec
+/** Re-exported from `internal/codec/hex.ts`. */
+export type InvalidHexValueError = InstanceType<
+  typeof InvalidHexValueError_codec
+>
 
 /**
  * Thrown when the provided hex value is an odd length.
  *
- * @example
- * ```ts twoslash
- * import { Bytes } from 'ox'
- *
- * Bytes.fromHex('0xabcde')
- * // @error: Hex.InvalidLengthError: Hex value `"0xabcde"` is an odd length (5 nibbles).
- * ```
+ * Re-exported from `internal/codec/hex.ts` to break the `Bytes` <-> `Hex` runtime cycle.
  */
-export class InvalidLengthError extends Errors.BaseError {
-  override readonly name = 'Hex.InvalidLengthError'
-
-  constructor(value: Hex) {
-    super(
-      `Hex value \`"${value}"\` is an odd length (${value.length - 2} nibbles).`,
-      {
-        metaMessages: ['It must be an even length.'],
-      },
-    )
-  }
-}
+export const InvalidLengthError = InvalidLengthError_codec
+/** Re-exported from `internal/codec/hex.ts`. */
+export type InvalidLengthError = InstanceType<typeof InvalidLengthError_codec>
 
 /**
  * Thrown when the size of the value exceeds the expected max size.
@@ -929,7 +954,11 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
     offset,
     position,
     size,
-  }: { offset: number; position: 'start' | 'end'; size: number }) {
+  }: {
+    offset: number
+    position: 'start' | 'end'
+    size: number
+  }) {
     super(
       `Slice ${
         position === 'start' ? 'starting' : 'ending'
@@ -945,7 +974,10 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
  * ```ts twoslash
  * import { Hex } from 'ox'
  *
- * Hex.padLeft('0x1a4e12a45a21323123aaa87a897a897a898a6567a578a867a98778a667a85a875a87a6a787a65a675a6a9', 32)
+ * Hex.padLeft(
+ *   '0x1a4e12a45a21323123aaa87a897a897a898a6567a578a867a98778a667a85a875a87a6a787a65a675a6a9',
+ *   32
+ * )
  * // @error: Hex.SizeExceedsPaddingSizeError: Hex size (`43`) exceeds padding size (`32`).
  * ```
  */

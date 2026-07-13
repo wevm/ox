@@ -18,13 +18,14 @@ export type IsSignature<signature extends string> =
 export type Signature<
   signature extends string,
   key extends string | unknown = unknown,
-> = IsSignature<signature> extends true
-  ? signature
-  : string extends signature // if exactly `string` (not narrowed), then pass through as valid
+> =
+  IsSignature<signature> extends true
     ? signature
-    : TypeErrorMessage<`Signature "${signature}" is invalid${key extends string
-        ? ` at position ${key}`
-        : ''}.`>
+    : string extends signature // if exactly `string` (not narrowed), then pass through as valid
+      ? signature
+      : TypeErrorMessage<`Signature "${signature}" is invalid${key extends string
+          ? ` at position ${key}`
+          : ''}.`>
 
 /** @internal */
 export type Signatures<signatures extends readonly string[]> = {

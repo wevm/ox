@@ -1,7 +1,7 @@
-import { hmac } from '@noble/hashes/hmac'
-import { ripemd160 as noble_ripemd160 } from '@noble/hashes/ripemd160'
-import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3'
-import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
+import { hmac } from '@noble/hashes/hmac.js'
+import { ripemd160 as noble_ripemd160 } from '@noble/hashes/legacy.js'
+import { sha256 as noble_sha256 } from '@noble/hashes/sha2.js'
+import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -52,8 +52,9 @@ export function keccak256<
   value: value | Hex.Hex | Bytes.Bytes,
   options: keccak256.Options<as> = {},
 ): keccak256.ReturnType<as> {
-  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = noble_keccak256(Bytes.from(value))
+  const isBytes = value instanceof Uint8Array
+  const { as = isBytes ? 'Bytes' : 'Hex' } = options
+  const bytes = noble_keccak256(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -93,7 +94,9 @@ export declare namespace keccak256 {
  * ```ts twoslash
  * import { Hash, Hex } from 'ox'
  *
- * Hash.hmac256(Hex.fromString('key'), '0xdeadbeef', { as: 'Bytes' })
+ * Hash.hmac256(Hex.fromString('key'), '0xdeadbeef', {
+ *   as: 'Bytes'
+ * })
  * // @log: Uint8Array [...]
  * ```
  *
@@ -112,8 +115,11 @@ export function hmac256<
   value: value | Hex.Hex | Bytes.Bytes,
   options: hmac256.Options<as> = {},
 ): hmac256.ReturnType<as> {
-  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = hmac(noble_sha256, Bytes.from(key), Bytes.from(value))
+  const isBytes = value instanceof Uint8Array
+  const { as = isBytes ? 'Bytes' : 'Hex' } = options
+  const keyBytes = key instanceof Uint8Array ? key : Bytes.from(key)
+  const valueBytes = isBytes ? value : Bytes.from(value)
+  const bytes = hmac(noble_sha256, keyBytes, valueBytes)
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -160,8 +166,9 @@ export function ripemd160<
   value: value | Hex.Hex | Bytes.Bytes,
   options: ripemd160.Options<as> = {},
 ): ripemd160.ReturnType<as> {
-  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = noble_ripemd160(Bytes.from(value))
+  const isBytes = value instanceof Uint8Array
+  const { as = isBytes ? 'Bytes' : 'Hex' } = options
+  const bytes = noble_ripemd160(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -208,8 +215,9 @@ export function sha256<
   value: value | Hex.Hex | Bytes.Bytes,
   options: sha256.Options<as> = {},
 ): sha256.ReturnType<as> {
-  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = noble_sha256(Bytes.from(value))
+  const isBytes = value instanceof Uint8Array
+  const { as = isBytes ? 'Bytes' : 'Hex' } = options
+  const bytes = noble_sha256(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -240,7 +248,9 @@ export declare namespace sha256 {
  * Hash.validate('0x')
  * // @log: false
  *
- * Hash.validate('0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0')
+ * Hash.validate(
+ *   '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
+ * )
  * // @log: true
  * ```
  *

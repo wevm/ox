@@ -2,13 +2,30 @@ import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as AbiItem from './AbiItem.js'
 import * as AbiParameters from './AbiParameters.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiConstructor.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
 export type AbiConstructor = abitype.AbiConstructor
+
+type ExtractConstructor<abi extends Abi.Abi | readonly unknown[]> = [
+  fromAbi.ReturnType<abi>,
+] extends [never]
+  ? undefined
+  : fromAbi.ReturnType<abi> extends AbiConstructor
+    ? fromAbi.ReturnType<abi>
+    : undefined
+
+type ExtractArgs<abiConstructor extends AbiConstructor | undefined> = [
+  abiConstructor,
+] extends [never]
+  ? readonly []
+  : abiConstructor extends AbiConstructor
+    ? abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+    : readonly []
 
 /**
  * ABI-decodes the provided constructor input (`inputs`).
@@ -17,18 +34,21 @@ export type AbiConstructor = abitype.AbiConstructor
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.from(
+ *   'constructor(address, uint256)'
+ * )
  *
  * const bytecode = '0x...'
  *
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode,
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n]
  * })
  *
- * const decoded = AbiConstructor.decode(constructor, { // [!code focus]
+ * const decoded = AbiConstructor.decode(constructor, {
+ *   // [!code focus]
  *   bytecode, // [!code focus]
- *   data, // [!code focus]
+ *   data // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -60,10 +80,7 @@ export type AbiConstructor = abitype.AbiConstructor
  */
 export function decode<
   const abi extends Abi.Abi | readonly unknown[],
-  abiConstructor extends
-    AbiConstructor = fromAbi.ReturnType<abi> extends AbiConstructor
-    ? fromAbi.ReturnType<abi>
-    : never,
+  abiConstructor extends AbiConstructor | undefined = ExtractConstructor<abi>,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
   options: decode.Options,
@@ -72,7 +89,7 @@ export function decode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
   options: decode.Options,
 ): decode.ReturnType<abiConstructor>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], options: decode.Options]
@@ -84,15 +101,24 @@ export function decode(
         Abi.Abi | readonly unknown[],
         decode.Options,
       ]
+      if (options.data === options.bytecode) return [undefined, options]
       return [fromAbi(abi), options] as [AbiConstructor, decode.Options]
     }
     return parameters as [AbiConstructor, decode.Options]
   })()
 
+  if (!abiConstructor) return undefined
   const { bytecode } = options
   if (abiConstructor.inputs?.length === 0) return undefined
-  const data = options.data.replace(bytecode, '0x') as Hex.Hex
-  return AbiParameters.decode(abiConstructor.inputs, data)
+  if (!options.data.startsWith(bytecode))
+    throw new BytecodeMismatchError({
+      bytecode,
+      data: options.data,
+    })
+  const data = ('0x' + options.data.slice(bytecode.length)) as Hex.Hex
+  return AbiParameters.decode(abiConstructor.inputs, data, {
+    checksumAddress: options.checksumAddress,
+  })
 }
 
 export declare namespace decode {
@@ -101,12 +127,24 @@ export declare namespace decode {
     bytecode: Hex.Hex
     /** The encoded constructor. */
     data: Hex.Hex
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
-  type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
-    | (abiConstructor['inputs']['length'] extends 0
+  type ReturnType<
+    abiConstructor extends AbiConstructor | undefined = AbiConstructor,
+  > =
+    | (abiConstructor extends undefined
         ? undefined
-        : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>)
+        : abiConstructor extends AbiConstructor
+          ? abiConstructor['inputs']['length'] extends 0
+            ? undefined
+            : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+          : never)
     | (IsNarrowable<abiConstructor, AbiConstructor> extends true
         ? never
         : undefined)
@@ -121,11 +159,13 @@ export declare namespace decode {
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.from(
+ *   'constructor(address, uint256)'
+ * )
  *
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode: '0x...',
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n]
  * })
  * ```
  *
@@ -157,19 +197,19 @@ export declare namespace decode {
  *
  * // 1. Instantiate the ABI Constructor.
  * const constructor = AbiConstructor.from(
- *   'constructor(address owner, uint256 amount)',
+ *   'constructor(address owner, uint256 amount)'
  * )
  *
  * // 2. Encode the ABI Constructor.
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode: '0x...',
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n]
  * })
  *
  * // 3. Deploy the contract.
  * const hash = await window.ethereum!.request({
  *   method: 'eth_sendTransaction',
- *   params: [{ data }],
+ *   params: [{ data }]
  * })
  * ```
  *
@@ -186,10 +226,7 @@ export declare namespace decode {
  */
 export function encode<
   const abi extends Abi.Abi | readonly unknown[],
-  abiConstructor extends
-    AbiConstructor = fromAbi.ReturnType<abi> extends AbiConstructor
-    ? fromAbi.ReturnType<abi>
-    : never,
+  abiConstructor extends AbiConstructor | undefined = ExtractConstructor<abi>,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
   options: encode.Options<abiConstructor>,
@@ -198,18 +235,19 @@ export function encode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
   options: encode.Options<abiConstructor>,
 ): encode.ReturnType
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encode(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], options: encode.Options]
     | [abiConstructor: AbiConstructor, options: encode.Options]
 ): encode.ReturnType {
   const [abiConstructor, options] = (() => {
+    const options = parameters[1] as encode.Options
+    if (!options.args || options.args.length === 0)
+      return [undefined, options] as [undefined, encode.Options]
+
     if (Array.isArray(parameters[0])) {
-      const [abi, options] = parameters as [
-        Abi.Abi | readonly unknown[],
-        encode.Options,
-      ]
+      const [abi] = parameters as [Abi.Abi | readonly unknown[], encode.Options]
       return [fromAbi(abi), options] as [AbiConstructor, encode.Options]
     }
 
@@ -217,6 +255,7 @@ export function encode(
   })()
 
   const { bytecode, args } = options
+  if (!abiConstructor) return bytecode
   return Hex.concat(
     bytecode,
     abiConstructor.inputs?.length && args?.length
@@ -227,11 +266,9 @@ export function encode(
 
 export declare namespace encode {
   type Options<
-    abiConstructor extends AbiConstructor = AbiConstructor,
+    abiConstructor extends AbiConstructor | undefined = AbiConstructor,
     ///
-    args extends abitype.AbiParametersToPrimitiveTypes<
-      abiConstructor['inputs']
-    > = abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>,
+    args extends ExtractArgs<abiConstructor> = ExtractArgs<abiConstructor>,
   > = {
     /** The bytecode of the contract. */
     bytecode: Hex.Hex
@@ -264,18 +301,14 @@ export function format<const abiConstructor extends AbiConstructor>(
  * import { AbiConstructor } from 'ox'
  *
  * const formatted = AbiConstructor.format({
- *   inputs: [
- *     { name: 'owner', type: 'address' },
- *   ],
+ *   inputs: [{ name: 'owner', type: 'address' }],
  *   payable: false,
  *   stateMutability: 'nonpayable',
- *   type: 'constructor',
+ *   type: 'constructor'
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiConstructor - The ABI Constructor to format.
@@ -284,12 +317,12 @@ export function format<const abiConstructor extends AbiConstructor>(
 export function format(abiConstructor: AbiConstructor): string
 /** @internal */
 export function format(abiConstructor: AbiConstructor): format.ReturnType {
-  return abitype.formatAbiItem(abiConstructor)
+  return formatAbiItem.formatAbiItem(abiConstructor)
 }
 
 export declare namespace format {
   type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
-    abitype.FormatAbiItem<abiConstructor>
+    formatAbiItem.FormatAbiItem<abiConstructor>
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -319,28 +352,14 @@ export function from<
  * import { AbiConstructor } from 'ox'
  *
  * const constructor = AbiConstructor.from({
- *   inputs: [
- *     { name: 'owner', type: 'address' },
- *   ],
+ *   inputs: [{ name: 'owner', type: 'address' }],
  *   payable: false,
  *   stateMutability: 'nonpayable',
- *   type: 'constructor',
+ *   type: 'constructor'
  * })
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -357,19 +376,6 @@ export function from<
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -380,23 +386,11 @@ export function from<
  *
  * const constructor = AbiConstructor.from([
  *   'struct Foo { address owner; uint256 amount; }', // [!code hl]
- *   'constructor(Foo foo)',
+ *   'constructor(Foo foo)'
  * ])
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -416,10 +410,8 @@ export function from(
 
 export declare namespace from {
   type ReturnType<
-    abiConstructor extends
-      | AbiConstructor
-      | string
-      | readonly string[] = AbiConstructor,
+    abiConstructor extends AbiConstructor | string | readonly string[] =
+      AbiConstructor,
   > = AbiItem.from.ReturnType<abiConstructor>
 
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
@@ -444,17 +436,11 @@ export function fromAbi<const abi extends Abi.Abi | readonly unknown[]>(
  *   'constructor(address owner)',
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiConstructor.fromAbi(abi) // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @returns The ABI constructor.
@@ -474,4 +460,30 @@ export declare namespace fromAbi {
   >
 
   type ErrorType = AbiItem.NotFoundError | Errors.GlobalErrorType
+}
+
+/**
+ * Throws when the provided `data` does not begin with the provided `bytecode`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiConstructor } from 'ox'
+ *
+ * AbiConstructor.decode(
+ *   AbiConstructor.from('constructor(address)'),
+ *   { bytecode: '0x6080...', data: '0xdeadbeef' }
+ * )
+ * // @error: AbiConstructor.BytecodeMismatchError: Provided `data` does not start with the provided `bytecode`.
+ * ```
+ */
+export class BytecodeMismatchError extends Errors.BaseError {
+  override readonly name = 'AbiConstructor.BytecodeMismatchError'
+  constructor({ bytecode, data }: { bytecode: Hex.Hex; data: Hex.Hex }) {
+    super('Provided `data` does not start with the provided `bytecode`.', {
+      metaMessages: [
+        `Bytecode: ${bytecode.slice(0, 18)}${bytecode.length > 18 ? '...' : ''}`,
+        `Data:     ${data.slice(0, 18)}${data.length > 18 ? '...' : ''}`,
+      ],
+    })
+  }
 }

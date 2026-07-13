@@ -9,6 +9,7 @@ declare const symbol: unique symbol
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = Branded<string, 'foo'>
  * //   ^? type Result = string & { [symbol]: 'foo' }
  * ```
@@ -20,6 +21,7 @@ export type Branded<T, U> = T & { [symbol]: U }
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = Filter<['a', 'b', 'c'], 'b'>
  * //   ^? type Result = ['a', 'c']
  * ```
@@ -41,21 +43,24 @@ export type Filter<
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = IsNarrowable<'foo', string>
  * //   ^? true
  * ```
  */
-export type IsNarrowable<T, U> = IsNever<
-  (T extends U ? true : false) & (U extends T ? false : true)
-> extends true
-  ? false
-  : true
+export type IsNarrowable<T, U> =
+  IsNever<
+    (T extends U ? true : false) & (U extends T ? false : true)
+  > extends true
+    ? false
+    : true
 
 /**
  * Checks if `T` is `never`
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = IsNever<never>
  * //   ^? type Result = true
  * ```
@@ -76,12 +81,14 @@ export type Mutable<type extends object> = {
  *
  * * @example
  * ```ts
+ * // @noErrors
  * type Result = Or<[false, true, false]>
  * //   ^? type Result = true
  * ```
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = Or<[false, false, false]>
  * //   ^? type Result = false
  * ```
@@ -102,6 +109,7 @@ export type Or<T extends readonly unknown[]> = T extends readonly [
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = IsUndefined<undefined>
  * //   ^? type Result = true
  * ```
@@ -129,10 +137,11 @@ export type MaybePromise<T> = T | Promise<T>
  *
  * @example
  * ```ts
- * MaybeRequired<{ a: string, b?: number }, true>
+ * // @noErrors
+ * MaybeRequired<{ a: string; b?: number }, true>
  * // { a: string, b: number }
  *
- * MaybeRequired<{ a: string, b?: number }, false>
+ * MaybeRequired<{ a: string; b?: number }, false>
  * // { a: string, b?: number }
  * ```
  *
@@ -147,7 +156,11 @@ export type MaybeRequired<T, required extends boolean> = required extends true
  *
  * @example
  * ```ts
- * Assign<{ a: string, b: number }, { a: undefined, c: boolean }>
+ * // @noErrors
+ * Assign<
+ *   { a: string; b: number },
+ *   { a: undefined; c: boolean }
+ * >
  * // { a: undefined, b: number, c: boolean }
  * ```
  *
@@ -169,6 +182,7 @@ export type Assign_inner<T, U> = {
  *
  * @example
  * ```ts
+ * // @noErrors
  * NoUndefined<string | undefined>
  * // string
  * ```
@@ -192,7 +206,8 @@ export type Omit<type, keys extends keyof type> = Pick<
  *
  * @example
  * ```ts
- * PartialBy<{ a: string, b: number }, 'a'>
+ * // @noErrors
+ * PartialBy<{ a: string; b: number }, 'a'>
  * // { a?: string, b: number }
  * ```
  *
@@ -208,7 +223,8 @@ export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
  *
  * @example
  * ```ts
- * RequiredBy<{ a?: string, b: number }, 'a'>
+ * // @noErrors
+ * RequiredBy<{ a?: string; b: number }, 'a'>
  * // { a: string, b: number }
  * ```
  *
@@ -222,6 +238,7 @@ export type RequiredBy<T, K extends keyof T> = Omit<T, K> &
  *
  * @example
  * ```ts
+ * // @noErrors
  * Some<[1, 2, 3], 2>
  * // true
  * ```
@@ -245,6 +262,7 @@ export type Some<
  *
  * @example
  * ```ts
+ * // @noErrors
  * type Result = TypeErrorMessage<'Custom error message'>
  * //   ^? type Result = ['Error: Custom error message']
  * ```
@@ -270,17 +288,16 @@ export type UnionToTuple<
 > = [union] extends [never] ? [] : [...UnionToTuple<Exclude<union, last>>, last]
 
 /** @internal */
-export type LastInUnion<U> = UnionToIntersection<
-  U extends unknown ? (x: U) => 0 : never
-> extends (x: infer l) => 0
-  ? l
-  : never
+export type LastInUnion<U> =
+  UnionToIntersection<U extends unknown ? (x: U) => 0 : never> extends (
+    x: infer l,
+  ) => 0
+    ? l
+    : never
 
 /** @internal */
 export type UnionToIntersection<union> = (
-  union extends unknown
-    ? (arg: union) => 0
-    : never
+  union extends unknown ? (arg: union) => 0 : never
 ) extends (arg: infer i) => 0
   ? i
   : never
@@ -359,7 +376,12 @@ export type UnionLooseOmit<type, keys extends string> = type extends any
  * Construct a type with the properties of union type T except for those in type K.
  * @example
  * ```ts
- * type Result = UnionOmit<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
+ * // @noErrors
+ * type Result = UnionOmit<
+ *   | { a: string; b: number }
+ *   | { a: string; b: undefined; c: number },
+ *   'a'
+ * >
  * // { b: number } | { b: undefined, c: number }
  * ```
  *
@@ -373,7 +395,12 @@ export type UnionOmit<type, keys extends keyof type> = type extends any
  * Construct a type with the properties of union type T except for those in type K.
  * @example
  * ```ts
- * type Result = UnionOmit<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
+ * // @noErrors
+ * type Result = UnionOmit<
+ *   | { a: string; b: number }
+ *   | { a: string; b: undefined; c: number },
+ *   'a'
+ * >
  * // { b: number } | { b: undefined, c: number }
  * ```
  *
@@ -388,7 +415,12 @@ export type UnionPick<type, keys extends keyof type> = type extends any
  *
  * @example
  * ```ts
- * PartialBy<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
+ * // @noErrors
+ * PartialBy<
+ *   | { a: string; b: number }
+ *   | { a: string; b: undefined; c: number },
+ *   'a'
+ * >
  * // { a?: string, b: number } | { a?: string, b: undefined, c: number }
  * ```
  *
@@ -403,7 +435,11 @@ export type UnionPartialBy<T, K extends keyof T> = T extends any
  *
  * @example
  * ```ts
- * RequiredBy<{ a?: string, b: number } | { a?: string, c?: number }, 'a'>
+ * // @noErrors
+ * RequiredBy<
+ *   { a?: string; b: number } | { a?: string; c?: number },
+ *   'a'
+ * >
  * // { a: string, b: number } | { a: string, c?: number }
  * ```
  *

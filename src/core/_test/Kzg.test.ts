@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { trustedSetup as fastSetup } from '@paulmillr/trusted-setups/fast-kzg.js'
-import { KZG } from 'micro-eth-signer/kzg.js'
+import { trustedSetup as fastSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { KZG } from 'micro-eth-signer/advanced/kzg.js'
 import { Bytes, Hex, Kzg } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
+import { blobData, kzg as peerdasKzg } from '../../../test/kzg.js'
+import * as Blobs from '../Blobs.js'
 
 describe('from', () => {
   const blobToKzgCommitmentCases = JSON.parse(
@@ -12,29 +14,40 @@ describe('from', () => {
       'utf8',
     ),
   )
-  const computeBlobKzgProofCases = JSON.parse(
-    readFileSync(
-      resolve(__dirname, '../../../test/kzg/compute-blob-kzg-proof.json'),
-      'utf8',
-    ),
-  )
 
   let kzg: Kzg.Kzg
 
   test('defineKzg', () => {
     const k = new KZG(fastSetup)
+    const toHex = (b: Bytes.Bytes) => Bytes.toHex(b)
+    const fromHex = (s: string) => Hex.toBytes(s as `0x${string}`)
     kzg = Kzg.from({
       blobToKzgCommitment(blob) {
-        return Hex.toBytes(
-          k.blobToKzgCommitment(Bytes.toHex(blob)) as `0x${string}`,
-        )
+        return fromHex(k.blobToKzgCommitment(toHex(blob)))
       },
-      computeBlobKzgProof(blob, commitment) {
-        return Hex.toBytes(
-          k.computeBlobProof(
-            Bytes.toHex(blob),
-            Bytes.toHex(commitment),
-          ) as `0x${string}`,
+      computeCells(blob) {
+        return k.computeCells(toHex(blob)).map(fromHex)
+      },
+      computeCellsAndKzgProofs(blob) {
+        const [cells, proofs] = k.computeCellsAndProofs(toHex(blob))
+        return { cells: cells.map(fromHex), proofs: proofs.map(fromHex) }
+      },
+      recoverCellsAndKzgProofs(indices, cells) {
+        const [recoveredCells, proofs] = k.recoverCellsAndProofs(
+          [...indices],
+          cells.map(toHex),
+        )
+        return {
+          cells: recoveredCells.map(fromHex),
+          proofs: proofs.map(fromHex),
+        }
+      },
+      verifyCellKzgProofBatch(commitments, indices, cells, proofs) {
+        return k.verifyCellKzgProofBatch(
+          commitments.map(toHex),
+          [...indices],
+          cells.map(toHex),
+          proofs.map(toHex),
         )
       },
     })
@@ -42,7 +55,10 @@ describe('from', () => {
     expect(kzg).toMatchInlineSnapshot(`
     {
       "blobToKzgCommitment": [Function],
-      "computeBlobKzgProof": [Function],
+      "computeCells": [Function],
+      "computeCellsAndKzgProofs": [Function],
+      "recoverCellsAndKzgProofs": [Function],
+      "verifyCellKzgProofBatch": [Function],
     }
   `)
   })
@@ -65,31 +81,6 @@ describe('from', () => {
       })
     }
   })
-
-  describe('computeBlobKzgProof', () => {
-    for (const data of computeBlobKzgProofCases) {
-      test(data.name, () => {
-        if (data.output === null)
-          expect(() =>
-            Uint8Array.from(
-              kzg.computeBlobKzgProof(
-                Hex.toBytes(data.input.blob),
-                Hex.toBytes(data.input.commitment),
-              ),
-            ),
-          ).toThrowError()
-        else
-          expect(
-            Uint8Array.from(
-              kzg.computeBlobKzgProof(
-                Hex.toBytes(data.input.blob),
-                Hex.toBytes(data.input.commitment),
-              ),
-            ),
-          ).toEqual(Hex.toBytes(data.output))
-      })
-    }
-  })
 })
 
 test('exports', () => {
@@ -99,4 +90,131 @@ test('exports', () => {
       "from",
     ]
   `)
+})
+
+describe('peerdas (EIP-7594)', () => {
+  // Single blob for cell-level round-trip tests.
+  const blob = Blobs.from(Hex.fromString(blobData), { as: 'Bytes' }).slice(
+    0,
+    1,
+  )[0]!
+
+  // KZG cell-proof computations are CPU-heavy and can exceed the default
+  // 20s testTimeout on busy CI runners; give each peerdas test 60s headroom.
+  test('computeCellsAndKzgProofs returns 128 cells + 128 proofs', () => {
+    const { cells, proofs } = peerdasKzg.computeCellsAndKzgProofs(blob)
+    expect(cells.length).toBe(128)
+    expect(proofs.length).toBe(128)
+    for (const cell of cells) expect(cell.length).toBe(2048)
+    for (const proof of proofs) expect(proof.length).toBe(48)
+  }, 60_000)
+
+  test('computeCells matches the cells from computeCellsAndKzgProofs', () => {
+    const cellsOnly = peerdasKzg.computeCells(blob)
+    const { cells } = peerdasKzg.computeCellsAndKzgProofs(blob)
+    expect(cellsOnly.length).toBe(cells.length)
+    for (let i = 0; i < cells.length; i++)
+      expect(cellsOnly[i]).toEqual(cells[i])
+  }, 60_000)
+
+  test('verifyCellKzgProofBatch round-trips', () => {
+    const commitment = peerdasKzg.blobToKzgCommitment(blob)
+    const { cells, proofs } = peerdasKzg.computeCellsAndKzgProofs(blob)
+    const indices = cells.map((_, i) => i)
+    const commitments = cells.map(() => commitment)
+    expect(
+      peerdasKzg.verifyCellKzgProofBatch(commitments, indices, cells, proofs),
+    ).toBe(true)
+  }, 60_000)
+
+  test('verifyCellKzgProofBatch detects a corrupted cell', () => {
+    const commitment = peerdasKzg.blobToKzgCommitment(blob)
+    const { cells, proofs } = peerdasKzg.computeCellsAndKzgProofs(blob)
+    const tampered = cells.map((c, i) => {
+      if (i !== 7) return c
+      const copy = Uint8Array.from(c)
+      copy[0] = copy[0]! ^ 0x01
+      return copy
+    })
+    const indices = cells.map((_, i) => i)
+    const commitments = cells.map(() => commitment)
+    expect(
+      peerdasKzg.verifyCellKzgProofBatch(
+        commitments,
+        indices,
+        tampered,
+        proofs,
+      ),
+    ).toBe(false)
+  }, 60_000)
+
+  test('recoverCellsAndKzgProofs reconstructs the full set from half the cells', () => {
+    const { cells, proofs } = peerdasKzg.computeCellsAndKzgProofs(blob)
+    // Erase every other cell (keep 64 of 128).
+    const keptIndices: number[] = []
+    const keptCells: Bytes.Bytes[] = []
+    for (let i = 0; i < cells.length; i += 2) {
+      keptIndices.push(i)
+      keptCells.push(cells[i]!)
+    }
+    const recovered = peerdasKzg.recoverCellsAndKzgProofs(
+      keptIndices,
+      keptCells,
+    )
+    expect(recovered.cells.length).toBe(128)
+    expect(recovered.proofs.length).toBe(128)
+    for (let i = 0; i < cells.length; i++) {
+      expect(recovered.cells[i]).toEqual(cells[i])
+      expect(recovered.proofs[i]).toEqual(proofs[i])
+    }
+  }, 60_000)
+})
+
+test('from: preserves `this` binding for method-style implementations', () => {
+  // Stateful implementation whose methods rely on `this` -- a destructured
+  // wrapper would lose the binding and throw.
+  class StatefulKzg {
+    suffix: Uint8Array
+    constructor(suffix: Uint8Array) {
+      this.suffix = suffix
+    }
+    blobToKzgCommitment(blob: Uint8Array): Uint8Array {
+      return new Uint8Array([...blob.slice(0, 1), ...this.suffix])
+    }
+    computeCells(blob: Uint8Array): readonly Uint8Array[] {
+      return [new Uint8Array([...blob.slice(0, 1), ...this.suffix])]
+    }
+    computeCellsAndKzgProofs(blob: Uint8Array): {
+      cells: readonly Uint8Array[]
+      proofs: readonly Uint8Array[]
+    } {
+      const cell = new Uint8Array([...blob.slice(0, 1), ...this.suffix])
+      return { cells: [cell], proofs: [cell] }
+    }
+    recoverCellsAndKzgProofs(
+      _indices: readonly number[],
+      cells: readonly Uint8Array[],
+    ): {
+      cells: readonly Uint8Array[]
+      proofs: readonly Uint8Array[]
+    } {
+      return {
+        cells: cells.map((c) => new Uint8Array([...c, ...this.suffix])),
+        proofs: cells.map((c) => new Uint8Array([...c, ...this.suffix])),
+      }
+    }
+    verifyCellKzgProofBatch(): boolean {
+      return this.suffix.length > 0
+    }
+  }
+  const stateful = new StatefulKzg(new Uint8Array([0xab, 0xcd]))
+  const kzg = Kzg.from(stateful)
+  expect(() => kzg.blobToKzgCommitment(new Uint8Array([0x11]))).not.toThrow()
+  expect(kzg.blobToKzgCommitment(new Uint8Array([0x11]))).toEqual(
+    new Uint8Array([0x11, 0xab, 0xcd]),
+  )
+  expect(kzg.computeCells(new Uint8Array([0x11]))).toEqual([
+    new Uint8Array([0x11, 0xab, 0xcd]),
+  ])
+  expect(kzg.verifyCellKzgProofBatch([], [], [], [])).toBe(true)
 })

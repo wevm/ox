@@ -27,6 +27,8 @@ import * as Hex from './Hex.js'
  * @returns The CompactSize-encoded bytes.
  */
 export function toBytes(value: bigint | number): Bytes.Bytes {
+  if (typeof value === 'number' && !Number.isSafeInteger(value))
+    throw new InvalidValueError({ value })
   const n = BigInt(value)
   if (n < 0n) throw new NegativeValueError({ value: n })
   if (n <= 252n) return new Uint8Array([Number(n)])
@@ -52,7 +54,10 @@ export function toBytes(value: bigint | number): Bytes.Bytes {
 }
 
 export declare namespace toBytes {
-  type ErrorType = NegativeValueError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidValueError
+    | NegativeValueError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -84,7 +89,9 @@ export declare namespace toHex {
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const result = CompactSize.fromBytes(new Uint8Array([0xfd, 0x00, 0x01]))
+ * const result = CompactSize.fromBytes(
+ *   new Uint8Array([0xfd, 0x00, 0x01])
+ * )
  * // { value: 256, size: 3 }
  * ```
  *
@@ -100,17 +107,23 @@ export function fromBytes(data: Bytes.Bytes): fromBytes.ReturnType {
   if (first === 0xfd) {
     if (data.length < 3)
       throw new InsufficientBytesError({ expected: 3, actual: data.length })
-    return { value: BigInt(view.getUint16(1, true)), size: 3 }
+    const value = view.getUint16(1, true)
+    if (value < 0xfd) throw new NonMinimalEncodingError()
+    return { value: BigInt(value), size: 3 }
   }
   if (first === 0xfe) {
     if (data.length < 5)
       throw new InsufficientBytesError({ expected: 5, actual: data.length })
-    return { value: BigInt(view.getUint32(1, true)), size: 5 }
+    const value = view.getUint32(1, true)
+    if (value <= 0xffff) throw new NonMinimalEncodingError()
+    return { value: BigInt(value), size: 5 }
   }
   if (data.length < 9)
     throw new InsufficientBytesError({ expected: 9, actual: data.length })
+  const value = view.getBigUint64(1, true)
+  if (value <= 0xffffffffn) throw new NonMinimalEncodingError()
   return {
-    value: view.getBigUint64(1, true),
+    value,
     size: 9,
   }
 }
@@ -123,7 +136,10 @@ export declare namespace fromBytes {
     size: number
   }
 
-  type ErrorType = InsufficientBytesError | Errors.GlobalErrorType
+  type ErrorType =
+    | InsufficientBytesError
+    | NonMinimalEncodingError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -165,5 +181,23 @@ export class InsufficientBytesError extends Errors.BaseError {
     super(
       `Insufficient bytes for CompactSize decoding. Expected at least ${expected}, got ${actual}.`,
     )
+  }
+}
+
+/** Thrown when a CompactSize input is not a safe integer. */
+export class InvalidValueError extends Errors.BaseError {
+  override readonly name = 'CompactSize.InvalidValueError'
+
+  constructor({ value }: { value: number }) {
+    super(`CompactSize value \`${value}\` must be a safe integer or a bigint.`)
+  }
+}
+
+/** Thrown when a CompactSize value is encoded non-minimally. */
+export class NonMinimalEncodingError extends Errors.BaseError {
+  override readonly name = 'CompactSize.NonMinimalEncodingError'
+
+  constructor() {
+    super('CompactSize value is encoded non-minimally.')
   }
 }

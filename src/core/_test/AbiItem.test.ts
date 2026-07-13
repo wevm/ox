@@ -7,7 +7,7 @@ import {
   Bytes,
   type Hex,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import {
   erc20Abi,
   seaportContractConfig,
@@ -205,9 +205,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    expect(
-      AbiItem.fromAbi(wagmiContractConfig.abi, 'balanceOf'),
-    ).toMatchInlineSnapshot(`
+    expect(AbiItem.fromAbi(wagmiContractConfig.abi, 'balanceOf'))
+      .toMatchInlineSnapshot(`
       {
         "hash": "0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be",
         "inputs": [
@@ -262,9 +261,8 @@ describe('fromAbi', () => {
         '0x0000000000000000000000000000000000000000',
         1n,
       ])
-      expect(
-        AbiItem.fromAbi(wagmiContractConfig.abi, data),
-      ).toMatchInlineSnapshot(`
+      expect(AbiItem.fromAbi(wagmiContractConfig.abi, data))
+        .toMatchInlineSnapshot(`
         {
           "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
           "inputs": [
@@ -289,9 +287,8 @@ describe('fromAbi', () => {
       const hash = AbiItem.getSignatureHash(
         AbiItem.fromAbi(seaportContractConfig.abi, 'CounterIncremented'),
       )
-      expect(
-        AbiItem.fromAbi(seaportContractConfig.abi, hash),
-      ).toMatchInlineSnapshot(`
+      expect(AbiItem.fromAbi(seaportContractConfig.abi, hash))
+        .toMatchInlineSnapshot(`
         {
           "anonymous": false,
           "hash": "0x721c20121297512b72821b97f5326877ea8ecf4bb9948fea5bfcb6453074d37f",
@@ -317,9 +314,8 @@ describe('fromAbi', () => {
       const selector = AbiItem.getSelector(
         AbiItem.fromAbi(seaportContractConfig.abi, 'BadSignatureV'),
       )
-      expect(
-        AbiItem.fromAbi(seaportContractConfig.abi, selector),
-      ).toMatchInlineSnapshot(`
+      expect(AbiItem.fromAbi(seaportContractConfig.abi, selector))
+        .toMatchInlineSnapshot(`
         {
           "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
           "inputs": [
@@ -2111,6 +2107,9 @@ describe('getSignatureHash', () => {
 test('exports', () => {
   expect(Object.keys(AbiItem)).toMatchInlineSnapshot(`
     [
+      "InvalidAbiItemError",
+      "UnknownSolidityTypeError",
+      "UnknownTypeError",
       "format",
       "from",
       "fromAbi",

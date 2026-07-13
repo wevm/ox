@@ -1,5 +1,5 @@
 import { Bech32m } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('encode', () => {
   test('20 zero bytes', () => {

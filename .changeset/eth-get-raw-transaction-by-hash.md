@@ -1,5 +1,5 @@
 ---
-"ox": patch
+'ox': patch
 ---
 
-Added `eth_getRawTransactionByHash` to `RpcSchema.Eth`.
+Added `eth_getRawTransactionByHash` to `RpcSchema.Eth` and `z.RpcSchema.Eth`.

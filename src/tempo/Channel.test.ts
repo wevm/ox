@@ -1,6 +1,6 @@
 import { type Address, Hash, Hex, TypedData } from 'ox'
 import { Channel } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vite-plus/test'
 
 const channel = {
   authorizedSigner: '0x3333333333333333333333333333333333333333',
@@ -10,7 +10,7 @@ const channel = {
   payee: '0x2222222222222222222222222222222222222222',
   payer: '0x1111111111111111111111111111111111111111',
   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
-  token: 1n,
+  token: '0x20c0000000000000000000000000000000000001',
 } as const
 
 const chainId = 4217
@@ -84,26 +84,6 @@ describe('from', () => {
     `)
   })
 
-  test('token address input', () => {
-    expect(
-      Channel.from({
-        ...channel,
-        operator: '0x4444444444444444444444444444444444444444',
-        token: '0x20c0000000000000000000000000000000000001',
-      }),
-    ).toMatchInlineSnapshot(`
-      {
-        "authorizedSigner": "0x3333333333333333333333333333333333333333",
-        "expiringNonceHash": "0x0000000000000000000000000000000000000000000000000000000000000002",
-        "operator": "0x4444444444444444444444444444444444444444",
-        "payee": "0x2222222222222222222222222222222222222222",
-        "payer": "0x1111111111111111111111111111111111111111",
-        "salt": "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "token": "0x20c0000000000000000000000000000000000001",
-      }
-    `)
-  })
-
   test('return type', () => {
     const resolved = Channel.from({
       expiringNonceHash:
@@ -111,10 +91,9 @@ describe('from', () => {
       payee: '0x2222222222222222222222222222222222222222',
       payer: '0x1111111111111111111111111111111111111111',
       salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      token: 1n,
+      token: '0x20c0000000000000000000000000000000000001',
     })
 
-    resolved satisfies Channel.Resolved
     resolved satisfies Channel.Channel
     resolved.payer satisfies Address.Address
     resolved.token satisfies Address.Address

@@ -1,5 +1,5 @@
 import { Base32 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromBytes', () => {
   test('default', () => {
@@ -61,6 +61,7 @@ test('exports', () => {
       "toBytes",
       "toHex",
       "InvalidCharacterError",
+      "InvalidPaddingError",
     ]
   `)
 })

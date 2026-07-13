@@ -1,5 +1,5 @@
 import { Ens } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('labelhash', () => {
   test.each([
@@ -167,12 +167,46 @@ describe('normalize', () => {
   })
 })
 
+describe('toCoinType', () => {
+  test('behavior: mainnet uses SLIP-44 coin type', () => {
+    expect(Ens.toCoinType(1n)).toBe(60n)
+  })
+
+  test('behavior: L2 chain IDs use ENSIP-11 high bit', () => {
+    expect(Ens.toCoinType(10n)).toBe(2147483658n)
+  })
+
+  test('error: rejects negative chain IDs', () => {
+    expect(() => Ens.toCoinType(-1n)).toThrowErrorMatchingInlineSnapshot(
+      `
+      [Ens.InvalidChainIdError: Invalid ENSIP-11 chain ID: -1.
+
+      Must be between 0 and 0x7fffffff, or 1.]
+    `,
+    )
+  })
+
+  test('error: rejects chain IDs above ENSIP-11 range', () => {
+    expect(() =>
+      Ens.toCoinType(2147483648n),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [Ens.InvalidChainIdError: Invalid ENSIP-11 chain ID: 2147483648.
+
+      Must be between 0 and 0x7fffffff, or 1.]
+    `,
+    )
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Ens)).toMatchInlineSnapshot(`
     [
       "labelhash",
       "namehash",
       "normalize",
+      "toCoinType",
+      "InvalidChainIdError",
     ]
   `)
 })

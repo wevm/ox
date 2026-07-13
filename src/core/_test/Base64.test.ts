@@ -1,5 +1,5 @@
 import { Base64, Bytes, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromBytes', () => {
   test('default', () => {
@@ -98,6 +98,9 @@ test('exports', () => {
       "toBytes",
       "toHex",
       "toString",
+      "InvalidCharacterError",
+      "InvalidLengthError",
+      "InvalidPaddingError",
     ]
   `)
 })

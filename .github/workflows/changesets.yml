@@ -1,34 +1,29 @@
 name: Changesets
 on:
   push:
-    branches: [main]
-
-permissions: {} # each job should declare only the permissions it needs
+    branches: [main, v1]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
   verify:
     name: Verify
-    permissions:
-      contents: read # checkout repository contents in the reusable workflow
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/verify.yml
     secrets: inherit
 
   changesets:
     name: Changesets
     needs: verify
-    # prevents this action from running on forks
-    if: github.repository == 'wevm/ox'
+    if: github.ref == 'refs/heads/main'
     permissions:
-      contents: write # commit version/changelog updates to the release pull request
-      pull-requests: write # create or update the Changesets release pull request
+      contents: write
+      id-token: write
+      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    outputs:
-      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
 
     steps:
       - name: Clone repository
@@ -40,76 +35,51 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with:
-          skip-cache: true # avoid cache poisoning attacks
 
-      - name: Create version pull request
-        id: changesets
+      - name: PR or publish
         uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
         with:
           title: 'chore: version packages'
           commit: 'chore: version packages'
+          createGithubReleases: ${{ github.ref == 'refs/heads/main' }}
+          publish: pnpm changeset:publish
           version: pnpm changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  release:
-    name: Release
-    needs: [verify, changesets]
-    # prevents this action from running on forks
-    if: github.repository == 'wevm/ox' && needs.changesets.outputs.hasChangesets == 'false'
+  beta:
+    name: Publish beta
+    if: >-
+      github.repository == 'wevm/ox' &&
+      github.ref == 'refs/heads/v1' &&
+      github.event.head_commit.message != 'chore: version beta packages'
     permissions:
-      contents: write # create GitHub releases and tags after npm publish
-      id-token: write # authenticate to npm via trusted publishing
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Clone repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
+          fetch-depth: 0
           submodules: 'recursive'
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with:
-          skip-cache: true # avoid cache poisoning attacks
 
-      - name: Publish to npm
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
-        with:
-          createGithubReleases: true
-          publish: pnpm changeset:publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  canary:
-    name: Canary release
-    needs: [verify, changesets]
-    # prevents this action from running on forks
-    if: github.repository == 'wevm/ox' && needs.changesets.outputs.hasChangesets == 'true'
-    permissions:
-      contents: read # checkout repository contents
-      id-token: write # authenticate to npm via trusted publishing
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          submodules: 'recursive'
-
-      - name: Install dependencies
-        uses: ./.github/actions/install-dependencies
-        with:
-          skip-cache: true # avoid cache poisoning attacks
-
-      - name: Publish snapshot packages
-        continue-on-error: true
+      - name: Version and publish beta
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pnpm changeset version --no-git-tag --snapshot canary
-          pnpm changeset:prepublish
-          pnpm changeset publish --no-git-tag --snapshot canary --tag canary
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          pnpm exec changeset version
+          pnpm version:update
+          if ! git diff --quiet -- .changeset package.json src/CHANGELOG.md src/version.ts; then
+            git add .changeset package.json src/CHANGELOG.md src/version.ts
+            git commit --no-verify -m "chore: version beta packages"
+            git push
+          fi
+          pnpm changeset:publish

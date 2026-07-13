@@ -2,6 +2,7 @@ import type * as AccessList from '../core/AccessList.js'
 import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { Compute, OneOf, UnionCompute } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as ox_Transaction from '../core/Transaction.js'
@@ -64,9 +65,9 @@ export type Tempo<
     feePayerSignature?:
       | {
           /** ECDSA signature r. */
-          r: bigintType
+          r: Hex.Hex
           /** ECDSA signature s. */
-          s: bigintType
+          s: Hex.Hex
           /** ECDSA signature yParity. */
           yParity: numberType
           /** @deprecated ECDSA signature v (for backwards compatibility). */
@@ -88,7 +89,7 @@ export type Tempo<
     /** Nonce key for 2D nonce system (192 bits). */
     nonceKey?: bigintType | undefined
     /** Sender signature. */
-    signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+    signature: SignatureEnvelope.SignatureEnvelope<numberType>
     /** Transaction can only be included in a block before this timestamp. */
     validBefore?: numberType | undefined
     /** Transaction can only be included in a block after this timestamp. */
@@ -102,18 +103,40 @@ export type Tempo<
 export type TempoRpc<pending extends boolean = false> = Compute<
   Omit<
     Tempo<pending, Hex.Hex, Hex.Hex, ToRpcType['tempo']>,
-    'authorizationList' | 'calls' | 'keyAuthorization' | 'signature'
+    | 'authorizationList'
+    | 'calls'
+    | 'feePayerSignature'
+    | 'gasPrice'
+    | 'keyAuthorization'
+    | 'nonceKey'
+    | 'signature'
+    | 'validAfter'
+    | 'validBefore'
   > & {
     aaAuthorizationList?: AuthorizationTempo.ListRpc | undefined
     calls:
       | readonly {
-          input?: Hex.Hex | undefined
-          to?: Hex.Hex | undefined
-          value?: Hex.Hex | undefined
+          data?: Hex.Hex | null | undefined
+          input?: Hex.Hex | null | undefined
+          to?: Hex.Hex | null | undefined
+          value?: Hex.Hex | null | undefined
         }[]
       | undefined
-    keyAuthorization?: KeyAuthorization.Rpc | undefined
+    feePayerSignature?:
+      | {
+          r: Hex.Hex
+          s: Hex.Hex
+          v?: Hex.Hex | undefined
+          yParity: Hex.Hex
+        }
+      | null
+      | undefined
+    gasPrice?: Hex.Hex | null | undefined
+    keyAuthorization?: KeyAuthorization.Rpc | null | undefined
+    nonceKey?: Hex.Hex | null | undefined
     signature: SignatureEnvelope.SignatureEnvelopeRpc
+    validAfter?: Hex.Hex | null | undefined
+    validBefore?: Hex.Hex | null | undefined
   }
 >
 
@@ -145,6 +168,7 @@ export type FromRpcType = typeof fromRpcType & {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Transaction } from 'ox/tempo'
  *
  * const transaction = Transaction.fromRpc({
@@ -157,8 +181,8 @@ export type FromRpcType = typeof fromRpcType & {
  *     {
  *       input: '0xdeadbeef',
  *       to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
- *       value: '0x9b6e64a8ec60000',
- *     },
+ *       value: '0x9b6e64a8ec60000'
+ *     }
  *   ],
  *   feeToken: '0x20c0000000000000000000000000000000000000',
  *   transactionIndex: '0x2',
@@ -173,11 +197,11 @@ export type FromRpcType = typeof fromRpcType & {
  *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *     type: 'secp256k1',
- *     yParity: '0x0',
+ *     yParity: '0x0'
  *   },
  *   chainId: '0x1',
  *   accessList: [],
- *   type: '0x76',
+ *   type: '0x76'
  * })
  * ```
  *
@@ -197,19 +221,26 @@ export function fromRpc<
     transaction as ox_Transaction.Rpc<pending>,
   ) as Transaction<pending>
 
-  transaction_.type = fromRpcType[transaction.type as keyof typeof fromRpcType]
+  if (transaction.type !== '0x76') return transaction_ as never
 
-  if (transaction.aaAuthorizationList) {
+  transaction_.type = 'tempo'
+
+  // Tempo transactions carry `calls`; scrub the flat call fields the generic
+  // decoder fabricates.
+  delete (transaction_ as any).data
+  delete (transaction_ as any).input
+  delete (transaction_ as any).to
+  delete (transaction_ as any).value
+
+  if (transaction.aaAuthorizationList?.length)
     transaction_.authorizationList = AuthorizationTempo.fromRpcList(
       transaction.aaAuthorizationList,
     )
-    delete (transaction_ as any).aaAuthorizationList
-  }
+  delete (transaction_ as any).aaAuthorizationList
   if (transaction.calls)
     transaction_.calls = transaction.calls.map((call) => ({
-      to: call.to,
+      to: call.to ?? undefined,
       value: call.value && call.value !== '0x' ? BigInt(call.value) : undefined,
-      // @ts-expect-error
       data: call.input || call.data || '0x',
     }))
   if (transaction.feeToken) transaction_.feeToken = transaction.feeToken
@@ -233,6 +264,18 @@ export function fromRpc<
     )
   }
 
+  // The node serializes absent optional fields as `null`; scrub them.
+  for (const key of [
+    'feePayer',
+    'feePayerSignature',
+    'gasPrice',
+    'keyAuthorization',
+    'nonceKey',
+    'validAfter',
+    'validBefore',
+  ] as const)
+    if ((transaction_ as any)[key] === null) delete (transaction_ as any)[key]
+
   return transaction_ as never
 }
 
@@ -249,6 +292,7 @@ export declare namespace fromRpc {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Transaction } from 'ox/tempo'
  *
  * const transaction = Transaction.toRpc({
@@ -260,8 +304,8 @@ export declare namespace fromRpc {
  *     {
  *       data: '0xdeadbeef',
  *       to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
- *       value: 700000000000000000n,
- *     },
+ *       value: 700000000000000000n
+ *     }
  *   ],
  *   chainId: 1,
  *   feeToken: '0x20c0000000000000000000000000000000000000',
@@ -275,14 +319,14 @@ export declare namespace fromRpc {
  *   nonce: 855n,
  *   signature: {
  *     signature: {
- *       r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *       s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
- *       yParity: 0,
+ *       r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *       s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *       yParity: 0
  *     },
- *     type: 'secp256k1',
+ *     type: 'secp256k1'
  *   },
  *   transactionIndex: 2,
- *   type: 'tempo',
+ *   type: 'tempo'
  * })
  * ```
  *
@@ -290,14 +334,22 @@ export declare namespace fromRpc {
  * @returns An RPC-formatted transaction.
  */
 export function toRpc<pending extends boolean = false>(
-  transaction: Transaction<pending>,
+  transaction: toRpc.Input<pending>,
   _options?: toRpc.Options<pending>,
 ): Rpc<pending> {
   const rpc = ox_Transaction.toRpc(
     transaction as ox_Transaction.Transaction<pending>,
   ) as Rpc<pending>
 
-  rpc.type = toRpcType[transaction.type as keyof typeof toRpcType]
+  if (transaction.type !== 'tempo') return rpc
+
+  rpc.type = '0x76'
+
+  // Tempo transactions carry `calls`; scrub the flat call fields the generic
+  // encoder fabricates.
+  delete (rpc as any).input
+  delete (rpc as any).to
+  delete (rpc as any).value
 
   if (transaction.authorizationList)
     rpc.aaAuthorizationList = AuthorizationTempo.toRpcList(
@@ -306,7 +358,7 @@ export function toRpc<pending extends boolean = false>(
   if (transaction.calls)
     rpc.calls = transaction.calls.map((call) => ({
       to: call.to,
-      value: call.value ? Hex.fromNumber(call.value) : undefined,
+      value: call.value ? Quantity.fromNumberish(call.value) : undefined,
       data: call.data,
     }))
   if (transaction.feeToken) rpc.feeToken = transaction.feeToken
@@ -317,20 +369,29 @@ export function toRpc<pending extends boolean = false>(
       transaction.feePayerSignature,
     ) as any
     ;(rpc.feePayerSignature as any).v = Hex.fromNumber(
-      Signature.yParityToV(transaction.feePayerSignature?.yParity),
+      Signature.yParityToV(Number(transaction.feePayerSignature.yParity)),
     )
   }
+  if (transaction.nonceKey !== undefined)
+    rpc.nonceKey = Quantity.fromNumberish(transaction.nonceKey)
   if (transaction.signature)
     rpc.signature = SignatureEnvelope.toRpc(transaction.signature)
-  if (typeof transaction.validAfter === 'number')
-    rpc.validAfter = Hex.fromNumber(transaction.validAfter)
-  if (typeof transaction.validBefore === 'number')
-    rpc.validBefore = Hex.fromNumber(transaction.validBefore)
+  if (transaction.validAfter !== undefined)
+    rpc.validAfter = Quantity.fromNumberish(transaction.validAfter)
+  if (transaction.validBefore !== undefined)
+    rpc.validBefore = Quantity.fromNumberish(transaction.validBefore)
 
   return rpc as Rpc<pending>
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#(Transaction:namespace).(toRpc:function)}. */
+  type Input<pending extends boolean = false> = Transaction<
+    pending,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   type Options<pending extends boolean = false> = {
     pending?: pending | boolean | undefined
   }

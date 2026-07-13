@@ -1,9 +1,9 @@
 import { erc20Abi } from 'abitype/abis'
 import { type Abi, AbiConstructor } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 const error = {} as AbiConstructor.encode.ErrorType
-error.name
+expectTypeOf(error.name).toBeString()
 
 describe('AbiConstructor.decode', () => {
   test('no inputs', () => {
@@ -22,6 +22,11 @@ describe('AbiConstructor.decode', () => {
     const abiConstructor = {} as AbiConstructor.AbiConstructor
     const decoded = AbiConstructor.decode(abiConstructor, options)
     expectTypeOf(decoded).toEqualTypeOf<readonly unknown[] | undefined>()
+  })
+
+  test('no constructor', () => {
+    const decoded = AbiConstructor.decode([], options)
+    expectTypeOf(decoded).toEqualTypeOf<undefined>()
   })
 })
 
@@ -55,6 +60,23 @@ describe('AbiConstructor.encode', () => {
   test('not narrowable', () => {
     const abiConstructor = {} as AbiConstructor.AbiConstructor
     AbiConstructor.encode(abiConstructor, options)
+  })
+
+  test('no constructor', () => {
+    AbiConstructor.encode([], {
+      bytecode: '0x',
+    })
+
+    AbiConstructor.encode([], {
+      bytecode: '0x',
+      args: [],
+    })
+
+    // @ts-expect-error no constructor args
+    AbiConstructor.encode([], {
+      bytecode: '0x',
+      args: ['0x'],
+    })
   })
 })
 

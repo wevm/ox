@@ -1,9 +1,9 @@
+import type * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute, PartialBy } from '../core/internal/types.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TempoAddress from './TempoAddress.js'
 
 /**
  * Header name used to transport Zone RPC authentication tokens.
@@ -37,7 +37,6 @@ export type Version = typeof version
  */
 export type ZoneRpcAuthentication<
   signed extends boolean = boolean,
-  bigintType = bigint,
   numberType = number,
 > = Compute<
   {
@@ -52,11 +51,9 @@ export type ZoneRpcAuthentication<
     /** Numeric zone identifier. */
     zoneId: numberType
   } & (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.SignatureEnvelope<numberType> }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 >
 
@@ -70,10 +67,10 @@ export type Fields = Hex.Hex
 export type Serialized = Hex.Hex
 
 /** Signed Zone RPC authentication token. */
-export type Signed<
-  bigintType = bigint,
-  numberType = number,
-> = ZoneRpcAuthentication<true, bigintType, numberType>
+export type Signed<numberType = number> = ZoneRpcAuthentication<
+  true,
+  numberType
+>
 
 /**
  * Instantiates a typed Zone RPC authentication token.
@@ -86,7 +83,7 @@ export type Signed<
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  * ```
  *
@@ -101,17 +98,21 @@ export type Signed<
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
- *   privateKey: '0x...',
+ *   payload:
+ *     ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...'
  * })
  *
- * const authentication_signed = ZoneRpcAuthentication.from(authentication, {
- *   signature,
- * })
+ * const authentication_signed = ZoneRpcAuthentication.from(
+ *   authentication,
+ *   {
+ *     signature
+ *   }
+ * )
  * ```
  *
  * @param authentication - Zone RPC authentication token fields.
@@ -149,9 +150,8 @@ export declare namespace from {
   }
 
   type ReturnType<
-    authentication extends
-      | ZoneRpcAuthentication
-      | Input = ZoneRpcAuthentication,
+    authentication extends ZoneRpcAuthentication | Input =
+      ZoneRpcAuthentication,
     signature extends SignatureEnvelope.from.Value | undefined =
       | SignatureEnvelope.from.Value
       | undefined,
@@ -176,7 +176,8 @@ export declare namespace from {
  * ```ts twoslash
  * import { ZoneRpcAuthentication } from 'ox/tempo'
  *
- * const authentication = ZoneRpcAuthentication.deserialize('0x...')
+ * const authentication =
+ *   ZoneRpcAuthentication.deserialize('0x...')
  * ```
  *
  * @param serialized - The serialized Zone RPC authentication token.
@@ -233,7 +234,7 @@ export declare namespace deserialize {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  * ```
  *
@@ -273,10 +274,11 @@ export declare namespace getFields {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
- * const payload = ZoneRpcAuthentication.getSignPayload(authentication)
+ * const payload =
+ *   ZoneRpcAuthentication.getSignPayload(authentication)
  * ```
  *
  * @param authentication - The Zone RPC authentication token.
@@ -289,9 +291,7 @@ export function getSignPayload(
 ): Hex.Hex {
   const authHash = hash(authentication)
   if (options.userAddress)
-    return Hash.keccak256(
-      Hex.concat('0x04', authHash, TempoAddress.resolve(options.userAddress)),
-    )
+    return Hash.keccak256(Hex.concat('0x04', authHash, options.userAddress))
   return authHash
 }
 
@@ -303,7 +303,7 @@ export declare namespace getSignPayload {
      * When provided, computes `keccak256(0x04 || authHash || userAddress)`
      * instead of the raw `authHash`.
      */
-    userAddress?: TempoAddress.Address | undefined
+    userAddress?: Address.Address | undefined
   }
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
@@ -322,7 +322,7 @@ export declare namespace getSignPayload {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
  * const hash = ZoneRpcAuthentication.hash(authentication)
@@ -359,17 +359,21 @@ export declare namespace hash {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
- *   privateKey: '0x...',
+ *   payload:
+ *     ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = ZoneRpcAuthentication.serialize(authentication, {
- *   signature,
- * })
+ * const serialized = ZoneRpcAuthentication.serialize(
+ *   authentication,
+ *   {
+ *     signature
+ *   }
+ * )
  * ```
  *
  * @param authentication - The Zone RPC authentication token.

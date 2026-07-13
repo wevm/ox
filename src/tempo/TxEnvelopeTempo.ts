@@ -17,8 +17,7 @@ import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TempoAddress from './TempoAddress.js'
-import * as TokenId from './TokenId.js'
+import type * as TransactionRequest from './TransactionRequest.js'
 
 /**
  * Represents a single call within a Tempo transaction.
@@ -27,11 +26,11 @@ import * as TokenId from './TokenId.js'
  *
  * [Batch Calls](https://docs.tempo.xyz/protocol/transactions#batch-calls)
  */
-export type Call<bigintType = bigint, addressType = Address.Address> = {
+export type Call<bigintType = bigint> = {
   /** Call data. */
   data?: Hex.Hex | undefined
   /** The target address or contract creation. */
-  to?: addressType | undefined
+  to?: Address.Address | undefined
   /** Value to send (in wei). */
   value?: bigintType | undefined
 }
@@ -69,7 +68,6 @@ export type TxEnvelopeTempo<
   bigintType = bigint,
   numberType = number,
   type extends string = Type,
-  addressType = Address.Address,
 > = Compute<
   {
     /** EIP-2930 Access List. */
@@ -79,20 +77,17 @@ export type TxEnvelopeTempo<
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
     /** Array of calls to execute. */
-    calls: readonly Call<bigintType, addressType>[]
+    calls: readonly Call<bigintType>[]
     /** EIP-155 Chain ID. */
     chainId: numberType
     /** Sender of the transaction. */
-    from?: addressType | undefined
+    from?: Address.Address | undefined
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
     /** Fee payer signature. */
-    feePayerSignature?:
-      | Signature.Signature<true, bigintType, numberType>
-      | null
-      | undefined
-    /** Fee token preference. Address or ID of the TIP-20 token. */
-    feeToken?: TokenId.TokenIdOrAddress | undefined
+    feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
+    /** Fee token preference. Address of the TIP-20 token. */
+    feeToken?: Address.Address | undefined
     /**
      * Key authorization for provisioning a new access key.
      *
@@ -101,7 +96,7 @@ export type TxEnvelopeTempo<
      * The authorization must be signed with the root key, the tx can be signed by the Keychain signature.
      */
     keyAuthorization?:
-      | KeyAuthorization.Signed<bigintType, numberType, addressType>
+      | KeyAuthorization.Signed<bigintType, numberType>
       | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
@@ -119,23 +114,15 @@ export type TxEnvelopeTempo<
     validAfter?: numberType | undefined
   } & (signed extends true
     ? {
-        signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+        signature: SignatureEnvelope.SignatureEnvelope<numberType>
       }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 >
 
-/** Input type that accepts TempoAddress for `calls.to`, `from`, etc. */
-export type Input = TxEnvelopeTempo<
-  boolean,
-  bigint,
-  number,
-  Type,
-  TempoAddress.Address
->
+/** Input type for a Tempo transaction envelope. */
+export type Input = TxEnvelopeTempo<boolean, bigint, number, Type>
 
 export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
   signed,
@@ -166,9 +153,16 @@ export type Type = typeof type
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: Address.from('0x0000000000000000000000000000000000000000'), value: 0n }],
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       ),
+ *       value: 0n
+ *     }
+ *   ],
  *   chainId: 1,
- *   maxFeePerGas: 1000000000n,
+ *   maxFeePerGas: 1000000000n
  * })
  * ```
  *
@@ -178,6 +172,7 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   const {
     calls,
     chainId,
+    feeToken,
     maxFeePerGas,
     maxPriorityFeePerGas,
     validBefore,
@@ -203,6 +198,9 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   if (calls)
     for (const call of calls)
       if (call.to) Address.assert(call.to, { strict: false })
+
+  // Validate fee token
+  if (feeToken) Address.assert(feeToken, { strict: false })
 
   // Validate chain ID
   if (chainId <= 0)
@@ -240,7 +238,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TxEnvelopeTempo.deserialize('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
+ * const envelope = TxEnvelopeTempo.deserialize(
+ *   '0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080'
+ * )
  * // @log: {
  * // @log:   type: 'tempo',
  * // @log:   nonce: 785n,
@@ -254,6 +254,13 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
+  if (Hex.slice(serialized, 0, 1) !== serializedType)
+    throw new TransactionEnvelope.InvalidSerializedError({
+      attributes: {},
+      serialized,
+      type,
+    })
+
   const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
@@ -421,14 +428,18 @@ export declare namespace deserialize {
  * import { Value } from 'ox'
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TxEnvelopeTempo.from({ // [!code focus]
+ * const envelope = TxEnvelopeTempo.from({
+ *   // [!code focus]
  *   chainId: 1, // [!code focus]
- *   calls: [{ // [!code focus]
- *     data: '0xdeadbeef', // [!code focus]
- *     to: 'tempox0x0000000000000000000000000000000000000000', // [!code focus]
- *   }], // [!code focus]
+ *   calls: [
+ *     {
+ *       // [!code focus]
+ *       data: '0xdeadbeef', // [!code focus]
+ *       to: '0x0000000000000000000000000000000000000000' // [!code focus]
+ *     }
+ *   ], // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
- *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
+ *   maxPriorityFeePerGas: Value.fromGwei('1') // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -444,21 +455,24 @@ export declare namespace deserialize {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x0000000000000000000000000000000000000000'
+ *     }
+ *   ],
  *   maxFeePerGas: Value.fromGwei('10'),
- *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeTempo.from(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   chainId: 1,
@@ -480,7 +494,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TxEnvelopeTempo.from('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
+ * const envelope = TxEnvelopeTempo.from(
+ *   '0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080'
+ * )
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   calls: [{
@@ -508,19 +524,6 @@ export function from<
   const envelope_ = (
     typeof envelope === 'string' ? deserialize(envelope) : envelope
   ) as TxEnvelopeTempo
-
-  // Resolve TempoAddress inputs to hex addresses.
-  if (envelope_.from)
-    envelope_.from = TempoAddress.resolve(
-      envelope_.from as TempoAddress.Address,
-    )
-  if (envelope_.calls)
-    envelope_.calls = (envelope_.calls as readonly Call[]).map((call) => ({
-      ...call,
-      ...(call.to
-        ? { to: TempoAddress.resolve(call.to as TempoAddress.Address) }
-        : {}),
-    })) as readonly Call[]
 
   assert(envelope_)
 
@@ -550,15 +553,13 @@ export declare namespace from {
   > = Compute<
     envelope extends Hex.Hex
       ? TxEnvelopeTempo
-      : TempoAddress.ResolveAddresses<
-          Assign<
-            envelope,
-            (signature extends SignatureEnvelope.from.Value
-              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-              : {}) & {
-              readonly type: 'tempo'
-            }
-          >
+      : Assign<
+          envelope,
+          (signature extends SignatureEnvelope.from.Value
+            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+            : {}) & {
+            readonly type: 'tempo'
+          }
         >
   >
 
@@ -584,11 +585,13 @@ export declare namespace from {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
- *   }],
- *   maxFeePerGas: Value.fromGwei('10'),
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x0000000000000000000000000000000000000000'
+ *     }
+ *   ],
+ *   maxFeePerGas: Value.fromGwei('10')
  * })
  *
  * const serialized = TxEnvelopeTempo.serialize(envelope) // [!code focus]
@@ -606,20 +609,23 @@ export declare namespace from {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
- *   }],
- *   maxFeePerGas: Value.fromGwei('10'),
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x0000000000000000000000000000000000000000'
+ *     }
+ *   ],
+ *   maxFeePerGas: Value.fromGwei('10')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = TxEnvelopeTempo.serialize(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const serialized = TxEnvelopeTempo.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
@@ -659,7 +665,7 @@ export function serialize(
 
   // Encode calls as RLP list of [to, value, data] tuples
   const callsTupleList = calls.map((call) => [
-    call.to ? TempoAddress.resolve(call.to) : '0x',
+    call.to ?? '0x',
     call.value ? Hex.fromNumber(call.value) : '0x',
     call.data ?? '0x',
   ])
@@ -716,10 +722,7 @@ export function serialize(
     nonce ? Hex.fromNumber(nonce) : '0x',
     typeof validBefore === 'number' ? Hex.fromNumber(validBefore) : '0x',
     typeof validAfter === 'number' ? Hex.fromNumber(validAfter) : '0x',
-    !skipFeeToken &&
-    (typeof feeToken === 'bigint' || typeof feeToken === 'string')
-      ? TokenId.toAddress(feeToken)
-      : '0x',
+    !skipFeeToken && feeToken ? feeToken : '0x',
     feePayerSignatureOrSender,
     authorizationTupleList,
     ...(keyAuthorization ? [KeyAuthorization.toTuple(keyAuthorization)] : []),
@@ -794,10 +797,12 @@ export declare namespace serialize {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
- *   nonce: 0n,
+ *   calls: [
+ *     {
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
+ *   nonce: 0n
  * })
  *
  * const encoded = TxEnvelopeTempo.encodeForSigning(envelope) // [!code focus]
@@ -840,14 +845,19 @@ export declare namespace encodeForSigning {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
- *   nonce: 0n,
+ *   calls: [
+ *     {
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
+ *   nonce: 0n
  * })
  *
  * const payload = TxEnvelopeTempo.getSignPayload(envelope) // [!code focus]
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -860,9 +870,7 @@ export function getSignPayload(
 ): getSignPayload.ReturnValue {
   const sigHash = hash(envelope, { presign: true })
   if (options.from)
-    return Hash.keccak256(
-      Hex.concat('0x04', sigHash, TempoAddress.resolve(options.from)),
-    )
+    return Hash.keccak256(Hex.concat('0x04', sigHash, options.from))
   return sigHash
 }
 
@@ -874,7 +882,7 @@ export declare namespace getSignPayload {
      * When provided, computes `keccak256(0x04 || sigHash || from)` instead of
      * the raw `sigHash`, binding the access key signature to the specific user account.
      */
-    from?: TempoAddress.Address | undefined
+    from?: Address.Address | undefined
   }
 
   type ReturnValue = Hex.Hex
@@ -893,13 +901,15 @@ export declare namespace getSignPayload {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
+ *   gas: 21000n
  * })
  *
  * const signature = Secp256k1.sign({
@@ -907,7 +917,9 @@ export declare namespace getSignPayload {
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeTempo.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeTempo.hash(envelope_signed) // [!code focus]
  * ```
@@ -963,21 +975,29 @@ export declare namespace hash {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
+ *   gas: 21000n
  * })
  *
- * const payload = TxEnvelopeTempo.getFeePayerSignPayload(envelope, {
- *   sender: 'tempox0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
- * }) // [!code focus]
+ * const payload = TxEnvelopeTempo.getFeePayerSignPayload(
+ *   envelope,
+ *   {
+ *     sender: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+ *   }
+ * ) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the fee payer sign payload for.
@@ -988,11 +1008,10 @@ export function getFeePayerSignPayload(
   envelope: TxEnvelopeTempo,
   options: getFeePayerSignPayload.Options,
 ): getFeePayerSignPayload.ReturnValue {
-  const sender = TempoAddress.resolve(options.sender)
   const serialized = serialize(
     { ...envelope, signature: undefined },
     {
-      sender,
+      sender: options.sender,
       format: 'feePayer',
     },
   )
@@ -1004,7 +1023,7 @@ export declare namespace getFeePayerSignPayload {
     /**
      * Sender address to cover the fee of.
      */
-    sender: TempoAddress.Address
+    sender: Address.Address
   }
 
   type ReturnValue = Hex.Hex
@@ -1021,12 +1040,16 @@ export declare namespace getFeePayerSignPayload {
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * const valid = TxEnvelopeTempo.validate({
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: Address.from('0x0000000000000000000000000000000000000000'),
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
  *   chainId: 1,
- *   maxFeePerGas: 1000000000n,
+ *   maxFeePerGas: 1000000000n
  * })
  * // @log: true
  * ```
@@ -1047,6 +1070,44 @@ export declare namespace validate {
 }
 
 /**
+ * Converts a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} to a Tempo {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * Preserves `signature` and `feePayerSignature`. The Tempo
+ * `TransactionRequest` shape carries the same envelope-style signature
+ * fields so signed envelopes can be round-tripped through the request
+ * representation without information loss.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * const envelope = TxEnvelopeTempo.from({
+ *   calls: [
+ *     { to: '0x0000000000000000000000000000000000000000' }
+ *   ],
+ *   chainId: 1,
+ *   maxFeePerGas: 1n
+ * })
+ *
+ * const request =
+ *   TxEnvelopeTempo.toTransactionRequest(envelope)
+ * ```
+ *
+ * @param envelope - The Tempo transaction envelope to convert.
+ * @returns A Tempo transaction request.
+ */
+export function toTransactionRequest(
+  envelope: TxEnvelopeTempo,
+): TransactionRequest.TransactionRequest {
+  return { ...envelope } as TransactionRequest.TransactionRequest
+}
+
+export declare namespace toTransactionRequest {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
  * Thrown when a transaction's calls list is empty.
  *
  * @example
@@ -1055,7 +1116,7 @@ export declare namespace validate {
  *
  * TxEnvelopeTempo.assert({
  *   calls: [],
- *   chainId: 1,
+ *   chainId: 1
  * })
  * // @error: TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.
  * ```
@@ -1076,10 +1137,16 @@ export class CallsEmptyError extends Errors.BaseError {
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: Address.from('0x0000000000000000000000000000000000000000') }],
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
  *   chainId: 1,
  *   validBefore: 100,
- *   validAfter: 200,
+ *   validAfter: 200
  * })
  * // @error: TxEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (200).
  * ```

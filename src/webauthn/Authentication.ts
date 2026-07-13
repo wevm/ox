@@ -1,5 +1,6 @@
 import * as Base64 from '../core/Base64.js'
 import * as Bytes from '../core/Bytes.js'
+import * as Cbor from '../core/Cbor.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -15,8 +16,9 @@ import {
   bufferSourceToBytes,
   bytesToArrayBuffer,
   deserializeExtensions,
-  responseKeys,
+  parseAuthenticatorData,
   serializeExtensions,
+  serializeResponseFields,
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
@@ -37,14 +39,16 @@ export type Response<serialized extends boolean = false> = {
  * import { Authentication } from 'ox/webauthn'
  *
  * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  * const serialized = Authentication.serializeOptions(options)
  *
  * // ... send to server and back ...
  *
- * const deserialized = Authentication.deserializeOptions(serialized) // [!code focus]
- * const credential = await window.navigator.credentials.get(deserialized)
+ * const deserialized =
+ *   Authentication.deserializeOptions(serialized) // [!code focus]
+ * const credential =
+ *   await window.navigator.credentials.get(deserialized)
  * ```
  *
  * @param options - The serialized credential request options.
@@ -88,23 +92,28 @@ export declare namespace deserializeOptions {
  * ```ts twoslash
  * import { Authentication } from 'ox/webauthn'
  *
- * const response = Authentication.deserializeResponse({ // [!code focus]
+ * const response = Authentication.deserializeResponse({
+ *   // [!code focus]
  *   id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
- *   metadata: { // [!code focus]
+ *   metadata: {
+ *     // [!code focus]
  *     authenticatorData: '0x49960de5...', // [!code focus]
  *     clientDataJSON: '{"type":"webauthn.get",...}', // [!code focus]
  *     challengeIndex: 23, // [!code focus]
  *     typeIndex: 1, // [!code focus]
- *     userVerificationRequired: true, // [!code focus]
+ *     userVerificationRequired: true // [!code focus]
  *   }, // [!code focus]
- *   raw: { // [!code focus]
+ *   raw: {
+ *     // [!code focus]
  *     id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
  *     type: 'public-key', // [!code focus]
  *     authenticatorAttachment: 'platform', // [!code focus]
  *     rawId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
- *     response: { clientDataJSON: 'eyJ0eXBlIjoid2ViYXV0aG4uZ2V0In0' }, // [!code focus]
+ *     response: {
+ *       clientDataJSON: 'eyJ0eXBlIjoid2ViYXV0aG4uZ2V0In0'
+ *     } // [!code focus]
  *   }, // [!code focus]
- *   signature: '0x...', // [!code focus]
+ *   signature: '0x...' // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -148,10 +157,11 @@ export declare namespace deserializeResponse {
  * import { Authentication } from 'ox/webauthn'
  *
  * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const credential = await window.navigator.credentials.get(options)
+ * const credential =
+ *   await window.navigator.credentials.get(options)
  * ```
  *
  * @param options - Options.
@@ -235,15 +245,19 @@ export declare namespace getOptions {
  * import { Authentication } from 'ox/webauthn'
  * import { WebCryptoP256 } from 'ox'
  *
- * const { metadata, payload } = Authentication.getSignPayload({ // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
- * }) // [!code focus]
+ * const { metadata, payload } = Authentication.getSignPayload(
+ *   {
+ *     // [!code focus]
+ *     challenge: '0xdeadbeef' // [!code focus]
+ *   }
+ * ) // [!code focus]
  *
- * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const { publicKey, privateKey } =
+ *   await WebCryptoP256.createKeyPair()
  *
  * const signature = await WebCryptoP256.sign({
  *   payload,
- *   privateKey,
+ *   privateKey
  * })
  * ```
  *
@@ -258,6 +272,7 @@ export function getSignPayload(
     crossOrigin,
     extraClientData,
     flag,
+    hash = false,
     origin,
     rpId,
     signCount,
@@ -288,7 +303,8 @@ export function getSignPayload(
     userVerificationRequired: userVerification === 'required',
   }
 
-  const payload = Hex.concat(authenticatorData, clientDataJSONHash)
+  const concatenated = Hex.concat(authenticatorData, clientDataJSONHash)
+  const payload = hash ? Hash.sha256(concatenated) : concatenated
 
   return { metadata, payload }
 }
@@ -338,7 +354,7 @@ export declare namespace getSignPayload {
  * import { Authentication } from 'ox/webauthn'
  *
  * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
  * const serialized = Authentication.serializeOptions(options) // [!code focus]
@@ -391,10 +407,11 @@ export declare namespace serializeOptions {
  * import { Authentication } from 'ox/webauthn'
  *
  * const response = await Authentication.sign({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const serialized = Authentication.serializeResponse(response) // [!code focus]
+ * const serialized =
+ *   Authentication.serializeResponse(response) // [!code focus]
  *
  * // `serialized` is JSON-serializable — send it to a server, store it, etc.
  * const json = JSON.stringify(serialized)
@@ -406,22 +423,9 @@ export declare namespace serializeOptions {
 export function serializeResponse(response: Response): Response<true> {
   const { id, metadata, raw, signature } = response
 
-  const rawResponse = {} as Record<string, string>
-  for (const key of responseKeys) {
-    const r = raw.response as unknown as Record<string, unknown>
-    let value = r[key]
-    if (!(value instanceof ArrayBuffer)) {
-      const getter =
-        `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
-      const fn = r[getter]
-      if (typeof fn === 'function') value = fn.call(r)
-    }
-    if (value instanceof ArrayBuffer)
-      rawResponse[key] = Base64.fromBytes(
-        new Uint8Array(value),
-        base64UrlOptions,
-      )
-  }
+  const rawResponse = serializeResponseFields(
+    raw.response as unknown as Record<string, unknown>,
+  )
 
   return {
     id,
@@ -454,12 +458,13 @@ export declare namespace serializeResponse {
  * import { Registration, Authentication } from 'ox/webauthn'
  *
  * const credential = await Registration.create({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await Authentication.sign({ // [!code focus]
+ * const { metadata, signature } = await Authentication.sign({
+ *   // [!code focus]
  *   credentialId: credential.id, // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
+ *   challenge: '0xdeadbeef' // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   metadata: {
@@ -501,7 +506,7 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
     const signatureBytes = new Uint8Array(response.signature)
     const id = credential.id
 
-    const clientDataJSON = String.fromCharCode(...clientDataJSONBytes)
+    const clientDataJSON = Bytes.toString(clientDataJSONBytes)
     const challengeIndex = clientDataJSON.indexOf('"challenge"')
     const typeIndex = clientDataJSON.indexOf('"type"')
 
@@ -538,7 +543,7 @@ export declare namespace sign {
          */
         getFn?:
           | ((
-              options?: Types.CredentialRequestOptions | undefined,
+              options?: Types.CredentialRequestOptions,
             ) => Promise<Types.Credential | null>)
           | undefined
       })
@@ -572,19 +577,20 @@ export class SignFailedError extends Errors.BaseError<Error> {
  * import { Registration, Authentication } from 'ox/webauthn'
  *
  * const credential = await Registration.create({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
  * const { metadata, signature } = await Authentication.sign({
  *   credentialId: credential.id,
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const result = Authentication.verify({ // [!code focus]
+ * const result = Authentication.verify({
+ *   // [!code focus]
  *   metadata, // [!code focus]
  *   challenge: '0xdeadbeef', // [!code focus]
  *   publicKey: credential.publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```
@@ -599,29 +605,41 @@ export function verify(options: verify.Options): boolean {
 
   const authenticatorDataBytes = Bytes.fromHex(authenticatorData)
 
-  // Check length of `authenticatorData`.
-  if (authenticatorDataBytes.length < 37) return false
+  const parsed = parseAuthenticatorData(authenticatorDataBytes)
+  if (!parsed) return false
 
   // If rpId is provided, validate the rpIdHash in authenticatorData.
   if (rpId !== undefined) {
-    const rpIdHash = authenticatorDataBytes.slice(0, 32)
     const expectedRpIdHash = Hash.sha256(Hex.fromString(rpId), { as: 'Bytes' })
-    if (!Bytes.isEqual(rpIdHash, expectedRpIdHash)) return false
+    if (!Bytes.isEqual(parsed.rpIdHash, expectedRpIdHash)) return false
   }
 
-  const flag = authenticatorDataBytes[32]!
-
   // Verify that the UP bit of the flags in authData is set.
-  if ((flag & 0x01) !== 0x01) return false
+  if (!parsed.up) return false
 
   // If user verification was determined to be required, verify that
   // the UV bit of the flags in authData is set. Otherwise, ignore the
   // value of the UV flag.
-  if (userVerificationRequired && (flag & 0x04) !== 0x04) return false
+  if (userVerificationRequired && !parsed.uv) return false
 
   // If the BE bit of the flags in authData is not set, verify that
   // the BS bit is not set.
-  if ((flag & 0x08) !== 0x08 && (flag & 0x10) === 0x10) return false
+  if (!parsed.be && parsed.bs) return false
+
+  // Authentication assertions must not carry attested credential data
+  // (AT bit). If AT is set, the structure is invalid for an assertion.
+  if (parsed.at) return false
+
+  // If the ED bit is set, trailing extension bytes must be a valid CBOR
+  // map. Reject malformed extensions.
+  if (parsed.ed) {
+    if (authenticatorDataBytes.length <= 37) return false
+    try {
+      Cbor.decode(authenticatorDataBytes.subarray(37))
+    } catch {
+      return false
+    }
+  }
 
   // Parse clientDataJSON for validation.
   const clientData = JSON.parse(clientDataJSON)

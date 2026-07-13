@@ -46,7 +46,7 @@ The example below demonstrates how to construct, sign, and broadcast a transacti
 
 ```ts
 import { Provider, Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
- 
+
 // 1. Construct a transaction envelope.
 const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
@@ -57,10 +57,10 @@ const envelope = TxEnvelopeEip1559.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1'),
 })
- 
+
 // 2. Get the signing payload for the envelope.
-const payload = TxEnvelopeEip1559.getSignPayload(envelope) 
- 
+const payload = TxEnvelopeEip1559.getSignPayload(envelope)
+
 // 3. Sign the payload with your private key using secp256k1.
 const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
 
@@ -91,11 +91,9 @@ Check out the following places for more Ox-related content:
 - [Gitcoin Grant](https://wagmi.sh/gitcoin)
 - [wevm.eth](https://etherscan.io/enslookup-search?search=wevm.eth)
 
-
 <br />
 <br />
 
 <a href="https://vercel.com/?utm_source=wevm&utm_campaign=oss">
   <img src="https://www.datocms-assets.com/31049/1618983297-powered-by-vercel.svg" alt="Powered by Vercel" height="35">
 </a>
-

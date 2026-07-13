@@ -1,5 +1,6 @@
 import * as model from '@microsoft/api-extractor-model'
 
+import { frontmatter, toMetaDescription } from '../utils/description.js'
 import { type Data, getId } from '../utils/model.js'
 import type { processDocComment } from '../utils/tsdoc.js'
 
@@ -23,7 +24,11 @@ export function renderNamespace(options: {
     functions,
     types,
   } = options
-  const { examples, summary } = docComment
+  const { description: tagDescription, examples, summary } = docComment
+
+  const description = toMetaDescription(tagDescription ?? summary, {
+    fallback: `${apiItem.displayName} module reference`,
+  })
 
   const headings = [...examples]
     .map((x) => {
@@ -33,7 +38,11 @@ export function renderNamespace(options: {
     })
     .filter(Boolean)
 
-  const content = [`# ${apiItem.displayName}`, summary]
+  const content = [
+    frontmatter({ description }),
+    `# ${apiItem.displayName}`,
+    summary,
+  ]
   if (examples.length)
     content.push(
       '## Examples',
@@ -87,7 +96,13 @@ export function renderNamespaceErrors(options: {
   name: string
 }) {
   const { dataLookup, errors, name } = options
-  const content = ['---\nshowOutline: 1\n---', `# ${name} Errors`]
+  const content = [
+    frontmatter({
+      showOutline: 1,
+      description: `Errors thrown by functions in the ${name} module.`,
+    }),
+    `# ${name} Errors`,
+  ]
 
   for (const error of errors) {
     const { apiItem } = error
@@ -120,7 +135,13 @@ export function renderNamespaceTypes(options: {
   name: string
 }) {
   const { dataLookup, name, types } = options
-  const content = ['---\nshowOutline: 1\n---', `# ${name} Types`]
+  const content = [
+    frontmatter({
+      showOutline: 1,
+      description: `Type definitions exported by the ${name} module.`,
+    }),
+    `# ${name} Types`,
+  ]
 
   for (const type of types) {
     const { apiItem } = type

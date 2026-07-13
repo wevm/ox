@@ -1,6 +1,7 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 
 /** A Log as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
@@ -15,12 +16,14 @@ export type Log<
   blockHash: pending extends true ? null : Hex.Hex
   /** Number of block containing this log or `null` if pending */
   blockNumber: pending extends true ? null : bigintType
+  /** Timestamp of block containing this log or `null` if pending */
+  blockTimestamp?: (pending extends true ? null : bigintType) | undefined
   /** Contains the non-integered arguments of the log */
   data: Hex.Hex
   /** Index of this log within its block or `null` if pending */
   logIndex: pending extends true ? null : numberType
   /** List of topics associated with this log */
-  topics: [Hex.Hex, ...(readonly Hex.Hex[])]
+  topics: Hex.Hex[]
   /** Hash of the transaction that created this log or `null` if pending */
   transactionHash: pending extends true ? null : Hex.Hex
   /** Index of the transaction that created this log or `null` if pending */
@@ -49,7 +52,7 @@ export type Rpc<pending extends boolean = false> = Log<
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x0000000000000000000000000000000000000000000000000000000000000000',
  *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
- *     '0x000000000000000000000000000000000000000000000000000000000000025b',
+ *     '0x000000000000000000000000000000000000000000000000000000000000025b'
  *   ],
  *   data: '0x',
  *   blockHash:
@@ -59,7 +62,7 @@ export type Rpc<pending extends boolean = false> = Log<
  *     '0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93',
  *   transactionIndex: '0x91',
  *   logIndex: '0x10f',
- *   removed: false,
+ *   removed: false
  * })
  * // @log: {
  * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
@@ -89,7 +92,7 @@ export type Rpc<pending extends boolean = false> = Log<
  * import { AbiEvent, Hex, Log } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)'
  * )
  *
  * const { topics } = AbiEvent.encode(transfer)
@@ -101,9 +104,9 @@ export type Rpc<pending extends boolean = false> = Log<
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  *
  * const log = Log.fromRpc(logs[0]) // [!code focus]
@@ -144,11 +147,17 @@ export function fromRpc<
 ): Log<pending> {
   return {
     ...log,
-    blockNumber: log.blockNumber ? BigInt(log.blockNumber) : null,
-    logIndex: log.logIndex ? Number(log.logIndex) : null,
-    transactionIndex: log.transactionIndex
-      ? Number(log.transactionIndex)
-      : null,
+    blockNumber: Quantity.toBigInt(log.blockNumber) ?? null,
+    ...('blockTimestamp' in log
+      ? {
+          blockTimestamp:
+            log.blockTimestamp === null
+              ? null
+              : Quantity.toBigInt(log.blockTimestamp),
+        }
+      : {}),
+    logIndex: Quantity.toNumber(log.logIndex) ?? null,
+    transactionIndex: Quantity.toNumber(log.transactionIndex) ?? null,
   } as Log<pending>
 }
 
@@ -179,11 +188,11 @@ export declare namespace fromRpc {
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x0000000000000000000000000000000000000000000000000000000000000000',
  *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
- *     '0x000000000000000000000000000000000000000000000000000000000000025b',
+ *     '0x000000000000000000000000000000000000000000000000000000000000025b'
  *   ],
  *   transactionHash:
  *     '0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93',
- *   transactionIndex: 145,
+ *   transactionIndex: 145
  * })
  * // @log: {
  * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
@@ -208,30 +217,35 @@ export declare namespace fromRpc {
  * @returns An RPC log.
  */
 export function toRpc<
-  const log extends Log<boolean>,
+  const log extends toRpc.Input,
   pending extends boolean = false,
 >(log: log, _options: toRpc.Options<pending> = {}): Rpc<pending> {
   return {
     address: log.address,
     blockHash: log.blockHash,
-    blockNumber:
-      typeof log.blockNumber === 'bigint'
-        ? Hex.fromNumber(log.blockNumber)
-        : null,
+    blockNumber: Quantity.fromNumberishOptional(log.blockNumber) ?? null,
+    ...('blockTimestamp' in log
+      ? {
+          blockTimestamp:
+            log.blockTimestamp === null
+              ? null
+              : Quantity.fromNumberishOptional(log.blockTimestamp),
+        }
+      : {}),
     data: log.data,
-    logIndex:
-      typeof log.logIndex === 'number' ? Hex.fromNumber(log.logIndex) : null,
+    logIndex: Quantity.fromNumberishOptional(log.logIndex) ?? null,
     topics: log.topics,
     transactionHash: log.transactionHash,
     transactionIndex:
-      typeof log.transactionIndex === 'number'
-        ? Hex.fromNumber(log.transactionIndex)
-        : null,
+      Quantity.fromNumberishOptional(log.transactionIndex) ?? null,
     removed: log.removed,
   } as Rpc as never
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Log.(toRpc:function)}. */
+  type Input = Log<boolean, Hex.Hex | bigint | number, Hex.Hex | number>
+
   type Options<pending extends boolean = false> = {
     pending?: pending | boolean | undefined
   }

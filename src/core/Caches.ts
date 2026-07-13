@@ -1,8 +1,8 @@
 import type * as Address from './Address.js'
-import { LruMap } from './internal/lru.js'
+import { BoundedMap } from './internal/lru.js'
 
 const caches = {
-  checksum: /*#__PURE__*/ new LruMap<Address.Address>(8192),
+  checksum: /*#__PURE__*/ new BoundedMap<Address.Address>(32_768),
 }
 
 export const checksum = caches.checksum

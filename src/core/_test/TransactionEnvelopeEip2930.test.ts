@@ -1,5 +1,5 @@
 import { Rlp, Secp256k1, TxEnvelopeEip2930, Value } from 'ox'
-import { assertType, describe, expect, expectTypeOf, test } from 'vitest'
+import { assertType, describe, expect, expectTypeOf, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
@@ -24,9 +24,8 @@ describe('assert', () => {
   })
 
   test('invalid address', () => {
-    expect(() =>
-      TxEnvelopeEip2930.assert({ to: '0x123', chainId: 1 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => TxEnvelopeEip2930.assert({ to: '0x123', chainId: 1 }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x123" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
@@ -204,8 +203,8 @@ describe('from', () => {
       const envelope = TxEnvelopeEip2930.from({
         chainId: 1,
         gasPrice: 69420n,
-        r: 0n,
-        s: 1n,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000001',
         yParity: 0,
         nonce: 0n,
       })
@@ -225,8 +224,8 @@ describe('from', () => {
       },
       {
         signature: {
-          r: 0n,
-          s: 1n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
           yParity: 0,
         },
       },
@@ -235,8 +234,8 @@ describe('from', () => {
       {
         "chainId": 1,
         "nonce": 0n,
-        "r": 0n,
-        "s": 1n,
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
         "to": "0x0000000000000000000000000000000000000000",
         "type": "eip2930",
         "value": 69n,
@@ -307,12 +306,8 @@ describe('hash', () => {
       value: 1000000000000000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       type: 'eip2930',
-      r: BigInt(
-        '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-      ),
-      s: BigInt(
-        '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-      ),
+      r: '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
+      s: '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
       v: 27,
     })
 
@@ -452,12 +447,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip2930.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 1,
         },
       }),
@@ -467,12 +458,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip2930.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 0,
         },
       }),
@@ -491,8 +478,8 @@ describe('toRpc', () => {
       gasPrice: Value.fromGwei('10'),
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       value: 1000000000000000000n,
-      r: 1n,
-      s: 2n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
       yParity: 0,
     })
     expect(transaction).toMatchInlineSnapshot(`
@@ -510,6 +497,44 @@ describe('toRpc', () => {
         "yParity": "0x0",
       }
     `)
+  })
+
+  test('numberish inputs', () => {
+    const fromBigint = TxEnvelopeEip2930.toRpc({
+      chainId: 1,
+      nonce: 0n,
+      gas: 21000n,
+      gasPrice: 1000n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromNumber = TxEnvelopeEip2930.toRpc({
+      chainId: 1,
+      nonce: 0,
+      gas: 21000,
+      gasPrice: 1000,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromHex = TxEnvelopeEip2930.toRpc({
+      chainId: '0x1',
+      nonce: '0x0',
+      gas: '0x5208',
+      gasPrice: '0x3e8',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: '0x3e8',
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: '0x0',
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
   })
 
   test('behavior: nullish', () => {

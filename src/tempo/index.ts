@@ -1,6 +1,5 @@
 /** @entrypointCategory Tempo */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utilities for Tempo-flavoured EIP-7702 authorizations.
@@ -17,14 +16,18 @@ export type {}
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.from({
- *   address: 'tempox0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
- * const payload = AuthorizationTempo.getSignPayload(authorization)
+ * const payload =
+ *   AuthorizationTempo.getSignPayload(authorization)
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  *
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
@@ -49,14 +52,17 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  * import { Channel } from 'ox/tempo'
  *
  * const channel = Channel.from({
- *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *   expiringNonceHash:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000000',
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n,
+ *   token: '0x20c0000000000000000000000000000000000001'
  * })
  *
- * const channelId = Channel.computeId(channel, { chainId: 4217 })
+ * const channelId = Channel.computeId(channel, {
+ *   chainId: 4217
+ * })
  * ```
  *
  * @category Reference
@@ -73,8 +79,16 @@ export * as Channel from './Channel.js'
  *
  * @example
  * ```ts twoslash
- * import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
- * import { Address, Secp256k1, WebCryptoP256, Value } from 'ox'
+ * import {
+ *   KeyAuthorization,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
+ * import {
+ *   Address,
+ *   Secp256k1,
+ *   WebCryptoP256,
+ *   Value
+ * } from 'ox'
  *
  * const keyPair = await WebCryptoP256.createKeyPair()
  * const address = Address.fromPublicKey(keyPair.publicKey)
@@ -84,16 +98,19 @@ export * as Channel from './Channel.js'
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'p256',
- *   limits: [{
- *     token: 'tempox0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6),
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('10', 6)
+ *     }
+ *   ]
  * })
  *
  * const privateKey = '0x...'
- * const payload = KeyAuthorization.getSignPayload(authorization)
+ * const payload =
+ *   KeyAuthorization.getSignPayload(authorization)
  * const signature = SignatureEnvelope.from(
- *   Secp256k1.sign({ payload, privateKey }),
+ *   Secp256k1.sign({ payload, privateKey })
  * )
  *
  * KeyAuthorization.from(authorization, { signature })
@@ -117,9 +134,15 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  * const genesisConfig = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     },
+ *     {
+ *       owner: '0x2222222222222222222222222222222222222222',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  *
  * const account = MultisigConfig.getAddress(genesisConfig)
@@ -144,11 +167,13 @@ export * as MultisigConfig from './MultisigConfig.js'
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 4217n,
  *   type: 'secp256k1',
- *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('100', 6),
- *     period: Period.days(1), // resets daily
- *   }],
+ *   limits: [
+ *     {
+ *       token: '0x20c0000000000000000000000000000000000001',
+ *       limit: Value.from('100', 6),
+ *       period: Period.days(1) // resets daily
+ *     }
+ *   ]
  * })
  * ```
  *
@@ -171,8 +196,9 @@ export * as Period from './Period.js'
  * import { PoolId } from 'ox/tempo'
  *
  * const poolId = PoolId.from({
- *   userToken: 1n,
- *   validatorToken: 2n,
+ *   userToken: '0x20c0000000000000000000000000000000000001',
+ *   validatorToken:
+ *     '0x20c0000000000000000000000000000000000002'
  * })
  * ```
  *
@@ -194,7 +220,8 @@ export * as PoolId from './PoolId.js'
  * // @noErrors
  * import { ReceivePolicyReceipt } from 'ox/tempo'
  *
- * const receipts = ReceivePolicyReceipt.fromTransactionReceipt(receipt)
+ * const receipts =
+ *   ReceivePolicyReceipt.fromTransactionReceipt(receipt)
  * const decoded = ReceivePolicyReceipt.decode('0x...')
  * ```
  *
@@ -211,8 +238,7 @@ export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
  * import { RpcSchemaTempo } from 'ox/tempo'
  *
  * const schema = RpcSchema.from<
- *   | RpcSchema.Default
- *   | RpcSchemaTempo.Tempo
+ *   RpcSchema.Default | RpcSchemaTempo.Tempo
  * >()
  *
  * const provider = Provider.from(window.ethereum!, { schema })
@@ -236,7 +262,10 @@ export * as RpcSchemaTempo from './RpcSchemaTempo.js'
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
  * const envelope = SignatureEnvelope.from(signature)
  * ```
@@ -244,25 +273,6 @@ export * as RpcSchemaTempo from './RpcSchemaTempo.js'
  * @category Reference
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
-/**
- * Tempo address encoding/decoding utilities for human-readable addresses.
- *
- * Tempo addresses use a simple `tempox` prefix before the hex address.
- *
- * @example
- * ```ts twoslash
- * import { TempoAddress } from 'ox/tempo'
- *
- * const encoded = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
- * // @log: 'tempox0x742d35cc6634c0532925a3b844bc9e7595f2bd28'
- *
- * const { address } = TempoAddress.parse(encoded)
- * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28' }
- * ```
- *
- * @category Reference
- */
-export * as TempoAddress from './TempoAddress.js'
 /**
  * Tick-based pricing utilities for DEX price conversions.
  *
@@ -283,27 +293,6 @@ export * as TempoAddress from './TempoAddress.js'
  * @category Reference
  */
 export * as Tick from './Tick.js'
-/**
- * TIP-20 token ID utilities for converting between token IDs and addresses.
- *
- * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses
- * derived from sequential token IDs. TIP-20 extends ERC-20 with payment features like
- * configurable fee tokens, transfer memos, and built-in role-based access control.
- *
- * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
- *
- * @example
- * ```ts twoslash
- * import { TokenId } from 'ox/tempo'
- *
- * const tokenId = TokenId.from(1n)
- * const address = TokenId.toAddress(1n)
- * // 'tempox0x20c0000000000000000000000000000000000001'
- * ```
- *
- * @category Reference
- */
-export * as TokenId from './TokenId.js'
 /**
  * Token role utilities for serializing role identifiers to keccak256 hashes.
  *
@@ -345,10 +334,10 @@ export * as TokenRole from './TokenRole.js'
  *     {
  *       input: '0xdeadbeef',
  *       to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
- *       value: '0x9b6e64a8ec60000',
- *     },
+ *       value: '0x9b6e64a8ec60000'
+ *     }
  *   ],
- *   feeToken: 'tempox0x20c0000000000000000000000000000000000000',
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
  *   transactionIndex: '0x2',
  *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
  *   value: '0x9b6e64a8ec60000',
@@ -361,11 +350,11 @@ export * as TokenRole from './TokenRole.js'
  *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *     type: 'secp256k1',
- *     yParity: '0x0',
+ *     yParity: '0x0'
  *   },
  *   chainId: '0x1',
  *   accessList: [],
- *   type: '0x76',
+ *   type: '0x76'
  * })
  * ```
  *
@@ -387,7 +376,7 @@ export * as Transaction from './Transaction.js'
  * const receipt = TransactionReceipt.fromRpc({
  *   status: '0x1',
  *   feePayer: '0x...',
- *   feeToken: 'tempox0x20c0000000000000000000000000000000000001',
+ *   feeToken: '0x20c0000000000000000000000000000000000001'
  *   // ... other fields
  * } as any)
  * ```
@@ -408,8 +397,13 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.toRpc({
- *   calls: [{ to: 'tempox0xcafebabecafebabecafebabecafebabecafebabe', data: '0xdeadbeef' }],
- *   feeToken: 'tempox0x20c0000000000000000000000000000000000000',
+ *   calls: [
+ *     {
+ *       to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *       data: '0xdeadbeef'
+ *     }
+ *   ],
+ *   feeToken: '0x20c0000000000000000000000000000000000000'
  * })
  * ```
  *
@@ -431,15 +425,26 @@ export * as TransactionRequest from './TransactionRequest.js'
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: 'tempox0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
- *   maxFeePerGas: Value.fromGwei('10'),
+ *   calls: [
+ *     {
+ *       to: '0x0000000000000000000000000000000000000000',
+ *       data: '0xdeadbeef'
+ *     }
+ *   ],
+ *   maxFeePerGas: Value.fromGwei('10')
  * })
  *
  * const payload = TxEnvelopeTempo.getSignPayload(envelope)
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  *
- * const envelope_signed = TxEnvelopeTempo.from(envelope, { signature })
- * const envelope_serialized = TxEnvelopeTempo.serialize(envelope_signed)
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, {
+ *   signature
+ * })
+ * const envelope_serialized =
+ *   TxEnvelopeTempo.serialize(envelope_signed)
  * ```
  *
  * @category Reference
@@ -457,17 +462,15 @@ export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
  *
  * @example
  * ```ts twoslash
- * import { TempoAddress, VirtualAddress } from 'ox/tempo'
+ * import { VirtualAddress } from 'ox/tempo'
  *
  * const masterId = '0x58e21090' // derived when the master registers
  * const userTag = '0x010203040506' // operator-defined deposit identifier
  *
  * const address = VirtualAddress.from({
  *   masterId,
- *   userTag,
+ *   userTag
  * })
- *
- * const tempoAddress = TempoAddress.format(address) // optional display format
  * ```
  *
  * @category Reference
@@ -487,11 +490,16 @@ export * as VirtualAddress from './VirtualAddress.js'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const registration = {
- *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
- *   salt: Hex.from('0x00000000000000000000000000000000000000000000000000000000abf52baf'),
+ *   address: Address.from(
+ *     '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+ *   ),
+ *   salt: Hex.from(
+ *     '0x00000000000000000000000000000000000000000000000000000000abf52baf'
+ *   )
  * }
  *
- * const registrationHash = VirtualMaster.getRegistrationHash(registration) // keccak256(address || salt)
+ * const registrationHash =
+ *   VirtualMaster.getRegistrationHash(registration) // keccak256(address || salt)
  * const masterId = VirtualMaster.getMasterId(registration) // bytes [4:8] of the hash
  * ```
  *
@@ -540,15 +548,19 @@ export * as ZoneId from './ZoneId.js'
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: 'tempox0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
+ *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8'
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
- *   privateKey: '0x...',
+ *   payload:
+ *     ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...'
  * })
  *
- * const token = ZoneRpcAuthentication.serialize(authentication, { signature })
+ * const token = ZoneRpcAuthentication.serialize(
+ *   authentication,
+ *   { signature }
+ * )
  * ```
  *
  * @category Reference

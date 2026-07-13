@@ -8,7 +8,7 @@ import {
   Value,
   WebAuthnP256,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
@@ -275,8 +275,8 @@ describe('deserialize', () => {
         },
       ],
       signature: SignatureEnvelope.from({
-        r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         yParity: 0,
       }),
     })
@@ -299,8 +299,8 @@ describe('deserialize', () => {
         chainId: 1,
         nonce: 40n,
         signature: SignatureEnvelope.from({
-          r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-          s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+          r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+          s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
           yParity: 0,
         }),
       }),
@@ -309,8 +309,8 @@ describe('deserialize', () => {
         chainId: 1,
         nonce: 55n,
         signature: SignatureEnvelope.from({
-          r: 12345678901234567890n,
-          s: 98765432109876543210n,
+          r: '0x000000000000000000000000000000000000000000000000ab54a98ceb1f0ad2',
+          s: '0x0000000000000000000000000000000000000000000000055aa54d38e5267eea',
           yParity: 1,
         }),
       }),
@@ -499,8 +499,8 @@ describe('deserialize', () => {
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.feePayerSignature).toEqual({
       yParity: 0,
-      r: 1n,
-      s: 2n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
     })
   })
 
@@ -637,6 +637,19 @@ describe('deserialize', () => {
       )
     })
 
+    test('invalid transaction (wrong prefix byte)', () => {
+      // EIP-1559 prefix byte (0x02) instead of Tempo's 0x76.
+      expect(() =>
+        TxEnvelopeTempo.deserialize(
+          `0x02${Rlp.fromHex([]).slice(2)}` as TxEnvelopeTempo.Serialized,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
+
+        Serialized Transaction: "0x02c0"]
+      `)
+    })
+
     test('invalid transaction (too many fields with signature)', () => {
       expect(() =>
         TxEnvelopeTempo.deserialize(
@@ -706,8 +719,8 @@ describe('from', () => {
         nonce: 0n,
         nonceKey: 0n,
         signature: SignatureEnvelope.from({
-          r: 0n,
-          s: 1n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
           yParity: 0,
         }),
       })
@@ -723,8 +736,8 @@ describe('from', () => {
           "nonceKey": 0n,
           "signature": {
             "signature": {
-              "r": 0n,
-              "s": 1n,
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
               "yParity": 0,
             },
             "type": "secp256k1",
@@ -741,32 +754,6 @@ describe('from', () => {
     }
   })
 
-  test('tempo address input for calls.to', () => {
-    const hexAddr = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
-    const tempoAddr = 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
-
-    const envelope = TxEnvelopeTempo.from({
-      chainId: 1,
-      calls: [{ to: tempoAddr }],
-      nonce: 0n,
-      nonceKey: 0n,
-    })
-    expect(envelope.calls[0]!.to).toBe(Address.checksum(hexAddr))
-  })
-
-  test('tempo address input for from', () => {
-    const hexAddr = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const tempoAddr = 'tempox0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-
-    const envelope = TxEnvelopeTempo.from({
-      chainId: 1,
-      calls: [{}],
-      nonce: 0n,
-      from: tempoAddr as any,
-    })
-    expect(envelope.from).toBe(Address.checksum(hexAddr))
-  })
-
   test('options: signature', () => {
     const envelope = TxEnvelopeTempo.from(
       {
@@ -777,8 +764,8 @@ describe('from', () => {
       },
       {
         signature: SignatureEnvelope.from({
-          r: 0n,
-          s: 1n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
           yParity: 0,
         }),
       },
@@ -793,8 +780,8 @@ describe('from', () => {
         "nonceKey": 0n,
         "signature": {
           "signature": {
-            "r": 0n,
-            "s": 1n,
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
             "yParity": 0,
           },
           "type": "secp256k1",
@@ -816,7 +803,11 @@ describe('from', () => {
         nonceKey: 0n,
       },
       {
-        signature: { r: 0n, s: 1n, yParity: 0 },
+        signature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          yParity: 0,
+        },
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -829,8 +820,8 @@ describe('from', () => {
         "nonceKey": 0n,
         "signature": {
           "signature": {
-            "r": 0n,
-            "s": 1n,
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
             "yParity": 0,
           },
           "type": "secp256k1",
@@ -849,14 +840,14 @@ describe('from', () => {
         chainId: 1,
         calls: [{}],
         nonce: 0n,
-        r: 1n,
-        s: 2n,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         yParity: 0,
       },
       {
         feePayerSignature: {
-          r: 0n,
-          s: 1n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
           yParity: 0,
         },
       },
@@ -868,13 +859,13 @@ describe('from', () => {
         ],
         "chainId": 1,
         "feePayerSignature": {
-          "r": 0n,
-          "s": 1n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
           "yParity": 0,
         },
         "nonce": 0n,
-        "r": 1n,
-        "s": 2n,
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
         "type": "tempo",
         "yParity": 0,
       }
@@ -980,8 +971,8 @@ describe('serialize', () => {
         },
       ],
       signature: SignatureEnvelope.from({
-        r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         yParity: 0,
       }),
     })
@@ -1016,13 +1007,13 @@ describe('serialize', () => {
       ],
       signature: SignatureEnvelope.from({
         signature: {
-          r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-          s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+          r: '0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e',
+          s: '0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35',
         },
         publicKey: {
           prefix: 4,
-          x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-          y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+          x: '0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5',
+          y: '0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0',
         },
         prehash: true,
       }),
@@ -1068,13 +1059,13 @@ describe('serialize', () => {
       ],
       signature: SignatureEnvelope.from({
         signature: {
-          r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-          s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+          r: '0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e',
+          s: '0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35',
         },
         publicKey: {
           prefix: 4,
-          x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-          y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+          x: '0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5',
+          y: '0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0',
         },
         metadata,
       }),
@@ -1104,8 +1095,8 @@ describe('serialize', () => {
         chainId: 1,
         nonce: 40n,
         signature: SignatureEnvelope.from({
-          r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-          s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+          r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+          s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
           yParity: 0,
         }),
       }),
@@ -1114,8 +1105,8 @@ describe('serialize', () => {
         chainId: 1,
         nonce: 55n,
         signature: SignatureEnvelope.from({
-          r: 12345678901234567890n,
-          s: 98765432109876543210n,
+          r: '0x000000000000000000000000000000000000000000000000ab54a98ceb1f0ad2',
+          s: '0x0000000000000000000000000000000000000000000000055aa54d38e5267eea',
           yParity: 1,
         }),
       }),
@@ -1274,8 +1265,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeTempo.serialize(transaction, {
         feePayerSignature: {
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
           yParity: 0,
         },
       }),
@@ -1473,7 +1464,7 @@ describe('encodeForSigning', () => {
         },
       ],
       feePayerSignature: null,
-      feeToken: 1n,
+      feeToken: '0x20c0000000000000000000000000000000000001',
       nonce: 0n,
     })
     const signature = Secp256k1.sign({
@@ -1494,7 +1485,7 @@ describe('encodeForSigning', () => {
     const sponsored = TxEnvelopeTempo.from({
       ...signed,
       feePayerSignature,
-      feeToken: 2n,
+      feeToken: '0x20c0000000000000000000000000000000000002',
     })
 
     expect(TxEnvelopeTempo.encodeForSigning(sponsored)).toBe(
@@ -1518,29 +1509,6 @@ describe('getSignPayload', () => {
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
     )
   })
-
-  test('tempo address input for from', () => {
-    const hexAddr = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const tempoAddr = 'tempox0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-
-    const transaction = TxEnvelopeTempo.from({
-      chainId: 1,
-      calls: [
-        {
-          to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-        },
-      ],
-      nonce: 0n,
-    })
-
-    const hashHex = TxEnvelopeTempo.getSignPayload(transaction, {
-      from: hexAddr,
-    })
-    const hashTempo = TxEnvelopeTempo.getSignPayload(transaction, {
-      from: tempoAddr,
-    })
-    expect(hashTempo).toBe(hashHex)
-  })
 })
 
 describe('getFeePayerSignPayload', () => {
@@ -1561,29 +1529,6 @@ describe('getFeePayerSignPayload', () => {
     ).toMatchInlineSnapshot(
       `"0xde7a88984d766d0f5aac705487b43e68261516d6e7c524698804d4970d39d77d"`,
     )
-  })
-
-  test('tempo address input for sender', () => {
-    const hexAddr = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-    const tempoAddr = 'tempox0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-
-    const transaction = TxEnvelopeTempo.from({
-      chainId: 1,
-      calls: [
-        {
-          to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-        },
-      ],
-      nonce: 0n,
-    })
-
-    const hashHex = TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
-      sender: hexAddr,
-    })
-    const hashTempo = TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
-      sender: tempoAddr,
-    })
-    expect(hashTempo).toBe(hashHex)
   })
 
   test('with feeToken', () => {
@@ -1642,5 +1587,57 @@ describe('validate', () => {
         validAfter: 200,
       }),
     ).toBe(false)
+  })
+})
+
+describe('toTransactionRequest', () => {
+  test('default', () => {
+    const envelope = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxFeePerGas: 1n,
+    })
+    const request = TxEnvelopeTempo.toTransactionRequest(envelope)
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "to": "0x0000000000000000000000000000000000000000",
+          },
+        ],
+        "chainId": 1,
+        "maxFeePerGas": 1n,
+        "type": "tempo",
+      }
+    `)
+  })
+
+  test('behavior: preserves signature and feePayerSignature', () => {
+    const envelope = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxFeePerGas: 1n,
+    })
+    const signature = {
+      type: 'secp256k1',
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        yParity: 0,
+      },
+    } as any
+    const feePayerSignature = {
+      r: '0x0000000000000000000000000000000000000000000000000000000000000003',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000004',
+      yParity: 1,
+    } as any
+    const signed: TxEnvelopeTempo.TxEnvelopeTempo = {
+      ...envelope,
+      signature,
+      feePayerSignature,
+    }
+    const request = TxEnvelopeTempo.toTransactionRequest(signed)
+    expect(request.signature).toEqual(signature)
+    expect(request.feePayerSignature).toEqual(feePayerSignature)
   })
 })
