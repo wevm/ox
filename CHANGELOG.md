@@ -1,5 +1,307 @@
 # ox
 
+## 1.0.0
+
+### Major Changes
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** Changed ABI decode helpers to checksum decoded addresses by default.
+
+  ```diff
+  - AbiParameters.decode(parameters, data)
+  + AbiParameters.decode(parameters, data, { checksumAddress: false })
+  ```
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Removed the Tempo `TokenId` module and narrowed Tempo token inputs (`feeToken`, `Channel.token`, `PoolId.from` tokens) to `Address.Address`; also removed the now-redundant `Channel.Resolved` type.
+
+  ```diff
+    TxEnvelopeTempo.from({
+      // ...
+  -   feeToken: 1n,
+  +   feeToken: '0x20c0000000000000000000000000000000000001',
+    })
+  ```
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Upgraded `@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/bip32`, and `@scure/bip39` to v2.
+
+  Notable behavioral changes inherited from noble v2:
+
+  - ECDSA signatures now default to `lowS: true` for both `Secp256k1` and `P256`. Previously `P256` signatures could have high-S values.
+  - The `noble` re-exports on `Secp256k1`, `P256`, `Ed25519`, `X25519`, and `Bls` now reference the v2 APIs (e.g. `randomSecretKey()` instead of `randomPrivateKey()`, `Point` instead of `ProjectivePoint`/`ExtendedPoint`, `bls.longSignatures.*` instead of top-level `bls.sign`/`verify`). If you depended on the v1 shape via `Module.noble`, refer to the noble v2 changelog.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** Removed the 4844-only blob-sidecar surface in favor of PeerDAS
+  (EIP-7594).
+
+  - `Kzg.Kzg` no longer includes `computeBlobKzgProof`. Bring a PeerDAS-capable
+    backend (e.g. `c-kzg` ≥ v1.5, `micro-eth-signer/advanced/kzg.js` ≥ v0.18, or
+    equivalent). The backend must implement `computeCells`,
+    `computeCellsAndKzgProofs`, `recoverCellsAndKzgProofs`, and
+    `verifyCellKzgProofBatch` in addition to `blobToKzgCommitment`.
+  - Removed `Blobs.toSidecars`, `Blobs.toProofs`,
+    `Blobs.sidecarsToVersionedHashes`, `Blobs.BlobSidecar`, and
+    `Blobs.BlobSidecars`. Use the upcoming `BlobCells` module (next phase) for
+    PeerDAS data-column construction. `Kzg.Kzg.blobToKzgCommitment` and
+    `Blobs.toVersionedHashes` remain for transaction versioned-hash derivation.
+  - Removed `TxEnvelopeEip4844.sidecars` (the legacy "network wrapper" RLP form
+    for `eth_sendRawTransaction`). PeerDAS replaces the network wrapper with
+    cell/column propagation; the on-chain envelope is unchanged.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Migrated ECDSA and BLS coordinate fields (`r`, `s`, `x`, `y`, BLS `Fp`/`Fp2`) from `bigint` to padded `Hex.Hex` strings (32-byte for `secp256k1`/`P256`/`WebAuthnP256`, 48-byte for BLS12-381) on `Signature`, `PublicKey`, `BlsPoint`, `Transaction`, `Authorization`, `TxEnvelope`, and related Tempo and ERC envelopes, dropping the `bigintType` generic.
+
+  ```diff
+  - Signature.from({ r: 0x6e10...n, s: 0x4a90...n, yParity: 1 })
+  + Signature.from({
+  +   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+  +   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+  +   yParity: 1,
+  + })
+  ```
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Removed the `TempoAddress` module and its `tempox`-prefixed address format. All Tempo modules now accept plain hex `Address.Address` values; remove any `TempoAddress.format` / `TempoAddress.parse` / `TempoAddress.resolve` calls at the boundary. The `addressType` type parameter has also been dropped from `Call`, `TxEnvelopeTempo`, `KeyAuthorization`, `AuthorizationTempo`, `TransactionRequest`, and `TokenId.TokenIdOrAddress`.
+
+  ```diff
+  - import { TempoAddress } from 'ox/tempo'
+  - const formatted = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
+  - const { address } = TempoAddress.parse(formatted)
+  + const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28'
+  ```
+
+### Minor Changes
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added an `AbiFunction.decodeData(abi, data)` overload that extracts the ABI function from the calldata selector.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added human-readable ABI parsing and formatting utilities from `abitype` to ox, including runtime validation and type-level safety for `Abi`, `AbiItem`, `AbiParameters`, and the new `AbiParameter` module.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `AccountProof.fromRpc` and `AccountProof.toRpc` for converting between RPC and instantiated `AccountProof` shapes returned by `eth_getProof`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `Bloom.prepare`, `Bloom.containsPrepared`, and `Bloom.containsHash` for membership checks against a precomputed bloom filter. Use `Bloom.prepare(bloom)` once and `Bloom.containsPrepared(prepared, input)` (or `Bloom.containsHash(prepared, hash)` when the caller already has the keccak hash) inside hot loops to avoid the per-call `Bytes.fromHex` allocation that `Bloom.contains` pays.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `returnByteLength` and `returnDecoded` options to `CoseKey.toPublicKey` and accepted `Uint8Array` input in addition to `Hex`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `as: 'Hex' | 'Bytes' | 'Object'` option to `Secp256k1.sign` / `getPublicKey` / `recoverPublicKey`, `P256.sign` / `getPublicKey` / `recoverPublicKey`, `WebCryptoP256.sign`, and `Bls.sign` / `getPublicKey` (default `'Object'` keeps existing behavior); plus accept `Hex.Hex | Bytes.Bytes | Signature.Signature` for `signature` params and `Hex.Hex | Bytes.Bytes | PublicKey.PublicKey` for `publicKey` params on `verify`, `recoverAddress`, `recoverPublicKey`, `getSharedSecret` across the same modules.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added EntryPoint 0.9 ABI, address, UserOperation types, `paymasterSignature` packing, hashing, and RPC support.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `Fee.fromHistoryRpc`, `Fee.toHistoryRpc`, `Fee.estimateMaxFeePerGas`, and `Fee.effectiveGasPrice` for converting between RPC/instantiated `FeeHistory` shapes and computing common EIP-1559 fee values.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added the EIP-234 `blockHash` branch to `Filter.Filter` (and `Filter.Rpc`) so log filters can be discriminated against `fromBlock`/`toBlock` and `blockHash`, matching the execution-apis `filter.yaml` `oneOf` schema. `Filter.toRpc` now forwards `blockHash` when present.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added directional codec helpers to the `ox/zod` `RpcSchema` namespace: `decodeParams`/`encodeParams`, `decodeReturns`/`encodeReturns`, and `decodeRequest`/`encodeRequest` (`decode` maps wire → native, `encode` maps native → wire), alongside `parseItem` for method lookup and `parse` as an alias of `decodeRequest`. Scalar quantity returns in `z.RpcSchema.Eth` now decode to their native representation (`eth_blockNumber`, `eth_gasPrice`, `eth_blobBaseFee`, `eth_estimateGas`, `eth_getBalance`, `eth_maxPriorityFeePerGas` → `bigint`; `eth_chainId`, `eth_getTransactionCount`, `eth_getBlockTransactionCountBy*`, `eth_getUncleCountByBlock*` → `number`), while raw transport typing (`RpcSchema.FromZod`) continues to use wire types.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added Zod-backed RPC schema support: `z.RpcSchema.from` (in `ox/zod`) now accepts a record of `{ params, returns }` Zod schemas keyed by method name and returns a parseable `RpcSchema.Namespace`; `RpcSchema.Schema`/`RpcSchema.ToGeneric`/`RpcSchema.FromZod` were added; and `Provider.from` / `RpcTransport.fromHttp` accept a Zod namespace as their `schema` option, deriving request/return types from it.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - The `ox/zod` `RpcSchema` codecs (`decodeParams`/`encodeParams`, `decodeReturns`/`encodeReturns`) now also accept a resolved `RpcSchema.Item` in place of a `(namespace, method)` pair. A method can be looked up once with `z.RpcSchema.parseItem` and passed to each codec, so encoding params and decoding returns no longer repeats the namespace and method name.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `Signature.toCompactBytes`, `Signature.fromCompactBytes`, `Signature.toRecoveredBytes`, and `Signature.fromRecoveredBytes` for direct 64 and 65 byte encoded signature interop.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `Solidity.intRange(bits, signed)` and `Solidity.maxUint(bits)` helpers that compute the inclusive range or maximum unsigned value of a Solidity integer of the given bit width without importing one of the `Solidity.maxInt*`/`Solidity.maxUint*` constants by name.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `TransactionRequest.toEnvelope` (in `ox/tempo`) and `TxEnvelopeTempo.toTransactionRequest` for converting between Tempo `TransactionRequest` and `TxEnvelopeTempo` shapes. `toEnvelope` folds flat `{ to, data, value }` requests into `calls[]`, resolves `nonceKey: 'random'`, and drops fields not supported by the Tempo envelope (`blobs`, `gasPrice`, core `r`/`s`/`yParity`/`v`). Extended Tempo's `TransactionRequest` with optional `signature` (`SignatureEnvelope`) and `feePayerSignature` (`Signature.Signature<true>`) fields so signed envelopes can be round-tripped without information loss; `fromRpc`/`toRpc` translate them via the existing `SignatureEnvelope.fromRpc`/`toRpc` and `Signature.fromRpc`/`toRpc` helpers.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Widened `toRpc` inputs (and their symmetric zod `*ToRpc` encode schemas) to accept numberish values -- `Hex.Hex | bigint | number` for bigint-typed quantities and `Hex.Hex | number` for number-typed quantities -- while keeping decoded/`fromRpc` output types strictly `bigint`/`number`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `TransactionRequest.toEnvelope` and `TransactionEnvelope.toTransactionRequest` for converting between `TransactionRequest` and `TxEnvelope*` shapes (e.g. when handling `eth_sendTransaction`). Extended `TransactionRequest` with optional `r`, `s`, `yParity`, `v` fields so signed payloads can be carried in the same type (with hex↔native coercion in `fromRpc`/`toRpc`). Also tightened `TransactionEnvelope.getType` to throw on accidental RPC-style type strings (`'0x0'`–`'0x4'`); pass payloads through `TransactionRequest.fromRpc` first.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added generic `TxEnvelope` routing helpers with property-based type inference for parsing, serialization, validation, hashing, signing payloads, and RPC conversion.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Threaded an optional `typeHashes` cache through `TypedData.encode`, `TypedData.hashStruct`, and `TypedData.hashDomain` so `keccak256(encodeType(t))` is computed once per `(primaryType, types)` per call instead of once per nested struct or array element (with `TypedData.encode` populating a fresh map internally and advanced callers able to share a `Map<string, Hex.Hex>` across calls).
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - **Added:** `BlobCells` module exposing PeerDAS (EIP-7594) cell-level helpers — `fromBlob` derives the 128 cells + cell KZG proofs of an extended blob, `verify` verifies a batch of cell proofs against their commitments, `recover` reconstructs the full set of cells/proofs from ≥ 64 known cells, and `toDataColumns` builds the 128 per-column packs for a list of blobs.
+
+  ```diff
+  + import { BlobCells, Blobs } from 'ox'
+  +
+  + const blobs = Blobs.from('0xdeadbeef')
+  + const columns = BlobCells.toDataColumns(blobs, { kzg }) // 128 columns
+  ```
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added an `as: 'Hex' | 'Bytes'` option to `webauthn.Authenticator.getAuthenticatorData`. The bytes path assembles into a single `Uint8Array` directly, while the legacy hex path stays in hex throughout to avoid `Bytes <-> Hex` round trips. `getSignCount` now accepts `Hex` or `Uint8Array`, eliminating the unconditional `Bytes.fromHex` decode for byte-input callers.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added the `ox/zod` entrypoint with module-scoped Zod schemas, direct integer quantity schemas, account proofs, authorizations, blocks, filters, override schemas, logs, RPC responses, RPC method schemas (`RpcSchema.Eth` / `RpcSchema.Wallet` per-method `params` / `returnType` plus `Request` envelopes), transaction envelopes, transactions, transaction requests, transaction receipts, ABI, and EIP-712 Typed Data.
+
+### Patch Changes
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.encode` and `AbiEvent.decode` to honor the `anonymous` flag -- anonymous events no longer prepend or expect a selector topic.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiConstructor.decode` to assert that `data` begins with the provided `bytecode` and allowed constructor encoding and decoding without an ABI constructor when no arguments are present.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `AbiError.extract` for selecting and decoding ABI errors from revert data.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `AbiEvent.decodeLog` and `AbiEvent.extractLogs` for decoding and extracting event logs directly from an ABI.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.assertArgs` and `AbiEvent.encode` to always hash `string`/`bytes` indexed inputs to hex via `Hash.keccak256(value, { as: 'Hex' })`, so topic comparisons and emitted topics are reliably hex regardless of whether the input is a `Hex.Hex` or a `Bytes.Bytes`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiFunction.decodeData` to throw `AbiParameters.DataSizeTooSmallError` when the calldata is exactly the 4-byte selector but the function declares inputs, instead of silently returning `undefined`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` to surface a `DataSizeTooSmallError` (with parameter context) instead of leaking a `Cursor.PositionOutOfBoundsError` when the encoded payload is shorter than the parameter list requires.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.encodePacked` to validate that fixed-array lengths match the supplied value, throwing `ArrayLengthMismatchError` (e.g. for `uint256[2]` with three elements) instead of silently encoding the wrong arity.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` for standalone zero-length fixed arrays of dynamic types (e.g. `string[0]`).
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Keystore.toKeyAsync` to use the async PBKDF2 implementation -- previously it called the synchronous `pbkdf2` helper and blocked the main thread when decrypting PBKDF2-backed keystores.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added validation of KDF parameters in `Keystore.pbkdf2`, `Keystore.pbkdf2Async`, `Keystore.scrypt`, and `Keystore.scryptAsync` -- PBKDF2 now requires `iterations` to be an integer `>= 1000`, and scrypt now requires `n` to be a power of two `>= 1024` with positive integer `r` and `p`, rejecting trivially weak parameters that previously produced formally valid but cryptographically insecure keystores.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Keystore.scryptAsync` to honor caller-provided `p` and `r` options -- previously they were silently overridden with `p=8` and `r=1`, producing keystores that disagreed with the synchronous `Keystore.scrypt` for the same inputs.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Mnemonic.toPrivateKey` to return `Bytes` by default to match its declared return type -- previously it returned a `Hex` string at runtime even though the default `as` was `'Bytes'`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `WebCryptoP256.verify` rejecting valid signatures whose `r` or `s` value has a leading zero byte by padding both components to 32 bytes.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `PublicKey.assert` so it rejects objects missing `x`/`y` when the `compressed` option is set explicitly.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `PublicKey.fromHex` and `PublicKey.fromBytes` so they reject deserialized public keys with an invalid SEC1 prefix.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Preserved `Block.fromRpc().totalDifficulty` as `undefined` instead of silently coercing missing values to `0n`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Made `Bloom.contains` validate the bloom argument length and throw `Bloom.InvalidBloomError` instead of silently returning `false` for malformed bloom inputs.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Made `Filter.toRpc` preserve explicit `address: null` (and `topics: null`) instead of stripping it via truthy checks.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `Log.fromRpc` and `Log.toRpc` support for optional `blockTimestamp` fields.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Unified the RPC-quantity conversion blocks across `Block`, `BlockOverrides`, and `StateOverrides` behind an internal helper so optional bigint fields with explicit `'0x0'` (e.g. `baseFeePerGas: '0x0'` on a post-merge block) round-trip as `0n` instead of being silently dropped by the previous truthy checks.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Validated array element types and fixed-array lengths in `TypedData.assert` and `TypedData.encodeField`, throwing `InvalidArrayError`/`InvalidArrayLengthError` instead of silently passing malformed input through to the encoder.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Made `ValidatorData.encode` call `Address.assert` on the validator argument so malformed validator addresses are rejected instead of producing invalid ERC-191 payloads.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Tightened `Value.from` input validation to reject malformed numeric strings (`''`, `'.'`, `'-'`, `'-.'`) and to reject non-integer or negative `decimals`, and replaced `Number`/`Math.round` rounding with string-carry rounding so very long fractions no longer lose precision.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Bytes.fromNumber` and `Rlp.fromHex` rejecting valid odd-nibble hex output produced by `Hex.fromNumber` (e.g. `0x7`, `0x311`); both now even-pad before handing the value to the strict `Bytes.fromHex` parser.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Bls.aggregate` to reject empty arrays and mixed G1/G2 input, and added a fast path that returns the input directly when only one point is supplied.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `BlsPoint.fromBytes` to honor its declared `group` argument and assert the input length matches the requested G1 (48 bytes) or G2 (96 bytes) shape.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Hardened `CoseKey.toPublicKey` to reject COSE_Key inputs with a non-P-256 `kty`, `alg`, or `crv` header, or with `x`/`y` byte arrays that are not exactly 32 bytes long.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Documented `extraEntropy` on `Secp256k1.sign` and `P256.sign` correctly as `@default false` so the JSDoc matches the runtime default.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Kzg.from` to preserve `this` binding by wrapping method calls instead of destructuring, so class instances or method-style implementations work correctly.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Documented `WebCryptoP256.sign` low-S normalization as always-on and corrected the `WebCryptoP256.createKeyPair` / `createKeyPairECDH` JSDoc to describe `publicKey` as a `PublicKey.PublicKey`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Replaced the plain `Error` thrown by `WebCryptoP256.getSharedSecret` when given an ECDSA private key with a typed `WebCryptoP256.InvalidPrivateKeyAlgorithmError`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `Ens.toCoinType` for converting chain IDs to ENS coin types.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Narrowed `UserOperation.fromPacked` return type to `UserOperation<'0.7', true>` to reflect that the packed format does not carry v0.8 `authorization`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added EntryPoint 0.8 and 0.9 support to `UserOperationGas` through version-specific aliases over the 0.7 gas shape.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `UserOperation.toRpc` to preserve v0.6 `paymasterAndData` and corrected `eth_getUserOperationByHash` result typing.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `UserOperation` RPC codecs to map native `authorization` to wire `eip7702Auth` for EntryPoint 0.8 and 0.9.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `SignatureErc6492.unwrap` to strip the trailing magic bytes before ABI-decoding, and made `SignatureErc6492.from` and `assert` validate object inputs by throwing the new `InvalidUnwrappedSignatureError` on malformed values.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Replaced the exception-driven opData fallback in `Execute.decodeBatchOfBatchesData` with structural detection of the ABI head word, so malformed inputs surface as decode errors instead of being masked by the catch.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Hardened ERC-8010 by validating the full unwrapped object in `SignatureErc8010.assert`, capping the suffix length parsed by `unwrap` against the wrapped size to reject overflowing inputs, and skipping `Secp256k1.recoverAddress` in `wrap` when `to` is already provided.
+
+- [#286](https://github.com/wevm/ox/pull/286) [`56f299f`](https://github.com/wevm/ox/commit/56f299f6c046aea41b55e64f7993b831a206c47c) Thanks [@jxom](https://github.com/jxom)! - Added `eth_getRawTransactionByHash` to `RpcSchema.Eth` and `z.RpcSchema.Eth`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toBytes` and `Bytes.fromHex` returning a `Uint8Array` view that aliased Node's shared `Buffer` pool memory, which broke callers that read `.buffer` (e.g. WebAuthn `attestationObject` round-trips).
+
+- [#291](https://github.com/wevm/ox/pull/291) [`5ebb88d`](https://github.com/wevm/ox/commit/5ebb88dfc6139573844d9c6b97eed8c463ee1d3a) Thanks [@jxom](https://github.com/jxom)! - Fixed `KeyAuthorization.fromRpc` return type mismatch under TypeScript configs without `exactOptionalPropertyTypes`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed the zod `Log` schema to accept logs with zero topics (e.g. `LOG0`/anonymous events) and widened `Log.topics` to `Hex.Hex[]`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Removed the TIP-1061 multisig `config_id` concept to match the updated Tempo reference implementation: multisig account addresses now derive directly from the initial config, owner approval digests bind only `account`, the signature wire format is `0x05 || rlp([account, signatures, init?])`, `MultisigConfig.maxOwners` is now 255 with `u8` weights, and owner approvals may be nested multisig signatures.
+
+  ```diff
+  - const id = MultisigConfig.toId(genesisConfig)
+  - const account = MultisigConfig.getAddress({ genesisConfigId: id })
+  + const account = MultisigConfig.getAddress(genesisConfig)
+
+  - MultisigConfig.getSignPayload({ payload, account, genesisConfigId })
+  + MultisigConfig.getSignPayload({ payload, account })
+
+  - SignatureEnvelope.from({ account, genesisConfigId, signatures })
+  + SignatureEnvelope.from({ account, signatures })
+  ```
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` (via internal `withTimeout`) producing an unhandled rejection when the wrapped fetch threw a non-`AbortError` after the timeout setup ran.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Provider.from` to preserve wrapped providers' prototype methods, accessors, and non-enumerable property descriptors instead of dropping them via object spread.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Provider.from` to stop sniffing successful EIP-1193 payloads for a `jsonrpc` field and reparsing them as JSON-RPC envelopes.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added a decode depth limit (1024) to `Rlp.toBytes` / `Rlp.toHex`, throwing `Rlp.DepthLimitExceededError` instead of overflowing the call stack on deeply nested untrusted RLP input.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed RLP decoding to reject malformed payloads with trailing bytes (`Rlp.TrailingBytesError`) or list items overrunning the declared list length (`Rlp.ListBoundaryExceededError`).
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcResponse.from` crashing when called without a `request` option and missing `jsonrpc` -- it now validates the envelope and throws `RpcResponse.ParseError` for missing `id`/`jsonrpc`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcResponse.parseError` re-wrapping existing `RpcResponse.BaseError` instances as `InternalError` -- existing instances are now returned as-is.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcResponse.parse` silently returning `undefined` for malformed payloads -- it now validates the JSON-RPC envelope (`jsonrpc === '2.0'`, presence of `id`, and presence of either `result` or `error`) and throws `RpcResponse.ParseError` otherwise.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed the EIP-1898 block identifier param type in the core `eth`/`tempo` RPC request schemas to be wire-typed (`Block.Identifier<Hex.Hex>`), so its `blockNumber` field is hex like the sibling `Block.Number<Hex.Hex>` branch instead of native `bigint`. This makes `z.RpcSchema.encodeParams` output assignable to the core request param types for block-selector methods (`eth_call`, `eth_getBalance`, `eth_getCode`, `eth_getStorageAt`, `eth_getTransactionCount`, `eth_getBlockTransactionCountByNumber`, `eth_getUncleCountByBlockNumber`, `eth_estimateGas`, etc.).
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added an optional 4th `blockOverrides` parameter to the `eth_call` and `eth_estimateGas` schemas (`RpcSchema.Default` and the zod `RpcSchema.Eth`), matching Geth/Anvil's `eth_call(transaction, block, stateOverrides, blockOverrides)` signature.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added `eth_fillTransaction` to `RpcSchema.Eth`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Updated the zod `RpcSchema.Eth` request-bearing methods (`eth_call`, `eth_estimateGas`, `eth_sendTransaction`, `eth_signTransaction`, `eth_simulateV1`) to encode their transaction-request params with `TransactionRequestToRpc`, so `RpcSchema.encodeParams` now accepts numberish (`bigint | number | Hex`) quantities. Decoded output is unchanged.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` to throw `RpcTransport.MalformedResponseError` for empty `2xx` HTTP bodies instead of silently returning `undefined`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.HttpError.details` to render raw-text error bodies verbatim instead of JSON-stringifying them with surrounding quotes.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` to surface an `HttpError` (instead of a `SyntaxError`) when servers return `Content-Type: application/json` with an empty body for non-`2xx` responses.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` ignoring its own `timeout` when the caller supplied a `fetchOptions.signal`; both signals are now composed via `AbortSignal.any` so the timeout always fires.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Changed `Siwe.Message.chainId` to bigint, parsed SIWE messages to bigint chain IDs, and generated SIWE nonces with cryptographically secure randomness.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `tempo.AuthorizationTempo.from` to normalize `options.signature` through `SignatureEnvelope.from` so serialized or convenience-shape signatures are accepted as documented.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed Tempo key authorization RPC decoding to tolerate `null` optional fields and preserve `witness`, `isAdmin`, and `account` through the zod codec.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `tempo.TransactionRequest.toRpc` to generate a full 192-bit `nonceKey` when called with `nonceKey: 'random'`, matching the documented field width.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `PoolId.from` to be order-independent by sorting token addresses canonically before hashing.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed Tempo `TransactionReceipt.fromRpc`/`toRpc` to map the `type` field between `'0x76'` and `'tempo'`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added the Tempo fields `keyId`, `multisigInit`, `multisigSignatureCount`, and `capabilities` to `TransactionRequest`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed Tempo transaction RPC decoding to tolerate `null` optional fields and to omit fabricated flat `data`/`to`/`value` call fields.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `tempo.TxEnvelopeTempo.deserialize` to validate the `0x76` envelope-type prefix before RLP decoding, rejecting payloads from other envelope types.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `AccessList.fromTupleList` silently normalizing non-32-byte storage keys; it now throws `InvalidStorageKeySizeError` to match the symmetric `toTupleList` validation.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Authorization.fromTupleList` declaring its return type as `TupleList` instead of `List`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Required `blobVersionedHashes` to be present and non-empty in `TxEnvelopeEip4844.assert`; the previous `if (blobVersionedHashes)` guard let envelopes serialize as "blob transactions with no blob hashes".
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Improved `TxEnvelopeEip4844.deserialize` `InvalidSerializedError` diagnostics by including `maxFeePerBlobGas` and `blobVersionedHashes` in the attributes map and using the EIP-4844 signature-presence threshold (`length > 11`) instead of the EIP-1559 `> 9` copy-paste.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `TxEnvelopeEip4844.serialize` ignoring the `input` alias for `data`; calldata supplied via `input` is now included in the serialized envelope and sign payload.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Added the missing `TxEnvelopeEip7702.toRpc` to mirror `Eip1559`/`Eip2930`/`Eip4844`/`Legacy`, restoring symmetry for callers building EIP-7702 RPC requests.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Transaction.fromRpc` clobbering legacy (`type: '0x0'`) `v` with `27`/`28`; the original RPC `v` is now preserved when present.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `TxEnvelopeLegacy.toRpc` collapsing every signed legacy envelope to `v: '0x1b'`/`'0x1c'`; it now preserves an explicit `envelope.v`, otherwise derives EIP-155 `v = chainId * 2 + 35 + yParity` when a chain ID is present.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `TransactionRequest.fromRpc` mutating the caller-provided RPC object by cloning before assigning parsed fields.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `Transaction.toRpc` emitting `null` for `transactionIndex: 0` instead of `0x0`.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `webauthn.Authentication.getSignPayload` to honor the documented `hash` option by SHA-256 hashing the returned payload when `hash: true` is passed.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `webauthn.Authentication.sign` to decode `clientDataJSON` bytes as UTF-8 via `Bytes.toString` instead of `String.fromCharCode(...bytes)`, which corrupted non-ASCII payloads and could throw `RangeError` on large inputs.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `webauthn.Authentication.verify` to reject assertion `authenticatorData` whose flags imply structure not allowed for assertions: the `AT` (attested credential data) bit is now refused, and an `ED` (extension data) bit must be backed by a CBOR-decodable trailing extension map.
+
+- [#231](https://github.com/wevm/ox/pull/231) [`40d9408`](https://github.com/wevm/ox/commit/40d94082a75f05e34d37b1c011722ed9853e94aa) Thanks [@jxom](https://github.com/jxom)! - Fixed `webauthn.Registration.verify` JSDoc for the `attestation` option to document the actual runtime default of `'none'` (matching `Registration.getOptions`) instead of `'required'`.
+
+- [#284](https://github.com/wevm/ox/pull/284) [`c86f635`](https://github.com/wevm/ox/commit/c86f6350f199a0f5a9705083ad545da760e1f5c4) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.encode` and `AbiParameters.decode` handling of zero-width types (zero-length fixed arrays and empty tuples).
+
 ## 0.14.30
 
 ### Patch Changes
@@ -449,6 +751,7 @@
 ### Patch Changes
 
 - [#113](https://github.com/wevm/ox/pull/113) [`e21cb3c`](https://github.com/wevm/ox/commit/e21cb3cf0b7412f9ca72824247d22ba25e8be4c9) Thanks [@jxom](https://github.com/jxom)! - Added support for specifying the ABI and signature name to:
+
   - `AbiFunction.{encodeData,encodeResult,decodeData,decodeResult}`
   - `AbiError.{encode,decode}`
   - `AbiEvent.{encode,decode}`
@@ -456,13 +759,13 @@
   Example:
 
   ```ts twoslash
-  import { AbiFunction } from 'ox'
-  import { abi } from './abi'
+  import { AbiFunction } from "ox";
+  import { abi } from "./abi";
 
-  const data = AbiFunction.encodeData(abi, 'approve', [
-    '0x0000000000000000000000000000000000000000',
+  const data = AbiFunction.encodeData(abi, "approve", [
+    "0x0000000000000000000000000000000000000000",
     1n,
-  ])
+  ]);
   ```
 
 ## 0.9.4
@@ -494,6 +797,7 @@
 ### Minor Changes
 
 - [#104](https://github.com/wevm/ox/pull/104) [`4f4b635`](https://github.com/wevm/ox/commit/4f4b635dfb399ca9df07bab843857743f389639e) Thanks [@jxom](https://github.com/jxom)! - **Breaking(`ox/erc6492`:**
+
   - Renamed `WrappedSignature` to `SignatureErc6492`
   - Renamed `WrappedSignature.WrappedSignature` to `SignatureErc6492.Unwrapped`
   - Renamed `WrappedSignature.toHex` to `SignatureErc6492.wrap`
@@ -548,6 +852,7 @@
 ### Patch Changes
 
 - [`9fd0bf0`](https://github.com/wevm/ox/commit/9fd0bf0460694709566805bc29f50cad25816620) Thanks [@jxom](https://github.com/jxom)! - Added [ECDH (Elliptic Curve Diffie-Hellman)](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#ecdh) shared secrets to `P256`, `Secp256k1`, and `WebCryptoP256` modules. This enables secure key agreement between parties using elliptic curve cryptography for both secp256k1 and secp256r1 (P256) curves, with support for both `@noble/curves` (for `P256` and `Secp256k1`) implementation and Web Crypto APIs (`WebCryptoP256`).
+
   - `P256.getSharedSecret`
   - `Secp256k1.getSharedSecret`
   - `WebCryptoP256.getSharedSecret`
