@@ -331,8 +331,8 @@ importers:
         specifier: ^4.3.0
         version: 4.3.0
       vocs:
-        specifier: https://pkg.pr.new/vocs@35ebd0c
-        version: https://pkg.pr.new/vocs@35ebd0c(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7))
+        specifier: 2.5.3
+        version: 2.5.3(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7))
       waku:
         specifier: 1.0.0-beta.6
         version: 1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)
@@ -3340,9 +3340,6 @@ packages:
   es-module-lexer@1.7.0:
     resolution: {integrity: sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA==}
 
-  es-module-lexer@2.1.0:
-    resolution: {integrity: sha512-n27zTYMjYu1aj4MjCWzSP7G9r75utsaoc8m61weK+W8JMBGGQybd43GstCXZ3WNmSFtGT9wi59qQTW6mhTR5LQ==}
-
   es-module-lexer@2.3.0:
     resolution: {integrity: sha512-KLdwQm2NvGLDkQDCGvmiQrhkd0JbMzXthwQAUgWjQuQdBLFa3eiBP5arXZyA+f8x+x7OXgud6bq2rxjGtHV2tw==}
 
@@ -5721,6 +5718,7 @@ packages:
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
+    deprecated: unmaintained
     hasBin: true
     peerDependencies:
       typescript: ^5.0.0
@@ -5964,9 +5962,8 @@ packages:
       vite:
         optional: true
 
-  vocs@https://pkg.pr.new/vocs@35ebd0c:
-    resolution: {integrity: sha512-WgXalTW6xBeSjWOtqNX2vO0R61urSdXs4bjWHNh0Kn6ypgtoSbVgE7LlTwFKtgBs1nui6ZfZHiDO7t5dFmVSlg==, tarball: https://pkg.pr.new/vocs@35ebd0c}
-    version: 2.5.2
+  vocs@2.5.3:
+    resolution: {integrity: sha512-4qcFOgjHnmsM++Kei33sHsS4HrG7wii4DcxRTpuZfxA1dRz49WyDNzks9j0Sgyp9Cr/u2tn1hlTtReiSK4gGuQ==}
     hasBin: true
     peerDependencies:
       '@vocs/twoslash-rust': ^0.1.0
@@ -8283,11 +8280,11 @@ snapshots:
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.0
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   '@types/eslint@9.6.0':
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
 
   '@types/estree-jsx@1.0.5':
@@ -8420,7 +8417,7 @@ snapshots:
   '@vitejs/plugin-rsc@0.5.26(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-rc.18
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.0
       estree-walker: 3.0.3
       magic-string: 0.30.21
       react: 19.2.7
@@ -8870,7 +8867,7 @@ snapshots:
 
   ast-types@0.13.4:
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   ast-v8-to-istanbul@1.0.3:
     dependencies:
@@ -9343,8 +9340,6 @@ snapshots:
   es-errors@1.3.0: {}
 
   es-module-lexer@1.7.0: {}
-
-  es-module-lexer@2.1.0: {}
 
   es-module-lexer@2.3.0: {}
 
@@ -12659,7 +12654,7 @@ snapshots:
     optionalDependencies:
       vite: '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)'
 
-  vocs@https://pkg.pr.new/vocs@35ebd0c(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7)):
+  vocs@2.5.3(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7)):
     dependencies:
       '@base-ui/react': 1.4.1(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@codesandbox/sandpack-react': 2.20.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -12889,7 +12884,7 @@ snapshots:
       browserslist: 4.28.2
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.21.3
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.0
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
