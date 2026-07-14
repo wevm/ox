@@ -788,9 +788,67 @@ export const sidebar: Record<string, { backLink: true; items: SidebarItem[] }> =
 ////////////////////////////////////////////////////////////
 
 for (const namespace of namespaceEntries) {
+  const isTempo = namespace.entrypointCategory === 'Tempo'
   let content = `${frontmatter({
-    description: `API reference for ${namespace.entrypointCategory} modules, functions, types, and errors.`,
-  })}\n\n# API Reference\n\n`
+    description: isTempo
+      ? 'Overview, guides, and API reference for Ox Tempo utilities.'
+      : `API reference for ${namespace.entrypointCategory} modules, functions, types, and errors.`,
+  })}\n\n`
+
+  if (isTempo)
+    content += `import { Card, Cards } from 'vocs'
+
+# Overview
+
+Ox provides low-level, type-safe primitives for constructing, signing, serializing, and inspecting
+Tempo protocol data. Explore the guides for common workflows, or browse the API reference for
+individual modules.
+
+## Guides
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Access Keys"
+    description="Authorize scoped keys with expiry, limits, witnesses, and admin access."
+    to="/tempo/guides/access-keys"
+  />
+  <Card
+    icon="lucide:users"
+    title="Native Multisig"
+    description="Derive accounts and assemble weighted owner approvals."
+    to="/tempo/guides/transaction-envelopes/multisig-transactions"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Private Zones"
+    description="Create signed credentials for authenticated Zone RPC requests."
+    to="/tempo/guides/zones"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Signature Envelopes"
+    description="Encode and verify secp256k1, P-256, keychain, and multisig signatures."
+    to="/tempo/guides/signature-envelopes"
+  />
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and coordinate Tempo transactions."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:at-sign"
+    title="Virtual Addresses"
+    description="Mine a master salt and derive tagged payment addresses."
+    to="/tempo/guides/virtual-addresses"
+  />
+</Cards>
+
+## API Reference
+
+`
+  else content += '# API Reference\n\n'
 
   const escapeTableCell = (value: string | undefined) =>
     (value ?? '').replaceAll('\n', ' ').replaceAll('|', '\\|')
