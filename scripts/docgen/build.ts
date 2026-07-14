@@ -34,7 +34,11 @@ type SidebarItem = {
   link?: string
   text: string
 }
-type TopNav = { link: string; text: string }[]
+type TopNavLink = { link: string; text: string }
+type TopNav = readonly (
+  | TopNavLink
+  | { items: readonly TopNavLink[]; text: string }
+)[]
 
 console.log('Generating API docs.')
 
@@ -622,10 +626,33 @@ for (const { entrypointCategory, categories } of namespaceEntries) {
   }
 }
 
-const topNav: TopNav = namespaceEntries.map(({ entrypointCategory }) => ({
-  text: entrypointCategory,
-  link: getPath({ entrypointCategory }),
-})) satisfies TopNav
+const topNav = [
+  {
+    text: 'Core',
+    link: getPath({ entrypointCategory: 'Core' }),
+  },
+  {
+    text: 'Tempo',
+    link: getPath({ entrypointCategory: 'Tempo' }),
+  },
+  {
+    text: 'More',
+    items: [
+      {
+        text: 'Account Abstraction',
+        link: getPath({ entrypointCategory: 'WebAuthn' }),
+      },
+      {
+        text: 'ERCs',
+        link: getPath({ entrypointCategory: 'ERCs' }),
+      },
+      {
+        text: 'Zod',
+        link: getPath({ entrypointCategory: 'Zod' }),
+      },
+    ],
+  },
+] satisfies TopNav
 
 fs.writeFileSync(
   './site/src/config-generated.ts',
