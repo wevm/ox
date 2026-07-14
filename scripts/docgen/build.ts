@@ -621,6 +621,54 @@ const tempoGuides: SidebarItem = {
       link: '/tempo/guides',
     },
     {
+      text: 'Access Keys',
+      collapsed: true,
+      items: [
+        {
+          text: 'Overview',
+          link: '/tempo/guides/access-keys',
+        },
+        {
+          text: 'Admin Access Keys',
+          link: '/tempo/guides/access-keys/admin',
+        },
+        {
+          text: 'Authorize Access Keys',
+          link: '/tempo/guides/access-keys/authorize',
+        },
+        {
+          text: 'Set Permissions & Limits',
+          link: '/tempo/guides/access-keys/permissions-and-limits',
+        },
+        {
+          text: 'Verify Signatures',
+          link: '/tempo/guides/access-keys/verify',
+        },
+        {
+          text: 'Witnesses',
+          link: '/tempo/guides/access-keys/witnesses',
+        },
+      ],
+    },
+    {
+      text: 'Private Zones',
+      collapsed: true,
+      items: [
+        {
+          text: 'Overview',
+          link: '/tempo/guides/zones',
+        },
+        {
+          text: 'Authenticate to a Zone',
+          link: '/tempo/guides/zones/authenticate',
+        },
+      ],
+    },
+    {
+      text: 'Signature Envelopes',
+      link: '/tempo/guides/signature-envelopes',
+    },
+    {
       text: 'Transaction Envelopes',
       collapsed: true,
       items: [
@@ -637,55 +685,21 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/transaction-envelopes/concurrent-transactions',
         },
         {
-          text: 'Scheduled Transactions',
-          link: '/tempo/guides/transaction-envelopes/scheduled-transactions',
+          text: 'Multisig Transactions',
+          link: '/tempo/guides/transaction-envelopes/multisig-transactions',
+          badge: { text: 'EXP', variant: 'warning' },
         },
         {
           text: 'Pay Fees in a Stablecoin',
           link: '/tempo/guides/transaction-envelopes/pay-fees-in-a-stablecoin',
         },
         {
+          text: 'Scheduled Transactions',
+          link: '/tempo/guides/transaction-envelopes/scheduled-transactions',
+        },
+        {
           text: 'Sponsor User Fees',
           link: '/tempo/guides/transaction-envelopes/sponsor-user-fees',
-        },
-        {
-          text: 'Multisig Transactions',
-          link: '/tempo/guides/transaction-envelopes/multisig-transactions',
-          badge: { text: 'EXP', variant: 'warning' },
-        },
-      ],
-    },
-    {
-      text: 'Signature Envelopes',
-      link: '/tempo/guides/signature-envelopes',
-    },
-    {
-      text: 'Access Keys',
-      collapsed: true,
-      items: [
-        {
-          text: 'Overview',
-          link: '/tempo/guides/access-keys',
-        },
-        {
-          text: 'Authorize Access Keys',
-          link: '/tempo/guides/access-keys/authorize',
-        },
-        {
-          text: 'Set Permissions & Limits',
-          link: '/tempo/guides/access-keys/permissions-and-limits',
-        },
-        {
-          text: 'Admin Access Keys',
-          link: '/tempo/guides/access-keys/admin',
-        },
-        {
-          text: 'Witnesses',
-          link: '/tempo/guides/access-keys/witnesses',
-        },
-        {
-          text: 'Verify Signatures',
-          link: '/tempo/guides/access-keys/verify',
         },
       ],
     },
@@ -698,26 +712,12 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/virtual-addresses',
         },
         {
-          text: 'Register a Master Address',
-          link: '/tempo/guides/virtual-addresses/register-a-master-address',
-        },
-        {
           text: 'Create & Parse Addresses',
           link: '/tempo/guides/virtual-addresses/create-and-parse-addresses',
         },
-      ],
-    },
-    {
-      text: 'Private Zones',
-      collapsed: true,
-      items: [
         {
-          text: 'Overview',
-          link: '/tempo/guides/zones',
-        },
-        {
-          text: 'Authenticate to a Zone',
-          link: '/tempo/guides/zones/authenticate',
+          text: 'Register a Master Address',
+          link: '/tempo/guides/virtual-addresses/register-a-master-address',
         },
       ],
     },
