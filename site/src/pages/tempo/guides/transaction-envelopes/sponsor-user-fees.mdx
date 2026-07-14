@@ -52,7 +52,7 @@ const envelope = TxEnvelopeTempo.from({
 // [!code focus:end]
 ```
 
-### Produce Both Signatures
+### Have the Sender Sign First
 
 The sender signs [`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload).
 The sponsor signs
@@ -100,6 +100,63 @@ const feePayerSignature = Secp256k1.sign({
 // @log: }
 // [!code focus:end]
 ```
+
+### Have the Fee Payer Sign First
+
+When the fee payer knows the sender address and final transaction fields, it can approve the
+transaction before the sender signs. The fee payer commits to the sender and `feeToken`; the sender
+then signs the approved envelope without committing to the fee token.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+// 1. Set up the sender and fee payer keys.
+const senderPrivateKey = Secp256k1.randomPrivateKey()
+const sender = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: senderPrivateKey }),
+)
+const feePayerPrivateKey = Secp256k1.randomPrivateKey()
+
+// 2. Build the final sponsor-ready envelope.
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feePayerSignature: null,
+  feeToken: '0x20c0000000000000000000000000000000000001',
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+
+// [!code focus:start]
+// 3. Have the fee payer approve the known sender and fee token first.
+const feePayerSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getFeePayerSignPayload(envelope, { sender }),
+  privateKey: feePayerPrivateKey,
+})
+
+// 4. Attach the fee payer approval before sender signing.
+const approved = TxEnvelopeTempo.from(envelope, { feePayerSignature })
+
+// 5. Have the sender sign the approved envelope.
+const senderSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(approved),
+  privateKey: senderPrivateKey,
+})
+
+// 6. Serialize the envelope with both signatures.
+const serialized = TxEnvelopeTempo.serialize(approved, {
+  signature: senderSignature,
+})
+// @log: '0x76...'
+// [!code focus:end]
+```
+
+`TxEnvelopeTempo.getSignPayload` normalizes the attached fee payer signature to the sponsorship
+marker, which keeps `feeToken` outside the sender commitment. Do not change fields covered by the
+fee payer signature after it signs.
 
 ### Assemble and Serialize the Sponsored Envelope
 
@@ -156,8 +213,8 @@ const serialized = TxEnvelopeTempo.serialize(sponsored)
 
 ### Authorize the Exact Sender
 
-The fee payer payload includes the sender address. Recover or derive it from the sender's
-signature flow, then verify it against the sponsorship request before signing.
+The fee payer payload includes the sender address. Derive it from sender key material or verify an
+authenticated sender claim before signing, especially when the fee payer signs first.
 
 ### Let the Fee Payer Control Its Token
 
@@ -171,9 +228,9 @@ caps, rate limits, and balances before releasing a signature.
 
 ### Coordinate Either Signing Order
 
-Either party may sign first once the sender address and committed fields are known. The example
-uses a sender-first flow, but it is a coordination choice rather than a protocol requirement. Do
-not mutate fields covered by a signature after producing it.
+Either party may sign first once the sender address and committed fields are known. The recipes
+above show both orders. In a fee-payer-first flow, the sponsor must receive the sender address
+before signing. Do not mutate fields covered by either signature after producing it.
 
 ## See More
 
