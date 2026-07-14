@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Sponsor User Fees
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Sponsor User Fees](https://viem.sh/tempo/guides/sponsor-fees)
+guide.
+:::
+
 ## Overview
 
 Tempo fee sponsorship separates transaction authorization from fee payment. The sender signs the
@@ -14,8 +19,6 @@ sender address and selected fee token.
 
 Ox exposes both digests and assembles the dual-signed envelope. Coordinating the two signers,
 applying sponsorship policy, and funding the fee payer remain application responsibilities.
-
-[See the Tempo fee sponsorship guide](https://docs.tempo.xyz/guide/payments/sponsor-user-fees)
 
 ## Recipes
 
@@ -31,7 +34,7 @@ import { TxEnvelopeTempo } from 'ox/tempo'
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
-  feePayerSignature: null,
+  feePayerSignature: null, // [!code hl]
   feeToken: '0x20c0000000000000000000000000000000000001',
   gas: 21_000n,
   maxFeePerGas: 2_000_000_000n,
@@ -68,6 +71,7 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
 })
 
+// [!code focus:start]
 const senderSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey: senderPrivateKey,
@@ -76,6 +80,7 @@ const feePayerSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getFeePayerSignPayload(envelope, { sender }),
   privateKey: feePayerPrivateKey,
 })
+// [!code focus:end]
 ```
 
 ### Assemble and Serialize the Sponsored Envelope
@@ -111,11 +116,13 @@ const feePayerSignature = Secp256k1.sign({
   privateKey: feePayerPrivateKey,
 })
 
+// [!code focus:start]
 const sponsored = TxEnvelopeTempo.from(envelope, {
   feePayerSignature,
   signature: senderSignature,
 })
 const serialized = TxEnvelopeTempo.serialize(sponsored)
+// [!code focus:end]
 ```
 
 ## Best Practices
@@ -158,8 +165,8 @@ not mutate fields covered by a signature after producing it.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Sponsor User Fees"
-    description="Read the complete fee sponsorship integration guide."
-    to="https://docs.tempo.xyz/guide/payments/sponsor-user-fees"
+    title="Viem: Sponsor User Fees"
+    description="Coordinate and submit sponsored transactions with a Viem client."
+    to="https://viem.sh/tempo/guides/sponsor-fees"
   />
 </Cards>

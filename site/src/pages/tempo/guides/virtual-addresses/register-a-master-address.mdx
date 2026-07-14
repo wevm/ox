@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Register a Master Address
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Register a Master Address](https://viem.sh/tempo/guides/virtual-addresses/register)
+guide.
+:::
+
 ## Overview
 
 A TIP-1022 master registration binds a 4-byte master ID to an address. Before submitting that
@@ -31,18 +36,19 @@ import { VirtualMaster } from 'ox/tempo'
 
 const masterAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
+// [!code focus:start]
 const mined = await VirtualMaster.mineSaltAsync({
-  address: masterAddress,
+  address: masterAddress, // [!code hl]
 })
 
 if (!mined) throw new Error('No registration salt found')
 
 const { masterId, registrationHash, salt } = mined
+// [!code focus:end]
 ```
 
 Submit `salt` for `masterAddress` through the protocol's master-registration call. Ox deliberately
-does not submit this transaction. For an end-to-end client flow, see Viem's
-[Register a Master Address](https://viem.sh/tempo/guides/virtual-addresses/register) guide.
+does not submit this transaction.
 
 ### Verify Stored Registration Data
 
@@ -59,11 +65,15 @@ const registration = {
   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
 } as const
 
+// [!code focus:start]
+// [!code hl:start]
 if (!VirtualMaster.validateSalt(registration))
   throw new Error('Invalid registration salt')
+// [!code hl:end]
 
 const masterId = VirtualMaster.getMasterId(registration)
 const registrationHash = VirtualMaster.getRegistrationHash(registration)
+// [!code focus:end]
 ```
 
 These checks only validate the local derivation. Query the Tempo registry to confirm that the
@@ -103,8 +113,8 @@ master has been registered or that a zone, token, or application accepts it.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Virtual Addresses"
-    description="Read the onchain registration requirements."
-    to="https://docs.tempo.xyz/protocol/tip20/virtual-addresses"
+    title="Viem: Register a Master Address"
+    description="Mine a salt and register a master address with a Viem client."
+    to="https://viem.sh/tempo/guides/virtual-addresses/register"
   />
 </Cards>

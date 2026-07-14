@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Pay Fees in a Stablecoin
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Pay Fees in a Stablecoin](https://viem.sh/tempo/guides/pay-fees)
+guide.
+:::
+
 ## Overview
 
 Tempo transaction envelopes can select a TIP-20 token with the `feeToken` field. The protocol's
@@ -30,7 +35,7 @@ const alphaUsd = '0x20c0000000000000000000000000000000000001'
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
-  feeToken: alphaUsd,
+  feeToken: alphaUsd, // [!code hl]
   gas: 21_000n,
   maxFeePerGas: 2_000_000_000n,
   nonce: 0n,
@@ -58,11 +63,13 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
 })
 
+// [!code focus:start]
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// [!code focus:end]
 ```
 
 ### Inspect the Encoded Fee Token
@@ -75,12 +82,12 @@ import { TxEnvelopeTempo } from 'ox/tempo'
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
-  feeToken: '0x20c0000000000000000000000000000000000001',
+  feeToken: '0x20c0000000000000000000000000000000000001', // [!code hl]
 })
 const serialized = TxEnvelopeTempo.serialize(envelope)
 
 const decoded = TxEnvelopeTempo.deserialize(serialized)
-const feeToken = decoded.feeToken
+const feeToken = decoded.feeToken // [!code hl]
 ```
 
 ## Best Practices
@@ -118,8 +125,8 @@ of reusing the single-signer flow above.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Fees"
-    description="Read the Tempo fee system and Fee AMM specification."
-    to="https://docs.tempo.xyz/protocol/fees"
+    title="Viem: Pay Fees in a Stablecoin"
+    description="Select a fee token and submit transactions with a Viem client."
+    to="https://viem.sh/tempo/guides/pay-fees"
   />
 </Cards>

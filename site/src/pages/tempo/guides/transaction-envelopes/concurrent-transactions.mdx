@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Concurrent Transactions
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Concurrent Transactions](https://viem.sh/tempo/guides/concurrent-transactions)
+guide.
+:::
+
 ## Overview
 
 Tempo uses a two-dimensional nonce made from `nonceKey` and `nonce`. Transactions on different
@@ -15,8 +20,6 @@ single sequential nonce becoming a bottleneck.
 [`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) preserves both fields in the signed
 envelope. Ox does not read a stream's current nonce from the network, so callers must supply the
 correct value or use a client that manages nonce state.
-
-[See the Tempo parallel transactions guide](https://docs.tempo.xyz/guide/payments/send-parallel-transactions)
 
 ## Recipes
 
@@ -32,14 +35,14 @@ const first = TxEnvelopeTempo.from({
   calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
   chainId: 4217,
   nonce: 0n,
-  nonceKey: 1n,
+  nonceKey: 1n, // [!code hl]
 })
 
 const second = TxEnvelopeTempo.from({
   calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
   chainId: 4217,
   nonce: 0n,
-  nonceKey: 2n,
+  nonceKey: 2n, // [!code hl]
 })
 ```
 
@@ -72,6 +75,7 @@ const envelopes = [
   }),
 ]
 
+// [!code focus:7]
 const serialized = envelopes.map((envelope) => {
   const signature = Secp256k1.sign({
     payload: TxEnvelopeTempo.getSignPayload(envelope),
@@ -81,6 +85,7 @@ const serialized = envelopes.map((envelope) => {
 })
 
 const transport = RpcTransport.fromHttp('https://rpc.example.com')
+// [!code focus:8]
 const hashes = await Promise.all(
   serialized.map((transaction) =>
     transport.request({
@@ -127,8 +132,8 @@ protocol nonce sequence and is also used by protocol operations.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Parallel Transactions"
-    description="Read the protocol guide for concurrent nonce streams."
-    to="https://docs.tempo.xyz/guide/payments/send-parallel-transactions"
+    title="Viem: Concurrent Transactions"
+    description="Submit transactions in parallel with independent nonce streams."
+    to="https://viem.sh/tempo/guides/concurrent-transactions"
   />
 </Cards>

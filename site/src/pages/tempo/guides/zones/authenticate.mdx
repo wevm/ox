@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Authenticate to a Zone
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Connect to a Zone](https://viem.sh/tempo/guides/zones/connect)
+guide.
+:::
+
 ## Overview
 
 A Zone RPC authentication token contains a zone ID, zone chain ID, issue time, expiry time, and
@@ -35,9 +40,10 @@ const privateKey = Secp256k1.randomPrivateKey()
 const zoneId = 5
 const issuedAt = Math.floor(Date.now() / 1_000)
 
+// [!code focus:start]
 const authentication = ZoneRpcAuthentication.from({
-  chainId: ZoneId.toChainId(zoneId),
-  expiresAt: issuedAt + 10 * 60,
+  chainId: ZoneId.toChainId(zoneId), // [!code hl]
+  expiresAt: issuedAt + 10 * 60, // [!code hl]
   issuedAt,
   zoneId,
 })
@@ -50,6 +56,7 @@ const signature = Secp256k1.sign({
 const serialized = ZoneRpcAuthentication.serialize(authentication, {
   signature,
 })
+// [!code focus:end]
 ```
 
 The example uses a ten-minute lifetime. Follow the zone operator's accepted lifetime and clock-skew
@@ -82,13 +89,15 @@ const serialized = ZoneRpcAuthentication.serialize(authentication, {
   }),
 })
 
+// [!code focus:start]
 const transport = RpcTransport.fromHttp('https://zone.example/rpc', {
   fetchOptions: {
     headers: {
-      [ZoneRpcAuthentication.headerName]: serialized,
+      [ZoneRpcAuthentication.headerName]: serialized, // [!code hl]
     },
   },
 })
+// [!code focus:end]
 
 const blockNumber = await transport.request({
   method: 'eth_blockNumber',
@@ -123,8 +132,10 @@ const serialized = ZoneRpcAuthentication.serialize(authentication, {
   }),
 })
 
+// [!code focus:start]
 const decoded = ZoneRpcAuthentication.deserialize(serialized)
-const isExpired = decoded.expiresAt <= Math.floor(Date.now() / 1_000)
+const isExpired = decoded.expiresAt <= Math.floor(Date.now() / 1_000) // [!code hl]
+// [!code focus:end]
 ```
 
 Deserialization verifies the encoding shape and version. It does not establish that the signature is
@@ -169,8 +180,8 @@ account admission, authorization policy, and expiry enforcement.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Zone RPC"
-    description="Read the authorization-token wire specification."
-    to="https://docs.tempo.xyz/protocol/zones/rpc#authorization-tokens"
+    title="Viem: Connect to a Zone"
+    description="Authenticate a Viem client with a private Zone."
+    to="https://viem.sh/tempo/guides/zones/connect"
   />
 </Cards>

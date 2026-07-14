@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Authorize Access Keys
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Authorize Access Keys](https://viem.sh/tempo/guides/access-keys/authorize)
+guide.
+:::
+
 ## Overview
 
 An access key becomes usable after the root key signs a
@@ -30,6 +35,7 @@ const accessAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
 )
 
+// [!code focus:start]
 const authorization = KeyAuthorization.from({
   address: accessAddress,
   chainId: 4217n,
@@ -37,13 +43,14 @@ const authorization = KeyAuthorization.from({
 })
 
 const rootSignature = Secp256k1.sign({
-  payload: KeyAuthorization.getSignPayload(authorization),
+  payload: KeyAuthorization.getSignPayload(authorization), // [!code hl]
   privateKey: rootPrivateKey,
 })
 
 const signedAuthorization = KeyAuthorization.from(authorization, {
-  signature: SignatureEnvelope.from(rootSignature),
+  signature: SignatureEnvelope.from(rootSignature), // [!code hl]
 })
+// [!code focus:end]
 ```
 
 The authorization's `type` describes the access key, while its attached signature belongs to the
@@ -83,6 +90,7 @@ const signedAuthorization = KeyAuthorization.from(authorization, {
   ),
 })
 
+// [!code focus:start]
 const transaction = TxEnvelopeTempo.from({
   calls: [
     {
@@ -90,13 +98,13 @@ const transaction = TxEnvelopeTempo.from({
     },
   ],
   chainId: 4217,
-  keyAuthorization: signedAuthorization,
+  keyAuthorization: signedAuthorization, // [!code hl]
   nonce: 0n,
 })
 
 const accessSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(transaction, {
-    from: rootAddress,
+    from: rootAddress, // [!code hl]
   }),
   privateKey: accessPrivateKey,
 })
@@ -104,10 +112,11 @@ const accessSignature = Secp256k1.sign({
 const serialized = TxEnvelopeTempo.serialize(transaction, {
   signature: SignatureEnvelope.from({
     inner: SignatureEnvelope.from(accessSignature),
-    type: 'keychain',
-    userAddress: rootAddress,
+    type: 'keychain', // [!code hl]
+    userAddress: rootAddress, // [!code hl]
   }),
 })
+// [!code focus:end]
 ```
 
 Submit `serialized` with a Tempo RPC client. Once the key is active, construct later transactions

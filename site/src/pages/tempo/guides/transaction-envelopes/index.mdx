@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Transaction Envelopes
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Tempo Transactions](https://viem.sh/tempo/transactions)
+guide.
+:::
+
 ## Overview
 
 Tempo defines an EIP-2718 transaction envelope with type `0x76`. A
@@ -30,12 +35,14 @@ array. Each call can contain a target, calldata, and value.
 import { TxEnvelopeTempo } from 'ox/tempo'
 
 const envelope = TxEnvelopeTempo.from({
+  // [!code hl:start]
   calls: [
     {
       data: '0xdeadbeef',
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     },
   ],
+  // [!code hl:end]
   chainId: 4217,
   gas: 100_000n,
   maxFeePerGas: 2_000_000_000n,
@@ -70,6 +77,7 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
 })
 
+// [!code focus:7]
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
@@ -98,9 +106,9 @@ const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
-const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature }) // [!code focus]
 
-const decoded = TxEnvelopeTempo.deserialize(serialized)
+const decoded = TxEnvelopeTempo.deserialize(serialized) // [!code focus]
 ```
 
 ### Submit a Signed Envelope
@@ -121,6 +129,7 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
+// [!code focus:5]
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
@@ -128,6 +137,7 @@ const signature = Secp256k1.sign({
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
 
 const transport = RpcTransport.fromHttp('https://rpc.example.com')
+// [!code focus:4]
 const hash = await transport.request({
   method: 'eth_sendRawTransaction',
   params: [serialized],

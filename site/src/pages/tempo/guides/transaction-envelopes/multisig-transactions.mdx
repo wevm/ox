@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Multisig Transactions
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Multisig Transactions](https://viem.sh/tempo/guides/multisig-transactions)
+guide.
+:::
+
 ## Overview
 
 Ox models a native Tempo multisig with a weighted
@@ -47,10 +52,11 @@ const owners = ownerPrivateKeys.map((privateKey) => ({
   weight: 1,
 }))
 
+// [!code focus:6]
 const genesisConfig = MultisigConfig.from({
   owners,
   salt: Hex.random(32),
-  threshold: 2,
+  threshold: 2, // [!code hl]
 })
 const account = MultisigConfig.getAddress(genesisConfig)
 ```
@@ -97,6 +103,7 @@ const transaction = TxEnvelopeTempo.from({
   chainId: 4217,
   nonce: 0n,
 })
+// [!code focus:start]
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
   genesisConfig,
@@ -118,12 +125,13 @@ const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
 
 const bootstrapSignature = SignatureEnvelope.from({
   genesisConfig,
-  init: true,
+  init: true, // [!code hl]
   signatures: orderedApprovals,
 })
 const serialized = TxEnvelopeTempo.serialize(transaction, {
   signature: bootstrapSignature,
 })
+// [!code focus:end]
 ```
 
 The bootstrap config lives in the signature, not in `transaction.calls`. Submit this as the first
@@ -162,6 +170,7 @@ const transaction = TxEnvelopeTempo.from({
   chainId: 4217,
   nonce: 1n,
 })
+// [!code focus:start]
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
   genesisConfig,
@@ -183,11 +192,12 @@ const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
 
 const signature = SignatureEnvelope.from({
   genesisConfig,
-  signatures: orderedApprovals,
+  signatures: orderedApprovals, // [!code hl]
 })
 const serialized = TxEnvelopeTempo.serialize(transaction, {
   signature,
 })
+// [!code focus:end]
 ```
 
 Without `init`, the signature contains the derived account and ordered approvals only.

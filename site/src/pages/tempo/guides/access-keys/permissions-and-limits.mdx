@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Set Permissions & Limits
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Set Permissions & Limits](https://viem.sh/tempo/guides/access-keys/permissions)
+guide.
+:::
+
 ## Overview
 
 [`KeyAuthorization.from`](/tempo/reference/KeyAuthorization/from) accepts three complementary
@@ -36,13 +41,15 @@ const accessAddress = Address.fromPublicKey(
 const authorization = KeyAuthorization.from({
   address: accessAddress,
   chainId: 4217n,
-  expiry: Math.floor(Date.now() / 1_000) + Period.hours(1),
+  // [!code focus:start]
+  expiry: Math.floor(Date.now() / 1_000) + Period.hours(1), // [!code hl]
   limits: [
     {
-      limit: 1_000_000n,
+      limit: 1_000_000n, // [!code hl]
       token: '0x20c0000000000000000000000000000000000001',
     },
   ],
+  // [!code focus:end]
   type: 'secp256k1',
 })
 ```
@@ -68,7 +75,7 @@ const authorization = KeyAuthorization.from({
   limits: [
     {
       limit: 100_000_000n,
-      period: Period.months(1),
+      period: Period.months(1), // [!code focus]
       token: '0x20c0000000000000000000000000000000000001',
     },
   ],
@@ -95,13 +102,15 @@ const accessAddress = Address.fromPublicKey(
 const authorization = KeyAuthorization.from({
   address: accessAddress,
   chainId: 4217n,
+  // [!code focus:start]
   scopes: [
     {
       address: '0x20c0000000000000000000000000000000000001',
-      recipients: ['0xcafebabecafebabecafebabecafebabecafebabe'],
-      selector: 'transfer(address,uint256)',
+      recipients: ['0xcafebabecafebabecafebabecafebabecafebabe'], // [!code hl]
+      selector: 'transfer(address,uint256)', // [!code hl]
     },
   ],
+  // [!code focus:end]
   type: 'secp256k1',
 })
 ```

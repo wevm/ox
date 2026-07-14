@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Verify Signatures
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Verify Signatures](https://viem.sh/tempo/guides/access-keys/verify)
+guide.
+:::
+
 ## Overview
 
 Ox can verify both signatures in an access-key flow: the root signature attached to a
@@ -34,6 +39,7 @@ const expectedRoot = '0x1111111111111111111111111111111111111111'
 const expectedAccessKey = '0x2222222222222222222222222222222222222222'
 const authorization = KeyAuthorization.deserialize(serialized)
 
+// [!code focus:start]
 if (!authorization.signature) throw new Error('Unsigned authorization')
 
 const keyMatches = Address.isEqual(authorization.address, expectedAccessKey)
@@ -41,7 +47,8 @@ const signatureMatches = SignatureEnvelope.verify(authorization.signature, {
   address: expectedRoot,
   payload: KeyAuthorization.getSignPayload(authorization),
 })
-const valid = keyMatches && signatureMatches
+const valid = keyMatches && signatureMatches // [!code hl]
+// [!code focus:end]
 ```
 
 Verify every application-level expectation separately, including `chainId`, `expiry`, limits,
@@ -63,6 +70,7 @@ const expectedRoot = '0x1111111111111111111111111111111111111111'
 const expectedAccessKey = '0x2222222222222222222222222222222222222222'
 const transaction = TxEnvelopeTempo.deserialize(serialized)
 
+// [!code focus:start]
 if (
   transaction.signature?.type !== 'keychain' ||
   transaction.signature.version === 'v1'
@@ -74,13 +82,16 @@ const accountMatches = Address.isEqual(
   expectedRoot,
 )
 const payload = TxEnvelopeTempo.getSignPayload(transaction, {
-  from: transaction.signature.userAddress,
+  from: transaction.signature.userAddress, // [!code hl]
 })
+// [!code hl:start]
 const signatureMatches = SignatureEnvelope.verify(transaction.signature.inner, {
   address: expectedAccessKey,
   payload,
 })
+// [!code hl:end]
 const valid = accountMatches && signatureMatches
+// [!code focus:end]
 ```
 
 Verify the `inner` envelope directly. `SignatureEnvelope.verify` deliberately rejects the stateful
@@ -104,18 +115,20 @@ if (
 )
   throw new Error('Expected a keychain signature')
 
+// [!code focus:start]
 const payload = TxEnvelopeTempo.getSignPayload(transaction, {
   from: transaction.signature.userAddress,
 })
 const account = SignatureEnvelope.extractAddress({
   payload,
-  root: true,
+  root: true, // [!code hl]
   signature: transaction.signature,
 })
 const accessKey = SignatureEnvelope.extractAddress({
   payload,
   signature: transaction.signature,
 })
+// [!code focus:end]
 ```
 
 Treat extracted values as claims until you compare them with trusted expectations and onchain

@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Batch Calls
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Batch Calls](https://viem.sh/tempo/guides/batch-calls)
+guide.
+:::
+
 ## Overview
 
 Tempo transaction envelopes contain a `calls` array instead of a single `to`, `value`, and
@@ -29,6 +34,7 @@ creation, and may omit `data` or `value` when they are not needed.
 import { TxEnvelopeTempo } from 'ox/tempo'
 
 const envelope = TxEnvelopeTempo.from({
+  // [!code hl:start]
   calls: [
     {
       data: '0xcafebabe00000000000000000000000000000001',
@@ -39,6 +45,7 @@ const envelope = TxEnvelopeTempo.from({
       to: '0xfeedfacefeedfacefeedfacefeedfacefeedface',
     },
   ],
+  // [!code hl:end]
   chainId: 4217,
   gas: 200_000n,
   maxFeePerGas: 2_000_000_000n,
@@ -75,6 +82,7 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
 })
 
+// [!code focus:5]
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
@@ -97,9 +105,9 @@ const envelope = TxEnvelopeTempo.from({
   ],
   chainId: 4217,
 })
-const serialized = TxEnvelopeTempo.serialize(envelope)
+const serialized = TxEnvelopeTempo.serialize(envelope) // [!code focus]
 
-const { calls } = TxEnvelopeTempo.deserialize(serialized)
+const { calls } = TxEnvelopeTempo.deserialize(serialized) // [!code focus]
 ```
 
 ## Best Practices
@@ -136,8 +144,8 @@ batch, while a revert discards its state changes.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Batch Transactions"
-    description="Read the protocol guide for atomic call batches."
-    to="https://docs.tempo.xyz/protocol/transactions#batch-calls"
+    title="Viem: Batch Calls"
+    description="Build and submit atomic call batches with a Viem client."
+    to="https://viem.sh/tempo/guides/batch-calls"
   />
 </Cards>

@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Scheduled Transactions
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Scheduled Transactions](https://viem.sh/tempo/guides/scheduled-transactions)
+guide.
+:::
+
 ## Overview
 
 Tempo envelopes can include `validAfter` and `validBefore` Unix timestamps. These fields define
@@ -34,8 +39,8 @@ const envelope = TxEnvelopeTempo.from({
   chainId: 4217,
   nonce: 0n,
   nonceKey: 1n,
-  validAfter: now + 60 * 60,
-  validBefore: now + 2 * 60 * 60,
+  validAfter: now + 60 * 60, // [!code hl]
+  validBefore: now + 2 * 60 * 60, // [!code hl]
 })
 ```
 
@@ -52,7 +57,7 @@ const envelope = TxEnvelopeTempo.from({
   chainId: 4217,
   nonce: 0n,
   nonceKey: 1n,
-  validBefore: Math.floor(Date.now() / 1_000) + 60 * 60,
+  validBefore: Math.floor(Date.now() / 1_000) + 60 * 60, // [!code hl]
 })
 ```
 
@@ -78,11 +83,13 @@ const envelope = TxEnvelopeTempo.from({
   validBefore: now + 2 * 60 * 60,
 })
 
+// [!code focus:start]
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// [!code focus:end]
 ```
 
 ## Best Practices

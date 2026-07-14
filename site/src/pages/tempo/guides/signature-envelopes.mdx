@@ -34,13 +34,15 @@ const payload =
   '0x1111111111111111111111111111111111111111111111111111111111111111'
 const privateKey = Secp256k1.randomPrivateKey()
 const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+// [!code focus:start]
 const signature = Secp256k1.sign({ payload, privateKey })
-const envelope = SignatureEnvelope.from(signature)
+const envelope = SignatureEnvelope.from(signature) // [!code hl]
 
 const valid = SignatureEnvelope.verify(envelope, {
   address,
   payload,
 })
+// [!code focus:end]
 ```
 
 ### Wrap and Verify a P-256 Signature
@@ -57,8 +59,9 @@ const payload =
 const privateKey = P256.randomPrivateKey()
 const publicKey = P256.getPublicKey({ privateKey })
 const signature = P256.sign({ payload, privateKey })
+// [!code focus:start]
 const envelope = SignatureEnvelope.from({
-  prehash: false,
+  prehash: false, // [!code hl]
   publicKey,
   signature,
 })
@@ -67,6 +70,7 @@ const valid = SignatureEnvelope.verify(envelope, {
   payload,
   publicKey,
 })
+// [!code focus:end]
 ```
 
 ### Wrap and Verify a WebAuthn Signature
@@ -83,13 +87,14 @@ const payload =
 const credential = await WebAuthnP256.createCredential({
   name: 'Tempo',
 })
+// [!code focus:start]
 const { metadata, signature } = await WebAuthnP256.sign({
   challenge: payload,
   credentialId: credential.id,
 })
 const envelope = SignatureEnvelope.from({
-  metadata,
-  publicKey: credential.publicKey,
+  metadata, // [!code hl]
+  publicKey: credential.publicKey, // [!code hl]
   signature,
 })
 
@@ -97,6 +102,7 @@ const valid = SignatureEnvelope.verify(envelope, {
   payload,
   publicKey: credential.publicKey,
 })
+// [!code focus:end]
 ```
 
 ### Serialize and Deserialize an Envelope
@@ -117,8 +123,8 @@ const signature = Secp256k1.sign({
 })
 const envelope = SignatureEnvelope.from(signature)
 
-const serialized = SignatureEnvelope.serialize(envelope)
-const decoded = SignatureEnvelope.deserialize(serialized)
+const serialized = SignatureEnvelope.serialize(envelope) // [!code hl]
+const decoded = SignatureEnvelope.deserialize(serialized) // [!code hl]
 ```
 
 ### Extract the Signer Address
@@ -139,10 +145,12 @@ const signature = Secp256k1.sign({
 })
 const envelope = SignatureEnvelope.from(signature)
 
+// [!code focus:start]
 const address = SignatureEnvelope.extractAddress({
   payload,
   signature: envelope,
 })
+// [!code focus:end]
 ```
 
 ## Best Practices

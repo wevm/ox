@@ -6,6 +6,11 @@ import { Card, Cards } from 'vocs'
 
 # Create and Parse Virtual Addresses
 
+:::info
+Looking for a higher-level abstraction? Check out Viem's [Resolve & Accept Payments](https://viem.sh/tempo/guides/virtual-addresses/resolve)
+guide.
+:::
+
 ## Overview
 
 A TIP-1022 virtual address has the layout
@@ -27,10 +32,12 @@ bigint inputs are left-padded to the required width.
 ```ts twoslash
 import { VirtualAddress } from 'ox/tempo'
 
+// [!code focus:start]
 const paymentAddress = VirtualAddress.from({
   masterId: '0x58e21090',
-  userTag: 42n,
+  userTag: 42n, // [!code hl]
 })
+// [!code focus:end]
 ```
 
 Store the relationship between `userTag` and the application record it represents. The tag is part
@@ -47,10 +54,12 @@ import { VirtualAddress } from 'ox/tempo'
 
 const address = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
 
+// [!code focus:start]
 if (!VirtualAddress.validate(address))
   throw new Error('Invalid virtual address')
 
-const { masterId, userTag } = VirtualAddress.parse(address)
+const { masterId, userTag } = VirtualAddress.parse(address) // [!code hl]
+// [!code focus:end]
 ```
 
 Parsing is local. Resolve `masterId` through the Tempo registry when you also need to verify the
@@ -64,9 +73,11 @@ layout and returns `false` for malformed or ordinary addresses.
 ```ts twoslash
 import { VirtualAddress } from 'ox/tempo'
 
+// [!code focus:start]
 const isVirtual = VirtualAddress.isVirtual(
   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
 )
+// [!code focus:end]
 ```
 
 ## Best Practices
@@ -103,8 +114,8 @@ on the destination for settlement or policy decisions.
   />
   <Card
     icon="lucide:book-open"
-    title="Tempo Docs: Virtual Addresses"
-    description="Read the address format and forwarding behavior."
-    to="https://docs.tempo.xyz/protocol/tip20/virtual-addresses"
+    title="Viem: Resolve & Accept Payments"
+    description="Derive and resolve virtual payment addresses with a Viem client."
+    to="https://viem.sh/tempo/guides/virtual-addresses/resolve"
   />
 </Cards>
