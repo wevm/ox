@@ -629,10 +629,6 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/access-keys',
         },
         {
-          text: 'Admin Access Keys',
-          link: '/tempo/guides/access-keys/admin',
-        },
-        {
           text: 'Authorize Access Keys',
           link: '/tempo/guides/access-keys/authorize',
         },
@@ -641,12 +637,16 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/access-keys/permissions-and-limits',
         },
         {
-          text: 'Verify Signatures',
-          link: '/tempo/guides/access-keys/verify',
+          text: 'Admin Access Keys',
+          link: '/tempo/guides/access-keys/admin',
         },
         {
           text: 'Witnesses',
           link: '/tempo/guides/access-keys/witnesses',
+        },
+        {
+          text: 'Verify Signatures',
+          link: '/tempo/guides/access-keys/verify',
         },
       ],
     },
@@ -685,21 +685,21 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/transaction-envelopes/concurrent-transactions',
         },
         {
-          text: 'Multisig Transactions',
-          link: '/tempo/guides/transaction-envelopes/multisig-transactions',
-          badge: { text: 'EXP', variant: 'warning' },
+          text: 'Scheduled Transactions',
+          link: '/tempo/guides/transaction-envelopes/scheduled-transactions',
         },
         {
           text: 'Pay Fees in a Stablecoin',
           link: '/tempo/guides/transaction-envelopes/pay-fees-in-a-stablecoin',
         },
         {
-          text: 'Scheduled Transactions',
-          link: '/tempo/guides/transaction-envelopes/scheduled-transactions',
-        },
-        {
           text: 'Sponsor User Fees',
           link: '/tempo/guides/transaction-envelopes/sponsor-user-fees',
+        },
+        {
+          text: 'Multisig Transactions',
+          link: '/tempo/guides/transaction-envelopes/multisig-transactions',
+          badge: { text: 'EXP', variant: 'warning' },
         },
       ],
     },
@@ -712,12 +712,12 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/virtual-addresses',
         },
         {
-          text: 'Create & Parse Addresses',
-          link: '/tempo/guides/virtual-addresses/create-and-parse-addresses',
-        },
-        {
           text: 'Register a Master Address',
           link: '/tempo/guides/virtual-addresses/register-a-master-address',
+        },
+        {
+          text: 'Create & Parse Addresses',
+          link: '/tempo/guides/virtual-addresses/create-and-parse-addresses',
         },
       ],
     },
