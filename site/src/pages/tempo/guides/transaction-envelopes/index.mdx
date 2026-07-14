@@ -1,0 +1,179 @@
+---
+description: Construct, sign, serialize, and submit Tempo transaction envelopes.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Transaction Envelopes
+
+## Overview
+
+Tempo defines an EIP-2718 transaction envelope with type `0x76`. A
+[`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) value contains one or more calls and can
+also carry a fee token, fee sponsorship, an access-key authorization, an independent nonce key,
+or a validity window.
+
+Ox operates at the protocol boundary. It constructs, validates, signs, serializes, and decodes
+the envelope, but it does not read missing transaction fields from a node. Fill fields such as
+`nonce`, `nonceKey`, `gas`, and fees before signing, or use a higher-level client to fill them.
+
+[See the Tempo Transactions specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+
+## Recipes
+
+### Construct an Envelope
+
+Use [`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from) with a nonempty `calls`
+array. Each call can contain a target, calldata, and value.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [
+    {
+      data: '0xdeadbeef',
+      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+    },
+  ],
+  chainId: 4217,
+  gas: 100_000n,
+  maxFeePerGas: 2_000_000_000n,
+  maxPriorityFeePerGas: 1_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+```
+
+### Sign and Serialize an Envelope
+
+Create the sender digest with
+[`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload), sign it,
+and attach the result before calling
+[`TxEnvelopeTempo.serialize`](/tempo/reference/TxEnvelopeTempo/serialize).
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const envelope = TxEnvelopeTempo.from({
+  calls: [
+    {
+      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+    },
+  ],
+  chainId: 4217,
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey,
+})
+const signed = TxEnvelopeTempo.from(envelope, { signature })
+const serialized = TxEnvelopeTempo.serialize(signed)
+const hash = TxEnvelopeTempo.hash(signed)
+```
+
+### Decode a Serialized Envelope
+
+Use [`TxEnvelopeTempo.deserialize`](/tempo/reference/TxEnvelopeTempo/deserialize) to recover the
+typed fields. When possible, the sender address is recovered from the attached signature.
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  nonce: 0n,
+})
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey,
+})
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+
+const decoded = TxEnvelopeTempo.deserialize(serialized)
+```
+
+### Submit a Signed Envelope
+
+Send the serialized bytes through `eth_sendRawTransaction`. This example uses
+[`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp); the RPC endpoint must support Tempo.
+
+```ts twoslash
+import { RpcTransport, Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey,
+})
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+
+const transport = RpcTransport.fromHttp('https://rpc.example.com')
+const hash = await transport.request({
+  method: 'eth_sendRawTransaction',
+  params: [serialized],
+})
+```
+
+## Best Practices
+
+### Fill Every Committed Field Before Signing
+
+Changing a call, nonce, validity bound, or other sender-committed field after signing invalidates
+the signature. Resolve chain-dependent fields before computing the sign payload. Sponsored
+envelopes use different sender and fee payer commitments, as described in
+[Sponsor User Fees](/tempo/guides/transaction-envelopes/sponsor-user-fees).
+
+### Keep Calls Nonempty
+
+Every Tempo envelope must contain at least one call. Use
+[`TxEnvelopeTempo.validate`](/tempo/reference/TxEnvelopeTempo/validate) for a boolean check or
+[`TxEnvelopeTempo.assert`](/tempo/reference/TxEnvelopeTempo/assert) when invalid input should
+throw.
+
+### Separate Protocol Primitives from Orchestration
+
+Use Ox when you need direct control over bytes, digests, and signatures. Use a client when you
+need nonce lookup, gas estimation, receipt polling, retries, or wallet interaction.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="Batch Calls"
+    description="Encode several calls into one atomic Tempo envelope."
+    to="/tempo/guides/transaction-envelopes/batch-calls"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Signature Envelopes"
+    description="Encode and verify the signature types accepted by Tempo."
+    to="/tempo/guides/signature-envelopes"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="TxEnvelopeTempo"
+    description="Browse the complete transaction envelope API reference."
+    to="/tempo/reference/TxEnvelopeTempo"
+  />
+</Cards>

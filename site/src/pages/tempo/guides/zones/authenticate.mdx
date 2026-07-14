@@ -1,0 +1,176 @@
+---
+description: Sign and send a private Zone RPC authentication token.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Authenticate to a Zone
+
+## Overview
+
+A Zone RPC authentication token contains a zone ID, zone chain ID, issue time, expiry time, and
+signature. [`ZoneRpcAuthentication.from`](/tempo/reference/ZoneRpcAuthentication/from) constructs
+the fields, and [`ZoneRpcAuthentication.serialize`](/tempo/reference/ZoneRpcAuthentication/serialize)
+encodes the signed token for the `X-Authorization-Token` request header.
+
+The token proves control of a signing key. The zone operator decides whether that account may access
+the endpoint and which expiry windows it accepts.
+
+[See the Zone RPC specification](https://docs.tempo.xyz/protocol/zones/rpc#authorization-tokens)
+
+## Recipes
+
+### Create and Sign a Token
+
+Derive the chain ID with [`ZoneId.toChainId`](/tempo/reference/ZoneId/toChainId), then use current
+Unix timestamps for the token window. Sign
+[`ZoneRpcAuthentication.getSignPayload`](/tempo/reference/ZoneRpcAuthentication/getSignPayload)
+before serializing the token.
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { ZoneId, ZoneRpcAuthentication } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const zoneId = 5
+const issuedAt = Math.floor(Date.now() / 1_000)
+
+const authentication = ZoneRpcAuthentication.from({
+  chainId: ZoneId.toChainId(zoneId),
+  expiresAt: issuedAt + 10 * 60,
+  issuedAt,
+  zoneId,
+})
+
+const signature = Secp256k1.sign({
+  payload: ZoneRpcAuthentication.getSignPayload(authentication),
+  privateKey,
+})
+
+const serialized = ZoneRpcAuthentication.serialize(authentication, {
+  signature,
+})
+```
+
+The example uses a ten-minute lifetime. Follow the zone operator's accepted lifetime and clock-skew
+policy when choosing `issuedAt` and `expiresAt`.
+
+### Attach the Token to an RPC Transport
+
+Pass the serialized token through [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) with
+[`ZoneRpcAuthentication.headerName`](/tempo/reference/ZoneRpcAuthentication). The computed property
+uses the exact `X-Authorization-Token` header name expected by Zone RPC endpoints.
+
+```ts twoslash
+import { RpcTransport, Secp256k1 } from 'ox'
+import { ZoneId, ZoneRpcAuthentication } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const zoneId = 5
+const issuedAt = Math.floor(Date.now() / 1_000)
+
+const authentication = ZoneRpcAuthentication.from({
+  chainId: ZoneId.toChainId(zoneId),
+  expiresAt: issuedAt + 10 * 60,
+  issuedAt,
+  zoneId,
+})
+const serialized = ZoneRpcAuthentication.serialize(authentication, {
+  signature: Secp256k1.sign({
+    payload: ZoneRpcAuthentication.getSignPayload(authentication),
+    privateKey,
+  }),
+})
+
+const transport = RpcTransport.fromHttp('https://zone.example/rpc', {
+  fetchOptions: {
+    headers: {
+      [ZoneRpcAuthentication.headerName]: serialized,
+    },
+  },
+})
+
+const blockNumber = await transport.request({
+  method: 'eth_blockNumber',
+})
+```
+
+Add any separate operator credentials to `headers` alongside the Zone token. Ox does not infer an
+endpoint or its additional authentication requirements.
+
+### Inspect a Serialized Token
+
+[`ZoneRpcAuthentication.deserialize`](/tempo/reference/ZoneRpcAuthentication/deserialize) recovers
+the signed fields. Use it to inspect cached credentials before deciding whether to refresh them.
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { ZoneId, ZoneRpcAuthentication } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const zoneId = 5
+const issuedAt = Math.floor(Date.now() / 1_000)
+const authentication = ZoneRpcAuthentication.from({
+  chainId: ZoneId.toChainId(zoneId),
+  expiresAt: issuedAt + 10 * 60,
+  issuedAt,
+  zoneId,
+})
+const serialized = ZoneRpcAuthentication.serialize(authentication, {
+  signature: Secp256k1.sign({
+    payload: ZoneRpcAuthentication.getSignPayload(authentication),
+    privateKey,
+  }),
+})
+
+const decoded = ZoneRpcAuthentication.deserialize(serialized)
+const isExpired = decoded.expiresAt <= Math.floor(Date.now() / 1_000)
+```
+
+Deserialization verifies the encoding shape and version. It does not establish that the signature is
+authorized by a particular zone.
+
+## Best Practices
+
+### Keep Tokens Short-Lived
+
+Use the shortest lifetime that fits the session and refresh before expiry. Allow only the clock skew
+documented by the zone operator.
+
+### Keep Zone IDs Consistent
+
+Derive `chainId` from the same `zoneId` instead of maintaining both independently. This prevents a
+credential from being signed for mismatched replay-protection fields.
+
+### Protect Serialized Tokens
+
+Treat a serialized token as a credential. Avoid logging it, leaking it to third parties, or storing
+it beyond its useful lifetime.
+
+### Separate Authentication from Authorization
+
+Ox proves key control and encodes the request credential. The zone server remains responsible for
+account admission, authorization policy, and expiry enforcement.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Access Keys"
+    description="Create account-bound keys for delegated signing flows."
+    to="/tempo/guides/access-keys"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="ZoneRpcAuthentication.serialize"
+    description="Review supported signature envelope inputs."
+    to="/tempo/reference/ZoneRpcAuthentication/serialize"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Tempo Docs: Zone RPC"
+    description="Read the authorization-token wire specification."
+    to="https://docs.tempo.xyz/protocol/zones/rpc#authorization-tokens"
+  />
+</Cards>

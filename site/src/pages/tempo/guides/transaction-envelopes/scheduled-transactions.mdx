@@ -1,0 +1,126 @@
+---
+description: Define a Tempo transaction envelope's valid inclusion window.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Scheduled Transactions
+
+## Overview
+
+Tempo envelopes can include `validAfter` and `validBefore` Unix timestamps. These fields define
+the time window in which a transaction is eligible for block inclusion, which is useful for
+delayed payments and expiring authorizations.
+
+The validity fields do not submit or queue a transaction. Ox constructs and signs the envelope;
+an application, wallet, or relayer still decides when to broadcast it.
+
+[See the Tempo Transactions specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+
+## Recipes
+
+### Define an Inclusion Window
+
+Set `validAfter` and `validBefore` when calling
+[`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from). Both values use seconds since
+the Unix epoch.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const now = Math.floor(Date.now() / 1_000)
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  nonce: 0n,
+  nonceKey: 1n,
+  validAfter: now + 60 * 60,
+  validBefore: now + 2 * 60 * 60,
+})
+```
+
+### Create an Expiring Envelope
+
+Provide only `validBefore` when the transaction is valid immediately but must expire at a
+deadline.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  nonce: 0n,
+  nonceKey: 1n,
+  validBefore: Math.floor(Date.now() / 1_000) + 60 * 60,
+})
+```
+
+### Sign the Window
+
+Validity bounds are part of the sender sign payload. Set them before calling
+[`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload).
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const now = Math.floor(Date.now() / 1_000)
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+  validAfter: now + 60 * 60,
+  validBefore: now + 2 * 60 * 60,
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey,
+})
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+```
+
+## Best Practices
+
+### Use Seconds, Not Milliseconds
+
+JavaScript timestamps from `Date.now()` are milliseconds. Divide by `1_000` and floor the result
+before assigning either validity field.
+
+### Keep the Window Ordered
+
+When both fields are present, `validBefore` must be greater than `validAfter`.
+[`TxEnvelopeTempo.assert`](/tempo/reference/TxEnvelopeTempo/assert) checks this relationship.
+
+### Allow for Submission Delay
+
+Leave enough time for signing, relay processing, and block inclusion. A narrow window can expire
+while the transaction is still in transit.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and submit Tempo envelopes."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:split"
+    title="Concurrent Transactions"
+    description="Use independent nonce keys for parallel submission."
+    to="/tempo/guides/transaction-envelopes/concurrent-transactions"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="TxEnvelopeTempo.from"
+    description="Review every supported transaction envelope field."
+    to="/tempo/reference/TxEnvelopeTempo/from"
+  />
+</Cards>

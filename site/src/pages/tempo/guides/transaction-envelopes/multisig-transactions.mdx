@@ -1,0 +1,245 @@
+---
+description: Derive and sign experimental native multisig transaction envelopes.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Multisig Transactions
+
+## Overview
+
+Ox models a native Tempo multisig with a weighted
+[`MultisigConfig`](/tempo/reference/MultisigConfig) and a top-level
+[`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) of type `multisig`. The initial config
+derives a stable account address. Owners approve a multisig-specific digest, and their combined
+weight must meet the configured threshold.
+
+The first transaction bootstraps the account by carrying the initial config in the signature's
+`init` field. Every later transaction omits `init` and relies on the config stored by the network.
+
+:::warning
+Native multisig support is experimental. These examples describe Ox's current API. TIP-1061 is a
+draft and its protocol shape may change, so confirm that your Ox and Tempo node versions agree
+before producing signatures.
+:::
+
+[See the TIP-1061 draft](https://tips.sh/1061)
+
+## Recipes
+
+### Derive a Weighted Multisig Account
+
+Normalize the initial config with
+[`MultisigConfig.from`](/tempo/reference/MultisigConfig/from), then derive its permanent account
+with [`MultisigConfig.getAddress`](/tempo/reference/MultisigConfig/getAddress).
+
+```ts twoslash
+import { Address, Hex, Secp256k1 } from 'ox'
+import { MultisigConfig } from 'ox/tempo'
+
+const ownerPrivateKeys = [
+  Secp256k1.randomPrivateKey(),
+  Secp256k1.randomPrivateKey(),
+  Secp256k1.randomPrivateKey(),
+]
+const owners = ownerPrivateKeys.map((privateKey) => ({
+  owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
+  weight: 1,
+}))
+
+const genesisConfig = MultisigConfig.from({
+  owners,
+  salt: Hex.random(32),
+  threshold: 2,
+})
+const account = MultisigConfig.getAddress(genesisConfig)
+```
+
+`MultisigConfig.from` sorts owners by ascending address, applies the zero salt when none is
+provided, and rejects invalid thresholds, weights, salts, or owner lists.
+
+### Sign the Bootstrap Transaction
+
+Build a nonempty transaction, derive its owner-approval digest with
+[`MultisigConfig.getSignPayload`](/tempo/reference/MultisigConfig/getSignPayload), and collect
+enough owner signatures to meet the threshold. Use
+[`SignatureEnvelope.sortMultisigApprovals`](/tempo/reference/SignatureEnvelope/sortMultisigApprovals)
+to put approvals in the order required by Tempo.
+
+Set `init: true` when calling
+[`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Ox derives `account` from
+`genesisConfig` and places the normalized config in `init`.
+
+```ts twoslash
+import { Address, Hex, Secp256k1 } from 'ox'
+import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+
+const ownerPrivateKeys = [
+  Secp256k1.randomPrivateKey(),
+  Secp256k1.randomPrivateKey(),
+  Secp256k1.randomPrivateKey(),
+]
+const genesisConfig = MultisigConfig.from({
+  owners: ownerPrivateKeys.map((privateKey) => ({
+    owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
+    weight: 1,
+  })),
+  salt: Hex.random(32),
+  threshold: 2,
+})
+
+const transaction = TxEnvelopeTempo.from({
+  calls: [
+    {
+      to: '0x0000000000000000000000000000000000000000',
+    },
+  ],
+  chainId: 4217,
+  nonce: 0n,
+})
+const payload = TxEnvelopeTempo.getSignPayload(transaction)
+const approvalPayload = MultisigConfig.getSignPayload({
+  genesisConfig,
+  payload,
+})
+const approvals = ownerPrivateKeys.slice(0, 2).map((privateKey) =>
+  SignatureEnvelope.from(
+    Secp256k1.sign({
+      payload: approvalPayload,
+      privateKey,
+    }),
+  ),
+)
+const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
+  genesisConfig,
+  payload,
+  signatures: approvals,
+})
+
+const bootstrapSignature = SignatureEnvelope.from({
+  genesisConfig,
+  init: true,
+  signatures: orderedApprovals,
+})
+const serialized = TxEnvelopeTempo.serialize(transaction, {
+  signature: bootstrapSignature,
+})
+```
+
+The bootstrap config lives in the signature, not in `transaction.calls`. Submit this as the first
+accepted transaction from the derived account.
+
+### Sign a Later Transaction
+
+Reuse the original `genesisConfig` to derive the permanent account and approval digest, even if
+the onchain owner config has since been updated. Omit `init` from every post-bootstrap signature.
+
+```ts twoslash
+import { Address, Hex, Secp256k1 } from 'ox'
+import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+
+const ownerPrivateKeys = [
+  Secp256k1.randomPrivateKey(),
+  Secp256k1.randomPrivateKey(),
+  Secp256k1.randomPrivateKey(),
+]
+const genesisConfig = MultisigConfig.from({
+  owners: ownerPrivateKeys.map((privateKey) => ({
+    owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
+    weight: 1,
+  })),
+  salt: Hex.random(32),
+  threshold: 2,
+})
+
+const transaction = TxEnvelopeTempo.from({
+  calls: [
+    {
+      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      value: 1n,
+    },
+  ],
+  chainId: 4217,
+  nonce: 1n,
+})
+const payload = TxEnvelopeTempo.getSignPayload(transaction)
+const approvalPayload = MultisigConfig.getSignPayload({
+  genesisConfig,
+  payload,
+})
+const approvals = ownerPrivateKeys.slice(1, 3).map((privateKey) =>
+  SignatureEnvelope.from(
+    Secp256k1.sign({
+      payload: approvalPayload,
+      privateKey,
+    }),
+  ),
+)
+const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
+  genesisConfig,
+  payload,
+  signatures: approvals,
+})
+
+const signature = SignatureEnvelope.from({
+  genesisConfig,
+  signatures: orderedApprovals,
+})
+const serialized = TxEnvelopeTempo.serialize(transaction, {
+  signature,
+})
+```
+
+Without `init`, the signature contains the derived account and ordered approvals only.
+
+## Best Practices
+
+### Persist the Genesis Config
+
+Store the normalized initial config with the account. The account address and owner-approval
+digest continue to use that genesis identity after later config updates.
+
+### Sort Both Config Owners and Approvals
+
+Construct configs with `MultisigConfig.from` and order every approval set with
+`sortMultisigApprovals`. These are separate ordering requirements.
+
+### Check Approval Weight
+
+Ox validates the config, but the network decides whether the supplied approvals meet the active
+threshold. Count weights from the current onchain config before collecting and broadcasting a
+signature.
+
+### Keep Access Keys Separate
+
+Do not include `keyAuthorization` in a native multisig transaction. TIP-1061 also excludes
+AccountKeychain mutation for native multisig accounts, so authorize each transaction with owner
+approvals.
+
+### Include `init` Exactly Once
+
+Use `init: true` only on the bootstrap transaction. A later transaction with `init`, or a first
+transaction without it, cannot follow the intended initialization flow.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:mail-open"
+    title="Transaction Envelopes"
+    description="Construct and sign Tempo transaction envelopes."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Signature Envelopes"
+    description="Work with Tempo's primitive and stateful signature formats."
+    to="/tempo/guides/signature-envelopes"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="MultisigConfig"
+    description="Review the complete experimental multisig API."
+    to="/tempo/reference/MultisigConfig"
+  />
+</Cards>

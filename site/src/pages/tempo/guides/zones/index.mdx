@@ -1,0 +1,46 @@
+---
+description: Build authentication credentials for private Tempo Zone RPC endpoints.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Private Zones
+
+## Overview
+
+Private Tempo Zones expose RPC endpoints that authenticate account-scoped reads with a signed,
+short-lived credential. Ox provides the low-level primitives for deriving zone chain IDs and
+encoding those credentials.
+
+Use [`ZoneId`](/tempo/reference/ZoneId) to convert between a numeric zone ID and its chain ID. Use
+[`ZoneRpcAuthentication`](/tempo/reference/ZoneRpcAuthentication) to construct, sign, serialize, and
+inspect an authorization token.
+
+Ox does not discover zone endpoints, grant an account access, or define a zone operator's
+authorization policy. Deposits, withdrawals, and other state changes also require a Tempo client or
+the zone's RPC and contract interfaces.
+
+[See the Tempo Zones specification](https://docs.tempo.xyz/protocol/zones)
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Authenticate to a Zone"
+    description="Sign a short-lived credential and attach it to an RPC transport."
+    to="/tempo/guides/zones/authenticate"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="ZoneRpcAuthentication"
+    description="Review the credential encoding and signing APIs."
+    to="/tempo/reference/ZoneRpcAuthentication"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Tempo Docs: Zones"
+    description="Read the private Zone protocol and RPC model."
+    to="https://docs.tempo.xyz/protocol/zones"
+  />
+</Cards>

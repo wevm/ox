@@ -1,0 +1,154 @@
+---
+description: Create, sign, and use an access-key authorization.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Authorize Access Keys
+
+## Overview
+
+An access key becomes usable after the root key signs a
+[`KeyAuthorization.from`](/tempo/reference/KeyAuthorization/from) value and Tempo provisions it
+for the root account. The first transaction may carry that signed authorization while also being
+signed by the new access key. This combines authorization and first use in one envelope.
+
+## Recipes
+
+### Create and Sign an Authorization
+
+Derive the access key address, describe the authorization, then have the root key sign
+[`KeyAuthorization.getSignPayload`](/tempo/reference/KeyAuthorization/getSignPayload).
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+
+const rootPrivateKey = Secp256k1.randomPrivateKey()
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  type: 'secp256k1',
+})
+
+const rootSignature = Secp256k1.sign({
+  payload: KeyAuthorization.getSignPayload(authorization),
+  privateKey: rootPrivateKey,
+})
+
+const signedAuthorization = KeyAuthorization.from(authorization, {
+  signature: SignatureEnvelope.from(rootSignature),
+})
+```
+
+The authorization's `type` describes the access key, while its attached signature belongs to the
+root key. Root signatures may use any signature type supported by `SignatureEnvelope`.
+
+### Authorize and Use the Key in One Transaction
+
+Attach the signed authorization to a
+[`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from) value. The access key signs
+[`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload) with the root
+account passed as `from`, then wraps its signature in a keychain envelope.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { KeyAuthorization, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+
+const rootPrivateKey = Secp256k1.randomPrivateKey()
+const rootAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
+)
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  type: 'secp256k1',
+})
+const signedAuthorization = KeyAuthorization.from(authorization, {
+  signature: SignatureEnvelope.from(
+    Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(authorization),
+      privateKey: rootPrivateKey,
+    }),
+  ),
+})
+
+const transaction = TxEnvelopeTempo.from({
+  calls: [
+    {
+      to: '0x0000000000000000000000000000000000000000',
+    },
+  ],
+  chainId: 4217,
+  keyAuthorization: signedAuthorization,
+  nonce: 0n,
+})
+
+const accessSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(transaction, {
+    from: rootAddress,
+  }),
+  privateKey: accessPrivateKey,
+})
+
+const serialized = TxEnvelopeTempo.serialize(transaction, {
+  signature: SignatureEnvelope.from({
+    inner: SignatureEnvelope.from(accessSignature),
+    type: 'keychain',
+    userAddress: rootAddress,
+  }),
+})
+```
+
+Submit `serialized` with a Tempo RPC client. Once the key is active, construct later transactions
+without `keyAuthorization` and sign them with the same account-bound keychain flow.
+
+## Best Practices
+
+### Bind Authorizations to a Chain
+
+Use the target chain ID unless cross-chain authorization is intentional. A `chainId` of `0n`
+allows the authorization on any chain that accepts it.
+
+### Keep the Account Binding Consistent
+
+Pass the same root account to `getSignPayload({ from })` and to the keychain envelope's
+`userAddress`. The V2 keychain payload binds the access-key signature to that account.
+
+### Attach an Authorization Once
+
+Include `keyAuthorization` only when provisioning the key. Confirm that the transaction succeeded
+before sending later transactions that rely on the stored key.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:sliders-horizontal"
+    title="Set Permissions & Limits"
+    description="Restrict an authorization before the root key signs it."
+    to="/tempo/guides/access-keys/permissions-and-limits"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Verify Signatures"
+    description="Verify the root and access-key signatures locally."
+    to="/tempo/guides/access-keys/verify"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="KeyAuthorization.from"
+    description="The full API reference for constructing key authorizations."
+    to="/tempo/reference/KeyAuthorization/from"
+  />
+</Cards>

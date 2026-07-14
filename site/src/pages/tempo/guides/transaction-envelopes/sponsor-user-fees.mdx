@@ -1,0 +1,165 @@
+---
+description: Create sender and fee payer signatures for sponsored Tempo transactions.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Sponsor User Fees
+
+## Overview
+
+Tempo fee sponsorship separates transaction authorization from fee payment. The sender signs the
+transaction's execution fields, while a fee payer signs a distinct payload that commits to the
+sender address and selected fee token.
+
+Ox exposes both digests and assembles the dual-signed envelope. Coordinating the two signers,
+applying sponsorship policy, and funding the fee payer remain application responsibilities.
+
+[See the Tempo fee sponsorship guide](https://docs.tempo.xyz/guide/payments/sponsor-user-fees)
+
+## Recipes
+
+### Create a Sponsor-Ready Envelope
+
+Set `feePayerSignature` to `null` when calling
+[`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from). This marker tells the sender
+signing encoder that a fee payer will complete the envelope.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feePayerSignature: null,
+  feeToken: '0x20c0000000000000000000000000000000000001',
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+```
+
+### Produce Both Signatures
+
+The sender signs [`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload).
+The sponsor signs
+[`TxEnvelopeTempo.getFeePayerSignPayload`](/tempo/reference/TxEnvelopeTempo/getFeePayerSignPayload)
+with the sender address.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const senderPrivateKey = Secp256k1.randomPrivateKey()
+const sender = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: senderPrivateKey }),
+)
+const feePayerPrivateKey = Secp256k1.randomPrivateKey()
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feePayerSignature: null,
+  feeToken: '0x20c0000000000000000000000000000000000001',
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+
+const senderSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey: senderPrivateKey,
+})
+const feePayerSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getFeePayerSignPayload(envelope, { sender }),
+  privateKey: feePayerPrivateKey,
+})
+```
+
+### Assemble and Serialize the Sponsored Envelope
+
+Attach both signatures with [`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from), then
+serialize the completed envelope for `eth_sendRawTransaction`.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const senderPrivateKey = Secp256k1.randomPrivateKey()
+const sender = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: senderPrivateKey }),
+)
+const feePayerPrivateKey = Secp256k1.randomPrivateKey()
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feePayerSignature: null,
+  feeToken: '0x20c0000000000000000000000000000000000001',
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+const senderSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey: senderPrivateKey,
+})
+const feePayerSignature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getFeePayerSignPayload(envelope, { sender }),
+  privateKey: feePayerPrivateKey,
+})
+
+const sponsored = TxEnvelopeTempo.from(envelope, {
+  feePayerSignature,
+  signature: senderSignature,
+})
+const serialized = TxEnvelopeTempo.serialize(sponsored)
+```
+
+## Best Practices
+
+### Authorize the Exact Sender
+
+The fee payer payload includes the sender address. Recover or derive it from the sender's
+signature flow, then verify it against the sponsorship request before signing.
+
+### Let the Fee Payer Control Its Token
+
+When the sponsorship marker is present, the sender sign payload does not commit to `feeToken`.
+The fee payer payload does commit to it, which lets the sponsor select the asset it will spend.
+
+### Keep the Fee Payer Key Isolated
+
+Treat the fee payer as a policy-controlled signing service. Check allowed senders, calls, fee
+caps, rate limits, and balances before releasing a signature.
+
+### Coordinate Either Signing Order
+
+Either party may sign first once the sender address and committed fields are known. The example
+uses a sender-first flow, but it is a coordination choice rather than a protocol requirement. Do
+not mutate fields covered by a signature after producing it.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:coins"
+    title="Pay Fees in a Stablecoin"
+    description="Select a TIP-20 token without fee sponsorship."
+    to="/tempo/guides/transaction-envelopes/pay-fees-in-a-stablecoin"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="getFeePayerSignPayload"
+    description="Review the fee payer digest API reference."
+    to="/tempo/reference/TxEnvelopeTempo/getFeePayerSignPayload"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Tempo Docs: Sponsor User Fees"
+    description="Read the complete fee sponsorship integration guide."
+    to="https://docs.tempo.xyz/guide/payments/sponsor-user-fees"
+  />
+</Cards>

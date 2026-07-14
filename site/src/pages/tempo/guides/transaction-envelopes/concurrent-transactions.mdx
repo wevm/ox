@@ -1,0 +1,134 @@
+---
+description: Prepare independent Tempo nonce streams for parallel transaction submission.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Concurrent Transactions
+
+## Overview
+
+Tempo uses a two-dimensional nonce made from `nonceKey` and `nonce`. Transactions on different
+nonce keys have independent ordering, which lets one account prepare and submit work without a
+single sequential nonce becoming a bottleneck.
+
+[`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) preserves both fields in the signed
+envelope. Ox does not read a stream's current nonce from the network, so callers must supply the
+correct value or use a client that manages nonce state.
+
+[See the Tempo parallel transactions guide](https://docs.tempo.xyz/guide/payments/send-parallel-transactions)
+
+## Recipes
+
+### Create Independent Nonce Streams
+
+Assign each independent stream a distinct nonzero `nonceKey`. The `nonce` starts at the current
+value for that sender and key.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const first = TxEnvelopeTempo.from({
+  calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
+  chainId: 4217,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+
+const second = TxEnvelopeTempo.from({
+  calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
+  chainId: 4217,
+  nonce: 0n,
+  nonceKey: 2n,
+})
+```
+
+### Sign and Submit in Parallel
+
+Sign each envelope independently, then submit the serialized transactions together. The RPC
+endpoint must support Tempo transaction type `0x76`.
+
+```ts twoslash
+import { RpcTransport, Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const envelopes = [
+  TxEnvelopeTempo.from({
+    calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
+    chainId: 4217,
+    gas: 21_000n,
+    maxFeePerGas: 2_000_000_000n,
+    nonce: 0n,
+    nonceKey: 1n,
+  }),
+  TxEnvelopeTempo.from({
+    calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
+    chainId: 4217,
+    gas: 21_000n,
+    maxFeePerGas: 2_000_000_000n,
+    nonce: 0n,
+    nonceKey: 2n,
+  }),
+]
+
+const serialized = envelopes.map((envelope) => {
+  const signature = Secp256k1.sign({
+    payload: TxEnvelopeTempo.getSignPayload(envelope),
+    privateKey,
+  })
+  return TxEnvelopeTempo.serialize(envelope, { signature })
+})
+
+const transport = RpcTransport.fromHttp('https://rpc.example.com')
+const hashes = await Promise.all(
+  serialized.map((transaction) =>
+    transport.request({
+      method: 'eth_sendRawTransaction',
+      params: [transaction],
+    }),
+  ),
+)
+```
+
+## Best Practices
+
+### Reuse a Small Sequential Key Set
+
+Allocate application streams from a small set such as `1n`, `2n`, and `3n`, then reuse each key
+for its ordered stream. Random keys can enter protocol-reserved ranges, and continually creating
+new keys adds nonce state and cost.
+
+### Never Reuse a Nonce Pair
+
+The sender, `nonceKey`, and `nonce` identify a position in one stream. Read the current value
+before appending to an existing stream, and do not sign two different transactions for the same
+position.
+
+### Reserve Key Zero for the Protocol Nonce Stream
+
+Use nonzero application-owned keys for concurrent transactions. Key `0` follows the account's
+protocol nonce sequence and is also used by protocol operations.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and submit Tempo envelopes."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:clock"
+    title="Scheduled Transactions"
+    description="Bind an envelope to a valid inclusion window."
+    to="/tempo/guides/transaction-envelopes/scheduled-transactions"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Tempo Docs: Parallel Transactions"
+    description="Read the protocol guide for concurrent nonce streams."
+    to="https://docs.tempo.xyz/guide/payments/send-parallel-transactions"
+  />
+</Cards>

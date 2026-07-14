@@ -1,0 +1,162 @@
+---
+description: Verify access-key authorizations and transaction signatures locally.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Verify Signatures
+
+## Overview
+
+Ox can verify both signatures in an access-key flow: the root signature attached to a
+`KeyAuthorization`, and the access-key signature inside a transaction's keychain envelope.
+[`SignatureEnvelope.verify`](/tempo/reference/SignatureEnvelope/verify) verifies primitive
+`secp256k1`, `p256`, and `webAuthn` envelopes.
+
+This is cryptographic verification only. It does not prove that an access key is active, unexpired,
+unrevoked, within its limits, or authorized for a call. Query the target network for those checks.
+
+## Recipes
+
+### Verify a Root-Signed Authorization
+
+Deserialize the authorization, recompute its
+[`KeyAuthorization.getSignPayload`](/tempo/reference/KeyAuthorization/getSignPayload), and verify
+the attached signature against the expected root address.
+
+```ts twoslash
+import { Address } from 'ox'
+import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+
+declare const serialized: `0x${string}`
+
+const expectedRoot = '0x1111111111111111111111111111111111111111'
+const expectedAccessKey = '0x2222222222222222222222222222222222222222'
+const authorization = KeyAuthorization.deserialize(serialized)
+
+if (!authorization.signature) throw new Error('Unsigned authorization')
+
+const keyMatches = Address.isEqual(authorization.address, expectedAccessKey)
+const signatureMatches = SignatureEnvelope.verify(authorization.signature, {
+  address: expectedRoot,
+  payload: KeyAuthorization.getSignPayload(authorization),
+})
+const valid = keyMatches && signatureMatches
+```
+
+Verify every application-level expectation separately, including `chainId`, `expiry`, limits,
+scopes, admin fields, and witness.
+
+### Verify an Access-Key Transaction Signature
+
+[`TxEnvelopeTempo.deserialize`](/tempo/reference/TxEnvelopeTempo/deserialize) returns the keychain
+envelope attached to a signed transaction. Recompute the account-bound payload, check the expected
+root account, then verify the primitive inner signature against the expected access key.
+
+```ts twoslash
+import { Address } from 'ox'
+import { SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+
+declare const serialized: TxEnvelopeTempo.Serialized
+
+const expectedRoot = '0x1111111111111111111111111111111111111111'
+const expectedAccessKey = '0x2222222222222222222222222222222222222222'
+const transaction = TxEnvelopeTempo.deserialize(serialized)
+
+if (
+  transaction.signature?.type !== 'keychain' ||
+  transaction.signature.version === 'v1'
+)
+  throw new Error('Expected a keychain signature')
+
+const accountMatches = Address.isEqual(
+  transaction.signature.userAddress,
+  expectedRoot,
+)
+const payload = TxEnvelopeTempo.getSignPayload(transaction, {
+  from: transaction.signature.userAddress,
+})
+const signatureMatches = SignatureEnvelope.verify(transaction.signature.inner, {
+  address: expectedAccessKey,
+  payload,
+})
+const valid = accountMatches && signatureMatches
+```
+
+Verify the `inner` envelope directly. `SignatureEnvelope.verify` deliberately rejects the stateful
+`keychain` wrapper. This recipe also rejects legacy V1 keychain signatures, which use an unbound
+payload.
+
+### Extract the Claimed Account and Key
+
+[`SignatureEnvelope.extractAddress`](/tempo/reference/SignatureEnvelope/extractAddress) returns
+the root account when `root: true`, or the inner signer otherwise.
+
+```ts twoslash
+import { SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+
+declare const serialized: TxEnvelopeTempo.Serialized
+
+const transaction = TxEnvelopeTempo.deserialize(serialized)
+if (
+  transaction.signature?.type !== 'keychain' ||
+  transaction.signature.version === 'v1'
+)
+  throw new Error('Expected a keychain signature')
+
+const payload = TxEnvelopeTempo.getSignPayload(transaction, {
+  from: transaction.signature.userAddress,
+})
+const account = SignatureEnvelope.extractAddress({
+  payload,
+  root: true,
+  signature: transaction.signature,
+})
+const accessKey = SignatureEnvelope.extractAddress({
+  payload,
+  signature: transaction.signature,
+})
+```
+
+Treat extracted values as claims until you compare them with trusted expectations and onchain
+AccountKeychain state.
+
+## Best Practices
+
+### Verify Trusted Identities
+
+Do not verify a signature only against an address recovered from that same signature. Compare the
+root account and access key with values your application already trusts.
+
+### Recompute the Exact Bound Payload
+
+For a V2 keychain signature, pass the root account through `getSignPayload({ from })`. Verifying
+the unbound transaction hash checks a different payload.
+
+### Separate Cryptography from Authorization State
+
+Local verification proves possession of key material. Query AccountKeychain state to enforce
+expiry, revocation, admin status, witnesses, spending limits, and call scopes.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Authorize Access Keys"
+    description="Build the root and access-key signatures verified here."
+    to="/tempo/guides/access-keys/authorize"
+  />
+  <Card
+    icon="lucide:flame"
+    title="Witnesses"
+    description="Bind root signatures to a challenge or revocation handle."
+    to="/tempo/guides/access-keys/witnesses"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="SignatureEnvelope.verify"
+    description="The full API reference for primitive signature verification."
+    to="/tempo/reference/SignatureEnvelope/verify"
+  />
+</Cards>

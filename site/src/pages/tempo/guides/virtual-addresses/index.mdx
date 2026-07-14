@@ -1,0 +1,43 @@
+---
+description: Derive and inspect TIP-1022 virtual payment addresses with Ox.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Virtual Addresses
+
+## Overview
+
+TIP-1022 virtual addresses let a service assign a distinct payment address to each customer while
+forwarding supported payments to one registered master address. A virtual address encodes a
+4-byte master ID and a 6-byte user tag in a normal 20-byte address.
+
+Ox separates the local data operations from the network operations. Use
+[`VirtualMaster`](/tempo/reference/VirtualMaster) to mine and verify a registration salt, and use
+[`VirtualAddress`](/tempo/reference/VirtualAddress) to derive and parse virtual addresses. Registering
+a master and resolving its current onchain record require a Tempo client or direct contract calls.
+
+[See the Virtual Addresses specification](https://docs.tempo.xyz/protocol/tip20/virtual-addresses)
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:user-plus"
+    title="Register a Master Address"
+    description="Mine and verify the proof-of-work salt used by a master registration."
+    to="/tempo/guides/virtual-addresses/register-a-master-address"
+  />
+  <Card
+    icon="lucide:scan-search"
+    title="Create and Parse Addresses"
+    description="Derive tagged addresses locally and recover their encoded parts."
+    to="/tempo/guides/virtual-addresses/create-and-parse-addresses"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Tempo Docs: Virtual Addresses"
+    description="Read the TIP-1022 protocol and registration rules."
+    to="https://docs.tempo.xyz/protocol/tip20/virtual-addresses"
+  />
+</Cards>

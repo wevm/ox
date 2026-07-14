@@ -1,0 +1,143 @@
+---
+description: Bundle multiple calls into one atomic Tempo transaction envelope.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Batch Calls
+
+## Overview
+
+Tempo transaction envelopes contain a `calls` array instead of a single `to`, `value`, and
+`data` tuple. The calls execute in order as one atomic transaction. If one call reverts, the
+transaction does not keep changes from earlier calls.
+
+Ox represents each entry with [`TxEnvelopeTempo.Call`](/tempo/reference/TxEnvelopeTempo/types#txenvelopetempocall)
+and serializes the full batch with the surrounding envelope.
+
+[See Batch Calls in the Tempo Transactions documentation](https://docs.tempo.xyz/protocol/transactions#batch-calls)
+
+## Recipes
+
+### Construct a Batch
+
+Pass multiple call objects to
+[`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from). A call may omit `to` for contract
+creation, and may omit `data` or `value` when they are not needed.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [
+    {
+      data: '0xcafebabe00000000000000000000000000000001',
+      to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    },
+    {
+      data: '0xdeadbeef00000000000000000000000000000002',
+      to: '0xfeedfacefeedfacefeedfacefeedfacefeedface',
+    },
+  ],
+  chainId: 4217,
+  gas: 200_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+```
+
+### Sign and Serialize a Batch
+
+The sender signs one payload for the complete ordered call list. Attach that signature when
+calling [`TxEnvelopeTempo.serialize`](/tempo/reference/TxEnvelopeTempo/serialize).
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const envelope = TxEnvelopeTempo.from({
+  calls: [
+    {
+      data: '0xcafebabe00000000000000000000000000000001',
+      to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    },
+    {
+      data: '0xdeadbeef00000000000000000000000000000002',
+      to: '0xfeedfacefeedfacefeedfacefeedfacefeedface',
+    },
+  ],
+  chainId: 4217,
+  gas: 200_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey,
+})
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+```
+
+### Inspect a Serialized Batch
+
+[`TxEnvelopeTempo.deserialize`](/tempo/reference/TxEnvelopeTempo/deserialize) preserves the call
+order and decodes each call's target, value, and calldata.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [
+    { to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' },
+    { to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' },
+  ],
+  chainId: 4217,
+})
+const serialized = TxEnvelopeTempo.serialize(envelope)
+
+const { calls } = TxEnvelopeTempo.deserialize(serialized)
+```
+
+## Best Practices
+
+### Preserve Dependency Order
+
+Place setup calls before the operations that depend on them. Reordering the array changes the
+sign payload and may change execution behavior.
+
+### Estimate the Entire Batch
+
+Gas belongs to the envelope, not to individual call entries. Estimate the complete ordered batch
+and include enough gas for all calls.
+
+### Treat the Batch as One Failure Boundary
+
+Do not design recovery logic around a partial batch. A successful receipt represents the whole
+batch, while a revert discards its state changes.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and submit Tempo envelopes."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:split"
+    title="Concurrent Transactions"
+    description="Use independent nonce keys for parallel submission."
+    to="/tempo/guides/transaction-envelopes/concurrent-transactions"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Tempo Docs: Batch Transactions"
+    description="Read the protocol guide for atomic call batches."
+    to="https://docs.tempo.xyz/protocol/transactions#batch-calls"
+  />
+</Cards>
