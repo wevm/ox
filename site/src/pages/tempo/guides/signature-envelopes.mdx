@@ -47,8 +47,8 @@ const valid = SignatureEnvelope.verify(envelope, {
 
 ### Wrap and Verify a P-256 Signature
 
-A P-256 envelope embeds the public key and records whether SHA-256 prehashing was used. Raw
-[`P256.sign`](/api/P256/sign) does not prehash by default, so set `prehash: false` here.
+A P-256 envelope embeds the public key alongside the signature. Sign the payload with
+[`P256.sign`](/api/P256/sign), then wrap both values with `SignatureEnvelope.from`.
 
 ```ts twoslash
 import { P256 } from 'ox'
@@ -61,8 +61,7 @@ const publicKey = P256.getPublicKey({ privateKey })
 const signature = P256.sign({ payload, privateKey })
 // [!code focus:start]
 const envelope = SignatureEnvelope.from({
-  prehash: false, // [!code hl]
-  publicKey,
+  publicKey, // [!code hl]
   signature,
 })
 
@@ -161,10 +160,10 @@ const address = SignatureEnvelope.extractAddress({
 
 ## Best Practices
 
-### Match the P-256 Prehash Flag
+### Mark WebCrypto P-256 Signatures as Prehashed
 
-Set `prehash` to the behavior of the signer. Raw `P256.sign` can sign the supplied payload
-directly, while WebCrypto-based P-256 signing applies SHA-256 and needs `prehash: true`.
+Set `prehash: true` when wrapping a WebCrypto P-256 signature. WebCrypto applies SHA-256 before
+signing.
 
 ### Preserve WebAuthn Metadata
 
