@@ -414,10 +414,10 @@ export function Landing({
             </p>
           </div>
           <div
-            className="relative -mx-[4em] grid grid-cols-[200px_1fr] bg-elevated max-md:grid-cols-1"
+            className="relative grid grid-cols-[200px_1fr] bg-elevated lg:-mx-[4em] max-md:grid-cols-1"
             style={dashedFrame}
           >
-            <div className="flex flex-col">
+            <div className="flex flex-col max-md:hidden">
               {modules.map((m, i) => {
                 const isActive = active === m.id
                 const Icon = m.icon
@@ -457,14 +457,14 @@ export function Landing({
             <div className="relative min-w-0">
               <span
                 aria-hidden
-                className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-no-repeat max-md:top-0 max-md:right-0 max-md:bottom-auto max-md:h-px max-md:w-full"
+                className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-no-repeat max-md:hidden"
                 style={{
                   backgroundImage:
                     'repeating-linear-gradient(to bottom, var(--border-color-hover) 0 3px, transparent 3px 6px)',
                   backgroundSize: '1px 100%',
                 }}
               />
-              <div className="relative flex items-center justify-between gap-3 px-4 py-[14.5px]">
+              <div className="relative flex items-center justify-between gap-3 px-4 py-[14.5px] max-md:flex-wrap">
                 <div className="flex items-center gap-3">
                   <h3 className="m-0 flex items-center gap-2.5 font-mono text-[15px] font-semibold text-primary">
                     <ActiveIcon
@@ -481,7 +481,7 @@ export function Landing({
                     <IconArrowUpRight aria-hidden className="h-3 w-3" />
                   </a>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1 max-md:ml-auto">
                   <button
                     type="button"
                     onClick={() => go(-1)}
