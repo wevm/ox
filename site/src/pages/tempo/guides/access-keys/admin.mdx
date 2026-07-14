@@ -1,0 +1,172 @@
+---
+description: Create account-bound authorizations for unrestricted admin access keys.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Admin Access Keys
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Admin Access Keys guide](https://viem.sh/tempo/guides/access-keys/admin).
+:::
+
+## Overview
+
+An admin access key has unrestricted keychain-management privileges, letting it manage an
+account's other access keys without using the root key for each operation. In Ox, an admin
+[`KeyAuthorization`](/tempo/reference/KeyAuthorization) pairs `isAdmin: true` with the root
+`account`. Both fields are included in the authorization hash, preventing the signed authorization
+from being replayed for a different account.
+
+Treat admin keys as root-equivalent key-management credentials and use scoped access keys for
+routine application activity.
+
+[See TIP-1049](https://tips.sh/1049)
+
+## Recipes
+
+### Create and Sign an Admin Authorization
+
+Set both `account` and `isAdmin`, then have the root key sign
+[`KeyAuthorization.getSignPayload`](/tempo/reference/KeyAuthorization/getSignPayload).
+
+```ts twoslash
+import { Address, P256, Secp256k1 } from 'ox'
+import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+
+// 1. Set up the root and admin keys.
+const rootPrivateKey = Secp256k1.randomPrivateKey()
+const rootAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
+)
+
+const adminPrivateKey = P256.randomPrivateKey()
+const adminAddress = Address.fromPublicKey(
+  P256.getPublicKey({ privateKey: adminPrivateKey }),
+)
+
+// [!code focus:start]
+// 2. Define the account-bound admin authorization.
+const authorization = KeyAuthorization.from({
+  account: rootAddress, // [!code hl]
+  address: adminAddress,
+  chainId: 4217n,
+  isAdmin: true, // [!code hl]
+  type: 'p256',
+})
+
+// 3. Sign the authorization with the root key.
+const signedAuthorization = KeyAuthorization.from(authorization, {
+  signature: SignatureEnvelope.from(
+    Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(authorization),
+      privateKey: rootPrivateKey,
+    }),
+  ),
+})
+// @log: {
+// @log:   account: '0x...',
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   isAdmin: true,
+// @log:   signature: { ... },
+// @log:   type: 'p256',
+// @log: }
+// [!code focus:end]
+```
+
+Attach `signedAuthorization` to the first transaction that provisions the admin key, using the
+same flow as a regular [access-key authorization](/tempo/guides/access-keys/authorize).
+
+### Preserve the Account Binding Across Formats
+
+[`KeyAuthorization.serialize`](/tempo/reference/KeyAuthorization/serialize) and
+[`KeyAuthorization.toRpc`](/tempo/reference/KeyAuthorization/toRpc) retain the paired admin
+fields.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+
+// 1. Set up the root and admin keys.
+const rootPrivateKey = Secp256k1.randomPrivateKey()
+const rootAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
+)
+const adminPrivateKey = Secp256k1.randomPrivateKey()
+const adminAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: adminPrivateKey }),
+)
+
+// 2. Define the admin authorization.
+const authorization = KeyAuthorization.from({
+  account: rootAddress,
+  address: adminAddress,
+  chainId: 4217n,
+  isAdmin: true,
+  type: 'secp256k1',
+})
+
+// 3. Sign the authorization with the root key.
+const signedAuthorization = KeyAuthorization.from(authorization, {
+  signature: SignatureEnvelope.from(
+    Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(authorization),
+      privateKey: rootPrivateKey,
+    }),
+  ),
+})
+
+// [!code focus:start]
+// 4. Convert the signed authorization between formats.
+const serialized = KeyAuthorization.serialize(signedAuthorization)
+const restored = KeyAuthorization.deserialize(serialized)
+const rpc = KeyAuthorization.toRpc(signedAuthorization)
+
+// 5. Inspect an admin field in each format.
+restored.account === rootAddress // [!code hl]
+rpc.isAdmin === true // [!code hl]
+// @log: true
+// [!code focus:end]
+```
+
+## Best Practices
+
+### Keep Admin Keys Separate
+
+Do not use an admin key as an application's everyday signing key. Store it separately, prefer
+non-exportable key material, and provision as few admin keys as possible.
+
+### Require Both Admin Fields
+
+Always set `account` and `isAdmin: true` together. Ox drops orphan admin fields when decoding wire
+values, and the account binding is part of the security model.
+
+### Confirm Network Support
+
+TIP-1049 activation can differ between Tempo networks. Confirm that the target node accepts admin
+authorizations before relying on them operationally.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Authorize Access Keys"
+    description="Attach the signed admin authorization to its first transaction."
+    to="/tempo/guides/access-keys/authorize"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Verify Signatures"
+    description="Verify the root signature before submitting an authorization."
+    to="/tempo/guides/access-keys/verify"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="KeyAuthorization.toRpc"
+    description="Convert a signed authorization to the Tempo RPC shape."
+    to="/tempo/reference/KeyAuthorization/toRpc"
+  />
+</Cards>

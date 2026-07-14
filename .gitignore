@@ -23,7 +23,9 @@ site/.vocs
 site/src/pages.gen.ts
 site/src/pages/api
 site/src/pages/ercs
-site/src/pages/tempo
+site/src/pages/tempo/*
+!site/src/pages/tempo/guides/
+!site/src/pages/tempo/guides/**
 site/src/pages/webauthn
 site/src/pages/zod
 site/src/pages/glossary

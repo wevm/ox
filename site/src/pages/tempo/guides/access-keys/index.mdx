@@ -1,0 +1,64 @@
+---
+description: Delegate transaction signing with bounded, account-linked access keys.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Access Keys
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Access Keys guide](https://viem.sh/tempo/guides/access-keys).
+:::
+
+## Overview
+
+Access keys let a root account delegate transaction signing to a secondary key. The root key
+signs a [`KeyAuthorization`](/tempo/reference/KeyAuthorization), which can restrict the access
+key by chain, expiry, token spending limits, call scopes, or an optional witness.
+
+The signed authorization can be attached to a
+[`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) transaction. The access key signs that
+transaction with a [`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) of type
+`keychain`, binding the signature to the root account. After the authorization is provisioned,
+later transactions omit `keyAuthorization` and continue using keychain signatures.
+
+Ox constructs, signs, serializes, and verifies these values. Reading active key state, revoking a
+key, and submitting transactions require a Tempo RPC client or direct precompile calls.
+
+[See the Tempo AccountKeychain specification](https://docs.tempo.xyz/protocol/transactions/AccountKeychain)
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Authorize Access Keys"
+    description="Create, sign, and attach a key authorization to its first transaction."
+    to="/tempo/guides/access-keys/authorize"
+  />
+  <Card
+    icon="lucide:sliders-horizontal"
+    title="Set Permissions & Limits"
+    description="Restrict a key by expiry, token spending, calls, and recipients."
+    to="/tempo/guides/access-keys/permissions-and-limits"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Admin Access Keys"
+    description="Create an account-bound authorization for an unrestricted admin key."
+    to="/tempo/guides/access-keys/admin"
+  />
+  <Card
+    icon="lucide:flame"
+    title="Witnesses"
+    description="Bind an authorization to a 32-byte context or revocation handle."
+    to="/tempo/guides/access-keys/witnesses"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Verify Signatures"
+    description="Verify root authorizations and access-key transaction signatures locally."
+    to="/tempo/guides/access-keys/verify"
+  />
+</Cards>

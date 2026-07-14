@@ -1,0 +1,129 @@
+---
+description: Mine and verify a TIP-1022 master registration salt.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Register a Master Address
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Register a Master Address guide](https://viem.sh/tempo/guides/virtual-addresses/register).
+:::
+
+## Overview
+
+A TIP-1022 master registration binds a 4-byte master ID to an address. Before submitting that
+registration, find a salt whose registration hash satisfies the protocol's proof-of-work rule.
+[`VirtualMaster.mineSaltAsync`](/tempo/reference/VirtualMaster/mineSaltAsync) performs this search
+with parallel workers when the environment supports them.
+
+Ox returns the salt, master ID, and registration hash. The registration itself is an onchain state
+change, so submitting it and confirming the resulting record require a Tempo client or direct
+contract call.
+
+[See the Virtual Addresses specification](https://docs.tempo.xyz/protocol/tip20/virtual-addresses)
+
+## Recipes
+
+### Mine a Registration Salt
+
+Pass the master address to `mineSaltAsync`. The default search covers the bounded 32-bit search
+space and returns `undefined` if no matching salt is found.
+
+```ts twoslash
+import { VirtualMaster } from 'ox/tempo'
+
+const masterAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+
+// [!code focus:start]
+const mined = await VirtualMaster.mineSaltAsync({
+  address: masterAddress, // [!code hl]
+})
+
+if (!mined) throw new Error('No registration salt found')
+
+const { masterId, registrationHash, salt } = mined
+// @log: {
+// @log:   masterId: '0x58e21090',
+// @log:   registrationHash: '0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d',
+// @log:   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf'
+// @log: }
+// [!code focus:end]
+```
+
+Submit `salt` for `masterAddress` through the protocol's master-registration call. Ox deliberately
+does not submit this transaction.
+
+### Verify Stored Registration Data
+
+Use [`VirtualMaster.validateSalt`](/tempo/reference/VirtualMaster/validateSalt) before reusing a
+persisted salt. You can independently recompute the master ID with
+[`VirtualMaster.getMasterId`](/tempo/reference/VirtualMaster/getMasterId) and the registration hash
+with [`VirtualMaster.getRegistrationHash`](/tempo/reference/VirtualMaster/getRegistrationHash).
+
+```ts twoslash
+import { VirtualMaster } from 'ox/tempo'
+
+const registration = {
+  address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+} as const
+
+// [!code focus:start]
+// [!code hl:start]
+if (!VirtualMaster.validateSalt(registration))
+  throw new Error('Invalid registration salt')
+// [!code hl:end]
+
+const masterId = VirtualMaster.getMasterId(registration)
+const registrationHash = VirtualMaster.getRegistrationHash(registration)
+// @log: {
+// @log:   masterId: '0x58e21090',
+// @log:   registrationHash: '0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d'
+// @log: }
+// [!code focus:end]
+```
+
+These checks only validate the local derivation. Query the Tempo registry to confirm that the
+master ID is registered to the expected address.
+
+## Best Practices
+
+### Mine Outside Request Paths
+
+Salt mining can take time. Run it in a background task, use the `onProgress` callback for
+observability, and pass an `AbortSignal` when the operation must be cancellable.
+
+### Persist the Exact Inputs
+
+Store the master address, salt, master ID, and confirmed transaction reference together. Recomputing
+from those inputs makes it easier to detect mismatched or corrupted records.
+
+### Confirm Onchain State
+
+`validateSalt` proves that a salt satisfies the local derivation rules. It does not prove that the
+master has been registered or that a zone, token, or application accepts it.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:scan-search"
+    title="Create and Parse Addresses"
+    description="Use the registered master ID to derive tagged addresses."
+    to="/tempo/guides/virtual-addresses/create-and-parse-addresses"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="VirtualMaster.mineSaltAsync"
+    description="Review mining options, progress reporting, and cancellation."
+    to="/tempo/reference/VirtualMaster/mineSaltAsync"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Viem: Register a Master Address"
+    description="Mine a salt and register a master address with a Viem client."
+    to="https://viem.sh/tempo/guides/virtual-addresses/register"
+  />
+</Cards>

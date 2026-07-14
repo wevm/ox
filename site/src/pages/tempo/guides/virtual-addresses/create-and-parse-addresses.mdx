@@ -1,0 +1,124 @@
+---
+description: Create, validate, and parse TIP-1022 virtual addresses locally.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Create and Parse Virtual Addresses
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Resolve & Accept Payments guide](https://viem.sh/tempo/guides/virtual-addresses/resolve).
+:::
+
+## Overview
+
+A TIP-1022 virtual address has the layout
+`[4-byte masterId][10-byte virtual marker][6-byte userTag]`. Once a master ID is registered, an
+application can derive any number of tagged addresses without another network request.
+
+[`VirtualAddress.from`](/tempo/reference/VirtualAddress/from) constructs the 20-byte address. The
+result encodes the master ID but does not prove that the ID is registered onchain.
+
+[See the Virtual Addresses specification](https://docs.tempo.xyz/protocol/tip20/virtual-addresses)
+
+## Recipes
+
+### Create a Tagged Address
+
+Choose a unique 6-byte user tag for the payer, invoice, or customer you need to identify. Number and
+bigint inputs are left-padded to the required width.
+
+```ts twoslash
+import { VirtualAddress } from 'ox/tempo'
+
+// [!code focus:start]
+const paymentAddress = VirtualAddress.from({
+  masterId: '0x58e21090',
+  userTag: 42n, // [!code hl]
+})
+// @log: '0x58e21090fdfdfdfdfdfdfdfdfdfd00000000002a'
+// [!code focus:end]
+```
+
+Store the relationship between `userTag` and the application record it represents. The tag is part
+of the public address and should not contain a secret.
+
+### Validate and Parse an Address
+
+Use [`VirtualAddress.validate`](/tempo/reference/VirtualAddress/validate) when invalid input should
+return `false`. After validation, [`VirtualAddress.parse`](/tempo/reference/VirtualAddress/parse)
+recovers the encoded master ID and user tag.
+
+```ts twoslash
+import { VirtualAddress } from 'ox/tempo'
+
+const address = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
+
+// [!code focus:start]
+if (!VirtualAddress.validate(address))
+  throw new Error('Invalid virtual address')
+
+const { masterId, userTag } = VirtualAddress.parse(address) // [!code hl]
+// @log: { masterId: '0x58e21090', userTag: '0x010203040506' }
+// [!code focus:end]
+```
+
+Parsing is local. Resolve `masterId` through the Tempo registry when you also need to verify the
+registered master address.
+
+### Classify an Address Without Throwing
+
+[`VirtualAddress.isVirtual`](/tempo/reference/VirtualAddress/isVirtual) checks the reserved byte
+layout and returns `false` for malformed or ordinary addresses.
+
+```ts twoslash
+import { VirtualAddress } from 'ox/tempo'
+
+// [!code focus:start]
+const isVirtual = VirtualAddress.isVirtual(
+  '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
+)
+// @log: true
+// [!code focus:end]
+```
+
+## Best Practices
+
+### Enforce Unique Tags
+
+The user tag has 48 bits. Allocate tags from a database-backed counter or enforce uniqueness when
+using random values, especially at high volume.
+
+### Treat Tags as Public Metadata
+
+Anyone who sees the address can recover its user tag. Store only an opaque identifier in the tag and
+keep customer data in your application.
+
+### Resolve Before Trusting
+
+The byte layout alone does not establish an onchain registration. Query the registry before relying
+on the destination for settlement or policy decisions.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:user-plus"
+    title="Register a Master Address"
+    description="Mine and verify the salt that derives a master ID."
+    to="/tempo/guides/virtual-addresses/register-a-master-address"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="VirtualAddress.from"
+    description="Review accepted master ID and user tag input types."
+    to="/tempo/reference/VirtualAddress/from"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Viem: Resolve & Accept Payments"
+    description="Derive and resolve virtual payment addresses with a Viem client."
+    to="https://viem.sh/tempo/guides/virtual-addresses/resolve"
+  />
+</Cards>

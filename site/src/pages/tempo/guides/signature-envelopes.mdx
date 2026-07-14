@@ -1,0 +1,216 @@
+---
+description: Encode, decode, inspect, and verify Tempo signature envelopes.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Signature Envelopes
+
+## Overview
+
+Tempo uses [`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) to carry the information
+needed to interpret different signer types. An envelope can contain a secp256k1, P-256,
+WebAuthn, access-key, or native multisig signature.
+
+Primitive signatures can be verified locally from their payload and signer identity. Access-key
+and multisig signatures also depend on protocol state or configuration, so applications should
+validate those through their complete authorization flow.
+
+[See the Tempo signature types specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
+
+## Recipes
+
+### Wrap and Verify a secp256k1 Signature
+
+Sign a payload with [`Secp256k1.sign`](/api/Secp256k1/sign), then normalize it with
+[`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Verify it against the
+signer address with [`SignatureEnvelope.verify`](/tempo/reference/SignatureEnvelope/verify).
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { SignatureEnvelope } from 'ox/tempo'
+
+const payload =
+  '0x1111111111111111111111111111111111111111111111111111111111111111'
+const privateKey = Secp256k1.randomPrivateKey()
+const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+// [!code focus:start]
+const signature = Secp256k1.sign({ payload, privateKey })
+const envelope = SignatureEnvelope.from(signature) // [!code hl]
+
+const valid = SignatureEnvelope.verify(envelope, {
+  address,
+  payload,
+})
+// @log: true
+// [!code focus:end]
+```
+
+### Wrap and Verify a P-256 Signature
+
+A P-256 envelope embeds the public key alongside the signature. Sign the payload with
+[`P256.sign`](/api/P256/sign), then wrap both values with `SignatureEnvelope.from`.
+
+```ts twoslash
+import { P256 } from 'ox'
+import { SignatureEnvelope } from 'ox/tempo'
+
+const payload =
+  '0x1111111111111111111111111111111111111111111111111111111111111111'
+const privateKey = P256.randomPrivateKey()
+const publicKey = P256.getPublicKey({ privateKey })
+const signature = P256.sign({ payload, privateKey })
+// [!code focus:start]
+const envelope = SignatureEnvelope.from({
+  prehash: false,
+  publicKey, // [!code hl]
+  signature,
+})
+
+const valid = SignatureEnvelope.verify(envelope, {
+  payload,
+  publicKey,
+})
+// @log: true
+// [!code focus:end]
+```
+
+### Wrap and Verify a WebAuthn Signature
+
+[`WebAuthnP256.sign`](/api/WebAuthnP256/sign) returns the authenticator metadata that the
+signature envelope must carry. This recipe runs in a browser and may prompt the user.
+
+```ts twoslash
+import { WebAuthnP256 } from 'ox'
+import { SignatureEnvelope } from 'ox/tempo'
+
+const payload =
+  '0x1111111111111111111111111111111111111111111111111111111111111111'
+
+// 1. Create a WebAuthn credential.
+const credential = await WebAuthnP256.createCredential({
+  name: 'Tempo',
+})
+// [!code focus:start]
+// 2. Sign the payload with the credential.
+const { metadata, signature } = await WebAuthnP256.sign({
+  challenge: payload,
+  credentialId: credential.id,
+})
+
+// 3. Preserve the WebAuthn metadata and public key in the envelope.
+const envelope = SignatureEnvelope.from({
+  metadata, // [!code hl]
+  publicKey: credential.publicKey, // [!code hl]
+  signature,
+})
+
+// 4. Verify the normalized signature.
+const valid = SignatureEnvelope.verify(envelope, {
+  payload,
+  publicKey: credential.publicKey,
+})
+// @log: true
+// [!code focus:end]
+```
+
+### Serialize and Deserialize an Envelope
+
+Use [`SignatureEnvelope.serialize`](/tempo/reference/SignatureEnvelope/serialize) for the wire
+format and [`SignatureEnvelope.deserialize`](/tempo/reference/SignatureEnvelope/deserialize) to
+recover the typed value.
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { SignatureEnvelope } from 'ox/tempo'
+
+const payload =
+  '0x1111111111111111111111111111111111111111111111111111111111111111'
+const signature = Secp256k1.sign({
+  payload,
+  privateKey: Secp256k1.randomPrivateKey(),
+})
+const envelope = SignatureEnvelope.from(signature)
+
+// [!code focus:start]
+const serialized = SignatureEnvelope.serialize(envelope) // [!code hl]
+const decoded = SignatureEnvelope.deserialize(serialized) // [!code hl]
+// @log: {
+// @log:   signature: { r: '0x...', s: '0x...', yParity: 0 },
+// @log:   type: 'secp256k1'
+// @log: }
+// [!code focus:end]
+```
+
+### Extract the Signer Address
+
+[`SignatureEnvelope.extractAddress`](/tempo/reference/SignatureEnvelope/extractAddress) recovers
+a secp256k1 signer from the payload, derives a P-256 or WebAuthn address from its embedded public
+key, and can return the root account for a keychain signature.
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { SignatureEnvelope } from 'ox/tempo'
+
+const payload =
+  '0x1111111111111111111111111111111111111111111111111111111111111111'
+const signature = Secp256k1.sign({
+  payload,
+  privateKey: Secp256k1.randomPrivateKey(),
+})
+const envelope = SignatureEnvelope.from(signature)
+
+// [!code focus:start]
+const address = SignatureEnvelope.extractAddress({
+  payload,
+  signature: envelope,
+})
+// @log: '0x...'
+// [!code focus:end]
+```
+
+## Best Practices
+
+### Mark WebCrypto P-256 Signatures as Prehashed
+
+Set `prehash: true` when wrapping a WebCrypto P-256 signature. WebCrypto applies SHA-256 before
+signing.
+
+### Preserve WebAuthn Metadata
+
+WebAuthn verification needs the exact `authenticatorData` and `clientDataJSON` returned during
+signing. Store and transmit them with the signature and public key.
+
+### Verify Primitive Signatures Only
+
+`SignatureEnvelope.verify` supports secp256k1, P-256, and WebAuthn envelopes. Do not use it as a
+standalone authorization check for keychain or multisig envelopes.
+
+### Keep the Original Payload
+
+Address recovery and signature verification require the exact payload that was signed. For a
+transaction, obtain it from
+[`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload).
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Access Keys"
+    description="Wrap a delegated signer in a keychain signature envelope."
+    to="/tempo/guides/access-keys"
+  />
+  <Card
+    icon="lucide:users"
+    title="Multisig Transactions"
+    description="Assemble weighted owner approvals into a native multisig envelope."
+    to="/tempo/guides/transaction-envelopes/multisig-transactions"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="SignatureEnvelope"
+    description="Browse the complete signature envelope API reference."
+    to="/tempo/reference/SignatureEnvelope"
+  />
+</Cards>

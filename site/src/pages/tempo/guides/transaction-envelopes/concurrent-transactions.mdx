@@ -1,0 +1,165 @@
+---
+description: Submit independent Tempo transactions in parallel with expiring nonces.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Concurrent Transactions
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Concurrent Transactions guide](https://viem.sh/tempo/guides/concurrent-transactions).
+:::
+
+## Overview
+
+Expiring nonces let one account submit independent transactions concurrently without allocating
+or tracking sequential nonce streams. [TIP-1009](https://docs.tempo.xyz/protocol/tips/tip-1009)
+identifies each transaction by its hash and limits replay protection to a short validity window.
+
+A Tempo envelope enters expiring nonce mode when `nonceKey` is `uint256.max`. It must also use
+`nonce: 0n` and a future `validBefore` no more than 30 seconds after the current block timestamp.
+[`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) exposes these fields directly, so callers
+choose the expiry and submit the signed envelope before it expires.
+
+## Recipes
+
+### Create Expiring Nonce Envelopes
+
+Set `nonceKey` to `Solidity.maxUint256`, `nonce` to `0n`, and `validBefore` to a near-future Unix
+timestamp. The example assumes a synchronized system clock and uses a 25-second window, leaving
+five seconds of headroom below the protocol's 30-second limit.
+
+```ts twoslash
+import { Solidity } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const validBefore = Math.floor(Date.now() / 1_000) + 25
+
+// [!code focus:start]
+const first = TxEnvelopeTempo.from({
+  calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
+  chainId: 4217,
+  nonce: 0n, // [!code hl]
+  nonceKey: Solidity.maxUint256, // [!code hl]
+  validBefore, // [!code hl]
+})
+
+const second = TxEnvelopeTempo.from({
+  calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
+  chainId: 4217,
+  nonce: 0n, // [!code hl]
+  nonceKey: Solidity.maxUint256, // [!code hl]
+  validBefore, // [!code hl]
+})
+// @log: [
+// @log:   { calls: [{ to: '0xdeadbeef...' }], nonce: 0n, nonceKey: 115792...n, type: 'tempo', validBefore: 17... },
+// @log:   { calls: [{ to: '0xfeedface...' }], nonce: 0n, nonceKey: 115792...n, type: 'tempo', validBefore: 17... },
+// @log: ]
+// [!code focus:end]
+```
+
+### Sign and Submit in Parallel
+
+Sign each envelope independently, then submit the serialized transactions together. Both can use
+the same reserved nonce key and zero nonce because the protocol prevents replay by signed
+transaction hash. The RPC endpoint must support Tempo transaction type `0x76`.
+
+```ts twoslash
+import { RpcTransport, Secp256k1, Solidity } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+// 1. Set up the signing key and shared expiry.
+const privateKey = Secp256k1.randomPrivateKey()
+const validBefore = Math.floor(Date.now() / 1_000) + 25
+
+// 2. Build independent envelopes with expiring nonces.
+const envelopes = [
+  TxEnvelopeTempo.from({
+    calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
+    chainId: 4217,
+    gas: 50_000n,
+    maxFeePerGas: 2_000_000_000n,
+    nonce: 0n, // [!code hl]
+    nonceKey: Solidity.maxUint256, // [!code hl]
+    validBefore, // [!code hl]
+  }),
+  TxEnvelopeTempo.from({
+    calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
+    chainId: 4217,
+    gas: 50_000n,
+    maxFeePerGas: 2_000_000_000n,
+    nonce: 0n, // [!code hl]
+    nonceKey: Solidity.maxUint256, // [!code hl]
+    validBefore, // [!code hl]
+  }),
+]
+
+// [!code focus:start]
+// 3. Sign and serialize each envelope.
+const serialized = envelopes.map((envelope) => {
+  const signature = Secp256k1.sign({
+    payload: TxEnvelopeTempo.getSignPayload(envelope),
+    privateKey,
+  })
+  return TxEnvelopeTempo.serialize(envelope, { signature })
+})
+// [!code focus:end]
+
+// 4. Connect to a Tempo RPC endpoint.
+const transport = RpcTransport.fromHttp('https://rpc.example.com')
+// [!code focus:start]
+// 5. Submit all serialized transactions concurrently.
+const hashes = await Promise.all(
+  serialized.map((transaction) =>
+    transport.request({
+      method: 'eth_sendRawTransaction',
+      params: [transaction],
+    }),
+  ),
+)
+// @log: ['0x...', '0x...']
+// [!code focus:end]
+```
+
+## Best Practices
+
+### Do Not Use Sequential Nonce Keys for Concurrency
+
+Do not create a new two-dimensional nonce key for each independent transaction. Those keys persist
+in state and add state-creation costs. Use expiring nonces for concurrent work, and reserve a
+small, reused set of two-dimensional keys for long-lived ordered streams.
+
+### Use a Reliable Clock
+
+TIP-1009 validates `validBefore` against the current block timestamp. Keep the system clock
+synchronized or derive the expiry from a recent block, and leave headroom for network latency.
+Submit immediately, then rebuild and sign a fresh envelope if the transaction expires.
+
+### Keep the Signed Envelope Immutable
+
+Changing the calls, fees, or validity window produces a different transaction hash. Retry the
+same serialized transaction only while its validity window remains open.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and submit Tempo envelopes."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:clock"
+    title="Scheduled Transactions"
+    description="Bind an envelope to a valid inclusion window."
+    to="/tempo/guides/transaction-envelopes/scheduled-transactions"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Viem: Concurrent Transactions"
+    description="Submit independent transactions in parallel with expiring nonces."
+    to="https://viem.sh/tempo/guides/concurrent-transactions"
+  />
+</Cards>

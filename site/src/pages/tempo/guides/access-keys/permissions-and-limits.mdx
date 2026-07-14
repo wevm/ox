@@ -1,0 +1,183 @@
+---
+description: Restrict access keys by time, spending, calls, and recipients.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Set Permissions & Limits
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Set Permissions & Limits guide](https://viem.sh/tempo/guides/access-keys/permissions).
+:::
+
+## Overview
+
+[`KeyAuthorization.from`](/tempo/reference/KeyAuthorization/from) accepts three complementary
+restrictions: an absolute `expiry`, per-token `limits`, and contract call `scopes`. Combine them
+to grant only the authority an access key needs.
+
+Token limits apply to TIP-20 `transfer` and `approve` calls. Scopes restrict target contracts,
+function selectors, and supported recipient arguments. These fields are part of the root key's
+signing payload, so changing them invalidates its signature.
+
+## Recipes
+
+### Set an Expiry and One-Time Spending Limit
+
+The `expiry` value is a Unix timestamp in seconds. Use
+[`Period.hours`](/tempo/reference/Period/hours) to add a readable duration, and express each
+token limit in that token's base units.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { KeyAuthorization, Period } from 'ox/tempo'
+
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  // [!code focus:start]
+  expiry: Math.floor(Date.now() / 1_000) + Period.hours(1), // [!code hl]
+  limits: [
+    {
+      limit: 1_000_000n, // [!code hl]
+      token: '0x20c0000000000000000000000000000000000001',
+    },
+  ],
+  type: 'secp256k1',
+})
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   expiry: 17...,
+// @log:   limits: [{ limit: 1000000n, token: '0x20c0000000000000000000000000000000000001' }],
+// @log:   type: 'secp256k1',
+// @log: }
+// [!code focus:end]
+```
+
+Omitting `period` creates a one-time limit that depletes as the access key spends the token.
+
+### Set a Recurring Spending Limit
+
+Add a nonzero `period` to reset a token's spending allowance at that interval.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { KeyAuthorization, Period } from 'ox/tempo'
+
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  limits: [
+    {
+      limit: 100_000_000n,
+      period: Period.months(1), // [!code focus]
+      token: '0x20c0000000000000000000000000000000000001',
+    },
+  ],
+  type: 'secp256k1',
+})
+// [!code focus:start]
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   limits: [{ limit: 100000000n, period: 2592000, token: '0x20c0000000000000000000000000000000000001' }],
+// @log:   type: 'secp256k1',
+// @log: }
+// [!code focus:end]
+```
+
+The period helpers return seconds. `Period.months(1)` is defined as 30 days.
+
+### Restrict Contract Calls and Recipients
+
+Pass a function signature as `selector`; Ox resolves it to its 4-byte selector. A recipient list
+restricts the first ABI `address` argument for supported TIP-20 functions.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+import { KeyAuthorization } from 'ox/tempo'
+
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  // [!code focus:start]
+  scopes: [
+    {
+      address: '0x20c0000000000000000000000000000000000001',
+      recipients: ['0xcafebabecafebabecafebabecafebabecafebabe'], // [!code hl]
+      selector: 'transfer(address,uint256)', // [!code hl]
+    },
+  ],
+  type: 'secp256k1',
+})
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   scopes: [{ address: '0x20c0000000000000000000000000000000000001', recipients: ['0xcafebabecafebabecafebabecafebabecafebabe'], selector: '0xa9059cbb' }],
+// @log:   type: 'secp256k1',
+// @log: }
+// [!code focus:end]
+```
+
+An address-only scope allows any selector on that target. A selector without `recipients` allows
+any recipient. Recipient constraints are valid for `transfer`, `approve`, and
+`transferWithMemo` selectors.
+
+## Best Practices
+
+### Distinguish Unrestricted and Empty Scopes
+
+Leave `scopes` undefined to allow any call. Use `scopes: []` to enter scoped mode while allowing
+no calls. Do not treat these values as equivalent.
+
+### Combine Independent Restrictions
+
+Use an expiry, token limit, and call scope together. A short lifetime does not limit how much a
+key can spend before expiry, and a spending limit alone does not restrict unrelated contract
+calls.
+
+### Sign the Final Authorization
+
+Finish every restriction before calling
+[`KeyAuthorization.getSignPayload`](/tempo/reference/KeyAuthorization/getSignPayload). The root
+signature commits to the full authorization.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Authorize Access Keys"
+    description="Sign and attach the restricted authorization to a transaction."
+    to="/tempo/guides/access-keys/authorize"
+  />
+  <Card
+    icon="lucide:flame"
+    title="Witnesses"
+    description="Add an offchain context or revocation handle to the signing payload."
+    to="/tempo/guides/access-keys/witnesses"
+  />
+  <Card
+    icon="lucide:braces"
+    title="KeyAuthorization Types"
+    description="Review the Scope and TokenLimit type definitions."
+    to="/tempo/reference/KeyAuthorization/types"
+  />
+</Cards>

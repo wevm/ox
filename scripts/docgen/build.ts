@@ -29,6 +29,7 @@ import {
 // installed in the `site` workspace, so it can't be imported from here; the
 // generated config is validated against the real Vocs types on the site side.
 type SidebarItem = {
+  badge?: { text: string; variant: 'warning' }
   collapsed?: boolean
   items?: SidebarItem[]
   link?: string
@@ -46,9 +47,12 @@ console.log('Generating API docs.')
 /// Clean previously generated pages
 ////////////////////////////////////////////////////////////
 
-for (const dir of ['api', 'ercs', 'tempo', 'webauthn', 'zod']) {
+for (const dir of ['api', 'ercs', 'webauthn', 'zod']) {
   fs.removeSync(`./site/src/pages/${dir}`)
 }
+// Preserve hand-authored Tempo guides while replacing generated pages.
+fs.removeSync('./site/src/pages/tempo/index.mdx')
+fs.removeSync('./site/src/pages/tempo/reference')
 
 ////////////////////////////////////////////////////////////
 /// Load API Model
@@ -609,6 +613,116 @@ for (const [entrypointCategory, categories] of Object.entries(namespaceMap)) {
 }
 
 const sidebar: Record<string, { backLink: true; items: SidebarItem[] }> = {}
+const tempoGuides: SidebarItem = {
+  text: 'Guides',
+  items: [
+    {
+      text: 'Overview',
+      link: '/tempo/guides',
+    },
+    {
+      text: 'Access Keys',
+      collapsed: true,
+      items: [
+        {
+          text: 'Overview',
+          link: '/tempo/guides/access-keys',
+        },
+        {
+          text: 'Authorize Access Keys',
+          link: '/tempo/guides/access-keys/authorize',
+        },
+        {
+          text: 'Set Permissions & Limits',
+          link: '/tempo/guides/access-keys/permissions-and-limits',
+        },
+        {
+          text: 'Admin Access Keys',
+          link: '/tempo/guides/access-keys/admin',
+        },
+        {
+          text: 'Witnesses',
+          link: '/tempo/guides/access-keys/witnesses',
+        },
+        {
+          text: 'Verify Signatures',
+          link: '/tempo/guides/access-keys/verify',
+        },
+      ],
+    },
+    {
+      text: 'Private Zones',
+      collapsed: true,
+      items: [
+        {
+          text: 'Overview',
+          link: '/tempo/guides/zones',
+        },
+        {
+          text: 'Authenticate to a Zone',
+          link: '/tempo/guides/zones/authenticate',
+        },
+      ],
+    },
+    {
+      text: 'Signature Envelopes',
+      link: '/tempo/guides/signature-envelopes',
+    },
+    {
+      text: 'Transaction Envelopes',
+      collapsed: true,
+      items: [
+        {
+          text: 'Overview',
+          link: '/tempo/guides/transaction-envelopes',
+        },
+        {
+          text: 'Batch Calls',
+          link: '/tempo/guides/transaction-envelopes/batch-calls',
+        },
+        {
+          text: 'Concurrent Transactions',
+          link: '/tempo/guides/transaction-envelopes/concurrent-transactions',
+        },
+        {
+          text: 'Scheduled Transactions',
+          link: '/tempo/guides/transaction-envelopes/scheduled-transactions',
+        },
+        {
+          text: 'Pay Fees in a Stablecoin',
+          link: '/tempo/guides/transaction-envelopes/pay-fees-in-a-stablecoin',
+        },
+        {
+          text: 'Sponsor User Fees',
+          link: '/tempo/guides/transaction-envelopes/sponsor-user-fees',
+        },
+        {
+          text: 'Multisig Transactions',
+          link: '/tempo/guides/transaction-envelopes/multisig-transactions',
+          badge: { text: 'EXP', variant: 'warning' },
+        },
+      ],
+    },
+    {
+      text: 'Virtual Addresses',
+      collapsed: true,
+      items: [
+        {
+          text: 'Overview',
+          link: '/tempo/guides/virtual-addresses',
+        },
+        {
+          text: 'Register a Master Address',
+          link: '/tempo/guides/virtual-addresses/register-a-master-address',
+        },
+        {
+          text: 'Create & Parse Addresses',
+          link: '/tempo/guides/virtual-addresses/create-and-parse-addresses',
+        },
+      ],
+    },
+  ],
+}
 for (const { entrypointCategory, categories } of namespaceEntries) {
   const path = getPath({ entrypointCategory })
   sidebar[path] = {
@@ -618,6 +732,7 @@ for (const { entrypointCategory, categories } of namespaceEntries) {
         text: 'Overview',
         link: path,
       },
+      ...(entrypointCategory === 'Tempo' ? [tempoGuides] : []),
       ...categories.map(({ category, items }) => ({
         text: category,
         items: items.map(({ sidebarItem }) => sidebarItem),
@@ -656,7 +771,15 @@ const topNav = [
 
 fs.writeFileSync(
   './site/src/config-generated.ts',
-  `export const sidebar = ${JSON.stringify(sidebar, null, 2)}\n` +
+  `type SidebarItem = {
+  badge?: { text: string; variant: 'warning' }
+  collapsed?: boolean
+  items?: SidebarItem[]
+  link?: string
+  text: string
+}
+
+export const sidebar: Record<string, { backLink: true; items: SidebarItem[] }> = ${JSON.stringify(sidebar, null, 2)}\n` +
     `export const topNav = ${JSON.stringify(topNav, null, 2)}`,
 )
 
@@ -665,9 +788,67 @@ fs.writeFileSync(
 ////////////////////////////////////////////////////////////
 
 for (const namespace of namespaceEntries) {
+  const isTempo = namespace.entrypointCategory === 'Tempo'
   let content = `${frontmatter({
-    description: `API reference for ${namespace.entrypointCategory} modules, functions, types, and errors.`,
-  })}\n\n# API Reference\n\n`
+    description: isTempo
+      ? 'Overview, guides, and API reference for Ox Tempo utilities.'
+      : `API reference for ${namespace.entrypointCategory} modules, functions, types, and errors.`,
+  })}\n\n`
+
+  if (isTempo)
+    content += `import { Card, Cards } from 'vocs'
+
+# Overview
+
+Ox provides low-level, type-safe primitives for constructing, signing, serializing, and inspecting
+Tempo protocol data. Explore the guides for common workflows, or browse the API reference for
+individual modules.
+
+## Guides
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Access Keys"
+    description="Authorize scoped keys with expiry, limits, witnesses, and admin access."
+    to="/tempo/guides/access-keys"
+  />
+  <Card
+    icon="lucide:users"
+    title="Native Multisig"
+    description="Derive accounts and assemble weighted owner approvals."
+    to="/tempo/guides/transaction-envelopes/multisig-transactions"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Private Zones"
+    description="Create signed credentials for authenticated Zone RPC requests."
+    to="/tempo/guides/zones"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Signature Envelopes"
+    description="Encode and verify secp256k1, P-256, keychain, and multisig signatures."
+    to="/tempo/guides/signature-envelopes"
+  />
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and coordinate Tempo transactions."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:at-sign"
+    title="Virtual Addresses"
+    description="Mine a master salt and derive tagged payment addresses."
+    to="/tempo/guides/virtual-addresses"
+  />
+</Cards>
+
+## API Reference
+
+`
+  else content += '# API Reference\n\n'
 
   const escapeTableCell = (value: string | undefined) =>
     (value ?? '').replaceAll('\n', ' ').replaceAll('|', '\\|')

@@ -1,0 +1,185 @@
+---
+description: Bind key authorizations to 32-byte contexts or revocation handles.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Witnesses
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Witnesses guide](https://viem.sh/tempo/guides/access-keys/witnesses).
+:::
+
+## Overview
+
+A witness is an optional 32-byte value included in a
+[`KeyAuthorization`](/tempo/reference/KeyAuthorization) signing hash. Applications can use it to
+bind an authorization to offchain context, such as a server challenge, or as a handle that can be
+burned onchain before the authorization is submitted.
+
+Ox validates, hashes, serializes, and deserializes the witness. Burning a witness and reading its
+onchain status require a Tempo RPC client or a direct AccountKeychain precompile call.
+
+[See TIP-1053](https://tips.sh/1053)
+
+## Recipes
+
+### Derive a Witness from a Challenge
+
+Hash an application challenge with [`Hash.keccak256`](/api/Hash/keccak256) to produce the required
+32-byte value, then include it when calling
+[`KeyAuthorization.from`](/tempo/reference/KeyAuthorization/from).
+
+```ts twoslash
+import { Address, Hash, Hex, Secp256k1 } from 'ox'
+import { KeyAuthorization } from 'ox/tempo'
+
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+// [!code focus:start]
+const challenge = 'authorize checkout session 01JZZY9K8KQ9WJ8Z08R8Q3JFQZ'
+const witness = Hash.keccak256(Hex.fromString(challenge)) // [!code hl]
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  type: 'secp256k1',
+  witness, // [!code hl]
+})
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   type: 'secp256k1',
+// @log:   witness: '0xa494af4c8c1283c80fd97d6819be97802c61584c1f92ea9d20f25729e3b2246a',
+// @log: }
+// [!code focus:end]
+```
+
+`KeyAuthorization.from` throws if the witness is not exactly 32 bytes.
+
+### Sign a Witness-Bound Authorization
+
+The root signature commits to the witness through
+[`KeyAuthorization.getSignPayload`](/tempo/reference/KeyAuthorization/getSignPayload).
+
+```ts twoslash
+import { Address, Hash, Hex, Secp256k1 } from 'ox'
+import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+
+// 1. Set up the root and access keys.
+const rootPrivateKey = Secp256k1.randomPrivateKey()
+const rootAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
+)
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+
+// [!code focus:start]
+// 2. Bind a witness to the authorization.
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  type: 'secp256k1',
+  witness: Hash.keccak256(Hex.fromString('single-use challenge')), // [!code hl]
+})
+
+// 3. Sign the authorization with the root key.
+const signedAuthorization = KeyAuthorization.from(authorization, {
+  signature: SignatureEnvelope.from(
+    Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(authorization), // [!code hl]
+      privateKey: rootPrivateKey,
+    }),
+  ),
+})
+
+// 4. Verify the attached root signature locally.
+const valid = SignatureEnvelope.verify(signedAuthorization.signature, {
+  address: rootAddress,
+  payload: KeyAuthorization.getSignPayload(signedAuthorization),
+})
+// @log: true
+// [!code focus:end]
+```
+
+Changing or removing `witness` after signing changes the payload and makes `valid` false.
+
+### Prepare a Witness for Revocation
+
+Generate a random witness when its only purpose is revocation. Persist it with the pending
+authorization so the account can burn the exact same value if needed.
+
+```ts twoslash
+import { Address, Hex, Secp256k1 } from 'ox'
+import { KeyAuthorization } from 'ox/tempo'
+
+const accessPrivateKey = Secp256k1.randomPrivateKey()
+const accessAddress = Address.fromPublicKey(
+  Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+)
+// [!code focus:start]
+const witness = Hex.random(32) // [!code hl]
+
+const authorization = KeyAuthorization.from({
+  address: accessAddress,
+  chainId: 4217n,
+  type: 'secp256k1',
+  witness, // [!code hl]
+})
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   type: 'secp256k1',
+// @log:   witness: '0x...',
+// @log: }
+// [!code focus:end]
+```
+
+Before submitting the signed authorization, query the AccountKeychain state for this account and
+witness. To cancel the pending authorization, send the network's witness-burn precompile call.
+
+## Best Practices
+
+### Never Reuse Revocation Handles
+
+Use a unique witness for each pending authorization. Reuse makes burning one handle affect every
+authorization bound to it.
+
+### Store the Original Context
+
+If a witness is derived from an offchain challenge, persist the challenge and derivation method.
+The hash alone cannot explain what context the root key approved.
+
+### Check Onchain State Before Submission
+
+Local signature verification cannot determine whether a witness has been burned. Query the target
+network immediately before broadcasting the authorization.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Authorize Access Keys"
+    description="Sign and attach a witness-bound authorization."
+    to="/tempo/guides/access-keys/authorize"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Verify Signatures"
+    description="Verify the root signature over the final witness-bound payload."
+    to="/tempo/guides/access-keys/verify"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="KeyAuthorization.getSignPayload"
+    description="Compute the hash that commits to every authorization field."
+    to="/tempo/reference/KeyAuthorization/getSignPayload"
+  />
+</Cards>

@@ -1,0 +1,145 @@
+---
+description: Select a USD-denominated TIP-20 token for transaction fees.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Pay Fees in a Stablecoin
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
+[Viem's Pay Fees in a Stablecoin guide](https://viem.sh/tempo/guides/pay-fees).
+:::
+
+## Overview
+
+Tempo transaction envelopes can select a TIP-20 token with the `feeToken` field. The protocol's
+Fee AMM converts the chosen USD-denominated token into the validator's preferred fee token.
+
+Ox encodes the token address into the transaction envelope. It does not read token metadata,
+balances, pause state, or Fee AMM liquidity from the network.
+
+[See the Tempo fee specification](https://docs.tempo.xyz/protocol/fees)
+
+## Recipes
+
+### Set the Fee Token
+
+Pass a token address to `feeToken` when calling
+[`TxEnvelopeTempo.from`](/tempo/reference/TxEnvelopeTempo/from).
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const alphaUsd = '0x20c0000000000000000000000000000000000001'
+// [!code focus:start]
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feeToken: alphaUsd, // [!code hl]
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+// @log: {
+// @log:   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+// @log:   chainId: 4217,
+// @log:   feeToken: '0x20c0000000000000000000000000000000000001',
+// @log:   type: 'tempo',
+// @log:   ...
+// @log: }
+// [!code focus:end]
+```
+
+### Sign and Serialize the Selection
+
+For a transaction without sponsorship, the sender commits to `feeToken` through
+[`TxEnvelopeTempo.getSignPayload`](/tempo/reference/TxEnvelopeTempo/getSignPayload).
+
+```ts twoslash
+import { Secp256k1 } from 'ox'
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const privateKey = Secp256k1.randomPrivateKey()
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feeToken: '0x20c0000000000000000000000000000000000001',
+  gas: 21_000n,
+  maxFeePerGas: 2_000_000_000n,
+  nonce: 0n,
+  nonceKey: 1n,
+})
+
+// [!code focus:start]
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeTempo.getSignPayload(envelope),
+  privateKey,
+})
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// @log: '0x76...'
+// [!code focus:end]
+```
+
+### Inspect the Encoded Fee Token
+
+Deserialize the transaction to inspect its encoded fee token selection.
+
+```ts twoslash
+import { TxEnvelopeTempo } from 'ox/tempo'
+
+const envelope = TxEnvelopeTempo.from({
+  calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+  chainId: 4217,
+  feeToken: '0x20c0000000000000000000000000000000000001', // [!code hl]
+})
+// [!code focus:start]
+const serialized = TxEnvelopeTempo.serialize(envelope)
+
+const decoded = TxEnvelopeTempo.deserialize(serialized)
+const feeToken = decoded.feeToken // [!code hl]
+// @log: '0x20c0000000000000000000000000000000000001'
+// [!code focus:end]
+```
+
+## Best Practices
+
+### Check Eligibility Onchain
+
+An address-shaped value can still be an invalid fee token. Before signing, use a Tempo client to
+confirm that the token is an active USD-denominated TIP-20 and that the Fee AMM can settle it.
+
+### Check the Fee Payer's Balance
+
+Without sponsorship, the sender pays. With sponsorship, the fee payer pays. Check the relevant
+account's balance in the selected token before submission.
+
+### Treat Sponsored Fee Selection Differently
+
+Fee sponsorship intentionally lets the fee payer select and commit to the fee token. Follow the
+[Sponsor User Fees](/tempo/guides/transaction-envelopes/sponsor-user-fees) signing flow instead
+of reusing the single-signer flow above.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:hand-coins"
+    title="Sponsor User Fees"
+    description="Add a fee payer signature to a Tempo envelope."
+    to="/tempo/guides/transaction-envelopes/sponsor-user-fees"
+  />
+  <Card
+    icon="lucide:send"
+    title="Transaction Envelopes"
+    description="Construct, sign, serialize, and submit Tempo envelopes."
+    to="/tempo/guides/transaction-envelopes"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Viem: Pay Fees in a Stablecoin"
+    description="Select a fee token and submit transactions with a Viem client."
+    to="https://viem.sh/tempo/guides/pay-fees"
+  />
+</Cards>
