@@ -414,7 +414,7 @@ export function Landing({
             </p>
           </div>
           <div
-            className="relative grid grid-cols-[200px_1fr] bg-elevated lg:-mx-[4em] max-md:grid-cols-1"
+            className="relative grid grid-cols-[200px_1fr] bg-elevated lg:-mx-[4em] max-md:-mx-[calc(var(--container-pad)+var(--vocs-spacing-content-px))] max-md:grid-cols-1"
             style={dashedFrame}
           >
             <div className="flex flex-col max-md:hidden">
