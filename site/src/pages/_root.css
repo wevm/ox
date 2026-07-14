@@ -341,8 +341,8 @@ body > div:has(> div > .twoslash-completion-list) {
 }
 
 /* Content links: heading text color with an accent underline.
-   Skip the blank layout (landing page) which styles its own anchors. */
-[data-v-content] a:not([data-v-anchor]) {
+   Respect Vocs no-underline components; the blank layout opts out below. */
+[data-v-content] a:not([data-v-anchor]):not([class~='vocs:no-underline']) {
   font-weight: 500;
   text-decoration: underline;
   text-decoration-color: color-mix(
@@ -355,7 +355,8 @@ body > div:has(> div > .twoslash-completion-list) {
   transition: text-decoration-color 0.15s ease;
 }
 
-[data-v-content] a:not([data-v-anchor]):hover {
+[data-v-content]
+  a:not([data-v-anchor]):not([class~='vocs:no-underline']):hover {
   color: var(--text-color-link);
   text-decoration-color: var(--text-color-accent);
   text-decoration-style: solid;
