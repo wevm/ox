@@ -44,6 +44,11 @@ const mined = await VirtualMaster.mineSaltAsync({
 if (!mined) throw new Error('No registration salt found')
 
 const { masterId, registrationHash, salt } = mined
+// @log: {
+// @log:   masterId: '0x58e21090',
+// @log:   registrationHash: '0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d',
+// @log:   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf'
+// @log: }
 // [!code focus:end]
 ```
 
@@ -73,6 +78,10 @@ if (!VirtualMaster.validateSalt(registration))
 
 const masterId = VirtualMaster.getMasterId(registration)
 const registrationHash = VirtualMaster.getRegistrationHash(registration)
+// @log: {
+// @log:   masterId: '0x58e21090',
+// @log:   registrationHash: '0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d'
+// @log: }
 // [!code focus:end]
 ```
 

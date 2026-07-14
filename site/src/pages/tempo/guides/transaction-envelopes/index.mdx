@@ -34,6 +34,7 @@ array. Each call can contain a target, calldata, and value.
 ```ts twoslash
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// [!code focus:start]
 const envelope = TxEnvelopeTempo.from({
   // [!code hl:start]
   calls: [
@@ -50,6 +51,14 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
+// @log: {
+// @log:   calls: [{ data: '0xdeadbeef', to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+// @log:   chainId: 4217,
+// @log:   gas: 100000n,
+// @log:   type: 'tempo',
+// @log:   ...
+// @log: }
+// [!code focus:end]
 ```
 
 ### Sign and Serialize an Envelope
@@ -89,6 +98,7 @@ const signature = Secp256k1.sign({
 const signed = TxEnvelopeTempo.from(envelope, { signature })
 const serialized = TxEnvelopeTempo.serialize(signed)
 const hash = TxEnvelopeTempo.hash(signed)
+// @log: '0x...'
 // [!code focus:end]
 ```
 
@@ -111,9 +121,19 @@ const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
-const serialized = TxEnvelopeTempo.serialize(envelope, { signature }) // [!code focus]
+// [!code focus:start]
+const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
 
-const decoded = TxEnvelopeTempo.deserialize(serialized) // [!code focus]
+const decoded = TxEnvelopeTempo.deserialize(serialized)
+// @log: {
+// @log:   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+// @log:   chainId: 4217,
+// @log:   from: '0x...',
+// @log:   nonce: 0n,
+// @log:   signature: { ... },
+// @log:   type: 'tempo',
+// @log: }
+// [!code focus:end]
 ```
 
 ### Submit a Signed Envelope
@@ -153,6 +173,7 @@ const hash = await transport.request({
   method: 'eth_sendRawTransaction',
   params: [serialized],
 })
+// @log: '0x...'
 // [!code focus:end]
 ```
 

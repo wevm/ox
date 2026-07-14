@@ -32,6 +32,7 @@ Pass a token address to `feeToken` when calling
 import { TxEnvelopeTempo } from 'ox/tempo'
 
 const alphaUsd = '0x20c0000000000000000000000000000000000001'
+// [!code focus:start]
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
@@ -41,6 +42,14 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
+// @log: {
+// @log:   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+// @log:   chainId: 4217,
+// @log:   feeToken: '0x20c0000000000000000000000000000000000001',
+// @log:   type: 'tempo',
+// @log:   ...
+// @log: }
+// [!code focus:end]
 ```
 
 ### Sign and Serialize the Selection
@@ -69,6 +78,7 @@ const signature = Secp256k1.sign({
   privateKey,
 })
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// @log: '0x76...'
 // [!code focus:end]
 ```
 
@@ -84,10 +94,13 @@ const envelope = TxEnvelopeTempo.from({
   chainId: 4217,
   feeToken: '0x20c0000000000000000000000000000000000001', // [!code hl]
 })
+// [!code focus:start]
 const serialized = TxEnvelopeTempo.serialize(envelope)
 
 const decoded = TxEnvelopeTempo.deserialize(serialized)
 const feeToken = decoded.feeToken // [!code hl]
+// @log: '0x20c0000000000000000000000000000000000001'
+// [!code focus:end]
 ```
 
 ## Best Practices

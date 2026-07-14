@@ -106,12 +106,12 @@ const transport = RpcTransport.fromHttp('https://zone.example/rpc', {
     },
   },
 })
-// [!code focus:end]
-
 // 5. Make an authenticated RPC request.
 const blockNumber = await transport.request({
   method: 'eth_blockNumber',
 })
+// @log: '0x...'
+// [!code focus:end]
 ```
 
 Add any separate operator credentials to `headers` alongside the Zone token. Ox does not infer an
@@ -149,6 +149,7 @@ const decoded = ZoneRpcAuthentication.deserialize(serialized)
 
 // 3. Check whether its validity window has ended.
 const isExpired = decoded.expiresAt <= Math.floor(Date.now() / 1_000) // [!code hl]
+// @log: false
 // [!code focus:end]
 ```
 

@@ -33,6 +33,7 @@ creation, and may omit `data` or `value` when they are not needed.
 ```ts twoslash
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// [!code focus:start]
 const envelope = TxEnvelopeTempo.from({
   // [!code hl:start]
   calls: [
@@ -52,6 +53,14 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
+// @log: {
+// @log:   calls: [{ data: '0xcafebabe...', to: '0xdeadbeef...' }, { data: '0xdeadbeef...', to: '0xfeedface...' }],
+// @log:   chainId: 4217,
+// @log:   gas: 200000n,
+// @log:   type: 'tempo',
+// @log:   ...
+// @log: }
+// [!code focus:end]
 ```
 
 ### Sign and Serialize a Batch
@@ -92,6 +101,7 @@ const signature = Secp256k1.sign({
 
 // 3. Serialize the batch with its signature.
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// @log: '0x76...'
 // [!code focus:end]
 ```
 
@@ -110,9 +120,12 @@ const envelope = TxEnvelopeTempo.from({
   ],
   chainId: 4217,
 })
-const serialized = TxEnvelopeTempo.serialize(envelope) // [!code focus]
+// [!code focus:start]
+const serialized = TxEnvelopeTempo.serialize(envelope)
 
-const { calls } = TxEnvelopeTempo.deserialize(serialized) // [!code focus]
+const { calls } = TxEnvelopeTempo.deserialize(serialized)
+// @log: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }, { to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }]
+// [!code focus:end]
 ```
 
 ## Best Practices

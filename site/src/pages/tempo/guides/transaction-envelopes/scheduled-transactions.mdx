@@ -34,6 +34,7 @@ the Unix epoch.
 import { TxEnvelopeTempo } from 'ox/tempo'
 
 const now = Math.floor(Date.now() / 1_000)
+// [!code focus:start]
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
@@ -42,6 +43,8 @@ const envelope = TxEnvelopeTempo.from({
   validAfter: now + 60 * 60, // [!code hl]
   validBefore: now + 2 * 60 * 60, // [!code hl]
 })
+// @log: { calls: [...], chainId: 4217, nonce: 0n, nonceKey: 1n, type: 'tempo', validAfter: 17..., validBefore: 17... }
+// [!code focus:end]
 ```
 
 ### Create an Expiring Envelope
@@ -52,6 +55,7 @@ deadline.
 ```ts twoslash
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// [!code focus:start]
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
@@ -59,6 +63,8 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
   validBefore: Math.floor(Date.now() / 1_000) + 60 * 60, // [!code hl]
 })
+// @log: { calls: [...], chainId: 4217, nonce: 0n, nonceKey: 1n, type: 'tempo', validBefore: 17... }
+// [!code focus:end]
 ```
 
 ### Sign the Window
@@ -89,6 +95,7 @@ const signature = Secp256k1.sign({
   privateKey,
 })
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// @log: '0x76...'
 // [!code focus:end]
 ```
 

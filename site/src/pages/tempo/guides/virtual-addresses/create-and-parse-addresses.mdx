@@ -37,6 +37,7 @@ const paymentAddress = VirtualAddress.from({
   masterId: '0x58e21090',
   userTag: 42n, // [!code hl]
 })
+// @log: '0x58e21090fdfdfdfdfdfdfdfdfdfd00000000002a'
 // [!code focus:end]
 ```
 
@@ -59,6 +60,7 @@ if (!VirtualAddress.validate(address))
   throw new Error('Invalid virtual address')
 
 const { masterId, userTag } = VirtualAddress.parse(address) // [!code hl]
+// @log: { masterId: '0x58e21090', userTag: '0x010203040506' }
 // [!code focus:end]
 ```
 
@@ -77,6 +79,7 @@ import { VirtualAddress } from 'ox/tempo'
 const isVirtual = VirtualAddress.isVirtual(
   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
 )
+// @log: true
 // [!code focus:end]
 ```
 

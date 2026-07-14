@@ -31,6 +31,7 @@ signing encoder that a fee payer will complete the envelope.
 ```ts twoslash
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// [!code focus:start]
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
@@ -41,6 +42,14 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
+// @log: {
+// @log:   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+// @log:   feePayerSignature: null,
+// @log:   feeToken: '0x20c0000000000000000000000000000000000001',
+// @log:   type: 'tempo',
+// @log:   ...
+// @log: }
+// [!code focus:end]
 ```
 
 ### Produce Both Signatures
@@ -85,6 +94,10 @@ const feePayerSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getFeePayerSignPayload(envelope, { sender }),
   privateKey: feePayerPrivateKey,
 })
+// @log: {
+// @log:   senderSignature: { r: '0x...', s: '0x...', yParity: 0 },
+// @log:   feePayerSignature: { r: '0x...', s: '0x...', yParity: 1 },
+// @log: }
 // [!code focus:end]
 ```
 
@@ -135,6 +148,7 @@ const sponsored = TxEnvelopeTempo.from(envelope, {
 
 // 5. Serialize the completed sponsored envelope.
 const serialized = TxEnvelopeTempo.serialize(sponsored)
+// @log: '0x76...'
 // [!code focus:end]
 ```
 

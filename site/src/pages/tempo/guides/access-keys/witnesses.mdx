@@ -50,6 +50,12 @@ const authorization = KeyAuthorization.from({
   type: 'secp256k1',
   witness, // [!code hl]
 })
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   type: 'secp256k1',
+// @log:   witness: '0xa494af4c8c1283c80fd97d6819be97802c61584c1f92ea9d20f25729e3b2246a',
+// @log: }
 // [!code focus:end]
 ```
 
@@ -98,6 +104,7 @@ const valid = SignatureEnvelope.verify(signedAuthorization.signature, {
   address: rootAddress,
   payload: KeyAuthorization.getSignPayload(signedAuthorization),
 })
+// @log: true
 // [!code focus:end]
 ```
 
@@ -125,6 +132,12 @@ const authorization = KeyAuthorization.from({
   type: 'secp256k1',
   witness, // [!code hl]
 })
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   type: 'secp256k1',
+// @log:   witness: '0x...',
+// @log: }
 // [!code focus:end]
 ```
 

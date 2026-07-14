@@ -42,6 +42,7 @@ const valid = SignatureEnvelope.verify(envelope, {
   address,
   payload,
 })
+// @log: true
 // [!code focus:end]
 ```
 
@@ -61,6 +62,7 @@ const publicKey = P256.getPublicKey({ privateKey })
 const signature = P256.sign({ payload, privateKey })
 // [!code focus:start]
 const envelope = SignatureEnvelope.from({
+  prehash: false,
   publicKey, // [!code hl]
   signature,
 })
@@ -69,6 +71,7 @@ const valid = SignatureEnvelope.verify(envelope, {
   payload,
   publicKey,
 })
+// @log: true
 // [!code focus:end]
 ```
 
@@ -107,6 +110,7 @@ const valid = SignatureEnvelope.verify(envelope, {
   payload,
   publicKey: credential.publicKey,
 })
+// @log: true
 // [!code focus:end]
 ```
 
@@ -128,8 +132,14 @@ const signature = Secp256k1.sign({
 })
 const envelope = SignatureEnvelope.from(signature)
 
+// [!code focus:start]
 const serialized = SignatureEnvelope.serialize(envelope) // [!code hl]
 const decoded = SignatureEnvelope.deserialize(serialized) // [!code hl]
+// @log: {
+// @log:   signature: { r: '0x...', s: '0x...', yParity: 0 },
+// @log:   type: 'secp256k1'
+// @log: }
+// [!code focus:end]
 ```
 
 ### Extract the Signer Address
@@ -155,6 +165,7 @@ const address = SignatureEnvelope.extractAddress({
   payload,
   signature: envelope,
 })
+// @log: '0x...'
 // [!code focus:end]
 ```
 

@@ -49,9 +49,16 @@ const authorization = KeyAuthorization.from({
       token: '0x20c0000000000000000000000000000000000001',
     },
   ],
-  // [!code focus:end]
   type: 'secp256k1',
 })
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   expiry: 17...,
+// @log:   limits: [{ limit: 1000000n, token: '0x20c0000000000000000000000000000000000001' }],
+// @log:   type: 'secp256k1',
+// @log: }
+// [!code focus:end]
 ```
 
 Omitting `period` creates a one-time limit that depletes as the access key spends the token.
@@ -81,6 +88,14 @@ const authorization = KeyAuthorization.from({
   ],
   type: 'secp256k1',
 })
+// [!code focus:start]
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   limits: [{ limit: 100000000n, period: 2592000, token: '0x20c0000000000000000000000000000000000001' }],
+// @log:   type: 'secp256k1',
+// @log: }
+// [!code focus:end]
 ```
 
 The period helpers return seconds. `Period.months(1)` is defined as 30 days.
@@ -110,9 +125,15 @@ const authorization = KeyAuthorization.from({
       selector: 'transfer(address,uint256)', // [!code hl]
     },
   ],
-  // [!code focus:end]
   type: 'secp256k1',
 })
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   scopes: [{ address: '0x20c0000000000000000000000000000000000001', recipients: ['0xcafebabecafebabecafebabecafebabecafebabe'], selector: '0xa9059cbb' }],
+// @log:   type: 'secp256k1',
+// @log: }
+// [!code focus:end]
 ```
 
 An address-only scope allows any selector on that target. A selector without `recipients` allows

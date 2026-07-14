@@ -54,6 +54,12 @@ const rootSignature = Secp256k1.sign({
 const signedAuthorization = KeyAuthorization.from(authorization, {
   signature: SignatureEnvelope.from(rootSignature), // [!code hl]
 })
+// @log: {
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   signature: { ... },
+// @log:   type: 'secp256k1',
+// @log: }
 // [!code focus:end]
 ```
 
@@ -127,6 +133,7 @@ const serialized = TxEnvelopeTempo.serialize(transaction, {
     userAddress: rootAddress, // [!code hl]
   }),
 })
+// @log: '0x76...'
 // [!code focus:end]
 ```
 

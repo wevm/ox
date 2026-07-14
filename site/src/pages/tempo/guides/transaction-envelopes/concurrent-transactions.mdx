@@ -36,6 +36,7 @@ import { TxEnvelopeTempo } from 'ox/tempo'
 
 const validBefore = Math.floor(Date.now() / 1_000) + 25
 
+// [!code focus:start]
 const first = TxEnvelopeTempo.from({
   calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
   chainId: 4217,
@@ -51,6 +52,11 @@ const second = TxEnvelopeTempo.from({
   nonceKey: Solidity.maxUint256, // [!code hl]
   validBefore, // [!code hl]
 })
+// @log: [
+// @log:   { calls: [{ to: '0xdeadbeef...' }], nonce: 0n, nonceKey: 115792...n, type: 'tempo', validBefore: 17... },
+// @log:   { calls: [{ to: '0xfeedface...' }], nonce: 0n, nonceKey: 115792...n, type: 'tempo', validBefore: 17... },
+// @log: ]
+// [!code focus:end]
 ```
 
 ### Sign and Submit in Parallel
@@ -112,6 +118,7 @@ const hashes = await Promise.all(
     }),
   ),
 )
+// @log: ['0x...', '0x...']
 // [!code focus:end]
 ```
 

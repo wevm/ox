@@ -52,13 +52,15 @@ const owners = ownerPrivateKeys.map((privateKey) => ({
   weight: 1,
 }))
 
-// [!code focus:6]
+// [!code focus:start]
 const genesisConfig = MultisigConfig.from({
   owners,
   salt: Hex.random(32),
   threshold: 2, // [!code hl]
 })
 const account = MultisigConfig.getAddress(genesisConfig)
+// @log: '0x...'
+// [!code focus:end]
 ```
 
 `MultisigConfig.from` sorts owners by ascending address, applies the zero salt when none is
@@ -137,6 +139,7 @@ const bootstrapSignature = SignatureEnvelope.from({
 const serialized = TxEnvelopeTempo.serialize(transaction, {
   signature: bootstrapSignature,
 })
+// @log: '0x76...'
 // [!code focus:end]
 ```
 
@@ -209,6 +212,7 @@ const signature = SignatureEnvelope.from({
 const serialized = TxEnvelopeTempo.serialize(transaction, {
   signature,
 })
+// @log: '0x76...'
 // [!code focus:end]
 ```
 

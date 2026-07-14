@@ -65,6 +65,14 @@ const signedAuthorization = KeyAuthorization.from(authorization, {
     }),
   ),
 })
+// @log: {
+// @log:   account: '0x...',
+// @log:   address: '0x...',
+// @log:   chainId: 4217n,
+// @log:   isAdmin: true,
+// @log:   signature: { ... },
+// @log:   type: 'p256',
+// @log: }
 // [!code focus:end]
 ```
 
@@ -119,6 +127,7 @@ const rpc = KeyAuthorization.toRpc(signedAuthorization)
 // 5. Inspect an admin field in each format.
 restored.account === rootAddress // [!code hl]
 rpc.isAdmin === true // [!code hl]
+// @log: true
 // [!code focus:end]
 ```
 

@@ -48,6 +48,7 @@ const signatureMatches = SignatureEnvelope.verify(authorization.signature, {
   payload: KeyAuthorization.getSignPayload(authorization),
 })
 const valid = keyMatches && signatureMatches // [!code hl]
+// @log: true
 // [!code focus:end]
 ```
 
@@ -98,6 +99,7 @@ const signatureMatches = SignatureEnvelope.verify(transaction.signature.inner, {
 })
 // [!code hl:end]
 const valid = accountMatches && signatureMatches
+// @log: true
 // [!code focus:end]
 ```
 
@@ -141,6 +143,7 @@ const accessKey = SignatureEnvelope.extractAddress({
   payload,
   signature: transaction.signature,
 })
+// @log: { account: '0x...', accessKey: '0x...' }
 // [!code focus:end]
 ```
 
