@@ -1,5 +1,5 @@
 ---
-description: Prepare independent Tempo nonce streams for parallel transaction submission.
+description: Submit independent Tempo transactions in parallel with expiring nonces.
 ---
 
 import { Card, Cards } from 'vocs'
@@ -13,65 +13,76 @@ This guide is intended to be low-level. If you are looking for a high-level abst
 
 ## Overview
 
-Tempo uses a two-dimensional nonce made from `nonceKey` and `nonce`. Transactions on different
-nonce keys have independent ordering, which lets one account prepare and submit work without a
-single sequential nonce becoming a bottleneck.
+Expiring nonces let one account submit independent transactions concurrently without allocating
+or tracking sequential nonce streams. [TIP-1009](https://docs.tempo.xyz/protocol/tips/tip-1009)
+identifies each transaction by its hash and limits replay protection to a short validity window.
 
-[`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) preserves both fields in the signed
-envelope. Ox does not read a stream's current nonce from the network, so callers must supply the
-correct value or use a client that manages nonce state.
+A Tempo envelope enters expiring nonce mode when `nonceKey` is `uint256.max`. It must also use
+`nonce: 0n` and a future `validBefore` no more than 30 seconds after the current block timestamp.
+[`TxEnvelopeTempo`](/tempo/reference/TxEnvelopeTempo) exposes these fields directly, so callers
+choose the expiry and submit the signed envelope before it expires.
 
 ## Recipes
 
-### Create Independent Nonce Streams
+### Create Expiring Nonce Envelopes
 
-Assign each independent stream a distinct nonzero `nonceKey`. The `nonce` starts at the current
-value for that sender and key.
+Set `nonceKey` to `Solidity.maxUint256`, `nonce` to `0n`, and `validBefore` to a near-future Unix
+timestamp. The example assumes a synchronized system clock and uses a 25-second window, leaving
+five seconds of headroom below the protocol's 30-second limit.
 
 ```ts twoslash
+import { Solidity } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
+
+const validBefore = Math.floor(Date.now() / 1_000) + 25
 
 const first = TxEnvelopeTempo.from({
   calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
   chainId: 4217,
-  nonce: 0n,
-  nonceKey: 1n, // [!code hl]
+  nonce: 0n, // [!code hl]
+  nonceKey: Solidity.maxUint256, // [!code hl]
+  validBefore, // [!code hl]
 })
 
 const second = TxEnvelopeTempo.from({
   calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
   chainId: 4217,
-  nonce: 0n,
-  nonceKey: 2n, // [!code hl]
+  nonce: 0n, // [!code hl]
+  nonceKey: Solidity.maxUint256, // [!code hl]
+  validBefore, // [!code hl]
 })
 ```
 
 ### Sign and Submit in Parallel
 
-Sign each envelope independently, then submit the serialized transactions together. The RPC
-endpoint must support Tempo transaction type `0x76`.
+Sign each envelope independently, then submit the serialized transactions together. Both can use
+the same reserved nonce key and zero nonce because the protocol prevents replay by signed
+transaction hash. The RPC endpoint must support Tempo transaction type `0x76`.
 
 ```ts twoslash
-import { RpcTransport, Secp256k1 } from 'ox'
+import { RpcTransport, Secp256k1, Solidity } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
 const privateKey = Secp256k1.randomPrivateKey()
+const validBefore = Math.floor(Date.now() / 1_000) + 25
 const envelopes = [
   TxEnvelopeTempo.from({
     calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
     chainId: 4217,
-    gas: 21_000n,
+    gas: 50_000n,
     maxFeePerGas: 2_000_000_000n,
-    nonce: 0n,
-    nonceKey: 1n,
+    nonce: 0n, // [!code hl]
+    nonceKey: Solidity.maxUint256, // [!code hl]
+    validBefore, // [!code hl]
   }),
   TxEnvelopeTempo.from({
     calls: [{ to: '0xfeedfacefeedfacefeedfacefeedfacefeedface' }],
     chainId: 4217,
-    gas: 21_000n,
+    gas: 50_000n,
     maxFeePerGas: 2_000_000_000n,
-    nonce: 0n,
-    nonceKey: 2n,
+    nonce: 0n, // [!code hl]
+    nonceKey: Solidity.maxUint256, // [!code hl]
+    validBefore, // [!code hl]
   }),
 ]
 
@@ -98,22 +109,22 @@ const hashes = await Promise.all(
 
 ## Best Practices
 
-### Reuse a Small Sequential Key Set
+### Do Not Use Sequential Nonce Keys for Concurrency
 
-Allocate application streams from a small set such as `1n`, `2n`, and `3n`, then reuse each key
-for its ordered stream. Random keys can enter protocol-reserved ranges, and continually creating
-new keys adds nonce state and cost.
+Do not create a new two-dimensional nonce key for each independent transaction. Those keys persist
+in state and add state-creation costs. Use expiring nonces for concurrent work, and reserve a
+small, reused set of two-dimensional keys for long-lived ordered streams.
 
-### Never Reuse a Nonce Pair
+### Use a Reliable Clock
 
-The sender, `nonceKey`, and `nonce` identify a position in one stream. Read the current value
-before appending to an existing stream, and do not sign two different transactions for the same
-position.
+TIP-1009 validates `validBefore` against the current block timestamp. Keep the system clock
+synchronized or derive the expiry from a recent block, and leave headroom for network latency.
+Submit immediately, then rebuild and sign a fresh envelope if the transaction expires.
 
-### Reserve Key Zero for the Protocol Nonce Stream
+### Keep the Signed Envelope Immutable
 
-Use nonzero application-owned keys for concurrent transactions. Key `0` follows the account's
-protocol nonce sequence and is also used by protocol operations.
+Changing the calls, fees, or validity window produces a different transaction hash. Retry the
+same serialized transaction only while its validity window remains open.
 
 ## See More
 
@@ -133,7 +144,7 @@ protocol nonce sequence and is also used by protocol operations.
   <Card
     icon="lucide:book-open"
     title="Viem: Concurrent Transactions"
-    description="Submit transactions in parallel with independent nonce streams."
+    description="Submit independent transactions in parallel with expiring nonces."
     to="https://viem.sh/tempo/guides/concurrent-transactions"
   />
 </Cards>
