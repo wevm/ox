@@ -29,6 +29,7 @@ Derive the access key address, describe the authorization, then have the root ke
 import { Address, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
 
+// 1. Set up the root and access keys.
 const rootPrivateKey = Secp256k1.randomPrivateKey()
 const accessPrivateKey = Secp256k1.randomPrivateKey()
 const accessAddress = Address.fromPublicKey(
@@ -36,17 +37,20 @@ const accessAddress = Address.fromPublicKey(
 )
 
 // [!code focus:start]
+// 2. Define the access-key authorization.
 const authorization = KeyAuthorization.from({
   address: accessAddress,
   chainId: 4217n,
   type: 'secp256k1',
 })
 
+// 3. Sign the authorization with the root key.
 const rootSignature = Secp256k1.sign({
   payload: KeyAuthorization.getSignPayload(authorization), // [!code hl]
   privateKey: rootPrivateKey,
 })
 
+// 4. Attach the root signature.
 const signedAuthorization = KeyAuthorization.from(authorization, {
   signature: SignatureEnvelope.from(rootSignature), // [!code hl]
 })
@@ -67,6 +71,7 @@ account passed as `from`, then wraps its signature in a keychain envelope.
 import { Address, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the root and access keys.
 const rootPrivateKey = Secp256k1.randomPrivateKey()
 const rootAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
@@ -76,11 +81,14 @@ const accessAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
 )
 
+// 2. Define the access-key authorization.
 const authorization = KeyAuthorization.from({
   address: accessAddress,
   chainId: 4217n,
   type: 'secp256k1',
 })
+
+// 3. Sign the authorization with the root key.
 const signedAuthorization = KeyAuthorization.from(authorization, {
   signature: SignatureEnvelope.from(
     Secp256k1.sign({
@@ -91,6 +99,7 @@ const signedAuthorization = KeyAuthorization.from(authorization, {
 })
 
 // [!code focus:start]
+// 4. Include the authorization in the first transaction.
 const transaction = TxEnvelopeTempo.from({
   calls: [
     {
@@ -102,6 +111,7 @@ const transaction = TxEnvelopeTempo.from({
   nonce: 0n,
 })
 
+// 5. Sign the account-bound payload with the access key.
 const accessSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(transaction, {
     from: rootAddress, // [!code hl]
@@ -109,6 +119,7 @@ const accessSignature = Secp256k1.sign({
   privateKey: accessPrivateKey,
 })
 
+// 6. Wrap the access signature and serialize the transaction.
 const serialized = TxEnvelopeTempo.serialize(transaction, {
   signature: SignatureEnvelope.from({
     inner: SignatureEnvelope.from(accessSignature),

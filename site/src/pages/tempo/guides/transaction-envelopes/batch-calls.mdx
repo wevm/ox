@@ -63,6 +63,7 @@ calling [`TxEnvelopeTempo.serialize`](/tempo/reference/TxEnvelopeTempo/serialize
 import { Secp256k1 } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the signing key and ordered batch.
 const privateKey = Secp256k1.randomPrivateKey()
 const envelope = TxEnvelopeTempo.from({
   calls: [
@@ -82,12 +83,16 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
 })
 
-// [!code focus:5]
+// [!code focus:start]
+// 2. Sign the payload for the complete batch.
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
+
+// 3. Serialize the batch with its signature.
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// [!code focus:end]
 ```
 
 ### Inspect a Serialized Batch

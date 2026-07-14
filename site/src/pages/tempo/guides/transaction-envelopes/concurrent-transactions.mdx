@@ -63,8 +63,11 @@ transaction hash. The RPC endpoint must support Tempo transaction type `0x76`.
 import { RpcTransport, Secp256k1, Solidity } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the signing key and shared expiry.
 const privateKey = Secp256k1.randomPrivateKey()
 const validBefore = Math.floor(Date.now() / 1_000) + 25
+
+// 2. Build independent envelopes with expiring nonces.
 const envelopes = [
   TxEnvelopeTempo.from({
     calls: [{ to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }],
@@ -86,7 +89,8 @@ const envelopes = [
   }),
 ]
 
-// [!code focus:7]
+// [!code focus:start]
+// 3. Sign and serialize each envelope.
 const serialized = envelopes.map((envelope) => {
   const signature = Secp256k1.sign({
     payload: TxEnvelopeTempo.getSignPayload(envelope),
@@ -94,9 +98,12 @@ const serialized = envelopes.map((envelope) => {
   })
   return TxEnvelopeTempo.serialize(envelope, { signature })
 })
+// [!code focus:end]
 
+// 4. Connect to a Tempo RPC endpoint.
 const transport = RpcTransport.fromHttp('https://rpc.example.com')
-// [!code focus:8]
+// [!code focus:start]
+// 5. Submit all serialized transactions concurrently.
 const hashes = await Promise.all(
   serialized.map((transaction) =>
     transport.request({
@@ -105,6 +112,7 @@ const hashes = await Promise.all(
     }),
   ),
 )
+// [!code focus:end]
 ```
 
 ## Best Practices

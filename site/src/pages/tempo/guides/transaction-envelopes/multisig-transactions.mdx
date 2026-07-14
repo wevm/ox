@@ -80,6 +80,7 @@ Set `init: true` when calling
 import { Address, Hex, Secp256k1 } from 'ox'
 import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the owner keys and genesis config.
 const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
@@ -94,6 +95,7 @@ const genesisConfig = MultisigConfig.from({
   threshold: 2,
 })
 
+// 2. Build the bootstrap transaction.
 const transaction = TxEnvelopeTempo.from({
   calls: [
     {
@@ -104,11 +106,14 @@ const transaction = TxEnvelopeTempo.from({
   nonce: 0n,
 })
 // [!code focus:start]
+// 3. Derive the multisig approval payload.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
   genesisConfig,
   payload,
 })
+
+// 4. Collect sufficient approval weight and sort the approvals.
 const approvals = ownerPrivateKeys.slice(0, 2).map((privateKey) =>
   SignatureEnvelope.from(
     Secp256k1.sign({
@@ -123,6 +128,7 @@ const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
   signatures: approvals,
 })
 
+// 5. Attach the genesis config and serialize the transaction.
 const bootstrapSignature = SignatureEnvelope.from({
   genesisConfig,
   init: true, // [!code hl]
@@ -146,6 +152,7 @@ the onchain owner config has since been updated. Omit `init` from every post-boo
 import { Address, Hex, Secp256k1 } from 'ox'
 import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the owner keys and genesis config.
 const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
@@ -160,6 +167,7 @@ const genesisConfig = MultisigConfig.from({
   threshold: 2,
 })
 
+// 2. Build a later transaction.
 const transaction = TxEnvelopeTempo.from({
   calls: [
     {
@@ -171,11 +179,14 @@ const transaction = TxEnvelopeTempo.from({
   nonce: 1n,
 })
 // [!code focus:start]
+// 3. Derive the multisig approval payload.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
   genesisConfig,
   payload,
 })
+
+// 4. Collect sufficient approval weight and sort the approvals.
 const approvals = ownerPrivateKeys.slice(1, 3).map((privateKey) =>
   SignatureEnvelope.from(
     Secp256k1.sign({
@@ -190,6 +201,7 @@ const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
   signatures: approvals,
 })
 
+// 5. Attach the approvals and serialize without reinitializing.
 const signature = SignatureEnvelope.from({
   genesisConfig,
   signatures: orderedApprovals, // [!code hl]

@@ -64,6 +64,7 @@ The root signature commits to the witness through
 import { Address, Hash, Hex, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
 
+// 1. Set up the root and access keys.
 const rootPrivateKey = Secp256k1.randomPrivateKey()
 const rootAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
@@ -74,6 +75,7 @@ const accessAddress = Address.fromPublicKey(
 )
 
 // [!code focus:start]
+// 2. Bind a witness to the authorization.
 const authorization = KeyAuthorization.from({
   address: accessAddress,
   chainId: 4217n,
@@ -81,6 +83,7 @@ const authorization = KeyAuthorization.from({
   witness: Hash.keccak256(Hex.fromString('single-use challenge')), // [!code hl]
 })
 
+// 3. Sign the authorization with the root key.
 const signedAuthorization = KeyAuthorization.from(authorization, {
   signature: SignatureEnvelope.from(
     Secp256k1.sign({
@@ -90,6 +93,7 @@ const signedAuthorization = KeyAuthorization.from(authorization, {
   ),
 })
 
+// 4. Verify the attached root signature locally.
 const valid = SignatureEnvelope.verify(signedAuthorization.signature, {
   address: rootAddress,
   payload: KeyAuthorization.getSignPayload(signedAuthorization),

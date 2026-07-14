@@ -63,6 +63,7 @@ and attach the result before calling
 import { Secp256k1 } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the signing key and envelope.
 const privateKey = Secp256k1.randomPrivateKey()
 const envelope = TxEnvelopeTempo.from({
   calls: [
@@ -77,14 +78,18 @@ const envelope = TxEnvelopeTempo.from({
   nonceKey: 1n,
 })
 
-// [!code focus:7]
+// [!code focus:start]
+// 2. Sign the envelope payload.
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
+
+// 3. Attach the signature, serialize, and hash the envelope.
 const signed = TxEnvelopeTempo.from(envelope, { signature })
 const serialized = TxEnvelopeTempo.serialize(signed)
 const hash = TxEnvelopeTempo.hash(signed)
+// [!code focus:end]
 ```
 
 ### Decode a Serialized Envelope
@@ -120,6 +125,7 @@ Send the serialized bytes through `eth_sendRawTransaction`. This example uses
 import { RpcTransport, Secp256k1 } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the signing key and envelope.
 const privateKey = Secp256k1.randomPrivateKey()
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
@@ -129,19 +135,25 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
-// [!code focus:5]
+
+// [!code focus:start]
+// 2. Sign and serialize the envelope.
 const signature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey,
 })
 const serialized = TxEnvelopeTempo.serialize(envelope, { signature })
+// [!code focus:end]
 
+// 3. Connect to a Tempo RPC endpoint.
 const transport = RpcTransport.fromHttp('https://rpc.example.com')
-// [!code focus:4]
+// [!code focus:start]
+// 4. Submit the serialized transaction.
 const hash = await transport.request({
   method: 'eth_sendRawTransaction',
   params: [serialized],
 })
+// [!code focus:end]
 ```
 
 ## Best Practices

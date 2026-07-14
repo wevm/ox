@@ -36,11 +36,13 @@ before serializing the token.
 import { Secp256k1 } from 'ox'
 import { ZoneId, ZoneRpcAuthentication } from 'ox/tempo'
 
+// 1. Set up the signer, zone, and issue time.
 const privateKey = Secp256k1.randomPrivateKey()
 const zoneId = 5
 const issuedAt = Math.floor(Date.now() / 1_000)
 
 // [!code focus:start]
+// 2. Create the authentication claims.
 const authentication = ZoneRpcAuthentication.from({
   chainId: ZoneId.toChainId(zoneId), // [!code hl]
   expiresAt: issuedAt + 10 * 60, // [!code hl]
@@ -48,11 +50,13 @@ const authentication = ZoneRpcAuthentication.from({
   zoneId,
 })
 
+// 3. Sign the authentication payload.
 const signature = Secp256k1.sign({
   payload: ZoneRpcAuthentication.getSignPayload(authentication),
   privateKey,
 })
 
+// 4. Serialize the signed token.
 const serialized = ZoneRpcAuthentication.serialize(authentication, {
   signature,
 })
@@ -72,16 +76,20 @@ uses the exact `X-Authorization-Token` header name expected by Zone RPC endpoint
 import { RpcTransport, Secp256k1 } from 'ox'
 import { ZoneId, ZoneRpcAuthentication } from 'ox/tempo'
 
+// 1. Set up the signer, zone, and issue time.
 const privateKey = Secp256k1.randomPrivateKey()
 const zoneId = 5
 const issuedAt = Math.floor(Date.now() / 1_000)
 
+// 2. Create the authentication claims.
 const authentication = ZoneRpcAuthentication.from({
   chainId: ZoneId.toChainId(zoneId),
   expiresAt: issuedAt + 10 * 60,
   issuedAt,
   zoneId,
 })
+
+// 3. Sign and serialize the token.
 const serialized = ZoneRpcAuthentication.serialize(authentication, {
   signature: Secp256k1.sign({
     payload: ZoneRpcAuthentication.getSignPayload(authentication),
@@ -90,6 +98,7 @@ const serialized = ZoneRpcAuthentication.serialize(authentication, {
 })
 
 // [!code focus:start]
+// 4. Attach the token to the RPC transport.
 const transport = RpcTransport.fromHttp('https://zone.example/rpc', {
   fetchOptions: {
     headers: {
@@ -99,6 +108,7 @@ const transport = RpcTransport.fromHttp('https://zone.example/rpc', {
 })
 // [!code focus:end]
 
+// 5. Make an authenticated RPC request.
 const blockNumber = await transport.request({
   method: 'eth_blockNumber',
 })
@@ -116,6 +126,7 @@ the signed fields. Use it to inspect cached credentials before deciding whether 
 import { Secp256k1 } from 'ox'
 import { ZoneId, ZoneRpcAuthentication } from 'ox/tempo'
 
+// 1. Set up and sign a short-lived token.
 const privateKey = Secp256k1.randomPrivateKey()
 const zoneId = 5
 const issuedAt = Math.floor(Date.now() / 1_000)
@@ -133,7 +144,10 @@ const serialized = ZoneRpcAuthentication.serialize(authentication, {
 })
 
 // [!code focus:start]
+// 2. Decode the cached token.
 const decoded = ZoneRpcAuthentication.deserialize(serialized)
+
+// 3. Check whether its validity window has ended.
 const isExpired = decoded.expiresAt <= Math.floor(Date.now() / 1_000) // [!code hl]
 // [!code focus:end]
 ```

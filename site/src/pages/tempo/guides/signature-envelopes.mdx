@@ -84,20 +84,26 @@ import { SignatureEnvelope } from 'ox/tempo'
 
 const payload =
   '0x1111111111111111111111111111111111111111111111111111111111111111'
+
+// 1. Create a WebAuthn credential.
 const credential = await WebAuthnP256.createCredential({
   name: 'Tempo',
 })
 // [!code focus:start]
+// 2. Sign the payload with the credential.
 const { metadata, signature } = await WebAuthnP256.sign({
   challenge: payload,
   credentialId: credential.id,
 })
+
+// 3. Preserve the WebAuthn metadata and public key in the envelope.
 const envelope = SignatureEnvelope.from({
   metadata, // [!code hl]
   publicKey: credential.publicKey, // [!code hl]
   signature,
 })
 
+// 4. Verify the normalized signature.
 const valid = SignatureEnvelope.verify(envelope, {
   payload,
   publicKey: credential.publicKey,

@@ -54,12 +54,14 @@ with the sender address.
 import { Address, Secp256k1 } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the sender and fee payer keys.
 const senderPrivateKey = Secp256k1.randomPrivateKey()
 const sender = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: senderPrivateKey }),
 )
 const feePayerPrivateKey = Secp256k1.randomPrivateKey()
 
+// 2. Build a sponsor-ready envelope.
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
@@ -72,10 +74,13 @@ const envelope = TxEnvelopeTempo.from({
 })
 
 // [!code focus:start]
+// 3. Sign the sender's transaction commitment.
 const senderSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey: senderPrivateKey,
 })
+
+// 4. Sign the fee payer commitment with the sender address.
 const feePayerSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getFeePayerSignPayload(envelope, { sender }),
   privateKey: feePayerPrivateKey,
@@ -92,11 +97,14 @@ serialize the completed envelope for `eth_sendRawTransaction`.
 import { Address, Secp256k1 } from 'ox'
 import { TxEnvelopeTempo } from 'ox/tempo'
 
+// 1. Set up the sender and fee payer keys.
 const senderPrivateKey = Secp256k1.randomPrivateKey()
 const sender = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: senderPrivateKey }),
 )
 const feePayerPrivateKey = Secp256k1.randomPrivateKey()
+
+// 2. Build a sponsor-ready envelope.
 const envelope = TxEnvelopeTempo.from({
   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
   chainId: 4217,
@@ -107,6 +115,8 @@ const envelope = TxEnvelopeTempo.from({
   nonce: 0n,
   nonceKey: 1n,
 })
+
+// 3. Produce the sender and fee payer signatures.
 const senderSignature = Secp256k1.sign({
   payload: TxEnvelopeTempo.getSignPayload(envelope),
   privateKey: senderPrivateKey,
@@ -117,10 +127,13 @@ const feePayerSignature = Secp256k1.sign({
 })
 
 // [!code focus:start]
+// 4. Attach both signatures to the envelope.
 const sponsored = TxEnvelopeTempo.from(envelope, {
   feePayerSignature,
   signature: senderSignature,
 })
+
+// 5. Serialize the completed sponsored envelope.
 const serialized = TxEnvelopeTempo.serialize(sponsored)
 // [!code focus:end]
 ```

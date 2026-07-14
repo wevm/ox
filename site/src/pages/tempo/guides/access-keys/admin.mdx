@@ -35,6 +35,7 @@ Set both `account` and `isAdmin`, then have the root key sign
 import { Address, P256, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
 
+// 1. Set up the root and admin keys.
 const rootPrivateKey = Secp256k1.randomPrivateKey()
 const rootAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
@@ -46,6 +47,7 @@ const adminAddress = Address.fromPublicKey(
 )
 
 // [!code focus:start]
+// 2. Define the account-bound admin authorization.
 const authorization = KeyAuthorization.from({
   account: rootAddress, // [!code hl]
   address: adminAddress,
@@ -54,6 +56,7 @@ const authorization = KeyAuthorization.from({
   type: 'p256',
 })
 
+// 3. Sign the authorization with the root key.
 const signedAuthorization = KeyAuthorization.from(authorization, {
   signature: SignatureEnvelope.from(
     Secp256k1.sign({
@@ -78,6 +81,7 @@ fields.
 import { Address, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
 
+// 1. Set up the root and admin keys.
 const rootPrivateKey = Secp256k1.randomPrivateKey()
 const rootAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: rootPrivateKey }),
@@ -87,6 +91,7 @@ const adminAddress = Address.fromPublicKey(
   Secp256k1.getPublicKey({ privateKey: adminPrivateKey }),
 )
 
+// 2. Define the admin authorization.
 const authorization = KeyAuthorization.from({
   account: rootAddress,
   address: adminAddress,
@@ -94,6 +99,8 @@ const authorization = KeyAuthorization.from({
   isAdmin: true,
   type: 'secp256k1',
 })
+
+// 3. Sign the authorization with the root key.
 const signedAuthorization = KeyAuthorization.from(authorization, {
   signature: SignatureEnvelope.from(
     Secp256k1.sign({
@@ -104,10 +111,12 @@ const signedAuthorization = KeyAuthorization.from(authorization, {
 })
 
 // [!code focus:start]
+// 4. Convert the signed authorization between formats.
 const serialized = KeyAuthorization.serialize(signedAuthorization)
 const restored = KeyAuthorization.deserialize(serialized)
 const rpc = KeyAuthorization.toRpc(signedAuthorization)
 
+// 5. Inspect an admin field in each format.
 restored.account === rootAddress // [!code hl]
 rpc.isAdmin === true // [!code hl]
 // [!code focus:end]

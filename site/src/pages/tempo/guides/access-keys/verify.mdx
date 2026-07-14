@@ -66,17 +66,22 @@ import { SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
 declare const serialized: TxEnvelopeTempo.Serialized
 
+// 1. Define the trusted account and access key.
 const expectedRoot = '0x1111111111111111111111111111111111111111'
 const expectedAccessKey = '0x2222222222222222222222222222222222222222'
+
+// 2. Decode the signed transaction.
 const transaction = TxEnvelopeTempo.deserialize(serialized)
 
 // [!code focus:start]
+// 3. Require a V2 keychain signature.
 if (
   transaction.signature?.type !== 'keychain' ||
   transaction.signature.version === 'v1'
 )
   throw new Error('Expected a keychain signature')
 
+// 4. Check the claimed account and recreate its signing payload.
 const accountMatches = Address.isEqual(
   transaction.signature.userAddress,
   expectedRoot,
@@ -84,6 +89,8 @@ const accountMatches = Address.isEqual(
 const payload = TxEnvelopeTempo.getSignPayload(transaction, {
   from: transaction.signature.userAddress, // [!code hl]
 })
+
+// 5. Verify the inner access-key signature.
 // [!code hl:start]
 const signatureMatches = SignatureEnvelope.verify(transaction.signature.inner, {
   address: expectedAccessKey,
@@ -108,7 +115,10 @@ import { SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
 declare const serialized: TxEnvelopeTempo.Serialized
 
+// 1. Decode the signed transaction.
 const transaction = TxEnvelopeTempo.deserialize(serialized)
+
+// 2. Require a V2 keychain signature.
 if (
   transaction.signature?.type !== 'keychain' ||
   transaction.signature.version === 'v1'
@@ -116,9 +126,12 @@ if (
   throw new Error('Expected a keychain signature')
 
 // [!code focus:start]
+// 3. Recreate the account-bound signing payload.
 const payload = TxEnvelopeTempo.getSignPayload(transaction, {
   from: transaction.signature.userAddress,
 })
+
+// 4. Extract the claimed account and access key.
 const account = SignatureEnvelope.extractAddress({
   payload,
   root: true, // [!code hl]
