@@ -45,7 +45,7 @@ Before you can create a SIWE message, you need to source the following informati
 function onClick() {
   const data = {
     address: '<connected address>', // e.g. Wagmi `useAccount()`/`getAccount()`
-    chainId: 1n,
+    chainId: 1,
     domain: window.location.host,
     nonce: '<fetched from server>', // e.g. `await getNonceFromServer()`
     uri: window.location.origin,
@@ -62,7 +62,7 @@ import { Siwe } from 'ox'
 function onClick() {
   const data = {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-    chainId: 1n,
+    chainId: 1,
     domain: 'example.com',
     nonce: '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1',
     uri: 'https://example.com/path',
@@ -94,7 +94,7 @@ import { Hex, Provider, Siwe } from 'ox'
 async function onClick() {
   const data = {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-    chainId: 1n,
+    chainId: 1,
     domain: 'example.com',
     nonce: '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1',
     uri: 'https://example.com/path',

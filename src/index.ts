@@ -2472,7 +2472,7 @@ export * as Signature from './core/Signature.js'
  *
  * Siwe.createMessage({
  *   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
- *   chainId: 1n,
+ *   chainId: 1,
  *   domain: 'example.com',
  *   nonce: 'foobarbaz',
  *   uri: 'https://example.com/path',
@@ -2544,7 +2544,7 @@ export * as Signature from './core/Signature.js'
  *   domain: 'example.com',
  *   message: {
  *     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
- *     chainId: 1n,
+ *     chainId: 1,
  *     domain: 'example.com',
  *     nonce: 'foobarbaz',
  *     uri: 'https://example.com/path',

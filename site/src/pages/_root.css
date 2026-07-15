@@ -163,6 +163,11 @@ body,
   --vocs-spacing-content: var(--max-w);
 }
 
+/* Account for the fixed banner on the landing page. */
+[data-layout='blank']:has(.landing-pattern) > [data-v-main] {
+  padding-top: var(--vocs-spacing-banner);
+}
+
 /* Landing page: tighten top padding above the header */
 [data-layout='blank']:has(.landing-pattern) [data-v-content] {
   padding-top: 2em;

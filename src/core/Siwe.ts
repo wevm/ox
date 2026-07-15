@@ -32,7 +32,7 @@ export type Message = {
   /**
    * The [EIP-155](https://eips.ethereum.org/EIPS/eip-155) Chain ID to which the session is bound,
    */
-  chainId: bigint
+  chainId: number
   /**
    * [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) authority that is requesting the signing.
    */
@@ -88,7 +88,7 @@ export type Message = {
  *
  * Siwe.createMessage({
  *   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
- *   chainId: 1n,
+ *   chainId: 1,
  *   domain: 'example.com',
  *   nonce: 'foobarbaz',
  *   uri: 'https://example.com/path',
@@ -126,7 +126,7 @@ export function createMessage(value: Message): string {
   // Validate fields
   {
     // Required fields
-    if (typeof chainId !== 'bigint' || chainId < 0n)
+    if (!Number.isInteger(chainId) || chainId < 0)
       throw new InvalidMessageFieldError({
         field: 'chainId',
         metaMessages: [
@@ -351,7 +351,7 @@ function splitUri(value: string) {
  * Issued At: 2023-02-01T00:00:00.000Z`)
  * // @log: {
  * // @log:   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
- * // @log:   chainId: 1n,
+ * // @log:   chainId: 1,
  * // @log:   domain: 'example.com',
  * // @log:   issuedAt: '2023-02-01T00:00:00.000Z',
  * // @log:   nonce: 'foobarbaz',
@@ -387,7 +387,7 @@ export function parseMessage(message: string): ExactPartial<Message> {
   return {
     ...prefix,
     ...suffix,
-    ...(chainId ? { chainId: BigInt(chainId) } : {}),
+    ...(chainId ? { chainId: Number(chainId) } : {}),
     ...(expirationTime ? { expirationTime: new Date(expirationTime) } : {}),
     ...(issuedAt ? { issuedAt: new Date(issuedAt) } : {}),
     ...(notBefore ? { notBefore: new Date(notBefore) } : {}),
@@ -410,7 +410,7 @@ export function parseMessage(message: string): ExactPartial<Message> {
  *   domain: 'example.com',
  *   message: {
  *     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
- *     chainId: 1n,
+ *     chainId: 1,
  *     domain: 'example.com',
  *     nonce: 'foobarbaz',
  *     uri: 'https://example.com/path',
