@@ -34,6 +34,11 @@ export default defineConfig({
       }
     : {}),
   accentColor: 'light-dark(#b8421d, #e85d35)',
+  banner: {
+    content: 'Looking for Ox v0? View the v0 documentation.',
+    dismissId: 'v0-docs',
+    href: 'https://v0.oxlib.sh',
+  },
   baseUrl: pkg.version.includes('-beta.')
     ? 'https://v1.oxlib.sh'
     : process.env.VERCEL_ENV === 'production'
@@ -62,6 +67,7 @@ export default defineConfig({
       { text: 'Imports & Bundle Size', link: '/imports' },
       { text: 'Error Handling', link: '/error-handling' },
       { text: 'Platform Compatibility', link: '/platform-compatibility' },
+      { text: 'Migrating from v0', link: '/migrating-from-v0' },
       {
         text: 'Guides',
         items: [
