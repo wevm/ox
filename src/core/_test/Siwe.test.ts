@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vp/test'
 describe('createMessage', () => {
   const message = {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-    chainId: 1n,
+    chainId: 1,
     domain: 'example.com',
     nonce: 'foobarbaz',
     uri: 'https://example.com/path',
@@ -277,10 +277,8 @@ describe('createMessage', () => {
   })
 
   test('behavior: invalid chainId', () => {
-    expect(() =>
-      // @ts-expect-error chain IDs must be bigint.
-      Siwe.createMessage({ ...message, chainId: 1.1 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, chainId: 1.1 }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "chainId".
 
     - Chain ID must be a EIP-155 chain ID.
@@ -478,7 +476,7 @@ Issued At: 2023-02-01T00:00:00.000Z`
     expect(parsed).toMatchInlineSnapshot(`
     {
       "address": "0xA0Cf798816D4b9b9866b5330EEa46a18382f251e",
-      "chainId": 1n,
+      "chainId": 1,
       "domain": "example.com",
       "issuedAt": 2023-02-01T00:00:00.000Z,
       "nonce": "foobarbaz",
@@ -626,7 +624,7 @@ Request ID: 123e4567-e89b-12d3-a456-426614174000`
     const parsed = Siwe.parseMessage(message)
     expect(parsed).toMatchInlineSnapshot(`
     {
-      "chainId": 1n,
+      "chainId": 1,
       "issuedAt": 2023-02-01T00:00:00.000Z,
       "nonce": "foobarbaz",
       "requestId": "123e4567-e89b-12d3-a456-426614174000",
@@ -646,7 +644,7 @@ Request ID: 123e4567-e89b-12d3-a456-426614174000`
 describe('validateMessage', () => {
   const message = {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-    chainId: 1n,
+    chainId: 1,
     domain: 'example.com',
     nonce: 'foobarbaz',
     uri: 'https://example.com/path',
