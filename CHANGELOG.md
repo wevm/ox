@@ -1,5 +1,11 @@
 # ox
 
+## 1.0.2
+
+### Patch Changes
+
+- [#303](https://github.com/wevm/ox/pull/303) [`34b28be`](https://github.com/wevm/ox/commit/34b28be6bb9be1059d277a30ba9c746044be53f2) Thanks [@tmm](https://github.com/tmm)! - Bumped ABIType version.
+
 ## 1.0.1
 
 ### Patch Changes
