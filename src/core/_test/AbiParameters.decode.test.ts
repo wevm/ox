@@ -443,6 +443,19 @@ describe('dynamic', () => {
       expect(result).toEqual([''])
     })
 
+    test('leading NUL byte', () => {
+      const result = AbiParameters.decode(
+        AbiParameters.from('string'),
+        '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000030061620000000000000000000000000000000000000000000000000000000000',
+      )
+      assertType<readonly [string]>(result)
+      expect(result).toMatchInlineSnapshot(`
+        [
+          "\u0000ab",
+        ]
+      `)
+    })
+
     test('default', () => {
       expect(
         AbiParameters.decode(

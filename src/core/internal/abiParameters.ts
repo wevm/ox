@@ -407,7 +407,7 @@ export function decodeString(
   }
 
   const data = cursor.readBytes(length, 32)
-  const value = Bytes.toString(Bytes.trimLeft(data))
+  const value = Bytes.toString(data)
 
   // As we have gone wondering, restore to the original position + next slot.
   cursor.setPosition(staticPosition + 32)
@@ -419,7 +419,6 @@ export declare namespace decodeString {
   type ErrorType =
     | Bytes.toNumber.ErrorType
     | Bytes.toString.ErrorType
-    | Bytes.trimLeft.ErrorType
     | Errors.GlobalErrorType
 }
 
