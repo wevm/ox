@@ -1,5 +1,13 @@
 # ox
 
+## 1.0.1
+
+### Patch Changes
+
+- [#301](https://github.com/wevm/ox/pull/301) [`1815469`](https://github.com/wevm/ox/commit/1815469020647e4343cd31e078b49f04cceac614) Thanks [@jxom](https://github.com/jxom)! - Preserved leading NUL bytes when decoding ABI `string` values.
+
+- [#300](https://github.com/wevm/ox/pull/300) [`1074bb3`](https://github.com/wevm/ox/commit/1074bb3d7b0a750435c24345c12c46c820695cad) Thanks [@jxom](https://github.com/jxom)! - Restored number-valued SIWE chain IDs for message creation and parsing.
+
 ## 1.0.0
 
 ### Major Changes
