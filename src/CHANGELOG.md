@@ -1,5 +1,17 @@
 # ox
 
+## 0.14.31
+
+### Patch Changes
+
+- [#306](https://github.com/wevm/ox/pull/306) [`e13c054`](https://github.com/wevm/ox/commit/e13c054ecd0adf319e2b306400e1564c67051e5a) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Updated multisig implementation.
+
+- [#286](https://github.com/wevm/ox/pull/286) [`56f299f`](https://github.com/wevm/ox/commit/56f299f6c046aea41b55e64f7993b831a206c47c) Thanks [@jxom](https://github.com/jxom)! - Added `eth_getRawTransactionByHash` to `RpcSchema.Eth`.
+
+- [#291](https://github.com/wevm/ox/pull/291) [`5ebb88d`](https://github.com/wevm/ox/commit/5ebb88dfc6139573844d9c6b97eed8c463ee1d3a) Thanks [@jxom](https://github.com/jxom)! - Fixed `KeyAuthorization.fromRpc` return type mismatch under TypeScript configs without `exactOptionalPropertyTypes`.
+
+- [#284](https://github.com/wevm/ox/pull/284) [`c86f635`](https://github.com/wevm/ox/commit/c86f6350f199a0f5a9705083ad545da760e1f5c4) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.encode` and `AbiParameters.decode` handling of zero-width types (zero-length fixed arrays and empty tuples).
+
 ## 0.14.30
 
 ### Patch Changes
