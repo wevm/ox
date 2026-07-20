@@ -140,4 +140,29 @@ describe('KeyAuthorization', () => {
       } as never).success,
     ).toBe(false)
   })
+
+  test('rejects multisig signatures', () => {
+    const multisigRpc = {
+      account: '0x1111111111111111111111111111111111111111',
+      signatures: [rpc.signature],
+    } as const
+    expect(
+      z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
+        ...rpc,
+        signature: multisigRpc,
+      } as never).success,
+    ).toBe(false)
+
+    const authorization = core_KeyAuthorization.fromRpc(rpc)
+    expect(
+      z.safeEncode(z_KeyAuthorization.KeyAuthorization, {
+        ...authorization,
+        signature: {
+          account: multisigRpc.account,
+          signatures: [authorization.signature],
+          type: 'multisig',
+        },
+      } as never).success,
+    ).toBe(false)
+  })
 })
