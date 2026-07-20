@@ -1,5 +1,11 @@
 # ox
 
+## 1.0.3
+
+### Patch Changes
+
+- [#305](https://github.com/wevm/ox/pull/305) [`7355d1d`](https://github.com/wevm/ox/commit/7355d1d5758df61949563d6d46f3f8b41324331c) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Updated multisig implementation.
+
 ## 1.0.2
 
 ### Patch Changes
