@@ -53,6 +53,12 @@ const signature_webauthn = SignatureEnvelope.from({
   },
 })
 
+const signature_multisig = SignatureEnvelope.from({
+  account: address,
+  signatures: [SignatureEnvelope.from(signature_secp256k1)],
+  type: 'multisig',
+})
+
 describe('from', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
@@ -416,9 +422,56 @@ describe('from', () => {
       }
     `)
   })
+
+  test('rejects a multisig signature', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+
+    expect(() =>
+      KeyAuthorization.from(authorization, {
+        signature: signature_multisig as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`multisig\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, or \`webAuthn\`.]`,
+    )
+
+    expect(() =>
+      KeyAuthorization.from(authorization, {
+        signature: SignatureEnvelope.serialize(signature_multisig),
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`multisig\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, or \`webAuthn\`.]`,
+    )
+
+    expect(() =>
+      KeyAuthorization.from({
+        ...authorization,
+        signature: signature_multisig,
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`multisig\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, or \`webAuthn\`.]`,
+    )
+  })
 })
 
 describe('fromRpc', () => {
+  test('rejects a multisig signature', () => {
+    expect(() =>
+      KeyAuthorization.fromRpc({
+        chainId: '0x1',
+        expiry: null,
+        keyId: address,
+        keyType: 'secp256k1',
+        signature: SignatureEnvelope.toRpc(signature_multisig),
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`multisig\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, or \`webAuthn\`.]`,
+    )
+  })
+
   test('secp256k1', () => {
     const authorization = KeyAuthorization.fromRpc({
       chainId: '0x1',

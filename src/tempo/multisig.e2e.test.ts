@@ -456,7 +456,7 @@ describe('behavior: multisig (TIP-1061)', () => {
     expect(updateReceipt.status).toBe('reverted')
   })
 
-  test('behavior: rejects `keyAuthorization` on multisig transactions', async () => {
+  test('behavior: rejects owner-signed `keyAuthorization` executed by multisig during bootstrap', async () => {
     const { account, genesisConfig, ownerKeys } = setup({
       count: 1,
       threshold: 1,
@@ -514,6 +514,69 @@ describe('behavior: multisig (TIP-1061)', () => {
         method: 'eth_sendRawTransactionSync',
         params: [serialized_signed],
       }),
-    ).rejects.toThrow()
+    ).rejects.toThrow(
+      'native multisig transactions cannot carry key_authorization',
+    )
+  })
+
+  test('behavior: rejects owner-signed `keyAuthorization` executed by access key before bootstrap', async () => {
+    const { account, ownerKeys } = setup({
+      count: 1,
+      threshold: 1,
+    })
+
+    await fundAddress(client, { address: account })
+
+    const access = (() => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      return { address, privateKey } as const
+    })()
+
+    const keyAuth = KeyAuthorization.from({
+      address: access.address,
+      chainId: BigInt(chainId),
+      type: 'secp256k1',
+    })
+    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+      signature: SignatureEnvelope.from(
+        Secp256k1.sign({
+          payload: KeyAuthorization.getSignPayload(keyAuth),
+          privateKey: ownerKeys[0]!.privateKey,
+        }),
+      ),
+    })
+
+    const bootstrap = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuth_signed,
+      nonce: 0n,
+      gas: 5_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(bootstrap, { from: account }),
+      privateKey: access.privateKey,
+    })
+    const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
+      signature: SignatureEnvelope.from({
+        userAddress: account,
+        inner: SignatureEnvelope.from(signature),
+        type: 'keychain',
+      }),
+    })
+
+    await expect(
+      client.request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
+      }),
+    ).rejects.toThrow('admin-signed key authorization account mismatch')
   })
 })

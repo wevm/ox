@@ -38,7 +38,7 @@ export const Rpc = z.object({
   keyId: z_Address.Address,
   keyType: z_SignatureEnvelope.Type,
   limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
-  signature: z_SignatureEnvelope.Rpc,
+  signature: z_SignatureEnvelope.PrimitiveRpc,
   witness: z.optional(z.nullable(z_Hex.Hex)),
 })
 
@@ -69,7 +69,7 @@ const domainShape = {
   expiry: z.optional(z.number()),
   limits: z.optional(z.readonly(z.array(TokenLimit))),
   scopes: z.optional(z.readonly(z.array(Scope))),
-  signature: z_SignatureEnvelope.Domain,
+  signature: z_SignatureEnvelope.Primitive,
   type: z_SignatureEnvelope.Type,
   witness: z.optional(z_Hex.Hex),
 }

@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from 'vp/test'
-import type * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const signature = {
   r: '0x01',
@@ -7,6 +7,21 @@ const signature = {
   type: 'secp256k1',
   yParity: '0x0',
 } as const satisfies SignatureEnvelope.SignatureEnvelopeRpc
+
+const signatureDomain = {
+  signature: {
+    r: '0x01',
+    s: '0x02',
+    yParity: 0,
+  },
+  type: 'secp256k1',
+} as const satisfies SignatureEnvelope.Secp256k1
+
+test('toRpc preserves the signature type', () => {
+  expectTypeOf(
+    SignatureEnvelope.toRpc(signatureDomain),
+  ).toEqualTypeOf<SignatureEnvelope.Secp256k1Rpc>()
+})
 
 test('MultisigRpc uses static initialized and bootstrap shapes', () => {
   const initialized = {

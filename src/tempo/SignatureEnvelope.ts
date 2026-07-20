@@ -134,6 +134,14 @@ export type SignatureEnvelopeRpc = OneOf<
   Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc | MultisigRpc
 >
 
+/** Primitive signature envelope accepted by protocol sidecars. */
+export type Primitive<numberType = number> = OneOf<
+  Secp256k1<numberType> | P256<numberType> | WebAuthn<numberType>
+>
+
+/** RPC-formatted primitive signature envelope. */
+export type PrimitiveRpc = OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc>
+
 /**
  * Keychain signature version.
  *
@@ -1582,7 +1590,9 @@ export declare namespace sortMultisigApprovals {
  * @param envelope - The signature envelope to convert.
  * @returns The RPC signature envelope with hex values.
  */
-export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
+export function toRpc<const envelope extends toRpc.Input>(
+  envelope: envelope,
+): toRpc.ReturnType<envelope> {
   const type = getType(envelope)
 
   if (type === 'secp256k1') {
@@ -1590,7 +1600,7 @@ export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
     return {
       ...Signature.toRpc(secp256k1.signature),
       type: 'secp256k1',
-    }
+    } as never
   }
 
   if (type === 'p256') {
@@ -1602,7 +1612,7 @@ export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
       r: p256.signature.r,
       s: p256.signature.s,
       type: 'p256',
-    }
+    } as never
   }
 
   if (type === 'webAuthn') {
@@ -1619,7 +1629,7 @@ export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
       s: webauthn.signature.s,
       type: 'webAuthn',
       webauthnData,
-    }
+    } as never
   }
 
   if (type === 'keychain') {
@@ -1630,7 +1640,7 @@ export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
       signature: toRpc(keychain.inner),
       ...(keychain.keyId ? { keyId: keychain.keyId } : {}),
       ...(keychain.version ? { version: keychain.version } : {}),
-    }
+    } as never
   }
 
   if (type === 'multisig') {
@@ -1650,12 +1660,12 @@ export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
       return {
         init,
         signatures,
-      }
+      } as never
     }
     return {
       account: multisig.account,
       signatures,
-    }
+    } as never
   }
 
   throw new CoercionError({ envelope })
@@ -1664,6 +1674,20 @@ export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
 export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#SignatureEnvelope.(toRpc:function)}. */
   type Input = SignatureEnvelope<Hex.Hex | number>
+
+  /** RPC signature envelope inferred from the input type. */
+  type ReturnType<envelope extends Input = Input> =
+    GetType<envelope> extends 'secp256k1'
+      ? Secp256k1Rpc
+      : GetType<envelope> extends 'p256'
+        ? P256Rpc
+        : GetType<envelope> extends 'webAuthn'
+          ? WebAuthnRpc
+          : GetType<envelope> extends 'keychain'
+            ? KeychainRpc
+            : GetType<envelope> extends 'multisig'
+              ? MultisigRpc
+              : SignatureEnvelopeRpc
 
   type ErrorType =
     | assert.ErrorType

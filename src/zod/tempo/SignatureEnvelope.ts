@@ -68,6 +68,9 @@ export const WebAuthnRpc = z.object({
   webauthnData: z_Hex.Hex,
 })
 
+/** RPC primitive signature envelope schema. */
+export const PrimitiveRpc = z.union([Secp256k1Rpc, P256Rpc, WebAuthnRpc])
+
 /** RPC keychain signature envelope schema. */
 export const KeychainRpc = z.object({
   keyId: z.optional(z_Address.Address),
@@ -164,6 +167,9 @@ export const WebAuthn = z.object({
   signature: Signature,
   type: z.literal('webAuthn'),
 })
+
+/** Primitive signature envelope schema. */
+export const Primitive = z.union([Secp256k1, P256, WebAuthn])
 
 /** Keychain signature envelope schema. */
 export const Keychain = z.object({
