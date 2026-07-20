@@ -2886,18 +2886,45 @@ describe('multisig', () => {
     expect(SignatureEnvelope.deserialize(serialized)).toEqual(envelope)
   })
 
-  test('deserialize: rejects the empty `init` placeholder (`0x80`)', () => {
-    const withPlaceholder = Hex.concat(
+  test('deserialize: rejects the legacy three-field wire shape', () => {
+    const init = MultisigConfig.toTuple({
+      threshold: 1,
+      owners: [
+        { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+      ],
+    })
+    const legacy = Hex.concat(
       '0x05',
-      Rlp.fromHex([account, [SignatureEnvelope.serialize(innerP256)], '0x']),
+      Rlp.fromHex([account, [SignatureEnvelope.serialize(innerP256)], init]),
     )
-    expect(() => SignatureEnvelope.deserialize(withPlaceholder)).toThrowError(
+    expect(() => SignatureEnvelope.deserialize(legacy)).toThrowError(
+      SignatureEnvelope.InvalidSerializedError,
+    )
+  })
+
+  test('deserialize: rejects an invalid initialized account', () => {
+    const malformed = Hex.concat(
+      '0x05',
+      Rlp.fromHex(['0x11', [SignatureEnvelope.serialize(innerP256)]]),
+    )
+    expect(() => SignatureEnvelope.deserialize(malformed)).toThrowError(
       SignatureEnvelope.InvalidSerializedError,
     )
   })
 
   test('getType', () => {
     expect(SignatureEnvelope.getType(envelope)).toBe('multisig')
+    expect(
+      SignatureEnvelope.getType({
+        init: {
+          threshold: 1,
+          owners: [
+            { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+          ],
+        },
+        signatures: [innerP256],
+      } as never),
+    ).toBe('multisig')
   })
 
   test('extractAddress returns the multisig account', () => {
@@ -2910,15 +2937,82 @@ describe('multisig', () => {
   })
 
   test('toRpc/fromRpc round-trip', () => {
-    const rpc = SignatureEnvelope.toRpc(envelope)
-    expect(rpc.type).toBe('multisig')
+    const rpc = SignatureEnvelope.toRpc(
+      envelope,
+    ) as SignatureEnvelope.MultisigRpc
+    expect(rpc).toMatchObject({
+      account,
+      signatures: [{ type: 'secp256k1' }, { type: 'p256' }],
+    })
+    expect(rpc.init).toBeUndefined()
+    expect('type' in rpc).toBe(false)
     expect(SignatureEnvelope.fromRpc(rpc)).toEqual(envelope)
+    expect(
+      SignatureEnvelope.fromRpc({ ...rpc, type: 'multisig' } as never),
+    ).toEqual(envelope)
   })
 
   test('assert: missing properties', () => {
     expect(() =>
       SignatureEnvelope.assert({ type: 'multisig', account } as never),
     ).toThrowError()
+  })
+
+  test('assert: rejects empty owner approvals', () => {
+    expect(() =>
+      SignatureEnvelope.assert({
+        type: 'multisig',
+        account,
+        signatures: [],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig signatures cannot be empty.]`,
+    )
+  })
+
+  test('assert: accepts at most eight owner approvals', () => {
+    expect(() =>
+      SignatureEnvelope.assert({
+        type: 'multisig',
+        account,
+        signatures: Array.from(
+          { length: MultisigConfig.maxSignatures },
+          () => innerP256,
+        ),
+      }),
+    ).not.toThrow()
+
+    expect(() =>
+      SignatureEnvelope.assert({
+        type: 'multisig',
+        account,
+        signatures: Array.from(
+          { length: MultisigConfig.maxSignatures + 1 },
+          () => innerP256,
+        ),
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig signatures exceed 8.]`,
+    )
+  })
+
+  test('assert: rejects oversized owner approvals', () => {
+    const oversized = {
+      ...signature_webauthn,
+      metadata: {
+        ...signature_webauthn.metadata,
+        clientDataJSON: JSON.stringify({ value: 'x'.repeat(2048) }),
+      },
+    }
+    expect(() =>
+      SignatureEnvelope.assert({
+        type: 'multisig',
+        account,
+        signatures: [oversized],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig owner signature exceeds 2049 bytes.]`,
+    )
   })
 
   test('assert: rejects keychain owner approvals', () => {
@@ -2952,6 +3046,15 @@ describe('multisig', () => {
     })
 
     test('assert: accepts the maximum nesting depth', () => {
+      const depth2 = SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        signatures: [nested],
+      })
+      expect(() => SignatureEnvelope.assert(depth2)).not.toThrowError()
+    })
+
+    test('assert: rejects nesting deeper than the maximum', () => {
       const depth3 = SignatureEnvelope.from({
         type: 'multisig',
         account,
@@ -2963,31 +3066,24 @@ describe('multisig', () => {
           }),
         ],
       })
-      expect(() => SignatureEnvelope.assert(depth3)).not.toThrowError()
+      expect(() =>
+        SignatureEnvelope.assert(depth3),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig nesting depth exceeds 2.]`,
+      )
     })
 
-    test('assert: rejects nesting deeper than the maximum', () => {
-      const depth4 = SignatureEnvelope.from({
-        type: 'multisig',
-        account,
-        signatures: [
-          SignatureEnvelope.from({
-            type: 'multisig',
-            account: nestedAccount,
-            signatures: [
-              SignatureEnvelope.from({
-                type: 'multisig',
-                account: nestedAccount,
-                signatures: [nested],
-              }),
-            ],
-          }),
-        ],
-      })
-      expect(() =>
-        SignatureEnvelope.assert(depth4),
-      ).toThrowErrorMatchingInlineSnapshot(
-        `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig nesting depth exceeds 3.]`,
+    test('deserialize: rejects nesting deeper than the maximum during decode', () => {
+      const primitive = SignatureEnvelope.serialize(innerP256)
+      const depth1 = Hex.concat(
+        '0x05',
+        Rlp.fromHex([nestedAccount, [primitive]]),
+      )
+      const depth2 = Hex.concat('0x05', Rlp.fromHex([nestedAccount, [depth1]]))
+      const depth3 = Hex.concat('0x05', Rlp.fromHex([account, [depth2]]))
+
+      expect(() => SignatureEnvelope.deserialize(depth3)).toThrowError(
+        SignatureEnvelope.InvalidSerializedError,
       )
     })
 
@@ -3023,10 +3119,11 @@ describe('multisig', () => {
         },
       ],
     }
+    const bootstrapAccount = MultisigConfig.getAddress(init)
 
     const bootstrapEnvelope = SignatureEnvelope.from({
       type: 'multisig',
-      account,
+      account: bootstrapAccount,
       signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
       init,
     })
@@ -3038,12 +3135,68 @@ describe('multisig', () => {
       )
     })
 
+    test('deserialize: validates bootstrap init semantics', () => {
+      const invalid = Hex.concat(
+        '0x05',
+        Rlp.fromHex([
+          [MultisigConfig.zeroSalt, '0x01', []],
+          [SignatureEnvelope.serialize(innerP256)],
+        ]),
+      )
+      expect(() => SignatureEnvelope.deserialize(invalid)).toThrowError(
+        MultisigConfig.InvalidConfigError,
+      )
+    })
+
+    test('deserialize: rejects noncanonical bootstrap field widths', () => {
+      const signatures = [SignatureEnvelope.serialize(innerP256)]
+      const shortSalt = Hex.concat(
+        '0x05',
+        Rlp.fromHex([
+          [`0x${'00'.repeat(31)}`, '0x01', [[init.owners[0]!.owner, '0x01']]],
+          signatures,
+        ]),
+      )
+      const wideThreshold = Hex.concat(
+        '0x05',
+        Rlp.fromHex([
+          [init.salt, '0x0001', [[init.owners[0]!.owner, '0x01']]],
+          signatures,
+        ]),
+      )
+      const wideWeight = Hex.concat(
+        '0x05',
+        Rlp.fromHex([
+          [init.salt, '0x01', [[init.owners[0]!.owner, '0x0001']]],
+          signatures,
+        ]),
+      )
+
+      for (const serialized of [shortSalt, wideThreshold, wideWeight])
+        expect(() => SignatureEnvelope.deserialize(serialized)).toThrowError(
+          SignatureEnvelope.InvalidSerializedError,
+        )
+    })
+
+    test('serialize: wire shape is `0x05 || rlp([init, signatures])`', () => {
+      const serialized = SignatureEnvelope.serialize(bootstrapEnvelope)
+      const [address] = Rlp.toHex(Hex.slice(serialized, 1)) as readonly [
+        MultisigConfig.Tuple,
+        readonly Hex.Hex[],
+      ]
+      expect(MultisigConfig.fromTuple(address)).toEqual(init)
+    })
+
     test('serialize/deserialize round-trip preserves non-zero salt', () => {
+      const saltedInit = {
+        ...init,
+        salt: `0x${'42'.repeat(32)}` as const,
+      }
       const salted = SignatureEnvelope.from({
         type: 'multisig',
-        account,
+        account: MultisigConfig.getAddress(saltedInit),
         signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
-        init: { ...init, salt: `0x${'42'.repeat(32)}` },
+        init: saltedInit,
       })
       const serialized = SignatureEnvelope.serialize(salted)
       const deserialized = SignatureEnvelope.deserialize(
@@ -3066,27 +3219,52 @@ describe('multisig', () => {
     })
 
     test('toRpc/fromRpc round-trip with init', () => {
-      const rpc = SignatureEnvelope.toRpc(bootstrapEnvelope)
+      const rpc = SignatureEnvelope.toRpc(
+        bootstrapEnvelope,
+      ) as SignatureEnvelope.MultisigRpc
       expect(rpc.init).toEqual(init)
+      expect(rpc.account).toBeUndefined()
+      expect('type' in rpc).toBe(false)
       expect(SignatureEnvelope.fromRpc(rpc)).toEqual(bootstrapEnvelope)
     })
 
-    test('toRpc encodes owner approvals as serialized hex (node `Vec<Bytes>`)', () => {
+    test('toRpc encodes owner approvals as structured RPC envelopes', () => {
       const multisig = bootstrapEnvelope as SignatureEnvelope.Multisig
       const rpc = SignatureEnvelope.toRpc(
         multisig,
       ) as SignatureEnvelope.MultisigRpc
       expect(rpc.signatures).toEqual(
-        multisig.signatures.map((s) => SignatureEnvelope.serialize(s)),
+        multisig.signatures.map((signature) =>
+          SignatureEnvelope.toRpc(signature),
+        ),
       )
     })
 
     test('fromRpc detects multisig by shape (no `type` field)', () => {
       const rpc = SignatureEnvelope.toRpc(bootstrapEnvelope)
-      // The node omits the `type` discriminant; detection is shape-based.
-      const { type: _type, ...untyped } = rpc
-      expect(SignatureEnvelope.fromRpc(untyped as never)).toEqual(
+      expect(SignatureEnvelope.fromRpc(rpc)).toEqual(bootstrapEnvelope)
+    })
+
+    test('fromRpc accepts the opposite static property as undefined', () => {
+      const rpc = SignatureEnvelope.toRpc(
         bootstrapEnvelope,
+      ) as SignatureEnvelope.MultisigRpc
+      expect(
+        SignatureEnvelope.fromRpc({ ...rpc, account: undefined } as never),
+      ).toEqual(bootstrapEnvelope)
+    })
+
+    test('fromRpc rejects the legacy combined account and init shape', () => {
+      const rpc = SignatureEnvelope.toRpc(
+        bootstrapEnvelope,
+      ) as SignatureEnvelope.MultisigRpc
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          account: bootstrapAccount,
+        } as never),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: RPC multisig must contain exactly one of \`account\` or \`init\`.]`,
       )
     })
 
@@ -3094,11 +3272,24 @@ describe('multisig', () => {
       expect(() =>
         SignatureEnvelope.assert({
           type: 'multisig',
-          account,
-          signatures: [],
+          account: bootstrapAccount,
+          signatures: [innerP256],
           init: { threshold: 1, owners: [] },
         } as never),
       ).toThrowError()
+    })
+
+    test('assert: init must derive the supplied account', () => {
+      expect(() =>
+        SignatureEnvelope.assert({
+          type: 'multisig',
+          account,
+          signatures: [innerP256],
+          init,
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig init does not derive account.]`,
+      )
     })
   })
 })

@@ -154,7 +154,12 @@ describe('assert / validate', () => {
       owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
       weight: 1,
     }))
-    expect(MultisigConfig.validate({ threshold: 255, owners })).toBe(true)
+    expect(
+      MultisigConfig.validate({
+        threshold: MultisigConfig.maxThreshold,
+        owners,
+      }),
+    ).toBe(true)
   })
 
   test('too many owners', () => {
@@ -174,6 +179,24 @@ describe('assert / validate', () => {
     ).toBe(false)
   })
 
+  test('threshold exceeds protocol maximum', () => {
+    expect(
+      MultisigConfig.validate({
+        threshold: MultisigConfig.maxThreshold + 1,
+        owners: [{ owner: owner1, weight: MultisigConfig.maxThreshold + 1 }],
+      }),
+    ).toBe(false)
+  })
+
+  test('fractional threshold', () => {
+    expect(
+      MultisigConfig.validate({
+        threshold: 1.5,
+        owners: [{ owner: owner1, weight: 2 }],
+      }),
+    ).toBe(false)
+  })
+
   test('threshold exceeds total weight', () => {
     expect(
       MultisigConfig.validate({
@@ -186,7 +209,7 @@ describe('assert / validate', () => {
   test('total weight exceeds u8 max', () => {
     expect(
       MultisigConfig.validate({
-        threshold: 255,
+        threshold: MultisigConfig.maxThreshold,
         owners: [
           { owner: owner1, weight: 128 },
           { owner: owner2, weight: 128 },
@@ -200,6 +223,15 @@ describe('assert / validate', () => {
       MultisigConfig.validate({
         threshold: 1,
         owners: [{ owner: owner1, weight: 0 }],
+      }),
+    ).toBe(false)
+  })
+
+  test('fractional owner weight', () => {
+    expect(
+      MultisigConfig.validate({
+        threshold: 1,
+        owners: [{ owner: owner1, weight: 1.5 }],
       }),
     ).toBe(false)
   })

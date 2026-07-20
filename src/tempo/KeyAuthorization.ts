@@ -3,7 +3,7 @@ import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type { Compute, OneOf } from '../core/internal/types.js'
+import type { Compute, OneOf, UnionPartialBy } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
@@ -81,10 +81,10 @@ export type KeyAuthorization<
   | {}
 > &
   (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.Primitive<bigintType, numberType> }
     : {
         signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+          | SignatureEnvelope.Primitive<bigintType, numberType>
           | undefined
       })
 
@@ -114,8 +114,8 @@ export type Rpc = {
   keyType: SignatureEnvelope.Type
   /** Token spending limits. */
   limits?: readonly RpcTokenLimit[] | undefined
-  /** Signature envelope. */
-  signature: SignatureEnvelope.SignatureEnvelopeRpc
+  /** Primitive signature authorizing this key. */
+  signature: SignatureEnvelope.PrimitiveRpc
   /** Optional 32-byte witness (hex). */
   witness?: Hex.Hex | null | undefined
 }
@@ -145,6 +145,11 @@ export type Signed<
   numberType = number,
   addressType = Address.Address,
 > = KeyAuthorization<true, bigintType, numberType, addressType>
+
+type PrimitiveSignatureValue =
+  | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
+  | SignatureEnvelope.Secp256k1Flat
+  | SignatureEnvelope.Serialized
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
@@ -403,7 +408,7 @@ export type TokenLimit<
  */
 export function from<
   const authorization extends Input | Rpc,
-  const signature extends SignatureEnvelope.from.Value | undefined = undefined,
+  const signature extends PrimitiveSignatureValue | undefined = undefined,
 >(
   authorization: authorization | KeyAuthorization,
   options: from.Options<signature> = {},
@@ -418,6 +423,7 @@ export function from<
     }[]
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
+  if (auth.signature) assertSignature(auth.signature)
   const resolved = {
     ...auth,
     address: TempoAddress.resolve(auth.address as TempoAddress.Address),
@@ -446,41 +452,51 @@ export function from<
         }
       : {}),
   }
-  if (options.signature)
+  if (options.signature) {
+    const signature = SignatureEnvelope.from(
+      options.signature,
+    ) as SignatureEnvelope.SignatureEnvelope
+    assertSignature(signature)
     return {
       ...resolved,
-      signature: SignatureEnvelope.from(options.signature),
+      signature,
     } as never
+  }
   return resolved as never
 }
 
 export declare namespace from {
   type Options<
-    signature extends SignatureEnvelope.from.Value | undefined =
-      | SignatureEnvelope.from.Value
+    signature extends PrimitiveSignatureValue | undefined =
+      | PrimitiveSignatureValue
       | undefined,
   > = {
-    /** The {@link ox#SignatureEnvelope.SignatureEnvelope} to attach to the Key Authorization. */
-    signature?: signature | SignatureEnvelope.SignatureEnvelope | undefined
+    /** The primitive signature to attach to the Key Authorization. */
+    signature?: signature | SignatureEnvelope.Primitive | undefined
   }
 
   type ReturnType<
     authorization extends KeyAuthorization | Input | Rpc = KeyAuthorization,
-    signature extends SignatureEnvelope.from.Value | undefined =
-      | SignatureEnvelope.from.Value
+    signature extends PrimitiveSignatureValue | undefined =
+      | PrimitiveSignatureValue
       | undefined,
   > = Compute<
     authorization extends Rpc
       ? Signed
       : TempoAddress.ResolveAddresses<
           authorization &
-            (signature extends SignatureEnvelope.from.Value
-              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+            (signature extends PrimitiveSignatureValue
+              ? {
+                  signature: Extract<
+                    SignatureEnvelope.from.ReturnValue<signature>,
+                    SignatureEnvelope.Primitive
+                  >
+                }
               : {})
         >
   >
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
 }
 
 /**
@@ -515,6 +531,7 @@ export function fromRpc(authorization: Rpc): Signed {
   const isAdmin = authorization.isAdmin ?? undefined
   const account = authorization.account ?? undefined
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
+  assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Unflatten nested allowedCalls into flat scopes
@@ -560,7 +577,7 @@ export function fromRpc(authorization: Rpc): Signed {
 }
 
 export declare namespace fromRpc {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
 }
 
 /**
@@ -692,8 +709,11 @@ export function fromTuple<const tuple extends Tuple>(
     ...(witness !== undefined ? { witness } : {}),
     ...adminPair,
   }
-  if (signatureSerialized)
-    args.signature = SignatureEnvelope.deserialize(signatureSerialized)
+  if (signatureSerialized) {
+    const signature = SignatureEnvelope.deserialize(signatureSerialized)
+    assertSignature(signature)
+    args.signature = signature
+  }
   return from(args) as never
 }
 
@@ -702,7 +722,7 @@ export declare namespace fromTuple {
     KeyAuthorization<authorization extends Tuple<true> ? true : false>
   >
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
 }
 
 /**
@@ -906,6 +926,7 @@ export function toRpc(authorization: Signed): Rpc {
     isAdmin,
     account,
   } = authorization
+  assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
@@ -942,7 +963,9 @@ export function toRpc(authorization: Signed): Rpc {
       limit: Hex.fromNumber(limit),
       ...(period ? { period: numberToHex(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(signature),
+    signature: SignatureEnvelope.toRpc(
+      signature,
+    ) as SignatureEnvelope.PrimitiveRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -951,7 +974,7 @@ export function toRpc(authorization: Signed): Rpc {
 }
 
 export declare namespace toRpc {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
 }
 
 /**
@@ -999,9 +1022,11 @@ export function toTuple<const authorization extends KeyAuthorization>(
     account,
   } = authorization
   if (witness !== undefined) assertWitness(witness)
-  const signature = authorization.signature
-    ? SignatureEnvelope.serialize(authorization.signature)
-    : undefined
+  const signature = (() => {
+    if (!authorization.signature) return undefined
+    assertSignature(authorization.signature)
+    return SignatureEnvelope.serialize(authorization.signature)
+  })()
   const type = (() => {
     switch (authorization.type) {
       case 'secp256k1':
@@ -1097,7 +1122,7 @@ export declare namespace toTuple {
   type ReturnType<authorization extends KeyAuthorization = KeyAuthorization> =
     Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
 }
 
 function bigintToHex(value: bigint): Hex.Hex {
@@ -1135,6 +1160,13 @@ function assertWitness(witness: Hex.Hex): void {
   if (Hex.size(witness) !== 32) throw new InvalidWitnessSizeError(witness)
 }
 
+function assertSignature<bigintType, numberType>(
+  signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>,
+): asserts signature is SignatureEnvelope.Primitive<bigintType, numberType> {
+  if (signature.type === 'keychain' || signature.type === 'multisig')
+    throw new InvalidSignatureTypeError(signature.type)
+}
+
 function isAbsent(value: unknown): boolean {
   return value === undefined || value === '0x'
 }
@@ -1155,6 +1187,16 @@ export class InvalidAdminMarkerError extends Error {
   constructor(marker: Hex.Hex) {
     super(
       `Admin marker \`${marker}\` is invalid; expected \`0x01\` (TIP-1049).`,
+    )
+  }
+}
+
+/** Thrown when a key authorization contains a non-primitive signature. */
+export class InvalidSignatureTypeError extends Error {
+  override readonly name = 'KeyAuthorization.InvalidSignatureTypeError'
+  constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
+    super(
+      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, or \`webAuthn\`.`,
     )
   }
 }

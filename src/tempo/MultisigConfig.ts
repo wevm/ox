@@ -8,13 +8,19 @@ import type { Compute, OneOf } from '../core/internal/types.js'
 /** Maximum number of owners allowed in a native multisig config. */
 export const maxOwners = 255
 
+/** Maximum threshold accepted by a native multisig config. */
+export const maxThreshold = 8
+
+/** Maximum number of owner approvals in a native multisig signature. */
+export const maxSignatures = maxThreshold
+
 /**
  * Maximum number of native multisig signatures in one nested authorization
  * path, including the top-level transaction signature.
  */
-export const maxNestingDepth = 3
+export const maxNestingDepth = 2
 
-/** Maximum encoded byte length for one primitive owner approval. */
+/** Maximum encoded byte length for one owner approval. */
 export const maxOwnerSignatureBytes = 2049
 
 /** Tempo signature type byte for native multisig signatures. */
@@ -65,8 +71,8 @@ export type Tuple = readonly [
  *
  * Mirrors the Tempo `InitMultisig::validate` rules: owners non-empty and
  * `<= maxOwners`, strictly ascending unique nonzero owner addresses, nonzero
- * owner weights, `threshold >= 1`, total weight `<= 255` (u8 max), and
- * `threshold <= total weight`.
+ * integer owner weights, integer `threshold` between `1` and `maxThreshold`,
+ * total weight `<= 255` (u8 max), and `threshold <= total weight`.
  *
  * @example
  * ```ts twoslash
@@ -91,14 +97,22 @@ export function assert<numberType = number>(config: Config<numberType>): void {
     throw new InvalidConfigError({ reason: 'owners cannot be empty' })
   if (owners.length > maxOwners)
     throw new InvalidConfigError({ reason: 'too many owners' })
+  if (!Number.isInteger(Number(threshold)))
+    throw new InvalidConfigError({ reason: 'threshold must be an integer' })
   if (Number(threshold) < 1)
     throw new InvalidConfigError({ reason: 'threshold cannot be zero' })
+  if (Number(threshold) > maxThreshold)
+    throw new InvalidConfigError({ reason: 'threshold exceeds max threshold' })
 
   let totalWeight = 0
   let previous: bigint | undefined
   for (const owner of owners) {
     if (!Address.validate(owner.owner) || Hex.toBigInt(owner.owner) === 0n)
       throw new InvalidConfigError({ reason: 'owner cannot be zero' })
+    if (!Number.isInteger(Number(owner.weight)))
+      throw new InvalidConfigError({
+        reason: 'owner weight must be an integer',
+      })
     if (Number(owner.weight) < 1)
       throw new InvalidConfigError({ reason: 'owner weight cannot be zero' })
 
