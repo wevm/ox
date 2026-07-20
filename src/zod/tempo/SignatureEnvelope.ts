@@ -1,6 +1,7 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as core_SignatureEnvelope from '../../tempo/SignatureEnvelope.js'
 import * as core_Hex from '../../core/Hex.js'
+import * as core_MultisigConfig from '../../tempo/MultisigConfig.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
 import * as z_MultisigConfig from './MultisigConfig.js'
@@ -81,13 +82,54 @@ export const KeychainRpc = z.object({
 })
 
 /** RPC native multisig signature envelope schema. */
-export const MultisigRpc = z.object({
-  account: z_Address.Address,
-  init: z.optional(z_MultisigConfig.Config),
-  // Owner approvals are raw serialized signatures (node `Vec<Bytes>`).
-  signatures: z.readonly(z.array(z_Hex.Hex)),
-  type: z.literal('multisig'),
-})
+export const MultisigRpc = z
+  .union([
+    z.strictObject({
+      account: z_Address.Address,
+      signatures: z.lazy(
+        (): z.ZodMiniType<
+          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
+          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
+        > =>
+          z.readonly(
+            z
+              .array(Rpc)
+              .check(
+                z.minLength(1),
+                z.maxLength(core_MultisigConfig.maxSignatures),
+              ),
+          ) as never,
+      ),
+    }),
+    z.strictObject({
+      init: z_MultisigConfig.Config,
+      signatures: z.lazy(
+        (): z.ZodMiniType<
+          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
+          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
+        > =>
+          z.readonly(
+            z
+              .array(Rpc)
+              .check(
+                z.minLength(1),
+                z.maxLength(core_MultisigConfig.maxSignatures),
+              ),
+          ) as never,
+      ),
+    }),
+  ])
+  // Keep invalid recursive approvals inside Zod's issue path.
+  .check(
+    z.refine((value) => {
+      try {
+        core_SignatureEnvelope.fromRpc(value)
+        return true
+      } catch {
+        return false
+      }
+    }, 'expected valid native multisig signature'),
+  )
 
 /** RPC signature envelope schema. */
 export const Rpc = z.union([
@@ -137,16 +179,31 @@ export const Keychain = z.object({
 })
 
 /** Native multisig signature envelope schema. */
-export const Multisig = z.object({
-  account: z_Address.Address,
-  init: z.optional(z_MultisigConfig.Config),
-  // `signatures` is recursive; type the getter concretely to break the cycle.
-  signatures: z.lazy(
-    (): z.ZodMiniType<readonly core_SignatureEnvelope.SignatureEnvelope[]> =>
-      z.readonly(z.array(Domain)) as never,
-  ),
-  type: z.literal('multisig'),
-})
+export const Multisig = z
+  .object({
+    account: z_Address.Address,
+    init: z.optional(z_MultisigConfig.Config),
+    // `signatures` is recursive; type the getter concretely to break the cycle.
+    signatures: z.lazy(
+      (): z.ZodMiniType<readonly core_SignatureEnvelope.SignatureEnvelope[]> =>
+        z.readonly(
+          z
+            .array(Domain)
+            .check(
+              z.minLength(1),
+              z.maxLength(core_MultisigConfig.maxSignatures),
+            ),
+        ) as never,
+    ),
+    type: z.literal('multisig'),
+  })
+  // Keep invalid recursive approvals inside Zod's issue path.
+  .check(
+    z.refine(
+      (value) => core_SignatureEnvelope.validate(value),
+      'expected valid native multisig signature',
+    ),
+  )
 
 /** Decoded signature envelope schema. */
 export const Domain = z.union([Secp256k1, P256, WebAuthn, Keychain, Multisig])
@@ -210,7 +267,7 @@ function fromRpc(
     }
   }
 
-  if (value.type === 'multisig')
+  if ('signatures' in value && ('account' in value || 'init' in value))
     return core_SignatureEnvelope.fromRpc(
       value as core_SignatureEnvelope.MultisigRpc,
     )

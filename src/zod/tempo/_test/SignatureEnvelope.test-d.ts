@@ -12,6 +12,15 @@ test('SignatureEnvelope decodes RPC into a signature envelope', () => {
   >()
 })
 
+test('MultisigRpc preserves the native multisig RPC union', () => {
+  expectTypeOf<core_SignatureEnvelope.MultisigRpc>().toExtend<
+    z.input<typeof z_SignatureEnvelope.MultisigRpc>
+  >()
+  expectTypeOf<
+    z.output<typeof z_SignatureEnvelope.MultisigRpc>
+  >().toExtend<core_SignatureEnvelope.MultisigRpc>()
+})
+
 test('Type preserves the key type union', () => {
   expectTypeOf<
     z.output<typeof z_SignatureEnvelope.Type>

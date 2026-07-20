@@ -1,6 +1,10 @@
 import { basename, dirname, join } from 'node:path'
 import { defineConfig } from 'vp'
 import { playwright } from 'vp/test/browser-playwright'
+import {
+  port as tempoMultisigPort,
+  tag as tempoMultisigTag,
+} from './test/tempo/multisig.js'
 
 const root = import.meta.dirname
 
@@ -137,7 +141,11 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'tempo-unit',
-          include: ['src/tempo/**/*.test.ts', '!src/tempo/e2e.test.ts'],
+          include: [
+            'src/tempo/**/*.test.ts',
+            '!src/tempo/e2e.test.ts',
+            '!src/tempo/multisig.e2e.test.ts',
+          ],
         },
       },
       {
@@ -147,6 +155,22 @@ export default defineConfig({
           include: ['src/tempo/e2e.test.ts'],
           setupFiles: [join(root, 'test/tempo/setup.ts')],
           globalSetup: [join(root, 'test/tempo/setup.global.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'tempo-multisig',
+          include: ['src/tempo/multisig.e2e.test.ts'],
+          setupFiles: [join(root, 'test/tempo/setup.ts')],
+          globalSetup: [join(root, 'test/tempo/setup.global.multisig.ts')],
+          hookTimeout: 60_000,
+          env: {
+            VITE_TEMPO_ENV: 'localnet',
+            VITE_TEMPO_PORT: String(tempoMultisigPort),
+            VITE_TEMPO_RPC_URL: '',
+            VITE_TEMPO_TAG: tempoMultisigTag,
+          },
         },
       },
       {
