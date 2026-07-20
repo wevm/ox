@@ -1,7 +1,7 @@
 name: Changesets
 on:
   push:
-    branches: [main, 0.x]
+    branches: [0.x]
 
 permissions: {} # each job should declare only the permissions it needs
 
@@ -79,7 +79,7 @@ jobs:
         uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
         with:
           createGithubReleases: true
-          publish: pnpm changeset:publish
+          publish: pnpm changeset:publish:v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
