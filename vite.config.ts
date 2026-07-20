@@ -155,6 +155,7 @@ export default defineConfig({
           include: ['src/tempo/e2e.test.ts'],
           setupFiles: [join(root, 'test/tempo/setup.ts')],
           globalSetup: [join(root, 'test/tempo/setup.global.ts')],
+          hookTimeout: 60_000,
         },
       },
       {
