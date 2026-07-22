@@ -1,5 +1,11 @@
 # ox
 
+## 1.0.4
+
+### Patch Changes
+
+- [#312](https://github.com/wevm/ox/pull/312) [`d7721a1`](https://github.com/wevm/ox/commit/d7721a16276e584080a3a0bde23ce2b28aff5a42) Thanks [@jxom](https://github.com/jxom)! - Added `EarnShares` utilities for Tempo vault share conversions, fee share calculation, and slippage bounds.
+
 ## 1.0.3
 
 ### Patch Changes
