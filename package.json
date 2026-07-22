@@ -11,7 +11,7 @@
     "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
     "changeset:prepublish": "pnpm version:update && pnpm build && tsx scripts/prepublish.ts",
     "changeset:publish": "pnpm changeset:prepublish && changeset publish",
-    "changeset:publish:v0": "pnpm changeset:prepublish && changeset publish --tag v0",
+    "changeset:publish:v0": "pnpm changeset:prepublish && changeset publish --tag legacy-v0",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
     "check": "biome check . --fix --unsafe",
     "check:repo": "sherif",
