@@ -63,7 +63,7 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  */
 export * as Channel from './Channel.js'
 /**
- * Tempo Earn `VaultAdapter` share math: raw EarnToken/venue-share conversions
+ * Tempo Earn `VaultAdapter` share math: raw vault-share and venue-share conversions
  * at the anchor rate, the dilution-correct fee-share formula, and the
  * `minimumOutput` slippage floor.
  *
@@ -74,8 +74,8 @@ export * as Channel from './Channel.js'
  * ```ts twoslash
  * import { EarnShares } from 'ox/tempo'
  *
- * const tokens = EarnShares.toTokens(
- *   { engineShares: 3n, supply: 2n },
+ * const shareAmount = EarnShares.toAmount(
+ *   { engineShares: 3n, shareSupply: 2n },
  *   7n,
  * )
  * // @log: 4n

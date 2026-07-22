@@ -1,37 +1,39 @@
 import { EarnShares } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
-const anchor = { engineShares: 3n, supply: 2n } as const
+const anchor = { engineShares: 3n, shareSupply: 2n } as const
 
-describe('fromTokens', () => {
+describe('toAmount', () => {
   test('default', () => {
-    expect(EarnShares.fromTokens(anchor, 7n)).toBe(10n)
+    expect(EarnShares.toAmount(anchor, 7n)).toBe(4n)
+  })
+
+  test('behavior: rounds down', () => {
+    expect(EarnShares.toAmount({ engineShares: 3n, shareSupply: 1n }, 2n)).toBe(
+      0n,
+    )
+  })
+})
+
+describe('toAmountUp', () => {
+  test('default', () => {
+    expect(EarnShares.toAmountUp(anchor, 7n)).toBe(5n)
+  })
+
+  test('behavior: exact conversions do not round up', () => {
+    expect(EarnShares.toAmountUp(anchor, 3n)).toBe(2n)
+  })
+})
+
+describe('toVenueAmount', () => {
+  test('default', () => {
+    expect(EarnShares.toVenueAmount(anchor, 7n)).toBe(10n)
   })
 
   test('behavior: identity at the initial 1:1 anchor', () => {
     expect(
-      EarnShares.fromTokens({ engineShares: 1n, supply: 1n }, 12_345n),
+      EarnShares.toVenueAmount({ engineShares: 1n, shareSupply: 1n }, 12_345n),
     ).toBe(12_345n)
-  })
-})
-
-describe('toTokens', () => {
-  test('default', () => {
-    expect(EarnShares.toTokens(anchor, 7n)).toBe(4n)
-  })
-
-  test('behavior: rounds down', () => {
-    expect(EarnShares.toTokens({ engineShares: 3n, supply: 1n }, 2n)).toBe(0n)
-  })
-})
-
-describe('toTokensUp', () => {
-  test('default', () => {
-    expect(EarnShares.toTokensUp(anchor, 7n)).toBe(5n)
-  })
-
-  test('behavior: exact conversions do not round up', () => {
-    expect(EarnShares.toTokensUp(anchor, 3n)).toBe(2n)
   })
 })
 
@@ -40,7 +42,7 @@ describe('feeShares', () => {
     expect(
       EarnShares.feeShares({
         activeAssets: 1_100n,
-        supply: 1_000n,
+        shareSupply: 1_000n,
         totalFeeAssets: 100n,
       }),
     ).toBe(100n)
@@ -50,7 +52,7 @@ describe('feeShares', () => {
     expect(
       EarnShares.feeShares({
         activeAssets: 1_100n,
-        supply: 1_000n,
+        shareSupply: 1_000n,
         totalFeeAssets: 0n,
       }),
     ).toBe(0n)
@@ -60,7 +62,7 @@ describe('feeShares', () => {
     expect(
       EarnShares.feeShares({
         activeAssets: 100n,
-        supply: 1_000n,
+        shareSupply: 1_000n,
         totalFeeAssets: 100n,
       }),
     ).toBe(0n)
@@ -70,7 +72,7 @@ describe('feeShares', () => {
     expect(
       EarnShares.feeShares({
         activeAssets: 1_000n,
-        supply: 999n,
+        shareSupply: 999n,
         totalFeeAssets: 100n,
       }),
     ).toBe(111n)
@@ -79,20 +81,20 @@ describe('feeShares', () => {
 
 describe('minimumOutput', () => {
   test('default', () => {
-    expect(EarnShares.minimumOutput(1_000_000n, 50n)).toBe(995_000n)
+    expect(EarnShares.minimumOutput(1_000_000n, 50)).toBe(995_000n)
   })
 
   test('behavior: zero slippage returns the expected output', () => {
-    expect(EarnShares.minimumOutput(1_000_000n, 0n)).toBe(1_000_000n)
+    expect(EarnShares.minimumOutput(1_000_000n, 0)).toBe(1_000_000n)
   })
 
   test('behavior: floors to 1n', () => {
-    expect(EarnShares.minimumOutput(1n, 9_999n)).toBe(1n)
+    expect(EarnShares.minimumOutput(1n, 9_999)).toBe(1n)
   })
 
   test('error: non-positive expected output', () => {
     expect(() =>
-      EarnShares.minimumOutput(0n, 50n),
+      EarnShares.minimumOutput(0n, 50),
     ).toThrowErrorMatchingInlineSnapshot(
       `[EarnShares.InvalidExpectedOutputError: Expected output \`0\` must be greater than zero.]`,
     )
@@ -100,11 +102,21 @@ describe('minimumOutput', () => {
 
   test('error: out-of-range slippage', () => {
     expect(() =>
-      EarnShares.minimumOutput(1_000_000n, 10_000n),
+      EarnShares.minimumOutput(1_000_000n, 10_000),
     ).toThrowErrorMatchingInlineSnapshot(`
       [EarnShares.InvalidSlippageError: Slippage tolerance \`10000\` is invalid.
 
-      Slippage must be at least 0 and below 10000 basis points.]
+      Slippage must be a whole number from 0 through 9999 basis points.]
+    `)
+  })
+
+  test('error: non-integer slippage', () => {
+    expect(() =>
+      EarnShares.minimumOutput(1_000_000n, 0.5),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [EarnShares.InvalidSlippageError: Slippage tolerance \`0.5\` is invalid.
+
+      Slippage must be a whole number from 0 through 9999 basis points.]
     `)
   })
 })
