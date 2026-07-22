@@ -1,5 +1,18 @@
 # ox
 
+## 0.14.32
+
+### Patch Changes
+
+- [#310](https://github.com/wevm/ox/pull/310) [`d882d95`](https://github.com/wevm/ox/commit/d882d95788b06669427ced3a44484a32221617c7) Thanks [@jxom](https://github.com/jxom)! - Added `EarnShares` to `ox/tempo`: raw EarnToken/venue-share conversions at the vault anchor rate, the dilution-correct fee-share formula, and a `minimumOutput` slippage floor.
+
+  ```ts
+  import { EarnShares } from "ox/tempo";
+
+  const tokens = EarnShares.toTokens({ engineShares: 3n, supply: 2n }, 7n);
+  const minimumShares = EarnShares.minimumOutput(1_000_000n, 50n);
+  ```
+
 ## 0.14.31
 
 ### Patch Changes
