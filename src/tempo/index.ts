@@ -69,6 +69,28 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  */
 export * as Channel from './Channel.js'
 /**
+ * Tempo Earn `VaultAdapter` share math: raw vault-share and venue-share conversions
+ * at the anchor rate, the dilution-correct fee-share formula, and the
+ * `minimumOutput` slippage floor.
+ *
+ * Conversions are fee-blind mirrors of the adapter's anchor arithmetic; use the
+ * adapter's `previewRedeem` for user-facing value.
+ *
+ * @example
+ * ```ts twoslash
+ * import { EarnShares } from 'ox/tempo'
+ *
+ * const shareAmount = EarnShares.toAmount(
+ *   { engineShares: 3n, shareSupply: 2n },
+ *   7n
+ * )
+ * // @log: 4n
+ * ```
+ *
+ * @category Reference
+ */
+export * as EarnShares from './EarnShares.js'
+/**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary

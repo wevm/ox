@@ -640,6 +640,11 @@
       "types": "./dist/tempo/Channel.d.ts",
       "default": "./dist/tempo/Channel.js"
     },
+    "./tempo/EarnShares": {
+      "src": "./src/tempo/EarnShares.ts",
+      "types": "./dist/tempo/EarnShares.d.ts",
+      "default": "./dist/tempo/EarnShares.js"
+    },
     "./tempo/KeyAuthorization": {
       "src": "./src/tempo/KeyAuthorization.ts",
       "types": "./dist/tempo/KeyAuthorization.d.ts",
