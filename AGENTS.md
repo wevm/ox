@@ -125,6 +125,8 @@
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.
 - **Secrets are local** -- `.env` is local. Do not print, rewrite, or commit secrets.
 - **Tempo multisig RPC shapes** -- TIP-1061 multisig signatures are untagged. Initialized signatures use `{ account, signatures }`; bootstrap signatures use `{ init, signatures }`, with structured owner approvals.
+- **Zone chain IDs** -- Presto and Moderato use separate fixed bases and ranges. Derive chain IDs as `base + (zoneId % range)`.
+- **Offline core tests** -- Set `SKIP_GLOBAL_SETUP=1` for focused core tests that do not need Anvil.
 - **Docgen export comments** -- `extractNamespaceDocComments` should read the nearest JSDoc on an export declaration. ts-morph can include earlier file-level JSDoc descendants on the first export.
 - **Type snapshot config** -- `@ark/attest` 0.16 does not follow root project references. Point `ATTEST_CONFIG.tsconfig` at `test/tsconfig.json`.
 - **Node local storage** -- Node 24+ needs a valid `--localstorage-file` for the `@typescript/vfs` dependency used by attest.

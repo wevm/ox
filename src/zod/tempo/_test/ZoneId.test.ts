@@ -11,7 +11,7 @@ describe('ZoneId', () => {
   })
 
   test('decodes and encodes chain ids', () => {
-    expect(z.decode(z_ZoneId.chainId, 4_217_000_006)).toMatchInlineSnapshot(`6`)
-    expect(z.encode(z_ZoneId.chainId, 6)).toMatchInlineSnapshot(`4217000006`)
+    expect(z.decode(z_ZoneId.chainId, 421_700_001)).toMatchInlineSnapshot(`1`)
+    expect(z.encode(z_ZoneId.chainId, 1)).toMatchInlineSnapshot(`421700001`)
   })
 })
