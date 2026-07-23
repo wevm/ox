@@ -524,18 +524,17 @@ export * as VirtualMaster from './VirtualMaster.js'
 /**
  * Zone ID utilities for converting between zone IDs and zone chain IDs.
  *
- * Zone chain IDs are deterministically derived from zone IDs using the formula
- * `421_700_000 + zoneId`. This module provides helpers to convert between them.
+ * Zone chain IDs use the base and range assigned to their Tempo source chain.
  *
  * @example
  * ```ts twoslash
  * import { ZoneId } from 'ox/tempo'
  *
- * const zoneId = ZoneId.fromChainId(421_700_026)
- * // @log: 26
+ * const zoneId = ZoneId.fromChainId(421_700_001)
+ * // @log: 1
  *
- * const chainId = ZoneId.toChainId(26)
- * // @log: 421700026
+ * const chainId = ZoneId.toChainId(1)
+ * // @log: 421700001
  * ```
  *
  * @category Reference
