@@ -1,5 +1,17 @@
 # ox
 
+## 0.14.33
+
+### Patch Changes
+
+- [#315](https://github.com/wevm/ox/pull/315) [`2298f7b`](https://github.com/wevm/ox/commit/2298f7b2181bda4954291a0e9e9e3a10c3cb089a) Thanks [@jxom](https://github.com/jxom)! - Corrected Zone chain ID conversion for Presto and Moderato source chains.
+
+  ```ts
+  import { ZoneId } from "ox/tempo";
+
+  ZoneId.toChainId(1, 42_431);
+  ```
+
 ## 0.14.32
 
 ### Patch Changes
