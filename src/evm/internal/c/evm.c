@@ -820,7 +820,13 @@ static int deposit_code(evm_vm *vm, int32_t created, int32_t snapshot,
     return 0;
   }
   *child_gas -= deposit;
-  set_code(vm->st, created, vm->output, dep_len);
+  // A full code arena is an engine limit, not a protocol one, so fail the
+  // creation rather than quietly deploying an empty contract.
+  if (!set_code(vm->st, created, vm->output, dep_len)) {
+    state_revert(vm->st, snapshot);
+    *child_gas = 0;
+    return 0;
+  }
   return 1;
 }
 
@@ -1341,9 +1347,9 @@ static inline int64_t capped_gas(int64_t available, u256 requested) {
  * loop. `continue` stays at the call site: inside the `do`/`while (0)` here it
  * would bind to the macro rather than to the interpreter loop.
  */
-#define OPEN_BLOCK()          \
-  do {                        \
-    ENTER_BLOCK(pc);          \
+#define OPEN_BLOCK()            \
+  do {                          \
+    ENTER_BLOCK(pc);            \
     if (code[pc] == 0x5b) pc++; \
   } while (0)
 

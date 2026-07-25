@@ -20,7 +20,10 @@
 #define STORAGE_SLOTS 32768 // power of two, > 2x MAX_STORAGE
 #define MAX_JOURNAL 65536
 #define MAX_TRANSIENT 2048
-#define CODE_ARENA (2 * 1024 * 1024)
+// Every contract deployed in a transaction keeps its code here, including the
+// ones a revert throws away. A test that deploys hundreds of max-size
+// contracts needs far more than the deployed-code limit suggests.
+#define CODE_ARENA (32 * 1024 * 1024)
 
 typedef struct {
   uint8_t address[20];
