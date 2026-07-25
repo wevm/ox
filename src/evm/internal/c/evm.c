@@ -49,12 +49,18 @@ static void *ox_alloc(uint64_t n) { return malloc((unsigned long)n); }
 // `__builtin_mem*` lower to wasm `memory.fill` / `memory.copy` (the module
 // already builds with bulk-memory). The byte-at-a-time loops these replaced
 // cost ~1.2 ns/byte, which made clearing dominate short executions.
+// Both check for zero before calling the builtin. With `-mbulk-memory` these
+// lower to wasm's `memory.fill` and `memory.copy`, which bounds-check their
+// operands before looking at the length — so a zero-length move through a
+// pointer the EVM never actually reads, which a saturated 256-bit offset
+// produces, traps rather than doing nothing. A trap does not restore the shadow
+// stack pointer, so it poisons the module for every later call.
 static void mem_zero(uint8_t *p, uint64_t n) {
-  __builtin_memset(p, 0, (unsigned long)n);
+  if (n) __builtin_memset(p, 0, (unsigned long)n);
 }
 
 static void mem_copy(uint8_t *dst, const uint8_t *src, uint64_t n) {
-  __builtin_memcpy(dst, src, (unsigned long)n);
+  if (n) __builtin_memcpy(dst, src, (unsigned long)n);
 }
 
 // ---------------------------------------------------------------------------
@@ -64,6 +70,10 @@ static void mem_copy(uint8_t *dst, const uint8_t *src, uint64_t n) {
 #define STACK_LIMIT 1024
 #define MAX_CODE 49152    // 2x EIP-170, so initcode fits
 #define MAX_INPUT 1048576 // 1 MiB of calldata
+// Memory offsets are bounded separately: expansion is priced quadratically, so
+// anything past this is unaffordable long before it is reached, and the check
+// only exists to keep the arithmetic below in range.
+#define MAX_MEMORY_OFFSET (1 << 30)
 #define DEFAULT_MEMORY (4 * 1024 * 1024)
 
 typedef enum {
@@ -274,7 +284,7 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
   } while (0)
 
 #define ANALYSIS_ARENA (48 * 1024 * 1024)
-#define FRAME_MEMORY (256 * 1024) // per-frame memory ceiling
+#define FRAME_MEMORY (64 * 1024) // a frame's first memory block; it doubles
 #define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
 #define MAX_DEPTH 1024
 // Must stay under the linker's `-z stack-size` with room for one more frame.
@@ -397,25 +407,38 @@ static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size,
   uint64_t end = offset + size;
   if (end < offset) return EVM_OUT_OF_GAS; // 64-bit overflow: unaffordable
   if (end <= vm->memory_size) return EVM_SUCCESS;
-  if (!vm->mem) {
-    // First memory access in this frame.
-    vm->mem = (uint8_t *)arena_alloc(vm, FRAME_MEMORY);
-    if (!vm->mem) return EVM_OUT_OF_MEMORY;
-    vm->mem_cap = FRAME_MEMORY;
-  }
-  if (end > vm->mem_cap) return EVM_OUT_OF_MEMORY;
 
-  uint64_t words = (end + 31) / 32;
-  uint64_t cost = memory_gas(words);
+  // Charge before allocating. Expansion is priced quadratically, so anything
+  // large enough to trouble the arena is unaffordable first, and reporting that
+  // as out-of-gas rather than out-of-memory is what the spec asks for.
+  const uint64_t words = (end + 31) / 32;
+  const uint64_t cost = memory_gas(words);
   if (cost > vm->memory_cost) {
     int64_t charge = (int64_t)(cost - vm->memory_cost);
-    if (*gas < charge) {
+    if (charge < 0 || *gas < charge) {
       *gas = 0;
       return EVM_OUT_OF_GAS;
     }
     *gas -= charge;
     vm->memory_cost = cost;
   }
+
+  if (end > vm->mem_cap) {
+    // Frame memory grows on demand rather than reserving a ceiling per frame: a
+    // program can legitimately expand past a megabyte, and reserving that for
+    // each of 1024 frames is not possible.
+    uint64_t want = vm->mem_cap ? vm->mem_cap : FRAME_MEMORY;
+    while (want < end) want *= 2;
+    if (want > (uint64_t)ANALYSIS_ARENA) return EVM_OUT_OF_MEMORY;
+    uint8_t *grown = (uint8_t *)arena_alloc(vm, (int32_t)want);
+    if (!grown) return EVM_OUT_OF_MEMORY;
+    if (vm->memory_size) mem_copy(grown, vm->mem, vm->memory_size);
+    vm->mem = grown;
+    vm->mem_cap = want;
+  }
+  // Belt and braces: a trap here would poison the whole module, so anything the
+  // accounting above failed to cover becomes a clean error instead.
+  if (words * 32 > vm->mem_cap) return EVM_OUT_OF_MEMORY;
   // Newly reachable bytes must read as zero. Clearing on growth rather than up
   // front is what lets a frame's memory come from a bump arena.
   mem_zero(vm->mem + vm->memory_size, words * 32 - vm->memory_size);
@@ -1312,7 +1335,8 @@ static evm_status interpret(evm_vm *vm) {
       case 0x20: { // KECCAK256
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
-        if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (o > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         USE_GAS(6 * ((n + 31) / 32));
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
@@ -1337,7 +1361,8 @@ static evm_status interpret(evm_vm *vm) {
         u256 dst = POP(), src = POP(), len = POP();
         uint64_t d = u256_to_u64_sat(dst), s = u256_to_u64_sat(src),
                  n = u256_to_u64_sat(len);
-        if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (d > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st = memory_expand(vm, d, n, &gas);
         if (st != EVM_SUCCESS) HALT(st);
@@ -1351,7 +1376,8 @@ static evm_status interpret(evm_vm *vm) {
         u256 dst = POP(), src = POP(), len = POP();
         uint64_t d = u256_to_u64_sat(dst), s = u256_to_u64_sat(src),
                  n = u256_to_u64_sat(len);
-        if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (d > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st = memory_expand(vm, d, n, &gas);
         if (st != EVM_SUCCESS) HALT(st);
@@ -1546,7 +1572,8 @@ static evm_status interpret(evm_vm *vm) {
         USE_GAS(access_cost(vm, a, vm->ctx.spec >= SPEC_TANGERINE ? 700 : 20));
         const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
                        n = u256_to_u64_sat(len);
-        if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (d > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st_ = memory_expand(vm, d, n, &gas);
         if (st_ != EVM_SUCCESS) HALT(st_);
@@ -1565,7 +1592,8 @@ static evm_status interpret(evm_vm *vm) {
         const u256 dst = POP(), src = POP(), len = POP();
         const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
                        n = u256_to_u64_sat(len);
-        if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (d > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         // Unlike the other copies, reading past the end is an error rather
         // than a zero-fill.
         if (so + n > (uint64_t)vm->returndata_len || so + n < so)
@@ -1661,7 +1689,8 @@ static evm_status interpret(evm_vm *vm) {
         const u256 dst = POP(), src = POP(), len = POP();
         const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
                        n = u256_to_u64_sat(len);
-        if (d > MAX_INPUT || so > MAX_INPUT || n > MAX_INPUT)
+        if (n && (d > MAX_MEMORY_OFFSET || so > MAX_MEMORY_OFFSET ||
+                  n > MAX_MEMORY_OFFSET))
           HALT(EVM_OUT_OF_GAS);
         USE_GAS(3 * ((n + 31) / 32));
         // Both ends must be covered before the move, and the regions may
@@ -1678,7 +1707,8 @@ static evm_status interpret(evm_vm *vm) {
         const int topics = op - 0xa0;
         const u256 off = POP(), len = POP();
         const uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
-        if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (o > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         USE_GAS(8 * n);
         evm_status st_ = memory_expand(vm, o, n, &gas);
         if (st_ != EVM_SUCCESS) HALT(st_);
@@ -1715,8 +1745,12 @@ static evm_status interpret(evm_vm *vm) {
         const uint64_t in_len = u256_to_u64_sat(POP());
         const uint64_t out_off = u256_to_u64_sat(POP());
         const uint64_t out_len = u256_to_u64_sat(POP());
-        if (in_off > MAX_INPUT || in_len > MAX_INPUT || out_off > MAX_INPUT ||
-            out_len > MAX_INPUT)
+        // A zero-length window never touches memory, so its offset is free to
+        // be nonsense; only a non-empty one has to be addressable.
+        if ((in_len && (in_off > MAX_MEMORY_OFFSET ||
+                        in_len > MAX_MEMORY_OFFSET)) ||
+            (out_len && (out_off > MAX_MEMORY_OFFSET ||
+                         out_len > MAX_MEMORY_OFFSET)))
           HALT(EVM_OUT_OF_GAS);
         // A static frame may not move value.
         if (vm->is_static && !u256_is_zero(value)) HALT(EVM_STATIC_VIOLATION);
@@ -1831,13 +1865,16 @@ static evm_status interpret(evm_vm *vm) {
 
       case 0xf0:   // CREATE
       case 0xf5: { // CREATE2 (EIP-1014)
-        REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
+        // Only CREATE2 is fork-gated; CREATE has existed since Frontier, and
+        // they share this label.
+        if (op == 0xf5) REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
         if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
         const u256 value = POP();
         const uint64_t off = u256_to_u64_sat(POP());
         const uint64_t len = u256_to_u64_sat(POP());
         const u256 salt = op == 0xf5 ? POP() : U256_ZERO;
-        if (off > MAX_INPUT || len > MAX_CODE) HALT(EVM_OUT_OF_GAS);
+        if (len && (off > MAX_MEMORY_OFFSET || len > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
         USE_GAS(32000);
         evm_status ms = memory_expand(vm, off, len, &gas);
         if (ms != EVM_SUCCESS) HALT(ms);
@@ -1849,6 +1886,18 @@ static evm_status interpret(evm_vm *vm) {
           USE_GAS(2 * ((len + 31) / 32));
         }
         if (op == 0xf5) USE_GAS(6 * ((len + 31) / 32));
+
+        // EIP-2681 caps a nonce at 2^64 - 1, so an account there can create
+        // nothing further: the creation fails, the nonce does not move, and the
+        // gas that would have gone to the initcode stays with the caller.
+        if (vm->st->accounts[vm->self].nonce == 0xFFFFFFFFFFFFFFFFULL) {
+          vm->returndata_len = 0;
+          PUSH(U256_ZERO);
+          pc++;
+          if (pc >= code_len) DONE(EVM_SUCCESS);
+          if (code[pc] != 0x5b) ENTER_BLOCK(pc);
+          continue;
+        }
 
         uint8_t *init = (uint8_t *)arena_alloc(vm, (int32_t)len + 16);
         if (!init) HALT(EVM_OUT_OF_MEMORY);
@@ -1975,7 +2024,12 @@ static evm_status interpret(evm_vm *vm) {
       case 0xf3: { // RETURN
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
-        if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (o > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
+        // The output buffer is a fixed megabyte. Memory can be expanded past
+        // that affordably, so the length has to be checked against the buffer
+        // and not just against memory.
+        if (n > MAX_INPUT) HALT(EVM_OUT_OF_MEMORY);
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         mem_copy(vm->output, vm->mem + o, n);
@@ -1986,7 +2040,12 @@ static evm_status interpret(evm_vm *vm) {
         REQUIRE_SPEC(SPEC_BYZANTIUM);
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
-        if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (n && (o > MAX_MEMORY_OFFSET || n > MAX_MEMORY_OFFSET))
+          HALT(EVM_OUT_OF_GAS);
+        // The output buffer is a fixed megabyte. Memory can be expanded past
+        // that affordably, so the length has to be checked against the buffer
+        // and not just against memory.
+        if (n > MAX_INPUT) HALT(EVM_OUT_OF_MEMORY);
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         mem_copy(vm->output, vm->mem + o, n);
@@ -2198,7 +2257,10 @@ int evm_run(evm_vm *vm, int input_len, int64_t gas) {
   // Only the previous run's high-water mark is dirty — the rest was zeroed by
   // `evm_new` and never written. Clearing the full capacity here costs more
   // than most programs execute.
-  mem_zero(vm->memory, vm->memory_size);
+  // Clamp to the static buffer: a previous execution may have grown into a
+  // larger arena block, leaving `memory_size` past the end of `vm->memory`.
+  mem_zero(vm->memory, vm->memory_size < vm->memory_cap ? vm->memory_size
+                                                        : vm->memory_cap);
   vm->memory_size = 0;
   return (int)interpret(vm);
 }
@@ -2361,7 +2423,10 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   vm->frame_input = vm->input;
   vm->stack_base = vm->stack;
   vm->sp = 0;
-  mem_zero(vm->memory, vm->memory_size);
+  // Clamp to the static buffer: a previous execution may have grown into a
+  // larger arena block, leaving `memory_size` past the end of `vm->memory`.
+  mem_zero(vm->memory, vm->memory_size < vm->memory_cap ? vm->memory_size
+                                                        : vm->memory_cap);
   vm->memory_size = 0;
   const int32_t snapshot = state_snapshot(vm->st);
   const int status = (int)interpret(vm);

@@ -10,18 +10,19 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 39247/40553 (96.78%) across all forks. This is the same fixture set
+// Status: 39589/40553 (97.62%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
-// Per-area, the groups that are not yet complete:
+// What is left, largest first:
 //
-//   - EIP-2537: 948/982. The two map-to-curve precompiles (0x10, 0x11) are not
-//     implemented; they need the RFC 9380 SSWU map, an 11-isogeny for G1 and a
-//     3-isogeny for G2, and cofactor clearing.
-//   - stStaticCall and stCreate sit near 86%, mostly deep-recursion gas
-//     accounting where the discrepancy is a few tens of thousands of gas across
-//     a thousand-frame chain.
-//   - A residue of small gas deltas spread thinly across the call tests.
+//   - Deep-recursion gas accounting in stStaticCall and stCallCreateCallCode,
+//     where the discrepancy is tens of thousands of gas across a thousand-frame
+//     chain.
+//   - EIP-2537's two map-to-curve precompiles (0x10, 0x11) are not implemented;
+//     they need the RFC 9380 SSWU map, an 11-isogeny for G1 and a 3-isogeny for
+//     G2, and cofactor clearing.
+//   - EIP-7883's modexp repricing for Osaka.
+//   - A residue of small gas deltas spread across the call tests.
 //
 // Blockchain tests are not run at all: they need block processing and a
 // Merkle-Patricia trie for the state root, which state tests avoid by shipping
@@ -73,6 +74,10 @@ let vm: number
 function instantiate() {
   engine = new WebAssembly.Instance(module_, {}).exports as any
   vm = engine.evm_new(0)
+  // `evm_new` returns a null pointer when it cannot grow linear memory far
+  // enough. Every later call would then write through it and trap, which looks
+  // like an engine bug rather than the resource exhaustion it is.
+  if (!vm) throw new Error('evm_new returned null: out of wasm memory')
 }
 instantiate()
 const mem = () => new Uint8Array(engine.memory.buffer)
@@ -462,7 +467,11 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // An invalid transaction is rejected outright: no nonce bump, no gas charged,
   // no execution. The expected post-state is simply the pre-state, which is
   // what the engine currently holds.
-  if (intrinsic + authGas > gasLimit) return compareLoaded(post)
+  // EIP-7623 makes the floor part of the validity requirement, not just the
+  // settlement: a transaction whose limit cannot cover the larger of the two is
+  // rejected before it runs.
+  const required = (intrinsic > floor ? intrinsic : floor) + authGas
+  if (required > gasLimit) return compareLoaded(post)
   // A set-code transaction must have at least one authorization and must not be
   // a create.
   if (tx.authorizationList && (authList.length === 0 || isCreate))

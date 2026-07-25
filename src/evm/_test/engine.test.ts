@@ -532,3 +532,74 @@ describe('BLS12-381 precompiles', () => {
     )
   })
 })
+
+describe('fork availability', () => {
+  // An opcode is rejected below the fork that introduced it. The engine's table
+  // is a switch, and several opcodes share a case label with an older one —
+  // CREATE with CREATE2, CALL with DELEGATECALL and STATICCALL — so a guard
+  // written on the label rather than the opcode silently backdates the older
+  // one. That is exactly what happened to CREATE.
+  //
+  // This states the introductions independently of the engine and checks both
+  // directions: rejected one fork below, accepted at the fork itself.
+  const introduced: [name: string, op: string, spec: number][] = [
+    ['DELEGATECALL', 'f4', 1],
+    ['RETURNDATASIZE', '3d', 4],
+    ['REVERT', 'fd', 4],
+    ['STATICCALL', 'fa', 4],
+    ['SHL', '1b', 5],
+    ['EXTCODEHASH', '3f', 5],
+    ['CREATE2', 'f5', 5],
+    ['CHAINID', '46', 7],
+    ['SELFBALANCE', '47', 7],
+    ['BASEFEE', '48', 9],
+    ['PUSH0', '5f', 11],
+    ['TLOAD', '5c', 12],
+    ['MCOPY', '5e', 12],
+    ['BLOBHASH', '49', 12],
+    ['BLOBBASEFEE', '4a', 12],
+  ]
+
+  // Opcodes that have been there since Frontier and must work at spec 0. CREATE
+  // and CALL are the ones that share a label with a later arrival.
+  const frontier: [name: string, op: string][] = [
+    ['CREATE', 'f0'],
+    ['CALL', 'f1'],
+    ['CALLCODE', 'f2'],
+    ['RETURN', 'f3'],
+    ['SELFDESTRUCT', 'ff'],
+    ['DIFFICULTY', '44'],
+    ['GAS', '5a'],
+  ]
+
+  /** Runs one opcode under `spec`, with enough zeroes below it for any inputs. */
+  function statusAt(op: string, spec: number) {
+    engine.evm_reset(vm)
+    const stage = engine.evm_stage_ptr(vm)
+    load_.view(engine).set(new Uint8Array(256), stage)
+    engine.evm_set_context(vm, 1n, 1n, 30_000_000n, 0, 0, spec)
+    // PUSH0 is itself fork-gated, so the operands are PUSH1 0.
+    const code = Hex.toBytes(`0x${'6000'.repeat(8)}${op}`)
+    load_.view(engine).set(code, engine.evm_code_ptr(vm))
+    engine.evm_set_code(vm, code.length)
+    return engine.evm_run(vm, 0, 10_000_000n)
+  }
+
+  const INVALID_OPCODE = 5
+
+  test('behavior: an opcode is invalid below the fork that introduced it', () => {
+    const wrong: string[] = []
+    for (const [name, op, spec] of introduced) {
+      if (statusAt(op, spec - 1) !== INVALID_OPCODE) wrong.push(`${name} early`)
+      if (statusAt(op, spec) === INVALID_OPCODE) wrong.push(`${name} late`)
+    }
+    expect(wrong).toEqual([])
+  })
+
+  test('behavior: Frontier opcodes work at Frontier', () => {
+    const wrong: string[] = []
+    for (const [name, op] of frontier)
+      if (statusAt(op, 0) === INVALID_OPCODE) wrong.push(name)
+    expect(wrong).toEqual([])
+  })
+})
