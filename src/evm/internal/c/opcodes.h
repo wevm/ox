@@ -60,6 +60,11 @@ static const op_info op_table[256] = {
 
     [0x20] = OP(30, 2, 1),     // KECCAK256  (+6 per word, + memory)
 
+    [0x30] = OP(2, 0, 1),      // ADDRESS
+    [0x31] = OP(0, 1, 1),      // BALANCE      (warm/cold)
+    [0x32] = OP(2, 0, 1),      // ORIGIN
+    [0x33] = OP(2, 0, 1),      // CALLER
+    [0x34] = OP(2, 0, 1),      // CALLVALUE
     [0x35] = OP(3, 1, 1),      // CALLDATALOAD
     [0x36] = OP(2, 0, 1),      // CALLDATASIZE
     [0x37] = OP(3, 3, 0),      // CALLDATACOPY (+3 per word, + memory)

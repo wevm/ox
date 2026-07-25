@@ -1,4 +1,5 @@
 import { Hash, Hex, Secp256k1 } from 'ox'
+import * as Opcode from '../Opcode.js'
 // Relative, not `ox/evm/internal/load`: `internal/` is deliberately absent
 // from the package exports map, so the subpath has no types.
 import * as load_ from '../internal/load.js'
@@ -332,5 +333,56 @@ describe('bn254 precompiles', () => {
     expect(precompile(0x08, new Uint8Array(0)).slice(0, 66)).toBe(
       `0x${'00'.repeat(31)}01`,
     )
+  })
+})
+
+describe('opcode pricing', () => {
+  // An opcode absent from the engine's gas table is not merely free: the
+  // analyzer treats it as unknown and ends the basic block there, so every
+  // instruction after it in the block runs free too. ADDRESS, BALANCE, ORIGIN,
+  // CALLER and CALLVALUE were all missing, which cost gas accuracy across whole
+  // programs, not just those five instructions.
+  //
+  // This walks every opcode the engine claims to support and asserts it is
+  // priced. It needs no per-opcode constants — the point is that the table has
+  // an entry at all.
+  const free = new Set([
+    'STOP', // terminators legitimately cost nothing on their own
+    'RETURN',
+    'REVERT',
+    'INVALID',
+    'SELFDESTRUCT', // priced, but halts before the block can be observed
+  ])
+
+  test('behavior: every supported opcode carries a gas price', () => {
+    const unpriced: string[] = []
+    // The PUSH, DUP and SWAP families are not individual entries in
+    // `Opcode.codes`, so walk every byte and take the ones that have a name.
+    const all = Array.from({ length: 256 }, (_, i) => i).filter((i) =>
+      Opcode.toName(i),
+    )
+    for (const op of all) {
+      const name = Opcode.toName(op) as string
+      if (free.has(name)) continue
+      // Enough zeroes below it to satisfy any opcode's inputs, then the opcode,
+      // then a POP so a pushing opcode does not end with a full stack. Running
+      // off the end is a STOP, so no terminator is needed.
+      const pushes = '5f'.repeat(8)
+      const baseline: Hex.Hex = `0x${pushes}`
+      const withOp: Hex.Hex = `0x${pushes}${op.toString(16).padStart(2, '0')}`
+      const gas = (bytecode: Hex.Hex) => {
+        const code = Hex.toBytes(bytecode)
+        load_.view(engine).set(code, engine.evm_code_ptr(vm))
+        engine.evm_set_code(vm, code.length)
+        engine.evm_run(vm, 0, 100_000_000n)
+        return 100_000_000n - engine.evm_gas_left(vm)
+      }
+      // Some opcodes halt on the zero operands they are handed; a halt consumes
+      // everything, which is still evidence the opcode was priced.
+      const before = gas(baseline)
+      const after = gas(withOp)
+      if (after <= before) unpriced.push(name)
+    }
+    expect(unpriced).toEqual([])
   })
 })

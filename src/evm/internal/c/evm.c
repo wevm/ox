@@ -220,6 +220,39 @@ static inline int64_t access_cost(evm_vm *vm, int32_t acct, int64_t pre_berlin) 
   return pre_berlin;
 }
 
+/**
+ * Resolves an EIP-7702 delegation designation.
+ *
+ * A designation is exactly `0xef0100` followed by 20 address bytes. When the
+ * callee carries one, the code that runs is the delegate's, and touching the
+ * delegate costs a further warm-or-cold access. Storage, balance, and the
+ * address seen by the callee all stay with the designating account.
+ *
+ * Returns the account whose code should run, and charges into `gas`. `*oog` is
+ * set when the access cost cannot be paid.
+ */
+static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
+                                  int *oog) {
+  *oog = 0;
+  if (vm->ctx.spec < SPEC_PRAGUE) return acct;
+  const account *a = &vm->st->accounts[acct];
+  if (a->code_len != 23) return acct;
+  const uint8_t *code = vm->st->code_arena + a->code_offset;
+  if (code[0] != 0xef || code[1] != 0x01 || code[2] != 0x00) return acct;
+  const int32_t target = account_intern(vm->st, code + 3);
+  if (target < 0) {
+    *oog = 1;
+    return acct;
+  }
+  const int64_t cost = access_cost(vm, target, GAS_WARM);
+  if (*gas < cost) {
+    *oog = 1;
+    return acct;
+  }
+  *gas -= cost;
+  return target;
+}
+
 #define ANALYSIS_ARENA (48 * 1024 * 1024)
 #define FRAME_MEMORY (256 * 1024) // per-frame memory ceiling
 #define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
@@ -1438,6 +1471,13 @@ static evm_status interpret(evm_vm *vm) {
         // warm/cold.
         USE_GAS(access_cost(vm, callee,
                             vm->ctx.spec >= SPEC_TANGERINE ? 700 : 40));
+        // An EIP-7702 delegation costs a further access, and it is part of the
+        // call's own cost rather than the child's: it comes out of the caller's
+        // gas before the 63/64 cap is applied.
+        int deleg_oog = 0;
+        const int32_t code_from =
+            resolve_delegation(vm, callee, &gas, &deleg_oog);
+        if (deleg_oog) HALT(EVM_OUT_OF_GAS);
 
         evm_status ms = memory_expand(vm, in_off, in_len, &gas);
         if (ms != EVM_SUCCESS) HALT(ms);
@@ -1506,9 +1546,9 @@ static evm_status interpret(evm_vm *vm) {
           }
           const evm_status cs = run_frame(
               vm, exec_self, sub_caller, sub_value,
-              vm->st->code_arena + vm->st->accounts[callee].code_offset,
-              vm->st->accounts[callee].code_len, args, (int)in_len, sub_static,
-              &child_gas);
+              vm->st->code_arena + vm->st->accounts[code_from].code_offset,
+              vm->st->accounts[code_from].code_len, args, (int)in_len,
+              sub_static, &child_gas);
           ok = cs == EVM_SUCCESS;
           if (cs != EVM_SUCCESS) state_revert(vm->st, snapshot);
           // REVERT returns data; an exceptional halt does not.
@@ -1924,7 +1964,9 @@ int evm_put_account(evm_vm *vm, int64_t nonce, int code_len) {
   vm->st->accounts[a].balance = u256_from_be(vm->stage + STAGE_WORD_A);
   vm->st->accounts[a].nonce = (uint64_t)nonce;
   vm->st->accounts[a].exists = 1;
-  if (code_len > 0 && !set_code(vm->st, a, vm->stage + STAGE_BYTES, code_len))
+  // A zero length clears the code: EIP-7702 undelegation needs that, and a
+  // caller loading a codeless account wants it too.
+  if (!set_code(vm->st, a, vm->stage + STAGE_BYTES, code_len))
     return EVM_OUT_OF_MEMORY;
   // Loading pre-state is not a mutation to roll back.
   vm->st->journal_len = 0;
@@ -2009,9 +2051,17 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   ENTER_TOP(vm);
   vm->returndata_len = 0;
 
-  const int32_t code_len = vm->st->accounts[a].code_len;
+  // The transaction target may itself be an EIP-7702 delegation, in which case
+  // the delegate's code runs. The extra access is charged out of the gas the
+  // frame is about to run with.
+  int deleg_oog = 0;
+  int64_t deleg_free = 1 << 30;
+  const int32_t code_from = resolve_delegation(vm, a, &deleg_free, &deleg_oog);
+  if (deleg_oog) return EVM_OUT_OF_GAS;
+  const int32_t code_len = vm->st->accounts[code_from].code_len;
   if (code_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
-  mem_copy(vm->code, vm->st->code_arena + vm->st->accounts[a].code_offset,
+  mem_copy(vm->code,
+           vm->st->code_arena + vm->st->accounts[code_from].code_offset,
            (uint64_t)code_len);
   mem_copy(vm->input, vm->stage + STAGE_BYTES, (uint64_t)input_len);
   vm->code_len = code_len;

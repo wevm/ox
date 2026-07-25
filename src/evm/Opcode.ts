@@ -113,10 +113,16 @@ export const codes = {
 export type Name = keyof typeof codes
 
 /**
- * Opcodes the engine can currently execute.
+ * Opcodes the engine can execute.
  *
- * The remainder require accounts, storage, or nested frames and land in
- * Phase 3. Executing one today yields an `Evm.InvalidOpcodeError`.
+ * This is every named opcode in the Prague instruction set. The PUSH, DUP and
+ * SWAP families are executable too; they are absent from {@link codes} as
+ * individual entries and so cannot be listed here. An undefined byte, or
+ * `INVALID` itself, yields an `Evm.InvalidOpcodeError`.
+ *
+ * The engine's gas table is checked against this list: an opcode listed here
+ * but absent from the table would not merely be free, it would end its basic
+ * block early and make the rest of that block free too.
  */
 export const supported = [
   'STOP',
@@ -146,24 +152,70 @@ export const supported = [
   'SHR',
   'SAR',
   'KECCAK256',
+  'ADDRESS',
+  'BALANCE',
+  'ORIGIN',
+  'CALLER',
+  'CALLVALUE',
   'CALLDATALOAD',
   'CALLDATASIZE',
   'CALLDATACOPY',
   'CODESIZE',
   'CODECOPY',
+  'GASPRICE',
+  'EXTCODESIZE',
+  'EXTCODECOPY',
+  'RETURNDATASIZE',
+  'RETURNDATACOPY',
+  'EXTCODEHASH',
+  'BLOCKHASH',
+  'COINBASE',
+  'TIMESTAMP',
+  'NUMBER',
+  'PREVRANDAO',
+  'GASLIMIT',
+  'CHAINID',
+  'SELFBALANCE',
+  'BASEFEE',
+  'BLOBHASH',
+  'BLOBBASEFEE',
   'POP',
   'MLOAD',
   'MSTORE',
   'MSTORE8',
+  'SLOAD',
+  'SSTORE',
   'JUMP',
   'JUMPI',
   'PC',
   'MSIZE',
   'GAS',
   'JUMPDEST',
+  'TLOAD',
+  'TSTORE',
+  'MCOPY',
   'PUSH0',
+  'PUSH1',
+  'PUSH32',
+  'DUP1',
+  'DUP16',
+  'SWAP1',
+  'SWAP16',
+  'LOG0',
+  'LOG1',
+  'LOG2',
+  'LOG3',
+  'LOG4',
+  'CREATE',
+  'CALL',
+  'CALLCODE',
   'RETURN',
+  'DELEGATECALL',
+  'CREATE2',
+  'STATICCALL',
   'REVERT',
+  'INVALID',
+  'SELFDESTRUCT',
 ] as const satisfies readonly Name[]
 
 const names = /*#__PURE__*/ (() => {

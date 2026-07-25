@@ -10,13 +10,12 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 35289/40553 (87.02%) across all forks. The known gaps, largest first:
+// Status: 37833/40553 (93.29%) across all forks. The known gaps, largest first:
 //
 //   - KZG (0x0a) and BLS12-381 (0x0b-0x11) are not implemented; a call to one
 //     returns 0 instead of 1, which is most of the `storage` bucket.
-//   - EIP-7702 set-code transactions are skipped outright (612 cases).
-//   - A residue of small gas deltas (8, 10, 11, 30, 34, 84) concentrated in the
-//     static-call and delegatecall tests.
+//   - A residue of gas deltas spread thinly across the static-call,
+//     delegatecall, and EIP-7702 tests.
 //
 // Blockchain tests are not run at all: they need block processing and a
 // Merkle-Patricia trie for the state root, which state tests avoid by shipping
@@ -25,6 +24,9 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
+import * as Hash from '../src/core/Hash.js'
+import * as Rlp from '../src/core/Rlp.js'
+import * as Secp256k1 from '../src/core/Secp256k1.js'
 import { wasmBase64 } from '../src/evm/internal/evm.wasm.js'
 
 type Hex = `0x${string}`
@@ -228,6 +230,66 @@ function warmPreamble(sender: string, to: string | undefined, fork: string) {
   }
 }
 
+const SECP_N =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
+
+/** RLP takes minimal big-endian bytes, so a zero is the empty string. */
+function minimal(v: bigint): Hex {
+  if (v === 0n) return '0x'
+  let h = v.toString(16)
+  if (h.length % 2) h = `0${h}`
+  return `0x${h}`
+}
+
+type Authorization = {
+  chainId: string
+  address: string
+  nonce: string
+  r: string
+  s: string
+  yParity?: string
+  v?: string
+}
+
+/**
+ * Recovers the authority of an EIP-7702 authorization tuple, or `undefined` if
+ * the tuple is malformed.
+ *
+ * The signed payload is `keccak(0x05 || rlp([chain_id, address, nonce]))`.
+ */
+function authority(auth: Authorization, chainId: bigint): Hex | undefined {
+  const r = big(auth.r)
+  const sig = big(auth.s)
+  const yParity = Number(big(auth.yParity ?? auth.v))
+  if (r === 0n || sig === 0n || r >= SECP_N) return undefined
+  // EIP-2 rejects the high half of the s range.
+  if (sig > SECP_N / 2n) return undefined
+  if (yParity !== 0 && yParity !== 1) return undefined
+  const authChain = big(auth.chainId)
+  if (authChain !== 0n && authChain !== chainId) return undefined
+  const nonce = big(auth.nonce)
+  if (nonce >= 1n << 64n) return undefined
+  const encoded = Rlp.fromHex([
+    minimal(authChain),
+    auth.address as Hex,
+    minimal(nonce),
+  ])
+  const payload = Hash.keccak256(`0x05${encoded.slice(2)}` as Hex)
+  try {
+    return Secp256k1.recoverAddress({
+      payload,
+      // `Signature` carries r and s as 32-byte hex, not as bigints.
+      signature: {
+        r: `0x${r.toString(16).padStart(64, '0')}`,
+        s: `0x${sig.toString(16).padStart(64, '0')}`,
+        yParity,
+      },
+    }).toLowerCase() as Hex
+  } catch {
+    return undefined
+  }
+}
+
 type Outcome = { ok: true } | { ok: false; reason: string; detail?: string }
 
 /** Compares the engine's current state against the expected post-state. */
@@ -238,6 +300,62 @@ function compareLoaded(post: any): Outcome {
     post.state,
     readStorage(),
   )
+}
+
+/**
+ * Applies a set-code transaction's authorization list and returns the gas to
+ * refund.
+ *
+ * Each tuple is validated independently; an invalid one is skipped but still
+ * paid for. Authorities are warmed whether or not the tuple applies.
+ */
+function applyAuthorizations(
+  authList: Authorization[],
+  chainId: bigint,
+  pre: Record<string, Account>,
+): bigint {
+  let refund = 0n
+  // The refund is for an authority already in the trie. The runner writes the
+  // transaction's recipient into the engine as part of moving value, which can
+  // conjure an account that the trie does not have, so pre-state membership is
+  // the authority on this rather than the engine's current view.
+  const created = new Set<string>()
+  for (const auth of authList) {
+    const who = authority(auth, chainId)
+    if (!who) continue
+    putAddr(STAGE_ADDR, who)
+    engine.evm_warm_account(vm)
+
+    const current = readState().find((a) => a.address === who)
+    const code = current ? bytes(current.code) : new Uint8Array(0)
+    // Only an empty account or one already delegating may be re-delegated.
+    const delegating =
+      code.length === 23 &&
+      code[0] === 0xef &&
+      code[1] === 0x01 &&
+      code[2] === 0x00
+    if (code.length !== 0 && !delegating) continue
+    const nonce = current?.nonce ?? 0n
+    if (nonce !== big(auth.nonce)) continue
+    // A nonce at the u64 ceiling cannot be bumped, so the tuple does not apply.
+    if (nonce === (1n << 64n) - 1n) continue
+    // PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST, for an account in the trie.
+    if (pre[who] || created.has(who)) refund += 12500n
+    created.add(who)
+
+    const target = bytes(auth.address)
+    // The zero address is the way to undelegate: it clears the code instead of
+    // writing a designation.
+    const designation =
+      big(auth.address) === 0n
+        ? new Uint8Array(0)
+        : Uint8Array.from([0xef, 0x01, 0x00, ...target])
+    putAddr(STAGE_ADDR, who)
+    putWord(STAGE_WORD_A, current?.balance ?? 0n)
+    mem().set(designation, stage() + STAGE_BYTES)
+    engine.evm_put_account(vm, nonce + 1n, designation.length)
+  }
+  return refund
 }
 
 // Set per case so `compare` can express a balance mismatch in gas units.
@@ -253,7 +371,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
   const isCreate = !tx.to || tx.to === '0x' || tx.to === ''
 
   const accessList = tx.accessLists?.[idx.data] ?? tx.accessList
-  if (tx.authorizationList) return { ok: false, reason: 'eip7702-unsupported' }
+  const authList: Authorization[] = tx.authorizationList ?? []
 
   engine.evm_reset(vm)
 
@@ -333,10 +451,16 @@ function runCase(test: any, fork: string, post: any): Outcome {
     accessList,
     fork,
   )
+  // EIP-7702 charges PER_EMPTY_ACCOUNT_COST per authorization up front.
+  const authGas = BigInt(authList.length) * 25000n
   // An invalid transaction is rejected outright: no nonce bump, no gas charged,
   // no execution. The expected post-state is simply the pre-state, which is
   // what the engine currently holds.
-  if (intrinsic > gasLimit) return compareLoaded(post)
+  if (intrinsic + authGas > gasLimit) return compareLoaded(post)
+  // A set-code transaction must have at least one authorization and must not be
+  // a create.
+  if (tx.authorizationList && (authList.length === 0 || isCreate))
+    return compareLoaded(post)
 
   // Sender pays upfront and its nonce advances before execution.
   const senderPre = (test.pre as Record<string, Account>)[
@@ -360,7 +484,9 @@ function runCase(test: any, fork: string, post: any): Outcome {
       blobFee -
       (isCreate ? 0n : value),
   )
-  engine.evm_put_account(vm, big(senderPre?.nonce) + 1n, 0)
+  const senderCode = bytes(senderPre?.code)
+  mem().set(senderCode, stage() + STAGE_BYTES)
+  engine.evm_put_account(vm, big(senderPre?.nonce) + 1n, senderCode.length)
 
   const toAddr = isCreate ? '' : tx.to.toLowerCase()
   let rc: number
@@ -410,6 +536,15 @@ function runCase(test: any, fork: string, post: any): Outcome {
     toCode.length,
   )
 
+  // Authorizations land before execution so the delegations they write are
+  // visible to the first frame, and after the sender and recipient writes above
+  // because those come from the pre-state and would otherwise clobber them.
+  const authRefund = applyAuthorizations(
+    authList,
+    big(test.config?.chainid ?? '0x01'),
+    test.pre as Record<string, Account>,
+  )
+
   // EIP-2929 seeds the accessed-address set with the sender, the target, and
   // every precompile. Missing the precompiles made each precompile call pay
   // the cold 2600 instead of the warm 100.
@@ -420,7 +555,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
   putAddr(STAGE_ADDR2, tx.sender)
   putWord(STAGE_WORD_A, value)
   mem().set(data, stage() + STAGE_BYTES)
-  const execGas = gasLimit - intrinsic
+  const execGas = gasLimit - intrinsic - authGas
   rc = engine.evm_execute(vm, data.length, execGas, 0)
   return settleAndCompare(
     rc,
@@ -435,6 +570,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
     post,
     value,
     toAddr,
+    authRefund,
   )
 }
 
@@ -452,12 +588,19 @@ function settleAndCompare(
   post: any,
   value: bigint,
   toAddr: string,
+  extraRefund = 0n,
 ): Outcome {
   lastRc = rc
   const gasLeft = engine.evm_gas_left(vm)
-  const refundCounter = BigInt(engine.evm_refund(vm))
+  const refundCounter = BigInt(engine.evm_refund(vm)) + extraRefund
 
   let gasUsed = gasLimit - gasLeft
+  if (rc !== 0 && extraRefund > 0n) {
+    // An authorization is processed before execution, so its refund stands even
+    // when the top-level frame reverts.
+    const cap = gasUsed / 5n
+    gasUsed -= extraRefund < cap ? extraRefund : cap
+  }
   if (rc === 0) {
     // EIP-3529 caps the refund at a fifth of the gas consumed. The counter can
     // be negative mid-transaction; a negative total refunds nothing.
@@ -514,7 +657,8 @@ function readState(): Acct[] {
     out.push({
       address: getAddr(STAGE_ADDR),
       balance: getWord(STAGE_WORD_A),
-      nonce: BigInt(engine.evm_account_nonce(vm, i)),
+      // The export returns i64, so a nonce past 2^63 comes back negative.
+      nonce: BigInt.asUintN(64, BigInt(engine.evm_account_nonce(vm, i))),
       code: toHex(
         mem().slice(stage() + STAGE_BYTES, stage() + STAGE_BYTES + codeLen),
       ),
