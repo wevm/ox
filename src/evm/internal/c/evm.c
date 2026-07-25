@@ -124,6 +124,7 @@ typedef struct {
 // Only the forks that changed a cost this engine charges.
 #define SPEC_HOMESTEAD 1  // EIP-7 added DELEGATECALL
 #define SPEC_TANGERINE 2  // EIP-150 repriced all external account access
+#define SPEC_SPURIOUS 3   // EIP-170 capped deployed code, EIP-161 changed emptiness
 #define SPEC_CONSTANTINOPLE 5
 #define SPEC_ISTANBUL 7   // EIP-1884 repriced BALANCE, EXTCODEHASH, SLOAD
 #define SPEC_BYZANTIUM 4  // modexp and bn254 arrived
@@ -783,6 +784,44 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->frame_code = saved.code_ptr;
   vm->frame_input = saved.input_ptr;
   return status;
+}
+
+/**
+ * Applies the deployed-code rules to a finished initcode frame, charging the
+ * 200-per-byte deposit. Returns 1 when the contract is created.
+ *
+ * Both length and prefix rules are fork-gated, and Frontier is the odd one
+ * out at the end: it cannot fail for want of deposit gas, it simply keeps the
+ * account with no code at all. Applying any of these three unconditionally is
+ * wrong on some fork, which is why the two call sites share this.
+ */
+static int deposit_code(evm_vm *vm, int32_t created, int32_t snapshot,
+                        int64_t *child_gas) {
+  const int32_t dep_len = vm->output_len;
+  const int spec = vm->ctx.spec;
+  // EIP-170 caps deployed code from Spurious Dragon; EIP-3541 reserves the
+  // 0xEF prefix from London, for what became EOF.
+  if ((spec >= SPEC_SPURIOUS && dep_len > 24576) ||
+      (spec >= SPEC_LONDON && dep_len > 0 && vm->output[0] == 0xEF)) {
+    state_revert(vm->st, snapshot);
+    *child_gas = 0;
+    return 0;
+  }
+  const int64_t deposit = (int64_t)dep_len * 200;
+  if (*child_gas < deposit) {
+    // Frontier had no way to signal this, so the account survives with empty
+    // code and the initcode's gas is simply gone. EIP-2 made it a failure.
+    if (spec < SPEC_HOMESTEAD) {
+      *child_gas = 0;
+      return 1;
+    }
+    state_revert(vm->st, snapshot);
+    *child_gas = 0;
+    return 0;
+  }
+  *child_gas -= deposit;
+  set_code(vm->st, created, vm->output, dep_len);
+  return 1;
 }
 
 /** Address `0x00..01` through `0x00..11` are the precompiles. */
@@ -2061,24 +2100,14 @@ static evm_status interpret(evm_vm *vm) {
                       u256_add(vm->st->accounts[created].balance, value));
           set_exists(vm->st, created, 1);
           set_created(vm->st, created, 1);
-          set_nonce(vm->st, created, 1); // EIP-161
+          // EIP-161 (Spurious Dragon) starts a created account at nonce 1;
+          // before it, at 0.
+          if (vm->ctx.spec >= SPEC_SPURIOUS) set_nonce(vm->st, created, 1);
           const evm_status cs =
               run_frame(vm, created, creator, value, init, (int)len, init, 0, 0,
                         &child_gas);
           if (cs == EVM_SUCCESS) {
-            const int32_t dep_len = vm->output_len;
-            // EIP-170 caps deployed code; EIP-3541 reserves the 0xEF prefix.
-            if (dep_len > 24576 || (dep_len > 0 && vm->output[0] == 0xEF)) {
-              state_revert(vm->st, snapshot);
-              child_gas = 0;
-            } else if (child_gas < (int64_t)dep_len * 200) {
-              state_revert(vm->st, snapshot);
-              child_gas = 0;
-            } else {
-              child_gas -= (int64_t)dep_len * 200;
-              set_code(vm->st, created, vm->output, dep_len);
-              ok = 1;
-            }
+            ok = deposit_code(vm, created, snapshot, &child_gas);
           } else {
             state_revert(vm->st, snapshot);
             if (cs == EVM_REVERT) {
@@ -2665,16 +2694,8 @@ int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
                 init_len, init, 0, 0, &child_gas);
   int status = (int)cs;
   if (cs == EVM_SUCCESS) {
-    const int32_t dep_len = vm->output_len;
-    if (dep_len > 24576 || (dep_len > 0 && vm->output[0] == 0xEF) ||
-        child_gas < (int64_t)dep_len * 200) {
-      state_revert(vm->st, snapshot);
-      child_gas = 0;
+    if (!deposit_code(vm, created, snapshot, &child_gas))
       status = EVM_OUT_OF_GAS;
-    } else {
-      child_gas -= (int64_t)dep_len * 200;
-      set_code(vm->st, created, vm->output, dep_len);
-    }
   } else {
     state_revert(vm->st, snapshot);
     if (cs != EVM_REVERT) child_gas = 0;
