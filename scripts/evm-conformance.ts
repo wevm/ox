@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40363/40553 (99.53%) across all forks. This is the same fixture set
+// Status: 40385/40553 (99.59%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -497,6 +497,17 @@ function runCase(test: any, fork: string, post: any): Outcome {
     tx.sender.toLowerCase()
   ]
   const senderBalance = big(senderPre?.balance)
+  // EIP-3607: a transaction from an account with deployed code is invalid, so
+  // that an address cannot be both a contract and an externally-owned account.
+  // EIP-7702 carved out the delegation designator, which is code but is not a
+  // contract — that is the whole point of a set-code transaction.
+  if (forkAtLeast(fork, 'London')) {
+    const senderCodeHex = (senderPre?.code ?? '0x').toLowerCase()
+    const delegating =
+      forkAtLeast(fork, 'Prague') && senderCodeHex.startsWith('0xef0100')
+    if (senderCodeHex !== '0x' && senderCodeHex !== '' && !delegating)
+      return compareLoaded(post)
+  }
   // A blob transaction is invalid if it cannot pay the block's blob base fee.
   if (blobHashes.length && big(tx.maxFeePerBlobGas) < blobBaseFee)
     return compareLoaded(post)
