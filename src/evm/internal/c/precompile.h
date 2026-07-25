@@ -192,6 +192,8 @@ static void ripemd160(const uint8_t *in, uint64_t len, uint8_t *out) {
 // precompile allows — so a modulus past 512 bytes was silently truncated and the
 // result was wrong rather than merely slow.
 #define MODEXP_LIMBS 128
+/** The widest operand the fixed-size limb buffers above can hold. */
+#define MODEXP_MAX_BYTES (MODEXP_LIMBS * 8)
 
 typedef struct {
   uint64_t d[MODEXP_LIMBS];

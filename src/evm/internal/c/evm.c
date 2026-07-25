@@ -74,6 +74,9 @@ static void mem_copy(uint8_t *dst, const uint8_t *src, uint64_t n) {
 // anything past this is unaffordable long before it is reached, and the check
 // only exists to keep the arithmetic below in range.
 #define MAX_MEMORY_OFFSET (1 << 30)
+// Freestanding: there is no <stdint.h> here, so no limit macros. Used as a
+// saturating price for operands too large to bill honestly — nothing pays it.
+#define GAS_UNAFFORDABLE 0x7FFFFFFFFFFFFFFFLL
 #define DEFAULT_MEMORY (4 * 1024 * 1024)
 
 typedef enum {
@@ -869,54 +872,76 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       const uint64_t bl = u256_to_u64_sat(bl_w);
       const uint64_t el = u256_to_u64_sat(el_w);
       const uint64_t ml = u256_to_u64_sat(ml_w);
-      if (bl > 1024 || el > 1024 || ml > 1024) return PRE_FAIL;
-
-      // EIP-2565 gas: multiplication complexity times adjusted exponent
-      // length, floored at 200.
+      // The spec bounds modexp by price, not by length. A header may declare
+      // terabyte operands: with an empty modulus that is a legal call costing
+      // the 200 floor and returning nothing, and rejecting it out of hand
+      // charged the caller everything it had forwarded instead. So price it
+      // from the declared lengths first, and only then require that whatever
+      // has to be computed fits.
       const uint64_t maxlen = bl > ml ? bl : ml;
-      uint64_t mult, divisor;
-      if (spec >= SPEC_BERLIN) {
-        // EIP-2565: complexity in 8-byte words, divided by 3.
-        const uint64_t wordsm = (maxlen + 7) / 8;
-        mult = wordsm * wordsm;
-        divisor = 3;
-      } else {
-        // EIP-198's piecewise complexity, divided by GQUADDIVISOR = 20.
-        if (maxlen <= 64) mult = maxlen * maxlen;
-        else if (maxlen <= 1024) mult = maxlen * maxlen / 4 + 96 * maxlen - 3072;
-        else mult = maxlen * maxlen / 16 + 480 * maxlen - 199680;
-        divisor = 20;
-      }
-      uint8_t expbuf[1024];
-      copy_padded(expbuf, in, len, 96 + bl, el);
-      uint64_t adj = 0;
-      if (el <= 32) {
-        // The exponent fits in the head: use its bit length minus one.
-        uint64_t highest = 0;
-        for (uint64_t i = 0; i < el; i++)
-          if (expbuf[i]) { highest = (el - i - 1) * 8 + 7; 
-            uint8_t b = expbuf[i];
-            while (!(b & 0x80)) { b <<= 1; highest--; }
-            break; }
-        adj = highest;
-      } else {
-        uint64_t highest = 0;
-        for (uint64_t i = 0; i < 32; i++)
-          if (expbuf[i]) { highest = (32 - i - 1) * 8 + 7;
-            uint8_t b = expbuf[i];
-            while (!(b & 0x80)) { b <<= 1; highest--; }
-            break; }
-        adj = 8 * (el - 32) + highest;
-      }
+
+      // The adjusted exponent length reads at most the exponent's first 32
+      // bytes, however long the exponent claims to be.
+      uint8_t exphead[32];
+      const uint64_t headlen = el < 32 ? el : 32;
+      copy_padded(exphead, in, len, 96 + (bl < len ? bl : len), headlen);
+      uint64_t highest = 0;
+      for (uint64_t i = 0; i < headlen; i++)
+        if (exphead[i]) {
+          highest = (headlen - i - 1) * 8 + 7;
+          uint8_t bt = exphead[i];
+          while (!(bt & 0x80)) {
+            bt <<= 1;
+            highest--;
+          }
+          break;
+        }
+      // Everything below saturates rather than wrapping: an unaffordable price
+      // has to stay unaffordable, and these lengths are attacker-chosen.
+      uint64_t adj = el <= 32 ? highest : 8 * (el - 32) + highest;
+      if (el > 32 && el > ((uint64_t)GAS_UNAFFORDABLE / 8)) adj = (uint64_t)GAS_UNAFFORDABLE;
       if (adj == 0) adj = 1;
-      int64_t cost = (int64_t)(mult * adj / divisor);
+
+      const uint64_t divisor = spec >= SPEC_BERLIN ? 3 : 20;
+      int64_t cost;
+      if (maxlen > (1ULL << 31)) {
+        cost = GAS_UNAFFORDABLE;
+      } else {
+        uint64_t mult;
+        if (spec >= SPEC_BERLIN) {
+          // EIP-2565: complexity in 8-byte words, divided by 3.
+          const uint64_t wordsm = (maxlen + 7) / 8;
+          mult = wordsm * wordsm;
+        } else {
+          // EIP-198's piecewise complexity, divided by GQUADDIVISOR = 20.
+          if (maxlen <= 64) mult = maxlen * maxlen;
+          else if (maxlen <= 1024)
+            mult = maxlen * maxlen / 4 + 96 * maxlen - 3072;
+          else mult = maxlen * maxlen / 16 + 480 * maxlen - 199680;
+        }
+        cost = mult && adj > (uint64_t)GAS_UNAFFORDABLE / mult
+                   ? GAS_UNAFFORDABLE
+                   : (int64_t)(mult * adj / divisor);
+      }
       // EIP-2565 introduced the floor; before Berlin there is none.
       if (spec >= SPEC_BERLIN && cost < 200) cost = 200;
       if (*gas < cost) return PRE_FAIL;
       *gas -= cost;
 
-      uint8_t basebuf[1024], modbuf[1024];
+      // An empty modulus returns nothing, which is the whole result for the
+      // oversized headers above: they never reach the arithmetic.
+      if (ml == 0) {
+        *out_len = 0;
+        return PRE_OK;
+      }
+      if (bl > MODEXP_MAX_BYTES || el > MODEXP_MAX_BYTES ||
+          ml > MODEXP_MAX_BYTES)
+        return PRE_FAIL;
+
+      uint8_t basebuf[MODEXP_MAX_BYTES], modbuf[MODEXP_MAX_BYTES];
+      uint8_t expbuf[MODEXP_MAX_BYTES];
       copy_padded(basebuf, in, len, 96, bl);
+      copy_padded(expbuf, in, len, 96 + bl, el);
       copy_padded(modbuf, in, len, 96 + bl + el, ml);
       modexp(basebuf, bl, expbuf, el, modbuf, ml, out);
       *out_len = (int32_t)ml;

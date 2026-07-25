@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40385/40553 (99.59%) across all forks. This is the same fixture set
+// Status: 40403/40553 (99.63%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -18,7 +18,6 @@
 //   - Deep-recursion gas accounting in stStaticCall and stCallCreateCallCode,
 //     where the discrepancy is tens of thousands of gas across a thousand-frame
 //     chain. `--trace-case` is the tool for these; see below.
-//   - EIP-7883's modexp repricing for Osaka.
 //   - A residue of small gas deltas spread across the call tests.
 //
 // Blockchain tests are not run at all: they need block processing and a
