@@ -1797,6 +1797,10 @@ static evm_status interpret(evm_vm *vm) {
 
         const int32_t snapshot = state_snapshot(vm->st);
         const u256 caller_balance = vm->st->accounts[vm->self].balance;
+        // Every call replaces the returndata buffer, including one that never
+        // starts. Leaving the previous call's output in place made
+        // RETURNDATASIZE report it.
+        vm->returndata_len = 0;
         int ok = 1;
         if (!u256_is_zero(value) && u256_cmp(caller_balance, value) < 0) {
           ok = 0; // insufficient balance: the call fails without executing
@@ -1845,6 +1849,10 @@ static evm_status interpret(evm_vm *vm) {
           vm->returndata_len =
               (cs == EVM_SUCCESS || cs == EVM_REVERT) ? vm->output_len : 0;
           mem_copy(vm->returndata, vm->output, (uint64_t)vm->returndata_len);
+          // `output_len` is shared across frames. This frame has not returned
+          // anything yet, so leaving the child's length there would make its own
+          // STOP look like a RETURN of that many bytes to *its* caller.
+          vm->output_len = 0;
         }
       call_done:
         if (!ok && vm->returndata_len == 0) state_revert(vm->st, snapshot);
@@ -1973,6 +1981,9 @@ static evm_status interpret(evm_vm *vm) {
               child_gas = 0;
             }
           }
+          // Same as the call family: this frame has returned nothing yet, so the
+          // initcode's own output length must not be left behind.
+          vm->output_len = 0;
         }
         gas += child_gas;
         PUSH(ok ? address_to_word(addr) : U256_ZERO);
