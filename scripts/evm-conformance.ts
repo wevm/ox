@@ -9,6 +9,25 @@
 // The transaction layer lives here rather than in the engine: intrinsic gas,
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
+//
+// Status: 31258/40553 (77.08%) across all forks, 85% on a Prague sample.
+// The known gaps, largest first:
+//
+//   - ecrecover, bn254 (0x06-0x08), KZG (0x0a), and BLS12-381 (0x0b-0x11) are
+//     not implemented; they need field and group arithmetic. This is most of
+//     the `storage` bucket, where a call to one returns 0 instead of 1.
+//   - EIP-7702 set-code transactions are skipped outright (612 cases).
+//   - Pre-Berlin gas schedules. The engine prices EIP-2929 warm/cold access
+//     unconditionally, so Istanbul and earlier misprice account access.
+//   - A residue of small gas deltas (8, 10, 35, 52, 84) concentrated in the
+//     static-call and delegatecall tests. Disabling the GAS block-correction
+//     shrinks some of these buckets while costing ~5% overall, so the
+//     correction is right in general and slightly wrong in some structural
+//     case that is not yet identified.
+//
+// Blockchain tests are not run at all: they need block processing and a
+// Merkle-Patricia trie for the state root, which state tests avoid by shipping
+// an explicit post-state.
 
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
