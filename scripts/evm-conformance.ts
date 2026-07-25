@@ -289,8 +289,12 @@ function authority(auth: Authorization, chainId: bigint): Hex | undefined {
   if (yParity !== 0 && yParity !== 1) return undefined
   const authChain = big(auth.chainId)
   if (authChain !== 0n && authChain !== chainId) return undefined
+  // EIP-7702 step 2: a tuple whose nonce is at the u64 ceiling cannot be
+  // applied, because applying it would have to increment past the cap. This is
+  // checked before the authority is recovered, so such a tuple never reaches
+  // step 4 and never warms anything.
   const nonce = big(auth.nonce)
-  if (nonce >= 1n << 64n) return undefined
+  if (nonce >= (1n << 64n) - 1n) return undefined
   const encoded = Rlp.fromHex([
     minimal(authChain),
     auth.address as Hex,
@@ -359,8 +363,6 @@ function applyAuthorizations(
     if (code.length !== 0 && !delegating) continue
     const nonce = current?.nonce ?? 0n
     if (nonce !== big(auth.nonce)) continue
-    // A nonce at the u64 ceiling cannot be bumped, so the tuple does not apply.
-    if (nonce === (1n << 64n) - 1n) continue
     // PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST, for an account in the trie.
     if (pre[who] || created.has(who)) refund += 12500n
     created.add(who)

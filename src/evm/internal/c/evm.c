@@ -1315,6 +1315,19 @@ static inline int64_t capped_gas(int64_t available, u256 requested) {
   return want < (uint64_t)allowed ? (int64_t)want : allowed;
 }
 
+/**
+ * The gas a sub-call receives, on any fork.
+ *
+ * Before Tangerine there is no cap and no retention: the callee gets exactly
+ * what was asked for, and asking for more than the caller holds is an
+ * out-of-gas error rather than a silent clamp. Returns -1 for that case.
+ */
+static inline int64_t call_gas(int64_t available, u256 requested, int spec) {
+  if (spec >= SPEC_TANGERINE) return capped_gas(available, requested);
+  const uint64_t want = u256_to_u64_sat(requested);
+  return want <= (uint64_t)available ? (int64_t)want : -1;
+}
+
 /** Charges a block's static gas and validates its stack bounds up front. */
 #define ENTER_BLOCK(at)                                       \
   do {                                                        \
@@ -1948,7 +1961,8 @@ static evm_status interpret(evm_vm *vm) {
             USE_GAS(25000);
         }
 
-        int64_t child_gas = capped_gas(gas, gas_arg);
+        int64_t child_gas = call_gas(gas, gas_arg, vm->ctx.spec);
+        if (child_gas < 0) HALT(EVM_OUT_OF_GAS);
         gas -= child_gas;
         // The stipend is granted on top of the 63/64 cap.
         if (!u256_is_zero(value)) child_gas += 2300;
@@ -2080,7 +2094,12 @@ static evm_status interpret(evm_vm *vm) {
         else
           create2_address(creator, salt, init, len, addr);
 
-        int64_t child_gas = capped_gas(gas, u256_from_u64(~(uint64_t)0));
+        // A creation names no gas figure, so it takes everything the cap
+        // allows — which before Tangerine is everything.
+        int64_t child_gas =
+            vm->ctx.spec >= SPEC_TANGERINE
+                ? capped_gas(gas, u256_from_u64(~(uint64_t)0))
+                : gas;
         gas -= child_gas;
 
         const u256 creator_balance = vm->st->accounts[vm->self].balance;
