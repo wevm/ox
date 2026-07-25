@@ -162,6 +162,16 @@ function warmPreamble(sender: string, to: string | undefined, fork: string) {
 
 type Outcome = { ok: true } | { ok: false; reason: string; detail?: string }
 
+/** Compares the engine's current state against the expected post-state. */
+function compareLoaded(post: any): Outcome {
+  lastRc = 0
+  return compare(
+    new Map(readState().map((a) => [a.address, a])),
+    post.state,
+    readStorage(),
+  )
+}
+
 // Set per case so `compare` can express a balance mismatch in gas units.
 let gasPriceForDetail = 0n
 let lastRc = 0
@@ -244,8 +254,10 @@ function runCase(test: any, fork: string, post: any): Outcome {
     accessList,
     fork,
   )
-  if (intrinsic > gasLimit)
-    return { ok: false, reason: 'intrinsic-exceeds-limit' }
+  // An invalid transaction is rejected outright: no nonce bump, no gas charged,
+  // no execution. The expected post-state is simply the pre-state, which is
+  // what the engine currently holds.
+  if (intrinsic > gasLimit) return compareLoaded(post)
 
   // Sender pays upfront and its nonce advances before execution.
   const senderPre = (test.pre as Record<string, Account>)[
@@ -253,8 +265,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
   ]
   const senderBalance = big(senderPre?.balance)
   const upfront = gasLimit * effectiveGasPrice + value
-  if (senderBalance < upfront)
-    return { ok: false, reason: 'insufficient-funds' }
+  if (senderBalance < upfront) return compareLoaded(post)
 
   // Only the gas is deducted here. For a call the runner moves the value
   // below; for a create `evm_execute_create` moves it, so deducting it here as
