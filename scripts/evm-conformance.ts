@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40412/40553 (99.65%) across all forks. This is the same fixture set
+// Status: 40423/40553 (99.68%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -526,9 +526,17 @@ function runCase(test: any, fork: string, post: any): Outcome {
     for (const h of blobHashes)
       if (!h.startsWith('0x01')) return compareLoaded(post)
   }
-  // EIP-1559: the fee cap has to cover the base fee.
-  if (tx.maxFeePerGas !== undefined && maxFee < baseFee)
+  // EIP-1559: the fee cap has to cover the base fee. That applies to a legacy
+  // transaction's `gasPrice` too — it is both caps at once, and one that
+  // cannot pay the base fee is as invalid as a type-2 that cannot.
+  if (forkAtLeast(fork, 'London') && maxFee < baseFee)
     return compareLoaded(post)
+  // A tip above the fee cap is nonsense and rejected, rather than clamped.
+  if (tx.maxPriorityFeePerGas !== undefined && maxPriority > maxFee)
+    return compareLoaded(post)
+  // EIP-2681 caps an account's nonce at 2^64 - 1, so a transaction at that
+  // nonce could never be followed by another and is refused outright.
+  if (big(tx.nonce) >= (1n << 64n) - 1n) return compareLoaded(post)
   if (tx.authorizationList && !forkAtLeast(fork, 'Prague'))
     return compareLoaded(post)
   // EIP-3860 caps initcode at twice the deployed-code limit.
