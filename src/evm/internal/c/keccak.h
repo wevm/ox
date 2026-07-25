@@ -1,8 +1,9 @@
 // Keccak-256 sponge for the Ox EVM.
 //
-// The permutation is lifted verbatim from `src/tempo/internal/mine.c`, which is
-// already validated against `@noble/hashes` by the VirtualMaster tests. Only
-// the sponge around it is new — `mine.c` specializes to a single 52-byte block.
+// The permutation started as the hand-unrolled keccak-f1600 from
+// `src/tempo/internal/mine.c`, which the VirtualMaster tests already validate
+// against `@noble/hashes`. Only the sponge around it was new — `mine.c`
+// specializes to a single 52-byte block.
 
 #ifndef OX_EVM_KECCAK_H
 #define OX_EVM_KECCAK_H
@@ -22,98 +23,177 @@ static const uint64_t KECCAK_RC[24] = {
     0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL,
 };
 
+// Lanes complemented in the stored representation. Chosen by exhaustive search
+// over the 2^25 masks for one that is stable round to round and leaves the
+// fewest NOTs in chi: this one frees 18 of the 25 lanes, so a round does 7 NOTs
+// instead of 25.
+//
+// chi is `a ^ (~b & c)`. A complemented `b` turns that into a plain AND and a
+// complemented `c` turns it into an OR, so most of the NOTs disappear. That
+// matters where the target has no `andn` instruction, which includes wasm
+// entirely and baseline x86-64. eprint.iacr.org/2024/1515 reaches the same
+// conclusion about lane complementing, and rules out bit interleaving here:
+// wasm32 has a native `i64.rotl`, so there is nothing to work around.
+#define KECCAK_COMPLEMENT_MASK { 0, 5, 8, 14, 16, 20 }
+
+/**
+ * One round, reading the 25 lanes named `S0..S24` and writing `T0..T24`.
+ *
+ * theta's D, rho's rotation, pi's permutation and chi are fused: each
+ * destination names its source rather than anything being moved. Only five `b`
+ * temporaries are live at a time, one output row's worth — materializing all 25
+ * at once, which is the obvious way to write this, puts ~75 values in flight and
+ * spills hard on a 16-register machine.
+ *
+ * Reads `c0..c4`, the column parities of `S`, from the enclosing scope.
+ * Accumulating those from the outputs as they are written (XKCP's
+ * `prepareTheta`) was measured and is slower: it stretches five live values
+ * across the whole round to save a pass over lanes that are already hot.
+ *
+ * Generated from the spec's rho offsets and pi mapping, not transcribed.
+ */
+#define KECCAK_ROUND(S, T, RC)                    \
+  do {                                            \
+    const uint64_t d0 = c4 ^ ROTL64(c1, 1);       \
+    const uint64_t d1 = c0 ^ ROTL64(c2, 1);       \
+    const uint64_t d2 = c1 ^ ROTL64(c3, 1);       \
+    const uint64_t d3 = c2 ^ ROTL64(c4, 1);       \
+    const uint64_t d4 = c3 ^ ROTL64(c0, 1);       \
+    {                                             \
+      const uint64_t b0 = (S##0 ^ d0);            \
+      const uint64_t b1 = ROTL64(S##6 ^ d1, 44);  \
+      const uint64_t b2 = ROTL64(S##12 ^ d2, 43); \
+      const uint64_t b3 = ROTL64(S##18 ^ d3, 21); \
+      const uint64_t b4 = ROTL64(S##24 ^ d4, 14); \
+      T##0 = b0 ^ (b1 & b2) ^ (RC);               \
+      T##1 = b1 ^ (b2 | b3);                      \
+      T##2 = b2 ^ (b3 & b4);                      \
+      T##3 = b3 ^ (b4 | b0);                      \
+      T##4 = b4 ^ (b0 & ~b1);                     \
+    }                                             \
+    {                                             \
+      const uint64_t b0 = ROTL64(S##3 ^ d3, 28);  \
+      const uint64_t b1 = ROTL64(S##9 ^ d4, 20);  \
+      const uint64_t b2 = ROTL64(S##10 ^ d0, 3);  \
+      const uint64_t b3 = ROTL64(S##16 ^ d1, 45); \
+      const uint64_t b4 = ROTL64(S##22 ^ d2, 61); \
+      T##5 = b0 ^ (~b1 & b2);                     \
+      T##6 = b1 ^ (~b2 & b3);                     \
+      T##7 = b2 ^ (~b3 & b4);                     \
+      T##8 = b3 ^ (b4 | b0);                      \
+      T##9 = b4 ^ (b0 & b1);                      \
+    }                                             \
+    {                                             \
+      const uint64_t b0 = ROTL64(S##1 ^ d1, 1);   \
+      const uint64_t b1 = ROTL64(S##7 ^ d2, 6);   \
+      const uint64_t b2 = ROTL64(S##13 ^ d3, 25); \
+      const uint64_t b3 = ROTL64(S##19 ^ d4, 8);  \
+      const uint64_t b4 = ROTL64(S##20 ^ d0, 18); \
+      T##10 = b0 ^ (b1 | b2);                     \
+      T##11 = b1 ^ (b2 & b3);                     \
+      T##12 = b2 ^ (b3 | b4);                     \
+      T##13 = b3 ^ (b4 & ~b0);                    \
+      T##14 = b4 ^ (b0 & b1);                     \
+    }                                             \
+    {                                             \
+      const uint64_t b0 = ROTL64(S##4 ^ d4, 27);  \
+      const uint64_t b1 = ROTL64(S##5 ^ d0, 36);  \
+      const uint64_t b2 = ROTL64(S##11 ^ d1, 10); \
+      const uint64_t b3 = ROTL64(S##17 ^ d2, 15); \
+      const uint64_t b4 = ROTL64(S##23 ^ d3, 56); \
+      T##15 = b0 ^ (b1 & ~b2);                    \
+      T##16 = b1 ^ (b2 & b3);                     \
+      T##17 = b2 ^ (b3 | b4);                     \
+      T##18 = b3 ^ (b4 & b0);                     \
+      T##19 = b4 ^ (b0 | b1);                     \
+    }                                             \
+    {                                             \
+      const uint64_t b0 = ROTL64(S##2 ^ d2, 62);  \
+      const uint64_t b1 = ROTL64(S##8 ^ d3, 55);  \
+      const uint64_t b2 = ROTL64(S##14 ^ d4, 39); \
+      const uint64_t b3 = ROTL64(S##15 ^ d0, 41); \
+      const uint64_t b4 = ROTL64(S##21 ^ d1, 2);  \
+      T##20 = b0 ^ (b1 | b2);                     \
+      T##21 = b1 ^ (b2 & b3);                     \
+      T##22 = b2 ^ (b3 | b4);                     \
+      T##23 = b3 ^ (b4 & b0);                     \
+      T##24 = b4 ^ (b0 | ~b1);                    \
+    }                                             \
+  } while (0)
+
+#define KECCAK_LANES(p)                                                     \
+  uint64_t p##0, p##1, p##2, p##3, p##4, p##5, p##6, p##7, p##8, p##9,      \
+      p##10, p##11, p##12, p##13, p##14, p##15, p##16, p##17, p##18,        \
+      p##19, p##20, p##21, p##22, p##23, p##24
+
+#define KECCAK_COLUMNS(p)          \
+  c0 = p##0 ^ p##5 ^ p##10 ^ p##15 ^ p##20; \
+  c1 = p##1 ^ p##6 ^ p##11 ^ p##16 ^ p##21; \
+  c2 = p##2 ^ p##7 ^ p##12 ^ p##17 ^ p##22; \
+  c3 = p##3 ^ p##8 ^ p##13 ^ p##18 ^ p##23; \
+  c4 = p##4 ^ p##9 ^ p##14 ^ p##19 ^ p##24
+
+/** The body of the permutation, so it can be instantiated per target below. */
+#define KECCAK_PERMUTE(A)                                                   \
+  do {                                                                      \
+    /* Two rounds per iteration, with the two lane sets swapping roles, so  \
+       the state is never copied back. */                                   \
+    KECCAK_LANES(a);                                                        \
+    KECCAK_LANES(e);                                                        \
+    uint64_t c0, c1, c2, c3, c4;                                            \
+    a0 = A[0];   a1 = A[1];   a2 = A[2];   a3 = A[3];   a4 = A[4];          \
+    a5 = A[5];   a6 = A[6];   a7 = A[7];   a8 = A[8];   a9 = A[9];          \
+    a10 = A[10]; a11 = A[11]; a12 = A[12]; a13 = A[13]; a14 = A[14];        \
+    a15 = A[15]; a16 = A[16]; a17 = A[17]; a18 = A[18]; a19 = A[19];        \
+    a20 = A[20]; a21 = A[21]; a22 = A[22]; a23 = A[23]; a24 = A[24];        \
+    for (int r = 0; r < 24; r += 2) {                                       \
+      KECCAK_COLUMNS(a);                                                    \
+      KECCAK_ROUND(a, e, KECCAK_RC[r]);                                     \
+      KECCAK_COLUMNS(e);                                                    \
+      KECCAK_ROUND(e, a, KECCAK_RC[r + 1]);                                 \
+    }                                                                       \
+    A[0] = a0;   A[1] = a1;   A[2] = a2;   A[3] = a3;   A[4] = a4;          \
+    A[5] = a5;   A[6] = a6;   A[7] = a7;   A[8] = a8;   A[9] = a9;          \
+    A[10] = a10; A[11] = a11; A[12] = a12; A[13] = a13; A[14] = a14;        \
+    A[15] = a15; A[16] = a16; A[17] = a17; A[18] = a18; A[19] = a19;        \
+    A[20] = a20; A[21] = a21; A[22] = a22; A[23] = a23; A[24] = a24;        \
+  } while (0)
+
+// Baseline x86-64 has no `andn`, so the seven NOTs the complement mask leaves
+// behind cost seven extra instructions per round. Compiling a second copy for
+// x86-64-v3 and picking between them recovers that, and is the same bargain
+// the hand-written assembly this competes with makes.
+//
+// The choice is an explicit branch on a `__builtin_cpu_supports` flag — a
+// predictable test against a preinitialized global, next to nothing beside a
+// 300ns permutation — rather than `target_clones`. `target_clones` builds an
+// IFUNC, and the PLT that comes with it measurably perturbs the rest of the
+// translation unit: the two pure-dispatch benchmarks, which never hash
+// anything, lost 5-8% to it.
+//
+// Everything else, wasm included, gets the single baseline definition.
+#if defined(__x86_64__) && !defined(OX_NO_MULTIVERSION)
+__attribute__((noinline, target("arch=x86-64-v3"))) static void
+keccak_f1600_v3(uint64_t *A) {
+  KECCAK_PERMUTE(A);
+}
+#endif
+
 /**
  * The Keccak-f[1600] permutation, over a lane-complemented state.
  *
- * theta's D, rho's rotation and pi's permutation are fused into one pass into a
- * scratch array — each destination names its source rather than anything being
- * moved — and chi is a second pass back. Four separate passes over the state
- * cost twice the loads and stores.
- *
- * Some lanes are stored complemented. chi is `a ^ (~b & c)`, and a complemented
- * `b` turns that into a plain AND while a complemented `c` turns it into an OR,
- * so most of the NOTs disappear. That matters most where the target has no
- * `andn` instruction, which includes wasm entirely.
- *
- * Generated from the spec's rho offsets and pi mapping, not transcribed. The
- * complement mask comes from an exhaustive search, not from a paper.
+ * Kept out of line deliberately. Inlined, its straight-line code lands inside
+ * the interpreter's dispatch loop and moves everything after it.
  */
-// Lanes complemented in the stored representation. Chosen by exhaustive
-// search over the 2^25 masks for one that is stable round to round and
-// leaves the fewest NOTs in chi: this one frees 18 of the 25 lanes, so a
-// round does 7 NOTs instead of 25.
-#define KECCAK_COMPLEMENT_MASK { 0, 5, 8, 14, 16, 20 }
-
-static void keccak_f1600(uint64_t *A) {
-  uint64_t B[25];
-  for (int r = 0; r < 24; r++) {
-    const uint64_t c0 = A[0] ^ A[5] ^ A[10] ^ A[15] ^ A[20];
-    const uint64_t c1 = A[1] ^ A[6] ^ A[11] ^ A[16] ^ A[21];
-    const uint64_t c2 = A[2] ^ A[7] ^ A[12] ^ A[17] ^ A[22];
-    const uint64_t c3 = A[3] ^ A[8] ^ A[13] ^ A[18] ^ A[23];
-    const uint64_t c4 = A[4] ^ A[9] ^ A[14] ^ A[19] ^ A[24];
-    const uint64_t d0 = c4 ^ ROTL64(c1, 1);
-    const uint64_t d1 = c0 ^ ROTL64(c2, 1);
-    const uint64_t d2 = c1 ^ ROTL64(c3, 1);
-    const uint64_t d3 = c2 ^ ROTL64(c4, 1);
-    const uint64_t d4 = c3 ^ ROTL64(c0, 1);
-    // theta's D, rho's rotation and pi's permutation in one pass: each
-    // destination names its source rather than anything being moved.
-    B[0] = (A[0] ^ d0);
-    B[1] = ROTL64(A[6] ^ d1, 44);
-    B[2] = ROTL64(A[12] ^ d2, 43);
-    B[3] = ROTL64(A[18] ^ d3, 21);
-    B[4] = ROTL64(A[24] ^ d4, 14);
-    B[5] = ROTL64(A[3] ^ d3, 28);
-    B[6] = ROTL64(A[9] ^ d4, 20);
-    B[7] = ROTL64(A[10] ^ d0, 3);
-    B[8] = ROTL64(A[16] ^ d1, 45);
-    B[9] = ROTL64(A[22] ^ d2, 61);
-    B[10] = ROTL64(A[1] ^ d1, 1);
-    B[11] = ROTL64(A[7] ^ d2, 6);
-    B[12] = ROTL64(A[13] ^ d3, 25);
-    B[13] = ROTL64(A[19] ^ d4, 8);
-    B[14] = ROTL64(A[20] ^ d0, 18);
-    B[15] = ROTL64(A[4] ^ d4, 27);
-    B[16] = ROTL64(A[5] ^ d0, 36);
-    B[17] = ROTL64(A[11] ^ d1, 10);
-    B[18] = ROTL64(A[17] ^ d2, 15);
-    B[19] = ROTL64(A[23] ^ d3, 56);
-    B[20] = ROTL64(A[2] ^ d2, 62);
-    B[21] = ROTL64(A[8] ^ d3, 55);
-    B[22] = ROTL64(A[14] ^ d4, 39);
-    B[23] = ROTL64(A[15] ^ d0, 41);
-    B[24] = ROTL64(A[21] ^ d1, 2);
-    // chi. Complemented inputs turn most of the ANDNOTs into a plain AND
-    // or OR; the seven that remain each still cost exactly one NOT.
-    A[0] = B[0] ^ (B[1] & B[2]) ^ KECCAK_RC[r];
-    A[1] = B[1] ^ (B[2] | B[3]);
-    A[2] = B[2] ^ (B[3] & B[4]);
-    A[3] = B[3] ^ (B[4] | B[0]);
-    A[4] = B[4] ^ (B[0] & ~B[1]);
-    A[5] = B[5] ^ (~B[6] & B[7]);
-    A[6] = B[6] ^ (~B[7] & B[8]);
-    A[7] = B[7] ^ (~B[8] & B[9]);
-    A[8] = B[8] ^ (B[9] | B[5]);
-    A[9] = B[9] ^ (B[5] & B[6]);
-    A[10] = B[10] ^ (B[11] | B[12]);
-    A[11] = B[11] ^ (B[12] & B[13]);
-    A[12] = B[12] ^ (B[13] | B[14]);
-    A[13] = B[13] ^ (B[14] & ~B[10]);
-    A[14] = B[14] ^ (B[10] & B[11]);
-    A[15] = B[15] ^ (B[16] & ~B[17]);
-    A[16] = B[16] ^ (B[17] & B[18]);
-    A[17] = B[17] ^ (B[18] | B[19]);
-    A[18] = B[18] ^ (B[19] & B[15]);
-    A[19] = B[19] ^ (B[15] | B[16]);
-    A[20] = B[20] ^ (B[21] | B[22]);
-    A[21] = B[21] ^ (B[22] & B[23]);
-    A[22] = B[22] ^ (B[23] | B[24]);
-    A[23] = B[23] ^ (B[24] & B[20]);
-    A[24] = B[24] ^ (B[20] | ~B[21]);
+__attribute__((noinline)) static void keccak_f1600(uint64_t *A) {
+#if defined(__x86_64__) && !defined(OX_NO_MULTIVERSION)
+  if (__builtin_cpu_supports("avx2")) { // implies BMI1/BMI2, i.e. x86-64-v3
+    keccak_f1600_v3(A);
+    return;
   }
+#endif
+  KECCAK_PERMUTE(A);
 }
-// NOTs per round: 7
 
 #define KECCAK_RATE 136
 
