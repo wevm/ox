@@ -1,14 +1,15 @@
 // Precompiled contracts implementable without elliptic-curve arithmetic.
 //
-// ecrecover (0x01), the bn254 pair (0x06-0x08), KZG (0x0a), and the BLS12-381
-// set (0x0b-0x11) need field and group arithmetic that does not belong in this
-// file; they are reported as unsupported so the caller can tell "wrong answer"
-// apart from "not implemented".
+// The bn254 pair (0x06-0x08), KZG (0x0a), and the BLS12-381 set (0x0b-0x11)
+// still need their own curve arithmetic; they are reported as unsupported so the
+// caller can tell "wrong answer" apart from "not implemented". ecrecover lives
+// in `secp256k1.h`.
 
 #ifndef OX_EVM_PRECOMPILE_H
 #define OX_EVM_PRECOMPILE_H
 
 #include "keccak.h"
+#include "secp256k1.h"
 #include "u256.h"
 
 #define PRE_OK 0

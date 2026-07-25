@@ -653,6 +653,29 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
   const uint64_t words = (len + 31) / 32;
   *out_len = 0;
   switch (id) {
+    case 0x01: { // ecrecover
+      if (*gas < 3000) return PRE_FAIL;
+      *gas -= 3000;
+      uint8_t padded[128];
+      copy_padded(padded, in, len, 0, 128);
+      // The recovery id is the last byte of the second word and must be 27 or
+      // 28; a non-zero byte anywhere else in that word is invalid.
+      int valid_v = padded[63] == 27 || padded[63] == 28;
+      for (int i = 32; i < 63; i++)
+        if (padded[i]) valid_v = 0;
+      // An invalid signature is not a precompile failure: it succeeds and
+      // returns nothing.
+      if (!valid_v) return PRE_OK;
+      uint8_t addr[20];
+      if (!ecrecover(padded, u256_from_be(padded + 64),
+                     u256_from_be(padded + 96), padded[63] - 27, addr))
+        return PRE_OK;
+      // The recovered address is right-aligned in a 32-byte word.
+      for (int i = 0; i < 12; i++) out[i] = 0;
+      for (int i = 0; i < 20; i++) out[12 + i] = addr[i];
+      *out_len = 32;
+      return PRE_OK;
+    }
     case 0x02: { // SHA2-256
       const int64_t cost = 60 + 12 * (int64_t)words;
       if (*gas < cost) return PRE_FAIL;
