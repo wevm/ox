@@ -525,99 +525,6 @@ static void divmod_knuth64(const uint64_t *num, int n, const uint64_t *den,
     rem[i] = s ? ((un[i] >> s) | (un[i + 1] << (64 - s))) : un[i];
 }
 
-/**
- * `a / b` and `a % b` for a divisor whose top limb is set.
- *
- * The quotient is then a single limb, so algorithm D runs exactly one
- * iteration. Spelling that out lets the compiler keep the five normalized limbs
- * in registers instead of spilling the generic routine's arrays, which is worth
- * about a third of the running time on full-width DIV.
- */
-static inline uint64_t divmod_4by4(const uint64_t *a, const uint64_t *b,
-                                   uint64_t *rem) {
-  const int s = __builtin_clzll(b[3]);
-  uint64_t v0, v1, v2, v3, u0, u1, u2, u3, u4;
-  if (s) {
-    v3 = (b[3] << s) | (b[2] >> (64 - s));
-    v2 = (b[2] << s) | (b[1] >> (64 - s));
-    v1 = (b[1] << s) | (b[0] >> (64 - s));
-    v0 = b[0] << s;
-    u4 = a[3] >> (64 - s);
-    u3 = (a[3] << s) | (a[2] >> (64 - s));
-    u2 = (a[2] << s) | (a[1] >> (64 - s));
-    u1 = (a[1] << s) | (a[0] >> (64 - s));
-    u0 = a[0] << s;
-  } else {
-    v3 = b[3];
-    v2 = b[2];
-    v1 = b[1];
-    v0 = b[0];
-    u4 = 0;
-    u3 = a[3];
-    u2 = a[2];
-    u1 = a[1];
-    u0 = a[0];
-  }
-
-  uint64_t qhat, rhat;
-  int corrected = 0;
-  if (u4 >= v3) {
-    qhat = 0xFFFFFFFFFFFFFFFFULL;
-    rhat = u3 + v3;
-    corrected = rhat < v3; // rhat passed 2^64, so the test below cannot hold
-  } else {
-    // A single estimate, so building a Möller-Granlund reciprocal would cost
-    // more than it saves: that needs a 128-by-64 hardware divide, where the
-    // portable form gets away with two 64-by-32 ones.
-    qhat = div_2by1_portable(u4, u3, v3, &rhat);
-  }
-  if (!corrected) {
-    uint64_t plo, phi;
-    mul64(qhat, v2, &plo, &phi);
-    while (phi > rhat || (phi == rhat && plo > u2)) {
-      qhat--;
-      rhat += v3;
-      if (rhat < v3) break;
-      mul64(qhat, v2, &plo, &phi);
-    }
-  }
-
-  uint64_t un[5] = {u0, u1, u2, u3, u4};
-  const uint64_t vn[4] = {v0, v1, v2, v3};
-  uint64_t carry = 0, borrow = 0;
-  for (int i = 0; i < 4; i++) {
-    uint64_t plo, phi;
-    mul64(qhat, vn[i], &plo, &phi);
-    const uint64_t sum = plo + carry;
-    phi += sum < plo;
-    carry = phi;
-    const uint64_t sub = un[i] - sum;
-    const uint64_t b1 = un[i] < sum;
-    const uint64_t sub2 = sub - borrow;
-    borrow = b1 | (sub < borrow);
-    un[i] = sub2;
-  }
-  const uint64_t t1 = un[4] - carry;
-  uint64_t neg = un[4] < carry;
-  const uint64_t t2 = t1 - borrow;
-  neg |= t1 < borrow;
-  un[4] = t2;
-  if (neg) {
-    qhat--;
-    uint64_t c = 0;
-    for (int i = 0; i < 4; i++) {
-      const uint64_t sum = un[i] + vn[i];
-      const uint64_t c1 = sum < un[i];
-      const uint64_t sum2 = sum + c;
-      c = c1 | (sum2 < sum);
-      un[i] = sum2;
-    }
-    un[4] += c;
-  }
-  for (int i = 0; i < 4; i++)
-    rem[i] = s ? ((un[i] >> s) | (un[i + 1] << (64 - s))) : un[i];
-  return qhat;
-}
 
 /** Number of significant 64-bit limbs, at least one. */
 static inline int u256_limb_len(u256 a) {
@@ -791,10 +698,6 @@ static inline u256 u256_div(u256 a, u256 b) {
     uint64_t r;
     return u256_divmod_u64(a, b.l[0], &r);
   }
-  if (b.l[3]) {
-    uint64_t r4[4];
-    return u256_from_u64(divmod_4by4(a.l, b.l, r4));
-  }
   // Only `quot[0..n-1]` is written, so the rest must start at zero. Trimming
   // the numerator drops whole outer iterations of algorithm D.
   uint64_t q[4] = {0}, r[8];
@@ -810,11 +713,6 @@ static inline u256 u256_mod(u256 a, u256 b) {
     uint64_t r;
     u256_divmod_u64(a, b.l[0], &r);
     return u256_from_u64(r);
-  }
-  if (b.l[3]) {
-    uint64_t r4[4];
-    divmod_4by4(a.l, b.l, r4);
-    return (u256){{r4[0], r4[1], r4[2], r4[3]}};
   }
   uint64_t q[4], r[8];
   divmod_knuth64(a.l, u256_limb_len(a), b.l, 4, q, r);
