@@ -149,7 +149,7 @@ static const op_info op_table[256] = {
     [0xf3] = OP_END(0, 2, 0),  // RETURN (+ memory)
     [0xfd] = OP_END(0, 2, 0),  // REVERT (+ memory)
     [0xfe] = OP_END(0, 0, 0),  // INVALID: defined, and always halts
-    [0xff] = OP_END(0, 1, 0),  // SELFDESTRUCT (EIP-6780)
+    [0xff] = OP_END(5000, 1, 0), // SELFDESTRUCT (EIP-6780)
 };
 
 #undef OP

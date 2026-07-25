@@ -944,7 +944,9 @@ static evm_status interpret(evm_vm *vm) {
         // Falling through starts a new block, since this one ended here.
         pc++;
         if (pc >= code_len) DONE(EVM_SUCCESS);
-        ENTER_BLOCK(pc);
+        // A JUMPDEST enters its own block, so entering it here too would
+        // charge that block's gas twice.
+        if (code[pc] != 0x5b) ENTER_BLOCK(pc);
         continue;
       }
       case 0x58: // PC
@@ -1299,7 +1301,9 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(u256_from_u64(ok ? 1 : 0));
         pc++;
         if (pc >= code_len) DONE(EVM_SUCCESS);
-        ENTER_BLOCK(pc);
+        // A JUMPDEST enters its own block, so entering it here too would
+        // charge that block's gas twice.
+        if (code[pc] != 0x5b) ENTER_BLOCK(pc);
         continue;
       }
 
@@ -1387,7 +1391,9 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(ok ? address_to_word(addr) : U256_ZERO);
         pc++;
         if (pc >= code_len) DONE(EVM_SUCCESS);
-        ENTER_BLOCK(pc);
+        // A JUMPDEST enters its own block, so entering it here too would
+        // charge that block's gas twice.
+        if (code[pc] != 0x5b) ENTER_BLOCK(pc);
         continue;
       }
 
@@ -1402,6 +1408,13 @@ static evm_status interpret(evm_vm *vm) {
         if (target < 0) HALT(EVM_OUT_OF_MEMORY);
         USE_GAS(warm_account(vm->st, target) ? GAS_COLD_ACCOUNT : 0);
         const u256 balance = vm->st->accounts[vm->self].balance;
+        // Sending a balance to an account that does not yet exist creates it.
+        if (!u256_is_zero(balance) && target != vm->self &&
+            !vm->st->accounts[target].exists &&
+            u256_is_zero(vm->st->accounts[target].balance) &&
+            vm->st->accounts[target].nonce == 0 &&
+            vm->st->accounts[target].code_len == 0)
+          USE_GAS(25000);
         if (!u256_is_zero(balance)) {
           if (target != vm->self) {
             set_balance(vm->st, target,
