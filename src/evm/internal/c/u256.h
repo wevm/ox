@@ -5,8 +5,9 @@
 // the byte-order conversions at the ABI boundary be plain 64-bit swaps.
 //
 // Division and the 512-bit intermediates required by MULMOD share one Knuth
-// algorithm-D implementation over 32-bit halves (`divmod_knuth`), so there is
-// a single code path to get right.
+// algorithm-D implementation over 64-bit limbs (`divmod_knuth64`), so there is
+// a single code path to get right. It needs no 128-bit divide, only 64x64->128
+// multiplies and a 2-by-1 division step, which keeps wasm32 on the same code.
 
 #ifndef OX_EVM_U256_H
 #define OX_EVM_U256_H
@@ -221,95 +222,268 @@ static inline u256 u256_sar(u256 a, uint32_t n) {
 // why it takes limb counts rather than fixed-width structs.
 // ---------------------------------------------------------------------------
 
-/**
- * Divides `num` (n32 halves) by `den` (d32 halves), writing the quotient to
- * `quot` (n32 halves) and the remainder to `rem` (d32 halves). Caller
- * guarantees the divisor is non-zero.
- */
-static void divmod_knuth(const uint32_t *num, int n32, const uint32_t *den,
-                         int d32, uint32_t *quot, uint32_t *rem) {
-  while (d32 > 0 && den[d32 - 1] == 0) d32--;
-  for (int i = 0; i < n32; i++) quot[i] = 0;
 
-  if (d32 == 1) {
-    uint64_t r = 0;
-    for (int i = n32 - 1; i >= 0; i--) {
-      uint64_t cur = (r << 32) | num[i];
-      quot[i] = (uint32_t)(cur / den[0]);
-      r = cur % den[0];
-    }
-    rem[0] = (uint32_t)r;
-    for (int i = 1; i < d32; i++) rem[i] = 0;
+/**
+ * Divides `(u1:u0)` by a normalized `d` using only 64-bit arithmetic.
+ *
+ * Hacker's Delight's `divlu` as two 32-bit steps. Requires the top bit of `d`
+ * set and `u1 < d`. wasm32 has no 128-bit divide, and the reciprocal form above
+ * needs one to build its reciprocal, so this covers that target.
+ */
+static inline uint64_t div_2by1_portable(uint64_t u1, uint64_t u0, uint64_t d,
+                                         uint64_t *rem) {
+  const uint64_t b = 1ULL << 32;
+  const uint64_t vn1 = d >> 32, vn0 = d & 0xFFFFFFFFULL;
+  const uint64_t un1 = u0 >> 32, un0 = u0 & 0xFFFFFFFFULL;
+  uint64_t q1 = u1 / vn1;
+  uint64_t rhat = u1 - q1 * vn1;
+  while (q1 >= b || q1 * vn0 > b * rhat + un1) {
+    q1--;
+    rhat += vn1;
+    if (rhat >= b) break;
+  }
+  const uint64_t un21 = u1 * b + un1 - q1 * d;
+  uint64_t q0 = un21 / vn1;
+  rhat = un21 - q0 * vn1;
+  while (q0 >= b || q0 * vn0 > b * rhat + un0) {
+    q0--;
+    rhat += vn1;
+    if (rhat >= b) break;
+  }
+  *rem = un21 * b + un0 - q0 * d;
+  return q1 * b + q0;
+}
+
+/** One 2-by-1 division step, using whichever primitive the target has. */
+#ifdef OX_HAS_INT128
+#define DIV2BY1(u1, u0, d, recip, rem) div_2by1((u1), (u0), (d), (recip), (rem))
+#else
+#define DIV2BY1(u1, u0, d, recip, rem) \
+  ((void)(recip), div_2by1_portable((u1), (u0), (d), (rem)))
+#endif
+
+/**
+ * Knuth algorithm D over 64-bit limbs.
+ *
+ * An earlier version worked over 32-bit halves, which doubles both the number of
+ * outer iterations and the work inside each one; that showed up as a 1.6-1.8x
+ * gap against `ruint` on full-width DIV and MULMOD. Everything here is
+ * 64x64->128 multiplies plus one 2-by-1 division per iteration, so no 128-bit
+ * divide is needed and the same code serves wasm32.
+ *
+ * `num` has `n` limbs and `den` has `d`; `quot` receives `n` limbs, `rem` eight.
+ */
+static void divmod_knuth64(const uint64_t *num, int n, const uint64_t *den,
+                           int d, uint64_t *quot, uint64_t *rem) {
+  while (d > 0 && den[d - 1] == 0) d--;
+  for (int i = 0; i < n; i++) quot[i] = 0;
+  for (int i = 0; i < 8; i++) rem[i] = 0;
+  if (d == 0) return;
+  // A numerator shorter than the divisor divides to zero with itself as the
+  // remainder. Without this the normalization below reads past `num`.
+  if (n < d) {
+    for (int i = 0; i < n; i++) rem[i] = num[i];
     return;
   }
 
-  // Normalize so the divisor's top half has its high bit set.
-  int shift = 0;
-  uint32_t top = den[d32 - 1];
-  while (!(top & 0x80000000u)) {
-    top <<= 1;
-    shift++;
+  if (d == 1) {
+    // Normalize once and carry the shifted remainder through, un-shifting only
+    // at the end. `r` stays below the divisor, which is what a 2-by-1 needs.
+    const int s0 = __builtin_clzll(den[0]);
+    const uint64_t dn = den[0] << s0;
+    uint64_t recip0 = 0;
+#ifdef OX_HAS_INT128
+    recip0 = reciprocal_2by1(dn);
+#endif
+    uint64_t un1[17];
+    un1[n] = s0 ? num[n - 1] >> (64 - s0) : 0;
+    for (int i = n - 1; i > 0; i--)
+      un1[i] = (num[i] << s0) | (s0 ? num[i - 1] >> (64 - s0) : 0);
+    un1[0] = num[0] << s0;
+    uint64_t r = un1[n];
+    for (int i = n - 1; i >= 0; i--)
+      quot[i] = DIV2BY1(r, un1[i], dn, recip0, &r);
+    rem[0] = r >> s0;
+    return;
   }
 
-  uint32_t un[18], vn[10];  // n32 <= 16, d32 <= 8, plus one overflow half
-  for (int i = d32 - 1; i > 0; i--)
-    vn[i] = (den[i] << shift) | (shift ? den[i - 1] >> (32 - shift) : 0);
-  vn[0] = den[0] << shift;
+  const int s = __builtin_clzll(den[d - 1]);
+  uint64_t vn[8], un[17];
+  for (int i = d - 1; i > 0; i--)
+    vn[i] = (den[i] << s) | (s ? den[i - 1] >> (64 - s) : 0);
+  vn[0] = den[0] << s;
+  un[n] = s ? num[n - 1] >> (64 - s) : 0;
+  for (int i = n - 1; i > 0; i--)
+    un[i] = (num[i] << s) | (s ? num[i - 1] >> (64 - s) : 0);
+  un[0] = num[0] << s;
 
-  un[n32] = shift ? num[n32 - 1] >> (32 - shift) : 0;
-  for (int i = n32 - 1; i > 0; i--)
-    un[i] = (num[i] << shift) | (shift ? num[i - 1] >> (32 - shift) : 0);
-  un[0] = num[0] << shift;
-
-  for (int j = n32 - d32; j >= 0; j--) {
-    uint64_t head = ((uint64_t)un[j + d32] << 32) | un[j + d32 - 1];
-    uint64_t qhat = head / vn[d32 - 1];
-    uint64_t rhat = head % vn[d32 - 1];
-    while (qhat > 0xffffffffULL ||
-           qhat * vn[d32 - 2] > ((rhat << 32) | un[j + d32 - 2])) {
-      qhat--;
-      rhat += vn[d32 - 1];
-      if (rhat > 0xffffffffULL) break;
+  uint64_t recip = 0;
+#ifdef OX_HAS_INT128
+  recip = reciprocal_2by1(vn[d - 1]);
+#endif
+  for (int j = n - d; j >= 0; j--) {
+    uint64_t qhat, rhat;
+    int skip_correction = 0;
+    if (un[j + d] >= vn[d - 1]) {
+      // The estimate saturates at b - 1; the correction below brings it down,
+      // unless the running remainder itself passed 2^64.
+      qhat = 0xFFFFFFFFFFFFFFFFULL;
+      rhat = un[j + d - 1] + vn[d - 1];
+      if (rhat < vn[d - 1]) skip_correction = 1;
+    } else {
+      qhat = DIV2BY1(un[j + d], un[j + d - 1], vn[d - 1], recip, &rhat);
     }
-
-    int64_t borrow = 0;
-    uint64_t carry = 0;
-    for (int i = 0; i < d32; i++) {
-      uint64_t p = qhat * vn[i] + carry;
-      carry = p >> 32;
-      int64_t t = (int64_t)un[i + j] - (int64_t)(p & 0xffffffffULL) - borrow;
-      un[i + j] = (uint32_t)t;
-      borrow = t < 0 ? 1 : 0;
-    }
-    int64_t t = (int64_t)un[j + d32] - (int64_t)carry - borrow;
-    un[j + d32] = (uint32_t)t;
-
-    if (t < 0) {
-      // qhat was one too large: add the divisor back.
-      qhat--;
-      carry = 0;
-      for (int i = 0; i < d32; i++) {
-        uint64_t s = (uint64_t)un[i + j] + vn[i] + carry;
-        un[i + j] = (uint32_t)s;
-        carry = s >> 32;
+    if (!skip_correction) {
+      uint64_t plo, phi;
+      mul64(qhat, vn[d - 2], &plo, &phi);
+      while (phi > rhat || (phi == rhat && plo > un[j + d - 2])) {
+        qhat--;
+        rhat += vn[d - 1];
+        if (rhat < vn[d - 1]) break; // rhat passed 2^64; the test cannot hold
+        mul64(qhat, vn[d - 2], &plo, &phi);
       }
-      un[j + d32] += (uint32_t)carry;
     }
-    quot[j] = (uint32_t)qhat;
+
+    uint64_t carry = 0, borrow = 0;
+    for (int i = 0; i < d; i++) {
+      uint64_t plo, phi;
+      mul64(qhat, vn[i], &plo, &phi);
+      const uint64_t sum = plo + carry;
+      phi += sum < plo;
+      carry = phi;
+      const uint64_t sub = un[i + j] - sum;
+      const uint64_t b1 = un[i + j] < sum;
+      const uint64_t sub2 = sub - borrow;
+      borrow = b1 | (sub < borrow);
+      un[i + j] = sub2;
+    }
+    const uint64_t top = un[j + d];
+    const uint64_t t1 = top - carry;
+    uint64_t neg = top < carry;
+    const uint64_t t2 = t1 - borrow;
+    neg |= t1 < borrow;
+    un[j + d] = t2;
+    quot[j] = qhat;
+    if (neg) {
+      // The estimate was one too large: give a divisor back.
+      quot[j]--;
+      uint64_t c = 0;
+      for (int i = 0; i < d; i++) {
+        const uint64_t sum = un[i + j] + vn[i];
+        const uint64_t c1 = sum < un[i + j];
+        const uint64_t sum2 = sum + c;
+        c = c1 | (sum2 < sum);
+        un[i + j] = sum2;
+      }
+      un[j + d] += c;
+    }
   }
 
-  for (int i = 0; i < d32; i++)
-    rem[i] = (un[i] >> shift) | (shift ? un[i + 1] << (32 - shift) : 0);
+  for (int i = 0; i < d; i++)
+    rem[i] = s ? ((un[i] >> s) | (un[i + 1] << (64 - s))) : un[i];
 }
 
-/** Number of significant 32-bit halves, minimum 1. */
-static inline int u256_h32_len(u256 a) {
-  for (int i = 3; i >= 0; i--) {
-    if (a.l[i] == 0) continue;
-    return (a.l[i] >> 32) ? i * 2 + 2 : i * 2 + 1;
+/**
+ * `a / b` and `a % b` for a divisor whose top limb is set.
+ *
+ * The quotient is then a single limb, so algorithm D runs exactly one
+ * iteration. Spelling that out lets the compiler keep the five normalized limbs
+ * in registers instead of spilling the generic routine's arrays, which is worth
+ * about a third of the running time on full-width DIV.
+ */
+static inline uint64_t divmod_4by4(const uint64_t *a, const uint64_t *b,
+                                   uint64_t *rem) {
+  const int s = __builtin_clzll(b[3]);
+  uint64_t v0, v1, v2, v3, u0, u1, u2, u3, u4;
+  if (s) {
+    v3 = (b[3] << s) | (b[2] >> (64 - s));
+    v2 = (b[2] << s) | (b[1] >> (64 - s));
+    v1 = (b[1] << s) | (b[0] >> (64 - s));
+    v0 = b[0] << s;
+    u4 = a[3] >> (64 - s);
+    u3 = (a[3] << s) | (a[2] >> (64 - s));
+    u2 = (a[2] << s) | (a[1] >> (64 - s));
+    u1 = (a[1] << s) | (a[0] >> (64 - s));
+    u0 = a[0] << s;
+  } else {
+    v3 = b[3];
+    v2 = b[2];
+    v1 = b[1];
+    v0 = b[0];
+    u4 = 0;
+    u3 = a[3];
+    u2 = a[2];
+    u1 = a[1];
+    u0 = a[0];
   }
+
+  uint64_t qhat, rhat;
+  int corrected = 0;
+  if (u4 >= v3) {
+    qhat = 0xFFFFFFFFFFFFFFFFULL;
+    rhat = u3 + v3;
+    corrected = rhat < v3; // rhat passed 2^64, so the test below cannot hold
+  } else {
+    // A single estimate, so building a Möller-Granlund reciprocal would cost
+    // more than it saves: that needs a 128-by-64 hardware divide, where the
+    // portable form gets away with two 64-by-32 ones.
+    qhat = div_2by1_portable(u4, u3, v3, &rhat);
+  }
+  if (!corrected) {
+    uint64_t plo, phi;
+    mul64(qhat, v2, &plo, &phi);
+    while (phi > rhat || (phi == rhat && plo > u2)) {
+      qhat--;
+      rhat += v3;
+      if (rhat < v3) break;
+      mul64(qhat, v2, &plo, &phi);
+    }
+  }
+
+  uint64_t un[5] = {u0, u1, u2, u3, u4};
+  const uint64_t vn[4] = {v0, v1, v2, v3};
+  uint64_t carry = 0, borrow = 0;
+  for (int i = 0; i < 4; i++) {
+    uint64_t plo, phi;
+    mul64(qhat, vn[i], &plo, &phi);
+    const uint64_t sum = plo + carry;
+    phi += sum < plo;
+    carry = phi;
+    const uint64_t sub = un[i] - sum;
+    const uint64_t b1 = un[i] < sum;
+    const uint64_t sub2 = sub - borrow;
+    borrow = b1 | (sub < borrow);
+    un[i] = sub2;
+  }
+  const uint64_t t1 = un[4] - carry;
+  uint64_t neg = un[4] < carry;
+  const uint64_t t2 = t1 - borrow;
+  neg |= t1 < borrow;
+  un[4] = t2;
+  if (neg) {
+    qhat--;
+    uint64_t c = 0;
+    for (int i = 0; i < 4; i++) {
+      const uint64_t sum = un[i] + vn[i];
+      const uint64_t c1 = sum < un[i];
+      const uint64_t sum2 = sum + c;
+      c = c1 | (sum2 < sum);
+      un[i] = sum2;
+    }
+    un[4] += c;
+  }
+  for (int i = 0; i < 4; i++)
+    rem[i] = s ? ((un[i] >> s) | (un[i + 1] << (64 - s))) : un[i];
+  return qhat;
+}
+
+/** Number of significant 64-bit limbs, at least one. */
+static inline int u256_limb_len(u256 a) {
+  for (int i = 3; i >= 0; i--)
+    if (a.l[i]) return i + 1;
   return 1;
 }
+
 
 /**
  * Divides by a divisor that fits in 32 bits.
@@ -438,6 +612,7 @@ static inline uint64_t div_2by1(uint64_t u1, uint64_t u0, uint64_t d,
 }
 #endif
 
+
 /**
  * Divides by a 64-bit divisor.
  *
@@ -504,20 +679,6 @@ static inline uint64_t u512_mod_u64(const uint64_t *full, uint64_t m) {
 #endif
 }
 
-static inline void u256_to_h32(u256 a, uint32_t *out) {
-  for (int i = 0; i < 4; i++) {
-    out[i * 2] = (uint32_t)a.l[i];
-    out[i * 2 + 1] = (uint32_t)(a.l[i] >> 32);
-  }
-}
-
-static inline u256 u256_from_h32(const uint32_t *in) {
-  u256 r;
-  for (int i = 0; i < 4; i++)
-    r.l[i] = (uint64_t)in[i * 2] | ((uint64_t)in[i * 2 + 1] << 32);
-  return r;
-}
-
 /** EVM DIV — division by zero yields zero. */
 static inline u256 u256_div(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
@@ -526,14 +687,15 @@ static inline u256 u256_div(u256 a, u256 b) {
     uint64_t r;
     return u256_divmod_u64(a, b.l[0], &r);
   }
-  // `divmod_knuth` only writes `quot[0..n32-1]`, so a trimmed numerator leaves
-  // the upper halves untouched — they must start at zero.
-  uint32_t n[8], d[8], q[8] = {0}, r[8];
-  u256_to_h32(a, n);
-  u256_to_h32(b, d);
-  // Trimming the numerator drops whole outer iterations of algorithm D.
-  divmod_knuth(n, u256_h32_len(a), d, 8, q, r);
-  return u256_from_h32(q);
+  if (b.l[3]) {
+    uint64_t r4[4];
+    return u256_from_u64(divmod_4by4(a.l, b.l, r4));
+  }
+  // Only `quot[0..n-1]` is written, so the rest must start at zero. Trimming
+  // the numerator drops whole outer iterations of algorithm D.
+  uint64_t q[4] = {0}, r[8];
+  divmod_knuth64(a.l, u256_limb_len(a), b.l, 4, q, r);
+  return (u256){{q[0], q[1], q[2], q[3]}};
 }
 
 /** EVM MOD — modulus by zero yields zero. */
@@ -545,11 +707,14 @@ static inline u256 u256_mod(u256 a, u256 b) {
     u256_divmod_u64(a, b.l[0], &r);
     return u256_from_u64(r);
   }
-  uint32_t n[8], d[8], q[8], r[8] = {0};
-  u256_to_h32(a, n);
-  u256_to_h32(b, d);
-  divmod_knuth(n, u256_h32_len(a), d, 8, q, r);
-  return u256_from_h32(r);
+  if (b.l[3]) {
+    uint64_t r4[4];
+    divmod_4by4(a.l, b.l, r4);
+    return (u256){{r4[0], r4[1], r4[2], r4[3]}};
+  }
+  uint64_t q[4], r[8];
+  divmod_knuth64(a.l, u256_limb_len(a), b.l, 4, q, r);
+  return (u256){{r[0], r[1], r[2], r[3]}};
 }
 
 /** EVM SDIV — two's-complement division, truncating toward zero. */
@@ -583,12 +748,10 @@ static inline u256 u256_addmod(u256 a, u256 b, u256 m) {
                               (uint64_t)carry, 0,      0,      0};
     return u256_from_u64(u512_mod_u64(wide, m.l[0]));
   }
-  uint32_t n[10] = {0}, d[8], q[10], r[8] = {0};
-  u256_to_h32(s, n);
-  n[8] = carry;
-  u256_to_h32(m, d);
-  divmod_knuth(n, 10, d, 8, q, r);
-  return u256_from_h32(r);
+  const uint64_t n[5] = {s.l[0], s.l[1], s.l[2], s.l[3], (uint64_t)carry};
+  uint64_t q[5], r[8];
+  divmod_knuth64(n, 5, m.l, 4, q, r);
+  return (u256){{r[0], r[1], r[2], r[3]}};
 }
 
 /** EVM MULMOD — the product is computed at 512 bits before reduction. */
@@ -597,14 +760,11 @@ static inline u256 u256_mulmod(u256 a, u256 b, u256 m) {
   uint64_t full[8];
   u256_mul_full(a, b, full);
   if (u256_is_u64(m)) return u256_from_u64(u512_mod_u64(full, m.l[0]));
-  uint32_t n[16], d[8], q[16], r[8] = {0};
-  for (int i = 0; i < 8; i++) {
-    n[i * 2] = (uint32_t)full[i];
-    n[i * 2 + 1] = (uint32_t)(full[i] >> 32);
-  }
-  u256_to_h32(m, d);
-  divmod_knuth(n, 16, d, 8, q, r);
-  return u256_from_h32(r);
+  int len = 8;
+  while (len > 1 && full[len - 1] == 0) len--;
+  uint64_t q[8], r[8];
+  divmod_knuth64(full, len, m.l, 4, q, r);
+  return (u256){{r[0], r[1], r[2], r[3]}};
 }
 
 /** EVM EXP — square-and-multiply, wrapping at 256 bits. */

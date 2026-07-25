@@ -2004,7 +2004,15 @@ static evm_status interpret(evm_vm *vm) {
         goto push_truncated;
       }
 
-      case 0x68 ... 0x7f: { // PUSH9..PUSH32
+      case 0x7f: // PUSH32 — a whole word, so no masking or shifting
+        if (pc + 33 <= code_len) {
+          PUSH(u256_from_be(code + pc + 1));
+          pc += 33;
+          continue;
+        }
+        goto push_truncated;
+
+      case 0x68 ... 0x7e: { // PUSH9..PUSH31
         const int n = op - 0x5f;
         if (pc + 1 + n <= code_len) {
           PUSH(u256_from_be_n(code + pc + 1, n));

@@ -10,12 +10,18 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 37833/40553 (93.29%) across all forks. The known gaps, largest first:
+// Status: 39177/40553 (96.61%) across all forks. This is the same fixture set
+// that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
-//   - KZG (0x0a) and BLS12-381 (0x0b-0x11) are not implemented; a call to one
-//     returns 0 instead of 1, which is most of the `storage` bucket.
-//   - A residue of gas deltas spread thinly across the static-call,
-//     delegatecall, and EIP-7702 tests.
+// Per-area, the groups that are not yet complete:
+//
+//   - EIP-2537: 948/982. The two map-to-curve precompiles (0x10, 0x11) are not
+//     implemented; they need the RFC 9380 SSWU map, an 11-isogeny for G1 and a
+//     3-isogeny for G2, and cofactor clearing.
+//   - stStaticCall and stCreate sit near 86%, mostly deep-recursion gas
+//     accounting where the discrepancy is a few tens of thousands of gas across
+//     a thousand-frame chain.
+//   - A residue of small gas deltas spread thinly across the call tests.
 //
 // Blockchain tests are not run at all: they need block processing and a
 // Merkle-Patricia trie for the state root, which state tests avoid by shipping
