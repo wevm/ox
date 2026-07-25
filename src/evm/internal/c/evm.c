@@ -629,7 +629,11 @@ static void analyze(evm_vm *vm) {
       continue;
     }
     prefix += info.gas;
-    if (op == 0x5a) vm->gas_fix[i] = vm->blocks[cur].gas - prefix;
+    // GAS reports the gas left, and from EIP-2200 SSTORE compares it against
+    // the call stipend. Both need the part of this block's static gas that
+    // `ENTER_BLOCK` charged up front but that execution has not reached yet.
+    if (op == 0x5a || op == 0x55)
+      vm->gas_fix[i] = vm->blocks[cur].gas - prefix;
     if (info.flags & OP_TERMINATOR) {
       // The instruction after a terminator opens a new block.
       if (i + 1 < vm->code_len) cur = i + 1;
@@ -1694,6 +1698,14 @@ static evm_status interpret(evm_vm *vm) {
       }
       case 0x55: { // SSTORE
         if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        // EIP-2200's sentry: an SSTORE with no more than the call stipend left
+        // fails outright, whatever it would have cost. It exists so that a
+        // 2300-gas transfer callback cannot write storage, and the check is
+        // against the gas *before* the charge — `gas_fix` adds back the part
+        // of this block that `ENTER_BLOCK` has already taken but that
+        // execution has not reached.
+        if (vm->ctx.spec >= SPEC_ISTANBUL && gas + vm->gas_fix[pc] <= 2300)
+          HALT(EVM_OUT_OF_GAS);
         const u256 key = POP(), value = POP();
         const int32_t slot = slot_intern(vm->st, vm->self, key);
         if (slot < 0) HALT(EVM_OUT_OF_MEMORY);

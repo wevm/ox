@@ -705,3 +705,28 @@ describe('memory', () => {
     }
   })
 })
+
+describe('EIP-2200 sentry', () => {
+  // An SSTORE with no more than the 2300-gas call stipend left fails outright,
+  // whatever it would have cost. It exists so a transfer callback cannot write
+  // storage, and the check has to see the gas *before* the charge — which,
+  // with static gas charged a block at a time, is not the interpreter's `gas`.
+  //
+  // Two writes to the same slot: the first sets (22100), the second is a no-op
+  // (100). Without the sentry the second is affordable well below the stipend,
+  // so the boundary below is entirely the sentry's doing.
+  test('behavior: SSTORE fails at or below the stipend', () => {
+    const run = (gas: bigint) => {
+      engine.evm_reset(vm)
+      const code = Hex.toBytes('0x600160015560016001550000')
+      load_.view(engine).set(code, engine.evm_code_ptr(vm))
+      engine.evm_set_code(vm, code.length)
+      const status = engine.evm_run(vm, 0, gas)
+      return { status, used: gas - engine.evm_gas_left(vm) }
+    }
+    // 12 static + 22100 + 100 = 22212, so the second SSTORE begins with
+    // `gas - 22112` left. The sentry trips at 2300 of that, i.e. 24412.
+    expect(run(24_412n)).toEqual({ status: 2, used: 24_412n }) // out of gas
+    expect(run(24_413n)).toEqual({ status: 0, used: 22_212n })
+  })
+})
