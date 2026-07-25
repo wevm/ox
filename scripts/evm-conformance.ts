@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 39589/40553 (97.62%) across all forks. This is the same fixture set
+// Status: 39686/40553 (97.86%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -228,11 +228,21 @@ function blobBaseFeeOf(excess: bigint, fork: string) {
   return fakeExponential(1n, excess, fraction)
 }
 
-function warmPreamble(sender: string, to: string | undefined, fork: string) {
+function warmPreamble(
+  sender: string,
+  to: string | undefined,
+  fork: string,
+  coinbase?: string,
+) {
   putAddr(STAGE_ADDR, sender)
   engine.evm_warm_account(vm)
   if (to) {
     putAddr(STAGE_ADDR, to)
+    engine.evm_warm_account(vm)
+  }
+  // EIP-3651 added the coinbase to the accessed set at Shanghai.
+  if (coinbase && forkAtLeast(fork, 'Shanghai')) {
+    putAddr(STAGE_ADDR, coinbase)
     engine.evm_warm_account(vm)
   }
   for (let i = 1; i <= precompileCount(fork); i++) {
@@ -535,7 +545,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
     putAddr(STAGE_ADDR2, tx.sender)
     putWord(STAGE_WORD_A, value)
     mem().set(data, stage() + STAGE_BYTES)
-    warmPreamble(tx.sender, undefined, fork)
+    warmPreamble(tx.sender, undefined, fork, env.currentCoinbase)
     rc = engine.evm_execute_create(vm, data.length, gasLimit - intrinsic)
     // `evm_execute_create` moves the value inside its own snapshot, so a
     // failure has already rolled it back and the runner must not undo it again.
@@ -587,7 +597,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // EIP-2929 seeds the accessed-address set with the sender, the target, and
   // every precompile. Missing the precompiles made each precompile call pay
   // the cold 2600 instead of the warm 100.
-  warmPreamble(tx.sender, toAddr, fork)
+  warmPreamble(tx.sender, toAddr, fork, env.currentCoinbase)
 
   // Execute.
   putAddr(STAGE_ADDR, toAddr)
