@@ -138,7 +138,32 @@ function intrinsicGas(
   return { gas, floor }
 }
 
+/** Highest precompile address defined at each fork. */
+function precompileCount(fork: string) {
+  if (forkAtLeast(fork, 'Prague')) return 0x11 // EIP-2537 BLS12-381
+  if (forkAtLeast(fork, 'Cancun')) return 0x0a // EIP-4844 point evaluation
+  if (forkAtLeast(fork, 'Istanbul')) return 0x09 // EIP-152 blake2f
+  if (forkAtLeast(fork, 'Byzantium')) return 0x08 // bn254 + modexp
+  return 0x04
+}
+
+function warmPreamble(sender: string, to: string | undefined, fork: string) {
+  putAddr(STAGE_ADDR, sender)
+  engine.evm_warm_account(vm)
+  if (to) {
+    putAddr(STAGE_ADDR, to)
+    engine.evm_warm_account(vm)
+  }
+  for (let i = 1; i <= precompileCount(fork); i++) {
+    putAddr(STAGE_ADDR, `0x${i.toString(16).padStart(40, '0')}`)
+    engine.evm_warm_account(vm)
+  }
+}
+
 type Outcome = { ok: true } | { ok: false; reason: string; detail?: string }
+
+// Set per case so `compare` can express a balance mismatch in gas units.
+let gasPriceForDetail = 0n
 
 function runCase(test: any, fork: string, post: any): Outcome {
   const tx = test.transaction
@@ -181,10 +206,12 @@ function runCase(test: any, fork: string, post: any): Outcome {
   const maxPriority = tx.maxPriorityFeePerGas
     ? big(tx.maxPriorityFeePerGas)
     : big(tx.gasPrice)
+  // biome-ignore lint/style/noCommaOperator: assignment before use
   const effectiveGasPrice = tx.maxFeePerGas
     ? baseFee +
       (maxFee - baseFee < maxPriority ? maxFee - baseFee : maxPriority)
     : big(tx.gasPrice)
+  gasPriceForDetail = effectiveGasPrice
   putWord(64, effectiveGasPrice)
   putWord(96, baseFee)
   putWord(128, big(env.currentExcessBlobGas ? '0x1' : '0x0'))
@@ -228,8 +255,14 @@ function runCase(test: any, fork: string, post: any): Outcome {
   if (senderBalance < upfront)
     return { ok: false, reason: 'insufficient-funds' }
 
+  // Only the gas is deducted here. For a call the runner moves the value
+  // below; for a create `evm_execute_create` moves it, so deducting it here as
+  // well would double-charge the sender.
   putAddr(STAGE_ADDR, tx.sender)
-  putWord(STAGE_WORD_A, senderBalance - gasLimit * effectiveGasPrice - value)
+  putWord(
+    STAGE_WORD_A,
+    senderBalance - gasLimit * effectiveGasPrice - (isCreate ? 0n : value),
+  )
   engine.evm_put_account(vm, big(senderPre?.nonce) + 1n, 0)
 
   let rc: number
@@ -239,8 +272,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
     putAddr(STAGE_ADDR2, tx.sender)
     putWord(STAGE_WORD_A, value)
     mem().set(data, stage() + STAGE_BYTES)
-    putAddr(STAGE_ADDR, tx.sender)
-    engine.evm_warm_account(vm)
+    warmPreamble(tx.sender, undefined, fork)
     rc = engine.evm_execute_create(vm, data.length, gasLimit - intrinsic)
     return settleAndCompare(
       rc,
@@ -265,11 +297,10 @@ function runCase(test: any, fork: string, post: any): Outcome {
   mem().set(toCode, stage() + STAGE_BYTES)
   engine.evm_put_account(vm, big(toPre?.nonce), toCode.length)
 
-  // Warm the sender and recipient, per EIP-2929.
-  putAddr(STAGE_ADDR, tx.sender)
-  engine.evm_warm_account(vm)
-  putAddr(STAGE_ADDR, toAddr)
-  engine.evm_warm_account(vm)
+  // EIP-2929 seeds the accessed-address set with the sender, the target, and
+  // every precompile. Missing the precompiles made each precompile call pay
+  // the cold 2600 instead of the warm 100.
+  warmPreamble(tx.sender, toAddr, fork)
 
   // Execute.
   putAddr(STAGE_ADDR, toAddr)
@@ -326,7 +357,10 @@ function settleAndCompare(
   if (sender) sender.balance += (gasLimit - gasUsed) * effectiveGasPrice
   const cbAddr =
     `0x${bytes(env.currentCoinbase).reduce((s, b) => s + b.toString(16).padStart(2, '0'), '')}` as Hex
-  const tip = tx.maxFeePerGas ? effectiveGasPrice - baseFee : effectiveGasPrice
+  // The base fee is burned for every transaction type from London onward, so
+  // the coinbase receives only the priority portion. Pre-London `baseFee` is
+  // zero and this reduces to the full gas price.
+  const tip = effectiveGasPrice - baseFee
   const cb = settle.get(cbAddr)
   if (cb) cb.balance += gasUsed * tip
   else if (gasUsed * tip > 0n)
@@ -389,7 +423,11 @@ function compare(
       return {
         ok: false,
         reason: 'balance',
-        detail: `${addr} got ${got.balance} want ${big(want.balance)}`,
+        detail: `${addr} wei-delta ${got.balance - big(want.balance)}${
+          gasPriceForDetail
+            ? ` gas-delta ${(got.balance - big(want.balance)) / gasPriceForDetail}`
+            : ''
+        }`,
       }
     if (got.nonce !== big(want.nonce))
       return {
