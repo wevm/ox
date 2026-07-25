@@ -741,6 +741,11 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   u256 *fstack = (u256 *)arena_alloc(vm, FRAME_STACK);
   if (!fjd || !fblocks || !fgas_fix || !fstack) {
     vm->arena_top = arena_mark;
+    // Consume the allowance. This is an engine limit rather than anything the
+    // protocol knows about, but returning it unspent makes the call look like
+    // one to a codeless account, and execution then carries on from a state
+    // that never existed.
+    *gas = 0;
     return EVM_OUT_OF_MEMORY;
   }
 
@@ -1341,14 +1346,17 @@ static inline int64_t call_gas(int64_t available, u256 requested, int spec) {
   } while (0)
 
 #ifdef OX_TRACE
-#define TRACE_STEP()                                    \
-  if (vm->trace_count < TRACE_CAP) {                    \
-    evm_trace_entry *e_ = &vm->trace[vm->trace_count++]; \
-    e_->pc = pc;                                        \
-    e_->op = op;                                        \
-    e_->gas = gas;                                      \
-    e_->depth = vm->depth;                              \
-    e_->sp = (int32_t)(sp - vm->stack_base);            \
+// A ring: `trace_count` keeps counting, the buffer keeps the last TRACE_CAP.
+// The interesting end of a million-step program is the last few hundred steps,
+// not the first.
+#define TRACE_STEP()                                             \
+  {                                                              \
+    evm_trace_entry *e_ = &vm->trace[vm->trace_count++ & (TRACE_CAP - 1)]; \
+    e_->pc = pc;                                                 \
+    e_->op = op;                                                 \
+    e_->gas = gas;                                               \
+    e_->depth = vm->depth;                                       \
+    e_->sp = (int32_t)(sp - vm->stack_base);                     \
   }
 #else
 #define TRACE_STEP() ((void)0)
@@ -1970,7 +1978,11 @@ static evm_status interpret(evm_vm *vm) {
         if (!u256_is_zero(value)) child_gas += 2300;
 
         // Copy the calldata out of memory first: the child gets its own memory
-        // and the arena may hand it the very bytes we are reading.
+        // and the arena may hand it the very bytes we are reading. The copy is
+        // dead once the child returns, and releasing it matters: a frame that
+        // calls in a loop with large calldata otherwise consumes the arena a
+        // call at a time and dies partway through.
+        const int32_t args_mark = vm->arena_top;
         uint8_t *args = (uint8_t *)arena_alloc(vm, (int32_t)in_len + 16);
         if (!args) HALT(EVM_OUT_OF_MEMORY);
         mem_copy(args, vm->mem + in_off, in_len);
@@ -2036,6 +2048,7 @@ static evm_status interpret(evm_vm *vm) {
         }
       call_done:
         if (!ok && vm->returndata_len == 0) state_revert(vm->st, snapshot);
+        vm->arena_top = args_mark;
         gas += child_gas; // unspent child gas returns to the caller
 
         const uint64_t n = out_len < (uint64_t)vm->returndata_len
@@ -2085,6 +2098,7 @@ static evm_status interpret(evm_vm *vm) {
           continue;
         }
 
+        const int32_t init_mark = vm->arena_top;
         uint8_t *init = (uint8_t *)arena_alloc(vm, (int32_t)len + 16);
         if (!init) HALT(EVM_OUT_OF_MEMORY);
         mem_copy(init, vm->mem + off, len);
@@ -2158,6 +2172,7 @@ static evm_status interpret(evm_vm *vm) {
           // initcode's own output length must not be left behind.
           vm->output_len = 0;
         }
+        vm->arena_top = init_mark;
         gas += child_gas;
         PUSH(ok ? address_to_word(addr) : U256_ZERO);
         pc++;

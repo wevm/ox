@@ -867,13 +867,21 @@ if (traceCase && !engine.evm_trace_ptr)
   throw new Error('--trace-case needs OX_WASM pointing at a --trace build')
 
 function dumpTrace() {
-  const n = engine.evm_trace_count(vm)
+  const total = engine.evm_trace_count(vm)
+  const CAP = 1 << 18
+  // The buffer is a ring, so a long program leaves only its tail. `--trace-tail
+  // N` narrows that further; the default is the whole ring.
+  const tail = Number(opt('--trace-tail') ?? CAP)
+  const first = Math.max(0, total - Math.min(tail, CAP))
+  const n = total - first
   const base = engine.evm_trace_ptr(vm)
   const view = new DataView(engine.memory.buffer)
-  console.log(`\n${n} steps  (pc, op, gas before, cost, depth, stack height)`)
+  console.log(
+    `\n${total} steps, showing the last ${n}  (pc, op, gas before, cost, depth, stack height)`,
+  )
   let prev: { gas: bigint; depth: number } | undefined
   for (let i = 0; i < n; i++) {
-    const o = base + i * 24
+    const o = base + ((first + i) & (CAP - 1)) * 24
     const pc = view.getInt32(o, true)
     const op = view.getInt32(o + 4, true)
     const gas = view.getBigInt64(o + 8, true)
@@ -887,7 +895,7 @@ function dumpTrace() {
         : '        '
     if (i > 0) process.stdout.write(`${cost}\n`)
     process.stdout.write(
-      `${String(i).padStart(6)}  d${depth} pc=${String(pc).padStart(5)} ` +
+      `${String(first + i).padStart(8)}  d${depth} pc=${String(pc).padStart(5)} ` +
         `${Opcode.toName(op) ?? `0x${op.toString(16)}`}`.padEnd(22) +
         `gas=${String(gas).padStart(12)} sp=${String(sp).padStart(3)}`,
     )
