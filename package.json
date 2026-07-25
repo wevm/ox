@@ -2,6 +2,8 @@
   "private": true,
   "scripts": {
     "build": "pnpm exports:update && zile",
+    "build:evm": "node --import tsx ./scripts/build-evm.ts",
+    "build:evm:check": "node --import tsx ./scripts/build-evm.ts --check",
     "changeset:publish": "zile publish:prepare && changeset publish && zile publish:post",
     "changeset:version": "changeset version && pnpm version:update && pnpm check",
     "check": "vp check --fix",
@@ -624,6 +626,21 @@
       "src": "./src/erc8021/Attribution.ts",
       "types": "./dist/erc8021/Attribution.d.ts",
       "default": "./dist/erc8021/Attribution.js"
+    },
+    "./evm": {
+      "src": "./src/evm/index.ts",
+      "types": "./dist/evm/index.d.ts",
+      "default": "./dist/evm/index.js"
+    },
+    "./evm/Evm": {
+      "src": "./src/evm/Evm.ts",
+      "types": "./dist/evm/Evm.d.ts",
+      "default": "./dist/evm/Evm.js"
+    },
+    "./evm/Opcode": {
+      "src": "./src/evm/Opcode.ts",
+      "types": "./dist/evm/Opcode.d.ts",
+      "default": "./dist/evm/Opcode.js"
     },
     "./tempo": {
       "src": "./src/tempo/index.ts",

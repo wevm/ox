@@ -27,6 +27,27 @@ jobs:
       - name: Check examples
         run: pnpm zile examples:check
 
+  test-evm:
+    name: Test Runtime (evm)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      # The salt miner's generator was never committed and its artifact cannot
+      # be reproduced. This keeps the EVM engine honest.
+      - name: Check WASM artifact is reproducible
+        run: pnpm build:evm:check
+
+      - name: Run tests
+        run: pnpm test --project evm --bail=1
+
   test-core:
     name: Test Runtime (core)
     runs-on: ubuntu-latest

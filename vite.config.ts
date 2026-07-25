@@ -69,7 +69,17 @@ export default defineConfig({
         },
       },
       {
-        files: ['src/core/internal/**/*.ts'],
+        // Internal modules and test/bench/fuzz files are not public API, so
+        // they do not need `@example` blocks. Without this the rule's autofix
+        // injects a stray `* @example` line above single-line doc comments on
+        // local helpers, producing invalid syntax.
+        files: [
+          'src/**/internal/**/*.ts',
+          'src/**/_test/**/*.ts',
+          'src/**/*.bench.ts',
+          'src/**/*.test.ts',
+          'src/**/*.fuzz.ts',
+        ],
         rules: {
           'jsdoc-js/require-jsdoc': 'off',
           'jsdoc-js/require-description': 'off',
@@ -132,9 +142,19 @@ export default defineConfig({
               ? ['src/**/*.snap-d.ts']
               : ['src/**/*.test.ts']),
             '!src/tempo/**',
+            '!src/evm/**',
             '!src/**/*.browser.test.ts',
           ],
           setupFiles: process.env.TYPES ? [] : [join(root, 'test/setup.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // The EVM engine needs no Anvil, so it runs outside the `core`
+          // project and skips that project's global setup.
+          name: 'evm',
+          include: ['src/evm/**/*.test.ts'],
         },
       },
       {
