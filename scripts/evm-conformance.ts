@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40274/40553 (99.31%) across all forks. This is the same fixture set
+// Status: 40342/40553 (99.48%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -481,8 +481,11 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // what the engine currently holds.
   // EIP-7623 makes the floor part of the validity requirement, not just the
   // settlement: a transaction whose limit cannot cover the larger of the two is
-  // rejected before it runs.
-  const required = (intrinsic > floor ? intrinsic : floor) + authGas
+  // rejected before it runs. The authorization cost belongs *inside* that
+  // comparison, as part of the intrinsic gas — adding it to the maximum
+  // instead rejected set-code transactions whose limit sat between the two.
+  const withAuth = intrinsic + authGas
+  const required = withAuth > floor ? withAuth : floor
   if (required > gasLimit) return compareLoaded(post)
   // A set-code transaction must have at least one authorization and must not be
   // a create.
