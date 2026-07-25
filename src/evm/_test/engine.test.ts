@@ -192,8 +192,14 @@ describe('ecrecover precompile', () => {
       const input = new Uint8Array(128)
       input.set(Hex.toBytes(payload), 0)
       input[63] = 27 + signature.yParity
-      input.set(Hex.toBytes(Hex.fromNumber(signature.r, { size: 32 })), 64)
-      input.set(Hex.toBytes(Hex.fromNumber(signature.s, { size: 32 })), 96)
+      input.set(
+        Hex.toBytes(Hex.fromNumber(BigInt(signature.r), { size: 32 })),
+        64,
+      )
+      input.set(
+        Hex.toBytes(Hex.fromNumber(BigInt(signature.s), { size: 32 })),
+        96,
+      )
 
       expect({ i, got: recoverVia(input) }).toEqual({
         i,

@@ -16,6 +16,35 @@ export type Engine = {
   evm_max_input(): number
   evm_set_code(vm: number, codeLength: number): number
   evm_run(vm: number, inputLength: number, gas: bigint): number
+  evm_stage_ptr(vm: number): number
+  evm_reset(vm: number): void
+  evm_put_account(vm: number, nonce: bigint, codeLength: number): number
+  evm_put_storage(vm: number): number
+  evm_warm_account(vm: number): number
+  evm_warm_storage(vm: number): number
+  evm_set_context(
+    vm: number,
+    number_: bigint,
+    timestamp: bigint,
+    blockGasLimit: bigint,
+    blobCount: number,
+    blockHashCount: number,
+  ): number
+  evm_execute(
+    vm: number,
+    inputLength: number,
+    gas: bigint,
+    isStatic: number,
+  ): number
+  evm_execute_create(vm: number, initLength: number, gas: bigint): number
+  evm_refund(vm: number): bigint
+  evm_account_count(vm: number): number
+  evm_account_at(vm: number, index: number): number
+  evm_account_nonce(vm: number, index: number): bigint
+  evm_storage_count(vm: number): number
+  evm_storage_at(vm: number, index: number): number
+  evm_log_count(vm: number): number
+  evm_log_at(vm: number, index: number): number
 }
 
 let engine: Engine | undefined
