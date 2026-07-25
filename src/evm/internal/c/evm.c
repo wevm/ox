@@ -11,6 +11,7 @@
 
 #include "keccak.h"
 #include "opcodes.h"
+#include "precompile.h"
 #include "state.h"
 #include "u256.h"
 
@@ -570,6 +571,105 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   return status;
 }
 
+/** Address `0x00..01` through `0x00..11` are the precompiles. */
+static inline int precompile_id(const uint8_t *addr) {
+  for (int i = 0; i < 19; i++)
+    if (addr[i]) return 0;
+  return addr[19] >= 1 && addr[19] <= 0x11 ? addr[19] : 0;
+}
+
+/**
+ * Runs precompile `id`. Returns `PRE_OK`, `PRE_FAIL` for a precompile that
+ * rejects its input, or `PRE_UNSUPPORTED` for one needing curve arithmetic.
+ *
+ * `gas` is charged here so the caller does not need each precompile's cost
+ * formula.
+ */
+static int run_precompile(int id, const uint8_t *in, uint64_t len,
+                          int64_t *gas, uint8_t *out, int32_t *out_len) {
+  const uint64_t words = (len + 31) / 32;
+  *out_len = 0;
+  switch (id) {
+    case 0x02: { // SHA2-256
+      const int64_t cost = 60 + 12 * (int64_t)words;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      sha256(in, len, out);
+      *out_len = 32;
+      return PRE_OK;
+    }
+    case 0x03: { // RIPEMD-160
+      const int64_t cost = 600 + 120 * (int64_t)words;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      ripemd160(in, len, out);
+      *out_len = 32;
+      return PRE_OK;
+    }
+    case 0x04: { // identity
+      const int64_t cost = 15 + 3 * (int64_t)words;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      mem_copy(out, in, len);
+      *out_len = (int32_t)len;
+      return PRE_OK;
+    }
+    case 0x05: { // MODEXP (EIP-198, repriced by EIP-2565 and EIP-7883)
+      uint8_t hdr[96];
+      copy_padded(hdr, in, len, 0, 96);
+      const u256 bl_w = u256_from_be(hdr);
+      const u256 el_w = u256_from_be(hdr + 32);
+      const u256 ml_w = u256_from_be(hdr + 64);
+      const uint64_t bl = u256_to_u64_sat(bl_w);
+      const uint64_t el = u256_to_u64_sat(el_w);
+      const uint64_t ml = u256_to_u64_sat(ml_w);
+      if (bl > 1024 || el > 1024 || ml > 1024) return PRE_FAIL;
+
+      // EIP-2565 gas: multiplication complexity times adjusted exponent
+      // length, floored at 200.
+      const uint64_t maxlen = bl > ml ? bl : ml;
+      const uint64_t wordsm = (maxlen + 7) / 8;
+      uint64_t mult = wordsm * wordsm;
+      uint8_t expbuf[1024];
+      copy_padded(expbuf, in, len, 96 + bl, el);
+      uint64_t adj = 0;
+      if (el <= 32) {
+        // The exponent fits in the head: use its bit length minus one.
+        uint64_t highest = 0;
+        for (uint64_t i = 0; i < el; i++)
+          if (expbuf[i]) { highest = (el - i - 1) * 8 + 7; 
+            uint8_t b = expbuf[i];
+            while (!(b & 0x80)) { b <<= 1; highest--; }
+            break; }
+        adj = highest;
+      } else {
+        uint64_t highest = 0;
+        for (uint64_t i = 0; i < 32; i++)
+          if (expbuf[i]) { highest = (32 - i - 1) * 8 + 7;
+            uint8_t b = expbuf[i];
+            while (!(b & 0x80)) { b <<= 1; highest--; }
+            break; }
+        adj = 8 * (el - 32) + highest;
+      }
+      if (adj == 0) adj = 1;
+      int64_t cost = (int64_t)(mult * adj / 3);
+      if (cost < 200) cost = 200;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+
+      uint8_t basebuf[1024], modbuf[1024];
+      copy_padded(basebuf, in, len, 96, bl);
+      copy_padded(modbuf, in, len, 96 + bl + el, ml);
+      modexp(basebuf, bl, expbuf, el, modbuf, ml, out);
+      *out_len = (int32_t)ml;
+      return PRE_OK;
+    }
+    default:
+      // ecrecover, bn254, KZG, and BLS need curve arithmetic.
+      return PRE_UNSUPPORTED;
+  }
+}
+
 /** EIP-150: a caller may only forward all but a 64th of its remaining gas. */
 static inline int64_t capped_gas(int64_t available, u256 requested) {
   const int64_t retained = available / 64;
@@ -1121,6 +1221,24 @@ static evm_status interpret(evm_vm *vm) {
           const u256 sub_value = op == 0xf4 ? vm->call_value : value;
           const int sub_static = vm->is_static || op == 0xfa;
 
+          const int pid = precompile_id(to);
+          if (pid) {
+            int32_t plen = 0;
+            const int pr = run_precompile(pid, args, in_len, &child_gas,
+                                          vm->returndata, &plen);
+            if (pr == PRE_OK) {
+              ok = 1;
+              vm->returndata_len = plen;
+            } else {
+              // A failed or unimplemented precompile consumes the whole
+              // forwarded allowance, as a failed call does.
+              ok = 0;
+              child_gas = 0;
+              vm->returndata_len = 0;
+              state_revert(vm->st, snapshot);
+            }
+            goto call_done;
+          }
           const evm_status cs = run_frame(
               vm, exec_self, sub_caller, sub_value,
               vm->st->code_arena + vm->st->accounts[callee].code_offset,
@@ -1133,6 +1251,7 @@ static evm_status interpret(evm_vm *vm) {
               (cs == EVM_SUCCESS || cs == EVM_REVERT) ? vm->output_len : 0;
           mem_copy(vm->returndata, vm->output, (uint64_t)vm->returndata_len);
         }
+      call_done:
         if (!ok && vm->returndata_len == 0) state_revert(vm->st, snapshot);
         gas += child_gas; // unspent child gas returns to the caller
 
@@ -1627,6 +1746,71 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   const int status = (int)interpret(vm);
   // Anything but a clean finish or an explicit revert still rolls state back.
   if (status != EVM_SUCCESS) state_revert(vm->st, snapshot);
+  return status;
+}
+
+/**
+ * Runs a create transaction: the initcode at `stage[128..)` deploys from the
+ * sender at `stage[20..40)` with the value at `stage[64..96)`.
+ *
+ * The sender's nonce must already have been advanced by the host, so the
+ * address derives from `nonce - 1`.
+ */
+EXPORT("evm_execute_create")
+int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
+  if (init_len < 0 || init_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
+  const int32_t sender = account_intern(vm->st, vm->stage + STAGE_ADDR2);
+  if (sender < 0) return EVM_OUT_OF_MEMORY;
+  const u256 value = u256_from_be(vm->stage + STAGE_WORD_A);
+
+  uint8_t addr[20];
+  create_address(vm->st->accounts[sender].address,
+                 vm->st->accounts[sender].nonce - 1, addr);
+  const int32_t created = account_intern(vm->st, addr);
+  if (created < 0) return EVM_OUT_OF_MEMORY;
+
+  vm->arena_top = 0;
+  vm->depth = 0;
+  vm->mem = vm->memory;
+  vm->mem_cap = vm->memory_cap;
+  vm->returndata_len = 0;
+  vm->gas = gas;
+
+  uint8_t *init = (uint8_t *)arena_alloc(vm, init_len + 16);
+  if (!init) return EVM_OUT_OF_MEMORY;
+  mem_copy(init, vm->stage + STAGE_BYTES, (uint64_t)init_len);
+
+  const int32_t snapshot = state_snapshot(vm->st);
+  set_balance(vm->st, sender,
+              u256_sub(vm->st->accounts[sender].balance, value));
+  set_balance(vm->st, created,
+              u256_add(vm->st->accounts[created].balance, value));
+  set_exists(vm->st, created, 1);
+  set_created(vm->st, created, 1);
+  set_nonce(vm->st, created, 1);
+  warm_account(vm->st, created);
+
+  int64_t child_gas = gas;
+  const evm_status cs =
+      run_frame(vm, created, vm->st->accounts[sender].address, value, init,
+                init_len, init, 0, 0, &child_gas);
+  int status = (int)cs;
+  if (cs == EVM_SUCCESS) {
+    const int32_t dep_len = vm->output_len;
+    if (dep_len > 24576 || (dep_len > 0 && vm->output[0] == 0xEF) ||
+        child_gas < (int64_t)dep_len * 200) {
+      state_revert(vm->st, snapshot);
+      child_gas = 0;
+      status = EVM_OUT_OF_GAS;
+    } else {
+      child_gas -= (int64_t)dep_len * 200;
+      set_code(vm->st, created, vm->output, dep_len);
+    }
+  } else {
+    state_revert(vm->st, snapshot);
+    if (cs != EVM_REVERT) child_gas = 0;
+  }
+  vm->gas = child_gas;
   return status;
 }
 

@@ -147,7 +147,6 @@ function runCase(test: any, fork: string, post: any): Outcome {
   const gasLimit = big(tx.gasLimit[idx.gas])
   const value = big(tx.value[idx.value])
   const isCreate = !tx.to || tx.to === '0x' || tx.to === ''
-  if (isCreate) return { ok: false, reason: 'create-tx-unsupported' }
 
   const accessList = tx.accessLists?.[idx.data] ?? tx.accessList
   if (tx.authorizationList) return { ok: false, reason: 'eip7702-unsupported' }
@@ -233,6 +232,30 @@ function runCase(test: any, fork: string, post: any): Outcome {
   putWord(STAGE_WORD_A, senderBalance - gasLimit * effectiveGasPrice - value)
   engine.evm_put_account(vm, big(senderPre?.nonce) + 1n, 0)
 
+  let rc: number
+  if (isCreate) {
+    // A create transaction runs the calldata as initcode; the engine derives
+    // the address from the sender's pre-increment nonce.
+    putAddr(STAGE_ADDR2, tx.sender)
+    putWord(STAGE_WORD_A, value)
+    mem().set(data, stage() + STAGE_BYTES)
+    putAddr(STAGE_ADDR, tx.sender)
+    engine.evm_warm_account(vm)
+    rc = engine.evm_execute_create(vm, data.length, gasLimit - intrinsic)
+    return settleAndCompare(
+      rc,
+      gasLimit,
+      intrinsic,
+      floor,
+      fork,
+      tx,
+      env,
+      effectiveGasPrice,
+      baseFee,
+      post,
+    )
+  }
+
   // Recipient receives the value.
   const toAddr = tx.to.toLowerCase()
   const toPre = (test.pre as Record<string, Account>)[toAddr]
@@ -254,7 +277,34 @@ function runCase(test: any, fork: string, post: any): Outcome {
   putWord(STAGE_WORD_A, value)
   mem().set(data, stage() + STAGE_BYTES)
   const execGas = gasLimit - intrinsic
-  const rc = engine.evm_execute(vm, data.length, execGas, 0)
+  rc = engine.evm_execute(vm, data.length, execGas, 0)
+  return settleAndCompare(
+    rc,
+    gasLimit,
+    intrinsic,
+    floor,
+    fork,
+    tx,
+    env,
+    effectiveGasPrice,
+    baseFee,
+    post,
+  )
+}
+
+/** Applies the gas refund, repays the sender, pays the coinbase, compares. */
+function settleAndCompare(
+  rc: number,
+  gasLimit: bigint,
+  _intrinsic: bigint,
+  floor: bigint,
+  fork: string,
+  tx: any,
+  env: any,
+  effectiveGasPrice: bigint,
+  baseFee: bigint,
+  post: any,
+): Outcome {
   const gasLeft = engine.evm_gas_left(vm)
   const refundCounter = engine.evm_refund(vm)
 
