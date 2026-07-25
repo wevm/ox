@@ -422,14 +422,14 @@ function runCase(test: any, fork: string, post: any): Outcome {
   putWord(128, blobBaseFee)
   putWord(160, big(env.currentRandom ?? env.currentDifficulty))
   putWord(192, big(test.config?.chainid ?? '0x01'))
-  for (let i = 0; i < Math.min(blobHashes.length, 8); i++)
+  for (let i = 0; i < Math.min(blobHashes.length, 16); i++)
     putWord(224 + i * 32, big(blobHashes[i]))
   engine.evm_set_context(
     vm,
     big(env.currentNumber),
     big(env.currentTimestamp),
     big(env.currentGasLimit),
-    Math.min(blobHashes.length, 8),
+    Math.min(blobHashes.length, 16),
     0,
     specIds[fork] ?? 13,
   )
@@ -470,8 +470,32 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // A blob transaction is invalid if it cannot pay the block's blob base fee.
   if (blobHashes.length && big(tx.maxFeePerBlobGas) < blobBaseFee)
     return compareLoaded(post)
-  const upfront = gasLimit * effectiveGasPrice + value + blobFee
-  if (senderBalance < upfront) return compareLoaded(post)
+  // Type-specific validity. A rejected transaction leaves the pre-state
+  // untouched, which is what the engine currently holds.
+  if (blobHashes.length) {
+    if (!forkAtLeast(fork, 'Cancun')) return compareLoaded(post)
+    // EIP-7691 raised the per-block maximum from 6 to 9.
+    const maxBlobs = forkAtLeast(fork, 'Prague') ? 9 : 6
+    if (blobHashes.length > maxBlobs) return compareLoaded(post)
+    // A blob transaction cannot be a create, and every hash must carry the
+    // version byte.
+    if (isCreate) return compareLoaded(post)
+    for (const h of blobHashes)
+      if (!h.startsWith('0x01')) return compareLoaded(post)
+  }
+  if (tx.authorizationList && !forkAtLeast(fork, 'Prague'))
+    return compareLoaded(post)
+  // EIP-3860 caps initcode at twice the deployed-code limit.
+  if (isCreate && forkAtLeast(fork, 'Shanghai') && data.length > 49152)
+    return compareLoaded(post)
+
+  // Validity is judged against the caps the sender signed, not the effective
+  // price: a transaction that cannot cover `gasLimit * maxFeePerGas` plus the
+  // blob allowance is rejected before it runs.
+  const maxBlobFee =
+    BigInt(blobHashes.length) * GAS_PER_BLOB * big(tx.maxFeePerBlobGas)
+  if (senderBalance < gasLimit * maxFee + value + maxBlobFee)
+    return compareLoaded(post)
 
   // Only the gas is deducted here. For a call the runner moves the value
   // below; for a create `evm_execute_create` moves it, so deducting it here as

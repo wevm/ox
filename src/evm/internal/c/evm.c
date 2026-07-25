@@ -96,7 +96,8 @@ typedef struct {
   uint64_t timestamp;
   uint64_t block_gas_limit;
   u256 chain_id;
-  u256 blob_hashes[8];
+  // EIP-7691 raised the per-block maximum to 9; the slack costs nothing.
+  u256 blob_hashes[16];
   int32_t blob_count;
   // The 256 most recent block hashes, index 0 being `number - 1`.
   uint8_t block_hashes[256][32];
@@ -107,14 +108,19 @@ typedef struct {
 } evm_context;
 
 // Only the forks that changed a cost this engine charges.
+#define SPEC_HOMESTEAD 1  // EIP-7 added DELEGATECALL
 #define SPEC_TANGERINE 2  // EIP-150 repriced all external account access
 #define SPEC_CONSTANTINOPLE 5
 #define SPEC_ISTANBUL 7   // EIP-1884 repriced BALANCE, EXTCODEHASH, SLOAD
 #define SPEC_BYZANTIUM 4  // modexp and bn254 arrived
+#define SPEC_SHANGHAI 11  // EIP-3855 added PUSH0
 #define SPEC_BERLIN 8     // EIP-2929 introduced warm/cold, EIP-2565 repriced modexp
 #define SPEC_LONDON 9    // EIP-3529 cut the refunds
 #define SPEC_CANCUN 12
 #define SPEC_PRAGUE 13
+// What a VM starts on, and what it returns to on reset. Callers that want an
+// older fork's semantics say so through `evm_set_context`.
+#define SPEC_DEFAULT SPEC_PRAGUE
 
 // EIP-2929 access costs.
 #define GAS_COLD_ACCOUNT 2600
@@ -253,6 +259,18 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
   *gas -= cost;
   return target;
 }
+
+/**
+ * Rejects an opcode the fork has not introduced yet.
+ *
+ * Checked here rather than during analysis because the analysis is cached per
+ * code, not per fork. Charging the block's gas before halting is harmless: an
+ * invalid opcode consumes everything anyway.
+ */
+#define REQUIRE_SPEC(min)                                 \
+  do {                                                    \
+    if (vm->ctx.spec < (min)) HALT(EVM_INVALID_OPCODE);    \
+  } while (0)
 
 #define ANALYSIS_ARENA (48 * 1024 * 1024)
 #define FRAME_MEMORY (256 * 1024) // per-frame memory ceiling
@@ -1076,13 +1094,16 @@ static evm_status interpret(evm_vm *vm) {
       case 0x1a: // BYTE
         BINARY(u256_byte(a, b));
         break;
-      case 0x1b: // SHL
+      case 0x1b: // SHL (EIP-145)
+        REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
         BINARY(u256_to_u64_sat(a) >= 256 ? U256_ZERO : u256_shl(b, (uint32_t)u256_to_u64_sat(a)));
         break;
-      case 0x1c: // SHR
+      case 0x1c: // SHR (EIP-145)
+        REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
         BINARY(u256_to_u64_sat(a) >= 256 ? U256_ZERO : u256_shr(b, (uint32_t)u256_to_u64_sat(a)));
         break;
-      case 0x1d: // SAR
+      case 0x1d: // SAR (EIP-145)
+        REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
         BINARY(u256_sar(b, u256_to_u64_sat(a) >= 256 ? 256 : (uint32_t)u256_to_u64_sat(a)));
         break;
 
@@ -1205,7 +1226,8 @@ static evm_status interpret(evm_vm *vm) {
       case 0x5b: // JUMPDEST
         ENTER_BLOCK(pc);
         break;
-      case 0x5f: // PUSH0
+      case 0x5f: // PUSH0 (EIP-3855)
+        REQUIRE_SPEC(SPEC_SHANGHAI);
         PUSH(U256_ZERO);
         break;
 
@@ -1240,19 +1262,24 @@ static evm_status interpret(evm_vm *vm) {
       case 0x45: // GASLIMIT
         PUSH(u256_from_u64(vm->ctx.block_gas_limit));
         break;
-      case 0x46: // CHAINID
+      case 0x46: // CHAINID (EIP-1344)
+        REQUIRE_SPEC(SPEC_ISTANBUL);
         PUSH(vm->ctx.chain_id);
         break;
-      case 0x48: // BASEFEE
+      case 0x48: // BASEFEE (EIP-3198)
+        REQUIRE_SPEC(SPEC_LONDON);
         PUSH(vm->ctx.base_fee);
         break;
-      case 0x4a: // BLOBBASEFEE
+      case 0x4a: // BLOBBASEFEE (EIP-7516)
+        REQUIRE_SPEC(SPEC_CANCUN);
         PUSH(vm->ctx.blob_base_fee);
         break;
-      case 0x47: // SELFBALANCE
+      case 0x47: // SELFBALANCE (EIP-1884)
+        REQUIRE_SPEC(SPEC_ISTANBUL);
         PUSH(vm->st->accounts[vm->self].balance);
         break;
-      case 0x49: { // BLOBHASH
+      case 0x49: { // BLOBHASH (EIP-4844)
+        REQUIRE_SPEC(SPEC_CANCUN);
         const uint64_t i = u256_to_u64_sat(POP());
         PUSH(i < (uint64_t)vm->ctx.blob_count ? vm->ctx.blob_hashes[i]
                                              : U256_ZERO);
@@ -1294,7 +1321,8 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(u256_from_u64((uint64_t)vm->st->accounts[a].code_len));
         break;
       }
-      case 0x3f: { // EXTCODEHASH
+      case 0x3f: { // EXTCODEHASH (EIP-1052)
+        REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
         uint8_t addr[20];
         word_to_address(POP(), addr);
         const int32_t a = account_intern(vm->st, addr);
@@ -1326,10 +1354,12 @@ static evm_status interpret(evm_vm *vm) {
         break;
       }
 
-      case 0x3d: // RETURNDATASIZE
+      case 0x3d: // RETURNDATASIZE (EIP-211)
+        REQUIRE_SPEC(SPEC_BYZANTIUM);
         PUSH(u256_from_u64((uint64_t)vm->returndata_len));
         break;
-      case 0x3e: { // RETURNDATACOPY
+      case 0x3e: { // RETURNDATACOPY (EIP-211)
+        REQUIRE_SPEC(SPEC_BYZANTIUM);
         const u256 dst = POP(), src = POP(), len = POP();
         const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
                        n = u256_to_u64_sat(len);
@@ -1410,19 +1440,22 @@ static evm_status interpret(evm_vm *vm) {
         set_storage(vm->st, slot, value);
         break;
       }
-      case 0x5c: { // TLOAD
+      case 0x5c: { // TLOAD (EIP-1153)
+        REQUIRE_SPEC(SPEC_CANCUN);
         const u256 key = PEEK(0);
         sp[-1] = transient_load(vm->st, vm->self, key);
         break;
       }
-      case 0x5d: { // TSTORE
+      case 0x5d: { // TSTORE (EIP-1153)
+        REQUIRE_SPEC(SPEC_CANCUN);
         if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
         const u256 key = POP(), value = POP();
         transient_store(vm->st, vm->self, key, value);
         break;
       }
 
-      case 0x5e: { // MCOPY
+      case 0x5e: { // MCOPY (EIP-5656)
+        REQUIRE_SPEC(SPEC_CANCUN);
         const u256 dst = POP(), src = POP(), len = POP();
         const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
                        n = u256_to_u64_sat(len);
@@ -1467,6 +1500,10 @@ static evm_status interpret(evm_vm *vm) {
       case 0xf2:   // CALLCODE
       case 0xf4:   // DELEGATECALL
       case 0xfa: { // STATICCALL
+        // DELEGATECALL arrived in Homestead (EIP-7) and STATICCALL in
+        // Byzantium (EIP-214).
+        if (op == 0xf4) REQUIRE_SPEC(SPEC_HOMESTEAD);
+        if (op == 0xfa) REQUIRE_SPEC(SPEC_BYZANTIUM);
         const int has_value = (op == 0xf1 || op == 0xf2);
         const u256 gas_arg = POP();
         uint8_t to[20];
@@ -1591,7 +1628,8 @@ static evm_status interpret(evm_vm *vm) {
       }
 
       case 0xf0:   // CREATE
-      case 0xf5: { // CREATE2
+      case 0xf5: { // CREATE2 (EIP-1014)
+        REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
         if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
         const u256 value = POP();
         const uint64_t off = u256_to_u64_sat(POP());
@@ -1630,9 +1668,11 @@ static evm_status interpret(evm_vm *vm) {
 
         int ok = 0;
         vm->returndata_len = 0;
-        // Creating over an account that already has code or a nonce fails.
+        // Creating over an account that already has code, a nonce, or (per
+        // EIP-7610) storage fails.
         const int occupied = vm->st->accounts[created].code_len > 0 ||
-                             vm->st->accounts[created].nonce > 0;
+                             vm->st->accounts[created].nonce > 0 ||
+                             vm->st->accounts[created].has_storage;
         if (u256_cmp(creator_balance, value) < 0 || occupied ||
             vm->depth >= MAX_DEPTH) {
           if (occupied) child_gas = 0;
@@ -1735,7 +1775,8 @@ static evm_status interpret(evm_vm *vm) {
         vm->output_len = (int)n;
         DONE(EVM_SUCCESS);
       }
-      case 0xfd: { // REVERT
+      case 0xfd: { // REVERT (EIP-140)
+        REQUIRE_SPEC(SPEC_BYZANTIUM);
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
         if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
@@ -1829,6 +1870,7 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   if (memory_cap <= 0) memory_cap = DEFAULT_MEMORY;
   evm_vm *vm = (evm_vm *)ox_alloc(sizeof(evm_vm));
   if (!vm) return 0;
+  vm->ctx.spec = SPEC_DEFAULT;
   vm->jumpdest = (uint8_t *)ox_alloc((MAX_CODE + 7) / 8);
   // Worst case is a block per byte, when every byte is a JUMPDEST.
   vm->blocks = (block_info *)ox_alloc((uint64_t)MAX_CODE * sizeof(block_info));
@@ -1969,6 +2011,7 @@ EXPORT("evm_stage_ptr") uint8_t *evm_stage_ptr(evm_vm *vm) { return vm->stage; }
 
 EXPORT("evm_reset") void evm_reset(evm_vm *vm) {
   state_reset(vm->st);
+  vm->ctx.spec = SPEC_DEFAULT;
   vm->returndata_len = 0;
   ENTER_TOP(vm);
   vm->is_static = 0;
@@ -2003,6 +2046,7 @@ EXPORT("evm_put_storage") int evm_put_storage(evm_vm *vm) {
   const u256 v = u256_from_be(vm->stage + STAGE_WORD_B);
   vm->st->slots[slot].value = v;
   vm->st->slots[slot].original = v;
+  if (!u256_is_zero(v)) vm->st->accounts[a].has_storage = 1;
   vm->st->journal_len = 0;
   return EVM_SUCCESS;
 }
@@ -2023,11 +2067,11 @@ void evm_set_context(evm_vm *vm, int64_t number, int64_t timestamp,
   vm->ctx.number = (uint64_t)number;
   vm->ctx.timestamp = (uint64_t)timestamp;
   vm->ctx.block_gas_limit = (uint64_t)block_gas_limit;
-  vm->ctx.blob_count = blob_count > 8 ? 8 : blob_count;
+  vm->ctx.blob_count = blob_count > 16 ? 16 : blob_count;
   for (int i = 0; i < vm->ctx.blob_count; i++)
     vm->ctx.blob_hashes[i] = u256_from_be(p + 224 + i * 32);
   vm->ctx.block_hash_count = block_hash_count > 256 ? 256 : block_hash_count;
-  const uint8_t *bh = p + 224 + 8 * 32;
+  const uint8_t *bh = p + 224 + 16 * 32;
   for (int i = 0; i < vm->ctx.block_hash_count; i++)
     for (int j = 0; j < 32; j++) vm->ctx.block_hashes[i][j] = bh[i * 32 + j];
 }
@@ -2143,6 +2187,15 @@ int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
   uint8_t *init = (uint8_t *)arena_alloc(vm, init_len + 16);
   if (!init) return EVM_OUT_OF_MEMORY;
   mem_copy(init, vm->stage + STAGE_BYTES, (uint64_t)init_len);
+
+  // A create transaction whose address is already occupied consumes all of its
+  // gas and deploys nothing. EIP-7610 counts pre-existing storage as occupied.
+  if (vm->st->accounts[created].code_len > 0 ||
+      vm->st->accounts[created].nonce > 0 ||
+      vm->st->accounts[created].has_storage) {
+    vm->gas = 0;
+    return EVM_OUT_OF_GAS;
+  }
 
   const int32_t snapshot = state_snapshot(vm->st);
   set_balance(vm->st, sender,

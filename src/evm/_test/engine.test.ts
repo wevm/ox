@@ -265,9 +265,9 @@ describe('bn254 precompiles', () => {
     const contract = '0x00000000000000000000000000000000000000c0' as const
 
     engine.evm_reset(vm)
-    // `evm_reset` leaves the fork at Frontier, where 0x06 and above are not
-    // precompiles at all but ordinary empty accounts, so a call to one would
-    // succeed and return nothing.
+    // A reset returns the fork to Prague. Pinning it explicitly anyway: on an
+    // older fork 0x06 and above are not precompiles at all but ordinary empty
+    // accounts, so a call to one would succeed and return nothing.
     const stage = engine.evm_stage_ptr(vm)
     load_.view(engine).set(new Uint8Array(256), stage)
     engine.evm_set_context(vm, 1n, 1n, 30_000_000n, 0, 0, PRAGUE)

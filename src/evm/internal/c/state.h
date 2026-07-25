@@ -34,6 +34,10 @@ typedef struct {
   uint8_t exists;   // present in the state trie
   uint8_t created;  // created in this transaction (EIP-6780)
   uint8_t destroyed;
+  // Set when the account starts the transaction with a non-zero slot. EIP-7610
+  // makes such an account block a CREATE at its address even with no code and a
+  // zero nonce, and a flag avoids scanning the slot table on every CREATE.
+  uint8_t has_storage;
 } account;
 
 typedef struct {
