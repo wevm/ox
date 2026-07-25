@@ -11,6 +11,7 @@
 
 #include "keccak.h"
 #include "opcodes.h"
+#include "bn254.h"
 #include "precompile.h"
 #include "state.h"
 #include "u256.h"
@@ -845,8 +846,71 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       *out_len = 64;
       return PRE_OK;
     }
+    case 0x06: { // bn254 G1 addition (EIP-196)
+      // EIP-1108 repriced this from 500.
+      const int64_t cost = spec >= SPEC_ISTANBUL ? 150 : 500;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      uint8_t buf[128];
+      copy_padded(buf, in, len, 0, 128);
+      g1 a, b, r;
+      if (!g1_decode(buf, &a) || !g1_decode(buf + 64, &b)) return PRE_FAIL;
+      g1_add(&r, &a, &b);
+      u256 x, y;
+      g1_affine(&r, &x, &y);
+      u256_to_be(x, out);
+      u256_to_be(y, out + 32);
+      *out_len = 64;
+      return PRE_OK;
+    }
+    case 0x07: { // bn254 G1 scalar multiplication (EIP-196)
+      const int64_t cost = spec >= SPEC_ISTANBUL ? 6000 : 40000;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      uint8_t buf[96];
+      copy_padded(buf, in, len, 0, 96);
+      g1 a, r;
+      if (!g1_decode(buf, &a)) return PRE_FAIL;
+      // The scalar is taken as-is: it is not required to be below the order.
+      g1_mul(&r, &a, u256_from_be(buf + 64));
+      u256 x, y;
+      g1_affine(&r, &x, &y);
+      u256_to_be(x, out);
+      u256_to_be(y, out + 32);
+      *out_len = 64;
+      return PRE_OK;
+    }
+    case 0x08: { // bn254 pairing check (EIP-197)
+      if (len % 192 != 0) return PRE_FAIL;
+      const uint64_t pairs = len / 192;
+      // EIP-1108 repriced this from 100000 + 80000 per pair.
+      const int64_t base = spec >= SPEC_ISTANBUL ? 45000 : 100000;
+      const int64_t per = spec >= SPEC_ISTANBUL ? 34000 : 80000;
+      const int64_t cost = base + per * (int64_t)pairs;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      bn_init();
+      fq12 acc = FQ12_ONE;
+      for (uint64_t i = 0; i < pairs; i++) {
+        const uint8_t *rec = in + i * 192;
+        g1 a;
+        g2 b;
+        if (!g1_decode(rec, &a) || !g2_decode(rec + 64, &b)) return PRE_FAIL;
+        // Pairing anything with the identity gives one, so those terms drop
+        // out; including them would divide by a zero denominator.
+        if (g1_is_inf(&a) || g2_is_inf(&b)) continue;
+        u256 px, py;
+        g1_affine(&a, &px, &py);
+        acc = fq12_mul(acc, bn_miller(px, py, b.x, b.y));
+      }
+      const int one = fq12_is_one(bn_final_exp(acc));
+      for (int i = 0; i < 32; i++) out[i] = 0;
+      out[31] = (uint8_t)one;
+      *out_len = 32;
+      return PRE_OK;
+    }
     default:
-      // bn254, KZG, and BLS need curve arithmetic.
+      // KZG and BLS need more curve arithmetic.
       return PRE_UNSUPPORTED;
   }
 }

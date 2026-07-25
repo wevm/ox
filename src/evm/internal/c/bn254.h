@@ -1,0 +1,660 @@
+// bn254 (alt_bn128) arithmetic for the EIP-196 and EIP-197 precompiles.
+//
+// Correctness first, in the same spirit as `secp256k1.h`: the field goes
+// through the generic 256-bit `u256_mulmod` rather than Montgomery form, and
+// inversion is Fermat's little theorem. A pairing therefore costs on the order
+// of tens of milliseconds. Montgomery multiplication is the obvious thing to
+// add if that ever matters.
+//
+// The tower is the standard one for this curve:
+//
+//   Fp2  = Fp[u]  / (u^2 + 1)
+//   Fp6  = Fp2[v] / (v^3 - xi),  xi = 9 + u
+//   Fp12 = Fp6[w] / (w^2 - v)
+
+#ifndef OX_EVM_BN254_H
+#define OX_EVM_BN254_H
+
+#include "u256.h"
+
+// p = 36t^4 + 36t^3 + 24t^2 + 6t + 1 for t = 4965661367192848881
+#define BN_P                                                       \
+  ((u256){{0x3C208C16D87CFD47ULL, 0x97816A916871CA8DULL,           \
+           0xB85045B68181585DULL, 0x30644E72E131A029ULL}})
+// The order of both groups.
+#define BN_R                                                       \
+  ((u256){{0x43E1F593F0000001ULL, 0x2833E84879B97091ULL,           \
+           0xB85045B68181585DULL, 0x30644E72E131A029ULL}})
+
+static inline u256 fq_add(u256 a, u256 b) {
+  const u256 r = u256_add(a, b);
+  // p is below 2^254, so a wrap cannot happen and one subtraction suffices.
+  return u256_cmp(r, BN_P) >= 0 ? u256_sub(r, BN_P) : r;
+}
+
+static inline u256 fq_sub(u256 a, u256 b) {
+  return u256_cmp(a, b) < 0 ? u256_add(u256_sub(a, b), BN_P) : u256_sub(a, b);
+}
+
+static inline u256 fq_neg(u256 a) {
+  return u256_is_zero(a) ? a : u256_sub(BN_P, a);
+}
+
+static inline u256 fq_mul(u256 a, u256 b) { return u256_mulmod(a, b, BN_P); }
+static inline u256 fq_sqr(u256 a) { return u256_mulmod(a, a, BN_P); }
+
+/** `a^e mod p`, square-and-multiply from the top bit. */
+static u256 fq_pow(u256 a, u256 e) {
+  u256 r = U256_ONE;
+  for (int bit = 255; bit >= 0; bit--) {
+    r = fq_sqr(r);
+    if ((e.l[bit / 64] >> (bit % 64)) & 1) r = fq_mul(r, a);
+  }
+  return r;
+}
+
+static inline u256 fq_inv(u256 a) { return fq_pow(a, u256_sub(BN_P, u256_from_u64(2))); }
+
+// ---------------------------------------------------------------------------
+// Fp2 = Fp[u] / (u^2 + 1)
+// ---------------------------------------------------------------------------
+
+typedef struct {
+  u256 c0, c1; // c0 + c1*u
+} fq2;
+
+#define FQ2_ZERO ((fq2){U256_ZERO, U256_ZERO})
+#define FQ2_ONE ((fq2){U256_ONE, U256_ZERO})
+
+static inline int fq2_is_zero(fq2 a) {
+  return u256_is_zero(a.c0) && u256_is_zero(a.c1);
+}
+static inline int fq2_eq(fq2 a, fq2 b) {
+  return u256_eq(a.c0, b.c0) && u256_eq(a.c1, b.c1);
+}
+static inline fq2 fq2_add(fq2 a, fq2 b) {
+  return (fq2){fq_add(a.c0, b.c0), fq_add(a.c1, b.c1)};
+}
+static inline fq2 fq2_sub(fq2 a, fq2 b) {
+  return (fq2){fq_sub(a.c0, b.c0), fq_sub(a.c1, b.c1)};
+}
+static inline fq2 fq2_neg(fq2 a) { return (fq2){fq_neg(a.c0), fq_neg(a.c1)}; }
+
+static inline fq2 fq2_mul(fq2 a, fq2 b) {
+  // Karatsuba: u^2 = -1, so the cross terms subtract.
+  const u256 v0 = fq_mul(a.c0, b.c0);
+  const u256 v1 = fq_mul(a.c1, b.c1);
+  const u256 mid = fq_mul(fq_add(a.c0, a.c1), fq_add(b.c0, b.c1));
+  return (fq2){fq_sub(v0, v1), fq_sub(fq_sub(mid, v0), v1)};
+}
+
+static inline fq2 fq2_sqr(fq2 a) {
+  // (c0 + c1 u)^2 = (c0+c1)(c0-c1) + 2 c0 c1 u
+  const u256 t0 = fq_mul(fq_add(a.c0, a.c1), fq_sub(a.c0, a.c1));
+  const u256 t1 = fq_mul(a.c0, a.c1);
+  return (fq2){t0, fq_add(t1, t1)};
+}
+
+static inline fq2 fq2_mul_fq(fq2 a, u256 b) {
+  return (fq2){fq_mul(a.c0, b), fq_mul(a.c1, b)};
+}
+
+static inline fq2 fq2_inv(fq2 a) {
+  // The norm c0^2 + c1^2 lives in Fp, so one Fp inversion suffices.
+  const u256 norm = fq_add(fq_sqr(a.c0), fq_sqr(a.c1));
+  const u256 ninv = fq_inv(norm);
+  return (fq2){fq_mul(a.c0, ninv), fq_neg(fq_mul(a.c1, ninv))};
+}
+
+/** Multiplication by xi = 9 + u, the non-residue that defines Fp6. */
+static inline fq2 fq2_mul_xi(fq2 a) {
+  // (c0 + c1 u)(9 + u) = (9 c0 - c1) + (c0 + 9 c1) u
+  u256 nine_c0 = fq_add(a.c0, a.c0);        // 2
+  nine_c0 = fq_add(nine_c0, nine_c0);      // 4
+  nine_c0 = fq_add(nine_c0, nine_c0);      // 8
+  nine_c0 = fq_add(nine_c0, a.c0);         // 9
+  u256 nine_c1 = fq_add(a.c1, a.c1);
+  nine_c1 = fq_add(nine_c1, nine_c1);
+  nine_c1 = fq_add(nine_c1, nine_c1);
+  nine_c1 = fq_add(nine_c1, a.c1);
+  return (fq2){fq_sub(nine_c0, a.c1), fq_add(a.c0, nine_c1)};
+}
+
+/** The p-power Frobenius on Fp2 is conjugation. */
+static inline fq2 fq2_conj(fq2 a) { return (fq2){a.c0, fq_neg(a.c1)}; }
+
+// ---------------------------------------------------------------------------
+// G1: y^2 = x^3 + 3 over Fp, in Jacobian coordinates
+// ---------------------------------------------------------------------------
+
+typedef struct {
+  u256 x, y, z;
+} g1;
+
+#define G1_INF ((g1){U256_ONE, U256_ONE, U256_ZERO})
+
+static inline int g1_is_inf(const g1 *p) { return u256_is_zero(p->z); }
+
+static void g1_double(g1 *r, const g1 *p) {
+  if (g1_is_inf(p) || u256_is_zero(p->y)) {
+    *r = G1_INF;
+    return;
+  }
+  // dbl-2009-l, valid because the curve's `a` coefficient is zero.
+  const u256 A = fq_sqr(p->x);
+  const u256 B = fq_sqr(p->y);
+  const u256 C = fq_sqr(B);
+  u256 D = fq_sqr(fq_add(p->x, B));
+  D = fq_sub(D, A);
+  D = fq_sub(D, C);
+  D = fq_add(D, D);
+  const u256 E = fq_add(fq_add(A, A), A);
+  const u256 F = fq_sqr(E);
+  const u256 x3 = fq_sub(F, fq_add(D, D));
+  u256 c8 = fq_add(C, C);
+  c8 = fq_add(c8, c8);
+  c8 = fq_add(c8, c8);
+  u256 y3 = fq_mul(E, fq_sub(D, x3));
+  y3 = fq_sub(y3, c8);
+  u256 z3 = fq_mul(p->y, p->z);
+  z3 = fq_add(z3, z3);
+  r->x = x3;
+  r->y = y3;
+  r->z = z3;
+}
+
+static void g1_add(g1 *r, const g1 *p, const g1 *q) {
+  if (g1_is_inf(p)) {
+    *r = *q;
+    return;
+  }
+  if (g1_is_inf(q)) {
+    *r = *p;
+    return;
+  }
+  const u256 z1z1 = fq_sqr(p->z);
+  const u256 z2z2 = fq_sqr(q->z);
+  const u256 u1 = fq_mul(p->x, z2z2);
+  const u256 u2 = fq_mul(q->x, z1z1);
+  const u256 s1 = fq_mul(fq_mul(p->y, z2z2), q->z);
+  const u256 s2 = fq_mul(fq_mul(q->y, z1z1), p->z);
+  const u256 h = fq_sub(u2, u1);
+  const u256 rr = fq_sub(s2, s1);
+  if (u256_is_zero(h)) {
+    if (u256_is_zero(rr)) {
+      g1_double(r, p);
+      return;
+    }
+    *r = G1_INF;
+    return;
+  }
+  const u256 h2 = fq_add(h, h);
+  const u256 i = fq_sqr(h2);
+  const u256 j = fq_mul(h, i);
+  const u256 r2 = fq_add(rr, rr);
+  const u256 v = fq_mul(u1, i);
+  u256 x3 = fq_sqr(r2);
+  x3 = fq_sub(x3, j);
+  x3 = fq_sub(x3, fq_add(v, v));
+  u256 y3 = fq_mul(r2, fq_sub(v, x3));
+  const u256 s1j = fq_mul(s1, j);
+  y3 = fq_sub(y3, fq_add(s1j, s1j));
+  u256 z3 = fq_sqr(fq_add(p->z, q->z));
+  z3 = fq_sub(z3, z1z1);
+  z3 = fq_sub(z3, z2z2);
+  z3 = fq_mul(z3, h);
+  r->x = x3;
+  r->y = y3;
+  r->z = z3;
+}
+
+/** `k * p`, double-and-add from the top bit. `k` is not reduced. */
+static void g1_mul(g1 *out, const g1 *p, u256 k) {
+  g1 acc = G1_INF;
+  for (int bit = 255; bit >= 0; bit--) {
+    g1 t;
+    g1_double(&t, &acc);
+    acc = t;
+    if ((k.l[bit / 64] >> (bit % 64)) & 1) {
+      g1_add(&t, &acc, p);
+      acc = t;
+    }
+  }
+  *out = acc;
+}
+
+/** Converts to affine. Writes zeroes for the point at infinity, per EIP-196. */
+static void g1_affine(const g1 *p, u256 *x, u256 *y) {
+  if (g1_is_inf(p)) {
+    *x = U256_ZERO;
+    *y = U256_ZERO;
+    return;
+  }
+  const u256 zinv = fq_inv(p->z);
+  const u256 zinv2 = fq_sqr(zinv);
+  *x = fq_mul(p->x, zinv2);
+  *y = fq_mul(p->y, fq_mul(zinv2, zinv));
+}
+
+/**
+ * Decodes an affine G1 point from 64 big-endian bytes.
+ *
+ * Returns 0 if a coordinate is not a field element or the point is not on the
+ * curve. `(0, 0)` is the encoding of the point at infinity and is accepted.
+ */
+static int g1_decode(const uint8_t *in, g1 *out) {
+  const u256 x = u256_from_be(in);
+  const u256 y = u256_from_be(in + 32);
+  if (u256_cmp(x, BN_P) >= 0 || u256_cmp(y, BN_P) >= 0) return 0;
+  if (u256_is_zero(x) && u256_is_zero(y)) {
+    *out = G1_INF;
+    return 1;
+  }
+  // y^2 == x^3 + 3
+  const u256 lhs = fq_sqr(y);
+  const u256 rhs = fq_add(fq_mul(fq_sqr(x), x), u256_from_u64(3));
+  if (!u256_eq(lhs, rhs)) return 0;
+  out->x = x;
+  out->y = y;
+  out->z = U256_ONE;
+  return 1;
+}
+
+// ---------------------------------------------------------------------------
+// Fp6 = Fp2[v] / (v^3 - xi)
+// ---------------------------------------------------------------------------
+
+typedef struct {
+  fq2 c0, c1, c2; // c0 + c1*v + c2*v^2
+} fq6;
+
+#define FQ6_ZERO ((fq6){FQ2_ZERO, FQ2_ZERO, FQ2_ZERO})
+#define FQ6_ONE ((fq6){FQ2_ONE, FQ2_ZERO, FQ2_ZERO})
+
+static inline fq6 fq6_add(fq6 a, fq6 b) {
+  return (fq6){fq2_add(a.c0, b.c0), fq2_add(a.c1, b.c1), fq2_add(a.c2, b.c2)};
+}
+static inline fq6 fq6_sub(fq6 a, fq6 b) {
+  return (fq6){fq2_sub(a.c0, b.c0), fq2_sub(a.c1, b.c1), fq2_sub(a.c2, b.c2)};
+}
+static inline fq6 fq6_neg(fq6 a) {
+  return (fq6){fq2_neg(a.c0), fq2_neg(a.c1), fq2_neg(a.c2)};
+}
+static inline int fq6_is_zero(fq6 a) {
+  return fq2_is_zero(a.c0) && fq2_is_zero(a.c1) && fq2_is_zero(a.c2);
+}
+static inline int fq6_eq(fq6 a, fq6 b) {
+  return fq2_eq(a.c0, b.c0) && fq2_eq(a.c1, b.c1) && fq2_eq(a.c2, b.c2);
+}
+
+static fq6 fq6_mul(fq6 a, fq6 b) {
+  // Karatsuba over the three coefficients; v^3 folds back as xi.
+  const fq2 t0 = fq2_mul(a.c0, b.c0);
+  const fq2 t1 = fq2_mul(a.c1, b.c1);
+  const fq2 t2 = fq2_mul(a.c2, b.c2);
+  fq2 s = fq2_mul(fq2_add(a.c1, a.c2), fq2_add(b.c1, b.c2));
+  const fq2 c0 = fq2_add(t0, fq2_mul_xi(fq2_sub(fq2_sub(s, t1), t2)));
+  s = fq2_mul(fq2_add(a.c0, a.c1), fq2_add(b.c0, b.c1));
+  const fq2 c1 = fq2_add(fq2_sub(fq2_sub(s, t0), t1), fq2_mul_xi(t2));
+  s = fq2_mul(fq2_add(a.c0, a.c2), fq2_add(b.c0, b.c2));
+  const fq2 c2 = fq2_add(fq2_sub(fq2_sub(s, t0), t2), t1);
+  return (fq6){c0, c1, c2};
+}
+
+static inline fq6 fq6_sqr(fq6 a) { return fq6_mul(a, a); }
+
+/** Multiplication by `v`, which cycles the coefficients. */
+static inline fq6 fq6_mul_v(fq6 a) {
+  return (fq6){fq2_mul_xi(a.c2), a.c0, a.c1};
+}
+
+static fq6 fq6_inv(fq6 a) {
+  const fq2 t0 = fq2_sub(fq2_sqr(a.c0), fq2_mul_xi(fq2_mul(a.c1, a.c2)));
+  const fq2 t1 = fq2_sub(fq2_mul_xi(fq2_sqr(a.c2)), fq2_mul(a.c0, a.c1));
+  const fq2 t2 = fq2_sub(fq2_sqr(a.c1), fq2_mul(a.c0, a.c2));
+  fq2 d = fq2_mul(a.c0, t0);
+  d = fq2_add(d, fq2_mul_xi(fq2_mul(a.c2, t1)));
+  d = fq2_add(d, fq2_mul_xi(fq2_mul(a.c1, t2)));
+  const fq2 di = fq2_inv(d);
+  return (fq6){fq2_mul(t0, di), fq2_mul(t1, di), fq2_mul(t2, di)};
+}
+
+// ---------------------------------------------------------------------------
+// Fp12 = Fp6[w] / (w^2 - v)
+// ---------------------------------------------------------------------------
+
+typedef struct {
+  fq6 c0, c1; // c0 + c1*w
+} fq12;
+
+#define FQ12_ONE ((fq12){FQ6_ONE, FQ6_ZERO})
+
+static inline int fq12_is_one(fq12 a) {
+  return fq6_eq(a.c0, FQ6_ONE) && fq6_is_zero(a.c1);
+}
+static inline fq12 fq12_conj(fq12 a) { return (fq12){a.c0, fq6_neg(a.c1)}; }
+
+static fq12 fq12_mul(fq12 a, fq12 b) {
+  const fq6 t0 = fq6_mul(a.c0, b.c0);
+  const fq6 t1 = fq6_mul(a.c1, b.c1);
+  const fq6 c0 = fq6_add(t0, fq6_mul_v(t1));
+  fq6 c1 = fq6_mul(fq6_add(a.c0, a.c1), fq6_add(b.c0, b.c1));
+  c1 = fq6_sub(fq6_sub(c1, t0), t1);
+  return (fq12){c0, c1};
+}
+
+static inline fq12 fq12_sqr(fq12 a) { return fq12_mul(a, a); }
+
+static fq12 fq12_inv(fq12 a) {
+  // (c0 + c1 w)(c0 - c1 w) = c0^2 - v c1^2, which lies in Fp6.
+  const fq6 d = fq6_sub(fq6_sqr(a.c0), fq6_mul_v(fq6_sqr(a.c1)));
+  const fq6 di = fq6_inv(d);
+  return (fq12){fq6_mul(a.c0, di), fq6_neg(fq6_mul(a.c1, di))};
+}
+
+/**
+ * The p-power Frobenius.
+ *
+ * `gamma[i]` is `xi^(i*(p-1)/6)`, derived at runtime by {@link bn_init} rather
+ * than transcribed. Conjugating each Fp2 coefficient handles the Fp2 part; the
+ * powers of `v` and `w` pick up the gammas because `v = w^2`.
+ */
+static fq2 bn_gamma[6];
+
+static fq2 fq2_pow(fq2 a, u256 e) {
+  fq2 r = FQ2_ONE;
+  for (int bit = 255; bit >= 0; bit--) {
+    r = fq2_sqr(r);
+    if ((e.l[bit / 64] >> (bit % 64)) & 1) r = fq2_mul(r, a);
+  }
+  return r;
+}
+
+/** Derives the Frobenius constants. Idempotent; called before any pairing. */
+static void bn_init(void) {
+  if (!fq2_is_zero(bn_gamma[1])) return;
+  const fq2 xi = (fq2){u256_from_u64(9), U256_ONE};
+  // (p - 1) / 6
+  uint64_t rem;
+  const u256 e = u256_divmod_u64(u256_sub(BN_P, U256_ONE), 6, &rem);
+  bn_gamma[0] = FQ2_ONE;
+  bn_gamma[1] = fq2_pow(xi, e);
+  for (int i = 2; i < 6; i++) bn_gamma[i] = fq2_mul(bn_gamma[i - 1], bn_gamma[1]);
+}
+
+static fq12 fq12_frobenius(fq12 a) {
+  fq6 c0, c1;
+  c0.c0 = fq2_conj(a.c0.c0);
+  c0.c1 = fq2_mul(fq2_conj(a.c0.c1), bn_gamma[2]);
+  c0.c2 = fq2_mul(fq2_conj(a.c0.c2), bn_gamma[4]);
+  c1.c0 = fq2_mul(fq2_conj(a.c1.c0), bn_gamma[1]);
+  c1.c1 = fq2_mul(fq2_conj(a.c1.c1), bn_gamma[3]);
+  c1.c2 = fq2_mul(fq2_conj(a.c1.c2), bn_gamma[5]);
+  return (fq12){c0, c1};
+}
+
+/** `a^e` for an exponent supplied as `n` little-endian 64-bit limbs. */
+static fq12 fq12_pow_limbs(fq12 a, const uint64_t *e, int n) {
+  fq12 r = FQ12_ONE;
+  int started = 0;
+  for (int i = n - 1; i >= 0; i--) {
+    for (int bit = 63; bit >= 0; bit--) {
+      if (started) r = fq12_sqr(r);
+      if ((e[i] >> bit) & 1) {
+        r = started ? fq12_mul(r, a) : a;
+        started = 1;
+      }
+    }
+  }
+  return r;
+}
+
+// ---------------------------------------------------------------------------
+// G2: y^2 = x^3 + 3/xi over Fp2, in Jacobian coordinates
+// ---------------------------------------------------------------------------
+
+typedef struct {
+  fq2 x, y, z;
+} g2;
+
+#define G2_INF ((g2){FQ2_ONE, FQ2_ONE, FQ2_ZERO})
+
+static inline int g2_is_inf(const g2 *p) { return fq2_is_zero(p->z); }
+
+/** The twist's curve constant, `3 / xi`. */
+static inline fq2 g2_b(void) {
+  const fq2 xi = (fq2){u256_from_u64(9), U256_ONE};
+  return fq2_mul_fq(fq2_inv(xi), u256_from_u64(3));
+}
+
+static void g2_double(g2 *r, const g2 *p) {
+  if (g2_is_inf(p) || fq2_is_zero(p->y)) {
+    *r = G2_INF;
+    return;
+  }
+  const fq2 A = fq2_sqr(p->x);
+  const fq2 B = fq2_sqr(p->y);
+  const fq2 C = fq2_sqr(B);
+  fq2 D = fq2_sqr(fq2_add(p->x, B));
+  D = fq2_sub(D, A);
+  D = fq2_sub(D, C);
+  D = fq2_add(D, D);
+  const fq2 E = fq2_add(fq2_add(A, A), A);
+  const fq2 F = fq2_sqr(E);
+  const fq2 x3 = fq2_sub(F, fq2_add(D, D));
+  fq2 c8 = fq2_add(C, C);
+  c8 = fq2_add(c8, c8);
+  c8 = fq2_add(c8, c8);
+  fq2 y3 = fq2_mul(E, fq2_sub(D, x3));
+  y3 = fq2_sub(y3, c8);
+  fq2 z3 = fq2_mul(p->y, p->z);
+  z3 = fq2_add(z3, z3);
+  r->x = x3;
+  r->y = y3;
+  r->z = z3;
+}
+
+static void g2_add(g2 *r, const g2 *p, const g2 *q) {
+  if (g2_is_inf(p)) {
+    *r = *q;
+    return;
+  }
+  if (g2_is_inf(q)) {
+    *r = *p;
+    return;
+  }
+  const fq2 z1z1 = fq2_sqr(p->z);
+  const fq2 z2z2 = fq2_sqr(q->z);
+  const fq2 u1 = fq2_mul(p->x, z2z2);
+  const fq2 u2 = fq2_mul(q->x, z1z1);
+  const fq2 s1 = fq2_mul(fq2_mul(p->y, z2z2), q->z);
+  const fq2 s2 = fq2_mul(fq2_mul(q->y, z1z1), p->z);
+  const fq2 h = fq2_sub(u2, u1);
+  const fq2 rr = fq2_sub(s2, s1);
+  if (fq2_is_zero(h)) {
+    if (fq2_is_zero(rr)) {
+      g2_double(r, p);
+      return;
+    }
+    *r = G2_INF;
+    return;
+  }
+  const fq2 h2 = fq2_add(h, h);
+  const fq2 i = fq2_sqr(h2);
+  const fq2 j = fq2_mul(h, i);
+  const fq2 r2 = fq2_add(rr, rr);
+  const fq2 v = fq2_mul(u1, i);
+  fq2 x3 = fq2_sqr(r2);
+  x3 = fq2_sub(x3, j);
+  x3 = fq2_sub(x3, fq2_add(v, v));
+  fq2 y3 = fq2_mul(r2, fq2_sub(v, x3));
+  const fq2 s1j = fq2_mul(s1, j);
+  y3 = fq2_sub(y3, fq2_add(s1j, s1j));
+  fq2 z3 = fq2_sqr(fq2_add(p->z, q->z));
+  z3 = fq2_sub(z3, z1z1);
+  z3 = fq2_sub(z3, z2z2);
+  z3 = fq2_mul(z3, h);
+  r->x = x3;
+  r->y = y3;
+  r->z = z3;
+}
+
+static void g2_mul(g2 *out, const g2 *p, u256 k) {
+  g2 acc = G2_INF;
+  for (int bit = 255; bit >= 0; bit--) {
+    g2 t;
+    g2_double(&t, &acc);
+    acc = t;
+    if ((k.l[bit / 64] >> (bit % 64)) & 1) {
+      g2_add(&t, &acc, p);
+      acc = t;
+    }
+  }
+  *out = acc;
+}
+
+/**
+ * Decodes an affine G2 point from 128 big-endian bytes.
+ *
+ * EIP-197 puts the coefficient of `u` first in each Fp2 element. The point must
+ * be on the curve and in the order-r subgroup; `(0, 0)` is infinity.
+ */
+static int g2_decode(const uint8_t *in, g2 *out) {
+  const u256 x1 = u256_from_be(in);
+  const u256 x0 = u256_from_be(in + 32);
+  const u256 y1 = u256_from_be(in + 64);
+  const u256 y0 = u256_from_be(in + 96);
+  if (u256_cmp(x0, BN_P) >= 0 || u256_cmp(x1, BN_P) >= 0 ||
+      u256_cmp(y0, BN_P) >= 0 || u256_cmp(y1, BN_P) >= 0)
+    return 0;
+  const fq2 x = (fq2){x0, x1};
+  const fq2 y = (fq2){y0, y1};
+  if (fq2_is_zero(x) && fq2_is_zero(y)) {
+    *out = G2_INF;
+    return 1;
+  }
+  if (!fq2_eq(fq2_sqr(y), fq2_add(fq2_mul(fq2_sqr(x), x), g2_b()))) return 0;
+  out->x = x;
+  out->y = y;
+  out->z = FQ2_ONE;
+  // The curve over Fp2 has more points than the pairing subgroup, and a point
+  // outside it makes the pairing meaningless, so EIP-197 rejects it.
+  g2 check;
+  g2_mul(&check, out, BN_R);
+  return g2_is_inf(&check);
+}
+
+// ---------------------------------------------------------------------------
+// The optimal ate pairing
+// ---------------------------------------------------------------------------
+
+// 6t + 2 = 29793968203157093288, the ate loop count. It needs 65 bits, so the
+// leading one is kept apart from the low 64.
+#define BN_ATE_LO 0x9D797039BE763BA8ULL
+#define BN_ATE_BITS 65
+static inline int bn_ate_bit(int bit) {
+  return bit == 64 ? 1 : (int)((BN_ATE_LO >> bit) & 1);
+}
+
+// (p^4 - p^2 + 1) / r, the hard part of the final exponentiation. Taking it as
+// one 761-bit exponent costs about twice an addition chain built from Frobenius
+// maps, and is far less to get wrong.
+static const uint64_t bn_hard_exp[12] = {
+    0xE81BB482CCDF42B1ULL, 0x5ABF5CC4F49C36D4ULL, 0xF1154E7E1DA014FDULL,
+    0xDCC7B44C87CDBACFULL, 0xAAA441E3954BCF8AULL, 0x6B887D56D5095F23ULL,
+    0x79581E16F3FD90C6ULL, 0x3B1B1355D189227DULL, 0x4E529A5861876F6BULL,
+    0x6C0EB522D5B12278ULL, 0x331EC15183177FAFULL, 0x01BAAA710B0759ADULL,
+};
+
+/**
+ * The line through `a` and `b` (or the tangent at `a` when they are equal),
+ * evaluated at the affine G1 point `(px, py)` and lifted into Fp12.
+ *
+ * The twist is D-type, so untwisting is `(x, y) -> (w^2 x, w^3 y)` and the
+ * slope of the untwisted line is `w * slope`. Substituting into
+ * `y_P - y_A - slope*(x_P - x_A)` and using `w^3 = v*w` gives
+ *
+ *   y_P  +  (-slope * x_P) * w  +  (slope * x_A - y_A) * v * w
+ *
+ * which is where the three terms below land. Writing them in any other
+ * arrangement still satisfies `e(P,Q) * e(-P,Q) == 1`, so bilinearity across
+ * two different multiples of `P` is the test that actually pins this down.
+ */
+static fq12 g2_line(const fq2 ax, const fq2 ay, const fq2 bx, const fq2 by,
+                    u256 px, u256 py, int tangent) {
+  fq2 slope;
+  if (tangent) {
+    // 3x^2 / 2y
+    fq2 num = fq2_sqr(ax);
+    num = fq2_add(fq2_add(num, num), num);
+    slope = fq2_mul(num, fq2_inv(fq2_add(ay, ay)));
+  } else {
+    slope = fq2_mul(fq2_sub(by, ay), fq2_inv(fq2_sub(bx, ax)));
+  }
+  fq12 out = (fq12){FQ6_ZERO, FQ6_ZERO};
+  out.c0.c0 = (fq2){py, U256_ZERO};
+  out.c1.c0 = fq2_mul_fq(fq2_neg(slope), px);
+  out.c1.c1 = fq2_sub(fq2_mul(slope, ax), ay);
+  return out;
+}
+
+/**
+ * The Miller loop for `e(P, Q)`, with `P` affine in G1 and `Q` affine in G2.
+ *
+ * Points at infinity are handled by the caller: the pairing of anything with
+ * infinity is one, so those terms are skipped entirely.
+ */
+static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
+  fq12 f = FQ12_ONE;
+  fq2 rx = qx, ry = qy;
+  // The leading bit only seeds R = Q, so the loop starts one below it.
+  for (int bit = BN_ATE_BITS - 2; bit >= 0; bit--) {
+    // Double: accumulate the tangent line, then R = 2R.
+    f = fq12_sqr(f);
+    f = fq12_mul(f, g2_line(rx, ry, rx, ry, px, py, 1));
+    {
+      g2 rj = (g2){rx, ry, FQ2_ONE}, t;
+      g2_double(&t, &rj);
+      const fq2 zi = fq2_inv(t.z);
+      const fq2 zi2 = fq2_sqr(zi);
+      rx = fq2_mul(t.x, zi2);
+      ry = fq2_mul(t.y, fq2_mul(zi2, zi));
+    }
+    if (bn_ate_bit(bit)) {
+      f = fq12_mul(f, g2_line(rx, ry, qx, qy, px, py, 0));
+      g2 rj = (g2){rx, ry, FQ2_ONE}, qj = (g2){qx, qy, FQ2_ONE}, t;
+      g2_add(&t, &rj, &qj);
+      const fq2 zi = fq2_inv(t.z);
+      const fq2 zi2 = fq2_sqr(zi);
+      rx = fq2_mul(t.x, zi2);
+      ry = fq2_mul(t.y, fq2_mul(zi2, zi));
+    }
+  }
+  // The two Frobenius corrections that make the ate pairing bilinear.
+  const fq2 q1x = fq2_mul(fq2_conj(qx), bn_gamma[2]);
+  const fq2 q1y = fq2_mul(fq2_conj(qy), bn_gamma[3]);
+  const fq2 q2x = fq2_mul(fq2_conj(q1x), bn_gamma[2]);
+  const fq2 q2y = fq2_neg(fq2_mul(fq2_conj(q1y), bn_gamma[3]));
+  f = fq12_mul(f, g2_line(rx, ry, q1x, q1y, px, py, 0));
+  {
+    g2 rj = (g2){rx, ry, FQ2_ONE}, qj = (g2){q1x, q1y, FQ2_ONE}, t;
+    g2_add(&t, &rj, &qj);
+    const fq2 zi = fq2_inv(t.z);
+    const fq2 zi2 = fq2_sqr(zi);
+    rx = fq2_mul(t.x, zi2);
+    ry = fq2_mul(t.y, fq2_mul(zi2, zi));
+  }
+  f = fq12_mul(f, g2_line(rx, ry, q2x, q2y, px, py, 0));
+  return f;
+}
+
+/** The final exponentiation, `f^((p^12 - 1) / r)`. */
+static fq12 bn_final_exp(fq12 f) {
+  // Easy part: f^(p^6 - 1) then f^(p^2 + 1).
+  fq12 t = fq12_mul(fq12_conj(f), fq12_inv(f));
+  fq12 t2 = fq12_frobenius(fq12_frobenius(t));
+  t = fq12_mul(t, t2);
+  return fq12_pow_limbs(t, bn_hard_exp, 12);
+}
+
+#endif // OX_EVM_BN254_H

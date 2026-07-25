@@ -219,3 +219,118 @@ describe('ecrecover precompile', () => {
     expect(recoverVia(input)).toBe(zeroWord)
   })
 })
+
+/** The engine's fork id for Prague. */
+const PRAGUE = 13
+
+describe('bn254 precompiles', () => {
+  // The generator of G1 and the generator of G2, in EIP-196/EIP-197 encoding.
+  // G2's Fp2 coordinates put the coefficient of `u` first.
+  const g1 = `${'00'.repeat(31)}01${'00'.repeat(31)}02`
+  const g2 = [
+    '198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2',
+    '1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed',
+    '090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b',
+    '12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa',
+  ].join('')
+
+  /**
+   * Calls a precompile through a CALL and returns the raw return window.
+   *
+   * The caller is assembled from named pieces because CALL's seven operands are
+   * pushed in reverse and a wrong order silently returns zeroes.
+   */
+  function precompile(address: number, input: Uint8Array): Hex.Hex {
+    const len = `61${input.length.toString(16).padStart(4, '0')}`
+    const asm = [
+      len,
+      '5f',
+      '5f',
+      '37', // CALLDATACOPY(0, 0, len)
+      '610100', // retLen = 256, generous
+      len, // retOff = len
+      len, // argsLen
+      '5f', // argsOff = 0
+      '5f', // value = 0
+      `60${address.toString(16).padStart(2, '0')}`, // to
+      '5a', // gas
+      'f1', // CALL
+      '50', // discard the success flag
+      '610100',
+      len,
+      'f3', // RETURN(len, 256)
+    ].join('')
+    const bytecode = Hex.toBytes(`0x${asm}`)
+    const contract = '0x00000000000000000000000000000000000000c0' as const
+
+    engine.evm_reset(vm)
+    // `evm_reset` leaves the fork at Frontier, where 0x06 and above are not
+    // precompiles at all but ordinary empty accounts, so a call to one would
+    // succeed and return nothing.
+    const stage = engine.evm_stage_ptr(vm)
+    load_.view(engine).set(new Uint8Array(256), stage)
+    engine.evm_set_context(vm, 1n, 1n, 30_000_000n, 0, 0, PRAGUE)
+    load_.view(engine).set(Hex.toBytes(contract), stage)
+    load_.view(engine).set(new Uint8Array(32), stage + 64)
+    load_.view(engine).set(bytecode, stage + 128)
+    expect(engine.evm_put_account(vm, 0n, bytecode.length)).toBe(0)
+
+    load_.view(engine).set(Hex.toBytes(contract), stage)
+    load_.view(engine).set(new Uint8Array(20), stage + 20)
+    load_.view(engine).set(new Uint8Array(32), stage + 64)
+    load_.view(engine).set(input, stage + 128)
+    expect(engine.evm_execute(vm, input.length, 500_000_000n, 0)).toBe(0)
+    const ptr = engine.evm_output_ptr(vm)
+    return Hex.fromBytes(
+      load_.view(engine).slice(ptr, ptr + engine.evm_output_len(vm)),
+    )
+  }
+
+  test('behavior: ECADD doubles the generator', () => {
+    // 2*G1 has a known value; adding G1 to itself must produce it.
+    const got = precompile(0x06, Hex.toBytes(`0x${g1}${g1}`)).slice(0, 130)
+    expect(got).toBe(
+      '0x030644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd3' +
+        '15ed738c0e0a7c92e7845f96b2ae9c0a68a6a449e3538fc7ff3ebf7a5a18a2c4',
+    )
+  })
+
+  test('behavior: ECMUL by two agrees with ECADD', () => {
+    const two = `${'00'.repeat(31)}02`
+    const mul = precompile(0x07, Hex.toBytes(`0x${g1}${two}`)).slice(0, 130)
+    const add = precompile(0x06, Hex.toBytes(`0x${g1}${g1}`)).slice(0, 130)
+    expect(mul).toBe(add)
+  })
+
+  test('behavior: ECMUL by the group order gives the point at infinity', () => {
+    // The order encodes as all-zero output, which is how EIP-196 spells
+    // infinity.
+    const order =
+      '30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001'
+    expect(precompile(0x07, Hex.toBytes(`0x${g1}${order}`)).slice(0, 130)).toBe(
+      `0x${'00'.repeat(64)}`,
+    )
+  })
+
+  test('behavior: ECPAIRING is bilinear', () => {
+    const negG1 =
+      `${'00'.repeat(31)}01` +
+      '30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd45'
+    // e(G1, G2) * e(-G1, G2) == 1
+    const paired = precompile(
+      0x08,
+      Hex.toBytes(`0x${g1}${g2}${negG1}${g2}`),
+    ).slice(0, 66)
+    expect(paired).toBe(`0x${'00'.repeat(31)}01`)
+    // A single non-degenerate pairing is not one.
+    expect(precompile(0x08, Hex.toBytes(`0x${g1}${g2}`)).slice(0, 66)).toBe(
+      `0x${'00'.repeat(32)}`,
+    )
+  })
+
+  test('behavior: an empty ECPAIRING input is the empty product', () => {
+    expect(precompile(0x08, new Uint8Array(0)).slice(0, 66)).toBe(
+      `0x${'00'.repeat(31)}01`,
+    )
+  })
+})

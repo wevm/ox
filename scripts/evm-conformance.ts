@@ -10,11 +10,10 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 33305/40553 (82.13%) across all forks. The known gaps, largest first:
+// Status: 35289/40553 (87.02%) across all forks. The known gaps, largest first:
 //
-//   - bn254 (0x06-0x08), KZG (0x0a), and BLS12-381 (0x0b-0x11) are not
-//     implemented; they need field and group arithmetic. This is most of the
-//     `storage` bucket, where a call to one returns 0 instead of 1.
+//   - KZG (0x0a) and BLS12-381 (0x0b-0x11) are not implemented; a call to one
+//     returns 0 instead of 1, which is most of the `storage` bucket.
 //   - EIP-7702 set-code transactions are skipped outright (612 cases).
 //   - A residue of small gas deltas (8, 10, 11, 30, 34, 84) concentrated in the
 //     static-call and delegatecall tests.
