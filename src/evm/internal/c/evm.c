@@ -164,10 +164,11 @@ typedef struct {
   // Bitmap, one bit per code position. A bitmap rather than a byte array
   // because this is cleared on every analysis and jumps read it rarely.
   uint8_t *jumpdest;
+  // Indexed by code position, written only at block starts. Never cleared:
+  // the interpreter only reads positions analysis just wrote. Indexing by pc
+  // rather than by a block number costs no more memory than the block-number
+  // table it replaces, and takes a dependent load off every block entry.
   block_info *blocks;
-  // Block index per code position, written only at block starts. Never
-  // cleared: the interpreter only reads positions analysis just wrote.
-  int32_t *block_at;
   // Static gas still owed by the rest of the block, per GAS opcode position.
   // Charging a whole block up front makes `gas` too low mid-block, and GAS is
   // the one instruction that can observe it.
@@ -537,7 +538,6 @@ static void copy_padded(uint8_t *dst, const uint8_t *src, uint64_t src_len,
 static void analyze(evm_vm *vm) {
   mem_zero(vm->jumpdest, (uint64_t)(vm->code_len + 7) / 8);
 
-  int block_count = 0;
   block_info *block = 0;
   // Stack height relative to block entry, plus its running extremes.
   int height = 0, lowest = 0, highest = 0;
@@ -554,10 +554,8 @@ static void analyze(evm_vm *vm) {
         block->stack_req = (int16_t)-lowest;
         block->stack_max_growth = (int16_t)highest;
       }
-      block = &vm->blocks[block_count];
+      block = &vm->blocks[i];
       block->gas = 0;
-      vm->block_at[i] = block_count;
-      block_count++;
       height = lowest = highest = 0;
       start_block = 0;
     }
@@ -604,7 +602,7 @@ static void analyze(evm_vm *vm) {
     const uint8_t op = vm->frame_code[i];
     const op_info info = op_table[op];
     if (op == 0x5b || cur < 0) {
-      cur = vm->block_at[i];
+      cur = i; // a block starts here, so its info lives at this position
       prefix = 0;
     }
     if (!(info.flags & OP_VALID)) {
@@ -616,7 +614,7 @@ static void analyze(evm_vm *vm) {
     if (op == 0x5a) vm->gas_fix[i] = vm->blocks[cur].gas - prefix;
     if (info.flags & OP_TERMINATOR) {
       // The instruction after a terminator opens a new block.
-      if (i + 1 < vm->code_len) cur = vm->block_at[i + 1];
+      if (i + 1 < vm->code_len) cur = i + 1;
       prefix = 0;
     }
     i += (op >= 0x60 && op <= 0x7f) ? 1 + (op - 0x5f) : 1;
@@ -647,7 +645,6 @@ typedef struct {
   uint64_t memory_cost;
   uint8_t *jumpdest;
   block_info *blocks;
-  int32_t *block_at;
   int32_t *gas_fix;
   int32_t arena_top;
   int code_len;
@@ -697,7 +694,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   saved.memory_cost = vm->memory_cost;
   saved.jumpdest = vm->jumpdest;
   saved.blocks = vm->blocks;
-  saved.block_at = vm->block_at;
   saved.gas_fix = vm->gas_fix;
   saved.arena_top = vm->arena_top;
   saved.code_len = vm->code_len;
@@ -709,12 +705,10 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   uint8_t *fjd = (uint8_t *)arena_alloc(vm, (code_len + 7) / 8 + 8);
   block_info *fblocks =
       (block_info *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(block_info));
-  int32_t *fblock_at =
-      (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
   int32_t *fgas_fix =
       (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
   u256 *fstack = (u256 *)arena_alloc(vm, FRAME_STACK);
-  if (!fjd || !fblocks || !fblock_at || !fgas_fix || !fstack) {
+  if (!fjd || !fblocks || !fgas_fix || !fstack) {
     vm->arena_top = arena_mark;
     return EVM_OUT_OF_MEMORY;
   }
@@ -732,7 +726,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->memory_cost = 0;
   vm->jumpdest = fjd;
   vm->blocks = fblocks;
-  vm->block_at = fblock_at;
   vm->gas_fix = fgas_fix;
   vm->frame_code = code;
   vm->frame_input = input;
@@ -758,7 +751,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->memory_cost = saved.memory_cost;
   vm->jumpdest = saved.jumpdest;
   vm->blocks = saved.blocks;
-  vm->block_at = saved.block_at;
   vm->gas_fix = saved.gas_fix;
   vm->arena_top = saved.arena_top;
   vm->code_len = saved.code_len;
@@ -1203,13 +1195,30 @@ static inline int64_t capped_gas(int64_t available, u256 requested) {
 /** Charges a block's static gas and validates its stack bounds up front. */
 #define ENTER_BLOCK(at)                                       \
   do {                                                        \
-    const block_info b_ = vm->blocks[vm->block_at[at]];       \
+    const block_info b_ = vm->blocks[at];                     \
     if (gas < b_.gas) HALT(EVM_OUT_OF_GAS);                   \
     gas -= b_.gas;                                            \
     const int height_ = (int)(sp - vm->stack_base);           \
     if (height_ < b_.stack_req) HALT(EVM_STACK_UNDERFLOW);    \
     if (height_ + b_.stack_max_growth > STACK_LIMIT)          \
       HALT(EVM_STACK_OVERFLOW);                               \
+  } while (0)
+
+/**
+ * Opens the block starting at `pc`, having arrived at it rather than fallen
+ * through into it — a taken jump, or the instruction after a call.
+ *
+ * A JUMPDEST is always the first instruction of its own block, so opening the
+ * block has already executed it and `pc` moves past it. That is what keeps the
+ * block from being charged twice, and on a taken jump it also saves a dispatch
+ * round-trip through `case 0x5b` — one instruction in eight around a tight
+ * loop. `continue` stays at the call site: inside the `do`/`while (0)` here it
+ * would bind to the macro rather than to the interpreter loop.
+ */
+#define OPEN_BLOCK()          \
+  do {                        \
+    ENTER_BLOCK(pc);          \
+    if (code[pc] == 0x5b) pc++; \
   } while (0)
 
 static evm_status interpret(evm_vm *vm) {
@@ -1223,9 +1232,7 @@ static evm_status interpret(evm_vm *vm) {
   vm->output_len = 0;
 
   if (code_len == 0) return EVM_SUCCESS;
-  // A JUMPDEST enters its own block, so entering it here as well would charge
-  // that block twice — and a great deal of compiled bytecode starts with one.
-  if (code[0] != 0x5b) ENTER_BLOCK(0);
+  OPEN_BLOCK();
 
   for (;;) {
     if (pc >= code_len) DONE(EVM_SUCCESS); // running off the end is STOP
@@ -1422,8 +1429,8 @@ static evm_status interpret(evm_vm *vm) {
         uint64_t d = u256_to_u64_sat(t);
         if (d >= (uint64_t)code_len || !JUMPDEST_GET(d))
           HALT(EVM_INVALID_JUMP);
-        // The target is a JUMPDEST, which enters its own block below.
         pc = (int)d;
+        OPEN_BLOCK();
         continue;
       }
       case 0x57: { // JUMPI
@@ -1433,14 +1440,13 @@ static evm_status interpret(evm_vm *vm) {
           if (d >= (uint64_t)code_len || !JUMPDEST_GET(d))
             HALT(EVM_INVALID_JUMP);
           pc = (int)d;
+          OPEN_BLOCK();
           continue;
         }
         // Falling through starts a new block, since this one ended here.
         pc++;
         if (pc >= code_len) DONE(EVM_SUCCESS);
-        // A JUMPDEST enters its own block, so entering it here too would
-        // charge that block's gas twice.
-        if (code[pc] != 0x5b) ENTER_BLOCK(pc);
+        OPEN_BLOCK();
         continue;
       }
       case 0x58: // PC
@@ -1867,9 +1873,7 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(u256_from_u64(ok ? 1 : 0));
         pc++;
         if (pc >= code_len) DONE(EVM_SUCCESS);
-        // A JUMPDEST enters its own block, so entering it here too would
-        // charge that block's gas twice.
-        if (code[pc] != 0x5b) ENTER_BLOCK(pc);
+        OPEN_BLOCK();
         continue;
       }
 
@@ -1905,7 +1909,7 @@ static evm_status interpret(evm_vm *vm) {
           PUSH(U256_ZERO);
           pc++;
           if (pc >= code_len) DONE(EVM_SUCCESS);
-          if (code[pc] != 0x5b) ENTER_BLOCK(pc);
+          OPEN_BLOCK();
           continue;
         }
 
@@ -1991,9 +1995,7 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(ok ? address_to_word(addr) : U256_ZERO);
         pc++;
         if (pc >= code_len) DONE(EVM_SUCCESS);
-        // A JUMPDEST enters its own block, so entering it here too would
-        // charge that block's gas twice.
-        if (code[pc] != 0x5b) ENTER_BLOCK(pc);
+        OPEN_BLOCK();
         continue;
       }
 
@@ -2168,16 +2170,15 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   if (!vm) return 0;
   vm->ctx.spec = SPEC_DEFAULT;
   vm->jumpdest = (uint8_t *)ox_alloc((MAX_CODE + 7) / 8);
-  // Worst case is a block per byte, when every byte is a JUMPDEST.
+  // One entry per code position, since a block can start at any of them.
   vm->blocks = (block_info *)ox_alloc((uint64_t)MAX_CODE * sizeof(block_info));
-  vm->block_at = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
   vm->gas_fix = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
   vm->memory = (uint8_t *)ox_alloc((uint64_t)memory_cap);
   vm->output = (uint8_t *)ox_alloc(MAX_INPUT);
   vm->st = (evm_state *)ox_alloc(sizeof(evm_state));
   vm->returndata = (uint8_t *)ox_alloc(MAX_INPUT);
   vm->stage = (uint8_t *)ox_alloc(MAX_INPUT);
-  if (!vm->jumpdest || !vm->blocks || !vm->block_at || !vm->gas_fix ||
+  if (!vm->jumpdest || !vm->blocks || !vm->gas_fix ||
       !vm->memory || !vm->output || !vm->st || !vm->returndata || !vm->stage)
     return 0;
   vm->st->log_data = (uint8_t *)ox_alloc(LOG_ARENA);
