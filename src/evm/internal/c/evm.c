@@ -467,6 +467,10 @@ static void analyze(evm_vm *vm) {
 
   // Second pass: for each GAS opcode, record the static gas its block still
   // owes after that instruction, so the interpreter can add it back.
+  //
+  // Cleared first: the array is reused across programs, and a position this
+  // pass does not reach would otherwise read a previous program's correction.
+  mem_zero((uint8_t *)vm->gas_fix, (uint64_t)vm->code_len * sizeof(int32_t));
   int32_t cur = -1;
   int32_t prefix = 0;
   for (int i = 0; i < vm->code_len;) {
