@@ -39,7 +39,12 @@ const wasmFlags = [
   '-Wl,--export-dynamic',
   '-Wl,--export=__heap_base',
   '-Wl,--export-memory',
-  '-Wl,--initial-memory=1048576',
+  // Must be at least the stack size: wasm-ld places the stack in initial memory.
+  '-Wl,--initial-memory=4194304',
+  // Call frames recurse, and the EVM allows 1024 of them. The default 64 KiB
+  // wasm stack overflows well before that and traps as an out-of-bounds access.
+  // ~800 bytes per recursion level covers the EVM's 1024-frame limit.
+  '-Wl,-z,stack-size=2097152',
   '-Wl,--max-memory=1073741824',
   // No `--allow-undefined`: an unresolved symbol must fail the build.
   '-Wl,--strip-all',

@@ -185,10 +185,15 @@ typedef struct {
   // at a caller's memory, not at the top-level staging buffers.
   const uint8_t *frame_code;
   const uint8_t *frame_input;
+  // Base of the executing frame's stack. Each frame gets its own region, so
+  // `sp` and the 1024-slot limit are both relative to this rather than to the
+  // bottom of the shared array.
+  u256 *stack_base;
 } evm_vm;
 
-#define ANALYSIS_ARENA (24 * 1024 * 1024)
-#define FRAME_MEMORY (1 << 20) // per-frame memory ceiling
+#define ANALYSIS_ARENA (48 * 1024 * 1024)
+#define FRAME_MEMORY (256 * 1024) // per-frame memory ceiling
+#define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
 #define MAX_DEPTH 1024
 
 // ---------------------------------------------------------------------------
@@ -241,7 +246,7 @@ typedef struct {
 
 #define SYNC()                             \
   do {                                     \
-    vm->sp = (int)(sp - vm->stack);         \
+    vm->sp = (int)(sp - vm->stack_base);    \
     vm->gas = gas;                          \
   } while (0)
 
@@ -279,6 +284,9 @@ typedef struct {
 // Memory
 // ---------------------------------------------------------------------------
 
+/** Defined below with the frame machinery; memory is allocated from the arena. */
+static void *arena_alloc(evm_vm *vm, int32_t n);
+
 static inline uint64_t memory_gas(uint64_t words) {
   return 3 * words + words * words / 512;
 }
@@ -293,6 +301,12 @@ static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size,
   uint64_t end = offset + size;
   if (end < offset) return EVM_OUT_OF_GAS; // 64-bit overflow: unaffordable
   if (end <= vm->memory_size) return EVM_SUCCESS;
+  if (!vm->mem) {
+    // First memory access in this frame.
+    vm->mem = (uint8_t *)arena_alloc(vm, FRAME_MEMORY);
+    if (!vm->mem) return EVM_OUT_OF_MEMORY;
+    vm->mem_cap = FRAME_MEMORY;
+  }
   if (end > vm->mem_cap) return EVM_OUT_OF_MEMORY;
 
   uint64_t words = (end + 31) / 32;
@@ -494,6 +508,8 @@ typedef struct {
   uint8_t caller[20];
   u256 call_value;
   int is_static;
+  u256 *stack_base;
+  int sp;
   uint8_t *mem;
   uint64_t mem_cap;
   uint64_t memory_size;
@@ -535,6 +551,8 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   for (int i = 0; i < 20; i++) saved.caller[i] = vm->caller[i];
   saved.call_value = vm->call_value;
   saved.is_static = vm->is_static;
+  saved.stack_base = vm->stack_base;
+  saved.sp = vm->sp;
   saved.mem = vm->mem;
   saved.mem_cap = vm->mem_cap;
   saved.memory_size = vm->memory_size;
@@ -550,7 +568,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   saved.input_ptr = vm->frame_input;
 
   const int32_t arena_mark = vm->arena_top;
-  uint8_t *fmem = (uint8_t *)arena_alloc(vm, FRAME_MEMORY);
   uint8_t *fjd = (uint8_t *)arena_alloc(vm, (code_len + 7) / 8 + 8);
   block_info *fblocks =
       (block_info *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(block_info));
@@ -558,7 +575,8 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
       (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
   int32_t *fgas_fix =
       (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
-  if (!fmem || !fjd || !fblocks || !fblock_at || !fgas_fix) {
+  u256 *fstack = (u256 *)arena_alloc(vm, FRAME_STACK);
+  if (!fjd || !fblocks || !fblock_at || !fgas_fix || !fstack) {
     vm->arena_top = arena_mark;
     return EVM_OUT_OF_MEMORY;
   }
@@ -567,8 +585,11 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   for (int i = 0; i < 20; i++) vm->caller[i] = caller[i];
   vm->call_value = value;
   vm->is_static = is_static;
-  vm->mem = fmem;
-  vm->mem_cap = FRAME_MEMORY;
+  vm->stack_base = fstack;
+  vm->sp = 0; // every frame starts with an empty stack
+  // Deferred to the first `memory_expand`.
+  vm->mem = 0;
+  vm->mem_cap = 0;
   vm->memory_size = 0;
   vm->memory_cost = 0;
   vm->jumpdest = fjd;
@@ -591,6 +612,8 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   for (int i = 0; i < 20; i++) vm->caller[i] = saved.caller[i];
   vm->call_value = saved.call_value;
   vm->is_static = saved.is_static;
+  vm->stack_base = saved.stack_base;
+  vm->sp = saved.sp;
   vm->mem = saved.mem;
   vm->mem_cap = saved.mem_cap;
   vm->memory_size = saved.memory_size;
@@ -720,7 +743,7 @@ static inline int64_t capped_gas(int64_t available, u256 requested) {
     const block_info b_ = vm->blocks[vm->block_at[at]];       \
     if (gas < b_.gas) HALT(EVM_OUT_OF_GAS);                   \
     gas -= b_.gas;                                            \
-    const int height_ = (int)(sp - vm->stack);                \
+    const int height_ = (int)(sp - vm->stack_base);           \
     if (height_ < b_.stack_req) HALT(EVM_STACK_UNDERFLOW);    \
     if (height_ + b_.stack_max_growth > STACK_LIMIT)          \
       HALT(EVM_STACK_OVERFLOW);                               \
@@ -728,7 +751,7 @@ static inline int64_t capped_gas(int64_t available, u256 requested) {
 
 static evm_status interpret(evm_vm *vm) {
   int pc = 0;
-  u256 *sp = vm->stack + vm->sp;
+  u256 *sp = vm->stack_base + vm->sp;
   int64_t gas = vm->gas;
   // Hoisted for the same reason as `sp` and `gas`: reached through `vm` these
   // were reloaded on every instruction.
@@ -1558,6 +1581,7 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   vm->mem_cap = (uint64_t)memory_cap;
   vm->frame_code = vm->code;
   vm->frame_input = vm->input;
+  vm->stack_base = vm->stack;
   state_reset(vm->st);
   vm->self = 0;
   vm->is_static = 0;
@@ -1677,6 +1701,9 @@ EXPORT("evm_reset") void evm_reset(evm_vm *vm) {
   vm->returndata_len = 0;
   vm->depth = 0;
   vm->is_static = 0;
+  vm->sp = 0;
+  vm->stack_base = vm->stack;
+  vm->arena_top = 0;
 }
 
 /** Interns the account at `stage[0..20)` and sets its balance, nonce, and code. */
@@ -1791,6 +1818,8 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   vm->mem_cap = vm->memory_cap;
   vm->frame_code = vm->code;
   vm->frame_input = vm->input;
+  vm->stack_base = vm->stack;
+  vm->sp = 0;
   mem_zero(vm->memory, vm->memory_size);
   vm->memory_size = 0;
   const int32_t snapshot = state_snapshot(vm->st);
@@ -1826,6 +1855,8 @@ int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
   vm->mem_cap = vm->memory_cap;
   vm->returndata_len = 0;
   vm->gas = gas;
+  vm->stack_base = vm->stack;
+  vm->sp = 0;
 
   uint8_t *init = (uint8_t *)arena_alloc(vm, init_len + 16);
   if (!init) return EVM_OUT_OF_MEMORY;
