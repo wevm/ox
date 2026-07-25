@@ -109,7 +109,10 @@ typedef struct {
 #define SPEC_TANGERINE 2  // EIP-150 repriced all external account access
 #define SPEC_CONSTANTINOPLE 5
 #define SPEC_ISTANBUL 7   // EIP-1884 repriced BALANCE, EXTCODEHASH, SLOAD
-#define SPEC_BERLIN 8     // EIP-2929 introduced warm/cold
+#define SPEC_BYZANTIUM 4  // modexp and bn254 arrived
+#define SPEC_BERLIN 8     // EIP-2929 introduced warm/cold, EIP-2565 repriced modexp
+#define SPEC_CANCUN 12
+#define SPEC_PRAGUE 13
 
 // EIP-2929 access costs.
 #define GAS_COLD_ACCOUNT 2600
@@ -681,10 +684,21 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
 }
 
 /** Address `0x00..01` through `0x00..11` are the precompiles. */
-static inline int precompile_id(const uint8_t *addr) {
+static inline int precompile_id(const uint8_t *addr, int spec) {
   for (int i = 0; i < 19; i++)
     if (addr[i]) return 0;
-  return addr[19] >= 1 && addr[19] <= 0x11 ? addr[19] : 0;
+  // A precompile that a fork has not introduced yet is an ordinary empty
+  // account, so a call to it succeeds and returns nothing.
+  int highest = 0x04;
+  if (spec >= SPEC_PRAGUE)
+    highest = 0x11; // EIP-2537 BLS12-381
+  else if (spec >= SPEC_CANCUN)
+    highest = 0x0a; // EIP-4844 point evaluation
+  else if (spec >= SPEC_ISTANBUL)
+    highest = 0x09; // EIP-152 blake2f
+  else if (spec >= SPEC_BYZANTIUM)
+    highest = 0x08; // bn254 and modexp
+  return addr[19] >= 1 && addr[19] <= highest ? addr[19] : 0;
 }
 
 /**
@@ -695,7 +709,8 @@ static inline int precompile_id(const uint8_t *addr) {
  * formula.
  */
 static int run_precompile(int id, const uint8_t *in, uint64_t len,
-                          int64_t *gas, uint8_t *out, int32_t *out_len) {
+                          int64_t *gas, uint8_t *out, int32_t *out_len,
+                          int spec) {
   const uint64_t words = (len + 31) / 32;
   *out_len = 0;
   switch (id) {
@@ -760,8 +775,19 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       // EIP-2565 gas: multiplication complexity times adjusted exponent
       // length, floored at 200.
       const uint64_t maxlen = bl > ml ? bl : ml;
-      const uint64_t wordsm = (maxlen + 7) / 8;
-      uint64_t mult = wordsm * wordsm;
+      uint64_t mult, divisor;
+      if (spec >= SPEC_BERLIN) {
+        // EIP-2565: complexity in 8-byte words, divided by 3.
+        const uint64_t wordsm = (maxlen + 7) / 8;
+        mult = wordsm * wordsm;
+        divisor = 3;
+      } else {
+        // EIP-198's piecewise complexity, divided by GQUADDIVISOR = 20.
+        if (maxlen <= 64) mult = maxlen * maxlen;
+        else if (maxlen <= 1024) mult = maxlen * maxlen / 4 + 96 * maxlen - 3072;
+        else mult = maxlen * maxlen / 16 + 480 * maxlen - 199680;
+        divisor = 20;
+      }
       uint8_t expbuf[1024];
       copy_padded(expbuf, in, len, 96 + bl, el);
       uint64_t adj = 0;
@@ -784,8 +810,9 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
         adj = 8 * (el - 32) + highest;
       }
       if (adj == 0) adj = 1;
-      int64_t cost = (int64_t)(mult * adj / 3);
-      if (cost < 200) cost = 200;
+      int64_t cost = (int64_t)(mult * adj / divisor);
+      // EIP-2565 introduced the floor; before Berlin there is none.
+      if (spec >= SPEC_BERLIN && cost < 200) cost = 200;
       if (*gas < cost) return PRE_FAIL;
       *gas -= cost;
 
@@ -796,8 +823,30 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       *out_len = (int32_t)ml;
       return PRE_OK;
     }
+    case 0x09: { // BLAKE2b F compression (EIP-152)
+      // The layout is fixed at 213 bytes; anything else is a hard failure.
+      if (len != 213) return PRE_FAIL;
+      // The final-block flag is a byte, and only 0 and 1 are valid.
+      if (in[212] > 1) return PRE_FAIL;
+      const uint32_t rounds = ((uint32_t)in[0] << 24) | ((uint32_t)in[1] << 16) |
+                              ((uint32_t)in[2] << 8) | (uint32_t)in[3];
+      const int64_t cost = (int64_t)rounds;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      // The state, message, and counters are little-endian, unlike everything
+      // else in the EVM.
+      uint64_t h[8], m[16], t[2];
+      for (int i = 0; i < 8; i++) h[i] = load64_le(in + 4 + i * 8);
+      for (int i = 0; i < 16; i++) m[i] = load64_le(in + 68 + i * 8);
+      t[0] = load64_le(in + 196);
+      t[1] = load64_le(in + 204);
+      blake2b_f(rounds, h, m, t, in[212]);
+      for (int i = 0; i < 8; i++) store64_le(out + i * 8, h[i]);
+      *out_len = 64;
+      return PRE_OK;
+    }
     default:
-      // ecrecover, bn254, KZG, and BLS need curve arithmetic.
+      // bn254, KZG, and BLS need curve arithmetic.
       return PRE_UNSUPPORTED;
   }
 }
@@ -1373,11 +1422,11 @@ static evm_status interpret(evm_vm *vm) {
           const u256 sub_value = op == 0xf4 ? vm->call_value : value;
           const int sub_static = vm->is_static || op == 0xfa;
 
-          const int pid = precompile_id(to);
+          const int pid = precompile_id(to, vm->ctx.spec);
           if (pid) {
             int32_t plen = 0;
             const int pr = run_precompile(pid, args, in_len, &child_gas,
-                                          vm->returndata, &plen);
+                                          vm->returndata, &plen, vm->ctx.spec);
             if (pr == PRE_OK) {
               ok = 1;
               vm->returndata_len = plen;

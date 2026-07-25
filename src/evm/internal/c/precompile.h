@@ -309,4 +309,80 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
   }
 }
 
+// ---------------------------------------------------------------------------
+// BLAKE2b compression (EIP-152, precompile 0x09)
+// ---------------------------------------------------------------------------
+
+// The precompile exposes the raw compression function `F`, not a hash: the
+// caller supplies the round count, the state, the message block, the offset
+// counters, and the final-block flag.
+
+static const uint8_t blake2b_sigma[10][16] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+    {14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3},
+    {11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4},
+    {7, 9, 3, 1, 13, 12, 11, 14, 2, 6, 5, 10, 4, 0, 15, 8},
+    {9, 0, 5, 7, 2, 4, 10, 15, 14, 1, 11, 12, 6, 8, 3, 13},
+    {2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9},
+    {12, 5, 1, 15, 14, 13, 4, 10, 0, 7, 6, 3, 9, 2, 8, 11},
+    {13, 11, 7, 14, 12, 1, 3, 9, 5, 0, 15, 4, 8, 6, 2, 10},
+    {6, 15, 14, 9, 11, 3, 0, 8, 12, 2, 13, 7, 1, 4, 10, 5},
+    {10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0},
+};
+
+static const uint64_t blake2b_iv[8] = {
+    0x6A09E667F3BCC908ULL, 0xBB67AE8584CAA73BULL, 0x3C6EF372FE94F82BULL,
+    0xA54FF53A5F1D36F1ULL, 0x510E527FADE682D1ULL, 0x9B05688C2B3E6C1FULL,
+    0x1F83D9ABFB41BD6BULL, 0x5BE0CD19137E2179ULL};
+
+#define ROTR64(x, n) (((x) >> (n)) | ((x) << (64 - (n))))
+
+/** BLAKE2b words are little-endian, unlike the rest of the EVM's encodings. */
+static inline uint64_t load64_le(const uint8_t *p) {
+  uint64_t v = 0;
+  for (int i = 0; i < 8; i++) v |= (uint64_t)p[i] << (i * 8);
+  return v;
+}
+static inline void store64_le(uint8_t *p, uint64_t v) {
+  for (int i = 0; i < 8; i++) p[i] = (uint8_t)(v >> (i * 8));
+}
+#define B2B_G(a, b, c, d, x, y)      \
+  do {                               \
+    v[a] = v[a] + v[b] + (x);        \
+    v[d] = ROTR64(v[d] ^ v[a], 32);  \
+    v[c] = v[c] + v[d];              \
+    v[b] = ROTR64(v[b] ^ v[c], 24);  \
+    v[a] = v[a] + v[b] + (y);        \
+    v[d] = ROTR64(v[d] ^ v[a], 16);  \
+    v[c] = v[c] + v[d];              \
+    v[b] = ROTR64(v[b] ^ v[c], 63);  \
+  } while (0)
+
+/**
+ * The BLAKE2b `F` compression function, `rounds` rounds over one 128-byte
+ * block. `h` is updated in place.
+ */
+static void blake2b_f(uint32_t rounds, uint64_t h[8], const uint64_t m[16],
+                      const uint64_t t[2], int final) {
+  uint64_t v[16];
+  for (int i = 0; i < 8; i++) v[i] = h[i];
+  for (int i = 0; i < 8; i++) v[8 + i] = blake2b_iv[i];
+  v[12] ^= t[0];
+  v[13] ^= t[1];
+  if (final) v[14] = ~v[14];
+  for (uint32_t r = 0; r < rounds; r++) {
+    // The message schedule repeats every ten rounds; EIP-152 allows more.
+    const uint8_t *sig = blake2b_sigma[r % 10];
+    B2B_G(0, 4, 8, 12, m[sig[0]], m[sig[1]]);
+    B2B_G(1, 5, 9, 13, m[sig[2]], m[sig[3]]);
+    B2B_G(2, 6, 10, 14, m[sig[4]], m[sig[5]]);
+    B2B_G(3, 7, 11, 15, m[sig[6]], m[sig[7]]);
+    B2B_G(0, 5, 10, 15, m[sig[8]], m[sig[9]]);
+    B2B_G(1, 6, 11, 12, m[sig[10]], m[sig[11]]);
+    B2B_G(2, 7, 8, 13, m[sig[12]], m[sig[13]]);
+    B2B_G(3, 4, 9, 14, m[sig[14]], m[sig[15]]);
+  }
+  for (int i = 0; i < 8; i++) h[i] ^= v[i] ^ v[8 + i];
+}
+
 #endif // OX_EVM_PRECOMPILE_H
