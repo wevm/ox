@@ -307,7 +307,12 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
   } while (0)
 
 #define ANALYSIS_ARENA (48 * 1024 * 1024)
-#define FRAME_MEMORY (64 * 1024) // a frame's first memory block; it doubles
+// A frame's first memory block, which doubles from there. Small on purpose:
+// this is reserved out of the shared analysis arena for every live frame, so
+// at 64 KiB a thousand nested frames claimed 64 MiB of a 48 MiB arena and the
+// recursion died partway down with contracts silently uncreated. Doubling is
+// amortized, so a frame that really needs megabytes pays a handful of copies.
+#define FRAME_MEMORY (4 * 1024)
 #define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
 #define MAX_DEPTH 1024
 // Must stay under the linker's `-z stack-size` with room for one more frame.
