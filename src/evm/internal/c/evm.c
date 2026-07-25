@@ -1935,6 +1935,7 @@ static evm_status interpret(evm_vm *vm) {
 
         const int32_t callee = account_intern(vm->st, to);
         if (callee < 0) HALT(EVM_OUT_OF_MEMORY);
+        touch_account(vm->st, callee);
         // EIP-150 raised the call cost from 40 to 700; Berlin replaced it with
         // warm/cold.
         USE_GAS(access_cost(vm, callee,
@@ -2177,6 +2178,7 @@ static evm_status interpret(evm_vm *vm) {
         word_to_address(POP(), addr);
         const int32_t target = account_intern(vm->st, addr);
         if (target < 0) HALT(EVM_OUT_OF_MEMORY);
+        touch_account(vm->st, target);
         USE_GAS(vm->ctx.spec >= SPEC_BERLIN
                     ? (warm_account(vm->st, target) ? GAS_COLD_ACCOUNT : 0)
                     : (warm_account(vm->st, target), 0));
@@ -2759,9 +2761,13 @@ EXPORT("evm_account_at") int evm_account_at(evm_vm *vm, int i) {
   if (i < 0 || i >= vm->st->account_count) return -1;
   const account *a = &vm->st->accounts[i];
   if (a->destroyed) return -1;
-  // An account that never existed and is still empty is not in the trie.
+  // An empty account is in the trie only if something put it there. A message
+  // call or a SELFDESTRUCT beneficiary does that before Spurious Dragon; from
+  // EIP-161 such accounts are swept at the end of the transaction, which comes
+  // to the same thing as never adding them.
   if (!a->exists && a->nonce == 0 && u256_is_zero(a->balance) &&
-      a->code_len == 0)
+      a->code_len == 0 &&
+      !(vm->ctx.spec < SPEC_SPURIOUS && a->touched))
     return -1;
   for (int k = 0; k < 20; k++) vm->stage[STAGE_ADDR + k] = a->address[k];
   u256_to_be(a->balance, vm->stage + STAGE_WORD_A);

@@ -35,6 +35,11 @@ typedef struct {
   int32_t analysis; // index of this account's cached analysis, -1 if none
   uint8_t warm;     // EIP-2929
   uint8_t exists;   // present in the state trie
+  // Reached by a message call or named as a SELFDESTRUCT beneficiary. Before
+  // Spurious Dragon that is enough to put an account in the trie and keep it
+  // there with nothing in it; EIP-161 made such accounts be swept at the end
+  // of the transaction instead, which is the same as never adding them.
+  uint8_t touched;
   uint8_t created;  // created in this transaction (EIP-6780)
   uint8_t destroyed;
   // Set when the account starts the transaction with a non-zero slot. EIP-7610
@@ -66,6 +71,7 @@ typedef enum {
   J_WARM_ACCOUNT,
   J_WARM_SLOT,
   J_EXISTS,
+  J_TOUCHED,
   J_CREATED,
   J_DESTROYED,
   J_TRANSIENT,
@@ -197,6 +203,7 @@ static int32_t account_intern(evm_state *st, const uint8_t *addr) {
       a->analysis = -1;
       a->warm = 0;
       a->exists = 0;
+      a->touched = 0;
       a->created = 0;
       a->destroyed = 0;
       a->has_storage = 0;
@@ -287,6 +294,9 @@ static void state_revert(evm_state *st, int32_t snapshot) {
         break;
       case J_WARM_SLOT: st->slots[e->target].warm = (uint8_t)e->scalar; break;
       case J_EXISTS: st->accounts[e->target].exists = (uint8_t)e->scalar; break;
+      case J_TOUCHED:
+        st->accounts[e->target].touched = (uint8_t)e->scalar;
+        break;
       case J_CREATED:
         st->accounts[e->target].created = (uint8_t)e->scalar;
         break;
@@ -315,6 +325,13 @@ static inline void set_balance(evm_state *st, int32_t acct, u256 v) {
 static inline void set_nonce(evm_state *st, int32_t acct, uint64_t n) {
   journal_push(st, J_NONCE, acct, U256_ZERO, st->accounts[acct].nonce, 0);
   st->accounts[acct].nonce = n;
+}
+
+/** Marks an account reached, so a revert can unreach it. */
+static inline void touch_account(evm_state *st, int32_t acct) {
+  if (st->accounts[acct].touched) return;
+  journal_push(st, J_TOUCHED, acct, U256_ZERO, 0, 0);
+  st->accounts[acct].touched = 1;
 }
 
 static inline void set_exists(evm_state *st, int32_t acct, uint8_t v) {
