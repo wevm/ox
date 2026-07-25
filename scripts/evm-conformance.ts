@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40160/40553 (99.03%) across all forks. This is the same fixture set
+// Status: 40194/40553 (99.11%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -18,9 +18,6 @@
 //   - Deep-recursion gas accounting in stStaticCall and stCallCreateCallCode,
 //     where the discrepancy is tens of thousands of gas across a thousand-frame
 //     chain.
-//   - EIP-2537's two map-to-curve precompiles (0x10, 0x11) are not implemented;
-//     they need the RFC 9380 SSWU map, an 11-isogeny for G1 and a 3-isogeny for
-//     G2, and cofactor clearing.
 //   - EIP-7883's modexp repricing for Osaka.
 //   - A residue of small gas deltas spread across the call tests.
 //

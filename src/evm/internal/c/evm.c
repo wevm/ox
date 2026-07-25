@@ -1093,6 +1093,32 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       *out_len = 32;
       return PRE_OK;
     }
+    case 0x10: { // BLS12_MAP_FP_TO_G1 (EIP-2537)
+      if (len != 64) return PRE_FAIL;
+      if (*gas < 5500) return PRE_FAIL;
+      *gas -= 5500;
+      bls_init();
+      bfp u;
+      if (!bls_read_fp(in, &u)) return PRE_FAIL;
+      bg1 r;
+      bls_map_fp_to_g1(u, &r);
+      bls_write_g1(&r, out);
+      *out_len = 128;
+      return PRE_OK;
+    }
+    case 0x11: { // BLS12_MAP_FP2_TO_G2 (EIP-2537)
+      if (len != 128) return PRE_FAIL;
+      if (*gas < 23800) return PRE_FAIL;
+      *gas -= 23800;
+      bls_init();
+      fp2 u;
+      if (!bls_read_fp2(in, &u)) return PRE_FAIL;
+      bg2 r;
+      if (!bls_map_fp2_to_g2(u, &r)) return PRE_FAIL;
+      bls_write_g2(&r, out);
+      *out_len = 256;
+      return PRE_OK;
+    }
     case 0x0a: { // KZG point evaluation (EIP-4844)
       if (len != 192) return PRE_FAIL;
       if (*gas < 50000) return PRE_FAIL;
