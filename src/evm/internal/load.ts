@@ -14,12 +14,8 @@ export type Engine = {
   evm_memory_size(vm: number): number
   evm_max_code(): number
   evm_max_input(): number
-  evm_run(
-    vm: number,
-    codeLength: number,
-    inputLength: number,
-    gas: bigint,
-  ): number
+  evm_set_code(vm: number, codeLength: number): number
+  evm_run(vm: number, inputLength: number, gas: bigint): number
 }
 
 let engine: Engine | undefined

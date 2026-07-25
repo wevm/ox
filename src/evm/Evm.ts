@@ -117,12 +117,23 @@ export async function run(options: run.Options): Promise<Result> {
       maxSize: maxInput,
     })
 
-  // Re-derive after every engine call: `evm_new` can grow memory, which
-  // detaches any view taken before it.
-  load_.view(engine).set(code, engine.evm_code_ptr(vm))
+  // Analysis is a pure function of the bytecode and costs about as much as
+  // executing it, so skip both the copy and the analysis when the caller runs
+  // the same code again — the common shape for simulation and estimation.
+  // Keyed on the caller's `Hex` string, which is cheap to compare; a
+  // `Uint8Array` has no comparable identity, so it always re-analyzes.
+  const key = typeof bytecode === 'string' ? bytecode : undefined
+  if (key === undefined || key !== codeKey) {
+    // Re-derive after every engine call: `evm_new` can grow memory, which
+    // detaches any view taken before it.
+    load_.view(engine).set(code, engine.evm_code_ptr(vm))
+    engine.evm_set_code(vm, code.length)
+    codeKey = key
+  }
+
   load_.view(engine).set(input, engine.evm_input_ptr(vm))
 
-  const status = engine.evm_run(vm, code.length, input.length, gas)
+  const status = engine.evm_run(vm, input.length, gas)
   const gasLeft = engine.evm_gas_left(vm)
   const outputPtr = engine.evm_output_ptr(vm)
   const outputLength = engine.evm_output_len(vm)
@@ -189,6 +200,10 @@ export declare namespace call {
 // A single reusable VM instance. The engine resets stack, memory, and gas at
 // the start of every `evm_run`, and Phase 1 has no state to carry across calls.
 let vm = 0
+
+// Bytecode whose analysis is currently loaded into `vm`, if it was supplied as
+// a `Hex` string. `undefined` forces a re-analysis.
+let codeKey: string | undefined
 
 /**
  * Thrown when execution ends in `REVERT`.

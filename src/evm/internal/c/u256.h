@@ -11,9 +11,14 @@
 #ifndef OX_EVM_U256_H
 #define OX_EVM_U256_H
 
+// Freestanding: no <stdint.h>, so the fixed-width types are declared here.
 typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
+typedef signed char int8_t;
+typedef short int16_t;
+typedef int int32_t;
 typedef long long int64_t;
 
 typedef struct {
@@ -259,6 +264,47 @@ static void divmod_knuth(const uint32_t *num, int n32, const uint32_t *den,
     rem[i] = (un[i] >> shift) | (shift ? un[i + 1] << (32 - shift) : 0);
 }
 
+/** Number of significant 32-bit halves, minimum 1. */
+static inline int u256_h32_len(u256 a) {
+  for (int i = 3; i >= 0; i--) {
+    if (a.l[i] == 0) continue;
+    return (a.l[i] >> 32) ? i * 2 + 2 : i * 2 + 1;
+  }
+  return 1;
+}
+
+/**
+ * Divides by a divisor that fits in 32 bits.
+ *
+ * Real bytecode divides by small constants and powers of two far more often
+ * than by full-width values, and this path avoids the halving, normalization,
+ * and per-digit correction that algorithm D pays.
+ *
+ * The 32-bit bound is load-bearing, not incidental: the running remainder must
+ * satisfy `r < 2^32` for `r << 32` below to stay inside 64 bits. A 64-bit
+ * divisor would need a real 128/64 division primitive, which wasm32 lacks.
+ */
+static inline u256 u256_divmod_u32(u256 a, uint32_t d, uint32_t *rem) {
+  u256 q = U256_ZERO;
+  uint64_t r = 0;
+  for (int i = 3; i >= 0; i--) {
+    uint64_t hi = (r << 32) | (a.l[i] >> 32);
+    uint64_t qhi = hi / d;
+    r = hi % d;
+    uint64_t lo = (r << 32) | (a.l[i] & 0xffffffffULL);
+    uint64_t qlo = lo / d;
+    r = lo % d;
+    q.l[i] = (qhi << 32) | qlo;
+  }
+  *rem = (uint32_t)r;
+  return q;
+}
+
+/** Whether `a` fits in 32 bits. */
+static inline int u256_is_u32(u256 a) {
+  return (a.l[1] | a.l[2] | a.l[3]) == 0 && (a.l[0] >> 32) == 0;
+}
+
 static inline void u256_to_h32(u256 a, uint32_t *out) {
   for (int i = 0; i < 4; i++) {
     out[i * 2] = (uint32_t)a.l[i];
@@ -277,10 +323,17 @@ static inline u256 u256_from_h32(const uint32_t *in) {
 static inline u256 u256_div(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   if (u256_cmp(a, b) < 0) return U256_ZERO;
-  uint32_t n[8], d[8], q[8], r[8];
+  if (u256_is_u32(b)) {
+    uint32_t r;
+    return u256_divmod_u32(a, (uint32_t)b.l[0], &r);
+  }
+  // `divmod_knuth` only writes `quot[0..n32-1]`, so a trimmed numerator leaves
+  // the upper halves untouched — they must start at zero.
+  uint32_t n[8], d[8], q[8] = {0}, r[8];
   u256_to_h32(a, n);
   u256_to_h32(b, d);
-  divmod_knuth(n, 8, d, 8, q, r);
+  // Trimming the numerator drops whole outer iterations of algorithm D.
+  divmod_knuth(n, u256_h32_len(a), d, 8, q, r);
   return u256_from_h32(q);
 }
 
@@ -288,10 +341,15 @@ static inline u256 u256_div(u256 a, u256 b) {
 static inline u256 u256_mod(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   if (u256_cmp(a, b) < 0) return a;
+  if (u256_is_u32(b)) {
+    uint32_t r;
+    u256_divmod_u32(a, (uint32_t)b.l[0], &r);
+    return u256_from_u64(r);
+  }
   uint32_t n[8], d[8], q[8], r[8] = {0};
   u256_to_h32(a, n);
   u256_to_h32(b, d);
-  divmod_knuth(n, 8, d, 8, q, r);
+  divmod_knuth(n, u256_h32_len(a), d, 8, q, r);
   return u256_from_h32(r);
 }
 
@@ -381,32 +439,50 @@ static inline u256 u256_byte(u256 i, u256 v) {
 // Big-endian conversion — the EVM's external byte order.
 // ---------------------------------------------------------------------------
 
+// A byte-reversed 64-bit load beats the byte-at-a-time shift-or loops these
+// replaced: `PUSH32`, `MLOAD`, and `MSTORE` are among the most frequent
+// instructions in real bytecode and each was paying 32 variable shifts.
+static inline uint64_t load64(const uint8_t *p) {
+  uint64_t v;
+  __builtin_memcpy(&v, p, 8);
+  return v;
+}
+
+static inline void store64(uint8_t *p, uint64_t v) {
+  __builtin_memcpy(p, &v, 8);
+}
+
 static inline u256 u256_from_be(const uint8_t *p) {
   u256 r;
-  for (int i = 0; i < 4; i++) {
-    uint64_t v = 0;
-    const uint8_t *q = p + (3 - i) * 8;
-    for (int j = 0; j < 8; j++) v = (v << 8) | q[j];
-    r.l[i] = v;
-  }
+  r.l[3] = __builtin_bswap64(load64(p));
+  r.l[2] = __builtin_bswap64(load64(p + 8));
+  r.l[1] = __builtin_bswap64(load64(p + 16));
+  r.l[0] = __builtin_bswap64(load64(p + 24));
   return r;
 }
 
 /** Reads `n` (<= 32) big-endian bytes as a right-aligned word. */
 static inline u256 u256_from_be_n(const uint8_t *p, int n) {
+  if (n == 32) return u256_from_be(p);
   u256 r = U256_ZERO;
-  for (int i = 0; i < n; i++) {
-    int shift = (n - 1 - i) * 8;
-    r.l[shift / 64] |= (uint64_t)p[i] << (shift % 64);
+  // Whole limbs first, from the least-significant end of the value.
+  int i = n;
+  int limb = 0;
+  while (i >= 8) {
+    r.l[limb++] = __builtin_bswap64(load64(p + i - 8));
+    i -= 8;
   }
+  uint64_t tail = 0;
+  for (int k = 0; k < i; k++) tail = (tail << 8) | p[k];
+  if (limb < 4) r.l[limb] = tail;
   return r;
 }
 
 static inline void u256_to_be(u256 a, uint8_t *p) {
-  for (int i = 0; i < 4; i++) {
-    uint64_t v = a.l[3 - i];
-    for (int j = 0; j < 8; j++) p[i * 8 + j] = (uint8_t)(v >> (56 - j * 8));
-  }
+  store64(p, __builtin_bswap64(a.l[3]));
+  store64(p + 8, __builtin_bswap64(a.l[2]));
+  store64(p + 16, __builtin_bswap64(a.l[1]));
+  store64(p + 24, __builtin_bswap64(a.l[0]));
 }
 
 #endif  // OX_EVM_U256_H

@@ -28,7 +28,11 @@ const wasmFlags = [
   '-nostdlib',
   '-O3',
   '-flto',
-  '-fno-builtin',
+  // Lets clang lower `memset`/`memcpy` to the `memory.fill`/`memory.copy`
+  // instructions. Without it the calls stay unresolved and, with
+  // `--allow-undefined`, silently become `env` imports — which breaks the
+  // module's no-imports guarantee at runtime rather than at build time.
+  '-mbulk-memory',
   '-Wall',
   '-Wextra',
   '-Wl,--no-entry',
@@ -37,7 +41,7 @@ const wasmFlags = [
   '-Wl,--export-memory',
   '-Wl,--initial-memory=1048576',
   '-Wl,--max-memory=1073741824',
-  '-Wl,--allow-undefined',
+  // No `--allow-undefined`: an unresolved symbol must fail the build.
   '-Wl,--strip-all',
   '-Wl,--lto-O3',
 ]
@@ -51,10 +55,29 @@ function buildWasm(): Uint8Array {
       [...wasmFlags, ...sources.map((s) => join(cDir, s)), '-o', wasm],
       { stdio: 'inherit' },
     )
-    return new Uint8Array(readFileSync(wasm))
+    const binary = new Uint8Array(readFileSync(wasm))
+    assertNoImports(binary)
+    return binary
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
+}
+
+/**
+ * The engine must import nothing.
+ *
+ * That is what lets one artifact instantiate identically in Node, Bun, Deno,
+ * and browsers with an empty import object, and what keeps the wasm and N-API
+ * surfaces the same. An accidental `memcpy` import breaks it at runtime, so
+ * catch it here.
+ */
+function assertNoImports(binary: Uint8Array) {
+  const imports = WebAssembly.Module.imports(new WebAssembly.Module(binary))
+  if (imports.length === 0) return
+  const list = imports.map((i) => `${i.module}.${i.name}`).join(', ')
+  throw new Error(
+    `The EVM engine must not import anything, but imports: ${list}.`,
+  )
 }
 
 function render(binary: Uint8Array): string {

@@ -88,6 +88,20 @@ static void keccak_f1600(uint64_t *A) {
 
 #define KECCAK_RATE 136
 
+// wasm and every target we build for are little-endian, and keccak's lane order
+// is little-endian too, so absorbing is a plain unaligned 64-bit load. The
+// byte-at-a-time shift-or loops this replaced cost 8 operations per lane, 17
+// lanes per block, on both absorb and squeeze.
+static inline uint64_t keccak_load64(const uint8_t *p) {
+  uint64_t v;
+  __builtin_memcpy(&v, p, 8);
+  return v;
+}
+
+static inline void keccak_store64(uint8_t *p, uint64_t v) {
+  __builtin_memcpy(p, &v, 8);
+}
+
 /** Keccak-256 (the Ethereum variant, 0x01 padding — not SHA3's 0x06). */
 static void keccak256(const uint8_t *in, uint64_t len, uint8_t *out) {
   uint64_t A[25];
@@ -95,31 +109,24 @@ static void keccak256(const uint8_t *in, uint64_t len, uint8_t *out) {
 
   uint64_t off = 0;
   while (len - off >= KECCAK_RATE) {
-    for (int i = 0; i < KECCAK_RATE / 8; i++) {
-      uint64_t v = 0;
-      for (int j = 7; j >= 0; j--) v = (v << 8) | in[off + i * 8 + j];
-      A[i] ^= v;
-    }
+    for (int i = 0; i < KECCAK_RATE / 8; i++)
+      A[i] ^= keccak_load64(in + off + i * 8);
     keccak_f1600(A);
     off += KECCAK_RATE;
   }
 
   uint8_t block[KECCAK_RATE];
   uint64_t rem = len - off;
-  for (uint64_t i = 0; i < rem; i++) block[i] = in[off + i];
-  for (uint64_t i = rem; i < KECCAK_RATE; i++) block[i] = 0;
+  __builtin_memcpy(block, in + off, (unsigned long)rem);
+  __builtin_memset(block + rem, 0, (unsigned long)(KECCAK_RATE - rem));
   block[rem] = 0x01;
   block[KECCAK_RATE - 1] |= 0x80;
 
-  for (int i = 0; i < KECCAK_RATE / 8; i++) {
-    uint64_t v = 0;
-    for (int j = 7; j >= 0; j--) v = (v << 8) | block[i * 8 + j];
-    A[i] ^= v;
-  }
+  for (int i = 0; i < KECCAK_RATE / 8; i++)
+    A[i] ^= keccak_load64(block + i * 8);
   keccak_f1600(A);
 
-  for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 8; j++) out[i * 8 + j] = (uint8_t)(A[i] >> (j * 8));
+  for (int i = 0; i < 4; i++) keccak_store64(out + i * 8, A[i]);
 }
 
 #endif  // OX_EVM_KECCAK_H

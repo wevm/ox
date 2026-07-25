@@ -80,11 +80,78 @@ describe('run', () => {
     expect({ status, data }).toEqual({ status: 'success', data: '0x' })
   })
 
+  test('behavior: reuses cached analysis across identical bytecode', async () => {
+    // The engine analyzes once per distinct bytecode. Re-running the same code,
+    // then different code, then the same code again must not carry stale
+    // analysis between them.
+    const a = '0x60016002015f5260205ff3' as const
+    const b = '0x60056006025f5260205ff3' as const
+    const results = []
+    for (const bytecode of [a, a, b, a, b, b])
+      results.push((await Evm.run({ bytecode })).data)
+    expect(results).toEqual([
+      Hex.fromNumber(3n, { size: 32 }),
+      Hex.fromNumber(3n, { size: 32 }),
+      Hex.fromNumber(30n, { size: 32 }),
+      Hex.fromNumber(3n, { size: 32 }),
+      Hex.fromNumber(30n, { size: 32 }),
+      Hex.fromNumber(30n, { size: 32 }),
+    ])
+  })
+
+  test('behavior: a bytes input re-analyzes rather than reusing a stale key', async () => {
+    // `Uint8Array` has no cheap identity, so it must never hit the cache.
+    await Evm.run({ bytecode: '0x60016002015f5260205ff3' })
+    const result = await Evm.run({
+      bytecode: Hex.toBytes('0x60056006025f5260205ff3'),
+    })
+    expect(result.data).toBe(Hex.fromNumber(30n, { size: 32 }))
+  })
+
   test('behavior: accepts bytes', async () => {
     const result = await Evm.run({
       bytecode: Hex.toBytes('0x60016002015f5260205ff3'),
     })
     expect(result.status).toBe('success')
+  })
+
+  describe('push', () => {
+    test('behavior: every PUSH width round-trips', async () => {
+      // PUSH1, PUSH2-8 (single limb), and PUSH9-32 take separate paths.
+      for (let size = 1; size <= 32; size++) {
+        const value = (1n << BigInt(size * 8 - 1)) | 0xabn
+        const immediate = value.toString(16).padStart(size * 2, '0')
+        const op = (0x5f + size).toString(16)
+        expect({ size, value: await evaluate(`${op}${immediate}`) }).toEqual({
+          size,
+          value,
+        })
+      }
+    })
+
+    test('behavior: a truncated immediate still halts cleanly', async () => {
+      // A truncated PUSH is necessarily the last instruction, so its value is
+      // not observable through returned data — see the internal ABI test below
+      // for that. What is observable is that it halts as STOP and is charged.
+      for (const bytecode of [
+        '0x61ff',
+        '0x68ff',
+        '0x7fff',
+        '0x60',
+        '0x7f',
+      ] as const) {
+        const result = await Evm.run({ bytecode, gas: 1000n })
+        expect({
+          bytecode,
+          status: result.status,
+          gasUsed: result.gasUsed,
+        }).toEqual({ bytecode, status: 'success', gasUsed: 3n })
+      }
+    })
+
+    test('behavior: PUSH0 pushes zero without reading code', async () => {
+      expect(await evaluate('5f')).toBe(0n)
+    })
   })
 
   describe('arithmetic', () => {
@@ -260,6 +327,32 @@ describe('run', () => {
       // Boundary check: exactly at capacity must be accepted, not rejected.
       const result = await Evm.run({ bytecode: `0x${'00'.repeat(49_152)}` })
       expect(result.status).toBe('success')
+    })
+
+    test('behavior: an exceptional halt consumes all gas', async () => {
+      // Unlike REVERT, an exceptional halt returns nothing to the caller.
+      for (const bytecode of [
+        '0x01', // stack underflow
+        '0x0c', // undefined opcode
+        '0x600156', // jump to a non-JUMPDEST
+      ] as const) {
+        const result = await Evm.run({ bytecode, gas: 50_000n })
+        expect({ bytecode, gasLeft: result.gasLeft }).toEqual({
+          bytecode,
+          gasLeft: 0n,
+        })
+      }
+    })
+
+    test('behavior: REVERT returns unspent gas', async () => {
+      const { status, gasLeft } = await Evm.run({
+        bytecode: '0x5f5ffd',
+        gas: 50_000n,
+      })
+      expect({ status, gasLeft }).toEqual({
+        status: 'reverted',
+        gasLeft: 49_996n,
+      })
     })
 
     test('error: out of gas', async () => {
