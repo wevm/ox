@@ -2009,13 +2009,14 @@ static evm_status interpret(evm_vm *vm) {
             vm->st->accounts[target].nonce == 0 &&
             vm->st->accounts[target].code_len == 0)
           USE_GAS(25000);
-        if (!u256_is_zero(balance)) {
-          if (target != vm->self) {
-            set_balance(vm->st, target,
-                        u256_add(vm->st->accounts[target].balance, balance));
-            if (!vm->st->accounts[target].exists)
-              set_exists(vm->st, target, 1);
-          }
+        // Sending to itself is a no-op, not a burn. That only shows up from
+        // Cancun on: before EIP-6780 the account was always deleted, so zeroing
+        // its balance made no observable difference.
+        if (!u256_is_zero(balance) && target != vm->self) {
+          set_balance(vm->st, target,
+                      u256_add(vm->st->accounts[target].balance, balance));
+          if (!vm->st->accounts[target].exists)
+            set_exists(vm->st, target, 1);
           set_balance(vm->st, vm->self, U256_ZERO);
         }
         // EIP-3529 removed the refund; before London it is 24000, once per
