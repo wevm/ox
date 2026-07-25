@@ -254,6 +254,136 @@ static inline uint64_t div_2by1_portable(uint64_t u1, uint64_t u0, uint64_t d,
   return q1 * b + q0;
 }
 
+/**
+ * Möller-Granlund reciprocal for a normalized divisor: `floor((2^128-1)/d) -
+ * 2^64`, which is exactly the low 64 bits of that quotient.
+ *
+ * Requires the top bit of `d` to be set. On wasm32 there is no 128-by-64
+ * divide, so the same value comes out of the portable 2-by-1 step: dividing
+ * `(~0 - d : ~0)` by `d` is `(2^128 - 1)/d - 2^64` by construction, and the
+ * normalization makes `~0 - d < d` so the precondition holds.
+ */
+static inline uint64_t reciprocal_2by1(uint64_t d) {
+#ifdef OX_HAS_INT128
+  return (uint64_t)(~(unsigned __int128)0 / d);
+#else
+  uint64_t rem;
+  return div_2by1_portable(~(uint64_t)0 - d, ~(uint64_t)0, d, &rem);
+#endif
+}
+
+#ifdef OX_HAS_INT128
+
+/**
+ * Divides `(u1:u0)` by a normalized `d` given its reciprocal, using two
+ * multiplies in place of a hardware divide.
+ *
+ * x86-64's 64-bit `div` is data dependent — roughly 30 cycles for small
+ * operands and 90 for large ones — so a chain of them dominates any wide
+ * division. This is Möller-Granlund algorithm 4, which is what `ruint` uses.
+ */
+static inline uint64_t div_2by1(uint64_t u1, uint64_t u0, uint64_t d,
+                                uint64_t v, uint64_t *rem) {
+  unsigned __int128 q = (unsigned __int128)v * u1;
+  q += ((unsigned __int128)u1 << 64) | u0;
+  uint64_t q1 = (uint64_t)(q >> 64) + 1;
+  uint64_t q0 = (uint64_t)q;
+  uint64_t r = u0 - q1 * d;
+  if (r > q0) {
+    q1--;
+    r += d;
+  }
+  if (r >= d) {
+    q1++;
+    r -= d;
+  }
+  *rem = r;
+  return q1;
+}
+#endif
+
+/** 128-bit add, in two limbs. */
+static inline void add128(uint64_t a1, uint64_t a0, uint64_t b1, uint64_t b0,
+                          uint64_t *r1, uint64_t *r0) {
+  const uint64_t s = a0 + b0;
+  *r1 = a1 + b1 + (s < a0);
+  *r0 = s;
+}
+
+/** 128-bit subtract, in two limbs. */
+static inline void sub128(uint64_t a1, uint64_t a0, uint64_t b1, uint64_t b0,
+                          uint64_t *r1, uint64_t *r0) {
+  const uint64_t d = a0 - b0;
+  *r1 = a1 - b1 - (a0 < b0);
+  *r0 = d;
+}
+
+/** `1` when `(a1:a0) >= (b1:b0)`. */
+static inline int ge128(uint64_t a1, uint64_t a0, uint64_t b1, uint64_t b0) {
+  return a1 != b1 ? a1 > b1 : a0 >= b0;
+}
+
+/**
+ * Möller-Granlund's reciprocal for a normalized two-limb divisor (algorithm 6).
+ *
+ * The top bit of `d1` must be set. Built once per division and reused for every
+ * digit of the quotient.
+ */
+static inline uint64_t reciprocal_3by2(uint64_t d1, uint64_t d0) {
+  uint64_t v = reciprocal_2by1(d1);
+  uint64_t p = d1 * v + d0;
+  if (p < d0) {
+    v--;
+    if (p >= d1) {
+      v--;
+      p -= d1;
+    }
+    p -= d1;
+  }
+  uint64_t t1, t0;
+  mul64(v, d0, &t0, &t1);
+  p += t1;
+  if (p < t1) {
+    v--;
+    if (ge128(p, t0, d1, d0)) v--;
+  }
+  return v;
+}
+
+/**
+ * Divides `(u2:u1:u0)` by a normalized `(d1:d0)` (Möller-Granlund algorithm 7).
+ *
+ * Requires `(u2:u1) < (d1:d0)`, which Knuth's normalization guarantees. Unlike a
+ * 2-by-1 estimate this needs no correction loop — at most two conditional
+ * adjustments — which is where the remaining gap against `ruint` on full-width
+ * DIV and MULMOD was.
+ */
+static inline uint64_t div_3by2(uint64_t u2, uint64_t u1, uint64_t u0,
+                                uint64_t d1, uint64_t d0, uint64_t v,
+                                uint64_t *r1, uint64_t *r0) {
+  uint64_t q1, q0;
+  mul64(v, u2, &q0, &q1);
+  add128(q1, q0, u2, u1, &q1, &q0);
+  uint64_t new_r1 = u1 - q1 * d1;
+  uint64_t t1, t0;
+  mul64(d0, q1, &t0, &t1);
+  uint64_t rr1, rr0;
+  sub128(new_r1, u0, d1, d0, &rr1, &rr0);
+  sub128(rr1, rr0, t1, t0, &rr1, &rr0);
+  q1++;
+  if (rr1 >= q0) {
+    q1--;
+    add128(rr1, rr0, d1, d0, &rr1, &rr0);
+  }
+  if (ge128(rr1, rr0, d1, d0)) {
+    q1++;
+    sub128(rr1, rr0, d1, d0, &rr1, &rr0);
+  }
+  *r1 = rr1;
+  *r0 = rr0;
+  return q1;
+}
+
 /** One 2-by-1 division step, using whichever primitive the target has. */
 #ifdef OX_HAS_INT128
 #define DIV2BY1(u1, u0, d, recip, rem) div_2by1((u1), (u0), (d), (recip), (rem))
@@ -317,52 +447,64 @@ static void divmod_knuth64(const uint64_t *num, int n, const uint64_t *den,
     un[i] = (num[i] << s) | (s ? num[i - 1] >> (64 - s) : 0);
   un[0] = num[0] << s;
 
-  uint64_t recip = 0;
-#ifdef OX_HAS_INT128
-  recip = reciprocal_2by1(vn[d - 1]);
-#endif
+  // One reciprocal for the whole division, then a 3-by-2 estimate per digit.
+  // That estimate is exact to within one, so there is no correction loop.
+  const uint64_t recip = reciprocal_3by2(vn[d - 1], vn[d - 2]);
   for (int j = n - d; j >= 0; j--) {
-    uint64_t qhat, rhat;
-    int skip_correction = 0;
-    if (un[j + d] >= vn[d - 1]) {
-      // The estimate saturates at b - 1; the correction below brings it down,
-      // unless the running remainder itself passed 2^64.
+    uint64_t qhat, rh1, rh0;
+    if (ge128(un[j + d], un[j + d - 1], vn[d - 1], vn[d - 2])) {
+      // The estimate saturates at b - 1. Knuth's add-back below recovers the
+      // one case where that is too large.
       qhat = 0xFFFFFFFFFFFFFFFFULL;
-      rhat = un[j + d - 1] + vn[d - 1];
-      if (rhat < vn[d - 1]) skip_correction = 1;
     } else {
-      qhat = DIV2BY1(un[j + d], un[j + d - 1], vn[d - 1], recip, &rhat);
-    }
-    if (!skip_correction) {
-      uint64_t plo, phi;
-      mul64(qhat, vn[d - 2], &plo, &phi);
-      while (phi > rhat || (phi == rhat && plo > un[j + d - 2])) {
-        qhat--;
-        rhat += vn[d - 1];
-        if (rhat < vn[d - 1]) break; // rhat passed 2^64; the test cannot hold
-        mul64(qhat, vn[d - 2], &plo, &phi);
-      }
+      qhat = div_3by2(un[j + d], un[j + d - 1], un[j + d - 2], vn[d - 1],
+                      vn[d - 2], recip, &rh1, &rh0);
+      (void)rh1;
+      (void)rh0;
     }
 
-    uint64_t carry = 0, borrow = 0;
-    for (int i = 0; i < d; i++) {
-      uint64_t plo, phi;
-      mul64(qhat, vn[i], &plo, &phi);
-      const uint64_t sum = plo + carry;
-      phi += sum < plo;
-      carry = phi;
-      const uint64_t sub = un[i + j] - sum;
-      const uint64_t b1 = un[i + j] < sum;
-      const uint64_t sub2 = sub - borrow;
-      borrow = b1 | (sub < borrow);
-      un[i + j] = sub2;
+    uint64_t neg;
+#ifdef OX_HAS_INT128
+    // Signed 128-bit intermediates let clang emit a straight `mulx`/`sbb`
+    // chain; the same loop written with explicit carry flags costs a few
+    // percent more.
+    {
+      unsigned __int128 carry = 0;
+      __int128 borrow = 0;
+      for (int i = 0; i < d; i++) {
+        const unsigned __int128 pr = (unsigned __int128)qhat * vn[i] + carry;
+        carry = pr >> 64;
+        const __int128 t = (__int128)un[i + j] - (__int128)(uint64_t)pr + borrow;
+        un[i + j] = (uint64_t)t;
+        borrow = t >> 64; // arithmetic: 0 or -1
+      }
+      const __int128 t = (__int128)un[j + d] - (__int128)carry + borrow;
+      un[j + d] = (uint64_t)t;
+      neg = (t >> 64) != 0;
     }
-    const uint64_t top = un[j + d];
-    const uint64_t t1 = top - carry;
-    uint64_t neg = top < carry;
-    const uint64_t t2 = t1 - borrow;
-    neg |= t1 < borrow;
-    un[j + d] = t2;
+#else
+    {
+      uint64_t carry = 0, borrow = 0;
+      for (int i = 0; i < d; i++) {
+        uint64_t plo, phi;
+        mul64(qhat, vn[i], &plo, &phi);
+        const uint64_t sum = plo + carry;
+        phi += sum < plo;
+        carry = phi;
+        const uint64_t sub = un[i + j] - sum;
+        const uint64_t b1 = un[i + j] < sum;
+        const uint64_t sub2 = sub - borrow;
+        borrow = b1 | (sub < borrow);
+        un[i + j] = sub2;
+      }
+      const uint64_t top = un[j + d];
+      const uint64_t t1 = top - carry;
+      neg = top < carry;
+      const uint64_t t2 = t1 - borrow;
+      neg |= t1 < borrow;
+      un[j + d] = t2;
+    }
+#endif
     quot[j] = qhat;
     if (neg) {
       // The estimate was one too large: give a divisor back.
@@ -573,44 +715,6 @@ static uint64_t udiv128by64(uint64_t hi, uint64_t lo, uint64_t d,
 }
 #endif
 
-#ifdef OX_HAS_INT128
-/**
- * Möller-Granlund reciprocal for a normalized divisor: `floor((2^128-1)/d) -
- * 2^64`, which is exactly the low 64 bits of that quotient.
- *
- * Requires the top bit of `d` to be set.
- */
-static inline uint64_t reciprocal_2by1(uint64_t d) {
-  return (uint64_t)(~(unsigned __int128)0 / d);
-}
-
-/**
- * Divides `(u1:u0)` by a normalized `d` given its reciprocal, using two
- * multiplies in place of a hardware divide.
- *
- * x86-64's 64-bit `div` is data dependent — roughly 30 cycles for small
- * operands and 90 for large ones — so a chain of them dominates any wide
- * division. This is Möller-Granlund algorithm 4, which is what `ruint` uses.
- */
-static inline uint64_t div_2by1(uint64_t u1, uint64_t u0, uint64_t d,
-                                uint64_t v, uint64_t *rem) {
-  unsigned __int128 q = (unsigned __int128)v * u1;
-  q += ((unsigned __int128)u1 << 64) | u0;
-  uint64_t q1 = (uint64_t)(q >> 64) + 1;
-  uint64_t q0 = (uint64_t)q;
-  uint64_t r = u0 - q1 * d;
-  if (r > q0) {
-    q1--;
-    r += d;
-  }
-  if (r >= d) {
-    q1++;
-    r -= d;
-  }
-  *rem = r;
-  return q1;
-}
-#endif
 
 
 /**
