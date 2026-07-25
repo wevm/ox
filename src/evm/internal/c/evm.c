@@ -1428,7 +1428,8 @@ static evm_status interpret(evm_vm *vm) {
       }
       case 0x0a: { // EXP
         u256 base = POP(), e = POP();
-        // 50 gas per byte of exponent, per EIP-160. The 10 base is in the block.
+        // Per byte of exponent: 10 until EIP-160 raised it to 50 in Spurious
+        // Dragon. The 10 base is in the block.
         int bytes = 0;
         for (int i = 31; i >= 0; i--) {
           if ((e.l[i / 8] >> ((i % 8) * 8)) & 0xff) {
@@ -1436,7 +1437,7 @@ static evm_status interpret(evm_vm *vm) {
             break;
           }
         }
-        USE_GAS(50 * bytes);
+        USE_GAS((vm->ctx.spec >= SPEC_SPURIOUS ? 50 : 10) * bytes);
         PUSH(u256_exp(base, e));
         break;
       }

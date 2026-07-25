@@ -732,3 +732,57 @@ describe('EIP-2200 sentry', () => {
     expect(run(24_413n)).toEqual({ status: 0, used: 22_212n })
   })
 })
+
+describe('fork repricing', () => {
+  // Several opcodes were repriced by a hard fork, and a price frozen at its
+  // latest value is wrong on every earlier one. EXP is how this was found: its
+  // per-byte cost was 50 everywhere, which is EIP-160's figure, so a Frontier
+  // transaction raising something to a one-byte power paid 40 gas too much.
+  //
+  // Priced against the schedule rather than against the engine, so this is an
+  // oracle and not a snapshot.
+  //
+  // Berlin (EIP-2929) replaced the state-access prices with warm/cold, which
+  // depends on what a frame has already touched; those are stated up to Berlin
+  // and left there.
+  const cases: [name: string, code: string, fork: number, gas: bigint][] = [
+    // EXP with a one-byte exponent: 10 base, then per-byte.
+    ['EXP^1 Frontier', '600260020a', 0, 10n + 10n + 6n],
+    ['EXP^1 Homestead', '600260020a', 1, 10n + 10n + 6n],
+    ['EXP^1 Tangerine', '600260020a', 2, 10n + 10n + 6n],
+    ['EXP^1 Spurious', '600260020a', 3, 10n + 50n + 6n],
+    ['EXP^1 Byzantium', '600260020a', 4, 10n + 50n + 6n],
+    // EXP with a two-byte exponent doubles the per-byte part.
+    ['EXP^2 Frontier', '6101006002 0a'.replace(/ /g, ''), 0, 10n + 20n + 6n],
+    ['EXP^2 Spurious', '6101006002 0a'.replace(/ /g, ''), 3, 10n + 100n + 6n],
+    // EIP-150 repriced every external account access.
+    ['BALANCE Frontier', '600031', 0, 20n + 3n],
+    ['BALANCE Tangerine', '600031', 2, 400n + 3n],
+    ['BALANCE Istanbul', '600031', 7, 700n + 3n], // EIP-1884
+    ['EXTCODESIZE Frontier', '60003b', 0, 20n + 3n],
+    ['EXTCODESIZE Tangerine', '60003b', 2, 700n + 3n],
+    ['SLOAD Frontier', '600054', 0, 50n + 3n],
+    ['SLOAD Tangerine', '600054', 2, 200n + 3n],
+    ['SLOAD Istanbul', '600054', 7, 800n + 3n], // EIP-1884
+    ['EXTCODEHASH Constantinople', '60003f', 5, 400n + 3n],
+    ['EXTCODEHASH Istanbul', '60003f', 7, 700n + 3n], // EIP-1884
+    // EIP-150 gave SELFDESTRUCT a price; before that it was free.
+    ['SELFDESTRUCT Frontier', '6000ff', 0, 0n + 3n],
+    ['SELFDESTRUCT Tangerine', '6000ff', 2, 5000n + 3n],
+  ]
+
+  test('behavior: repriced opcodes follow the schedule of their fork', () => {
+    const wrong: string[] = []
+    for (const [name, code, fork, want] of cases) {
+      engine.evm_reset(vm)
+      engine.evm_set_context(vm, 1n, 1n, 30_000_000n, 0, 0, fork)
+      const bytes = Hex.toBytes(`0x${code}`)
+      load_.view(engine).set(bytes, engine.evm_code_ptr(vm))
+      engine.evm_set_code(vm, bytes.length)
+      engine.evm_run(vm, 0, 10_000_000n)
+      const got = 10_000_000n - engine.evm_gas_left(vm)
+      if (got !== want) wrong.push(`${name}: got ${got} want ${want}`)
+    }
+    expect(wrong).toEqual([])
+  })
+})
