@@ -1426,7 +1426,12 @@ static evm_status interpret(evm_vm *vm) {
       case 0x51: { // MLOAD
         u256 off = POP();
         uint64_t o = u256_to_u64_sat(off);
-        if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        // Bounded so `o + 32` cannot wrap. The limit is the addressable range,
+        // not the calldata limit these three used to share by mistake: an
+        // MSTORE8 a couple of megabytes up is affordable and legal, and was
+        // being rejected. Anything genuinely out of range runs out of gas on
+        // the quadratic expansion price long before it reaches this.
+        if (o > MAX_MEMORY_OFFSET) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, 32, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         PUSH(u256_from_be(vm->mem + o));
@@ -1435,7 +1440,7 @@ static evm_status interpret(evm_vm *vm) {
       case 0x52: { // MSTORE
         u256 off = POP(), v = POP();
         uint64_t o = u256_to_u64_sat(off);
-        if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (o > MAX_MEMORY_OFFSET) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, 32, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         u256_to_be(v, vm->mem + o);
@@ -1444,7 +1449,7 @@ static evm_status interpret(evm_vm *vm) {
       case 0x53: { // MSTORE8
         u256 off = POP(), v = POP();
         uint64_t o = u256_to_u64_sat(off);
-        if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        if (o > MAX_MEMORY_OFFSET) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, 1, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         vm->mem[o] = (uint8_t)(v.l[0] & 0xff);

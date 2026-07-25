@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40194/40553 (99.11%) across all forks. This is the same fixture set
+// Status: 40204/40553 (99.14%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -740,6 +740,20 @@ function compare(
   expected: Record<string, Account>,
   storage: Map<string, Map<bigint, bigint>>,
 ): Outcome {
+  // `DIFF=1` reports every mismatching account rather than the first, which is
+  // what tells a gas discrepancy (the sender pays) from a value one.
+  if (process.env.DIFF)
+    for (const [rawAddr, want] of Object.entries(expected)) {
+      const addr = rawAddr.toLowerCase() as Hex
+      const got = actual.get(addr)
+      if (!got) console.log(`DIFF ${addr} missing`)
+      else if (got.balance !== big(want.balance))
+        console.log(
+          `DIFF ${addr} balance got ${got.balance} want ${big(want.balance)} delta ${got.balance - big(want.balance)}`,
+        )
+      else if (got.nonce !== big(want.nonce))
+        console.log(`DIFF ${addr} nonce got ${got.nonce} want ${big(want.nonce)}`)
+    }
   for (const [rawAddr, want] of Object.entries(expected)) {
     const addr = rawAddr.toLowerCase() as Hex
     const got = actual.get(addr)
@@ -843,6 +857,8 @@ outer: for (const file of walk(root)) {
           }
           instantiate()
         }
+        if (process.env.CASES)
+          console.log(`CASE ${outcome.ok ? 'PASS' : 'FAIL'} ${name}`)
         if (outcome.ok) pass++
         else {
           fail++

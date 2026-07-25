@@ -673,3 +673,35 @@ describe('block gas accounting', () => {
     expect(run('0x6003565b600050')).toBe(17n)
   })
 })
+
+describe('memory', () => {
+  // MLOAD, MSTORE and MSTORE8 each bounded their offset by the *calldata*
+  // limit. The guard is only there to stop `offset + 32` wrapping, so the
+  // limit should be the addressable range; as written, a store two megabytes
+  // up — affordable, legal, and what `msizeFiller` does — halted out of gas.
+  test('behavior: memory reaches past the calldata limit', () => {
+    for (const [offset, expected] of [
+      [0x0fffffn, 0x100000n],
+      [0x1fffffn, 0x200000n],
+      [0xb00000n, 0xb00020n], // the offset `msizeFiller.yml::farChunk` uses
+    ] as const) {
+      engine.evm_reset(vm)
+      // PUSH1 1, PUSH3 offset, MSTORE8, MSIZE
+      const bytecode = `0x600162${offset.toString(16).padStart(6, '0')}5359` as const
+      const code = Hex.toBytes(bytecode)
+      load_.view(engine).set(code, engine.evm_code_ptr(vm))
+      engine.evm_set_code(vm, code.length)
+      expect({ offset, status: engine.evm_run(vm, 0, 100_000_000_000n) }).toEqual(
+        { offset, status: 0 },
+      )
+      engine.evm_stack_peek(vm, 0)
+      const ptr = engine.evm_output_ptr(vm)
+      expect({
+        offset,
+        msize: Hex.toBigInt(
+          Hex.fromBytes(load_.view(engine).slice(ptr, ptr + 32)),
+        ),
+      }).toEqual({ offset, msize: expected })
+    }
+  })
+})
