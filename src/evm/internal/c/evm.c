@@ -167,7 +167,24 @@ typedef struct {
   int32_t returndata_len;
   // Staging area the host reads and writes across the ABI boundary.
   uint8_t *stage;
+
+  // Per-frame, saved and restored around a nested call. EVM memory and the
+  // jumpdest/block analysis are both per-frame, so they are carved out of bump
+  // arenas whose tops are part of the saved state.
+  uint8_t *mem;      // this frame's memory base
+  uint64_t mem_cap;  // bytes available to this frame
+  uint8_t *arena;
+  int32_t arena_top;
+  int32_t arena_cap;
+  // The executing frame's code and calldata. These point at the code arena or
+  // at a caller's memory, not at the top-level staging buffers.
+  const uint8_t *frame_code;
+  const uint8_t *frame_input;
 } evm_vm;
+
+#define ANALYSIS_ARENA (24 * 1024 * 1024)
+#define FRAME_MEMORY (1 << 20) // per-frame memory ceiling
+#define MAX_DEPTH 1024
 
 // ---------------------------------------------------------------------------
 // Stack
@@ -271,7 +288,7 @@ static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size,
   uint64_t end = offset + size;
   if (end < offset) return EVM_OUT_OF_GAS; // 64-bit overflow: unaffordable
   if (end <= vm->memory_size) return EVM_SUCCESS;
-  if (end > vm->memory_cap) return EVM_OUT_OF_MEMORY;
+  if (end > vm->mem_cap) return EVM_OUT_OF_MEMORY;
 
   uint64_t words = (end + 31) / 32;
   uint64_t cost = memory_gas(words);
@@ -284,6 +301,9 @@ static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size,
     *gas -= charge;
     vm->memory_cost = cost;
   }
+  // Newly reachable bytes must read as zero. Clearing on growth rather than up
+  // front is what lets a frame's memory come from a bump arena.
+  mem_zero(vm->mem + vm->memory_size, words * 32 - vm->memory_size);
   vm->memory_size = words * 32;
   return EVM_SUCCESS;
 }
@@ -300,6 +320,52 @@ static inline u256 address_to_word(const uint8_t *addr) {
   for (int i = 0; i < 12; i++) buf[i] = 0;
   for (int i = 0; i < 20; i++) buf[12 + i] = addr[i];
   return u256_from_be(buf);
+}
+
+/** CREATE address: the low 20 bytes of `keccak256(rlp([sender, nonce]))`. */
+static void create_address(const uint8_t *sender, uint64_t nonce,
+                           uint8_t *out) {
+  uint8_t buf[32];
+  int n = 0;
+  // The payload is always shorter than 56 bytes, so the list header is one
+  // byte: 0xc0 + length.
+  uint8_t nonce_bytes[9];
+  int nonce_len = 0;
+  if (nonce == 0) {
+    nonce_bytes[nonce_len++] = 0x80;
+  } else if (nonce < 0x80) {
+    nonce_bytes[nonce_len++] = (uint8_t)nonce;
+  } else {
+    uint8_t tmp[8];
+    int k = 0;
+    for (uint64_t v = nonce; v; v >>= 8) tmp[k++] = (uint8_t)(v & 0xff);
+    nonce_bytes[nonce_len++] = (uint8_t)(0x80 + k);
+    for (int i = k - 1; i >= 0; i--) nonce_bytes[nonce_len++] = tmp[i];
+  }
+  buf[n++] = (uint8_t)(0xc0 + 21 + nonce_len);
+  buf[n++] = 0x94; // 0x80 + 20, a 20-byte string
+  for (int i = 0; i < 20; i++) buf[n++] = sender[i];
+  for (int i = 0; i < nonce_len; i++) buf[n++] = nonce_bytes[i];
+
+  uint8_t hash[32];
+  keccak256(buf, (uint64_t)n, hash);
+  for (int i = 0; i < 20; i++) out[i] = hash[12 + i];
+}
+
+/** CREATE2 address: `keccak256(0xff ++ sender ++ salt ++ keccak256(init))`. */
+static void create2_address(const uint8_t *sender, u256 salt,
+                            const uint8_t *init, uint64_t init_len,
+                            uint8_t *out) {
+  uint8_t init_hash[32];
+  keccak256(init, init_len, init_hash);
+  uint8_t buf[85];
+  buf[0] = 0xff;
+  for (int i = 0; i < 20; i++) buf[1 + i] = sender[i];
+  u256_to_be(salt, buf + 21);
+  for (int i = 0; i < 32; i++) buf[53 + i] = init_hash[i];
+  uint8_t hash[32];
+  keccak256(buf, 85, hash);
+  for (int i = 0; i < 20; i++) out[i] = hash[12 + i];
 }
 
 /** Copies into memory from a source, zero-filling reads past the source end. */
@@ -332,7 +398,7 @@ static void analyze(evm_vm *vm) {
   int start_block = 1;
 
   for (int i = 0; i < vm->code_len;) {
-    const uint8_t op = vm->code[i];
+    const uint8_t op = vm->frame_code[i];
     const op_info info = op_table[op];
 
     if (op == 0x5b) start_block = 1; // JUMPDEST always begins a block
@@ -385,6 +451,133 @@ static void analyze(evm_vm *vm) {
 // Interpreter
 // ---------------------------------------------------------------------------
 
+static evm_status interpret(evm_vm *vm);
+
+// ---------------------------------------------------------------------------
+// Frames
+// ---------------------------------------------------------------------------
+
+/** The parts of the VM that belong to one frame. */
+typedef struct {
+  int32_t self;
+  uint8_t caller[20];
+  u256 call_value;
+  int is_static;
+  uint8_t *mem;
+  uint64_t mem_cap;
+  uint64_t memory_size;
+  uint64_t memory_cost;
+  uint8_t *jumpdest;
+  block_info *blocks;
+  int32_t *block_at;
+  int32_t arena_top;
+  int code_len;
+  int input_len;
+  const uint8_t *code_ptr;
+  const uint8_t *input_ptr;
+} frame_state;
+
+static void *arena_alloc(evm_vm *vm, int32_t n) {
+  n = (n + 15) & ~15;
+  if (vm->arena_top + n > vm->arena_cap) return 0;
+  void *p = vm->arena + vm->arena_top;
+  vm->arena_top += n;
+  return p;
+}
+
+/**
+ * Runs `code` as a nested frame and returns its status.
+ *
+ * The caller's per-frame fields are saved on the C stack and restored on the
+ * way out, so recursion carries the frame stack. Memory and analysis for the
+ * new frame come from the bump arena, whose top is part of the saved state.
+ */
+static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
+                            u256 value, const uint8_t *code, int code_len,
+                            const uint8_t *input, int input_len, int is_static,
+                            int64_t *gas) {
+  if (vm->depth >= MAX_DEPTH) return EVM_INVALID_JUMP;
+
+  frame_state saved;
+  saved.self = vm->self;
+  for (int i = 0; i < 20; i++) saved.caller[i] = vm->caller[i];
+  saved.call_value = vm->call_value;
+  saved.is_static = vm->is_static;
+  saved.mem = vm->mem;
+  saved.mem_cap = vm->mem_cap;
+  saved.memory_size = vm->memory_size;
+  saved.memory_cost = vm->memory_cost;
+  saved.jumpdest = vm->jumpdest;
+  saved.blocks = vm->blocks;
+  saved.block_at = vm->block_at;
+  saved.arena_top = vm->arena_top;
+  saved.code_len = vm->code_len;
+  saved.input_len = vm->input_len;
+  saved.code_ptr = vm->frame_code;
+  saved.input_ptr = vm->frame_input;
+
+  const int32_t arena_mark = vm->arena_top;
+  uint8_t *fmem = (uint8_t *)arena_alloc(vm, FRAME_MEMORY);
+  uint8_t *fjd = (uint8_t *)arena_alloc(vm, (code_len + 7) / 8 + 8);
+  block_info *fblocks =
+      (block_info *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(block_info));
+  int32_t *fblock_at =
+      (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
+  if (!fmem || !fjd || !fblocks || !fblock_at) {
+    vm->arena_top = arena_mark;
+    return EVM_OUT_OF_MEMORY;
+  }
+
+  vm->self = self;
+  for (int i = 0; i < 20; i++) vm->caller[i] = caller[i];
+  vm->call_value = value;
+  vm->is_static = is_static;
+  vm->mem = fmem;
+  vm->mem_cap = FRAME_MEMORY;
+  vm->memory_size = 0;
+  vm->memory_cost = 0;
+  vm->jumpdest = fjd;
+  vm->blocks = fblocks;
+  vm->block_at = fblock_at;
+  vm->frame_code = code;
+  vm->frame_input = input;
+  vm->code_len = code_len;
+  vm->input_len = input_len;
+  vm->gas = *gas;
+  vm->depth++;
+  analyze(vm);
+
+  const evm_status status = interpret(vm);
+
+  *gas = vm->gas;
+  vm->depth--;
+  vm->self = saved.self;
+  for (int i = 0; i < 20; i++) vm->caller[i] = saved.caller[i];
+  vm->call_value = saved.call_value;
+  vm->is_static = saved.is_static;
+  vm->mem = saved.mem;
+  vm->mem_cap = saved.mem_cap;
+  vm->memory_size = saved.memory_size;
+  vm->memory_cost = saved.memory_cost;
+  vm->jumpdest = saved.jumpdest;
+  vm->blocks = saved.blocks;
+  vm->block_at = saved.block_at;
+  vm->arena_top = saved.arena_top;
+  vm->code_len = saved.code_len;
+  vm->input_len = saved.input_len;
+  vm->frame_code = saved.code_ptr;
+  vm->frame_input = saved.input_ptr;
+  return status;
+}
+
+/** EIP-150: a caller may only forward all but a 64th of its remaining gas. */
+static inline int64_t capped_gas(int64_t available, u256 requested) {
+  const int64_t retained = available / 64;
+  const int64_t allowed = available - retained;
+  const uint64_t want = u256_to_u64_sat(requested);
+  return want < (uint64_t)allowed ? (int64_t)want : allowed;
+}
+
 /** Charges a block's static gas and validates its stack bounds up front. */
 #define ENTER_BLOCK(at)                                       \
   do {                                                        \
@@ -403,7 +596,7 @@ static evm_status interpret(evm_vm *vm) {
   int64_t gas = vm->gas;
   // Hoisted for the same reason as `sp` and `gas`: reached through `vm` these
   // were reloaded on every instruction.
-  const uint8_t *const code = vm->code;
+  const uint8_t *const code = vm->frame_code;
   const int code_len = vm->code_len;
   vm->output_len = 0;
 
@@ -522,7 +715,7 @@ static evm_status interpret(evm_vm *vm) {
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         uint8_t hash[32];
-        keccak256(vm->memory + o, n, hash);
+        keccak256(vm->mem + o, n, hash);
         PUSH(u256_from_be(hash));
         break;
       }
@@ -531,7 +724,7 @@ static evm_status interpret(evm_vm *vm) {
         u256 off = POP();
         uint64_t o = u256_to_u64_sat(off);
         uint8_t word[32];
-        copy_padded(word, vm->input, (uint64_t)vm->input_len, o, 32);
+        copy_padded(word, vm->frame_input, (uint64_t)vm->input_len, o, 32);
         PUSH(u256_from_be(word));
         break;
       }
@@ -546,7 +739,7 @@ static evm_status interpret(evm_vm *vm) {
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st = memory_expand(vm, d, n, &gas);
         if (st != EVM_SUCCESS) HALT(st);
-        copy_padded(vm->memory + d, vm->input, (uint64_t)vm->input_len, s, n);
+        copy_padded(vm->mem + d, vm->frame_input, (uint64_t)vm->input_len, s, n);
         break;
       }
       case 0x38: // CODESIZE
@@ -560,7 +753,7 @@ static evm_status interpret(evm_vm *vm) {
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st = memory_expand(vm, d, n, &gas);
         if (st != EVM_SUCCESS) HALT(st);
-        copy_padded(vm->memory + d, code, (uint64_t)code_len, s, n);
+        copy_padded(vm->mem + d, code, (uint64_t)code_len, s, n);
         break;
       }
 
@@ -573,7 +766,7 @@ static evm_status interpret(evm_vm *vm) {
         if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, 32, &gas);
         if (s != EVM_SUCCESS) HALT(s);
-        PUSH(u256_from_be(vm->memory + o));
+        PUSH(u256_from_be(vm->mem + o));
         break;
       }
       case 0x52: { // MSTORE
@@ -582,7 +775,7 @@ static evm_status interpret(evm_vm *vm) {
         if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, 32, &gas);
         if (s != EVM_SUCCESS) HALT(s);
-        u256_to_be(v, vm->memory + o);
+        u256_to_be(v, vm->mem + o);
         break;
       }
       case 0x53: { // MSTORE8
@@ -591,7 +784,7 @@ static evm_status interpret(evm_vm *vm) {
         if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, 1, &gas);
         if (s != EVM_SUCCESS) HALT(s);
-        vm->memory[o] = (uint8_t)(v.l[0] & 0xff);
+        vm->mem[o] = (uint8_t)(v.l[0] & 0xff);
         break;
       }
       case 0x56: { // JUMP
@@ -740,7 +933,7 @@ static evm_status interpret(evm_vm *vm) {
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st_ = memory_expand(vm, d, n, &gas);
         if (st_ != EVM_SUCCESS) HALT(st_);
-        copy_padded(vm->memory + d,
+        copy_padded(vm->mem + d,
                     vm->st->code_arena + vm->st->accounts[a].code_offset,
                     (uint64_t)vm->st->accounts[a].code_len, so, n);
         break;
@@ -761,7 +954,7 @@ static evm_status interpret(evm_vm *vm) {
         USE_GAS(3 * ((n + 31) / 32));
         evm_status st_ = memory_expand(vm, d, n, &gas);
         if (st_ != EVM_SUCCESS) HALT(st_);
-        mem_copy(vm->memory + d, vm->returndata + so, n);
+        mem_copy(vm->mem + d, vm->returndata + so, n);
         break;
       }
 
@@ -828,7 +1021,7 @@ static evm_status interpret(evm_vm *vm) {
         // overlap in either direction.
         evm_status st_ = memory_expand(vm, d > so ? d : so, n, &gas);
         if (st_ != EVM_SUCCESS) HALT(st_);
-        if (n) __builtin_memmove(vm->memory + d, vm->memory + so,
+        if (n) __builtin_memmove(vm->mem + d, vm->mem + so,
                                  (unsigned long)n);
         break;
       }
@@ -853,9 +1046,193 @@ static evm_status interpret(evm_vm *vm) {
         for (int i = 0; i < topics; i++) lg->topics[i] = POP();
         lg->data_offset = vm->st->log_data_len;
         lg->data_len = (int32_t)n;
-        mem_copy(vm->st->log_data + vm->st->log_data_len, vm->memory + o, n);
+        mem_copy(vm->st->log_data + vm->st->log_data_len, vm->mem + o, n);
         vm->st->log_data_len += (int32_t)n;
         break;
+      }
+
+      case 0xf1:   // CALL
+      case 0xf2:   // CALLCODE
+      case 0xf4:   // DELEGATECALL
+      case 0xfa: { // STATICCALL
+        const int has_value = (op == 0xf1 || op == 0xf2);
+        const u256 gas_arg = POP();
+        uint8_t to[20];
+        word_to_address(POP(), to);
+        const u256 value = has_value ? POP() : U256_ZERO;
+        const uint64_t in_off = u256_to_u64_sat(POP());
+        const uint64_t in_len = u256_to_u64_sat(POP());
+        const uint64_t out_off = u256_to_u64_sat(POP());
+        const uint64_t out_len = u256_to_u64_sat(POP());
+        if (in_off > MAX_INPUT || in_len > MAX_INPUT || out_off > MAX_INPUT ||
+            out_len > MAX_INPUT)
+          HALT(EVM_OUT_OF_GAS);
+        // A static frame may not move value.
+        if (vm->is_static && !u256_is_zero(value)) HALT(EVM_STATIC_VIOLATION);
+
+        const int32_t callee = account_intern(vm->st, to);
+        if (callee < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_account(vm->st, callee) ? GAS_COLD_ACCOUNT : GAS_WARM);
+
+        evm_status ms = memory_expand(vm, in_off, in_len, &gas);
+        if (ms != EVM_SUCCESS) HALT(ms);
+        ms = memory_expand(vm, out_off, out_len, &gas);
+        if (ms != EVM_SUCCESS) HALT(ms);
+
+        if (!u256_is_zero(value)) {
+          USE_GAS(9000);
+          // Funding an account that does not yet exist costs extra.
+          if (op == 0xf1 && !vm->st->accounts[callee].exists &&
+              u256_is_zero(vm->st->accounts[callee].balance) &&
+              vm->st->accounts[callee].nonce == 0 &&
+              vm->st->accounts[callee].code_len == 0)
+            USE_GAS(25000);
+        }
+
+        int64_t child_gas = capped_gas(gas, gas_arg);
+        gas -= child_gas;
+        // The stipend is granted on top of the 63/64 cap.
+        if (!u256_is_zero(value)) child_gas += 2300;
+
+        // Copy the calldata out of memory first: the child gets its own memory
+        // and the arena may hand it the very bytes we are reading.
+        uint8_t *args = (uint8_t *)arena_alloc(vm, (int32_t)in_len + 16);
+        if (!args) HALT(EVM_OUT_OF_MEMORY);
+        mem_copy(args, vm->mem + in_off, in_len);
+
+        const int32_t snapshot = state_snapshot(vm->st);
+        const u256 caller_balance = vm->st->accounts[vm->self].balance;
+        int ok = 1;
+        if (!u256_is_zero(value) && u256_cmp(caller_balance, value) < 0) {
+          ok = 0; // insufficient balance: the call fails without executing
+        } else {
+          if (!u256_is_zero(value) && op == 0xf1) {
+            set_balance(vm->st, vm->self, u256_sub(caller_balance, value));
+            set_balance(vm->st, callee,
+                        u256_add(vm->st->accounts[callee].balance, value));
+            if (!vm->st->accounts[callee].exists)
+              set_exists(vm->st, callee, 1);
+          }
+          // DELEGATECALL and CALLCODE run the callee's code against the
+          // caller's own storage and address.
+          const int32_t exec_self = (op == 0xf1 || op == 0xfa) ? callee : vm->self;
+          const uint8_t *sub_caller =
+              op == 0xf4 ? vm->caller : vm->st->accounts[vm->self].address;
+          const u256 sub_value = op == 0xf4 ? vm->call_value : value;
+          const int sub_static = vm->is_static || op == 0xfa;
+
+          const evm_status cs = run_frame(
+              vm, exec_self, sub_caller, sub_value,
+              vm->st->code_arena + vm->st->accounts[callee].code_offset,
+              vm->st->accounts[callee].code_len, args, (int)in_len, sub_static,
+              &child_gas);
+          ok = cs == EVM_SUCCESS;
+          if (cs != EVM_SUCCESS) state_revert(vm->st, snapshot);
+          // REVERT returns data; an exceptional halt does not.
+          vm->returndata_len =
+              (cs == EVM_SUCCESS || cs == EVM_REVERT) ? vm->output_len : 0;
+          mem_copy(vm->returndata, vm->output, (uint64_t)vm->returndata_len);
+        }
+        if (!ok && vm->returndata_len == 0) state_revert(vm->st, snapshot);
+        gas += child_gas; // unspent child gas returns to the caller
+
+        const uint64_t n = out_len < (uint64_t)vm->returndata_len
+                               ? out_len
+                               : (uint64_t)vm->returndata_len;
+        mem_copy(vm->mem + out_off, vm->returndata, n);
+        PUSH(u256_from_u64(ok ? 1 : 0));
+        pc++;
+        if (pc >= code_len) DONE(EVM_SUCCESS);
+        ENTER_BLOCK(pc);
+        continue;
+      }
+
+      case 0xf0:   // CREATE
+      case 0xf5: { // CREATE2
+        if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        const u256 value = POP();
+        const uint64_t off = u256_to_u64_sat(POP());
+        const uint64_t len = u256_to_u64_sat(POP());
+        const u256 salt = op == 0xf5 ? POP() : U256_ZERO;
+        if (off > MAX_INPUT || len > MAX_CODE) HALT(EVM_OUT_OF_GAS);
+        USE_GAS(32000);
+        evm_status ms = memory_expand(vm, off, len, &gas);
+        if (ms != EVM_SUCCESS) HALT(ms);
+        // EIP-3860 charges for initcode words; CREATE2 also hashes it.
+        USE_GAS(2 * ((len + 31) / 32));
+        if (op == 0xf5) USE_GAS(6 * ((len + 31) / 32));
+
+        uint8_t *init = (uint8_t *)arena_alloc(vm, (int32_t)len + 16);
+        if (!init) HALT(EVM_OUT_OF_MEMORY);
+        mem_copy(init, vm->mem + off, len);
+
+        uint8_t addr[20];
+        const uint8_t *creator = vm->st->accounts[vm->self].address;
+        if (op == 0xf0)
+          create_address(creator, vm->st->accounts[vm->self].nonce, addr);
+        else
+          create2_address(creator, salt, init, len, addr);
+
+        // The creator's nonce advances whether or not the creation succeeds.
+        set_nonce(vm->st, vm->self, vm->st->accounts[vm->self].nonce + 1);
+
+        int64_t child_gas = capped_gas(gas, u256_from_u64(~(uint64_t)0));
+        gas -= child_gas;
+
+        const int32_t snapshot = state_snapshot(vm->st);
+        const u256 creator_balance = vm->st->accounts[vm->self].balance;
+        const int32_t created = account_intern(vm->st, addr);
+        if (created < 0) HALT(EVM_OUT_OF_MEMORY);
+        warm_account(vm->st, created);
+
+        int ok = 0;
+        vm->returndata_len = 0;
+        // Creating over an account that already has code or a nonce fails.
+        const int occupied = vm->st->accounts[created].code_len > 0 ||
+                             vm->st->accounts[created].nonce > 0;
+        if (u256_cmp(creator_balance, value) < 0 || occupied ||
+            vm->depth >= MAX_DEPTH) {
+          if (occupied) child_gas = 0;
+        } else {
+          set_balance(vm->st, vm->self, u256_sub(creator_balance, value));
+          set_balance(vm->st, created,
+                      u256_add(vm->st->accounts[created].balance, value));
+          set_exists(vm->st, created, 1);
+          set_created(vm->st, created, 1);
+          set_nonce(vm->st, created, 1); // EIP-161
+          const evm_status cs =
+              run_frame(vm, created, creator, value, init, (int)len, init, 0, 0,
+                        &child_gas);
+          if (cs == EVM_SUCCESS) {
+            const int32_t dep_len = vm->output_len;
+            // EIP-170 caps deployed code; EIP-3541 reserves the 0xEF prefix.
+            if (dep_len > 24576 || (dep_len > 0 && vm->output[0] == 0xEF)) {
+              state_revert(vm->st, snapshot);
+              child_gas = 0;
+            } else if (child_gas < (int64_t)dep_len * 200) {
+              state_revert(vm->st, snapshot);
+              child_gas = 0;
+            } else {
+              child_gas -= (int64_t)dep_len * 200;
+              set_code(vm->st, created, vm->output, dep_len);
+              ok = 1;
+            }
+          } else {
+            state_revert(vm->st, snapshot);
+            if (cs == EVM_REVERT) {
+              vm->returndata_len = vm->output_len;
+              mem_copy(vm->returndata, vm->output, (uint64_t)vm->output_len);
+            } else {
+              child_gas = 0;
+            }
+          }
+        }
+        gas += child_gas;
+        PUSH(ok ? address_to_word(addr) : U256_ZERO);
+        pc++;
+        if (pc >= code_len) DONE(EVM_SUCCESS);
+        ENTER_BLOCK(pc);
+        continue;
       }
 
       case 0xfe: // INVALID
@@ -891,7 +1268,7 @@ static evm_status interpret(evm_vm *vm) {
         if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
-        mem_copy(vm->output, vm->memory + o, n);
+        mem_copy(vm->output, vm->mem + o, n);
         vm->output_len = (int)n;
         DONE(EVM_SUCCESS);
       }
@@ -901,7 +1278,7 @@ static evm_status interpret(evm_vm *vm) {
         if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
-        mem_copy(vm->output, vm->memory + o, n);
+        mem_copy(vm->output, vm->mem + o, n);
         vm->output_len = (int)n;
         // REVERT is not an exceptional halt: unspent gas is returned.
         DONE(EVM_REVERT);
@@ -1003,7 +1380,14 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
     return 0;
   vm->st->log_data = (uint8_t *)ox_alloc(LOG_ARENA);
   vm->st->code_arena = (uint8_t *)ox_alloc(CODE_ARENA);
-  if (!vm->st->log_data || !vm->st->code_arena) return 0;
+  vm->arena = (uint8_t *)ox_alloc(ANALYSIS_ARENA);
+  if (!vm->st->log_data || !vm->st->code_arena || !vm->arena) return 0;
+  vm->arena_cap = ANALYSIS_ARENA;
+  vm->arena_top = 0;
+  vm->mem = vm->memory;
+  vm->mem_cap = (uint64_t)memory_cap;
+  vm->frame_code = vm->code;
+  vm->frame_input = vm->input;
   state_reset(vm->st);
   vm->self = 0;
   vm->is_static = 0;
@@ -1064,6 +1448,7 @@ int evm_set_code(evm_vm *vm, int code_len) {
   vm->analyzed = 0;
   if (code_len < 0 || code_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
   vm->code_len = code_len;
+  vm->frame_code = vm->code;
   analyze(vm);
   vm->analyzed = 1;
   return EVM_SUCCESS;
@@ -1082,6 +1467,12 @@ int evm_run(evm_vm *vm, int input_len, int64_t gas) {
   vm->sp = 0;
   vm->memory_cost = 0;
   vm->output_len = 0;
+  vm->arena_top = 0;
+  vm->depth = 0;
+  vm->mem = vm->memory;
+  vm->mem_cap = vm->memory_cap;
+  vm->frame_code = vm->code;
+  vm->frame_input = vm->input;
   // Only the previous run's high-water mark is dirty — the rest was zeroed by
   // `evm_new` and never written. Clearing the full capacity here costs more
   // than most programs execute.
@@ -1224,6 +1615,12 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   vm->sp = 0;
   vm->memory_cost = 0;
   vm->output_len = 0;
+  vm->arena_top = 0;
+  vm->depth = 0;
+  vm->mem = vm->memory;
+  vm->mem_cap = vm->memory_cap;
+  vm->frame_code = vm->code;
+  vm->frame_input = vm->input;
   mem_zero(vm->memory, vm->memory_size);
   vm->memory_size = 0;
   const int32_t snapshot = state_snapshot(vm->st);

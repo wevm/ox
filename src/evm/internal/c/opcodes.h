@@ -137,6 +137,15 @@ static const op_info op_table[256] = {
     [0xa3] = OP(1500, 5, 0),   // LOG3
     [0xa4] = OP(1875, 6, 0),   // LOG4
 
+    // The call family ends a block: gas and stack effects past the call
+    // depend on its result.
+    [0xf0] = OP_END(0, 3, 1),  // CREATE
+    [0xf1] = OP_END(0, 7, 1),  // CALL
+    [0xf2] = OP_END(0, 7, 1),  // CALLCODE
+    [0xf4] = OP_END(0, 6, 1),  // DELEGATECALL
+    [0xf5] = OP_END(0, 4, 1),  // CREATE2
+    [0xfa] = OP_END(0, 6, 1),  // STATICCALL
+
     [0xf3] = OP_END(0, 2, 0),  // RETURN (+ memory)
     [0xfd] = OP_END(0, 2, 0),  // REVERT (+ memory)
     [0xfe] = OP_END(0, 0, 0),  // INVALID: defined, and always halts
