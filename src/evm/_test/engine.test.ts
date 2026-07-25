@@ -89,6 +89,36 @@ describe('engine', () => {
     )
   })
 
+  test('behavior: a long program does not corrupt its own bytecode', () => {
+    // `stack` is the first field of the engine's VM struct and `code` follows a
+    // few fields later, so a stack pointer that drifts past its 1024 slots
+    // rewrites the program mid-run. This is the direct oracle for that: reading
+    // the code buffer back must yield exactly what was written.
+    //
+    // Comparing two runs of the same program does NOT catch it — the corruption
+    // is deterministic, so both runs agree. Nor do short programs: the drift
+    // has to exceed 1024 slots first, and block validation only runs on entry.
+    //
+    // The regression this pins: `POP` decremented the struct field instead of
+    // the hoisted local, so the stack grew by one every iteration.
+    const body = '60205f2050' // PUSH1 32, PUSH0, KECCAK256, POP — net zero
+    const bytecode: Hex.Hex = `0x${body.repeat(3000)}00`
+    const code = Hex.toBytes(bytecode)
+
+    load_.view(engine).set(code, engine.evm_code_ptr(vm))
+    engine.evm_set_code(vm, code.length)
+    const status = engine.evm_run(vm, 0, 100_000_000n)
+    expect(status).toBe(0)
+
+    const ptr = engine.evm_code_ptr(vm)
+    const after = load_.view(engine).slice(ptr, ptr + code.length)
+    expect(Hex.fromBytes(after)).toBe(bytecode)
+
+    // Net-zero body, so the stack must be empty and gas exact.
+    expect(engine.evm_stack_size(vm)).toBe(0)
+    expect(100_000_000n - engine.evm_gas_left(vm)).toBe(3000n * 43n + 3n)
+  })
+
   test('behavior: the stack limit is enforced at the block boundary', () => {
     // Bounds are validated once per block, not per instruction, so the limit
     // must still hold exactly at 1024 and fail at 1025.

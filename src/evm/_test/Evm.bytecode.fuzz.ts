@@ -67,6 +67,34 @@ const arbitraryProgram = () =>
     )
     .map((ops) => Hex.fromBytes(new Uint8Array(ops)))
 
+/**
+ * A short body repeated thousands of times.
+ *
+ * Short programs never reach the interesting states: a stack pointer drifting by
+ * a fixed amount per iteration has to exceed the 1024-slot stack before it
+ * corrupts anything, and block validation only runs on block entry.
+ *
+ * These cases assert determinism, not memory integrity — deterministic
+ * corruption reproduces identically across runs, so re-running and comparing
+ * cannot see it. `engine.test.ts` reads the code buffer back for that.
+ */
+const arbitraryLoop = () =>
+  fc
+    .tuple(
+      fc.array(
+        fc.oneof(
+          fc.integer({ min: 0x01, max: 0x1d }),
+          fc.integer({ min: 0x5f, max: 0x9f }),
+          fc.constantFrom(0x20, 0x50, 0x51, 0x52, 0x53, 0x58, 0x59, 0x5a),
+        ),
+        { minLength: 1, maxLength: 8 },
+      ),
+      fc.integer({ min: 1200, max: 3000 }),
+    )
+    .map(([body, repeats]) =>
+      Hex.fromBytes(new Uint8Array(Array(repeats).fill(body).flat())),
+    )
+
 beforeAll(async () => {
   await Evm.ready()
 })
@@ -100,6 +128,17 @@ describe('arbitrary bytecode is contained', () => {
       // exceptional and burns the lot.
       if (result.status !== 'success' && result.status !== 'reverted')
         expect(result.gasLeft).toBe(0n)
+    },
+  )
+
+  test.prop({ bytecode: arbitraryLoop() }, { numRuns })(
+    'thousands of iterations stay contained and deterministic',
+    async ({ bytecode }) => {
+      // A run must not leave state behind that changes the next one.
+      const first = await Evm.run({ bytecode, gas: 100_000_000n })
+      const second = await Evm.run({ bytecode, gas: 100_000_000n })
+      expect(statuses.has(first.status)).toBe(true)
+      expect(second).toEqual(first)
     },
   )
 

@@ -130,38 +130,81 @@ typedef struct {
 // Stack
 // ---------------------------------------------------------------------------
 
-// Bounds are guaranteed by the enclosing block's entry check, so these do not
-// re-validate. Correctness now rests on `analyze` computing `stack_req` and
-// `stack_max_growth` correctly for every block.
+// `sp` and `gas` live in locals inside `interpret`, not in the VM struct. Read
+// through the `vm` pointer they were reloaded and re-stored on every
+// instruction, because the compiler cannot prove nothing else aliases them.
+// `SYNC` writes them back before anything that inspects the VM, and `HALT`
+// writes them back on the way out.
 //
-// The value is still materialized before `sp` moves: writing this as
-// `vm->stack[vm->sp++] = (v)` is undefined behaviour whenever `v` itself reads
-// `sp` — which `PUSH(PEEK(n))` in DUP does, and which silently duplicated the
-// stale slot above the top.
-#define PUSH(v)                    \
-  do {                             \
-    u256 pushed_ = (v);            \
-    vm->stack[vm->sp++] = pushed_; \
+// `sp` points one past the top of the stack. Bounds are guaranteed by the
+// enclosing block's entry check, so these do not re-validate — correctness
+// rests on `analyze` computing `stack_req` and `stack_max_growth` correctly.
+//
+// A pushed value is materialized before `sp` moves: writing this as
+// `*sp++ = (v)` is undefined behaviour whenever `v` itself reads `sp` — which
+// `PUSH(PEEK(n))` in DUP does, and which silently duplicated the stale slot
+// above the top.
+#define PUSH(v)          \
+  do {                   \
+    u256 pushed_ = (v);  \
+    *sp++ = pushed_;     \
   } while (0)
-#define POP() (vm->stack[--vm->sp])
-#define PEEK(i) (vm->stack[vm->sp - 1 - (i)])
+#define POP() (*--sp)
+#define PEEK(i) (sp[-1 - (i)])
+
+/**
+ * Replaces the top two words with `expr` over them.
+ *
+ * `a` is the top of the stack and `b` the word beneath, matching the operand
+ * order of every two-input EVM instruction. One store and one `sp` adjustment,
+ * against the three 32-byte copies that `PUSH(f(POP(), POP()))` compiled to.
+ */
+#define BINARY(expr)         \
+  do {                       \
+    const u256 a = sp[-1];    \
+    const u256 b = sp[-2];    \
+    sp[-2] = (expr);          \
+    sp--;                     \
+  } while (0)
+
+/** Replaces the top word with `expr` over it. */
+#define UNARY(expr)        \
+  do {                     \
+    const u256 a = sp[-1];  \
+    sp[-1] = (expr);        \
+  } while (0)
+
+#define SYNC()                             \
+  do {                                     \
+    vm->sp = (int)(sp - vm->stack);         \
+    vm->gas = gas;                          \
+  } while (0)
 
 /** Charges dynamic gas. Static per-block gas is charged by `ENTER_BLOCK`. */
 #define USE_GAS(n)                \
   do {                            \
     int64_t cost_ = (int64_t)(n); \
-    if (vm->gas < cost_) {        \
-      vm->gas = 0;                \
+    if (gas < cost_) {            \
+      gas = 0;                    \
+      SYNC();                     \
       return EVM_OUT_OF_GAS;      \
     }                             \
-    vm->gas -= cost_;             \
+    gas -= cost_;                 \
   } while (0)
 
 /** An exceptional halt consumes all remaining gas. */
-#define HALT(status)  \
-  do {                \
-    vm->gas = 0;      \
-    return (status);  \
+#define HALT(status) \
+  do {               \
+    gas = 0;         \
+    SYNC();          \
+    return (status); \
+  } while (0)
+
+/** A normal halt keeps the unspent gas. */
+#define DONE(status) \
+  do {               \
+    SYNC();          \
+    return (status); \
   } while (0)
 
 #define JUMPDEST_SET(i) (vm->jumpdest[(i) >> 3] |= (uint8_t)(1 << ((i) & 7)))
@@ -179,7 +222,8 @@ static inline uint64_t memory_gas(uint64_t words) {
  * Grows memory to cover `[offset, offset + size)` and charges the expansion.
  * A zero-length access never expands, per the yellow paper.
  */
-static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size) {
+static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size,
+                                int64_t *gas) {
   if (size == 0) return EVM_SUCCESS;
   uint64_t end = offset + size;
   if (end < offset) return EVM_OUT_OF_GAS; // 64-bit overflow: unaffordable
@@ -190,11 +234,11 @@ static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size) {
   uint64_t cost = memory_gas(words);
   if (cost > vm->memory_cost) {
     int64_t charge = (int64_t)(cost - vm->memory_cost);
-    if (vm->gas < charge) {
-      vm->gas = 0;
+    if (*gas < charge) {
+      *gas = 0;
       return EVM_OUT_OF_GAS;
     }
-    vm->gas -= charge;
+    *gas -= charge;
     vm->memory_cost = cost;
   }
   vm->memory_size = words * 32;
@@ -288,71 +332,66 @@ static void analyze(evm_vm *vm) {
 #define ENTER_BLOCK(at)                                       \
   do {                                                        \
     const block_info b_ = vm->blocks[vm->block_at[at]];       \
-    if (vm->gas < b_.gas) HALT(EVM_OUT_OF_GAS);               \
-    vm->gas -= b_.gas;                                        \
-    if (vm->sp < b_.stack_req) HALT(EVM_STACK_UNDERFLOW);     \
-    if (vm->sp + b_.stack_max_growth > STACK_LIMIT)           \
+    if (gas < b_.gas) HALT(EVM_OUT_OF_GAS);                   \
+    gas -= b_.gas;                                            \
+    const int height_ = (int)(sp - vm->stack);                \
+    if (height_ < b_.stack_req) HALT(EVM_STACK_UNDERFLOW);    \
+    if (height_ + b_.stack_max_growth > STACK_LIMIT)          \
       HALT(EVM_STACK_OVERFLOW);                               \
   } while (0)
 
 static evm_status interpret(evm_vm *vm) {
   int pc = 0;
+  u256 *sp = vm->stack + vm->sp;
+  int64_t gas = vm->gas;
+  // Hoisted for the same reason as `sp` and `gas`: reached through `vm` these
+  // were reloaded on every instruction.
+  const uint8_t *const code = vm->code;
+  const int code_len = vm->code_len;
   vm->output_len = 0;
 
-  if (vm->code_len == 0) return EVM_SUCCESS;
+  if (code_len == 0) return EVM_SUCCESS;
   ENTER_BLOCK(0);
 
   for (;;) {
-    if (pc >= vm->code_len) return EVM_SUCCESS; // running off the end is STOP
-    uint8_t op = vm->code[pc];
+    if (pc >= code_len) DONE(EVM_SUCCESS); // running off the end is STOP
+    const uint8_t op = code[pc];
 
     switch (op) {
       case 0x00: // STOP
-        return EVM_SUCCESS;
+        DONE(EVM_SUCCESS);
 
-      case 0x01: { // ADD
-        u256 a = POP(), b = POP();
-        PUSH(u256_add(a, b));
+      case 0x01: // ADD
+        BINARY(u256_add(a, b));
         break;
-      }
-      case 0x02: { // MUL
-        u256 a = POP(), b = POP();
-        PUSH(u256_mul(a, b));
+      case 0x02: // MUL
+        BINARY(u256_mul(a, b));
         break;
-      }
-      case 0x03: { // SUB
-        u256 a = POP(), b = POP();
-        PUSH(u256_sub(a, b));
+      case 0x03: // SUB
+        BINARY(u256_sub(a, b));
         break;
-      }
-      case 0x04: { // DIV
-        u256 a = POP(), b = POP();
-        PUSH(u256_div(a, b));
+      case 0x04: // DIV
+        BINARY(u256_div(a, b));
         break;
-      }
-      case 0x05: { // SDIV
-        u256 a = POP(), b = POP();
-        PUSH(u256_sdiv(a, b));
+      case 0x05: // SDIV
+        BINARY(u256_sdiv(a, b));
         break;
-      }
-      case 0x06: { // MOD
-        u256 a = POP(), b = POP();
-        PUSH(u256_mod(a, b));
+      case 0x06: // MOD
+        BINARY(u256_mod(a, b));
         break;
-      }
-      case 0x07: { // SMOD
-        u256 a = POP(), b = POP();
-        PUSH(u256_smod(a, b));
+      case 0x07: // SMOD
+        BINARY(u256_smod(a, b));
         break;
-      }
       case 0x08: { // ADDMOD
-        u256 a = POP(), b = POP(), m = POP();
-        PUSH(u256_addmod(a, b, m));
+        const u256 a = sp[-1], b = sp[-2], m = sp[-3];
+        sp[-3] = u256_addmod(a, b, m);
+        sp -= 2;
         break;
       }
       case 0x09: { // MULMOD
-        u256 a = POP(), b = POP(), m = POP();
-        PUSH(u256_mulmod(a, b, m));
+        const u256 a = sp[-1], b = sp[-2], m = sp[-3];
+        sp[-3] = u256_mulmod(a, b, m);
+        sp -= 2;
         break;
       }
       case 0x0a: { // EXP
@@ -369,94 +408,61 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(u256_exp(base, e));
         break;
       }
-      case 0x0b: { // SIGNEXTEND
-        u256 k = POP(), v = POP();
-        PUSH(u256_signextend(k, v));
+      case 0x0b: // SIGNEXTEND
+        BINARY(u256_signextend(a, b));
         break;
-      }
 
-      case 0x10: { // LT
-        u256 a = POP(), b = POP();
-        PUSH(u256_from_u64(u256_cmp(a, b) < 0));
+      case 0x10: // LT
+        BINARY(u256_from_u64(u256_cmp(a, b) < 0));
         break;
-      }
-      case 0x11: { // GT
-        u256 a = POP(), b = POP();
-        PUSH(u256_from_u64(u256_cmp(a, b) > 0));
+      case 0x11: // GT
+        BINARY(u256_from_u64(u256_cmp(a, b) > 0));
         break;
-      }
-      case 0x12: { // SLT
-        u256 a = POP(), b = POP();
-        int sa = u256_sign(a), sb = u256_sign(b);
-        PUSH(u256_from_u64(sa != sb ? sa : u256_cmp(a, b) < 0));
+      case 0x12: // SLT
+        BINARY(u256_from_u64(u256_sign(a) != u256_sign(b) ? u256_sign(a)
+                                          : u256_cmp(a, b) < 0));
         break;
-      }
-      case 0x13: { // SGT
-        u256 a = POP(), b = POP();
-        int sa = u256_sign(a), sb = u256_sign(b);
-        PUSH(u256_from_u64(sa != sb ? sb : u256_cmp(a, b) > 0));
+      case 0x13: // SGT
+        BINARY(u256_from_u64(u256_sign(a) != u256_sign(b) ? u256_sign(b)
+                                          : u256_cmp(a, b) > 0));
         break;
-      }
-      case 0x14: { // EQ
-        u256 a = POP(), b = POP();
-        PUSH(u256_from_u64(u256_eq(a, b)));
+      case 0x14: // EQ
+        BINARY(u256_from_u64(u256_eq(a, b)));
         break;
-      }
-      case 0x15: { // ISZERO
-        u256 a = POP();
-        PUSH(u256_from_u64(u256_is_zero(a)));
+      case 0x15: // ISZERO
+        UNARY(u256_from_u64(u256_is_zero(a)));
         break;
-      }
-      case 0x16: { // AND
-        u256 a = POP(), b = POP();
-        PUSH(u256_and(a, b));
+      case 0x16: // AND
+        BINARY(u256_and(a, b));
         break;
-      }
-      case 0x17: { // OR
-        u256 a = POP(), b = POP();
-        PUSH(u256_or(a, b));
+      case 0x17: // OR
+        BINARY(u256_or(a, b));
         break;
-      }
-      case 0x18: { // XOR
-        u256 a = POP(), b = POP();
-        PUSH(u256_xor(a, b));
+      case 0x18: // XOR
+        BINARY(u256_xor(a, b));
         break;
-      }
-      case 0x19: { // NOT
-        u256 a = POP();
-        PUSH(u256_not(a));
+      case 0x19: // NOT
+        UNARY(u256_not(a));
         break;
-      }
-      case 0x1a: { // BYTE
-        u256 i = POP(), v = POP();
-        PUSH(u256_byte(i, v));
+      case 0x1a: // BYTE
+        BINARY(u256_byte(a, b));
         break;
-      }
-      case 0x1b: { // SHL
-        u256 n = POP(), v = POP();
-        uint64_t s = u256_to_u64_sat(n);
-        PUSH(s >= 256 ? U256_ZERO : u256_shl(v, (uint32_t)s));
+      case 0x1b: // SHL
+        BINARY(u256_to_u64_sat(a) >= 256 ? U256_ZERO : u256_shl(b, (uint32_t)u256_to_u64_sat(a)));
         break;
-      }
-      case 0x1c: { // SHR
-        u256 n = POP(), v = POP();
-        uint64_t s = u256_to_u64_sat(n);
-        PUSH(s >= 256 ? U256_ZERO : u256_shr(v, (uint32_t)s));
+      case 0x1c: // SHR
+        BINARY(u256_to_u64_sat(a) >= 256 ? U256_ZERO : u256_shr(b, (uint32_t)u256_to_u64_sat(a)));
         break;
-      }
-      case 0x1d: { // SAR
-        u256 n = POP(), v = POP();
-        uint64_t s = u256_to_u64_sat(n);
-        PUSH(u256_sar(v, s >= 256 ? 256 : (uint32_t)s));
+      case 0x1d: // SAR
+        BINARY(u256_sar(b, u256_to_u64_sat(a) >= 256 ? 256 : (uint32_t)u256_to_u64_sat(a)));
         break;
-      }
 
       case 0x20: { // KECCAK256
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
         if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         USE_GAS(6 * ((n + 31) / 32));
-        evm_status s = memory_expand(vm, o, n);
+        evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         uint8_t hash[32];
         keccak256(vm->memory + o, n, hash);
@@ -481,13 +487,13 @@ static evm_status interpret(evm_vm *vm) {
                  n = u256_to_u64_sat(len);
         if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         USE_GAS(3 * ((n + 31) / 32));
-        evm_status st = memory_expand(vm, d, n);
+        evm_status st = memory_expand(vm, d, n, &gas);
         if (st != EVM_SUCCESS) HALT(st);
         copy_padded(vm->memory + d, vm->input, (uint64_t)vm->input_len, s, n);
         break;
       }
       case 0x38: // CODESIZE
-        PUSH(u256_from_u64((uint64_t)vm->code_len));
+        PUSH(u256_from_u64((uint64_t)code_len));
         break;
       case 0x39: { // CODECOPY
         u256 dst = POP(), src = POP(), len = POP();
@@ -495,20 +501,20 @@ static evm_status interpret(evm_vm *vm) {
                  n = u256_to_u64_sat(len);
         if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
         USE_GAS(3 * ((n + 31) / 32));
-        evm_status st = memory_expand(vm, d, n);
+        evm_status st = memory_expand(vm, d, n, &gas);
         if (st != EVM_SUCCESS) HALT(st);
-        copy_padded(vm->memory + d, vm->code, (uint64_t)vm->code_len, s, n);
+        copy_padded(vm->memory + d, code, (uint64_t)code_len, s, n);
         break;
       }
 
       case 0x50: // POP
-        vm->sp--;
+        sp--;
         break;
       case 0x51: { // MLOAD
         u256 off = POP();
         uint64_t o = u256_to_u64_sat(off);
         if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
-        evm_status s = memory_expand(vm, o, 32);
+        evm_status s = memory_expand(vm, o, 32, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         PUSH(u256_from_be(vm->memory + o));
         break;
@@ -517,7 +523,7 @@ static evm_status interpret(evm_vm *vm) {
         u256 off = POP(), v = POP();
         uint64_t o = u256_to_u64_sat(off);
         if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
-        evm_status s = memory_expand(vm, o, 32);
+        evm_status s = memory_expand(vm, o, 32, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         u256_to_be(v, vm->memory + o);
         break;
@@ -526,7 +532,7 @@ static evm_status interpret(evm_vm *vm) {
         u256 off = POP(), v = POP();
         uint64_t o = u256_to_u64_sat(off);
         if (o > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
-        evm_status s = memory_expand(vm, o, 1);
+        evm_status s = memory_expand(vm, o, 1, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         vm->memory[o] = (uint8_t)(v.l[0] & 0xff);
         break;
@@ -534,7 +540,7 @@ static evm_status interpret(evm_vm *vm) {
       case 0x56: { // JUMP
         u256 t = POP();
         uint64_t d = u256_to_u64_sat(t);
-        if (d >= (uint64_t)vm->code_len || !JUMPDEST_GET(d))
+        if (d >= (uint64_t)code_len || !JUMPDEST_GET(d))
           HALT(EVM_INVALID_JUMP);
         // The target is a JUMPDEST, which enters its own block below.
         pc = (int)d;
@@ -544,14 +550,14 @@ static evm_status interpret(evm_vm *vm) {
         u256 t = POP(), cond = POP();
         if (!u256_is_zero(cond)) {
           uint64_t d = u256_to_u64_sat(t);
-          if (d >= (uint64_t)vm->code_len || !JUMPDEST_GET(d))
+          if (d >= (uint64_t)code_len || !JUMPDEST_GET(d))
             HALT(EVM_INVALID_JUMP);
           pc = (int)d;
           continue;
         }
         // Falling through starts a new block, since this one ended here.
         pc++;
-        if (pc >= vm->code_len) return EVM_SUCCESS;
+        if (pc >= code_len) DONE(EVM_SUCCESS);
         ENTER_BLOCK(pc);
         continue;
       }
@@ -562,7 +568,7 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(u256_from_u64(vm->memory_size));
         break;
       case 0x5a: // GAS
-        PUSH(u256_from_u64((uint64_t)vm->gas));
+        PUSH(u256_from_u64((uint64_t)gas));
         break;
       case 0x5b: // JUMPDEST
         ENTER_BLOCK(pc);
@@ -575,22 +581,22 @@ static evm_status interpret(evm_vm *vm) {
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
         if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
-        evm_status s = memory_expand(vm, o, n);
+        evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         mem_copy(vm->output, vm->memory + o, n);
         vm->output_len = (int)n;
-        return EVM_SUCCESS;
+        DONE(EVM_SUCCESS);
       }
       case 0xfd: { // REVERT
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
         if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
-        evm_status s = memory_expand(vm, o, n);
+        evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         mem_copy(vm->output, vm->memory + o, n);
         vm->output_len = (int)n;
         // REVERT is not an exceptional halt: unspent gas is returned.
-        return EVM_REVERT;
+        DONE(EVM_REVERT);
       }
 
       // PUSH, DUP, and SWAP get explicit labels rather than range tests under
@@ -598,14 +604,14 @@ static evm_status interpret(evm_vm *vm) {
       // this lets the jump table dispatch them directly instead of falling
       // through to a chain of comparisons.
       case 0x60: // PUSH1 — the single most common opcode in compiled output
-        PUSH(u256_from_u64(pc + 1 < vm->code_len ? vm->code[pc + 1] : 0));
+        PUSH(u256_from_u64(pc + 1 < code_len ? code[pc + 1] : 0));
         pc += 2;
         continue;
 
       case 0x61 ... 0x67: { // PUSH2..PUSH8 fit in one limb
         const int n = op - 0x5f;
-        if (pc + 1 + n <= vm->code_len) {
-          const uint8_t *p = vm->code + pc + 1;
+        if (pc + 1 + n <= code_len) {
+          const uint8_t *p = code + pc + 1;
           uint64_t v = 0;
           for (int k = 0; k < n; k++) v = (v << 8) | p[k];
           PUSH(u256_from_u64(v));
@@ -617,8 +623,8 @@ static evm_status interpret(evm_vm *vm) {
 
       case 0x68 ... 0x7f: { // PUSH9..PUSH32
         const int n = op - 0x5f;
-        if (pc + 1 + n <= vm->code_len) {
-          PUSH(u256_from_be_n(vm->code + pc + 1, n));
+        if (pc + 1 + n <= code_len) {
+          PUSH(u256_from_be_n(code + pc + 1, n));
           pc += 1 + n;
           continue;
         }
@@ -626,9 +632,9 @@ static evm_status interpret(evm_vm *vm) {
         // An immediate running past the end of code is zero-padded on the
         // right. Only reachable at the very end of a program.
         const int size = op - 0x5f;
-        int avail = vm->code_len - pc - 1;
+        int avail = code_len - pc - 1;
         if (avail < 0) avail = 0;
-        u256 v = u256_from_be_n(vm->code + pc + 1, avail);
+        u256 v = u256_from_be_n(code + pc + 1, avail);
         v = u256_shl(v, (uint32_t)((size - avail) * 8));
         PUSH(v);
         pc += 1 + size;
@@ -662,7 +668,14 @@ static evm_status interpret(evm_vm *vm) {
 // Pointer-returning exports hand back offsets into linear memory under wasm.
 // ---------------------------------------------------------------------------
 
+// Under wasm the export table needs explicit names. Natively the plain symbol
+// name is the export, and `export_name` is ignored with a warning, so only
+// apply it where it means something.
+#ifdef __wasm__
 #define EXPORT(name) __attribute__((export_name(name))) __attribute__((used))
+#else
+#define EXPORT(name) __attribute__((used))
+#endif
 
 EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   if (memory_cap <= 0) memory_cap = DEFAULT_MEMORY;
@@ -725,6 +738,9 @@ EXPORT("evm_stack_peek") int evm_stack_peek(evm_vm *vm, int i) {
  */
 EXPORT("evm_set_code")
 int evm_set_code(evm_vm *vm, int code_len) {
+  // Invalidate first, so a rejected length leaves the VM unrunnable rather
+  // than letting `evm_run` execute the previous program's analysis.
+  vm->analyzed = 0;
   if (code_len < 0 || code_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
   vm->code_len = code_len;
   analyze(vm);

@@ -21,6 +21,19 @@ typedef short int16_t;
 typedef int int32_t;
 typedef long long int64_t;
 
+// x86-64 and aarch64 have 64x64->128 multiply and 128/64 divide as single
+// instructions, reachable through `__int128`. wasm32 *defines*
+// `__SIZEOF_INT128__` but has neither: LLVM lowers those operations to
+// `__multi3`/`__udivti3` libcalls that do not exist in a freestanding build. So
+// gate on having the hardware, not on the type existing.
+//
+// Define `OX_NO_INT128` to force the portable path on a native target. That is
+// how the wasm code paths get differential-tested against the native ones
+// without a wasm runtime in the loop.
+#if defined(__SIZEOF_INT128__) && !defined(__wasm__) && !defined(OX_NO_INT128)
+#define OX_HAS_INT128 1
+#endif
+
 typedef struct {
   uint64_t l[4];
 } u256;
@@ -104,8 +117,14 @@ static inline u256 u256_sub(u256 a, u256 b) {
 
 static inline u256 u256_neg(u256 a) { return u256_add(u256_not(a), U256_ONE); }
 
-// 64x64 -> 128 without relying on __int128, which wasm32 does not have.
+/** 64x64 -> 128 product. */
 static inline void mul64(uint64_t a, uint64_t b, uint64_t *lo, uint64_t *hi) {
+#ifdef OX_HAS_INT128
+  const unsigned __int128 p = (unsigned __int128)a * b;
+  *lo = (uint64_t)p;
+  *hi = (uint64_t)(p >> 64);
+#else
+  // wasm32 has no 64x64->128, so decompose into four 32x32 products.
   uint64_t a0 = a & 0xffffffffULL, a1 = a >> 32;
   uint64_t b0 = b & 0xffffffffULL, b1 = b >> 32;
   uint64_t p00 = a0 * b0;
@@ -115,6 +134,7 @@ static inline void mul64(uint64_t a, uint64_t b, uint64_t *lo, uint64_t *hi) {
   uint64_t mid = (p00 >> 32) + (p01 & 0xffffffffULL) + (p10 & 0xffffffffULL);
   *lo = (mid << 32) | (p00 & 0xffffffffULL);
   *hi = p11 + (p01 >> 32) + (p10 >> 32) + (mid >> 32);
+#endif
 }
 
 /** Full 256x256 -> 512 product. `out` receives 8 limbs, least-significant first. */
@@ -136,11 +156,29 @@ static inline void u256_mul_full(u256 a, u256 b, uint64_t out[8]) {
   }
 }
 
-/** Wrapping 256-bit product (the MUL opcode). */
+/**
+ * Wrapping 256-bit product (the MUL opcode).
+ *
+ * Only the low four limbs survive, so the partial products that land entirely
+ * above limb 3 are never computed: ten 64x64 multiplies instead of the sixteen
+ * a full 512-bit product needs.
+ */
 static inline u256 u256_mul(u256 a, u256 b) {
-  uint64_t full[8];
-  u256_mul_full(a, b, full);
-  return (u256){{full[0], full[1], full[2], full[3]}};
+  u256 r = U256_ZERO;
+  for (int i = 0; i < 4; i++) {
+    uint64_t carry = 0;
+    for (int j = 0; i + j < 4; j++) {
+      uint64_t lo, hi;
+      mul64(a.l[i], b.l[j], &lo, &hi);
+      uint64_t s = r.l[i + j] + lo;
+      hi += (s < lo);
+      uint64_t t = s + carry;
+      hi += (t < s);
+      r.l[i + j] = t;
+      carry = hi;
+    }
+  }
+  return r;
 }
 
 static inline u256 u256_shl(u256 a, uint32_t n) {
@@ -305,6 +343,167 @@ static inline int u256_is_u32(u256 a) {
   return (a.l[1] | a.l[2] | a.l[3]) == 0 && (a.l[0] >> 32) == 0;
 }
 
+/** Whether `a` fits in 64 bits. */
+static inline int u256_is_u64(u256 a) {
+  return (a.l[1] | a.l[2] | a.l[3]) == 0;
+}
+
+// A 128-by-64 division is the primitive every long-division step needs. x86-64
+// and aarch64 have it via `__int128`, which is what `ruint` uses.
+//
+// wasm32 *defines* `__SIZEOF_INT128__` but has no such instruction: LLVM lowers
+// the operations to `__udivti3`/`__multi3` libcalls that do not exist in a
+// freestanding build. So gate on having a real hardware divide, not on the type
+// existing, and fall back to Knuth's two-digit estimate over 32-bit halves
+// (Hacker's Delight `divlu`) everywhere else.
+#ifdef OX_HAS_INT128
+/** Divides `(hi:lo)` by `d`, requiring `hi < d`. Returns the quotient. */
+static inline uint64_t udiv128by64(uint64_t hi, uint64_t lo, uint64_t d,
+                                   uint64_t *rem) {
+  const unsigned __int128 n = ((unsigned __int128)hi << 64) | lo;
+  *rem = (uint64_t)(n % d);
+  return (uint64_t)(n / d);
+}
+#else
+static inline int clz64(uint64_t x) { return __builtin_clzll(x); }
+
+static uint64_t udiv128by64(uint64_t hi, uint64_t lo, uint64_t d,
+                            uint64_t *rem) {
+  const int s = clz64(d);
+  d <<= s;
+  if (s) {
+    hi = (hi << s) | (lo >> (64 - s));
+    lo <<= s;
+  }
+  const uint64_t dh = d >> 32, dl = d & 0xffffffffULL;
+  const uint64_t un1 = lo >> 32, un0 = lo & 0xffffffffULL;
+
+  uint64_t q1 = hi / dh;
+  uint64_t rhat = hi - q1 * dh;
+  while (q1 >> 32 || q1 * dl > ((rhat << 32) | un1)) {
+    q1--;
+    rhat += dh;
+    if (rhat >> 32) break;
+  }
+  const uint64_t u21 = ((hi << 32) | un1) - q1 * d;
+
+  uint64_t q0 = u21 / dh;
+  rhat = u21 - q0 * dh;
+  while (q0 >> 32 || q0 * dl > ((rhat << 32) | un0)) {
+    q0--;
+    rhat += dh;
+    if (rhat >> 32) break;
+  }
+  *rem = (((u21 << 32) | un0) - q0 * d) >> s;
+  return (q1 << 32) | q0;
+}
+#endif
+
+#ifdef OX_HAS_INT128
+/**
+ * Möller-Granlund reciprocal for a normalized divisor: `floor((2^128-1)/d) -
+ * 2^64`, which is exactly the low 64 bits of that quotient.
+ *
+ * Requires the top bit of `d` to be set.
+ */
+static inline uint64_t reciprocal_2by1(uint64_t d) {
+  return (uint64_t)(~(unsigned __int128)0 / d);
+}
+
+/**
+ * Divides `(u1:u0)` by a normalized `d` given its reciprocal, using two
+ * multiplies in place of a hardware divide.
+ *
+ * x86-64's 64-bit `div` is data dependent — roughly 30 cycles for small
+ * operands and 90 for large ones — so a chain of them dominates any wide
+ * division. This is Möller-Granlund algorithm 4, which is what `ruint` uses.
+ */
+static inline uint64_t div_2by1(uint64_t u1, uint64_t u0, uint64_t d,
+                                uint64_t v, uint64_t *rem) {
+  unsigned __int128 q = (unsigned __int128)v * u1;
+  q += ((unsigned __int128)u1 << 64) | u0;
+  uint64_t q1 = (uint64_t)(q >> 64) + 1;
+  uint64_t q0 = (uint64_t)q;
+  uint64_t r = u0 - q1 * d;
+  if (r > q0) {
+    q1--;
+    r += d;
+  }
+  if (r >= d) {
+    q1++;
+    r -= d;
+  }
+  *rem = r;
+  return q1;
+}
+#endif
+
+/**
+ * Divides by a 64-bit divisor.
+ *
+ * Real bytecode divides by values that fit in 64 bits far more often than by
+ * full-width ones — small constants, powers of two, and `1e18`-style decimal
+ * scales — so this avoids algorithm D's normalization and correction entirely.
+ */
+static inline u256 u256_divmod_u64(u256 a, uint64_t d, uint64_t *rem) {
+  u256 q = U256_ZERO;
+#ifdef OX_HAS_INT128
+  // One hardware divide to build the reciprocal, then four multiply-based
+  // steps, rather than four hardware divides.
+  const int s = __builtin_clzll(d);
+  const uint64_t dn = d << s;
+  const uint64_t v = reciprocal_2by1(dn);
+
+  // Shift the numerator left by `s` to match, keeping the bits shifted out of
+  // the top limb as the initial remainder.
+  uint64_t n[4];
+  uint64_t r;
+  if (s == 0) {
+    n[3] = a.l[3];
+    n[2] = a.l[2];
+    n[1] = a.l[1];
+    n[0] = a.l[0];
+    r = 0;
+  } else {
+    r = a.l[3] >> (64 - s);
+    n[3] = (a.l[3] << s) | (a.l[2] >> (64 - s));
+    n[2] = (a.l[2] << s) | (a.l[1] >> (64 - s));
+    n[1] = (a.l[1] << s) | (a.l[0] >> (64 - s));
+    n[0] = a.l[0] << s;
+  }
+  for (int i = 3; i >= 0; i--) q.l[i] = div_2by1(r, n[i], dn, v, &r);
+  *rem = r >> s;
+#else
+  uint64_t r = 0;
+  for (int i = 3; i >= 0; i--) q.l[i] = udiv128by64(r, a.l[i], d, &r);
+  *rem = r;
+#endif
+  return q;
+}
+
+/** Reduces an 8-limb value modulo a 64-bit `m`. */
+static inline uint64_t u512_mod_u64(const uint64_t *full, uint64_t m) {
+#ifdef OX_HAS_INT128
+  const int s = __builtin_clzll(m);
+  const uint64_t mn = m << s;
+  const uint64_t v = reciprocal_2by1(mn);
+  // Dividing `(N << s)` by `(m << s)` leaves a remainder of `(N mod m) << s`,
+  // so the numerator is fed in pre-shifted and the result shifted back.
+  uint64_t r = s ? (full[7] >> (64 - s)) : 0;
+  for (int i = 7; i >= 0; i--) {
+    const uint64_t lo =
+        s == 0 ? full[i]
+               : ((full[i] << s) | (i > 0 ? full[i - 1] >> (64 - s) : 0));
+    div_2by1(r, lo, mn, v, &r);
+  }
+  return r >> s;
+#else
+  uint64_t r = 0;
+  for (int i = 7; i >= 0; i--) udiv128by64(r, full[i], m, &r);
+  return r;
+#endif
+}
+
 static inline void u256_to_h32(u256 a, uint32_t *out) {
   for (int i = 0; i < 4; i++) {
     out[i * 2] = (uint32_t)a.l[i];
@@ -323,9 +522,9 @@ static inline u256 u256_from_h32(const uint32_t *in) {
 static inline u256 u256_div(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   if (u256_cmp(a, b) < 0) return U256_ZERO;
-  if (u256_is_u32(b)) {
-    uint32_t r;
-    return u256_divmod_u32(a, (uint32_t)b.l[0], &r);
+  if (u256_is_u64(b)) {
+    uint64_t r;
+    return u256_divmod_u64(a, b.l[0], &r);
   }
   // `divmod_knuth` only writes `quot[0..n32-1]`, so a trimmed numerator leaves
   // the upper halves untouched — they must start at zero.
@@ -341,9 +540,9 @@ static inline u256 u256_div(u256 a, u256 b) {
 static inline u256 u256_mod(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   if (u256_cmp(a, b) < 0) return a;
-  if (u256_is_u32(b)) {
-    uint32_t r;
-    u256_divmod_u32(a, (uint32_t)b.l[0], &r);
+  if (u256_is_u64(b)) {
+    uint64_t r;
+    u256_divmod_u64(a, b.l[0], &r);
     return u256_from_u64(r);
   }
   uint32_t n[8], d[8], q[8], r[8] = {0};
@@ -376,10 +575,15 @@ static inline u256 u256_smod(u256 a, u256 b) {
 /** EVM ADDMOD — the sum is computed at 257 bits before reduction. */
 static inline u256 u256_addmod(u256 a, u256 b, u256 m) {
   if (u256_is_zero(m)) return U256_ZERO;
-  uint32_t n[10] = {0}, d[8], q[10], r[8] = {0};
   u256 s = u256_add(a, b);
   // Recover the carry bit lost by the wrapping add.
   int carry = u256_cmp(s, a) < 0;
+  if (u256_is_u64(m)) {
+    const uint64_t wide[8] = {s.l[0],           s.l[1], s.l[2], s.l[3],
+                              (uint64_t)carry, 0,      0,      0};
+    return u256_from_u64(u512_mod_u64(wide, m.l[0]));
+  }
+  uint32_t n[10] = {0}, d[8], q[10], r[8] = {0};
   u256_to_h32(s, n);
   n[8] = carry;
   u256_to_h32(m, d);
@@ -392,6 +596,7 @@ static inline u256 u256_mulmod(u256 a, u256 b, u256 m) {
   if (u256_is_zero(m)) return U256_ZERO;
   uint64_t full[8];
   u256_mul_full(a, b, full);
+  if (u256_is_u64(m)) return u256_from_u64(u512_mod_u64(full, m.l[0]));
   uint32_t n[16], d[8], q[16], r[8] = {0};
   for (int i = 0; i < 8; i++) {
     n[i * 2] = (uint32_t)full[i];
