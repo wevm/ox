@@ -65,17 +65,40 @@ static const op_info op_table[256] = {
     [0x37] = OP(3, 3, 0),      // CALLDATACOPY (+3 per word, + memory)
     [0x38] = OP(2, 0, 1),      // CODESIZE
     [0x39] = OP(3, 3, 0),      // CODECOPY     (+3 per word, + memory)
+    [0x3a] = OP(2, 0, 1),      // GASPRICE
+    [0x3b] = OP(0, 1, 1),      // EXTCODESIZE  (warm/cold)
+    [0x3c] = OP(0, 4, 0),      // EXTCODECOPY  (warm/cold, +3 per word, + memory)
+    [0x3d] = OP(2, 0, 1),      // RETURNDATASIZE
+    [0x3e] = OP(3, 3, 0),      // RETURNDATACOPY (+3 per word, + memory)
+    [0x3f] = OP(0, 1, 1),      // EXTCODEHASH  (warm/cold)
+
+    [0x40] = OP(20, 1, 1),     // BLOCKHASH
+    [0x41] = OP(2, 0, 1),      // COINBASE
+    [0x42] = OP(2, 0, 1),      // TIMESTAMP
+    [0x43] = OP(2, 0, 1),      // NUMBER
+    [0x44] = OP(2, 0, 1),      // PREVRANDAO
+    [0x45] = OP(2, 0, 1),      // GASLIMIT
+    [0x46] = OP(2, 0, 1),      // CHAINID
+    [0x47] = OP(5, 0, 1),      // SELFBALANCE
+    [0x48] = OP(2, 0, 1),      // BASEFEE
+    [0x49] = OP(3, 1, 1),      // BLOBHASH
+    [0x4a] = OP(2, 0, 1),      // BLOBBASEFEE
 
     [0x50] = OP(2, 1, 0),      // POP
     [0x51] = OP(3, 1, 1),      // MLOAD        (+ memory)
     [0x52] = OP(3, 2, 0),      // MSTORE       (+ memory)
     [0x53] = OP(3, 2, 0),      // MSTORE8      (+ memory)
+    [0x54] = OP(0, 1, 1),      // SLOAD        (warm/cold)
+    [0x55] = OP(0, 2, 0),      // SSTORE       (EIP-2200/3529)
     [0x56] = OP_END(8, 1, 0),  // JUMP
     [0x57] = OP_END(10, 2, 0), // JUMPI
     [0x58] = OP(2, 0, 1),      // PC
     [0x59] = OP(2, 0, 1),      // MSIZE
     [0x5a] = OP(2, 0, 1),      // GAS
     [0x5b] = OP(1, 0, 0),      // JUMPDEST
+    [0x5c] = OP(100, 1, 1),    // TLOAD
+    [0x5d] = OP(100, 2, 0),    // TSTORE
+    [0x5e] = OP(3, 3, 0),      // MCOPY        (+3 per word, + memory)
     [0x5f] = OP(2, 0, 1),      // PUSH0
 
     [0x60] = OP(3, 0, 1), [0x61] = OP(3, 0, 1), [0x62] = OP(3, 0, 1),
@@ -106,8 +129,18 @@ static const op_info op_table[256] = {
     [0x9c] = OP(3, 14, 14), [0x9d] = OP(3, 15, 15), [0x9e] = OP(3, 16, 16),
     [0x9f] = OP(3, 17, 17), // SWAP1..SWAP16
 
+    // LOG<n>: 375 base plus 375 per topic, charged statically; the per-byte
+    // component and memory expansion are inline.
+    [0xa0] = OP(375, 2, 0),    // LOG0
+    [0xa1] = OP(750, 3, 0),    // LOG1
+    [0xa2] = OP(1125, 4, 0),   // LOG2
+    [0xa3] = OP(1500, 5, 0),   // LOG3
+    [0xa4] = OP(1875, 6, 0),   // LOG4
+
     [0xf3] = OP_END(0, 2, 0),  // RETURN (+ memory)
     [0xfd] = OP_END(0, 2, 0),  // REVERT (+ memory)
+    [0xfe] = OP_END(0, 0, 0),  // INVALID: defined, and always halts
+    [0xff] = OP_END(0, 1, 0),  // SELFDESTRUCT (EIP-6780)
 };
 
 #undef OP

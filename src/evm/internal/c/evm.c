@@ -11,6 +11,7 @@
 
 #include "keccak.h"
 #include "opcodes.h"
+#include "state.h"
 #include "u256.h"
 
 // ---------------------------------------------------------------------------
@@ -73,12 +74,41 @@ typedef enum {
   EVM_OUT_OF_MEMORY = 7,
   EVM_CODE_TOO_LARGE = 8,
   EVM_INPUT_TOO_LARGE = 9,
+  EVM_STATIC_VIOLATION = 10,
   // Reserved for the Phase 3 suspend/resume protocol. The driver treats any
   // status >= EVM_NEEDS_ACCOUNT as "fill the request buffer and resume".
   EVM_NEEDS_ACCOUNT = 64,
   EVM_NEEDS_STORAGE = 65,
   EVM_NEEDS_PRECOMPILE = 66,
 } evm_status;
+
+/** Block and transaction environment, supplied by the host before a run. */
+typedef struct {
+  uint8_t origin[20];
+  uint8_t coinbase[20];
+  u256 gas_price;
+  u256 base_fee;
+  u256 blob_base_fee;
+  u256 prev_randao;
+  uint64_t number;
+  uint64_t timestamp;
+  uint64_t block_gas_limit;
+  u256 chain_id;
+  u256 blob_hashes[8];
+  int32_t blob_count;
+  // The 256 most recent block hashes, index 0 being `number - 1`.
+  uint8_t block_hashes[256][32];
+  int32_t block_hash_count;
+} evm_context;
+
+// EIP-2929 access costs.
+#define GAS_COLD_ACCOUNT 2600
+#define GAS_WARM 100
+#define GAS_COLD_SLOAD 2100
+#define GAS_SSET 20000
+#define GAS_SRESET 2900
+// EIP-3529 refunds.
+#define REFUND_SCLEAR 4800
 
 /**
  * Precomputed properties of a basic block.
@@ -124,6 +154,19 @@ typedef struct {
   // `evm_set_code` and reused across runs. revm caches the equivalent work in
   // `Bytecode::new_raw`; re-deriving it per call was costing ~50% of a run.
   int analyzed;
+
+  evm_state *st;
+  evm_context ctx;
+  // The frame currently executing.
+  int32_t self;        // account index of the executing address
+  uint8_t caller[20];
+  u256 call_value;
+  int is_static;
+  int depth;
+  uint8_t *returndata; // result of the most recent sub-call
+  int32_t returndata_len;
+  // Staging area the host reads and writes across the ABI boundary.
+  uint8_t *stage;
 } evm_vm;
 
 // ---------------------------------------------------------------------------
@@ -243,6 +286,20 @@ static evm_status memory_expand(evm_vm *vm, uint64_t offset, uint64_t size,
   }
   vm->memory_size = words * 32;
   return EVM_SUCCESS;
+}
+
+/** Extracts the low 20 bytes of a word as an address. */
+static inline void word_to_address(u256 w, uint8_t *out) {
+  uint8_t buf[32];
+  u256_to_be(w, buf);
+  for (int i = 0; i < 20; i++) out[i] = buf[12 + i];
+}
+
+static inline u256 address_to_word(const uint8_t *addr) {
+  uint8_t buf[32];
+  for (int i = 0; i < 12; i++) buf[i] = 0;
+  for (int i = 0; i < 20; i++) buf[12 + i] = addr[i];
+  return u256_from_be(buf);
 }
 
 /** Copies into memory from a source, zero-filling reads past the source end. */
@@ -577,6 +634,257 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(U256_ZERO);
         break;
 
+
+      case 0x30: // ADDRESS
+        PUSH(address_to_word(vm->st->accounts[vm->self].address));
+        break;
+      case 0x32: // ORIGIN
+        PUSH(address_to_word(vm->ctx.origin));
+        break;
+      case 0x33: // CALLER
+        PUSH(address_to_word(vm->caller));
+        break;
+      case 0x34: // CALLVALUE
+        PUSH(vm->call_value);
+        break;
+      case 0x3a: // GASPRICE
+        PUSH(vm->ctx.gas_price);
+        break;
+      case 0x41: // COINBASE
+        PUSH(address_to_word(vm->ctx.coinbase));
+        break;
+      case 0x42: // TIMESTAMP
+        PUSH(u256_from_u64(vm->ctx.timestamp));
+        break;
+      case 0x43: // NUMBER
+        PUSH(u256_from_u64(vm->ctx.number));
+        break;
+      case 0x44: // PREVRANDAO
+        PUSH(vm->ctx.prev_randao);
+        break;
+      case 0x45: // GASLIMIT
+        PUSH(u256_from_u64(vm->ctx.block_gas_limit));
+        break;
+      case 0x46: // CHAINID
+        PUSH(vm->ctx.chain_id);
+        break;
+      case 0x48: // BASEFEE
+        PUSH(vm->ctx.base_fee);
+        break;
+      case 0x4a: // BLOBBASEFEE
+        PUSH(vm->ctx.blob_base_fee);
+        break;
+      case 0x47: // SELFBALANCE
+        PUSH(vm->st->accounts[vm->self].balance);
+        break;
+      case 0x49: { // BLOBHASH
+        const uint64_t i = u256_to_u64_sat(POP());
+        PUSH(i < (uint64_t)vm->ctx.blob_count ? vm->ctx.blob_hashes[i]
+                                             : U256_ZERO);
+        break;
+      }
+      case 0x40: { // BLOCKHASH
+        const uint64_t n = u256_to_u64_sat(POP());
+        // Only the 256 blocks before the current one are addressable.
+        if (n >= vm->ctx.number || vm->ctx.number - n > 256) {
+          PUSH(U256_ZERO);
+        } else {
+          const uint64_t back = vm->ctx.number - n - 1;
+          PUSH(back < (uint64_t)vm->ctx.block_hash_count
+                   ? u256_from_be(vm->ctx.block_hashes[back])
+                   : U256_ZERO);
+        }
+        break;
+      }
+
+      case 0x31: { // BALANCE
+        uint8_t addr[20];
+        word_to_address(POP(), addr);
+        const int32_t a = account_intern(vm->st, addr);
+        if (a < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        PUSH(vm->st->accounts[a].balance);
+        break;
+      }
+      case 0x3b: { // EXTCODESIZE
+        uint8_t addr[20];
+        word_to_address(POP(), addr);
+        const int32_t a = account_intern(vm->st, addr);
+        if (a < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        PUSH(u256_from_u64((uint64_t)vm->st->accounts[a].code_len));
+        break;
+      }
+      case 0x3f: { // EXTCODEHASH
+        uint8_t addr[20];
+        word_to_address(POP(), addr);
+        const int32_t a = account_intern(vm->st, addr);
+        if (a < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        // A non-existent account hashes to zero, not to the empty-string hash.
+        PUSH(vm->st->accounts[a].exists
+                 ? u256_from_be(vm->st->accounts[a].code_hash)
+                 : U256_ZERO);
+        break;
+      }
+      case 0x3c: { // EXTCODECOPY
+        uint8_t addr[20];
+        word_to_address(POP(), addr);
+        const u256 dst = POP(), src = POP(), len = POP();
+        const int32_t a = account_intern(vm->st, addr);
+        if (a < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
+                       n = u256_to_u64_sat(len);
+        if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        USE_GAS(3 * ((n + 31) / 32));
+        evm_status st_ = memory_expand(vm, d, n, &gas);
+        if (st_ != EVM_SUCCESS) HALT(st_);
+        copy_padded(vm->memory + d,
+                    vm->st->code_arena + vm->st->accounts[a].code_offset,
+                    (uint64_t)vm->st->accounts[a].code_len, so, n);
+        break;
+      }
+
+      case 0x3d: // RETURNDATASIZE
+        PUSH(u256_from_u64((uint64_t)vm->returndata_len));
+        break;
+      case 0x3e: { // RETURNDATACOPY
+        const u256 dst = POP(), src = POP(), len = POP();
+        const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
+                       n = u256_to_u64_sat(len);
+        if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        // Unlike the other copies, reading past the end is an error rather
+        // than a zero-fill.
+        if (so + n > (uint64_t)vm->returndata_len || so + n < so)
+          HALT(EVM_INVALID_JUMP);
+        USE_GAS(3 * ((n + 31) / 32));
+        evm_status st_ = memory_expand(vm, d, n, &gas);
+        if (st_ != EVM_SUCCESS) HALT(st_);
+        mem_copy(vm->memory + d, vm->returndata + so, n);
+        break;
+      }
+
+      case 0x54: { // SLOAD
+        const u256 key = PEEK(0);
+        const int32_t slot = slot_intern(vm->st, vm->self, key);
+        if (slot < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_slot(vm->st, slot) ? GAS_COLD_SLOAD : GAS_WARM);
+        sp[-1] = vm->st->slots[slot].value;
+        break;
+      }
+      case 0x55: { // SSTORE
+        if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        const u256 key = POP(), value = POP();
+        const int32_t slot = slot_intern(vm->st, vm->self, key);
+        if (slot < 0) HALT(EVM_OUT_OF_MEMORY);
+        // EIP-2200: cost depends on the original, current, and new values.
+        if (warm_slot(vm->st, slot)) USE_GAS(GAS_COLD_SLOAD);
+        const u256 current = vm->st->slots[slot].value;
+        const u256 original = vm->st->slots[slot].original;
+        if (u256_eq(current, value)) {
+          USE_GAS(GAS_WARM);
+        } else if (u256_eq(original, current)) {
+          USE_GAS(u256_is_zero(original) ? GAS_SSET : GAS_SRESET);
+          if (!u256_is_zero(original) && u256_is_zero(value))
+            add_refund(vm->st, REFUND_SCLEAR);
+        } else {
+          USE_GAS(GAS_WARM);
+          // EIP-3529 refund bookkeeping when a slot is revisited.
+          if (!u256_is_zero(original)) {
+            if (u256_is_zero(current)) sub_refund(vm->st, REFUND_SCLEAR);
+            if (u256_is_zero(value)) add_refund(vm->st, REFUND_SCLEAR);
+          }
+          if (u256_eq(original, value)) {
+            if (u256_is_zero(original))
+              add_refund(vm->st, GAS_SSET - GAS_WARM);
+            else
+              add_refund(vm->st, GAS_SRESET - GAS_WARM);
+          }
+        }
+        set_storage(vm->st, slot, value);
+        break;
+      }
+      case 0x5c: { // TLOAD
+        const u256 key = PEEK(0);
+        sp[-1] = transient_load(vm->st, vm->self, key);
+        break;
+      }
+      case 0x5d: { // TSTORE
+        if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        const u256 key = POP(), value = POP();
+        transient_store(vm->st, vm->self, key, value);
+        break;
+      }
+
+      case 0x5e: { // MCOPY
+        const u256 dst = POP(), src = POP(), len = POP();
+        const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
+                       n = u256_to_u64_sat(len);
+        if (d > MAX_INPUT || so > MAX_INPUT || n > MAX_INPUT)
+          HALT(EVM_OUT_OF_GAS);
+        USE_GAS(3 * ((n + 31) / 32));
+        // Both ends must be covered before the move, and the regions may
+        // overlap in either direction.
+        evm_status st_ = memory_expand(vm, d > so ? d : so, n, &gas);
+        if (st_ != EVM_SUCCESS) HALT(st_);
+        if (n) __builtin_memmove(vm->memory + d, vm->memory + so,
+                                 (unsigned long)n);
+        break;
+      }
+
+      case 0xa0: case 0xa1: case 0xa2: case 0xa3: case 0xa4: { // LOG0..LOG4
+        if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        const int topics = op - 0xa0;
+        const u256 off = POP(), len = POP();
+        const uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
+        if (o > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
+        USE_GAS(8 * n);
+        evm_status st_ = memory_expand(vm, o, n, &gas);
+        if (st_ != EVM_SUCCESS) HALT(st_);
+        if (vm->st->log_count >= MAX_LOGS ||
+            vm->st->log_data_len + (int32_t)n > LOG_ARENA)
+          HALT(EVM_OUT_OF_MEMORY);
+        journal_push(vm->st, J_LOG, vm->st->log_count, U256_ZERO, 0, 0);
+        evm_log *lg = &vm->st->logs[vm->st->log_count++];
+        for (int i = 0; i < 20; i++)
+          lg->address[i] = vm->st->accounts[vm->self].address[i];
+        lg->topic_count = topics;
+        for (int i = 0; i < topics; i++) lg->topics[i] = POP();
+        lg->data_offset = vm->st->log_data_len;
+        lg->data_len = (int32_t)n;
+        mem_copy(vm->st->log_data + vm->st->log_data_len, vm->memory + o, n);
+        vm->st->log_data_len += (int32_t)n;
+        break;
+      }
+
+      case 0xfe: // INVALID
+        HALT(EVM_INVALID_OPCODE);
+
+      case 0xff: { // SELFDESTRUCT
+        if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        uint8_t addr[20];
+        word_to_address(POP(), addr);
+        const int32_t target = account_intern(vm->st, addr);
+        if (target < 0) HALT(EVM_OUT_OF_MEMORY);
+        USE_GAS(warm_account(vm->st, target) ? GAS_COLD_ACCOUNT : 0);
+        const u256 balance = vm->st->accounts[vm->self].balance;
+        if (!u256_is_zero(balance)) {
+          if (target != vm->self) {
+            set_balance(vm->st, target,
+                        u256_add(vm->st->accounts[target].balance, balance));
+            if (!vm->st->accounts[target].exists)
+              set_exists(vm->st, target, 1);
+          }
+          set_balance(vm->st, vm->self, U256_ZERO);
+        }
+        // EIP-6780: the account is only removed when created in this same
+        // transaction; otherwise only the balance moves.
+        if (vm->st->accounts[vm->self].created)
+          set_destroyed(vm->st, vm->self, 1);
+        DONE(EVM_SUCCESS);
+      }
+
       case 0xf3: { // RETURN
         u256 off = POP(), len = POP();
         uint64_t o = u256_to_u64_sat(off), n = u256_to_u64_sat(len);
@@ -687,9 +995,22 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   vm->block_at = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
   vm->memory = (uint8_t *)ox_alloc((uint64_t)memory_cap);
   vm->output = (uint8_t *)ox_alloc(MAX_INPUT);
+  vm->st = (evm_state *)ox_alloc(sizeof(evm_state));
+  vm->returndata = (uint8_t *)ox_alloc(MAX_INPUT);
+  vm->stage = (uint8_t *)ox_alloc(MAX_INPUT);
   if (!vm->jumpdest || !vm->blocks || !vm->block_at || !vm->memory ||
-      !vm->output)
+      !vm->output || !vm->st || !vm->returndata || !vm->stage)
     return 0;
+  vm->st->log_data = (uint8_t *)ox_alloc(LOG_ARENA);
+  vm->st->code_arena = (uint8_t *)ox_alloc(CODE_ARENA);
+  if (!vm->st->log_data || !vm->st->code_arena) return 0;
+  state_reset(vm->st);
+  vm->self = 0;
+  vm->is_static = 0;
+  vm->depth = 0;
+  vm->returndata_len = 0;
+  vm->call_value = U256_ZERO;
+  for (int i = 0; i < 20; i++) vm->caller[i] = 0;
   vm->memory_cap = (uint64_t)memory_cap;
   mem_zero(vm->memory, vm->memory_cap);
   vm->sp = 0;
@@ -767,4 +1088,218 @@ int evm_run(evm_vm *vm, int input_len, int64_t gas) {
   mem_zero(vm->memory, vm->memory_size);
   vm->memory_size = 0;
   return (int)interpret(vm);
+}
+
+// ---------------------------------------------------------------------------
+// State ABI
+//
+// Wide values cross the boundary through a staging buffer rather than as
+// arguments, because wasm exports only carry i32/i64. Layout, in bytes:
+//
+//   [0..20)    address
+//   [20..40)   secondary address (caller)
+//   [64..96)   word A (balance, storage key, call value)
+//   [96..128)  word B (storage value)
+//   [128..)    variable-length bytes (code, calldata)
+// ---------------------------------------------------------------------------
+
+#define STAGE_ADDR 0
+#define STAGE_ADDR2 20
+#define STAGE_WORD_A 64
+#define STAGE_WORD_B 96
+#define STAGE_BYTES 128
+
+EXPORT("evm_stage_ptr") uint8_t *evm_stage_ptr(evm_vm *vm) { return vm->stage; }
+
+EXPORT("evm_reset") void evm_reset(evm_vm *vm) {
+  state_reset(vm->st);
+  vm->returndata_len = 0;
+  vm->depth = 0;
+  vm->is_static = 0;
+}
+
+/** Interns the account at `stage[0..20)` and sets its balance, nonce, and code. */
+EXPORT("evm_put_account")
+int evm_put_account(evm_vm *vm, int64_t nonce, int code_len) {
+  const int32_t a = account_intern(vm->st, vm->stage + STAGE_ADDR);
+  if (a < 0) return EVM_OUT_OF_MEMORY;
+  vm->st->accounts[a].balance = u256_from_be(vm->stage + STAGE_WORD_A);
+  vm->st->accounts[a].nonce = (uint64_t)nonce;
+  vm->st->accounts[a].exists = 1;
+  if (code_len > 0 && !set_code(vm->st, a, vm->stage + STAGE_BYTES, code_len))
+    return EVM_OUT_OF_MEMORY;
+  // Loading pre-state is not a mutation to roll back.
+  vm->st->journal_len = 0;
+  return EVM_SUCCESS;
+}
+
+/** Sets a storage slot and marks it as the transaction's original value. */
+EXPORT("evm_put_storage") int evm_put_storage(evm_vm *vm) {
+  const int32_t a = account_intern(vm->st, vm->stage + STAGE_ADDR);
+  if (a < 0) return EVM_OUT_OF_MEMORY;
+  const int32_t slot = slot_intern(vm->st, a, u256_from_be(vm->stage + STAGE_WORD_A));
+  if (slot < 0) return EVM_OUT_OF_MEMORY;
+  const u256 v = u256_from_be(vm->stage + STAGE_WORD_B);
+  vm->st->slots[slot].value = v;
+  vm->st->slots[slot].original = v;
+  vm->st->journal_len = 0;
+  return EVM_SUCCESS;
+}
+
+EXPORT("evm_set_context")
+void evm_set_context(evm_vm *vm, int64_t number, int64_t timestamp,
+                     int64_t block_gas_limit, int blob_count,
+                     int block_hash_count) {
+  const uint8_t *p = vm->stage;
+  for (int i = 0; i < 20; i++) vm->ctx.origin[i] = p[STAGE_ADDR + i];
+  for (int i = 0; i < 20; i++) vm->ctx.coinbase[i] = p[STAGE_ADDR2 + i];
+  vm->ctx.gas_price = u256_from_be(p + 64);
+  vm->ctx.base_fee = u256_from_be(p + 96);
+  vm->ctx.blob_base_fee = u256_from_be(p + 128);
+  vm->ctx.prev_randao = u256_from_be(p + 160);
+  vm->ctx.chain_id = u256_from_be(p + 192);
+  vm->ctx.number = (uint64_t)number;
+  vm->ctx.timestamp = (uint64_t)timestamp;
+  vm->ctx.block_gas_limit = (uint64_t)block_gas_limit;
+  vm->ctx.blob_count = blob_count > 8 ? 8 : blob_count;
+  for (int i = 0; i < vm->ctx.blob_count; i++)
+    vm->ctx.blob_hashes[i] = u256_from_be(p + 224 + i * 32);
+  vm->ctx.block_hash_count = block_hash_count > 256 ? 256 : block_hash_count;
+  const uint8_t *bh = p + 224 + 8 * 32;
+  for (int i = 0; i < vm->ctx.block_hash_count; i++)
+    for (int j = 0; j < 32; j++) vm->ctx.block_hashes[i][j] = bh[i * 32 + j];
+}
+
+/** Marks an address warm ahead of execution, for EIP-2930 access lists. */
+EXPORT("evm_warm_account") int evm_warm_account_abi(evm_vm *vm) {
+  const int32_t a = account_intern(vm->st, vm->stage + STAGE_ADDR);
+  if (a < 0) return EVM_OUT_OF_MEMORY;
+  vm->st->accounts[a].warm = 1;
+  vm->st->journal_len = 0;
+  return EVM_SUCCESS;
+}
+
+EXPORT("evm_warm_storage") int evm_warm_storage_abi(evm_vm *vm) {
+  const int32_t a = account_intern(vm->st, vm->stage + STAGE_ADDR);
+  if (a < 0) return EVM_OUT_OF_MEMORY;
+  const int32_t slot =
+      slot_intern(vm->st, a, u256_from_be(vm->stage + STAGE_WORD_A));
+  if (slot < 0) return EVM_OUT_OF_MEMORY;
+  vm->st->slots[slot].warm = 1;
+  vm->st->journal_len = 0;
+  return EVM_SUCCESS;
+}
+
+/**
+ * Executes a message call against the account at `stage[0..20)`, with the
+ * caller at `stage[20..40)`, value at `stage[64..96)`, and calldata at
+ * `stage[128..)`.
+ *
+ * The value transfer and nonce handling belong to the transaction layer and are
+ * the host's responsibility; this runs the frame.
+ */
+EXPORT("evm_execute")
+int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
+  if (input_len < 0 || input_len > MAX_INPUT) return EVM_INPUT_TOO_LARGE;
+  const int32_t a = account_intern(vm->st, vm->stage + STAGE_ADDR);
+  if (a < 0) return EVM_OUT_OF_MEMORY;
+  vm->self = a;
+  for (int i = 0; i < 20; i++) vm->caller[i] = vm->stage[STAGE_ADDR2 + i];
+  vm->call_value = u256_from_be(vm->stage + STAGE_WORD_A);
+  vm->is_static = is_static;
+  vm->depth = 0;
+  vm->returndata_len = 0;
+
+  const int32_t code_len = vm->st->accounts[a].code_len;
+  if (code_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
+  mem_copy(vm->code, vm->st->code_arena + vm->st->accounts[a].code_offset,
+           (uint64_t)code_len);
+  mem_copy(vm->input, vm->stage + STAGE_BYTES, (uint64_t)input_len);
+  vm->code_len = code_len;
+  analyze(vm);
+  vm->analyzed = 1;
+
+  vm->input_len = input_len;
+  vm->gas = gas;
+  vm->sp = 0;
+  vm->memory_cost = 0;
+  vm->output_len = 0;
+  mem_zero(vm->memory, vm->memory_size);
+  vm->memory_size = 0;
+  const int32_t snapshot = state_snapshot(vm->st);
+  const int status = (int)interpret(vm);
+  // Anything but a clean finish or an explicit revert still rolls state back.
+  if (status != EVM_SUCCESS) state_revert(vm->st, snapshot);
+  return status;
+}
+
+EXPORT("evm_refund") int64_t evm_refund(evm_vm *vm) {
+  return (int64_t)vm->st->refund;
+}
+
+// --- post-state readback ---
+
+EXPORT("evm_account_count") int evm_account_count(evm_vm *vm) {
+  return vm->st->account_count;
+}
+
+/**
+ * Writes account `i` into the staging buffer: address, balance, and code.
+ * Returns the code length, or -1 when the account should be absent from the
+ * post-state.
+ */
+EXPORT("evm_account_at") int evm_account_at(evm_vm *vm, int i) {
+  if (i < 0 || i >= vm->st->account_count) return -1;
+  const account *a = &vm->st->accounts[i];
+  if (a->destroyed) return -1;
+  // An account that never existed and is still empty is not in the trie.
+  if (!a->exists && a->nonce == 0 && u256_is_zero(a->balance) &&
+      a->code_len == 0)
+    return -1;
+  for (int k = 0; k < 20; k++) vm->stage[STAGE_ADDR + k] = a->address[k];
+  u256_to_be(a->balance, vm->stage + STAGE_WORD_A);
+  mem_copy(vm->stage + STAGE_BYTES, vm->st->code_arena + a->code_offset,
+           (uint64_t)a->code_len);
+  return a->code_len;
+}
+
+EXPORT("evm_account_nonce") int64_t evm_account_nonce(evm_vm *vm, int i) {
+  if (i < 0 || i >= vm->st->account_count) return 0;
+  return (int64_t)vm->st->accounts[i].nonce;
+}
+
+EXPORT("evm_storage_count") int evm_storage_count(evm_vm *vm) {
+  return vm->st->slot_count;
+}
+
+/**
+ * Writes slot `i` into the staging buffer: owning address, key, and value.
+ * Returns 1, or 0 when the slot is zero and therefore absent from the trie.
+ */
+EXPORT("evm_storage_at") int evm_storage_at(evm_vm *vm, int i) {
+  if (i < 0 || i >= vm->st->slot_count) return 0;
+  const storage_slot *s = &vm->st->slots[i];
+  if (u256_is_zero(s->value)) return 0;
+  if (vm->st->accounts[s->account].destroyed) return 0;
+  for (int k = 0; k < 20; k++)
+    vm->stage[STAGE_ADDR + k] = vm->st->accounts[s->account].address[k];
+  u256_to_be(s->key, vm->stage + STAGE_WORD_A);
+  u256_to_be(s->value, vm->stage + STAGE_WORD_B);
+  return 1;
+}
+
+EXPORT("evm_log_count") int evm_log_count(evm_vm *vm) {
+  return vm->st->log_count;
+}
+
+/** Writes log `i`: address, topics from `stage[128..)`, then data. */
+EXPORT("evm_log_at") int evm_log_at(evm_vm *vm, int i) {
+  if (i < 0 || i >= vm->st->log_count) return -1;
+  const evm_log *lg = &vm->st->logs[i];
+  for (int k = 0; k < 20; k++) vm->stage[STAGE_ADDR + k] = lg->address[k];
+  for (int t = 0; t < lg->topic_count; t++)
+    u256_to_be(lg->topics[t], vm->stage + STAGE_BYTES + t * 32);
+  mem_copy(vm->stage + STAGE_BYTES + lg->topic_count * 32,
+           vm->st->log_data + lg->data_offset, (uint64_t)lg->data_len);
+  return (lg->topic_count << 24) | (lg->data_len & 0xffffff);
 }
