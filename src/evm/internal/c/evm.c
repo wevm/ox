@@ -1911,8 +1911,13 @@ static evm_status interpret(evm_vm *vm) {
             (out_len && (out_off > MAX_MEMORY_OFFSET ||
                          out_len > MAX_MEMORY_OFFSET)))
           HALT(EVM_OUT_OF_GAS);
-        // A static frame may not move value.
-        if (vm->is_static && !u256_is_zero(value)) HALT(EVM_STATIC_VIOLATION);
+        // A static frame may not move value — but only CALL moves any.
+        // CALLCODE's value never leaves the account: it runs foreign code in
+        // this one, and the figure is there for the stipend and for CALLVALUE.
+        // Rejecting it too made a CALLCODE with value inside a STATICCALL fail
+        // where it should run.
+        if (op == 0xf1 && vm->is_static && !u256_is_zero(value))
+          HALT(EVM_STATIC_VIOLATION);
 
         const int32_t callee = account_intern(vm->st, to);
         if (callee < 0) HALT(EVM_OUT_OF_MEMORY);
