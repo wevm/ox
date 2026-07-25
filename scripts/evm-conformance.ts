@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 39177/40553 (96.61%) across all forks. This is the same fixture set
+// Status: 39247/40553 (96.78%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // Per-area, the groups that are not yet complete:

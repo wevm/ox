@@ -152,3 +152,49 @@ describe('arbitrary bytecode is contained', () => {
     },
   )
 })
+
+describe('copy opcodes pad rather than wrap', () => {
+  // CALLDATACOPY, CODECOPY and EXTCODECOPY zero-pad a read that runs past the
+  // end of their source. The source offset is a 256-bit operand saturated into
+  // 64 bits, so an offset that looks negative arrives as a value near 2^64;
+  // adding the loop index to it used to wrap back to zero part way through the
+  // copy and start returning real bytes. The result was still a valid status, so
+  // the containment properties above could not see it.
+  //
+  // RETURNDATACOPY is deliberately absent: it is the one that does not pad, and
+  // an out-of-range read is an exceptional halt.
+  const opcodes = [
+    { name: 'CALLDATACOPY', op: '37' },
+    { name: 'CODECOPY', op: '39' },
+  ] as const
+
+  test.prop(
+    {
+      // Offsets in the top few bytes of the 256-bit range, which is where a
+      // small negative number lands.
+      back: fc.bigInt({ min: 1n, max: 64n }),
+      length: fc.integer({ min: 1, max: 32 }),
+      which: fc.integer({ min: 0, max: opcodes.length - 1 }),
+    },
+    { numRuns },
+  )(
+    'a source offset near 2^256 reads only zeroes',
+    async ({ back, length, which }) => {
+      const { op } = opcodes[which]!
+      const offset = ((1n << 256n) - back).toString(16).padStart(64, '0')
+      // PUSH1 length, PUSH32 offset, PUSH1 0, <copy>, PUSH1 0, MLOAD, PUSH1 0,
+      // MSTORE, PUSH1 32, PUSH1 0, RETURN
+      const bytecode: Hex.Hex = `0x60${length
+        .toString(16)
+        .padStart(2, '0')}7f${offset}5f${op}5f515f5260205ff3`
+      const result = await Evm.run({
+        bytecode,
+        // Calldata that is entirely non-zero, so any wraparound shows up.
+        data: `0x${'ab'.repeat(64)}`,
+        gas: 1_000_000n,
+      })
+      expect(result.status).toBe('success')
+      expect(result.data).toBe(`0x${'00'.repeat(32)}`)
+    },
+  )
+})

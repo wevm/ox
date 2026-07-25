@@ -486,10 +486,18 @@ static void create2_address(const uint8_t *sender, u256 salt,
 /** Copies into memory from a source, zero-filling reads past the source end. */
 static void copy_padded(uint8_t *dst, const uint8_t *src, uint64_t src_len,
                         uint64_t src_off, uint64_t size) {
-  for (uint64_t i = 0; i < size; i++) {
-    uint64_t s = src_off + i;
-    dst[i] = (s < src_len) ? src[s] : 0;
+  // An offset at or past the end reads only padding. Deciding that up front
+  // also keeps `src_off + i` from wrapping: a saturated offset — what a
+  // negative-looking 256-bit operand becomes — would otherwise come back
+  // around to zero part way through and start copying real bytes.
+  if (src_off >= src_len) {
+    for (uint64_t i = 0; i < size; i++) dst[i] = 0;
+    return;
   }
+  const uint64_t avail = src_len - src_off;
+  const uint64_t take = size < avail ? size : avail;
+  for (uint64_t i = 0; i < take; i++) dst[i] = src[src_off + i];
+  for (uint64_t i = take; i < size; i++) dst[i] = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1833,8 +1841,13 @@ static evm_status interpret(evm_vm *vm) {
         USE_GAS(32000);
         evm_status ms = memory_expand(vm, off, len, &gas);
         if (ms != EVM_SUCCESS) HALT(ms);
-        // EIP-3860 charges for initcode words; CREATE2 also hashes it.
-        USE_GAS(2 * ((len + 31) / 32));
+        // EIP-3860 charges for initcode words from Shanghai on, and caps the
+        // initcode at twice the deployed-code limit. CREATE2 hashes the
+        // initcode at every fork that has it.
+        if (vm->ctx.spec >= SPEC_SHANGHAI) {
+          if (len > 49152) HALT(EVM_OUT_OF_GAS);
+          USE_GAS(2 * ((len + 31) / 32));
+        }
         if (op == 0xf5) USE_GAS(6 * ((len + 31) / 32));
 
         uint8_t *init = (uint8_t *)arena_alloc(vm, (int32_t)len + 16);
