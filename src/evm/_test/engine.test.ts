@@ -687,13 +687,15 @@ describe('memory', () => {
     ] as const) {
       engine.evm_reset(vm)
       // PUSH1 1, PUSH3 offset, MSTORE8, MSIZE
-      const bytecode = `0x600162${offset.toString(16).padStart(6, '0')}5359` as const
+      const bytecode =
+        `0x600162${offset.toString(16).padStart(6, '0')}5359` as const
       const code = Hex.toBytes(bytecode)
       load_.view(engine).set(code, engine.evm_code_ptr(vm))
       engine.evm_set_code(vm, code.length)
-      expect({ offset, status: engine.evm_run(vm, 0, 100_000_000_000n) }).toEqual(
-        { offset, status: 0 },
-      )
+      expect({
+        offset,
+        status: engine.evm_run(vm, 0, 100_000_000_000n),
+      }).toEqual({ offset, status: 0 })
       engine.evm_stack_peek(vm, 0)
       const ptr = engine.evm_output_ptr(vm)
       expect({

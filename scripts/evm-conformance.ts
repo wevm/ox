@@ -778,7 +778,9 @@ function compare(
           `DIFF ${addr} balance got ${got.balance} want ${big(want.balance)} delta ${got.balance - big(want.balance)}`,
         )
       else if (got.nonce !== big(want.nonce))
-        console.log(`DIFF ${addr} nonce got ${got.nonce} want ${big(want.nonce)}`)
+        console.log(
+          `DIFF ${addr} nonce got ${got.nonce} want ${big(want.nonce)}`,
+        )
     }
   for (const [rawAddr, want] of Object.entries(expected)) {
     const addr = rawAddr.toLowerCase() as Hex
@@ -878,7 +880,9 @@ function dumpTrace() {
     // The cost of the *previous* instruction, which is the interesting column;
     // it is only meaningful within one frame.
     const cost =
-      prev && prev.depth === depth ? String(prev.gas - gas).padStart(8) : '        '
+      prev && prev.depth === depth
+        ? String(prev.gas - gas).padStart(8)
+        : '        '
     if (i > 0) process.stdout.write(`${cost}\n`)
     process.stdout.write(
       `${String(i).padStart(6)}  d${depth} pc=${String(pc).padStart(5)} ` +
@@ -924,7 +928,9 @@ outer: for (const file of walk(root)) {
         if (process.env.CASES)
           console.log(`CASE ${outcome.ok ? 'PASS' : 'FAIL'} ${name}`)
         if (traceCase && name.includes(traceCase)) {
-          console.log(`${name}\n  ${outcome.ok ? 'PASS' : `FAIL ${outcome.reason} ${outcome.detail ?? ''}`}`)
+          console.log(
+            `${name}\n  ${outcome.ok ? 'PASS' : `FAIL ${outcome.reason} ${outcome.detail ?? ''}`}`,
+          )
           dumpTrace()
           process.exit(0)
         }

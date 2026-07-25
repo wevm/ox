@@ -60,7 +60,13 @@ function buildWasm(extra: string[] = []): Uint8Array {
     const wasm = join(dir, 'evm.wasm')
     execFileSync(
       'clang',
-      [...wasmFlags, ...extra, ...sources.map((s) => join(cDir, s)), '-o', wasm],
+      [
+        ...wasmFlags,
+        ...extra,
+        ...sources.map((s) => join(cDir, s)),
+        '-o',
+        wasm,
+      ],
       { stdio: 'inherit' },
     )
     const binary = new Uint8Array(readFileSync(wasm))
