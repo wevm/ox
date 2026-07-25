@@ -1910,13 +1910,9 @@ static evm_status interpret(evm_vm *vm) {
         else
           create2_address(creator, salt, init, len, addr);
 
-        // The creator's nonce advances whether or not the creation succeeds.
-        set_nonce(vm->st, vm->self, vm->st->accounts[vm->self].nonce + 1);
-
         int64_t child_gas = capped_gas(gas, u256_from_u64(~(uint64_t)0));
         gas -= child_gas;
 
-        const int32_t snapshot = state_snapshot(vm->st);
         const u256 creator_balance = vm->st->accounts[vm->self].balance;
         const int32_t created = account_intern(vm->st, addr);
         if (created < 0) HALT(EVM_OUT_OF_MEMORY);
@@ -1924,14 +1920,26 @@ static evm_status interpret(evm_vm *vm) {
 
         int ok = 0;
         vm->returndata_len = 0;
-        // Creating over an account that already has code, a nonce, or (per
-        // EIP-7610) storage fails.
+        // Order matters. Depth and balance are checked before the creator's
+        // nonce moves, so a CREATE that fails either way leaves the nonce alone
+        // and gets its whole allowance back. A collision is checked after, so
+        // that one does advance the nonce and does consume the allowance.
+        const int started =
+            u256_cmp(creator_balance, value) >= 0 && vm->depth < MAX_DEPTH;
+        if (started)
+          set_nonce(vm->st, vm->self, vm->st->accounts[vm->self].nonce + 1);
+        // Snapshot after the bump: initcode that reverts must not take the
+        // creator's nonce back with it.
+        const int32_t snapshot = state_snapshot(vm->st);
+        // Creating over an account that already has code, a nonce, or — per
+        // EIP-7610 — storage fails.
         const int occupied = vm->st->accounts[created].code_len > 0 ||
                              vm->st->accounts[created].nonce > 0 ||
                              vm->st->accounts[created].has_storage;
-        if (u256_cmp(creator_balance, value) < 0 || occupied ||
-            vm->depth >= MAX_DEPTH) {
-          if (occupied) child_gas = 0;
+        if (!started) {
+          // Nothing ran.
+        } else if (occupied) {
+          child_gas = 0;
         } else {
           set_balance(vm->st, vm->self, u256_sub(creator_balance, value));
           set_balance(vm->st, created,
