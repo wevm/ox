@@ -164,6 +164,29 @@ static const uint64_t KECCAK_RC[24] = {
 // x86-64-v3 and picking between them recovers that, and is the same bargain
 // the hand-written assembly this competes with makes.
 //
+// There is no assembly path here, and that is a measured decision rather than
+// an omission. Per permutation, on this machine:
+//
+//   this code, wasm (what ships)                       389 ns
+//   this code, native, baseline ISA                    355 ns
+//   OpenSSL keccak1600-x86_64, hand-written asm        320 ns
+//   this code, native, the x86-64-v3 copy below        289 ns
+//   AVX-512, five zmm rows, instruction-mix floor      329 ns
+//
+// The assembly is what revm and evm2 actually run — `alloy-primitives` pulls in
+// `keccak-asm` — and the scalar C below is already ahead of it. The only
+// assembly that could go faster is a vector one, and it cannot: a single
+// Keccak state in five zmm registers needs pi to gather one lane from each of
+// the five rows into every output row, which is twenty `vpermt2q` per round,
+// and every one of them contends for the same shuffle port. The figure above
+// is that instruction mix run with its data dependencies deliberately broken,
+// so it is a floor no correct implementation can beat, and it is 14% behind
+// the scalar code. Vector Keccak pays off for hashing several states at once;
+// the EVM hashes one.
+//
+// wasm cannot use any of this and lands within 10% of native scalar C, which
+// is close to what the target allows.
+//
 // The choice is an explicit branch on a `__builtin_cpu_supports` flag — a
 // predictable test against a preinitialized global, next to nothing beside a
 // 300ns permutation — rather than `target_clones`. `target_clones` builds an
