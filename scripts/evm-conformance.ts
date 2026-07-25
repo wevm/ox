@@ -10,14 +10,14 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40204/40553 (99.14%) across all forks. This is the same fixture set
+// Status: 40274/40553 (99.31%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
 //
 //   - Deep-recursion gas accounting in stStaticCall and stCallCreateCallCode,
 //     where the discrepancy is tens of thousands of gas across a thousand-frame
-//     chain.
+//     chain. `--trace-case` is the tool for these; see below.
 //   - EIP-7883's modexp repricing for Osaka.
 //   - A residue of small gas deltas spread across the call tests.
 //
@@ -31,6 +31,7 @@ import { join } from 'node:path'
 import * as Hash from '../src/core/Hash.js'
 import * as Rlp from '../src/core/Rlp.js'
 import * as Secp256k1 from '../src/core/Secp256k1.js'
+import * as Opcode from '../src/evm/Opcode.js'
 import { wasmBase64 } from '../src/evm/internal/evm.wasm.js'
 
 type Hex = `0x${string}`
@@ -55,7 +56,11 @@ const status = [
   'static-violation',
 ] as const
 
-const binary = Uint8Array.from(Buffer.from(wasmBase64, 'base64'))
+// `OX_WASM` points at a build other than the committed one — in practice the
+// tracing build from `build-evm.ts --trace`, which `--trace-case` needs.
+const binary = process.env.OX_WASM
+  ? new Uint8Array(readFileSync(process.env.OX_WASM))
+  : Uint8Array.from(Buffer.from(wasmBase64, 'base64'))
 const module_ = new WebAssembly.Module(binary)
 
 let engine: any
@@ -826,6 +831,43 @@ const onlyFork = opt('--fork')
 const limit = Number(opt('--limit') ?? Number.POSITIVE_INFINITY)
 const filter = opt('--filter')
 const show = Number(opt('--show') ?? 8)
+// `--trace-case <substring>` dumps a per-instruction trace for the first case
+// whose name matches, then exits. Needs the tracing build:
+//
+//   node --import tsx scripts/build-evm.ts --trace /tmp/evm.trace.wasm
+//   OX_WASM=/tmp/evm.trace.wasm node --import tsx scripts/evm-conformance.ts \
+//     <fixtures> --trace-case <substring>
+const traceCase = opt('--trace-case')
+if (traceCase && !engine.evm_trace_ptr)
+  throw new Error('--trace-case needs OX_WASM pointing at a --trace build')
+
+function dumpTrace() {
+  const n = engine.evm_trace_count(vm)
+  const base = engine.evm_trace_ptr(vm)
+  const view = new DataView(engine.memory.buffer)
+  console.log(`\n${n} steps  (pc, op, gas before, cost, depth, stack height)`)
+  let prev: { gas: bigint; depth: number } | undefined
+  for (let i = 0; i < n; i++) {
+    const o = base + i * 24
+    const pc = view.getInt32(o, true)
+    const op = view.getInt32(o + 4, true)
+    const gas = view.getBigInt64(o + 8, true)
+    const depth = view.getInt32(o + 16, true)
+    const sp = view.getInt32(o + 20, true)
+    // The cost of the *previous* instruction, which is the interesting column;
+    // it is only meaningful within one frame.
+    const cost =
+      prev && prev.depth === depth ? String(prev.gas - gas).padStart(8) : '        '
+    if (i > 0) process.stdout.write(`${cost}\n`)
+    process.stdout.write(
+      `${String(i).padStart(6)}  d${depth} pc=${String(pc).padStart(5)} ` +
+        `${Opcode.toName(op) ?? `0x${op.toString(16)}`}`.padEnd(22) +
+        `gas=${String(gas).padStart(12)} sp=${String(sp).padStart(3)}`,
+    )
+    prev = { gas, depth }
+  }
+  process.stdout.write('\n')
+}
 
 let pass = 0
 let fail = 0
@@ -848,6 +890,7 @@ outer: for (const file of walk(root)) {
       if (onlyFork && fork !== onlyFork) continue
       for (const post of posts) {
         let outcome: Outcome
+        if (traceCase) engine.evm_trace_reset?.(vm)
         try {
           outcome = runCase(test, fork, post)
         } catch (error) {
@@ -859,6 +902,11 @@ outer: for (const file of walk(root)) {
         }
         if (process.env.CASES)
           console.log(`CASE ${outcome.ok ? 'PASS' : 'FAIL'} ${name}`)
+        if (traceCase && name.includes(traceCase)) {
+          console.log(`${name}\n  ${outcome.ok ? 'PASS' : `FAIL ${outcome.reason} ${outcome.detail ?? ''}`}`)
+          dumpTrace()
+          process.exit(0)
+        }
         if (outcome.ok) pass++
         else {
           fail++

@@ -1,7 +1,8 @@
 // Builds the Ox EVM engine.
 //
-//   node --import tsx scripts/build-evm.ts          # wasm + base64 module
-//   node --import tsx scripts/build-evm.ts --check   # verify committed output
+//   node --import tsx scripts/build-evm.ts             # wasm + base64 module
+//   node --import tsx scripts/build-evm.ts --check      # verify committed output
+//   node --import tsx scripts/build-evm.ts --trace <p>  # tracing build, raw .wasm
 //
 // The wasm artifact is emitted as a base64 string inside a `.ts` module rather
 // than as a binary asset. That is the same choice `src/tempo/internal/mine.wasm.ts`
@@ -53,13 +54,13 @@ const wasmFlags = [
   '-Wl,--lto-O3',
 ]
 
-function buildWasm(): Uint8Array {
+function buildWasm(extra: string[] = []): Uint8Array {
   const dir = mkdtempSync(join(tmpdir(), 'ox-evm-'))
   try {
     const wasm = join(dir, 'evm.wasm')
     execFileSync(
       'clang',
-      [...wasmFlags, ...sources.map((s) => join(cDir, s)), '-o', wasm],
+      [...wasmFlags, ...extra, ...sources.map((s) => join(cDir, s)), '-o', wasm],
       { stdio: 'inherit' },
     )
     const binary = new Uint8Array(readFileSync(wasm))
@@ -101,6 +102,23 @@ export const wasmBase64 =
 /** Size of the decoded WASM binary, in bytes. */
 export const wasmSize = ${binary.length}
 `
+}
+
+// `--trace <path>` emits a second artifact with per-instruction tracing
+// compiled in, for `scripts/evm-conformance.ts --trace-case`. It is never
+// committed: the recording costs a branch per instruction, so it must not be
+// what ships. Point the conformance runner at it with `OX_WASM=<path>`.
+const traceAt = process.argv.indexOf('--trace')
+if (traceAt >= 0) {
+  const path = process.argv[traceAt + 1]
+  if (!path) {
+    console.error('usage: build-evm.ts --trace <path.wasm>')
+    process.exit(2)
+  }
+  const traced = buildWasm(['-DOX_TRACE'])
+  writeFileSync(path, traced)
+  console.log(`Wrote ${path} (${traced.length} bytes wasm, tracing).`)
+  process.exit(0)
 }
 
 const binary = buildWasm()

@@ -155,6 +155,20 @@ typedef struct {
   int16_t stack_max_growth; // peak height increase within the block
 } block_info;
 
+#ifdef OX_TRACE
+// A step record. Present only in the tracing build: recording unconditionally
+// would put a branch on every instruction in the dispatch loop, and the two
+// pure-dispatch benchmarks are close enough that it would show.
+typedef struct {
+  int32_t pc;
+  int32_t op;
+  int64_t gas; // remaining, before the instruction executes
+  int32_t depth;
+  int32_t sp;
+} evm_trace_entry;
+#define TRACE_CAP (1 << 18)
+#endif
+
 typedef struct {
   u256 stack[STACK_LIMIT];
   int sp;
@@ -207,6 +221,10 @@ typedef struct {
   int32_t returndata_len;
   // Staging area the host reads and writes across the ABI boundary.
   uint8_t *stage;
+#ifdef OX_TRACE
+  evm_trace_entry *trace;
+  int32_t trace_count;
+#endif
 
   // Per-frame, saved and restored around a nested call. EVM memory and the
   // jumpdest/block analysis are both per-frame, so they are carved out of bump
@@ -1230,6 +1248,20 @@ static inline int64_t capped_gas(int64_t available, u256 requested) {
       HALT(EVM_STACK_OVERFLOW);                               \
   } while (0)
 
+#ifdef OX_TRACE
+#define TRACE_STEP()                                    \
+  if (vm->trace_count < TRACE_CAP) {                    \
+    evm_trace_entry *e_ = &vm->trace[vm->trace_count++]; \
+    e_->pc = pc;                                        \
+    e_->op = op;                                        \
+    e_->gas = gas;                                      \
+    e_->depth = vm->depth;                              \
+    e_->sp = (int32_t)(sp - vm->stack_base);            \
+  }
+#else
+#define TRACE_STEP() ((void)0)
+#endif
+
 /**
  * Opens the block starting at `pc`, having arrived at it rather than fallen
  * through into it — a taken jump, or the instruction after a call.
@@ -1263,6 +1295,7 @@ static evm_status interpret(evm_vm *vm) {
   for (;;) {
     if (pc >= code_len) DONE(EVM_SUCCESS); // running off the end is STOP
     const uint8_t op = code[pc];
+    TRACE_STEP();
 
     switch (op) {
       case 0x00: // STOP
@@ -2055,24 +2088,36 @@ static evm_status interpret(evm_vm *vm) {
             vm->st->accounts[target].nonce == 0 &&
             vm->st->accounts[target].code_len == 0)
           USE_GAS(25000);
-        // Sending to itself is a no-op, not a burn. That only shows up from
-        // Cancun on: before EIP-6780 the account was always deleted, so zeroing
-        // its balance made no observable difference.
-        if (!u256_is_zero(balance) && target != vm->self) {
-          set_balance(vm->st, target,
-                      u256_add(vm->st->accounts[target].balance, balance));
-          if (!vm->st->accounts[target].exists)
-            set_exists(vm->st, target, 1);
-          set_balance(vm->st, vm->self, U256_ZERO);
+        // EIP-6780 narrowed removal to accounts created in this same
+        // transaction. Before Cancun the account always goes.
+        const int removed =
+            vm->ctx.spec < SPEC_CANCUN || vm->st->accounts[vm->self].created;
+        if (!u256_is_zero(balance)) {
+          if (target != vm->self) {
+            set_balance(vm->st, target,
+                        u256_add(vm->st->accounts[target].balance, balance));
+            if (!vm->st->accounts[target].exists)
+              set_exists(vm->st, target, 1);
+            set_balance(vm->st, vm->self, U256_ZERO);
+          } else if (removed) {
+            // Sending to yourself and being removed burns the balance: the
+            // credit and the clear land on the same account and the clear is
+            // last. Sending to yourself and surviving is a plain no-op — do
+            // neither step, or the balance doubles.
+            //
+            // Before Cancun everything was removed, so the two cases had
+            // nowhere to differ. From Cancun a surviving contract can read its
+            // own balance afterwards, and either mistake is worth 19900 gas
+            // downstream: the difference between an SSTORE that sets and one
+            // that does nothing.
+            set_balance(vm->st, vm->self, U256_ZERO);
+          }
         }
         // EIP-3529 removed the refund; before London it is 24000, once per
         // account per transaction.
         if (vm->ctx.spec < SPEC_LONDON && !vm->st->accounts[vm->self].destroyed)
           add_refund(vm->st, 24000);
-        // EIP-6780 narrowed removal to accounts created in this same
-        // transaction. Before Cancun the account always goes.
-        if (vm->ctx.spec < SPEC_CANCUN || vm->st->accounts[vm->self].created)
-          set_destroyed(vm->st, vm->self, 1);
+        if (removed) set_destroyed(vm->st, vm->self, 1);
         DONE(EVM_SUCCESS);
       }
 
@@ -2209,6 +2254,11 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   vm->st = (evm_state *)ox_alloc(sizeof(evm_state));
   vm->returndata = (uint8_t *)ox_alloc(MAX_INPUT);
   vm->stage = (uint8_t *)ox_alloc(MAX_INPUT);
+#ifdef OX_TRACE
+  vm->trace = (evm_trace_entry *)ox_alloc(TRACE_CAP * sizeof(evm_trace_entry));
+  vm->trace_count = 0;
+  if (!vm->trace) return 0;
+#endif
   if (!vm->jumpdest || !vm->blocks || !vm->gas_fix ||
       !vm->memory || !vm->output || !vm->st || !vm->returndata || !vm->stage)
     return 0;
@@ -2318,6 +2368,16 @@ int evm_run(evm_vm *vm, int input_len, int64_t gas) {
   vm->memory_size = 0;
   return (int)interpret(vm);
 }
+
+#ifdef OX_TRACE
+EXPORT("evm_trace_ptr") evm_trace_entry *evm_trace_ptr(evm_vm *vm) {
+  return vm->trace;
+}
+EXPORT("evm_trace_count") int evm_trace_count(evm_vm *vm) {
+  return vm->trace_count;
+}
+EXPORT("evm_trace_reset") void evm_trace_reset(evm_vm *vm) { vm->trace_count = 0; }
+#endif
 
 // ---------------------------------------------------------------------------
 // State ABI
