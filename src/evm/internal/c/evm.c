@@ -11,6 +11,7 @@
 
 #include "keccak.h"
 #include "opcodes.h"
+#include "bls12381.h"
 #include "bn254.h"
 #include "precompile.h"
 #include "state.h"
@@ -961,8 +962,116 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       *out_len = 32;
       return PRE_OK;
     }
+    case 0x0b: { // BLS12_G1ADD (EIP-2537)
+      if (len != 256) return PRE_FAIL;
+      if (*gas < 375) return PRE_FAIL;
+      *gas -= 375;
+      bls_init();
+      // Addition does not require subgroup membership, only that the points be
+      // on the curve.
+      bg1 a, b, r;
+      if (!bls_read_g1(in, &a, 0) || !bls_read_g1(in + 128, &b, 0))
+        return PRE_FAIL;
+      bg1_add(&r, &a, &b);
+      bls_write_g1(&r, out);
+      *out_len = 128;
+      return PRE_OK;
+    }
+    case 0x0d: { // BLS12_G2ADD (EIP-2537)
+      if (len != 512) return PRE_FAIL;
+      if (*gas < 600) return PRE_FAIL;
+      *gas -= 600;
+      bls_init();
+      bg2 a, b, r;
+      if (!bls_read_g2(in, &a, 0) || !bls_read_g2(in + 256, &b, 0))
+        return PRE_FAIL;
+      bg2_add(&r, &a, &b);
+      bls_write_g2(&r, out);
+      *out_len = 256;
+      return PRE_OK;
+    }
+    case 0x0c: { // BLS12_G1MSM (EIP-2537)
+      if (len == 0 || len % 160 != 0) return PRE_FAIL;
+      const uint64_t k = len / 160;
+      const int64_t cost =
+          (int64_t)k * 12000 * bls_msm_discount(k, 1) / 1000;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      bls_init();
+      bg1 acc = bg1_inf();
+      for (uint64_t i = 0; i < k; i++) {
+        const uint8_t *rec = in + i * 160;
+        bg1 p, t;
+        if (!bls_read_g1(rec, &p, 1)) return PRE_FAIL;
+        uint64_t scalar[4] = {0};
+        for (int j = 0; j < 32; j++) {
+          const int nib = 31 - j;
+          scalar[nib / 8] |= (uint64_t)rec[128 + j] << ((nib % 8) * 8);
+        }
+        bg1_mul(&t, &p, scalar, 4);
+        bg1 sum;
+        bg1_add(&sum, &acc, &t);
+        acc = sum;
+      }
+      bls_write_g1(&acc, out);
+      *out_len = 128;
+      return PRE_OK;
+    }
+    case 0x0e: { // BLS12_G2MSM (EIP-2537)
+      if (len == 0 || len % 288 != 0) return PRE_FAIL;
+      const uint64_t k = len / 288;
+      const int64_t cost =
+          (int64_t)k * 22500 * bls_msm_discount(k, 0) / 1000;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      bls_init();
+      bg2 acc = bg2_inf();
+      for (uint64_t i = 0; i < k; i++) {
+        const uint8_t *rec = in + i * 288;
+        bg2 p, t;
+        if (!bls_read_g2(rec, &p, 1)) return PRE_FAIL;
+        uint64_t scalar[4] = {0};
+        for (int j = 0; j < 32; j++) {
+          const int nib = 31 - j;
+          scalar[nib / 8] |= (uint64_t)rec[256 + j] << ((nib % 8) * 8);
+        }
+        bg2_mul(&t, &p, scalar, 4);
+        bg2 sum;
+        bg2_add(&sum, &acc, &t);
+        acc = sum;
+      }
+      bls_write_g2(&acc, out);
+      *out_len = 256;
+      return PRE_OK;
+    }
+    case 0x0f: { // BLS12_PAIRING_CHECK (EIP-2537)
+      if (len == 0 || len % 384 != 0) return PRE_FAIL;
+      const uint64_t k = len / 384;
+      const int64_t cost = 32600 * (int64_t)k + 37700;
+      if (*gas < cost) return PRE_FAIL;
+      *gas -= cost;
+      bls_init();
+      fp12 acc = fp12_one();
+      for (uint64_t i = 0; i < k; i++) {
+        const uint8_t *rec = in + i * 384;
+        bg1 a;
+        bg2 b;
+        if (!bls_read_g1(rec, &a, 1) || !bls_read_g2(rec + 128, &b, 1))
+          return PRE_FAIL;
+        // Pairing with the identity gives one, so those terms drop out.
+        if (bg1_is_inf(&a) || bg2_is_inf(&b)) continue;
+        bfp ax, ay;
+        bg1_affine(&a, &ax, &ay);
+        acc = fp12_mul(acc, bls_miller(ax, ay, b.x, b.y));
+      }
+      const int one = fp12_is_one(bls_final_exp(acc));
+      for (int i = 0; i < 32; i++) out[i] = 0;
+      out[31] = (uint8_t)one;
+      *out_len = 32;
+      return PRE_OK;
+    }
     default:
-      // KZG and BLS need more curve arithmetic.
+      // KZG and the two map-to-curve precompiles need more curve arithmetic.
       return PRE_UNSUPPORTED;
   }
 }

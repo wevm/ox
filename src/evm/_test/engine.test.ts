@@ -224,6 +224,58 @@ describe('ecrecover precompile', () => {
 /** The engine's fork id for Prague. */
 const PRAGUE = 13
 
+/**
+ * Calls a precompile through a CALL and returns the raw return window.
+ *
+ * The caller is assembled from named pieces because CALL's seven operands are
+ * pushed in reverse and a wrong order silently returns zeroes.
+ */
+function precompile(address: number, input: Uint8Array): Hex.Hex {
+  const len = `61${input.length.toString(16).padStart(4, '0')}`
+  const asm = [
+    len,
+    '5f',
+    '5f',
+    '37', // CALLDATACOPY(0, 0, len)
+    '610100', // retLen = 256, generous
+    len, // retOff = len
+    len, // argsLen
+    '5f', // argsOff = 0
+    '5f', // value = 0
+    `60${address.toString(16).padStart(2, '0')}`, // to
+    '5a', // gas
+    'f1', // CALL
+    '50', // discard the success flag
+    '610100',
+    len,
+    'f3', // RETURN(len, 256)
+  ].join('')
+  const bytecode = Hex.toBytes(`0x${asm}`)
+  const contract = '0x00000000000000000000000000000000000000c0' as const
+
+  engine.evm_reset(vm)
+  // A reset returns the fork to Prague. Pinning it explicitly anyway: on an
+  // older fork 0x06 and above are not precompiles at all but ordinary empty
+  // accounts, so a call to one would succeed and return nothing.
+  const stage = engine.evm_stage_ptr(vm)
+  load_.view(engine).set(new Uint8Array(256), stage)
+  engine.evm_set_context(vm, 1n, 1n, 30_000_000n, 0, 0, PRAGUE)
+  load_.view(engine).set(Hex.toBytes(contract), stage)
+  load_.view(engine).set(new Uint8Array(32), stage + 64)
+  load_.view(engine).set(bytecode, stage + 128)
+  expect(engine.evm_put_account(vm, 0n, bytecode.length)).toBe(0)
+
+  load_.view(engine).set(Hex.toBytes(contract), stage)
+  load_.view(engine).set(new Uint8Array(20), stage + 20)
+  load_.view(engine).set(new Uint8Array(32), stage + 64)
+  load_.view(engine).set(input, stage + 128)
+  expect(engine.evm_execute(vm, input.length, 500_000_000n, 0)).toBe(0)
+  const ptr = engine.evm_output_ptr(vm)
+  return Hex.fromBytes(
+    load_.view(engine).slice(ptr, ptr + engine.evm_output_len(vm)),
+  )
+}
+
 describe('bn254 precompiles', () => {
   // The generator of G1 and the generator of G2, in EIP-196/EIP-197 encoding.
   // G2's Fp2 coordinates put the coefficient of `u` first.
@@ -234,58 +286,6 @@ describe('bn254 precompiles', () => {
     '090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b',
     '12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa',
   ].join('')
-
-  /**
-   * Calls a precompile through a CALL and returns the raw return window.
-   *
-   * The caller is assembled from named pieces because CALL's seven operands are
-   * pushed in reverse and a wrong order silently returns zeroes.
-   */
-  function precompile(address: number, input: Uint8Array): Hex.Hex {
-    const len = `61${input.length.toString(16).padStart(4, '0')}`
-    const asm = [
-      len,
-      '5f',
-      '5f',
-      '37', // CALLDATACOPY(0, 0, len)
-      '610100', // retLen = 256, generous
-      len, // retOff = len
-      len, // argsLen
-      '5f', // argsOff = 0
-      '5f', // value = 0
-      `60${address.toString(16).padStart(2, '0')}`, // to
-      '5a', // gas
-      'f1', // CALL
-      '50', // discard the success flag
-      '610100',
-      len,
-      'f3', // RETURN(len, 256)
-    ].join('')
-    const bytecode = Hex.toBytes(`0x${asm}`)
-    const contract = '0x00000000000000000000000000000000000000c0' as const
-
-    engine.evm_reset(vm)
-    // A reset returns the fork to Prague. Pinning it explicitly anyway: on an
-    // older fork 0x06 and above are not precompiles at all but ordinary empty
-    // accounts, so a call to one would succeed and return nothing.
-    const stage = engine.evm_stage_ptr(vm)
-    load_.view(engine).set(new Uint8Array(256), stage)
-    engine.evm_set_context(vm, 1n, 1n, 30_000_000n, 0, 0, PRAGUE)
-    load_.view(engine).set(Hex.toBytes(contract), stage)
-    load_.view(engine).set(new Uint8Array(32), stage + 64)
-    load_.view(engine).set(bytecode, stage + 128)
-    expect(engine.evm_put_account(vm, 0n, bytecode.length)).toBe(0)
-
-    load_.view(engine).set(Hex.toBytes(contract), stage)
-    load_.view(engine).set(new Uint8Array(20), stage + 20)
-    load_.view(engine).set(new Uint8Array(32), stage + 64)
-    load_.view(engine).set(input, stage + 128)
-    expect(engine.evm_execute(vm, input.length, 500_000_000n, 0)).toBe(0)
-    const ptr = engine.evm_output_ptr(vm)
-    return Hex.fromBytes(
-      load_.view(engine).slice(ptr, ptr + engine.evm_output_len(vm)),
-    )
-  }
 
   test('behavior: ECADD doubles the generator', () => {
     // 2*G1 has a known value; adding G1 to itself must produce it.
@@ -449,5 +449,86 @@ describe('reset isolation', () => {
     expect(clean.rc).toBe(0)
     expect(clean.gas).toBeLessThan(1_000_000n)
     expect(clean).toEqual(dirty)
+  })
+})
+
+describe('BLS12-381 precompiles', () => {
+  // The generators, in EIP-2537 encoding: each Fp coordinate is 64 bytes with
+  // 16 leading zeroes, and an Fp2 element puts its real part first — the
+  // opposite of EIP-197's convention for bn254.
+  const pad = (h: string) => `${'00'.repeat(16)}${h}`
+  const g1 =
+    pad(
+      '17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb',
+    ) +
+    pad(
+      '08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1',
+    )
+  const g2 = [
+    '024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb8',
+    '13e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e',
+    '0ce5d527727d6e118cc9cdc6da2e351aadfd9baa8cbdd3a76d429a695160d12c923ac9cc3baca289e193548608b82801',
+    '0606c4a02ea734cc32acd2b02bc28b99cb3e287e85a763af267492ab572e99ab3f370d275cec1da1aaa9075ff05f79be',
+  ]
+    .map(pad)
+    .join('')
+  const infG1 = '00'.repeat(128)
+  const scalarTwo = `${'00'.repeat(31)}02`
+
+  test('behavior: G1ADD doubling agrees with G1MSM by two', () => {
+    const add = precompile(0x0b, Hex.toBytes(`0x${g1}${g1}`)).slice(0, 258)
+    const msm = precompile(0x0c, Hex.toBytes(`0x${g1}${scalarTwo}`)).slice(
+      0,
+      258,
+    )
+    expect(add).not.toBe(`0x${infG1}`)
+    expect(msm).toBe(add)
+  })
+
+  test('behavior: G1MSM by the group order gives infinity', () => {
+    const order =
+      '73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001'
+    expect(precompile(0x0c, Hex.toBytes(`0x${g1}${order}`)).slice(0, 258)).toBe(
+      `0x${infG1}`,
+    )
+  })
+
+  test('behavior: G2ADD doubling agrees with G2MSM by two', () => {
+    const add = precompile(0x0d, Hex.toBytes(`0x${g2}${g2}`)).slice(0, 514)
+    const msm = precompile(0x0e, Hex.toBytes(`0x${g2}${scalarTwo}`)).slice(
+      0,
+      514,
+    )
+    expect(msm).toBe(add)
+  })
+
+  test('behavior: the pairing check is bilinear', () => {
+    // -G1 has the same x and the negated y.
+    const negG1 =
+      pad(
+        '17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb',
+      ) +
+      pad(
+        '114d1d6855d545a8aa7d76c8cf2e21f267816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca',
+      )
+    // e(G1, G2) * e(-G1, G2) == 1
+    expect(
+      precompile(0x0f, Hex.toBytes(`0x${g1}${g2}${negG1}${g2}`)).slice(0, 66),
+    ).toBe(`0x${'00'.repeat(31)}01`)
+    // A single non-degenerate pairing is not one.
+    expect(precompile(0x0f, Hex.toBytes(`0x${g1}${g2}`)).slice(0, 66)).toBe(
+      `0x${'00'.repeat(32)}`,
+    )
+  })
+
+  test('behavior: a coordinate at or above the modulus is rejected', () => {
+    // The call fails, so the caller sees zeroes in its return window rather
+    // than a point.
+    const p =
+      '1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab'
+    const bad = pad(p) + pad('00'.repeat(48))
+    expect(precompile(0x0b, Hex.toBytes(`0x${bad}${g1}`)).slice(0, 258)).toBe(
+      `0x${infG1}`,
+    )
   })
 })
