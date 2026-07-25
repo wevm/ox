@@ -108,7 +108,10 @@ typedef struct {
   uint8_t *code_arena;
   int32_t code_arena_len;
 
-  uint64_t refund;
+  // Signed: EIP-3529 decrements this on a slot revisit and the running total is
+  // allowed to go negative in intermediate states. Clamping at zero lost that
+  // and over-refunded.
+  int64_t refund;
 } evm_state;
 
 // ---------------------------------------------------------------------------
@@ -286,7 +289,7 @@ static void state_revert(evm_state *st, int32_t snapshot) {
         st->transients[e->target].value = e->value;
         break;
       case J_LOG: st->log_count = e->target; break;
-      case J_REFUND: st->refund = e->scalar; break;
+      case J_REFUND: st->refund = (int64_t)e->scalar; break;
       default: break;
     }
   }
@@ -322,14 +325,14 @@ static inline void set_destroyed(evm_state *st, int32_t acct, uint8_t v) {
   st->accounts[acct].destroyed = v;
 }
 
-static inline void add_refund(evm_state *st, uint64_t amount) {
-  journal_push(st, J_REFUND, 0, U256_ZERO, st->refund, 0);
+static inline void add_refund(evm_state *st, int64_t amount) {
+  journal_push(st, J_REFUND, 0, U256_ZERO, (uint64_t)st->refund, 0);
   st->refund += amount;
 }
 
-static inline void sub_refund(evm_state *st, uint64_t amount) {
-  journal_push(st, J_REFUND, 0, U256_ZERO, st->refund, 0);
-  st->refund = st->refund > amount ? st->refund - amount : 0;
+static inline void sub_refund(evm_state *st, int64_t amount) {
+  journal_push(st, J_REFUND, 0, U256_ZERO, (uint64_t)st->refund, 0);
+  st->refund -= amount;
 }
 
 /** Marks an account warm, returning 1 if it was cold. */

@@ -1853,7 +1853,7 @@ int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
 }
 
 EXPORT("evm_refund") int64_t evm_refund(evm_vm *vm) {
-  return (int64_t)vm->st->refund;
+  return vm->st->refund;
 }
 
 // --- post-state readback ---

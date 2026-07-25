@@ -164,6 +164,7 @@ type Outcome = { ok: true } | { ok: false; reason: string; detail?: string }
 
 // Set per case so `compare` can express a balance mismatch in gas units.
 let gasPriceForDetail = 0n
+let lastRc = 0
 
 function runCase(test: any, fork: string, post: any): Outcome {
   const tx = test.transaction
@@ -265,6 +266,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
   )
   engine.evm_put_account(vm, big(senderPre?.nonce) + 1n, 0)
 
+  const toAddr = isCreate ? '' : tx.to.toLowerCase()
   let rc: number
   if (isCreate) {
     // A create transaction runs the calldata as initcode; the engine derives
@@ -274,6 +276,8 @@ function runCase(test: any, fork: string, post: any): Outcome {
     mem().set(data, stage() + STAGE_BYTES)
     warmPreamble(tx.sender, undefined, fork)
     rc = engine.evm_execute_create(vm, data.length, gasLimit - intrinsic)
+    // `evm_execute_create` moves the value inside its own snapshot, so a
+    // failure has already rolled it back and the runner must not undo it again.
     return settleAndCompare(
       rc,
       gasLimit,
@@ -285,17 +289,29 @@ function runCase(test: any, fork: string, post: any): Outcome {
       effectiveGasPrice,
       baseFee,
       post,
+      0n,
+      '',
     )
   }
 
-  // Recipient receives the value.
-  const toAddr = tx.to.toLowerCase()
+  // Recipient receives the value. When the sender is also the recipient the
+  // two writes target one account, so the credit has to build on the balance
+  // the sender write just produced rather than on the pre-state.
   const toPre = (test.pre as Record<string, Account>)[toAddr]
   const toCode = bytes(toPre?.code)
+  const senderAdjusted = senderBalance - gasLimit * effectiveGasPrice - value
+  const toBase =
+    toAddr === tx.sender.toLowerCase() ? senderAdjusted : big(toPre?.balance)
   putAddr(STAGE_ADDR, toAddr)
-  putWord(STAGE_WORD_A, big(toPre?.balance) + value)
+  putWord(STAGE_WORD_A, toBase + value)
   mem().set(toCode, stage() + STAGE_BYTES)
-  engine.evm_put_account(vm, big(toPre?.nonce), toCode.length)
+  engine.evm_put_account(
+    vm,
+    toAddr === tx.sender.toLowerCase()
+      ? big(senderPre?.nonce) + 1n
+      : big(toPre?.nonce),
+    toCode.length,
+  )
 
   // EIP-2929 seeds the accessed-address set with the sender, the target, and
   // every precompile. Missing the precompiles made each precompile call pay
@@ -320,6 +336,8 @@ function runCase(test: any, fork: string, post: any): Outcome {
     effectiveGasPrice,
     baseFee,
     post,
+    value,
+    toAddr,
   )
 }
 
@@ -335,15 +353,20 @@ function settleAndCompare(
   effectiveGasPrice: bigint,
   baseFee: bigint,
   post: any,
+  value: bigint,
+  toAddr: string,
 ): Outcome {
+  lastRc = rc
   const gasLeft = engine.evm_gas_left(vm)
-  const refundCounter = engine.evm_refund(vm)
+  const refundCounter = BigInt(engine.evm_refund(vm))
 
   let gasUsed = gasLimit - gasLeft
   if (rc === 0) {
-    // EIP-3529 caps the refund at a fifth of the gas consumed.
+    // EIP-3529 caps the refund at a fifth of the gas consumed. The counter can
+    // be negative mid-transaction; a negative total refunds nothing.
+    const counter = refundCounter > 0n ? refundCounter : 0n
     const cap = gasUsed / 5n
-    gasUsed -= refundCounter < cap ? refundCounter : cap
+    gasUsed -= counter < cap ? counter : cap
   }
   if (forkAtLeast(fork, 'Prague') && gasUsed < floor) gasUsed = floor
 
@@ -354,6 +377,14 @@ function settleAndCompare(
   )
   const settle = new Map(post_.map((a) => [a.address, a]))
   const sender = settle.get(tx.sender.toLowerCase())
+  // The runner performs the call-path value transfer outside the engine, as
+  // part of loading state, so the engine's journal cannot roll it back. Undo it
+  // here when the top-level frame did not succeed — REVERT included.
+  if (rc !== 0 && value > 0n && toAddr) {
+    const to = settle.get(toAddr as Hex)
+    if (to) to.balance -= value
+    if (sender) sender.balance += value
+  }
   if (sender) sender.balance += (gasLimit - gasUsed) * effectiveGasPrice
   const cbAddr =
     `0x${bytes(env.currentCoinbase).reduce((s, b) => s + b.toString(16).padStart(2, '0'), '')}` as Hex
@@ -423,7 +454,7 @@ function compare(
       return {
         ok: false,
         reason: 'balance',
-        detail: `${addr} wei-delta ${got.balance - big(want.balance)}${
+        detail: `${addr} rc=${status[lastRc] ?? lastRc} wei-delta ${got.balance - big(want.balance)}${
           gasPriceForDetail
             ? ` gas-delta ${(got.balance - big(want.balance)) / gasPriceForDetail}`
             : ''
@@ -490,6 +521,9 @@ const show = Number(opt('--show') ?? 8)
 
 let pass = 0
 let fail = 0
+// A histogram of gas deltas points straight at a wrong constant: one recurring
+// value is one bug, however many tests it breaks.
+const gasDeltas = new Map<string, number>()
 const reasons = new Map<string, number>()
 const samples = new Map<string, string>()
 
@@ -518,6 +552,17 @@ outer: for (const file of walk(root)) {
         else {
           fail++
           reasons.set(outcome.reason, (reasons.get(outcome.reason) ?? 0) + 1)
+          if (outcome.reason === 'balance' && outcome.detail) {
+            const m = /gas-delta (-?\d+)/.exec(outcome.detail)
+            const w = /wei-delta (-?\d+)/.exec(outcome.detail)
+            // When the gas matches, the discrepancy is a value transfer, so
+            // bucket those by wei instead.
+            const key =
+              m && m[1] !== '0' ? `gas ${m[1]}` : `wei ${w?.[1] ?? '?'}`
+            gasDeltas.set(key, (gasDeltas.get(key) ?? 0) + 1)
+            if (!samples.has(key))
+              samples.set(key, `${name.slice(0, 100)}\n      ${outcome.detail}`)
+          }
           if (!samples.has(outcome.reason))
             samples.set(
               outcome.reason,
@@ -534,6 +579,18 @@ const total = pass + fail
 console.log(
   `\n${pass}/${total} passed (${((pass / total) * 100).toFixed(2)}%)  ${onlyFork ?? 'all forks'}\n`,
 )
+if (gasDeltas.size) {
+  console.log('most common gas deltas (balance failures):')
+  for (const [delta, count] of [...gasDeltas]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12))
+    console.log(
+      `${String(count).padStart(7)}  ${delta}${
+        samples.has(delta) ? `\n         ${samples.get(delta)}` : ''
+      }`,
+    )
+  console.log()
+}
 const ranked = [...reasons].sort((a, b) => b[1] - a[1])
 for (const [reason, count] of ranked.slice(0, show))
   console.log(
