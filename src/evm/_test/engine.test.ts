@@ -603,3 +603,46 @@ describe('fork availability', () => {
     expect(wrong).toEqual([])
   })
 })
+
+describe('keccak256', () => {
+  // The permutation stores some lanes complemented, which is invisible from
+  // outside — absorbing is a XOR and so transparent, and only the initial state
+  // and the squeezed lanes are converted. Nothing about that is obvious from
+  // reading it, so these are known answers checked against `ox`'s own
+  // implementation, which is itself checked against `@noble/hashes`.
+  const cases = [
+    '',
+    'a',
+    'abc',
+    'The quick brown fox jumps over the lazy dog',
+    // One byte under, exactly on, and one over the 136-byte rate, so the
+    // padding and the multi-block path both get exercised.
+    'x'.repeat(135),
+    'x'.repeat(136),
+    'x'.repeat(137),
+    'y'.repeat(400),
+  ]
+
+  test('behavior: matches ox Hash.keccak256 across the rate boundary', () => {
+    for (const text of cases) {
+      // Earlier tests leave the fork wherever they set it; a reset restores it.
+      engine.evm_reset(vm)
+      const bytes = Hex.toBytes(Hex.fromString(text))
+      // PUSH2 len, PUSH0, KECCAK256, PUSH0, MSTORE, PUSH1 32, PUSH0, RETURN,
+      // with the input arriving as calldata copied to memory first.
+      const len = bytes.length.toString(16).padStart(4, '0')
+      const bytecode: Hex.Hex = `0x61${len}5f5f3761${len}5f205f5260205ff3`
+      const code = Hex.toBytes(bytecode)
+      load_.view(engine).set(code, engine.evm_code_ptr(vm))
+      engine.evm_set_code(vm, code.length)
+      load_.view(engine).set(bytes, engine.evm_input_ptr(vm))
+      expect(engine.evm_run(vm, bytes.length, 10_000_000n)).toBe(0)
+      const ptr = engine.evm_output_ptr(vm)
+      const got = Hex.fromBytes(load_.view(engine).slice(ptr, ptr + 32))
+      expect({ text: text.slice(0, 12), got }).toEqual({
+        text: text.slice(0, 12),
+        got: Hash.keccak256(Hex.fromString(text)),
+      })
+    }
+  })
+})
