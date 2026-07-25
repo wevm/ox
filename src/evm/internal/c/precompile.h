@@ -187,104 +187,89 @@ static void ripemd160(const uint8_t *in, uint64_t len, uint8_t *out) {
 // MODEXP (0x05)
 // ---------------------------------------------------------------------------
 
-#define MODEXP_LIMBS 128 // 1024 bytes, the practical ceiling for these tests
+// The precompile accepts operands up to 1024 bytes, which is 128 64-bit limbs.
+// An earlier version used 32-bit limbs and only 128 of them — half the width the
+// precompile allows — so a modulus past 512 bytes was silently truncated and the
+// result was wrong rather than merely slow.
+#define MODEXP_LIMBS 128
 
 typedef struct {
-  uint32_t d[MODEXP_LIMBS];
-  int n;
+  uint64_t d[MODEXP_LIMBS];
+  int n; // significant limbs, zero for the value zero
 } bignum;
+
+static void bn_trim(bignum *a) {
+  a->n = 0;
+  for (int i = MODEXP_LIMBS - 1; i >= 0; i--)
+    if (a->d[i]) {
+      a->n = i + 1;
+      break;
+    }
+}
 
 static void bn_from_be(bignum *r, const uint8_t *p, uint64_t len) {
   for (int i = 0; i < MODEXP_LIMBS; i++) r->d[i] = 0;
-  r->n = 0;
-  if (len > MODEXP_LIMBS * 4) len = MODEXP_LIMBS * 4;
+  if (len > (uint64_t)MODEXP_LIMBS * 8) len = (uint64_t)MODEXP_LIMBS * 8;
   for (uint64_t i = 0; i < len; i++) {
     const uint64_t shift = (len - 1 - i) * 8;
-    r->d[shift / 32] |= (uint32_t)p[i] << (shift % 32);
+    r->d[shift / 64] |= (uint64_t)p[i] << (shift % 64);
   }
-  for (int i = MODEXP_LIMBS - 1; i >= 0; i--)
-    if (r->d[i]) { r->n = i + 1; break; }
+  bn_trim(r);
 }
 
 static int bn_is_zero(const bignum *a) { return a->n == 0; }
 
-/** `r = a * b mod m`, schoolbook with a reduce-by-subtraction step. */
+/**
+ * `r = a * b mod m`.
+ *
+ * Schoolbook multiply into a double-width buffer, then one Knuth division to
+ * reduce. The reduction used to be a bit-at-a-time long division, which costs a
+ * factor of 64 more and put a 1024-byte modular exponentiation into minutes.
+ */
 static void bn_mulmod(bignum *r, const bignum *a, const bignum *b,
                       const bignum *m) {
-  uint32_t t[MODEXP_LIMBS * 2 + 2];
-  const int tn = m->n * 2 + 2 > MODEXP_LIMBS * 2 ? MODEXP_LIMBS * 2 : m->n * 2 + 2;
-  for (int i = 0; i < tn; i++) t[i] = 0;
+  uint64_t t[MODEXP_LIMBS * 2 + 1];
+  const int tn = a->n + b->n;
+  for (int i = 0; i <= tn; i++) t[i] = 0;
   for (int i = 0; i < a->n; i++) {
     uint64_t carry = 0;
-    for (int j = 0; j < b->n && i + j < tn; j++) {
-      const uint64_t cur = (uint64_t)t[i + j] + (uint64_t)a->d[i] * b->d[j] + carry;
-      t[i + j] = (uint32_t)cur;
-      carry = cur >> 32;
+    for (int j = 0; j < b->n; j++) {
+      uint64_t lo, hi;
+      mul64(a->d[i], b->d[j], &lo, &hi);
+      uint64_t sum = t[i + j] + lo;
+      hi += sum < lo;
+      sum += carry;
+      hi += sum < carry;
+      t[i + j] = sum;
+      carry = hi;
     }
-    for (int k = i + b->n; carry && k < tn; k++) {
-      const uint64_t cur = (uint64_t)t[k] + carry;
-      t[k] = (uint32_t)cur;
-      carry = cur >> 32;
-    }
+    t[i + b->n] += carry;
   }
-  // Long division by `m`, one bit at a time from the top.
-  bignum rem;
-  for (int i = 0; i < MODEXP_LIMBS; i++) rem.d[i] = 0;
-  rem.n = 0;
-  for (int bit = tn * 32 - 1; bit >= 0; bit--) {
-    // rem = rem*2 + bit
-    uint32_t carry = (t[bit / 32] >> (bit % 32)) & 1;
-    for (int i = 0; i < m->n + 1 && i < MODEXP_LIMBS; i++) {
-      const uint32_t next = rem.d[i] >> 31;
-      rem.d[i] = (rem.d[i] << 1) | carry;
-      carry = next;
-    }
-    rem.n = 0;
-    for (int i = MODEXP_LIMBS - 1; i >= 0; i--)
-      if (rem.d[i]) { rem.n = i + 1; break; }
-    // Subtract m if rem >= m.
-    int ge = rem.n > m->n;
-    if (rem.n == m->n) {
-      ge = 1;
-      for (int i = m->n - 1; i >= 0; i--) {
-        if (rem.d[i] != m->d[i]) { ge = rem.d[i] > m->d[i]; break; }
-      }
-    }
-    if (ge) {
-      int64_t borrow = 0;
-      for (int i = 0; i < m->n; i++) {
-        const int64_t diff = (int64_t)rem.d[i] - m->d[i] - borrow;
-        rem.d[i] = (uint32_t)diff;
-        borrow = diff < 0;
-      }
-      for (int i = m->n; borrow && i < MODEXP_LIMBS; i++) {
-        const int64_t diff = (int64_t)rem.d[i] - borrow;
-        rem.d[i] = (uint32_t)diff;
-        borrow = diff < 0;
-      }
-      rem.n = 0;
-      for (int i = MODEXP_LIMBS - 1; i >= 0; i--)
-        if (rem.d[i]) { rem.n = i + 1; break; }
-    }
-  }
-  *r = rem;
+  int len = tn;
+  while (len > 1 && t[len - 1] == 0) len--;
+
+  uint64_t quot[MODEXP_LIMBS * 2 + 1], rem[MODEXP_LIMBS * 2 + 1];
+  divmod_knuth64(t, len, m->d, m->n, quot, rem);
+  for (int i = 0; i < MODEXP_LIMBS; i++) r->d[i] = i < m->n ? rem[i] : 0;
+  bn_trim(r);
 }
 
-/** EIP-198 `base^exp mod modulus`, big-endian in and out. */
+/** `base^exp mod m`, big-endian in and out. Writes `ml` bytes. */
 static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
-                   uint64_t el, const uint8_t *mod, uint64_t ml, uint8_t *out) {
+                   uint64_t el, const uint8_t *mod, uint64_t ml,
+                   uint8_t *out) {
+  for (uint64_t i = 0; i < ml; i++) out[i] = 0;
   bignum b, m, acc;
   bn_from_be(&b, base, bl);
   bn_from_be(&m, mod, ml);
-  for (uint64_t i = 0; i < ml; i++) out[i] = 0;
   if (bn_is_zero(&m)) return;
-  // Result is zero mod 1, and the loop below assumes a multi-bit modulus.
+  // Everything is zero mod one.
   if (m.n == 1 && m.d[0] == 1) return;
 
   for (int i = 0; i < MODEXP_LIMBS; i++) acc.d[i] = 0;
   acc.d[0] = 1;
   acc.n = 1;
-  bignum sq = b;
+  bignum sq;
   {
     // Reduce the base first so the squaring chain stays bounded.
     bignum one;
@@ -304,8 +289,8 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
   }
   for (uint64_t i = 0; i < ml; i++) {
     const uint64_t shift = (ml - 1 - i) * 8;
-    const uint64_t limb = shift / 32;
-    out[i] = limb < MODEXP_LIMBS ? (uint8_t)(acc.d[limb] >> (shift % 32)) : 0;
+    const uint64_t limb = shift / 64;
+    out[i] = limb < MODEXP_LIMBS ? (uint8_t)(acc.d[limb] >> (shift % 64)) : 0;
   }
 }
 

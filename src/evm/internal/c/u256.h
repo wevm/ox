@@ -392,6 +392,10 @@ static inline uint64_t div_3by2(uint64_t u2, uint64_t u1, uint64_t u0,
   ((void)(recip), div_2by1_portable((u1), (u0), (d), (rem)))
 #endif
 
+// Widest operand `divmod_knuth64` accepts, in 64-bit limbs. Four covers the
+// EVM's own arithmetic; modexp reaches 1024-byte operands, which is 128.
+#define DIV_LIMBS 128
+
 /**
  * Knuth algorithm D over 64-bit limbs.
  *
@@ -407,7 +411,10 @@ static void divmod_knuth64(const uint64_t *num, int n, const uint64_t *den,
                            int d, uint64_t *quot, uint64_t *rem) {
   while (d > 0 && den[d - 1] == 0) d--;
   for (int i = 0; i < n; i++) quot[i] = 0;
-  for (int i = 0; i < 8; i++) rem[i] = 0;
+  // The EVM's own callers read four limbs of remainder whatever `d` trims to, so
+  // clear at least that many; modexp passes wider operands and a wider array.
+  const int rem_len = d > 8 ? d : 8;
+  for (int i = 0; i < rem_len; i++) rem[i] = 0;
   if (d == 0) return;
   // A numerator shorter than the divisor divides to zero with itself as the
   // remainder. Without this the normalization below reads past `num`.
@@ -425,7 +432,7 @@ static void divmod_knuth64(const uint64_t *num, int n, const uint64_t *den,
 #ifdef OX_HAS_INT128
     recip0 = reciprocal_2by1(dn);
 #endif
-    uint64_t un1[17];
+    uint64_t un1[DIV_LIMBS * 2 + 1];
     un1[n] = s0 ? num[n - 1] >> (64 - s0) : 0;
     for (int i = n - 1; i > 0; i--)
       un1[i] = (num[i] << s0) | (s0 ? num[i - 1] >> (64 - s0) : 0);
@@ -438,7 +445,7 @@ static void divmod_knuth64(const uint64_t *num, int n, const uint64_t *den,
   }
 
   const int s = __builtin_clzll(den[d - 1]);
-  uint64_t vn[8], un[17];
+  uint64_t vn[DIV_LIMBS], un[DIV_LIMBS * 2 + 1];
   for (int i = d - 1; i > 0; i--)
     vn[i] = (den[i] << s) | (s ? den[i - 1] >> (64 - s) : 0);
   vn[0] = den[0] << s;
