@@ -1223,7 +1223,9 @@ static evm_status interpret(evm_vm *vm) {
   vm->output_len = 0;
 
   if (code_len == 0) return EVM_SUCCESS;
-  ENTER_BLOCK(0);
+  // A JUMPDEST enters its own block, so entering it here as well would charge
+  // that block twice — and a great deal of compiled bytecode starts with one.
+  if (code[0] != 0x5b) ENTER_BLOCK(0);
 
   for (;;) {
     if (pc >= code_len) DONE(EVM_SUCCESS); // running off the end is STOP

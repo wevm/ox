@@ -646,3 +646,30 @@ describe('keccak256', () => {
     }
   })
 })
+
+describe('block gas accounting', () => {
+  // Gas and stack bounds are validated once per basic block, and a JUMPDEST
+  // starts a block. The interpreter also enters the first block on entry, so
+  // code beginning with a JUMPDEST — which most compiled output does — had that
+  // block charged twice. It was one gas per such program plus the rest of the
+  // block, and it cost more than half a point of conformance.
+  test('behavior: a leading JUMPDEST is charged once', () => {
+    const run = (bytecode: Hex.Hex) => {
+      engine.evm_reset(vm)
+      const code = Hex.toBytes(bytecode)
+      load_.view(engine).set(code, engine.evm_code_ptr(vm))
+      engine.evm_set_code(vm, code.length)
+      expect(engine.evm_run(vm, 0, 1_000_000n)).toBe(0)
+      return 1_000_000n - engine.evm_gas_left(vm)
+    }
+    // JUMPDEST alone is 1.
+    expect(run('0x5b')).toBe(1n)
+    // JUMPDEST, PUSH1, POP: 1 + 3 + 2.
+    expect(run('0x5b600050')).toBe(6n)
+    // The same block reached by a jump rather than by falling into it must cost
+    // the same, which is what makes the leading case an accounting error rather
+    // than a definition.
+    // PUSH1 3, JUMP, JUMPDEST, PUSH1 0, POP = 3 + 8 + 1 + 3 + 2.
+    expect(run('0x6003565b600050')).toBe(17n)
+  })
+})
