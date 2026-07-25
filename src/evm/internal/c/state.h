@@ -196,6 +196,7 @@ static int32_t account_intern(evm_state *st, const uint8_t *addr) {
       a->exists = 0;
       a->created = 0;
       a->destroyed = 0;
+      a->has_storage = 0;
       // keccak256 of the empty string, the code hash of a codeless account.
       keccak256((const uint8_t *)0, 0, a->code_hash);
       st->account_index[probe] = n;

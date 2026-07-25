@@ -386,3 +386,68 @@ describe('opcode pricing', () => {
     expect(unpriced).toEqual([])
   })
 })
+
+describe('reset isolation', () => {
+  const sender = '0x00000000000000000000000000000000000000aa' as const
+
+  /** Loads a sender with `nonce` and runs a create of `initcode`. */
+  function create(initcode: Hex.Hex, withStorage: string[]) {
+    engine.evm_reset(vm)
+    const stage = engine.evm_stage_ptr(vm)
+    const put = (addr: string, balance: bigint, nonce: bigint) => {
+      load_.view(engine).set(Hex.toBytes(addr as Hex.Hex), stage)
+      load_.view(engine).set(new Uint8Array(32), stage + 64)
+      const buf = new Uint8Array(32)
+      for (let i = 31, v = balance; i >= 0; i--, v >>= 8n)
+        buf[i] = Number(v & 0xffn)
+      load_.view(engine).set(buf, stage + 64)
+      expect(engine.evm_put_account(vm, nonce, 0)).toBe(0)
+    }
+    // Accounts that hold storage but no code. These are what dirty the account
+    // table for whatever runs next.
+    for (const addr of withStorage) {
+      put(addr, 0n, 0n)
+      load_.view(engine).set(Hex.toBytes(addr as Hex.Hex), stage)
+      load_.view(engine).set(new Uint8Array(32), stage + 64)
+      const one = new Uint8Array(32)
+      one[31] = 1
+      load_.view(engine).set(one, stage + 96)
+      expect(engine.evm_put_storage(vm)).toBe(0)
+    }
+    put(sender, 10n ** 18n, 1n)
+
+    const init = Hex.toBytes(initcode)
+    load_.view(engine).set(new Uint8Array(20), stage)
+    load_.view(engine).set(Hex.toBytes(sender), stage + 20)
+    load_.view(engine).set(new Uint8Array(32), stage + 64)
+    load_.view(engine).set(init, stage + 128)
+    const rc = engine.evm_execute_create(vm, init.length, 1_000_000n)
+    return { rc, gas: 1_000_000n - engine.evm_gas_left(vm) }
+  }
+
+  test('behavior: a create is unaffected by the previous run’s state', () => {
+    // PUSH1 1, PUSH1 0, MSTORE8, PUSH1 1, PUSH1 0, RETURN — deploys one byte.
+    const initcode: Hex.Hex = '0x600160005360016000f3'
+
+    // A run that leaves several storage-bearing accounts in the table first.
+    // Account slots are recycled by index, so whatever runs next inherits them.
+    const dirty = create(
+      initcode,
+      Array.from(
+        { length: 6 },
+        (_, i) => `0x${(i + 1).toString(16).padStart(40, '0')}`,
+      ),
+    )
+    expect(dirty.rc).toBe(0)
+
+    // `evm_reset` clears the table, so a create with no storage anywhere must
+    // succeed and cost the same as it would in a fresh process. It did not:
+    // `account_intern` left the EIP-7610 storage flag from the recycled entry
+    // set, so the new address looked occupied and the create consumed all of its
+    // gas.
+    const clean = create(initcode, [])
+    expect(clean.rc).toBe(0)
+    expect(clean.gas).toBeLessThan(1_000_000n)
+    expect(clean).toEqual(dirty)
+  })
+})
