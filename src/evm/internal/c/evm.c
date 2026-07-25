@@ -1070,8 +1070,93 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       *out_len = 32;
       return PRE_OK;
     }
+    case 0x0a: { // KZG point evaluation (EIP-4844)
+      if (len != 192) return PRE_FAIL;
+      if (*gas < 50000) return PRE_FAIL;
+      *gas -= 50000;
+      bls_init();
+      // versioned_hash || z || y || commitment || proof
+      const uint8_t *vh = in;
+      const uint8_t *zb = in + 32;
+      const uint8_t *yb = in + 64;
+      const uint8_t *cb = in + 96;
+      const uint8_t *pb = in + 144;
+      // The versioned hash commits to the commitment: sha256 of it with the
+      // leading byte replaced by the version.
+      uint8_t digest[32];
+      sha256(cb, 48, digest);
+      digest[0] = 0x01;
+      for (int i = 0; i < 32; i++)
+        if (digest[i] != vh[i]) return PRE_FAIL;
+      // z and y are scalars, so they must be below the group order.
+      uint64_t z[4] = {0}, y[4] = {0};
+      for (int i = 0; i < 32; i++) {
+        const int nib = 31 - i;
+        z[nib / 8] |= (uint64_t)zb[i] << ((nib % 8) * 8);
+        y[nib / 8] |= (uint64_t)yb[i] << ((nib % 8) * 8);
+      }
+      for (int i = 3; i >= 0; i--) {
+        if (z[i] != BLS_ORDER[i]) {
+          if (z[i] > BLS_ORDER[i]) return PRE_FAIL;
+          break;
+        }
+        if (i == 0) return PRE_FAIL;
+      }
+      for (int i = 3; i >= 0; i--) {
+        if (y[i] != BLS_ORDER[i]) {
+          if (y[i] > BLS_ORDER[i]) return PRE_FAIL;
+          break;
+        }
+        if (i == 0) return PRE_FAIL;
+      }
+      bg1 commitment, proof;
+      if (!bls_decompress_g1(cb, &commitment) ||
+          !bls_decompress_g1(pb, &proof))
+        return PRE_FAIL;
+
+      // The check is e(C - [y]G1, -G2) * e(proof, [s]G2 - [z]G2) == 1.
+      const bg1 g1 = bls_g1_generator();
+      bg1 yg1, lhs;
+      bg1_mul(&yg1, &g1, y, 4);
+      if (!bg1_is_inf(&yg1)) yg1.y = bfp_neg(yg1.y);
+      bg1_add(&lhs, &commitment, &yg1);
+
+      bg2 g2 = bls_g2_from(BLS_G2_GEN);
+      const bg2 sg2 = bls_g2_from(BLS_SETUP_G2);
+      bg2 zg2, rhs;
+      bg2_mul(&zg2, &g2, z, 4);
+      if (!bg2_is_inf(&zg2)) zg2.y = fp2_neg(zg2.y);
+      bg2_add(&rhs, &sg2, &zg2);
+      g2.y = fp2_neg(g2.y); // -G2
+
+      fp12 acc = fp12_one();
+      if (!bg1_is_inf(&lhs) && !bg2_is_inf(&g2)) {
+        bfp ax, ay;
+        bg1_affine(&lhs, &ax, &ay);
+        fp2 bx, by;
+        bg2_affine(&g2, &bx, &by);
+        acc = fp12_mul(acc, bls_miller(ax, ay, bx, by));
+      }
+      if (!bg1_is_inf(&proof) && !bg2_is_inf(&rhs)) {
+        bfp ax, ay;
+        bg1_affine(&proof, &ax, &ay);
+        fp2 bx, by;
+        bg2_affine(&rhs, &bx, &by);
+        acc = fp12_mul(acc, bls_miller(ax, ay, bx, by));
+      }
+      if (!fp12_is_one(bls_final_exp(acc))) return PRE_FAIL;
+
+      // On success the precompile returns the blob width and the modulus.
+      for (int i = 0; i < 64; i++) out[i] = 0;
+      out[30] = 0x10; // FIELD_ELEMENTS_PER_BLOB = 4096
+      for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 8; j++)
+          out[63 - (i * 8 + j)] = (uint8_t)(BLS_ORDER[i] >> (j * 8));
+      *out_len = 64;
+      return PRE_OK;
+    }
     default:
-      // KZG and the two map-to-curve precompiles need more curve arithmetic.
+      // The two map-to-curve precompiles need more curve arithmetic.
       return PRE_UNSUPPORTED;
   }
 }

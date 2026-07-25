@@ -913,4 +913,110 @@ static inline int64_t bls_msm_discount(uint64_t k, int g1) {
   return table[k - 1];
 }
 
+// ---------------------------------------------------------------------------
+// EIP-4844 point evaluation
+// ---------------------------------------------------------------------------
+
+// Generators and the trusted setup's [s]G2, in plain limbs. The setup point is
+// element 1 of `g2_monomial` in `src/trusted-setups`, decompressed.
+static const uint64_t BLS_G1_GEN_X[BFP_LIMBS] = {
+    0xFB3AF00ADB22C6BBULL, 0x6C55E83FF97A1AEFULL, 0xA14E3A3F171BAC58ULL,
+    0xC3688C4F9774B905ULL, 0x2695638C4FA9AC0FULL, 0x17F1D3A73197D794ULL};
+static const uint64_t BLS_G1_GEN_Y[BFP_LIMBS] = {
+    0x0CAA232946C5E7E1ULL, 0xD03CC744A2888AE4ULL, 0x00DB18CB2C04B3EDULL,
+    0xFCF5E095D5D00AF6ULL, 0xA09E30ED741D8AE4ULL, 0x08B3F481E3AAA0F1ULL};
+static const uint64_t BLS_G2_GEN[4][BFP_LIMBS] = {
+    {0xD48056C8C121BDB8ULL, 0x0BAC0326A805BBEFULL, 0xB4510B647AE3D177ULL,
+     0xC6E47AD4FA403B02ULL, 0x260805272DC51051ULL, 0x024AA2B2F08F0A91ULL},
+    {0xE5AC7D055D042B7EULL, 0x334CF11213945D57ULL, 0xB5DA61BBDC7F5049ULL,
+     0x596BD0D09920B61AULL, 0x7DACD3A088274F65ULL, 0x13E02B6052719F60ULL},
+    {0xE193548608B82801ULL, 0x923AC9CC3BACA289ULL, 0x6D429A695160D12CULL,
+     0xADFD9BAA8CBDD3A7ULL, 0x8CC9CDC6DA2E351AULL, 0x0CE5D527727D6E11ULL},
+    {0xAAA9075FF05F79BEULL, 0x3F370D275CEC1DA1ULL, 0x267492AB572E99ABULL,
+     0xCB3E287E85A763AFULL, 0x32ACD2B02BC28B99ULL, 0x0606C4A02EA734CCULL}};
+static const uint64_t BLS_SETUP_G2[4][BFP_LIMBS] = {
+    {0xC98EDADA20C1DEF2ULL, 0x087041DE621000EDULL, 0xA36851477BA4C60BULL,
+     0x3926C911CCECEAC9ULL, 0x734429B7B38608E2ULL, 0x185CBFEE53492714ULL},
+    {0xAFAAAB24F3499F72ULL, 0x2914E5870CB452D2ULL, 0x1009A2CE615AC53DULL,
+     0x26187075CBFBEFA8ULL, 0x843BC287230AF389ULL, 0x15BFD7DD8CDEB128ULL},
+    {0xEE689BFBBB832A99ULL, 0x4CE26D105941F383ULL, 0xE82451A496A9C979ULL,
+     0x131569490E28DE18ULL, 0xD7D5EE8599D1FCA2ULL, 0x014353BDB96B626DULL},
+    {0x23048EF30D0A154FULL, 0x9495346F3D7AC9CDULL, 0xDA5ED1BA9BFA0789ULL,
+     0xEF79DE09FC63671FULL, 0x03432FCAE0181B4BULL, 0x1666C54B0A325295ULL}};
+
+// (p - 1) / 2, the threshold for "lexicographically larger" in the ZCash
+// point encoding.
+static const uint64_t BLS_P_HALF[BFP_LIMBS] = {0xDCFF7FFFFFFFD555ULL, 0x0F55FFFF58A9FFFFULL, 0xB39869507B587B12ULL, 0xB23BA5C279C2895FULL, 0x258DD3DB21A5D66BULL, 0x0D0088F51CBFF34DULL};
+
+// (p + 1) / 4, the square-root exponent; p is 3 mod 4.
+static const uint64_t BLS_SQRT_EXP[BFP_LIMBS] = {
+    0xEE7FBFFFFFFFEAABULL, 0x07AAFFFFAC54FFFFULL, 0xD9CC34A83DAC3D89ULL,
+    0xD91DD2E13CE144AFULL, 0x92C6E9ED90D2EB35ULL, 0x0680447A8E5FF9A6ULL};
+
+static inline bg1 bls_g1_generator(void) {
+  return (bg1){bfp_to_mont(BLS_G1_GEN_X), bfp_to_mont(BLS_G1_GEN_Y),
+               bfp_one()};
+}
+
+static inline bg2 bls_g2_from(const uint64_t c[4][BFP_LIMBS]) {
+  bg2 q;
+  q.x = (fp2){bfp_to_mont(c[0]), bfp_to_mont(c[1])};
+  q.y = (fp2){bfp_to_mont(c[2]), bfp_to_mont(c[3])};
+  q.z = fp2_one();
+  return q;
+}
+
+/**
+ * Decompresses a 48-byte ZCash-serialised G1 point.
+ *
+ * The top three bits of the first byte are flags: compressed, infinity, and the
+ * sign that picks between the two square roots. Returns 0 on any malformed
+ * input, including an uncompressed or out-of-range encoding.
+ */
+static int bls_decompress_g1(const uint8_t *in, bg1 *out) {
+  const uint8_t flags = in[0];
+  if (!(flags & 0x80)) return 0; // must be the compressed form
+  const int infinity = (flags & 0x40) != 0;
+  const int sign = (flags & 0x20) != 0;
+  uint64_t raw[BFP_LIMBS] = {0};
+  for (int i = 0; i < 48; i++) {
+    const uint8_t byte = i == 0 ? (uint8_t)(in[0] & 0x1f) : in[i];
+    const int nib = 47 - i;
+    raw[nib / 8] |= (uint64_t)byte << ((nib % 8) * 8);
+  }
+  if (infinity) {
+    // The infinity encoding must carry no coordinate and no sign.
+    for (int i = 0; i < BFP_LIMBS; i++)
+      if (raw[i]) return 0;
+    if (sign) return 0;
+    *out = bg1_inf();
+    return 1;
+  }
+  if (bfp_ge_p(raw)) return 0;
+  const bfp x = bfp_to_mont(raw);
+  const bfp two = bfp_add(bfp_one(), bfp_one());
+  const bfp four = bfp_add(two, two);
+  const bfp y2 = bfp_add(bfp_mul(bfp_sqr(x), x), four);
+  bfp y = bfp_pow(y2, BLS_SQRT_EXP, BFP_LIMBS);
+  if (!bfp_eq(bfp_sqr(y), y2)) return 0; // x is not on the curve
+  // The sign bit selects the lexicographically larger root, which for this
+  // prime means the one above (p - 1) / 2.
+  uint64_t plain[BFP_LIMBS];
+  bfp_from_mont(y, plain);
+  int larger = 0;
+  for (int i = BFP_LIMBS - 1; i >= 0; i--) {
+    if (plain[i] != BLS_P_HALF[i]) {
+      larger = plain[i] > BLS_P_HALF[i];
+      break;
+    }
+  }
+  if (larger != sign) y = bfp_neg(y);
+  out->x = x;
+  out->y = y;
+  out->z = bfp_one();
+  bg1 check;
+  bg1_mul(&check, out, BLS_ORDER, 4);
+  return bg1_is_inf(&check);
+}
+
 #endif // OX_EVM_BLS12381_H
