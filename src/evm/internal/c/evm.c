@@ -112,6 +112,7 @@ typedef struct {
 #define SPEC_ISTANBUL 7   // EIP-1884 repriced BALANCE, EXTCODEHASH, SLOAD
 #define SPEC_BYZANTIUM 4  // modexp and bn254 arrived
 #define SPEC_BERLIN 8     // EIP-2929 introduced warm/cold, EIP-2565 repriced modexp
+#define SPEC_LONDON 9    // EIP-3529 cut the refunds
 #define SPEC_CANCUN 12
 #define SPEC_PRAGUE 13
 
@@ -1364,30 +1365,46 @@ static evm_status interpret(evm_vm *vm) {
         const u256 key = POP(), value = POP();
         const int32_t slot = slot_intern(vm->st, vm->self, key);
         if (slot < 0) HALT(EVM_OUT_OF_MEMORY);
-        // EIP-2200: cost depends on the original, current, and new values. The
-        // cold surcharge only exists from Berlin.
-        if (warm_slot(vm->st, slot) && vm->ctx.spec >= SPEC_BERLIN)
-          USE_GAS(GAS_COLD_SLOAD);
+        const int cold = warm_slot(vm->st, slot);
         const u256 current = vm->st->slots[slot].value;
+        if (vm->ctx.spec < SPEC_ISTANBUL) {
+          // Before EIP-2200 the price depends only on the current value, and
+          // there is no net metering to unwind.
+          USE_GAS(u256_is_zero(current) && !u256_is_zero(value) ? GAS_SSET
+                                                                : 5000);
+          if (!u256_is_zero(current) && u256_is_zero(value))
+            add_refund(vm->st, 15000);
+          set_storage(vm->st, slot, value);
+          break;
+        }
+        // EIP-2200 net metering: the cost depends on the original, current, and
+        // new values. Berlin split the base into a cold surcharge plus the warm
+        // read, and EIP-3529 cut the clearing refund from 15000 to 4800.
+        const int64_t noop_gas = vm->ctx.spec >= SPEC_BERLIN ? GAS_WARM : 800;
+        const int64_t reset_gas = vm->ctx.spec >= SPEC_BERLIN ? GAS_SRESET
+                                                              : 5000;
+        const int64_t clear_refund =
+            vm->ctx.spec >= SPEC_LONDON ? REFUND_SCLEAR : 15000;
+        if (cold && vm->ctx.spec >= SPEC_BERLIN) USE_GAS(GAS_COLD_SLOAD);
         const u256 original = vm->st->slots[slot].original;
         if (u256_eq(current, value)) {
-          USE_GAS(GAS_WARM);
+          USE_GAS(noop_gas);
         } else if (u256_eq(original, current)) {
-          USE_GAS(u256_is_zero(original) ? GAS_SSET : GAS_SRESET);
+          USE_GAS(u256_is_zero(original) ? GAS_SSET : reset_gas);
           if (!u256_is_zero(original) && u256_is_zero(value))
-            add_refund(vm->st, REFUND_SCLEAR);
+            add_refund(vm->st, clear_refund);
         } else {
-          USE_GAS(GAS_WARM);
-          // EIP-3529 refund bookkeeping when a slot is revisited.
+          USE_GAS(noop_gas);
+          // Refund bookkeeping when a slot is revisited within the transaction.
           if (!u256_is_zero(original)) {
-            if (u256_is_zero(current)) sub_refund(vm->st, REFUND_SCLEAR);
-            if (u256_is_zero(value)) add_refund(vm->st, REFUND_SCLEAR);
+            if (u256_is_zero(current)) sub_refund(vm->st, clear_refund);
+            if (u256_is_zero(value)) add_refund(vm->st, clear_refund);
           }
           if (u256_eq(original, value)) {
             if (u256_is_zero(original))
-              add_refund(vm->st, GAS_SSET - GAS_WARM);
+              add_refund(vm->st, GAS_SSET - noop_gas);
             else
-              add_refund(vm->st, GAS_SRESET - GAS_WARM);
+              add_refund(vm->st, reset_gas - noop_gas);
           }
         }
         set_storage(vm->st, slot, value);
@@ -1697,9 +1714,13 @@ static evm_status interpret(evm_vm *vm) {
           }
           set_balance(vm->st, vm->self, U256_ZERO);
         }
-        // EIP-6780: the account is only removed when created in this same
-        // transaction; otherwise only the balance moves.
-        if (vm->st->accounts[vm->self].created)
+        // EIP-3529 removed the refund; before London it is 24000, once per
+        // account per transaction.
+        if (vm->ctx.spec < SPEC_LONDON && !vm->st->accounts[vm->self].destroyed)
+          add_refund(vm->st, 24000);
+        // EIP-6780 narrowed removal to accounts created in this same
+        // transaction. Before Cancun the account always goes.
+        if (vm->ctx.spec < SPEC_CANCUN || vm->st->accounts[vm->self].created)
           set_destroyed(vm->st, vm->self, 1);
         DONE(EVM_SUCCESS);
       }

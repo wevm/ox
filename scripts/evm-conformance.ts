@@ -605,7 +605,8 @@ function settleAndCompare(
     // EIP-3529 caps the refund at a fifth of the gas consumed. The counter can
     // be negative mid-transaction; a negative total refunds nothing.
     const counter = refundCounter > 0n ? refundCounter : 0n
-    const cap = gasUsed / 5n
+    // EIP-3529 tightened the cap from a half to a fifth.
+    const cap = forkAtLeast(fork, 'London') ? gasUsed / 5n : gasUsed / 2n
     gasUsed -= counter < cap ? counter : cap
   }
   if (forkAtLeast(fork, 'Prague') && gasUsed < floor) gasUsed = floor
