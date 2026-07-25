@@ -10,20 +10,14 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 31258/40553 (77.08%) across all forks, 85% on a Prague sample.
-// The known gaps, largest first:
+// Status: 33305/40553 (82.13%) across all forks. The known gaps, largest first:
 //
-//   - ecrecover, bn254 (0x06-0x08), KZG (0x0a), and BLS12-381 (0x0b-0x11) are
-//     not implemented; they need field and group arithmetic. This is most of
-//     the `storage` bucket, where a call to one returns 0 instead of 1.
+//   - bn254 (0x06-0x08), KZG (0x0a), and BLS12-381 (0x0b-0x11) are not
+//     implemented; they need field and group arithmetic. This is most of the
+//     `storage` bucket, where a call to one returns 0 instead of 1.
 //   - EIP-7702 set-code transactions are skipped outright (612 cases).
-//   - Pre-Berlin gas schedules. The engine prices EIP-2929 warm/cold access
-//     unconditionally, so Istanbul and earlier misprice account access.
-//   - A residue of small gas deltas (8, 10, 35, 52, 84) concentrated in the
-//     static-call and delegatecall tests. Disabling the GAS block-correction
-//     shrinks some of these buckets while costing ~5% overall, so the
-//     correction is right in general and slightly wrong in some structural
-//     case that is not yet identified.
+//   - A residue of small gas deltas (8, 10, 11, 30, 34, 84) concentrated in the
+//     static-call and delegatecall tests.
 //
 // Blockchain tests are not run at all: they need block processing and a
 // Merkle-Patricia trie for the state root, which state tests avoid by shipping
@@ -56,14 +50,24 @@ const status = [
   'static-violation',
 ] as const
 
-const engine = await (async () => {
-  const { instance } = await WebAssembly.instantiate(
-    Uint8Array.from(Buffer.from(wasmBase64, 'base64')),
-  )
-  return instance.exports as any
-})()
+const binary = Uint8Array.from(Buffer.from(wasmBase64, 'base64'))
+const module_ = new WebAssembly.Module(binary)
 
-const vm = engine.evm_new(0)
+let engine: any
+let vm: number
+
+/**
+ * Instantiates a fresh engine.
+ *
+ * Called again after any trap: a wasm trap leaves the shadow stack pointer
+ * where it was, so a poisoned instance traps on every later call and one bad
+ * case would be reported as tens of thousands.
+ */
+function instantiate() {
+  engine = new WebAssembly.Instance(module_, {}).exports as any
+  vm = engine.evm_new(0)
+}
+instantiate()
 const mem = () => new Uint8Array(engine.memory.buffer)
 const stage = () => engine.evm_stage_ptr(vm)
 
@@ -127,6 +131,27 @@ const forkOrder = [
 const forkAtLeast = (fork: string, min: string) =>
   forkOrder.indexOf(fork) >= forkOrder.indexOf(min)
 
+/**
+ * The engine's `spec` id for a fork name.
+ *
+ * The engine numbers every fork that repriced something, including ones no
+ * fixture targets directly (Tangerine, Spurious Dragon, Constantinople), so
+ * these ids are not contiguous over `forkOrder`.
+ */
+const specIds: Record<string, number> = {
+  Frontier: 0,
+  Homestead: 1,
+  Byzantium: 4,
+  ConstantinopleFix: 6,
+  Istanbul: 7,
+  Berlin: 8,
+  London: 9,
+  Paris: 10,
+  Shanghai: 11,
+  Cancun: 12,
+  Prague: 13,
+}
+
 /** EIP-2028/7623 intrinsic gas for the calldata and access list. */
 function intrinsicGas(
   data: Uint8Array,
@@ -164,6 +189,31 @@ function precompileCount(fork: string) {
   if (forkAtLeast(fork, 'Istanbul')) return 0x09 // EIP-152 blake2f
   if (forkAtLeast(fork, 'Byzantium')) return 0x08 // bn254 + modexp
   return 0x04
+}
+
+const GAS_PER_BLOB = 131072n
+
+/**
+ * EIP-4844 `fake_exponential`: `factor * e ** (numerator / denominator)`
+ * approximated with integer arithmetic.
+ */
+function fakeExponential(factor: bigint, numerator: bigint, denom: bigint) {
+  let i = 1n
+  let output = 0n
+  let accum = factor * denom
+  while (accum > 0n) {
+    output += accum
+    accum = (accum * numerator) / (denom * i)
+    i += 1n
+  }
+  return output / denom
+}
+
+/** The blob base fee for a block's excess blob gas. */
+function blobBaseFeeOf(excess: bigint, fork: string) {
+  // EIP-7691 raised the update fraction along with the target blob count.
+  const fraction = forkAtLeast(fork, 'Prague') ? 5007716n : 3338477n
+  return fakeExponential(1n, excess, fraction)
 }
 
 function warmPreamble(sender: string, to: string | undefined, fork: string) {
@@ -244,16 +294,27 @@ function runCase(test: any, fork: string, post: any): Outcome {
   gasPriceForDetail = effectiveGasPrice
   putWord(64, effectiveGasPrice)
   putWord(96, baseFee)
-  putWord(128, big(env.currentExcessBlobGas ? '0x1' : '0x0'))
+  // EIP-4844. The data fee is burnt, so it leaves the sender's balance without
+  // reaching the coinbase; `BLOBBASEFEE` and `BLOBHASH` read the same values.
+  const blobHashes: string[] = tx.blobVersionedHashes ?? []
+  const excessBlobGas = big(env.currentExcessBlobGas)
+  const blobBaseFee = forkAtLeast(fork, 'Cancun')
+    ? blobBaseFeeOf(excessBlobGas, fork)
+    : 0n
+  const blobFee = BigInt(blobHashes.length) * GAS_PER_BLOB * blobBaseFee
+  putWord(128, blobBaseFee)
   putWord(160, big(env.currentRandom ?? env.currentDifficulty))
   putWord(192, big(test.config?.chainid ?? '0x01'))
+  for (let i = 0; i < Math.min(blobHashes.length, 8); i++)
+    putWord(224 + i * 32, big(blobHashes[i]))
   engine.evm_set_context(
     vm,
     big(env.currentNumber),
     big(env.currentTimestamp),
     big(env.currentGasLimit),
+    Math.min(blobHashes.length, 8),
     0,
-    0,
+    specIds[fork] ?? 13,
   )
 
   // EIP-2930 access list warms addresses and slots before execution.
@@ -283,7 +344,10 @@ function runCase(test: any, fork: string, post: any): Outcome {
     tx.sender.toLowerCase()
   ]
   const senderBalance = big(senderPre?.balance)
-  const upfront = gasLimit * effectiveGasPrice + value
+  // A blob transaction is invalid if it cannot pay the block's blob base fee.
+  if (blobHashes.length && big(tx.maxFeePerBlobGas) < blobBaseFee)
+    return compareLoaded(post)
+  const upfront = gasLimit * effectiveGasPrice + value + blobFee
   if (senderBalance < upfront) return compareLoaded(post)
 
   // Only the gas is deducted here. For a call the runner moves the value
@@ -292,7 +356,10 @@ function runCase(test: any, fork: string, post: any): Outcome {
   putAddr(STAGE_ADDR, tx.sender)
   putWord(
     STAGE_WORD_A,
-    senderBalance - gasLimit * effectiveGasPrice - (isCreate ? 0n : value),
+    senderBalance -
+      gasLimit * effectiveGasPrice -
+      blobFee -
+      (isCreate ? 0n : value),
   )
   engine.evm_put_account(vm, big(senderPre?.nonce) + 1n, 0)
 
@@ -329,7 +396,8 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // the sender write just produced rather than on the pre-state.
   const toPre = (test.pre as Record<string, Account>)[toAddr]
   const toCode = bytes(toPre?.code)
-  const senderAdjusted = senderBalance - gasLimit * effectiveGasPrice - value
+  const senderAdjusted =
+    senderBalance - gasLimit * effectiveGasPrice - blobFee - value
   const toBase =
     toAddr === tx.sender.toLowerCase() ? senderAdjusted : big(toPre?.balance)
   putAddr(STAGE_ADDR, toAddr)
@@ -577,6 +645,7 @@ outer: for (const file of walk(root)) {
             ok: false,
             reason: `threw:${(error as Error).message.slice(0, 40)}`,
           }
+          instantiate()
         }
         if (outcome.ok) pass++
         else {

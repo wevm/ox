@@ -29,6 +29,7 @@ export type Engine = {
     blockGasLimit: bigint,
     blobCount: number,
     blockHashCount: number,
+    spec: number,
   ): number
   evm_execute(
     vm: number,

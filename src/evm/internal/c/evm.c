@@ -100,7 +100,16 @@ typedef struct {
   // The 256 most recent block hashes, index 0 being `number - 1`.
   uint8_t block_hashes[256][32];
   int32_t block_hash_count;
+  // Fork identifier. Account and storage access were repriced repeatedly, so
+  // these costs cannot be constants.
+  int32_t spec;
 } evm_context;
+
+// Only the forks that changed a cost this engine charges.
+#define SPEC_TANGERINE 2  // EIP-150 repriced all external account access
+#define SPEC_CONSTANTINOPLE 5
+#define SPEC_ISTANBUL 7   // EIP-1884 repriced BALANCE, EXTCODEHASH, SLOAD
+#define SPEC_BERLIN 8     // EIP-2929 introduced warm/cold
 
 // EIP-2929 access costs.
 #define GAS_COLD_ACCOUNT 2600
@@ -168,6 +177,9 @@ typedef struct {
   u256 call_value;
   int is_static;
   int depth;
+  // Address of a local in the outermost entry point. `run_frame` recurses on
+  // the C stack, so this is the reference point for the depth guard below.
+  __UINTPTR_TYPE__ stack_top;
   uint8_t *returndata; // result of the most recent sub-call
   int32_t returndata_len;
   // Staging area the host reads and writes across the ABI boundary.
@@ -191,10 +203,37 @@ typedef struct {
   u256 *stack_base;
 } evm_vm;
 
+/**
+ * Cost of touching an external account, and marks it warm.
+ *
+ * Before Berlin there is no warm/cold distinction and the price is flat; the
+ * account is still marked so that later forks' bookkeeping is uniform.
+ */
+static inline int64_t access_cost(evm_vm *vm, int32_t acct, int64_t pre_berlin) {
+  const int cold = warm_account(vm->st, acct);
+  if (vm->ctx.spec >= SPEC_BERLIN)
+    return cold ? GAS_COLD_ACCOUNT : GAS_WARM;
+  return pre_berlin;
+}
+
 #define ANALYSIS_ARENA (48 * 1024 * 1024)
 #define FRAME_MEMORY (256 * 1024) // per-frame memory ceiling
 #define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
 #define MAX_DEPTH 1024
+// Must stay under the linker's `-z stack-size` with room for one more frame.
+#define C_STACK_BUDGET (6 * 1024 * 1024)
+/**
+ * Marks the base of the C stack for the recursion guard, and resets the depth.
+ *
+ * Every ABI entry point that can run a frame goes through this so `run_frame`
+ * has a reference point to measure against.
+ */
+#define ENTER_TOP(vm)                                    \
+  do {                                                   \
+    volatile uint8_t probe_;                             \
+    (vm)->depth = 0;                                     \
+    (vm)->stack_top = (__UINTPTR_TYPE__)&probe_;                \
+  } while (0)
 
 // ---------------------------------------------------------------------------
 // Stack
@@ -551,6 +590,13 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   if (vm->depth >= MAX_DEPTH) return EVM_INVALID_JUMP;
 
   frame_state saved;
+  // A C-stack overflow is a wasm trap, and a trap does not restore the shadow
+  // stack pointer: every later call into the module then traps immediately, so
+  // one deep program would poison the instance for good. Degrade to an EVM
+  // error instead, well before the real limit.
+  if (vm->stack_top - (__UINTPTR_TYPE__)&saved > C_STACK_BUDGET)
+    return EVM_OUT_OF_MEMORY;
+
   saved.self = vm->self;
   for (int i = 0; i < 20; i++) saved.caller[i] = vm->caller[i];
   saved.call_value = vm->call_value;
@@ -1084,7 +1130,11 @@ static evm_status interpret(evm_vm *vm) {
         word_to_address(POP(), addr);
         const int32_t a = account_intern(vm->st, addr);
         if (a < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        // EIP-1884 raised BALANCE from 400 to 700; before EIP-150 it was 20.
+        USE_GAS(access_cost(vm, a,
+                            vm->ctx.spec >= SPEC_ISTANBUL
+                                ? 700
+                                : (vm->ctx.spec >= SPEC_TANGERINE ? 400 : 20)));
         PUSH(vm->st->accounts[a].balance);
         break;
       }
@@ -1093,7 +1143,7 @@ static evm_status interpret(evm_vm *vm) {
         word_to_address(POP(), addr);
         const int32_t a = account_intern(vm->st, addr);
         if (a < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        USE_GAS(access_cost(vm, a, vm->ctx.spec >= SPEC_TANGERINE ? 700 : 20));
         PUSH(u256_from_u64((uint64_t)vm->st->accounts[a].code_len));
         break;
       }
@@ -1102,7 +1152,8 @@ static evm_status interpret(evm_vm *vm) {
         word_to_address(POP(), addr);
         const int32_t a = account_intern(vm->st, addr);
         if (a < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        // EXTCODEHASH arrived in Constantinople at 400 and was raised to 700.
+        USE_GAS(access_cost(vm, a, vm->ctx.spec >= SPEC_ISTANBUL ? 700 : 400));
         // A non-existent account hashes to zero, not to the empty-string hash.
         PUSH(vm->st->accounts[a].exists
                  ? u256_from_be(vm->st->accounts[a].code_hash)
@@ -1115,7 +1166,7 @@ static evm_status interpret(evm_vm *vm) {
         const u256 dst = POP(), src = POP(), len = POP();
         const int32_t a = account_intern(vm->st, addr);
         if (a < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_account(vm->st, a) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        USE_GAS(access_cost(vm, a, vm->ctx.spec >= SPEC_TANGERINE ? 700 : 20));
         const uint64_t d = u256_to_u64_sat(dst), so = u256_to_u64_sat(src),
                        n = u256_to_u64_sat(len);
         if (d > MAX_INPUT || n > MAX_INPUT) HALT(EVM_OUT_OF_GAS);
@@ -1151,7 +1202,14 @@ static evm_status interpret(evm_vm *vm) {
         const u256 key = PEEK(0);
         const int32_t slot = slot_intern(vm->st, vm->self, key);
         if (slot < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_slot(vm->st, slot) ? GAS_COLD_SLOAD : GAS_WARM);
+        // SLOAD: 50 originally, 200 after EIP-150, 800 after EIP-1884, then
+        // warm/cold from Berlin.
+        const int cold = warm_slot(vm->st, slot);
+        USE_GAS(vm->ctx.spec >= SPEC_BERLIN
+                    ? (cold ? GAS_COLD_SLOAD : GAS_WARM)
+                    : (vm->ctx.spec >= SPEC_ISTANBUL
+                           ? 800
+                           : (vm->ctx.spec >= SPEC_TANGERINE ? 200 : 50)));
         sp[-1] = vm->st->slots[slot].value;
         break;
       }
@@ -1160,8 +1218,10 @@ static evm_status interpret(evm_vm *vm) {
         const u256 key = POP(), value = POP();
         const int32_t slot = slot_intern(vm->st, vm->self, key);
         if (slot < 0) HALT(EVM_OUT_OF_MEMORY);
-        // EIP-2200: cost depends on the original, current, and new values.
-        if (warm_slot(vm->st, slot)) USE_GAS(GAS_COLD_SLOAD);
+        // EIP-2200: cost depends on the original, current, and new values. The
+        // cold surcharge only exists from Berlin.
+        if (warm_slot(vm->st, slot) && vm->ctx.spec >= SPEC_BERLIN)
+          USE_GAS(GAS_COLD_SLOAD);
         const u256 current = vm->st->slots[slot].value;
         const u256 original = vm->st->slots[slot].original;
         if (u256_eq(current, value)) {
@@ -1261,7 +1321,10 @@ static evm_status interpret(evm_vm *vm) {
 
         const int32_t callee = account_intern(vm->st, to);
         if (callee < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_account(vm->st, callee) ? GAS_COLD_ACCOUNT : GAS_WARM);
+        // EIP-150 raised the call cost from 40 to 700; Berlin replaced it with
+        // warm/cold.
+        USE_GAS(access_cost(vm, callee,
+                            vm->ctx.spec >= SPEC_TANGERINE ? 700 : 40));
 
         evm_status ms = memory_expand(vm, in_off, in_len, &gas);
         if (ms != EVM_SUCCESS) HALT(ms);
@@ -1452,14 +1515,21 @@ static evm_status interpret(evm_vm *vm) {
 
       case 0xff: { // SELFDESTRUCT
         if (vm->is_static) HALT(EVM_STATIC_VIOLATION);
+        // The 5000 base in the opcode table arrived with EIP-150; give it back
+        // on the forks that predate it.
+        if (vm->ctx.spec < SPEC_TANGERINE) gas += 5000;
         uint8_t addr[20];
         word_to_address(POP(), addr);
         const int32_t target = account_intern(vm->st, addr);
         if (target < 0) HALT(EVM_OUT_OF_MEMORY);
-        USE_GAS(warm_account(vm->st, target) ? GAS_COLD_ACCOUNT : 0);
+        USE_GAS(vm->ctx.spec >= SPEC_BERLIN
+                    ? (warm_account(vm->st, target) ? GAS_COLD_ACCOUNT : 0)
+                    : (warm_account(vm->st, target), 0));
         const u256 balance = vm->st->accounts[vm->self].balance;
         // Sending a balance to an account that does not yet exist creates it.
-        if (!u256_is_zero(balance) && target != vm->self &&
+        // EIP-150 introduced this charge alongside the 5000 base.
+        if (vm->ctx.spec >= SPEC_TANGERINE && !u256_is_zero(balance) &&
+            target != vm->self &&
             !vm->st->accounts[target].exists &&
             u256_is_zero(vm->st->accounts[target].balance) &&
             vm->st->accounts[target].nonce == 0 &&
@@ -1612,7 +1682,7 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   state_reset(vm->st);
   vm->self = 0;
   vm->is_static = 0;
-  vm->depth = 0;
+  ENTER_TOP(vm);
   vm->returndata_len = 0;
   vm->call_value = U256_ZERO;
   for (int i = 0; i < 20; i++) vm->caller[i] = 0;
@@ -1689,7 +1759,7 @@ int evm_run(evm_vm *vm, int input_len, int64_t gas) {
   vm->memory_cost = 0;
   vm->output_len = 0;
   vm->arena_top = 0;
-  vm->depth = 0;
+  ENTER_TOP(vm);
   vm->mem = vm->memory;
   vm->mem_cap = vm->memory_cap;
   vm->frame_code = vm->code;
@@ -1726,7 +1796,7 @@ EXPORT("evm_stage_ptr") uint8_t *evm_stage_ptr(evm_vm *vm) { return vm->stage; }
 EXPORT("evm_reset") void evm_reset(evm_vm *vm) {
   state_reset(vm->st);
   vm->returndata_len = 0;
-  vm->depth = 0;
+  ENTER_TOP(vm);
   vm->is_static = 0;
   vm->sp = 0;
   vm->stack_base = vm->stack;
@@ -1764,7 +1834,8 @@ EXPORT("evm_put_storage") int evm_put_storage(evm_vm *vm) {
 EXPORT("evm_set_context")
 void evm_set_context(evm_vm *vm, int64_t number, int64_t timestamp,
                      int64_t block_gas_limit, int blob_count,
-                     int block_hash_count) {
+                     int block_hash_count, int spec) {
+  vm->ctx.spec = spec;
   const uint8_t *p = vm->stage;
   for (int i = 0; i < 20; i++) vm->ctx.origin[i] = p[STAGE_ADDR + i];
   for (int i = 0; i < 20; i++) vm->ctx.coinbase[i] = p[STAGE_ADDR2 + i];
@@ -1822,7 +1893,7 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   for (int i = 0; i < 20; i++) vm->caller[i] = vm->stage[STAGE_ADDR2 + i];
   vm->call_value = u256_from_be(vm->stage + STAGE_WORD_A);
   vm->is_static = is_static;
-  vm->depth = 0;
+  ENTER_TOP(vm);
   vm->returndata_len = 0;
 
   const int32_t code_len = vm->st->accounts[a].code_len;
@@ -1840,7 +1911,7 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   vm->memory_cost = 0;
   vm->output_len = 0;
   vm->arena_top = 0;
-  vm->depth = 0;
+  ENTER_TOP(vm);
   vm->mem = vm->memory;
   vm->mem_cap = vm->memory_cap;
   vm->frame_code = vm->code;
@@ -1877,7 +1948,7 @@ int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
   if (created < 0) return EVM_OUT_OF_MEMORY;
 
   vm->arena_top = 0;
-  vm->depth = 0;
+  ENTER_TOP(vm);
   vm->mem = vm->memory;
   vm->mem_cap = vm->memory_cap;
   vm->returndata_len = 0;

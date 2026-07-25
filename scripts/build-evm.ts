@@ -40,11 +40,13 @@ const wasmFlags = [
   '-Wl,--export=__heap_base',
   '-Wl,--export-memory',
   // Must be at least the stack size: wasm-ld places the stack in initial memory.
-  '-Wl,--initial-memory=4194304',
+  '-Wl,--initial-memory=12582912',
   // Call frames recurse, and the EVM allows 1024 of them. The default 64 KiB
   // wasm stack overflows well before that and traps as an out-of-bounds access.
-  // ~800 bytes per recursion level covers the EVM's 1024-frame limit.
-  '-Wl,-z,stack-size=2097152',
+  // A frame costs ~2 KiB, so 1024 of them need ~2 MiB; this leaves headroom,
+  // and `C_STACK_BUDGET` in evm.c turns an overflow into an EVM error rather
+  // than a trap that would poison the instance.
+  '-Wl,-z,stack-size=8388608',
   '-Wl,--max-memory=1073741824',
   // No `--allow-undefined`: an unresolved symbol must fail the build.
   '-Wl,--strip-all',
