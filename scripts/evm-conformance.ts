@@ -10,7 +10,7 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40099/40553 (98.88%) across all forks. This is the same fixture set
+// Status: 40156/40553 (99.02%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
 // What is left, largest first:
@@ -497,17 +497,23 @@ function runCase(test: any, fork: string, post: any): Outcome {
     return compareLoaded(post)
   // Type-specific validity. A rejected transaction leaves the pre-state
   // untouched, which is what the engine currently holds.
-  if (blobHashes.length) {
+  // `maxFeePerBlobGas` is what makes a transaction type 3, not the presence of
+  // blobs: an empty blob list is exactly what one of these tests sends.
+  if (tx.maxFeePerBlobGas !== undefined) {
     if (!forkAtLeast(fork, 'Cancun')) return compareLoaded(post)
     // EIP-7691 raised the per-block maximum from 6 to 9.
     const maxBlobs = forkAtLeast(fork, 'Prague') ? 9 : 6
-    if (blobHashes.length > maxBlobs) return compareLoaded(post)
+    if (blobHashes.length === 0 || blobHashes.length > maxBlobs)
+      return compareLoaded(post)
     // A blob transaction cannot be a create, and every hash must carry the
     // version byte.
     if (isCreate) return compareLoaded(post)
     for (const h of blobHashes)
       if (!h.startsWith('0x01')) return compareLoaded(post)
   }
+  // EIP-1559: the fee cap has to cover the base fee.
+  if (tx.maxFeePerGas !== undefined && maxFee < baseFee)
+    return compareLoaded(post)
   if (tx.authorizationList && !forkAtLeast(fork, 'Prague'))
     return compareLoaded(post)
   // EIP-3860 caps initcode at twice the deployed-code limit.

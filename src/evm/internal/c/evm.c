@@ -2415,6 +2415,27 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   ENTER_TOP(vm);
   vm->returndata_len = 0;
 
+  // A transaction can be sent straight to a precompile, which has no code for
+  // the interpreter to run.
+  const int top_pid = precompile_id(vm->st->accounts[a].address, vm->ctx.spec);
+  if (top_pid) {
+    mem_copy(vm->input, vm->stage + STAGE_BYTES, (uint64_t)input_len);
+    vm->input_len = input_len;
+    int32_t plen = 0;
+    int64_t left = gas;
+    const int pr =
+        run_precompile(top_pid, vm->input, (uint64_t)input_len, &left,
+                       vm->output, &plen, vm->ctx.spec);
+    if (pr == PRE_OK) {
+      vm->output_len = plen;
+      vm->gas = left;
+      return EVM_SUCCESS;
+    }
+    vm->output_len = 0;
+    vm->gas = 0;
+    return EVM_OUT_OF_GAS;
+  }
+
   // The transaction target may itself be an EIP-7702 delegation, in which case
   // the delegate's code runs. The extra access is charged out of the gas the
   // frame is about to run with.
