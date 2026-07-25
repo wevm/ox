@@ -137,6 +137,10 @@ typedef struct {
   // Block index per code position, written only at block starts. Never
   // cleared: the interpreter only reads positions analysis just wrote.
   int32_t *block_at;
+  // Static gas still owed by the rest of the block, per GAS opcode position.
+  // Charging a whole block up front makes `gas` too low mid-block, and GAS is
+  // the one instruction that can observe it.
+  int32_t *gas_fix;
 
   uint8_t input[MAX_INPUT];
   int input_len;
@@ -446,6 +450,32 @@ static void analyze(evm_vm *vm) {
     block->stack_req = (int16_t)-lowest;
     block->stack_max_growth = (int16_t)highest;
   }
+
+  // Second pass: for each GAS opcode, record the static gas its block still
+  // owes after that instruction, so the interpreter can add it back.
+  int32_t cur = -1;
+  int32_t prefix = 0;
+  for (int i = 0; i < vm->code_len;) {
+    const uint8_t op = vm->frame_code[i];
+    const op_info info = op_table[op];
+    if (op == 0x5b || cur < 0) {
+      cur = vm->block_at[i];
+      prefix = 0;
+    }
+    if (!(info.flags & OP_VALID)) {
+      cur = -1;
+      i++;
+      continue;
+    }
+    prefix += info.gas;
+    if (op == 0x5a) vm->gas_fix[i] = vm->blocks[cur].gas - prefix;
+    if (info.flags & OP_TERMINATOR) {
+      // The instruction after a terminator opens a new block.
+      if (i + 1 < vm->code_len) cur = vm->block_at[i + 1];
+      prefix = 0;
+    }
+    i += (op >= 0x60 && op <= 0x7f) ? 1 + (op - 0x5f) : 1;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -471,6 +501,7 @@ typedef struct {
   uint8_t *jumpdest;
   block_info *blocks;
   int32_t *block_at;
+  int32_t *gas_fix;
   int32_t arena_top;
   int code_len;
   int input_len;
@@ -511,6 +542,7 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   saved.jumpdest = vm->jumpdest;
   saved.blocks = vm->blocks;
   saved.block_at = vm->block_at;
+  saved.gas_fix = vm->gas_fix;
   saved.arena_top = vm->arena_top;
   saved.code_len = vm->code_len;
   saved.input_len = vm->input_len;
@@ -524,7 +556,9 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
       (block_info *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(block_info));
   int32_t *fblock_at =
       (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
-  if (!fmem || !fjd || !fblocks || !fblock_at) {
+  int32_t *fgas_fix =
+      (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
+  if (!fmem || !fjd || !fblocks || !fblock_at || !fgas_fix) {
     vm->arena_top = arena_mark;
     return EVM_OUT_OF_MEMORY;
   }
@@ -540,6 +574,7 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->jumpdest = fjd;
   vm->blocks = fblocks;
   vm->block_at = fblock_at;
+  vm->gas_fix = fgas_fix;
   vm->frame_code = code;
   vm->frame_input = input;
   vm->code_len = code_len;
@@ -563,6 +598,7 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->jumpdest = saved.jumpdest;
   vm->blocks = saved.blocks;
   vm->block_at = saved.block_at;
+  vm->gas_fix = saved.gas_fix;
   vm->arena_top = saved.arena_top;
   vm->code_len = saved.code_len;
   vm->input_len = saved.input_len;
@@ -918,7 +954,8 @@ static evm_status interpret(evm_vm *vm) {
         PUSH(u256_from_u64(vm->memory_size));
         break;
       case 0x5a: // GAS
-        PUSH(u256_from_u64((uint64_t)gas));
+        // Add back the part of this block's static gas not yet reached.
+        PUSH(u256_from_u64((uint64_t)(gas + vm->gas_fix[pc])));
         break;
       case 0x5b: // JUMPDEST
         ENTER_BLOCK(pc);
@@ -1489,13 +1526,14 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   // Worst case is a block per byte, when every byte is a JUMPDEST.
   vm->blocks = (block_info *)ox_alloc((uint64_t)MAX_CODE * sizeof(block_info));
   vm->block_at = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
+  vm->gas_fix = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
   vm->memory = (uint8_t *)ox_alloc((uint64_t)memory_cap);
   vm->output = (uint8_t *)ox_alloc(MAX_INPUT);
   vm->st = (evm_state *)ox_alloc(sizeof(evm_state));
   vm->returndata = (uint8_t *)ox_alloc(MAX_INPUT);
   vm->stage = (uint8_t *)ox_alloc(MAX_INPUT);
-  if (!vm->jumpdest || !vm->blocks || !vm->block_at || !vm->memory ||
-      !vm->output || !vm->st || !vm->returndata || !vm->stage)
+  if (!vm->jumpdest || !vm->blocks || !vm->block_at || !vm->gas_fix ||
+      !vm->memory || !vm->output || !vm->st || !vm->returndata || !vm->stage)
     return 0;
   vm->st->log_data = (uint8_t *)ox_alloc(LOG_ARENA);
   vm->st->code_arena = (uint8_t *)ox_alloc(CODE_ARENA);
