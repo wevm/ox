@@ -450,6 +450,158 @@ static void bn_sqrmod(bignum *r, const bignum *a, const bignum *m) {
   bn_trim_to(r, m->n);
 }
 
+/**
+ * Barrett reduction, for the moduli Montgomery cannot take.
+ *
+ * An even modulus has no inverse mod 2^64, so Montgomery is unavailable — but
+ * the divisions dominate there just the same. Barrett replaces them with a
+ * second multiplication by a precomputed `mu = floor(2^(128n) / m)`: the
+ * estimate `q3 = ((x >> 64(n-1)) * mu) >> 64(n+1)` is short of the true
+ * quotient by at most two, so at most two corrective subtractions follow.
+ */
+static void bn_barrett_init(bignum *mu, const bignum *m) {
+  const int n = m->n;
+  uint64_t num[MODEXP_LIMBS * 2 + 2], quot[MODEXP_LIMBS * 2 + 2],
+      rem[MODEXP_LIMBS * 2 + 2];
+  for (int i = 0; i <= 2 * n; i++) num[i] = 0;
+  num[2 * n] = 1;
+  divmod_knuth64(num, 2 * n + 1, m->d, n, quot, rem);
+  for (int i = 0; i <= n; i++) mu->d[i] = quot[i];
+  mu->n = n + 1;
+}
+
+/** `r = x mod m`, with `x` at most 2n limbs. */
+static void bn_barrett_reduce(bignum *r, const uint64_t *x, int xn,
+                              const bignum *m, const bignum *mu) {
+  const int n = m->n;
+  const int W = n + 1; // the width within which the estimate is exact
+  const int q1n = xn - (n - 1);
+  if (q1n <= 0) {
+    // Below 2^(64(n-1)), so below m already.
+    for (int i = 0; i < n; i++) r->d[i] = i < xn ? x[i] : 0;
+    bn_trim_to(r, n);
+    return;
+  }
+  uint64_t q2[MODEXP_MONT_LIMBS * 4 + 8];
+  for (int i = 0; i < q1n + mu->n; i++) q2[i] = 0;
+  for (int i = 0; i < q1n; i++) {
+    uint64_t carry = 0;
+    const uint64_t qi = x[n - 1 + i];
+    for (int j = 0; j < mu->n; j++) {
+      uint64_t lo, hi;
+      mul64(qi, mu->d[j], &lo, &hi);
+      uint64_t sm = q2[i + j] + lo;
+      hi += sm < lo;
+      sm += carry;
+      hi += sm < carry;
+      q2[i + j] = sm;
+      carry = hi;
+    }
+    q2[i + mu->n] += carry;
+  }
+  const int q3n = q1n + mu->n - W;
+  // r2 = (q3 * m) mod 2^(64W), built separately so the subtraction is plain.
+  uint64_t r2[MODEXP_MONT_LIMBS * 2 + 4], rr[MODEXP_MONT_LIMBS * 2 + 4];
+  for (int i = 0; i < W; i++) r2[i] = 0;
+  for (int i = 0; i < q3n && i < W; i++) {
+    uint64_t carry = 0;
+    const uint64_t qi = q2[W + i];
+    for (int j = 0; j < n && i + j < W; j++) {
+      uint64_t lo, hi;
+      mul64(qi, m->d[j], &lo, &hi);
+      uint64_t sm = r2[i + j] + lo;
+      hi += sm < lo;
+      sm += carry;
+      hi += sm < carry;
+      r2[i + j] = sm;
+      carry = hi;
+    }
+    if (i + n < W) r2[i + n] += carry;
+  }
+  for (int i = 0; i < W; i++) rr[i] = i < xn ? x[i] : 0;
+  uint64_t borrow = 0;
+  for (int i = 0; i < W; i++) {
+    const uint64_t d0 = rr[i] - r2[i];
+    const uint64_t b1 = rr[i] < r2[i];
+    const uint64_t v = d0 - borrow;
+    borrow = b1 | (d0 < borrow);
+    rr[i] = v;
+  }
+  for (int t = 0; t < 3; t++) {
+    int ge = 0;
+    for (int i = W - 1; i >= n; i--)
+      if (rr[i]) {
+        ge = 1;
+        break;
+      }
+    if (!ge)
+      for (int i = n - 1; i >= 0; i--) {
+        if (rr[i] != m->d[i]) {
+          ge = rr[i] > m->d[i];
+          break;
+        }
+        if (i == 0) ge = 1;
+      }
+    if (!ge) break;
+    uint64_t bo = 0;
+    for (int i = 0; i < W; i++) {
+      const uint64_t mi = i < n ? m->d[i] : 0;
+      const uint64_t d0 = rr[i] - mi;
+      const uint64_t b1 = rr[i] < mi;
+      const uint64_t v = d0 - bo;
+      bo = b1 | (d0 < bo);
+      rr[i] = v;
+    }
+  }
+  for (int i = 0; i < n; i++) r->d[i] = rr[i];
+  bn_trim_to(r, n);
+}
+
+/** `r = a * b mod m`, reducing with Barrett rather than a division. */
+static void bn_bmulmod(bignum *r, const bignum *a, const bignum *b,
+                       const bignum *m, const bignum *mu) {
+  const int tn = a->n + b->n;
+  if (tn == 0) {
+    r->n = 0;
+    return;
+  }
+  uint64_t t[MODEXP_MONT_LIMBS * 2 + 2];
+  for (int i = 0; i <= tn; i++) t[i] = 0;
+  for (int i = 0; i < a->n; i++) {
+    uint64_t carry = 0;
+    for (int j = 0; j < b->n; j++) {
+      uint64_t lo, hi;
+      mul64(a->d[i], b->d[j], &lo, &hi);
+      uint64_t sm = t[i + j] + lo;
+      hi += sm < lo;
+      sm += carry;
+      hi += sm < carry;
+      t[i + j] = sm;
+      carry = hi;
+    }
+    t[i + b->n] += carry;
+  }
+  int len = tn;
+  while (len > 1 && t[len - 1] == 0) len--;
+  bn_barrett_reduce(r, t, len, m, mu);
+}
+
+/** Multiply, taking the Barrett path when one is set up. */
+static void bn_bmulmod2(bignum *r, const bignum *a, const bignum *b,
+                        const bignum *m, const bignum *mu, int use) {
+  if (use)
+    bn_bmulmod(r, a, b, m, mu);
+  else
+    bn_mulmod(r, a, b, m);
+}
+
+static void bn_bsqr2(bignum *a, const bignum *m, const bignum *mu, int use) {
+  if (use)
+    bn_bmulmod(a, a, a, m, mu);
+  else
+    bn_sqrmod(a, a, m);
+}
+
 /** `base^exp mod m`, big-endian in and out. Writes `ml` bytes. */
 static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
                    uint64_t el, const uint8_t *mod, uint64_t ml,
@@ -574,6 +726,11 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
   // A narrow odd modulus runs in Montgomery form; see the note above the
   // multiplication for where the two costs cross.
   const int mont = (m.d[0] & 1) && m.n <= MODEXP_MONT_LIMBS;
+  // An even modulus has no inverse mod 2^64, so Montgomery is out; Barrett
+  // removes the same divisions without needing one.
+  const int barrett = !mont && m.n > 1 && m.n <= MODEXP_MONT_LIMBS;
+  bignum mu;
+  if (barrett) bn_barrett_init(&mu, &m);
   uint64_t n0 = 0;
   bignum mont_one;
   if (mont) {
@@ -594,7 +751,7 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
       if (mont)
         bn_mont_mul(&tab[i], &tab[i - 1], &base_red, &m, n0);
       else
-        bn_mulmod(&tab[i], &tab[i - 1], &base_red, &m);
+        bn_bmulmod2(&tab[i], &tab[i - 1], &base_red, &m, &mu, barrett);
     }
 
   int started = 0;
@@ -607,14 +764,14 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
           if (mont)
             bn_mont_mul(&acc, &acc, &acc, &m, n0);
           else
-            bn_sqrmod(&acc, &acc, &m);
+            bn_bsqr2(&acc, &m, &mu, barrett);
         }
       if (w) {
         if (started) {
           if (mont)
             bn_mont_mul(&acc, &acc, &tab[w], &m, n0);
           else
-            bn_mulmod(&acc, &acc, &tab[w], &m);
+            bn_bmulmod2(&acc, &acc, &tab[w], &m, &mu, barrett);
         } else {
           acc = tab[w];
           started = 1;
