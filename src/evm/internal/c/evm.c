@@ -1267,10 +1267,7 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       g1 a, b, r;
       if (!g1_decode(buf, &a) || !g1_decode(buf + 64, &b)) return PRE_FAIL;
       g1_add(&r, &a, &b);
-      u256 x, y;
-      g1_affine(&r, &x, &y);
-      u256_to_be(x, out);
-      u256_to_be(y, out + 32);
+      g1_encode(&r, out);
       *out_len = 64;
       return PRE_OK;
     }
@@ -1284,10 +1281,7 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       if (!g1_decode(buf, &a)) return PRE_FAIL;
       // The scalar is taken as-is: it is not required to be below the order.
       g1_mul(&r, &a, u256_from_be(buf + 64));
-      u256 x, y;
-      g1_affine(&r, &x, &y);
-      u256_to_be(x, out);
-      u256_to_be(y, out + 32);
+      g1_encode(&r, out);
       *out_len = 64;
       return PRE_OK;
     }

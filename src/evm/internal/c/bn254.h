@@ -1,10 +1,8 @@
 // bn254 (alt_bn128) arithmetic for the EIP-196 and EIP-197 precompiles.
 //
-// Correctness first, in the same spirit as `secp256k1.h`: the field goes
-// through the generic 256-bit `u256_mulmod` rather than Montgomery form, and
-// inversion is Fermat's little theorem. A pairing therefore costs on the order
-// of tens of milliseconds. Montgomery multiplication is the obvious thing to
-// add if that ever matters.
+// The field is in Montgomery form; see the section below for what that means
+// for the constants. Inversion is still Fermat's little theorem, which is
+// affordable because the curve arithmetic needs it only at the boundaries.
 //
 // The tower is the standard one for this curve:
 //
@@ -18,9 +16,11 @@
 #include "u256.h"
 
 // p = 36t^4 + 36t^3 + 24t^2 + 6t + 1 for t = 4965661367192848881
-#define BN_P                                                       \
-  ((u256){{0x3C208C16D87CFD47ULL, 0x97816A916871CA8DULL,           \
-           0xB85045B68181585DULL, 0x30644E72E131A029ULL}})
+#define BN_P0 0x3C208C16D87CFD47ULL
+#define BN_P1 0x97816A916871CA8DULL
+#define BN_P2 0xB85045B68181585DULL
+#define BN_P3 0x30644E72E131A029ULL
+#define BN_P ((u256){{BN_P0, BN_P1, BN_P2, BN_P3}})
 // The order of both groups.
 #define BN_R                                                       \
   ((u256){{0x43E1F593F0000001ULL, 0x2833E84879B97091ULL,           \
@@ -40,12 +40,107 @@ static inline u256 fq_neg(u256 a) {
   return u256_is_zero(a) ? a : u256_sub(BN_P, a);
 }
 
-static inline u256 fq_mul(u256 a, u256 b) { return u256_mulmod(a, b, BN_P); }
-static inline u256 fq_sqr(u256 a) { return u256_mulmod(a, a, BN_P); }
+// ---------------------------------------------------------------------------
+// Montgomery form
+//
+// This prime has none of the structure that lets secp256k1's fold work, so the
+// reduction is Montgomery's: field elements are held as `a * R mod p` with
+// R = 2^256, and a multiplication is a 256x256 product followed by four
+// rounds that divide by R without ever dividing. That replaces the generic
+// `u256_mulmod`, whose 512-by-256 Knuth division cost about 90 ns per field
+// multiplication and put a pairing in the tens of milliseconds.
+//
+// Everything between `g1_decode`/`g2_decode` and `g1_encode` is in Montgomery
+// form, including the constants: `bn_one` is R mod p, not 1. The exponents are
+// not — `fq_pow` and the Frobenius derivation take ordinary integers.
+//
+// The constants are derived at startup rather than transcribed, in the same
+// spirit as the Frobenius table below.
+// ---------------------------------------------------------------------------
+
+static const uint64_t bn_p_l[4] = {BN_P0, BN_P1, BN_P2, BN_P3};
+static uint64_t bn_n0;  // -p^-1 mod 2^64
+static u256 bn_one;     // R mod p, the Montgomery representation of 1
+static u256 bn_r2;      // R^2 mod p, which converts into Montgomery form
+static u256 bn_three;   // 3R mod p, the curve constant
+static int bn_mont_ready;
+
+/**
+ * Montgomery reduction of a 512-bit product, in place.
+ *
+ * `t` needs a ninth limb for the carry the last round can push past the top.
+ * With both inputs below p the result is below 2p, so one conditional
+ * subtraction finishes it.
+ */
+static inline u256 mont_redc(uint64_t t[9]) {
+  for (int i = 0; i < 4; i++) {
+    const uint64_t m = t[i] * bn_n0;
+    uint64_t carry = 0;
+    for (int j = 0; j < 4; j++) {
+      uint64_t lo, hi;
+      mul64(m, bn_p_l[j], &lo, &hi);
+      uint64_t s = t[i + j] + lo;
+      hi += (s < lo);
+      const uint64_t s2 = s + carry;
+      hi += (s2 < s);
+      t[i + j] = s2;
+      carry = hi;
+    }
+    for (int j = i + 4; j < 9 && carry; j++) {
+      const uint64_t s = t[j] + carry;
+      carry = (s < carry);
+      t[j] = s;
+    }
+  }
+  u256 r = {{t[4], t[5], t[6], t[7]}};
+  if (t[8] || u256_cmp(r, BN_P) >= 0) r = u256_sub(r, BN_P);
+  return r;
+}
+
+static inline u256 mont_mul(u256 a, u256 b) {
+  uint64_t t[9];
+  u256_mul_full(a, b, t);
+  t[8] = 0;
+  return mont_redc(t);
+}
+
+static inline u256 fq_mul(u256 a, u256 b) { return mont_mul(a, b); }
+static inline u256 fq_sqr(u256 a) { return mont_mul(a, a); }
+
+/** Into Montgomery form: `a * R2 * R^-1 = a * R`. */
+static inline u256 fq_to_mont(u256 a) { return mont_mul(a, bn_r2); }
+
+/** Out of Montgomery form: reducing `a` alone divides it by R. */
+static inline u256 fq_from_mont(u256 a) {
+  uint64_t t[9] = {a.l[0], a.l[1], a.l[2], a.l[3], 0, 0, 0, 0, 0};
+  return mont_redc(t);
+}
+
+/** Derives the Montgomery constants. Idempotent. */
+static void bn_mont_init(void) {
+  if (bn_mont_ready) return;
+  // -p^-1 mod 2^64 by Hensel lifting: each step doubles the number of correct
+  // bits, so six take one bit to sixty-four.
+  uint64_t inv = 1;
+  for (int i = 0; i < 6; i++) inv *= 2 - BN_P0 * inv;
+  bn_n0 = (uint64_t)0 - inv;
+  // R mod p. The wrapping negation of p is 2^256 - p, which is under 5p.
+  u256 r1 = u256_sub(U256_ZERO, BN_P);
+  while (u256_cmp(r1, BN_P) >= 0) r1 = u256_sub(r1, BN_P);
+  bn_one = r1;
+  // R^2, the one place the generic path is still used — once per process.
+  bn_r2 = u256_mulmod(r1, r1, BN_P);
+  bn_mont_ready = 1;
+  bn_three = fq_to_mont(u256_from_u64(3));
+}
+
+// Declared here because the decoders call it and it is defined further down,
+// with the Frobenius table it derives.
+static void bn_init(void);
 
 /** `a^e mod p`, square-and-multiply from the top bit. */
 static u256 fq_pow(u256 a, u256 e) {
-  u256 r = U256_ONE;
+  u256 r = bn_one;
   for (int bit = 255; bit >= 0; bit--) {
     r = fq_sqr(r);
     if ((e.l[bit / 64] >> (bit % 64)) & 1) r = fq_mul(r, a);
@@ -64,7 +159,9 @@ typedef struct {
 } fq2;
 
 #define FQ2_ZERO ((fq2){U256_ZERO, U256_ZERO})
-#define FQ2_ONE ((fq2){U256_ONE, U256_ZERO})
+// `bn_one` is R mod p; see the Montgomery section. Valid only after
+// `bn_init`, which every path into this file goes through.
+#define FQ2_ONE ((fq2){bn_one, U256_ZERO})
 
 static inline int fq2_is_zero(fq2 a) {
   return u256_is_zero(a.c0) && u256_is_zero(a.c1);
@@ -131,7 +228,7 @@ typedef struct {
   u256 x, y, z;
 } g1;
 
-#define G1_INF ((g1){U256_ONE, U256_ONE, U256_ZERO})
+#define G1_INF ((g1){bn_one, bn_one, U256_ZERO})
 
 static inline int g1_is_inf(const g1 *p) { return u256_is_zero(p->z); }
 
@@ -243,21 +340,33 @@ static void g1_affine(const g1 *p, u256 *x, u256 *y) {
  * curve. `(0, 0)` is the encoding of the point at infinity and is accepted.
  */
 static int g1_decode(const uint8_t *in, g1 *out) {
-  const u256 x = u256_from_be(in);
-  const u256 y = u256_from_be(in + 32);
-  if (u256_cmp(x, BN_P) >= 0 || u256_cmp(y, BN_P) >= 0) return 0;
-  if (u256_is_zero(x) && u256_is_zero(y)) {
+  bn_init();
+  const u256 xr = u256_from_be(in);
+  const u256 yr = u256_from_be(in + 32);
+  // The range check is on the encoded value, before the lift.
+  if (u256_cmp(xr, BN_P) >= 0 || u256_cmp(yr, BN_P) >= 0) return 0;
+  if (u256_is_zero(xr) && u256_is_zero(yr)) {
     *out = G1_INF;
     return 1;
   }
+  const u256 x = fq_to_mont(xr);
+  const u256 y = fq_to_mont(yr);
   // y^2 == x^3 + 3
   const u256 lhs = fq_sqr(y);
-  const u256 rhs = fq_add(fq_mul(fq_sqr(x), x), u256_from_u64(3));
+  const u256 rhs = fq_add(fq_mul(fq_sqr(x), x), bn_three);
   if (!u256_eq(lhs, rhs)) return 0;
   out->x = x;
   out->y = y;
-  out->z = U256_ONE;
+  out->z = bn_one;
   return 1;
+}
+
+/** Affine coordinates as 64 big-endian bytes, back in ordinary form. */
+static void g1_encode(const g1 *p, uint8_t *out) {
+  u256 x, y;
+  g1_affine(p, &x, &y);
+  u256_to_be(fq_from_mont(x), out);
+  u256_to_be(fq_from_mont(y), out + 32);
 }
 
 // ---------------------------------------------------------------------------
@@ -372,8 +481,9 @@ static fq2 fq2_pow(fq2 a, u256 e) {
 
 /** Derives the Frobenius constants. Idempotent; called before any pairing. */
 static void bn_init(void) {
+  bn_mont_init();
   if (!fq2_is_zero(bn_gamma[1])) return;
-  const fq2 xi = (fq2){u256_from_u64(9), U256_ONE};
+  const fq2 xi = (fq2){fq_to_mont(u256_from_u64(9)), bn_one};
   // (p - 1) / 6
   uint64_t rem;
   const u256 e = u256_divmod_u64(u256_sub(BN_P, U256_ONE), 6, &rem);
@@ -423,8 +533,8 @@ static inline int g2_is_inf(const g2 *p) { return fq2_is_zero(p->z); }
 
 /** The twist's curve constant, `3 / xi`. */
 static inline fq2 g2_b(void) {
-  const fq2 xi = (fq2){u256_from_u64(9), U256_ONE};
-  return fq2_mul_fq(fq2_inv(xi), u256_from_u64(3));
+  const fq2 xi = (fq2){fq_to_mont(u256_from_u64(9)), bn_one};
+  return fq2_mul_fq(fq2_inv(xi), bn_three);
 }
 
 static void g2_double(g2 *r, const g2 *p) {
@@ -520,15 +630,17 @@ static void g2_mul(g2 *out, const g2 *p, u256 k) {
  * be on the curve and in the order-r subgroup; `(0, 0)` is infinity.
  */
 static int g2_decode(const uint8_t *in, g2 *out) {
+  bn_init();
   const u256 x1 = u256_from_be(in);
   const u256 x0 = u256_from_be(in + 32);
   const u256 y1 = u256_from_be(in + 64);
   const u256 y0 = u256_from_be(in + 96);
+  // The range check is on the encoded values, before the lift.
   if (u256_cmp(x0, BN_P) >= 0 || u256_cmp(x1, BN_P) >= 0 ||
       u256_cmp(y0, BN_P) >= 0 || u256_cmp(y1, BN_P) >= 0)
     return 0;
-  const fq2 x = (fq2){x0, x1};
-  const fq2 y = (fq2){y0, y1};
+  const fq2 x = (fq2){fq_to_mont(x0), fq_to_mont(x1)};
+  const fq2 y = (fq2){fq_to_mont(y0), fq_to_mont(y1)};
   if (fq2_is_zero(x) && fq2_is_zero(y)) {
     *out = G2_INF;
     return 1;
