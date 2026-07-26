@@ -161,10 +161,21 @@ typedef struct {
  * shape, and it is why the opcode cases below carry no checks of their own.
  */
 typedef struct {
-  int32_t gas;              // total static gas for the block
-  int16_t stack_req;        // items that must be on the stack at entry
-  int16_t stack_max_growth; // peak height increase within the block
+  int32_t gas;       // total static gas for the block
+  int16_t stack_req; // items that must be on the stack at entry
+  // Peak height increase within the block, in the low bits, with
+  // `BLOCK_JUMPDEST` in the top one. Growth cannot exceed the 1024-slot stack
+  // limit, so the bit is free — and folding it in here means a jump reads one
+  // table instead of two. The separate bitmap it replaced was a second
+  // dependent load on the hottest control-flow path in the interpreter.
+  uint16_t growth;
 } block_info;
+
+// Set on a block that begins at a JUMPDEST, which is exactly the set of valid
+// jump targets. Relies on `analyze` clearing the table first: an unwritten
+// entry must not read as a legal target.
+#define BLOCK_JUMPDEST 0x8000u
+#define BLOCK_GROWTH(b) ((int)((b).growth & 0x7fffu))
 
 /**
  * A kept analysis of one deployed bytecode.
@@ -185,7 +196,6 @@ typedef struct {
   const uint8_t *code;
   int32_t code_len;
   int32_t epoch;
-  uint8_t *jd;
   block_info *blocks;
   int32_t *gas_fix;
 } analysis_slot;
@@ -217,7 +227,6 @@ typedef struct {
   int code_len;
   // Bitmap, one bit per code position. A bitmap rather than a byte array
   // because this is cleared on every analysis and jumps read it rarely.
-  uint8_t *jumpdest;
   // Indexed by code position, written only at block starts. Never cleared:
   // the interpreter only reads positions analysis just wrote. Indexing by pc
   // rather than by a block number costs no more memory than the block-number
@@ -267,7 +276,7 @@ typedef struct {
 #endif
 
   // Per-frame, saved and restored around a nested call. EVM memory and the
-  // jumpdest/block analysis are both per-frame, so they are carved out of bump
+  // Block analysis is per-frame, so it is carved out of the bump
   // arenas whose tops are part of the saved state.
   uint8_t *mem;      // this frame's memory base
   uint64_t mem_cap;  // bytes available to this frame
@@ -295,7 +304,6 @@ typedef struct {
   // down — far short of the 1024 the protocol allows.
   const uint8_t *frame_analysis_code[MAX_DEPTH];
   int32_t frame_analysis_len[MAX_DEPTH];
-  uint8_t *frame_analysis_jd[MAX_DEPTH];
   block_info *frame_analysis_blocks[MAX_DEPTH];
   int32_t *frame_analysis_gas_fix[MAX_DEPTH];
 
@@ -303,11 +311,10 @@ typedef struct {
   // call, never from the dispatch loop, so it sits with the coldest state.
   analysis_slot *acache;
   int32_t acache_epoch;
-  // The `MAX_CODE`-sized tables allocated once by `evm_new`. `jumpdest`,
-  // `blocks` and `gas_fix` above are whatever the running frame uses, usually
-  // a kept analysis; these are the fallback the bare-bytecode entry point
-  // always analyzes into.
-  uint8_t *static_jumpdest;
+  // The `MAX_CODE`-sized tables allocated once by `evm_new`. `blocks` and
+  // `gas_fix` above are whatever the running frame uses, usually a kept
+  // analysis; these are the fallback the bare-bytecode entry point always
+  // analyzes into.
   block_info *static_blocks;
   int32_t *static_gas_fix;
 } evm_vm;
@@ -492,8 +499,6 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
     return (status); \
   } while (0)
 
-#define JUMPDEST_SET(i) (vm->jumpdest[(i) >> 3] |= (uint8_t)(1 << ((i) & 7)))
-
 // ---------------------------------------------------------------------------
 // Memory
 // ---------------------------------------------------------------------------
@@ -643,7 +648,10 @@ static void copy_padded(uint8_t *dst, const uint8_t *src, uint64_t src_len,
  * terminator. It ends at a terminator or just before the next `JUMPDEST`.
  */
 static void analyze(evm_vm *vm) {
-  mem_zero(vm->jumpdest, (uint64_t)(vm->code_len + 7) / 8);
+  // Cleared, unlike before: `BLOCK_JUMPDEST` must not be readable at a
+  // position analysis never wrote. Analysis is kept per contract now, so this
+  // runs once per bytecode rather than once per call.
+  mem_zero((uint8_t *)vm->blocks, (uint64_t)vm->code_len * sizeof(block_info));
 
   block_info *block = 0;
   // Stack height relative to block entry, plus its running extremes.
@@ -659,15 +667,16 @@ static void analyze(evm_vm *vm) {
     if (start_block) {
       if (block) {
         block->stack_req = (int16_t)-lowest;
-        block->stack_max_growth = (int16_t)highest;
+        block->growth |= (uint16_t)highest;
       }
       block = &vm->blocks[i];
       block->gas = 0;
+      block->growth = 0;
       height = lowest = highest = 0;
       start_block = 0;
     }
 
-    if (op == 0x5b) JUMPDEST_SET(i);
+    if (op == 0x5b) vm->blocks[i].growth = BLOCK_JUMPDEST;
 
     if (!(info.flags & OP_VALID)) {
       // Undefined opcode: end the block here so its gas stops accumulating.
@@ -694,7 +703,7 @@ static void analyze(evm_vm *vm) {
 
   if (block) {
     block->stack_req = (int16_t)-lowest;
-    block->stack_max_growth = (int16_t)highest;
+    block->growth |= (uint16_t)highest;
   }
 
   // Second pass: for each GAS opcode, record the static gas its block still
@@ -764,12 +773,11 @@ static inline int analysis_hit(const evm_vm *vm, const analysis_slot *s,
 }
 
 static void analysis_keep(evm_vm *vm, analysis_slot *s, const uint8_t *code,
-                          int code_len, uint8_t *jd, block_info *blocks,
+                          int code_len, block_info *blocks,
                           int32_t *gas_fix) {
   s->code = code;
   s->code_len = code_len;
   s->epoch = vm->acache_epoch;
-  s->jd = jd;
   s->blocks = blocks;
   s->gas_fix = gas_fix;
 }
@@ -796,7 +804,6 @@ typedef struct {
   uint64_t mem_cap;
   uint64_t memory_size;
   uint64_t memory_cost;
-  uint8_t *jumpdest;
   block_info *blocks;
   int32_t *gas_fix;
   int32_t arena_top;
@@ -847,31 +854,27 @@ static void analysis_prime(evm_vm *vm, const uint8_t *code, int code_len) {
   if (code_len <= 0) return;
   analysis_slot *slot = analysis_lookup(vm, code);
   if (!slot || analysis_hit(vm, slot, code, code_len)) return;
-  uint8_t *jd = (uint8_t *)arena_alloc_kept(vm, (code_len + 7) / 8 + 8);
   block_info *bl = (block_info *)arena_alloc_kept(
       vm, (code_len + 1) * (int32_t)sizeof(block_info));
   int32_t *gf = (int32_t *)arena_alloc_kept(
       vm, (code_len + 1) * (int32_t)sizeof(int32_t));
-  if (!jd || !bl || !gf) return;
+  if (!bl || !gf) return;
   // `analyze` works on whatever tables the VM currently points at, so borrow
   // them and hand them back.
   const uint8_t *s_code = vm->frame_code;
   const int s_len = vm->code_len;
-  uint8_t *s_jd = vm->jumpdest;
   block_info *s_bl = vm->blocks;
   int32_t *s_gf = vm->gas_fix;
   vm->frame_code = code;
   vm->code_len = code_len;
-  vm->jumpdest = jd;
   vm->blocks = bl;
   vm->gas_fix = gf;
   analyze(vm);
   vm->frame_code = s_code;
   vm->code_len = s_len;
-  vm->jumpdest = s_jd;
   vm->blocks = s_bl;
   vm->gas_fix = s_gf;
-  analysis_keep(vm, slot, code, code_len, jd, bl, gf);
+  analysis_keep(vm, slot, code, code_len, bl, gf);
 }
 
 /**
@@ -905,7 +908,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   saved.mem_cap = vm->mem_cap;
   saved.memory_size = vm->memory_size;
   saved.memory_cost = vm->memory_cost;
-  saved.jumpdest = vm->jumpdest;
   saved.blocks = vm->blocks;
   saved.gas_fix = vm->gas_fix;
   saved.arena_top = vm->arena_top;
@@ -930,40 +932,33 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   const int cached = analysis_hit(vm, slot, code, code_len);
   const int have = reused >= 0 || cached;
 
-  uint8_t *fjd;
   block_info *fblocks;
   int32_t *fgas_fix;
   if (reused >= 0) {
-    fjd = vm->frame_analysis_jd[reused];
     fblocks = vm->frame_analysis_blocks[reused];
     fgas_fix = vm->frame_analysis_gas_fix[reused];
   } else if (cached) {
-    fjd = slot->jd;
     fblocks = slot->blocks;
     fgas_fix = slot->gas_fix;
   } else {
     // A fresh analysis goes in the kept region when the code is cacheable and
     // there is room, and in the frame's own scratch otherwise.
-    const int32_t jd_n = (code_len + 7) / 8 + 8;
     const int32_t bl_n = (code_len + 1) * (int32_t)sizeof(block_info);
     const int32_t gf_n = (code_len + 1) * (int32_t)sizeof(int32_t);
-    fjd = slot ? (uint8_t *)arena_alloc_kept(vm, jd_n)
-               : (uint8_t *)arena_alloc(vm, jd_n);
     fblocks = slot ? (block_info *)arena_alloc_kept(vm, bl_n)
                    : (block_info *)arena_alloc(vm, bl_n);
     fgas_fix = slot ? (int32_t *)arena_alloc_kept(vm, gf_n)
                     : (int32_t *)arena_alloc(vm, gf_n);
-    if (slot && (!fjd || !fblocks || !fgas_fix)) {
+    if (slot && (!fblocks || !fgas_fix)) {
       // The kept region is full. Fall back to the frame's scratch, and stop
       // trying to cache this one.
       slot = 0;
-      fjd = (uint8_t *)arena_alloc(vm, jd_n);
       fblocks = (block_info *)arena_alloc(vm, bl_n);
       fgas_fix = (int32_t *)arena_alloc(vm, gf_n);
     }
   }
   u256 *fstack = (u256 *)arena_alloc(vm, FRAME_STACK);
-  if (!fjd || !fblocks || !fgas_fix || !fstack) {
+  if (!fblocks || !fgas_fix || !fstack) {
     vm->arena_top = arena_mark;
     // Consume the allowance. This is an engine limit rather than anything the
     // protocol knows about, but returning it unspent makes the call look like
@@ -984,7 +979,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->mem_cap = 0;
   vm->memory_size = 0;
   vm->memory_cost = 0;
-  vm->jumpdest = fjd;
   vm->blocks = fblocks;
   vm->gas_fix = fgas_fix;
   vm->frame_code = code;
@@ -994,13 +988,12 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->gas = *gas;
   vm->frame_analysis_code[vm->depth] = code;
   vm->frame_analysis_len[vm->depth] = code_len;
-  vm->frame_analysis_jd[vm->depth] = fjd;
   vm->frame_analysis_blocks[vm->depth] = fblocks;
   vm->frame_analysis_gas_fix[vm->depth] = fgas_fix;
   vm->depth++;
   if (!have) {
     analyze(vm);
-    if (slot) analysis_keep(vm, slot, code, code_len, fjd, fblocks, fgas_fix);
+    if (slot) analysis_keep(vm, slot, code, code_len, fblocks, fgas_fix);
   }
 
   const evm_status status = interpret(vm);
@@ -1017,7 +1010,6 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->mem_cap = saved.mem_cap;
   vm->memory_size = saved.memory_size;
   vm->memory_cost = saved.memory_cost;
-  vm->jumpdest = saved.jumpdest;
   vm->blocks = saved.blocks;
   vm->gas_fix = saved.gas_fix;
   vm->arena_top = saved.arena_top;
@@ -1567,7 +1559,7 @@ static inline int64_t call_gas(int64_t available, u256 requested, int spec) {
     gas -= b_.gas;                                            \
     const int height_ = (int)(sp - vm->stack_base);           \
     if (height_ < b_.stack_req) HALT(EVM_STACK_UNDERFLOW);    \
-    if (height_ + b_.stack_max_growth > STACK_LIMIT)          \
+    if (height_ + BLOCK_GROWTH(b_) > STACK_LIMIT)             \
       HALT(EVM_STACK_OVERFLOW);                               \
   } while (0)
 
@@ -1599,6 +1591,26 @@ static inline int64_t call_gas(int64_t available, u256 requested, int spec) {
  * loop. `continue` stays at the call site: inside the `do`/`while (0)` here it
  * would bind to the macro rather than to the interpreter loop.
  */
+/**
+ * Opens the block a taken jump lands on, validating the target on the way.
+ *
+ * The one table read does both jobs: an entry without `BLOCK_JUMPDEST` is not
+ * a legal target, and one with it carries the gas and stack bounds. The byte
+ * at `pc` is known to be JUMPDEST, so the skip is unconditional.
+ */
+#define JUMP_BLOCK()                                        \
+  do {                                                      \
+    const block_info b_ = blocks[pc];                       \
+    if (!(b_.growth & BLOCK_JUMPDEST)) HALT(EVM_INVALID_JUMP); \
+    if (gas < b_.gas) HALT(EVM_OUT_OF_GAS);                 \
+    gas -= b_.gas;                                          \
+    const int height_ = (int)(sp - vm->stack_base);         \
+    if (height_ < b_.stack_req) HALT(EVM_STACK_UNDERFLOW);  \
+    if (height_ + BLOCK_GROWTH(b_) > STACK_LIMIT)           \
+      HALT(EVM_STACK_OVERFLOW);                             \
+    pc++;                                                   \
+  } while (0)
+
 #define OPEN_BLOCK()            \
   do {                          \
     ENTER_BLOCK(pc);            \
@@ -1619,11 +1631,12 @@ static evm_status interpret(evm_vm *vm) {
   // `*vm` and the compiler cannot see that it does not. `run_frame` swaps this
   // out and back around a nested call, so the copy survives one.
   //
-  // Only this one. `jumpdest` and `gas_fix` were hoisted too and had to come
-  // back out: each extra live value widens the JIT frame, and deep wasm
-  // recursion consumes the host's native stack, so 1024 nested frames stopped
-  // fitting and the EIP-7702 max-depth tests began trapping. That limit is not
-  // the shadow-stack budget below and cannot be raised from inside the module.
+  // Only this one. `gas_fix` was hoisted too and had to come back out: each
+  // extra live value widens the JIT frame, and deep wasm recursion consumes
+  // the host's native stack, so 1024 nested frames stopped fitting and the
+  // EIP-7702 max-depth tests began trapping. That limit is not the
+  // shadow-stack budget below and cannot be raised from inside the module.
+  // The jump table folds into `blocks` for the same reason.
   const block_info *const blocks = vm->blocks;
 
   vm->output_len = 0;
@@ -1831,20 +1844,18 @@ static evm_status interpret(evm_vm *vm) {
       case 0x56: { // JUMP
         u256 t = POP();
         uint64_t d = u256_to_u64_sat(t);
-        if (d >= (uint64_t)code_len || !(vm->jumpdest[d >> 3] & (1 << (d & 7))))
-          HALT(EVM_INVALID_JUMP);
+        if (d >= (uint64_t)code_len) HALT(EVM_INVALID_JUMP);
         pc = (int)d;
-        OPEN_BLOCK();
+        JUMP_BLOCK();
         continue;
       }
       case 0x57: { // JUMPI
         u256 t = POP(), cond = POP();
         if (!u256_is_zero(cond)) {
           uint64_t d = u256_to_u64_sat(t);
-          if (d >= (uint64_t)code_len || !(vm->jumpdest[d >> 3] & (1 << (d & 7))))
-            HALT(EVM_INVALID_JUMP);
+          if (d >= (uint64_t)code_len) HALT(EVM_INVALID_JUMP);
           pc = (int)d;
-          OPEN_BLOCK();
+          JUMP_BLOCK();
           continue;
         }
         // Falling through starts a new block, since this one ended here.
@@ -2608,7 +2619,6 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   evm_vm *vm = (evm_vm *)ox_alloc(sizeof(evm_vm));
   if (!vm) return 0;
   vm->ctx.spec = SPEC_DEFAULT;
-  vm->jumpdest = (uint8_t *)ox_alloc((MAX_CODE + 7) / 8);
   // One entry per code position, since a block can start at any of them.
   vm->blocks = (block_info *)ox_alloc((uint64_t)MAX_CODE * sizeof(block_info));
   vm->gas_fix = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
@@ -2622,10 +2632,9 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   vm->trace_count = 0;
   if (!vm->trace) return 0;
 #endif
-  if (!vm->jumpdest || !vm->blocks || !vm->gas_fix ||
+  if (!vm->blocks || !vm->gas_fix ||
       !vm->memory || !vm->output || !vm->st || !vm->returndata || !vm->stage)
     return 0;
-  vm->static_jumpdest = vm->jumpdest;
   vm->static_blocks = vm->blocks;
   vm->static_gas_fix = vm->gas_fix;
   vm->st->log_data = (uint8_t *)ox_alloc(LOG_ARENA);
@@ -2708,7 +2717,6 @@ int evm_set_code(evm_vm *vm, int code_len) {
   vm->code_len = code_len;
   vm->frame_code = vm->code;
   // An `evm_execute` in between may have left a cached analysis in place.
-  vm->jumpdest = vm->static_jumpdest;
   vm->blocks = vm->static_blocks;
   vm->gas_fix = vm->static_gas_fix;
   analyze(vm);
@@ -2791,7 +2799,6 @@ EXPORT("evm_reset") void evm_reset(evm_vm *vm) {
   // Bumping the epoch retires them all without walking the table.
   vm->arena_cap = ANALYSIS_ARENA;
   vm->acache_epoch++;
-  vm->jumpdest = vm->static_jumpdest;
   vm->blocks = vm->static_blocks;
   vm->gas_fix = vm->static_gas_fix;
 }
@@ -2951,24 +2958,21 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
 
   analysis_slot *slot = analysis_lookup(vm, top_code);
   if (analysis_hit(vm, slot, top_code, code_len)) {
-    vm->jumpdest = slot->jd;
     vm->blocks = slot->blocks;
     vm->gas_fix = slot->gas_fix;
   } else {
     // The VM's own tables are sized for `MAX_CODE`, so they always fit; the
     // kept region is the preferred home but not a requirement.
-    uint8_t *jd = (uint8_t *)arena_alloc_kept(vm, (code_len + 7) / 8 + 8);
-    block_info *bl = (block_info *)arena_alloc_kept(
+      block_info *bl = (block_info *)arena_alloc_kept(
         vm, (code_len + 1) * (int32_t)sizeof(block_info));
     int32_t *gf = (int32_t *)arena_alloc_kept(
         vm, (code_len + 1) * (int32_t)sizeof(int32_t));
-    const int room = slot && jd && bl && gf;
-    vm->jumpdest = room ? jd : vm->static_jumpdest;
+    const int room = slot && bl && gf;
     vm->blocks = room ? bl : vm->static_blocks;
     vm->gas_fix = room ? gf : vm->static_gas_fix;
     analyze(vm);
     if (room)
-      analysis_keep(vm, slot, top_code, code_len, jd, bl, gf);
+      analysis_keep(vm, slot, top_code, code_len, bl, gf);
   }
   vm->analyzed = 0; // `evm_run`'s tables are no longer the ones in place
   vm->stack_base = vm->stack;
