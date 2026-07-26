@@ -95,8 +95,13 @@ typedef struct {
   int32_t data_len;
 } evm_log;
 
-#define MAX_LOGS 2048
-#define LOG_ARENA (1024 * 1024)
+// Log data is priced at 8 gas a byte and nothing else bounds it, so a
+// transaction with a large limit can legitimately emit far more than a
+// megabyte — `randomStatetest159` recurses a thousand frames deep emitting
+// 13 KiB from each. Sized for the depth limit times a generous per-frame
+// figure; the pages are only touched as they are used.
+#define MAX_LOGS 8192
+#define LOG_ARENA (24 * 1024 * 1024)
 
 typedef struct {
   account accounts[MAX_ACCOUNTS];
