@@ -17,7 +17,9 @@
 #include "safegcd.h"
 #include "u256.h"
 
-// p = 36t^4 + 36t^3 + 24t^2 + 6t + 1 for t = 4965661367192848881
+// p = 36u^4 + 36u^3 + 24u^2 + 6u + 1 for the curve parameter u below.
+// Both the prime and the final exponentiation are polynomials in it.
+#define BN_U 4965661367192848881ULL
 #define BN_P0 0x3C208C16D87CFD47ULL
 #define BN_P1 0x97816A916871CA8DULL
 #define BN_P2 0xB85045B68181585DULL
@@ -676,33 +678,6 @@ static fq12 fq12_frobenius(fq12 a) {
   return (fq12){c0, c1};
 }
 
-/** `a^e` for an exponent supplied as `n` little-endian 64-bit limbs. */
-static fq12 fq12_pow_limbs(fq12 a, const uint64_t *e, int n) {
-  // Four bits at a time. The only caller is the hard part of the final
-  // exponentiation, whose exponent is 768 bits, so the fifteen-entry table
-  // costs fourteen multiplications and saves about two hundred.
-  fq12 tab[16];
-  tab[1] = a;
-  for (int i = 2; i < 16; i++) tab[i] = fq12_mul(tab[i - 1], a);
-
-  fq12 r = FQ12_ONE;
-  int started = 0;
-  for (int i = n - 1; i >= 0; i--) {
-    for (int sh = 60; sh >= 0; sh -= 4) {
-      // That same caller hands us a base already through the easy part, so it
-      // lies in the cyclotomic subgroup and so does every power of it. All the
-      // squaring can take the cheap route.
-      if (started)
-        for (int k = 0; k < 4; k++) r = fq12_cyclo_sqr(r);
-      const int w = (int)((e[i] >> sh) & 0xf);
-      if (w) {
-        r = started ? fq12_mul(r, tab[w]) : tab[w];
-        started = 1;
-      }
-    }
-  }
-  return r;
-}
 
 // ---------------------------------------------------------------------------
 // G2: y^2 = x^3 + 3/xi over Fp2, in Jacobian coordinates
@@ -853,16 +828,6 @@ static inline int bn_ate_bit(int bit) {
   return bit == 64 ? 1 : (int)((BN_ATE_LO >> bit) & 1);
 }
 
-// (p^4 - p^2 + 1) / r, the hard part of the final exponentiation. Taking it as
-// one 761-bit exponent costs about twice an addition chain built from Frobenius
-// maps, and is far less to get wrong.
-static const uint64_t bn_hard_exp[12] = {
-    0xE81BB482CCDF42B1ULL, 0x5ABF5CC4F49C36D4ULL, 0xF1154E7E1DA014FDULL,
-    0xDCC7B44C87CDBACFULL, 0xAAA441E3954BCF8AULL, 0x6B887D56D5095F23ULL,
-    0x79581E16F3FD90C6ULL, 0x3B1B1355D189227DULL, 0x4E529A5861876F6BULL,
-    0x6C0EB522D5B12278ULL, 0x331EC15183177FAFULL, 0x01BAAA710B0759ADULL,
-};
-
 /**
  * The line through `a` and `b` (or the tangent at `a` when they are equal),
  * evaluated at the affine G1 point `(px, py)` and lifted into Fp12.
@@ -946,12 +911,78 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
 }
 
 /** The final exponentiation, `f^((p^12 - 1) / r)`. */
+/** `a^u` for the curve parameter, inside the cyclotomic subgroup. */
+static fq12 fq12_pow_u(fq12 a) {
+  fq12 r = a;
+  // Bit 62 is the top one and is consumed by the initialisation above. A
+  // window would need a table, and at 63 bits its fifteen setup
+  // multiplications cost about what the twenty-seven it saves are worth.
+  for (int i = 61; i >= 0; i--) {
+    r = fq12_cyclo_sqr(r);
+    if ((BN_U >> i) & 1) r = fq12_mul(r, a);
+  }
+  return r;
+}
+
+/**
+ * `f^((p^4 - p^2 + 1)/r)`, by the addition chain rather than the exponent.
+ *
+ * The exponent is 761 bits, and a windowed square-and-multiply over it is 761
+ * cyclotomic squarings and about two hundred multiplications — which was 71%
+ * of a pairing. It is not an arbitrary number, though: written in base `p` its
+ * four digits are small polynomials in the curve parameter `u`,
+ *
+ *   d = 1 * p^3 + (6u^2 + 1) p^2 + (-36u^3 - 18u^2 - 12u + 1) p
+ *       + (-36u^3 - 30u^2 - 18u - 2)
+ *
+ * so everything follows from `f^u`, `f^(u^2)` and `f^(u^3)` — three 63-bit
+ * exponentiations — combined by Frobenius maps and a dozen multiplications.
+ * The grouping below is Scott, Benger, Charlemagne, Perez and Kachisa's; the
+ * chain was checked to reproduce `d` exactly, not a multiple of it, so this is
+ * the same pairing value and not merely one that agrees on the check.
+ *
+ * Conjugation stands in for inversion throughout: after the easy part `f` is
+ * in the cyclotomic subgroup, where the two coincide, and every term here
+ * stays in it.
+ */
+static fq12 bn_hard_part(fq12 f) {
+  const fq12 a = fq12_pow_u(f);
+  const fq12 b = fq12_pow_u(a);
+  const fq12 c = fq12_pow_u(b);
+
+  const fq12 f1 = fq12_frobenius(f);
+  const fq12 f2 = fq12_frobenius(f1);
+  const fq12 f3 = fq12_frobenius(f2);
+
+  const fq12 y0 = fq12_mul(fq12_mul(f1, f2), f3);
+  const fq12 y1 = fq12_conj(f);
+  const fq12 y2 = fq12_frobenius(fq12_frobenius(b));
+  const fq12 y3 = fq12_conj(fq12_frobenius(a));
+  const fq12 y4 = fq12_conj(fq12_mul(a, fq12_frobenius(b)));
+  const fq12 y5 = fq12_conj(b);
+  const fq12 y6 = fq12_conj(fq12_mul(c, fq12_frobenius(c)));
+
+  fq12 t0 = fq12_cyclo_sqr(y6);
+  t0 = fq12_mul(t0, y4);
+  t0 = fq12_mul(t0, y5);
+  fq12 t1 = fq12_mul(y3, y5);
+  t1 = fq12_mul(t1, t0);
+  t0 = fq12_mul(t0, y2);
+  t1 = fq12_cyclo_sqr(t1);
+  t1 = fq12_mul(t1, t0);
+  t1 = fq12_cyclo_sqr(t1);
+  t0 = fq12_mul(t1, y1);
+  t1 = fq12_mul(t1, y0);
+  t0 = fq12_cyclo_sqr(t0);
+  return fq12_mul(t0, t1);
+}
+
 static fq12 bn_final_exp(fq12 f) {
   // Easy part: f^(p^6 - 1) then f^(p^2 + 1).
   fq12 t = fq12_mul(fq12_conj(f), fq12_inv(f));
   fq12 t2 = fq12_frobenius(fq12_frobenius(t));
   t = fq12_mul(t, t2);
-  return fq12_pow_limbs(t, bn_hard_exp, 12);
+  return bn_hard_part(t);
 }
 
 #endif // OX_EVM_BN254_H
