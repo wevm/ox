@@ -284,6 +284,72 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
   // Everything is zero mod one.
   if (m.n == 1 && m.d[0] == 1) return;
 
+  // A single-limb modulus is worth its own loop. Every `bn_mulmod` reduction
+  // renormalises the divisor and rebuilds its reciprocal, which for a 64-bit
+  // modulus is the entire cost — and the corpus leans on that case, with an
+  // 8-byte modulus against a 896-byte exponent field. Hoisting the reciprocal
+  // out leaves one 128-by-64 division per multiplication.
+  if (m.n == 1) {
+    const uint64_t d = m.d[0];
+    const int sh = __builtin_clzll(d);
+    const uint64_t dn = d << sh;
+    const uint64_t recip = reciprocal_2by1(dn);
+    // `(hi:lo) mod d`, numerator fed in pre-shifted so the divisor is
+    // normalised. `hi < d` holds because both factors are already reduced.
+#define MODEXP_RED(hi, lo, out)                                        \
+  do {                                                                 \
+    const uint64_t n2 = sh ? ((hi) >> (64 - sh)) : 0;                  \
+    const uint64_t n1 = ((hi) << sh) | (sh ? ((lo) >> (64 - sh)) : 0); \
+    const uint64_t n0 = (lo) << sh;                                    \
+    uint64_t rr_ = n2;                                                 \
+    (void)DIV2BY1(rr_, n1, dn, recip, &rr_);                           \
+    (void)DIV2BY1(rr_, n0, dn, recip, &rr_);                           \
+    (out) = rr_ >> sh;                                                 \
+  } while (0)
+
+    uint64_t hi, lo, base;
+    {
+      bignum one1, red;
+      for (int i = 0; i < MODEXP_LIMBS; i++) one1.d[i] = 0;
+      one1.d[0] = 1;
+      one1.n = 1;
+      bn_mulmod(&red, &b, &one1, &m);
+      base = red.n ? red.d[0] : 0;
+    }
+    uint64_t tab[16];
+    tab[1] = base;
+    for (int i = 2; i < 16; i++) {
+      mul64(tab[i - 1], base, &lo, &hi);
+      MODEXP_RED(hi, lo, tab[i]);
+    }
+    uint64_t acc1 = 1 % d;
+    int begun = 0;
+    for (uint64_t byte = 0; byte < el; byte++)
+      for (int half = 0; half < 2; half++) {
+        const int w = (exp[byte] >> (half ? 0 : 4)) & 0xf;
+        if (begun)
+          for (int k = 0; k < 4; k++) {
+            mul64(acc1, acc1, &lo, &hi);
+            MODEXP_RED(hi, lo, acc1);
+          }
+        if (w) {
+          if (begun) {
+            mul64(acc1, tab[w], &lo, &hi);
+            MODEXP_RED(hi, lo, acc1);
+          } else {
+            acc1 = tab[w];
+            begun = 1;
+          }
+        }
+      }
+#undef MODEXP_RED
+    for (uint64_t i = 0; i < ml; i++) {
+      const uint64_t shift = (ml - 1 - i) * 8;
+      out[i] = shift < 64 ? (uint8_t)(acc1 >> shift) : 0;
+    }
+    return;
+  }
+
   for (int i = 0; i < MODEXP_LIMBS; i++) acc.d[i] = 0;
   acc.d[0] = 1;
   acc.n = 1;
