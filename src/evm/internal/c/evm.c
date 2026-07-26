@@ -2159,12 +2159,18 @@ static evm_status interpret(evm_vm *vm) {
                         &child_gas);
           if (cs == EVM_SUCCESS) {
             ok = deposit_code(vm, created, snapshot, &child_gas);
+            // A creation returns no data. It was cleared before the initcode
+            // ran, but the initcode's own last call left its result in the
+            // shared buffer, and RETURNDATASIZE in the creator then read it.
+            vm->returndata_len = 0;
           } else {
             state_revert(vm->st, snapshot);
             if (cs == EVM_REVERT) {
+              // Revert data is the one thing a creation does hand back.
               vm->returndata_len = vm->output_len;
               mem_copy(vm->returndata, vm->output, (uint64_t)vm->output_len);
             } else {
+              vm->returndata_len = 0;
               child_gas = 0;
             }
           }
