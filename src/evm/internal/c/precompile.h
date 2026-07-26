@@ -146,28 +146,22 @@ static void ripemd160_block(uint32_t h[5], const uint8_t *block) {
            ((uint32_t)block[i * 4 + 3] << 24);
   uint32_t al = h[0], bl = h[1], cl = h[2], dl = h[3], el = h[4];
   uint32_t ar = h[0], br = h[1], cr = h[2], dr = h[3], er = h[4];
-  for (int i = 0; i < 80; i++) {
-    const int r = i / 16;
-    uint32_t f, g;
-    switch (r) {
-      case 0: f = bl ^ cl ^ dl; break;
-      case 1: f = (bl & cl) | (~bl & dl); break;
-      case 2: f = (bl | ~cl) ^ dl; break;
-      case 3: f = (bl & dl) | (cl & ~dl); break;
-      default: f = bl ^ (cl | ~dl); break;
-    }
-    uint32_t t = ROTL32(al + f + x[rl[i]] + kl[r], sl[i]) + el;
-    al = el; el = dl; dl = ROTL32(cl, 10); cl = bl; bl = t;
-    switch (r) {
-      case 0: g = br ^ (cr | ~dr); break;
-      case 1: g = (br & dr) | (cr & ~dr); break;
-      case 2: g = (br | ~cr) ^ dr; break;
-      case 3: g = (br & cr) | (~br & dr); break;
-      default: g = br ^ cr ^ dr; break;
-    }
-    t = ROTL32(ar + g + x[rr[i]] + kr[r], sr[i]) + er;
-    ar = er; er = dr; dr = ROTL32(cr, 10); cr = br; br = t;
+  // Five passes of sixteen rather than eighty with a switch inside. The round
+  // function is constant within a pass, so this turns two unpredictable
+  // branches per round into none, and lets the constants fold.
+#define RMD_PASS(r, FL, FR)                                       \
+  for (int i = (r) * 16; i < (r) * 16 + 16; i++) {                \
+    uint32_t t = ROTL32(al + (FL) + x[rl[i]] + kl[r], sl[i]) + el; \
+    al = el; el = dl; dl = ROTL32(cl, 10); cl = bl; bl = t;       \
+    t = ROTL32(ar + (FR) + x[rr[i]] + kr[r], sr[i]) + er;         \
+    ar = er; er = dr; dr = ROTL32(cr, 10); cr = br; br = t;       \
   }
+  RMD_PASS(0, bl ^ cl ^ dl, br ^ (cr | ~dr))
+  RMD_PASS(1, (bl & cl) | (~bl & dl), (br & dr) | (cr & ~dr))
+  RMD_PASS(2, (bl | ~cl) ^ dl, (br | ~cr) ^ dr)
+  RMD_PASS(3, (bl & dl) | (cl & ~dl), (br & cr) | (~br & dr))
+  RMD_PASS(4, bl ^ (cl | ~dl), br ^ cr ^ dr)
+#undef RMD_PASS
   const uint32_t t = h[1] + cl + dr;
   h[1] = h[2] + dl + er;
   h[2] = h[3] + el + ar;
