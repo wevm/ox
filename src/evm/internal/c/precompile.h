@@ -292,6 +292,98 @@ static void bn_mulmod(bignum *r, const bignum *a, const bignum *b,
   bn_trim_to(r, m->n);
 }
 
+// ---------------------------------------------------------------------------
+// Montgomery arithmetic for a small odd modulus
+//
+// Knuth's reduction costs n^2 limb products plus one 3-by-2 division per
+// output limb. The divisions are the expensive part and there are n of them,
+// so for a narrow modulus they dominate: at four limbs it is sixteen products
+// against four divisions, and a division is worth twenty-odd products.
+// Montgomery trades them for a second n^2 pass, which is a clear win while n
+// is small and a wash by n = 32 — measured, which is why it is gated.
+//
+// Even moduli keep the division path; Montgomery needs an odd one.
+// ---------------------------------------------------------------------------
+
+/** The widest modulus worth converting. Beyond this the two costs cross. */
+#define MODEXP_MONT_LIMBS 16
+
+/** `r = a * b * R^-1 mod m`, coarsely integrated. */
+static void bn_mont_mul(bignum *r, const bignum *a, const bignum *b,
+                        const bignum *m, uint64_t n0) {
+  const int n = m->n;
+  uint64_t t[MODEXP_MONT_LIMBS + 2];
+  for (int i = 0; i <= n + 1; i++) t[i] = 0;
+  for (int i = 0; i < n; i++) {
+    const uint64_t bi = i < b->n ? b->d[i] : 0;
+    uint64_t c = 0, lo, hi;
+    for (int j = 0; j < n; j++) {
+      const uint64_t aj = j < a->n ? a->d[j] : 0;
+      mul64(aj, bi, &lo, &hi);
+      uint64_t sm = t[j] + lo;
+      hi += (sm < lo);
+      sm += c;
+      hi += (sm < c);
+      t[j] = sm;
+      c = hi;
+    }
+    uint64_t sm = t[n] + c;
+    t[n + 1] = (sm < c);
+    t[n] = sm;
+
+    const uint64_t u = t[0] * n0;
+    mul64(u, m->d[0], &lo, &hi);
+    // The low word cancels by construction; only its carry survives.
+    c = hi + ((t[0] + lo) < lo);
+    for (int j = 1; j < n; j++) {
+      mul64(u, m->d[j], &lo, &hi);
+      uint64_t v = t[j] + lo;
+      hi += (v < lo);
+      v += c;
+      hi += (v < c);
+      t[j - 1] = v;
+      c = hi;
+    }
+    sm = t[n] + c;
+    t[n - 1] = sm;
+    t[n] = t[n + 1] + (sm < c);
+  }
+  // Below 2m, so one conditional subtraction finishes it.
+  int ge = t[n] != 0;
+  if (!ge)
+    for (int i = n - 1; i >= 0; i--) {
+      if (t[i] != m->d[i]) {
+        ge = t[i] > m->d[i];
+        break;
+      }
+      if (i == 0) ge = 1;
+    }
+  if (ge) {
+    uint64_t borrow = 0;
+    for (int i = 0; i < n; i++) {
+      const uint64_t d0 = t[i] - m->d[i];
+      const uint64_t b1 = t[i] < m->d[i];
+      const uint64_t v = d0 - borrow;
+      borrow = b1 | (d0 < borrow);
+      t[i] = v;
+    }
+  }
+  for (int i = 0; i < n; i++) r->d[i] = t[i];
+  bn_trim_to(r, n);
+}
+
+/** `2^(64*n*k) mod m`, by dividing the exact power of two. */
+static void bn_pow2_mod(bignum *r, const bignum *m, int k) {
+  const int n = m->n;
+  uint64_t num[MODEXP_LIMBS * 2 + 2], quot[MODEXP_LIMBS * 2 + 2],
+      rem[MODEXP_LIMBS * 2 + 2];
+  for (int i = 0; i <= n * k; i++) num[i] = 0;
+  num[n * k] = 1;
+  divmod_knuth64(num, n * k + 1, m->d, n, quot, rem);
+  for (int i = 0; i < n; i++) r->d[i] = rem[i];
+  bn_trim_to(r, n);
+}
+
 /**
  * `r = a * a mod m`.
  *
@@ -479,10 +571,31 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
     }
   const int win = ebits > 50 ? 4 : 1;
 
+  // A narrow odd modulus runs in Montgomery form; see the note above the
+  // multiplication for where the two costs cross.
+  const int mont = (m.d[0] & 1) && m.n <= MODEXP_MONT_LIMBS;
+  uint64_t n0 = 0;
+  bignum mont_one;
+  if (mont) {
+    uint64_t inv = 1;
+    for (int i = 0; i < 6; i++) inv *= 2 - m.d[0] * inv;
+    n0 = (uint64_t)0 - inv;
+    bn_pow2_mod(&mont_one, &m, 1); // R mod m
+    bignum rr;
+    bn_pow2_mod(&rr, &m, 2); // R^2 mod m
+    bn_mont_mul(&base_red, &base_red, &rr, &m, n0);
+    acc = mont_one;
+  }
+
   bignum tab[16];
   tab[1] = base_red;
   if (win == 4)
-    for (int i = 2; i < 16; i++) bn_mulmod(&tab[i], &tab[i - 1], &base_red, &m);
+    for (int i = 2; i < 16; i++) {
+      if (mont)
+        bn_mont_mul(&tab[i], &tab[i - 1], &base_red, &m, n0);
+      else
+        bn_mulmod(&tab[i], &tab[i - 1], &base_red, &m);
+    }
 
   int started = 0;
   for (uint64_t byte = 0; byte < el; byte++) {
@@ -490,16 +603,31 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
       const int shift = 8 - win * (step + 1);
       const int w = (exp[byte] >> shift) & ((1 << win) - 1);
       if (started)
-        for (int k = 0; k < win; k++) bn_sqrmod(&acc, &acc, &m);
+        for (int k = 0; k < win; k++) {
+          if (mont)
+            bn_mont_mul(&acc, &acc, &acc, &m, n0);
+          else
+            bn_sqrmod(&acc, &acc, &m);
+        }
       if (w) {
         if (started) {
-          bn_mulmod(&acc, &acc, &tab[w], &m);
+          if (mont)
+            bn_mont_mul(&acc, &acc, &tab[w], &m, n0);
+          else
+            bn_mulmod(&acc, &acc, &tab[w], &m);
         } else {
           acc = tab[w];
           started = 1;
         }
       }
     }
+  }
+  if (mont) {
+    // Out of Montgomery form: reducing against one divides by R.
+    bignum one2;
+    one2.d[0] = 1;
+    one2.n = 1;
+    bn_mont_mul(&acc, &acc, &one2, &m, n0);
   }
   for (uint64_t i = 0; i < ml; i++) {
     const uint64_t shift = (ml - 1 - i) * 8;
