@@ -425,6 +425,52 @@ static fp12 fp12_mul(fp12 a, fp12 b) {
   return (fp12){c0, c1};
 }
 
+/** `a * (b, 0, 0)`. */
+static inline fp6 fp6_mul_fp2(fp6 a, fp2 b) {
+  return (fp6){fp2_mul(a.c0, b), fp2_mul(a.c1, b), fp2_mul(a.c2, b)};
+}
+
+/**
+ * `a * (0, b1, b2)`, in five multiplications rather than the general six.
+ *
+ * `a1*b2 + a2*b1` comes out of one product against a sum, and `a0*b2` out of
+ * another against a term already computed.
+ */
+static fp6 fp6_mul_12(fp6 a, fp2 b1, fp2 b2) {
+  const fp2 v1 = fp2_mul(a.c1, b1);
+  const fp2 v2 = fp2_mul(a.c2, b2);
+  const fp2 cross =
+      fp2_sub(fp2_sub(fp2_mul(fp2_add(a.c1, a.c2), fp2_add(b1, b2)), v1), v2);
+  const fp2 a0b1 = fp2_mul(a.c0, b1);
+  const fp2 a0b2 = fp2_sub(fp2_mul(fp2_add(a.c0, a.c2), b2), v2);
+  return (fp6){fp2_mul_xi(cross), fp2_add(a0b1, fp2_mul_xi(v2)),
+               fp2_add(a0b2, v1)};
+}
+
+/** The three non-zero coefficients a line evaluation produces. */
+typedef struct {
+  fp2 l0, l4, l5;
+} fp12_line;
+
+/**
+ * `a * line`, where `line` is `(l0, 0, 0) + (0, l4, l5) w`.
+ *
+ * A line evaluation fills three of an Fp12's six Fp2 coefficients and the
+ * Miller loop multiplies by one every iteration, so the general product runs
+ * eighteen Fp2 multiplications where fourteen suffice. Fewer than bn254's
+ * thirteen because this twist puts the two G2 terms at `v` and `v^2`, so the
+ * Karatsuba middle sees a full Fp6 rather than a sparse one; the additions it
+ * skips are worth more than the one multiplication it does not.
+ */
+static fp12 fp12_mul_line(fp12 a, fp12_line b) {
+  const fp6 t0 = fp6_mul_fp2(a.c0, b.l0);
+  const fp6 t1 = fp6_mul_12(a.c1, b.l4, b.l5);
+  const fp6 c0 = fp6_add(t0, fp6_mul_v(t1));
+  fp6 c1 = fp6_mul(fp6_add(a.c0, a.c1), (fp6){b.l0, b.l4, b.l5});
+  c1 = fp6_sub(fp6_sub(c1, t0), t1);
+  return (fp12){c0, c1};
+}
+
 /**
  * Squaring in Fp12, as a complex squaring over Fp6: two Fp6 products where the
  * general multiplication needs three.
@@ -917,8 +963,8 @@ static void bg2_affine(const bg2 *p, fp2 *x, fp2 *y) {
  * `1/w = v^2 w / xi` and `1/w^3 = v w / xi`, which is where the two divisions
  * by xi below come from.
  */
-static fp12 bg2_line(const fp2 ax, const fp2 ay, const fp2 bx, const fp2 by,
-                     bfp px, bfp py, int tangent) {
+static fp12_line bg2_line(const fp2 ax, const fp2 ay, const fp2 bx,
+                          const fp2 by, bfp px, bfp py, int tangent) {
   fp2 slope;
   if (tangent) {
     fp2 num = fp2_sqr(ax);
@@ -927,11 +973,9 @@ static fp12 bg2_line(const fp2 ax, const fp2 ay, const fp2 bx, const fp2 by,
   } else {
     slope = fp2_mul(fp2_sub(by, ay), fp2_inv(fp2_sub(bx, ax)));
   }
-  fp12 out = (fp12){FP6_ZERO, FP6_ZERO};
-  out.c0.c0 = (fp2){py, BFP_ZERO};
-  out.c1.c1 = fp2_div_xi(fp2_sub(fp2_mul(slope, ax), ay));
-  out.c1.c2 = fp2_div_xi(fp2_neg(fp2_mul_fp(slope, px)));
-  return out;
+  return (fp12_line){(fp2){py, BFP_ZERO},
+                     fp2_div_xi(fp2_sub(fp2_mul(slope, ax), ay)),
+                     fp2_div_xi(fp2_neg(fp2_mul_fp(slope, px)))};
 }
 
 /** Reduces a Jacobian G2 point to affine coordinates in place. */
@@ -948,14 +992,14 @@ static fp12 bls_miller(bfp px, bfp py, fp2 qx, fp2 qy) {
   fp2 rx = qx, ry = qy;
   for (int bit = BLS_Z_BITS - 2; bit >= 0; bit--) {
     f = fp12_sqr(f);
-    f = fp12_mul(f, bg2_line(rx, ry, rx, ry, px, py, 1));
+    f = fp12_mul_line(f, bg2_line(rx, ry, rx, ry, px, py, 1));
     {
       bg2 rj = (bg2){rx, ry, fp2_one()}, t;
       bg2_double(&t, &rj);
       bg2_to_affine_xy(&t, &rx, &ry);
     }
     if ((BLS_Z >> bit) & 1) {
-      f = fp12_mul(f, bg2_line(rx, ry, qx, qy, px, py, 0));
+      f = fp12_mul_line(f, bg2_line(rx, ry, qx, qy, px, py, 0));
       bg2 rj = (bg2){rx, ry, fp2_one()}, qj = (bg2){qx, qy, fp2_one()}, t;
       bg2_add(&t, &rj, &qj);
       bg2_to_affine_xy(&t, &rx, &ry);

@@ -550,6 +550,50 @@ static fq12 fq12_mul(fq12 a, fq12 b) {
   return (fq12){c0, c1};
 }
 
+/** `a * (b0, 0, 0)`. */
+static inline fq6 fq6_mul_fq2(fq6 a, fq2 b) {
+  return (fq6){fq2_mul(a.c0, b), fq2_mul(a.c1, b), fq2_mul(a.c2, b)};
+}
+
+/**
+ * `a * (b0, b1, 0)`, in five multiplications rather than the general six.
+ *
+ * Only `a2*b1` and `a2*b0` are not already Karatsuba by-products of the two
+ * diagonal terms, and each costs one product against a sum.
+ */
+static fq6 fq6_mul_01(fq6 a, fq2 b0, fq2 b1) {
+  const fq2 v0 = fq2_mul(a.c0, b0);
+  const fq2 v1 = fq2_mul(a.c1, b1);
+  const fq2 a2b1 = fq2_sub(fq2_mul(fq2_add(a.c1, a.c2), b1), v1);
+  const fq2 a2b0 = fq2_sub(fq2_mul(fq2_add(a.c0, a.c2), b0), v0);
+  const fq2 mid = fq2_mul(fq2_add(a.c0, a.c1), fq2_add(b0, b1));
+  return (fq6){fq2_add(v0, fq2_mul_xi(a2b1)),
+               fq2_sub(fq2_sub(mid, v0), v1), fq2_add(v1, a2b0)};
+}
+
+/** The three non-zero coefficients a line evaluation produces. */
+typedef struct {
+  fq2 l0, l3, l4;
+} fq12_line;
+
+/**
+ * `a * line`, where `line` is `(l0, 0, 0) + (l3, l4, 0) w`.
+ *
+ * A line evaluation fills three of an Fp12's six Fp2 coefficients and the
+ * Miller loop multiplies by one every iteration, so running the general
+ * product means eighteen Fp2 multiplications where thirteen suffice — and,
+ * because the loop is a dependent chain on `f`, the saving is on the critical
+ * path rather than on throughput.
+ */
+static fq12 fq12_mul_line(fq12 a, fq12_line b) {
+  const fq6 t0 = fq6_mul_fq2(a.c0, b.l0);
+  const fq6 t1 = fq6_mul_01(a.c1, b.l3, b.l4);
+  const fq6 c0 = fq6_add(t0, fq6_mul_v(t1));
+  fq6 c1 = fq6_mul_01(fq6_add(a.c0, a.c1), fq2_add(b.l0, b.l3), b.l4);
+  c1 = fq6_sub(fq6_sub(c1, t0), t1);
+  return (fq12){c0, c1};
+}
+
 /**
  * Squaring in Fp12, as a complex squaring over Fp6.
  *
@@ -842,8 +886,8 @@ static inline int bn_ate_bit(int bit) {
  * arrangement still satisfies `e(P,Q) * e(-P,Q) == 1`, so bilinearity across
  * two different multiples of `P` is the test that actually pins this down.
  */
-static fq12 g2_line(const fq2 ax, const fq2 ay, const fq2 bx, const fq2 by,
-                    u256 px, u256 py, int tangent) {
+static fq12_line g2_line(const fq2 ax, const fq2 ay, const fq2 bx, const fq2 by,
+                         u256 px, u256 py, int tangent) {
   fq2 slope;
   if (tangent) {
     // 3x^2 / 2y
@@ -853,11 +897,9 @@ static fq12 g2_line(const fq2 ax, const fq2 ay, const fq2 bx, const fq2 by,
   } else {
     slope = fq2_mul(fq2_sub(by, ay), fq2_inv(fq2_sub(bx, ax)));
   }
-  fq12 out = (fq12){FQ6_ZERO, FQ6_ZERO};
-  out.c0.c0 = (fq2){py, U256_ZERO};
-  out.c1.c0 = fq2_mul_fq(fq2_neg(slope), px);
-  out.c1.c1 = fq2_sub(fq2_mul(slope, ax), ay);
-  return out;
+  return (fq12_line){(fq2){py, U256_ZERO},
+                     fq2_mul_fq(fq2_neg(slope), px),
+                     fq2_sub(fq2_mul(slope, ax), ay)};
 }
 
 /**
@@ -873,7 +915,7 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
   for (int bit = BN_ATE_BITS - 2; bit >= 0; bit--) {
     // Double: accumulate the tangent line, then R = 2R.
     f = fq12_sqr(f);
-    f = fq12_mul(f, g2_line(rx, ry, rx, ry, px, py, 1));
+    f = fq12_mul_line(f, g2_line(rx, ry, rx, ry, px, py, 1));
     {
       g2 rj = (g2){rx, ry, FQ2_ONE}, t;
       g2_double(&t, &rj);
@@ -883,7 +925,7 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
       ry = fq2_mul(t.y, fq2_mul(zi2, zi));
     }
     if (bn_ate_bit(bit)) {
-      f = fq12_mul(f, g2_line(rx, ry, qx, qy, px, py, 0));
+      f = fq12_mul_line(f, g2_line(rx, ry, qx, qy, px, py, 0));
       g2 rj = (g2){rx, ry, FQ2_ONE}, qj = (g2){qx, qy, FQ2_ONE}, t;
       g2_add(&t, &rj, &qj);
       const fq2 zi = fq2_inv(t.z);
@@ -897,7 +939,7 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
   const fq2 q1y = fq2_mul(fq2_conj(qy), bn_gamma[3]);
   const fq2 q2x = fq2_mul(fq2_conj(q1x), bn_gamma[2]);
   const fq2 q2y = fq2_neg(fq2_mul(fq2_conj(q1y), bn_gamma[3]));
-  f = fq12_mul(f, g2_line(rx, ry, q1x, q1y, px, py, 0));
+  f = fq12_mul_line(f, g2_line(rx, ry, q1x, q1y, px, py, 0));
   {
     g2 rj = (g2){rx, ry, FQ2_ONE}, qj = (g2){q1x, q1y, FQ2_ONE}, t;
     g2_add(&t, &rj, &qj);
@@ -906,7 +948,7 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
     rx = fq2_mul(t.x, zi2);
     ry = fq2_mul(t.y, fq2_mul(zi2, zi));
   }
-  f = fq12_mul(f, g2_line(rx, ry, q2x, q2y, px, py, 0));
+  f = fq12_mul_line(f, g2_line(rx, ry, q2x, q2y, px, py, 0));
   return f;
 }
 
