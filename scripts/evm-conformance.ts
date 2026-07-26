@@ -127,11 +127,22 @@ type Account = {
   storage: Record<string, string>
 }
 
-/** Forks that changed intrinsic-gas or refund rules the runner models. */
+/**
+ * Every fork the engine numbers, in order.
+ *
+ * It must mirror `specIds` exactly. `forkAtLeast` is `indexOf >= indexOf`, so a
+ * name missing from this list reads as -1 and makes *every* fork "at least" it
+ * — which silently gave Byzantium the wrong block reward, because the list held
+ * `ConstantinopleFix` and the comparison named `Constantinople`. Adding a fork
+ * means adding it here as well.
+ */
 const forkOrder = [
   'Frontier',
   'Homestead',
+  'Tangerine',
+  'SpuriousDragon',
   'Byzantium',
+  'Constantinople',
   'ConstantinopleFix',
   'Istanbul',
   'Berlin',
@@ -141,6 +152,15 @@ const forkOrder = [
   'Cancun',
   'Prague',
   'Osaka',
+  // EIP-7892 blob-parameter-only forks. They change the blob schedule and
+  // nothing else, so they are Osaka's rules with a different `blobSchedule`,
+  // and the fixture supplies that. They have to sit after Osaka so
+  // `forkAtLeast(fork, 'Osaka')` holds for them.
+  'BPO1',
+  'BPO2',
+  'BPO3',
+  'BPO4',
+  'BPO5',
   // Reserved. Glamsterdam's execution-layer name; nothing keys off it yet.
   'Amsterdam',
 ]
@@ -158,7 +178,10 @@ const SPEC_LATEST = 14
 const specIds: Record<string, number> = {
   Frontier: 0,
   Homestead: 1,
+  Tangerine: 2,
+  SpuriousDragon: 3,
   Byzantium: 4,
+  Constantinople: 5,
   ConstantinopleFix: 6,
   Istanbul: 7,
   Berlin: 8,
@@ -168,6 +191,13 @@ const specIds: Record<string, number> = {
   Cancun: 12,
   Prague: 13,
   Osaka: 14,
+  // A blob-parameter-only fork reprices nothing the engine charges, so they
+  // all execute as Osaka.
+  BPO1: 14,
+  BPO2: 14,
+  BPO3: 14,
+  BPO4: 14,
+  BPO5: 14,
   Amsterdam: 15,
 }
 
@@ -642,6 +672,10 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // EIP-2681 caps an account's nonce at 2^64 - 1, so a transaction at that
   // nonce could never be followed by another and is refused outright.
   if (big(tx.nonce) >= (1n << 64n) - 1n) return compareLoaded(post)
+  // The nonce has to be exactly the account's. A state test always supplies a
+  // matching one, so this never mattered until a block put two transactions
+  // from the same sender in sequence.
+  if (big(tx.nonce) !== big(senderPre?.nonce)) return compareLoaded(post)
   // A transaction cannot reserve more gas than the block has to give.
   if (gasLimit > big(env.currentGasLimit)) return compareLoaded(post)
   if (tx.authorizationList && !forkAtLeast(fork, 'Prague'))
@@ -827,7 +861,10 @@ function settleAndCompare(
   const tip = effectiveGasPrice - baseFee
   const cb = settle.get(cbAddr)
   if (cb) cb.balance += gasUsed * tip
-  else if (gasUsed * tip > 0n)
+  // Paying the coinbase touches it, and before EIP-161 a touched account joins
+  // the trie and stays there with nothing in it — even when the fee is zero,
+  // which a zero-gas-price transaction makes it.
+  else if (gasUsed * tip > 0n || !forkAtLeast(fork, 'SpuriousDragon'))
     settle.set(cbAddr, {
       address: cbAddr,
       balance: gasUsed * tip,
@@ -980,9 +1017,7 @@ function preFromSettled(): Record<string, Account> {
 /** The block reward paid to the coinbase, which the merge ended. */
 function blockReward(fork: string): bigint {
   if (forkAtLeast(fork, 'Paris')) return 0n
-  // `forkOrder` has no plain Constantinople -- the fixtures all name the fix --
-  // and `indexOf` would return -1 and make every fork "at least" it.
-  if (forkAtLeast(fork, 'ConstantinopleFix')) return 2_000_000_000_000_000_000n
+  if (forkAtLeast(fork, 'Constantinople')) return 2_000_000_000_000_000_000n
   if (forkAtLeast(fork, 'Byzantium')) return 3_000_000_000_000_000_000n
   return 5_000_000_000_000_000_000n
 }
