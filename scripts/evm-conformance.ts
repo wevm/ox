@@ -1023,7 +1023,10 @@ function runBlockchainTest(t: any): Outcome {
       currentTimestamp: h.timestamp,
       currentGasLimit: h.gasLimit,
       currentBaseFee: h.baseFeePerGas ?? '0x0',
-      currentRandom: h.mixHash,
+      // Only from the merge. A pre-merge header still has a `mixHash`, and
+      // passing it as the random would shadow `difficulty`, which is what
+      // opcode 0x44 still means before Paris.
+      currentRandom: forkAtLeast(fork, 'Paris') ? h.mixHash : undefined,
       currentDifficulty: h.difficulty,
       currentExcessBlobGas: h.excessBlobGas ?? '0x0',
     }

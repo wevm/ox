@@ -3140,7 +3140,11 @@ int evm_execute_create(evm_vm *vm, int init_len, int64_t gas) {
               u256_add(vm->st->accounts[created].balance, value));
   set_exists(vm->st, created, 1);
   set_created(vm->st, created, 1);
-  set_nonce(vm->st, created, 1);
+  // EIP-161 started a contract's life at nonce 1; before Spurious Dragon it
+  // was zero. The CREATE opcode has always had this condition and this path
+  // did not, which the blockchain tests caught on a Frontier create
+  // transaction and the state tests never reach.
+  if (vm->ctx.spec >= SPEC_SPURIOUS) set_nonce(vm->st, created, 1);
   warm_account(vm->st, created);
 
   int64_t child_gas = gas;
