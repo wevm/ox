@@ -178,17 +178,6 @@ static void state_reset(evm_state *st) {
   for (int i = 0; i < STORAGE_SLOTS; i++) st->slot_index[i] = -1;
 }
 
-/** Looks up an account, returning its index or -1. */
-__attribute__((unused)) static int32_t account_find(const evm_state *st, const uint8_t *addr) {
-  uint64_t h = hash_bytes(addr, 20);
-  for (uint64_t i = 0; i < ACCOUNT_SLOTS; i++) {
-    const uint64_t probe = (h + i) & (ACCOUNT_SLOTS - 1);
-    const int32_t idx = st->account_index[probe];
-    if (idx < 0) return -1;
-    if (addr_eq(st->accounts[idx].address, addr)) return idx;
-  }
-  return -1;
-}
 
 /** Looks up an account, inserting an empty one if absent. Returns -1 if full. */
 static int32_t account_intern(evm_state *st, const uint8_t *addr) {
@@ -225,18 +214,6 @@ static int32_t account_intern(evm_state *st, const uint8_t *addr) {
 // ---------------------------------------------------------------------------
 // Storage
 // ---------------------------------------------------------------------------
-
-__attribute__((unused)) static int32_t slot_find(const evm_state *st, int32_t acct, u256 key) {
-  uint64_t h = hash_slot(acct, key);
-  for (uint64_t i = 0; i < STORAGE_SLOTS; i++) {
-    const uint64_t probe = (h + i) & (STORAGE_SLOTS - 1);
-    const int32_t idx = st->slot_index[probe];
-    if (idx < 0) return -1;
-    if (st->slots[idx].account == acct && u256_eq(st->slots[idx].key, key))
-      return idx;
-  }
-  return -1;
-}
 
 static int32_t slot_intern(evm_state *st, int32_t acct, u256 key) {
   uint64_t h = hash_slot(acct, key);
