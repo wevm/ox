@@ -319,14 +319,32 @@ function authority(auth: Authorization, chainId: bigint): Hex | undefined {
 type Outcome = { ok: true } | { ok: false; reason: string; detail?: string }
 
 /** Compares the engine's current state against the expected post-state. */
+// The ancestors BLOCKHASH can see, nearest first. A state test has none — its
+// `env` describes one block with no history — so this is empty except under
+// `--blockchain`, where the fixture supplies every header's hash.
+let chainHashes: string[] = []
+
+/**
+ * Stages the ancestor hashes and returns how many. They go after the sixteen
+ * blob-hash slots, which is where `evm_set_context` reads them from.
+ */
+function putChainHashes(): number {
+  const n = Math.min(chainHashes.length, 256)
+  for (let i = 0; i < n; i++) putWord(224 + 16 * 32 + i * 32, big(chainHashes[i]))
+  return n
+}
+
 function compareLoaded(post: any): Outcome {
   lastRc = 0
-  return compare(
-    new Map(readState().map((a) => [a.address, a])),
-    post.state,
-    readStorage(),
-  )
+  lastSettled = new Map(readState().map((a) => [a.address, a]))
+  return compare(lastSettled, post.state, readStorage())
 }
+
+// The post-transaction accounts, gas settlement included. Settlement happens
+// out here rather than in the engine — the transaction layer is the runner's
+// job — so a blockchain test, which has to carry one transaction's result into
+// the next, cannot just read the engine back.
+let lastSettled: Map<string, Acct> | undefined
 
 /**
  * Applies a set-code transaction's authorization list and returns the gas to
@@ -454,7 +472,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
     big(env.currentTimestamp),
     big(env.currentGasLimit),
     Math.min(blobHashes.length, 16),
-    0,
+    putChainHashes(),
     specIds[fork] ?? 13,
   )
 
@@ -726,6 +744,7 @@ function settleAndCompare(
     })
   void senderIdx
 
+  lastSettled = settle
   return compare(settle, post.state, readStorage())
 }
 
@@ -834,6 +853,261 @@ function compare(
   return { ok: true }
 }
 
+// --- blockchain tests ---
+//
+// A blockchain fixture is a chain of blocks rather than one transaction, but
+// every one of them carries an explicit `postState`, so none of this needs a
+// Merkle Patricia trie: the state root in the header is never checked. What it
+// does need is for one transaction's result to feed the next, and settlement
+// happens out here in the runner, so the state is carried in `lastSettled`
+// rather than read back out of the engine.
+//
+// Each transaction is run by handing `runCase` a state test synthesised from
+// the running state and the block's header. That reloads the whole state per
+// transaction, which is wasteful and is also why no other part of the runner
+// had to change.
+
+/** The running state, in the shape `runCase` wants for a fixture's `pre`. */
+function preFromSettled(): Record<string, Account> {
+  const storage = readStorage()
+  const pre: Record<string, Account> = {}
+  for (const a of lastSettled?.values() ?? []) {
+    const slots: Record<string, string> = {}
+    for (const [k, v] of storage.get(a.address) ?? [])
+      if (v !== 0n) slots[`0x${k.toString(16)}`] = `0x${v.toString(16)}`
+    pre[a.address] = {
+      balance: `0x${a.balance.toString(16)}`,
+      nonce: `0x${a.nonce.toString(16)}`,
+      code: a.code,
+      storage: slots,
+    } as Account
+  }
+  return pre
+}
+
+/** The block reward paid to the coinbase, which the merge ended. */
+function blockReward(fork: string): bigint {
+  if (forkAtLeast(fork, 'Paris')) return 0n
+  // `forkOrder` has no plain Constantinople -- the fixtures all name the fix --
+  // and `indexOf` would return -1 and make every fork "at least" it.
+  if (forkAtLeast(fork, 'ConstantinopleFix')) return 2_000_000_000_000_000_000n
+  if (forkAtLeast(fork, 'Byzantium')) return 3_000_000_000_000_000_000n
+  return 5_000_000_000_000_000_000n
+}
+
+function credit(pre: Record<string, Account>, addr: string, wei: bigint) {
+  const key = addr.toLowerCase()
+  const a = (pre[key] ??= {
+    balance: '0x0',
+    nonce: '0x0',
+    code: '0x',
+    storage: {},
+  } as Account)
+  a.balance = `0x${(big(a.balance) + wei).toString(16)}`
+}
+
+// The predeploys a block invokes outside any transaction. Each is an ordinary
+// call from the system address with 30M gas, charged to nobody: no nonce bump
+// and no gas accounting, which is why they cannot go through `runCase`.
+const SYSTEM_ADDR = '0xfffffffffffffffffffffffffffffffffffffffe'
+const BEACON_ROOTS = '0x000f3df6d732807ef1319fb7b8bb8522d0beac02'
+const HISTORY_STORAGE = '0x0000f90827f1c53a10cb7a02335b175320002935'
+const WITHDRAWAL_REQUESTS = '0x00000961ef480eb55e80d19ad83579a64c007002'
+const CONSOLIDATION_REQUESTS = '0x0000bbddc7ce488642fb579f8b00f3a590007251'
+
+/** Loads `pre` into the engine and sets the block context. */
+function loadInto(
+  pre: Record<string, Account>,
+  env: any,
+  fork: string,
+  config: any,
+): boolean {
+  engine.evm_reset(vm)
+  for (const [addr, acct] of Object.entries(pre)) {
+    const code = bytes(acct.code)
+    putAddr(STAGE_ADDR, addr)
+    putWord(STAGE_WORD_A, big(acct.balance))
+    mem().set(code, stage() + STAGE_BYTES)
+    if (engine.evm_put_account(vm, big(acct.nonce), code.length) !== 0)
+      return false
+    for (const [k, v] of Object.entries(acct.storage ?? {})) {
+      putAddr(STAGE_ADDR, addr)
+      putWord(STAGE_WORD_A, big(k))
+      putWord(STAGE_WORD_B, big(v))
+      if (engine.evm_put_storage(vm) !== 0) return false
+    }
+  }
+  putAddr(STAGE_ADDR, SYSTEM_ADDR)
+  putAddr(STAGE_ADDR2, env.currentCoinbase)
+  putWord(64, 0n)
+  putWord(96, big(env.currentBaseFee))
+  putWord(128, 0n)
+  putWord(160, big(env.currentRandom ?? env.currentDifficulty))
+  putWord(192, big(config?.chainid ?? '0x01'))
+  engine.evm_set_context(
+    vm,
+    big(env.currentNumber),
+    big(env.currentTimestamp),
+    big(env.currentGasLimit),
+    0,
+    putChainHashes(),
+    specIds[fork] ?? 13,
+  )
+  return true
+}
+
+/** Reads the engine back into a `pre`, with no settlement to apply. */
+function preFromEngine(): Record<string, Account> {
+  lastSettled = new Map(readState().map((a) => [a.address, a]))
+  return preFromSettled()
+}
+
+/**
+ * One predeploy call, if the contract is deployed. Returns the state after.
+ *
+ * A call to an address with no code is a no-op that still touches the account,
+ * so an absent predeploy is skipped rather than called into.
+ */
+function systemCall(
+  pre: Record<string, Account>,
+  env: any,
+  fork: string,
+  config: any,
+  to: string,
+  data: Uint8Array,
+): Record<string, Account> {
+  const acct = pre[to]
+  if (!acct || !acct.code || acct.code === '0x') return pre
+  if (!loadInto(pre, env, fork, config)) return pre
+  putAddr(STAGE_ADDR, to)
+  putAddr(STAGE_ADDR2, SYSTEM_ADDR)
+  putWord(STAGE_WORD_A, 0n)
+  mem().set(data, stage() + STAGE_BYTES)
+  engine.evm_execute(vm, data.length, 30_000_000n, 0)
+  return preFromEngine()
+}
+
+/**
+ * Runs one blockchain fixture and compares its `postState`.
+ *
+ * Blocks carrying `expectException` are the invalid-block corpus: rejecting
+ * them means validating the header, which means the state root, which means a
+ * trie. They are reported as skipped rather than failed.
+ */
+function runBlockchainTest(t: any): Outcome {
+  // A transition network names two forks and the timestamp the second takes
+  // effect at, so the fork is a property of the block rather than the test.
+  const transition = /^(\w+)To(\w+)AtTime(\d+)k$/.exec(t.network)
+  const forkAt = (timestamp: bigint): string =>
+    transition
+      ? timestamp >= BigInt(transition[3]) * 1000n
+        ? transition[2]
+        : transition[1]
+      : t.network
+  let fork: string = forkAt(0n)
+  if (specIds[fork] === undefined) return { ok: false, reason: `fork:${fork}` }
+  let pre: Record<string, Account> = t.pre
+  // Nearest ancestor first, starting from the genesis header the fixture
+  // carries; BLOCKHASH indexes back from the current block.
+  chainHashes = t.genesisBlockHeader?.hash ? [t.genesisBlockHeader.hash] : []
+  for (const b of t.blocks ?? []) {
+    if (b.expectException !== undefined)
+      return { ok: false, reason: 'skip:invalid-block' }
+    const h = b.blockHeader
+    if (!h) return { ok: false, reason: 'skip:no-header' }
+    fork = forkAt(big(h.timestamp))
+    if (specIds[fork] === undefined) return { ok: false, reason: `fork:${fork}` }
+    const env = {
+      currentCoinbase: h.coinbase,
+      currentNumber: h.number,
+      currentTimestamp: h.timestamp,
+      currentGasLimit: h.gasLimit,
+      currentBaseFee: h.baseFeePerGas ?? '0x0',
+      currentRandom: h.mixHash,
+      currentDifficulty: h.difficulty,
+      currentExcessBlobGas: h.excessBlobGas ?? '0x0',
+    }
+    // EIP-4788 and EIP-2935 run before the block's transactions.
+    if (forkAtLeast(fork, 'Cancun') && h.parentBeaconBlockRoot !== undefined)
+      pre = systemCall(
+        pre,
+        env,
+        fork,
+        t.config,
+        BEACON_ROOTS,
+        bytes(h.parentBeaconBlockRoot),
+      )
+    if (forkAtLeast(fork, 'Prague'))
+      pre = systemCall(
+        pre,
+        env,
+        fork,
+        t.config,
+        HISTORY_STORAGE,
+        bytes(h.parentHash),
+      )
+    for (const tx of b.transactions ?? []) {
+      const synthetic = {
+        pre,
+        env,
+        config: t.config,
+        transaction: {
+          ...tx,
+          data: [tx.data],
+          gasLimit: [tx.gasLimit],
+          value: [tx.value],
+        },
+      }
+      const out = runCase(synthetic, fork, {
+        indexes: { data: 0, gas: 0, value: 0 },
+        state: {},
+      })
+      if (!out.ok) return out
+      pre = preFromSettled()
+    }
+    // EIP-7002 and EIP-7251 dequeue their request lists after them.
+    if (forkAtLeast(fork, 'Prague'))
+      for (const addr of [WITHDRAWAL_REQUESTS, CONSOLIDATION_REQUESTS])
+        pre = systemCall(pre, env, fork, t.config, addr, new Uint8Array())
+    // Withdrawals are denominated in gwei, unlike everything else here.
+    for (const w of b.withdrawals ?? [])
+      credit(pre, w.address, big(w.amount) * 1_000_000_000n)
+    const reward = blockReward(fork)
+    if (reward > 0n) credit(pre, h.coinbase, reward)
+    if (h.hash) chainHashes.unshift(h.hash)
+  }
+  // Load the final state back so `compare` reads it from the engine, which is
+  // the only path that also produces storage.
+  chainHashes = []
+  const out = runCase(
+    {
+      pre,
+      env: {
+        currentCoinbase: '0x0000000000000000000000000000000000000000',
+        currentNumber: '0x1',
+        currentTimestamp: '0x1',
+        currentGasLimit: '0x1',
+        currentBaseFee: '0x0',
+      },
+      config: t.config,
+      // A transaction that cannot pay its intrinsic gas is rejected before it
+      // runs, which loads the state and compares without touching it.
+      transaction: {
+        sender: '0x0000000000000000000000000000000000000000',
+        to: '0x0000000000000000000000000000000000000000',
+        gasPrice: '0x0',
+        nonce: '0x0',
+        data: ['0x'],
+        gasLimit: ['0x0'],
+        value: ['0x0'],
+      },
+    },
+    fork,
+    { indexes: { data: 0, gas: 0, value: 0 }, state: t.postState },
+  )
+  return out
+}
+
 // --- driver ---
 
 function* walk(dir: string): Generator<string> {
@@ -864,6 +1138,7 @@ const show = Number(opt('--show') ?? 8)
 //   node --import tsx scripts/build-evm.ts --trace /tmp/evm.trace.wasm
 //   OX_WASM=/tmp/evm.trace.wasm node --import tsx scripts/evm-conformance.ts \
 //     <fixtures> --trace-case <substring>
+const blockchain = args.includes('--blockchain')
 const traceCase = opt('--trace-case')
 if (traceCase && !engine.evm_trace_ptr)
   throw new Error('--trace-case needs OX_WASM pointing at a --trace build')
@@ -923,6 +1198,34 @@ outer: for (const file of walk(root)) {
     continue
   }
   for (const [name, test] of Object.entries<any>(doc)) {
+    // `--blockchain` switches to the chain fixtures, whose shape is a list of
+    // blocks and one `postState` rather than a `post` keyed by fork.
+    if (blockchain) {
+      let outcome: Outcome
+      try {
+        outcome = runBlockchainTest(test)
+      } catch (error) {
+        outcome = {
+          ok: false,
+          reason: `threw:${(error as Error).message.slice(0, 40)}`,
+        }
+        instantiate()
+      }
+      if (process.env.CASES)
+        console.log(`CASE ${outcome.ok ? 'PASS' : 'FAIL'} ${name}`)
+      if (outcome.ok) pass++
+      else {
+        fail++
+        reasons.set(outcome.reason, (reasons.get(outcome.reason) ?? 0) + 1)
+        if (!samples.has(outcome.reason))
+          samples.set(
+            outcome.reason,
+            `${name.slice(0, 110)}${outcome.detail ? `\n      ${outcome.detail}` : ''}`,
+          )
+      }
+      if (pass + fail >= limit) break outer
+      continue
+    }
     for (const [fork, posts] of Object.entries<any[]>(test.post ?? {})) {
       if (onlyFork && fork !== onlyFork) continue
       for (const post of posts) {
