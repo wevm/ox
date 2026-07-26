@@ -493,7 +493,6 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
   } while (0)
 
 #define JUMPDEST_SET(i) (vm->jumpdest[(i) >> 3] |= (uint8_t)(1 << ((i) & 7)))
-#define JUMPDEST_GET(i) (vm->jumpdest[(i) >> 3] & (1 << ((i) & 7)))
 
 // ---------------------------------------------------------------------------
 // Memory
@@ -1563,7 +1562,7 @@ static inline int64_t call_gas(int64_t available, u256 requested, int spec) {
 /** Charges a block's static gas and validates its stack bounds up front. */
 #define ENTER_BLOCK(at)                                       \
   do {                                                        \
-    const block_info b_ = vm->blocks[at];                     \
+    const block_info b_ = blocks[at];                         \
     if (gas < b_.gas) HALT(EVM_OUT_OF_GAS);                   \
     gas -= b_.gas;                                            \
     const int height_ = (int)(sp - vm->stack_base);           \
@@ -1614,6 +1613,19 @@ static evm_status interpret(evm_vm *vm) {
   // were reloaded on every instruction.
   const uint8_t *const code = vm->frame_code;
   const int code_len = vm->code_len;
+  // Hoisted for the same reason as `code`. Every block entry reads `blocks`,
+  // and reached through `vm` that was two dependent loads — and worse, a
+  // reload after every stack write, because a store through `sp` may alias
+  // `*vm` and the compiler cannot see that it does not. `run_frame` swaps this
+  // out and back around a nested call, so the copy survives one.
+  //
+  // Only this one. `jumpdest` and `gas_fix` were hoisted too and had to come
+  // back out: each extra live value widens the JIT frame, and deep wasm
+  // recursion consumes the host's native stack, so 1024 nested frames stopped
+  // fitting and the EIP-7702 max-depth tests began trapping. That limit is not
+  // the shadow-stack budget below and cannot be raised from inside the module.
+  const block_info *const blocks = vm->blocks;
+
   vm->output_len = 0;
 
   if (code_len == 0) return EVM_SUCCESS;
@@ -1819,7 +1831,7 @@ static evm_status interpret(evm_vm *vm) {
       case 0x56: { // JUMP
         u256 t = POP();
         uint64_t d = u256_to_u64_sat(t);
-        if (d >= (uint64_t)code_len || !JUMPDEST_GET(d))
+        if (d >= (uint64_t)code_len || !(vm->jumpdest[d >> 3] & (1 << (d & 7))))
           HALT(EVM_INVALID_JUMP);
         pc = (int)d;
         OPEN_BLOCK();
@@ -1829,7 +1841,7 @@ static evm_status interpret(evm_vm *vm) {
         u256 t = POP(), cond = POP();
         if (!u256_is_zero(cond)) {
           uint64_t d = u256_to_u64_sat(t);
-          if (d >= (uint64_t)code_len || !JUMPDEST_GET(d))
+          if (d >= (uint64_t)code_len || !(vm->jumpdest[d >> 3] & (1 << (d & 7))))
             HALT(EVM_INVALID_JUMP);
           pc = (int)d;
           OPEN_BLOCK();

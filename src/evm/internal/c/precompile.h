@@ -35,49 +35,64 @@ static const uint32_t SHA256_K[64] = {
 
 #define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 
+/** One compression round over a 64-byte block. */
+static void sha256_block(uint32_t h[8], const uint8_t *block) {
+  uint32_t w[64];
+  for (int i = 0; i < 16; i++)
+    w[i] = ((uint32_t)block[i * 4] << 24) | ((uint32_t)block[i * 4 + 1] << 16) |
+           ((uint32_t)block[i * 4 + 2] << 8) | (uint32_t)block[i * 4 + 3];
+  for (int i = 16; i < 64; i++) {
+    const uint32_t s0 =
+        ROTR32(w[i - 15], 7) ^ ROTR32(w[i - 15], 18) ^ (w[i - 15] >> 3);
+    const uint32_t s1 =
+        ROTR32(w[i - 2], 17) ^ ROTR32(w[i - 2], 19) ^ (w[i - 2] >> 10);
+    w[i] = w[i - 16] + s0 + w[i - 7] + s1;
+  }
+  uint32_t a = h[0], b = h[1], c = h[2], d = h[3];
+  uint32_t e = h[4], f = h[5], g = h[6], hh = h[7];
+  for (int i = 0; i < 64; i++) {
+    const uint32_t S1 = ROTR32(e, 6) ^ ROTR32(e, 11) ^ ROTR32(e, 25);
+    const uint32_t ch = (e & f) ^ (~e & g);
+    const uint32_t t1 = hh + S1 + ch + SHA256_K[i] + w[i];
+    const uint32_t S0 = ROTR32(a, 2) ^ ROTR32(a, 13) ^ ROTR32(a, 22);
+    const uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+    const uint32_t t2 = S0 + maj;
+    hh = g; g = f; f = e; e = d + t1;
+    d = c; c = b; b = a; a = t1 + t2;
+  }
+  h[0] += a; h[1] += b; h[2] += c; h[3] += d;
+  h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+}
+
+/**
+ * Whole blocks are compressed straight out of the caller's buffer; only the
+ * final one or two are assembled.
+ *
+ * The version this replaces built every block a byte at a time through four
+ * branches deciding message, padding, or length — for interior blocks, where
+ * the answer is always "message". That was most of the cost on inputs of any
+ * size.
+ */
 static void sha256(const uint8_t *in, uint64_t len, uint8_t *out) {
   uint32_t h[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
                    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+  uint64_t off = 0;
+  for (; off + 64 <= len; off += 64) sha256_block(h, in + off);
+
+  // The tail: what is left, a 0x80 byte, zeroes, and the bit count. That fits
+  // in one block unless the remainder reaches 56.
+  uint8_t tail[128];
+  const uint64_t rem = len - off;
+  const uint64_t tail_len = rem < 56 ? 64 : 128;
+  for (uint64_t i = 0; i < rem; i++) tail[i] = in[off + i];
+  tail[rem] = 0x80;
+  for (uint64_t i = rem + 1; i < tail_len; i++) tail[i] = 0;
   const uint64_t bits = len * 8;
-  // One pass over the message plus the padded tail, which is one block unless
-  // the length byte-count spills past 56.
-  const uint64_t total = len + 1 + ((len % 64) < 56 ? (55 - (len % 64))
-                                                    : (119 - (len % 64))) + 8;
-  for (uint64_t off = 0; off < total; off += 64) {
-    uint8_t block[64];
-    for (int i = 0; i < 64; i++) {
-      const uint64_t p = off + (uint64_t)i;
-      if (p < len) block[i] = in[p];
-      else if (p == len) block[i] = 0x80;
-      else if (p + 8 >= total) block[i] = (uint8_t)(bits >> ((total - 1 - p) * 8));
-      else block[i] = 0;
-    }
-    uint32_t w[64];
-    for (int i = 0; i < 16; i++)
-      w[i] = ((uint32_t)block[i * 4] << 24) | ((uint32_t)block[i * 4 + 1] << 16) |
-             ((uint32_t)block[i * 4 + 2] << 8) | (uint32_t)block[i * 4 + 3];
-    for (int i = 16; i < 64; i++) {
-      const uint32_t s0 =
-          ROTR32(w[i - 15], 7) ^ ROTR32(w[i - 15], 18) ^ (w[i - 15] >> 3);
-      const uint32_t s1 =
-          ROTR32(w[i - 2], 17) ^ ROTR32(w[i - 2], 19) ^ (w[i - 2] >> 10);
-      w[i] = w[i - 16] + s0 + w[i - 7] + s1;
-    }
-    uint32_t a = h[0], b = h[1], c = h[2], d = h[3];
-    uint32_t e = h[4], f = h[5], g = h[6], hh = h[7];
-    for (int i = 0; i < 64; i++) {
-      const uint32_t S1 = ROTR32(e, 6) ^ ROTR32(e, 11) ^ ROTR32(e, 25);
-      const uint32_t ch = (e & f) ^ (~e & g);
-      const uint32_t t1 = hh + S1 + ch + SHA256_K[i] + w[i];
-      const uint32_t S0 = ROTR32(a, 2) ^ ROTR32(a, 13) ^ ROTR32(a, 22);
-      const uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
-      const uint32_t t2 = S0 + maj;
-      hh = g; g = f; f = e; e = d + t1;
-      d = c; c = b; b = a; a = t1 + t2;
-    }
-    h[0] += a; h[1] += b; h[2] += c; h[3] += d;
-    h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
-  }
+  for (int i = 0; i < 8; i++)
+    tail[tail_len - 1 - i] = (uint8_t)(bits >> (i * 8));
+  sha256_block(h, tail);
+  if (tail_len == 128) sha256_block(h, tail + 64);
+
   for (int i = 0; i < 8; i++) {
     out[i * 4] = (uint8_t)(h[i] >> 24);
     out[i * 4 + 1] = (uint8_t)(h[i] >> 16);
@@ -92,88 +107,95 @@ static void sha256(const uint8_t *in, uint64_t len, uint8_t *out) {
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
-static void ripemd160(const uint8_t *in, uint64_t len, uint8_t *out) {
-  static const uint8_t rl[80] = {
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-      7, 4, 13, 1, 10, 6, 15, 3, 12, 0, 9, 5, 2, 14, 11, 8,
-      3, 10, 14, 4, 9, 15, 8, 1, 2, 7, 0, 6, 13, 11, 5, 12,
-      1, 9, 11, 10, 0, 8, 12, 4, 13, 3, 7, 15, 14, 5, 6, 2,
-      4, 0, 5, 9, 7, 12, 2, 10, 14, 1, 3, 8, 11, 6, 15, 13};
-  static const uint8_t rr[80] = {
-      5, 14, 7, 0, 9, 2, 11, 4, 13, 6, 15, 8, 1, 10, 3, 12,
-      6, 11, 3, 7, 0, 13, 5, 10, 14, 15, 8, 12, 4, 9, 1, 2,
-      15, 5, 1, 3, 7, 14, 6, 9, 11, 8, 12, 2, 10, 0, 4, 13,
-      8, 6, 4, 1, 3, 11, 15, 0, 5, 12, 2, 13, 9, 7, 10, 14,
-      12, 15, 10, 4, 1, 5, 8, 7, 6, 2, 13, 14, 0, 3, 9, 11};
-  static const uint8_t sl[80] = {
-      11, 14, 15, 12, 5, 8, 7, 9, 11, 13, 14, 15, 6, 7, 9, 8,
-      7, 6, 8, 13, 11, 9, 7, 15, 7, 12, 15, 9, 11, 7, 13, 12,
-      11, 13, 6, 7, 14, 9, 13, 15, 14, 8, 13, 6, 5, 12, 7, 5,
-      11, 12, 14, 15, 14, 15, 9, 8, 9, 14, 5, 6, 8, 6, 5, 12,
-      9, 15, 5, 11, 6, 8, 13, 12, 5, 12, 13, 14, 11, 8, 5, 6};
-  static const uint8_t sr[80] = {
-      8, 9, 9, 11, 13, 15, 15, 5, 7, 7, 8, 11, 14, 14, 12, 6,
-      9, 13, 15, 7, 12, 8, 9, 11, 7, 7, 12, 7, 6, 15, 13, 11,
-      9, 7, 15, 11, 8, 6, 6, 14, 12, 13, 5, 14, 13, 13, 7, 5,
-      15, 5, 8, 11, 14, 14, 6, 14, 6, 9, 12, 9, 12, 5, 15, 8,
-      8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11};
-  static const uint32_t kl[5] = {0, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc,
-                                 0xa953fd4e};
-  static const uint32_t kr[5] = {0x50a28be6, 0x5c4dd124, 0x6d703ef3,
-                                 0x7a6d76e9, 0};
+static const uint8_t rl[80] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    7, 4, 13, 1, 10, 6, 15, 3, 12, 0, 9, 5, 2, 14, 11, 8,
+    3, 10, 14, 4, 9, 15, 8, 1, 2, 7, 0, 6, 13, 11, 5, 12,
+    1, 9, 11, 10, 0, 8, 12, 4, 13, 3, 7, 15, 14, 5, 6, 2,
+    4, 0, 5, 9, 7, 12, 2, 10, 14, 1, 3, 8, 11, 6, 15, 13};
+static const uint8_t rr[80] = {
+    5, 14, 7, 0, 9, 2, 11, 4, 13, 6, 15, 8, 1, 10, 3, 12,
+    6, 11, 3, 7, 0, 13, 5, 10, 14, 15, 8, 12, 4, 9, 1, 2,
+    15, 5, 1, 3, 7, 14, 6, 9, 11, 8, 12, 2, 10, 0, 4, 13,
+    8, 6, 4, 1, 3, 11, 15, 0, 5, 12, 2, 13, 9, 7, 10, 14,
+    12, 15, 10, 4, 1, 5, 8, 7, 6, 2, 13, 14, 0, 3, 9, 11};
+static const uint8_t sl[80] = {
+    11, 14, 15, 12, 5, 8, 7, 9, 11, 13, 14, 15, 6, 7, 9, 8,
+    7, 6, 8, 13, 11, 9, 7, 15, 7, 12, 15, 9, 11, 7, 13, 12,
+    11, 13, 6, 7, 14, 9, 13, 15, 14, 8, 13, 6, 5, 12, 7, 5,
+    11, 12, 14, 15, 14, 15, 9, 8, 9, 14, 5, 6, 8, 6, 5, 12,
+    9, 15, 5, 11, 6, 8, 13, 12, 5, 12, 13, 14, 11, 8, 5, 6};
+static const uint8_t sr[80] = {
+    8, 9, 9, 11, 13, 15, 15, 5, 7, 7, 8, 11, 14, 14, 12, 6,
+    9, 13, 15, 7, 12, 8, 9, 11, 7, 7, 12, 7, 6, 15, 13, 11,
+    9, 7, 15, 11, 8, 6, 6, 14, 12, 13, 5, 14, 13, 13, 7, 5,
+    15, 5, 8, 11, 14, 14, 6, 14, 6, 9, 12, 9, 12, 5, 15, 8,
+    8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11};
+static const uint32_t kl[5] = {0, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc,
+                               0xa953fd4e};
+static const uint32_t kr[5] = {0x50a28be6, 0x5c4dd124, 0x6d703ef3,
+                               0x7a6d76e9, 0};
 
-  uint32_t h[5] = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0};
-  const uint64_t bits = len * 8;
-  const uint64_t total = len + 1 + ((len % 64) < 56 ? (55 - (len % 64))
-                                                    : (119 - (len % 64))) + 8;
-  for (uint64_t off = 0; off < total; off += 64) {
-    uint32_t x[16];
-    for (int i = 0; i < 16; i++) {
-      uint32_t v = 0;
-      for (int j = 3; j >= 0; j--) {
-        const uint64_t p = off + (uint64_t)i * 4 + (uint64_t)j;
-        uint8_t byte;
-        if (p < len) byte = in[p];
-        else if (p == len) byte = 0x80;
-        // The length is little-endian in the final eight bytes.
-        else if (p + 8 >= total) byte = (uint8_t)(bits >> ((p - (total - 8)) * 8));
-        else byte = 0;
-        v = (v << 8) | byte;
-      }
-      x[i] = v;
+
+/** One compression round over a 64-byte block, whose words are little-endian. */
+static void ripemd160_block(uint32_t h[5], const uint8_t *block) {
+  uint32_t x[16];
+  for (int i = 0; i < 16; i++)
+    x[i] = (uint32_t)block[i * 4] | ((uint32_t)block[i * 4 + 1] << 8) |
+           ((uint32_t)block[i * 4 + 2] << 16) |
+           ((uint32_t)block[i * 4 + 3] << 24);
+  uint32_t al = h[0], bl = h[1], cl = h[2], dl = h[3], el = h[4];
+  uint32_t ar = h[0], br = h[1], cr = h[2], dr = h[3], er = h[4];
+  for (int i = 0; i < 80; i++) {
+    const int r = i / 16;
+    uint32_t f, g;
+    switch (r) {
+      case 0: f = bl ^ cl ^ dl; break;
+      case 1: f = (bl & cl) | (~bl & dl); break;
+      case 2: f = (bl | ~cl) ^ dl; break;
+      case 3: f = (bl & dl) | (cl & ~dl); break;
+      default: f = bl ^ (cl | ~dl); break;
     }
-    uint32_t al = h[0], bl = h[1], cl = h[2], dl = h[3], el = h[4];
-    uint32_t ar = h[0], br = h[1], cr = h[2], dr = h[3], er = h[4];
-    for (int i = 0; i < 80; i++) {
-      const int r = i / 16;
-      uint32_t f, g;
-      switch (r) {
-        case 0: f = bl ^ cl ^ dl; break;
-        case 1: f = (bl & cl) | (~bl & dl); break;
-        case 2: f = (bl | ~cl) ^ dl; break;
-        case 3: f = (bl & dl) | (cl & ~dl); break;
-        default: f = bl ^ (cl | ~dl); break;
-      }
-      uint32_t t = ROTL32(al + f + x[rl[i]] + kl[r], sl[i]) + el;
-      al = el; el = dl; dl = ROTL32(cl, 10); cl = bl; bl = t;
-      switch (r) {
-        case 0: g = br ^ (cr | ~dr); break;
-        case 1: g = (br & dr) | (cr & ~dr); break;
-        case 2: g = (br | ~cr) ^ dr; break;
-        case 3: g = (br & cr) | (~br & dr); break;
-        default: g = br ^ cr ^ dr; break;
-      }
-      t = ROTL32(ar + g + x[rr[i]] + kr[r], sr[i]) + er;
-      ar = er; er = dr; dr = ROTL32(cr, 10); cr = br; br = t;
+    uint32_t t = ROTL32(al + f + x[rl[i]] + kl[r], sl[i]) + el;
+    al = el; el = dl; dl = ROTL32(cl, 10); cl = bl; bl = t;
+    switch (r) {
+      case 0: g = br ^ (cr | ~dr); break;
+      case 1: g = (br & dr) | (cr & ~dr); break;
+      case 2: g = (br | ~cr) ^ dr; break;
+      case 3: g = (br & cr) | (~br & dr); break;
+      default: g = br ^ cr ^ dr; break;
     }
-    const uint32_t t = h[1] + cl + dr;
-    h[1] = h[2] + dl + er;
-    h[2] = h[3] + el + ar;
-    h[3] = h[4] + al + br;
-    h[4] = h[0] + bl + cr;
-    h[0] = t;
+    t = ROTL32(ar + g + x[rr[i]] + kr[r], sr[i]) + er;
+    ar = er; er = dr; dr = ROTL32(cr, 10); cr = br; br = t;
   }
-  // The 20-byte digest is left-aligned in a 32-byte output word.
+  const uint32_t t = h[1] + cl + dr;
+  h[1] = h[2] + dl + er;
+  h[2] = h[3] + el + ar;
+  h[3] = h[4] + al + br;
+  h[4] = h[0] + bl + cr;
+  h[0] = t;
+}
+
+/** As with sha256, whole blocks are compressed in place; only the tail is built. */
+static void ripemd160(const uint8_t *in, uint64_t len, uint8_t *out) {
+  uint32_t h[5] = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0};
+  uint64_t off = 0;
+  for (; off + 64 <= len; off += 64) ripemd160_block(h, in + off);
+
+  uint8_t tail[128];
+  const uint64_t rem = len - off;
+  const uint64_t tail_len = rem < 56 ? 64 : 128;
+  for (uint64_t i = 0; i < rem; i++) tail[i] = in[off + i];
+  tail[rem] = 0x80;
+  for (uint64_t i = rem + 1; i < tail_len; i++) tail[i] = 0;
+  const uint64_t bits = len * 8;
+  // The length is little-endian here, unlike sha256.
+  for (int i = 0; i < 8; i++)
+    tail[tail_len - 8 + i] = (uint8_t)(bits >> (i * 8));
+  ripemd160_block(h, tail);
+  if (tail_len == 128) ripemd160_block(h, tail + 64);
+
+  // The digest is 20 bytes, left-padded to 32 as the precompile requires.
   for (int i = 0; i < 12; i++) out[i] = 0;
   for (int i = 0; i < 5; i++) {
     out[12 + i * 4] = (uint8_t)h[i];
