@@ -198,6 +198,22 @@ static inline bfp bfp_one(void) {
   return r;
 }
 
+/**
+ * `R^3 mod p`, which converts the extended GCD's output back into Montgomery
+ * form. Derived from `R^2` rather than transcribed.
+ */
+static bfp bls_r3(void) {
+  static bfp cached;
+  static int ready;
+  if (!ready) {
+    bfp r2;
+    for (int i = 0; i < BFP_LIMBS; i++) r2.l[i] = BLS_R2[i];
+    cached = bfp_mul(r2, r2); // R^2 * R^2 / R = R^3
+    ready = 1;
+  }
+  return cached;
+}
+
 /** `a^e` for an exponent given as `n` little-endian limbs. */
 static bfp bfp_pow(bfp a, const uint64_t *e, int n) {
   bfp r = bfp_one();
@@ -213,12 +229,93 @@ static bfp bfp_pow(bfp a, const uint64_t *e, int n) {
   return r;
 }
 
+/** `a / 2`, adding the modulus first when `a` is odd so the shift is exact. */
+static inline bfp bfp_half(bfp a) {
+  bfp r = a;
+  if (r.l[0] & 1) {
+    uint64_t carry = 0;
+    for (int i = 0; i < BFP_LIMBS; i++) {
+      const uint64_t s = r.l[i] + BLS_P[i];
+      const uint64_t c1 = s < r.l[i];
+      const uint64_t s2 = s + carry;
+      carry = c1 | (s2 < s);
+      r.l[i] = s2;
+    }
+    // The sum needs 382 bits; carry holds the bit the shift below restores.
+    for (int i = 0; i < BFP_LIMBS - 1; i++)
+      r.l[i] = (r.l[i] >> 1) | (r.l[i + 1] << 63);
+    r.l[BFP_LIMBS - 1] = (r.l[BFP_LIMBS - 1] >> 1) | (carry << 63);
+    return r;
+  }
+  for (int i = 0; i < BFP_LIMBS - 1; i++)
+    r.l[i] = (r.l[i] >> 1) | (r.l[i + 1] << 63);
+  r.l[BFP_LIMBS - 1] >>= 1;
+  return r;
+}
+
+/** Raw 384-bit helpers for the extended GCD, which works on integers. */
+static inline int bfp_raw_cmp(const uint64_t *a, const uint64_t *b) {
+  for (int i = BFP_LIMBS - 1; i >= 0; i--)
+    if (a[i] != b[i]) return a[i] < b[i] ? -1 : 1;
+  return 0;
+}
+
+static inline void bfp_raw_sub(uint64_t *r, const uint64_t *a,
+                               const uint64_t *b) {
+  uint64_t borrow = 0;
+  for (int i = 0; i < BFP_LIMBS; i++) {
+    const uint64_t d = a[i] - b[i];
+    const uint64_t b1 = a[i] < b[i];
+    const uint64_t t = d - borrow;
+    borrow = b1 | (d < borrow);
+    r[i] = t;
+  }
+}
+
+static inline void bfp_raw_shr1(uint64_t *a) {
+  for (int i = 0; i < BFP_LIMBS - 1; i++) a[i] = (a[i] >> 1) | (a[i + 1] << 63);
+  a[BFP_LIMBS - 1] >>= 1;
+}
+
+/**
+ * `a^-1 mod p`, by the binary extended GCD.
+ *
+ * Fermat's `a^(p-2)` over a 381-bit prime is 381 squarings and about 190
+ * multiplications; this is around 540 iterations of shift-compare-subtract and
+ * no multiplication at all. The Miller loop inverts twice per iteration and
+ * every point that arrives gets normalised, so this is not a rare path.
+ *
+ * The extended GCD works on the integer it is given, so on `aR` it returns
+ * `a^-1 R^-1`; multiplying by `R^3` in Montgomery form lands on `a^-1 R`.
+ */
 static bfp bfp_inv(bfp a) {
-  // p - 2
-  uint64_t e[BFP_LIMBS];
-  for (int i = 0; i < BFP_LIMBS; i++) e[i] = BLS_P[i];
-  e[0] -= 2;
-  return bfp_pow(a, e, BFP_LIMBS);
+  if (bfp_is_zero(a)) return BFP_ZERO;
+  uint64_t u[BFP_LIMBS], v[BFP_LIMBS];
+  for (int i = 0; i < BFP_LIMBS; i++) {
+    u[i] = a.l[i];
+    v[i] = BLS_P[i];
+  }
+  bfp x1 = BFP_ZERO, x2 = BFP_ZERO;
+  x1.l[0] = 1;
+  const uint64_t one[BFP_LIMBS] = {1, 0, 0, 0, 0, 0};
+  while (bfp_raw_cmp(u, one) != 0 && bfp_raw_cmp(v, one) != 0) {
+    while (!(u[0] & 1)) {
+      bfp_raw_shr1(u);
+      x1 = bfp_half(x1);
+    }
+    while (!(v[0] & 1)) {
+      bfp_raw_shr1(v);
+      x2 = bfp_half(x2);
+    }
+    if (bfp_raw_cmp(u, v) >= 0) {
+      bfp_raw_sub(u, u, v);
+      x1 = bfp_sub(x1, x2);
+    } else {
+      bfp_raw_sub(v, v, u);
+      x2 = bfp_sub(x2, x1);
+    }
+  }
+  return bfp_mul(bfp_raw_cmp(u, one) == 0 ? x1 : x2, bls_r3());
 }
 
 // ---------------------------------------------------------------------------
@@ -360,7 +457,78 @@ static fp12 fp12_mul(fp12 a, fp12 b) {
   return (fp12){c0, c1};
 }
 
-static inline fp12 fp12_sqr(fp12 a) { return fp12_mul(a, a); }
+/**
+ * Squaring in Fp12, as a complex squaring over Fp6: two Fp6 products where the
+ * general multiplication needs three.
+ */
+static fp12 fp12_sqr(fp12 a) {
+  const fp6 t = fp6_mul(a.c0, a.c1);
+  const fp6 c0 = fp6_sub(
+      fp6_sub(fp6_mul(fp6_add(a.c0, a.c1), fp6_add(a.c0, fp6_mul_v(a.c1))), t),
+      fp6_mul_v(t));
+  return (fp12){c0, fp6_add(t, t)};
+}
+
+/**
+ * Squaring restricted to the cyclotomic subgroup, after Granger and Scott.
+ *
+ * Once the easy part of the final exponentiation has run, the element
+ * satisfies `f^(p^6+1) = 1`, and on that subgroup the twelve Fp2 coefficients
+ * regroup into three Fp4 squarings — six Fp2 multiplications against the
+ * eighteen a general Fp12 squaring costs. The hard part here is a 1280-bit
+ * exponent, so almost all of it is squaring.
+ *
+ * The coefficients are read in `w`-power order: with `w^2 = v`, the Fp6 pair
+ * `(c0, c1)` interleaves as `c0.c0, c1.c0, c0.c1, c1.c1, c0.c2, c1.c2`.
+ *
+ * Only valid on the subgroup — `fp12_sqr` is the one for anywhere else.
+ */
+static fp12 fp12_cyclo_sqr(fp12 a) {
+  fp2 z0 = a.c0.c0, z4 = a.c0.c1, z3 = a.c0.c2;
+  fp2 z2 = a.c1.c0, z1 = a.c1.c1, z5 = a.c1.c2;
+
+  fp2 tmp = fp2_mul(z0, z1);
+  const fp2 t0 = fp2_sub(
+      fp2_sub(fp2_mul(fp2_add(z0, z1), fp2_add(z0, fp2_mul_xi(z1))), tmp),
+      fp2_mul_xi(tmp));
+  const fp2 t1 = fp2_add(tmp, tmp);
+
+  tmp = fp2_mul(z2, z3);
+  const fp2 t2 = fp2_sub(
+      fp2_sub(fp2_mul(fp2_add(z2, z3), fp2_add(z2, fp2_mul_xi(z3))), tmp),
+      fp2_mul_xi(tmp));
+  const fp2 t3 = fp2_add(tmp, tmp);
+
+  tmp = fp2_mul(z4, z5);
+  const fp2 t4 = fp2_sub(
+      fp2_sub(fp2_mul(fp2_add(z4, z5), fp2_add(z4, fp2_mul_xi(z5))), tmp),
+      fp2_mul_xi(tmp));
+  const fp2 t5 = fp2_add(tmp, tmp);
+
+  z0 = fp2_sub(t0, z0);
+  z0 = fp2_add(z0, z0);
+  z0 = fp2_add(z0, t0);
+  z1 = fp2_add(t1, z1);
+  z1 = fp2_add(z1, z1);
+  z1 = fp2_add(z1, t1);
+
+  tmp = fp2_mul_xi(t5);
+  z2 = fp2_add(tmp, z2);
+  z2 = fp2_add(z2, z2);
+  z2 = fp2_add(z2, tmp);
+  z3 = fp2_sub(t4, z3);
+  z3 = fp2_add(z3, z3);
+  z3 = fp2_add(z3, t4);
+
+  z4 = fp2_sub(t2, z4);
+  z4 = fp2_add(z4, z4);
+  z4 = fp2_add(z4, t2);
+  z5 = fp2_add(t3, z5);
+  z5 = fp2_add(z5, z5);
+  z5 = fp2_add(z5, t3);
+
+  return (fp12){{z0, z4, z3}, {z2, z1, z5}};
+}
 
 static fp12 fp12_inv(fp12 a) {
   const fp6 d = fp6_sub(fp6_sqr(a.c0), fp6_mul_v(fp6_sqr(a.c1)));
@@ -419,40 +587,27 @@ static fp12 fp12_frobenius(fp12 a) {
 }
 
 static fp12 fp12_pow_limbs(fp12 a, const uint64_t *e, int n) {
+  // Four bits at a time. The only caller is the hard part of the final
+  // exponentiation, whose exponent is 1280 bits, so a fifteen-entry table
+  // costs fourteen multiplications and saves several hundred.
+  fp12 tab[16];
+  tab[1] = a;
+  for (int i = 2; i < 16; i++) tab[i] = fp12_mul(tab[i - 1], a);
+
   fp12 r = fp12_one();
   int started = 0;
   for (int i = n - 1; i >= 0; i--)
-    for (int bit = 63; bit >= 0; bit--) {
-      if (started) r = fp12_sqr(r);
-      if ((e[i] >> bit) & 1) {
-        r = started ? fp12_mul(r, a) : a;
+    for (int sh = 60; sh >= 0; sh -= 4) {
+      // That caller's base has been through the easy part, so it lies in the
+      // cyclotomic subgroup and so does every power of it.
+      if (started)
+        for (int k = 0; k < 4; k++) r = fp12_cyclo_sqr(r);
+      const int w = (int)((e[i] >> sh) & 0xf);
+      if (w) {
+        r = started ? fp12_mul(r, tab[w]) : tab[w];
         started = 1;
       }
     }
-  return r;
-}
-
-/** `a / 2`, adding the modulus first when `a` is odd so the shift is exact. */
-static inline bfp bfp_half(bfp a) {
-  bfp r = a;
-  if (r.l[0] & 1) {
-    uint64_t carry = 0;
-    for (int i = 0; i < BFP_LIMBS; i++) {
-      const uint64_t s = r.l[i] + BLS_P[i];
-      const uint64_t c1 = s < r.l[i];
-      const uint64_t s2 = s + carry;
-      carry = c1 | (s2 < s);
-      r.l[i] = s2;
-    }
-    // The sum needs 382 bits; carry holds the bit the shift below restores.
-    for (int i = 0; i < BFP_LIMBS - 1; i++)
-      r.l[i] = (r.l[i] >> 1) | (r.l[i + 1] << 63);
-    r.l[BFP_LIMBS - 1] = (r.l[BFP_LIMBS - 1] >> 1) | (carry << 63);
-    return r;
-  }
-  for (int i = 0; i < BFP_LIMBS - 1; i++)
-    r.l[i] = (r.l[i] >> 1) | (r.l[i + 1] << 63);
-  r.l[BFP_LIMBS - 1] >>= 1;
   return r;
 }
 
@@ -548,16 +703,40 @@ static void bg1_add(bg1 *r, const bg1 *p, const bg1 *q) {
   r->z = z3;
 }
 
+/**
+ * `k * p`, four bits of the scalar at a time.
+ *
+ * The window turns an addition every bit into one every four, for a table of
+ * fifteen multiples. Both multiplications an MSM point pays go through here —
+ * the scalar itself, and the subgroup check every decode runs — so it is the
+ * hot path of the MSM precompiles.
+ */
 static void bg1_mul(bg1 *out, const bg1 *p, const uint64_t *k, int n) {
+  bg1 tab[16];
+  tab[1] = *p;
+  bg1_double(&tab[2], p);
+  for (int i = 3; i < 16; i++) bg1_add(&tab[i], &tab[i - 1], p);
+
   bg1 acc = bg1_inf();
+  int started = 0;
   for (int i = n - 1; i >= 0; i--)
-    for (int bit = 63; bit >= 0; bit--) {
-      bg1 t;
-      bg1_double(&t, &acc);
-      acc = t;
-      if ((k[i] >> bit) & 1) {
-        bg1_add(&t, &acc, p);
-        acc = t;
+    for (int sh = 60; sh >= 0; sh -= 4) {
+      if (started)
+        for (int d = 0; d < 4; d++) {
+          bg1 t;
+          bg1_double(&t, &acc);
+          acc = t;
+        }
+      const int w = (int)((k[i] >> sh) & 0xf);
+      if (w) {
+        if (started) {
+          bg1 t;
+          bg1_add(&t, &acc, &tab[w]);
+          acc = t;
+        } else {
+          acc = tab[w];
+          started = 1;
+        }
       }
     }
   *out = acc;
@@ -667,16 +846,40 @@ static void bg2_add(bg2 *r, const bg2 *p, const bg2 *q) {
   r->z = z3;
 }
 
+/**
+ * `k * p`, four bits of the scalar at a time.
+ *
+ * The window turns an addition every bit into one every four, for a table of
+ * fifteen multiples. Both multiplications an MSM point pays go through here —
+ * the scalar itself, and the subgroup check every decode runs — so it is the
+ * hot path of the MSM precompiles.
+ */
 static void bg2_mul(bg2 *out, const bg2 *p, const uint64_t *k, int n) {
+  bg2 tab[16];
+  tab[1] = *p;
+  bg2_double(&tab[2], p);
+  for (int i = 3; i < 16; i++) bg2_add(&tab[i], &tab[i - 1], p);
+
   bg2 acc = bg2_inf();
+  int started = 0;
   for (int i = n - 1; i >= 0; i--)
-    for (int bit = 63; bit >= 0; bit--) {
-      bg2 t;
-      bg2_double(&t, &acc);
-      acc = t;
-      if ((k[i] >> bit) & 1) {
-        bg2_add(&t, &acc, p);
-        acc = t;
+    for (int sh = 60; sh >= 0; sh -= 4) {
+      if (started)
+        for (int d = 0; d < 4; d++) {
+          bg2 t;
+          bg2_double(&t, &acc);
+          acc = t;
+        }
+      const int w = (int)((k[i] >> sh) & 0xf);
+      if (w) {
+        if (started) {
+          bg2 t;
+          bg2_add(&t, &acc, &tab[w]);
+          acc = t;
+        } else {
+          acc = tab[w];
+          started = 1;
+        }
       }
     }
   *out = acc;
