@@ -93,7 +93,6 @@ export async function run(options: run.Options): Promise<Result> {
   const { bytecode, data = '0x', gas = 30_000_000n } = options
 
   const engine = await load_.load()
-  const code = typeof bytecode === 'string' ? Hex.toBytes(bytecode) : bytecode
   const input = typeof data === 'string' ? Hex.toBytes(data) : data
 
   if (!vm) vm = engine.evm_new(0)
@@ -102,13 +101,6 @@ export async function run(options: run.Options): Promise<Result> {
   // Check capacity before writing. The buffers are fixed-size fields inside the
   // engine's VM struct, so an oversized `set` would silently scribble over the
   // fields laid out after them rather than throwing.
-  const maxCode = engine.evm_max_code()
-  if (code.length > maxCode)
-    throw new SizeOverflowError({
-      name: 'bytecode',
-      givenSize: code.length,
-      maxSize: maxCode,
-    })
   const maxInput = engine.evm_max_input()
   if (input.length > maxInput)
     throw new SizeOverflowError({
@@ -122,8 +114,21 @@ export async function run(options: run.Options): Promise<Result> {
   // the same code again — the common shape for simulation and estimation.
   // Keyed on the caller's `Hex` string, which is cheap to compare; a
   // `Uint8Array` has no comparable identity, so it always re-analyzes.
+  //
+  // Decoding the hex is inside the guard for the same reason, and it is the
+  // larger half: at ~1.4 ns a byte, `Hex.toBytes` on a 24 KiB contract costs
+  // more than most executions of it. The size check moves in with it, since
+  // the only string that skips the check is one that already passed.
   const key = typeof bytecode === 'string' ? bytecode : undefined
   if (key === undefined || key !== codeKey) {
+    const code = typeof bytecode === 'string' ? Hex.toBytes(bytecode) : bytecode
+    const maxCode = engine.evm_max_code()
+    if (code.length > maxCode)
+      throw new SizeOverflowError({
+        name: 'bytecode',
+        givenSize: code.length,
+        maxSize: maxCode,
+      })
     // Re-derive after every engine call: `evm_new` can grow memory, which
     // detaches any view taken before it.
     load_.view(engine).set(code, engine.evm_code_ptr(vm))

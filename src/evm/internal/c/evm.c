@@ -205,6 +205,16 @@ typedef struct {
 // simpler than reclaiming them.
 #define ANALYSIS_SLOTS 512
 
+/**
+ * Where a wide PUSH at `pc` parks its decoded word inside `gas_fix`.
+ *
+ * The first even slot at or after the immediate, so the address is eight-byte
+ * aligned and the word can be moved as four limbs rather than an unaligned
+ * byte copy. PUSH9 is the tight case: rounding up costs at most one slot and
+ * nine immediate bytes leave nine.
+ */
+#define PUSH_SLOT(pc) (((pc) + 2) & ~1)
+
 #ifdef OX_TRACE
 // A step record. Present only in the tracing build: recording unconditionally
 // would put a branch on every instruction in the dispatch loop, and the two
@@ -709,9 +719,12 @@ static void analyze(evm_vm *vm) {
   // Second pass: for each GAS opcode, record the static gas its block still
   // owes after that instruction, so the interpreter can add it back.
   //
-  // Cleared first: the array is reused across programs, and a position this
-  // pass does not reach would otherwise read a previous program's correction.
-  mem_zero((uint8_t *)vm->gas_fix, (uint64_t)vm->code_len * sizeof(int32_t));
+  // Not cleared, unlike `blocks`. This pass is a linear scan, and every
+  // position the interpreter can execute an opcode at is one it reaches: a
+  // jump only lands on a `JUMPDEST`, which is marked here. So a slot holding a
+  // previous program's value is a slot nothing reads. Skipping the clear is
+  // worth a third of analysis, which on a large contract is most of what a
+  // call to `Evm.run` costs.
   int32_t cur = -1;
   int32_t prefix = 0;
   for (int i = 0; i < vm->code_len;) {
@@ -732,6 +745,31 @@ static void analyze(evm_vm *vm) {
     // `ENTER_BLOCK` charged up front but that execution has not reached yet.
     if (op == 0x5a || op == 0x55)
       vm->gas_fix[i] = vm->blocks[cur].gas - prefix;
+    // Wide PUSH immediates are decoded here, once, and parked in this same
+    // array. wasm has no byte-swap instruction, so LLVM synthesises `bswap64`
+    // from about eleven operations and a PUSH32 pays that four times — forty
+    // operations to read a constant that never changes. Analysis is kept per
+    // contract, so the interpreter can load the word instead of rebuilding it.
+    //
+    // No allocation is needed: `gas_fix` has a slot per code byte and only
+    // opcode positions are ever read from it, so the immediate's own slots are
+    // dead space. Nine immediate bytes are thirty-six bytes of it, which holds
+    // the thirty-two the word needs at the first even slot — `PUSH_SLOT`
+    // rounds up so the word stays eight-byte aligned and both sides can move
+    // it as four limbs. Truncated pushes are skipped; the interpreter's bounds
+    // test already separates them.
+    if (op >= 0x68 && op <= 0x7f) {
+      const int n = op - 0x5f;
+      if (i + 1 + n <= vm->code_len) {
+        const u256 v = op == 0x7f ? u256_from_be(vm->frame_code + i + 1)
+                                  : u256_from_be_n(vm->frame_code + i + 1, n);
+        u256 *dst = (u256 *)&vm->gas_fix[PUSH_SLOT(i)];
+        dst->l[0] = v.l[0];
+        dst->l[1] = v.l[1];
+        dst->l[2] = v.l[2];
+        dst->l[3] = v.l[3];
+      }
+    }
     if (info.flags & OP_TERMINATOR) {
       // The instruction after a terminator opens a new block.
       if (i + 1 < vm->code_len) cur = i + 1;
@@ -2572,9 +2610,19 @@ static evm_status interpret(evm_vm *vm) {
         goto push_truncated;
       }
 
-      case 0x7f: // PUSH32 — a whole word, so no masking or shifting
+      // PUSH9..PUSH32 read the word `analyze` already decoded, out of the
+      // unused `gas_fix` slots belonging to their own immediate. The copy is
+      // then the whole instruction: no shifting, and on wasm no synthesised
+      // byte swaps. `gas_fix` is reached through `vm` rather than hoisted into
+      // a local because `interpret`'s frame has no room left.
+      case 0x7f: // PUSH32
         if (pc + 33 <= code_len) {
-          PUSH(u256_from_be(code + pc + 1));
+          const u256 *src_ = (const u256 *)&vm->gas_fix[PUSH_SLOT(pc)];
+          sp->l[0] = src_->l[0];
+          sp->l[1] = src_->l[1];
+          sp->l[2] = src_->l[2];
+          sp->l[3] = src_->l[3];
+          sp++;
           pc += 33;
           continue;
         }
@@ -2583,7 +2631,12 @@ static evm_status interpret(evm_vm *vm) {
       case 0x68 ... 0x7e: { // PUSH9..PUSH31
         const int n = op - 0x5f;
         if (pc + 1 + n <= code_len) {
-          PUSH(u256_from_be_n(code + pc + 1, n));
+          const u256 *src_ = (const u256 *)&vm->gas_fix[PUSH_SLOT(pc)];
+          sp->l[0] = src_->l[0];
+          sp->l[1] = src_->l[1];
+          sp->l[2] = src_->l[2];
+          sp->l[3] = src_->l[3];
+          sp++;
           pc += 1 + n;
           continue;
         }
