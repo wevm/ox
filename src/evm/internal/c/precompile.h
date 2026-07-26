@@ -378,16 +378,19 @@ static inline uint64_t load64_le(const uint8_t *p) {
 static inline void store64_le(uint8_t *p, uint64_t v) {
   for (int i = 0; i < 8; i++) p[i] = (uint8_t)(v >> (i * 8));
 }
-#define B2B_G(a, b, c, d, x, y)      \
-  do {                               \
-    v[a] = v[a] + v[b] + (x);        \
-    v[d] = ROTR64(v[d] ^ v[a], 32);  \
-    v[c] = v[c] + v[d];              \
-    v[b] = ROTR64(v[b] ^ v[c], 24);  \
-    v[a] = v[a] + v[b] + (y);        \
-    v[d] = ROTR64(v[d] ^ v[a], 16);  \
-    v[c] = v[c] + v[d];              \
-    v[b] = ROTR64(v[b] ^ v[c], 63);  \
+// Named locals rather than `v[a]`: with the working state in an array the
+// compiler must keep it addressable and every step becomes a load and a store,
+// where sixteen scalars can live in registers.
+#define B2B_G(a, b, c, d, x, y)  \
+  do {                           \
+    a = a + b + (x);             \
+    d = ROTR64(d ^ a, 32);       \
+    c = c + d;                   \
+    b = ROTR64(b ^ c, 24);       \
+    a = a + b + (y);             \
+    d = ROTR64(d ^ a, 16);       \
+    c = c + d;                   \
+    b = ROTR64(b ^ c, 63);       \
   } while (0)
 
 /**
@@ -396,25 +399,38 @@ static inline void store64_le(uint8_t *p, uint64_t v) {
  */
 static void blake2b_f(uint32_t rounds, uint64_t h[8], const uint64_t m[16],
                       const uint64_t t[2], int final) {
-  uint64_t v[16];
-  for (int i = 0; i < 8; i++) v[i] = h[i];
-  for (int i = 0; i < 8; i++) v[8 + i] = blake2b_iv[i];
-  v[12] ^= t[0];
-  v[13] ^= t[1];
-  if (final) v[14] = ~v[14];
+  uint64_t v0 = h[0], v1 = h[1], v2 = h[2], v3 = h[3];
+  uint64_t v4 = h[4], v5 = h[5], v6 = h[6], v7 = h[7];
+  uint64_t v8 = blake2b_iv[0], v9 = blake2b_iv[1];
+  uint64_t v10 = blake2b_iv[2], v11 = blake2b_iv[3];
+  uint64_t v12 = blake2b_iv[4] ^ t[0], v13 = blake2b_iv[5] ^ t[1];
+  uint64_t v14 = blake2b_iv[6], v15 = blake2b_iv[7];
+  if (final) v14 = ~v14;
+  // The message schedule repeats every ten rounds; EIP-152 allows more, and
+  // the round count is attacker-chosen and can reach hundreds of thousands.
+  // A wrapping counter rather than `r % 10`, which is a multiply-and-shift the
+  // loop pays for every round.
+  int sr = 0;
   for (uint32_t r = 0; r < rounds; r++) {
-    // The message schedule repeats every ten rounds; EIP-152 allows more.
-    const uint8_t *sig = blake2b_sigma[r % 10];
-    B2B_G(0, 4, 8, 12, m[sig[0]], m[sig[1]]);
-    B2B_G(1, 5, 9, 13, m[sig[2]], m[sig[3]]);
-    B2B_G(2, 6, 10, 14, m[sig[4]], m[sig[5]]);
-    B2B_G(3, 7, 11, 15, m[sig[6]], m[sig[7]]);
-    B2B_G(0, 5, 10, 15, m[sig[8]], m[sig[9]]);
-    B2B_G(1, 6, 11, 12, m[sig[10]], m[sig[11]]);
-    B2B_G(2, 7, 8, 13, m[sig[12]], m[sig[13]]);
-    B2B_G(3, 4, 9, 14, m[sig[14]], m[sig[15]]);
+    const uint8_t *sig = blake2b_sigma[sr];
+    if (++sr == 10) sr = 0;
+    B2B_G(v0, v4, v8, v12, m[sig[0]], m[sig[1]]);
+    B2B_G(v1, v5, v9, v13, m[sig[2]], m[sig[3]]);
+    B2B_G(v2, v6, v10, v14, m[sig[4]], m[sig[5]]);
+    B2B_G(v3, v7, v11, v15, m[sig[6]], m[sig[7]]);
+    B2B_G(v0, v5, v10, v15, m[sig[8]], m[sig[9]]);
+    B2B_G(v1, v6, v11, v12, m[sig[10]], m[sig[11]]);
+    B2B_G(v2, v7, v8, v13, m[sig[12]], m[sig[13]]);
+    B2B_G(v3, v4, v9, v14, m[sig[14]], m[sig[15]]);
   }
-  for (int i = 0; i < 8; i++) h[i] ^= v[i] ^ v[8 + i];
+  h[0] ^= v0 ^ v8;
+  h[1] ^= v1 ^ v9;
+  h[2] ^= v2 ^ v10;
+  h[3] ^= v3 ^ v11;
+  h[4] ^= v4 ^ v12;
+  h[5] ^= v5 ^ v13;
+  h[6] ^= v6 ^ v14;
+  h[7] ^= v7 ^ v15;
 }
 
 #endif // OX_EVM_PRECOMPILE_H
