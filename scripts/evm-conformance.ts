@@ -1128,6 +1128,99 @@ function systemCall(
   return { pre: preFromEngine(), failed: rc !== 0, output }
 }
 
+// --- Merkle Patricia trie ---
+//
+// Only enough of one to compute a root over a list keyed by its index, which is
+// what the withdrawals, transactions and receipts roots all are. There is no
+// storage, no lookup and no proof: a root is a pure function of the pairs, so
+// the trie is built and hashed in one pass and thrown away.
+
+/** keccak of the RLP of the empty string — the root of an empty trie. */
+const EMPTY_ROOT =
+  '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421'
+
+/**
+ * Hex-prefix encoding: the path, packed two nibbles to a byte, behind a flag
+ * nibble carrying the node kind and the parity.
+ *
+ * The parity matters because a path of odd length cannot be packed without a
+ * spare nibble, and the flag byte donates it.
+ */
+function hpEncode(nibbles: number[], leaf: boolean): Uint8Array {
+  const odd = nibbles.length % 2 === 1
+  const out = [((leaf ? 2 : 0) + (odd ? 1 : 0)) << 4]
+  if (odd) out[0] |= nibbles[0] as number
+  for (let i = odd ? 1 : 0; i < nibbles.length; i += 2)
+    out.push(((nibbles[i] as number) << 4) | (nibbles[i + 1] as number))
+  return Uint8Array.from(out)
+}
+
+type Node = Rlp.RecursiveArray<Uint8Array>
+
+/**
+ * How a parent refers to a child: inline when the child's encoding is under 32
+ * bytes, by hash otherwise. This is the rule that makes the root depend on
+ * node *sizes* and not only on the key set.
+ */
+function trieRef(node: Node): Node {
+  const encoded = Rlp.fromBytes(node, { as: 'Bytes' })
+  return encoded.length < 32 ? node : bytes(Hash.keccak256(toHex(encoded)))
+}
+
+function trieNode(pairs: { key: number[]; value: Uint8Array }[]): Node {
+  if (pairs.length === 1) {
+    const only = pairs[0] as { key: number[]; value: Uint8Array }
+    return [hpEncode(only.key, true), only.value]
+  }
+  // The longest prefix every key shares becomes an extension node.
+  const first = (pairs[0] as { key: number[] }).key
+  let common = 0
+  while (
+    common < first.length &&
+    pairs.every((p) => p.key.length > common && p.key[common] === first[common])
+  )
+    common++
+  if (common > 0)
+    return [
+      hpEncode(first.slice(0, common), false),
+      trieRef(trieNode(pairs.map((p) => ({ ...p, key: p.key.slice(common) })))),
+    ]
+  const branch: Node = Array.from({ length: 17 }, () => new Uint8Array())
+  for (let nib = 0; nib < 16; nib++) {
+    const below = pairs.filter((p) => p.key[0] === nib)
+    if (below.length)
+      branch[nib] = trieRef(
+        trieNode(below.map((p) => ({ ...p, key: p.key.slice(1) }))),
+      )
+  }
+  // A key that ends here rather than descending sits in the seventeenth slot.
+  const here = pairs.find((p) => p.key.length === 0)
+  if (here) branch[16] = here.value
+  return branch
+}
+
+/** The root over `values`, keyed by `RLP(index)` as every list trie is. */
+function listRoot(values: Uint8Array[]): Hex {
+  if (values.length === 0) return EMPTY_ROOT
+  const pairs = values.map((value, i) => {
+    const key = Rlp.fromBytes(minimalBytes(BigInt(i)), { as: 'Bytes' })
+    const nibbles: number[] = []
+    for (const b of key) nibbles.push(b >> 4, b & 0xf)
+    return { key: nibbles, value }
+  })
+  return Hash.keccak256(
+    toHex(Rlp.fromBytes(trieNode(pairs), { as: 'Bytes' })),
+  )
+}
+
+/** A scalar as the shortest big-endian byte string, which is how RLP wants it. */
+function minimalBytes(v: bigint): Uint8Array {
+  if (v === 0n) return new Uint8Array()
+  let hex = v.toString(16)
+  if (hex.length % 2) hex = `0${hex}`
+  return bytes(`0x${hex}`)
+}
+
 // EIP-6110's deposit contract, and the canonical ABI layout of its event: five
 // dynamic `bytes` fields, so five offsets followed by five length-prefixed
 // padded bodies. The offsets and lengths are fixed by the field sizes, and a
@@ -1242,9 +1335,43 @@ function headerInvalid(
     const diff = gasLimit > pl ? gasLimit - pl : pl - gasLimit
     if (diff >= pl / 1024n) return true
   }
-  // EIP-7934 caps the encoded block at 10 MiB from Osaka.
-  if (forkAtLeast(fork, 'Osaka') && b.rlp && (b.rlp.length - 2) / 2 > 10_485_760)
+  // EIP-7934 caps the encoded block from Osaka at `MAX_BLOCK_SIZE` less a
+  // `SAFETY_MARGIN` — 10 MiB less 2 MiB, so 8 MiB, not the 10 the headline
+  // number suggests.
+  if (forkAtLeast(fork, 'Osaka') && b.rlp && (b.rlp.length - 2) / 2 > 8_388_608)
     return true
+  // Every fork that added a header field made it mandatory from that block and
+  // forbidden before it, so presence is as much a consensus rule as value —
+  // which is what INCORRECT_BLOCK_FORMAT means. `parentBeaconBlockRoot` is
+  // excluded: the fixtures omit it on blocks they still expect to be valid.
+  for (const [field, since] of [
+    ['baseFeePerGas', 'London'],
+    ['withdrawalsRoot', 'Shanghai'],
+    ['blobGasUsed', 'Cancun'],
+    ['excessBlobGas', 'Cancun'],
+    ['requestsHash', 'Prague'],
+  ] as const)
+    if ((h[field] !== undefined) !== forkAtLeast(fork, since)) return true
+
+  // EIP-4895's withdrawals root. A withdrawal is `RLP([index, validatorIndex,
+  // address, amount])` and the trie is keyed by position, so this needs only
+  // the list the fixture already gives.
+  if (h.withdrawalsRoot !== undefined) {
+    const encoded = ((b.withdrawals ?? b.rlp_decoded?.withdrawals ?? []) as any[]).map(
+      (w) =>
+        Rlp.fromBytes(
+          [
+            minimalBytes(big(w.index)),
+            minimalBytes(big(w.validatorIndex)),
+            bytes(w.address),
+            minimalBytes(big(w.amount)),
+          ],
+          { as: 'Bytes' },
+        ),
+    )
+    if (listRoot(encoded) !== h.withdrawalsRoot.toLowerCase()) return true
+  }
+
   // Not checked: the block hash. It is `keccak(RLP(header))`, and the fixture
   // supplies `RLP(block)` — decoding and re-encoding the header would repair
   // exactly the corruption the INVALID_BLOCK_HASH cases are testing for, so it
@@ -1351,6 +1478,15 @@ function runBlockchainTest(t: any): Outcome {
           ? 9
           : 6
     if (blobTotal > blockMaxBlobs) rejected = true
+    // A transaction is only includable while the gas already committed plus its
+    // own limit still fits the block, so the sum of the limits is the binding
+    // constraint — and no single transaction can see it. EIP-7825's 2^24 cap
+    // makes this reachable with a handful of transactions.
+    const gasCommitted = txs.reduce(
+      (n: bigint, tx: any) => n + big(tx.gasLimit),
+      0n,
+    )
+    if (gasCommitted > big(h.gasLimit)) rejected = true
     // A transition block's gas limit is allowed to jump — London doubled it —
     // so the 1/1024 band is not applied across one.
     if (headerInvalid(h, parent, fork, b, transition !== null)) rejected = true
