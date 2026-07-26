@@ -667,6 +667,35 @@ static void bg1_add(bg1 *r, const bg1 *p, const bg1 *q) {
     *r = *p;
     return;
   }
+  // Both affine is the common case — it is what the add precompiles hand us,
+  // and what the first steps of a scalar multiplication's table are. The
+  // general formula squares and multiplies by two ones to discover that;
+  // mmadd-2007-bl is four multiplications and two squarings against eleven
+  // and five.
+  if (bfp_eq(p->z, bfp_one()) && bfp_eq(q->z, bfp_one())) {
+    const bfp h = bfp_sub(q->x, p->x);
+    if (bfp_is_zero(h)) {
+      if (bfp_eq(p->y, q->y)) {
+        bg1_double(r, p);
+        return;
+      }
+      *r = bg1_inf();
+      return;
+    }
+    const bfp hh = bfp_sqr(h);
+    bfp i = bfp_add(hh, hh);
+    i = bfp_add(i, i);
+    const bfp j = bfp_mul(h, i);
+    const bfp rr = bfp_add(bfp_sub(q->y, p->y), bfp_sub(q->y, p->y));
+    const bfp v = bfp_mul(p->x, i);
+    bfp x3 = bfp_sub(bfp_sub(bfp_sqr(rr), j), bfp_add(v, v));
+    bfp y1j = bfp_mul(p->y, j);
+    y1j = bfp_add(y1j, y1j);
+    r->x = x3;
+    r->y = bfp_sub(bfp_mul(rr, bfp_sub(v, x3)), y1j);
+    r->z = bfp_add(h, h);
+    return;
+  }
   const bfp z1z1 = bfp_sqr(p->z);
   const bfp z2z2 = bfp_sqr(q->z);
   const bfp u1 = bfp_mul(p->x, z2z2);
@@ -808,6 +837,35 @@ static void bg2_add(bg2 *r, const bg2 *p, const bg2 *q) {
   }
   if (bg2_is_inf(q)) {
     *r = *p;
+    return;
+  }
+  // Both affine is the common case — it is what the add precompiles hand us,
+  // and what the first steps of a scalar multiplication's table are. The
+  // general formula squares and multiplies by two ones to discover that;
+  // mmadd-2007-bl is four multiplications and two squarings against eleven
+  // and five.
+  if (fp2_eq(p->z, fp2_one()) && fp2_eq(q->z, fp2_one())) {
+    const fp2 h = fp2_sub(q->x, p->x);
+    if (fp2_is_zero(h)) {
+      if (fp2_eq(p->y, q->y)) {
+        bg2_double(r, p);
+        return;
+      }
+      *r = bg2_inf();
+      return;
+    }
+    const fp2 hh = fp2_sqr(h);
+    fp2 i = fp2_add(hh, hh);
+    i = fp2_add(i, i);
+    const fp2 j = fp2_mul(h, i);
+    const fp2 rr = fp2_add(fp2_sub(q->y, p->y), fp2_sub(q->y, p->y));
+    const fp2 v = fp2_mul(p->x, i);
+    fp2 x3 = fp2_sub(fp2_sub(fp2_sqr(rr), j), fp2_add(v, v));
+    fp2 y1j = fp2_mul(p->y, j);
+    y1j = fp2_add(y1j, y1j);
+    r->x = x3;
+    r->y = fp2_sub(fp2_mul(rr, fp2_sub(v, x3)), y1j);
+    r->z = fp2_add(h, h);
     return;
   }
   const fp2 z1z1 = fp2_sqr(p->z);
