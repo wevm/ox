@@ -160,32 +160,47 @@ static inline void u256_mul_full(u256 a, u256 b, uint64_t out[8]) {
 /**
  * Wrapping 256-bit product (the MUL opcode).
  *
- * Only the low four limbs survive, so the partial products that land entirely
- * above limb 3 are never computed: ten 64x64 multiplies instead of the sixteen
- * a full 512-bit product needs.
+ * Only the low four limbs survive. The three lower columns are accumulated in
+ * a three-word running sum, and the top limb needs no widening multiply at
+ * all: its high halves land above the word and are discarded, so four plain
+ * 64-bit products finish it. Six widening multiplies instead of ten.
  */
 static inline u256 u256_mul(u256 a, u256 b) {
-  u256 r = U256_ZERO;
-  for (int i = 0; i < 4; i++) {
-    uint64_t carry = 0;
-    for (int j = 0; i + j < 4; j++) {
-      uint64_t lo, hi;
-      mul64(a.l[i], b.l[j], &lo, &hi);
-      uint64_t s = r.l[i + j] + lo;
-      hi += (s < lo);
-      uint64_t t = s + carry;
-      hi += (t < s);
-      r.l[i + j] = t;
-      carry = hi;
-    }
-  }
-  return r;
+  uint64_t r0 = 0, r1 = 0, r2 = 0, out[4];
+#define OX_MAC(i, j)                   \
+  do {                                 \
+    uint64_t lo_, hi_;                 \
+    mul64(a.l[i], b.l[j], &lo_, &hi_); \
+    r0 += lo_;                         \
+    uint64_t c_ = (r0 < lo_);          \
+    r1 += hi_;                         \
+    uint64_t d_ = (r1 < hi_);          \
+    r1 += c_;                          \
+    d_ += (r1 < c_);                   \
+    r2 += d_;                          \
+  } while (0)
+#define OX_COL(k) \
+  do {            \
+    out[k] = r0;  \
+    r0 = r1;      \
+    r1 = r2;      \
+    r2 = 0;       \
+  } while (0)
+  OX_MAC(0, 0);
+  OX_COL(0);
+  OX_MAC(0, 1);
+  OX_MAC(1, 0);
+  OX_COL(1);
+  OX_MAC(0, 2);
+  OX_MAC(1, 1);
+  OX_MAC(2, 0);
+  OX_COL(2);
+#undef OX_MAC
+#undef OX_COL
+  out[3] = r0 + a.l[0] * b.l[3] + a.l[1] * b.l[2] + a.l[2] * b.l[1] +
+           a.l[3] * b.l[0];
+  return (u256){{out[0], out[1], out[2], out[3]}};
 }
-
-// The limb displacement is a switch over the four possible values rather than
-// a loop whose trip count is the shift, so nothing goes through memory. The
-// zero-bit case returns early: `x >> 64` is undefined, and branching on it once
-// beats folding it into every limb.
 
 static inline u256 u256_shl(u256 a, uint32_t n) {
   if (n >= 256) return U256_ZERO;
