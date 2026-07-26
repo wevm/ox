@@ -602,6 +602,12 @@ function runCase(test: any, fork: string, post: any): Outcome {
   if (gasLimit > big(env.currentGasLimit)) return compareLoaded(post)
   if (tx.authorizationList && !forkAtLeast(fork, 'Prague'))
     return compareLoaded(post)
+  // A transaction type is invalid before the fork that introduced it: EIP-2930
+  // brought the access list at Berlin, EIP-1559 the fee caps at London.
+  if (accessList !== undefined && !forkAtLeast(fork, 'Berlin'))
+    return compareLoaded(post)
+  if (tx.maxFeePerGas !== undefined && !forkAtLeast(fork, 'London'))
+    return compareLoaded(post)
   // EIP-3860 caps initcode at twice the deployed-code limit.
   if (isCreate && forkAtLeast(fork, 'Shanghai') && data.length > 49152)
     return compareLoaded(post)

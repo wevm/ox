@@ -70,7 +70,11 @@ static void mem_copy(uint8_t *dst, const uint8_t *src, uint64_t n) {
 
 #define STACK_LIMIT 1024
 #define MAX_CODE 49152    // 2x EIP-170, so initcode fits
-#define MAX_INPUT 1048576 // 1 MiB of calldata
+// Calldata. Four mebibytes because that is what the protocol allows a single
+// transaction to carry: EIP-7825 caps a transaction at 2^24 gas from Osaka and
+// a zero byte costs 4, so 4 MiB of zeros is the whole budget. The BLS pairing
+// fixtures already send 1.2 MiB, which the previous 1 MiB rejected outright.
+#define MAX_INPUT (4 * 1024 * 1024)
 // The most a frame may RETURN or REVERT. Larger than the calldata limit
 // because nothing but gas bounds a return: expanding memory far enough to
 // return four megabytes already costs ~34M gas, more than a block, so this is
@@ -1093,12 +1097,13 @@ static int deposit_code(evm_vm *vm, int32_t created, int32_t snapshot,
   }
   const int64_t deposit = (int64_t)dep_len * 200;
   if (*child_gas < deposit) {
-    // Frontier had no way to signal this, so the account survives with empty
-    // code and the initcode's gas is simply gone. EIP-2 made it a failure.
-    if (spec < SPEC_HOMESTEAD) {
-      *child_gas = 0;
-      return 1;
-    }
+    // Frontier had no way to signal this: the charge simply does not happen,
+    // the account survives with empty code, and the *unspent gas is returned*
+    // -- execution-specs' `process_create_message` catches the halt, clears
+    // the output and leaves `gas_left` alone. Consuming it here instead made a
+    // create that overruns its deposit burn the whole transaction. EIP-2 made
+    // it a failure at Homestead.
+    if (spec < SPEC_HOMESTEAD) return 1;
     state_revert(vm->st, snapshot);
     *child_gas = 0;
     return 0;
@@ -2319,14 +2324,23 @@ static evm_status interpret(evm_vm *vm) {
         ms = memory_expand(vm, out_off, out_len, &gas);
         if (ms != EVM_SUCCESS) HALT(ms);
 
-        if (!u256_is_zero(value)) {
-          USE_GAS(9000);
-          // Funding an account that does not yet exist costs extra.
-          if (op == 0xf1 && !vm->st->accounts[callee].exists &&
-              u256_is_zero(vm->st->accounts[callee].balance) &&
-              vm->st->accounts[callee].nonce == 0 &&
-              vm->st->accounts[callee].code_len == 0)
-            USE_GAS(25000);
+        if (!u256_is_zero(value)) USE_GAS(9000);
+        // Calling into an account the state does not hold costs extra.
+        //
+        // EIP-161 narrowed this at Spurious Dragon to a *value-bearing* call
+        // to a dead — that is, empty — account. Before it, the charge applied
+        // to any call to an address that did not exist, value or not, so a
+        // zero-value call to an untouched precompile paid it. Getting that
+        // wrong is invisible on every modern fork and wrong on 116 Frontier
+        // and Homestead tests.
+        if (op == 0xf1) {
+          const account *cal = &vm->st->accounts[callee];
+          const int dead = !cal->exists && u256_is_zero(cal->balance) &&
+                           cal->nonce == 0 && cal->code_len == 0;
+          const int charge = vm->ctx.spec >= SPEC_SPURIOUS
+                                 ? (!u256_is_zero(value) && dead)
+                                 : !cal->exists;
+          if (charge) USE_GAS(25000);
         }
 
         int64_t child_gas = call_gas(gas, gas_arg, vm->ctx.spec);

@@ -317,9 +317,9 @@ describe('run', () => {
 
     test('error: calldata larger than the engine buffer', async () => {
       await expect(
-        Evm.run({ bytecode: '0x', data: `0x${'00'.repeat(2_000_000)}` }),
+        Evm.run({ bytecode: '0x', data: `0x${'00'.repeat(5_000_000)}` }),
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[Evm.SizeOverflowError: data cannot exceed \`1048576\` bytes. Given size: \`2000000\` bytes.]`,
+        `[Evm.SizeOverflowError: data cannot exceed \`4194304\` bytes. Given size: \`5000000\` bytes.]`,
       )
     })
 

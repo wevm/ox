@@ -14,10 +14,18 @@
 // Sized for a state test or a single simulated transaction, not for a whole
 // block: the tables are flat arrays inside the VM struct, so these bounds are
 // the memory footprint.
-#define MAX_ACCOUNTS 4096
-#define ACCOUNT_SLOTS 8192 // power of two, > 2x MAX_ACCOUNTS
-#define MAX_STORAGE 16384
-#define STORAGE_SLOTS 32768 // power of two, > 2x MAX_STORAGE
+//
+// The account table has to hold every address a transaction can touch, and
+// EIP-7702 made that number much larger than the account-access price
+// suggests: an authorization list costs 12500 gas an entry, so a 2^24-gas
+// transaction can name well over a thousand, and the fixtures already build
+// one with 4798. Each entry is about 100 bytes, so the headroom is cheap and
+// the failure mode without it -- `state-capacity` -- is a wrong answer rather
+// than a slow one.
+#define MAX_ACCOUNTS 16384
+#define ACCOUNT_SLOTS 32768 // power of two, > 2x MAX_ACCOUNTS
+#define MAX_STORAGE 65536
+#define STORAGE_SLOTS 131072 // power of two, > 2x MAX_STORAGE
 #define MAX_JOURNAL 65536
 #define MAX_TRANSIENT 2048
 // Every contract deployed in a transaction keeps its code here, including the
