@@ -70,6 +70,7 @@ static void mem_copy(uint8_t *dst, const uint8_t *src, uint64_t n) {
 #define STACK_LIMIT 1024
 #define MAX_CODE 49152    // 2x EIP-170, so initcode fits
 #define MAX_INPUT 1048576 // 1 MiB of calldata
+#define MAX_DEPTH 1024    // the call-depth limit, since Tangerine
 // Memory offsets are bounded separately: expansion is priced quadratically, so
 // anything past this is unaffordable long before it is reached, and the check
 // only exists to keep the arithmetic below in range.
@@ -246,6 +247,22 @@ typedef struct {
   // `sp` and the 1024-slot limit are both relative to this rather than to the
   // bottom of the shared array.
   u256 *stack_base;
+
+  // Last, because it is 36 KiB and every field is reached through `vm` in the
+  // dispatch loop: putting it earlier pushes the hot fields to larger offsets
+  // and the pure-dispatch benchmarks lose several percent.
+  // What each live frame analyzed, indexed by depth. Analysis is a pure
+  // function of the bytecode, and a frame's copy stays alive as long as the
+  // frame does, so a nested call into code an ancestor is already running can
+  // point at that ancestor's tables instead of building its own. Recursion is
+  // where this matters: a 15 KiB contract calling itself needs 214 KiB of
+  // analysis per frame, which exhausts the arena a couple of hundred frames
+  // down — far short of the 1024 the protocol allows.
+  const uint8_t *frame_analysis_code[MAX_DEPTH];
+  int32_t frame_analysis_len[MAX_DEPTH];
+  uint8_t *frame_analysis_jd[MAX_DEPTH];
+  block_info *frame_analysis_blocks[MAX_DEPTH];
+  int32_t *frame_analysis_gas_fix[MAX_DEPTH];
 } evm_vm;
 
 /**
@@ -314,7 +331,6 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
 // amortized, so a frame that really needs megabytes pays a handful of copies.
 #define FRAME_MEMORY (4 * 1024)
 #define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
-#define MAX_DEPTH 1024
 // Must stay under the linker's `-z stack-size` with room for one more frame.
 #define C_STACK_BUDGET (6 * 1024 * 1024)
 /**
@@ -733,11 +749,26 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   saved.input_ptr = vm->frame_input;
 
   const int32_t arena_mark = vm->arena_top;
-  uint8_t *fjd = (uint8_t *)arena_alloc(vm, (code_len + 7) / 8 + 8);
+  // Reuse an ancestor's analysis of the same bytecode if there is one. Frames
+  // nest, so anything an ancestor allocated is still live.
+  int reused = -1;
+  for (int i = vm->depth - 1; i >= 0; i--)
+    if (vm->frame_analysis_code[i] == code &&
+        vm->frame_analysis_len[i] == code_len) {
+      reused = i;
+      break;
+    }
+  uint8_t *fjd = reused >= 0
+                     ? vm->frame_analysis_jd[reused]
+                     : (uint8_t *)arena_alloc(vm, (code_len + 7) / 8 + 8);
   block_info *fblocks =
-      (block_info *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(block_info));
+      reused >= 0 ? vm->frame_analysis_blocks[reused]
+                  : (block_info *)arena_alloc(
+                        vm, (code_len + 1) * (int32_t)sizeof(block_info));
   int32_t *fgas_fix =
-      (int32_t *)arena_alloc(vm, (code_len + 1) * (int32_t)sizeof(int32_t));
+      reused >= 0 ? vm->frame_analysis_gas_fix[reused]
+                  : (int32_t *)arena_alloc(
+                        vm, (code_len + 1) * (int32_t)sizeof(int32_t));
   u256 *fstack = (u256 *)arena_alloc(vm, FRAME_STACK);
   if (!fjd || !fblocks || !fgas_fix || !fstack) {
     vm->arena_top = arena_mark;
@@ -768,8 +799,13 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->code_len = code_len;
   vm->input_len = input_len;
   vm->gas = *gas;
+  vm->frame_analysis_code[vm->depth] = code;
+  vm->frame_analysis_len[vm->depth] = code_len;
+  vm->frame_analysis_jd[vm->depth] = fjd;
+  vm->frame_analysis_blocks[vm->depth] = fblocks;
+  vm->frame_analysis_gas_fix[vm->depth] = fgas_fix;
   vm->depth++;
-  analyze(vm);
+  if (reused < 0) analyze(vm);
 
   const evm_status status = interpret(vm);
 
