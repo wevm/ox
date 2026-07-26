@@ -118,6 +118,12 @@ static inline u256 u256_sub(u256 a, u256 b) {
 
 static inline u256 u256_neg(u256 a) { return u256_add(u256_not(a), U256_ONE); }
 
+// Opcode bodies big enough that inlining them into the dispatch switch moves
+// everything after them. Out of line they cost their own opcode a call and
+// leave the loop alone; the division and modular-arithmetic opcodes are rare
+// enough in real bytecode that the trade is one-sided.
+#define OX_COLD __attribute__((noinline))
+
 /** 64x64 -> 128 product. */
 static inline void mul64(uint64_t a, uint64_t b, uint64_t *lo, uint64_t *hi) {
 #ifdef OX_HAS_INT128
@@ -160,13 +166,20 @@ static inline void u256_mul_full(u256 a, u256 b, uint64_t out[8]) {
 /**
  * Wrapping 256-bit product (the MUL opcode).
  *
+ * `noinline` deliberately. Inlined, this body sits inside the dispatch switch
+ * and pushes everything after it around; out of line it costs MUL a call and
+ * buys back about 10% on the fixtures that barely multiply at all. That was
+ * worth two fixtures on its own.
+ *
  * Only the low four limbs survive. The three lower columns are accumulated in
  * a three-word running sum, and the top limb needs no widening multiply at
  * all: its high halves land above the word and are discarded, so four plain
  * 64-bit products finish it. Six widening multiplies instead of ten.
  */
-static inline u256 u256_mul(u256 a, u256 b) {
-  uint64_t r0 = 0, r1 = 0, r2 = 0, out[4];
+static __attribute__((noinline)) u256 u256_mul(u256 a, u256 b) {
+  // Named, not an array: an array must stay addressable and puts the operand
+  // through memory, which measured ~9% worse on the dispatch-bound fixtures.
+  uint64_t r0 = 0, r1 = 0, r2 = 0, o0, o1, o2;
 #define OX_MAC(i, j)                   \
   do {                                 \
     uint64_t lo_, hi_;                 \
@@ -179,27 +192,27 @@ static inline u256 u256_mul(u256 a, u256 b) {
     d_ += (r1 < c_);                   \
     r2 += d_;                          \
   } while (0)
-#define OX_COL(k) \
-  do {            \
-    out[k] = r0;  \
-    r0 = r1;      \
-    r1 = r2;      \
-    r2 = 0;       \
+#define OX_COL(dst) \
+  do {              \
+    dst = r0;       \
+    r0 = r1;        \
+    r1 = r2;        \
+    r2 = 0;         \
   } while (0)
   OX_MAC(0, 0);
-  OX_COL(0);
+  OX_COL(o0);
   OX_MAC(0, 1);
   OX_MAC(1, 0);
-  OX_COL(1);
+  OX_COL(o1);
   OX_MAC(0, 2);
   OX_MAC(1, 1);
   OX_MAC(2, 0);
-  OX_COL(2);
+  OX_COL(o2);
 #undef OX_MAC
 #undef OX_COL
-  out[3] = r0 + a.l[0] * b.l[3] + a.l[1] * b.l[2] + a.l[2] * b.l[1] +
-           a.l[3] * b.l[0];
-  return (u256){{out[0], out[1], out[2], out[3]}};
+  const uint64_t o3 = r0 + a.l[0] * b.l[3] + a.l[1] * b.l[2] +
+                      a.l[2] * b.l[1] + a.l[3] * b.l[0];
+  return (u256){{o0, o1, o2, o3}};
 }
 
 static inline u256 u256_shl(u256 a, uint32_t n) {
@@ -726,7 +739,7 @@ static inline uint64_t u512_mod_u64(const uint64_t *full, uint64_t m) {
 }
 
 /** EVM DIV — division by zero yields zero. */
-static inline u256 u256_div(u256 a, u256 b) {
+static OX_COLD u256 u256_div(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   if (u256_cmp(a, b) < 0) return U256_ZERO;
   if (u256_is_u64(b)) {
@@ -741,7 +754,7 @@ static inline u256 u256_div(u256 a, u256 b) {
 }
 
 /** EVM MOD — modulus by zero yields zero. */
-static inline u256 u256_mod(u256 a, u256 b) {
+static OX_COLD u256 u256_mod(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   if (u256_cmp(a, b) < 0) return a;
   if (u256_is_u64(b)) {
@@ -755,7 +768,7 @@ static inline u256 u256_mod(u256 a, u256 b) {
 }
 
 /** EVM SDIV — two's-complement division, truncating toward zero. */
-static inline u256 u256_sdiv(u256 a, u256 b) {
+static OX_COLD u256 u256_sdiv(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   int na = u256_sign(a), nb = u256_sign(b);
   u256 ua = na ? u256_neg(a) : a;
@@ -765,7 +778,7 @@ static inline u256 u256_sdiv(u256 a, u256 b) {
 }
 
 /** EVM SMOD — remainder takes the sign of the dividend. */
-static inline u256 u256_smod(u256 a, u256 b) {
+static OX_COLD u256 u256_smod(u256 a, u256 b) {
   if (u256_is_zero(b)) return U256_ZERO;
   int na = u256_sign(a);
   u256 ua = na ? u256_neg(a) : a;
@@ -775,7 +788,7 @@ static inline u256 u256_smod(u256 a, u256 b) {
 }
 
 /** EVM ADDMOD — the sum is computed at 257 bits before reduction. */
-static inline u256 u256_addmod(u256 a, u256 b, u256 m) {
+static OX_COLD u256 u256_addmod(u256 a, u256 b, u256 m) {
   if (u256_is_zero(m)) return U256_ZERO;
   u256 s = u256_add(a, b);
   // Recover the carry bit lost by the wrapping add.
@@ -792,7 +805,7 @@ static inline u256 u256_addmod(u256 a, u256 b, u256 m) {
 }
 
 /** EVM MULMOD — the product is computed at 512 bits before reduction. */
-static inline u256 u256_mulmod(u256 a, u256 b, u256 m) {
+static OX_COLD u256 u256_mulmod(u256 a, u256 b, u256 m) {
   if (u256_is_zero(m)) return U256_ZERO;
   uint64_t full[8];
   u256_mul_full(a, b, full);
@@ -805,7 +818,7 @@ static inline u256 u256_mulmod(u256 a, u256 b, u256 m) {
 }
 
 /** EVM EXP — square-and-multiply, wrapping at 256 bits. */
-static inline u256 u256_exp(u256 base, u256 e) {
+static OX_COLD u256 u256_exp(u256 base, u256 e) {
   u256 result = U256_ONE;
   u256 b = base;
   for (int i = 0; i < 256; i++) {
