@@ -9,7 +9,7 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
-import { engine } from './internal/engine.js'
+import { type Complete, type Ecdsa, engine } from './internal/engine.js'
 import * as Entropy from './internal/entropy.js'
 import {
   fromRecoveredBytes,
@@ -90,7 +90,7 @@ export function getPublicKey<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
   options: getPublicKey.Options<as>,
 ): getPublicKey.ReturnType<as> {
   const { as = 'Object', privateKey } = options
-  const bytes = (engine.Secp256k1?.getPublicKey ?? defaultGetPublicKey)(
+  const bytes = (engine.Secp256k1?.getPublicKey ?? defaults.getPublicKey)(
     Bytes.from(privateKey),
   )
   const publicKey = PublicKey.fromBytes(bytes)
@@ -146,7 +146,7 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): getSharedSecret.ReturnType<as> {
   const { as = 'Hex', privateKey, publicKey } = options
   const sharedSecret = (
-    engine.Secp256k1?.getSharedSecret ?? defaultGetSharedSecret
+    engine.Secp256k1?.getSharedSecret ?? defaults.getSharedSecret
   )(Bytes.from(privateKey), PublicKey.toBytes(normalizePublicKey(publicKey)))
   if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
   return sharedSecret as never
@@ -200,7 +200,9 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = (engine.Secp256k1?.randomSecretKey ?? defaultRandomSecretKey)()
+  const bytes = (
+    engine.Secp256k1?.randomSecretKey ?? defaults.randomSecretKey
+  )()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -297,10 +299,9 @@ export function recoverPublicKey<
 >(options: recoverPublicKey.Options<as>): recoverPublicKey.ReturnType<as> {
   const { as = 'Object', payload, signature } = options
   const sigBytes = toRecoveredBytes(normalizeSignature<true>(signature))
-  const bytes = (engine.Secp256k1?.recoverPublicKey ?? defaultRecoverPublicKey)(
-    sigBytes,
-    Bytes.from(payload),
-  )
+  const bytes = (
+    engine.Secp256k1?.recoverPublicKey ?? defaults.recoverPublicKey
+  )(sigBytes, Bytes.from(payload))
   const publicKey = PublicKey.fromBytes(bytes)
   return formatPublicKey(publicKey, as) as never
 }
@@ -361,7 +362,7 @@ export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
     payload,
     privateKey,
   } = options
-  const sigBytes = (engine.Secp256k1?.sign ?? defaultSign)(
+  const sigBytes = (engine.Secp256k1?.sign ?? defaults.sign)(
     Bytes.from(payload),
     Bytes.from(privateKey),
     {
@@ -465,7 +466,7 @@ export function verify(options: verify.Options): boolean {
       recoverAddress({ payload, signature: options.signature }),
     )
   const sig = normalizeSignature(options.signature)
-  return (engine.Secp256k1?.verify ?? defaultVerify)(
+  return (engine.Secp256k1?.verify ?? defaults.verify)(
     toCompactBytes(sig),
     Bytes.from(payload),
     PublicKey.toBytes(normalizePublicKey(options.publicKey)),
@@ -513,53 +514,31 @@ export declare namespace verify {
 }
 
 /**
- * Default `@noble/curves` implementations, used unless an engine slot is
- * installed with {@link ox#Engine.set}. `lowS` and the recovered signature
- * format are pinned here rather than in the engine contract, so an engine
- * cannot opt out of them.
+ * ox's default `Secp256k1` implementation, backed by `@noble/curves`.
+ *
+ * Declaring it against the slot contract is what keeps it honest: a default
+ * that goes missing, or whose signature drifts, fails to compile rather than
+ * failing at the call site. `lowS` and the recovered signature format are
+ * pinned here rather than in the contract, so an engine cannot opt out of them.
  */
-
-function defaultGetPublicKey(privateKey: Bytes.Bytes) {
-  return secp256k1.getPublicKey(privateKey, false)
-}
-
-function defaultGetSharedSecret(
-  privateKey: Bytes.Bytes,
-  publicKey: Bytes.Bytes,
-) {
-  return secp256k1.getSharedSecret(privateKey, publicKey, true)
-}
-
-function defaultRandomSecretKey() {
-  return secp256k1.utils.randomSecretKey()
-}
-
-function defaultRecoverPublicKey(signature: Bytes.Bytes, payload: Bytes.Bytes) {
-  return secp256k1.Signature.fromBytes(signature, 'recovered')
-    .recoverPublicKey(payload)
-    .toBytes(false)
-}
-
-function defaultSign(
-  payload: Bytes.Bytes,
-  privateKey: Bytes.Bytes,
-  options: { extraEntropy: boolean | Bytes.Bytes; prehash: boolean },
-) {
-  return secp256k1.sign(payload, privateKey, {
-    ...options,
-    format: 'recovered',
-    lowS: true,
-  })
-}
-
-function defaultVerify(
-  signature: Bytes.Bytes,
-  payload: Bytes.Bytes,
-  publicKey: Bytes.Bytes,
-  options: { prehash: boolean },
-) {
-  return secp256k1.verify(signature, payload, publicKey, {
-    ...options,
-    lowS: true,
-  })
-}
+const defaults = {
+  getPublicKey: (privateKey) => secp256k1.getPublicKey(privateKey, false),
+  getSharedSecret: (privateKey, publicKey) =>
+    secp256k1.getSharedSecret(privateKey, publicKey, true),
+  randomSecretKey: () => secp256k1.utils.randomSecretKey(),
+  recoverPublicKey: (signature, payload) =>
+    secp256k1.Signature.fromBytes(signature, 'recovered')
+      .recoverPublicKey(payload)
+      .toBytes(false),
+  sign: (payload, privateKey, options) =>
+    secp256k1.sign(payload, privateKey, {
+      ...options,
+      format: 'recovered',
+      lowS: true,
+    }),
+  verify: (signature, payload, publicKey, options) =>
+    secp256k1.verify(signature, payload, publicKey, {
+      ...options,
+      lowS: true,
+    }),
+} satisfies Complete<Ecdsa>

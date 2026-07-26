@@ -270,6 +270,19 @@ export type Engine = {
 }
 
 /**
+ * A slot with every function present.
+ *
+ * Slots are optional all the way down so that an engine can fill in as little
+ * as it likes. ox's own default implementations are held to the opposite
+ * standard: they back every function ox routes, so they are declared against
+ * this instead, and a default that goes missing or drifts from the contract
+ * fails to compile.
+ *
+ * @internal
+ */
+export type Complete<slot> = { [key in keyof slot]-?: NonNullable<slot[key]> }
+
+/**
  * Recognized slot names, in the order they appear on {@link Engine}.
  *
  * @internal

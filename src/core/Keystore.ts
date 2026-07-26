@@ -10,7 +10,11 @@ import {
 import { sha256 } from '@noble/hashes/sha2.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
-import { engine } from './internal/engine.js'
+import {
+  type Complete,
+  engine,
+  type Keystore as KeystoreSlot,
+} from './internal/engine.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
@@ -114,7 +118,7 @@ export function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
   if (!Bytes.isEqual(mac, Bytes.from(`0x${keystore.crypto.mac}`)))
     throw new Error('corrupt keystore')
 
-  const data = (engine.Keystore?.aesCtrDecrypt ?? defaultAesCtrDecrypt)(
+  const data = (engine.Keystore?.aesCtrDecrypt ?? defaults.aesCtrDecrypt)(
     encKey,
     Bytes.from(`0x${keystore.crypto.cipherparams.iv}`),
     ciphertext,
@@ -196,7 +200,7 @@ export function encrypt(
   const encKey = Bytes.slice(key_, 0, 16)
   const macKey = Bytes.slice(key_, 16, 32)
 
-  const ciphertext = (engine.Keystore?.aesCtrEncrypt ?? defaultAesCtrEncrypt)(
+  const ciphertext = (engine.Keystore?.aesCtrEncrypt ?? defaults.aesCtrEncrypt)(
     encKey,
     iv,
     value_,
@@ -245,7 +249,7 @@ export function pbkdf2(options: pbkdf2.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    (engine.Keystore?.pbkdf2Sha256 ?? defaultPbkdf2Sha256)(
+    (engine.Keystore?.pbkdf2Sha256 ?? defaults.pbkdf2Sha256)(
       Bytes.fromString(password),
       salt,
       { c: iterations, dkLen: 32 },
@@ -298,7 +302,7 @@ export async function pbkdf2Async(options: pbkdf2.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    await (engine.Keystore?.pbkdf2Sha256Async ?? defaultPbkdf2Sha256Async)(
+    await (engine.Keystore?.pbkdf2Sha256Async ?? defaults.pbkdf2Sha256Async)(
       Bytes.fromString(password),
       salt,
       { c: iterations, dkLen: 32 },
@@ -342,7 +346,7 @@ export function scrypt(options: scrypt.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    (engine.Keystore?.scrypt ?? defaultScrypt)(
+    (engine.Keystore?.scrypt ?? defaults.scrypt)(
       Bytes.fromString(password),
       salt,
       { N: n, dkLen: 32, p, r },
@@ -400,7 +404,7 @@ export async function scryptAsync(options: scrypt.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    await (engine.Keystore?.scryptAsync ?? defaultScryptAsync)(
+    await (engine.Keystore?.scryptAsync ?? defaults.scryptAsync)(
       Bytes.fromString(password),
       salt,
       { N: n, dkLen: 32, p, r },
@@ -598,55 +602,22 @@ declare namespace defineKey {
 }
 
 /**
- * Default implementations, used unless an engine slot is installed with
- * {@link ox#Engine.set}. The asynchronous variants resolve independently of
+ * ox's default `Keystore` implementation, backed by `@noble/hashes` and
+ * `@noble/ciphers`.
+ *
+ * Declaring it against the slot contract is what keeps it honest: a default
+ * that goes missing, or whose signature drifts, fails to compile rather than
+ * failing at the call site. The asynchronous variants resolve independently of
  * their synchronous twins, so an engine can supply one without the other.
  */
-
-function defaultAesCtrDecrypt(
-  key: Bytes.Bytes,
-  iv: Bytes.Bytes,
-  data: Bytes.Bytes,
-) {
-  return ctr(key, iv).decrypt(data)
-}
-
-function defaultAesCtrEncrypt(
-  key: Bytes.Bytes,
-  iv: Bytes.Bytes,
-  data: Bytes.Bytes,
-) {
-  return ctr(key, iv).encrypt(data)
-}
-
-function defaultPbkdf2Sha256(
-  password: Bytes.Bytes,
-  salt: Bytes.Bytes,
-  options: { c: number; dkLen: number },
-) {
-  return pbkdf2_noble(sha256, password, salt, options)
-}
-
-function defaultPbkdf2Sha256Async(
-  password: Bytes.Bytes,
-  salt: Bytes.Bytes,
-  options: { c: number; dkLen: number },
-) {
-  return pbkdf2Async_noble(sha256, password, salt, options)
-}
-
-function defaultScrypt(
-  password: Bytes.Bytes,
-  salt: Bytes.Bytes,
-  options: { N: number; dkLen: number; p: number; r: number },
-) {
-  return scrypt_noble(password, salt, options)
-}
-
-function defaultScryptAsync(
-  password: Bytes.Bytes,
-  salt: Bytes.Bytes,
-  options: { N: number; dkLen: number; p: number; r: number },
-) {
-  return scryptAsync_noble(password, salt, options)
-}
+const defaults = {
+  aesCtrDecrypt: (key, iv, data) => ctr(key, iv).decrypt(data),
+  aesCtrEncrypt: (key, iv, data) => ctr(key, iv).encrypt(data),
+  pbkdf2Sha256: (password, salt, options) =>
+    pbkdf2_noble(sha256, password, salt, options),
+  pbkdf2Sha256Async: (password, salt, options) =>
+    pbkdf2Async_noble(sha256, password, salt, options),
+  scrypt: (password, salt, options) => scrypt_noble(password, salt, options),
+  scryptAsync: (password, salt, options) =>
+    scryptAsync_noble(password, salt, options),
+} satisfies Complete<KeystoreSlot>

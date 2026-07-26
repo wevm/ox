@@ -52,7 +52,9 @@
 - **Wire formats stay explicit** -- serialization, RPC, RLP, ABI, and transaction-envelope code should keep wire-order and field-shape decisions visible at the call site.
 - **Internal helpers stay internal** -- keep helper modules under `internal/` unless they are part of the public API.
 - **Global registries are for delegation and caching only** -- `Engine` (implementation delegation) and `Caches` (memoization) are the sanctioned exceptions to stateless module APIs. A new one needs a `reset` for test isolation, must not change type-level behavior, and must not require a side-effect import to install (`sideEffects: false` lets bundlers drop those, so the registration would silently vanish).
-- **Engine slots hold overrides, never defaults** -- `src/core/internal/engine.ts` imports nothing, and each module keeps its own `@noble/*` import as a local fallback with one resolver function per primitive. Collapsing resolvers into a shared object, or pre-populating the registry with defaults, pulls every implementation into any bundle that touches one of them.
+- **Engine slots hold overrides, never defaults** -- `src/core/internal/engine.ts` imports nothing, and each module keeps its own `@noble/*` import as a local fallback. Pre-populating the registry with defaults pulls every implementation into any bundle that touches one of them.
+- **Declare defaults against the contract** -- a module's default implementation is one object with `satisfies Complete<Slot>`, not a scattering of loose `default*` functions. `Complete` makes every slot function required, so a default that goes missing or drifts fails to compile at the declaration rather than at a call site.
+- **`internal/hash.ts` is the exception, and stays one binding per primitive** -- it is the only slot whose consumers use different subsets (`BinaryStateTree` wants nothing but blake3). A shared object ties each primitive's import to all the others; Rollup sees through that but esbuild does not, and it measures at 4.8 kB gzip on a keccak256-only bundle (3.8 kB becomes 8.7 kB). Each binding is still typed `Complete<Hash>['name']`.
 
 ## Documentation Conventions
 

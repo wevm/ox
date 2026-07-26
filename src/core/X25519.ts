@@ -2,7 +2,7 @@ import { x25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import { engine } from './internal/engine.js'
+import { type Complete, type Ecdh, engine } from './internal/engine.js'
 
 /** Re-export of noble/curves X25519 utilities. */
 export const noble = x25519
@@ -78,7 +78,7 @@ export function getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): getPublicKey.ReturnType<as> {
   const { as = 'Hex', privateKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
-  const publicKeyBytes = (engine.X25519?.getPublicKey ?? defaultGetPublicKey)(
+  const publicKeyBytes = (engine.X25519?.getPublicKey ?? defaults.getPublicKey)(
     privateKeyBytes,
   )
   if (as === 'Hex') return Hex.fromBytes(publicKeyBytes) as never
@@ -134,7 +134,7 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const privateKeyBytes = Bytes.from(privateKey)
   const publicKeyBytes = Bytes.from(publicKey)
   const sharedSecretBytes = (
-    engine.X25519?.getSharedSecret ?? defaultGetSharedSecret
+    engine.X25519?.getSharedSecret ?? defaults.getSharedSecret
   )(privateKeyBytes, publicKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(sharedSecretBytes) as never
   return sharedSecretBytes as never
@@ -184,7 +184,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = (engine.X25519?.randomSecretKey ?? defaultRandomSecretKey)()
+  const bytes = (engine.X25519?.randomSecretKey ?? defaults.randomSecretKey)()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -206,21 +206,15 @@ export declare namespace randomPrivateKey {
 }
 
 /**
- * Default `@noble/curves` implementations, used unless an engine slot is
- * installed with {@link ox#Engine.set}.
+ * ox's default `X25519` implementation, backed by `@noble/curves`.
+ *
+ * Declaring it against the slot contract is what keeps it honest: a default
+ * that goes missing, or whose signature drifts, fails to compile rather than
+ * failing at the call site.
  */
-
-function defaultGetPublicKey(privateKey: Bytes.Bytes) {
-  return x25519.getPublicKey(privateKey)
-}
-
-function defaultGetSharedSecret(
-  privateKey: Bytes.Bytes,
-  publicKey: Bytes.Bytes,
-) {
-  return x25519.getSharedSecret(privateKey, publicKey)
-}
-
-function defaultRandomSecretKey() {
-  return x25519.utils.randomSecretKey()
-}
+const defaults = {
+  getPublicKey: (privateKey) => x25519.getPublicKey(privateKey),
+  getSharedSecret: (privateKey, publicKey) =>
+    x25519.getSharedSecret(privateKey, publicKey),
+  randomSecretKey: () => x25519.utils.randomSecretKey(),
+} satisfies Complete<Ecdh>

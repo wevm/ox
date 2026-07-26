@@ -7,7 +7,11 @@ import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as HdKey from './HdKey.js'
 import type * as Hex from './Hex.js'
-import { engine } from './internal/engine.js'
+import {
+  type Complete,
+  engine,
+  type Mnemonic as MnemonicSlot,
+} from './internal/engine.js'
 
 export { path } from './HdKey.js'
 
@@ -185,7 +189,7 @@ export function toSeed<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   options: toSeed.Options<as> = {},
 ): toSeed.ReturnType<as> {
   const { passphrase } = options
-  const seed = (engine.Mnemonic?.toSeed ?? mnemonicToSeedSync)(
+  const seed = (engine.Mnemonic?.toSeed ?? defaults.toSeed)(
     mnemonic,
     passphrase,
   )
@@ -233,3 +237,14 @@ export function validate(mnemonic: string, wordlist: string[]): boolean {
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * ox's default `Mnemonic` implementation, backed by `@scure/bip39`.
+ *
+ * Declaring it against the slot contract is what keeps it honest: a default
+ * that goes missing, or whose signature drifts, fails to compile rather than
+ * failing at the call site.
+ */
+const defaults = {
+  toSeed: (mnemonic, passphrase) => mnemonicToSeedSync(mnemonic, passphrase),
+} satisfies Complete<MnemonicSlot>
