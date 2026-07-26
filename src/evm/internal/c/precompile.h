@@ -271,22 +271,33 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
   for (int i = 0; i < MODEXP_LIMBS; i++) acc.d[i] = 0;
   acc.d[0] = 1;
   acc.n = 1;
-  bignum sq;
+  bignum base_red;
   {
     // Reduce the base first so the squaring chain stays bounded.
     bignum one;
     for (int i = 0; i < MODEXP_LIMBS; i++) one.d[i] = 0;
     one.d[0] = 1;
     one.n = 1;
-    bn_mulmod(&sq, &b, &one, &m);
+    bn_mulmod(&base_red, &b, &one, &m);
   }
-  for (int64_t byte = (int64_t)el - 1; byte >= 0; byte--) {
+  // Left to right, so leading zero bits cost nothing. The right-to-left form
+  // this replaces squared once per bit of the *encoded* exponent, and EIP-198
+  // lets that be much wider than the value in it: the ethpandaops corpus has an
+  // 896-byte exponent field, which was thousands of squarings of a value that
+  // had not started yet.
+  int started = 0;
+  for (uint64_t byte = 0; byte < el; byte++) {
     const uint8_t e = exp[byte];
-    for (int bit = 0; bit < 8; bit++) {
-      if ((e >> bit) & 1) bn_mulmod(&acc, &acc, &sq, &m);
-      // Skip the final squaring once no higher bits remain.
-      if (byte == 0 && bit == 7) break;
-      bn_mulmod(&sq, &sq, &sq, &m);
+    for (int bit = 7; bit >= 0; bit--) {
+      if (started) bn_mulmod(&acc, &acc, &acc, &m);
+      if ((e >> bit) & 1) {
+        if (started) {
+          bn_mulmod(&acc, &acc, &base_red, &m);
+        } else {
+          acc = base_red;
+          started = 1;
+        }
+      }
     }
   }
   for (uint64_t i = 0; i < ml; i++) {
