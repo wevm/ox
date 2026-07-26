@@ -14,6 +14,7 @@
 #ifndef OX_EVM_BN254_H
 #define OX_EVM_BN254_H
 
+#include "safegcd.h"
 #include "u256.h"
 
 // p = 36t^4 + 36t^3 + 24t^2 + 6t + 1 for t = 4965661367192848881
@@ -187,49 +188,35 @@ static void bn_mont_init(void) {
 // with the Frobenius table it derives.
 static void bn_init(void);
 
-/** `x / 2 mod p`. The sum needs 257 bits, so the carry is kept. */
-static inline u256 fq_half(u256 x) {
-  if (!(x.l[0] & 1)) return u256_shr(x, 1);
-  const u256 s = u256_add(x, BN_P);
-  const int carry = u256_cmp(s, x) < 0;
-  u256 h = u256_shr(s, 1);
-  if (carry) h.l[3] |= 1ULL << 63;
-  return h;
-}
+// The same prime as five limbs of 62 bits, for `safegcd.h`.
+#define SG_BN_LIMBS 5
+static const int64_t SG_BN_P[SG_BN_LIMBS] = {
+    0x3C208C16D87CFD47LL, 0x1E05AA45A1C72A34LL, 0x05045B68181585D9LL,
+    0x19139CB84C680A6ELL, 0x0000000000000030LL};
+#define SG_BN_INV62 0x382DF87D1B799C77ULL
 
 /**
- * `a^-1 mod p`, by the binary extended GCD.
+ * `a^-1 mod p`, by Bernstein-Yang safegcd.
  *
- * Fermat's `a^(p-2)` is 256 squarings and about 128 multiplications; this is
- * roughly 360 iterations of shift-compare-subtract with no multiplication at
- * all, and comes out about five times quicker. It matters because the Miller
- * loop inverts twice per iteration — normalising the running point, and again
- * for the line's slope — so inversions were half of it.
+ * Fermat's `a^(p-2)` is 256 squarings and about 128 multiplications, and the
+ * binary extended GCD that replaced it is roughly 360 iterations of
+ * shift-compare-subtract over the full width. safegcd folds 62 of those steps
+ * at a time into a 2x2 matrix read off the low bits; see `safegcd.h`. It
+ * matters because the Miller loop inverts twice per iteration — normalising
+ * the running point, and again for the line's slope.
  *
- * The extended GCD works on the integer it is handed, so on `aR` it returns
+ * The GCD works on the integer it is handed, so on `aR` it returns
  * `a^-1 R^-1`. Multiplying by `R^3` in Montgomery form lands back on `a^-1 R`.
+ * `a` must already be reduced.
  */
 static u256 fq_inv(u256 a) {
   if (u256_is_zero(a)) return U256_ZERO;
-  u256 u = a, v = BN_P, x1 = U256_ONE, x2 = U256_ZERO;
-  while (!u256_eq(u, U256_ONE) && !u256_eq(v, U256_ONE)) {
-    while (!(u.l[0] & 1)) {
-      u = u256_shr(u, 1);
-      x1 = fq_half(x1);
-    }
-    while (!(v.l[0] & 1)) {
-      v = u256_shr(v, 1);
-      x2 = fq_half(x2);
-    }
-    if (u256_cmp(u, v) >= 0) {
-      u = u256_sub(u, v);
-      x1 = fq_sub(x1, x2);
-    } else {
-      v = u256_sub(v, u);
-      x2 = fq_sub(x2, x1);
-    }
-  }
-  return mont_mul(u256_eq(u, U256_ONE) ? x1 : x2, bn_r3);
+  sg62 x;
+  sg_from64(&x, a.l, 4, SG_BN_LIMBS);
+  sg_inv(SG_BN_LIMBS, &x, SG_BN_P, SG_BN_INV62);
+  u256 r;
+  sg_to64(r.l, 4, &x, SG_BN_LIMBS);
+  return mont_mul(r, bn_r3);
 }
 
 // ---------------------------------------------------------------------------

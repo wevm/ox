@@ -22,6 +22,7 @@
 #ifndef OX_EVM_BLS12381_H
 #define OX_EVM_BLS12381_H
 
+#include "safegcd.h"
 #include "u256.h" // for mul64
 
 #define BFP_LIMBS 6
@@ -44,6 +45,15 @@ static const uint64_t BLS_R2[BFP_LIMBS] = {
     0x67EB88A9939D83C0ULL, 0x9A793E85B519952DULL, 0x11988FE592CAE3AAULL};
 // -p^-1 mod 2^64
 #define BLS_INV 0x89F3FFFCFFFCFFFDULL
+
+// The same prime as seven limbs of 62 bits, and its inverse mod 2^62, which is
+// what `safegcd.h` works in.
+#define SG_BLS_LIMBS 7
+static const int64_t SG_BLS_P[SG_BLS_LIMBS] = {
+    0x39FEFFFFFFFFAAABLL, 0x3AAFFFFAC54FFFFELL, 0x330D2A0F6B0F6241LL,
+    0x1DD2E13CE144AFD9LL, 0x1BA7B6434BACD764LL, 0x0447A8E5FF9A692CLL,
+    0x00000000000001A0LL};
+#define SG_BLS_INV62 0x360C000300030003ULL
 
 // The order of both groups.
 static const uint64_t BLS_ORDER[4] = {
@@ -253,69 +263,27 @@ static inline bfp bfp_half(bfp a) {
   return r;
 }
 
-/** Raw 384-bit helpers for the extended GCD, which works on integers. */
-static inline int bfp_raw_cmp(const uint64_t *a, const uint64_t *b) {
-  for (int i = BFP_LIMBS - 1; i >= 0; i--)
-    if (a[i] != b[i]) return a[i] < b[i] ? -1 : 1;
-  return 0;
-}
-
-static inline void bfp_raw_sub(uint64_t *r, const uint64_t *a,
-                               const uint64_t *b) {
-  uint64_t borrow = 0;
-  for (int i = 0; i < BFP_LIMBS; i++) {
-    const uint64_t d = a[i] - b[i];
-    const uint64_t b1 = a[i] < b[i];
-    const uint64_t t = d - borrow;
-    borrow = b1 | (d < borrow);
-    r[i] = t;
-  }
-}
-
-static inline void bfp_raw_shr1(uint64_t *a) {
-  for (int i = 0; i < BFP_LIMBS - 1; i++) a[i] = (a[i] >> 1) | (a[i + 1] << 63);
-  a[BFP_LIMBS - 1] >>= 1;
-}
-
 /**
- * `a^-1 mod p`, by the binary extended GCD.
+ * `a^-1 mod p`, by Bernstein-Yang safegcd.
  *
  * Fermat's `a^(p-2)` over a 381-bit prime is 381 squarings and about 190
- * multiplications; this is around 540 iterations of shift-compare-subtract and
- * no multiplication at all. The Miller loop inverts twice per iteration and
- * every point that arrives gets normalised, so this is not a rare path.
+ * multiplications, and the binary extended GCD that replaced it is around 540
+ * iterations of shift-compare-subtract over the full width. safegcd batches 62
+ * of those steps into a 2x2 matrix built from the low bits alone, so a dozen
+ * passes over the width finish it. See `safegcd.h`; measured 5.6x against the
+ * binary GCD over the same inputs.
  *
- * The extended GCD works on the integer it is given, so on `aR` it returns
- * `a^-1 R^-1`; multiplying by `R^3` in Montgomery form lands on `a^-1 R`.
+ * The GCD works on the integer it is given, so on `aR` it returns `a^-1 R^-1`;
+ * multiplying by `R^3` in Montgomery form lands on `a^-1 R`.
  */
 static bfp bfp_inv(bfp a) {
   if (bfp_is_zero(a)) return BFP_ZERO;
-  uint64_t u[BFP_LIMBS], v[BFP_LIMBS];
-  for (int i = 0; i < BFP_LIMBS; i++) {
-    u[i] = a.l[i];
-    v[i] = BLS_P[i];
-  }
-  bfp x1 = BFP_ZERO, x2 = BFP_ZERO;
-  x1.l[0] = 1;
-  const uint64_t one[BFP_LIMBS] = {1, 0, 0, 0, 0, 0};
-  while (bfp_raw_cmp(u, one) != 0 && bfp_raw_cmp(v, one) != 0) {
-    while (!(u[0] & 1)) {
-      bfp_raw_shr1(u);
-      x1 = bfp_half(x1);
-    }
-    while (!(v[0] & 1)) {
-      bfp_raw_shr1(v);
-      x2 = bfp_half(x2);
-    }
-    if (bfp_raw_cmp(u, v) >= 0) {
-      bfp_raw_sub(u, u, v);
-      x1 = bfp_sub(x1, x2);
-    } else {
-      bfp_raw_sub(v, v, u);
-      x2 = bfp_sub(x2, x1);
-    }
-  }
-  return bfp_mul(bfp_raw_cmp(u, one) == 0 ? x1 : x2, bls_r3());
+  sg62 x;
+  sg_from64(&x, a.l, BFP_LIMBS, SG_BLS_LIMBS);
+  sg_inv(SG_BLS_LIMBS, &x, SG_BLS_P, SG_BLS_INV62);
+  bfp r;
+  sg_to64(r.l, BFP_LIMBS, &x, SG_BLS_LIMBS);
+  return bfp_mul(r, bls_r3());
 }
 
 // ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 //
 // Three things carry the cost of a recovery, and all three are specialised:
 // the field multiplication folds on this prime's shape rather than dividing,
-// inversion is a binary extended GCD rather than Fermat's exponentiation, and
+// inversion is Bernstein-Yang safegcd rather than Fermat's exponentiation, and
 // the two scalar products share one doubling chain with a 4-bit window rather
 // than running three bit-at-a-time ladders one after another. Together they
 // take a recovery from about 1.4 ms to well under a tenth of that.
@@ -14,6 +14,7 @@
 #define OX_EVM_SECP256K1_H
 
 #include "keccak.h"
+#include "safegcd.h"
 #include "u256.h"
 
 // p = 2^256 - 2^32 - 977
@@ -30,6 +31,10 @@
 #define SECP_GY                                                   \
   ((u256){{0x9C47D08FFB10D4B8ULL, 0xFD17B448A6855419ULL,          \
            0x5DA4FBFC0E1108A8ULL, 0x483ADA7726A3C465ULL}})
+
+// Five limbs of 62 bits covers both of the moduli above, which is the width
+// `safegcd.h` works in.
+#define SG_SECP_LIMBS 5
 
 // ---------------------------------------------------------------------------
 // Field arithmetic modulo p
@@ -138,46 +143,28 @@ static u256 fp_pow(u256 a, u256 e, u256 m) {
   return result;
 }
 
-/** `x / 2 mod m` for odd `m`. The sum needs 257 bits, so the carry is kept. */
-static inline u256 fp_half(u256 x, u256 m) {
-  if (!(x.l[0] & 1)) return u256_shr(x, 1);
-  const u256 s = u256_add(x, m);
-  const int carry = u256_cmp(s, x) < 0;
-  u256 h = u256_shr(s, 1);
-  if (carry) h.l[3] |= 1ULL << 63;
-  return h;
-}
-
 /**
- * `a^-1 mod m` for odd `m`, by the binary extended GCD.
+ * `a^-1 mod m` for odd `m` and `a` already reduced, by Bernstein-Yang safegcd.
  *
- * Fermat's `a^(m-2)` needs 256 squarings and about 128 multiplications; this
- * needs roughly 360 iterations of shift-compare-subtract and no multiplication
- * at all. It matters most for the inverse modulo the group order, which has no
- * fast reduction and so was paying full-price `u256_mulmod` for every one of
- * those 384 operations.
+ * Fermat's `a^(m-2)` needs 256 squarings and about 128 multiplications, and
+ * the binary extended GCD that replaced it needs roughly 360 iterations of
+ * shift-compare-subtract. safegcd folds 62 of those steps at a time into a
+ * 2x2 matrix read off the low bits; see `safegcd.h`. It matters most for the
+ * inverse modulo the group order, which has no fast reduction.
+ *
+ * Both moduli arrive here, so the 62-bit form and the inverse the reduction
+ * needs are derived rather than tabulated. That is a few dozen operations
+ * against the thousands the inversion itself costs.
  */
 static u256 fp_inv(u256 a, u256 m) {
   if (u256_is_zero(a)) return U256_ZERO;
-  u256 u = a, v = m, x1 = U256_ONE, x2 = U256_ZERO;
-  while (!u256_eq(u, U256_ONE) && !u256_eq(v, U256_ONE)) {
-    while (!(u.l[0] & 1)) {
-      u = u256_shr(u, 1);
-      x1 = fp_half(x1, m);
-    }
-    while (!(v.l[0] & 1)) {
-      v = u256_shr(v, 1);
-      x2 = fp_half(x2, m);
-    }
-    if (u256_cmp(u, v) >= 0) {
-      u = u256_sub(u, v);
-      x1 = fp_sub(x1, x2, m);
-    } else {
-      v = u256_sub(v, u);
-      x2 = fp_sub(x2, x1, m);
-    }
-  }
-  return u256_eq(u, U256_ONE) ? x1 : x2;
+  sg62 sm, x;
+  sg_from64(&sm, m.l, 4, SG_SECP_LIMBS);
+  sg_from64(&x, a.l, 4, SG_SECP_LIMBS);
+  sg_inv(SG_SECP_LIMBS, &x, sm.v, sg_modinv62((uint64_t)sm.v[0]));
+  u256 r;
+  sg_to64(r.l, 4, &x, SG_SECP_LIMBS);
+  return r;
 }
 
 /** A point in Jacobian coordinates; `z == 0` is the point at infinity. */
