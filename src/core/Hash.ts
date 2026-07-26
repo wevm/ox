@@ -1,15 +1,12 @@
-import { hmac } from '@noble/hashes/hmac.js'
-import { ripemd160 as noble_ripemd160 } from '@noble/hashes/legacy.js'
-import { sha256 as noble_sha256 } from '@noble/hashes/sha2.js'
-import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as hash from './internal/hash.js'
 
 /**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
- * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
+ * Backed by `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library, unless another implementation is installed with {@link ox#Engine.set}.
  *
  * @example
  * ```ts twoslash
@@ -54,7 +51,7 @@ export function keccak256<
 ): keccak256.ReturnType<as> {
   const isBytes = value instanceof Uint8Array
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
-  const bytes = noble_keccak256(isBytes ? value : Bytes.from(value))
+  const bytes = hash.keccak256(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -78,7 +75,7 @@ export declare namespace keccak256 {
 /**
  * Calculates the [HMAC-SHA256](https://en.wikipedia.org/wiki/HMAC) of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
- * This function is a re-export of `hmac` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
+ * Backed by `hmac` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library, unless another implementation is installed with {@link ox#Engine.set}.
  *
  * @example
  * ```ts twoslash
@@ -119,7 +116,7 @@ export function hmac256<
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
   const keyBytes = key instanceof Uint8Array ? key : Bytes.from(key)
   const valueBytes = isBytes ? value : Bytes.from(value)
-  const bytes = hmac(noble_sha256, keyBytes, valueBytes)
+  const bytes = hash.hmacSha256(keyBytes, valueBytes)
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -143,7 +140,7 @@ export declare namespace hmac256 {
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
- * This function is a re-export of `ripemd160` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
+ * Backed by `ripemd160` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library, unless another implementation is installed with {@link ox#Engine.set}.
  *
  * @example
  * ```ts twoslash
@@ -168,7 +165,7 @@ export function ripemd160<
 ): ripemd160.ReturnType<as> {
   const isBytes = value instanceof Uint8Array
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
-  const bytes = noble_ripemd160(isBytes ? value : Bytes.from(value))
+  const bytes = hash.ripemd160(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -192,7 +189,7 @@ export declare namespace ripemd160 {
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
- * This function is a re-export of `sha256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
+ * Backed by `sha256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library, unless another implementation is installed with {@link ox#Engine.set}.
  *
  * @example
  * ```ts twoslash
@@ -217,7 +214,7 @@ export function sha256<
 ): sha256.ReturnType<as> {
   const isBytes = value instanceof Uint8Array
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
-  const bytes = noble_sha256(isBytes ? value : Bytes.from(value))
+  const bytes = hash.sha256(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }

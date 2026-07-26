@@ -1521,6 +1521,41 @@ export * as CoseKey from './core/CoseKey.js'
 export * as Ed25519 from './core/Ed25519.js'
 
 /**
+ * Functions for delegating ox's cryptography to a different implementation.
+ *
+ * Ox uses [`@noble`](https://github.com/paulmillr/noble-hashes) and
+ * [`@scure`](https://github.com/paulmillr/scure-bip32) by default. An engine
+ * replaces those implementations with your own — for example a WASM build of an
+ * audited C library.
+ *
+ * @example
+ * ### Installing an Engine
+ *
+ * Engine slots are named after ox modules, and everything is optional: any slot
+ * or function you leave out keeps using ox's default implementation.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Engine } from 'ox'
+ * import * as Wasm from 'ox/wasm'
+ *
+ * Engine.set(await Wasm.load())
+ * ```
+ *
+ * @example
+ * ### Overriding a Single Primitive
+ *
+ * ```ts twoslash
+ * import { Engine } from 'ox'
+ *
+ * Engine.set({ Hash: { keccak256: (input) => input } })
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Engine from './core/Engine.js'
+
+/**
  * Utility functions for working with ENS names.
  *
  * @example

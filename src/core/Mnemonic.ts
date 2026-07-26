@@ -7,6 +7,7 @@ import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as HdKey from './HdKey.js'
 import type * as Hex from './Hex.js'
+import { engine } from './internal/engine.js'
 
 export { path } from './HdKey.js'
 
@@ -184,7 +185,10 @@ export function toSeed<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   options: toSeed.Options<as> = {},
 ): toSeed.ReturnType<as> {
   const { passphrase } = options
-  const seed = mnemonicToSeedSync(mnemonic, passphrase)
+  const seed = (engine.Mnemonic?.toSeed ?? mnemonicToSeedSync)(
+    mnemonic,
+    passphrase,
+  )
   if (options.as === 'Hex') return Bytes.toHex(seed) as never
   return seed as never
 }

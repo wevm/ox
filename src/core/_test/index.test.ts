@@ -36,6 +36,7 @@ test('exports', () => {
       "ContractAddress",
       "CoseKey",
       "Ed25519",
+      "Engine",
       "Ens",
       "Errors",
       "Fee",

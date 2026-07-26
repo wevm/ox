@@ -8,6 +8,7 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
+import { engine } from './internal/engine.js'
 import * as Entropy from './internal/entropy.js'
 import {
   fromRecoveredBytes,
@@ -85,7 +86,9 @@ export function getPublicKey<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
   options: getPublicKey.Options<as>,
 ): getPublicKey.ReturnType<as> {
   const { as = 'Object', privateKey } = options
-  const bytes = noble_p256.getPublicKey(Bytes.from(privateKey), false)
+  const bytes = (engine.P256?.getPublicKey ?? defaultGetPublicKey)(
+    Bytes.from(privateKey),
+  )
   const publicKey = PublicKey.fromBytes(bytes)
   return formatPublicKey(publicKey, as) as never
 }
@@ -134,10 +137,9 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: getSharedSecret.Options<as>,
 ): getSharedSecret.ReturnType<as> {
   const { as = 'Hex', privateKey, publicKey } = options
-  const sharedSecret = noble_p256.getSharedSecret(
+  const sharedSecret = (engine.P256?.getSharedSecret ?? defaultGetSharedSecret)(
     Bytes.from(privateKey),
     PublicKey.toBytes(normalizePublicKey(publicKey)),
-    true, // compressed
   )
   if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
   return sharedSecret as never
@@ -190,7 +192,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = noble_p256.utils.randomSecretKey()
+  const bytes = (engine.P256?.randomSecretKey ?? defaultRandomSecretKey)()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -238,11 +240,11 @@ export function recoverPublicKey<
 >(options: recoverPublicKey.Options<as>): recoverPublicKey.ReturnType<as> {
   const { as = 'Object', payload, signature } = options
   const sigBytes = toRecoveredBytes(normalizeSignature<true>(signature))
-  const point = noble_p256.Signature.fromBytes(
+  const bytes = (engine.P256?.recoverPublicKey ?? defaultRecoverPublicKey)(
     sigBytes,
-    'recovered',
-  ).recoverPublicKey(Bytes.from(payload))
-  const publicKey = PublicKey.fromBytes(point.toBytes(false))
+    Bytes.from(payload),
+  )
+  const publicKey = PublicKey.fromBytes(bytes)
   return formatPublicKey(publicKey, as) as never
 }
 
@@ -302,7 +304,7 @@ export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
     payload,
     privateKey,
   } = options
-  const sigBytes = noble_p256.sign(
+  const sigBytes = (engine.P256?.sign ?? defaultSign)(
     Bytes.from(payload),
     Bytes.from(privateKey),
     {
@@ -310,9 +312,7 @@ export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
         typeof extraEntropy === 'boolean'
           ? extraEntropy
           : Bytes.from(extraEntropy),
-      lowS: true,
       prehash: hash === true,
-      format: 'recovered',
     },
   )
   const signature = fromRecoveredBytes(sigBytes)
@@ -381,11 +381,11 @@ export declare namespace sign {
  */
 export function verify(options: verify.Options): boolean {
   const { hash, payload, publicKey, signature } = options
-  return noble_p256.verify(
+  return (engine.P256?.verify ?? defaultVerify)(
     toCompactBytes(normalizeSignature(signature)),
     Bytes.from(payload),
     PublicKey.toBytes(normalizePublicKey(publicKey)),
-    { lowS: true, prehash: hash === true },
+    { prehash: hash === true },
   )
 }
 
@@ -412,4 +412,56 @@ export declare namespace verify {
   }
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Default `@noble/curves` implementations, used unless an engine slot is
+ * installed with {@link ox#Engine.set}. `lowS` and the recovered signature
+ * format are pinned here rather than in the engine contract, so an engine
+ * cannot opt out of them.
+ */
+
+function defaultGetPublicKey(privateKey: Bytes.Bytes) {
+  return noble_p256.getPublicKey(privateKey, false)
+}
+
+function defaultGetSharedSecret(
+  privateKey: Bytes.Bytes,
+  publicKey: Bytes.Bytes,
+) {
+  return noble_p256.getSharedSecret(privateKey, publicKey, true)
+}
+
+function defaultRandomSecretKey() {
+  return noble_p256.utils.randomSecretKey()
+}
+
+function defaultRecoverPublicKey(signature: Bytes.Bytes, payload: Bytes.Bytes) {
+  return noble_p256.Signature.fromBytes(signature, 'recovered')
+    .recoverPublicKey(payload)
+    .toBytes(false)
+}
+
+function defaultSign(
+  payload: Bytes.Bytes,
+  privateKey: Bytes.Bytes,
+  options: { extraEntropy: boolean | Bytes.Bytes; prehash: boolean },
+) {
+  return noble_p256.sign(payload, privateKey, {
+    ...options,
+    format: 'recovered',
+    lowS: true,
+  })
+}
+
+function defaultVerify(
+  signature: Bytes.Bytes,
+  payload: Bytes.Bytes,
+  publicKey: Bytes.Bytes,
+  options: { prehash: boolean },
+) {
+  return noble_p256.verify(signature, payload, publicKey, {
+    ...options,
+    lowS: true,
+  })
 }

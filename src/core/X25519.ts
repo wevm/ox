@@ -2,6 +2,7 @@ import { x25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import { engine } from './internal/engine.js'
 
 /** Re-export of noble/curves X25519 utilities. */
 export const noble = x25519
@@ -77,7 +78,9 @@ export function getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): getPublicKey.ReturnType<as> {
   const { as = 'Hex', privateKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
-  const publicKeyBytes = x25519.getPublicKey(privateKeyBytes)
+  const publicKeyBytes = (engine.X25519?.getPublicKey ?? defaultGetPublicKey)(
+    privateKeyBytes,
+  )
   if (as === 'Hex') return Hex.fromBytes(publicKeyBytes) as never
   return publicKeyBytes as never
 }
@@ -130,10 +133,9 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex', privateKey, publicKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
   const publicKeyBytes = Bytes.from(publicKey)
-  const sharedSecretBytes = x25519.getSharedSecret(
-    privateKeyBytes,
-    publicKeyBytes,
-  )
+  const sharedSecretBytes = (
+    engine.X25519?.getSharedSecret ?? defaultGetSharedSecret
+  )(privateKeyBytes, publicKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(sharedSecretBytes) as never
   return sharedSecretBytes as never
 }
@@ -182,7 +184,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = x25519.utils.randomSecretKey()
+  const bytes = (engine.X25519?.randomSecretKey ?? defaultRandomSecretKey)()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -201,4 +203,24 @@ export declare namespace randomPrivateKey {
     | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Default `@noble/curves` implementations, used unless an engine slot is
+ * installed with {@link ox#Engine.set}.
+ */
+
+function defaultGetPublicKey(privateKey: Bytes.Bytes) {
+  return x25519.getPublicKey(privateKey)
+}
+
+function defaultGetSharedSecret(
+  privateKey: Bytes.Bytes,
+  publicKey: Bytes.Bytes,
+) {
+  return x25519.getSharedSecret(privateKey, publicKey)
+}
+
+function defaultRandomSecretKey() {
+  return x25519.utils.randomSecretKey()
 }

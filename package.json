@@ -340,6 +340,11 @@
       "types": "./dist/core/Ed25519.d.ts",
       "default": "./dist/core/Ed25519.js"
     },
+    "./Engine": {
+      "src": "./src/core/Engine.ts",
+      "types": "./dist/core/Engine.d.ts",
+      "default": "./dist/core/Engine.js"
+    },
     "./Ens": {
       "src": "./src/core/Ens.ts",
       "types": "./dist/core/Ens.d.ts",

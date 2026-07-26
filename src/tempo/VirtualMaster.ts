@@ -1,8 +1,8 @@
-import { keccak_256 } from '@noble/hashes/sha3.js'
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import type * as Hash from '../core/Hash.js'
+import * as hash_ from '../core/internal/hash.js'
 import * as Hex from '../core/Hex.js'
 import * as VirtualMasterPool from './internal/virtualMasterPool.js'
 import * as VirtualAddress from './VirtualAddress.js'
@@ -203,7 +203,7 @@ export function mineSalt(
   saltView.set(toFixedBytes(value.start ?? 0n, 32))
 
   for (let i = 0; i < count; i++) {
-    const hash = keccak_256(input)
+    const hash = hash_.keccak256(input)
 
     if (hash[0] === 0 && hash[1] === 0 && hash[2] === 0 && hash[3] === 0) {
       return {
@@ -679,7 +679,7 @@ function buildRegistrationDigest(
   const addressBytes = Bytes.fromHex(resolveAddress(address))
   buffer.set(addressBytes)
   buffer.set(toFixedBytes(salt, 32), addressBytes.length)
-  return keccak_256(buffer)
+  return hash_.keccak256(buffer)
 }
 
 /**

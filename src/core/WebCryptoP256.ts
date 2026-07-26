@@ -1,4 +1,3 @@
-import { p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -7,12 +6,13 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
+import { p256N } from './internal/curves.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
 /** secp256r1 / P-256 curve order. */
-const N = p256.Point.CURVE().n
+const N = p256N
 
 /**
  * Generates an ECDSA P256 key pair that includes:
