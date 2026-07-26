@@ -243,10 +243,43 @@ function fakeExponential(factor: bigint, numerator: bigint, denom: bigint) {
 }
 
 /** The blob base fee for a block's excess blob gas. */
-function blobBaseFeeOf(excess: bigint, fork: string) {
-  // EIP-7691 raised the update fraction along with the target blob count.
-  const fraction = forkAtLeast(fork, 'Prague') ? 5007716n : 3338477n
+function blobBaseFeeOf(excess: bigint, fork: string, schedule?: any) {
+  // EIP-7691 raised the update fraction along with the target blob count, and
+  // EIP-7840 moved it into the fixture's own schedule so a blob-parameter-only
+  // fork can change it alone. The schedule wins where it exists.
+  const fraction =
+    schedule?.baseFeeUpdateFraction !== undefined
+      ? big(schedule.baseFeeUpdateFraction)
+      : forkAtLeast(fork, 'Prague')
+        ? 5007716n
+        : 3338477n
   return fakeExponential(1n, excess, fraction)
+}
+
+/**
+ * `calc_excess_blob_gas`, EIP-4844 as amended by EIP-7918.
+ *
+ * The amendment stops the excess falling when a blob is already cheaper than
+ * the execution gas it takes to carry one: below that floor the price signal is
+ * meaningless, so the subtraction of the target is replaced by a proportional
+ * decay. `BLOB_BASE_COST` is 2^13.
+ */
+function calcExcessBlobGas(
+  parent: { excessBlobGas: bigint; blobGasUsed: bigint; baseFeePerGas: bigint },
+  fork: string,
+  schedule: any,
+) {
+  const target = big(schedule?.target) || (forkAtLeast(fork, 'Prague') ? 6n : 3n)
+  const max = big(schedule?.max) || (forkAtLeast(fork, 'Prague') ? 9n : 6n)
+  const targetGas = GAS_PER_BLOB * target
+  if (parent.excessBlobGas + parent.blobGasUsed < targetGas) return 0n
+  if (
+    forkAtLeast(fork, 'Osaka') &&
+    8192n * parent.baseFeePerGas >
+      GAS_PER_BLOB * blobBaseFeeOf(parent.excessBlobGas, fork, schedule)
+  )
+    return parent.excessBlobGas + (parent.blobGasUsed * (max - target)) / max
+  return parent.excessBlobGas + parent.blobGasUsed - targetGas
 }
 
 function warmPreamble(
@@ -354,8 +387,19 @@ function putChainHashes(): number {
   return n
 }
 
+/**
+ * Whether the last `runCase` refused the transaction instead of running it.
+ *
+ * A state test cannot tell the two apart — a rejected transaction's expected
+ * post-state is the pre-state, which is also what a transaction that does
+ * nothing produces — but a blockchain test can: a block containing an invalid
+ * transaction is itself invalid and must not be applied.
+ */
+let lastRejected = false
+
 function compareLoaded(post: any): Outcome {
   lastRc = 0
+  lastRejected = true
   lastSettled = new Map(readState().map((a) => [a.address, a]))
   return compare(lastSettled, post.state, readStorage())
 }
@@ -738,6 +782,7 @@ function settleAndCompare(
   extraRefund = 0n,
 ): Outcome {
   lastRc = rc
+  lastRejected = false
   const gasLeft = engine.evm_gas_left(vm)
   const refundCounter = BigInt(engine.evm_refund(vm)) + extraRefund
 
@@ -1057,10 +1102,37 @@ function runBlockchainTest(t: any): Outcome {
   // Nearest ancestor first, starting from the genesis header the fixture
   // carries; BLOCKHASH indexes back from the current block.
   chainHashes = t.genesisBlockHeader?.hash ? [t.genesisBlockHeader.hash] : []
+  const headerOf = (x: any) =>
+    x
+      ? {
+          excessBlobGas: big(x.excessBlobGas),
+          blobGasUsed: big(x.blobGasUsed),
+          baseFeePerGas: big(x.baseFeePerGas),
+        }
+      : undefined
+  // The excess is defined against the previous block, so the genesis header
+  // seeds it.
+  let parent = headerOf(t.genesisBlockHeader)
   for (const b of t.blocks ?? []) {
-    if (b.expectException !== undefined)
+    // A block the chain must reject. Where the reason is a transaction, the
+    // runner already decides that — it is the same set of validity rules a
+    // state test exercises — so the block can be run and the verdict read off
+    // `lastRejected`. A `BlockException` is a property of the header, which
+    // means the state root, which means a trie; those are still skipped.
+    const expected: string = b.expectException ?? ''
+    // What is left after the blob-gas header checks below is the header
+    // validation that does need a state root, and a trie with it.
+    const blobHeaderException =
+      expected.includes('INCORRECT_EXCESS_BLOB_GAS') ||
+      expected.includes('INCORRECT_BLOB_GAS_USED') ||
+      expected.includes('BLOB_GAS_USED_ABOVE_LIMIT')
+    if (
+      expected &&
+      !expected.startsWith('TransactionException') &&
+      !blobHeaderException
+    )
       return { ok: false, reason: 'skip:invalid-block' }
-    const h = b.blockHeader
+    const h = b.blockHeader ?? b.rlp_decoded?.blockHeader
     if (!h) return { ok: false, reason: 'skip:no-header' }
     fork = forkAt(big(h.timestamp))
     if (specIds[fork] === undefined) return { ok: false, reason: `fork:${fork}` }
@@ -1077,6 +1149,10 @@ function runBlockchainTest(t: any): Outcome {
       currentDifficulty: h.difficulty,
       currentExcessBlobGas: h.excessBlobGas ?? '0x0',
     }
+    // An invalid block leaves the chain where it was, so everything it does is
+    // discarded — the predeploy calls below included, which is why the
+    // snapshot is taken before them and not just before the transactions.
+    const before = pre
     // EIP-4788 and EIP-2935 run before the block's transactions.
     if (forkAtLeast(fork, 'Cancun') && h.parentBeaconBlockRoot !== undefined)
       pre = systemCall(
@@ -1096,7 +1172,40 @@ function runBlockchainTest(t: any): Outcome {
         HISTORY_STORAGE,
         bytes(h.parentHash),
       )
-    for (const tx of b.transactions ?? []) {
+    // The blob limit is per *block* as well as per transaction, and no single
+    // transaction can see the total, so it is summed here. A block over the
+    // schedule's maximum is invalid however valid each transaction is on its
+    // own.
+    const txs = b.transactions ?? b.rlp_decoded?.transactions ?? []
+    const blobTotal = txs.reduce(
+      (n: number, tx: any) => n + (tx.blobVersionedHashes?.length ?? 0),
+      0,
+    )
+    const scheduledMax = t.config?.blobSchedule?.[fork]?.max
+    const blockMaxBlobs =
+      scheduledMax !== undefined
+        ? Number(big(scheduledMax))
+        : forkAtLeast(fork, 'Prague')
+          ? 9
+          : 6
+    let rejected = blobTotal > blockMaxBlobs
+
+    // The blob fields of the header are a pure function of the block's blobs
+    // and its parent, so they can be checked without any of the rest of the
+    // header. That is 729 of the invalid-block corpus, and validating them is
+    // also the only place EIP-7918 is observable — the excess is computed from
+    // the parent, never by the engine.
+    if (forkAtLeast(fork, 'Cancun') && h.blobGasUsed !== undefined) {
+      const schedule = t.config?.blobSchedule?.[fork]
+      const usedWant = GAS_PER_BLOB * BigInt(blobTotal)
+      if (big(h.blobGasUsed) !== usedWant) rejected = true
+      if (usedWant > GAS_PER_BLOB * BigInt(blockMaxBlobs)) rejected = true
+      if (parent && h.excessBlobGas !== undefined) {
+        const want = calcExcessBlobGas(parent, fork, schedule)
+        if (big(h.excessBlobGas) !== want) rejected = true
+      }
+    }
+    for (const tx of rejected ? [] : txs) {
       const synthetic = {
         pre,
         env,
@@ -1112,8 +1221,21 @@ function runBlockchainTest(t: any): Outcome {
         indexes: { data: 0, gas: 0, value: 0 },
         state: {},
       })
-      if (!out.ok) return out
+      if (!out.ok && !expected) return out
+      rejected = rejected || lastRejected
       pre = preFromSettled()
+    }
+    if (expected) {
+      // `continue` skips the parent update below too: a rejected block is
+      // never the parent of the next one.
+      pre = before
+      if (!rejected)
+        return {
+          ok: false,
+          reason: 'accepted-invalid-block',
+          detail: expected,
+        }
+      continue
     }
     // EIP-7002 and EIP-7251 dequeue their request lists after them.
     if (forkAtLeast(fork, 'Prague'))
@@ -1125,6 +1247,7 @@ function runBlockchainTest(t: any): Outcome {
     const reward = blockReward(fork)
     if (reward > 0n) credit(pre, h.coinbase, reward)
     if (h.hash) chainHashes.unshift(h.hash)
+    parent = headerOf(h)
   }
   // Load the final state back so `compare` reads it from the engine, which is
   // the only path that also produces storage.
