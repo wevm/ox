@@ -1,8 +1,9 @@
 // bn254 (alt_bn128) arithmetic for the EIP-196 and EIP-197 precompiles.
 //
 // The field is in Montgomery form; see the section below for what that means
-// for the constants. Inversion is still Fermat's little theorem, which is
-// affordable because the curve arithmetic needs it only at the boundaries.
+// for the constants. Inversion is a binary extended GCD, squaring in the
+// cyclotomic subgroup has its own formula, and the hard part of the final
+// exponentiation goes four exponent bits at a time.
 //
 // The tower is the standard one for this curve:
 //
@@ -21,6 +22,9 @@
 #define BN_P2 0xB85045B68181585DULL
 #define BN_P3 0x30644E72E131A029ULL
 #define BN_P ((u256){{BN_P0, BN_P1, BN_P2, BN_P3}})
+// The same limbs as an array, so the field routines can index them without
+// materialising a compound literal on every use.
+static const uint64_t bn_p_l[4] = {BN_P0, BN_P1, BN_P2, BN_P3};
 // The order of both groups.
 #define BN_R                                                       \
   ((u256){{0x43E1F593F0000001ULL, 0x2833E84879B97091ULL,           \
@@ -58,10 +62,10 @@ static inline u256 fq_neg(u256 a) {
 // spirit as the Frobenius table below.
 // ---------------------------------------------------------------------------
 
-static const uint64_t bn_p_l[4] = {BN_P0, BN_P1, BN_P2, BN_P3};
 static uint64_t bn_n0;  // -p^-1 mod 2^64
 static u256 bn_one;     // R mod p, the Montgomery representation of 1
 static u256 bn_r2;      // R^2 mod p, which converts into Montgomery form
+static u256 bn_r3;      // R^3 mod p, which the extended-GCD inverse needs
 static u256 bn_three;   // 3R mod p, the curve constant
 static int bn_mont_ready;
 
@@ -97,11 +101,55 @@ static inline u256 mont_redc(uint64_t t[9]) {
   return r;
 }
 
+/**
+ * Montgomery multiplication, coarsely integrated (CIOS).
+ *
+ * Interleaving the reduction with the product keeps the running value in six
+ * words instead of building a nine-word 512-bit intermediate and walking it
+ * again: the same 32 multiplies, but a working set small enough to stay in
+ * registers. The tower above runs several tens of thousands of these per
+ * pairing, and the separate form was spending more on the intermediate than on
+ * the arithmetic.
+ */
 static inline u256 mont_mul(u256 a, u256 b) {
-  uint64_t t[9];
-  u256_mul_full(a, b, t);
-  t[8] = 0;
-  return mont_redc(t);
+  uint64_t t[6] = {0, 0, 0, 0, 0, 0};
+  for (int i = 0; i < 4; i++) {
+    uint64_t c = 0;
+    for (int j = 0; j < 4; j++) {
+      uint64_t lo, hi;
+      mul64(a.l[j], b.l[i], &lo, &hi);
+      uint64_t s = t[j] + lo;
+      hi += (s < lo);
+      s += c;
+      hi += (s < c);
+      t[j] = s;
+      c = hi;
+    }
+    uint64_t s = t[4] + c;
+    t[5] = (s < c);
+    t[4] = s;
+
+    const uint64_t m = t[0] * bn_n0;
+    uint64_t lo, hi;
+    mul64(m, bn_p_l[0], &lo, &hi);
+    // The low word cancels by construction; only its carry survives.
+    c = hi + ((t[0] + lo) < lo);
+    for (int j = 1; j < 4; j++) {
+      mul64(m, bn_p_l[j], &lo, &hi);
+      uint64_t v = t[j] + lo;
+      hi += (v < lo);
+      v += c;
+      hi += (v < c);
+      t[j - 1] = v;
+      c = hi;
+    }
+    s = t[4] + c;
+    t[3] = s;
+    t[4] = t[5] + (s < c);
+  }
+  u256 r = {{t[0], t[1], t[2], t[3]}};
+  if (t[4] || u256_cmp(r, BN_P) >= 0) r = u256_sub(r, BN_P);
+  return r;
 }
 
 static inline u256 fq_mul(u256 a, u256 b) { return mont_mul(a, b); }
@@ -131,6 +179,7 @@ static void bn_mont_init(void) {
   // R^2, the one place the generic path is still used — once per process.
   bn_r2 = u256_mulmod(r1, r1, BN_P);
   bn_mont_ready = 1;
+  bn_r3 = mont_mul(bn_r2, bn_r2);
   bn_three = fq_to_mont(u256_from_u64(3));
 }
 
@@ -138,17 +187,50 @@ static void bn_mont_init(void) {
 // with the Frobenius table it derives.
 static void bn_init(void);
 
-/** `a^e mod p`, square-and-multiply from the top bit. */
-static u256 fq_pow(u256 a, u256 e) {
-  u256 r = bn_one;
-  for (int bit = 255; bit >= 0; bit--) {
-    r = fq_sqr(r);
-    if ((e.l[bit / 64] >> (bit % 64)) & 1) r = fq_mul(r, a);
-  }
-  return r;
+/** `x / 2 mod p`. The sum needs 257 bits, so the carry is kept. */
+static inline u256 fq_half(u256 x) {
+  if (!(x.l[0] & 1)) return u256_shr(x, 1);
+  const u256 s = u256_add(x, BN_P);
+  const int carry = u256_cmp(s, x) < 0;
+  u256 h = u256_shr(s, 1);
+  if (carry) h.l[3] |= 1ULL << 63;
+  return h;
 }
 
-static inline u256 fq_inv(u256 a) { return fq_pow(a, u256_sub(BN_P, u256_from_u64(2))); }
+/**
+ * `a^-1 mod p`, by the binary extended GCD.
+ *
+ * Fermat's `a^(p-2)` is 256 squarings and about 128 multiplications; this is
+ * roughly 360 iterations of shift-compare-subtract with no multiplication at
+ * all, and comes out about five times quicker. It matters because the Miller
+ * loop inverts twice per iteration — normalising the running point, and again
+ * for the line's slope — so inversions were half of it.
+ *
+ * The extended GCD works on the integer it is handed, so on `aR` it returns
+ * `a^-1 R^-1`. Multiplying by `R^3` in Montgomery form lands back on `a^-1 R`.
+ */
+static u256 fq_inv(u256 a) {
+  if (u256_is_zero(a)) return U256_ZERO;
+  u256 u = a, v = BN_P, x1 = U256_ONE, x2 = U256_ZERO;
+  while (!u256_eq(u, U256_ONE) && !u256_eq(v, U256_ONE)) {
+    while (!(u.l[0] & 1)) {
+      u = u256_shr(u, 1);
+      x1 = fq_half(x1);
+    }
+    while (!(v.l[0] & 1)) {
+      v = u256_shr(v, 1);
+      x2 = fq_half(x2);
+    }
+    if (u256_cmp(u, v) >= 0) {
+      u = u256_sub(u, v);
+      x1 = fq_sub(x1, x2);
+    } else {
+      v = u256_sub(v, u);
+      x2 = fq_sub(x2, x1);
+    }
+  }
+  return mont_mul(u256_eq(u, U256_ONE) ? x1 : x2, bn_r3);
+}
 
 // ---------------------------------------------------------------------------
 // Fp2 = Fp[u] / (u^2 + 1)
@@ -452,7 +534,84 @@ static fq12 fq12_mul(fq12 a, fq12 b) {
   return (fq12){c0, c1};
 }
 
-static inline fq12 fq12_sqr(fq12 a) { return fq12_mul(a, a); }
+/**
+ * Squaring in Fp12, as a complex squaring over Fp6.
+ *
+ * `(c0 + c1 w)^2 = (c0 + c1)(c0 + v c1) - c0 c1 - v c0 c1  +  2 c0 c1 w`,
+ * which is two Fp6 multiplications where the general product needs three.
+ */
+static fq12 fq12_sqr(fq12 a) {
+  const fq6 t = fq6_mul(a.c0, a.c1);
+  const fq6 c0 =
+      fq6_sub(fq6_sub(fq6_mul(fq6_add(a.c0, a.c1), fq6_add(a.c0, fq6_mul_v(a.c1))),
+                      t),
+              fq6_mul_v(t));
+  return (fq12){c0, fq6_add(t, t)};
+}
+
+/**
+ * Squaring restricted to the cyclotomic subgroup, after Granger and Scott.
+ *
+ * Once the easy part of the final exponentiation has run, the element
+ * satisfies `f^(p^6+1) = 1`. On that subgroup the twelve Fp2 coefficients
+ * regroup into three Fp4 squarings, which is six Fp2 multiplications against
+ * the eighteen a general Fp12 squaring costs. The hard part is a few hundred
+ * squarings, so this is most of it.
+ *
+ * The coefficients are read out in the `w`-power order the formula is stated
+ * in: with `w^2 = v`, the Fp6 pair `(c0, c1)` interleaves as
+ * `c0.c0, c1.c0, c0.c1, c1.c1, c0.c2, c1.c2`.
+ *
+ * Only valid on the subgroup — `fq12_sqr` is the one to use anywhere else.
+ */
+static fq12 fq12_cyclo_sqr(fq12 a) {
+  fq2 z0 = a.c0.c0, z4 = a.c0.c1, z3 = a.c0.c2;
+  fq2 z2 = a.c1.c0, z1 = a.c1.c1, z5 = a.c1.c2;
+
+  // Three Fp4 squarings, each `(x + y*s)^2` with `s^2 = xi`.
+  fq2 tmp = fq2_mul(z0, z1);
+  const fq2 t0 = fq2_sub(
+      fq2_sub(fq2_mul(fq2_add(z0, z1), fq2_add(z0, fq2_mul_xi(z1))), tmp),
+      fq2_mul_xi(tmp));
+  const fq2 t1 = fq2_add(tmp, tmp);
+
+  tmp = fq2_mul(z2, z3);
+  const fq2 t2 = fq2_sub(
+      fq2_sub(fq2_mul(fq2_add(z2, z3), fq2_add(z2, fq2_mul_xi(z3))), tmp),
+      fq2_mul_xi(tmp));
+  const fq2 t3 = fq2_add(tmp, tmp);
+
+  tmp = fq2_mul(z4, z5);
+  const fq2 t4 = fq2_sub(
+      fq2_sub(fq2_mul(fq2_add(z4, z5), fq2_add(z4, fq2_mul_xi(z5))), tmp),
+      fq2_mul_xi(tmp));
+  const fq2 t5 = fq2_add(tmp, tmp);
+
+  // z <- 3t +/- 2z, the step that makes this a squaring rather than a square.
+  z0 = fq2_sub(t0, z0);
+  z0 = fq2_add(z0, z0);
+  z0 = fq2_add(z0, t0);
+  z1 = fq2_add(t1, z1);
+  z1 = fq2_add(z1, z1);
+  z1 = fq2_add(z1, t1);
+
+  tmp = fq2_mul_xi(t5);
+  z2 = fq2_add(tmp, z2);
+  z2 = fq2_add(z2, z2);
+  z2 = fq2_add(z2, tmp);
+  z3 = fq2_sub(t4, z3);
+  z3 = fq2_add(z3, z3);
+  z3 = fq2_add(z3, t4);
+
+  z4 = fq2_sub(t2, z4);
+  z4 = fq2_add(z4, z4);
+  z4 = fq2_add(z4, t2);
+  z5 = fq2_add(t3, z5);
+  z5 = fq2_add(z5, z5);
+  z5 = fq2_add(z5, t3);
+
+  return (fq12){{z0, z4, z3}, {z2, z1, z5}};
+}
 
 static fq12 fq12_inv(fq12 a) {
   // (c0 + c1 w)(c0 - c1 w) = c0^2 - v c1^2, which lies in Fp6.
@@ -505,13 +664,25 @@ static fq12 fq12_frobenius(fq12 a) {
 
 /** `a^e` for an exponent supplied as `n` little-endian 64-bit limbs. */
 static fq12 fq12_pow_limbs(fq12 a, const uint64_t *e, int n) {
+  // Four bits at a time. The only caller is the hard part of the final
+  // exponentiation, whose exponent is 768 bits, so the fifteen-entry table
+  // costs fourteen multiplications and saves about two hundred.
+  fq12 tab[16];
+  tab[1] = a;
+  for (int i = 2; i < 16; i++) tab[i] = fq12_mul(tab[i - 1], a);
+
   fq12 r = FQ12_ONE;
   int started = 0;
   for (int i = n - 1; i >= 0; i--) {
-    for (int bit = 63; bit >= 0; bit--) {
-      if (started) r = fq12_sqr(r);
-      if ((e[i] >> bit) & 1) {
-        r = started ? fq12_mul(r, a) : a;
+    for (int sh = 60; sh >= 0; sh -= 4) {
+      // That same caller hands us a base already through the easy part, so it
+      // lies in the cyclotomic subgroup and so does every power of it. All the
+      // squaring can take the cheap route.
+      if (started)
+        for (int k = 0; k < 4; k++) r = fq12_cyclo_sqr(r);
+      const int w = (int)((e[i] >> sh) & 0xf);
+      if (w) {
+        r = started ? fq12_mul(r, tab[w]) : tab[w];
         started = 1;
       }
     }
