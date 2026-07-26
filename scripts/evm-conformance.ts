@@ -10,15 +10,15 @@
 // nonce and balance checks, the refund cap, and the coinbase payment are not
 // hot, and keeping them out of C keeps the engine to executing frames.
 //
-// Status: 40495/40553 (99.86%) across all forks. This is the same fixture set
+// Status: 40551/40553 (99.995%) across all forks. This is the same fixture set
 // that Reth's `ef-tests` and evm2's `evm2-eest` run against.
 //
-// What is left, largest first:
-//
-//   - Deep-recursion gas accounting in stStaticCall and stCallCreateCallCode,
-//     where the discrepancy is tens of thousands of gas across a thousand-frame
-//     chain. `--trace-case` is the tool for these; see below.
-//   - A residue of small gas deltas spread across the call tests.
+// What is left is two cases, both `static_Call1MB1024Calldepth`, and both an
+// engine limit rather than a semantic one: they pass a megabyte of calldata
+// down every one of 1024 nested frames, so each frame's own memory is another
+// megabyte and the whole thing wants about a gigabyte live at once. Frame
+// memory comes out of a fixed arena, and wasm's address space would not hold
+// it either. The engine reaches 47 frames.
 //
 // Blockchain tests are not run at all: they need block processing and a
 // Merkle-Patricia trie for the state root, which state tests avoid by shipping
