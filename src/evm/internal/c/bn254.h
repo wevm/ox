@@ -351,6 +351,33 @@ static void g1_add(g1 *r, const g1 *p, const g1 *q) {
     *r = *p;
     return;
   }
+  // Both affine, which is what the precompile decodes: mmadd-2007-bl at 4M+2S
+  // rather than the general 11M+5S, most of which would be squaring one and
+  // multiplying by it.
+  if (u256_eq(p->z, bn_one) && u256_eq(q->z, bn_one)) {
+    const u256 h = fq_sub(q->x, p->x);
+    if (u256_is_zero(h)) {
+      if (u256_eq(p->y, q->y)) {
+        g1_double(r, p);
+        return;
+      }
+      *r = G1_INF;
+      return;
+    }
+    const u256 hh = fq_sqr(h);
+    u256 i = fq_add(hh, hh);
+    i = fq_add(i, i);
+    const u256 j = fq_mul(h, i);
+    const u256 rr = fq_add(fq_sub(q->y, p->y), fq_sub(q->y, p->y));
+    const u256 v = fq_mul(p->x, i);
+    const u256 x3 = fq_sub(fq_sub(fq_sqr(rr), j), fq_add(v, v));
+    u256 y1j = fq_mul(p->y, j);
+    y1j = fq_add(y1j, y1j);
+    r->x = x3;
+    r->y = fq_sub(fq_mul(rr, fq_sub(v, x3)), y1j);
+    r->z = fq_add(h, h);
+    return;
+  }
   const u256 z1z1 = fq_sqr(p->z);
   const u256 z2z2 = fq_sqr(q->z);
   const u256 u1 = fq_mul(p->x, z2z2);
