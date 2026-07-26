@@ -539,6 +539,8 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // EIP-2681 caps an account's nonce at 2^64 - 1, so a transaction at that
   // nonce could never be followed by another and is refused outright.
   if (big(tx.nonce) >= (1n << 64n) - 1n) return compareLoaded(post)
+  // A transaction cannot reserve more gas than the block has to give.
+  if (gasLimit > big(env.currentGasLimit)) return compareLoaded(post)
   if (tx.authorizationList && !forkAtLeast(fork, 'Prague'))
     return compareLoaded(post)
   // EIP-3860 caps initcode at twice the deployed-code limit.
