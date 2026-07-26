@@ -1105,16 +1105,152 @@ function systemCall(
   config: any,
   to: string,
   data: Uint8Array,
-): Record<string, Account> {
+  requirePresent: boolean,
+): { pre: Record<string, Account>; failed: boolean; output: Uint8Array } {
   const acct = pre[to]
-  if (!acct || !acct.code || acct.code === '0x') return pre
-  if (!loadInto(pre, env, fork, config)) return pre
+  // Absence and failure are different. EIP-7002 and EIP-7251 require their
+  // predeploy to exist — the chain is invalid without it. EIP-4788 and
+  // EIP-2935 tolerate absence and skip the call, which is what lets a chain
+  // deploy the history contract partway through and stay valid. A call that
+  // *halts* is invalid either way.
+  const none = new Uint8Array()
+  if (!acct || !acct.code || acct.code === '0x')
+    return { pre, failed: requirePresent, output: none }
+  if (!loadInto(pre, env, fork, config))
+    return { pre, failed: false, output: none }
   putAddr(STAGE_ADDR, to)
   putAddr(STAGE_ADDR2, SYSTEM_ADDR)
   putWord(STAGE_WORD_A, 0n)
   mem().set(data, stage() + STAGE_BYTES)
-  engine.evm_execute(vm, data.length, 30_000_000n, 0)
-  return preFromEngine()
+  const rc = engine.evm_execute(vm, data.length, 30_000_000n, 0)
+  const at = engine.evm_output_ptr(vm)
+  const output = mem().slice(at, at + engine.evm_output_len(vm))
+  return { pre: preFromEngine(), failed: rc !== 0, output }
+}
+
+// EIP-6110's deposit contract, and the canonical ABI layout of its event: five
+// dynamic `bytes` fields, so five offsets followed by five length-prefixed
+// padded bodies. The offsets and lengths are fixed by the field sizes, and a
+// log that does not match them exactly is what INVALID_DEPOSIT_EVENT_LAYOUT
+// means — the consensus layer parses this by position, not by decoding.
+const DEPOSIT_CONTRACT = '0x00000000219ab540356cbb839cbe05303d7705fa'
+// keccak of `DepositEvent(bytes,bytes,bytes,bytes,bytes)`. The contract emits
+// other logs, and one of those is not a malformed deposit — it is not a
+// deposit at all.
+const DEPOSIT_EVENT_TOPIC =
+  '0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5'
+const DEPOSIT_EVENT_LAYOUT = [
+  { offset: 0xa0, length: 48 }, // pubkey
+  { offset: 0x100, length: 32 }, // withdrawal credentials
+  { offset: 0x140, length: 8 }, // amount
+  { offset: 0x180, length: 96 }, // signature
+  { offset: 0x200, length: 8 }, // index
+]
+const DEPOSIT_EVENT_SIZE = 576
+
+/** Every log the last `runCase` produced. */
+function readLogs(): { address: Hex; topics: Hex[]; data: Uint8Array }[] {
+  const out: { address: Hex; topics: Hex[]; data: Uint8Array }[] = []
+  for (let i = 0; i < engine.evm_log_count(vm); i++) {
+    const packed = engine.evm_log_at(vm, i)
+    if (packed < 0) continue
+    const topicCount = packed >>> 24
+    const dataLen = packed & 0xffffff
+    const address = getAddr(STAGE_ADDR)
+    const base = stage() + STAGE_BYTES
+    const topics: Hex[] = []
+    for (let t = 0; t < topicCount; t++)
+      topics.push(toHex(mem().slice(base + t * 32, base + (t + 1) * 32)))
+    const from = base + topicCount * 32
+    out.push({ address, topics, data: mem().slice(from, from + dataLen) })
+  }
+  return out
+}
+
+/**
+ * The 192-byte deposit request a log encodes, or null if its layout is wrong.
+ *
+ * The fields are concatenated unpadded, in declaration order, which is not
+ * what the ABI encoding holds — hence reading each body out of its own slot
+ * rather than decoding.
+ */
+function depositRequest(data: Uint8Array): Uint8Array | null {
+  if (data.length !== DEPOSIT_EVENT_SIZE) return null
+  const word = (at: number) => {
+    let v = 0n
+    for (let i = 0; i < 32; i++) v = (v << 8n) | BigInt(data[at + i] as number)
+    return v
+  }
+  const parts: Uint8Array[] = []
+  for (const { offset, length } of DEPOSIT_EVENT_LAYOUT) {
+    if (word(parts.length * 32) !== BigInt(offset)) return null
+    if (word(offset) !== BigInt(length)) return null
+    parts.push(data.slice(offset + 32, offset + 32 + length))
+  }
+  const out = new Uint8Array(192)
+  let at = 0
+  for (const p of parts) {
+    out.set(p, at)
+    at += p.length
+  }
+  return out
+}
+
+/**
+ * EIP-7685: `sha256` over the `sha256` of each non-empty `type || data`.
+ *
+ * The three lists are deposits scraped from the block's logs, and the raw
+ * output of the EIP-7002 and EIP-7251 predeploy calls.
+ */
+function requestsHashOf(lists: (Uint8Array | null)[]): Hex {
+  const digests: number[] = []
+  for (let type = 0; type < lists.length; type++) {
+    const body = lists[type]
+    if (!body || body.length === 0) continue
+    const framed = new Uint8Array(1 + body.length)
+    framed[0] = type
+    framed.set(body, 1)
+    digests.push(...bytes(Hash.sha256(toHex(framed))))
+  }
+  return Hash.sha256(toHex(Uint8Array.from(digests)))
+}
+
+/**
+ * Header checks that need only the header and its parent.
+ *
+ * Everything here is arithmetic on fields the fixture already decodes, so none
+ * of it needs a trie. What is deliberately *not* here is anything rooted in
+ * one: the withdrawals root, the receipts root and the EIP-7685 requests hash.
+ *
+ * Over-rejection is the danger — a rule slightly too strict quietly discards
+ * valid blocks — so the caller treats a rejection of a block with no
+ * `expectException` as a failure rather than letting it pass silently.
+ */
+function headerInvalid(
+  h: any,
+  parent: any,
+  fork: string,
+  b: any,
+  transition: boolean,
+): boolean {
+  const gasLimit = big(h.gasLimit)
+  // The floor and the 1/1024 band, unchanged since Frontier.
+  if (gasLimit < 5000n) return true
+  if (big(h.gasUsed) > gasLimit) return true
+  if (parent && !transition) {
+    const pl = parent.gasLimit
+    const diff = gasLimit > pl ? gasLimit - pl : pl - gasLimit
+    if (diff >= pl / 1024n) return true
+  }
+  // EIP-7934 caps the encoded block at 10 MiB from Osaka.
+  if (forkAtLeast(fork, 'Osaka') && b.rlp && (b.rlp.length - 2) / 2 > 10_485_760)
+    return true
+  // Not checked: the block hash. It is `keccak(RLP(header))`, and the fixture
+  // supplies `RLP(block)` — decoding and re-encoding the header would repair
+  // exactly the corruption the INVALID_BLOCK_HASH cases are testing for, so it
+  // needs either a header encoder or a byte-range extraction, for twelve
+  // tests.
+  return false
 }
 
 /**
@@ -1146,6 +1282,7 @@ function runBlockchainTest(t: any): Outcome {
           excessBlobGas: big(x.excessBlobGas),
           blobGasUsed: big(x.blobGasUsed),
           baseFeePerGas: big(x.baseFeePerGas),
+          gasLimit: big(x.gasLimit),
         }
       : undefined
   // The excess is defined against the previous block, so the genesis header
@@ -1158,20 +1295,10 @@ function runBlockchainTest(t: any): Outcome {
     // `lastRejected`. A `BlockException` is a property of the header, which
     // means the state root, which means a trie; those are still skipped.
     const expected: string = b.expectException ?? ''
-    // What is left after the blob-gas header checks below is the header
-    // validation that does need a state root, and a trie with it.
-    const blobHeaderException =
-      expected.includes('INCORRECT_EXCESS_BLOB_GAS') ||
-      expected.includes('INCORRECT_BLOB_GAS_USED') ||
-      expected.includes('BLOB_GAS_USED_ABOVE_LIMIT')
-    if (
-      expected &&
-      !expected.startsWith('TransactionException') &&
-      !blobHeaderException
-    )
-      return { ok: false, reason: 'skip:invalid-block' }
     const h = b.blockHeader ?? b.rlp_decoded?.blockHeader
-    if (!h) return { ok: false, reason: 'skip:no-header' }
+    // An RLP-only block is one whose encoding is itself what is wrong, so
+    // there is nothing decoded to check.
+    if (!h) return { ok: false, reason: 'skip:undecodable-block' }
     fork = forkAt(big(h.timestamp))
     if (specIds[fork] === undefined) return { ok: false, reason: `fork:${fork}` }
     const env = {
@@ -1191,25 +1318,22 @@ function runBlockchainTest(t: any): Outcome {
     // discarded — the predeploy calls below included, which is why the
     // snapshot is taken before them and not just before the transactions.
     const before = pre
+    // Declared before the predeploy calls below, which report into it.
+    let rejected = false
     // EIP-4788 and EIP-2935 run before the block's transactions.
+    const sys = (to: string, data: Uint8Array, required: boolean) => {
+      const r = systemCall(pre, env, fork, t.config, to, data, required)
+      pre = r.pre
+      if (r.failed) rejected = true
+      return r.output
+    }
+    // Deposits are scraped from the block's logs as its transactions run.
+    const deposits: number[] = []
+    let badDepositLog = false
     if (forkAtLeast(fork, 'Cancun') && h.parentBeaconBlockRoot !== undefined)
-      pre = systemCall(
-        pre,
-        env,
-        fork,
-        t.config,
-        BEACON_ROOTS,
-        bytes(h.parentBeaconBlockRoot),
-      )
+      sys(BEACON_ROOTS, bytes(h.parentBeaconBlockRoot), false)
     if (forkAtLeast(fork, 'Prague'))
-      pre = systemCall(
-        pre,
-        env,
-        fork,
-        t.config,
-        HISTORY_STORAGE,
-        bytes(h.parentHash),
-      )
+      sys(HISTORY_STORAGE, bytes(h.parentHash), false)
     // The blob limit is per *block* as well as per transaction, and no single
     // transaction can see the total, so it is summed here. A block over the
     // schedule's maximum is invalid however valid each transaction is on its
@@ -1226,7 +1350,10 @@ function runBlockchainTest(t: any): Outcome {
         : forkAtLeast(fork, 'Prague')
           ? 9
           : 6
-    let rejected = blobTotal > blockMaxBlobs
+    if (blobTotal > blockMaxBlobs) rejected = true
+    // A transition block's gas limit is allowed to jump — London doubled it —
+    // so the 1/1024 band is not applied across one.
+    if (headerInvalid(h, parent, fork, b, transition !== null)) rejected = true
 
     // The blob fields of the header are a pure function of the block's blobs
     // and its parent, so they can be checked without any of the rest of the
@@ -1261,8 +1388,35 @@ function runBlockchainTest(t: any): Outcome {
       })
       if (!out.ok && !expected) return out
       rejected = rejected || lastRejected
+      if (forkAtLeast(fork, 'Prague') && !lastRejected)
+        for (const log of readLogs()) {
+          if (log.address !== DEPOSIT_CONTRACT) continue
+          if (log.topics[0] !== DEPOSIT_EVENT_TOPIC) continue
+          const req = depositRequest(log.data)
+          if (!req) badDepositLog = true
+          else deposits.push(...req)
+        }
       pre = preFromSettled()
     }
+    // EIP-7002 and EIP-7251 dequeue their request lists after the
+    // transactions, and their output is two thirds of the requests hash. This
+    // has to run before the verdict below: for an invalid block the hash is
+    // often the very thing that is wrong.
+    if (forkAtLeast(fork, 'Prague')) {
+      const withdrawals = sys(WITHDRAWAL_REQUESTS, new Uint8Array(), true)
+      const consolidations = sys(CONSOLIDATION_REQUESTS, new Uint8Array(), true)
+      if (badDepositLog) rejected = true
+      else if (h.requestsHash !== undefined) {
+        const want = requestsHashOf([
+          Uint8Array.from(deposits),
+          withdrawals,
+          consolidations,
+        ])
+        if (want !== h.requestsHash.toLowerCase()) rejected = true
+      }
+    }
+    if (!expected && rejected)
+      return { ok: false, reason: 'rejected-valid-block' }
     if (expected) {
       // `continue` skips the parent update below too: a rejected block is
       // never the parent of the next one.
@@ -1275,10 +1429,6 @@ function runBlockchainTest(t: any): Outcome {
         }
       continue
     }
-    // EIP-7002 and EIP-7251 dequeue their request lists after them.
-    if (forkAtLeast(fork, 'Prague'))
-      for (const addr of [WITHDRAWAL_REQUESTS, CONSOLIDATION_REQUESTS])
-        pre = systemCall(pre, env, fork, t.config, addr, new Uint8Array())
     // Withdrawals are denominated in gwei, unlike everything else here.
     for (const w of b.withdrawals ?? [])
       credit(pre, w.address, big(w.amount) * 1_000_000_000n)
