@@ -2537,7 +2537,29 @@ static evm_status interpret(evm_vm *vm) {
         pc += 2;
         continue;
 
-      case 0x61 ... 0x67: { // PUSH2..PUSH8 fit in one limb
+      case 0x61: // PUSH2 — jump targets, so the commonest push after PUSH1
+        if (pc + 3 <= code_len) {
+          PUSH(u256_from_u64(((uint64_t)code[pc + 1] << 8) | code[pc + 2]));
+          pc += 3;
+          continue;
+        }
+        goto push_truncated;
+
+      case 0x63: // PUSH4 — function selectors and most constants
+        if (pc + 5 <= code_len) {
+          PUSH(u256_from_u64(((uint64_t)code[pc + 1] << 24) |
+                             ((uint64_t)code[pc + 2] << 16) |
+                             ((uint64_t)code[pc + 3] << 8) |
+                             (uint64_t)code[pc + 4]));
+          pc += 5;
+          continue;
+        }
+        goto push_truncated;
+
+      // The rest keep the loop: its trip count is not a constant, which is
+      // exactly why the two above are worth writing out.
+      case 0x62:
+      case 0x64 ... 0x67: { // PUSH3, PUSH5..PUSH8 fit in one limb
         const int n = op - 0x5f;
         if (pc + 1 + n <= code_len) {
           const uint8_t *p = code + pc + 1;
