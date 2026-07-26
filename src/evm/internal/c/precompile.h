@@ -272,6 +272,72 @@ static void bn_mulmod(bignum *r, const bignum *a, const bignum *b,
   bn_trim(r);
 }
 
+/**
+ * `r = a * a mod m`.
+ *
+ * The cross terms of a square appear twice, so the upper triangle is summed
+ * once, doubled, and the diagonal added: about half the limb products of the
+ * general multiplication. Squarings are most of an exponentiation — a 1024-bit
+ * exponent is a thousand of them against a few hundred multiplications.
+ */
+static void bn_sqrmod(bignum *r, const bignum *a, const bignum *m) {
+  const int n = a->n;
+  if (n == 0) {
+    for (int i = 0; i < MODEXP_LIMBS; i++) r->d[i] = 0;
+    r->n = 0;
+    return;
+  }
+  uint64_t t[MODEXP_LIMBS * 2 + 1];
+  for (int i = 0; i <= 2 * n; i++) t[i] = 0;
+  // Upper triangle: every product with i < j, each counted once.
+  for (int i = 0; i < n; i++) {
+    uint64_t carry = 0;
+    for (int j = i + 1; j < n; j++) {
+      uint64_t lo, hi;
+      mul64(a->d[i], a->d[j], &lo, &hi);
+      uint64_t sum = t[i + j] + lo;
+      hi += sum < lo;
+      sum += carry;
+      hi += sum < carry;
+      t[i + j] = sum;
+      carry = hi;
+    }
+    t[i + n] = carry;
+  }
+  // Double it, then add the diagonal squares.
+  uint64_t carry = 0;
+  for (int i = 0; i <= 2 * n - 1; i++) {
+    const uint64_t next = t[i] >> 63;
+    t[i] = (t[i] << 1) | carry;
+    carry = next;
+  }
+  t[2 * n] = carry;
+  carry = 0;
+  for (int i = 0; i < n; i++) {
+    uint64_t lo, hi;
+    mul64(a->d[i], a->d[i], &lo, &hi);
+    uint64_t sum = t[2 * i] + lo;
+    uint64_t c1 = sum < lo;
+    sum += carry;
+    c1 += sum < carry;
+    t[2 * i] = sum;
+    sum = t[2 * i + 1] + hi;
+    uint64_t c2 = sum < hi;
+    sum += c1;
+    c2 += sum < c1;
+    t[2 * i + 1] = sum;
+    carry = c2;
+  }
+  if (carry) t[2 * n] += carry;
+
+  int len = 2 * n + 1;
+  while (len > 1 && t[len - 1] == 0) len--;
+  uint64_t quot[MODEXP_LIMBS * 2 + 1], rem[MODEXP_LIMBS * 2 + 1];
+  divmod_knuth64(t, len, m->d, m->n, quot, rem);
+  for (int i = 0; i < MODEXP_LIMBS; i++) r->d[i] = i < m->n ? rem[i] : 0;
+  bn_trim(r);
+}
+
 /** `base^exp mod m`, big-endian in and out. Writes `ml` bytes. */
 static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
                    uint64_t el, const uint8_t *mod, uint64_t ml,
@@ -404,7 +470,7 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
       const int shift = 8 - win * (step + 1);
       const int w = (exp[byte] >> shift) & ((1 << win) - 1);
       if (started)
-        for (int k = 0; k < win; k++) bn_mulmod(&acc, &acc, &acc, &m);
+        for (int k = 0; k < win; k++) bn_sqrmod(&acc, &acc, &m);
       if (w) {
         if (started) {
           bn_mulmod(&acc, &acc, &tab[w], &m);
