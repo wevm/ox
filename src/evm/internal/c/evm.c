@@ -2019,15 +2019,15 @@ static evm_status interpret(evm_vm *vm) {
         // The stipend is granted on top of the 63/64 cap.
         if (!u256_is_zero(value)) child_gas += 2300;
 
-        // Copy the calldata out of memory first: the child gets its own memory
-        // and the arena may hand it the very bytes we are reading. The copy is
-        // dead once the child returns, and releasing it matters: a frame that
-        // calls in a loop with large calldata otherwise consumes the arena a
-        // call at a time and dies partway through.
-        const int32_t args_mark = vm->arena_top;
-        uint8_t *args = (uint8_t *)arena_alloc(vm, (int32_t)in_len + 16);
-        if (!args) HALT(EVM_OUT_OF_MEMORY);
-        mem_copy(args, vm->mem + in_off, in_len);
+        // The child reads its calldata straight out of this frame's memory
+        // rather than from a copy. Nothing it does can disturb those bytes:
+        // everything a nested frame allocates — its analysis, its stack, its
+        // own memory — comes off the top of the same bump arena, above this
+        // frame's memory, and this frame does not run again until the child
+        // has returned and the arena has been wound back to where it was.
+        // Copying cost a duplicate of the calldata for every live frame, which
+        // halved how deep a large-calldata recursion could go.
+        const uint8_t *args = vm->mem + in_off;
 
         const int32_t snapshot = state_snapshot(vm->st);
         const u256 caller_balance = vm->st->accounts[vm->self].balance;
@@ -2090,7 +2090,6 @@ static evm_status interpret(evm_vm *vm) {
         }
       call_done:
         if (!ok && vm->returndata_len == 0) state_revert(vm->st, snapshot);
-        vm->arena_top = args_mark;
         gas += child_gas; // unspent child gas returns to the caller
 
         const uint64_t n = out_len < (uint64_t)vm->returndata_len
