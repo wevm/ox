@@ -1353,6 +1353,22 @@ function headerInvalid(
   ] as const)
     if ((h[field] !== undefined) !== forkAtLeast(fork, since)) return true
 
+  // EIP-1559's base fee, which is a function of how full the parent was.
+  // Skipped where the parent has none: that is the London transition block,
+  // whose base fee is the initial constant rather than a step from anything.
+  if (h.baseFeePerGas !== undefined && parent?.hasBaseFee) {
+    const target = parent.gasLimit / 2n // ELASTICITY_MULTIPLIER
+    const base = parent.baseFeePerGas
+    let want = base
+    if (target > 0n && parent.gasUsed > target) {
+      const delta = (base * (parent.gasUsed - target)) / target / 8n
+      want = base + (delta > 1n ? delta : 1n)
+    } else if (target > 0n && parent.gasUsed < target) {
+      want = base - (base * (target - parent.gasUsed)) / target / 8n
+    }
+    if (big(h.baseFeePerGas) !== want) return true
+  }
+
   // EIP-4895's withdrawals root. A withdrawal is `RLP([index, validatorIndex,
   // address, amount])` and the trie is keyed by position, so this needs only
   // the list the fixture already gives.
@@ -1410,6 +1426,8 @@ function runBlockchainTest(t: any): Outcome {
           blobGasUsed: big(x.blobGasUsed),
           baseFeePerGas: big(x.baseFeePerGas),
           gasLimit: big(x.gasLimit),
+          gasUsed: big(x.gasUsed),
+          hasBaseFee: x.baseFeePerGas !== undefined,
         }
       : undefined
   // The excess is defined against the previous block, so the genesis header
