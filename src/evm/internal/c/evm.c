@@ -2601,13 +2601,40 @@ static evm_status interpret(evm_vm *vm) {
       }
       }
 
-      case 0x80 ... 0x8f: // DUP1..DUP16
+      // DUP1..DUP3 and SWAP1..SWAP2 are written out because their depth is
+      // then a constant offset from `sp` rather than an index computed from the
+      // opcode. Together they are 29% of the factorial fixture's instructions
+      // and 25% of snailtracer's.
+      case 0x80: // DUP1
+        PUSH(PEEK(0));
+        break;
+      case 0x81: // DUP2
+        PUSH(PEEK(1));
+        break;
+      case 0x82: // DUP3
+        PUSH(PEEK(2));
+        break;
+
+      case 0x83 ... 0x8f: // DUP4..DUP16
         PUSH(PEEK(op - 0x80));
         break;
 
-      case 0x90 ... 0x9f: { // SWAP1..SWAP16
+      case 0x90: { // SWAP1
+        const u256 tmp = PEEK(0);
+        PEEK(0) = PEEK(1);
+        PEEK(1) = tmp;
+        break;
+      }
+      case 0x91: { // SWAP2
+        const u256 tmp = PEEK(0);
+        PEEK(0) = PEEK(2);
+        PEEK(2) = tmp;
+        break;
+      }
+
+      case 0x92 ... 0x9f: { // SWAP3..SWAP16
         const int n = op - 0x8f;
-        u256 tmp = PEEK(0);
+        const u256 tmp = PEEK(0);
         PEEK(0) = PEEK(n);
         PEEK(n) = tmp;
         break;
