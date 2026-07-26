@@ -182,28 +182,41 @@ static inline u256 u256_mul(u256 a, u256 b) {
   return r;
 }
 
+// The limb displacement is a switch over the four possible values rather than
+// a loop whose trip count is the shift, so nothing goes through memory. The
+// zero-bit case returns early: `x >> 64` is undefined, and branching on it once
+// beats folding it into every limb.
+
 static inline u256 u256_shl(u256 a, uint32_t n) {
   if (n >= 256) return U256_ZERO;
-  u256 r = U256_ZERO;
-  uint32_t limbs = n / 64, bits = n % 64;
-  for (int i = 3; i >= (int)limbs; i--) {
-    uint64_t v = a.l[i - limbs] << bits;
-    if (bits && i - (int)limbs - 1 >= 0) v |= a.l[i - limbs - 1] >> (64 - bits);
-    r.l[i] = v;
+  const uint32_t bits = n & 63;
+  uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0;
+  switch (n >> 6) {
+    case 0: w0 = a.l[0]; w1 = a.l[1]; w2 = a.l[2]; w3 = a.l[3]; break;
+    case 1: w1 = a.l[0]; w2 = a.l[1]; w3 = a.l[2]; break;
+    case 2: w2 = a.l[0]; w3 = a.l[1]; break;
+    default: w3 = a.l[0]; break;
   }
-  return r;
+  if (!bits) return (u256){{w0, w1, w2, w3}};
+  const uint32_t inv = 64 - bits;
+  return (u256){{w0 << bits, (w1 << bits) | (w0 >> inv),
+                 (w2 << bits) | (w1 >> inv), (w3 << bits) | (w2 >> inv)}};
 }
 
 static inline u256 u256_shr(u256 a, uint32_t n) {
   if (n >= 256) return U256_ZERO;
-  u256 r = U256_ZERO;
-  uint32_t limbs = n / 64, bits = n % 64;
-  for (int i = 0; i + (int)limbs < 4; i++) {
-    uint64_t v = a.l[i + limbs] >> bits;
-    if (bits && i + (int)limbs + 1 < 4) v |= a.l[i + limbs + 1] << (64 - bits);
-    r.l[i] = v;
+  const uint32_t bits = n & 63;
+  uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0;
+  switch (n >> 6) {
+    case 0: w0 = a.l[0]; w1 = a.l[1]; w2 = a.l[2]; w3 = a.l[3]; break;
+    case 1: w0 = a.l[1]; w1 = a.l[2]; w2 = a.l[3]; break;
+    case 2: w0 = a.l[2]; w1 = a.l[3]; break;
+    default: w0 = a.l[3]; break;
   }
-  return r;
+  if (!bits) return (u256){{w0, w1, w2, w3}};
+  const uint32_t inv = 64 - bits;
+  return (u256){{(w0 >> bits) | (w1 << inv), (w1 >> bits) | (w2 << inv),
+                 (w2 >> bits) | (w3 << inv), w3 >> bits}};
 }
 
 /** Arithmetic (sign-propagating) right shift. */
