@@ -70,6 +70,12 @@ static void mem_copy(uint8_t *dst, const uint8_t *src, uint64_t n) {
 #define STACK_LIMIT 1024
 #define MAX_CODE 49152    // 2x EIP-170, so initcode fits
 #define MAX_INPUT 1048576 // 1 MiB of calldata
+// The most a frame may RETURN or REVERT. Larger than the calldata limit
+// because nothing but gas bounds a return: expanding memory far enough to
+// return four megabytes already costs ~34M gas, more than a block, so this is
+// past anything payable while still covering the fixtures that return one or
+// two megabytes on a several-million-gas limit.
+#define MAX_OUTPUT (4 * 1024 * 1024)
 #define MAX_DEPTH 1024    // the call-depth limit, since Tangerine
 // Memory offsets are bounded separately: expansion is priced quadratically, so
 // anything past this is unaffordable long before it is reached, and the check
@@ -2290,7 +2296,7 @@ static evm_status interpret(evm_vm *vm) {
         // The output buffer is a fixed megabyte. Memory can be expanded past
         // that affordably, so the length has to be checked against the buffer
         // and not just against memory.
-        if (n > MAX_INPUT) HALT(EVM_OUT_OF_MEMORY);
+        if (n > MAX_OUTPUT) HALT(EVM_OUT_OF_MEMORY);
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         mem_copy(vm->output, vm->mem + o, n);
@@ -2306,7 +2312,7 @@ static evm_status interpret(evm_vm *vm) {
         // The output buffer is a fixed megabyte. Memory can be expanded past
         // that affordably, so the length has to be checked against the buffer
         // and not just against memory.
-        if (n > MAX_INPUT) HALT(EVM_OUT_OF_MEMORY);
+        if (n > MAX_OUTPUT) HALT(EVM_OUT_OF_MEMORY);
         evm_status s = memory_expand(vm, o, n, &gas);
         if (s != EVM_SUCCESS) HALT(s);
         mem_copy(vm->output, vm->mem + o, n);
@@ -2411,9 +2417,9 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   vm->blocks = (block_info *)ox_alloc((uint64_t)MAX_CODE * sizeof(block_info));
   vm->gas_fix = (int32_t *)ox_alloc((uint64_t)MAX_CODE * sizeof(int32_t));
   vm->memory = (uint8_t *)ox_alloc((uint64_t)memory_cap);
-  vm->output = (uint8_t *)ox_alloc(MAX_INPUT);
+  vm->output = (uint8_t *)ox_alloc(MAX_OUTPUT);
   vm->st = (evm_state *)ox_alloc(sizeof(evm_state));
-  vm->returndata = (uint8_t *)ox_alloc(MAX_INPUT);
+  vm->returndata = (uint8_t *)ox_alloc(MAX_OUTPUT);
   vm->stage = (uint8_t *)ox_alloc(MAX_INPUT);
 #ifdef OX_TRACE
   vm->trace = (evm_trace_entry *)ox_alloc(TRACE_CAP * sizeof(evm_trace_entry));
