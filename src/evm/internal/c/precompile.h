@@ -374,16 +374,37 @@ static void modexp(const uint8_t *base, uint64_t bl, const uint8_t *exp,
   // product costs about what the Knuth division it replaces did, and it
   // measured 4.56 ms against 3.94 for a hundred and twenty lines of carry
   // propagation.
+  // The window only pays for itself once the exponent is long enough. Its
+  // table costs fourteen multiplications and saves about 0.27 per exponent
+  // bit, so the crossover is near fifty bits — and EIP-198 exponents are
+  // routinely far shorter than the field holding them. `mod_1024_exp_2` in the
+  // corpus is a two-bit exponent against a 1024-byte modulus, where the table
+  // was fourteen full-width multiplications to replace one.
+  uint64_t ebits = 0;
+  for (uint64_t byte = 0; byte < el; byte++)
+    if (exp[byte]) {
+      ebits = (el - byte) * 8;
+      uint8_t v = exp[byte];
+      while (!(v & 0x80)) {
+        ebits--;
+        v = (uint8_t)(v << 1);
+      }
+      break;
+    }
+  const int win = ebits > 50 ? 4 : 1;
+
   bignum tab[16];
   tab[1] = base_red;
-  for (int i = 2; i < 16; i++) bn_mulmod(&tab[i], &tab[i - 1], &base_red, &m);
+  if (win == 4)
+    for (int i = 2; i < 16; i++) bn_mulmod(&tab[i], &tab[i - 1], &base_red, &m);
 
   int started = 0;
   for (uint64_t byte = 0; byte < el; byte++) {
-    for (int half = 0; half < 2; half++) {
-      const int w = (exp[byte] >> (half ? 0 : 4)) & 0xf;
+    for (int step = 0; step < 8 / win; step++) {
+      const int shift = 8 - win * (step + 1);
+      const int w = (exp[byte] >> shift) & ((1 << win) - 1);
       if (started)
-        for (int k = 0; k < 4; k++) bn_mulmod(&acc, &acc, &acc, &m);
+        for (int k = 0; k < win; k++) bn_mulmod(&acc, &acc, &acc, &m);
       if (w) {
         if (started) {
           bn_mulmod(&acc, &acc, &tab[w], &m);
