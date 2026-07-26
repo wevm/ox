@@ -1,0 +1,26 @@
+{
+  "$comment": "Pinned native toolchain for the WASM artifacts. Bumping anything here changes the compiled bytes, so a bump is a deliberate PR that regenerates every artifact with `pnpm wasm:build`.",
+  "wasiSdk": {
+    "version": "25.0",
+    "release": "wasi-sdk-25",
+    "assets": {
+      "darwin-arm64": {
+        "file": "wasi-sdk-25.0-arm64-macos.tar.gz",
+        "sha256": "e1e529ea226b1db0b430327809deae9246b580fa3cae32d31c82dfe770233587"
+      },
+      "darwin-x64": {
+        "file": "wasi-sdk-25.0-x86_64-macos.tar.gz",
+        "sha256": "55e3ff3fee1a15678a16eeccba0129276c9f6be481bc9c283e7f9f65bf055c11"
+      },
+      "linux-arm64": {
+        "file": "wasi-sdk-25.0-arm64-linux.tar.gz",
+        "sha256": "47fccad8b2498f2239e05e1115c3ffc652bf37e7de2f88fb64b2d663c976ce2d"
+      },
+      "linux-x64": {
+        "file": "wasi-sdk-25.0-x86_64-linux.tar.gz",
+        "sha256": "52640dde13599bf127a95499e61d6d640256119456d1af8897ab6725bcf3d89c"
+      }
+    }
+  },
+  "binaryen": "123"
+}

@@ -47,7 +47,7 @@ console.log('Generating API docs.')
 /// Clean previously generated pages
 ////////////////////////////////////////////////////////////
 
-for (const dir of ['api', 'ercs', 'webauthn', 'zod']) {
+for (const dir of ['api', 'ercs', 'wasm', 'webauthn', 'zod']) {
   fs.removeSync(`./site/src/pages/${dir}`)
 }
 // Preserve hand-authored Tempo guides while replacing generated pages.
@@ -306,6 +306,7 @@ const coreNames = new Set(Object.keys(docCommentsByPath['./index.ts'] ?? {}))
 const secondaryModels: Record<string, string> = {
   './erc4337/index.ts': './scripts/docgen/erc4337.api.json',
   './tempo/index.ts': './scripts/docgen/tempo.api.json',
+  './wasm/index.ts': './scripts/docgen/wasm.api.json',
 }
 for (const [path, modelPath] of Object.entries(secondaryModels)) {
   const comments = docCommentsByPath[path]
@@ -760,6 +761,10 @@ const topNav = [
       {
         text: 'ERCs',
         link: getPath({ entrypointCategory: 'ERCs' }),
+      },
+      {
+        text: 'WASM',
+        link: getPath({ entrypointCategory: 'WASM' }),
       },
       {
         text: 'Zod',

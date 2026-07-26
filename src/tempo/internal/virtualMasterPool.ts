@@ -1,4 +1,5 @@
 import * as Errors from '../../core/Errors.js'
+import { dataOffset } from './mine.wasm.js'
 
 /** Message sent from a mining worker to the main thread. */
 export type Message =
@@ -185,7 +186,7 @@ main().catch(function(error) {
  */
 function getWorkerMineLoop(): string {
   return `
-var dataOffset = 1024
+var dataOffset = ${dataOffset}
 
 function hexToBytes(hex) {
   var h = hex.startsWith('0x') ? hex.slice(2) : hex
