@@ -203,11 +203,22 @@ static void ripemd160(const uint8_t *in, uint64_t len, uint8_t *out) {
 // MODEXP (0x05)
 // ---------------------------------------------------------------------------
 
-// The precompile accepts operands up to 1024 bytes, which is 128 64-bit limbs.
-// An earlier version used 32-bit limbs and only 128 of them — half the width the
-// precompile allows — so a modulus past 512 bytes was silently truncated and the
-// result was wrong rather than merely slow.
-#define MODEXP_LIMBS 128
+// EIP-7823 caps every modexp operand at 1024 bytes — but only from Osaka.
+// Before it the precompile is bounded by gas alone, and the gas is quadratic:
+// a 30M block can pay for an operand of roughly 76 KiB. That does not fit in
+// fixed buffers, and the buffers are fixed because a `bignum` is a stack local
+// several of which are live at once.
+//
+// 2048 bytes is therefore a compromise and worth naming as one: it covers
+// twice what any fork now allows, and the fixtures' 1025-byte pre-Osaka case,
+// while costing 2 KiB a `bignum`. From Osaka the spec's own cap makes the
+// buffer sufficient by construction; before it, an operand past this is
+// rejected where the protocol would merely have charged for it.
+//
+// An earlier version used 32-bit limbs and only 128 of them — half the width
+// the precompile allowed — so a modulus past 512 bytes was silently truncated
+// and the result was wrong rather than merely slow.
+#define MODEXP_LIMBS 256
 /** The widest operand the fixed-size limb buffers above can hold. */
 #define MODEXP_MAX_BYTES (MODEXP_LIMBS * 8)
 

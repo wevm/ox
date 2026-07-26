@@ -551,8 +551,11 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // reaching the coinbase; `BLOBBASEFEE` and `BLOBHASH` read the same values.
   const blobHashes: string[] = tx.blobVersionedHashes ?? []
   const excessBlobGas = big(env.currentExcessBlobGas)
+  // The schedule, not the fork constant: a blob-parameter-only fork changes the
+  // update fraction and nothing else, so reading it from the fork name alone
+  // prices every BPO block wrong.
   const blobBaseFee = forkAtLeast(fork, 'Cancun')
-    ? blobBaseFeeOf(excessBlobGas, fork)
+    ? blobBaseFeeOf(excessBlobGas, fork, test.config?.blobSchedule?.[fork])
     : 0n
   const blobFee = BigInt(blobHashes.length) * GAS_PER_BLOB * blobBaseFee
   putWord(128, blobBaseFee)
