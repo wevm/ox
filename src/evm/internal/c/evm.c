@@ -166,6 +166,35 @@ typedef struct {
   int16_t stack_max_growth; // peak height increase within the block
 } block_info;
 
+/**
+ * A kept analysis of one deployed bytecode.
+ *
+ * Analysis is a pure function of the bytes, and the same contract runs over
+ * and over — several frames within a transaction, then every later
+ * transaction that touches it — so it is computed once and kept for the life
+ * of the state. It is not cheap: it walks the code twice and writes about
+ * twelve bytes per code byte, which on a 24 KiB contract is more work than
+ * most calls into it perform.
+ *
+ * Only code in the state's code arena is cached. Those bytes are written once
+ * and never rewritten before `evm_reset`, so the pointer alone identifies the
+ * content and no hash is needed. Initcode is excluded: it lives in the
+ * caller's memory, which is reused for different bytes, and it runs once.
+ */
+typedef struct {
+  const uint8_t *code;
+  int32_t code_len;
+  int32_t epoch;
+  uint8_t *jd;
+  block_info *blocks;
+  int32_t *gas_fix;
+} analysis_slot;
+
+// Direct-mapped, power of two. A collision overwrites the entry; the tables it
+// pointed at stay in the arena until reset, which is a bounded waste and much
+// simpler than reclaiming them.
+#define ANALYSIS_SLOTS 512
+
 #ifdef OX_TRACE
 // A step record. Present only in the tracing build: recording unconditionally
 // would put a branch on every instruction in the dispatch loop, and the two
@@ -269,6 +298,18 @@ typedef struct {
   uint8_t *frame_analysis_jd[MAX_DEPTH];
   block_info *frame_analysis_blocks[MAX_DEPTH];
   int32_t *frame_analysis_gas_fix[MAX_DEPTH];
+
+  // Analyses kept across frames and across transactions. Reached once per
+  // call, never from the dispatch loop, so it sits with the coldest state.
+  analysis_slot *acache;
+  int32_t acache_epoch;
+  // The `MAX_CODE`-sized tables allocated once by `evm_new`. `jumpdest`,
+  // `blocks` and `gas_fix` above are whatever the running frame uses, usually
+  // a kept analysis; these are the fallback the bare-bytecode entry point
+  // always analyzes into.
+  uint8_t *static_jumpdest;
+  block_info *static_blocks;
+  int32_t *static_gas_fix;
 } evm_vm;
 
 /**
@@ -330,6 +371,10 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
   } while (0)
 
 #define ANALYSIS_ARENA (48 * 1024 * 1024)
+// How much of it kept analyses may claim. Analysis runs about twelve bytes per
+// code byte, so this holds fifty contracts at the 24 KiB deployment limit and
+// many hundreds of ordinary ones.
+#define ANALYSIS_KEPT (16 * 1024 * 1024)
 // A frame's first memory block, which doubles from there. Small on purpose:
 // this is reserved out of the shared analysis arena for every live frame, so
 // at 64 KiB a thousand nested frames claimed 64 MiB of a 48 MiB arena and the
@@ -339,6 +384,20 @@ static int32_t resolve_delegation(evm_vm *vm, int32_t acct, int64_t *gas,
 #define FRAME_STACK (STACK_LIMIT * (int32_t)sizeof(u256))
 // Must stay under the linker's `-z stack-size` with room for one more frame.
 #define C_STACK_BUDGET (6 * 1024 * 1024)
+
+// A native build of this file wants `-falign-loops=32`.
+//
+// The dispatch loop below runs about 30% slower when it does not start on a
+// 32-byte boundary, and whether it does is decided by the total size of
+// everything emitted before it — so adding a helper the loop never calls moves
+// it. That is what was behind the "layout sensitivity" in the notes: measured
+// across a sweep of `-falign-loops`, two builds differing only by an unrelated
+// addition both ran 48.7 and 49.3 µs at 32, and both ran 61-71 µs at every
+// other setting. It is the loop's alignment, not the change under test.
+// Aligning functions does nothing; only the loop matters.
+//
+// Nothing to do for the shipped artifact: wasm has no code alignment, and the
+// engine that JITs it makes this decision itself.
 /**
  * Marks the base of the C stack for the recursion guard, and resets the depth.
  *
@@ -674,6 +733,48 @@ static void analyze(evm_vm *vm) {
   }
 }
 
+/**
+ * Finds the slot `code` would occupy, or null if it is not worth caching.
+ *
+ * Callers pair this with `analysis_hit`: a hit reads the slot's tables, a miss
+ * fills it. Nothing is evicted here, so a probe that ends up not caching
+ * leaves an unrelated contract's entry alone.
+ */
+/** Spreads code-arena offsets, which are dense and unaligned, over the slots. */
+static inline int32_t acache_index(const uint8_t *code) {
+  uint32_t h = (uint32_t)(__UINTPTR_TYPE__)code;
+  h ^= h >> 16;
+  h *= 0x7feb352dU;
+  h ^= h >> 15;
+  return (int32_t)(h & (ANALYSIS_SLOTS - 1));
+}
+
+static analysis_slot *analysis_lookup(evm_vm *vm, const uint8_t *code) {
+  // Only deployed code: everything else is either one-shot or lives in a
+  // buffer whose bytes change under the same address.
+  const evm_state *st = vm->st;
+  if (code < st->code_arena || code >= st->code_arena + st->code_arena_len)
+    return 0;
+  return &vm->acache[acache_index(code)];
+}
+
+static inline int analysis_hit(const evm_vm *vm, const analysis_slot *s,
+                               const uint8_t *code, int code_len) {
+  return s && s->epoch == vm->acache_epoch && s->code == code &&
+         s->code_len == code_len;
+}
+
+static void analysis_keep(evm_vm *vm, analysis_slot *s, const uint8_t *code,
+                          int code_len, uint8_t *jd, block_info *blocks,
+                          int32_t *gas_fix) {
+  s->code = code;
+  s->code_len = code_len;
+  s->epoch = vm->acache_epoch;
+  s->jd = jd;
+  s->blocks = blocks;
+  s->gas_fix = gas_fix;
+}
+
 // ---------------------------------------------------------------------------
 // Interpreter
 // ---------------------------------------------------------------------------
@@ -712,6 +813,66 @@ static void *arena_alloc(evm_vm *vm, int32_t n) {
   void *p = vm->arena + vm->arena_top;
   vm->arena_top += n;
   return p;
+}
+
+/**
+ * Allocates from the far end of the same arena, growing down.
+ *
+ * Kept analyses outlive every frame, so they cannot come off the top, which is
+ * wound back on the way out of each call. Taking them from the other end costs
+ * no extra memory and needs no second limit: frames grow up, analyses grow
+ * down, and the one bounds check in `arena_alloc` catches them meeting.
+ */
+static void *arena_alloc_kept(evm_vm *vm, int32_t n) {
+  n = (n + 15) & ~15;
+  // Capped, and not merely bounded by the arena: without this a state holding
+  // more distinct code than the arena can analyze would eat the room frames
+  // need, turning a cache that should have quietly stopped helping into an
+  // out-of-memory partway down a call chain.
+  if (ANALYSIS_ARENA - (vm->arena_cap - n) > ANALYSIS_KEPT) return 0;
+  if (n > vm->arena_cap - vm->arena_top) return 0;
+  vm->arena_cap -= n;
+  return vm->arena + vm->arena_cap;
+}
+
+
+/**
+ * Analyzes `code` now and keeps the result.
+ *
+ * Called when code enters the state, so the cost lands with the load rather
+ * than with the first call into it — the same place a rival that analyzes on
+ * `Bytecode` construction pays it. Does nothing if the code is not cacheable
+ * or the kept region is full; the lazy path in `run_frame` covers both.
+ */
+static void analysis_prime(evm_vm *vm, const uint8_t *code, int code_len) {
+  if (code_len <= 0) return;
+  analysis_slot *slot = analysis_lookup(vm, code);
+  if (!slot || analysis_hit(vm, slot, code, code_len)) return;
+  uint8_t *jd = (uint8_t *)arena_alloc_kept(vm, (code_len + 7) / 8 + 8);
+  block_info *bl = (block_info *)arena_alloc_kept(
+      vm, (code_len + 1) * (int32_t)sizeof(block_info));
+  int32_t *gf = (int32_t *)arena_alloc_kept(
+      vm, (code_len + 1) * (int32_t)sizeof(int32_t));
+  if (!jd || !bl || !gf) return;
+  // `analyze` works on whatever tables the VM currently points at, so borrow
+  // them and hand them back.
+  const uint8_t *s_code = vm->frame_code;
+  const int s_len = vm->code_len;
+  uint8_t *s_jd = vm->jumpdest;
+  block_info *s_bl = vm->blocks;
+  int32_t *s_gf = vm->gas_fix;
+  vm->frame_code = code;
+  vm->code_len = code_len;
+  vm->jumpdest = jd;
+  vm->blocks = bl;
+  vm->gas_fix = gf;
+  analyze(vm);
+  vm->frame_code = s_code;
+  vm->code_len = s_len;
+  vm->jumpdest = s_jd;
+  vm->blocks = s_bl;
+  vm->gas_fix = s_gf;
+  analysis_keep(vm, slot, code, code_len, jd, bl, gf);
 }
 
 /**
@@ -764,17 +925,44 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
       reused = i;
       break;
     }
-  uint8_t *fjd = reused >= 0
-                     ? vm->frame_analysis_jd[reused]
-                     : (uint8_t *)arena_alloc(vm, (code_len + 7) / 8 + 8);
-  block_info *fblocks =
-      reused >= 0 ? vm->frame_analysis_blocks[reused]
-                  : (block_info *)arena_alloc(
-                        vm, (code_len + 1) * (int32_t)sizeof(block_info));
-  int32_t *fgas_fix =
-      reused >= 0 ? vm->frame_analysis_gas_fix[reused]
-                  : (int32_t *)arena_alloc(
-                        vm, (code_len + 1) * (int32_t)sizeof(int32_t));
+  // Failing that, the kept cache: deployed code analyzed by any earlier frame
+  // or transaction is still good.
+  analysis_slot *slot = reused < 0 ? analysis_lookup(vm, code) : 0;
+  const int cached = analysis_hit(vm, slot, code, code_len);
+  const int have = reused >= 0 || cached;
+
+  uint8_t *fjd;
+  block_info *fblocks;
+  int32_t *fgas_fix;
+  if (reused >= 0) {
+    fjd = vm->frame_analysis_jd[reused];
+    fblocks = vm->frame_analysis_blocks[reused];
+    fgas_fix = vm->frame_analysis_gas_fix[reused];
+  } else if (cached) {
+    fjd = slot->jd;
+    fblocks = slot->blocks;
+    fgas_fix = slot->gas_fix;
+  } else {
+    // A fresh analysis goes in the kept region when the code is cacheable and
+    // there is room, and in the frame's own scratch otherwise.
+    const int32_t jd_n = (code_len + 7) / 8 + 8;
+    const int32_t bl_n = (code_len + 1) * (int32_t)sizeof(block_info);
+    const int32_t gf_n = (code_len + 1) * (int32_t)sizeof(int32_t);
+    fjd = slot ? (uint8_t *)arena_alloc_kept(vm, jd_n)
+               : (uint8_t *)arena_alloc(vm, jd_n);
+    fblocks = slot ? (block_info *)arena_alloc_kept(vm, bl_n)
+                   : (block_info *)arena_alloc(vm, bl_n);
+    fgas_fix = slot ? (int32_t *)arena_alloc_kept(vm, gf_n)
+                    : (int32_t *)arena_alloc(vm, gf_n);
+    if (slot && (!fjd || !fblocks || !fgas_fix)) {
+      // The kept region is full. Fall back to the frame's scratch, and stop
+      // trying to cache this one.
+      slot = 0;
+      fjd = (uint8_t *)arena_alloc(vm, jd_n);
+      fblocks = (block_info *)arena_alloc(vm, bl_n);
+      fgas_fix = (int32_t *)arena_alloc(vm, gf_n);
+    }
+  }
   u256 *fstack = (u256 *)arena_alloc(vm, FRAME_STACK);
   if (!fjd || !fblocks || !fgas_fix || !fstack) {
     vm->arena_top = arena_mark;
@@ -811,7 +999,10 @@ static evm_status run_frame(evm_vm *vm, int32_t self, const uint8_t *caller,
   vm->frame_analysis_blocks[vm->depth] = fblocks;
   vm->frame_analysis_gas_fix[vm->depth] = fgas_fix;
   vm->depth++;
-  if (reused < 0) analyze(vm);
+  if (!have) {
+    analyze(vm);
+    if (slot) analysis_keep(vm, slot, code, code_len, fjd, fblocks, fgas_fix);
+  }
 
   const evm_status status = interpret(vm);
 
@@ -2428,10 +2619,20 @@ EXPORT("evm_new") evm_vm *evm_new(int memory_cap) {
   if (!vm->jumpdest || !vm->blocks || !vm->gas_fix ||
       !vm->memory || !vm->output || !vm->st || !vm->returndata || !vm->stage)
     return 0;
+  vm->static_jumpdest = vm->jumpdest;
+  vm->static_blocks = vm->blocks;
+  vm->static_gas_fix = vm->gas_fix;
   vm->st->log_data = (uint8_t *)ox_alloc(LOG_ARENA);
   vm->st->code_arena = (uint8_t *)ox_alloc(CODE_ARENA);
   vm->arena = (uint8_t *)ox_alloc(ANALYSIS_ARENA);
-  if (!vm->st->log_data || !vm->st->code_arena || !vm->arena) return 0;
+  // Last, so that adding it leaves every other block where it was.
+  vm->acache = (analysis_slot *)ox_alloc(ANALYSIS_SLOTS * sizeof(analysis_slot));
+  if (!vm->st->log_data || !vm->st->code_arena || !vm->arena || !vm->acache)
+    return 0;
+  // Slot 0 would otherwise match uninitialized entries whose `code` happens to
+  // be null; starting at 1 keeps a zeroed table cold.
+  vm->acache_epoch = 1;
+  mem_zero((uint8_t *)vm->acache, ANALYSIS_SLOTS * sizeof(analysis_slot));
   vm->arena_cap = ANALYSIS_ARENA;
   vm->arena_top = 0;
   vm->mem = vm->memory;
@@ -2500,6 +2701,10 @@ int evm_set_code(evm_vm *vm, int code_len) {
   if (code_len < 0 || code_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
   vm->code_len = code_len;
   vm->frame_code = vm->code;
+  // An `evm_execute` in between may have left a cached analysis in place.
+  vm->jumpdest = vm->static_jumpdest;
+  vm->blocks = vm->static_blocks;
+  vm->gas_fix = vm->static_gas_fix;
   analyze(vm);
   vm->analyzed = 1;
   return EVM_SUCCESS;
@@ -2575,6 +2780,14 @@ EXPORT("evm_reset") void evm_reset(evm_vm *vm) {
   vm->sp = 0;
   vm->stack_base = vm->stack;
   vm->arena_top = 0;
+  // Every kept analysis pointed into the region below `arena_cap` and was
+  // keyed on a code-arena address that `state_reset` has just invalidated.
+  // Bumping the epoch retires them all without walking the table.
+  vm->arena_cap = ANALYSIS_ARENA;
+  vm->acache_epoch++;
+  vm->jumpdest = vm->static_jumpdest;
+  vm->blocks = vm->static_blocks;
+  vm->gas_fix = vm->static_gas_fix;
 }
 
 /** Interns the account at `stage[0..20)` and sets its balance, nonce, and code. */
@@ -2589,6 +2802,12 @@ int evm_put_account(evm_vm *vm, int64_t nonce, int code_len) {
   // caller loading a codeless account wants it too.
   if (!set_code(vm->st, a, vm->stage + STAGE_BYTES, code_len))
     return EVM_OUT_OF_MEMORY;
+  // Analyze it here rather than on the first call. Loading an account is the
+  // one moment the code is known to be new, so this is where the cost belongs;
+  // leaving it to execution charges every transaction for work whose answer
+  // never changes.
+  analysis_prime(vm, vm->st->code_arena + vm->st->accounts[a].code_offset,
+                 code_len);
   // Loading pre-state is not a mutation to roll back.
   vm->st->journal_len = 0;
   return EVM_SUCCESS;
@@ -2703,13 +2922,14 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   if (deleg_oog) return EVM_OUT_OF_GAS;
   const int32_t code_len = vm->st->accounts[code_from].code_len;
   if (code_len > MAX_CODE) return EVM_CODE_TOO_LARGE;
-  mem_copy(vm->code,
-           vm->st->code_arena + vm->st->accounts[code_from].code_offset,
-           (uint64_t)code_len);
+  // Straight off the code arena rather than through `vm->code`. The arena is
+  // append-only for the life of the state, so the bytes stay put for the whole
+  // execution — and running from the same address a nested call would use is
+  // what lets both share one cached analysis.
+  const uint8_t *top_code =
+      vm->st->code_arena + vm->st->accounts[code_from].code_offset;
   mem_copy(vm->input, vm->stage + STAGE_BYTES, (uint64_t)input_len);
   vm->code_len = code_len;
-  analyze(vm);
-  vm->analyzed = 1;
 
   vm->input_len = input_len;
   vm->gas = gas;
@@ -2720,8 +2940,31 @@ int evm_execute(evm_vm *vm, int input_len, int64_t gas, int is_static) {
   ENTER_TOP(vm);
   vm->mem = vm->memory;
   vm->mem_cap = vm->memory_cap;
-  vm->frame_code = vm->code;
+  vm->frame_code = top_code;
   vm->frame_input = vm->input;
+
+  analysis_slot *slot = analysis_lookup(vm, top_code);
+  if (analysis_hit(vm, slot, top_code, code_len)) {
+    vm->jumpdest = slot->jd;
+    vm->blocks = slot->blocks;
+    vm->gas_fix = slot->gas_fix;
+  } else {
+    // The VM's own tables are sized for `MAX_CODE`, so they always fit; the
+    // kept region is the preferred home but not a requirement.
+    uint8_t *jd = (uint8_t *)arena_alloc_kept(vm, (code_len + 7) / 8 + 8);
+    block_info *bl = (block_info *)arena_alloc_kept(
+        vm, (code_len + 1) * (int32_t)sizeof(block_info));
+    int32_t *gf = (int32_t *)arena_alloc_kept(
+        vm, (code_len + 1) * (int32_t)sizeof(int32_t));
+    const int room = slot && jd && bl && gf;
+    vm->jumpdest = room ? jd : vm->static_jumpdest;
+    vm->blocks = room ? bl : vm->static_blocks;
+    vm->gas_fix = room ? gf : vm->static_gas_fix;
+    analyze(vm);
+    if (room)
+      analysis_keep(vm, slot, top_code, code_len, jd, bl, gf);
+  }
+  vm->analyzed = 0; // `evm_run`'s tables are no longer the ones in place
   vm->stack_base = vm->stack;
   vm->sp = 0;
   // Clamp to the static buffer: a previous execution may have grown into a
