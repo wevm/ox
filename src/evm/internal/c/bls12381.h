@@ -554,31 +554,6 @@ static fp12 fp12_frobenius(fp12 a) {
   return (fp12){c0, c1};
 }
 
-static fp12 fp12_pow_limbs(fp12 a, const uint64_t *e, int n) {
-  // Four bits at a time. The only caller is the hard part of the final
-  // exponentiation, whose exponent is 1280 bits, so a fifteen-entry table
-  // costs fourteen multiplications and saves several hundred.
-  fp12 tab[16];
-  tab[1] = a;
-  for (int i = 2; i < 16; i++) tab[i] = fp12_mul(tab[i - 1], a);
-
-  fp12 r = fp12_one();
-  int started = 0;
-  for (int i = n - 1; i >= 0; i--)
-    for (int sh = 60; sh >= 0; sh -= 4) {
-      // That caller's base has been through the easy part, so it lies in the
-      // cyclotomic subgroup and so does every power of it.
-      if (started)
-        for (int k = 0; k < 4; k++) r = fp12_cyclo_sqr(r);
-      const int w = (int)((e[i] >> sh) & 0xf);
-      if (w) {
-        r = started ? fp12_mul(r, tab[w]) : tab[w];
-        started = 1;
-      }
-    }
-  return r;
-}
-
 /** Division by xi = 1 + u. Its norm is 2, so `1/xi = (1 - u)/2`. */
 static inline fp2 fp2_div_xi(fp2 a) {
   const bfp c0 = bfp_add(a.c0, a.c1);
@@ -932,18 +907,6 @@ static void bg2_affine(const bg2 *p, fp2 *x, fp2 *y) {
 #define BLS_Z 0xD201000000010000ULL
 #define BLS_Z_BITS 64
 
-// (p^4 - p^2 + 1) / r, the hard part of the final exponentiation, as one
-// 1268-bit exponent.
-static const uint64_t bls_hard_exp[20] = {
-    0xE516C3F438E3BA79ULL, 0xFA9912AAE208CCF1ULL, 0x905CE937335D5B68ULL,
-    0xC71A2629B0DEA236ULL, 0x83774940996754C8ULL, 0x21D160AEB6A1E799ULL,
-    0x2ED0B283ED237DB4ULL, 0x915C97F36C6F1821ULL, 0x67F17FCBDE783765ULL,
-    0x2378B9039096D1B7ULL, 0x7988F8761BDC51DCULL, 0x2076995003FC77A1ULL,
-    0x827ECA0BA621315BULL, 0xE5A72BCE8D63CB9FULL, 0xF68F7764C28B6F8AULL,
-    0x2F230063CF081517ULL, 0x94506632528D6A9AULL, 0xD3CDE88EEB996CA3ULL,
-    0xC0BD38C3195C899EULL, 0x000F686B3D807D01ULL,
-};
-
 /**
  * The line through `a` and `b` (or the tangent at `a`), evaluated at the affine
  * G1 point `(px, py)` and lifted into Fp12.
@@ -1004,12 +967,55 @@ static fp12 bls_miller(bfp px, bfp py, fp2 qx, fp2 qy) {
   return fp12_conj(f);
 }
 
-/** The final exponentiation, `f^((p^12 - 1) / r)`. */
+/** `a^z` for the curve parameter, inside the cyclotomic subgroup. */
+static fp12 fp12_expt(fp12 a) {
+  fp12 r = a;
+  // `BLS_Z` holds |z|, whose top bit starts the loop. It has a Hamming weight
+  // of six, so this is 63 squarings and five multiplications and a window
+  // would only add table cost.
+  for (int i = BLS_Z_BITS - 2; i >= 0; i--) {
+    r = fp12_cyclo_sqr(r);
+    if ((BLS_Z >> i) & 1) r = fp12_mul(r, a);
+  }
+  // z is negative, and conjugation is inversion in this subgroup.
+  return fp12_conj(r);
+}
+
+/**
+ * `f^(3 * (p^4 - p^2 + 1)/r)`, by the addition chain rather than the exponent.
+ *
+ * The exponent is 1268 bits, and a windowed walk over it is 1268 cyclotomic
+ * squarings and some three hundred multiplications. For a BLS12 curve it
+ * factors through the parameter `z`,
+ *
+ *   3 * (p^4 - p^2 + 1)/r = (z-1)^2 (z + p) (z^2 + p^2 - 1) + 3
+ *
+ * which is Hayashida, Hayasaka and Teruya's identity, verified against the
+ * exponent before any of this was written. Five exponentiations by `z` -- 63
+ * squarings each, since |z| has a Hamming weight of six -- and a handful of
+ * multiplications and Frobenius maps replace the walk.
+ *
+ * The result is the cube of the pairing value. `r` is prime and not 3, so
+ * cubing is a bijection on the r-torsion and "is it one" is unchanged; both
+ * callers ask only that. It is not the pairing itself, and nothing here should
+ * start treating it as such.
+ */
+static fp12 bls_hard_part(fp12 f) {
+  fp12 t = fp12_mul(fp12_expt(f), fp12_conj(f));  // f^(z-1)
+  t = fp12_mul(fp12_expt(t), fp12_conj(t));       // f^((z-1)^2)
+  t = fp12_mul(fp12_expt(t), fp12_frobenius(t));  // ... ^(z + p)
+  const fp12 tz2 = fp12_expt(fp12_expt(t));
+  const fp12 tp2 = fp12_frobenius(fp12_frobenius(t));
+  t = fp12_mul(fp12_mul(tz2, tp2), fp12_conj(t)); // ... ^(z^2 + p^2 - 1)
+  return fp12_mul(t, fp12_mul(fp12_cyclo_sqr(f), f)); // ... * f^3
+}
+
+/** The final exponentiation, `f^((p^12 - 1) / r)`, up to the cube above. */
 static fp12 bls_final_exp(fp12 f) {
   fp12 t = fp12_mul(fp12_conj(f), fp12_inv(f));
   const fp12 t2 = fp12_frobenius(fp12_frobenius(t));
   t = fp12_mul(t, t2);
-  return fp12_pow_limbs(t, bls_hard_exp, 20);
+  return bls_hard_part(t);
 }
 
 // ---------------------------------------------------------------------------
