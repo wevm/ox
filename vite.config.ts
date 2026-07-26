@@ -69,7 +69,10 @@ export default defineConfig({
         },
       },
       {
-        files: ['src/**/internal/**/*.ts'],
+        // Neither internal helpers nor tests are public API, so the
+        // public-documentation rules do not apply -- and `require-example`'s
+        // autofix corrupts JSDoc on nested functions, which tests are full of.
+        files: ['src/**/internal/**/*.ts', 'src/**/_test/**/*.ts'],
         rules: {
           'jsdoc-js/require-jsdoc': 'off',
           'jsdoc-js/require-description': 'off',

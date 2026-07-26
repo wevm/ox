@@ -17,6 +17,24 @@
 
 #define KECCAK256_RATE 136
 
+/**
+ * Applies Keccak-f[1600] to a 200-byte state in place.
+ *
+ * Exported only so the permutation can be checked against the Keccak team's own
+ * reference values (`test/vectors/hashes/KeccakF-1600-IntermediateValues.txt`).
+ * It is the shared core of this file and `mine.c`, and `mine.c`'s specialized
+ * single-block path is not covered by any published digest vector -- so this is
+ * the only way to test that core directly, and to localize a regression to a
+ * specific round when someone edits the unrolled macros.
+ */
+__attribute__((export_name("keccak_f1600")))
+void ox_keccak_f1600(uint8_t *state) {
+    uint64_t A[25];
+    for (int i = 0; i < 25; i++) A[i] = load64_le(state + i * 8);
+    keccak_f1600(A);
+    for (int i = 0; i < 25; i++) store64_le(state + i * 8, A[i]);
+}
+
 static void keccak256_absorb(uint64_t *A, const uint8_t *block) {
     for (int i = 0; i < KECCAK256_RATE / 8; i++)
         A[i] ^= load64_le(block + i * 8);

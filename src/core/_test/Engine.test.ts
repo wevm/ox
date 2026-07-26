@@ -1,15 +1,4 @@
-import { ctr } from '@noble/ciphers/aes.js'
-import { ed25519, x25519 } from '@noble/curves/ed25519.js'
-import { p256 } from '@noble/curves/nist.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
-import { blake3 } from '@noble/hashes/blake3.js'
-import { hmac } from '@noble/hashes/hmac.js'
-import { ripemd160 } from '@noble/hashes/legacy.js'
-import { pbkdf2, pbkdf2Async } from '@noble/hashes/pbkdf2.js'
-import { scrypt, scryptAsync } from '@noble/hashes/scrypt.js'
-import { sha256 } from '@noble/hashes/sha2.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
-import { mnemonicToSeedSync } from '@scure/bip39'
 import {
   Address,
   BinaryStateTree,
@@ -25,6 +14,7 @@ import {
   X25519,
 } from 'ox'
 import { describe, expect, test, vi } from 'vp/test'
+import { identity as identityEngine } from '../../../test/engines.js'
 
 const privateKey =
   '0x0000000000000000000000000000000000000000000000000000000000000001'
@@ -42,88 +32,6 @@ function merkelize() {
     new Uint8Array(32).fill(2),
   )
   return BinaryStateTree.merkelize(tree)
-}
-
-// An engine whose every slot delegates to the same `@noble/*` implementation ox
-// uses by default. Installing it must not change a single result -- that is what
-// proves the byte conventions in the slot contracts match what ox expects.
-const identityEngine: Engine.Engine = {
-  Ed25519: {
-    getPublicKey: (privateKey) => ed25519.getPublicKey(privateKey),
-    randomSecretKey: () => ed25519.utils.randomSecretKey(),
-    sign: (payload, privateKey) => ed25519.sign(payload, privateKey),
-    toMontgomery: (publicKey) => ed25519.utils.toMontgomery(publicKey),
-    toMontgomerySecret: (privateKey) =>
-      ed25519.utils.toMontgomerySecret(privateKey),
-    verify: (signature, payload, publicKey) =>
-      ed25519.verify(signature, payload, publicKey),
-  },
-  Hash: {
-    blake3: (input) => blake3(input),
-    hmacSha256: (key, message) => hmac(sha256, key, message),
-    keccak256: (input) => keccak_256(input),
-    ripemd160: (input) => ripemd160(input),
-    sha256: (input) => sha256(input),
-  },
-  Keystore: {
-    aesCtrDecrypt: (key, iv, data) => ctr(key, iv).decrypt(data),
-    aesCtrEncrypt: (key, iv, data) => ctr(key, iv).encrypt(data),
-    pbkdf2Sha256: (password, salt, options) =>
-      pbkdf2(sha256, password, salt, options),
-    pbkdf2Sha256Async: (password, salt, options) =>
-      pbkdf2Async(sha256, password, salt, options),
-    scrypt: (password, salt, options) => scrypt(password, salt, options),
-    scryptAsync: (password, salt, options) =>
-      scryptAsync(password, salt, options),
-  },
-  Mnemonic: {
-    toSeed: (mnemonic, passphrase) => mnemonicToSeedSync(mnemonic, passphrase),
-  },
-  P256: {
-    getPublicKey: (privateKey) => p256.getPublicKey(privateKey, false),
-    getSharedSecret: (privateKey, publicKey) =>
-      p256.getSharedSecret(privateKey, publicKey, true),
-    randomSecretKey: () => p256.utils.randomSecretKey(),
-    recoverPublicKey: (signature, payload) =>
-      p256.Signature.fromBytes(signature, 'recovered')
-        .recoverPublicKey(payload)
-        .toBytes(false),
-    sign: (payload, privateKey, options) =>
-      p256.sign(payload, privateKey, {
-        ...options,
-        format: 'recovered',
-        lowS: true,
-      }),
-    verify: (signature, payload, publicKey, options) =>
-      p256.verify(signature, payload, publicKey, { ...options, lowS: true }),
-  },
-  Secp256k1: {
-    getPublicKey: (privateKey) => secp256k1.getPublicKey(privateKey, false),
-    getSharedSecret: (privateKey, publicKey) =>
-      secp256k1.getSharedSecret(privateKey, publicKey, true),
-    randomSecretKey: () => secp256k1.utils.randomSecretKey(),
-    recoverPublicKey: (signature, payload) =>
-      secp256k1.Signature.fromBytes(signature, 'recovered')
-        .recoverPublicKey(payload)
-        .toBytes(false),
-    sign: (payload, privateKey, options) =>
-      secp256k1.sign(payload, privateKey, {
-        ...options,
-        format: 'recovered',
-        lowS: true,
-      }),
-    verify: (signature, payload, publicKey, options) =>
-      secp256k1.verify(signature, payload, publicKey, {
-        ...options,
-        lowS: true,
-      }),
-  },
-  X25519: {
-    getPublicKey: (privateKey) => x25519.getPublicKey(privateKey),
-    getSharedSecret: (privateKey, publicKey) =>
-      x25519.getSharedSecret(privateKey, publicKey),
-    randomSecretKey: () => x25519.utils.randomSecretKey(),
-  },
 }
 
 describe('set', () => {

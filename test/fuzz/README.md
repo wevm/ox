@@ -8,6 +8,8 @@ Property-based / fuzz harnesses for `ox`, built on
 
 ```
 test/fuzz/arbitraries/   # Shared, ox-specific fast-check arbitraries.
+test/engines.ts          # Shared `Engine` implementations (identity, sentinel).
+test/vectors/hashes/     # Published hash vectors, for non-differential checks.
 src/**/_test/*.fuzz.ts   # Co-located fuzz harnesses.
 ```
 
@@ -73,3 +75,6 @@ Do not rely on the seed alone -- seeds are not stable across
   distribution.
 - **Keep PR runs bounded.** Default `numRuns` should keep the `Fuzz`
   CI job under ~10 minutes. Heavier runs belong in nightly schedules.
+- **Differential properties need a non-differential backstop.** A property
+  asserting two implementations agree cannot catch a fault they share. Pair it
+  with published vectors -- see `test/vectors/hashes/`.
