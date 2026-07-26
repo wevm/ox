@@ -57,6 +57,7 @@ static const op_info op_table[256] = {
     [0x1b] = OP(3, 2, 1),      // SHL
     [0x1c] = OP(3, 2, 1),      // SHR
     [0x1d] = OP(3, 2, 1),      // SAR
+    [0x1e] = OP(5, 1, 1),      // CLZ        (Osaka; priced with MUL, not ADD)
 
     [0x20] = OP(30, 2, 1),     // KECCAK256  (+6 per word, + memory)
 

@@ -35,6 +35,7 @@ export const codes = {
   SHL: 0x1b,
   SHR: 0x1c,
   SAR: 0x1d,
+  CLZ: 0x1e,
 
   KECCAK256: 0x20,
 
@@ -115,7 +116,7 @@ export type Name = keyof typeof codes
 /**
  * Opcodes the engine can execute.
  *
- * This is every named opcode in the Prague instruction set. The PUSH, DUP and
+ * This is every named opcode in the Osaka instruction set. The PUSH, DUP and
  * SWAP families are executable too; they are absent from {@link codes} as
  * individual entries and so cannot be listed here. An undefined byte, or
  * `INVALID` itself, yields an `Evm.InvalidOpcodeError`.
@@ -151,6 +152,7 @@ export const supported = [
   'SHL',
   'SHR',
   'SAR',
+  'CLZ',
   'KECCAK256',
   'ADDRESS',
   'BALANCE',
@@ -229,7 +231,7 @@ const names = /*#__PURE__*/ (() => {
 
 /**
  * Returns the mnemonic for an opcode byte, or `undefined` if it is undefined
- * in the Prague instruction set.
+ * in the Osaka instruction set.
  *
  * @example
  * ```ts twoslash

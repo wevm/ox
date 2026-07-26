@@ -41,6 +41,43 @@ export type Result = {
 }
 
 /**
+ * The forks the engine implements, newest last.
+ *
+ * The value is the engine's internal spec id. These are not contiguous: the
+ * engine numbers every fork that repriced something, including ones no caller
+ * names directly. `Amsterdam` is reserved rather than implemented — it is
+ * Glamsterdam's execution-layer name, every EIP scheduled for it is still
+ * Draft, and selecting it today behaves exactly like `Osaka`.
+ */
+export const forks = {
+  Frontier: 0,
+  Homestead: 1,
+  Tangerine: 2,
+  SpuriousDragon: 3,
+  Byzantium: 4,
+  Constantinople: 5,
+  Petersburg: 6,
+  Istanbul: 7,
+  Berlin: 8,
+  London: 9,
+  Paris: 10,
+  Shanghai: 11,
+  Cancun: 12,
+  Prague: 13,
+  Osaka: 14,
+  Amsterdam: 15,
+} as const
+
+/** A fork name the engine accepts. */
+export type Fork = keyof typeof forks
+
+/**
+ * The newest fork that has activated on mainnet, and what execution defaults
+ * to. Fusaka, whose execution-layer name is Osaka, activated 2025-12-03.
+ */
+export const latestFork = 'Osaka' satisfies Fork
+
+/**
  * Prepares the EVM engine.
  *
  * Calling this is optional — {@link ox#evm/Evm.(run:function)} loads the engine
@@ -90,13 +127,17 @@ export declare namespace ready {
  * @returns The execution result.
  */
 export async function run(options: run.Options): Promise<Result> {
-  const { bytecode, data = '0x', gas = 30_000_000n } = options
+  const { bytecode, data = '0x', gas = 30_000_000n, fork = latestFork } = options
 
   const engine = await load_.load()
   const input = typeof data === 'string' ? Hex.toBytes(data) : data
 
   if (!vm) vm = engine.evm_new(0)
   if (!vm) throw new load_.LoadError()
+  // Before the code is staged: analysis is fork-independent, but the block
+  // validator's gas figures are not, and `evm_set_code` is what caches them.
+  if (forks[fork] === undefined) throw new UnknownForkError({ fork })
+  engine.evm_set_spec(vm, forks[fork])
 
   // Check capacity before writing. The buffers are fixed-size fields inside the
   // engine's VM struct, so an oversized `set` would silently scribble over the
@@ -157,6 +198,10 @@ export declare namespace run {
   type Options = {
     /** Bytecode to execute. */
     bytecode: Hex.Hex | Uint8Array
+    /**
+     * Fork whose rules to execute under. Defaults to {@link ox#Evm.latestFork}.
+     */
+    fork?: Fork | undefined
     /** Calldata. @default '0x' */
     data?: Hex.Hex | Uint8Array | undefined
     /** Gas limit. @default 30_000_000n */
@@ -166,6 +211,7 @@ export declare namespace run {
   type ErrorType =
     | load_.LoadError
     | SizeOverflowError
+    | UnknownForkError
     | Hex.toBytes.ErrorType
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
@@ -261,6 +307,28 @@ export class SizeOverflowError extends Errors.BaseError {
     super(
       `${name} cannot exceed \`${maxSize}\` bytes. Given size: \`${givenSize}\` bytes.`,
     )
+  }
+}
+
+/**
+ * Thrown when a fork name is not one the engine implements.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm } from 'ox/evm'
+ *
+ * // @ts-expect-error
+ * await Evm.run({ bytecode: '0x00', fork: 'Verkle' })
+ * // @error: Evm.UnknownForkError: Unknown fork `Verkle`.
+ * ```
+ */
+export class UnknownForkError extends Errors.BaseError {
+  override readonly name = 'Evm.UnknownForkError'
+
+  constructor({ fork }: { fork: string }) {
+    super(`Unknown fork \`${fork}\`.`, {
+      metaMessages: [`Known forks: ${Object.keys(forks).join(', ')}.`],
+    })
   }
 }
 

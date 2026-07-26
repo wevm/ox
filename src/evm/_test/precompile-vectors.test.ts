@@ -22,6 +22,7 @@ import failBlsMapG1 from './vectors/fail-blsMapG1.json' with { type: 'json' }
 import failBlsMapG2 from './vectors/fail-blsMapG2.json' with { type: 'json' }
 import failBlsPairing from './vectors/fail-blsPairing.json' with { type: 'json' }
 import modexp from './vectors/modexp.json' with { type: 'json' }
+import p256Verify from './vectors/p256Verify.json' with { type: 'json' }
 import modexpEip2565 from './vectors/modexp_eip2565.json' with { type: 'json' }
 
 /**
@@ -35,8 +36,9 @@ import modexpEip2565 from './vectors/modexp_eip2565.json' with { type: 'json' }
  * include the rejection cases, which is where the engine's own test corpus is
  * thinnest.
  *
- * P256VERIFY has vectors upstream and no suite here: EIP-7951 is not
- * implemented, and the engine's newest fork is Prague.
+ * The P256VERIFY set is the whole upstream file rather than a sample: 215 of
+ * its 782 cases expect rejection, and they are Wycheproof-derived, which is
+ * the closest thing to an adversarial corpus available for a curve.
  */
 
 /**
@@ -52,8 +54,20 @@ function callPrecompile(address: string, gas: number) {
   // PUSH1 for the one-byte precompile addresses, PUSH2 for anything wider.
   const push = address.length === 2 ? '60' : '61'
   const g = gas.toString(16).padStart(8, '0')
-  return `0x365f5f37${'610400'}${'611000'}365f${push}${address}63${g}fa5f533d5f60013e3d600101${'5f'}f3` as const
+  // `PUSH1 0` rather than PUSH0 throughout: the suites name forks as far back
+  // as Byzantium to assert their own gas schedules, and PUSH0 is Shanghai.
+  const z = '6000'
+  return (
+    `0x36${z}${z}37` + // CALLDATACOPY(0, 0, calldatasize)
+    `610400611000${'36'}${z}${push}${address}63${g}fa` + // STATICCALL
+    `${z}53` + // memory[0] = success
+    `3d${z}6001${'3e'}` + // RETURNDATACOPY(1, 0, returndatasize)
+    `3d600101${z}f3` // RETURN(0, returndatasize + 1)
+  ) as const
 }
+
+/** Fork a suite's gas column belongs to, when it is not the default. */
+type Suite = { address: string; cases: Case[]; fork?: Evm.Fork }
 
 type Case = {
   name: string
@@ -63,19 +77,16 @@ type Case = {
   gas?: number
 }
 
-const suites: readonly (readonly [
-  string,
-  { address: string; cases: Case[] },
-])[] = [
+const suites: readonly (readonly [string, Suite])[] = [
   ['ecrecover (0x01)', ecRecover],
-  // Byzantium-era answers. Its gas column is the pre-EIP-2565 schedule and
-  // has been stripped: `Evm.run` is Prague, where the price is lower, so the
-  // figures would assert the wrong fork. `modexp_eip2565` carries the current
-  // ones.
-  ['modexp (0x05)', modexp],
-  ['modexp, EIP-2565 pricing (0x05)', modexpEip2565],
+  // Each modexp file is a different schedule, and there have been three:
+  // EIP-198's, EIP-2565's from Berlin, and EIP-7883's from Osaka. Naming the
+  // fork lets all three assert their own prices instead of the newest one.
+  ['modexp, EIP-198 pricing (0x05)', { ...modexp, fork: 'Byzantium' }],
+  ['modexp, EIP-2565 pricing (0x05)', { ...modexpEip2565, fork: 'Berlin' }],
   ['blake2f (0x09)', blake2F],
   ['blake2f, rejections (0x09)', failBlake2f],
+  ['P256VERIFY (0x0100)', p256Verify],
   ['bn254 G1 add (0x06)', bn256Add],
   ['bn254 G1 mul (0x07)', bn256ScalarMul],
   ['bn254 pairing (0x08)', bn256Pairing],
@@ -100,11 +111,17 @@ const BUDGET = 200_000_000n
 /** What a rejected input is given, since its own cost is not the point. */
 const REJECT_GAS = 100_000_000
 
-async function call(address: string, gas: number, input: string) {
+async function call(
+  address: string,
+  gas: number,
+  input: string,
+  fork: Evm.Fork,
+) {
   const result = await Evm.run({
     bytecode: callPrecompile(address, gas),
     data: `0x${input}`,
     gas: BUDGET,
+    fork,
   })
   expect(result.status).toBe('success')
   const out = result.data.slice(2)
@@ -112,11 +129,12 @@ async function call(address: string, gas: number, input: string) {
 }
 
 describe.each(suites)('%s', (_name, suite) => {
+  const fork = suite.fork ?? Evm.latestFork
   test.each(suite.cases.map((c) => [c.name, c] as const))('%s', async (_, c) => {
     if (c.error !== undefined) {
       // go-ethereum reports a reason string; the precompile ABI only carries
       // failure, so the assertion is that it did not succeed.
-      const { succeeded } = await call(suite.address, REJECT_GAS, c.input)
+      const { succeeded } = await call(suite.address, REJECT_GAS, c.input, fork)
       expect(succeeded, `expected rejection: ${c.error}`).toBe(false)
       return
     }
@@ -127,6 +145,7 @@ describe.each(suites)('%s', (_name, suite) => {
       suite.address,
       gas ?? REJECT_GAS,
       c.input,
+      fork,
     )
     expect(succeeded).toBe(true)
     expect(returned).toBe((c.expected as string).toLowerCase())
@@ -137,7 +156,7 @@ describe.each(suites)('%s', (_name, suite) => {
     // catches a fee formula that is generous as well as one that overcharges —
     // EIP-2565's modexp pricing being the one most easily got wrong.
     if (gas !== undefined && gas > 0) {
-      const short = await call(suite.address, gas - 1, c.input)
+      const short = await call(suite.address, gas - 1, c.input, fork)
       expect(short.succeeded, `should not fit in ${gas - 1} gas`).toBe(false)
     }
   })

@@ -140,6 +140,9 @@ const forkOrder = [
   'Shanghai',
   'Cancun',
   'Prague',
+  'Osaka',
+  // Reserved. Glamsterdam's execution-layer name; nothing keys off it yet.
+  'Amsterdam',
 ]
 const forkAtLeast = (fork: string, min: string) =>
   forkOrder.indexOf(fork) >= forkOrder.indexOf(min)
@@ -151,6 +154,7 @@ const forkAtLeast = (fork: string, min: string) =>
  * fixture targets directly (Tangerine, Spurious Dragon, Constantinople), so
  * these ids are not contiguous over `forkOrder`.
  */
+const SPEC_LATEST = 14
 const specIds: Record<string, number> = {
   Frontier: 0,
   Homestead: 1,
@@ -163,6 +167,8 @@ const specIds: Record<string, number> = {
   Shanghai: 11,
   Cancun: 12,
   Prague: 13,
+  Osaka: 14,
+  Amsterdam: 15,
 }
 
 /** EIP-2028/7623 intrinsic gas for the calldata and access list. */
@@ -196,12 +202,26 @@ function intrinsicGas(
 }
 
 /** Highest precompile address defined at each fork. */
-function precompileCount(fork: string) {
-  if (forkAtLeast(fork, 'Prague')) return 0x11 // EIP-2537 BLS12-381
-  if (forkAtLeast(fork, 'Cancun')) return 0x0a // EIP-4844 point evaluation
-  if (forkAtLeast(fork, 'Istanbul')) return 0x09 // EIP-152 blake2f
-  if (forkAtLeast(fork, 'Byzantium')) return 0x08 // bn254 + modexp
-  return 0x04
+/**
+ * The precompile addresses EIP-2929 seeds the accessed set with.
+ *
+ * Contiguous from `0x01` until Osaka, where EIP-7951 put P256VERIFY at
+ * `0x0100` and left a gap; hence a list rather than a count.
+ */
+function precompileAddresses(fork: string): number[] {
+  const highest = forkAtLeast(fork, 'Prague')
+    ? 0x11 // EIP-2537 BLS12-381
+    : forkAtLeast(fork, 'Cancun')
+      ? 0x0a // EIP-4844 point evaluation
+      : forkAtLeast(fork, 'Istanbul')
+        ? 0x09 // EIP-152 blake2f
+        : forkAtLeast(fork, 'Byzantium')
+          ? 0x08 // bn254 + modexp
+          : 0x04
+  const out: number[] = []
+  for (let i = 1; i <= highest; i++) out.push(i)
+  if (forkAtLeast(fork, 'Osaka')) out.push(0x0100)
+  return out
 }
 
 const GAS_PER_BLOB = 131072n
@@ -246,7 +266,7 @@ function warmPreamble(
     putAddr(STAGE_ADDR, coinbase)
     engine.evm_warm_account(vm)
   }
-  for (let i = 1; i <= precompileCount(fork); i++) {
+  for (const i of precompileAddresses(fork)) {
     putAddr(STAGE_ADDR, `0x${i.toString(16).padStart(40, '0')}`)
     engine.evm_warm_account(vm)
   }
@@ -473,7 +493,7 @@ function runCase(test: any, fork: string, post: any): Outcome {
     big(env.currentGasLimit),
     Math.min(blobHashes.length, 16),
     putChainHashes(),
-    specIds[fork] ?? 13,
+    specIds[fork] ?? SPEC_LATEST,
   )
 
   // EIP-2930 access list warms addresses and slots before execution.
@@ -506,6 +526,11 @@ function runCase(test: any, fork: string, post: any): Outcome {
   const withAuth = intrinsic + authGas
   const required = withAuth > floor ? withAuth : floor
   if (required > gasLimit) return compareLoaded(post)
+  // EIP-7825 caps a single transaction at 2^24 gas from Osaka, whatever the
+  // block allows. It is a validity rule, so the transaction is rejected before
+  // it runs rather than running out of gas.
+  if (forkAtLeast(fork, 'Osaka') && gasLimit > 16_777_216n)
+    return compareLoaded(post)
   // A set-code transaction must have at least one authorization and must not be
   // a create.
   if (tx.authorizationList && (authList.length === 0 || isCreate))
@@ -536,9 +561,25 @@ function runCase(test: any, fork: string, post: any): Outcome {
   // blobs: an empty blob list is exactly what one of these tests sends.
   if (tx.maxFeePerBlobGas !== undefined) {
     if (!forkAtLeast(fork, 'Cancun')) return compareLoaded(post)
-    // EIP-7691 raised the per-block maximum from 6 to 9.
-    const maxBlobs = forkAtLeast(fork, 'Prague') ? 9 : 6
-    if (blobHashes.length === 0 || blobHashes.length > maxBlobs)
+    // EIP-7691 raised the per-block maximum from 6 to 9, and from Osaka the
+    // number is not a fork constant at all: EIP-7892 lets a blob-parameter-only
+    // fork move it without any other change, so the fixture's own schedule is
+    // the authority and the constants are only a fallback.
+    const scheduled = test.config?.blobSchedule?.[fork]?.max
+    const maxBlobs =
+      scheduled !== undefined
+        ? Number(big(scheduled))
+        : forkAtLeast(fork, 'Prague')
+          ? 9
+          : 6
+    // EIP-7594 adds a per-*transaction* cap of six, below the per-block max, so
+    // that one transaction cannot fill a block's whole blob capacity.
+    const perTx = forkAtLeast(fork, 'Osaka') ? 6 : maxBlobs
+    if (
+      blobHashes.length === 0 ||
+      blobHashes.length > maxBlobs ||
+      blobHashes.length > perTx
+    )
       return compareLoaded(post)
     // A blob transaction cannot be a create, and every hash must carry the
     // version byte.
@@ -951,7 +992,7 @@ function loadInto(
     big(env.currentGasLimit),
     0,
     putChainHashes(),
-    specIds[fork] ?? 13,
+    specIds[fork] ?? SPEC_LATEST,
   )
   return true
 }

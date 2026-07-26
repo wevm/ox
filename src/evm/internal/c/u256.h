@@ -71,6 +71,20 @@ static inline uint64_t u256_to_u64_sat(u256 a) {
   return a.l[0];
 }
 
+/**
+ * Leading zeros, counting from the top of the 256-bit word; 256 for zero.
+ *
+ * `__builtin_clzll` is undefined at zero, hence the per-limb guard rather than
+ * one call on a folded value.
+ */
+static inline u256 u256_clz(u256 a) {
+  for (int i = 3; i >= 0; i--)
+    if (a.l[i])
+      return (u256){{(uint64_t)((3 - i) * 64 + __builtin_clzll(a.l[i])), 0, 0,
+                     0}};
+  return (u256){{256, 0, 0, 0}};
+}
+
 static inline u256 u256_not(u256 a) {
   return (u256){{~a.l[0], ~a.l[1], ~a.l[2], ~a.l[3]}};
 }

@@ -14,6 +14,7 @@
 #include "bls12381.h"
 #include "bn254.h"
 #include "precompile.h"
+#include "secp256r1.h"
 #include "state.h"
 #include "u256.h"
 
@@ -140,9 +141,20 @@ typedef struct {
 #define SPEC_LONDON 9    // EIP-3529 cut the refunds
 #define SPEC_CANCUN 12
 #define SPEC_PRAGUE 13
+#define SPEC_OSAKA 14  // EIP-7939 CLZ, EIP-7951 P256VERIFY, EIP-7823/7883 modexp
+// Not yet a fork: Glamsterdam's execution-layer name, reserved so a caller can
+// already name it and so the comparisons below read the right way round. Every
+// EIP scheduled for it is still Draft, and nothing here changes behaviour at
+// this id -- adding one means adding a `>= SPEC_AMSTERDAM` branch, not
+// renumbering.
+#define SPEC_AMSTERDAM 15
 // What a VM starts on, and what it returns to on reset. Callers that want an
 // older fork's semantics say so through `evm_set_context`.
-#define SPEC_DEFAULT SPEC_PRAGUE
+//
+// This tracks the newest fork that has *activated* on mainnet, not the newest
+// this engine knows a name for: defaulting to a fork nobody is running would
+// silently give every caller rules that are not yet consensus.
+#define SPEC_DEFAULT SPEC_OSAKA
 
 // EIP-2929 access costs.
 #define GAS_COLD_ACCOUNT 2600
@@ -1102,10 +1114,27 @@ static int deposit_code(evm_vm *vm, int32_t created, int32_t snapshot,
   return 1;
 }
 
-/** Address `0x00..01` through `0x00..11` are the precompiles. */
+/**
+ * The precompile at `addr`, or 0.
+ *
+ * Addresses `0x00..01` through `0x00..11` are the historical block, and
+ * EIP-7951 broke out of it: P256VERIFY sits at `0x00..0100`, two bytes wide.
+ * It is given the internal id `PRE_P256VERIFY` so the switch in
+ * `run_precompile` stays a dense jump table over small integers rather than
+ * growing a second dimension.
+ */
+#define PRE_P256VERIFY 0x12
+
 static inline int precompile_id(const uint8_t *addr, int spec) {
-  for (int i = 0; i < 19; i++)
+  for (int i = 0; i < 18; i++)
     if (addr[i]) return 0;
+  if (addr[18]) {
+    // The only two-byte precompile so far. Anything else up here is an
+    // ordinary account.
+    if (addr[18] == 0x01 && addr[19] == 0x00 && spec >= SPEC_OSAKA)
+      return PRE_P256VERIFY;
+    return 0;
+  }
   // A precompile that a fork has not introduced yet is an ordinary empty
   // account, so a call to it succeeds and returns nothing.
   int highest = 0x04;
@@ -1196,6 +1225,13 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       // from the declared lengths first, and only then require that whatever
       // has to be computed fits.
       const uint64_t maxlen = bl > ml ? bl : ml;
+      // EIP-7823 caps every declared length at 1024 bytes from Osaka. The
+      // check is before the pricing because the penalty is the whole forwarded
+      // budget, which is what a failing precompile costs anyway -- and because
+      // an oversized header with an empty modulus was legal until this fork
+      // and is not any more.
+      if (spec >= SPEC_OSAKA && (bl > 1024 || el > 1024 || ml > 1024))
+        return PRE_FAIL;
 
       // The adjusted exponent length reads at most the exponent's first 32
       // bytes, however long the exponent claims to be.
@@ -1215,17 +1251,26 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
         }
       // Everything below saturates rather than wrapping: an unaffordable price
       // has to stay unaffordable, and these lengths are attacker-chosen.
-      uint64_t adj = el <= 32 ? highest : 8 * (el - 32) + highest;
-      if (el > 32 && el > ((uint64_t)GAS_UNAFFORDABLE / 8)) adj = (uint64_t)GAS_UNAFFORDABLE;
+      // EIP-7883 doubled the per-byte weight of a long exponent.
+      const uint64_t exp_weight = spec >= SPEC_OSAKA ? 16 : 8;
+      uint64_t adj = el <= 32 ? highest : exp_weight * (el - 32) + highest;
+      if (el > 32 && el > ((uint64_t)GAS_UNAFFORDABLE / exp_weight))
+        adj = (uint64_t)GAS_UNAFFORDABLE;
       if (adj == 0) adj = 1;
 
-      const uint64_t divisor = spec >= SPEC_BERLIN ? 3 : 20;
+      // EIP-7883 folded the divisor into the complexity, tripling the price.
+      const uint64_t divisor = spec >= SPEC_OSAKA ? 1 : spec >= SPEC_BERLIN ? 3 : 20;
       int64_t cost;
       if (maxlen > (1ULL << 31)) {
         cost = GAS_UNAFFORDABLE;
       } else {
         uint64_t mult;
-        if (spec >= SPEC_BERLIN) {
+        if (spec >= SPEC_OSAKA) {
+          // EIP-7883: a floor of 16 up to 32 bytes, and twice the squared word
+          // count above it.
+          const uint64_t wordsm = (maxlen + 7) / 8;
+          mult = maxlen > 32 ? 2 * wordsm * wordsm : 16;
+        } else if (spec >= SPEC_BERLIN) {
           // EIP-2565: complexity in 8-byte words, divided by 3.
           const uint64_t wordsm = (maxlen + 7) / 8;
           mult = wordsm * wordsm;
@@ -1240,8 +1285,10 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
                    ? GAS_UNAFFORDABLE
                    : (int64_t)(mult * adj / divisor);
       }
-      // EIP-2565 introduced the floor; before Berlin there is none.
-      if (spec >= SPEC_BERLIN && cost < 200) cost = 200;
+      // EIP-2565 introduced the floor; EIP-7883 raised it; before Berlin there
+      // is none.
+      const int64_t floor_ = spec >= SPEC_OSAKA ? 500 : 200;
+      if (spec >= SPEC_BERLIN && cost < floor_) cost = floor_;
       if (*gas < cost) return PRE_FAIL;
       *gas -= cost;
 
@@ -1262,6 +1309,25 @@ static int run_precompile(int id, const uint8_t *in, uint64_t len,
       copy_padded(modbuf, in, len, 96 + bl + el, ml);
       modexp(basebuf, bl, expbuf, el, modbuf, ml, out);
       *out_len = (int32_t)ml;
+      return PRE_OK;
+    }
+    case PRE_P256VERIFY: { // secp256r1 verification (EIP-7951)
+      if (*gas < 6900) return PRE_FAIL;
+      *gas -= 6900;
+      // A wrong length is a failure, not a zero answer: the precompile returns
+      // empty output for everything it rejects, and the caller sees the
+      // difference as returndata size.
+      if (len != 160) {
+        *out_len = 0;
+        return PRE_OK;
+      }
+      if (!p256_verify(in)) {
+        *out_len = 0;
+        return PRE_OK;
+      }
+      for (int i = 0; i < 31; i++) out[i] = 0;
+      out[31] = 1;
+      *out_len = 32;
       return PRE_OK;
     }
     case 0x09: { // BLAKE2b F compression (EIP-152)
@@ -1777,6 +1843,10 @@ static evm_status interpret(evm_vm *vm) {
         break;
       case 0x1a: // BYTE
         BINARY(u256_byte(a, b));
+        break;
+      case 0x1e: // CLZ (EIP-7939)
+        REQUIRE_SPEC(SPEC_OSAKA);
+        UNARY(u256_clz(a));
         break;
       case 0x1b: // SHL (EIP-145)
         REQUIRE_SPEC(SPEC_CONSTANTINOPLE);
@@ -2830,6 +2900,22 @@ int evm_set_code(evm_vm *vm, int code_len) {
  * Runs the analyzed bytecode against the calldata at `evm_input_ptr`.
  * Returns an `evm_status`.
  */
+/**
+ * Selects the fork the next `evm_run` executes under.
+ *
+ * `evm_set_context` carries the fork for the transaction entry points, but the
+ * bare-bytecode path has no context to set, and it defaulted to whatever
+ * `evm_reset` left behind. An out-of-range id is ignored rather than clamped:
+ * silently running a different fork than asked for is the failure mode worth
+ * avoiding.
+ */
+EXPORT("evm_set_spec")
+int evm_set_spec(evm_vm *vm, int spec) {
+  if (spec < 0 || spec > SPEC_AMSTERDAM) return EVM_INVALID_OPCODE;
+  vm->ctx.spec = spec;
+  return EVM_SUCCESS;
+}
+
 EXPORT("evm_run")
 int evm_run(evm_vm *vm, int input_len, int64_t gas) {
   if (input_len < 0 || input_len > MAX_INPUT) return EVM_INPUT_TOO_LARGE;

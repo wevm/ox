@@ -15,6 +15,7 @@ export type Engine = {
   evm_max_code(): number
   evm_max_input(): number
   evm_set_code(vm: number, codeLength: number): number
+  evm_set_spec(vm: number, spec: number): number
   evm_run(vm: number, inputLength: number, gas: bigint): number
   evm_stage_ptr(vm: number): number
   evm_reset(vm: number): void
