@@ -6,7 +6,7 @@ description: "Delegate Ox's cryptography to a different implementation."
 
 Ox implements its cryptography with [`@noble`](https://github.com/paulmillr/noble-hashes) and [`@scure`](https://github.com/paulmillr/scure-bip32) — audited, minimal, dependency-free JavaScript libraries. That is the right default: it works in every runtime, it is small, and it needs no build step.
 
-Sometimes you want something else. A WASM build of an audited C library can be several times faster for signing, key derivation, or hashing large payloads. A hardware or platform-native implementation may be required by policy. [`Engine`](/api/Engine) lets you supply one without forking Ox.
+Sometimes you want something else. A native implementation can be substantially faster — [`ox/wasm`](/wasm) hashes Keccak256 around 12–14× faster than the default. A hardware or platform-native implementation may be required by policy. [`Engine`](/api/Engine) lets you supply one without forking Ox.
 
 ## Installing an Engine
 
@@ -47,9 +47,9 @@ Ox's crypto functions are synchronous, but WASM must be compiled asynchronously 
 ```ts twoslash
 // @noErrors
 import { Engine } from 'ox'
-import * as Wasm from 'ox/wasm'
+import { Hash } from 'ox/wasm'
 
-const engine = await Wasm.load()
+const engine = await Hash.load()
 Engine.set(engine)
 ```
 
@@ -72,6 +72,22 @@ declare const myEngine: Engine.Engine
 Install your engine once, during application startup, before any crypto call.
 
 There is deliberately no side-effect import that installs an engine for you (`import 'ox/wasm/register'` and the like). Ox declares `sideEffects: false`, so a bundler would be free to drop such an import and your engine would silently never install. `Engine.set` is an explicit call for that reason.
+
+## Measure Before You Switch
+
+An engine is not automatically faster. Each call crosses a boundary — copying bytes into WASM memory and back — and for cheap operations that cost can exceed the work itself.
+
+Measured with `pnpm bench` on Node 22, against `@noble/hashes` 2.2.0:
+
+| operation                    | speedup with `ox/wasm` |
+| ---------------------------- | ---------------------- |
+| `Hash.keccak256`, any size   | ~12–14×                |
+| `Hash.sha256`, 32 bytes      | ~3×                    |
+| `Hash.sha256`, 1 MiB         | ~1.1×                  |
+
+The Keccak256 gap is large at every size because the default implementation is unusually slow there — around 19 MB/s, against roughly 148 MB/s for its own SHA-256. Since Keccak256 is the hash Ox reaches for most (every address checksum, every signature recovery), that is the clearest win available.
+
+SHA-256 is a much narrower margin, and it narrows further as inputs grow. Re-measure on your own runtime before assuming a gain: these numbers move with the engine and the machine.
 
 ## Engines and Bundle Size
 

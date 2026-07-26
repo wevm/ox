@@ -8,10 +8,9 @@
  * synchronous.
  *
  * :::note
- * WASM wins on throughput, not on latency. The call boundary costs roughly as
- * much as hashing a short input, so a 32-byte `keccak256` is no faster than ox's
- * default implementation and may be slower. The gains start at a few hundred
- * bytes and grow from there.
+ * Measured with `pnpm bench` against `@noble/hashes` 2.2.0, `keccak256` is
+ * ~12-14x faster at every input size and `sha256` is ~1.1-3x faster. Numbers
+ * vary by runtime -- re-measure on yours.
  * :::
  *
  * @example

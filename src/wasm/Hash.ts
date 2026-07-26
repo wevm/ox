@@ -30,10 +30,12 @@ const digestSize = { hmac_sha256: 32, keccak256: 32, ripemd160: 20, sha256: 32 }
  * everything afterwards is synchronous.
  *
  * :::note
- * WASM wins on throughput, not on latency. The call boundary costs roughly as
- * much as hashing a short input, so a 32-byte `keccak256` is no faster than the
- * default implementation and may be slower; the gains start at a few hundred
- * bytes and grow from there. Load this when you hash large payloads.
+ * The win is uneven, and worth knowing before you reach for this. Measured with
+ * `pnpm bench` on Node 22 against `@noble/hashes` 2.2.0, `keccak256` is ~12-14x
+ * faster at every input size, including 32 bytes, because `@noble/hashes`'
+ * Keccak is unusually slow (~19 MB/s, against ~148 MB/s for its own SHA-256).
+ * `sha256` is a much narrower ~1.1-3x, widest on short inputs where the fixed
+ * per-call cost dominates. Numbers vary by runtime -- re-measure on yours.
  * :::
  *
  * @example
