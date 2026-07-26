@@ -887,7 +887,7 @@ static inline int bn_ate_bit(int bit) {
  * two different multiples of `P` is the test that actually pins this down.
  */
 static fq12_line g2_line(const fq2 ax, const fq2 ay, const fq2 bx, const fq2 by,
-                         u256 px, u256 py, int tangent) {
+                         u256 px, u256 py, int tangent, fq2 *slope_out) {
   fq2 slope;
   if (tangent) {
     // 3x^2 / 2y
@@ -897,9 +897,29 @@ static fq12_line g2_line(const fq2 ax, const fq2 ay, const fq2 bx, const fq2 by,
   } else {
     slope = fq2_mul(fq2_sub(by, ay), fq2_inv(fq2_sub(bx, ax)));
   }
+  // The caller advances R with this same slope, so it is handed back rather
+  // than re-derived from a Jacobian doubling and a second inversion.
+  *slope_out = slope;
   return (fq12_line){(fq2){py, U256_ZERO},
                      fq2_mul_fq(fq2_neg(slope), px),
                      fq2_sub(fq2_mul(slope, ax), ay)};
+}
+
+/**
+ * `R <- R + S` in affine coordinates, given the slope of the line through
+ * them, which the line evaluation has just computed.
+ *
+ * `sx` is `R`'s own x for a doubling. Both formulas need the slope and
+ * nothing else, so reusing it removes one field inversion per Miller
+ * iteration -- the loop was paying two, one for the line and one to
+ * renormalise a Jacobian doubling. Neither form is defined when the slope is
+ * not, but a point of prime order is never its own negation and the Miller
+ * loop never adds R to itself, so those cases do not arise.
+ */
+static inline void g2_step(fq2 *rx, fq2 *ry, fq2 slope, fq2 sx) {
+  const fq2 nx = fq2_sub(fq2_sub(fq2_sqr(slope), *rx), sx);
+  *ry = fq2_sub(fq2_mul(slope, fq2_sub(*rx, nx)), *ry);
+  *rx = nx;
 }
 
 /**
@@ -914,24 +934,13 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
   // The leading bit only seeds R = Q, so the loop starts one below it.
   for (int bit = BN_ATE_BITS - 2; bit >= 0; bit--) {
     // Double: accumulate the tangent line, then R = 2R.
+    fq2 lam;
     f = fq12_sqr(f);
-    f = fq12_mul_line(f, g2_line(rx, ry, rx, ry, px, py, 1));
-    {
-      g2 rj = (g2){rx, ry, FQ2_ONE}, t;
-      g2_double(&t, &rj);
-      const fq2 zi = fq2_inv(t.z);
-      const fq2 zi2 = fq2_sqr(zi);
-      rx = fq2_mul(t.x, zi2);
-      ry = fq2_mul(t.y, fq2_mul(zi2, zi));
-    }
+    f = fq12_mul_line(f, g2_line(rx, ry, rx, ry, px, py, 1, &lam));
+    g2_step(&rx, &ry, lam, rx);
     if (bn_ate_bit(bit)) {
-      f = fq12_mul_line(f, g2_line(rx, ry, qx, qy, px, py, 0));
-      g2 rj = (g2){rx, ry, FQ2_ONE}, qj = (g2){qx, qy, FQ2_ONE}, t;
-      g2_add(&t, &rj, &qj);
-      const fq2 zi = fq2_inv(t.z);
-      const fq2 zi2 = fq2_sqr(zi);
-      rx = fq2_mul(t.x, zi2);
-      ry = fq2_mul(t.y, fq2_mul(zi2, zi));
+      f = fq12_mul_line(f, g2_line(rx, ry, qx, qy, px, py, 0, &lam));
+      g2_step(&rx, &ry, lam, qx);
     }
   }
   // The two Frobenius corrections that make the ate pairing bilinear.
@@ -939,16 +948,10 @@ static fq12 bn_miller(u256 px, u256 py, fq2 qx, fq2 qy) {
   const fq2 q1y = fq2_mul(fq2_conj(qy), bn_gamma[3]);
   const fq2 q2x = fq2_mul(fq2_conj(q1x), bn_gamma[2]);
   const fq2 q2y = fq2_neg(fq2_mul(fq2_conj(q1y), bn_gamma[3]));
-  f = fq12_mul_line(f, g2_line(rx, ry, q1x, q1y, px, py, 0));
-  {
-    g2 rj = (g2){rx, ry, FQ2_ONE}, qj = (g2){q1x, q1y, FQ2_ONE}, t;
-    g2_add(&t, &rj, &qj);
-    const fq2 zi = fq2_inv(t.z);
-    const fq2 zi2 = fq2_sqr(zi);
-    rx = fq2_mul(t.x, zi2);
-    ry = fq2_mul(t.y, fq2_mul(zi2, zi));
-  }
-  f = fq12_mul_line(f, g2_line(rx, ry, q2x, q2y, px, py, 0));
+  fq2 lam;
+  f = fq12_mul_line(f, g2_line(rx, ry, q1x, q1y, px, py, 0, &lam));
+  g2_step(&rx, &ry, lam, q1x);
+  f = fq12_mul_line(f, g2_line(rx, ry, q2x, q2y, px, py, 0, &lam));
   return f;
 }
 

@@ -964,7 +964,8 @@ static void bg2_affine(const bg2 *p, fp2 *x, fp2 *y) {
  * by xi below come from.
  */
 static fp12_line bg2_line(const fp2 ax, const fp2 ay, const fp2 bx,
-                          const fp2 by, bfp px, bfp py, int tangent) {
+                          const fp2 by, bfp px, bfp py, int tangent,
+                          fp2 *slope_out) {
   fp2 slope;
   if (tangent) {
     fp2 num = fp2_sqr(ax);
@@ -973,36 +974,39 @@ static fp12_line bg2_line(const fp2 ax, const fp2 ay, const fp2 bx,
   } else {
     slope = fp2_mul(fp2_sub(by, ay), fp2_inv(fp2_sub(bx, ax)));
   }
+  // The caller advances R with this same slope; see `bg2_step`.
+  *slope_out = slope;
   return (fp12_line){(fp2){py, BFP_ZERO},
                      fp2_div_xi(fp2_sub(fp2_mul(slope, ax), ay)),
                      fp2_div_xi(fp2_neg(fp2_mul_fp(slope, px)))};
 }
 
-/** Reduces a Jacobian G2 point to affine coordinates in place. */
-static void bg2_to_affine_xy(const bg2 *t, fp2 *x, fp2 *y) {
-  const fp2 zi = fp2_inv(t->z);
-  const fp2 zi2 = fp2_sqr(zi);
-  *x = fp2_mul(t->x, zi2);
-  *y = fp2_mul(t->y, fp2_mul(zi2, zi));
+/**
+ * `R <- R + S` in affine coordinates from the slope the line just computed.
+ *
+ * `sx` is `R`'s own x for a doubling. This removes one field inversion per
+ * Miller iteration: the loop was paying one for the line and a second to
+ * renormalise a Jacobian doubling back to affine.
+ */
+static inline void bg2_step(fp2 *rx, fp2 *ry, fp2 slope, fp2 sx) {
+  const fp2 nx = fp2_sub(fp2_sub(fp2_sqr(slope), *rx), sx);
+  *ry = fp2_sub(fp2_mul(slope, fp2_sub(*rx, nx)), *ry);
+  *rx = nx;
 }
+
 
 /** The Miller loop for `e(P, Q)`, with both points affine and non-trivial. */
 static fp12 bls_miller(bfp px, bfp py, fp2 qx, fp2 qy) {
   fp12 f = fp12_one();
   fp2 rx = qx, ry = qy;
   for (int bit = BLS_Z_BITS - 2; bit >= 0; bit--) {
+    fp2 lam;
     f = fp12_sqr(f);
-    f = fp12_mul_line(f, bg2_line(rx, ry, rx, ry, px, py, 1));
-    {
-      bg2 rj = (bg2){rx, ry, fp2_one()}, t;
-      bg2_double(&t, &rj);
-      bg2_to_affine_xy(&t, &rx, &ry);
-    }
+    f = fp12_mul_line(f, bg2_line(rx, ry, rx, ry, px, py, 1, &lam));
+    bg2_step(&rx, &ry, lam, rx);
     if ((BLS_Z >> bit) & 1) {
-      f = fp12_mul_line(f, bg2_line(rx, ry, qx, qy, px, py, 0));
-      bg2 rj = (bg2){rx, ry, fp2_one()}, qj = (bg2){qx, qy, fp2_one()}, t;
-      bg2_add(&t, &rj, &qj);
-      bg2_to_affine_xy(&t, &rx, &ry);
+      f = fp12_mul_line(f, bg2_line(rx, ry, qx, qy, px, py, 0, &lam));
+      bg2_step(&rx, &ry, lam, qx);
     }
   }
   // z is negative, so the accumulated value is the inverse of the one wanted.
