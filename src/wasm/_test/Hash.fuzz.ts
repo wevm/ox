@@ -4,10 +4,9 @@ import { ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import type { Engine } from 'ox'
-import * as WasmHash from 'ox/wasm/Hash'
+import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect } from 'vp/test'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 let engine: Engine.Engine
 

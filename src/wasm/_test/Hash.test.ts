@@ -3,7 +3,7 @@ import { ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { Bytes, Engine, Hash } from 'ox'
-import * as WasmHash from 'ox/wasm/Hash'
+import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect, test } from 'vp/test'
 
 let engine: Engine.Engine

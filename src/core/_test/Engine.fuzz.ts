@@ -12,8 +12,7 @@ import {
 } from 'ox'
 import { afterEach, describe, expect } from 'vp/test'
 import { identity, sentinel } from '../../../test/engines.js'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 const arbitraryBytes = fc.uint8Array({ maxLength: 256, minLength: 0 })
 /**

@@ -26,10 +26,15 @@ import type { Engine } from 'ox'
 export const identity: Engine.Engine = {
   Bls: {
     aggregate: (points, group) => {
-      const curve = group === 'G1' ? bls.G1 : bls.G2
-      let point = curve.Point.ZERO
+      if (group === 'G1') {
+        let point = bls.G1.Point.ZERO
+        for (const value of points)
+          point = point.add(bls.G1.Point.fromBytes(value))
+        return point.toBytes()
+      }
+      let point = bls.G2.Point.ZERO
       for (const value of points)
-        point = point.add(curve.Point.fromBytes(value))
+        point = point.add(bls.G2.Point.fromBytes(value))
       return point.toBytes()
     },
     getPublicKey: (privateKey, group) => {

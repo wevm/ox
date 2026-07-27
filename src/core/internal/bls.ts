@@ -10,10 +10,16 @@ import { type Bls, type Complete, overrides } from './engine.js'
  * than failing at the call site.
  */
 
+// Branching on the group rather than selecting a curve into a variable: the
+// two `Point` types are unrelated, so a union of them has no common `add`.
 const aggregateDefault: Complete<Bls>['aggregate'] = (points, group) => {
-  const curve = group === 'G1' ? bls.G1 : bls.G2
-  let point = curve.Point.ZERO
-  for (const value of points) point = point.add(curve.Point.fromBytes(value))
+  if (group === 'G1') {
+    let point = bls.G1.Point.ZERO
+    for (const value of points) point = point.add(bls.G1.Point.fromBytes(value))
+    return point.toBytes()
+  }
+  let point = bls.G2.Point.ZERO
+  for (const value of points) point = point.add(bls.G2.Point.fromBytes(value))
   return point.toBytes()
 }
 

@@ -1,5 +1,5 @@
 import type { Engine } from 'ox'
-import * as WasmHash from 'ox/wasm/Hash'
+import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect, test } from 'vp/test'
 import * as vectors from '../../../test/vectors/hashes/index.js'
 import { wasmBase64 } from '../internal/hashes.wasm.js'
