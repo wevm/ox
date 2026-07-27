@@ -101,12 +101,12 @@ describe('keccak_f1600', () => {
     expect(second!.output).not.toEqual(first!.output)
   })
 
-  test('applying it 24 times reaches each documented round state', async () => {
-    // Each `rounds[n]` is the state after round `n`'s iota step. Running the
-    // full permutation from the input cannot check those, but the round states
-    // form their own chain: permuting a state is 24 rounds, so this instead
-    // pins that our round constants and offsets reproduce the documented
-    // sequence end to end.
+  test('the parsed fixture is internally consistent', () => {
+    // Checks the fixture, not the implementation. Each `rounds[n]` is the state
+    // after round `n`'s iota step, and nothing exported reaches a single round,
+    // so per-round agreement is not observable from here -- the permutation
+    // itself is covered above, end to end against `input`/`output`. What this
+    // catches is a parser that mis-read the file and quietly weakened that.
     const { examples, rhoOffsets, roundConstants } = vectors.keccakPermutation
     expect(roundConstants).toHaveLength(24)
     expect(rhoOffsets).toHaveLength(25)

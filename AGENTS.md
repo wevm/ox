@@ -93,7 +93,7 @@
 - **Browser tests use browser suffixes** -- browser-specific behavior uses `*.browser.test.ts` and the `browser` Vitest project.
 - **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz` or `pnpm test:fuzz:ci`; default `pnpm test` should not pick them up.
 - **Fuzz regressions become deterministic** -- when a property fails, add the minimized case as a regular `*.test.ts` or vector fixture.
-- **Vectors use Bun** -- run vector tests with `pnpm vectors`.
+- **Vectors use Bun** -- run vector tests with `pnpm vectors`. That covers the generated corpora under `vectors/` only. Published upstream fixtures (NIST `.rsp`, XKCP intermediate values) live in `test/vectors/`, are consumed by colocated `*.vectors.test.ts` suites, and run in the `core` project instead -- `pnpm vectors` will not touch them.
 - **Unit and type tests as you go** -- write unit tests and `.test-d.ts` type tests alongside implementation for each public behavior change.
 
 ## Workflow Conventions

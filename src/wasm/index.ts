@@ -16,12 +16,12 @@
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Hash as OxHash } from 'ox'
- * import { Hash } from 'ox/wasm'
+ * import { Hash } from 'ox'
+ * import { Engine } from 'ox/wasm'
  *
- * Engine.set(await Hash.load())
+ * await Engine.load()
  *
- * OxHash.keccak256('0xdeadbeef')
+ * Hash.keccak256('0xdeadbeef')
  * ```
  *
  * @category Crypto

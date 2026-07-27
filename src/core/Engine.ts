@@ -143,7 +143,10 @@ export declare namespace reset {
  * @param fn - Synchronous function to run.
  * @returns The return value of `fn`.
  */
-export function with_<returnType>(
+// Declared unexported and surfaced only through the alias below: exporting the
+// backing name too would put an undocumented `Engine.with_` in the public
+// surface, which is then breaking to take away.
+function with_<returnType>(
   value: engine.Engine,
   fn: () => returnType,
 ): returnType {
@@ -174,7 +177,7 @@ export function with_<returnType>(
 
 export { with_ as with }
 
-export declare namespace with_ {
+declare namespace with_ {
   type ErrorType =
     | AsyncScopeError
     | set.ErrorType
