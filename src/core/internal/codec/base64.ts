@@ -46,8 +46,10 @@ const integerToCharacter = /*#__PURE__*/ (() => {
   return table
 })()
 
-// Phase 2 native fast-path detection: `Uint8Array.prototype.toBase64` /
-// `Uint8Array.fromBase64` ship in Node 22+, Safari 18+, Firefox 133+.
+// Native fast-path detection. `Uint8Array.prototype.toBase64` ships in
+// Chromium 145, Safari 18.2+, Firefox 133+ and Bun, but not in Node 24.
+//
+// Only encoding delegates to it; see `toBytes` for why decoding cannot.
 const nativeToBase64:
   | ((
       this: Uint8Array,
