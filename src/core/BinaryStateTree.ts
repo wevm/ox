@@ -1,5 +1,5 @@
 import * as Bytes from './Bytes.js'
-import * as hash_ from './internal/hash.js'
+import * as engine from './internal/hash.js'
 import type { OneOf } from './internal/types.js'
 
 /** Type that defines a Binary State Tree instance. */
@@ -275,5 +275,5 @@ function bitsToBytes(bits: number[]): Bytes.Bytes {
 function hash(bytes: Bytes.Bytes | undefined): Bytes.Bytes {
   if (!bytes) return new Uint8Array(32).fill(0)
   if (!bytes.some((byte) => byte !== 0)) return new Uint8Array(32).fill(0)
-  return hash_.blake3(bytes)
+  return engine.blake3(bytes)
 }

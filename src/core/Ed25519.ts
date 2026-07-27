@@ -2,7 +2,7 @@ import { ed25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import { type Complete, type Eddsa, engine } from './internal/engine.js'
+import * as engine from './internal/ed25519.js'
 
 /** Re-export of noble/curves Ed25519 utilities. */
 export const noble = ed25519
@@ -78,9 +78,7 @@ export function getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): getPublicKey.ReturnType<as> {
   const { as = 'Hex', privateKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
-  const publicKeyBytes = (
-    engine.Ed25519?.getPublicKey ?? defaults.getPublicKey
-  )(privateKeyBytes)
+  const publicKeyBytes = engine.getPublicKey(privateKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(publicKeyBytes) as never
   return publicKeyBytes as never
 }
@@ -125,7 +123,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = (engine.Ed25519?.randomSecretKey ?? defaults.randomSecretKey)()
+  const bytes = engine.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -169,10 +167,7 @@ export function sign<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex', payload, privateKey } = options
   const payloadBytes = Bytes.from(payload)
   const privateKeyBytes = Bytes.from(privateKey)
-  const signatureBytes = (engine.Ed25519?.sign ?? defaults.sign)(
-    payloadBytes,
-    privateKeyBytes,
-  )
+  const signatureBytes = engine.sign(payloadBytes, privateKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(signatureBytes) as never
   return signatureBytes as never
 }
@@ -233,11 +228,7 @@ export function verify(options: verify.Options): boolean {
   const payloadBytes = Bytes.from(payload)
   const publicKeyBytes = Bytes.from(publicKey)
   const signatureBytes = Bytes.from(signature)
-  return (engine.Ed25519?.verify ?? defaults.verify)(
-    signatureBytes,
-    payloadBytes,
-    publicKeyBytes,
-  )
+  return engine.verify(signatureBytes, payloadBytes, publicKeyBytes)
 }
 
 export declare namespace verify {
@@ -278,9 +269,7 @@ export function toX25519PublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): toX25519PublicKey.ReturnType<as> {
   const { as = 'Hex', publicKey } = options
   const publicKeyBytes = Bytes.from(publicKey)
-  const x25519PublicKeyBytes = (
-    engine.Ed25519?.toMontgomery ?? defaults.toMontgomery
-  )(publicKeyBytes)
+  const x25519PublicKeyBytes = engine.toMontgomery(publicKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(x25519PublicKeyBytes) as never
   return x25519PublicKeyBytes as never
 }
@@ -331,9 +320,7 @@ export function toX25519PrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): toX25519PrivateKey.ReturnType<as> {
   const { as = 'Hex', privateKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
-  const x25519PrivateKeyBytes = (
-    engine.Ed25519?.toMontgomerySecret ?? defaults.toMontgomerySecret
-  )(privateKeyBytes)
+  const x25519PrivateKeyBytes = engine.toMontgomerySecret(privateKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(x25519PrivateKeyBytes) as never
   return x25519PrivateKeyBytes as never
 }
@@ -358,21 +345,3 @@ export declare namespace toX25519PrivateKey {
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
-
-/**
- * ox's default `Ed25519` implementation, backed by `@noble/curves`.
- *
- * Declaring it against the slot contract is what keeps it honest: a default
- * that goes missing, or whose signature drifts, fails to compile rather than
- * failing at the call site.
- */
-const defaults = {
-  getPublicKey: (privateKey) => ed25519.getPublicKey(privateKey),
-  randomSecretKey: () => ed25519.utils.randomSecretKey(),
-  sign: (payload, privateKey) => ed25519.sign(payload, privateKey),
-  toMontgomery: (publicKey) => ed25519.utils.toMontgomery(publicKey),
-  toMontgomerySecret: (privateKey) =>
-    ed25519.utils.toMontgomerySecret(privateKey),
-  verify: (signature, payload, publicKey) =>
-    ed25519.verify(signature, payload, publicKey),
-} satisfies Complete<Eddsa>

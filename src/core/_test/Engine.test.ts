@@ -2,6 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1.js'
 import {
   Address,
   BinaryStateTree,
+  Bls,
   Bytes,
   Ed25519,
   Engine,
@@ -14,7 +15,10 @@ import {
   X25519,
 } from 'ox'
 import { describe, expect, test, vi } from 'vp/test'
-import { identity as identityEngine } from '../../../test/engines.js'
+import {
+  identity as identityEngine,
+  sentinel as sentinelEngine,
+} from '../../../test/engines.js'
 
 const privateKey =
   '0x0000000000000000000000000000000000000000000000000000000000000001'
@@ -50,6 +54,8 @@ describe('set', () => {
   test('behavior: identity engine changes nothing', () => {
     const expected = {
       blake3: merkelize(),
+      blsPublicKey: Bls.getPublicKey({ privateKey }),
+      blsSignature: Bls.sign({ payload, privateKey }),
       ed25519PublicKey: Ed25519.getPublicKey({ privateKey }),
       hmac256: Hash.hmac256('0xbeef', payload),
       keccak256: Hash.keccak256(payload),
@@ -69,6 +75,8 @@ describe('set', () => {
 
     expect({
       blake3: merkelize(),
+      blsPublicKey: Bls.getPublicKey({ privateKey }),
+      blsSignature: Bls.sign({ payload, privateKey }),
       ed25519PublicKey: Ed25519.getPublicKey({ privateKey }),
       hmac256: Hash.hmac256('0xbeef', payload),
       keccak256: Hash.keccak256(payload),
@@ -392,5 +400,52 @@ describe('interception', () => {
     const before = invoke()
     Engine.set(engine)
     expect(invoke()).not.toEqual(before)
+  })
+})
+
+describe('Bls', () => {
+  test('behavior: identity engine verifies its own signature', () => {
+    Engine.set(identityEngine)
+    const publicKey = Bls.getPublicKey({ privateKey })
+    const signature = Bls.sign({ payload, privateKey })
+    expect(Bls.verify({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('behavior: aggregate is routed through the engine', () => {
+    const publicKeys = [
+      Bls.getPublicKey({ privateKey }),
+      Bls.getPublicKey({ privateKey: otherPrivateKey }),
+    ]
+    const before = Bls.aggregate(publicKeys)
+    Engine.set(sentinelEngine)
+    expect(Bls.aggregate(publicKeys)).not.toEqual(before)
+  })
+
+  test('behavior: getPublicKey is routed through the engine', () => {
+    const before = Bls.getPublicKey({ privateKey })
+    Engine.set(sentinelEngine)
+    expect(Bls.getPublicKey({ privateKey })).not.toEqual(before)
+  })
+
+  test('behavior: sign is routed through the engine', () => {
+    const before = Bls.sign({ payload, privateKey })
+    Engine.set(sentinelEngine)
+    expect(Bls.sign({ payload, privateKey })).not.toEqual(before)
+  })
+
+  test('behavior: verify is routed through the engine', () => {
+    const publicKey = Bls.getPublicKey({ privateKey })
+    const signature = Bls.sign({ payload, privateKey })
+    expect(Bls.verify({ payload, publicKey, signature })).toBe(true)
+    Engine.set(sentinelEngine)
+    expect(Bls.verify({ payload, publicKey, signature })).toBe(false)
+  })
+
+  test('behavior: long-key:short-sig routes through the engine', () => {
+    Engine.set(identityEngine)
+    const size = 'long-key:short-sig'
+    const publicKey = Bls.getPublicKey({ privateKey, size })
+    const signature = Bls.sign({ payload, privateKey, size })
+    expect(Bls.verify({ payload, publicKey, signature })).toBe(true)
   })
 })

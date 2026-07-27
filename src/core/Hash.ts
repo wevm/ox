@@ -1,7 +1,7 @@
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import * as hash from './internal/hash.js'
+import * as engine from './internal/hash.js'
 
 /**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
@@ -51,7 +51,7 @@ export function keccak256<
 ): keccak256.ReturnType<as> {
   const isBytes = value instanceof Uint8Array
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
-  const bytes = hash.keccak256(isBytes ? value : Bytes.from(value))
+  const bytes = engine.keccak256(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -116,7 +116,7 @@ export function hmac256<
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
   const keyBytes = key instanceof Uint8Array ? key : Bytes.from(key)
   const valueBytes = isBytes ? value : Bytes.from(value)
-  const bytes = hash.hmacSha256(keyBytes, valueBytes)
+  const bytes = engine.hmacSha256(keyBytes, valueBytes)
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -165,7 +165,7 @@ export function ripemd160<
 ): ripemd160.ReturnType<as> {
   const isBytes = value instanceof Uint8Array
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
-  const bytes = hash.ripemd160(isBytes ? value : Bytes.from(value))
+  const bytes = engine.ripemd160(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }
@@ -214,7 +214,7 @@ export function sha256<
 ): sha256.ReturnType<as> {
   const isBytes = value instanceof Uint8Array
   const { as = isBytes ? 'Bytes' : 'Hex' } = options
-  const bytes = hash.sha256(isBytes ? value : Bytes.from(value))
+  const bytes = engine.sha256(isBytes ? value : Bytes.from(value))
   if (as === 'Bytes') return bytes as never
   return Hex.fromBytes(bytes) as never
 }

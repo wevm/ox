@@ -85,7 +85,7 @@ export declare namespace set {
  * @returns The installed engine.
  */
 export function get(): engine.Engine {
-  return { ...engine.engine }
+  return { ...engine.overrides }
 }
 
 export declare namespace get {

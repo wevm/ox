@@ -7,10 +7,13 @@
  * rather than `Bytes.Bytes`/`Hex.Hex` -- coercion stays in the public module,
  * and the engine boundary is plain bytes in, plain bytes out.
  *
- * The registry holds **overrides only**. Defaults are never registered here:
- * each module keeps its own `@noble/*` import as a local fallback, so the
- * default import edge never leaves the module the caller already imported and
- * bundlers can still drop the implementations nobody uses.
+ * The registry holds **overrides only**. Defaults are never registered here,
+ * because a registered default has to live on a complete slot object, and a
+ * slot object is a single reachable value: esbuild cannot drop the properties
+ * of one, so every default's `@noble/*` import survives into every bundle that
+ * touches the slot. Measured on a keccak256-only bundle, that costs 5 kB gzip.
+ * Instead each slot has a resolver module under `internal/` holding one binding
+ * per primitive, and the fallback is chosen there, per primitive.
  *
  * @internal
  */
@@ -304,7 +307,7 @@ export const slots = [
  *
  * @internal
  */
-export const engine: Engine = {}
+export const overrides: Engine = {}
 
 /**
  * Merges overrides into the registry, one level deep. A slot set to `undefined`
@@ -315,8 +318,8 @@ export const engine: Engine = {}
 export function merge(value: Engine) {
   for (const key of Object.keys(value) as (keyof Engine)[]) {
     const slot = value[key]
-    if (slot === undefined) delete engine[key]
-    else engine[key] = { ...engine[key], ...slot } as never
+    if (slot === undefined) delete overrides[key]
+    else overrides[key] = { ...overrides[key], ...slot } as never
   }
 }
 
@@ -326,8 +329,8 @@ export function merge(value: Engine) {
  * @internal
  */
 export function reset(slot?: keyof Engine) {
-  if (slot) delete engine[slot]
+  if (slot) delete overrides[slot]
   else
-    for (const key of Object.keys(engine) as (keyof Engine)[])
-      delete engine[key]
+    for (const key of Object.keys(overrides) as (keyof Engine)[])
+      delete overrides[key]
 }

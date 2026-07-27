@@ -1,4 +1,5 @@
 import { ctr } from '@noble/ciphers/aes.js'
+import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 import { ed25519, x25519 } from '@noble/curves/ed25519.js'
 import { p256 } from '@noble/curves/nist.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
@@ -23,6 +24,57 @@ import type { Engine } from 'ox'
  * rather than silently only when a real engine is installed.
  */
 export const identity: Engine.Engine = {
+  Bls: {
+    aggregate: (points, group) => {
+      const curve = group === 'G1' ? bls.G1 : bls.G2
+      let point = curve.Point.ZERO
+      for (const value of points)
+        point = point.add(curve.Point.fromBytes(value))
+      return point.toBytes()
+    },
+    getPublicKey: (privateKey, group) => {
+      const curve = group === 'G1' ? bls.G1 : bls.G2
+      return curve.Point.BASE.multiply(
+        curve.Point.Fn.fromBytes(privateKey),
+      ).toBytes()
+    },
+    randomSecretKey: () => bls.utils.randomSecretKey(),
+    sign: (payload, privateKey, { dst, group }) => {
+      const signatureCurve = group === 'G1' ? bls.G1 : bls.G2
+      const privateKeyCurve = group === 'G1' ? bls.G2 : bls.G1
+      return signatureCurve
+        .hashToCurve(payload, dst ? { DST: dst } : undefined)
+        .multiply(privateKeyCurve.Point.Fn.fromBytes(privateKey))
+        .toBytes()
+    },
+    verify: (signature, payload, publicKey, { dst, signatureGroup }) => {
+      const shortSignature = signatureGroup === 'G1'
+      const curve = shortSignature ? bls.G1 : bls.G2
+      const payloadPoint = curve.hashToCurve(
+        payload,
+        dst ? { DST: dst } : undefined,
+      )
+      const pairing = shortSignature
+        ? bls.pairingBatch([
+            {
+              g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
+              g2: bls.G2.Point.fromBytes(publicKey),
+            },
+            {
+              g1: bls.G1.Point.fromBytes(signature),
+              g2: bls.G2.Point.BASE.negate(),
+            },
+          ])
+        : bls.pairingBatch([
+            {
+              g1: bls.G1.Point.fromBytes(publicKey).negate(),
+              g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
+            },
+            { g1: bls.G1.Point.BASE, g2: bls.G2.Point.fromBytes(signature) },
+          ])
+      return bls.fields.Fp12.eql(pairing, bls.fields.Fp12.ONE)
+    },
+  },
   Ed25519: {
     getPublicKey: (privateKey) => ed25519.getPublicKey(privateKey),
     randomSecretKey: () => ed25519.utils.randomSecretKey(),
@@ -101,6 +153,12 @@ export const identity: Engine.Engine = {
   },
 }
 
+/** Valid BLS point that no test key derives to. */
+function blsSentinelPoint(group: 'G1' | 'G2') {
+  const curve = group === 'G1' ? bls.G1 : bls.G2
+  return curve.Point.BASE.multiply(0xdeadbeefn).toBytes()
+}
+
 /**
  * An engine whose every slot returns a fixed, wrong answer.
  *
@@ -109,6 +167,15 @@ export const identity: Engine.Engine = {
  * directly and that slot is not wired up.
  */
 export const sentinel: Engine.Engine = {
+  // Points must deserialize, so the sentinel is a valid point rather than a
+  // fill pattern. The scalar is arbitrary but large enough not to collide with
+  // the small private keys tests use.
+  Bls: {
+    aggregate: (_, group) => blsSentinelPoint(group),
+    getPublicKey: (_, group) => blsSentinelPoint(group),
+    sign: (_payload, _privateKey, { group }) => blsSentinelPoint(group),
+    verify: () => false,
+  },
   Ed25519: {
     getPublicKey: () => new Uint8Array(32).fill(0xe1),
     sign: () => new Uint8Array(64).fill(0xe2),

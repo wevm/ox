@@ -14,5 +14,6 @@ Hash.keccak256('0xdeadbeef')
 
 Slots are named after ox modules, and both slots and the functions within them
 are optional -- anything omitted keeps using ox's `@noble/*` and `@scure/*`
-defaults, so existing behavior is unchanged. `Hash`, `Secp256k1`, `P256`,
-`Ed25519`, `X25519`, `Keystore` and `Mnemonic` are routed through the engine.
+defaults, so existing behavior is unchanged. `Bls`, `Ed25519`, `Hash`,
+`Keystore`, `Mnemonic`, `P256`, `Secp256k1` and `X25519` are routed through the
+engine.

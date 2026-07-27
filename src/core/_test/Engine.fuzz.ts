@@ -1,5 +1,6 @@
 import { fc, test } from '@fast-check/vitest'
 import {
+  Bls,
   Ed25519,
   Engine,
   Hash,
@@ -172,6 +173,28 @@ describe('identity engine', () => {
       )
     },
   )
+
+  test.prop(
+    { payload: arbitraryBytes, privateKey: arbitraryPrivateKey },
+    { numRuns: Math.min(numRuns, 10) },
+  )('leaves Bls unchanged', ({ payload, privateKey }) => {
+    const before = {
+      publicKey: Bls.getPublicKey({ privateKey }),
+      signature: Bls.sign({ payload, privateKey }),
+    }
+
+    Engine.set(identity)
+
+    expect(Bls.getPublicKey({ privateKey })).toEqual(before.publicKey)
+    expect(Bls.sign({ payload, privateKey })).toEqual(before.signature)
+    expect(
+      Bls.verify({
+        payload,
+        publicKey: before.publicKey,
+        signature: before.signature,
+      }),
+    ).toBe(true)
+  })
 
   test.prop({ passphrase: fc.string({ maxLength: 32 }) }, { numRuns })(
     'leaves Mnemonic.toSeed unchanged',
