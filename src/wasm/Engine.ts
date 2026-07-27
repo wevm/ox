@@ -42,16 +42,20 @@ export declare namespace load {
  * Compiles every implementation this entrypoint provides, without installing
  * it.
  *
- * Use this to measure one implementation against another, or to compose an
- * engine before installing it in one go:
+ * Reach for this where an engine has to exist as a value: measuring one
+ * implementation against another, or installing for the duration of a call.
+ * Combining engines does not need it, because {@link ox#Engine.set} merges --
+ * `await load()` followed by `Engine.set({ Secp256k1 })` leaves both in place.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine } from 'ox'
+ * import { Engine, Hash } from 'ox'
  * import { Engine as Wasm } from 'ox/wasm'
  *
- * Engine.set({ ...(await Wasm.create()), Secp256k1: mySecp256k1 })
+ * const wasm = await Wasm.create()
+ *
+ * Engine.with(wasm, () => Hash.keccak256('0xdeadbeef'))
  * ```
  *
  * @returns An engine, ready to install.

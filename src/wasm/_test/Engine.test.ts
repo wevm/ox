@@ -15,11 +15,20 @@ describe('create', () => {
     expect(CoreEngine.get()).toMatchInlineSnapshot('{}')
   })
 
-  test('behavior: composes with other engines before installing', async () => {
-    CoreEngine.set({
-      ...(await Engine.create()),
-      Mnemonic: { toSeed: () => new Uint8Array(64) },
-    })
+  test('behavior: installs for the duration of a call', async () => {
+    // `with` is the case that genuinely needs a value: there is nothing
+    // installed for `set` to merge into.
+    const wasm = await Engine.create()
+    const inside = CoreEngine.with(wasm, () => Hash.keccak256('0xdeadbeef'))
+    expect(inside).toEqual(Hash.keccak256('0xdeadbeef'))
+    expect(CoreEngine.get()).toMatchInlineSnapshot('{}')
+  })
+})
+
+describe('load', () => {
+  test('behavior: merges with a later set, rather than being replaced', async () => {
+    await Engine.load()
+    CoreEngine.set({ Mnemonic: { toSeed: () => new Uint8Array(64) } })
     expect(Object.keys(CoreEngine.get()).sort()).toMatchInlineSnapshot(`
       [
         "Hash",
@@ -27,9 +36,7 @@ describe('create', () => {
       ]
     `)
   })
-})
 
-describe('load', () => {
   test('behavior: installs, and returns what it installed', async () => {
     const before = Hash.keccak256('0xdeadbeef')
 
@@ -42,7 +49,8 @@ describe('load', () => {
 
   test('behavior: routes every slot it reports', async () => {
     await Engine.load()
-    expect(Object.keys(CoreEngine.get().Hash ?? {}).sort()).toMatchInlineSnapshot(`
+    expect(Object.keys(CoreEngine.get().Hash ?? {}).sort())
+      .toMatchInlineSnapshot(`
       [
         "hmacSha256",
         "keccak256",

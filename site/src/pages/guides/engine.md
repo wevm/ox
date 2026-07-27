@@ -51,17 +51,30 @@ import { Engine } from 'ox/wasm'
 await Engine.load()
 ```
 
-To hold an implementation without installing it — to measure one against another, or to compose before installing — use `create`:
+`Engine.set` itself is synchronous and expects a fully initialized engine.
+
+Combining an entrypoint's engine with your own does not need anything further, because `set` merges — both across slots and within one:
 
 ```ts twoslash
 // @noErrors
 import { Engine } from 'ox'
 import { Engine as Wasm } from 'ox/wasm'
 
-Engine.set({ ...(await Wasm.create()), Secp256k1: mySecp256k1 })
+await Wasm.load()
+Engine.set({ Secp256k1: mySecp256k1 })
 ```
 
-`Engine.set` itself is synchronous and expects a fully initialized engine.
+Where an engine has to exist as a value — measuring one implementation against another, or installing for the duration of a call — `create` returns it without installing:
+
+```ts twoslash
+// @noErrors
+import { Engine, Hash } from 'ox'
+import { Engine as Wasm } from 'ox/wasm'
+
+const wasm = await Wasm.create()
+
+Engine.with(wasm, () => Hash.keccak256('0xdeadbeef'))
+```
 
 ## Call Order
 
