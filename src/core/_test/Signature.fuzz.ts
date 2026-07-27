@@ -1,7 +1,7 @@
 import { fc, test } from '@fast-check/vitest'
 import { Hex, Signature } from 'ox'
 import { describe, expect } from 'vp/test'
-import { fuzz } from '../../../test/fuzz/numRuns.js'
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 /**
  * Arbitrary secp256k1-style signature components. ox enforces:
@@ -25,35 +25,35 @@ const arbitrarySignature = fc
   }))
 
 describe('Signature round-trip', () => {
-  test.prop({ sig: arbitrarySignature }, fuzz)(
+  test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromHex(toHex(s)) ≡ s',
     ({ sig }) => {
       expect(Signature.fromHex(Signature.toHex(sig))).toEqual(sig)
     },
   )
 
-  test.prop({ sig: arbitrarySignature }, fuzz)(
+  test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromBytes(toBytes(s)) ≡ s',
     ({ sig }) => {
       expect(Signature.fromBytes(Signature.toBytes(sig))).toEqual(sig)
     },
   )
 
-  test.prop({ sig: arbitrarySignature }, fuzz)(
+  test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromTuple(toTuple(s)) ≡ s',
     ({ sig }) => {
       expect(Signature.fromTuple(Signature.toTuple(sig))).toEqual(sig)
     },
   )
 
-  test.prop({ sig: arbitrarySignature }, fuzz)(
+  test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromRpc(toRpc(s)) ≡ s',
     ({ sig }) => {
       expect(Signature.fromRpc(Signature.toRpc(sig))).toEqual(sig)
     },
   )
 
-  test.prop({ sig: arbitrarySignature }, fuzz)(
+  test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromCompactBytes(toCompactBytes(s)) ≡ s (without recovery)',
     ({ sig }) => {
       const stripped = { r: sig.r, s: sig.s }

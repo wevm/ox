@@ -6,7 +6,7 @@ import {
   hexToBytes,
   hexToBytesLoop,
 } from '../hex.js'
-import { fuzz } from '../../../../../test/fuzz/numRuns.js'
+import { numRuns } from '../../../../../test/fuzz/numRuns.js'
 
 // The implementations as they stood before the tiering change, vendored so the
 // suite has an oracle independent of the code under test. Any disagreement is
@@ -123,14 +123,14 @@ const arbitraryCorruptedHex = fc
   })
 
 describe.runIf(hasReference)('encode: new vs previous implementation', () => {
-  test.prop({ bytes: arbitraryBoundaryBytes }, fuzz)(
+  test.prop({ bytes: arbitraryBoundaryBytes }, { numRuns })(
     'bytesToHexLoop agrees with the previous loop',
     ({ bytes }) => {
       expect(bytesToHexLoop(bytes)).toBe(referenceEncode(bytes))
     },
   )
 
-  test.prop({ bytes: arbitraryBoundaryBytes }, fuzz)(
+  test.prop({ bytes: arbitraryBoundaryBytes }, { numRuns })(
     'the dispatched encoder agrees with the previous loop',
     ({ bytes }) => {
       expect(bytesToHex(bytes)).toBe(referenceEncode(bytes))
@@ -150,7 +150,7 @@ describe.runIf(hasReference)('decode: new vs previous implementation', () => {
     return true
   }
 
-  test.prop({ bytes: arbitraryBoundaryBytes }, fuzz)(
+  test.prop({ bytes: arbitraryBoundaryBytes }, { numRuns })(
     'valid input decodes identically',
     ({ bytes }) => {
       const hex = referenceEncode(bytes)
@@ -159,7 +159,7 @@ describe.runIf(hasReference)('decode: new vs previous implementation', () => {
     },
   )
 
-  test.prop({ hex: arbitraryCorruptedHex }, fuzz)(
+  test.prop({ hex: arbitraryCorruptedHex }, { numRuns })(
     'pure-ASCII corruption is accepted or rejected identically',
     ({ hex }) => {
       fc.pre(isAscii(hex))
@@ -169,7 +169,7 @@ describe.runIf(hasReference)('decode: new vs previous implementation', () => {
     },
   )
 
-  test.prop({ value: fc.string({ unit: 'grapheme' }) }, fuzz)(
+  test.prop({ value: fc.string({ unit: 'grapheme' }) }, { numRuns })(
     'pure-ASCII strings are accepted or rejected identically',
     ({ value }) => {
       fc.pre(isAscii(value))
@@ -180,7 +180,7 @@ describe.runIf(hasReference)('decode: new vs previous implementation', () => {
     },
   )
 
-  test.prop({ hex: arbitraryCorruptedHex }, fuzz)(
+  test.prop({ hex: arbitraryCorruptedHex }, { numRuns })(
     'non-ASCII input is always rejected',
     ({ hex }) => {
       fc.pre(!isAscii(hex))
@@ -199,7 +199,7 @@ describe('decode: tiers agree with each other', () => {
   const prefix = 'ab'.repeat(96)
   const prefixBytes = hexToBytes(`0x${prefix}`)
 
-  test.prop({ hex: arbitraryCorruptedHex }, fuzz)(
+  test.prop({ hex: arbitraryCorruptedHex }, { numRuns })(
     'the tier chosen by size does not change the verdict',
     ({ hex }) => {
       const body = hex.slice(2)
@@ -213,7 +213,7 @@ describe('decode: tiers agree with each other', () => {
     },
   )
 
-  test.prop({ bytes: arbitraryBoundaryBytes }, fuzz)(
+  test.prop({ bytes: arbitraryBoundaryBytes }, { numRuns })(
     'the loop agrees with whichever tier size selects',
     ({ bytes }) => {
       const hex = referenceEncode(bytes)
@@ -223,7 +223,7 @@ describe('decode: tiers agree with each other', () => {
 })
 
 describe('round-trip', () => {
-  test.prop({ bytes: arbitraryBoundaryBytes }, fuzz)(
+  test.prop({ bytes: arbitraryBoundaryBytes }, { numRuns })(
     'decode(encode(b)) is b, through every tier',
     ({ bytes }) => {
       expect(hexToBytes(bytesToHex(bytes))).toEqual(bytes)

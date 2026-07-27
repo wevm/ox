@@ -6,24 +6,24 @@ import {
   arbitraryBytes,
   arbitraryHex,
 } from '../../../test/fuzz/arbitraries/bytes.js'
-import { fuzz } from '../../../test/fuzz/numRuns.js'
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('Hex round-trip', () => {
-  test.prop({ bytes: arbitraryBytes() }, fuzz)(
+  test.prop({ bytes: arbitraryBytes() }, { numRuns })(
     'toBytes(fromBytes(b)) ≡ b',
     ({ bytes }) => {
       expect(Hex.toBytes(Hex.fromBytes(bytes))).toEqual(bytes)
     },
   )
 
-  test.prop({ hex: arbitraryHex() }, fuzz)(
+  test.prop({ hex: arbitraryHex() }, { numRuns })(
     'fromBytes(toBytes(h)) ≡ h',
     ({ hex }) => {
       expect(Hex.fromBytes(Hex.toBytes(hex))).toEqual(hex.toLowerCase())
     },
   )
 
-  test.prop({ value: fc.boolean() }, fuzz)(
+  test.prop({ value: fc.boolean() }, { numRuns })(
     'toBoolean(fromBoolean(v)) ≡ v',
     ({ value }) => {
       expect(Hex.toBoolean(Hex.fromBoolean(value))).toEqual(value)
@@ -36,7 +36,7 @@ describe('Hex round-trip', () => {
       // bounded.
       value: fc.string({ maxLength: 256 }),
     },
-    fuzz,
+    { numRuns },
   )('toString(fromString(s)) ≡ s', ({ value }) => {
     expect(Hex.toString(Hex.fromString(value))).toEqual(value)
   })
@@ -47,7 +47,7 @@ describe('Hex round-trip', () => {
       // integer range. ox uses unsigned by default.
       value: fc.integer({ min: 0, max: Number.MAX_SAFE_INTEGER }),
     },
-    fuzz,
+    { numRuns },
   )('toNumber(fromNumber(n)) ≡ n', ({ value }) => {
     expect(Hex.toNumber(Hex.fromNumber(value))).toEqual(value)
   })
@@ -56,14 +56,14 @@ describe('Hex round-trip', () => {
     {
       value: fc.bigInt({ min: 0n, max: 2n ** 256n - 1n }),
     },
-    fuzz,
+    { numRuns },
   )('toBigInt(fromNumber(big)) ≡ big', ({ value }) => {
     expect(Hex.toBigInt(Hex.fromNumber(value))).toEqual(value)
   })
 })
 
 describe('Hex.size', () => {
-  test.prop({ bytes: arbitraryBytes() }, fuzz)(
+  test.prop({ bytes: arbitraryBytes() }, { numRuns })(
     'size(fromBytes(b)) ≡ b.length',
     ({ bytes }) => {
       expect(Hex.size(Hex.fromBytes(bytes))).toEqual(bytes.length)

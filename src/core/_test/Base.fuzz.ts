@@ -3,10 +3,10 @@ import { Base32, Base58, Base64 } from 'ox'
 import { describe, expect } from 'vp/test'
 
 import { arbitraryBytes } from '../../../test/fuzz/arbitraries/bytes.js'
-import { fuzz } from '../../../test/fuzz/numRuns.js'
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('Base32 round-trip', () => {
-  test.prop({ bytes: arbitraryBytes() }, fuzz)(
+  test.prop({ bytes: arbitraryBytes() }, { numRuns })(
     'toBytes(fromBytes(b)) ≡ b',
     ({ bytes }) => {
       expect(Base32.toBytes(Base32.fromBytes(bytes))).toEqual(bytes)
@@ -15,7 +15,7 @@ describe('Base32 round-trip', () => {
 })
 
 describe('Base58 round-trip', () => {
-  test.prop({ bytes: arbitraryBytes() }, fuzz)(
+  test.prop({ bytes: arbitraryBytes() }, { numRuns })(
     'toBytes(fromBytes(b)) ≡ b',
     ({ bytes }) => {
       expect(Base58.toBytes(Base58.fromBytes(bytes))).toEqual(bytes)
@@ -24,14 +24,14 @@ describe('Base58 round-trip', () => {
 })
 
 describe('Base64 round-trip', () => {
-  test.prop({ bytes: arbitraryBytes() }, fuzz)(
+  test.prop({ bytes: arbitraryBytes() }, { numRuns })(
     'toBytes(fromBytes(b)) ≡ b',
     ({ bytes }) => {
       expect(Base64.toBytes(Base64.fromBytes(bytes))).toEqual(bytes)
     },
   )
 
-  test.prop({ bytes: arbitraryBytes() }, fuzz)(
+  test.prop({ bytes: arbitraryBytes() }, { numRuns })(
     'toBytes(fromBytes(b, { url: true })) ≡ b',
     ({ bytes }) => {
       expect(Base64.toBytes(Base64.fromBytes(bytes, { url: true }))).toEqual(

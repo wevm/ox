@@ -3,14 +3,14 @@ import { AbiParameters } from 'ox'
 import { describe, expect } from 'vp/test'
 
 import { arbitraryAbiCase } from '../../../test/fuzz/arbitraries/abi.js'
-import { fuzz } from '../../../test/fuzz/numRuns.js'
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('AbiParameters round-trip', () => {
   test.prop(
     {
       input: arbitraryAbiCase(),
     },
-    fuzz,
+    { numRuns },
   )('decode(encode(values)) ≡ values', ({ input }) => {
     const encoded = AbiParameters.encode(
       input.parameters,

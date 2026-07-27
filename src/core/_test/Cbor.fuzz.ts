@@ -1,7 +1,7 @@
 import { fc, test } from '@fast-check/vitest'
 import { Cbor } from 'ox'
 import { describe, expect } from 'vp/test'
-import { fuzz } from '../../../test/fuzz/numRuns.js'
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 /**
  * Recursive CBOR-encodable value. ox's Cbor module supports:
@@ -56,7 +56,7 @@ function arbitraryCborValue(maxDepth = 3): fc.Arbitrary<unknown> {
 }
 
 describe('Cbor round-trip', () => {
-  test.prop({ value: arbitraryCborValue() }, fuzz)(
+  test.prop({ value: arbitraryCborValue() }, { numRuns })(
     'decode(encode(v)) ≡ v',
     ({ value }) => {
       const encoded = Cbor.encode(value)

@@ -145,16 +145,19 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
-      # 2k runs per property, on Node. The counterexamples behind the `Hex`
-      # and `Base64` decode fixes surfaced at iterations 372 and 1612, so the
-      # previous budget of 200 could not have found either.
+      # The counterexamples behind the `Hex` and `Base64` decode fixes surfaced
+      # at iterations 372 and 1612, so the previous budget of 200 could not
+      # have found either. 10k timed out at the default per-test limit on a
+      # runner, which is several times slower than a laptop.
       #
-      # Browsers are left to `fuzz-soak.yml`: they triple the wall time, and
-      # what is unique about them -- the native codecs, which disagree between
-      # engine versions -- is already pinned on every pull request by the
-      # `*.conformance.ts` suites running under the `browser` project.
-      - name: Run bounded fuzz tests
-        run: pnpm test:fuzz:ci
+      # Node only: browsers triple the wall time, and what is unique about them
+      # -- native codecs that differ between engine versions -- is already
+      # pinned here by the `*.conformance.ts` suites under the `browser`
+      # project. Add `--project fuzz-browser` to fuzz them too.
+      - name: Run fuzz tests
+        run: pnpm test:fuzz --bail=1
+        env:
+          FC_NUM_RUNS: 2000
 
   vectors:
     name: Vectors
