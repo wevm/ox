@@ -3,26 +3,23 @@ import { ripemd160 as noble_ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 as noble_sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3.js'
 import { bench, describe } from 'vp/test'
-import * as Bytes from '../core/Bytes.js'
-import { create } from './Hash.js'
+import { create as createWasm } from './Hash.js'
 
-// Sizes bracket the crossover: WASM pays a fixed marshalling cost per call, so
-// short inputs favor the JavaScript implementation and long ones favor WASM.
+// Sizes expose fixed boundary overhead and sustained throughput. Crossovers
+// vary by primitive, runtime, and processor.
 //
-// For a native ceiling alongside these two, run `pnpm bench:hash`, which drives
-// the same primitives through `bench/native`. Vitest cannot run native code, so
-// it cannot be a column here.
+// Run `pnpm bench:hash` for the full four-provider comparison. Vitest cannot
+// run Rust, and this portable benchmark must remain browser-compatible.
 const sizes = [32, 64, 256, 1024, 4096, 65_536, 1_048_576] as const
 
-const engine = await create()
-const wasm = engine.Hash
-const key = Bytes.random(32)
+const wasm = (await createWasm()).Hash
+const key = Uint8Array.from({ length: 32 }, (_, index) => index % 97)
 
 for (const size of sizes) {
-  const bytes = Bytes.random(size)
+  const bytes = Uint8Array.from({ length: size }, (_, index) => index % 251)
 
   describe(`keccak256 (${size} bytes input)`, () => {
-    bench('@noble/hashes', () => {
+    bench('ox', () => {
       noble_keccak256(bytes)
     })
 
@@ -32,7 +29,7 @@ for (const size of sizes) {
   })
 
   describe(`sha256 (${size} bytes input)`, () => {
-    bench('@noble/hashes', () => {
+    bench('ox', () => {
       noble_sha256(bytes)
     })
 
@@ -42,7 +39,7 @@ for (const size of sizes) {
   })
 
   describe(`ripemd160 (${size} bytes input)`, () => {
-    bench('@noble/hashes', () => {
+    bench('ox', () => {
       noble_ripemd160(bytes)
     })
 
@@ -52,7 +49,7 @@ for (const size of sizes) {
   })
 
   describe(`hmacSha256 (${size} bytes input)`, () => {
-    bench('@noble/hashes', () => {
+    bench('ox', () => {
       hmac(noble_sha256, key, bytes)
     })
 

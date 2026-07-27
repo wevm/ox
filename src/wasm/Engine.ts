@@ -45,8 +45,9 @@ export declare namespace load {
  * it.
  *
  * Reach for this where an engine has to exist as a value: measuring one
- * implementation against another, or installing for the duration of a call.
- * Combining engines does not need it, because
+ * implementation against another, or installing through
+ * [`Engine.with`](/api/Engine/with) for the duration of a call. Combining
+ * engines does not need it, because
  * [`Engine.set`](/api/Engine/set) merges -- `await load()` followed by
  * `Engine.set({ Secp256k1 })` leaves both in place.
  *

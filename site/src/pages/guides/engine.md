@@ -1,16 +1,163 @@
 ---
-description: "Delegate Ox's cryptography to a different implementation."
+description: "Choose between Ox's default, WASM, Node, and custom cryptography engines."
 ---
 
-# Crypto Engines
+# WASM & Engines
 
-Ox implements its cryptography with [`@noble`](https://github.com/paulmillr/noble-hashes) and [`@scure`](https://github.com/paulmillr/scure-bip32) — audited, minimal, dependency-free JavaScript libraries. That is the right default: it works in every runtime, it is small, and it needs no build step.
+## Overview
 
-Sometimes you want something else. A native implementation can be substantially faster — [`ox/wasm`](/wasm) hashes Keccak256 around 12–14× faster than the default. A hardware or platform-native implementation may be required by policy. [`Engine`](/api/Engine) lets you supply one without forking Ox.
+Ox uses portable JavaScript cryptography by default. An [`Engine`](/api/Engine)
+replaces individual implementations without changing the `Hash`, `Secp256k1`,
+`Keystore`, or other public APIs that call them.
 
-## Installing an Engine
+| Engine      | Runtime                       | Benefits                                  | Trade-offs                              |
+| ----------- | ----------------------------- | ----------------------------------------- | --------------------------------------- |
+| `ox`        | Browser, Node, and edge       | Audited, isomorphic, no setup             | Slower for some hashes                  |
+| `ox/wasm`   | Runtimes with WebAssembly     | Fast, isomorphic, portable                | Async startup and memory marshalling    |
+| `ox/node`   | Node.js 22 and newer          | Native OpenSSL-backed hashes              | Node-only and no Keccak256              |
+| Custom      | Implementation-dependent      | Any supported primitive or provider       | You own correctness and key handling    |
 
-An engine is a plain object whose keys are named after Ox modules:
+Engines are partial. Anything they omit leaves the currently installed
+implementation unchanged, falling back to Ox's default when no override was
+installed earlier. Calls to [`Engine.set`](/api/Engine/set) merge, including
+within the same slot, and Ox selects an implementation when a cryptographic
+function is called.
+
+Install an engine once during application startup, before making cryptographic
+calls. The registry belongs to one loaded Ox module instance, so separate
+copies of Ox have separate registries.
+
+## Default Engine
+
+No setup is required:
+
+```ts twoslash
+import { Hash } from 'ox'
+
+const digest = Hash.keccak256('0xdeadbeef')
+```
+
+Ox's defaults use the
+[`@noble`](https://github.com/paulmillr/noble-hashes) and
+[`@scure`](https://github.com/paulmillr/scure-bip32) JavaScript libraries.
+[`Engine.get()`](/api/Engine/get) returns `{}` until an override is installed
+because defaults are fallbacks, not registered overrides.
+
+**Benefits**
+
+- Works across browsers, Node.js, and edge runtimes.
+- Covers Ox's complete cryptography surface.
+- Requires no initialization or runtime-specific entrypoint.
+- Keeps runtime-specific dependencies out of the default entrypoint.
+
+**Trade-offs**
+
+- Pure JavaScript can be slower than WASM or platform-native implementations.
+- It cannot use Node's OpenSSL and hardware-accelerated SHA paths.
+- It may not satisfy a policy requiring a particular native, hardware, or
+  validated provider.
+
+## WASM (Web Assembly) Engine
+
+The WASM engine compiles and installs asynchronously:
+
+```ts twoslash
+import { Hash } from 'ox'
+import { Engine } from 'ox/wasm'
+
+await Engine.load()
+
+const digest = Hash.keccak256('0xdeadbeef')
+```
+
+It supplies `hmacSha256`, `keccak256`, `ripemd160`, and `sha256`. BLAKE3 and
+every non-`Hash` operation keep their current implementation, or use Ox's
+default when no earlier override exists.
+
+Use `create` when you need the engine without installing it:
+
+```ts twoslash
+import { Engine } from 'ox/wasm'
+
+const wasm = await Engine.create()
+```
+
+**Benefits**
+
+- Runs in browsers, Node.js, and other runtimes with WebAssembly.
+- Provides a substantial Keccak256 speedup on common runtimes.
+- Keeps hashing synchronous after one asynchronous startup step.
+- Embeds the compiled module, with no separate WASM asset to host.
+
+**Trade-offs**
+
+- Requires asynchronous initialization before cryptographic calls.
+- Copies inputs and outputs across WASM linear memory.
+- Gains vary by primitive, input size, runtime, and processor.
+- Adds the WASM implementation without removing JavaScript fallbacks from the
+  bundle.
+
+## Node Engine
+
+The Node engine uses the built-in `node:crypto` implementation. Its setup is
+asynchronous to match `ox/wasm`, although Node requires no compilation:
+
+```ts twoslash
+import { Hash } from 'ox'
+import { Engine } from 'ox/node'
+
+await Engine.load()
+
+const digest = Hash.sha256('0xdeadbeef')
+```
+
+It supplies `hmacSha256`, `ripemd160`, and `sha256`. Keccak256 and BLAKE3 keep
+their current implementation, or use Ox's default when no earlier override
+exists. Node's `sha3-256` is not Ethereum Keccak256 and must not be substituted
+for it.
+
+Use `create` to obtain the engine without installing it:
+
+```ts twoslash
+import { Engine } from 'ox/node'
+
+const node = await Engine.create()
+```
+
+The Node and WASM engines compose through `Engine.set`:
+
+```ts twoslash
+import { Engine as NodeEngine } from 'ox/node'
+import { Engine as WasmEngine } from 'ox/wasm'
+
+await WasmEngine.load()
+await NodeEngine.load()
+```
+
+The second load replaces the three overlapping hashes with Node
+implementations while keeping WASM Keccak256 installed.
+
+**Benefits**
+
+- Uses Node's native OpenSSL-backed cryptography.
+- Can use processor acceleration for SHA-256 and HMAC-SHA256.
+- Requires no WASM compilation or memory marshalling.
+- Lives in a separate entrypoint, so browser bundles do not resolve
+  `node:crypto`.
+
+**Trade-offs**
+
+- Supports Node.js only and must not be imported into browser bundles.
+- Does not provide Keccak256 or BLAKE3.
+- Native call overhead can affect short-input rankings.
+- Algorithm availability and validation modes depend on the Node and OpenSSL
+  build. FIPS mode may reject RIPEMD-160.
+- Leaves Ox's default fallback code available.
+
+## Custom Engines
+
+Install any subset of Ox's engine contract with
+[`Engine.set`](/api/Engine/set):
 
 ```ts twoslash
 import { Engine } from 'ox'
@@ -24,139 +171,89 @@ Engine.set({
 declare function myKeccak256(input: Uint8Array): Uint8Array
 ```
 
-Every slot, and every function within a slot, is optional. Anything you leave out keeps using Ox's default, so an engine that implements only `keccak256` is perfectly valid — everything else is untouched.
-
-Calls to `Engine.set` merge, so you can install an engine and then override one primitive:
+Slots and primitives are optional, and repeated calls merge:
 
 ```ts twoslash
 import { Engine } from 'ox'
 // ---cut---
-Engine.set(myEngine)
-Engine.set({ Hash: { keccak256: myFasterKeccak256 } })
-// ---cut-after---
-declare const myEngine: Engine.Engine
-declare function myFasterKeccak256(input: Uint8Array): Uint8Array
-```
-
-Engine functions take and return plain `Uint8Array` values, not Ox's `Hex` or `Bytes` types. Coercion stays in the Ox module, so an engine only ever deals in bytes.
-
-## Asynchronous Initialization
-
-Ox's crypto functions are synchronous, but WASM must be compiled asynchronously — browsers refuse to compile modules larger than a few kilobytes synchronously on the main thread. Each entrypoint exports an `Engine` whose `load` does both, so the `await` appears once:
-
-```ts twoslash
-// @noErrors
-import { Engine } from 'ox/wasm'
-
-await Engine.load()
-```
-
-`Engine.set` itself is synchronous and expects a fully initialized engine.
-
-Combining an entrypoint's engine with your own does not need anything further, because `set` merges — both across slots and within one:
-
-```ts twoslash
-// @noErrors
-import { Engine } from 'ox'
-import { Engine as Wasm } from 'ox/wasm'
-
-await Wasm.load()
+Engine.set({ Hash: { keccak256: myKeccak256 } })
 Engine.set({ Secp256k1: mySecp256k1 })
-```
-
-Where an engine has to exist as a value — measuring one implementation against another, or installing for the duration of a call — `create` returns it without installing:
-
-```ts twoslash
-// @noErrors
-import { Engine, Hash } from 'ox'
-import { Engine as Wasm } from 'ox/wasm'
-
-const wasm = await Wasm.create()
-
-Engine.with(wasm, () => Hash.keccak256('0xdeadbeef'))
-```
-
-## Call Order
-
-Ox resolves the engine at call time. Anything computed before `Engine.set` used whatever implementation was installed then:
-
-```ts twoslash
-import { Engine, Hash } from 'ox'
-// ---cut---
-Hash.keccak256('0xdeadbeef') // uses the default
-Engine.set(myEngine)
-Hash.keccak256('0xdeadbeef') // uses myEngine
 // ---cut-after---
-declare const myEngine: Engine.Engine
+declare const myKeccak256: (input: Uint8Array) => Uint8Array
+declare const mySecp256k1: NonNullable<Engine.Engine['Secp256k1']>
 ```
 
-Install your engine once, during application startup, before any crypto call.
+Binary values cross engine boundaries as raw `Uint8Array` values. Ox performs
+`Hex` and `Bytes` conversion outside the engine boundary. Install explicitly
+rather than relying on a side-effect import: Ox declares `sideEffects: false`,
+so a bundler may drop an import that appears unused.
 
-There is deliberately no side-effect import that installs an engine for you (`import 'ox/wasm/register'` and the like). Ox declares `sideEffects: false`, so a bundler would be free to drop such an import and your engine would silently never install. `Engine.set` is an explicit call for that reason.
+**Benefits**
 
-## Measure Before You Switch
+- Supports synchronous native libraries and policy-required providers.
+- Replaces one primitive without requiring a complete slot.
+- Preserves Ox's public APIs and input/output conversion.
+- Composes with the built-in Node and WASM engines.
 
-An engine is not automatically faster. Each call crosses a boundary — copying bytes into WASM memory and back — and for cheap operations that cost can exceed the work itself.
+**Trade-offs**
 
-Measured with `pnpm bench` on Node 22, against `@noble/hashes` 2.2.0:
+- The engine author owns algorithm semantics, output lengths, key formats, and
+  error behavior.
+- Most engine functions are synchronous. Only explicitly asynchronous
+  contracts such as `scryptAsync` may return promises.
+- Overrides are module-instance-global, so initialization order and concurrent
+  use matter.
+- Installing an engine changes dispatch but does not remove defaults from the
+  bundle.
 
-| operation                    | speedup with `ox/wasm` |
-| ---------------------------- | ---------------------- |
-| `Hash.keccak256`, any size   | ~12–14×                |
-| `Hash.sha256`, 32 bytes      | ~3×                    |
-| `Hash.sha256`, 1 MiB         | ~1.1×                  |
+## Benchmarks
 
-The Keccak256 gap is large at every size because the default implementation is unusually slow there — around 19 MB/s, against roughly 148 MB/s for its own SHA-256. Since Keccak256 is the hash Ox reaches for most (every address checksum, every signature recovery), that is the clearest win available.
+Run the engine hash comparison with:
 
-SHA-256 is a much narrower margin, and it narrows further as inputs grow. Re-measure on your own runtime before assuming a gain: these numbers move with the engine and the machine.
-
-### Against Native Code
-
-`pnpm bench` compares the default against `ox/wasm`. To see both against native Rust, `pnpm bench:hash` adds a third column from `bench/native`, covering every primitive `ox/wasm` implements. It needs `cargo`, and omits that column without it.
-
-That column is a ceiling, not a target: native code has no VM and no boundary to cross. It is useful for knowing how much of the remaining gap is worth chasing. On Apple Silicon, `ox/wasm` lands within ~1.15× of `alloy-primitives` for large Keccak256 inputs, and is *faster* than the `ripemd` crate above 256 bytes.
-
-## Engines and Bundle Size
-
-Installing an engine changes *which implementation Ox calls*. It does not remove the default implementation from your bundle.
-
-Two reasons:
-
-- Ox's crypto modules keep their `@noble/*` import as the fallback for any slot you do not fill.
-- Each crypto module exports the underlying implementation as an escape hatch — [`Secp256k1.noble`](/api/Secp256k1), [`P256.noble`](/api/P256), [`Ed25519.noble`](/api/Ed25519), [`X25519.noble`](/api/X25519), [`Bls.noble`](/api/Bls). These always refer to the bundled `@noble/*` implementation and are never affected by `Engine.set`.
-
-So reach for an engine when you want a *faster* or *policy-mandated* implementation, not a smaller bundle.
-
-## Synchronous and Asynchronous Variants
-
-Where Ox exposes both a synchronous and an asynchronous function — [`Keystore.scrypt`](/api/Keystore/scrypt) and [`Keystore.scryptAsync`](/api/Keystore/scryptAsync), for instance — the corresponding engine functions resolve independently. Supplying `scrypt` alone leaves `scryptAsync` on the default implementation.
-
-That is intentional. Wrapping a long synchronous computation in a promise blocks the event loop just as much as calling it directly, so it is worse than an implementation that genuinely yields.
-
-## Scoped Overrides
-
-For tests and benchmarks, [`Engine.with`](/api/Engine/with) installs an engine for the duration of a synchronous function and restores the previous one afterwards, including on throw:
-
-```ts twoslash
-import { Engine, Hash } from 'ox'
-
-const hash = Engine.with({ Hash: { keccak256: () => new Uint8Array(32) } }, () =>
-  Hash.keccak256('0xdeadbeef'),
-)
+```sh
+pnpm bench:hash
 ```
 
-The engine is process-wide, so this is only safe for synchronous functions — concurrent asynchronous work would observe the override too. Passing an asynchronous function throws `Engine.AsyncScopeError`.
+The harness reports only implementations each provider actually supplies:
 
-## Caches
+| Primitive       | `ox` | `ox/node` | `ox/wasm` | `alloy (Rust)` |
+| --------------- | ---- | --------- | --------- | -------------- |
+| `keccak256`     | yes  | n/a       | yes       | yes            |
+| `sha256`        | yes  | yes       | yes       | n/a            |
+| `ripemd160`     | yes  | yes       | yes       | n/a            |
+| `hmacSha256`    | yes  | yes       | yes       | n/a            |
 
-`Caches` memoizes values derived from cryptography, such as address checksums. `Engine.set` and `Engine.reset` clear them, so a swapped hash implementation never returns a stale cached value.
+`n/a` means the provider does not implement that primitive. The harness never
+times Ox's fallback under another engine's name. `alloy-primitives` provides
+Keccak256 only; it is a native reference, not an Ox engine.
+
+One local run on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1 produced
+the following best-observed timings (lower is better). Speedup compares the
+fastest Ox engine in each row with `ox`; Alloy remains a reference only:
+
+| Primitive and input    | `ox`     | `ox/node` | `ox/wasm` | `alloy (Rust)` | Fastest Ox engine vs `ox` |
+| ---------------------- | -------- | --------- | --------- | -------------- | ------------------------- |
+| `keccak256`, 32 B      | 2.57 µs  | n/a       | 268 ns    | 133 ns         | 9.59× (wasm)              |
+| `keccak256`, 1024 KiB  | 17.76 ms | n/a       | 1.23 ms   | 1.18 ms        | 14.44× (wasm)             |
+| `sha256`, 32 B         | 649 ns   | 447 ns    | 302 ns    | n/a            | 2.15× (wasm)              |
+| `sha256`, 1024 KiB     | 3.83 ms  | 349.83 µs | 3.04 ms   | n/a            | 10.94× (node)             |
+| `ripemd160`, 32 B      | 749 ns   | 564 ns    | 263 ns    | n/a            | 2.84× (wasm)              |
+| `ripemd160`, 1024 KiB  | 6.00 ms  | 2.21 ms   | 2.77 ms   | n/a            | 2.71× (node)              |
+| `hmacSha256`, 32 B     | 2.37 µs  | 1.01 µs   | 985 ns    | n/a            | 2.40× (wasm)              |
+| `hmacSha256`, 1024 KiB | 3.93 ms  | 345.87 µs | 2.94 ms   | n/a            | 11.38× (node)             |
+
+The benchmark initializes engines outside the timed loops and uses identical
+inputs, warmups, budgets, and repeats. It reports the best-observed repeat as a
+peak-throughput microbenchmark, not a latency distribution. It measures raw
+single-call byte-array implementations, not Ox formatting or whole applications.
+Treat the results as runtime-specific: Node/OpenSSL, CPU acceleration, the WASM
+runtime, Rust compiler, JIT state, and input size can all change the ranking.
 
 ## Testing
 
-Reset the engine between tests, or one test's engine leaks into the next:
+Reset the installed engine between tests:
 
 ```ts twoslash
-// @noErrors
 import { Engine } from 'ox'
 import { beforeEach } from 'vitest'
 
@@ -165,12 +262,40 @@ beforeEach(() => {
 })
 ```
 
-## Multiple Copies of Ox
+For differential tests, obtain an implementation with `create`, then install it
+for one synchronous call with [`Engine.with`](/api/Engine/with):
 
-The engine registry belongs to the Ox module instance that owns it. If your dependency graph contains two copies of Ox, each has its own registry, and installing an engine on one will not affect the other. Deduplicate Ox in your lockfile if you hit this.
+```ts twoslash
+import { Engine, Hash } from 'ox'
+import { Engine as WasmEngine } from 'ox/wasm'
+
+const wasm = await WasmEngine.create()
+const digest = Engine.with(wasm, () => Hash.sha256('0xdeadbeef'))
+```
+
+`Engine.with` rejects asynchronous functions because concurrent work could
+observe the module-instance-global override. `Engine.set` and `Engine.reset`
+clear Ox's derived cryptographic caches automatically.
+
+Test custom implementations against published vectors, boundary-sized and
+empty inputs, and an independent implementation. Verify exact digest,
+signature, and key lengths rather than checking only that a call succeeds.
 
 ## Security
 
-Neither the default implementation nor a WASM engine is hardened against timing or cache side-channel attacks. WebAssembly provides no constant-time guarantees at all: the specification says nothing about instruction timing, engines re-optimize functions once they are hot, and branchless source code is not guaranteed to stay branchless.
+Treat an engine as trusted code. Depending on the slot, it can receive HMAC
+keys, private keys, passwords, mnemonic phrases, and plaintext keystore
+material. `Engine.set` validates slot and primitive names, but it cannot
+validate correctness, constant-time behavior, or key handling.
 
-If an attacker can execute code in the same process or measure your timing precisely, use a hardware signer or an OS keystore rather than either implementation.
+Neither the default nor WASM engine promises protection from timing or cache
+side channels. WebAssembly has no constant-time execution guarantee. The WASM
+HMAC implementation clears the copied key from linear memory, but that does
+not make the surrounding runtime side-channel resistant.
+
+The Node engine inherits the properties of the active Node and OpenSSL build.
+Using `node:crypto` does not itself mean FIPS mode is enabled or that every
+configured provider exposes RIPEMD-160.
+
+For threats involving precise timing measurement or hostile same-process code,
+use an OS keystore, hardware-backed signer, or isolated signing service.

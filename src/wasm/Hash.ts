@@ -36,21 +36,18 @@ const instantiate = /*#__PURE__*/ internal.memoize(() =>
 )
 
 /**
- * Compiles the WASM implementation of the {@link ox#Hash} primitives, without
+ * Compiles the WASM implementation of the [`Hash`](/api/Hash) primitives, without
  * installing it.
  *
- * Most callers want {@link ox#wasm/Engine.load} instead, which compiles every
+ * Most callers want {@link ox#Engine.load} instead, which compiles every
  * implementation this entrypoint provides and installs them in one call. Reach
  * for this to take the `Hash` slot on its own, or to hold the implementation
  * without touching the installed engine.
  *
  * :::note
- * The win is uneven, and worth knowing before you reach for this. Measured with
- * `pnpm bench` on Node 22 against `@noble/hashes` 2.2.0, `keccak256` is ~12-14x
- * faster at every input size, including 32 bytes, because `@noble/hashes`'
- * Keccak is unusually slow (~19 MB/s, against ~148 MB/s for its own SHA-256).
- * `sha256` is a much narrower ~1.1-3x, widest on short inputs where the fixed
- * per-call cost dominates. Numbers vary by runtime -- re-measure on yours.
+ * Performance varies by primitive, input size, runtime, and processor. Run
+ * `pnpm bench:hash` to compare Ox's default, Node, WASM, and Alloy
+ * implementations on your target machine.
  * :::
  *
  * @example

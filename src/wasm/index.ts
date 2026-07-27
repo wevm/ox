@@ -8,9 +8,9 @@
  * synchronous.
  *
  * :::note
- * Measured with `pnpm bench` against `@noble/hashes` 2.2.0, `keccak256` is
- * ~12-14x faster at every input size and `sha256` is ~1.1-3x faster. Numbers
- * vary by runtime -- re-measure on yours.
+ * Performance varies by primitive, input size, runtime, and processor. Run
+ * `pnpm bench:hash` to compare the available implementations on your target
+ * machine.
  * :::
  *
  * @example
@@ -27,4 +27,21 @@
  * @category Crypto
  */
 export * as Engine from './Engine.js'
+
+/**
+ * WASM implementations of Ox's supported hash primitives.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Engine, Hash } from 'ox'
+ * import * as WasmHash from 'ox/wasm/Hash'
+ *
+ * Engine.set(await WasmHash.create())
+ *
+ * Hash.keccak256('0xdeadbeef')
+ * ```
+ *
+ * @category Crypto
+ */
 export * as Hash from './Hash.js'

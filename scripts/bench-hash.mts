@@ -1,14 +1,13 @@
 /**
- * Three-way hash benchmark: ox's default, `ox/wasm`, and native Rust.
+ * Hash benchmark across Ox's default, Node, WASM, and Rust implementations.
  *
- * `pnpm bench` covers the first two through Vitest, which cannot run native
- * code. This script exists for the third: it times the JavaScript sides itself,
- * shells out to `bench/native` for the Rust one, and prints them in one table
- * so the columns are actually comparable -- same sizes, same warmup, same
- * budget, same `min` over repeats on both sides.
+ * `pnpm bench` covers the Ox engines through Vitest, which cannot run Rust.
+ * This script times the JavaScript sides itself, shells out to `bench/native`,
+ * and prints comparable columns using the same sizes, warmup, budget, and
+ * best-observed repeat on both sides.
  *
- * The native column needs `cargo`. Without it the script still runs and simply
- * omits that column, so this is not a hard dependency of the repository.
+ * The native column needs `cargo`. Without it the script still runs and marks
+ * Rust cells unavailable, so this is not a hard dependency of the repository.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -18,7 +17,8 @@ import { hmac } from '@noble/hashes/hmac.js'
 import { ripemd160 as noble_ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 as noble_sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3.js'
-import { create } from '../src/wasm/Hash.js'
+import { create as createNode } from '../src/node/Hash.js'
+import { create as createWasm } from '../src/wasm/Hash.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -28,10 +28,10 @@ const budgetMs = 900
 const repeats = 3
 
 /**
- * Nanoseconds per call, best of `repeats`.
+ * Nanoseconds per call, using the best-observed repeat.
  *
- * Interference only ever makes a sample slower, so the minimum is the robust
- * estimator -- a mean would fold in whatever else the machine was doing.
+ * This favors peak throughput and avoids presenting the result as a latency
+ * distribution.
  */
 function measure(run: () => void) {
   let best = Number.POSITIVE_INFINITY
@@ -49,8 +49,8 @@ function measure(run: () => void) {
   return best
 }
 
-/** Native rows, or `undefined` where `cargo` is unavailable. */
-function native() {
+/** Alloy rows, or `undefined` where `cargo` is unavailable. */
+function rust() {
   try {
     // Run from the crate directory, not via `--manifest-path`: rustup resolves
     // `rust-toolchain.toml` by walking up from the working directory, and
@@ -61,63 +61,77 @@ function native() {
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     const rows = new Map<string, number>()
-    const crates = new Map<string, string>()
     for (const line of stdout.trim().split('\n').slice(1)) {
-      const [primitive, krate, size, ns] = line.split(',') as [
-        string,
-        string,
-        string,
-        string,
-      ]
+      const [primitive, size, ns] = line.split(',') as [string, string, string]
       rows.set(`${primitive}:${size}`, Number(ns))
-      crates.set(primitive, krate)
     }
-    return { crates, rows }
+    return rows
   } catch (error) {
-    // Cargo missing, or the crate failed to build. Either way the JavaScript
-    // columns are still worth printing, so report why and carry on.
+    // Cargo missing, or the crate failed to build. The Ox columns are still
+    // worth printing, so report why and mark Rust cells unavailable.
     const reason = (error as { stderr?: string }).stderr
       ?.trim()
       .split('\n')
       .pop()
-    console.log(`native column omitted: ${reason ?? 'cargo not available'}\n`)
+    console.log(`Rust unavailable: ${reason ?? 'cargo not available'}\n`)
     return undefined
   }
 }
 
-const engine = await create()
-const wasm = engine.Hash
+const node = (await createNode()).Hash
+const wasm = (await createWasm()).Hash
 const key = new Uint8Array(32).map((_, i) => i % 97)
 
 const primitives = [
   {
     name: 'keccak256',
     default: (input: Uint8Array) => noble_keccak256(input),
+    node: undefined,
     wasm: (input: Uint8Array) => wasm.keccak256(input),
   },
   {
     name: 'sha256',
     default: (input: Uint8Array) => noble_sha256(input),
+    node: (input: Uint8Array) => node.sha256(input),
     wasm: (input: Uint8Array) => wasm.sha256(input),
   },
   {
     name: 'ripemd160',
     default: (input: Uint8Array) => noble_ripemd160(input),
+    node: (input: Uint8Array) => node.ripemd160(input),
     wasm: (input: Uint8Array) => wasm.ripemd160(input),
   },
   {
     name: 'hmacSha256',
     default: (input: Uint8Array) => hmac(noble_sha256, key, input),
+    node: (input: Uint8Array) => node.hmacSha256(key, input),
     wasm: (input: Uint8Array) => wasm.hmacSha256(key, input),
   },
 ]
 
-const rust = native()
+const rustRows = rust()
 
 const format = (ns: number) =>
-  ns >= 1e6 ? `${(ns / 1e6).toFixed(2)}ms` : `${Math.round(ns)}`
+  ns >= 1e6
+    ? `${(ns / 1e6).toFixed(2)} ms`
+    : ns >= 1e3
+      ? `${(ns / 1e3).toFixed(2)} µs`
+      : `${Math.round(ns)} ns`
 const label = (size: number) =>
   size >= 1024 ? `${size / 1024} KiB` : `${size} B`
+const speedup = (
+  base: number,
+  candidates: readonly (readonly [name: string, ns: number | undefined])[],
+) => {
+  const available = candidates.filter(
+    (candidate): candidate is readonly [name: string, ns: number] =>
+      candidate[1] !== undefined,
+  )
+  const fastest = available.reduce((best, candidate) =>
+    candidate[1] < best[1] ? candidate : best,
+  )
+  return `${(base / fastest[1]).toFixed(2)}× (${fastest[0]})`
+}
 
 /** Right-aligns cells to the widest entry in each column. */
 function table(
@@ -134,21 +148,37 @@ function table(
 }
 
 for (const primitive of primitives) {
-  // Column headers name the implementation rather than a category: the Rust
-  // crate differs per primitive, since `alloy-primitives` only offers keccak256.
-  const crate = rust?.crates.get(primitive.name)
-  const headers = ['size', '@noble/hashes', 'ox/wasm']
-  if (crate) headers.push(crate, `wasm / ${crate}`)
+  const headers = [
+    'size',
+    'ox',
+    'ox/node',
+    'ox/wasm',
+    'alloy (Rust)',
+    'fastest Ox engine vs ox',
+  ]
 
   const rows = sizes.map((size) => {
     const input = new Uint8Array(size).map((_, i) => i % 251)
     const base = measure(() => primitive.default(input))
+    const nodeFn = primitive.node
+    const nodeNs = nodeFn ? measure(() => nodeFn(input)) : undefined
     const wasmNs = measure(() => primitive.wasm(input))
-    const row = [label(size), format(base), format(wasmNs)]
-    const nativeNs = rust?.rows.get(`${primitive.name}:${size}`)
-    if (nativeNs !== undefined)
-      row.push(format(nativeNs), `${(wasmNs / nativeNs).toFixed(2)}x`)
-    return row
+    const rustNs = rustRows?.get(`${primitive.name}:${size}`)
+    return [
+      label(size),
+      format(base),
+      nodeNs === undefined ? 'n/a' : format(nodeNs),
+      format(wasmNs),
+      primitive.name !== 'keccak256'
+        ? 'n/a'
+        : rustNs === undefined
+          ? 'unavailable'
+          : format(rustNs),
+      speedup(base, [
+        ['node', nodeNs],
+        ['wasm', wasmNs],
+      ]),
+    ]
   })
 
   console.log(`\n${primitive.name}`)
