@@ -134,7 +134,7 @@ jobs:
   fuzz:
     name: Fuzz
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Clone repository
@@ -145,14 +145,14 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
-
-      # 10k runs per property, across Node and all three browser engines. The
-      # counterexamples behind the `Hex` and `Base64` decode fixes surfaced at
-      # iterations 372 and 1612, so the previous budget of 200 could not have
-      # found either, and the Chromium one only shows in a browser.
-      # `fuzz-soak.yml` runs the same properties far longer on a schedule.
+      # 2k runs per property, on Node. The counterexamples behind the `Hex`
+      # and `Base64` decode fixes surfaced at iterations 372 and 1612, so the
+      # previous budget of 200 could not have found either.
+      #
+      # Browsers are left to `fuzz-soak.yml`: they triple the wall time, and
+      # what is unique about them -- the native codecs, which disagree between
+      # engine versions -- is already pinned on every pull request by the
+      # `*.conformance.ts` suites running under the `browser` project.
       - name: Run bounded fuzz tests
         run: pnpm test:fuzz:ci
 

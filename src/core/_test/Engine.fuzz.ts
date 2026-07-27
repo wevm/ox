@@ -12,7 +12,7 @@ import {
 } from 'ox'
 import { afterEach, describe, expect } from 'vp/test'
 import { identity, sentinel } from '../../../test/engines.js'
-import { numRuns } from '../../../test/fuzz/numRuns.js'
+import { fuzz, numRuns } from '../../../test/fuzz/numRuns.js'
 
 const arbitraryBytes = fc.uint8Array({ maxLength: 256, minLength: 0 })
 /**
@@ -58,7 +58,7 @@ const callSites = [
 ] as const
 
 describe('identity engine', () => {
-  test.prop({ bytes: arbitraryBytes }, { numRuns })(
+  test.prop({ bytes: arbitraryBytes }, fuzz)(
     'leaves every hash call site unchanged',
     ({ bytes }) => {
       const before = callSites.map((site) => site.run(bytes))
@@ -114,68 +114,68 @@ describe('identity engine', () => {
     expect(P256.verify({ payload, publicKey, signature })).toBe(true)
   })
 
-  test.prop(
-    { payload: arbitraryBytes, privateKey: arbitraryPrivateKey },
-    {
-      numRuns,
-    },
-  )('leaves Ed25519 and X25519 unchanged', ({ payload, privateKey }) => {
-    const before = {
-      ed25519PublicKey: Ed25519.getPublicKey({ privateKey }),
-      signature: Ed25519.sign({ payload, privateKey }),
-      x25519PublicKey: X25519.getPublicKey({ privateKey }),
-    }
-    const sharedSecret = X25519.getSharedSecret({
-      privateKey,
-      publicKey: before.x25519PublicKey,
-    })
-
-    Engine.set(identity)
-
-    expect(Ed25519.getPublicKey({ privateKey })).toEqual(
-      before.ed25519PublicKey,
-    )
-    expect(Ed25519.sign({ payload, privateKey })).toEqual(before.signature)
-    expect(X25519.getPublicKey({ privateKey })).toEqual(before.x25519PublicKey)
-    expect(
-      X25519.getSharedSecret({
+  test.prop({ payload: arbitraryBytes, privateKey: arbitraryPrivateKey }, fuzz)(
+    'leaves Ed25519 and X25519 unchanged',
+    ({ payload, privateKey }) => {
+      const before = {
+        ed25519PublicKey: Ed25519.getPublicKey({ privateKey }),
+        signature: Ed25519.sign({ payload, privateKey }),
+        x25519PublicKey: X25519.getPublicKey({ privateKey }),
+      }
+      const sharedSecret = X25519.getSharedSecret({
         privateKey,
         publicKey: before.x25519PublicKey,
-      }),
-    ).toEqual(sharedSecret)
-  })
-
-  test.prop({ password: fc.string({ maxLength: 64 }) }, { numRuns: 10 })(
-    'leaves Keystore key derivation unchanged',
-    ({ password }) => {
-      // The smallest parameters ox accepts -- these run per fuzz case, and
-      // scrypt's real defaults take seconds. `iv` is pinned because it defaults
-      // to random, and the returned key is a thunk, so compare derived material
-      // rather than the returned tuple.
-      const options = {
-        iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
-        password,
-        salt: '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd',
-      } as const
-      const before = {
-        pbkdf2: Keystore.pbkdf2({ ...options, iterations: 1000 })[0](),
-        scrypt: Keystore.scrypt({ ...options, n: 1024, p: 1, r: 1 })[0](),
-      }
+      })
 
       Engine.set(identity)
 
-      expect(Keystore.pbkdf2({ ...options, iterations: 1000 })[0]()).toEqual(
-        before.pbkdf2,
+      expect(Ed25519.getPublicKey({ privateKey })).toEqual(
+        before.ed25519PublicKey,
       )
-      expect(Keystore.scrypt({ ...options, n: 1024, p: 1, r: 1 })[0]()).toEqual(
-        before.scrypt,
+      expect(Ed25519.sign({ payload, privateKey })).toEqual(before.signature)
+      expect(X25519.getPublicKey({ privateKey })).toEqual(
+        before.x25519PublicKey,
       )
+      expect(
+        X25519.getSharedSecret({
+          privateKey,
+          publicKey: before.x25519PublicKey,
+        }),
+      ).toEqual(sharedSecret)
     },
   )
 
   test.prop(
+    { password: fc.string({ maxLength: 64 }) },
+    { ...fuzz, numRuns: 10 },
+  )('leaves Keystore key derivation unchanged', ({ password }) => {
+    // The smallest parameters ox accepts -- these run per fuzz case, and
+    // scrypt's real defaults take seconds. `iv` is pinned because it defaults
+    // to random, and the returned key is a thunk, so compare derived material
+    // rather than the returned tuple.
+    const options = {
+      iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
+      password,
+      salt: '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd',
+    } as const
+    const before = {
+      pbkdf2: Keystore.pbkdf2({ ...options, iterations: 1000 })[0](),
+      scrypt: Keystore.scrypt({ ...options, n: 1024, p: 1, r: 1 })[0](),
+    }
+
+    Engine.set(identity)
+
+    expect(Keystore.pbkdf2({ ...options, iterations: 1000 })[0]()).toEqual(
+      before.pbkdf2,
+    )
+    expect(Keystore.scrypt({ ...options, n: 1024, p: 1, r: 1 })[0]()).toEqual(
+      before.scrypt,
+    )
+  })
+
+  test.prop(
     { payload: arbitraryBytes, privateKey: arbitraryPrivateKey },
-    { numRuns: Math.min(numRuns, 10) },
+    { ...fuzz, numRuns: Math.min(numRuns, 10) },
   )('leaves Bls unchanged', ({ payload, privateKey }) => {
     const before = {
       publicKey: Bls.getPublicKey({ privateKey }),
@@ -195,7 +195,7 @@ describe('identity engine', () => {
     ).toBe(true)
   })
 
-  test.prop({ passphrase: fc.string({ maxLength: 32 }) }, { numRuns })(
+  test.prop({ passphrase: fc.string({ maxLength: 32 }) }, fuzz)(
     'leaves Mnemonic.toSeed unchanged',
     ({ passphrase }) => {
       const mnemonic =
@@ -208,7 +208,7 @@ describe('identity engine', () => {
 })
 
 describe('sentinel engine', () => {
-  test.prop({ bytes: arbitraryBytes }, { numRuns })(
+  test.prop({ bytes: arbitraryBytes }, fuzz)(
     'is consulted by every hash call site',
     ({ bytes }) => {
       // The inverse of the identity property: if a result survives a wrong
@@ -225,9 +225,7 @@ describe('sentinel engine', () => {
 describe('with', () => {
   test.prop(
     { bytes: arbitraryBytes, depth: fc.integer({ max: 6, min: 1 }) },
-    {
-      numRuns,
-    },
+    fuzz,
   )('restores the engine at every nesting depth', ({ bytes, depth }) => {
     const expected = Hash.keccak256(bytes)
 
@@ -249,7 +247,7 @@ describe('with', () => {
     expect(Hash.keccak256(bytes)).toEqual(expected)
   })
 
-  test.prop({ bytes: arbitraryBytes }, { numRuns })(
+  test.prop({ bytes: arbitraryBytes }, fuzz)(
     'restores the engine when the callback throws',
     ({ bytes }) => {
       const expected = Hash.keccak256(bytes)
@@ -273,7 +271,7 @@ describe('merge', () => {
         minLength: 1,
       }),
     },
-    { numRuns },
+    fuzz,
   )('accumulates slots across calls in any order', ({ slots }) => {
     for (const slot of slots) Engine.set({ [slot]: {} })
     expect(Object.keys(Engine.get()).sort()).toEqual([...new Set(slots)].sort())
@@ -286,7 +284,7 @@ describe('merge', () => {
         minLength: 1,
       }),
     },
-    { numRuns },
+    fuzz,
   )('reset clears whatever was accumulated', ({ slots }) => {
     for (const slot of slots) Engine.set({ [slot]: {} })
     Engine.reset()

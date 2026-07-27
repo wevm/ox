@@ -24,8 +24,14 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      # No `--bail`: a soak run should report every property that fails, not
-      # stop at the first. Counterexamples belong in a `*.test.ts` or a vector
+      # Bounded twice over: 20k cases or 10s per property, whichever comes
+      # first. How many cases fit in a budget depends on the property and the
+      # runner, so a count alone is a guess -- but a property whose individual
+      # cases are slow can outrun a time limit too, so neither cap is enough on
+      # its own. Watch the wall time here; it has not been measured on a runner.
+      #
+      # No `--bail`: a soak should report every property that fails, not stop
+      # at the first. Counterexamples belong in a `*.test.ts` or a vector
       # fixture once minimized, so a failure here is a request for a commit,
       # not something to re-run until it passes.
       - name: Run fuzz soak

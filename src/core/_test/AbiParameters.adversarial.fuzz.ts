@@ -3,7 +3,7 @@ import { AbiParameters, Bytes, Hex } from 'ox'
 import { describe, expect } from 'vp/test'
 
 import { arbitraryAbiCase } from '../../../test/fuzz/arbitraries/abi.js'
-import { numRuns } from '../../../test/fuzz/numRuns.js'
+import { fuzz } from '../../../test/fuzz/numRuns.js'
 
 /**
  * Whitelist of error names ox is allowed to throw on adversarial-but-
@@ -55,7 +55,7 @@ describe('AbiParameters adversarial decode', () => {
         random: fc.uint8Array({ minLength: 32, maxLength: 32 }),
       }),
     },
-    { numRuns },
+    fuzz,
   )(
     'mutated decode either succeeds or throws a whitelisted error',
     ({ input, mutation }) => {

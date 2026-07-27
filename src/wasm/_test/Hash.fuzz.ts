@@ -6,7 +6,7 @@ import { keccak_256 } from '@noble/hashes/sha3.js'
 import type { Engine } from 'ox'
 import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect } from 'vp/test'
-import { numRuns } from '../../../test/fuzz/numRuns.js'
+import { fuzz, numRuns } from '../../../test/fuzz/numRuns.js'
 
 let engine: Engine.Engine
 
@@ -77,28 +77,28 @@ const primitives = {
 type Name = keyof typeof primitives
 
 describe('Hash', () => {
-  test.prop({ input: arbitraryInput }, { numRuns })(
+  test.prop({ input: arbitraryInput }, fuzz)(
     'keccak256 ≡ @noble/hashes',
     ({ input }) => {
       expect(engine.Hash!.keccak256!(input)).toEqual(keccak_256(input))
     },
   )
 
-  test.prop({ input: arbitraryInput }, { numRuns })(
+  test.prop({ input: arbitraryInput }, fuzz)(
     'sha256 ≡ @noble/hashes',
     ({ input }) => {
       expect(engine.Hash!.sha256!(input)).toEqual(sha256(input))
     },
   )
 
-  test.prop({ input: arbitraryInput }, { numRuns })(
+  test.prop({ input: arbitraryInput }, fuzz)(
     'ripemd160 ≡ @noble/hashes',
     ({ input }) => {
       expect(engine.Hash!.ripemd160!(input)).toEqual(ripemd160(input))
     },
   )
 
-  test.prop({ input: arbitraryInput, key: arbitraryKey }, { numRuns })(
+  test.prop({ input: arbitraryInput, key: arbitraryKey }, fuzz)(
     'hmacSha256 ≡ @noble/hashes',
     ({ input, key }) => {
       expect(engine.Hash!.hmacSha256!(key, input)).toEqual(
@@ -125,7 +125,7 @@ describe('memory', () => {
         { maxLength: 24, minLength: 2 },
       ),
     },
-    { numRuns },
+    fuzz,
   )('an arbitrary sequence of calls agrees at every step', ({ operations }) => {
     // Every primitive shares one region of WASM linear memory, reusing it call
     // after call. A mis-sized reservation, an off-by-one write, or a digest read
@@ -149,7 +149,7 @@ describe('memory', () => {
         minLength: 2,
       }),
     },
-    { numRuns: Math.min(numRuns, 20) },
+    { ...fuzz, numRuns: Math.min(numRuns, 20) },
   )('repeated growth keeps results correct', ({ sizes }) => {
     // Each size is a page count. Going up grows linear memory and detaches the
     // previous `ArrayBuffer`; coming back down must not, since WASM memory never
@@ -163,7 +163,7 @@ describe('memory', () => {
     }
   })
 
-  test.prop({ input: arbitraryInput }, { numRuns })(
+  test.prop({ input: arbitraryInput }, fuzz)(
     'digests never alias WASM memory',
     ({ input }) => {
       // A digest returned as a view over linear memory would be silently
@@ -175,7 +175,7 @@ describe('memory', () => {
     },
   )
 
-  test.prop({ input: arbitraryInput }, { numRuns })(
+  test.prop({ input: arbitraryInput }, fuzz)(
     'inputs are not mutated',
     ({ input }) => {
       const snapshot = input.slice()

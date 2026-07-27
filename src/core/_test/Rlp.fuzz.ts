@@ -7,10 +7,10 @@ import {
   arbitraryRecursiveRlpHex,
   type RecursiveArray,
 } from '../../../test/fuzz/arbitraries/rlp.js'
-import { numRuns } from '../../../test/fuzz/numRuns.js'
+import { fuzz } from '../../../test/fuzz/numRuns.js'
 
 describe('Rlp round-trip', () => {
-  test.prop({ tree: arbitraryRecursiveRlpHex() }, { numRuns })(
+  test.prop({ tree: arbitraryRecursiveRlpHex() }, fuzz)(
     'toHex(from(tree, { as: "Hex" })) ≡ tree (Hex leaves)',
     ({ tree }) => {
       const encoded = Rlp.from(tree, { as: 'Hex' })
@@ -19,7 +19,7 @@ describe('Rlp round-trip', () => {
     },
   )
 
-  test.prop({ tree: arbitraryRecursiveRlpBytes() }, { numRuns })(
+  test.prop({ tree: arbitraryRecursiveRlpBytes() }, fuzz)(
     'toBytes(from(tree, { as: "Bytes" })) ≡ tree (Bytes leaves)',
     ({ tree }) => {
       const encoded = Rlp.from(tree, { as: 'Bytes' })
@@ -28,7 +28,7 @@ describe('Rlp round-trip', () => {
     },
   )
 
-  test.prop({ tree: arbitraryRecursiveRlpHex() }, { numRuns })(
+  test.prop({ tree: arbitraryRecursiveRlpHex() }, fuzz)(
     'hex and bytes encode paths agree',
     ({ tree }) => {
       const asHex = Rlp.from(tree, { as: 'Hex' })
