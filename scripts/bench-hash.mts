@@ -119,23 +119,35 @@ const format = (ns: number) =>
 const label = (size: number) =>
   size >= 1024 ? `${size / 1024} KiB` : `${size} B`
 
-for (const primitive of primitives) {
-  const crate = rust?.crates.get(primitive.name)
-  console.log(`\n${primitive.name}${crate ? `  (native: ${crate})` : ''}`)
-  console.log(
-    `${'size'.padStart(9)} ${'default'.padStart(10)} ${'ox/wasm'.padStart(10)}` +
-      (rust ? `${'native'.padStart(10)}${'wasm/native'.padStart(13)}` : ''),
+/** Right-aligns cells to the widest entry in each column. */
+function table(headers: string[], rows: string[][]) {
+  const widths = headers.map((header, i) =>
+    Math.max(header.length, ...rows.map((row) => row[i]!.length)),
   )
-  for (const size of sizes) {
+  const line = (cells: string[]) =>
+    cells.map((cell, i) => cell.padStart(widths[i]! + 2)).join('')
+  console.log(line(headers))
+  for (const row of rows) console.log(line(row))
+}
+
+for (const primitive of primitives) {
+  // Column headers name the implementation rather than a category: the Rust
+  // crate differs per primitive, since `alloy-primitives` only offers keccak256.
+  const crate = rust?.crates.get(primitive.name)
+  const headers = ['size', '@noble/hashes', 'ox/wasm']
+  if (crate) headers.push(crate, `wasm / ${crate}`)
+
+  const rows = sizes.map((size) => {
     const input = new Uint8Array(size).map((_, i) => i % 251)
     const base = measure(() => primitive.default(input))
-    const w = measure(() => primitive.wasm(input))
-    const n = rust?.rows.get(`${primitive.name}:${size}`)
-    console.log(
-      `${label(size).padStart(9)} ${format(base).padStart(10)} ${format(w).padStart(10)}` +
-        (n === undefined
-          ? ''
-          : `${format(n).padStart(10)}${`${(w / n).toFixed(2)}x`.padStart(13)}`),
-    )
-  }
+    const wasmNs = measure(() => primitive.wasm(input))
+    const row = [label(size), format(base), format(wasmNs)]
+    const nativeNs = rust?.rows.get(`${primitive.name}:${size}`)
+    if (nativeNs !== undefined)
+      row.push(format(nativeNs), `${(wasmNs / nativeNs).toFixed(2)}x`)
+    return row
+  })
+
+  console.log(`\n${primitive.name}`)
+  table(headers, rows)
 }
