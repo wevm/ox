@@ -146,7 +146,7 @@ export default defineConfig({
           include: [
             ...(process.env.TYPES
               ? ['src/**/*.snap-d.ts']
-              : ['src/**/*.test.ts']),
+              : ['src/**/*.test.ts', 'src/**/*.conformance.ts']),
             '!src/tempo/**',
             '!src/**/*.browser.test.ts',
           ],
@@ -209,7 +209,14 @@ export default defineConfig({
           // Chromium 145 read `U+C230` as a hex digit where 149 rejects it --
           // so an engine ox does not run here is one it is not checked on.
           name: 'browser',
-          include: ['src/**/*.browser.test.ts', '!src/webauthn/**'],
+          // `*.conformance.ts` is deliberately not a `*.test.ts`: the same
+          // file is collected here and by `core`, so a suite is written once
+          // and every runtime runs whichever tiers it has.
+          include: [
+            'src/**/*.browser.test.ts',
+            'src/**/*.conformance.ts',
+            '!src/webauthn/**',
+          ],
           browser: {
             enabled: true,
             provider: playwright() as never,

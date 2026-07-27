@@ -123,3 +123,59 @@ export function expectTiersReject<input, output>(
         `${tier.name} accepted ${describe(input)}`,
       ).toBe(false)
 }
+
+/**
+ * Deterministic pseudo-random bytes, so a failure reproduces.
+ *
+ * @yields Byte arrays of varying length.
+ */
+export function* sampleBytes(count: number) {
+  let seed = 0x2f6e2b1
+  const next = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff)
+  for (let i = 0; i < count; i++) {
+    const length = next() % 200
+    yield Uint8Array.from({ length }, () => next() & 0xff)
+  }
+}
+
+/**
+ * Valid encodings with one character replaced, spanning the alphabets.
+ *
+ * @yields Encoded strings with a single character swapped out.
+ */
+export function* corrupted(
+  encode: (bytes: Uint8Array) => string,
+  count: number,
+) {
+  const chars = [
+    '.',
+    '^',
+    ' ',
+    '\t',
+    '=',
+    ' ',
+    ' ',
+    ' ',
+    '−',
+    '＋',
+    '숰',
+    '\ud800',
+    '\u{1f600}',
+    'g',
+    'z',
+  ]
+  let seed = 0x51f3a7
+  const next = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff)
+  let emitted = 0
+  for (const bytes of sampleBytes(count * 2)) {
+    const encoded = encode(bytes)
+    if (encoded.length === 0) continue
+    const at = next() % encoded.length
+    yield (
+      encoded.slice(0, at) +
+        chars[next() % chars.length] +
+        encoded.slice(at + 1)
+    )
+    if (++emitted >= count) return
+  }
+}
