@@ -1,14 +1,15 @@
-import { keccak_256 } from '@noble/hashes/sha3.js'
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import type * as Hash from '../core/Hash.js'
+import * as hash_ from '../core/internal/hash.js'
 import * as Hex from '../core/Hex.js'
 import * as VirtualMasterPool from './internal/virtualMasterPool.js'
 import * as VirtualAddress from './VirtualAddress.js'
 
 const tip20Prefix = '0x20c000000000000000000000'
 const zeroAddress = '0x0000000000000000000000000000000000000000'
+const maxUint32 = 2 ** 32 - 1
 
 /** A valid salt input for TIP-1022 master registration. */
 export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
@@ -203,7 +204,7 @@ export function mineSalt(
   saltView.set(toFixedBytes(value.start ?? 0n, 32))
 
   for (let i = 0; i < count; i++) {
-    const hash = keccak_256(input)
+    const hash = hash_.keccak256(input)
 
     if (hash[0] === 0 && hash[1] === 0 && hash[2] === 0 && hash[3] === 0) {
       return {
@@ -289,12 +290,13 @@ export async function mineSaltAsync(
     workers = getDefaultWorkerCount(),
   } = parameters
 
-  const address = resolveAddress(parameters.address)
-  const start = toFixedHex(start_, 32)
-
+  assertChunkSize(chunkSize)
   assertCount(count)
   if (workers !== undefined) assertWorkers(workers)
   throwIfAborted(signal)
+
+  const address = resolveAddress(parameters.address)
+  const start = toFixedHex(start_, 32)
 
   const workerCount = Math.max(
     1,
@@ -340,6 +342,8 @@ export declare namespace mineSaltAsync {
     address: Address.Address
     /**
      * Number of salts each worker processes before sending a progress update.
+     *
+     * Must be a positive integer no greater than 2 ** 32 - 1.
      *
      * @default 100_000
      */
@@ -577,6 +581,24 @@ function assertWorkers(workers: number) {
 }
 
 /**
+ * Asserts that `chunkSize` fits the miner's unsigned 32-bit WASM ABI.
+ *
+ * @internal
+ */
+function assertChunkSize(chunkSize: number) {
+  if (
+    Number.isSafeInteger(chunkSize) &&
+    chunkSize > 0 &&
+    chunkSize <= maxUint32
+  )
+    return
+
+  throw new Errors.BaseError(
+    `Chunk size "${chunkSize}" is invalid. Expected a positive safe integer no greater than ${maxUint32}.`,
+  )
+}
+
+/**
  * Extracts or creates an error from an `AbortSignal`.
  *
  * @internal
@@ -679,7 +701,7 @@ function buildRegistrationDigest(
   const addressBytes = Bytes.fromHex(resolveAddress(address))
   buffer.set(addressBytes)
   buffer.set(toFixedBytes(salt, 32), addressBytes.length)
-  return keccak_256(buffer)
+  return hash_.keccak256(buffer)
 }
 
 /**

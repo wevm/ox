@@ -51,6 +51,11 @@
 - **Keep public APIs lean** -- avoid exposing options for values the library can derive from existing inputs.
 - **Wire formats stay explicit** -- serialization, RPC, RLP, ABI, and transaction-envelope code should keep wire-order and field-shape decisions visible at the call site.
 - **Internal helpers stay internal** -- keep helper modules under `internal/` unless they are part of the public API.
+- **Global registries are for delegation and caching only** -- `Engine` (implementation delegation) and `Caches` (memoization) are the sanctioned exceptions to stateless module APIs. A new one needs a `reset` for test isolation, must not change type-level behavior, and must not require a side-effect import to install (`sideEffects: false` lets bundlers drop those, so the registration would silently vanish).
+- **Engine slots hold overrides, never defaults** -- `src/core/internal/engine.ts` imports nothing and holds only what `Engine.set` installed. Pre-populating the registry with defaults would put them on a complete slot object, and a slot object is a single reachable value that esbuild cannot shake the properties off, so every default's `@noble/*` import survives into any bundle touching the slot. Measured on a keccak256-only bundle, 3.8 kB becomes 8.8 kB gzip.
+- **One resolver module per slot, one binding per primitive** -- each slot has an `internal/<slot>.ts` that pairs a `<name>Default` binding with an exported resolver picking `overrides.<Slot>?.<name> ?? <name>Default`. Separate bindings are what keep the primitives independently shakeable: grouping a slot's defaults into one object regresses `Keystore.pbkdf2` by 3.7 kB gzip by tying `@noble/ciphers/aes` and `@noble/hashes/scrypt` to it.
+- **Declare defaults and resolvers against the contract** -- both are typed `Complete<Slot>['name']`. `Complete` makes every slot function required, so a default that goes missing or drifts from the contract fails to compile at the declaration rather than at a call site.
+- **Public modules never spell the fallback** -- they do `import * as engine from './internal/<slot>.js'` and call `engine.<name>(...)`. A `?? default` at a call site means the slot is missing a resolver.
 
 ## Documentation Conventions
 
@@ -59,7 +64,7 @@
 - **Examples should be small** -- public examples should show the minimum useful shape and avoid unrelated setup.
 - **Source docs first** -- public API documentation usually belongs in TSDoc near the exported source.
 - **Site pages** -- human guides live under `site/src/pages/`.
-- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
+- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
 - **Check TSDoc when touching docs** -- run `pnpm check:tsdoc` after changing public comments or examples.
 - **SEO descriptions are auto-derived** -- every generated docs page emits a `description` frontmatter (used for `<meta name="description">` and OG images), targeting 5-15 words. It is derived from the TSDoc summary (markdown stripped, first paragraph, clamped). Add an optional `@description` TSDoc block tag to a function/namespace/schema to override the auto-derived text with hand-written SEO copy. Hand-written site pages should set their own `description` frontmatter (or a `# Title [description]` heading).
 
@@ -86,9 +91,9 @@
 - **Inline snapshots over direct assertions** -- prefer `toMatchInlineSnapshot()` over `.toBe()`, `.toEqual()`, etc. for stable return values. Use `toThrowErrorMatchingInlineSnapshot()` for error assertions.
 - **Snapshot whole objects, omit nondeterministic properties** -- destructure out nondeterministic fields and snapshot the rest, rather than cherry-picking individual fields to assert.
 - **Browser tests use browser suffixes** -- browser-specific behavior uses `*.browser.test.ts` and the `browser` Vitest project.
-- **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz` or `pnpm test:fuzz:ci`; default `pnpm test` should not pick them up.
+- **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz`; default `pnpm test` should not pick them up.
 - **Fuzz regressions become deterministic** -- when a property fails, add the minimized case as a regular `*.test.ts` or vector fixture.
-- **Vectors use Bun** -- run vector tests with `pnpm vectors`.
+- **Vectors use Bun** -- run vector tests with `pnpm vectors`. That covers the generated corpora under `vectors/` only. Published upstream fixtures (NIST `.rsp`, XKCP intermediate values) live in `test/vectors/`, are consumed by colocated `*.vectors.test.ts` suites, and run in the `core` project instead -- `pnpm vectors` will not touch them.
 - **Unit and type tests as you go** -- write unit tests and `.test-d.ts` type tests alongside implementation for each public behavior change.
 
 ## Workflow Conventions
@@ -101,6 +106,8 @@
 - **`pnpm check` mutates** -- it runs `vp check --fix`. Use it only when intentionally applying lint/format fixes.
 - **`pnpm exports:update` mutates** -- it rewrites `package.json#exports`.
 - **`pnpm docs:gen` and `pnpm docs:build` mutate generated docs output** -- run only when docs generation is part of the task.
+- **`FC_NUM_RUNS` sets the fuzz budget, and CI owns the number** -- `pnpm test:fuzz` runs the `fuzz` project on Node at 100 cases per property; the workflow raises it to 2000 through the environment. Size it against a runner rather than a laptop: 10k timed out at the default per-test limit in CI. Browsers are opt-in via `pnpm test:fuzz --project fuzz-browser`, since they triple the wall time and their unique risk (native codecs differing between engine versions) is already pinned per pull request by the `*.conformance.ts` suites. The `fuzz` projects raise `testTimeout`: one `test` is thousands of cases, so the unit-test default does not apply.
+- **`pnpm bench:hash` needs `cargo`** -- it compares the default, `ox/wasm` and native Rust in one table, so it builds `bench/native` (toolchain pinned in `bench/native/rust-toolchain.toml`). Without `cargo` it drops the native column rather than failing. `pnpm bench` covers the first two through Vitest, which cannot run native code. A full run takes several minutes.
 - **`pnpm contracts:build` mutates generated contract artifacts** -- it runs Forge and `contracts/scripts/generate-typed-artifacts.ts`.
 - **Install hooks can mutate** -- `pnpm install` runs `postinstall`, which initializes submodules, builds contracts, and runs `pnpm dev`.
 
@@ -121,8 +128,9 @@
 - **Source layout** -- source lives in `src/`; tests live under `src/**/_test`; docs live in `site`; shared test utilities live in `test`; vectors live in `vectors`; contracts live in `contracts`.
 - **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@11.0.8`.
 - **Generated exports** -- `scripts/exports:update.ts` derives `package.json#exports` from `src/`. It flattens `src/core/<Name>.ts` to root package subpaths and ignores test/bench/snapshot files.
-- **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, and `site/src/pages/glossary` are generated.
+- **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.
+- **WASM artifacts are generated** -- C lives in `wasm/src`, targets in `wasm/targets.ts`, and the committed base64 modules (`src/wasm/internal/*.wasm.ts`, `src/tempo/internal/mine.wasm.ts`) are written by `pnpm wasm:build`. Never hand-edit them. After changing any C or target config, run `pnpm wasm:build` and commit the result; `pnpm wasm:check` fails CI otherwise. The toolchain is pinned in `wasm/toolchain.json` because compiled bytes depend on the exact compiler version. See `wasm/README.md`.
 - **Secrets are local** -- `.env` is local. Do not print, rewrite, or commit secrets.
 - **Tempo multisig RPC shapes** -- TIP-1061 multisig signatures are untagged. Initialized signatures use `{ account, signatures }`; bootstrap signatures use `{ init, signatures }`, with structured owner approvals.
 - **Zone chain IDs** -- Presto and Moderato use separate fixed bases and ranges. Derive chain IDs as `base + (zoneId % range)`.

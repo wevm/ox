@@ -1,4 +1,4 @@
-import { Caches } from 'ox'
+import { Caches, Engine } from 'ox'
 import { afterAll, beforeAll, beforeEach, vi } from 'vite-plus/test'
 
 beforeAll(() => {
@@ -11,6 +11,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   Caches.clear()
+  Engine.reset()
 })
 
 afterAll(async () => {

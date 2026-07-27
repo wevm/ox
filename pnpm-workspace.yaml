@@ -25,6 +25,7 @@ catalog:
   '@types/fs-extra': ^11.0.4
   '@types/node': 24.10.2
   '@vitest/coverage-v8': ^4.1.8
+  binaryen: ^123.0.0
   bun: ^1.1.24
   eslint: ^9.9.0
   eslint-plugin-jsdoc: ^50.0.1

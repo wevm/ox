@@ -1,15 +1,6 @@
-import { ctr } from '@noble/ciphers/aes.js'
-import {
-  pbkdf2 as pbkdf2_noble,
-  pbkdf2Async as pbkdf2Async_noble,
-} from '@noble/hashes/pbkdf2.js'
-import {
-  scrypt as scrypt_noble,
-  scryptAsync as scryptAsync_noble,
-} from '@noble/hashes/scrypt.js'
-import { sha256 } from '@noble/hashes/sha2.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
+import * as engine from './internal/keystore.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
@@ -113,10 +104,11 @@ export function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
   if (!Bytes.isEqual(mac, Bytes.from(`0x${keystore.crypto.mac}`)))
     throw new Error('corrupt keystore')
 
-  const data = ctr(
+  const data = engine.aesCtrDecrypt(
     encKey,
     Bytes.from(`0x${keystore.crypto.cipherparams.iv}`),
-  ).decrypt(ciphertext)
+    ciphertext,
+  )
 
   if (as === 'Hex') return Bytes.toHex(data) as never
   return data as never
@@ -194,7 +186,7 @@ export function encrypt(
   const encKey = Bytes.slice(key_, 0, 16)
   const macKey = Bytes.slice(key_, 16, 32)
 
-  const ciphertext = ctr(encKey, iv).encrypt(value_)
+  const ciphertext = engine.aesCtrEncrypt(encKey, iv, value_)
   const mac = Hash.keccak256(Bytes.concat(macKey, ciphertext))
 
   return {
@@ -239,7 +231,10 @@ export function pbkdf2(options: pbkdf2.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    pbkdf2_noble(sha256, password, salt, { c: iterations, dkLen: 32 }),
+    engine.pbkdf2Sha256(Bytes.fromString(password), salt, {
+      c: iterations,
+      dkLen: 32,
+    }),
   )
 
   return defineKey(() => key, {
@@ -288,7 +283,7 @@ export async function pbkdf2Async(options: pbkdf2.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    await pbkdf2Async_noble(sha256, password, salt, {
+    await engine.pbkdf2Sha256Async(Bytes.fromString(password), salt, {
       c: iterations,
       dkLen: 32,
     }),
@@ -331,7 +326,7 @@ export function scrypt(options: scrypt.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    scrypt_noble(password, salt, { N: n, dkLen: 32, r, p }),
+    engine.scrypt(Bytes.fromString(password), salt, { N: n, dkLen: 32, p, r }),
   )
 
   return defineKey(() => key, {
@@ -385,7 +380,12 @@ export async function scryptAsync(options: scrypt.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    await scryptAsync_noble(password, salt, { N: n, dkLen: 32, r, p }),
+    await engine.scryptAsync(Bytes.fromString(password), salt, {
+      N: n,
+      dkLen: 32,
+      p,
+      r,
+    }),
   )
 
   return defineKey(() => key, {

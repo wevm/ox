@@ -9,6 +9,7 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
+import * as engine from './internal/secp256k1.js'
 import * as Entropy from './internal/entropy.js'
 import {
   fromRecoveredBytes,
@@ -89,7 +90,7 @@ export function getPublicKey<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
   options: getPublicKey.Options<as>,
 ): getPublicKey.ReturnType<as> {
   const { as = 'Object', privateKey } = options
-  const bytes = secp256k1.getPublicKey(Bytes.from(privateKey), false)
+  const bytes = engine.getPublicKey(Bytes.from(privateKey))
   const publicKey = PublicKey.fromBytes(bytes)
   return formatPublicKey(publicKey, as) as never
 }
@@ -142,10 +143,9 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: getSharedSecret.Options<as>,
 ): getSharedSecret.ReturnType<as> {
   const { as = 'Hex', privateKey, publicKey } = options
-  const sharedSecret = secp256k1.getSharedSecret(
+  const sharedSecret = engine.getSharedSecret(
     Bytes.from(privateKey),
     PublicKey.toBytes(normalizePublicKey(publicKey)),
-    true, // compressed
   )
   if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
   return sharedSecret as never
@@ -199,7 +199,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = secp256k1.utils.randomSecretKey()
+  const bytes = engine.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -296,11 +296,8 @@ export function recoverPublicKey<
 >(options: recoverPublicKey.Options<as>): recoverPublicKey.ReturnType<as> {
   const { as = 'Object', payload, signature } = options
   const sigBytes = toRecoveredBytes(normalizeSignature<true>(signature))
-  const point = secp256k1.Signature.fromBytes(
-    sigBytes,
-    'recovered',
-  ).recoverPublicKey(Bytes.from(payload))
-  const publicKey = PublicKey.fromBytes(point.toBytes(false))
+  const bytes = engine.recoverPublicKey(sigBytes, Bytes.from(payload))
+  const publicKey = PublicKey.fromBytes(bytes)
   return formatPublicKey(publicKey, as) as never
 }
 
@@ -360,14 +357,12 @@ export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
     payload,
     privateKey,
   } = options
-  const sigBytes = secp256k1.sign(Bytes.from(payload), Bytes.from(privateKey), {
+  const sigBytes = engine.sign(Bytes.from(payload), Bytes.from(privateKey), {
     extraEntropy:
       typeof extraEntropy === 'boolean'
         ? extraEntropy
         : Bytes.from(extraEntropy),
-    lowS: true,
     prehash: hash === true,
-    format: 'recovered',
   })
   const signature = fromRecoveredBytes(sigBytes)
   return formatSignature(signature, as) as never
@@ -462,11 +457,11 @@ export function verify(options: verify.Options): boolean {
       recoverAddress({ payload, signature: options.signature }),
     )
   const sig = normalizeSignature(options.signature)
-  return secp256k1.verify(
+  return engine.verify(
     toCompactBytes(sig),
     Bytes.from(payload),
     PublicKey.toBytes(normalizePublicKey(options.publicKey)),
-    { lowS: true, prehash: hash === true },
+    { prehash: hash === true },
   )
 }
 

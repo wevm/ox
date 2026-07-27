@@ -8,6 +8,8 @@ Property-based / fuzz harnesses for `ox`, built on
 
 ```
 test/fuzz/arbitraries/   # Shared, ox-specific fast-check arbitraries.
+test/engines.ts          # Shared `Engine` implementations (identity, sentinel).
+test/vectors/hashes/     # Published hash vectors, for non-differential checks.
 src/**/_test/*.fuzz.ts   # Co-located fuzz harnesses.
 ```
 
@@ -21,14 +23,19 @@ default Vitest `core` project (which globs `src/**/*.test.ts`).
 # Local loop, default fast-check budget (100 runs/property).
 pnpm test:fuzz
 
-# CI-style: bounded run count, bail on first failure (200 runs).
-pnpm test:fuzz:ci
+# What CI runs: the workflow supplies the budget and bails on first failure.
+FC_NUM_RUNS=2000 pnpm test:fuzz --bail=1
 
 # Run a single harness.
 pnpm test:fuzz src/core/_test/AbiParameters.fuzz.ts
 
 # Increase the budget locally.
 FC_NUM_RUNS=5000 pnpm test:fuzz
+
+# Fuzz the browser engines too, which CI does not: they triple the wall time,
+# and the native codecs they uniquely exercise are already pinned per pull
+# request by the `*.conformance.ts` suites.
+pnpm test:fuzz --project fuzz-browser
 ```
 
 The `fuzz` Vitest project is gated behind `FUZZ=true` so the default
@@ -72,4 +79,8 @@ Do not rely on the seed alone -- seeds are not stable across
   over `.filter(...)`; rejection-sampling wastes runs and skews
   distribution.
 - **Keep PR runs bounded.** Default `numRuns` should keep the `Fuzz`
-  CI job under ~10 minutes. Heavier runs belong in nightly schedules.
+  CI job under ~10 minutes. Raise `FC_NUM_RUNS` for a one-off deeper
+  run rather than raising the default.
+- **Differential properties need a non-differential backstop.** A property
+  asserting two implementations agree cannot catch a fault they share. Pair it
+  with published vectors -- see `test/vectors/hashes/`.

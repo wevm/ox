@@ -4,6 +4,7 @@ import * as BlsPoint from './BlsPoint.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as engine from './internal/bls.js'
 import type { OneOf } from './internal/types.js'
 
 /**
@@ -116,12 +117,11 @@ export function aggregate(
     return point
   })
 
-  const first = normalized[0]!
+  // A single point aggregates to itself. The engine is not consulted because
+  // there is no addition to perform, only the identity.
+  if (normalized.length === 1) return normalized[0]!
 
-  // Fast path: a single point aggregates to itself.
-  if (normalized.length === 1) return first
-
-  const isG1 = typeof first.x === 'string'
+  const isG1 = typeof normalized[0]!.x === 'string'
   for (let i = 1; i < normalized.length; i++) {
     if ((typeof normalized[i]!.x === 'string') !== isG1)
       throw new Errors.BaseError(
@@ -130,13 +130,13 @@ export function aggregate(
   }
 
   const groupName = isG1 ? 'G1' : 'G2'
-  const group = isG1 ? bls.G1 : bls.G2
-  let acc = group.Point.ZERO
-  for (let i = 0; i < normalized.length; i++) {
-    const p = normalized[i]!
-    acc = acc.add(BlsPoint.toNoblePoint(p as any, groupName) as any)
-  }
-  return BlsPoint.fromNoblePoint(acc, groupName) as BlsPoint.BlsPoint
+  const point = engine.aggregate(
+    normalized.map((point) =>
+      BlsPoint.toBytes(point as BlsPoint.G1 | BlsPoint.G2),
+    ),
+    groupName,
+  )
+  return BlsPoint.fromBytes(point, groupName) as BlsPoint.BlsPoint
 }
 
 export declare namespace aggregate {
@@ -349,14 +349,8 @@ export function getPublicKey<
 export function getPublicKey(options: getPublicKey.Options): unknown {
   const { as = 'Object', privateKey, size = 'short-key:long-sig' } = options
   const groupName = size === 'short-key:long-sig' ? 'G1' : 'G2'
-  const group = groupName === 'G1' ? bls.G1 : bls.G2
-  const point = group.Point.BASE.multiply(
-    group.Point.Fn.fromBytes(Bytes.from(privateKey)),
-  )
-  const publicKey = BlsPoint.fromNoblePoint(
-    point,
-    groupName,
-  ) as BlsPoint.BlsPoint
+  const point = engine.getPublicKey(Bytes.from(privateKey), groupName)
+  const publicKey = BlsPoint.fromBytes(point, groupName) as BlsPoint.BlsPoint
   return formatBlsPoint(publicKey, as)
 }
 
@@ -422,7 +416,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = bls.utils.randomSecretKey()
+  const bytes = engine.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -507,18 +501,11 @@ export function sign(options: sign.Options): unknown {
 
   const signatureGroupName: 'G1' | 'G2' =
     size === 'short-key:long-sig' ? 'G2' : 'G1'
-  const payloadGroup = signatureGroupName === 'G2' ? bls.G2 : bls.G1
-  const payloadPoint = payloadGroup.hashToCurve(
-    Bytes.from(payload),
-    suite ? { DST: Bytes.fromString(suite) } : undefined,
-  )
-
-  const privateKeyGroup = size === 'short-key:long-sig' ? bls.G1 : bls.G2
-  const signature = payloadPoint.multiply(
-    privateKeyGroup.Point.Fn.fromBytes(Bytes.from(privateKey)),
-  )
-
-  const result = BlsPoint.fromNoblePoint(
+  const signature = engine.sign(Bytes.from(payload), Bytes.from(privateKey), {
+    dst: suite ? Bytes.fromString(suite) : undefined,
+    group: signatureGroupName,
+  })
+  const result = BlsPoint.fromBytes(
     signature,
     signatureGroupName,
   ) as BlsPoint.BlsPoint
@@ -674,51 +661,14 @@ export function verify(options: verify.Options): boolean {
       : normalizeBlsPoint(publicKeyRaw as Hex.Hex | Bytes.Bytes, publicKeyGroup)
   ) as BlsPoint.BlsPoint<any>
 
-  const isShortSig = signatureGroup === 'G1'
-
-  const group = isShortSig ? bls.G1 : bls.G2
-  const payloadPoint = group.hashToCurve(
+  return engine.verify(
+    BlsPoint.toBytes(signature as BlsPoint.G1 | BlsPoint.G2),
     Bytes.from(payload),
-    suite ? { DST: Bytes.fromString(suite) } : undefined,
-  )
-
-  const shortSigPairing = () =>
-    bls.pairingBatch([
-      {
-        g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
-        g2: BlsPoint.toNoblePoint(publicKey as any, 'G2') as InstanceType<
-          typeof bls.G2.Point
-        >,
-      },
-      {
-        g1: BlsPoint.toNoblePoint(signature as any, 'G1') as InstanceType<
-          typeof bls.G1.Point
-        >,
-        g2: bls.G2.Point.BASE.negate(),
-      },
-    ])
-
-  const longSigPairing = () =>
-    bls.pairingBatch([
-      {
-        g1: (
-          BlsPoint.toNoblePoint(publicKey as any, 'G1') as InstanceType<
-            typeof bls.G1.Point
-          >
-        ).negate(),
-        g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
-      },
-      {
-        g1: bls.G1.Point.BASE,
-        g2: BlsPoint.toNoblePoint(signature as any, 'G2') as InstanceType<
-          typeof bls.G2.Point
-        >,
-      },
-    ])
-
-  return bls.fields.Fp12.eql(
-    isShortSig ? shortSigPairing() : longSigPairing(),
-    bls.fields.Fp12.ONE,
+    BlsPoint.toBytes(publicKey as BlsPoint.G1 | BlsPoint.G2),
+    {
+      dst: suite ? Bytes.fromString(suite) : undefined,
+      signatureGroup,
+    },
   )
 }
 

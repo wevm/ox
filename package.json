@@ -13,7 +13,7 @@
     "deps:ci": "pnpx actions-up",
     "dev": "pnpm exports:update && zile dev",
     "docs:dev": "pnpm --filter site dev",
-    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && node --import tsx scripts/docgen/build.ts",
+    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
@@ -23,15 +23,17 @@
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
     "bench": "vp test bench",
+    "bench:hash": "node --import tsx ./scripts/bench-hash.mts",
     "test": "vp test",
     "test:cov": "vp test --coverage",
-    "test:fuzz": "FUZZ=true vp test --project fuzz",
-    "test:fuzz:soak": "FUZZ=true FC_NUM_RUNS=1000000 vp test run --project fuzz --project fuzz-browser",
-    "test:fuzz:ci": "FUZZ=true FC_NUM_RUNS=10000 vp test run --project fuzz --project fuzz-browser --bail=1",
+    "test:fuzz": "FUZZ=true vp test run --project fuzz",
     "test:types": "TYPES=true vp test",
     "vectors": "bun test vectors/**/*.test.ts",
     "vectors:generate": "bun vectors/generate.ts",
-    "version:update": "node --import tsx ./scripts/version:update.ts"
+    "version:update": "node --import tsx ./scripts/version:update.ts",
+    "wasm:build": "node --import tsx ./scripts/wasm/build.ts",
+    "wasm:check": "node --import tsx ./scripts/wasm/check.ts",
+    "wasm:toolchain": "node --import tsx ./scripts/wasm/toolchain.ts"
   },
   "devDependencies": {
     "@ark/attest": "catalog:",
@@ -48,6 +50,7 @@
     "@types/fs-extra": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "binaryen": "catalog:",
     "bun": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-jsdoc": "catalog:",
@@ -117,6 +120,17 @@
       "name": "import { Hex } from 'ox'; console.log(Hex.assert)",
       "path": "./dist/index.js",
       "import": "{ Hex.assert }"
+    },
+    {
+      "name": "import * from 'ox/wasm'",
+      "path": "./dist/wasm/index.js",
+      "import": "*"
+    },
+    {
+      "name": "import * from 'ox/wasm/Hash'",
+      "path": "./dist/wasm/Hash.js",
+      "import": "*",
+      "limit": "24 kB"
     }
   ],
   "[!start-pkg]": "",
@@ -340,6 +354,11 @@
       "src": "./src/core/Ed25519.ts",
       "types": "./dist/core/Ed25519.d.ts",
       "default": "./dist/core/Ed25519.js"
+    },
+    "./Engine": {
+      "src": "./src/core/Engine.ts",
+      "types": "./dist/core/Engine.d.ts",
+      "default": "./dist/core/Engine.js"
     },
     "./Ens": {
       "src": "./src/core/Ens.ts",
@@ -740,6 +759,21 @@
       "src": "./src/trusted-setups/Paths.ts",
       "types": "./dist/trusted-setups/Paths.d.ts",
       "default": "./dist/trusted-setups/Paths.js"
+    },
+    "./wasm": {
+      "src": "./src/wasm/index.ts",
+      "types": "./dist/wasm/index.d.ts",
+      "default": "./dist/wasm/index.js"
+    },
+    "./wasm/Engine": {
+      "src": "./src/wasm/Engine.ts",
+      "types": "./dist/wasm/Engine.d.ts",
+      "default": "./dist/wasm/Engine.js"
+    },
+    "./wasm/Hash": {
+      "src": "./src/wasm/Hash.ts",
+      "types": "./dist/wasm/Hash.d.ts",
+      "default": "./dist/wasm/Hash.js"
     },
     "./webauthn": {
       "src": "./src/webauthn/index.ts",

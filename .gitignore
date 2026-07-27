@@ -17,6 +17,7 @@ tsdoc.d.tson
 ox.api.json
 erc4337.api.json
 tempo.api.json
+wasm.api.json
 lookup.json
 config-generated.ts
 site/.vocs
@@ -26,8 +27,19 @@ site/src/pages/ercs
 site/src/pages/tempo/*
 !site/src/pages/tempo/guides/
 !site/src/pages/tempo/guides/**
+site/src/pages/wasm
 site/src/pages/webauthn
 site/src/pages/zod
 site/src/pages/glossary
 tsdoc-metadata.json
 *.timestamp*
+
+# WASM build
+.wasm-toolchain
+wasm/.build
+
+# Rust bench build output (`pnpm bench:hash`). `Cargo.lock` is committed: the
+# dependency ranges would otherwise re-resolve per machine, and a benchmark
+# whose point is comparison over time cannot have its baseline move underneath
+# it.
+bench/native/target

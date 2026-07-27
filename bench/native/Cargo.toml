@@ -1,0 +1,19 @@
+[package]
+name = "ox-bench-native"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Native references for the primitives `ox/wasm` implements. `alloy-primitives`
+# only provides keccak256; the rest come from the RustCrypto crates a Rust
+# project would actually reach for.
+[dependencies]
+alloy-primitives = "1"
+hmac = "0.12"
+ripemd = "0.1"
+sha2 = "0.10"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

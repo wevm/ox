@@ -1,5 +1,5 @@
 /**
- * Iterations per property, from `FC_NUM_RUNS`.
+ * Cases per property, from `FC_NUM_RUNS`.
  *
  * Read through `import.meta.env` rather than `process.env` so the same fuzz
  * files run under Node and in a browser, where `process` does not exist. Vite
@@ -7,6 +7,7 @@
  *
  * @internal
  */
+
 declare global {
   interface ImportMetaEnv {
     readonly FC_NUM_RUNS?: string | undefined

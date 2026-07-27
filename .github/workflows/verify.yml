@@ -134,7 +134,7 @@ jobs:
   fuzz:
     name: Fuzz
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Clone repository
@@ -145,16 +145,19 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
-
-      # 10k runs per property, across Node and all three browser engines. The
-      # counterexamples behind the `Hex` and `Base64` decode fixes surfaced at
-      # iterations 372 and 1612, so the previous budget of 200 could not have
-      # found either, and the Chromium one only shows in a browser.
-      # `fuzz-soak.yml` runs the same properties far longer on a schedule.
-      - name: Run bounded fuzz tests
-        run: pnpm test:fuzz:ci
+      # The counterexamples behind the `Hex` and `Base64` decode fixes surfaced
+      # at iterations 372 and 1612, so the previous budget of 200 could not
+      # have found either. 10k timed out at the default per-test limit on a
+      # runner, which is several times slower than a laptop.
+      #
+      # Node only: browsers triple the wall time, and what is unique about them
+      # -- native codecs that differ between engine versions -- is already
+      # pinned here by the `*.conformance.ts` suites under the `browser`
+      # project. Add `--project fuzz-browser` to fuzz them too.
+      - name: Run fuzz tests
+        run: pnpm test:fuzz --bail=1
+        env:
+          FC_NUM_RUNS: 2000
 
   vectors:
     name: Vectors
@@ -171,3 +174,26 @@ jobs:
       - name: Run test vectors
         shell: bash
         run: pnpm vectors
+
+  wasm:
+    name: WASM Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Restore WASM toolchain
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .wasm-toolchain
+          key: wasi-sdk-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('wasm/toolchain.json') }}
+
+      - name: Verify committed artifacts are reproducible
+        run: pnpm wasm:check

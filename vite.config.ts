@@ -9,6 +9,16 @@ import {
 const root = import.meta.dirname
 
 /**
+ * Per-property timeout for the fuzz projects.
+ *
+ * `testTimeout` is sized for unit tests. A fuzz property runs `FC_NUM_RUNS`
+ * cases inside one `test`, so its wall time scales with that budget and with
+ * how slow the machine is -- a CI runner is several times slower than a
+ * developer's, which is what made 10k runs time out at 20s there.
+ */
+const fuzzTimeout = 120_000
+
+/**
  * Engines the portable browser projects run against.
  *
  * A function, not a shared array: Vitest stamps a resolved name onto each
@@ -82,7 +92,10 @@ export default defineConfig({
         },
       },
       {
-        files: ['src/core/internal/**/*.ts'],
+        // Neither internal helpers nor tests are public API, so the
+        // public-documentation rules do not apply -- and `require-example`'s
+        // autofix corrupts JSDoc on nested functions, which tests are full of.
+        files: ['src/**/internal/**/*.ts', 'src/**/_test/**/*.ts'],
         rules: {
           'jsdoc-js/require-jsdoc': 'off',
           'jsdoc-js/require-description': 'off',
@@ -196,9 +209,12 @@ export default defineConfig({
           name: 'fuzz',
           // Gated behind `FUZZ=true` so the default `pnpm test` run
           // doesn't pick up stochastic property tests. Run via
-          // `pnpm test:fuzz` (or `pnpm test:fuzz:ci`).
+          // `pnpm test:fuzz`.
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
           setupFiles: [join(root, 'test/setup.ts')],
+          // A property is thousands of cases, not one, so the unit-test
+          // default does not apply. The job's own timeout is the real guard.
+          testTimeout: fuzzTimeout,
         },
       },
       {
@@ -253,6 +269,7 @@ export default defineConfig({
           // alongside it.
           name: 'fuzz-browser',
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
+          testTimeout: fuzzTimeout,
           browser: {
             enabled: true,
             provider: playwright() as never,

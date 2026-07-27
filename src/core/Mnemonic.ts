@@ -1,12 +1,9 @@
-import {
-  generateMnemonic,
-  mnemonicToSeedSync,
-  validateMnemonic,
-} from '@scure/bip39'
+import { generateMnemonic, validateMnemonic } from '@scure/bip39'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as HdKey from './HdKey.js'
 import type * as Hex from './Hex.js'
+import * as engine from './internal/mnemonic.js'
 
 export { path } from './HdKey.js'
 
@@ -184,7 +181,7 @@ export function toSeed<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   options: toSeed.Options<as> = {},
 ): toSeed.ReturnType<as> {
   const { passphrase } = options
-  const seed = mnemonicToSeedSync(mnemonic, passphrase)
+  const seed = engine.toSeed(mnemonic, passphrase)
   if (options.as === 'Hex') return Bytes.toHex(seed) as never
   return seed as never
 }
