@@ -36,10 +36,9 @@ export type {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine } from 'ox'
- * import * as Wasm from 'ox/wasm'
+ * import { Engine } from 'ox/wasm'
  *
- * Engine.set(await Wasm.load())
+ * await Engine.load()
  * ```
  *
  * @example

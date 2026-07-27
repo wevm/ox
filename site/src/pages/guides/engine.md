@@ -42,15 +42,23 @@ Engine functions take and return plain `Uint8Array` values, not Ox's `Hex` or `B
 
 ## Asynchronous Initialization
 
-Ox's crypto functions are synchronous, but WASM must be compiled asynchronously — browsers refuse to compile modules larger than a few kilobytes synchronously on the main thread. So an engine is initialized asynchronously and then installed:
+Ox's crypto functions are synchronous, but WASM must be compiled asynchronously — browsers refuse to compile modules larger than a few kilobytes synchronously on the main thread. Each entrypoint exports an `Engine` whose `load` does both, so the `await` appears once:
+
+```ts twoslash
+// @noErrors
+import { Engine } from 'ox/wasm'
+
+await Engine.load()
+```
+
+To hold an implementation without installing it — to measure one against another, or to compose before installing — use `create`:
 
 ```ts twoslash
 // @noErrors
 import { Engine } from 'ox'
-import { Hash } from 'ox/wasm'
+import { Engine as Wasm } from 'ox/wasm'
 
-const engine = await Hash.load()
-Engine.set(engine)
+Engine.set({ ...(await Wasm.create()), Secp256k1: mySecp256k1 })
 ```
 
 `Engine.set` itself is synchronous and expects a fully initialized engine.

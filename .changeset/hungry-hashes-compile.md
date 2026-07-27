@@ -5,13 +5,17 @@
 Added `ox/wasm`, providing WASM implementations of ox's cryptography for use with `Engine`.
 
 ```ts
-import { Engine, Hash as OxHash } from 'ox'
-import { Hash } from 'ox/wasm'
+import { Hash } from 'ox'
+import { Engine } from 'ox/wasm'
 
-Engine.set(await Hash.load())
+await Engine.load()
 
-OxHash.keccak256('0xdeadbeef')
+Hash.keccak256('0xdeadbeef')
 ```
+
+`Engine.load` compiles every implementation the entrypoint provides and installs
+it. `Engine.create` returns the same engine without installing, for measuring
+one implementation against another or composing before installing.
 
 The first release covers `keccak256`, `sha256`, `ripemd160` and HMAC-SHA256,
 compiled from hand-written C. Measured against `@noble/hashes` 2.2.0,

@@ -11,7 +11,7 @@ import { numRuns } from '../../../test/fuzz/numRuns.js'
 let engine: Engine.Engine
 
 beforeAll(async () => {
-  engine = await WasmHash.load()
+  engine = await WasmHash.create()
 })
 
 /**

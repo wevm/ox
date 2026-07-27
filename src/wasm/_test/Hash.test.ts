@@ -9,17 +9,17 @@ import { beforeAll, describe, expect, test } from 'vp/test'
 let engine: Engine.Engine
 
 beforeAll(async () => {
-  engine = await WasmHash.load()
+  engine = await WasmHash.create()
 })
 
 describe('load', () => {
   test('default', async () => {
-    expect(Object.keys(await WasmHash.load())).toMatchInlineSnapshot(`
+    expect(Object.keys(await WasmHash.create())).toMatchInlineSnapshot(`
       [
         "Hash",
       ]
     `)
-    expect(Object.keys((await WasmHash.load()).Hash!)).toMatchInlineSnapshot(`
+    expect(Object.keys((await WasmHash.create()).Hash!)).toMatchInlineSnapshot(`
       [
         "hmacSha256",
         "keccak256",
@@ -30,7 +30,7 @@ describe('load', () => {
   })
 
   test('behavior: compiles once', async () => {
-    const [a, b] = await Promise.all([WasmHash.load(), WasmHash.load()])
+    const [a, b] = await Promise.all([WasmHash.create(), WasmHash.create()])
     expect(a).toBe(b)
   })
 })

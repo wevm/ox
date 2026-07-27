@@ -13,7 +13,7 @@ describe('load', () => {
     const Module = vi.spyOn(globalThis.WebAssembly, 'Module')
     const Instance = vi.spyOn(globalThis.WebAssembly, 'Instance')
     try {
-      const engine = await WasmHash.load()
+      const engine = await WasmHash.create()
       expect(Module).not.toHaveBeenCalled()
       expect(Instance).not.toHaveBeenCalled()
 
@@ -26,7 +26,7 @@ describe('load', () => {
   })
 
   test('behavior: grows memory in a real browser, then hashes a small input', async () => {
-    const engine = await WasmHash.load()
+    const engine = await WasmHash.create()
 
     const large = new Uint8Array(3 * 1024 * 1024).fill(7)
     expect(engine.Hash!.keccak256!(large)).toEqual(keccak_256(large))
@@ -38,7 +38,7 @@ describe('load', () => {
   })
 
   test('behavior: ox uses the WASM implementation once installed', async () => {
-    Engine.set(await WasmHash.load())
+    Engine.set(await WasmHash.create())
     try {
       expect(Hash.keccak256('0xdeadbeef')).toBe(
         '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',

@@ -767,6 +767,11 @@
       "types": "./dist/wasm/index.d.ts",
       "default": "./dist/wasm/index.js"
     },
+    "./wasm/Engine": {
+      "src": "./src/wasm/Engine.ts",
+      "types": "./dist/wasm/Engine.d.ts",
+      "default": "./dist/wasm/Engine.js"
+    },
     "./wasm/Hash": {
       "src": "./src/wasm/Hash.ts",
       "types": "./dist/wasm/Hash.d.ts",

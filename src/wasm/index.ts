@@ -26,4 +26,5 @@
  *
  * @category Crypto
  */
+export * as Engine from './Engine.js'
 export * as Hash from './Hash.js'
