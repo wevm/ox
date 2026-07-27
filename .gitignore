@@ -37,3 +37,7 @@ tsdoc-metadata.json
 # WASM build
 .wasm-toolchain
 wasm/.build
+
+# Rust bench artifacts (`pnpm bench:hash`)
+bench/native/target
+bench/native/Cargo.lock

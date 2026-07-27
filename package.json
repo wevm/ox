@@ -23,6 +23,7 @@
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
     "bench": "vp test bench",
+    "bench:hash": "node --import tsx ./scripts/bench-hash.mts",
     "test": "vp test",
     "test:cov": "vp test --coverage",
     "test:fuzz": "FUZZ=true vp test --project fuzz",

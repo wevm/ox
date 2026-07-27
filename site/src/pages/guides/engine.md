@@ -89,6 +89,12 @@ The Keccak256 gap is large at every size because the default implementation is u
 
 SHA-256 is a much narrower margin, and it narrows further as inputs grow. Re-measure on your own runtime before assuming a gain: these numbers move with the engine and the machine.
 
+### Against Native Code
+
+`pnpm bench` compares the default against `ox/wasm`. To see both against native Rust, `pnpm bench:hash` adds a third column from `bench/native`, covering every primitive `ox/wasm` implements. It needs `cargo`, and omits that column without it.
+
+That column is a ceiling, not a target: native code has no VM and no boundary to cross. It is useful for knowing how much of the remaining gap is worth chasing. On Apple Silicon, `ox/wasm` lands within ~1.15× of `alloy-primitives` for large Keccak256 inputs, and is *faster* than the `ripemd` crate above 256 bytes.
+
 ## Engines and Bundle Size
 
 Installing an engine changes *which implementation Ox calls*. It does not remove the default implementation from your bundle.

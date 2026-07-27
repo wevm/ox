@@ -106,6 +106,7 @@
 - **`pnpm check` mutates** -- it runs `vp check --fix`. Use it only when intentionally applying lint/format fixes.
 - **`pnpm exports:update` mutates** -- it rewrites `package.json#exports`.
 - **`pnpm docs:gen` and `pnpm docs:build` mutate generated docs output** -- run only when docs generation is part of the task.
+- **`pnpm bench:hash` needs `cargo`** -- it compares the default, `ox/wasm` and native Rust in one table, so it builds `bench/native` (toolchain pinned in `bench/native/rust-toolchain.toml`). Without `cargo` it drops the native column rather than failing. `pnpm bench` covers the first two through Vitest, which cannot run native code. A full run takes several minutes.
 - **`pnpm contracts:build` mutates generated contract artifacts** -- it runs Forge and `contracts/scripts/generate-typed-artifacts.ts`.
 - **Install hooks can mutate** -- `pnpm install` runs `postinstall`, which initializes submodules, builds contracts, and runs `pnpm dev`.
 
