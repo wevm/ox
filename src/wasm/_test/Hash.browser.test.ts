@@ -4,7 +4,7 @@ import * as Engine from '../../core/Engine.js'
 import * as Hash from '../../core/Hash.js'
 import * as WasmHash from '../Hash.js'
 
-describe('load', () => {
+describe('create', () => {
   test('behavior: instantiates asynchronously', async () => {
     // Chrome refuses to compile modules above a few kilobytes synchronously on
     // the main thread, so `new WebAssembly.Module` must never be reached. A spy

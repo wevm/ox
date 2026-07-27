@@ -38,6 +38,8 @@ tsdoc-metadata.json
 .wasm-toolchain
 wasm/.build
 
-# Rust bench artifacts (`pnpm bench:hash`)
+# Rust bench build output (`pnpm bench:hash`). `Cargo.lock` is committed: the
+# dependency ranges would otherwise re-resolve per machine, and a benchmark
+# whose point is comparison over time cannot have its baseline move underneath
+# it.
 bench/native/target
-bench/native/Cargo.lock

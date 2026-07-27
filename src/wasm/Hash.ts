@@ -23,6 +23,19 @@ type Exports = {
 const digestSize = { hmac_sha256: 32, keccak256: 32, ripemd160: 20, sha256: 32 }
 
 /**
+ * Compilation is memoized; the engine object deliberately is not.
+ *
+ * Handing every caller the same object means one of them customising a slot
+ * for composition silently changes what a later `create` -- or `Engine.load`
+ * -- installs.
+ *
+ * @internal
+ */
+const instantiate = /*#__PURE__*/ internal.memoize(() =>
+  internal.instantiate<Exports>(wasmBase64),
+)
+
+/**
  * Compiles the WASM implementation of the {@link ox#Hash} primitives, without
  * installing it.
  *
@@ -53,9 +66,9 @@ const digestSize = { hmac_sha256: 32, keccak256: 32, ripemd160: 20, sha256: 32 }
  *
  * @returns An engine supplying the `Hash` slot.
  */
-export const create: () => Promise<Engine.Engine> = internal.memoize(
-  async () => {
-    const module = await internal.instantiate<Exports>(wasmBase64)
+export async function create(): Promise<Engine.Engine> {
+  {
+    const module = await instantiate()
 
     // Copies `input` in, runs `hash`, and copies the digest back out.
     function call(
@@ -101,8 +114,8 @@ export const create: () => Promise<Engine.Engine> = internal.memoize(
         sha256: (input) => call('sha256', input),
       },
     }
-  },
-)
+  }
+}
 
 export declare namespace create {
   type ErrorType = internal.MemoryError | Errors.GlobalErrorType

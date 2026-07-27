@@ -449,3 +449,33 @@ describe('Bls', () => {
     expect(Bls.verify({ payload, publicKey, signature })).toBe(true)
   })
 })
+
+describe('merge semantics', () => {
+  test('behavior: a primitive cleared to undefined stops being reported', () => {
+    Engine.set({ Hash: { keccak256: () => new Uint8Array(32).fill(1) } })
+    expect(Object.keys(Engine.get().Hash ?? {})).toMatchInlineSnapshot(`
+      [
+        "keccak256",
+      ]
+    `)
+
+    Engine.set({ Hash: { keccak256: undefined } })
+    // Calls already fell through to the default; the point is that `get` no
+    // longer claims an override that is not there.
+    expect(Object.keys(Engine.get().Hash ?? {})).toMatchInlineSnapshot('[]')
+    expect(Hash.keccak256(payload)).toEqual(
+      Hash.keccak256(payload, { as: 'Hex' }),
+    )
+  })
+
+  test('behavior: the returned engine cannot mutate the registry', () => {
+    Engine.set({ Hash: { keccak256: () => new Uint8Array(32).fill(1) } })
+    const snapshot = Engine.get()
+
+    snapshot.Hash!.keccak256 = () => new Uint8Array(32).fill(2)
+
+    // Writing through the snapshot would change what ox calls without going
+    // through `set`, so without clearing the caches derived from it.
+    expect(Hash.keccak256(payload, { as: 'Bytes' })[0]).toBe(1)
+  })
+})

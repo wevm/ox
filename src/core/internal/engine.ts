@@ -50,17 +50,26 @@ export type Hash = {
 export type Ecdsa = {
   /** Derives an uncompressed (65-byte) public key. */
   getPublicKey?: ((privateKey: Uint8Array) => Uint8Array) | undefined
-  /** Computes a compressed (33-byte) ECDH shared secret. */
+  /**
+   * Computes a compressed (33-byte) ECDH shared secret.
+   *
+   * `publicKey` arrives in whichever SEC1 form the caller supplied, so an
+   * implementation has to accept both the compressed 33-byte and uncompressed
+   * 65-byte encodings.
+   */
   getSharedSecret?:
     | ((privateKey: Uint8Array, publicKey: Uint8Array) => Uint8Array)
     | undefined
-  /** Recovers an uncompressed public key from a 65-byte recovered signature. */
+  /**
+   * Recovers an uncompressed public key from a 65-byte `yParity || r || s`
+   * signature, the same layout {@link Ecdsa.sign} returns.
+   */
   recoverPublicKey?:
     | ((signature: Uint8Array, payload: Uint8Array) => Uint8Array)
     | undefined
   /** Generates a random private key. */
   randomSecretKey?: (() => Uint8Array) | undefined
-  /** Signs a payload, returning 65 bytes of `r || s || yParity`. */
+  /** Signs a payload, returning 65 bytes of `yParity || r || s`. */
   sign?:
     | ((
         payload: Uint8Array,
@@ -318,8 +327,21 @@ export const overrides: Engine = {}
 export function merge(value: Engine) {
   for (const key of Object.keys(value) as (keyof Engine)[]) {
     const slot = value[key]
-    if (slot === undefined) delete overrides[key]
-    else overrides[key] = { ...overrides[key], ...slot } as never
+    if (slot === undefined) {
+      delete overrides[key]
+      continue
+    }
+    // A member set to `undefined` clears that primitive. Spreading would keep
+    // it as an own property: calls still fall through to the default, but
+    // `get` would report an override that is not there.
+    const merged: Record<string, unknown> = { ...overrides[key] }
+    for (const [name, fn] of Object.entries(slot)) {
+      if (fn === undefined) delete merged[name]
+      else merged[name] = fn
+    }
+    // An empty slot stays: `set({ Hash: {} })` is a no-op a caller wrote
+    // deliberately, and `get` has always reported it.
+    overrides[key] = merged as never
   }
 }
 

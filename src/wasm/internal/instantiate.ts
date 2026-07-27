@@ -98,7 +98,8 @@ export async function instantiate<exports extends Record<string, unknown>>(
  * Memoizes a loader so concurrent callers compile the module once.
  *
  * The promise is memoized rather than its result, so a second call made while
- * the first is still compiling awaits the same compilation.
+ * the first is still compiling awaits the same compilation. A rejected attempt
+ * is discarded, so a later call can try again.
  *
  * @internal
  */
@@ -106,7 +107,16 @@ export function memoize<value>(
   load: () => Promise<value>,
 ): () => Promise<value> {
   let cached: Promise<value> | undefined
-  return () => (cached ??= load())
+  return () => {
+    // Only success is memoized. Compilation can fail for reasons that pass --
+    // a runtime briefly out of memory, say -- and caching the rejection would
+    // make one bad moment permanent for the life of the process.
+    cached ??= load().catch((error) => {
+      cached = undefined
+      throw error
+    })
+    return cached
+  }
 }
 
 /** Thrown when a WASM module cannot grow its memory to the required size. */

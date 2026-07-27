@@ -23,14 +23,19 @@ default Vitest `core` project (which globs `src/**/*.test.ts`).
 # Local loop, default fast-check budget (100 runs/property).
 pnpm test:fuzz
 
-# CI-style: bounded run count, bail on first failure (200 runs).
-pnpm test:fuzz:ci
+# What CI runs: the workflow supplies the budget and bails on first failure.
+FC_NUM_RUNS=2000 pnpm test:fuzz --bail=1
 
 # Run a single harness.
 pnpm test:fuzz src/core/_test/AbiParameters.fuzz.ts
 
 # Increase the budget locally.
 FC_NUM_RUNS=5000 pnpm test:fuzz
+
+# Fuzz the browser engines too, which CI does not: they triple the wall time,
+# and the native codecs they uniquely exercise are already pinned per pull
+# request by the `*.conformance.ts` suites.
+pnpm test:fuzz --project fuzz-browser
 ```
 
 The `fuzz` Vitest project is gated behind `FUZZ=true` so the default

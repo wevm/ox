@@ -12,7 +12,7 @@ beforeAll(async () => {
   engine = await WasmHash.create()
 })
 
-describe('load', () => {
+describe('create', () => {
   test('default', async () => {
     expect(Object.keys(await WasmHash.create())).toMatchInlineSnapshot(`
       [
@@ -29,9 +29,20 @@ describe('load', () => {
     `)
   })
 
-  test('behavior: compiles once', async () => {
+  test('behavior: hands every caller its own engine', async () => {
     const [a, b] = await Promise.all([WasmHash.create(), WasmHash.create()])
-    expect(a).toBe(b)
+
+    // Deliberately not the same object. A shared slot lets one caller's
+    // customisation for composition leak into what a later `create` -- or
+    // `Engine.load` -- installs.
+    expect(a).not.toBe(b)
+    expect(a.Hash).not.toBe(b.Hash)
+
+    a.Hash!.keccak256 = () => new Uint8Array(32).fill(9)
+    const c = await WasmHash.create()
+    expect(c.Hash!.keccak256!(Bytes.from('0xdeadbeef'))).toEqual(
+      b.Hash!.keccak256!(Bytes.from('0xdeadbeef')),
+    )
   })
 })
 

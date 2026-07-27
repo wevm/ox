@@ -84,7 +84,14 @@ export declare namespace set {
  * @returns The installed engine.
  */
 export function get(): engine.Engine {
-  return { ...engine.overrides }
+  // Slots are copied too, not just the root: a shared slot lets a caller write
+  // `get().Hash!.keccak256 = …` straight into the live registry, changing what
+  // ox calls without going through `set` and so without clearing the caches
+  // derived from it.
+  const copy: Record<string, unknown> = {}
+  for (const [name, slot] of Object.entries(engine.overrides))
+    copy[name] = { ...slot }
+  return copy as engine.Engine
 }
 
 export declare namespace get {
@@ -144,8 +151,19 @@ export function with_<returnType>(
   try {
     set(value)
     const result = fn()
-    if (typeof (result as { then?: unknown } | undefined)?.then === 'function')
+    const thenable = result as
+      | { then?: (ok: () => void, err: () => void) => void }
+      | undefined
+    if (typeof thenable?.then === 'function') {
+      // Settle the promise we are about to discard. Otherwise its rejection is
+      // never observed, and Node can take the process down over it after the
+      // caller has already handled the `AsyncScopeError` thrown here.
+      thenable.then(
+        () => {},
+        () => {},
+      )
       throw new AsyncScopeError()
+    }
     return result
   } finally {
     engine.reset()
