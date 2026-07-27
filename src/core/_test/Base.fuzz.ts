@@ -3,8 +3,7 @@ import { Base32, Base58, Base64 } from 'ox'
 import { describe, expect } from 'vp/test'
 
 import { arbitraryBytes } from '../../../test/fuzz/arbitraries/bytes.js'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('Base32 round-trip', () => {
   test.prop({ bytes: arbitraryBytes() }, { numRuns })(

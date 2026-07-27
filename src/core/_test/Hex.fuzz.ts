@@ -6,8 +6,7 @@ import {
   arbitraryBytes,
   arbitraryHex,
 } from '../../../test/fuzz/arbitraries/bytes.js'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('Hex round-trip', () => {
   test.prop({ bytes: arbitraryBytes() }, { numRuns })(

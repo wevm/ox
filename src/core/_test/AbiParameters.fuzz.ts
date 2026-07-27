@@ -3,8 +3,7 @@ import { AbiParameters } from 'ox'
 import { describe, expect } from 'vp/test'
 
 import { arbitraryAbiCase } from '../../../test/fuzz/arbitraries/abi.js'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('AbiParameters round-trip', () => {
   test.prop(
