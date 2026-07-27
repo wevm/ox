@@ -72,7 +72,7 @@ const nativeToBase64:
  * @internal
  */
 export const fromBytesNative:
-  | ((value: Bytes.Bytes, options?: fromBytes.Options) => string)
+  | ((value: Bytes.Bytes, options?: Options) => string)
   | undefined =
   nativeToBase64 &&
   ((value, options = {}) => {
@@ -92,7 +92,7 @@ export const fromBytesNative:
  */
 export function fromBytesLoop(
   value: Bytes.Bytes,
-  options: fromBytes.Options = {},
+  options: Options = {},
 ): string {
   const { pad = true, url = false } = options
 

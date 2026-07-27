@@ -6,8 +6,7 @@ import {
   hexToBytes,
   hexToBytesLoop,
 } from '../hex.js'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../../../test/fuzz/numRuns.js'
 
 // The implementations as they stood before the tiering change, vendored so the
 // suite has an oracle independent of the code under test. Any disagreement is
@@ -24,6 +23,13 @@ function referenceEncode(value: Uint8Array): string {
   for (let i = 0; i < length; i++) parts[i] = referenceHexes[value[i]!]!
   return `0x${parts.join('')}`
 }
+
+/**
+ * Whether the previous decoder can be reconstructed here at all. It was built
+ * on `Buffer`, so on a runtime without one there is nothing to compare against
+ * -- and nothing to regress, since such a runtime always used the JS loop.
+ */
+const hasReference = typeof globalThis.Buffer !== 'undefined'
 
 /**
  * The previous decoder: `Buffer` at every size, with the JS loop reachable only
@@ -116,7 +122,7 @@ const arbitraryCorruptedHex = fc
     return `0x${body.slice(0, at)}${char}${body.slice(at + 1)}`
   })
 
-describe('encode: new vs previous implementation', () => {
+describe.runIf(hasReference)('encode: new vs previous implementation', () => {
   test.prop({ bytes: arbitraryBoundaryBytes }, { numRuns })(
     'bytesToHexLoop agrees with the previous loop',
     ({ bytes }) => {
@@ -132,7 +138,7 @@ describe('encode: new vs previous implementation', () => {
   )
 })
 
-describe('decode: new vs previous implementation', () => {
+describe.runIf(hasReference)('decode: new vs previous implementation', () => {
   // The previous decoder had a bug: `Buffer.from(…, 'hex')` masks UTF-16 code
   // units to 8 bits, so a character above U+00FF could alias a hex digit and
   // decode instead of being refused. That is now rejected, which is the one

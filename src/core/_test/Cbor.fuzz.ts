@@ -1,8 +1,7 @@
 import { fc, test } from '@fast-check/vitest'
 import { Cbor } from 'ox'
 import { describe, expect } from 'vp/test'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 /**
  * Recursive CBOR-encodable value. ox's Cbor module supports:

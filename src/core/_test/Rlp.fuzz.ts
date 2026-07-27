@@ -7,8 +7,7 @@ import {
   arbitraryRecursiveRlpHex,
   type RecursiveArray,
 } from '../../../test/fuzz/arbitraries/rlp.js'
-
-const numRuns = Number(process.env.FC_NUM_RUNS) || 100
+import { numRuns } from '../../../test/fuzz/numRuns.js'
 
 describe('Rlp round-trip', () => {
   test.prop({ tree: arbitraryRecursiveRlpHex() }, { numRuns })(
