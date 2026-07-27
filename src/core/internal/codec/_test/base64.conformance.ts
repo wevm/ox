@@ -22,7 +22,46 @@ import {
   type Tier,
 } from '../../../../../test/conformance.js'
 import * as base64 from '../base64.js'
-import { base64 as vectors } from './vectors.js'
+
+/**
+ * Published vectors, transcribed verbatim rather than regenerated, so a change
+ * to ox cannot quietly move the expected values.
+ *
+ * - RFC 4648 section 10 specifies Base64 and gives the `""` through `"foobar"`
+ *   progression. https://www.rfc-editor.org/rfc/rfc4648#section-10
+ * - test262 pins which characters the native codec must reject.
+ *   https://github.com/tc39/test262/tree/main/test/built-ins/Uint8Array/fromBase64
+ */
+
+/** Bytes and their Base64, from RFC 4648 section 10. */
+const roundTrip = ['', 'f', 'fo', 'foo', 'foob', 'fooba', 'foobar'].map(
+  (value, i) => ({
+    bytes: Uint8Array.from(value, (c) => c.charCodeAt(0)),
+    encoded: ['', 'Zg==', 'Zm8=', 'Zm9v', 'Zm9vYg==', 'Zm9vYmE=', 'Zm9vYmFy'][
+      i
+    ]!,
+  }),
+)
+
+/**
+ * Strings a decoder must reject, from test262
+ * `fromBase64/illegal-characters.js`.
+ *
+ * U+2212 and U+FF0B are the interesting ones: they are homoglyphs for `-` and
+ * `+`, both of which *are* Base64 alphabet characters, and U+FF0B sits above
+ * the Latin-1 table. Before the guard it decoded silently as `A` rather than
+ * being refused.
+ */
+const illegal = [
+  'Zm.9v',
+  'Zm9v^',
+  'Zg==&',
+  'Z\u2212==', // minus sign, homoglyph for '-'
+  'Z\uff0b==', // fullwidth plus sign, homoglyph for '+'
+  'Zg\u00a0==', // no-break space
+  'Zg\u2009==', // thin space
+  'Zg\u2028==', // line separator
+]
 
 describe('base64', () => {
   const options = [
@@ -58,7 +97,7 @@ describe('base64', () => {
   }
   // Only one decode tier: `Uint8Array.fromBase64` cannot match ox's
   // alphabet-agnostic decoding, so the loop is all there is. The suite still
-  // pins it to the published vectors.
+  // pins it to the published
   const decodeTiers: Tier<string, Uint8Array>[] = [
     { name: 'loop', run: (v) => base64.toBytesLoop(v, bodyEnd(v)) },
   ]
@@ -71,7 +110,7 @@ describe('base64', () => {
   test('vectors: RFC 4648', () => {
     expectTiersMatch(
       encodeTiers,
-      vectors.roundTrip.map(({ bytes, encoded }) => ({
+      roundTrip.map(({ bytes, encoded }) => ({
         input: { bytes, options: { pad: true, url: false } },
         output: encoded,
       })),
@@ -79,7 +118,7 @@ describe('base64', () => {
     )
     expectTiersMatch(
       decodeTiers,
-      vectors.roundTrip.map(({ bytes, encoded }) => ({
+      roundTrip.map(({ bytes, encoded }) => ({
         input: encoded,
         output: bytes,
       })),
@@ -87,7 +126,7 @@ describe('base64', () => {
   })
 
   test('vectors: illegal characters are rejected by every tier', () => {
-    expectTiersReject(decodeTiers, vectors.illegal)
+    expectTiersReject(decodeTiers, illegal)
   })
 
   test('differential: tiers agree on valid input', () => {
