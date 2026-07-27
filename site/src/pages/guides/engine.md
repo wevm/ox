@@ -149,7 +149,7 @@ The engine is process-wide, so this is only safe for synchronous functions — c
 
 ## Caches
 
-[`Caches`](/api/Caches) memoizes values derived from cryptography, such as address checksums. `Engine.set` and `Engine.reset` clear them, so a swapped hash implementation never returns a stale cached value.
+`Caches` memoizes values derived from cryptography, such as address checksums. `Engine.set` and `Engine.reset` clear them, so a swapped hash implementation never returns a stale cached value.
 
 ## Testing
 
