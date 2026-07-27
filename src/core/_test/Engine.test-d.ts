@@ -1,5 +1,21 @@
 import { Engine } from 'ox'
 import { describe, expectTypeOf, test } from 'vp/test'
+import type { primitives } from '../internal/engine.js'
+
+/**
+ * Primitives on a slot contract that the runtime name table omits.
+ *
+ * `set` rejects any name absent from that table, so anything showing up here
+ * would be a valid override refused at runtime.
+ */
+type Unlisted = {
+  // `-?` because the slots are optional, which would otherwise leave
+  // `undefined` in the union and mask a genuinely missing name.
+  [key in keyof Engine.Engine]-?: Exclude<
+    keyof NonNullable<Engine.Engine[key]>,
+    (typeof primitives)[key][number]
+  >
+}[keyof Engine.Engine]
 
 describe('set', () => {
   test('accepts a partial engine', () => {
@@ -19,6 +35,10 @@ describe('set', () => {
   test('rejects a mistyped function', () => {
     // @ts-expect-error
     Engine.set({ Hash: { keccak256: (input: string) => input } })
+  })
+
+  test('the runtime name table lists every primitive it must accept', () => {
+    expectTypeOf<Unlisted>().toEqualTypeOf<never>()
   })
 })
 

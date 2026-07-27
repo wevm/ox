@@ -46,7 +46,6 @@ export const targets = [
   {
     initialMemory: 1_048_576,
     maxBytes: 32_768,
-    maxMemory: 67_108_864,
     name: 'hashes',
     out: 'src/wasm/internal/hashes.wasm.ts',
     sources: ['wasm/src/hashes.c', 'wasm/src/ox_rt.c'],
@@ -58,5 +57,13 @@ export const targets = [
     name: 'mine',
     out: 'src/tempo/internal/mine.wasm.ts',
     sources: ['wasm/src/mine.c', 'wasm/src/ox_rt.c'],
+  },
+  {
+    initialMemory: 131_072,
+    maxBytes: 4_096,
+    maxMemory: 131_072,
+    name: 'runtime-test',
+    out: 'src/wasm/_test/runtime.wasm.ts',
+    sources: ['wasm/test/ox_rt.c', 'wasm/src/ox_rt.c'],
   },
 ] as const satisfies readonly Target[]

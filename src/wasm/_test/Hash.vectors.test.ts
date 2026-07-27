@@ -1,4 +1,3 @@
-import type { Engine } from 'ox'
 import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect, test } from 'vp/test'
 import * as vectors from '../../../test/vectors/hashes/index.js'
@@ -14,7 +13,7 @@ import { instantiate } from '../internal/instantiate.js'
  * See `test/vectors/hashes/README.md`.
  */
 
-let engine: Engine.Engine
+let engine: WasmHash.create.ReturnType
 
 beforeAll(async () => {
   engine = await WasmHash.create()
@@ -23,7 +22,7 @@ beforeAll(async () => {
 describe('sha256', () => {
   test(`matches ${vectors.sha256.length} NIST CAVP vectors`, () => {
     for (const { digest, message } of vectors.sha256)
-      expect(engine.Hash!.sha256!(message)).toEqual(digest)
+      expect(engine.Hash.sha256(message)).toEqual(digest)
   })
 })
 
@@ -32,26 +31,26 @@ describe('hmacSha256', () => {
     // Two of these use 131-byte keys, which is the only coverage of the
     // longer-than-a-block path where the key is hashed before padding.
     for (const { digest, key, message } of vectors.hmacSha256)
-      expect(engine.Hash!.hmacSha256!(key, message)).toEqual(digest)
+      expect(engine.Hash.hmacSha256(key, message)).toEqual(digest)
   })
 })
 
 describe('ripemd160', () => {
   test(`matches ${vectors.ripemd160.length} reference vectors`, () => {
     for (const { digest, message } of vectors.ripemd160)
-      expect(engine.Hash!.ripemd160!(message)).toEqual(digest)
+      expect(engine.Hash.ripemd160(message)).toEqual(digest)
   })
 
   test('matches the million-`a` reference vector', () => {
     const { digest, message } = vectors.ripemd160MillionA
-    expect(engine.Hash!.ripemd160!(message)).toEqual(digest)
+    expect(engine.Hash.ripemd160(message)).toEqual(digest)
   })
 })
 
 describe('keccak256', () => {
   test(`matches ${vectors.keccak256.length} OpenSSL vectors`, () => {
     for (const { digest, message } of vectors.keccak256)
-      expect(engine.Hash!.keccak256!(message)).toEqual(digest)
+      expect(engine.Hash.keccak256(message)).toEqual(digest)
   })
 })
 

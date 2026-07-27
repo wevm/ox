@@ -13,14 +13,16 @@ toolchain.json   pinned wasi-sdk + binaryen versions, with per-platform checksum
 targets.ts       per-target sources, flags, memory sizes and size budgets
 shim/            libc declarations for freestanding builds (-nostdlib gives us none)
 src/             the C
+test/            C entrypoints used only by regression-test artifacts
 ```
 
 Generated artifacts, and the module that loads them:
 
-| target   | artifact                          | consumed by                      |
-| -------- | --------------------------------- | -------------------------------- |
-| `hashes` | `src/wasm/internal/hashes.wasm.ts` | `src/wasm/Hash.ts` (`ox/wasm/Hash`) |
-| `mine`   | `src/tempo/internal/mine.wasm.ts`  | `src/tempo/internal/virtualMasterPool.ts` |
+| target         | artifact                           | consumed by                                 |
+| -------------- | ---------------------------------- | ------------------------------------------- |
+| `hashes`       | `src/wasm/internal/hashes.wasm.ts` | `src/wasm/Hash.ts` (`ox/wasm/Hash`)         |
+| `mine`         | `src/tempo/internal/mine.wasm.ts`  | `src/tempo/internal/virtualMasterPool.ts`   |
+| `runtime-test` | `src/wasm/_test/runtime.wasm.ts`   | `src/wasm/_test/Runtime.test.ts` (test only) |
 
 ## Building
 
@@ -69,10 +71,10 @@ makes a toolchain change reviewable as a diff.
   exception is `mine`, which keeps its original fixed-offset layout: its I/O is
   84 bytes, it crosses the JS boundary once per million hashes, and its offsets
   are already shipped.
-- **`malloc` is a bump allocator that never frees** (`ox_rt.c`). It exists only
-  for vendored libraries that allocate once during initialization. A target that
-  allocates must be initialized before JS reads `heap_base`, because the
-  allocator advances past what it hands out.
+- **`malloc` is a bump allocator and `free` is a no-op** (`ox_rt.c`). Allocation
+  metadata lets `realloc` preserve bytes and grow the latest allocation in place.
+  A target that allocates must be initialized before JS reads `heap_base`,
+  because the allocator advances past what it hands out.
 - **Every target is size-budgeted** by `maxBytes` in `targets.ts`. The build fails
   when a target exceeds it, so a size regression cannot land unnoticed.
 - **`producers` and `target_features` sections are stripped** and their absence

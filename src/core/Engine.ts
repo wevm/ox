@@ -26,13 +26,6 @@ export type {
  * resolves the engine at call time, so values computed beforehand used whatever
  * implementation was installed then.
  *
- * :::warning
- * Installing an engine changes which implementation ox calls; it does not remove
- * the default implementation from your bundle. The `noble` export on each crypto
- * module (for example `Secp256k1.noble`) always refers to the bundled
- * `@noble/*` implementation and is never affected by `Engine.set`.
- * :::
- *
  * @example
  * ```ts twoslash
  * // @noErrors
@@ -47,24 +40,33 @@ export type {
  * ```ts twoslash
  * import { Engine, Hash } from 'ox'
  *
- * Engine.set({ Hash: { keccak256: (input) => input } })
+ * Engine.set({ Hash: { keccak256: () => new Uint8Array(32) } })
  *
- * Hash.keccak256('0xdeadbeef', { as: 'Bytes' })
- * // @log: Uint8Array [222, 173, 190, 239]
+ * Hash.keccak256('0xdeadbeef')
+ * // @log: '0x0000000000000000000000000000000000000000000000000000000000000000'
  * ```
  *
  * @param value - Engine to install.
  */
 export function set(value: engine.Engine): void {
-  for (const slot of Object.keys(value))
+  for (const [slot, primitives] of Object.entries(value)) {
     if (!(engine.slots as readonly string[]).includes(slot))
       throw new UnknownSlotError(slot)
+    const known = engine.primitives[slot as keyof engine.Engine]
+    // `primitives` is undefined where the caller is clearing the slot.
+    for (const primitive of Object.keys(primitives ?? {}))
+      if (!(known as readonly string[]).includes(primitive))
+        throw new UnknownPrimitiveError(slot, primitive)
+  }
   engine.merge(value)
   Caches.clear()
 }
 
 export declare namespace set {
-  type ErrorType = UnknownSlotError | Errors.GlobalErrorType
+  type ErrorType =
+    | UnknownSlotError
+    | UnknownPrimitiveError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -193,6 +195,22 @@ export class UnknownSlotError extends Errors.BaseError {
     super(`\`${slot}\` is not a valid engine slot.`, {
       metaMessages: [`Valid slots: ${engine.slots.join(', ')}`],
     })
+  }
+}
+
+/** Thrown when a slot is given an unrecognized primitive name. */
+export class UnknownPrimitiveError extends Errors.BaseError {
+  override readonly name = 'Engine.UnknownPrimitiveError'
+
+  constructor(slot: string, primitive: string) {
+    // The class is public, so `slot` is not necessarily one the table knows;
+    // an error that throws while being constructed hides the real failure.
+    const known: readonly string[] | undefined =
+      engine.primitives[slot as keyof engine.Engine]
+    super(
+      `\`${primitive}\` is not a valid primitive for the \`${slot}\` slot.`,
+      known ? { metaMessages: [`Valid primitives: ${known.join(', ')}`] } : {},
+    )
   }
 }
 

@@ -1,7 +1,7 @@
 // Freestanding `stdlib.h`.
 //
-// `malloc` is a bump allocator that never frees -- see `ox_rt.c`. It exists only
-// because some vendored libraries allocate once, during initialization.
+// `malloc` is a bump allocator and `free` is a no-op -- see `ox_rt.c`. Allocation
+// metadata is retained so `realloc` still preserves existing bytes.
 #ifndef OX_SHIM_STDLIB_H
 #define OX_SHIM_STDLIB_H
 

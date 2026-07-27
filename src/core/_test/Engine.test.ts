@@ -164,6 +164,32 @@ describe('set', () => {
     `,
     )
   })
+
+  test('error: unknown primitive', () => {
+    expect(() =>
+      Engine.set({ Hash: { keccak_256: () => new Uint8Array(32) } } as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Engine.UnknownPrimitiveError: \`keccak_256\` is not a valid primitive for the \`Hash\` slot.
+
+      Valid primitives: blake3, hmacSha256, keccak256, ripemd160, sha256]
+    `)
+  })
+
+  test('behavior: a rejected engine is not partially installed', () => {
+    // The whole point of rejecting the name: without this, the override is
+    // stored, no resolver ever reads it, and the caller is told nothing.
+    expect(() =>
+      Engine.set({
+        Hash: { keccak256: () => new Uint8Array(32) },
+        Secp256k1: { signn: () => new Uint8Array(65) },
+      } as never),
+    ).toThrow()
+    expect(Engine.get()).toEqual({})
+    // Still the real digest, not the 32 zero bytes the rejected engine returns.
+    expect(Hash.keccak256('0xdeadbeef')).toMatchInlineSnapshot(
+      `"0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1"`,
+    )
+  })
 })
 
 describe('get', () => {

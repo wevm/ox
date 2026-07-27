@@ -92,8 +92,7 @@ static void store32_be(uint8_t *p, uint32_t v) {
     p[2] = (uint8_t)(v >> 8);  p[3] = (uint8_t)v;
 }
 
-static void sha256_compress(uint32_t *H, const uint8_t *block) {
-    uint32_t W[64];
+static void sha256_compress(uint32_t *H, const uint8_t *block, uint32_t *W) {
     for (int i = 0; i < 16; i++) W[i] = load32_be(block + i * 4);
     for (int i = 16; i < 64; i++) {
         const uint32_t s0 =
@@ -121,20 +120,24 @@ static void sha256_compress(uint32_t *H, const uint8_t *block) {
     H[4] += e; H[5] += f; H[6] += g; H[7] += h;
 }
 
-static void sha256_hash(const uint8_t *in, uint32_t len, uint8_t *out) {
-    uint32_t H[8] = {
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
-    };
+static void sha256_init(uint32_t *H) {
+    H[0] = 0x6a09e667; H[1] = 0xbb67ae85;
+    H[2] = 0x3c6ef372; H[3] = 0xa54ff53a;
+    H[4] = 0x510e527f; H[5] = 0x9b05688c;
+    H[6] = 0x1f83d9ab; H[7] = 0x5be0cd19;
+}
 
+static void sha256_hash_with_scratch(const uint8_t *in, uint32_t len,
+                                     uint8_t *out, uint32_t *H,
+                                     uint8_t *block, uint32_t *W) {
+    sha256_init(H);
     uint32_t offset = 0;
     while (len - offset >= 64) {
-        sha256_compress(H, in + offset);
+        sha256_compress(H, in + offset, W);
         offset += 64;
     }
 
     // Final block(s): message remainder, 0x80, zeroes, then a 64-bit bit count.
-    uint8_t block[128];
     const uint32_t remaining = len - offset;
     const uint32_t total = remaining >= 56 ? 128 : 64;
     for (uint32_t i = 0; i < total; i++) block[i] = 0;
@@ -145,10 +148,17 @@ static void sha256_hash(const uint8_t *in, uint32_t len, uint8_t *out) {
     for (int i = 0; i < 8; i++)
         block[total - 1 - i] = (uint8_t)(bits >> (i * 8));
 
-    sha256_compress(H, block);
-    if (total == 128) sha256_compress(H, block + 64);
+    sha256_compress(H, block, W);
+    if (total == 128) sha256_compress(H, block + 64, W);
 
     for (int i = 0; i < 8; i++) store32_be(out + i * 4, H[i]);
+}
+
+static void sha256_hash(const uint8_t *in, uint32_t len, uint8_t *out) {
+    uint32_t H[8];
+    uint8_t block[128];
+    uint32_t W[64];
+    sha256_hash_with_scratch(in, len, out, H, block, W);
 }
 
 __attribute__((export_name("sha256")))
@@ -162,22 +172,23 @@ __attribute__((export_name("hmac_sha256")))
 void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
                     uint32_t msgLen, uint8_t *out) {
     uint8_t pad[64];
+    uint32_t H[8];
+    uint8_t block[128];
+    uint32_t W[64];
+
     for (int i = 0; i < 64; i++) pad[i] = 0;
-    if (keyLen > 64) sha256_hash(key, keyLen, pad);
+    if (keyLen > 64)
+        sha256_hash_with_scratch(key, keyLen, pad, H, block, W);
     else for (uint32_t i = 0; i < keyLen; i++) pad[i] = key[i];
 
     // Inner: sha256(ipad || msg), streamed so `msg` is never copied.
-    uint32_t H[8] = {
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
-    };
-    uint8_t block[128];
+    sha256_init(H);
     for (int i = 0; i < 64; i++) block[i] = pad[i] ^ 0x36;
-    sha256_compress(H, block);
+    sha256_compress(H, block, W);
 
     uint32_t offset = 0;
     while (msgLen - offset >= 64) {
-        sha256_compress(H, msg + offset);
+        sha256_compress(H, msg + offset, W);
         offset += 64;
     }
     const uint32_t remaining = msgLen - offset;
@@ -188,8 +199,8 @@ void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
     const uint64_t innerBits = ((uint64_t)msgLen + 64) * 8;
     for (int i = 0; i < 8; i++)
         block[total - 1 - i] = (uint8_t)(innerBits >> (i * 8));
-    sha256_compress(H, block);
-    if (total == 128) sha256_compress(H, block + 64);
+    sha256_compress(H, block, W);
+    if (total == 128) sha256_compress(H, block + 64, W);
 
     uint8_t inner[32];
     for (int i = 0; i < 8; i++) store32_be(inner + i * 4, H[i]);
@@ -198,11 +209,14 @@ void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
     uint8_t outer[96];
     for (int i = 0; i < 64; i++) outer[i] = pad[i] ^ 0x5c;
     for (int i = 0; i < 32; i++) outer[64 + i] = inner[i];
-    sha256_hash(outer, 96, out);
+    sha256_hash_with_scratch(outer, 96, out, H, block, W);
 
     ox_zero(pad, 64);
     ox_zero(inner, 32);
     ox_zero(outer, 96);
+    ox_zero((uint8_t *)H, 32);
+    ox_zero(block, 128);
+    ox_zero((uint8_t *)W, 256);
 }
 
 // RIPEMD-160 — Dobbertin/Bosselaers/Preneel.

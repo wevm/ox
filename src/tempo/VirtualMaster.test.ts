@@ -1,5 +1,8 @@
+import { Bytes } from 'ox'
 import { VirtualMaster } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
+import { instantiate } from '../wasm/internal/instantiate.js'
+import { wasmBase64 } from './internal/mine.wasm.js'
 
 const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 const salt =
@@ -174,6 +177,52 @@ describe('mineSaltAsync', () => {
     })
 
     expect(result).toBeUndefined()
+  })
+
+  test.each([
+    0,
+    -1,
+    1.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    2 ** 32,
+    Number.MAX_SAFE_INTEGER + 1,
+  ])('rejects chunk size %s outside the uint32 ABI', async (chunkSize) => {
+    await expect(
+      VirtualMaster.mineSaltAsync({
+        address,
+        chunkSize,
+        count: 1,
+        workers: 1,
+      }),
+    ).rejects.toThrow(
+      `Chunk size "${chunkSize}" is invalid. Expected a positive safe integer no greater than 4294967295.`,
+    )
+  })
+
+  test('accepts the maximum uint32 chunk size', async () => {
+    await expect(
+      VirtualMaster.mineSaltAsync({
+        address,
+        chunkSize: 2 ** 32 - 1,
+        count: 1,
+        start: 0n,
+        workers: 1,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test('treats the raw WASM count as unsigned', async () => {
+    type Exports = { mine(count: number): number }
+    const module = await instantiate<Exports>(wasmBase64)
+    module.reserve(84)
+    module.view().set(Bytes.fromHex(address), module.heapBase)
+    module.view().set(Bytes.fromHex(salt), module.heapBase + 20)
+
+    // 2 ** 31 has its sign bit set in the i32 passed by JavaScript. The first
+    // salt is already known to match, so unsigned C returns immediately; the old
+    // signed ABI interpreted the count as negative and skipped the loop.
+    expect(module.exports.mine(2 ** 31)).toBe(1)
   })
 
   test('reports progress', async () => {

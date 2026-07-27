@@ -64,7 +64,7 @@
 - **Examples should be small** -- public examples should show the minimum useful shape and avoid unrelated setup.
 - **Source docs first** -- public API documentation usually belongs in TSDoc near the exported source.
 - **Site pages** -- human guides live under `site/src/pages/`.
-- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
+- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
 - **Check TSDoc when touching docs** -- run `pnpm check:tsdoc` after changing public comments or examples.
 - **SEO descriptions are auto-derived** -- every generated docs page emits a `description` frontmatter (used for `<meta name="description">` and OG images), targeting 5-15 words. It is derived from the TSDoc summary (markdown stripped, first paragraph, clamped). Add an optional `@description` TSDoc block tag to a function/namespace/schema to override the auto-derived text with hand-written SEO copy. Hand-written site pages should set their own `description` frontmatter (or a `# Title [description]` heading).
 
@@ -91,7 +91,7 @@
 - **Inline snapshots over direct assertions** -- prefer `toMatchInlineSnapshot()` over `.toBe()`, `.toEqual()`, etc. for stable return values. Use `toThrowErrorMatchingInlineSnapshot()` for error assertions.
 - **Snapshot whole objects, omit nondeterministic properties** -- destructure out nondeterministic fields and snapshot the rest, rather than cherry-picking individual fields to assert.
 - **Browser tests use browser suffixes** -- browser-specific behavior uses `*.browser.test.ts` and the `browser` Vitest project.
-- **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz` or `pnpm test:fuzz:ci`; default `pnpm test` should not pick them up.
+- **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz`; default `pnpm test` should not pick them up.
 - **Fuzz regressions become deterministic** -- when a property fails, add the minimized case as a regular `*.test.ts` or vector fixture.
 - **Vectors use Bun** -- run vector tests with `pnpm vectors`. That covers the generated corpora under `vectors/` only. Published upstream fixtures (NIST `.rsp`, XKCP intermediate values) live in `test/vectors/`, are consumed by colocated `*.vectors.test.ts` suites, and run in the `core` project instead -- `pnpm vectors` will not touch them.
 - **Unit and type tests as you go** -- write unit tests and `.test-d.ts` type tests alongside implementation for each public behavior change.

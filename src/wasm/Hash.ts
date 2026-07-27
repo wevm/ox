@@ -66,7 +66,7 @@ const instantiate = /*#__PURE__*/ internal.memoize(() =>
  *
  * @returns An engine supplying the `Hash` slot.
  */
-export async function create(): Promise<Engine.Engine> {
+export async function create(): Promise<create.ReturnType> {
   {
     const module = await instantiate()
 
@@ -95,19 +95,22 @@ export async function create(): Promise<Engine.Engine> {
           const messagePtr = keyPtr + key.length
           const outPtr = messagePtr + message.length
           const view = module.view()
-          view.set(key, keyPtr)
-          view.set(message, messagePtr)
-          module.exports.hmac_sha256(
-            keyPtr,
-            key.length,
-            messagePtr,
-            message.length,
-            outPtr,
-          )
-          const digest = module.view().slice(outPtr, outPtr + out)
-          // The key is secret; do not leave it sitting in linear memory.
-          module.exports.zero(keyPtr, key.length)
-          return digest
+          try {
+            view.set(key, keyPtr)
+            view.set(message, messagePtr)
+            module.exports.hmac_sha256(
+              keyPtr,
+              key.length,
+              messagePtr,
+              message.length,
+              outPtr,
+            )
+            return module.view().slice(outPtr, outPtr + out)
+          } finally {
+            // The key is secret; do not leave it sitting in linear memory, even
+            // when copying, hashing, or copying the digest back out throws.
+            module.exports.zero(keyPtr, key.length)
+          }
         },
         keccak256: (input) => call('keccak256', input),
         ripemd160: (input) => call('ripemd160', input),
@@ -118,5 +121,22 @@ export async function create(): Promise<Engine.Engine> {
 }
 
 export declare namespace create {
+  /**
+   * The `Hash` slot, carrying every primitive this module implements.
+   *
+   * {@link ox#Engine.Engine} is optional all the way down so that an engine can
+   * fill in as little as it likes. This one always fills the same four, and
+   * saying so is what spares callers a non-null assertion per primitive.
+   */
+  type ReturnType = {
+    Hash: {
+      [key in
+        | 'hmacSha256'
+        | 'keccak256'
+        | 'ripemd160'
+        | 'sha256']-?: NonNullable<Engine.Hash[key]>
+    }
+  }
+
   type ErrorType = internal.MemoryError | Errors.GlobalErrorType
 }

@@ -19,7 +19,7 @@
 // ---------------------------------------------------------------------------
 
 __attribute__((export_name("mine")))
-int mine(int count) {
+int mine(uint32_t count) {
     uint8_t *mem   = (uint8_t *)ox_heap_base();
     uint8_t *addr  = mem;       // 20 bytes
     uint8_t *salt  = mem + 20;  // 32 bytes
@@ -45,7 +45,10 @@ int mine(int count) {
     // Lane 16 (bytes 128..135): byte 135 = lane offset 7 → bit 56
     base[16] = (uint64_t)0x80 << 56;
 
-    for (int iter = 0; iter < count; iter++) {
+    // JavaScript passes an i32 bit pattern across the WASM boundary. Treat it as
+    // unsigned so chunk sizes above INT32_MAX still run instead of looking
+    // negative and skipping the loop entirely.
+    for (uint32_t iter = 0; iter < count; iter++) {
         // Copy base, XOR salt.
         // Salt occupies bytes 20..51 → lanes 2..6.
         uint64_t A[25];

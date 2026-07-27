@@ -311,6 +311,58 @@ export const slots = [
 ] as const satisfies readonly (keyof Engine)[]
 
 /**
+ * Recognized primitive names, per slot.
+ *
+ * An override stored under a name no resolver reads is invisible: the default
+ * keeps running and nothing is reported, so a typo looks exactly like success.
+ * That is worst for the callers who can least afford it -- someone installing a
+ * policy-constrained or hardware-backed implementation silently gets ox's
+ * default instead. {@link Engine.set} checks against this to make it loud.
+ *
+ * @internal
+ */
+export const primitives = {
+  Bls: ['aggregate', 'getPublicKey', 'randomSecretKey', 'sign', 'verify'],
+  Ed25519: [
+    'getPublicKey',
+    'randomSecretKey',
+    'sign',
+    'toMontgomery',
+    'toMontgomerySecret',
+    'verify',
+  ],
+  Hash: ['blake3', 'hmacSha256', 'keccak256', 'ripemd160', 'sha256'],
+  Keystore: [
+    'aesCtrDecrypt',
+    'aesCtrEncrypt',
+    'pbkdf2Sha256',
+    'pbkdf2Sha256Async',
+    'scrypt',
+    'scryptAsync',
+  ],
+  Mnemonic: ['toSeed'],
+  P256: [
+    'getPublicKey',
+    'getSharedSecret',
+    'recoverPublicKey',
+    'randomSecretKey',
+    'sign',
+    'verify',
+  ],
+  Secp256k1: [
+    'getPublicKey',
+    'getSharedSecret',
+    'recoverPublicKey',
+    'randomSecretKey',
+    'sign',
+    'verify',
+  ],
+  X25519: ['getPublicKey', 'getSharedSecret', 'randomSecretKey'],
+} as const satisfies {
+  [key in keyof Engine]-?: readonly (keyof Complete<NonNullable<Engine[key]>>)[]
+}
+
+/**
  * The installed overrides. Empty by default -- a bare object literal, so
  * bundlers treat it as side-effect free.
  *

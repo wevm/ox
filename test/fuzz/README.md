@@ -79,7 +79,8 @@ Do not rely on the seed alone -- seeds are not stable across
   over `.filter(...)`; rejection-sampling wastes runs and skews
   distribution.
 - **Keep PR runs bounded.** Default `numRuns` should keep the `Fuzz`
-  CI job under ~10 minutes. Heavier runs belong in nightly schedules.
+  CI job under ~10 minutes. Raise `FC_NUM_RUNS` for a one-off deeper
+  run rather than raising the default.
 - **Differential properties need a non-differential backstop.** A property
   asserting two implementations agree cannot catch a fault they share. Pair it
   with published vectors -- see `test/vectors/hashes/`.

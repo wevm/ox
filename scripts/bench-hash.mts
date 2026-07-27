@@ -86,29 +86,29 @@ function native() {
 }
 
 const engine = await create()
-const wasm = engine.Hash!
+const wasm = engine.Hash
 const key = new Uint8Array(32).map((_, i) => i % 97)
 
 const primitives = [
   {
     name: 'keccak256',
     default: (input: Uint8Array) => noble_keccak256(input),
-    wasm: (input: Uint8Array) => wasm.keccak256!(input),
+    wasm: (input: Uint8Array) => wasm.keccak256(input),
   },
   {
     name: 'sha256',
     default: (input: Uint8Array) => noble_sha256(input),
-    wasm: (input: Uint8Array) => wasm.sha256!(input),
+    wasm: (input: Uint8Array) => wasm.sha256(input),
   },
   {
     name: 'ripemd160',
     default: (input: Uint8Array) => noble_ripemd160(input),
-    wasm: (input: Uint8Array) => wasm.ripemd160!(input),
+    wasm: (input: Uint8Array) => wasm.ripemd160(input),
   },
   {
     name: 'hmacSha256',
     default: (input: Uint8Array) => hmac(noble_sha256, key, input),
-    wasm: (input: Uint8Array) => wasm.hmacSha256!(key, input),
+    wasm: (input: Uint8Array) => wasm.hmacSha256(key, input),
   },
 ]
 

@@ -5,8 +5,10 @@ import { keccak_256 } from '@noble/hashes/sha3.js'
 import { Bytes, Engine, Hash } from 'ox'
 import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect, test } from 'vp/test'
+import { wasmBase64 } from '../internal/hashes.wasm.js'
+import * as internal from '../internal/instantiate.js'
 
-let engine: Engine.Engine
+let engine: WasmHash.create.ReturnType
 
 beforeAll(async () => {
   engine = await WasmHash.create()
@@ -19,7 +21,7 @@ describe('create', () => {
         "Hash",
       ]
     `)
-    expect(Object.keys((await WasmHash.create()).Hash!)).toMatchInlineSnapshot(`
+    expect(Object.keys((await WasmHash.create()).Hash)).toMatchInlineSnapshot(`
       [
         "hmacSha256",
         "keccak256",
@@ -38,10 +40,10 @@ describe('create', () => {
     expect(a).not.toBe(b)
     expect(a.Hash).not.toBe(b.Hash)
 
-    a.Hash!.keccak256 = () => new Uint8Array(32).fill(9)
+    a.Hash.keccak256 = () => new Uint8Array(32).fill(9)
     const c = await WasmHash.create()
-    expect(c.Hash!.keccak256!(Bytes.from('0xdeadbeef'))).toEqual(
-      b.Hash!.keccak256!(Bytes.from('0xdeadbeef')),
+    expect(c.Hash.keccak256(Bytes.from('0xdeadbeef'))).toEqual(
+      b.Hash.keccak256(Bytes.from('0xdeadbeef')),
     )
   })
 })
@@ -58,19 +60,26 @@ function input(size: number) {
   return new Uint8Array(size).map((_, index) => (index * 37 + 11) & 0xff)
 }
 
+function indexOfBytes(haystack: Uint8Array, needle: Uint8Array) {
+  search: for (let i = 0; i <= haystack.length - needle.length; i++) {
+    for (let j = 0; j < needle.length; j++)
+      if (haystack[i + j] !== needle[j]) continue search
+    return i
+  }
+  return -1
+}
+
 describe('Hash', () => {
   test.each(sizes)('keccak256 matches the default at %i bytes', (size) => {
-    expect(engine.Hash!.keccak256!(input(size))).toEqual(
-      keccak_256(input(size)),
-    )
+    expect(engine.Hash.keccak256(input(size))).toEqual(keccak_256(input(size)))
   })
 
   test.each(sizes)('sha256 matches the default at %i bytes', (size) => {
-    expect(engine.Hash!.sha256!(input(size))).toEqual(sha256(input(size)))
+    expect(engine.Hash.sha256(input(size))).toEqual(sha256(input(size)))
   })
 
   test.each(sizes)('ripemd160 matches the default at %i bytes', (size) => {
-    expect(engine.Hash!.ripemd160!(input(size))).toEqual(ripemd160(input(size)))
+    expect(engine.Hash.ripemd160(input(size))).toEqual(ripemd160(input(size)))
   })
 
   test.each([0, 1, 32, 63, 64, 65, 200])(
@@ -78,47 +87,99 @@ describe('Hash', () => {
     (size) => {
       const key = new Uint8Array(size).fill(0xa5)
       const message = input(100)
-      expect(engine.Hash!.hmacSha256!(key, message)).toEqual(
+      expect(engine.Hash.hmacSha256(key, message)).toEqual(
         hmac(sha256, key, message),
       )
     },
   )
 
   test('behavior: known vectors', () => {
-    expect(Bytes.toHex(engine.Hash!.keccak256!(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.Hash.keccak256(new Uint8Array(0)))).toBe(
       '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
     )
-    expect(Bytes.toHex(engine.Hash!.sha256!(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.Hash.sha256(new Uint8Array(0)))).toBe(
       '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     )
-    expect(Bytes.toHex(engine.Hash!.ripemd160!(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.Hash.ripemd160(new Uint8Array(0)))).toBe(
       '0x9c1185a5c5e9fc54612808977ee8f548b2258d31',
     )
   })
 
-  test('behavior: grows memory for large inputs, then still hashes small ones', () => {
-    // 3 MiB exceeds the module's initial memory, forcing a `memory.grow` -- which
-    // detaches the previous `ArrayBuffer`. A retained view would silently read
-    // zero bytes from here on, so the small hash afterwards is the real assertion.
-    const large = new Uint8Array(3 * 1024 * 1024).fill(7)
-    expect(engine.Hash!.keccak256!(large)).toEqual(keccak_256(large))
+  test('behavior: grows memory past 64 MiB, then still hashes small inputs', () => {
+    // The input itself is exactly 64 MiB, so the heap base and digest force
+    // memory past that boundary. Growing detaches the previous `ArrayBuffer`; a
+    // retained view would silently read zero bytes in the assertion below.
+    const large = new Uint8Array(64 * 1024 * 1024).fill(7)
+    expect(engine.Hash.sha256(large)).toEqual(sha256(large))
 
     const small = input(32)
-    expect(engine.Hash!.keccak256!(small)).toEqual(keccak_256(small))
+    expect(engine.Hash.sha256(small)).toEqual(sha256(small))
+  })
+
+  test('behavior: hmacSha256 clears secret-derived stack state', async () => {
+    type Exports = {
+      hmac_sha256(
+        key: number,
+        keyLength: number,
+        message: number,
+        messageLength: number,
+        out: number,
+      ): void
+      zero(ptr: number, length: number): void
+    }
+
+    const module = await internal.instantiate<Exports>(wasmBase64)
+    const key = input(120)
+    const message = input(17)
+    const out = 32
+    module.reserve(key.length + message.length + out)
+    const keyPtr = module.heapBase
+    const messagePtr = keyPtr + key.length
+    const outPtr = messagePtr + message.length
+    module.view().set(key, keyPtr)
+    module.view().set(message, messagePtr)
+    module.exports.hmac_sha256(
+      keyPtr,
+      key.length,
+      messagePtr,
+      message.length,
+      outPtr,
+    )
+    module.exports.zero(keyPtr, key.length)
+
+    const keyBlock = new Uint8Array(64)
+    keyBlock.set(sha256(key))
+    const innerInput = new Uint8Array(64 + message.length)
+    for (let i = 0; i < 64; i++) innerInput[i] = keyBlock[i]! ^ 0x36
+    innerInput.set(message, 64)
+    const inner = sha256(innerInput)
+    const innerWords = new Uint8Array(inner.length)
+    for (let i = 0; i < inner.length; i += 4) {
+      innerWords[i] = inner[i + 3]!
+      innerWords[i + 1] = inner[i + 2]!
+      innerWords[i + 2] = inner[i + 1]!
+      innerWords[i + 3] = inner[i]!
+    }
+
+    // The old artifact left the exact inner digest in its final-block scratch
+    // and native-endian copies in H and W, all below the JS-owned heap.
+    const stack = module.view().subarray(0, module.heapBase)
+    expect(indexOfBytes(stack, inner)).toBe(-1)
+    expect(indexOfBytes(stack, innerWords)).toBe(-1)
   })
 
   test('behavior: consecutive calls do not corrupt each other', () => {
     const a = input(200)
     const b = input(7)
-    expect(engine.Hash!.keccak256!(a)).toEqual(keccak_256(a))
-    expect(engine.Hash!.keccak256!(b)).toEqual(keccak_256(b))
-    expect(engine.Hash!.keccak256!(a)).toEqual(keccak_256(a))
+    expect(engine.Hash.keccak256(a)).toEqual(keccak_256(a))
+    expect(engine.Hash.keccak256(b)).toEqual(keccak_256(b))
+    expect(engine.Hash.keccak256(a)).toEqual(keccak_256(a))
   })
 
   test('behavior: results do not alias WASM memory', () => {
-    const first = engine.Hash!.keccak256!(input(32))
+    const first = engine.Hash.keccak256(input(32))
     const snapshot = first.slice()
-    engine.Hash!.keccak256!(input(64))
+    engine.Hash.keccak256(input(64))
     expect(first).toEqual(snapshot)
   })
 })

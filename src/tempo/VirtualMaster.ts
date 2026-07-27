@@ -9,6 +9,7 @@ import * as VirtualAddress from './VirtualAddress.js'
 
 const tip20Prefix = '0x20c000000000000000000000'
 const zeroAddress = '0x0000000000000000000000000000000000000000'
+const maxUint32 = 2 ** 32 - 1
 
 /** A valid salt input for TIP-1022 master registration. */
 export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
@@ -289,12 +290,13 @@ export async function mineSaltAsync(
     workers = getDefaultWorkerCount(),
   } = parameters
 
-  const address = resolveAddress(parameters.address)
-  const start = toFixedHex(start_, 32)
-
+  assertChunkSize(chunkSize)
   assertCount(count)
   if (workers !== undefined) assertWorkers(workers)
   throwIfAborted(signal)
+
+  const address = resolveAddress(parameters.address)
+  const start = toFixedHex(start_, 32)
 
   const workerCount = Math.max(
     1,
@@ -340,6 +342,8 @@ export declare namespace mineSaltAsync {
     address: Address.Address
     /**
      * Number of salts each worker processes before sending a progress update.
+     *
+     * Must be a positive integer no greater than 2 ** 32 - 1.
      *
      * @default 100_000
      */
@@ -573,6 +577,24 @@ function assertWorkers(workers: number) {
   if (Number.isSafeInteger(workers) && workers >= 0) return
   throw new Errors.BaseError(
     `Workers "${workers}" is invalid. Expected a non-negative safe integer.`,
+  )
+}
+
+/**
+ * Asserts that `chunkSize` fits the miner's unsigned 32-bit WASM ABI.
+ *
+ * @internal
+ */
+function assertChunkSize(chunkSize: number) {
+  if (
+    Number.isSafeInteger(chunkSize) &&
+    chunkSize > 0 &&
+    chunkSize <= maxUint32
+  )
+    return
+
+  throw new Errors.BaseError(
+    `Chunk size "${chunkSize}" is invalid. Expected a positive safe integer no greater than ${maxUint32}.`,
   )
 }
 

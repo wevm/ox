@@ -25,13 +25,15 @@ import type * as internal from './internal/instantiate.js'
  *
  * @returns The engine that was installed.
  */
-export async function load(): Promise<CoreEngine.Engine> {
+export async function load(): Promise<load.ReturnType> {
   const engine = await create()
   CoreEngine.set(engine)
   return engine
 }
 
 export declare namespace load {
+  type ReturnType = create.ReturnType
+
   type ErrorType =
     | create.ErrorType
     | CoreEngine.set.ErrorType
@@ -60,10 +62,13 @@ export declare namespace load {
  *
  * @returns An engine, ready to install.
  */
-export async function create(): Promise<CoreEngine.Engine> {
+export async function create(): Promise<create.ReturnType> {
   return { ...(await Hash.create()) }
 }
 
 export declare namespace create {
+  /** Every slot this entrypoint supplies, each with its primitives present. */
+  type ReturnType = Hash.create.ReturnType
+
   type ErrorType = internal.MemoryError | Errors.GlobalErrorType
 }

@@ -18,7 +18,7 @@ describe('create', () => {
       expect(Instance).not.toHaveBeenCalled()
 
       const input = new Uint8Array(32).fill(1)
-      expect(engine.Hash!.keccak256!(input)).toEqual(keccak_256(input))
+      expect(engine.Hash.keccak256(input)).toEqual(keccak_256(input))
     } finally {
       Module.mockRestore()
       Instance.mockRestore()
@@ -29,12 +29,12 @@ describe('create', () => {
     const engine = await WasmHash.create()
 
     const large = new Uint8Array(3 * 1024 * 1024).fill(7)
-    expect(engine.Hash!.keccak256!(large)).toEqual(keccak_256(large))
+    expect(engine.Hash.keccak256(large)).toEqual(keccak_256(large))
 
     // `memory.grow` detached the previous `ArrayBuffer`; a retained view would
     // now read zero bytes.
     const small = new Uint8Array(32).fill(1)
-    expect(engine.Hash!.keccak256!(small)).toEqual(keccak_256(small))
+    expect(engine.Hash.keccak256(small)).toEqual(keccak_256(small))
   })
 
   test('behavior: ox uses the WASM implementation once installed', async () => {

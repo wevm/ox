@@ -209,7 +209,7 @@ export default defineConfig({
           name: 'fuzz',
           // Gated behind `FUZZ=true` so the default `pnpm test` run
           // doesn't pick up stochastic property tests. Run via
-          // `pnpm test:fuzz` (or `pnpm test:fuzz:ci`).
+          // `pnpm test:fuzz`.
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
           setupFiles: [join(root, 'test/setup.ts')],
           // A property is thousands of cases, not one, so the unit-test
