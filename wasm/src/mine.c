@@ -1,15 +1,18 @@
 // TIP-1022 salt mining — isomorphic WASM (Node + browser).
 // Specialized single-block keccak256 for 52-byte input.
 //
-// Memory layout at offset 1024:
+// Memory layout, from the first byte past the module's static data:
 //   [0..19]   address   (set by JS)
 //   [20..51]  salt      (set by JS, incremented in-place)
 //   [52..83]  hash out  (written on match)
+//
+// The base is `__heap_base`, not a fixed address. A literal offset silently
+// overlaps whatever the linker placed below it: at 1024 this buffer sat on top
+// of the Keccak round constants, so writing the address corrupted `RC[0..6]`
+// and every digest came back wrong.
 
 #include "keccak_f1600.h"
 #include "ox_rt.h"
-
-#define DATA_OFFSET 1024
 
 // ---------------------------------------------------------------------------
 // Mining entry point
@@ -17,7 +20,7 @@
 
 __attribute__((export_name("mine")))
 int mine(int count) {
-    uint8_t *mem   = (uint8_t *)DATA_OFFSET;
+    uint8_t *mem   = (uint8_t *)ox_heap_base();
     uint8_t *addr  = mem;       // 20 bytes
     uint8_t *salt  = mem + 20;  // 32 bytes
     uint8_t *hout  = mem + 52;  // 32 bytes

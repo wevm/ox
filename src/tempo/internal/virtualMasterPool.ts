@@ -1,5 +1,4 @@
 import * as Errors from '../../core/Errors.js'
-import { dataOffset } from './mine.wasm.js'
 
 /** Message sent from a mining worker to the main thread. */
 export type Message =
@@ -186,7 +185,6 @@ main().catch(function(error) {
  */
 function getWorkerMineLoop(): string {
   return `
-var dataOffset = ${dataOffset}
 
 function hexToBytes(hex) {
   var h = hex.startsWith('0x') ? hex.slice(2) : hex
@@ -218,6 +216,10 @@ function mineLoop(data, wasm, mem, postMessage) {
   var workerCount = data.workerCount
   var workerIndex = data.workerIndex
   var startBigInt = BigInt(data.start)
+
+  // Asked of the module rather than baked in: the buffer starts past the
+  // static data, wherever the linker put its end.
+  var dataOffset = wasm.heap_base()
 
   mem.set(addressBytes, dataOffset)
 

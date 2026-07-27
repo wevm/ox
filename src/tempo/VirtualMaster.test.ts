@@ -123,6 +123,32 @@ describe('mineSaltAsync', () => {
     `)
   })
 
+  // `workerCount` is `min(workers, ceil(count / chunkSize))`, so the cases
+  // above collapse to one worker and take the JavaScript fallback. Only a
+  // chunk size small enough to need two workers reaches the WASM, which is how
+  // a miner writing over its own Keccak constants went unnoticed.
+  test('agrees with the fallback once the WASM actually runs', async () => {
+    const viaFallback = await VirtualMaster.mineSaltAsync({
+      address,
+      count: 16,
+      start: 0xabf52ba0n,
+      workers: 1,
+    })
+
+    const viaWasm = await VirtualMaster.mineSaltAsync({
+      address,
+      chunkSize: 8,
+      count: 16,
+      start: 0xabf52ba0n,
+      workers: 2,
+    })
+
+    expect(viaWasm).toEqual(viaFallback)
+    expect(viaWasm?.salt).toMatchInlineSnapshot(
+      `"0x00000000000000000000000000000000000000000000000000000000abf52baf"`,
+    )
+  })
+
   test('finds the same salt with workers', async () => {
     const result = await VirtualMaster.mineSaltAsync({
       address,

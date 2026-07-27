@@ -18,7 +18,7 @@ import { hmac } from '@noble/hashes/hmac.js'
 import { ripemd160 as noble_ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 as noble_sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3.js'
-import { load } from '../src/wasm/Hash.js'
+import { create } from '../src/wasm/Hash.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -85,7 +85,7 @@ function native() {
   }
 }
 
-const engine = await load()
+const engine = await create()
 const wasm = engine.Hash!
 const key = new Uint8Array(32).map((_, i) => i % 97)
 

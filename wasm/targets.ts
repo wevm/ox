@@ -52,7 +52,6 @@ export const targets = [
     sources: ['wasm/src/hashes.c', 'wasm/src/ox_rt.c'],
   },
   {
-    extra: { dataOffset: '1024' },
     initialMemory: 131_072,
     maxBytes: 8_192,
     maxMemory: 131_072,

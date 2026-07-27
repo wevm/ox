@@ -18,13 +18,15 @@ const arbitraryBytes = fc.uint8Array({ maxLength: 256, minLength: 0 })
 /**
  * A 32-byte scalar that is a valid private key on every curve ox uses.
  *
- * Built compositionally rather than by filtering: pinning the leading byte to
- * `[1, 0xef]` keeps the value clear of zero and comfortably below every curve
- * order (all just under 2^256), so no candidate is ever rejected.
+ * Built compositionally rather than by filtering, so no candidate is ever
+ * rejected: a leading byte in `[0x01, 0x72]` is clear of zero and below every
+ * order in play. BLS12-381 sets the ceiling, not the 256-bit curves -- its
+ * scalar field is `0x73eda753…`, so anything above `0x72` reduces rather than
+ * being used as given, which would quietly narrow what the fuzz explores.
  */
 const arbitraryPrivateKey = fc
   .tuple(
-    fc.integer({ max: 0xef, min: 0x01 }),
+    fc.integer({ max: 0x72, min: 0x01 }),
     fc.uint8Array({ maxLength: 31, minLength: 31 }),
   )
   .map(([first, rest]) => Uint8Array.of(first, ...rest))
