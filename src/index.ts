@@ -1547,7 +1547,9 @@ export * as Ed25519 from './core/Ed25519.js'
  * ```ts twoslash
  * import { Engine } from 'ox'
  *
- * Engine.set({ Hash: { keccak256: () => new Uint8Array(32) } })
+ * Engine.set({
+ *   Hash: { keccak256: () => new Uint8Array(32) }
+ * })
  * ```
  *
  * @category Crypto

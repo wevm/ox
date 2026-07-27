@@ -40,7 +40,9 @@ export type {
  * ```ts twoslash
  * import { Engine, Hash } from 'ox'
  *
- * Engine.set({ Hash: { keccak256: () => new Uint8Array(32) } })
+ * Engine.set({
+ *   Hash: { keccak256: () => new Uint8Array(32) }
+ * })
  *
  * Hash.keccak256('0xdeadbeef')
  * // @log: '0x0000000000000000000000000000000000000000000000000000000000000000'
