@@ -116,12 +116,17 @@ export declare namespace get {
  * @param slot - Slot to reset. Resets every slot when omitted.
  */
 export function reset(slot?: keyof engine.Engine): void {
+  // Deleting an unknown key succeeds silently, so without this a misspelled
+  // slot reports nothing and leaves the override it was meant to remove
+  // installed.
+  if (slot !== undefined && !(engine.slots as readonly string[]).includes(slot))
+    throw new UnknownSlotError(slot)
   engine.reset(slot)
   Caches.clear()
 }
 
 export declare namespace reset {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = UnknownSlotError | Errors.GlobalErrorType
 }
 
 /**

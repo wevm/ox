@@ -164,7 +164,8 @@ export async function buildAll(names?: readonly string[]) {
       )
   }
 
-  const results: { source: string; target: Target }[] = []
+  type Result = { source: string; target: Target }
+  const results: Result[] = []
   for (const target of selected) {
     const { bytes, source } = await build(target, toolchain)
     const gzip = child_process

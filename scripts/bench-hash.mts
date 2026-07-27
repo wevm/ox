@@ -120,11 +120,14 @@ const label = (size: number) =>
   size >= 1024 ? `${size / 1024} KiB` : `${size} B`
 
 /** Right-aligns cells to the widest entry in each column. */
-function table(headers: string[], rows: string[][]) {
+function table(
+  headers: readonly string[],
+  rows: readonly (readonly string[])[],
+) {
   const widths = headers.map((header, i) =>
     Math.max(header.length, ...rows.map((row) => row[i]!.length)),
   )
-  const line = (cells: string[]) =>
+  const line = (cells: readonly string[]) =>
     cells.map((cell, i) => cell.padStart(widths[i]! + 2)).join('')
   console.log(line(headers))
   for (const row of rows) console.log(line(row))

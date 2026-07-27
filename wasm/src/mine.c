@@ -14,10 +14,7 @@
 #include "keccak_f1600.h"
 #include "ox_rt.h"
 
-// ---------------------------------------------------------------------------
-// Mining entry point
-// ---------------------------------------------------------------------------
-
+// Mining entry point.
 __attribute__((export_name("mine")))
 int mine(uint32_t count) {
     uint8_t *mem   = (uint8_t *)ox_heap_base();

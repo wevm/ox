@@ -232,6 +232,22 @@ describe('reset', () => {
     Engine.reset('Hash')
     expect(Engine.get()).toEqual({ Secp256k1: { sign } })
   })
+
+  test('error: unknown slot', () => {
+    const keccak256 = () => new Uint8Array(32)
+    Engine.set({ Hash: { keccak256 } })
+
+    expect(() => Engine.reset('Hsah' as never))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Engine.UnknownSlotError: \`Hsah\` is not a valid engine slot.
+
+      Valid slots: Bls, Ed25519, Hash, Keystore, Mnemonic, P256, Secp256k1, X25519]
+    `)
+
+    // The override the caller meant to remove is still installed, which is the
+    // reason a silent no-op here is worse than an error.
+    expect(Engine.get()).toEqual({ Hash: { keccak256 } })
+  })
 })
 
 describe('with', () => {
