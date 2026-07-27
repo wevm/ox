@@ -10,6 +10,7 @@
     "./**/*.bench.ts",
     "./**/*.bench-d.ts",
     "./**/*.snap-d.ts",
-    "./**/*.browser.test.ts"
+    "./**/*.browser.test.ts",
+    "./**/*.fuzz.ts"
   ]
 }

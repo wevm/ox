@@ -8,6 +8,19 @@ import {
 
 const root = import.meta.dirname
 
+/**
+ * Engines the portable browser projects run against.
+ *
+ * A function, not a shared array: Vitest stamps a resolved name onto each
+ * instance object, so handing the same objects to two projects makes the second
+ * collide with the first.
+ */
+const browserInstances = () => [
+  { browser: 'chromium' },
+  { browser: 'firefox' },
+  { browser: 'webkit' },
+]
+
 export default defineConfig({
   fmt: {
     singleQuote: true,
@@ -101,6 +114,9 @@ export default defineConfig({
     },
     ignorePatterns: ['contracts/**', 'contracts/generated.ts', 'test/kzg/**'],
   },
+  // `FC_NUM_RUNS` reaches the fuzz files through `import.meta.env`, so that the
+  // same properties run under Node and in a browser, where `process` is absent.
+  envPrefix: ['VITE_', 'FC_'],
   test: {
     alias: {
       ox: join(root, 'src'),
@@ -133,7 +149,7 @@ export default defineConfig({
           include: [
             ...(process.env.TYPES
               ? ['src/**/*.snap-d.ts']
-              : ['src/**/*.test.ts']),
+              : ['src/**/*.test.ts', 'src/**/*.conformance.ts']),
             '!src/tempo/**',
             '!src/**/*.browser.test.ts',
           ],
@@ -191,14 +207,60 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          // Everything that does not need a virtual authenticator, on every
+          // engine Playwright can drive. Native codecs differ between them --
+          // Chromium 145 read `U+C230` as a hex digit where 149 rejects it --
+          // so an engine ox does not run here is one it is not checked on.
           name: 'browser',
-          include: ['src/**/*.browser.test.ts'],
+          // `*.conformance.ts` is deliberately not a `*.test.ts`: the same
+          // file is collected here and by `core`, so a suite is written once
+          // and every runtime runs whichever tiers it has.
+          include: [
+            'src/**/*.browser.test.ts',
+            'src/**/*.conformance.ts',
+            '!src/webauthn/**',
+          ],
+          browser: {
+            enabled: true,
+            provider: playwright() as never,
+            headless: true,
+            instances: browserInstances(),
+            screenshotFailures: false,
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // WebAuthn needs a virtual authenticator, installed over CDP by
+          // `test/setup.browser.ts`. CDP is Chromium-only, and that is what
+          // holds this project to one engine -- keep it to the tests that
+          // need it, so everything else stays portable.
+          name: 'browser-webauthn',
+          include: ['src/webauthn/**/*.browser.test.ts'],
           setupFiles: [join(root, 'test/setup.browser.ts')],
           browser: {
             enabled: true,
             provider: playwright() as never,
             headless: true,
             instances: [{ browser: 'chromium' }],
+            screenshotFailures: false,
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // The properties the `fuzz` project runs under Node, put in front of
+          // the native codecs only a browser has. Gated behind `FUZZ=true`
+          // alongside it.
+          name: 'fuzz-browser',
+          include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
+          browser: {
+            enabled: true,
+            provider: playwright() as never,
+            headless: true,
+            instances: browserInstances(),
             screenshotFailures: false,
           },
         },

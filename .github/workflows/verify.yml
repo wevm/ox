@@ -59,10 +59,10 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Run tests
-        run: pnpm test --project browser --bail=1
+        run: pnpm test --project browser --project browser-webauthn --bail=1
 
   test-tempo:
     name: 'Test Runtime (tempo, env: localnet, tag: ${{ matrix.tag }})'
@@ -145,6 +145,14 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      # 10k runs per property, across Node and all three browser engines. The
+      # counterexamples behind the `Hex` and `Base64` decode fixes surfaced at
+      # iterations 372 and 1612, so the previous budget of 200 could not have
+      # found either, and the Chromium one only shows in a browser.
+      # `fuzz-soak.yml` runs the same properties far longer on a schedule.
       - name: Run bounded fuzz tests
         run: pnpm test:fuzz:ci
 

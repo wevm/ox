@@ -1,7 +1,5 @@
-// Track B / transactions: bench coverage for the RLP encode/decode hot
-// paths exercised by every TxEnvelope codec. The encoding thread owns
-// codec-only bench naming under `src/core/Rlp.bench.ts`; this file scopes
-// to transaction-shaped inputs to avoid collision.
+// Scoped to transaction-shaped inputs, the RLP paths every TxEnvelope codec
+// exercises. `src/core/Rlp.bench.ts` covers RLP on its own terms.
 
 import { bench, describe } from 'vp/test'
 import * as Hex from './Hex.js'
