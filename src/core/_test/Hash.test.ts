@@ -1,5 +1,103 @@
-import { Hash } from 'ox'
+import { Engine, Hash } from 'ox'
 import { describe, expect, test } from 'vp/test'
+
+describe('blake3', () => {
+  test('default', () => {
+    expect(Hash.blake3('0x')).toMatchInlineSnapshot(
+      `"0xaf1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"`,
+    )
+
+    expect(Hash.blake3(new Uint8Array())).toMatchInlineSnapshot(`
+      Uint8Array [
+        175,
+        19,
+        73,
+        185,
+        245,
+        249,
+        161,
+        166,
+        160,
+        64,
+        77,
+        234,
+        54,
+        220,
+        201,
+        73,
+        155,
+        203,
+        37,
+        201,
+        173,
+        193,
+        18,
+        183,
+        204,
+        154,
+        147,
+        202,
+        228,
+        31,
+        50,
+        98,
+      ]
+    `)
+  })
+
+  test('as: Hex', () => {
+    expect(Hash.blake3(new Uint8Array(), { as: 'Hex' })).toMatchInlineSnapshot(
+      `"0xaf1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"`,
+    )
+  })
+
+  test('as: Bytes', () => {
+    expect(Hash.blake3('0x', { as: 'Bytes' })).toMatchInlineSnapshot(`
+      Uint8Array [
+        175,
+        19,
+        73,
+        185,
+        245,
+        249,
+        161,
+        166,
+        160,
+        64,
+        77,
+        234,
+        54,
+        220,
+        201,
+        73,
+        155,
+        203,
+        37,
+        201,
+        173,
+        193,
+        18,
+        183,
+        204,
+        154,
+        147,
+        202,
+        228,
+        31,
+        50,
+        98,
+      ]
+    `)
+  })
+
+  test('behavior: routes through the installed engine', () => {
+    Engine.set({ Hash: { blake3: () => new Uint8Array(32).fill(1) } })
+
+    expect(Hash.blake3('0x')).toMatchInlineSnapshot(
+      `"0x0101010101010101010101010101010101010101010101010101010101010101"`,
+    )
+  })
+})
 
 describe('hmac256', () => {
   test('default', () => {
@@ -530,6 +628,7 @@ describe('validate', () => {
 test('exports', () => {
   expect(Object.keys(Hash)).toMatchInlineSnapshot(`
     [
+      "blake3",
       "keccak256",
       "hmac256",
       "ripemd160",

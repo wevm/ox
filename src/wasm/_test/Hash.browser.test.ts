@@ -44,6 +44,9 @@ describe('engine', () => {
   test('behavior: ox uses the WASM implementation once installed', async () => {
     await Engine.install({ Hash: WasmHash.engine() })
     try {
+      expect(Hash.blake3('0xdeadbeef')).toBe(
+        '0x53147f3ce49ed4f60dfa5b9654c36ba6103c11f5737df3dabd4cbd296c4161bd',
+      )
       expect(Hash.keccak256('0xdeadbeef')).toBe(
         '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',
       )

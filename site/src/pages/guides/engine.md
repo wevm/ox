@@ -35,7 +35,7 @@ No setup is required:
 ```ts twoslash
 import { Hash } from 'ox'
 
-const digest = Hash.keccak256('0xdeadbeef')
+const digest = Hash.blake3('0xdeadbeef')
 ```
 
 Ox's defaults use the
@@ -94,12 +94,12 @@ await Engine.install({
   Hash: Hash.engine(),
 })
 
-const digest = Hash.sha256('0xdeadbeef')
+const digest = Hash.blake3('0xdeadbeef')
 ```
 
 `Engine.install` awaits all supplied slot promises together, then installs the
 resolved modules atomically. `Hash.engine()` returns the raw `Hash` slot;
-`Hash.sha256()` remains the normal formatted public API.
+`Hash.blake3()` remains the normal formatted public API.
 
 **Benefits**
 
@@ -260,6 +260,20 @@ Binary values cross engine boundaries as raw `Uint8Array` values. Ox performs
 rather than relying on a side-effect import: Ox declares `sideEffects: false`,
 so a bundler may drop an import that appears unused.
 
+The `HdKey` slot receives BIP-32 seeds and extended private keys as trusted
+inputs and returns plain records rather than provider objects. Existing HD-key
+values resolve the currently installed implementation whenever `derive` is
+called, so scoped overrides and engine swaps do not retain provider instances.
+On derivation, `versions` selects the returned node's version bytes; providers
+must read the source private version from the encoded key independently.
+Providers must accept non-zero-offset seed views without mutation or retention
+and return fresh, owned buffers and version records.
+
+Serialized `Bls` implementations are responsible for matching Ox's default
+validation of compressed lengths, canonical encodings, curve membership,
+subgroups, and infinity. Providers must not mutate or retain input views and
+must return fresh, exact-length byte arrays.
+
 **Benefits**
 
 - Supports synchronous native libraries and policy-required providers.
@@ -269,8 +283,8 @@ so a bundler may drop an import that appears unused.
 
 **Trade-offs**
 
-- The engine author owns algorithm semantics, output lengths, key formats, and
-  error behavior.
+- The engine author owns algorithm semantics, validation, output lengths, key
+  formats, and error behavior.
 - Most engine functions are synchronous. Only explicitly asynchronous
   contracts such as `scryptAsync` may return promises.
 - Overrides are module-instance-global, so initialization order and concurrent
@@ -286,7 +300,14 @@ Run the engine comparison with:
 pnpm bench:engines
 ```
 
-The harness covers every engine slot and all 38 primitives in Ox's default
+Run the BLS boundary benchmarks in Node and supported browsers with:
+
+```sh
+pnpm bench --project core src/core/Bls.bench.ts src/core/Bls_crypto.bench.ts
+pnpm bench --project browser src/core/Bls.bench.ts --testNamePattern 'Bls\.(getPublicKey|sign|verify)'
+```
+
+The harness covers every engine slot and all 41 primitives in Ox's default
 engine. The provider columns count the primitives each implementation supplies:
 
 | Slot          | Primitives | `ox` | `ox/node` | `ox/wasm` | `alloy (Rust)` |
@@ -294,17 +315,43 @@ engine. The provider columns count the primitives each implementation supplies:
 | `Bls`         | 5          | 5    | n/a       | n/a       | n/a            |
 | `Ed25519`     | 6          | 6    | 3         | 4         | n/a            |
 | `Hash`        | 5          | 5    | 3         | 5         | 1              |
+| `HdKey`       | 3          | 3    | n/a       | n/a       | n/a            |
 | `Keystore`    | 6          | 6    | 4         | 1         | n/a            |
 | `Mnemonic`    | 1          | 1    | 1         | 1         | n/a            |
 | `P256`        | 6          | 6    | 1         | n/a       | n/a            |
 | `Secp256k1`   | 6          | 6    | n/a       | n/a       | n/a            |
 | `X25519`      | 3          | 3    | 2         | 2         | n/a            |
-| **Total**     | **38**     | **38** | **14**    | **13**    | **1**          |
+| **Total**     | **41**     | **41** | **14**    | **13**    | **1**          |
 
 `n/a` means the provider does not implement a primitive in that slot. The
 harness never times Ox's fallback under another engine's name.
 `alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
 engine.
+
+The harness reports the first provider factory call separately from steady
+state. A fresh process on the benchmark host, after module loading, measured:
+
+| Provider  | Initialization |
+| --------- | -------------- |
+| `ox/node` | 221.08 µs      |
+| `ox/wasm` | 5.22 ms        |
+
+Each provider initializes once, so these single-call measurements are startup
+costs rather than throughput distributions. WASM compilation is memoized after
+the first successful call.
+
+A separate Playwright run records the serialized BLS boundary in every
+supported browser. These rows compare the fastest serialized representation
+with the structured-object path:
+
+| Browser        | `getPublicKey` output | `sign` output | `verify` input |
+| -------------- | --------------------- | ------------- | -------------- |
+| Chromium 145   | 1.87×                 | 1.11×         | 1.10×          |
+| Firefox 146    | 2.48×                 | 1.29×         | 1.14×          |
+| WebKit 26      | 1.84×                 | 1.08×         | 1.07×          |
+
+Browser benchmark timers are coarser than Node's, especially for short calls;
+use these as directional conversion-cost measurements.
 
 Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1, using 50 ms
 warmups, 200 ms measurement budgets, and three repeats, produced the following
@@ -371,8 +418,10 @@ signature, and key lengths rather than checking only that a call succeeds.
 
 Ox's built-in engines add independent conformance coverage for NIST AES-CTR,
 RFC 7914 PBKDF2, RFC 8032 Ed25519, all 196 ZIP-215 verification cases, RFC 7748
-X25519, libsodium's low-order X25519 corpus, official BLAKE3 vectors, and
-English and Japanese BIP-39 vectors. Differential fuzz tests also cover
+X25519, libsodium's low-order X25519 corpus, official BLAKE3 vectors, published
+BIP-32 vectors, the
+[Ethereum BLS12-381 signature suite](https://github.com/ethereum/bls12-381-tests/releases/tag/v0.1.0),
+and English and Japanese BIP-39 vectors. Differential fuzz tests also cover
 subviews, input immutability, output ownership, interleaved providers, memory
 growth, and boundary-sized inputs. WASM conformance runs in Chromium, Firefox,
 and WebKit as well as Node.js.
@@ -380,9 +429,10 @@ and WebKit as well as Node.js.
 ## Security
 
 Treat an engine as trusted code. Depending on the slot, it can receive HMAC
-keys, private keys, passwords, mnemonic phrases, and plaintext keystore
-material. `Engine.install` and `Engine.set` validate slot and primitive names,
-but they cannot validate correctness, constant-time behavior, or key handling.
+keys, private keys, BIP-32 seeds and extended private keys, passwords, mnemonic
+phrases, and plaintext keystore material. `Engine.install` and `Engine.set`
+validate slot and primitive names, but they cannot validate correctness,
+constant-time behavior, or key handling.
 
 Ox's default engine uses audited cryptographic implementations. The WASM engine
 does not promise protection from timing or cache side channels. WebAssembly has

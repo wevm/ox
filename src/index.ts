@@ -1604,14 +1604,14 @@ export * as Fee from './core/Fee.js'
  */
 export * as Filter from './core/Filter.js'
 /**
- * Utility functions for hashing (keccak256, sha256, etc).
+ * Utility functions for BLAKE3, Keccak256, SHA-256, and other hashes.
  *
  * @example
  * ```ts twoslash
  * import { Hash } from 'ox'
  *
- * const value = Hash.keccak256('0xdeadbeef')
- * // '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1'
+ * const value = Hash.blake3('0xdeadbeef')
+ * // '0x53147f3ce49ed4f60dfa5b9654c36ba6103c11f5737df3dabd4cbd296c4161bd'
  * ```
  *
  * @category Crypto
@@ -1622,7 +1622,7 @@ export * as Hash from './core/Hash.js'
  *
  * :::info
  *
- * The `HdKey` module is a friendly wrapper over [`@scure/bip32`](https://github.com/paulmillr/scure-bip32), an **audited** implementation of [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD Wallets.
+ * The `HdKey` module defaults to [`@scure/bip32`](https://github.com/paulmillr/scure-bip32), an **audited** implementation of [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD Wallets. Its implementation can be replaced with {@link ox#Engine.set}.
  *
  * :::
  *

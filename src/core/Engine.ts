@@ -9,6 +9,9 @@ export type {
   Eddsa,
   Engine,
   Hash,
+  HdKey,
+  HdKeyNode,
+  HdKeyVersions,
   Keystore,
   Mnemonic,
 } from './internal/engine.js'

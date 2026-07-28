@@ -1,9 +1,17 @@
-import { HDKey, type Versions } from '@scure/bip32'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
-import type * as Hex from './Hex.js'
+import * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 import * as internal from './internal/hdKey.js'
-import type * as PublicKey from './PublicKey.js'
+import type { HdKeyNode, HdKeyVersions } from './internal/engine.js'
+import * as PublicKey from './PublicKey.js'
+
+const defaultVersions = {
+  private: 0x0488_ade4,
+  public: 0x0488_b21e,
+} satisfies Versions
+
+/** BIP-32 version bytes for private and public extended keys. */
+export type Versions = HdKeyVersions
 
 /** Root type for a Hierarchical Deterministic (HD) Key. */
 export type HdKey = {
@@ -16,6 +24,52 @@ export type HdKey = {
   publicKey: PublicKey.PublicKey<false>
   publicExtendedKey: string
   versions: Versions
+}
+
+/** @internal */
+function fromNode(node: HdKeyNode): HdKey {
+  assertNodeBytes(node.identifier, 'identifier', 20)
+  assertNodeBytes(node.privateKey, 'private key', 32)
+  assertNodeBytes(node.publicKey, 'public key', 65)
+  const versions = { ...node.versions }
+  const sourceVersions = { ...node.versions }
+  const privateExtendedKey = node.privateExtendedKey
+  return {
+    derive: createDerive(privateExtendedKey, versions, sourceVersions),
+    depth: node.depth,
+    identifier: Hex.fromBytes(node.identifier),
+    index: node.index,
+    privateKey: Hex.fromBytes(node.privateKey),
+    privateExtendedKey,
+    publicKey: PublicKey.fromBytes(node.publicKey),
+    publicExtendedKey: node.publicExtendedKey,
+    versions,
+  }
+}
+
+/** @internal */
+function assertNodeBytes(
+  value: Bytes.Bytes,
+  name: string,
+  expectedLength: number,
+): void {
+  Bytes.assert(value)
+  if (value.length !== expectedLength)
+    throw new Errors.BaseError(
+      `Expected ${expectedLength} bytes for an HD key ${name}, received ${value.length}.`,
+    )
+}
+
+/** @internal */
+function createDerive(
+  privateExtendedKey: string,
+  versions: Versions,
+  sourceVersions: Versions,
+): HdKey['derive'] {
+  return (path) =>
+    fromNode(
+      internal.derive(privateExtendedKey, path, versions, sourceVersions),
+    )
 }
 
 /**
@@ -32,15 +86,27 @@ export type HdKey = {
  * ```
  *
  * @param extendedKey - The extended private key.
+ * @param options - Creation options.
  * @returns The HD Key.
  */
-export function fromExtendedKey(extendedKey: string): HdKey {
-  const key = HDKey.fromExtendedKey(extendedKey)
-  return internal.fromScure(key)
+export function fromExtendedKey(
+  extendedKey: string,
+  options: fromExtendedKey.Options = {},
+): HdKey {
+  const versions = { ...(options.versions ?? defaultVersions) }
+  return fromNode(internal.fromExtendedKey(extendedKey, versions))
 }
 
 export declare namespace fromExtendedKey {
-  type ErrorType = internal.fromScure.ErrorType | Errors.GlobalErrorType
+  type Options = {
+    /** The versions to use for the HD Key. */
+    versions?: Versions | undefined
+  }
+
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
+    | PublicKey.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -57,14 +123,20 @@ export declare namespace fromExtendedKey {
  * ```
  *
  * @param json - The JSON object containing an extended private key (`xpriv`).
+ * @param options - Creation options.
  * @returns The HD Key.
  */
-export function fromJson(json: { xpriv: string }): HdKey {
-  return internal.fromScure(HDKey.fromJSON(json))
+export function fromJson(
+  json: { xpriv: string },
+  options: fromJson.Options = {},
+): HdKey {
+  return fromExtendedKey(json.xpriv, options)
 }
 
 export declare namespace fromJson {
-  type ErrorType = internal.fromScure.ErrorType | Errors.GlobalErrorType
+  type Options = fromExtendedKey.Options
+
+  type ErrorType = fromExtendedKey.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -105,9 +177,8 @@ export function fromSeed(
   seed: Hex.Hex | Bytes.Bytes,
   options: fromSeed.Options = {},
 ): HdKey {
-  const { versions } = options
-  const key = HDKey.fromMasterSeed(Bytes.from(seed), versions)
-  return internal.fromScure(key)
+  const versions = { ...(options.versions ?? defaultVersions) }
+  return fromNode(internal.fromSeed(Bytes.from(seed), versions))
 }
 
 export declare namespace fromSeed {
@@ -118,7 +189,8 @@ export declare namespace fromSeed {
 
   type ErrorType =
     | Bytes.from.ErrorType
-    | internal.fromScure.ErrorType
+    | Hex.fromBytes.ErrorType
+    | PublicKey.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
 

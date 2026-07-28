@@ -19,6 +19,7 @@ import * as bls from '../src/core/internal/bls.js'
 import * as ed25519 from '../src/core/internal/ed25519.js'
 import * as engineContract from '../src/core/internal/engine.js'
 import * as hash from '../src/core/internal/hash.js'
+import * as hdKey from '../src/core/internal/hdKey.js'
 import * as keystore from '../src/core/internal/keystore.js'
 import * as mnemonic from '../src/core/internal/mnemonic.js'
 import * as p256 from '../src/core/internal/p256.js'
@@ -291,6 +292,25 @@ for (const size of hashSizes) {
   sync('Hash', 'sha256', case_, () => hash.sha256(input))
 }
 
+const hdKeySeed = bytes(32)
+const hdKeyVersions = { private: 0x0488_ade4, public: 0x0488_b21e }
+const hdKeyRoot = hdKey.fromSeed(hdKeySeed, hdKeyVersions)
+
+sync('HdKey', 'derive', "m/44'/60'/0'/0/0", () =>
+  hdKey.derive(
+    hdKeyRoot.privateExtendedKey,
+    "m/44'/60'/0'/0/0",
+    hdKeyVersions,
+    hdKeyVersions,
+  ),
+)
+sync('HdKey', 'fromExtendedKey', 'private extended key', () =>
+  hdKey.fromExtendedKey(hdKeyRoot.privateExtendedKey, hdKeyVersions),
+)
+sync('HdKey', 'fromSeed', '32 B seed', () =>
+  hdKey.fromSeed(hdKeySeed, hdKeyVersions),
+)
+
 const aesKey = bytes(16, 97)
 const aesIv = bytes(16, 53)
 const aesPlaintext = bytes(4096)
@@ -408,8 +428,14 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
     )
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
+const nodeInitializationStart = performance.now()
 const node = await nodeEngine()
+const nodeInitializationNs = (performance.now() - nodeInitializationStart) * 1e6
+
+const wasmInitializationStart = performance.now()
 const wasm = await wasmEngine()
+const wasmInitializationNs = (performance.now() - wasmInitializationStart) * 1e6
+
 const rustRows = rust()
 
 const headers = [
@@ -424,6 +450,16 @@ const headers = [
 
 console.log(
   'Best-observed time per call. Lower is better; Alloy is reference only.',
+)
+console.log(
+  '\nFirst engine factory call after module loading; each provider initializes once.',
+)
+table(
+  ['provider', 'initialization'],
+  [
+    ['ox/node', format(nodeInitializationNs)],
+    ['ox/wasm', format(wasmInitializationNs)],
+  ],
 )
 
 for (const slot of engineContract.slots) {

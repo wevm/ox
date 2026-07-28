@@ -13,6 +13,9 @@ test('install and engine expose the same precise engine', () => {
 })
 
 test('the Node Engine namespace exposes synchronous core operations', () => {
+  expectTypeOf<Engine.HdKey>().toEqualTypeOf<CoreEngine.HdKey>()
+  expectTypeOf<Engine.HdKeyNode>().toEqualTypeOf<CoreEngine.HdKeyNode>()
+  expectTypeOf<Engine.HdKeyVersions>().toEqualTypeOf<CoreEngine.HdKeyVersions>()
   expectTypeOf(Engine.get).toEqualTypeOf(CoreEngine.get)
   expectTypeOf(Engine.InvalidSlotValueError).toEqualTypeOf(
     CoreEngine.InvalidSlotValueError,

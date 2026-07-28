@@ -42,6 +42,10 @@ afterEach(() => {
  */
 const callSites = [
   {
+    name: 'Hash.blake3',
+    run: (bytes: Uint8Array) => Hash.blake3(bytes),
+  },
+  {
     name: 'Hash.keccak256',
     run: (bytes: Uint8Array) => Hash.keccak256(bytes),
   },

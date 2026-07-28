@@ -24,6 +24,9 @@ export type {
   Eddsa,
   Engine,
   Hash,
+  HdKey,
+  HdKeyNode,
+  HdKeyVersions,
   Keystore,
   Mnemonic,
 } from '../core/Engine.js'

@@ -39,6 +39,83 @@ export type Hash = {
 }
 
 /**
+ * BIP-32 version bytes.
+ *
+ * @internal
+ */
+export type HdKeyVersions = {
+  /** Version used to serialize private extended keys. */
+  private: number
+  /** Version used to serialize public extended keys. */
+  public: number
+}
+
+/**
+ * A fully materialized private BIP-32 node.
+ *
+ * Providers return plain data rather than an object with methods so an
+ * {@link Engine} swap cannot leave a provider-owned class or closure attached
+ * to an existing public HD key.
+ *
+ * @internal
+ */
+export type HdKeyNode = {
+  /** Node depth. */
+  depth: number
+  /** 20-byte HASH160 identifier. */
+  identifier: Uint8Array
+  /** Child index. */
+  index: number
+  /** 32-byte private key. */
+  privateKey: Uint8Array
+  /** Base58Check-encoded private extended key. */
+  privateExtendedKey: string
+  /** Uncompressed 65-byte SEC1 public key. */
+  publicKey: Uint8Array
+  /** Base58Check-encoded public extended key. */
+  publicExtendedKey: string
+  /** Version bytes used by the node. */
+  versions: HdKeyVersions
+}
+
+/**
+ * BIP-32 private-node operations.
+ *
+ * The private extended key is the portable derivation state: it contains the
+ * private key, chain code, depth, parent fingerprint, and child index without
+ * exposing a provider-owned object across calls.
+ *
+ * Providers must accept non-zero-offset seed views without retaining or
+ * mutating them. Returned buffers and version records must be fresh, have the
+ * documented lengths, and remain valid after the provider returns.
+ *
+ * @internal
+ */
+export type HdKey = {
+  /**
+   * Derives a node at a BIP-32 path.
+   *
+   * `versions` selects the returned node's version bytes. Providers must read
+   * the source private version from `privateExtendedKey` independently.
+   */
+  derive?:
+    | ((
+        privateExtendedKey: string,
+        path: string,
+        versions: HdKeyVersions,
+      ) => HdKeyNode)
+    | undefined
+  /** Imports a Base58Check-encoded private extended key. */
+  fromExtendedKey?:
+    | ((extendedKey: string, versions: HdKeyVersions) => HdKeyNode)
+    | undefined
+  /** Derives a master node from a 16- to 64-byte seed. */
+  fromSeed?:
+    | ((seed: Uint8Array, versions: HdKeyVersions) => HdKeyNode)
+    | undefined
+}
+
+/**
  * Short-Weierstrass ECDSA. Shared by the `Secp256k1` and `P256` slots.
  *
  * Signatures are always low-S normalized and always returned in 65-byte
@@ -212,7 +289,14 @@ export type Mnemonic = {
  * Points cross this boundary in their compressed serialized form (48 bytes for
  * G1, 96 for G2), never as projective coordinate triples -- an engine backed by
  * a native library cannot be expected to reproduce another library's internal
- * point representation.
+ * point representation. Providers must accept non-zero-offset views without
+ * retaining or mutating them, and return fresh, exact-length byte arrays.
+ *
+ * Serialized inputs are trusted only after the provider validates their
+ * canonical compressed encoding, curve and prime-order subgroup membership,
+ * and infinity behavior exactly as Ox's default does. Aggregation validates
+ * points in array order. Verification validates the signature before the
+ * public key.
  *
  * @internal
  */
@@ -269,6 +353,8 @@ export type Engine = {
   Ed25519?: Eddsa | undefined
   /** Implementation for [`Hash`](/api/Hash). */
   Hash?: Hash | undefined
+  /** Implementation for [`HdKey`](/api/HdKey). */
+  HdKey?: HdKey | undefined
   /** Implementation for [`Keystore`](/api/Keystore). */
   Keystore?: Keystore | undefined
   /** Implementation for [`Mnemonic`](/api/Mnemonic). */
@@ -303,6 +389,7 @@ export const slots = [
   'Bls',
   'Ed25519',
   'Hash',
+  'HdKey',
   'Keystore',
   'Mnemonic',
   'P256',
@@ -332,6 +419,7 @@ export const primitives = {
     'verify',
   ],
   Hash: ['blake3', 'hmacSha256', 'keccak256', 'ripemd160', 'sha256'],
+  HdKey: ['derive', 'fromExtendedKey', 'fromSeed'],
   Keystore: [
     'aesCtrDecrypt',
     'aesCtrEncrypt',

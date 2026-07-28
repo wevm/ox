@@ -128,6 +128,16 @@ describe('Engine', () => {
     >()
   })
 
+  test('the HdKey slot uses the portable BIP-32 contract', () => {
+    expectTypeOf<Engine.Engine['HdKey']>().toEqualTypeOf<
+      Engine.HdKey | undefined
+    >()
+    expectTypeOf<Engine.HdKeyNode['privateKey']>().toEqualTypeOf<Uint8Array>()
+    expectTypeOf<
+      Engine.HdKeyNode['versions']
+    >().toEqualTypeOf<Engine.HdKeyVersions>()
+  })
+
   test('every slot is optional', () => {
     expectTypeOf<Engine.Engine>().toEqualTypeOf<Partial<Engine.Engine>>()
   })

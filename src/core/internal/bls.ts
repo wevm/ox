@@ -60,31 +60,44 @@ const verifyDefault: Complete<Bls>['verify'] = (
   const { dst, signatureGroup } = options
   const shortSignature = signatureGroup === 'G1'
   const curve = shortSignature ? bls.G1 : bls.G2
-  const payloadPoint = curve.hashToCurve(
-    payload,
-    dst ? { DST: dst } : undefined,
-  )
-  const pairing = shortSignature
-    ? bls.pairingBatch([
+  // Parse both points before hashing the payload, with the signature first, to
+  // preserve public malformed-input precedence.
+  const pairing = (() => {
+    if (shortSignature) {
+      const signaturePoint = bls.G1.Point.fromBytes(signature)
+      const publicKeyPoint = bls.G2.Point.fromBytes(publicKey)
+      const payloadPoint = curve.hashToCurve(
+        payload,
+        dst ? { DST: dst } : undefined,
+      )
+      return bls.pairingBatch([
         {
           g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
-          g2: bls.G2.Point.fromBytes(publicKey),
+          g2: publicKeyPoint,
         },
         {
-          g1: bls.G1.Point.fromBytes(signature),
+          g1: signaturePoint,
           g2: bls.G2.Point.BASE.negate(),
         },
       ])
-    : bls.pairingBatch([
-        {
-          g1: bls.G1.Point.fromBytes(publicKey).negate(),
-          g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
-        },
-        {
-          g1: bls.G1.Point.BASE,
-          g2: bls.G2.Point.fromBytes(signature),
-        },
-      ])
+    }
+    const signaturePoint = bls.G2.Point.fromBytes(signature)
+    const publicKeyPoint = bls.G1.Point.fromBytes(publicKey)
+    const payloadPoint = curve.hashToCurve(
+      payload,
+      dst ? { DST: dst } : undefined,
+    )
+    return bls.pairingBatch([
+      {
+        g1: publicKeyPoint.negate(),
+        g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
+      },
+      {
+        g1: bls.G1.Point.BASE,
+        g2: signaturePoint,
+      },
+    ])
+  })()
   return bls.fields.Fp12.eql(pairing, bls.fields.Fp12.ONE)
 }
 

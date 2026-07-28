@@ -7,6 +7,7 @@ import {
   Ed25519,
   Engine,
   Hash,
+  HdKey,
   Hex,
   Keystore,
   Mnemonic,
@@ -16,6 +17,7 @@ import {
 } from 'ox'
 import { describe, expect, test, vi } from 'vp/test'
 import {
+  hdKey as hdKeyEngine,
   identity as identityEngine,
   sentinel as sentinelEngine,
 } from '../../../test/engines.js'
@@ -149,6 +151,7 @@ describe('set', () => {
   test('behavior: identity engine changes nothing', () => {
     const expected = {
       blake3: merkelize(),
+      blake3Public: Hash.blake3(payload),
       blsPublicKey: Bls.getPublicKey({ privateKey }),
       blsSignature: Bls.sign({ payload, privateKey }),
       ed25519PublicKey: Ed25519.getPublicKey({ privateKey }),
@@ -170,6 +173,7 @@ describe('set', () => {
 
     expect({
       blake3: merkelize(),
+      blake3Public: Hash.blake3(payload),
       blsPublicKey: Bls.getPublicKey({ privateKey }),
       blsSignature: Bls.sign({ payload, privateKey }),
       ed25519PublicKey: Ed25519.getPublicKey({ privateKey }),
@@ -255,7 +259,7 @@ describe('set', () => {
       `
       [Engine.UnknownSlotError: \`Keccak\` is not a valid engine slot.
 
-      Valid slots: Bls, Ed25519, Hash, Keystore, Mnemonic, P256, Secp256k1, X25519]
+      Valid slots: Bls, Ed25519, Hash, HdKey, Keystore, Mnemonic, P256, Secp256k1, X25519]
     `,
     )
   })
@@ -267,6 +271,16 @@ describe('set', () => {
       [Engine.UnknownPrimitiveError: \`keccak_256\` is not a valid primitive for the \`Hash\` slot.
 
       Valid primitives: blake3, hmacSha256, keccak256, ripemd160, sha256]
+    `)
+  })
+
+  test('error: unknown HD key primitive', () => {
+    expect(() =>
+      Engine.set({ HdKey: { deriveChild: () => undefined } } as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Engine.UnknownPrimitiveError: \`deriveChild\` is not a valid primitive for the \`HdKey\` slot.
+
+      Valid primitives: derive, fromExtendedKey, fromSeed]
     `)
   })
 
@@ -336,7 +350,7 @@ describe('reset', () => {
       .toThrowErrorMatchingInlineSnapshot(`
       [Engine.UnknownSlotError: \`Hsah\` is not a valid engine slot.
 
-      Valid slots: Bls, Ed25519, Hash, Keystore, Mnemonic, P256, Secp256k1, X25519]
+      Valid slots: Bls, Ed25519, Hash, HdKey, Keystore, Mnemonic, P256, Secp256k1, X25519]
     `)
 
     // The override the caller meant to remove is still installed, which is the
@@ -422,6 +436,11 @@ describe('interception', () => {
       'Hash.hmac256',
       { Hash: { hmacSha256: () => new Uint8Array(32).fill(1) } },
       () => Hash.hmac256('0xbeef', payload, { as: 'Bytes' }),
+    ],
+    [
+      'Hash.blake3',
+      { Hash: { blake3: () => new Uint8Array(32).fill(1) } },
+      () => Hash.blake3(payload, { as: 'Bytes' }),
     ],
     [
       'BinaryStateTree.merkelize',
@@ -526,6 +545,27 @@ describe('interception', () => {
       'Mnemonic.toSeed',
       { Mnemonic: { toSeed: () => new Uint8Array(64).fill(1) } },
       () => Mnemonic.toSeed(mnemonic),
+    ],
+    [
+      'HdKey.fromSeed',
+      { HdKey: { fromSeed: hdKeyEngine.fromSeed } },
+      () => HdKey.fromSeed('0x00000000000000000000000000000000'),
+    ],
+    [
+      'HdKey.fromExtendedKey',
+      { HdKey: { fromExtendedKey: hdKeyEngine.fromExtendedKey } },
+      () =>
+        HdKey.fromExtendedKey(
+          'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi',
+        ),
+    ],
+    [
+      'HdKey.derive',
+      { HdKey: { derive: hdKeyEngine.derive } },
+      () =>
+        HdKey.fromExtendedKey(
+          'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi',
+        ).derive('m/1'),
     ],
   ] as const satisfies readonly (readonly [
     string,

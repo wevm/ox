@@ -78,6 +78,9 @@ describe('install', () => {
   test('behavior: leaves unsupported primitives on the default', async () => {
     await Engine.install()
 
+    expect(Hash.blake3('0x')).toMatchInlineSnapshot(
+      `"0xaf1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"`,
+    )
     expect(Hash.keccak256('0xdeadbeef')).toMatchInlineSnapshot(
       `"0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1"`,
     )

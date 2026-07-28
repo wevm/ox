@@ -7,33 +7,45 @@ import * as Hex from './Hex.js'
 import * as engine from './internal/bls.js'
 import type { OneOf } from './internal/types.js'
 
-/**
- * Coerces a serialized or structured BLS point into a structured
- * {@link ox#BlsPoint.BlsPoint}.
- *
- * @internal
- */
-function normalizeBlsPoint<group extends 'G1' | 'G2'>(
-  value: Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint,
-  group: group,
-): BlsPoint.BlsPoint {
-  if (typeof value === 'string') return BlsPoint.fromHex(value, group)
-  if (value instanceof Uint8Array) return BlsPoint.fromBytes(value, group)
-  return value
-}
-
-/**
- * Formats a structured BLS point as the requested representation.
- *
- * @internal
- */
-function formatBlsPoint<point extends BlsPoint.BlsPoint>(
-  point: point,
+/** @internal */
+function formatBlsPoint(
+  point: Bytes.Bytes,
+  group: 'G1' | 'G2',
   as: 'Hex' | 'Bytes' | 'Object',
 ): unknown {
-  if (as === 'Hex') return BlsPoint.toHex(point as BlsPoint.G1 | BlsPoint.G2)
-  if (as === 'Bytes')
-    return BlsPoint.toBytes(point as BlsPoint.G1 | BlsPoint.G2)
+  if (as === 'Hex') return Hex.fromBytes(point)
+  if (as === 'Bytes') return point
+  return BlsPoint.fromBytes(point, group)
+}
+
+/** @internal */
+function serializeBlsPoint(
+  point: Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint,
+): Bytes.Bytes {
+  if (typeof point === 'string') return Hex.toBytes(point)
+  if (point instanceof Uint8Array) return point
+  return BlsPoint.toBytes(point as BlsPoint.G1 | BlsPoint.G2)
+}
+
+/** @internal */
+function validateSerializedBlsPoint(
+  point: Hex.Hex | Bytes.Bytes,
+  group: 'G1' | 'G2',
+): void {
+  if (typeof point === 'string') BlsPoint.fromHex(point, group)
+  else BlsPoint.fromBytes(point, group)
+}
+
+/** @internal */
+function assertBlsPointSize(
+  point: Bytes.Bytes,
+  group: 'G1' | 'G2',
+): Bytes.Bytes {
+  const expectedLength = group === 'G1' ? 48 : 96
+  if (point.length !== expectedLength)
+    throw new Errors.BaseError(
+      `Expected ${expectedLength} bytes for a ${group} point, received ${point.length}.`,
+    )
   return point
 }
 
@@ -104,38 +116,75 @@ export function aggregate(
       'Bls.aggregate expects a non-empty array of points.',
     )
 
-  // Normalize once -- accept structured points, hex strings, or `Uint8Array`s.
   const groupHint = options.group
-  const normalized: BlsPoint.BlsPoint[] = points.map((point) => {
+  const groups = points.map((point) => {
     if (typeof point === 'string' || point instanceof Uint8Array) {
       if (!groupHint)
         throw new Errors.BaseError(
           'Bls.aggregate requires `options.group` (`"G1"` or `"G2"`) when passing serialized points.',
         )
-      return normalizeBlsPoint(point, groupHint)
+      return groupHint
     }
-    return point
+    return typeof point.x === 'string' ? 'G1' : 'G2'
   })
 
   // A single point aggregates to itself. The engine is not consulted because
   // there is no addition to perform, only the identity.
-  if (normalized.length === 1) return normalized[0]!
+  if (points.length === 1) {
+    const point = points[0]!
+    if (typeof point === 'string')
+      return BlsPoint.fromHex(point, groups[0]!) as BlsPoint.BlsPoint
+    if (point instanceof Uint8Array)
+      return BlsPoint.fromBytes(point, groups[0]!) as BlsPoint.BlsPoint
+    return point
+  }
 
-  const isG1 = typeof normalized[0]!.x === 'string'
-  for (let i = 1; i < normalized.length; i++) {
-    if ((typeof normalized[i]!.x === 'string') !== isG1)
+  const groupName = groups[0]!
+  for (let i = 1; i < groups.length; i++) {
+    if (groups[i] !== groupName) {
+      // Preserve eager serialized validation on this error path. Valid inputs
+      // stay serialized, while malformed inputs still win over the mixed-group
+      // error in their original array order.
+      for (const [index, point] of points.entries()) {
+        if (typeof point === 'string') BlsPoint.fromHex(point, groups[index]!)
+        else if (point instanceof Uint8Array)
+          BlsPoint.fromBytes(point, groups[index]!)
+      }
       throw new Errors.BaseError(
         'Bls.aggregate expects all points to be from the same group (G1 or G2).',
       )
+    }
   }
 
-  const groupName = isG1 ? 'G1' : 'G2'
-  const point = engine.aggregate(
-    normalized.map((point) =>
-      BlsPoint.toBytes(point as BlsPoint.G1 | BlsPoint.G2),
-    ),
-    groupName,
+  // The previous implementation decoded every serialized member before
+  // serializing structured members. Retain that error order only for mixed
+  // representations; fully serialized arrays stay on the fast path.
+  const hasStructured = points.some(
+    (point) => typeof point !== 'string' && !(point instanceof Uint8Array),
   )
+  if (hasStructured)
+    for (const point of points)
+      if (typeof point === 'string' || point instanceof Uint8Array)
+        validateSerializedBlsPoint(point, groupName)
+
+  const serialized: Bytes.Bytes[] = []
+  for (const [index, point] of points.entries()) {
+    try {
+      serialized.push(assertBlsPointSize(serializeBlsPoint(point), groupName))
+    } catch (error) {
+      // A later cheap serialization error must not outrank an earlier
+      // malformed point. Decode only the failed prefix on this error path.
+      if (!hasStructured)
+        for (let i = 0; i <= index; i++)
+          validateSerializedBlsPoint(
+            points[i] as Hex.Hex | Bytes.Bytes,
+            groupName,
+          )
+      throw error
+    }
+  }
+
+  const point = engine.aggregate(serialized, groupName)
   return BlsPoint.fromBytes(point, groupName) as BlsPoint.BlsPoint
 }
 
@@ -349,9 +398,11 @@ export function getPublicKey<
 export function getPublicKey(options: getPublicKey.Options): unknown {
   const { as = 'Object', privateKey, size = 'short-key:long-sig' } = options
   const groupName = size === 'short-key:long-sig' ? 'G1' : 'G2'
-  const point = engine.getPublicKey(Bytes.from(privateKey), groupName)
-  const publicKey = BlsPoint.fromBytes(point, groupName) as BlsPoint.BlsPoint
-  return formatBlsPoint(publicKey, as)
+  const point = assertBlsPointSize(
+    engine.getPublicKey(Bytes.from(privateKey), groupName),
+    groupName,
+  )
+  return formatBlsPoint(point, groupName, as)
 }
 
 export declare namespace getPublicKey {
@@ -501,15 +552,14 @@ export function sign(options: sign.Options): unknown {
 
   const signatureGroupName: 'G1' | 'G2' =
     size === 'short-key:long-sig' ? 'G2' : 'G1'
-  const signature = engine.sign(Bytes.from(payload), Bytes.from(privateKey), {
-    dst: suite ? Bytes.fromString(suite) : undefined,
-    group: signatureGroupName,
-  })
-  const result = BlsPoint.fromBytes(
-    signature,
+  const signature = assertBlsPointSize(
+    engine.sign(Bytes.from(payload), Bytes.from(privateKey), {
+      dst: suite ? Bytes.fromString(suite) : undefined,
+      group: signatureGroupName,
+    }),
     signatureGroupName,
-  ) as BlsPoint.BlsPoint
-  return formatBlsPoint(result, as)
+  )
+  return formatBlsPoint(signature, signatureGroupName, as)
 }
 
 export declare namespace sign {
@@ -648,28 +698,75 @@ export function verify(options: verify.Options): boolean {
     : signatureByteLength(signatureRaw as Hex.Hex | Bytes.Bytes) === 48
       ? 'G1'
       : 'G2'
-  const publicKeyGroup: 'G1' | 'G2' = signatureGroup === 'G1' ? 'G2' : 'G1'
+  const publicKeyGroup = signatureGroup === 'G1' ? 'G2' : 'G1'
 
-  const signature = (
-    signatureIsStructured
-      ? (signatureRaw as BlsPoint.BlsPoint)
-      : normalizeBlsPoint(signatureRaw as Hex.Hex | Bytes.Bytes, signatureGroup)
-  ) as BlsPoint.BlsPoint<any>
-  const publicKey = (
-    publicKeyIsStructured
-      ? (publicKeyRaw as BlsPoint.BlsPoint)
-      : normalizeBlsPoint(publicKeyRaw as Hex.Hex | Bytes.Bytes, publicKeyGroup)
-  ) as BlsPoint.BlsPoint<any>
+  // Preserve the previous eager validation order when representations are
+  // mixed. Fully serialized pairs stay serialized until the provider.
+  if (signatureIsStructured !== publicKeyIsStructured) {
+    if (!signatureIsStructured)
+      validateSerializedBlsPoint(
+        signatureRaw as Hex.Hex | Bytes.Bytes,
+        signatureGroup,
+      )
+    if (!publicKeyIsStructured)
+      validateSerializedBlsPoint(
+        publicKeyRaw as Hex.Hex | Bytes.Bytes,
+        publicKeyGroup,
+      )
+  }
 
-  return engine.verify(
-    BlsPoint.toBytes(signature as BlsPoint.G1 | BlsPoint.G2),
-    Bytes.from(payload),
-    BlsPoint.toBytes(publicKey as BlsPoint.G1 | BlsPoint.G2),
-    {
-      dst: suite ? Bytes.fromString(suite) : undefined,
-      signatureGroup,
-    },
-  )
+  const signature = signatureIsStructured
+    ? BlsPoint.toBytes(signatureRaw as BlsPoint.G1 | BlsPoint.G2)
+    : assertBlsPointSize(
+        Bytes.from(signatureRaw as Hex.Hex | Bytes.Bytes),
+        signatureGroup,
+      )
+  let payloadBytes: Bytes.Bytes
+  try {
+    payloadBytes = Bytes.from(payload)
+  } catch (error) {
+    // Serialized points used to be decoded before payload coercion. Only pay
+    // that cost on this invalid-payload path so their errors still win.
+    if (!signatureIsStructured && !publicKeyIsStructured) {
+      validateSerializedBlsPoint(
+        signatureRaw as Hex.Hex | Bytes.Bytes,
+        signatureGroup,
+      )
+      validateSerializedBlsPoint(
+        publicKeyRaw as Hex.Hex | Bytes.Bytes,
+        publicKeyGroup,
+      )
+    }
+    throw error
+  }
+  let publicKey: Bytes.Bytes
+  try {
+    publicKey = publicKeyIsStructured
+      ? BlsPoint.toBytes(publicKeyRaw as BlsPoint.G1 | BlsPoint.G2)
+      : assertBlsPointSize(
+          Bytes.from(publicKeyRaw as Hex.Hex | Bytes.Bytes),
+          publicKeyGroup,
+        )
+  } catch (error) {
+    // As above, a later cheap public-key error must not outrank a malformed
+    // serialized signature.
+    if (!signatureIsStructured && !publicKeyIsStructured) {
+      validateSerializedBlsPoint(
+        signatureRaw as Hex.Hex | Bytes.Bytes,
+        signatureGroup,
+      )
+      validateSerializedBlsPoint(
+        publicKeyRaw as Hex.Hex | Bytes.Bytes,
+        publicKeyGroup,
+      )
+    }
+    throw error
+  }
+
+  return engine.verify(signature, payloadBytes, publicKey, {
+    dst: suite ? Bytes.fromString(suite) : undefined,
+    signatureGroup,
+  })
 }
 
 export declare namespace verify {

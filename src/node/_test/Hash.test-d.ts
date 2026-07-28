@@ -27,6 +27,7 @@ test('the result is the raw slot, so `Engine.install` accepts it', () => {
 })
 
 test('the Node namespace exposes the public Hash API', () => {
+  expectTypeOf(NodeHash.blake3).toEqualTypeOf(CoreHash.blake3)
   expectTypeOf(NodeHash.sha256).toEqualTypeOf(CoreHash.sha256)
   expectTypeOf<typeof NodeHash>().not.toHaveProperty('create')
 })

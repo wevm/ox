@@ -35,7 +35,7 @@ const digestSize = { keccak256: 32, ripemd160: 20, sha256: 32 }
  *
  * await Engine.install({ Hash: Hash.engine() })
  *
- * Hash.keccak256('0xdeadbeef')
+ * Hash.blake3('0xdeadbeef')
  * ```
  *
  * @returns The WASM implementation of the `Hash` slot.
