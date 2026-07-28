@@ -109,6 +109,13 @@ export function set(value: engine.Engine): void {
   for (const [slot, primitives] of Object.entries(value)) {
     if (!(engine.slots as readonly string[]).includes(slot))
       throw new UnknownSlotError(slot)
+    if (
+      primitives !== undefined &&
+      (typeof primitives !== 'object' ||
+        primitives === null ||
+        Array.isArray(primitives))
+    )
+      throw new InvalidSlotValueError(slot)
     const known = engine.primitives[slot as keyof engine.Engine]
     // `primitives` is undefined where the caller is clearing the slot.
     for (const primitive of Object.keys(primitives ?? {}))
@@ -121,8 +128,9 @@ export function set(value: engine.Engine): void {
 
 export declare namespace set {
   type ErrorType =
-    | UnknownSlotError
+    | InvalidSlotValueError
     | UnknownPrimitiveError
+    | UnknownSlotError
     | Errors.GlobalErrorType
 }
 
@@ -247,6 +255,15 @@ declare namespace with_ {
     | set.ErrorType
     | get.ErrorType
     | Errors.GlobalErrorType
+}
+
+/** Thrown when an engine slot is not an object or `undefined`. */
+export class InvalidSlotValueError extends Errors.BaseError {
+  override readonly name = 'Engine.InvalidSlotValueError'
+
+  constructor(slot: string) {
+    super(`\`${slot}\` must be an object or \`undefined\`.`)
+  }
 }
 
 /** Thrown when an unrecognized engine slot is supplied. */

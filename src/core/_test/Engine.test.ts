@@ -116,6 +116,21 @@ describe('install', () => {
     ).rejects.toThrowError(Engine.UnknownPrimitiveError)
     expect(Engine.get()).toEqual({ Hash: { keccak256 } })
   })
+
+  test('behavior: a null resolved slot leaves the previous engine installed', async () => {
+    const keccak256 = () => new Uint8Array(32).fill(1)
+    Engine.set({ Hash: { keccak256 } })
+
+    await expect(
+      Engine.install({
+        Hash: Promise.resolve({
+          sha256: () => new Uint8Array(32).fill(2),
+        }),
+        Mnemonic: Promise.resolve(null),
+      } as never),
+    ).rejects.toThrowError(Engine.InvalidSlotValueError)
+    expect(Engine.get()).toEqual({ Hash: { keccak256 } })
+  })
 })
 
 describe('set', () => {
