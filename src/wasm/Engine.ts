@@ -1,6 +1,10 @@
 import * as CoreEngine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
+import * as Ed25519 from './Ed25519.js'
 import * as Hash from './Hash.js'
+import * as Keystore from './Keystore.js'
+import * as Mnemonic from './Mnemonic.js'
+import * as X25519 from './X25519.js'
 import type * as internal from './internal/instantiate.js'
 
 /**
@@ -65,12 +69,23 @@ export declare namespace load {
  * @returns An engine, ready to install.
  */
 export async function create(): Promise<create.ReturnType> {
-  return { ...(await Hash.create()) }
+  const [ed25519, hash, keystore, mnemonic, x25519] = await Promise.all([
+    Ed25519.create(),
+    Hash.create(),
+    Keystore.create(),
+    Mnemonic.create(),
+    X25519.create(),
+  ])
+  return { ...ed25519, ...hash, ...keystore, ...mnemonic, ...x25519 }
 }
 
 export declare namespace create {
   /** Every slot this entrypoint supplies, each with its primitives present. */
-  type ReturnType = Hash.create.ReturnType
+  type ReturnType = Ed25519.create.ReturnType &
+    Hash.create.ReturnType &
+    Keystore.create.ReturnType &
+    Mnemonic.create.ReturnType &
+    X25519.create.ReturnType
 
   type ErrorType = internal.MemoryError | Errors.GlobalErrorType
 }

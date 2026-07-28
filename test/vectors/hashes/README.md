@@ -17,6 +17,7 @@ for the default and `src/wasm/_test/Hash.vectors.test.ts` for the WASM engine.
 
 | File                                   | Cases | Source |
 | -------------------------------------- | ----- | ------ |
+| `blake3.json`                          | 35    | BLAKE3 team's official test vectors |
 | `SHA256ShortMsg.rsp`                   | 65    | NIST CAVP, SHA-256 byte-oriented short messages |
 | `SHA256LongMsg.rsp`                    | 64    | NIST CAVP, SHA-256 byte-oriented long messages |
 | `rfc-4231-sha256.txt`                  | 6     | RFC 4231 §4, HMAC-SHA-256 test cases |
@@ -29,6 +30,7 @@ for the default and `src/wasm/_test/Hash.vectors.test.ts` for the WASM engine.
 Vendored verbatim, so the checksums below verify them against upstream:
 
 ```
+dcb91ea8accc77e6d6e632af7cdc1a99a9f3ae78cf648da595c7d064db32f624  blake3.json
 75e1cb83994638481808e225b9eb0c1ebd0c232d952ac42b61abce6363be283c  SHA256ShortMsg.rsp
 6fac36f37360bcf74ffcf4465c18e30d6d5a04cc90885b901fc3130c16060974  SHA256LongMsg.rsp
 a152130875a5afa91afe974499822d96a995131ab2bbbaf3106ef4c00d3f334b  rfc-4231-sha256.txt
@@ -42,6 +44,9 @@ db0947545a5d91c20b2105aac75fac430deafe0ccaecb660af60044244df30d4  KeccakF-1600-I
   `6b781b384f6570442921109af3062cc6571265e7`
   (`vectors/cryptography_vectors/hashes/SHA2/`). `csrc.nist.gov` is not reachable
   from CI, and pyca vendors the files unmodified.
+- **`blake3.json`** — the BLAKE3 team's official vectors from version 1.8.5,
+  commit `93a431c78a52d7ccf0f366f106467f5070e6075e`
+  (`test_vectors/test_vectors.json`). The file is vendored unmodified.
 - **`rfc-4231-sha256.txt`** — RFC 4231 §4, reformatted by pyca into the same
   `Len`/`Key`/`Msg`/`MD` shape as the CAVP files, from the same commit
   (`vectors/cryptography_vectors/HMAC/`). Covers RFC 4231 cases 1–4, 6 and 7;

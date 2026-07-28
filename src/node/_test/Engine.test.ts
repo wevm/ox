@@ -8,7 +8,12 @@ describe('create', () => {
 
     expect(Object.keys(engine)).toMatchInlineSnapshot(`
       [
+        "Ed25519",
         "Hash",
+        "Keystore",
+        "Mnemonic",
+        "P256",
+        "X25519",
       ]
     `)
     expect(CoreEngine.get()).toMatchInlineSnapshot('{}')
@@ -30,14 +35,43 @@ describe('load', () => {
     const engine = await Engine.load()
 
     expect(Object.keys(CoreEngine.get())).toEqual(Object.keys(engine))
-    expect(Object.keys(CoreEngine.get().Hash ?? {}).sort())
-      .toMatchInlineSnapshot(`
-      [
-        "hmacSha256",
-        "ripemd160",
-        "sha256",
-      ]
-    `)
+    expect(
+      Object.fromEntries(
+        Object.entries(CoreEngine.get()).map(([slot, value]) => [
+          slot,
+          Object.keys(value ?? {}).sort(),
+        ]),
+      ),
+    ).toMatchInlineSnapshot(`
+        {
+          "Ed25519": [
+            "getPublicKey",
+            "sign",
+            "toMontgomerySecret",
+          ],
+          "Hash": [
+            "hmacSha256",
+            "ripemd160",
+            "sha256",
+          ],
+          "Keystore": [
+            "aesCtrDecrypt",
+            "aesCtrEncrypt",
+            "pbkdf2Sha256",
+            "pbkdf2Sha256Async",
+          ],
+          "Mnemonic": [
+            "toSeed",
+          ],
+          "P256": [
+            "getPublicKey",
+          ],
+          "X25519": [
+            "getPublicKey",
+            "getSharedSecret",
+          ],
+        }
+      `)
   })
 
   test('behavior: leaves unsupported primitives on the default', async () => {
@@ -50,12 +84,17 @@ describe('load', () => {
 
   test('behavior: merges with later engines', async () => {
     await Engine.load()
-    CoreEngine.set({ Mnemonic: { toSeed: () => new Uint8Array(64) } })
+    CoreEngine.set({ Bls: { randomSecretKey: () => new Uint8Array(32) } })
 
     expect(Object.keys(CoreEngine.get()).sort()).toMatchInlineSnapshot(`
       [
+        "Bls",
+        "Ed25519",
         "Hash",
+        "Keystore",
         "Mnemonic",
+        "P256",
+        "X25519",
       ]
     `)
   })

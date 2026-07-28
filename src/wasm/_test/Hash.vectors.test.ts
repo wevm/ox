@@ -19,6 +19,13 @@ beforeAll(async () => {
   engine = await WasmHash.create()
 })
 
+describe('blake3', () => {
+  test(`matches ${vectors.blake3.length} official BLAKE3 vectors`, () => {
+    for (const { digest, message } of vectors.blake3)
+      expect(engine.Hash.blake3(message)).toEqual(digest)
+  })
+})
+
 describe('sha256', () => {
   test(`matches ${vectors.sha256.length} NIST CAVP vectors`, () => {
     for (const { digest, message } of vectors.sha256)

@@ -268,6 +268,27 @@ export default defineConfig({
           // the native codecs only a browser has. Gated behind `FUZZ=true`
           // alongside it.
           name: 'fuzz-browser',
+          deps: {
+            // Discover every direct fuzz oracle before browsers connect.
+            // Mid-run dependency optimization reloads the test runtime.
+            optimizer: {
+              client: {
+                include: [
+                  '@fast-check/vitest',
+                  '@noble/ciphers/aes.js',
+                  '@noble/curves/ed25519.js',
+                  '@noble/curves/nist.js',
+                  '@noble/hashes/blake3.js',
+                  '@noble/hashes/hmac.js',
+                  '@noble/hashes/legacy.js',
+                  '@noble/hashes/pbkdf2.js',
+                  '@noble/hashes/sha2.js',
+                  '@noble/hashes/sha3.js',
+                  '@scure/bip39',
+                ],
+              },
+            },
+          },
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
           testTimeout: fuzzTimeout,
           browser: {

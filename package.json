@@ -650,6 +650,11 @@
       "types": "./dist/node/index.d.ts",
       "default": "./dist/node/index.js"
     },
+    "./node/Ed25519": {
+      "src": "./src/node/Ed25519.ts",
+      "types": "./dist/node/Ed25519.d.ts",
+      "default": "./dist/node/Ed25519.js"
+    },
     "./node/Engine": {
       "src": "./src/node/Engine.ts",
       "types": "./dist/node/Engine.d.ts",
@@ -659,6 +664,26 @@
       "src": "./src/node/Hash.ts",
       "types": "./dist/node/Hash.d.ts",
       "default": "./dist/node/Hash.js"
+    },
+    "./node/Keystore": {
+      "src": "./src/node/Keystore.ts",
+      "types": "./dist/node/Keystore.d.ts",
+      "default": "./dist/node/Keystore.js"
+    },
+    "./node/Mnemonic": {
+      "src": "./src/node/Mnemonic.ts",
+      "types": "./dist/node/Mnemonic.d.ts",
+      "default": "./dist/node/Mnemonic.js"
+    },
+    "./node/P256": {
+      "src": "./src/node/P256.ts",
+      "types": "./dist/node/P256.d.ts",
+      "default": "./dist/node/P256.js"
+    },
+    "./node/X25519": {
+      "src": "./src/node/X25519.ts",
+      "types": "./dist/node/X25519.d.ts",
+      "default": "./dist/node/X25519.js"
     },
     "./tempo": {
       "src": "./src/tempo/index.ts",
@@ -780,6 +805,11 @@
       "types": "./dist/wasm/index.d.ts",
       "default": "./dist/wasm/index.js"
     },
+    "./wasm/Ed25519": {
+      "src": "./src/wasm/Ed25519.ts",
+      "types": "./dist/wasm/Ed25519.d.ts",
+      "default": "./dist/wasm/Ed25519.js"
+    },
     "./wasm/Engine": {
       "src": "./src/wasm/Engine.ts",
       "types": "./dist/wasm/Engine.d.ts",
@@ -789,6 +819,21 @@
       "src": "./src/wasm/Hash.ts",
       "types": "./dist/wasm/Hash.d.ts",
       "default": "./dist/wasm/Hash.js"
+    },
+    "./wasm/Keystore": {
+      "src": "./src/wasm/Keystore.ts",
+      "types": "./dist/wasm/Keystore.d.ts",
+      "default": "./dist/wasm/Keystore.js"
+    },
+    "./wasm/Mnemonic": {
+      "src": "./src/wasm/Mnemonic.ts",
+      "types": "./dist/wasm/Mnemonic.d.ts",
+      "default": "./dist/wasm/Mnemonic.js"
+    },
+    "./wasm/X25519": {
+      "src": "./src/wasm/X25519.ts",
+      "types": "./dist/wasm/X25519.d.ts",
+      "default": "./dist/wasm/X25519.js"
     },
     "./webauthn": {
       "src": "./src/webauthn/index.ts",

@@ -1,3 +1,4 @@
+import { blake3 } from '@noble/hashes/blake3.js'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { describe, expect, test, vi } from 'vp/test'
 import * as Engine from '../../core/Engine.js'
@@ -19,6 +20,7 @@ describe('create', () => {
 
       const input = new Uint8Array(32).fill(1)
       expect(engine.Hash.keccak256(input)).toEqual(keccak_256(input))
+      expect(engine.Hash.blake3(input)).toEqual(blake3(input))
     } finally {
       Module.mockRestore()
       Instance.mockRestore()
@@ -30,11 +32,13 @@ describe('create', () => {
 
     const large = new Uint8Array(3 * 1024 * 1024).fill(7)
     expect(engine.Hash.keccak256(large)).toEqual(keccak_256(large))
+    expect(engine.Hash.blake3(large)).toEqual(blake3(large))
 
     // `memory.grow` detached the previous `ArrayBuffer`; a retained view would
     // now read zero bytes.
     const small = new Uint8Array(32).fill(1)
     expect(engine.Hash.keccak256(small)).toEqual(keccak_256(small))
+    expect(engine.Hash.blake3(small)).toEqual(blake3(small))
   })
 
   test('behavior: ox uses the WASM implementation once installed', async () => {

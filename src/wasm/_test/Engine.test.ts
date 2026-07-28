@@ -7,7 +7,11 @@ describe('create', () => {
     const engine = await Engine.create()
     expect(Object.keys(engine)).toMatchInlineSnapshot(`
       [
+        "Ed25519",
         "Hash",
+        "Keystore",
+        "Mnemonic",
+        "X25519",
       ]
     `)
     // The whole point of `create` over `load`: benches, differential tests and
@@ -28,11 +32,15 @@ describe('create', () => {
 describe('load', () => {
   test('behavior: merges with a later set, rather than being replaced', async () => {
     await Engine.load()
-    CoreEngine.set({ Mnemonic: { toSeed: () => new Uint8Array(64) } })
+    CoreEngine.set({ Bls: { randomSecretKey: () => new Uint8Array(32) } })
     expect(Object.keys(CoreEngine.get()).sort()).toMatchInlineSnapshot(`
       [
+        "Bls",
+        "Ed25519",
         "Hash",
+        "Keystore",
         "Mnemonic",
+        "X25519",
       ]
     `)
   })
@@ -49,14 +57,39 @@ describe('load', () => {
 
   test('behavior: routes every slot it reports', async () => {
     await Engine.load()
-    expect(Object.keys(CoreEngine.get().Hash ?? {}).sort())
-      .toMatchInlineSnapshot(`
-      [
-        "hmacSha256",
-        "keccak256",
-        "ripemd160",
-        "sha256",
-      ]
-    `)
+    expect(
+      Object.fromEntries(
+        Object.entries(CoreEngine.get()).map(([slot, value]) => [
+          slot,
+          Object.keys(value ?? {}).sort(),
+        ]),
+      ),
+    ).toMatchInlineSnapshot(`
+        {
+          "Ed25519": [
+            "getPublicKey",
+            "sign",
+            "toMontgomerySecret",
+            "verify",
+          ],
+          "Hash": [
+            "blake3",
+            "hmacSha256",
+            "keccak256",
+            "ripemd160",
+            "sha256",
+          ],
+          "Keystore": [
+            "pbkdf2Sha256",
+          ],
+          "Mnemonic": [
+            "toSeed",
+          ],
+          "X25519": [
+            "getPublicKey",
+            "getSharedSecret",
+          ],
+        }
+      `)
   })
 })

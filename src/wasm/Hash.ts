@@ -1,32 +1,14 @@
 import type * as Engine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
+import * as blake3 from './internal/blake3.js'
 import * as hash from './internal/hash.js'
-import { wasmBase64 } from './internal/hashes.wasm.js'
+import * as hashes from './internal/hashes.js'
 import * as internal from './internal/instantiate.js'
 
 export { MemoryError } from './internal/instantiate.js'
 
-type Exports = hash.Exports & {
-  keccak256(input: number, length: number, out: number): void
-  ripemd160(input: number, length: number, out: number): void
-  sha256(input: number, length: number, out: number): void
-}
-
 /** Digest sizes, in bytes. */
 const digestSize = { keccak256: 32, ripemd160: 20, sha256: 32 }
-
-/**
- * Compilation is memoized; the engine object deliberately is not.
- *
- * Handing every caller the same object means one of them customising a slot
- * for composition silently changes what a later `create` -- or `Engine.load`
- * -- installs.
- *
- * @internal
- */
-const instantiate = /*#__PURE__*/ internal.memoize(() =>
-  internal.instantiate<Exports>(wasmBase64),
-)
 
 /**
  * Compiles the WASM implementation of the [`Hash`](/api/Hash) primitives, without
@@ -58,7 +40,10 @@ const instantiate = /*#__PURE__*/ internal.memoize(() =>
  */
 export async function create(): Promise<create.ReturnType> {
   {
-    const module = await instantiate()
+    const [blake3Module, module] = await Promise.all([
+      blake3.load(),
+      hashes.load(),
+    ])
 
     // Copies `input` in, runs `hash`, and copies the digest back out.
     function call(
@@ -78,6 +63,7 @@ export async function create(): Promise<create.ReturnType> {
 
     return {
       Hash: {
+        blake3: (input) => blake3.hash(blake3Module, input),
         hmacSha256: (key, message) => hash.hmacSha256(module, key, message),
         keccak256: (input) => call('keccak256', input),
         ripemd160: (input) => call('ripemd160', input),
@@ -92,12 +78,13 @@ export declare namespace create {
    * The `Hash` slot, carrying every primitive this module implements.
    *
    * {@link ox#Engine.Engine} is optional all the way down so that an engine can
-   * fill in as little as it likes. This one always fills the same four, and
+   * fill in as little as it likes. This one always fills the same five, and
    * saying so is what spares callers a non-null assertion per primitive.
    */
   type ReturnType = {
     Hash: {
       [key in
+        | 'blake3'
         | 'hmacSha256'
         | 'keccak256'
         | 'ripemd160'

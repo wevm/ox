@@ -1,4 +1,5 @@
 import { fc, test } from '@fast-check/vitest'
+import { blake3 } from '@noble/hashes/blake3.js'
 import { hmac } from '@noble/hashes/hmac.js'
 import { ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 } from '@noble/hashes/sha2.js'
@@ -21,14 +22,33 @@ beforeAll(async () => {
  *
  * The distribution is weighted toward the sizes where padding and block-boundary
  * bugs hide -- empty input, exact multiples of the keccak256 rate (136) and the
- * SHA-2 block (64), and the 56-byte threshold at which the length counter no
- * longer fits in the final block.
+ * SHA-2 block (64), BLAKE3 chunk (1024), and the 56-byte threshold at which
+ * the SHA-2 length counter no longer fits in the final block.
  */
 const arbitraryInput = fc.oneof(
   { arbitrary: fc.uint8Array({ maxLength: 300, minLength: 0 }), weight: 6 },
   {
     arbitrary: fc
-      .constantFrom(0, 1, 55, 56, 63, 64, 65, 111, 112, 135, 136, 137, 272)
+      .constantFrom(
+        0,
+        1,
+        55,
+        56,
+        63,
+        64,
+        65,
+        111,
+        112,
+        135,
+        136,
+        137,
+        272,
+        1023,
+        1024,
+        1025,
+        2048,
+        2049,
+      )
       .chain((size) => fc.uint8Array({ maxLength: size, minLength: size })),
     weight: 3,
   },
@@ -54,6 +74,10 @@ const arbitraryKey = fc.oneof(
 )
 
 const primitives = {
+  blake3: {
+    reference: (input: Uint8Array) => blake3(input),
+    wasm: (input: Uint8Array) => engine.Hash.blake3(input),
+  },
   hmacSha256: {
     reference: (input: Uint8Array, key: Uint8Array) => hmac(sha256, key, input),
     wasm: (input: Uint8Array, key: Uint8Array) =>
@@ -76,6 +100,13 @@ const primitives = {
 type Name = keyof typeof primitives
 
 describe('Hash', () => {
+  test.prop({ input: arbitraryInput }, { numRuns })(
+    'blake3 ≡ @noble/hashes',
+    ({ input }) => {
+      expect(engine.Hash.blake3(input)).toEqual(blake3(input))
+    },
+  )
+
   test.prop({ input: arbitraryInput }, { numRuns })(
     'keccak256 ≡ @noble/hashes',
     ({ input }) => {
@@ -115,6 +146,7 @@ describe('memory', () => {
           input: arbitraryInput,
           key: arbitraryKey,
           name: fc.constantFrom<Name>(
+            'blake3',
             'hmacSha256',
             'keccak256',
             'ripemd160',
@@ -171,6 +203,11 @@ describe('memory', () => {
       const snapshot = digest.slice()
       engine.Hash.keccak256(new Uint8Array(input.length + 1024).fill(0xaa))
       expect(digest).toEqual(snapshot)
+
+      const blake3Digest = engine.Hash.blake3(input)
+      const blake3Snapshot = blake3Digest.slice()
+      engine.Hash.blake3(new Uint8Array(input.length + 1024).fill(0xaa))
+      expect(blake3Digest).toEqual(blake3Snapshot)
     },
   )
 
@@ -178,6 +215,7 @@ describe('memory', () => {
     'inputs are not mutated',
     ({ input }) => {
       const snapshot = input.slice()
+      engine.Hash.blake3(input)
       engine.Hash.keccak256(input)
       engine.Hash.sha256(input)
       engine.Hash.ripemd160(input)

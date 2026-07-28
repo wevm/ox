@@ -1,6 +1,11 @@
 import * as CoreEngine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
+import * as Ed25519 from './Ed25519.js'
 import * as Hash from './Hash.js'
+import * as Keystore from './Keystore.js'
+import * as Mnemonic from './Mnemonic.js'
+import * as P256 from './P256.js'
+import * as X25519 from './X25519.js'
 
 /**
  * Creates and installs every Node.js implementation this entrypoint provides.
@@ -58,12 +63,31 @@ export declare namespace load {
  * @returns An engine, ready to install.
  */
 export async function create(): Promise<create.ReturnType> {
-  return { ...(await Hash.create()) }
+  return {
+    ...(await Ed25519.create()),
+    ...(await Hash.create()),
+    ...(await Keystore.create()),
+    ...(await Mnemonic.create()),
+    ...(await P256.create()),
+    ...(await X25519.create()),
+  }
 }
 
 export declare namespace create {
   /** Every slot this entrypoint supplies, each with its primitives present. */
-  type ReturnType = Hash.create.ReturnType
+  type ReturnType = Ed25519.create.ReturnType &
+    Hash.create.ReturnType &
+    Keystore.create.ReturnType &
+    Mnemonic.create.ReturnType &
+    P256.create.ReturnType &
+    X25519.create.ReturnType
 
-  type ErrorType = Hash.create.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | Ed25519.create.ErrorType
+    | Hash.create.ErrorType
+    | Keystore.create.ErrorType
+    | Mnemonic.create.ErrorType
+    | P256.create.ErrorType
+    | X25519.create.ErrorType
+    | Errors.GlobalErrorType
 }
