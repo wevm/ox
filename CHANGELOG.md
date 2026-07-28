@@ -1,5 +1,26 @@
 # ox
 
+## 1.1.1
+
+### Patch Changes
+
+- [#324](https://github.com/wevm/ox/pull/324) [`63545a2`](https://github.com/wevm/ox/commit/63545a2af498f899b4f163deb126256c763fa84e) Thanks [@jxom](https://github.com/jxom)! - Expanded Node and WASM engines, renamed provider factories to `engine`, and added atomic `Engine.install` for selecting and installing modules in parallel.
+
+  ```diff
+   import { Engine as CoreEngine } from 'ox'
+   import { Engine, Hash } from 'ox/wasm'
+
+  -await Engine.load()
+  +await Engine.install()
+  +Hash.sha256('0xdeadbeef')
+
+  -const wasm = await Engine.create()
+  +const wasm = await Engine.engine()
+
+  -CoreEngine.set(await Hash.create())
+  +await CoreEngine.install({ Hash: Hash.engine() })
+  ```
+
 ## 1.1.0
 
 ### Minor Changes
