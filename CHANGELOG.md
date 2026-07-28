@@ -1,5 +1,55 @@
 # ox
 
+## 1.1.0
+
+### Minor Changes
+
+- [#321](https://github.com/wevm/ox/pull/321) [`3e5c27b`](https://github.com/wevm/ox/commit/3e5c27b40284ec973d782d21afbceb4a4dee0f7d) Thanks [@jxom](https://github.com/jxom)! - Added `ox/node` for native SHA-256, RIPEMD-160, and HMAC-SHA256, and `ox/wasm` for those hashes plus WASM-backed Keccak256.
+
+  ```ts
+  import { Engine } from "ox/wasm";
+
+  await Engine.load();
+  ```
+
+- [#321](https://github.com/wevm/ox/pull/321) [`3e5c27b`](https://github.com/wevm/ox/commit/3e5c27b40284ec973d782d21afbceb4a4dee0f7d) Thanks [@jxom](https://github.com/jxom)! - Added `Engine`, which swaps ox's cryptography for another implementation across the `Bls`, `Ed25519`, `Hash`, `Keystore`, `Mnemonic`, `P256`, `Secp256k1` and `X25519` slots.
+
+### Patch Changes
+
+- [#319](https://github.com/wevm/ox/pull/319) [`96bd9ce`](https://github.com/wevm/ox/commit/96bd9ce0b4b09eca740e9eb728b30635b3e0e589) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toBytes` silently accepting characters above `U+00FF`, and sped up decoding of short values and encoding on runtimes without `Uint8Array.prototype.toHex`.
+
+  `Buffer.from(…, 'hex')` masks each UTF-16 code unit to 8 bits, so a character
+  above `U+00FF` could alias a hex digit rather than being rejected:
+
+  ```ts
+  Hex.toBytes("0x숰0");
+  // before: Uint8Array [0]  (U+C230 masked to the digit `0`)
+  // after:  throws Hex.InvalidHexValueError
+  ```
+
+- [#321](https://github.com/wevm/ox/pull/321) [`3e5c27b`](https://github.com/wevm/ox/commit/3e5c27b40284ec973d782d21afbceb4a4dee0f7d) Thanks [@jxom](https://github.com/jxom)! - Fixed `VirtualMaster.mineSaltAsync` accepting non-positive, non-finite, non-integer or larger-than-uint32 chunk sizes.
+
+- [#319](https://github.com/wevm/ox/pull/319) [`96bd9ce`](https://github.com/wevm/ox/commit/96bd9ce0b4b09eca740e9eb728b30635b3e0e589) Thanks [@jxom](https://github.com/jxom)! - Fixed `Base64.fromBytes` double-padding URL-safe output, and `Base64.toBytes` silently accepting characters above `U+00FF`.
+
+  `omitPadding` governs both alphabets, so padding was appended to an
+  already-padded `base64url` string on every runtime with
+  `Uint8Array.prototype.toBase64` — browsers and Bun, but not Node:
+
+  ```ts
+  Base64.fromBytes(Bytes.from([0xfa]), { url: true, pad: true });
+  // before: '-g===='
+  // after:  '-g=='
+  ```
+
+  Separately, the decoder's alphabet table only spans Latin-1, so a character
+  above it read as `undefined` and decoded as `A` rather than being refused:
+
+  ```ts
+  Base64.toBytes("숰GVsbG8=");
+  // before: Uint8Array of "\u0000ello"
+  // after:  throws Base64.InvalidCharacterError
+  ```
+
 ## 1.0.5
 
 ### Patch Changes
