@@ -6,20 +6,20 @@ import * as Engine from '../../core/Engine.js'
 import * as Keystore from '../../core/Keystore.js'
 import * as WasmKeystore from '../Keystore.js'
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: derives arbitrary-length keys in a real browser', async () => {
-    const engine = await WasmKeystore.create()
+    const engine = await WasmKeystore.engine()
     const password = Bytes.fromString('testpassword')
     const salt = new Uint8Array(52).fill(0xa5)
 
-    expect(
-      engine.Keystore.pbkdf2Sha256(password, salt, { c: 3, dkLen: 65 }),
-    ).toEqual(pbkdf2_noble(sha256, password, salt, { c: 3, dkLen: 65 }))
+    expect(engine.pbkdf2Sha256(password, salt, { c: 3, dkLen: 65 })).toEqual(
+      pbkdf2_noble(sha256, password, salt, { c: 3, dkLen: 65 }),
+    )
   })
 
   test('behavior: ox uses synchronous WASM PBKDF2 once installed', async () => {
-    const engine = await WasmKeystore.create()
-    Engine.set(engine)
+    const engine = await WasmKeystore.engine()
+    await Engine.install({ Keystore: engine })
     try {
       const salt = new Uint8Array(32).fill(7)
       const [key] = Keystore.pbkdf2({

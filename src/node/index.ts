@@ -10,10 +10,9 @@
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Hash } from 'ox'
- * import { Engine } from 'ox/node'
+ * import { Engine, Hash } from 'ox/node'
  *
- * await Engine.load()
+ * await Engine.install()
  *
  * Hash.sha256('0xdeadbeef')
  * ```
@@ -23,15 +22,15 @@
 export * as Engine from './Engine.js'
 
 /**
- * Node.js implementations of Ox's supported Ed25519 primitives.
+ * Ox's Ed25519 API and its supported Node.js engine primitives.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Ed25519, Engine } from 'ox'
- * import * as NodeEd25519 from 'ox/node/Ed25519'
+ * import { Engine } from 'ox'
+ * import { Ed25519 } from 'ox/node'
  *
- * Engine.set(await NodeEd25519.create())
+ * await Engine.install({ Ed25519: Ed25519.engine() })
  *
  * Ed25519.getPublicKey({ privateKey: '0x...' })
  * ```
@@ -41,15 +40,15 @@ export * as Engine from './Engine.js'
 export * as Ed25519 from './Ed25519.js'
 
 /**
- * Node.js implementations of Ox's supported hash primitives.
+ * Ox's hash API and its supported Node.js engine primitives.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Hash } from 'ox'
- * import * as NodeHash from 'ox/node/Hash'
+ * import { Engine } from 'ox'
+ * import { Hash } from 'ox/node'
  *
- * Engine.set(await NodeHash.create())
+ * await Engine.install({ Hash: Hash.engine() })
  *
  * Hash.sha256('0xdeadbeef')
  * ```
@@ -59,15 +58,15 @@ export * as Ed25519 from './Ed25519.js'
 export * as Hash from './Hash.js'
 
 /**
- * Node.js implementations of Ox's supported keystore primitives.
+ * Ox's keystore API and its supported Node.js engine primitives.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Keystore } from 'ox'
- * import * as NodeKeystore from 'ox/node/Keystore'
+ * import { Engine } from 'ox'
+ * import { Keystore } from 'ox/node'
  *
- * Engine.set(await NodeKeystore.create())
+ * await Engine.install({ Keystore: Keystore.engine() })
  *
  * Keystore.pbkdf2({ password: 'testpassword' })
  * ```
@@ -77,15 +76,15 @@ export * as Hash from './Hash.js'
 export * as Keystore from './Keystore.js'
 
 /**
- * Node.js implementation of Ox's BIP-39 seed derivation.
+ * Ox's mnemonic API and its Node.js BIP-39 seed engine primitive.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Mnemonic } from 'ox'
- * import * as NodeMnemonic from 'ox/node/Mnemonic'
+ * import { Engine } from 'ox'
+ * import { Mnemonic } from 'ox/node'
  *
- * Engine.set(await NodeMnemonic.create())
+ * await Engine.install({ Mnemonic: Mnemonic.engine() })
  *
  * Mnemonic.toSeed(
  *   'test test test test test test test test test test test junk'
@@ -97,15 +96,15 @@ export * as Keystore from './Keystore.js'
 export * as Mnemonic from './Mnemonic.js'
 
 /**
- * Node.js implementation of Ox's P256 public-key derivation.
+ * Ox's P256 API and its Node.js public-key derivation engine primitive.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, P256 } from 'ox'
- * import * as NodeP256 from 'ox/node/P256'
+ * import { Engine } from 'ox'
+ * import { P256 } from 'ox/node'
  *
- * Engine.set(await NodeP256.create())
+ * await Engine.install({ P256: P256.engine() })
  *
  * P256.getPublicKey({ privateKey: '0x...' })
  * ```
@@ -115,15 +114,15 @@ export * as Mnemonic from './Mnemonic.js'
 export * as P256 from './P256.js'
 
 /**
- * Node.js implementations of Ox's supported X25519 primitives.
+ * Ox's X25519 API and its supported Node.js engine primitives.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, X25519 } from 'ox'
- * import * as NodeX25519 from 'ox/node/X25519'
+ * import { Engine } from 'ox'
+ * import { X25519 } from 'ox/node'
  *
- * Engine.set(await NodeX25519.create())
+ * await Engine.install({ X25519: X25519.engine() })
  *
  * X25519.getPublicKey({ privateKey: '0x...' })
  * ```

@@ -2,11 +2,13 @@ import * as crypto from 'node:crypto'
 import type * as Engine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
 
+export * from '../core/Ed25519.js'
+
 const privateKeyPrefix = Buffer.from('302e020100300506032b657004220420', 'hex')
 
 /**
- * Creates Node.js implementations of the [`Ed25519`](/api/Ed25519)
- * primitives, without installing them.
+ * Creates a Node.js implementation of the [`Ed25519`](/api/Ed25519) engine
+ * slot, without installing it.
  *
  * Node's verifier does not implement Ox's ZIP-215 verification semantics, so
  * this engine deliberately omits `verify`. Public-key conversion and random
@@ -15,48 +17,44 @@ const privateKeyPrefix = Buffer.from('302e020100300506032b657004220420', 'hex')
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Ed25519, Engine } from 'ox'
- * import * as NodeEd25519 from 'ox/node/Ed25519'
+ * import { Engine } from 'ox'
+ * import { Ed25519 } from 'ox/node'
  *
- * Engine.set(await NodeEd25519.create())
+ * await Engine.install({ Ed25519: Ed25519.engine() })
  *
  * Ed25519.getPublicKey({ privateKey: '0x...' })
  * ```
  *
- * @returns An engine supplying part of the `Ed25519` slot.
+ * @returns The raw `Ed25519` engine slot.
  */
-export function create(): Promise<create.ReturnType> {
+export function engine(): Promise<engine.ReturnType> {
   return Promise.resolve({
-    Ed25519: {
-      getPublicKey: (privateKey) =>
-        rawPublicKey(crypto.createPublicKey(toPrivateKey(privateKey))),
-      sign: (payload, privateKey) =>
-        new Uint8Array(crypto.sign(null, payload, toPrivateKey(privateKey))),
-      toMontgomerySecret: (privateKey) => {
-        assertLength(privateKey)
-        const digest = crypto.hash('sha512', privateKey, 'buffer')
-        try {
-          const secretKey = Uint8Array.from(digest.subarray(0, 32))
-          secretKey[0]! &= 248
-          secretKey[31]! &= 127
-          secretKey[31]! |= 64
-          return secretKey
-        } finally {
-          digest.fill(0)
-        }
-      },
+    getPublicKey: (privateKey) =>
+      rawPublicKey(crypto.createPublicKey(toPrivateKey(privateKey))),
+    sign: (payload, privateKey) =>
+      new Uint8Array(crypto.sign(null, payload, toPrivateKey(privateKey))),
+    toMontgomerySecret: (privateKey) => {
+      assertLength(privateKey)
+      const digest = crypto.hash('sha512', privateKey, 'buffer')
+      try {
+        const secretKey = Uint8Array.from(digest.subarray(0, 32))
+        secretKey[0]! &= 248
+        secretKey[31]! &= 127
+        secretKey[31]! |= 64
+        return secretKey
+      } finally {
+        digest.fill(0)
+      }
     },
   })
 }
 
-export declare namespace create {
-  /** The `Ed25519` slot, carrying every primitive this module implements. */
+export declare namespace engine {
+  /** Every `Ed25519` primitive this module implements. */
   type ReturnType = {
-    Ed25519: {
-      [key in 'getPublicKey' | 'sign' | 'toMontgomerySecret']-?: NonNullable<
-        Engine.Eddsa[key]
-      >
-    }
+    [key in 'getPublicKey' | 'sign' | 'toMontgomerySecret']-?: NonNullable<
+      Engine.Eddsa[key]
+    >
   }
 
   type ErrorType = Errors.GlobalErrorType

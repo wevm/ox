@@ -10,25 +10,19 @@ import { wasmBase64 } from '../internal/hashes.wasm.js'
 import * as internal from '../internal/instantiate.js'
 import * as pbkdf2 from '../internal/pbkdf2.js'
 
-let engine: WasmKeystore.create.ReturnType
+let engine: WasmKeystore.engine.ReturnType
 
 beforeAll(async () => {
-  engine = await WasmKeystore.create()
+  engine = await WasmKeystore.engine()
 })
 
 function input(size: number) {
   return new Uint8Array(size).map((_, index) => (index * 37 + 11) & 0xff)
 }
 
-describe('create', () => {
+describe('engine', () => {
   test('default', async () => {
-    expect(Object.keys(await WasmKeystore.create())).toMatchInlineSnapshot(`
-      [
-        "Keystore",
-      ]
-    `)
-    expect(Object.keys((await WasmKeystore.create()).Keystore))
-      .toMatchInlineSnapshot(`
+    expect(Object.keys(await WasmKeystore.engine())).toMatchInlineSnapshot(`
       [
         "pbkdf2Sha256",
       ]
@@ -42,17 +36,16 @@ describe('create', () => {
 
   test('behavior: hands every caller its own engine', async () => {
     const [a, b] = await Promise.all([
-      WasmKeystore.create(),
-      WasmKeystore.create(),
+      WasmKeystore.engine(),
+      WasmKeystore.engine(),
     ])
     expect(a).not.toBe(b)
-    expect(a.Keystore).not.toBe(b.Keystore)
 
-    a.Keystore.pbkdf2Sha256 = () => new Uint8Array([9])
-    const c = await WasmKeystore.create()
-    expect(
-      c.Keystore.pbkdf2Sha256(input(8), input(16), { c: 2, dkLen: 33 }),
-    ).toEqual(b.Keystore.pbkdf2Sha256(input(8), input(16), { c: 2, dkLen: 33 }))
+    a.pbkdf2Sha256 = () => new Uint8Array([9])
+    const c = await WasmKeystore.engine()
+    expect(c.pbkdf2Sha256(input(8), input(16), { c: 2, dkLen: 33 })).toEqual(
+      b.pbkdf2Sha256(input(8), input(16), { c: 2, dkLen: 33 }),
+    )
   })
 })
 
@@ -71,9 +64,9 @@ describe('pbkdf2Sha256', () => {
     ({ c, dkLen, password: passwordLength, salt: saltLength }) => {
       const password = input(passwordLength)
       const salt = input(saltLength)
-      expect(
-        engine.Keystore.pbkdf2Sha256(password, salt, { c, dkLen }),
-      ).toEqual(pbkdf2_noble(sha256, password, salt, { c, dkLen }))
+      expect(engine.pbkdf2Sha256(password, salt, { c, dkLen })).toEqual(
+        pbkdf2_noble(sha256, password, salt, { c, dkLen }),
+      )
     },
   )
 
@@ -87,9 +80,9 @@ describe('pbkdf2Sha256', () => {
     const passwordSnapshot = passwordBacking.slice()
     const saltSnapshot = saltBacking.slice()
 
-    expect(
-      engine.Keystore.pbkdf2Sha256(password, salt, { c: 3, dkLen: 65 }),
-    ).toEqual(pbkdf2_noble(sha256, password, salt, { c: 3, dkLen: 65 }))
+    expect(engine.pbkdf2Sha256(password, salt, { c: 3, dkLen: 65 })).toEqual(
+      pbkdf2_noble(sha256, password, salt, { c: 3, dkLen: 65 }),
+    )
     expect(passwordBacking).toEqual(passwordSnapshot)
     expect(saltBacking).toEqual(saltSnapshot)
   })
@@ -97,12 +90,12 @@ describe('pbkdf2Sha256', () => {
   test('behavior: results are fresh and never alias WASM memory', () => {
     const password = input(65)
     const salt = input(52)
-    const first = engine.Keystore.pbkdf2Sha256(password, salt, {
+    const first = engine.pbkdf2Sha256(password, salt, {
       c: 2,
       dkLen: 65,
     })
     const snapshot = first.slice()
-    const second = engine.Keystore.pbkdf2Sha256(input(5), input(9), {
+    const second = engine.pbkdf2Sha256(input(5), input(9), {
       c: 3,
       dkLen: 97,
     })
@@ -170,15 +163,13 @@ describe('pbkdf2Sha256', () => {
     { name: 'dkLen', options: { c: 1, dkLen: 1.5 } },
     { name: 'dkLen', options: { c: 1, dkLen: 0x1_0000_0000 } },
   ])('behavior: rejects invalid $name before entering WASM', ({ options }) => {
-    expect(() =>
-      engine.Keystore.pbkdf2Sha256(input(8), input(16), options),
-    ).toThrow()
+    expect(() => engine.pbkdf2Sha256(input(8), input(16), options)).toThrow()
   })
 })
 
-describe('Engine.set', () => {
-  test('behavior: ox uses synchronous WASM PBKDF2 once installed', () => {
-    Engine.set(engine)
+describe('Engine.install', () => {
+  test('behavior: ox uses synchronous WASM PBKDF2 once installed', async () => {
+    await Engine.install({ Keystore: engine })
     try {
       const salt = input(32)
       const [key] = Keystore.pbkdf2({

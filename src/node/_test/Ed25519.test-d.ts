@@ -1,27 +1,35 @@
-import type { Engine } from 'ox'
 import { expectTypeOf, test } from 'vp/test'
+import type * as Engine from '../../core/Engine.js'
+import * as core_Ed25519 from '../../core/Ed25519.js'
 import * as NodeEd25519 from '../Ed25519.js'
 
-type Created = Awaited<ReturnType<typeof NodeEd25519.create>>
+type Slot = Awaited<ReturnType<typeof NodeEd25519.engine>>
 
 test('every implemented primitive is present', () => {
-  expectTypeOf<Created['Ed25519']['getPublicKey']>().toEqualTypeOf<
+  expectTypeOf<Slot['getPublicKey']>().toEqualTypeOf<
     (privateKey: Uint8Array) => Uint8Array
   >()
-  expectTypeOf<Created['Ed25519']['sign']>().toEqualTypeOf<
+  expectTypeOf<Slot['sign']>().toEqualTypeOf<
     (payload: Uint8Array, privateKey: Uint8Array) => Uint8Array
   >()
-  expectTypeOf<Created['Ed25519']['toMontgomerySecret']>().toEqualTypeOf<
+  expectTypeOf<Slot['toMontgomerySecret']>().toEqualTypeOf<
     (privateKey: Uint8Array) => Uint8Array
   >()
 })
 
 test('unsupported primitives are absent', () => {
-  expectTypeOf<Created['Ed25519']>().not.toHaveProperty('randomSecretKey')
-  expectTypeOf<Created['Ed25519']>().not.toHaveProperty('toMontgomery')
-  expectTypeOf<Created['Ed25519']>().not.toHaveProperty('verify')
+  expectTypeOf<Slot>().not.toHaveProperty('randomSecretKey')
+  expectTypeOf<Slot>().not.toHaveProperty('toMontgomery')
+  expectTypeOf<Slot>().not.toHaveProperty('verify')
 })
 
-test('the result is still an engine', () => {
-  expectTypeOf<Created>().toExtend<Engine.Engine>()
+test('the result is the raw slot', () => {
+  expectTypeOf<{ Ed25519: Slot }>().toExtend<Engine.Engine>()
+})
+
+test('the Node namespace exposes the public Ed25519 API', () => {
+  expectTypeOf(NodeEd25519.getPublicKey).toEqualTypeOf(
+    core_Ed25519.getPublicKey,
+  )
+  expectTypeOf<typeof NodeEd25519>().not.toHaveProperty('create')
 })

@@ -263,21 +263,21 @@ export type Bls = {
  * @internal
  */
 export type Engine = {
-  /** Implementation for {@link ox#Bls}. */
+  /** Implementation for [`Bls`](/api/Bls). */
   Bls?: Bls | undefined
-  /** Implementation for {@link ox#Ed25519}. */
+  /** Implementation for [`Ed25519`](/api/Ed25519). */
   Ed25519?: Eddsa | undefined
-  /** Implementation for {@link ox#Hash}. */
+  /** Implementation for [`Hash`](/api/Hash). */
   Hash?: Hash | undefined
-  /** Implementation for {@link ox#Keystore}. */
+  /** Implementation for [`Keystore`](/api/Keystore). */
   Keystore?: Keystore | undefined
-  /** Implementation for {@link ox#Mnemonic}. */
+  /** Implementation for [`Mnemonic`](/api/Mnemonic). */
   Mnemonic?: Mnemonic | undefined
-  /** Implementation for {@link ox#P256}. */
+  /** Implementation for [`P256`](/api/P256). */
   P256?: Ecdsa | undefined
-  /** Implementation for {@link ox#Secp256k1}. */
+  /** Implementation for [`Secp256k1`](/api/Secp256k1). */
   Secp256k1?: Ecdsa | undefined
-  /** Implementation for {@link ox#X25519}. */
+  /** Implementation for [`X25519`](/api/X25519). */
   X25519?: Ecdh | undefined
 }
 

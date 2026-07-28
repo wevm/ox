@@ -8,7 +8,7 @@ import * as X25519 from '../X25519.js'
 
 describe('crypto25519 WASM', () => {
   test('behavior: Ed25519 works in this runtime', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const privateKey = fromHex(
       '9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60',
     )
@@ -22,7 +22,7 @@ describe('crypto25519 WASM', () => {
   })
 
   test('behavior: X25519 works in this runtime', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = fromHex(
       '77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a',
     )
@@ -40,7 +40,7 @@ describe('crypto25519 WASM', () => {
   })
 
   test('behavior: Unicode BIP-39 works in this runtime', async () => {
-    const engine = (await Mnemonic.create()).Mnemonic
+    const engine = await Mnemonic.engine()
     const vector = vectors.japanese
 
     expect(engine.toSeed(vector.mnemonic, vector.passphrase)).toEqual(

@@ -2,52 +2,48 @@ import * as crypto from 'node:crypto'
 import type * as Engine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
 
+export * from '../core/X25519.js'
+
 const privateKeyPrefix = Buffer.from('302e020100300506032b656e04220420', 'hex')
 const publicKeyPrefix = Buffer.from('302a300506032b656e032100', 'hex')
 
 /**
- * Creates Node.js implementations of the [`X25519`](/api/X25519) primitives,
- * without installing them.
+ * Creates a Node.js implementation of the [`X25519`](/api/X25519) engine slot,
+ * without installing it.
  *
  * Random key generation remains on Ox's default implementation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, X25519 } from 'ox'
- * import * as NodeX25519 from 'ox/node/X25519'
+ * import { Engine } from 'ox'
+ * import { X25519 } from 'ox/node'
  *
- * Engine.set(await NodeX25519.create())
+ * await Engine.install({ X25519: X25519.engine() })
  *
  * X25519.getPublicKey({ privateKey: '0x...' })
  * ```
  *
- * @returns An engine supplying part of the `X25519` slot.
+ * @returns The raw `X25519` engine slot.
  */
-export function create(): Promise<create.ReturnType> {
+export function engine(): Promise<engine.ReturnType> {
   return Promise.resolve({
-    X25519: {
-      getPublicKey: (privateKey) =>
-        rawPublicKey(crypto.createPublicKey(toPrivateKey(privateKey))),
-      getSharedSecret: (privateKey, publicKey) =>
-        copyAndClear(
-          crypto.diffieHellman({
-            privateKey: toPrivateKey(privateKey),
-            publicKey: toPublicKey(publicKey),
-          }),
-        ),
-    },
+    getPublicKey: (privateKey) =>
+      rawPublicKey(crypto.createPublicKey(toPrivateKey(privateKey))),
+    getSharedSecret: (privateKey, publicKey) =>
+      copyAndClear(
+        crypto.diffieHellman({
+          privateKey: toPrivateKey(privateKey),
+          publicKey: toPublicKey(publicKey),
+        }),
+      ),
   })
 }
 
-export declare namespace create {
-  /** The `X25519` slot, carrying every primitive this module implements. */
+export declare namespace engine {
+  /** Every `X25519` primitive this module implements. */
   type ReturnType = {
-    X25519: {
-      [key in 'getPublicKey' | 'getSharedSecret']-?: NonNullable<
-        Engine.Ecdh[key]
-      >
-    }
+    [key in 'getPublicKey' | 'getSharedSecret']-?: NonNullable<Engine.Ecdh[key]>
   }
 
   type ErrorType = Errors.GlobalErrorType

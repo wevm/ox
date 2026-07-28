@@ -20,7 +20,7 @@ describe('Ed25519', () => {
   test.prop({ payload: arbitraryBytes, privateKey: arbitraryKey }, { numRuns })(
     'matches the default for arbitrary offset views',
     async (options) => {
-      const engine = (await Ed25519.create()).Ed25519
+      const engine = await Ed25519.engine()
       const payload = offsetView(options.payload)
       const privateKey = offsetView(options.privateKey)
 
@@ -42,7 +42,7 @@ describe('X25519', () => {
     { privateKey: arbitraryKey, publicKeySeed: arbitraryKey },
     { numRuns },
   )('matches the default for arbitrary offset views', async (options) => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = offsetView(options.privateKey)
     const publicKey = offsetView(x25519.getPublicKey(options.publicKeySeed))
 
@@ -59,7 +59,7 @@ describe('P256', () => {
   test.prop({ privateKey: arbitraryP256PrivateKey }, { numRuns })(
     'matches the default for arbitrary offset views',
     async (options) => {
-      const engine = (await P256.create()).P256
+      const engine = await P256.engine()
       const privateKey = offsetView(options.privateKey)
 
       expect(engine.getPublicKey(privateKey)).toEqual(

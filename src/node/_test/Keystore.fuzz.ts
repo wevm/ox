@@ -28,7 +28,7 @@ test.prop(
   },
   { numRuns },
 )('Node AES-CTR agrees with the default', async ({ data, iv, key }) => {
-  const { aesCtrDecrypt, aesCtrEncrypt } = (await Keystore.create()).Keystore
+  const { aesCtrDecrypt, aesCtrEncrypt } = await Keystore.engine()
   const expected = ctr(key, iv).encrypt(data)
   const encrypted = aesCtrEncrypt(key, iv, data)
 
@@ -47,8 +47,7 @@ test.prop(
 )(
   'Node PBKDF2-HMAC-SHA256 agrees with the default',
   async ({ c, dkLen, password, salt }) => {
-    const { pbkdf2Sha256, pbkdf2Sha256Async } = (await Keystore.create())
-      .Keystore
+    const { pbkdf2Sha256, pbkdf2Sha256Async } = await Keystore.engine()
     const expected = pbkdf2(sha256, password, salt, { c, dkLen })
 
     expect(pbkdf2Sha256(password, salt, { c, dkLen })).toEqual(expected)

@@ -5,11 +5,11 @@ import * as P256 from '../P256.js'
 
 const order = 'ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: exposes only public-key derivation', async () => {
-    const engine = await P256.create()
+    const engine = await P256.engine()
 
-    expect(Object.keys(engine.P256)).toMatchInlineSnapshot(`
+    expect(Object.keys(engine)).toMatchInlineSnapshot(`
       [
         "getPublicKey",
       ]
@@ -17,7 +17,7 @@ describe('create', () => {
   })
 
   test('behavior: matches the SEC 2 generator vector', async () => {
-    const engine = (await P256.create()).P256
+    const engine = await P256.engine()
     const privateKey = new Uint8Array(32)
     privateKey[31] = 1
 
@@ -29,7 +29,7 @@ describe('create', () => {
   })
 
   test('behavior: matches the default across valid scalars', async () => {
-    const engine = (await P256.create()).P256
+    const engine = await P256.engine()
     const privateKeys = [
       `${'00'.repeat(31)}01`,
       `${'00'.repeat(31)}02`,
@@ -47,7 +47,7 @@ describe('create', () => {
   })
 
   test('behavior: respects typed-array offsets without mutating inputs', async () => {
-    const engine = (await P256.create()).P256
+    const engine = await P256.engine()
     const privateKey = offsetView(
       fromHex(
         'dde57ae9b9ed6f76fa5358c24d5ca2057ebc1ece18b7273121450a29c96ec8e5',
@@ -62,7 +62,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects malformed and out-of-range private keys', async () => {
-    const engine = (await P256.create()).P256
+    const engine = await P256.engine()
 
     for (const size of [0, 1, 31, 33, 64])
       expect(() => engine.getPublicKey(new Uint8Array(size))).toThrowError(
@@ -74,7 +74,7 @@ describe('create', () => {
   })
 
   test('behavior: returns owned Uint8Array values', async () => {
-    const engine = (await P256.create()).P256
+    const engine = await P256.engine()
     const privateKey = fromHex(`${'00'.repeat(31)}01`)
     const first = engine.getPublicKey(privateKey)
     const second = engine.getPublicKey(privateKey)
@@ -84,11 +84,10 @@ describe('create', () => {
   })
 
   test('behavior: returns a fresh engine', async () => {
-    const first = await P256.create()
-    const second = await P256.create()
+    const first = await P256.engine()
+    const second = await P256.engine()
 
     expect(first === second).toMatchInlineSnapshot('false')
-    expect(first.P256 === second.P256).toMatchInlineSnapshot('false')
   })
 })
 

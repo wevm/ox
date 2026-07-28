@@ -12,20 +12,15 @@ import { hmacSha256ScratchSize, wasmBase64 } from '../internal/hashes.wasm.js'
 import * as hash from '../internal/hash.js'
 import * as internal from '../internal/instantiate.js'
 
-let engine: WasmHash.create.ReturnType
+let engine: WasmHash.engine.ReturnType
 
 beforeAll(async () => {
-  engine = await WasmHash.create()
+  engine = await WasmHash.engine()
 })
 
-describe('create', () => {
+describe('engine', () => {
   test('default', async () => {
-    expect(Object.keys(await WasmHash.create())).toMatchInlineSnapshot(`
-      [
-        "Hash",
-      ]
-    `)
-    expect(Object.keys((await WasmHash.create()).Hash)).toMatchInlineSnapshot(`
+    expect(Object.keys(await WasmHash.engine())).toMatchInlineSnapshot(`
       [
         "blake3",
         "hmacSha256",
@@ -37,18 +32,16 @@ describe('create', () => {
   })
 
   test('behavior: hands every caller its own engine', async () => {
-    const [a, b] = await Promise.all([WasmHash.create(), WasmHash.create()])
+    const [a, b] = await Promise.all([WasmHash.engine(), WasmHash.engine()])
 
-    // Deliberately not the same object. A shared slot lets one caller's
-    // customisation for composition leak into what a later `create` -- or
-    // `Engine.load` -- installs.
+    // Deliberately not the same object. Sharing the slot object would let one
+    // caller's customisation leak into a later `engine` or `Engine.install`.
     expect(a).not.toBe(b)
-    expect(a.Hash).not.toBe(b.Hash)
 
-    a.Hash.keccak256 = () => new Uint8Array(32).fill(9)
-    const c = await WasmHash.create()
-    expect(c.Hash.keccak256(Bytes.from('0xdeadbeef'))).toEqual(
-      b.Hash.keccak256(Bytes.from('0xdeadbeef')),
+    a.keccak256 = () => new Uint8Array(32).fill(9)
+    const c = await WasmHash.engine()
+    expect(c.keccak256(Bytes.from('0xdeadbeef'))).toEqual(
+      b.keccak256(Bytes.from('0xdeadbeef')),
     )
   })
 })
@@ -67,19 +60,19 @@ function input(size: number) {
 
 describe('Hash', () => {
   test.each(sizes)('blake3 matches the default at %i bytes', (size) => {
-    expect(engine.Hash.blake3(input(size))).toEqual(blake3(input(size)))
+    expect(engine.blake3(input(size))).toEqual(blake3(input(size)))
   })
 
   test.each(sizes)('keccak256 matches the default at %i bytes', (size) => {
-    expect(engine.Hash.keccak256(input(size))).toEqual(keccak_256(input(size)))
+    expect(engine.keccak256(input(size))).toEqual(keccak_256(input(size)))
   })
 
   test.each(sizes)('sha256 matches the default at %i bytes', (size) => {
-    expect(engine.Hash.sha256(input(size))).toEqual(sha256(input(size)))
+    expect(engine.sha256(input(size))).toEqual(sha256(input(size)))
   })
 
   test.each(sizes)('ripemd160 matches the default at %i bytes', (size) => {
-    expect(engine.Hash.ripemd160(input(size))).toEqual(ripemd160(input(size)))
+    expect(engine.ripemd160(input(size))).toEqual(ripemd160(input(size)))
   })
 
   test.each([0, 1, 32, 63, 64, 65, 200])(
@@ -87,23 +80,23 @@ describe('Hash', () => {
     (size) => {
       const key = new Uint8Array(size).fill(0xa5)
       const message = input(100)
-      expect(engine.Hash.hmacSha256(key, message)).toEqual(
+      expect(engine.hmacSha256(key, message)).toEqual(
         hmac(sha256, key, message),
       )
     },
   )
 
   test('behavior: known vectors', () => {
-    expect(Bytes.toHex(engine.Hash.blake3(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.blake3(new Uint8Array(0)))).toBe(
       '0xaf1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262',
     )
-    expect(Bytes.toHex(engine.Hash.keccak256(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.keccak256(new Uint8Array(0)))).toBe(
       '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
     )
-    expect(Bytes.toHex(engine.Hash.sha256(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.sha256(new Uint8Array(0)))).toBe(
       '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     )
-    expect(Bytes.toHex(engine.Hash.ripemd160(new Uint8Array(0)))).toBe(
+    expect(Bytes.toHex(engine.ripemd160(new Uint8Array(0)))).toBe(
       '0x9c1185a5c5e9fc54612808977ee8f548b2258d31',
     )
   })
@@ -113,19 +106,19 @@ describe('Hash', () => {
     // memory past that boundary. Growing detaches the previous `ArrayBuffer`; a
     // retained view would silently read zero bytes in the assertion below.
     const large = new Uint8Array(64 * 1024 * 1024).fill(7)
-    expect(engine.Hash.sha256(large)).toEqual(sha256(large))
-    expect(engine.Hash.blake3(large)).toEqual(blake3(large))
+    expect(engine.sha256(large)).toEqual(sha256(large))
+    expect(engine.blake3(large)).toEqual(blake3(large))
 
     const small = input(32)
-    expect(engine.Hash.sha256(small)).toEqual(sha256(small))
-    expect(engine.Hash.blake3(small)).toEqual(blake3(small))
+    expect(engine.sha256(small)).toEqual(sha256(small))
+    expect(engine.blake3(small)).toEqual(blake3(small))
   })
 
   test('behavior: accepts Uint8Array subviews without mutation', () => {
     const backing = input(1027)
     const subview = backing.subarray(1, 1026)
     const snapshot = backing.slice()
-    expect(engine.Hash.blake3(subview)).toEqual(blake3(subview))
+    expect(engine.blake3(subview)).toEqual(blake3(subview))
     expect(backing).toEqual(snapshot)
   })
 
@@ -274,41 +267,45 @@ describe('Hash', () => {
   test('behavior: consecutive calls do not corrupt each other', () => {
     const a = input(200)
     const b = input(7)
-    expect(engine.Hash.keccak256(a)).toEqual(keccak_256(a))
-    expect(engine.Hash.blake3(a)).toEqual(blake3(a))
-    expect(engine.Hash.blake3(b)).toEqual(blake3(b))
-    expect(engine.Hash.blake3(a)).toEqual(blake3(a))
-    expect(engine.Hash.keccak256(b)).toEqual(keccak_256(b))
-    expect(engine.Hash.keccak256(a)).toEqual(keccak_256(a))
+    expect(engine.keccak256(a)).toEqual(keccak_256(a))
+    expect(engine.blake3(a)).toEqual(blake3(a))
+    expect(engine.blake3(b)).toEqual(blake3(b))
+    expect(engine.blake3(a)).toEqual(blake3(a))
+    expect(engine.keccak256(b)).toEqual(keccak_256(b))
+    expect(engine.keccak256(a)).toEqual(keccak_256(a))
   })
 
   test('behavior: results do not alias WASM memory', () => {
-    const first = engine.Hash.keccak256(input(32))
+    const first = engine.keccak256(input(32))
     const snapshot = first.slice()
-    engine.Hash.keccak256(input(64))
+    engine.keccak256(input(64))
     expect(first).toEqual(snapshot)
 
-    const blake3First = engine.Hash.blake3(input(32))
+    const blake3First = engine.blake3(input(32))
     const blake3Snapshot = blake3First.slice()
-    engine.Hash.blake3(input(64))
+    engine.blake3(input(64))
     expect(blake3First).toEqual(blake3Snapshot)
   })
 })
 
-describe('Engine.set', () => {
-  test('behavior: ox uses the WASM implementation once installed', () => {
-    Engine.set(engine)
-    expect(Engine.get().Hash?.blake3?.(Bytes.from('0xdeadbeef'))).toEqual(
-      blake3(Bytes.from('0xdeadbeef')),
-    )
-    expect(Hash.keccak256('0xdeadbeef')).toBe(
-      '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',
-    )
-    expect(Hash.sha256('0xdeadbeef')).toBe(
-      '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953',
-    )
-    expect(Hash.ripemd160('0xdeadbeef')).toBe(
-      '0x226821c2f5423e11fe9af68bd285c249db2e4b5a',
-    )
+describe('Engine.install', () => {
+  test('behavior: ox uses the WASM implementation once installed', async () => {
+    await Engine.install({ Hash: engine })
+    try {
+      expect(Engine.get().Hash?.blake3?.(Bytes.from('0xdeadbeef'))).toEqual(
+        blake3(Bytes.from('0xdeadbeef')),
+      )
+      expect(Hash.keccak256('0xdeadbeef')).toBe(
+        '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',
+      )
+      expect(Hash.sha256('0xdeadbeef')).toBe(
+        '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953',
+      )
+      expect(Hash.ripemd160('0xdeadbeef')).toBe(
+        '0x226821c2f5423e11fe9af68bd285c249db2e4b5a',
+      )
+    } finally {
+      Engine.reset()
+    }
   })
 })

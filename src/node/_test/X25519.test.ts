@@ -21,11 +21,11 @@ const lowOrderPublicKeys = JSON.parse(
   ),
 ) as readonly LowOrderVector[]
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: exposes only the supported primitives', async () => {
-    const engine = await X25519.create()
+    const engine = await X25519.engine()
 
-    expect(Object.keys(engine.X25519).sort()).toMatchInlineSnapshot(`
+    expect(Object.keys(engine).sort()).toMatchInlineSnapshot(`
       [
         "getPublicKey",
         "getSharedSecret",
@@ -34,7 +34,7 @@ describe('create', () => {
   })
 
   test('behavior: matches RFC 7748 key-agreement vectors', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const alicePublicKey = engine.getPublicKey(fromHex(alicePrivateKey))
     const bobPublicKey = engine.getPublicKey(fromHex(bobPrivateKey))
 
@@ -54,7 +54,7 @@ describe('create', () => {
   })
 
   test('behavior: matches RFC 7748 arbitrary-point vectors', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const vectors = [
       {
         privateKey:
@@ -85,7 +85,7 @@ describe('create', () => {
   })
 
   test('behavior: matches the default across private keys', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKeys = [
       fromHex(alicePrivateKey),
       fromHex(bobPrivateKey),
@@ -110,7 +110,7 @@ describe('create', () => {
   })
 
   test('behavior: masks the public u-coordinate high bit', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = fromHex(alicePrivateKey)
     const publicKey = x25519.getPublicKey(fromHex(bobPrivateKey))
     const highBitPublicKey = publicKey.slice()
@@ -126,7 +126,7 @@ describe('create', () => {
   })
 
   test('behavior: reduces noncanonical public u-coordinates', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = fromHex(alicePrivateKey)
     // 2^255 - 19 + 9 encodes the base point modulo the field prime.
     const publicKey = fromHex(`f6${'ff'.repeat(30)}7f`)
@@ -137,7 +137,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects the complete published low-order set', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = fromHex(alicePrivateKey)
 
     expect(lowOrderPublicKeys).toHaveLength(7)
@@ -163,7 +163,7 @@ describe('create', () => {
   })
 
   test('behavior: respects typed-array offsets without mutating inputs', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = offsetView(fromHex(alicePrivateKey))
     const publicKey = offsetView(x25519.getPublicKey(fromHex(bobPrivateKey)))
     const privateKeyBefore = privateKey.slice()
@@ -182,7 +182,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects malformed key lengths', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = fromHex(alicePrivateKey)
     const publicKey = x25519.getPublicKey(fromHex(bobPrivateKey))
 
@@ -200,7 +200,7 @@ describe('create', () => {
   })
 
   test('behavior: returns owned Uint8Array values', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = fromHex(alicePrivateKey)
     const publicKey = x25519.getPublicKey(fromHex(bobPrivateKey))
     const outputs = [
@@ -221,11 +221,10 @@ describe('create', () => {
   })
 
   test('behavior: returns a fresh engine', async () => {
-    const first = await X25519.create()
-    const second = await X25519.create()
+    const first = await X25519.engine()
+    const second = await X25519.engine()
 
     expect(first === second).toMatchInlineSnapshot('false')
-    expect(first.X25519 === second.X25519).toMatchInlineSnapshot('false')
   })
 })
 

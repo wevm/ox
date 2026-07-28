@@ -1,24 +1,25 @@
 import type { Engine } from 'ox'
 import { expectTypeOf, test } from 'vp/test'
-import * as Keystore from '../Keystore.js'
+import * as core_Keystore from '../../core/Keystore.js'
+import * as NodeKeystore from '../Keystore.js'
 
-type Created = Awaited<ReturnType<typeof Keystore.create>>
+type Slot = Awaited<ReturnType<typeof NodeKeystore.engine>>
 
 test('every implemented primitive is present', () => {
-  expectTypeOf<Created['Keystore']['aesCtrDecrypt']>().toEqualTypeOf<
+  expectTypeOf<Slot['aesCtrDecrypt']>().toEqualTypeOf<
     (key: Uint8Array, iv: Uint8Array, data: Uint8Array) => Uint8Array
   >()
-  expectTypeOf<Created['Keystore']['aesCtrEncrypt']>().toEqualTypeOf<
+  expectTypeOf<Slot['aesCtrEncrypt']>().toEqualTypeOf<
     (key: Uint8Array, iv: Uint8Array, data: Uint8Array) => Uint8Array
   >()
-  expectTypeOf<Created['Keystore']['pbkdf2Sha256']>().toEqualTypeOf<
+  expectTypeOf<Slot['pbkdf2Sha256']>().toEqualTypeOf<
     (
       password: Uint8Array,
       salt: Uint8Array,
       options: { c: number; dkLen: number },
     ) => Uint8Array
   >()
-  expectTypeOf<Created['Keystore']['pbkdf2Sha256Async']>().toEqualTypeOf<
+  expectTypeOf<Slot['pbkdf2Sha256Async']>().toEqualTypeOf<
     (
       password: Uint8Array,
       salt: Uint8Array,
@@ -28,10 +29,15 @@ test('every implemented primitive is present', () => {
 })
 
 test('unsupported primitives are absent', () => {
-  expectTypeOf<Created['Keystore']>().not.toHaveProperty('scrypt')
-  expectTypeOf<Created['Keystore']>().not.toHaveProperty('scryptAsync')
+  expectTypeOf<Slot>().not.toHaveProperty('scrypt')
+  expectTypeOf<Slot>().not.toHaveProperty('scryptAsync')
 })
 
-test('the result is still an engine', () => {
-  expectTypeOf<Created>().toExtend<Engine.Engine>()
+test('the result is the raw slot', () => {
+  expectTypeOf<{ Keystore: Slot }>().toExtend<Engine.Engine>()
+})
+
+test('the Node namespace exposes the public Keystore API', () => {
+  expectTypeOf(NodeKeystore.pbkdf2).toEqualTypeOf(core_Keystore.pbkdf2)
+  expectTypeOf<typeof NodeKeystore>().not.toHaveProperty('create')
 })

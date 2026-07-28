@@ -6,9 +6,9 @@ import { describe, expect, test } from 'vp/test'
 import * as vectors from '../../../test/vectors/pbkdf2/index.js'
 import * as Keystore from '../Keystore.js'
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: matches NIST SP 800-38A AES-CTR vectors', async () => {
-    const { aesCtrDecrypt, aesCtrEncrypt } = (await Keystore.create()).Keystore
+    const { aesCtrDecrypt, aesCtrEncrypt } = await Keystore.engine()
     const iv = Hex.toBytes('0xf0f1f2f3f4f5f6f7f8f9fafbfcfdfeff')
     const plaintext = Hex.toBytes('0x6bc1bee22e409f96e93d7e117393172a')
     const vectors = [
@@ -58,7 +58,7 @@ describe('create', () => {
   })
 
   test('behavior: matches RFC 7914 PBKDF2-HMAC-SHA256 vectors', async () => {
-    const { pbkdf2Sha256 } = (await Keystore.create()).Keystore
+    const { pbkdf2Sha256 } = await Keystore.engine()
 
     for (const { iterations, key, password, salt } of vectors.vectors)
       expect(
@@ -70,7 +70,7 @@ describe('create', () => {
   })
 
   test('behavior: agrees with the defaults across boundary sizes', async () => {
-    const node = (await Keystore.create()).Keystore
+    const node = await Keystore.engine()
     const iv = Uint8Array.from(
       { length: 20 },
       (_, index) => (index * 13) % 251,
@@ -119,7 +119,7 @@ describe('create', () => {
   })
 
   test('behavior: does not mutate inputs and returns owned arrays', async () => {
-    const node = (await Keystore.create()).Keystore
+    const node = await Keystore.engine()
     const data = Uint8Array.of(1, 2, 3, 4, 5)
     const iv = new Uint8Array(16).fill(2)
     const key = new Uint8Array(16).fill(3)
@@ -151,7 +151,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects malformed AES and PBKDF2 parameters', async () => {
-    const node = (await Keystore.create()).Keystore
+    const node = await Keystore.engine()
     const data = new Uint8Array()
     const iv = new Uint8Array(16)
     const key = new Uint8Array(16)
@@ -190,10 +190,9 @@ describe('create', () => {
   })
 
   test('behavior: returns a fresh engine', async () => {
-    const first = await Keystore.create()
-    const second = await Keystore.create()
+    const first = await Keystore.engine()
+    const second = await Keystore.engine()
 
     expect(first === second).toMatchInlineSnapshot('false')
-    expect(first.Keystore === second.Keystore).toMatchInlineSnapshot('false')
   })
 })

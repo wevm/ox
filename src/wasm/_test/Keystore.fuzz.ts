@@ -6,13 +6,13 @@ import { numRuns } from '../../../test/fuzz/numRuns.js'
 import * as WasmHash from '../Hash.js'
 import * as WasmKeystore from '../Keystore.js'
 
-let hash: WasmHash.create.ReturnType
-let keystore: WasmKeystore.create.ReturnType
+let hash: WasmHash.engine.ReturnType
+let keystore: WasmKeystore.engine.ReturnType
 
 beforeAll(async () => {
   ;[hash, keystore] = await Promise.all([
-    WasmHash.create(),
-    WasmKeystore.create(),
+    WasmHash.engine(),
+    WasmKeystore.engine(),
   ])
 })
 
@@ -62,9 +62,9 @@ describe('pbkdf2Sha256', () => {
   )(
     'matches @noble/hashes for arbitrary inputs and output lengths',
     ({ c, dkLen, password, salt }) => {
-      expect(
-        keystore.Keystore.pbkdf2Sha256(password, salt, { c, dkLen }),
-      ).toEqual(pbkdf2_noble(sha256, password, salt, { c, dkLen }))
+      expect(keystore.pbkdf2Sha256(password, salt, { c, dkLen })).toEqual(
+        pbkdf2_noble(sha256, password, salt, { c, dkLen }),
+      )
     },
   )
 
@@ -85,7 +85,7 @@ describe('pbkdf2Sha256', () => {
       const saltSnapshot = salt_.backing.slice()
 
       expect(
-        keystore.Keystore.pbkdf2Sha256(password_.view, salt_.view, {
+        keystore.pbkdf2Sha256(password_.view, salt_.view, {
           c,
           dkLen,
         }),
@@ -102,12 +102,12 @@ describe('pbkdf2Sha256', () => {
     },
     { numRuns },
   )('shares memory safely with hash calls', ({ dkLen, input }) => {
-    const derived = keystore.Keystore.pbkdf2Sha256(input, input, {
+    const derived = keystore.pbkdf2Sha256(input, input, {
       c: 2,
       dkLen,
     })
     const snapshot = derived.slice()
-    expect(hash.Hash.sha256(input)).toEqual(sha256(input))
+    expect(hash.sha256(input)).toEqual(sha256(input))
     expect(derived).toEqual(snapshot)
   })
 })

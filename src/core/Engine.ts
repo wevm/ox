@@ -14,6 +14,72 @@ export type {
 } from './internal/engine.js'
 
 /**
+ * Resolves and installs crypto implementations.
+ *
+ * Slots resolve in parallel, then use {@link ox#Engine.set} merge semantics:
+ * omitted slots and primitives preserve existing overrides. If a slot rejects
+ * or validation fails, the installed engine is unchanged.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Engine } from 'ox'
+ * import { Hash } from 'ox/wasm'
+ *
+ * await Engine.install({
+ *   Hash: Hash.engine()
+ * })
+ * ```
+ *
+ * @param value - Engine slots or promises for engine slots.
+ * @returns The resolved engine that was installed.
+ */
+export async function install<value extends install.Value>(
+  value: value & install.Exact<value>,
+): Promise<install.ReturnType<value>> {
+  const resolved = Object.fromEntries(
+    await Promise.all(
+      Object.entries(value).map(async ([slot, primitives]) => [
+        slot,
+        await primitives,
+      ]),
+    ),
+  ) as install.ReturnType<value>
+  set(resolved as engine.Engine)
+  return resolved
+}
+
+export declare namespace install {
+  /** Rejects slot and primitive names outside the engine contract. */
+  type Exact<value extends Value> = {
+    [key in keyof value]: key extends keyof engine.Engine
+      ? [NonNullable<Awaited<value[key]>>] extends [never]
+        ? unknown
+        : Exclude<
+              keyof NonNullable<Awaited<value[key]>>,
+              keyof NonNullable<engine.Engine[key]>
+            > extends never
+          ? unknown
+          : never
+      : never
+  }
+
+  /** Engine whose slots can be resolved asynchronously. */
+  type Value = {
+    [key in keyof engine.Engine]?:
+      | engine.Engine[key]
+      | PromiseLike<engine.Engine[key]>
+  }
+
+  /** Resolves the supplied slots while preserving their precise shape. */
+  type ReturnType<value extends Value> = {
+    [key in keyof value]: Awaited<value[key]>
+  }
+
+  /** Error thrown while installing an engine. */
+  type ErrorType = set.ErrorType | Errors.GlobalErrorType
+}
+
+/**
  * Installs crypto implementations, replacing the `@noble/*` implementations ox
  * uses by default.
  *
@@ -26,16 +92,6 @@ export type {
  * implementation was installed then.
  *
  * @example
- * ```ts twoslash
- * // @noErrors
- * import { Engine } from 'ox/wasm'
- *
- * await Engine.load()
- * ```
- *
- * @example
- * ### Overriding a Single Primitive
- *
  * ```ts twoslash
  * import { Engine, Hash } from 'ox'
  *

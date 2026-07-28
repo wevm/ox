@@ -38,6 +38,86 @@ function merkelize() {
   return BinaryStateTree.merkelize(tree)
 }
 
+describe('install', () => {
+  test('behavior: resolves slots in parallel and installs them atomically', async () => {
+    const keccak256 = () => new Uint8Array(32).fill(1)
+    const sign = () => new Uint8Array(65).fill(3)
+    const toSeed = () => new Uint8Array(64).fill(2)
+    let releaseHash: (() => void) | undefined
+
+    Engine.set({ Secp256k1: { sign } })
+
+    const hash = {
+      // oxlint-disable-next-line unicorn/no-thenable -- Distinguishes parallel resolution from sequential awaits.
+      then(
+        resolve: (value: Engine.Hash) => void,
+        reject: (reason: unknown) => void,
+      ) {
+        const timeout = setTimeout(
+          () => reject(new Error('slots resolved serially')),
+          0,
+        )
+        releaseHash = () => {
+          clearTimeout(timeout)
+          resolve({ keccak256 })
+        }
+      },
+    } as unknown as PromiseLike<Engine.Hash>
+    const mnemonic = {
+      // oxlint-disable-next-line unicorn/no-thenable -- Distinguishes parallel resolution from sequential awaits.
+      then(resolve: (value: Engine.Mnemonic) => void) {
+        resolve({ toSeed })
+        releaseHash?.()
+      },
+    } as unknown as PromiseLike<Engine.Mnemonic>
+
+    const installed = await Engine.install({ Hash: hash, Mnemonic: mnemonic })
+
+    expect(installed).toEqual({
+      Hash: { keccak256 },
+      Mnemonic: { toSeed },
+    })
+    expect(Engine.get()).toEqual({
+      ...installed,
+      Secp256k1: { sign },
+    })
+  })
+
+  test('behavior: a rejected slot leaves the previous engine installed', async () => {
+    const keccak256 = () => new Uint8Array(32).fill(1)
+    Engine.set({ Hash: { keccak256 } })
+
+    await expect(
+      Engine.install({
+        Hash: Promise.resolve({
+          sha256: () => new Uint8Array(32).fill(2),
+        }),
+        Mnemonic: Promise.reject(new Error('could not load engine')),
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: could not load engine]`,
+    )
+    expect(Engine.get()).toEqual({ Hash: { keccak256 } })
+  })
+
+  test('behavior: an invalid resolved engine leaves the previous engine installed', async () => {
+    const keccak256 = () => new Uint8Array(32).fill(1)
+    Engine.set({ Hash: { keccak256 } })
+
+    await expect(
+      Engine.install({
+        Hash: Promise.resolve({
+          sha256: () => new Uint8Array(32).fill(2),
+        }),
+        Mnemonic: Promise.resolve({
+          to_seed: () => new Uint8Array(64),
+        }),
+      } as never),
+    ).rejects.toThrowError(Engine.UnknownPrimitiveError)
+    expect(Engine.get()).toEqual({ Hash: { keccak256 } })
+  })
+})
+
 describe('set', () => {
   test('behavior: empty engine is a no-op', () => {
     const before = Hash.keccak256(payload)

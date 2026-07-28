@@ -22,7 +22,7 @@ test.prop(
 )(
   'Node BIP-39 seed derivation agrees with the default',
   async ({ mnemonic, passphrase }) => {
-    const { toSeed } = (await Mnemonic.create()).Mnemonic
+    const { toSeed } = await Mnemonic.engine()
 
     expect(toSeed(mnemonic, passphrase)).toEqual(
       mnemonicToSeedSync(mnemonic, passphrase),

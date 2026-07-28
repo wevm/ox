@@ -1,15 +1,21 @@
-import type { Engine } from 'ox'
 import { expectTypeOf, test } from 'vp/test'
-import * as Mnemonic from '../Mnemonic.js'
+import type * as Engine from '../../core/Engine.js'
+import * as core_Mnemonic from '../../core/Mnemonic.js'
+import * as NodeMnemonic from '../Mnemonic.js'
 
-type Created = Awaited<ReturnType<typeof Mnemonic.create>>
+type Slot = Awaited<ReturnType<typeof NodeMnemonic.engine>>
 
 test('every implemented primitive is present', () => {
-  expectTypeOf<Created['Mnemonic']['toSeed']>().toEqualTypeOf<
+  expectTypeOf<Slot['toSeed']>().toEqualTypeOf<
     (mnemonic: string, passphrase?: string) => Uint8Array
   >()
 })
 
-test('the result is still an engine', () => {
-  expectTypeOf<Created>().toExtend<Engine.Engine>()
+test('the result is the raw slot', () => {
+  expectTypeOf<{ Mnemonic: Slot }>().toExtend<Engine.Engine>()
+})
+
+test('the Node namespace exposes the public Mnemonic API', () => {
+  expectTypeOf(NodeMnemonic.toSeed).toEqualTypeOf(core_Mnemonic.toSeed)
+  expectTypeOf<typeof NodeMnemonic>().not.toHaveProperty('create')
 })

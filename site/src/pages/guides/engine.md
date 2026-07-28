@@ -19,9 +19,10 @@ replaces individual implementations without changing the `Hash`, `Secp256k1`,
 
 Engines are partial. Anything they omit leaves the currently installed
 implementation unchanged, falling back to Ox's default when no override was
-installed earlier. Calls to [`Engine.set`](/api/Engine/set) merge, including
-within the same slot, and Ox selects an implementation when a cryptographic
-function is called.
+installed earlier. [`Engine.install`](/api/Engine/install) resolves selected
+provider modules in parallel and installs them only after every module is
+ready. Calls merge, including within the same slot, and Ox selects an
+implementation when a cryptographic function is called.
 
 Install an engine once during application startup, before making cryptographic
 calls. The registry belongs to one loaded Ox module instance, so separate
@@ -62,10 +63,9 @@ because defaults are fallbacks, not registered overrides.
 The WASM engine compiles and installs asynchronously:
 
 ```ts twoslash
-import { Hash } from 'ox'
-import { Engine } from 'ox/wasm'
+import { Engine, Hash } from 'ox/wasm'
 
-await Engine.load()
+await Engine.install()
 
 const digest = Hash.keccak256('0xdeadbeef')
 ```
@@ -83,13 +83,23 @@ Other operations keep their current implementation, or use Ox's default when
 no earlier override exists. In particular, asynchronous KDFs remain on the
 default because wrapping synchronous WASM in a promise would not make it yield.
 
-Use `create` when you need the engine without installing it:
+Provider modules expose the regular Ox API alongside an `engine` factory. Use
+this to install only the modules an application needs:
 
 ```ts twoslash
-import { Engine } from 'ox/wasm'
+import { Engine } from 'ox'
+import { Hash } from 'ox/wasm'
 
-const wasm = await Engine.create()
+await Engine.install({
+  Hash: Hash.engine(),
+})
+
+const digest = Hash.sha256('0xdeadbeef')
 ```
+
+`Engine.install` awaits all supplied slot promises together, then installs the
+resolved modules atomically. `Hash.engine()` returns the raw `Hash` slot;
+`Hash.sha256()` remains the normal formatted public API.
 
 **Benefits**
 
@@ -116,10 +126,9 @@ The Node engine uses the built-in `node:crypto` implementation. Its setup is
 asynchronous to match `ox/wasm`, although Node requires no compilation:
 
 ```ts twoslash
-import { Hash } from 'ox'
-import { Engine } from 'ox/node'
+import { Engine, Hash } from 'ox/node'
 
-await Engine.load()
+await Engine.install()
 
 const digest = Hash.sha256('0xdeadbeef')
 ```
@@ -141,27 +150,51 @@ because Node/OpenSSL does not implement Ox's ZIP-215 semantics. Scrypt also
 stays on the default because OpenSSL rejects parameter combinations accepted
 by Ox's public API.
 
-Use `create` to obtain the engine without installing it:
+Install one Node module through the same core API:
 
 ```ts twoslash
-import { Engine } from 'ox/node'
+import { Engine } from 'ox'
+import { Hash } from 'ox/node'
 
-const node = await Engine.create()
+await Engine.install({
+  Hash: Hash.engine(),
+})
+
+const digest = Hash.sha256('0xdeadbeef')
 ```
 
-The Node and WASM engines compose through `Engine.set`:
+### Selecting Node and WASM modules
+
+Select modules from different providers in one atomic installation:
 
 ```ts twoslash
-import { Engine as NodeEngine } from 'ox/node'
-import { Engine as WasmEngine } from 'ox/wasm'
+import { Engine, Hash } from 'ox'
+import { Hash as NodeHash } from 'ox/node'
+import { Ed25519 as WasmEd25519 } from 'ox/wasm'
 
-await WasmEngine.load()
-await NodeEngine.load()
+await Engine.install({
+  Ed25519: WasmEd25519.engine(),
+  Hash: NodeHash.engine(),
+})
+
+const digest = Hash.sha256('0xdeadbeef')
 ```
 
-The second load replaces overlapping primitives with Node implementations
-while keeping WASM-only primitives such as Keccak256 and Ed25519 verification
-installed.
+The factories begin initializing while the argument is evaluated, then
+`Engine.install` awaits them together. If any factory rejects, none of the
+resolved modules are installed.
+
+Repeated installations merge primitives. Installing Node's `Hash` after WASM
+keeps WASM-only BLAKE3 and Keccak256 installed while replacing the three
+overlapping hashes. Reset the slot first when replacing it completely:
+
+```ts twoslash
+import { Engine } from 'ox'
+import { Hash } from 'ox/node'
+
+Engine.reset('Hash')
+await Engine.install({ Hash: Hash.engine() })
+```
 
 **Benefits**
 
@@ -207,6 +240,19 @@ Engine.set({ Secp256k1: mySecp256k1 })
 // ---cut-after---
 declare const myKeccak256: (input: Uint8Array) => Uint8Array
 declare const mySecp256k1: NonNullable<Engine.Engine['Secp256k1']>
+```
+
+Use `Engine.install` when one or more custom modules are asynchronous. Values
+may be slots or promises of slots:
+
+```ts twoslash
+import { Engine } from 'ox'
+
+await Engine.install({
+  Hash: Promise.resolve({ keccak256: myKeccak256 }),
+})
+// ---cut-after---
+declare const myKeccak256: (input: Uint8Array) => Uint8Array
 ```
 
 Binary values cross engine boundaries as raw `Uint8Array` values. Ox performs
@@ -304,20 +350,20 @@ beforeEach(() => {
 })
 ```
 
-For differential tests, obtain an implementation with `create`, then install it
+For differential tests, obtain an implementation with `engine`, then install it
 for one synchronous call with [`Engine.with`](/api/Engine/with):
 
 ```ts twoslash
 import { Engine, Hash } from 'ox'
 import { Engine as WasmEngine } from 'ox/wasm'
 
-const wasm = await WasmEngine.create()
+const wasm = await WasmEngine.engine()
 const digest = Engine.with(wasm, () => Hash.sha256('0xdeadbeef'))
 ```
 
 `Engine.with` rejects asynchronous functions because concurrent work could
-observe the module-instance-global override. `Engine.set` and `Engine.reset`
-clear Ox's derived cryptographic caches automatically.
+observe the module-instance-global override. `Engine.install`, `Engine.set`,
+and `Engine.reset` clear Ox's derived cryptographic caches automatically.
 
 Test custom implementations against published vectors, boundary-sized and
 empty inputs, and an independent implementation. Verify exact digest,
@@ -335,8 +381,8 @@ and WebKit as well as Node.js.
 
 Treat an engine as trusted code. Depending on the slot, it can receive HMAC
 keys, private keys, passwords, mnemonic phrases, and plaintext keystore
-material. `Engine.set` validates slot and primitive names, but it cannot
-validate correctness, constant-time behavior, or key handling.
+material. `Engine.install` and `Engine.set` validate slot and primitive names,
+but they cannot validate correctness, constant-time behavior, or key handling.
 
 Ox's default engine uses audited cryptographic implementations. The WASM engine
 does not promise protection from timing or cache side channels. WebAssembly has

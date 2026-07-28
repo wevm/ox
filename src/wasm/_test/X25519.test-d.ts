@@ -1,15 +1,21 @@
 import { expectTypeOf, test } from 'vp/test'
 import type * as Engine from '../../core/Engine.js'
+import * as core_X25519 from '../../core/X25519.js'
 import * as X25519 from '../X25519.js'
 
-type Created = Awaited<ReturnType<typeof X25519.create>>
+type Slot = Awaited<ReturnType<typeof X25519.engine>>
 
 test('return type exposes only implemented X25519 primitives', () => {
-  expectTypeOf<Created['X25519']['getPublicKey']>().toEqualTypeOf<
+  expectTypeOf<Slot['getPublicKey']>().toEqualTypeOf<
     NonNullable<Engine.Ecdh['getPublicKey']>
   >()
-  expectTypeOf<Created['X25519']['getSharedSecret']>().toEqualTypeOf<
+  expectTypeOf<Slot['getSharedSecret']>().toEqualTypeOf<
     NonNullable<Engine.Ecdh['getSharedSecret']>
   >()
-  expectTypeOf<Created['X25519']>().not.toHaveProperty('randomSecretKey')
+  expectTypeOf<Slot>().not.toHaveProperty('randomSecretKey')
+})
+
+test('the WASM namespace exposes the public X25519 API', () => {
+  expectTypeOf(X25519.getPublicKey).toEqualTypeOf(core_X25519.getPublicKey)
+  expectTypeOf<typeof X25519>().not.toHaveProperty('create')
 })

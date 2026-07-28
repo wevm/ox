@@ -10,11 +10,11 @@ const privateKey = fromHex(
   '9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60',
 )
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: exposes only semantics-compatible primitives', async () => {
-    const engine = await Ed25519.create()
+    const engine = await Ed25519.engine()
 
-    expect(Object.keys(engine.Ed25519).sort()).toMatchInlineSnapshot(`
+    expect(Object.keys(engine).sort()).toMatchInlineSnapshot(`
       [
         "getPublicKey",
         "sign",
@@ -25,7 +25,7 @@ describe('create', () => {
   })
 
   test('behavior: signs and verifies boundary-sized messages', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
 
     for (const size of [0, 1, 31, 32, 63, 64, 65, 127, 128, 129, 1024]) {
       const payload = Uint8Array.from(
@@ -44,7 +44,7 @@ describe('create', () => {
   })
 
   test('behavior: matches private-key conversion', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
 
     expect(engine.toMontgomerySecret(privateKey)).toEqual(
       ed25519.utils.toMontgomerySecret(privateKey),
@@ -52,7 +52,7 @@ describe('create', () => {
   })
 
   test('behavior: respects subviews and leaves inputs immutable', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const key = offsetView(privateKey)
     const payload = offsetView(new Uint8Array(257).fill(0xa5))
     const keyBefore = key.slice()
@@ -76,7 +76,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects malformed key and signature lengths', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const publicKey = engine.getPublicKey(privateKey)
 
     for (const size of [0, 1, 31, 33, 63, 64]) {
@@ -100,7 +100,7 @@ describe('create', () => {
   })
 
   test('behavior: outputs are owned across calls and memory growth', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const publicKey = engine.getPublicKey(privateKey)
     const signature = engine.sign(new Uint8Array(), privateKey)
     const snapshots = [publicKey.slice(), signature.slice()]
@@ -112,7 +112,7 @@ describe('create', () => {
   })
 
   test('behavior: clears the shared staging region', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const payload = new Uint8Array(1024).fill(0xa5)
     engine.sign(payload, privateKey)
 

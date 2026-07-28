@@ -8,14 +8,14 @@ import * as Mnemonic from '../Mnemonic.js'
 import * as X25519 from '../X25519.js'
 import { x25519LowOrder } from './fixtures.js'
 
-let ed25519Engine: Ed25519.create.ReturnType['Ed25519']
-let mnemonicEngine: Mnemonic.create.ReturnType['Mnemonic']
-let x25519Engine: X25519.create.ReturnType['X25519']
+let ed25519Engine: Ed25519.engine.ReturnType
+let mnemonicEngine: Mnemonic.engine.ReturnType
+let x25519Engine: X25519.engine.ReturnType
 
 beforeAll(async () => {
-  ed25519Engine = (await Ed25519.create()).Ed25519
-  mnemonicEngine = (await Mnemonic.create()).Mnemonic
-  x25519Engine = (await X25519.create()).X25519
+  ed25519Engine = await Ed25519.engine()
+  mnemonicEngine = await Mnemonic.engine()
+  x25519Engine = await X25519.engine()
 })
 
 const arbitraryKey = fc.uint8Array({ maxLength: 32, minLength: 32 })

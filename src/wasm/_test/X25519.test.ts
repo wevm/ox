@@ -15,9 +15,9 @@ const bobPrivateKey = fromHex(
   '5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb',
 )
 
-describe('create', () => {
+describe('engine', () => {
   test('vectors: matches RFC 7748 key agreement', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const alicePublicKey = engine.getPublicKey(alicePrivateKey)
     const bobPublicKey = engine.getPublicKey(bobPrivateKey)
 
@@ -35,7 +35,7 @@ describe('create', () => {
   })
 
   test('vectors: matches RFC 7748 arbitrary-point cases', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const vectors = [
       [
         'a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4',
@@ -56,7 +56,7 @@ describe('create', () => {
   })
 
   test('vectors: matches RFC 7748 iterated cases', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     let privateKey = Uint8Array.of(9, ...new Uint8Array(31))
     let publicKey = privateKey
     const expected = new Map([
@@ -79,7 +79,7 @@ describe('create', () => {
   })
 
   test('behavior: accepts masked and noncanonical u-coordinates', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const publicKey = x25519.getPublicKey(bobPrivateKey)
     const masked = publicKey.slice()
     masked[31]! |= 0x80
@@ -94,7 +94,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects low-order and malformed public keys', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
 
     expect(x25519LowOrder).toEqual(
       JSON.parse(
@@ -129,7 +129,7 @@ describe('create', () => {
   })
 
   test('behavior: respects subviews, ownership, and cleanup', async () => {
-    const engine = (await X25519.create()).X25519
+    const engine = await X25519.engine()
     const privateKey = offsetView(alicePrivateKey)
     const publicKey = offsetView(x25519.getPublicKey(bobPrivateKey))
     const before = {

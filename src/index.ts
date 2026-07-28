@@ -1536,9 +1536,12 @@ export * as Ed25519 from './core/Ed25519.js'
  *
  * ```ts twoslash
  * // @noErrors
- * import { Engine } from 'ox/wasm'
+ * import { Engine } from 'ox'
+ * import { Hash } from 'ox/wasm'
  *
- * await Engine.load()
+ * await Engine.install({
+ *   Hash: Hash.engine()
+ * })
  * ```
  *
  * @example

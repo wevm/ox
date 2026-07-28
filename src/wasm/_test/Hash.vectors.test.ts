@@ -13,23 +13,23 @@ import { instantiate } from '../internal/instantiate.js'
  * See `test/vectors/hashes/README.md`.
  */
 
-let engine: WasmHash.create.ReturnType
+let engine: WasmHash.engine.ReturnType
 
 beforeAll(async () => {
-  engine = await WasmHash.create()
+  engine = await WasmHash.engine()
 })
 
 describe('blake3', () => {
   test(`matches ${vectors.blake3.length} official BLAKE3 vectors`, () => {
     for (const { digest, message } of vectors.blake3)
-      expect(engine.Hash.blake3(message)).toEqual(digest)
+      expect(engine.blake3(message)).toEqual(digest)
   })
 })
 
 describe('sha256', () => {
   test(`matches ${vectors.sha256.length} NIST CAVP vectors`, () => {
     for (const { digest, message } of vectors.sha256)
-      expect(engine.Hash.sha256(message)).toEqual(digest)
+      expect(engine.sha256(message)).toEqual(digest)
   })
 })
 
@@ -38,26 +38,26 @@ describe('hmacSha256', () => {
     // Two of these use 131-byte keys, which is the only coverage of the
     // longer-than-a-block path where the key is hashed before padding.
     for (const { digest, key, message } of vectors.hmacSha256)
-      expect(engine.Hash.hmacSha256(key, message)).toEqual(digest)
+      expect(engine.hmacSha256(key, message)).toEqual(digest)
   })
 })
 
 describe('ripemd160', () => {
   test(`matches ${vectors.ripemd160.length} reference vectors`, () => {
     for (const { digest, message } of vectors.ripemd160)
-      expect(engine.Hash.ripemd160(message)).toEqual(digest)
+      expect(engine.ripemd160(message)).toEqual(digest)
   })
 
   test('matches the million-`a` reference vector', () => {
     const { digest, message } = vectors.ripemd160MillionA
-    expect(engine.Hash.ripemd160(message)).toEqual(digest)
+    expect(engine.ripemd160(message)).toEqual(digest)
   })
 })
 
 describe('keccak256', () => {
   test(`matches ${vectors.keccak256.length} OpenSSL vectors`, () => {
     for (const { digest, message } of vectors.keccak256)
-      expect(engine.Hash.keccak256(message)).toEqual(digest)
+      expect(engine.keccak256(message)).toEqual(digest)
   })
 })
 
@@ -67,7 +67,7 @@ describe('keccak_f1600', () => {
   /** Writes 25 lanes as little-endian 64-bit words, permutes, and reads back. */
   async function permute(lanes: readonly bigint[]) {
     // A separate instance, because this export is not part of the engine and so
-    // is deliberately not reachable through `WasmHash.load`.
+    // is deliberately not reachable through `WasmHash.engine`.
     const module = await instantiate<Exports>(wasmBase64)
     module.reserve(200)
     const view = module.view()

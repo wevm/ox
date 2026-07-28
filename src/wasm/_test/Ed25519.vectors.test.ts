@@ -35,9 +35,9 @@ const rfc8032 = [
   },
 ] as const
 
-describe('create', () => {
+describe('engine', () => {
   test('vectors: matches RFC 8032 key, signature, and verification cases', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
 
     for (const vector of rfc8032) {
       const seed = fromHex(vector.seed)
@@ -52,7 +52,7 @@ describe('create', () => {
   })
 
   test('vectors: matches all 196 ZIP-215 compliance cases', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const message = new TextEncoder().encode('Zcash')
 
     expect(zip215).toHaveLength(196)

@@ -32,13 +32,13 @@ const vectors = [
   },
 ] as const
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: exposes only primitives compatible with Ox semantics', async () => {
-    const engine = await Ed25519.create()
+    const engine = await Ed25519.engine()
 
     // Node verification is deliberately absent because it does not implement
     // the ZIP-215 rules used by Ox's default verifier.
-    expect(Object.keys(engine.Ed25519).sort()).toMatchInlineSnapshot(`
+    expect(Object.keys(engine).sort()).toMatchInlineSnapshot(`
       [
         "getPublicKey",
         "sign",
@@ -48,7 +48,7 @@ describe('create', () => {
   })
 
   test('behavior: matches RFC 8032 test vectors', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
 
     expect(
       vectors.map(({ payload, privateKey }) => ({
@@ -72,7 +72,7 @@ describe('create', () => {
   })
 
   test('behavior: omits verification that disagrees with ZIP-215', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const digest = crypto
       .createHash('sha256')
       .update(zip215Text.trimEnd())
@@ -107,7 +107,7 @@ describe('create', () => {
   })
 
   test('behavior: matches the default across messages and private keys', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
 
     for (const [index, { privateKey }] of vectors.entries()) {
       const key = fromHex(privateKey)
@@ -126,7 +126,7 @@ describe('create', () => {
   })
 
   test('behavior: respects typed-array offsets without mutating inputs', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const privateKey = offsetView(fromHex(vectors[0].privateKey))
     const payload = offsetView(
       Uint8Array.from({ length: 65 }, (_, index) => (index * 17) % 251),
@@ -150,7 +150,7 @@ describe('create', () => {
   })
 
   test('behavior: rejects malformed private-key lengths', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
 
     for (const size of [0, 1, 31, 33, 64]) {
       const privateKey = new Uint8Array(size)
@@ -167,7 +167,7 @@ describe('create', () => {
   })
 
   test('behavior: returns owned Uint8Array values', async () => {
-    const engine = (await Ed25519.create()).Ed25519
+    const engine = await Ed25519.engine()
     const privateKey = fromHex(vectors[0].privateKey)
     const outputs = [
       engine.getPublicKey(privateKey),
@@ -189,11 +189,10 @@ describe('create', () => {
   })
 
   test('behavior: returns a fresh engine', async () => {
-    const first = await Ed25519.create()
-    const second = await Ed25519.create()
+    const first = await Ed25519.engine()
+    const second = await Ed25519.engine()
 
     expect(first === second).toMatchInlineSnapshot('false')
-    expect(first.Ed25519 === second.Ed25519).toMatchInlineSnapshot('false')
   })
 })
 

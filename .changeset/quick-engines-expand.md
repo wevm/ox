@@ -1,11 +1,20 @@
 ---
-'ox': minor
+'ox': patch
 ---
 
-Added Node and WASM engines for hashes, AES-CTR, PBKDF2, BIP-39 seeds, Ed25519, X25519, and P256 public-key derivation.
+Expanded Node and WASM engines, renamed provider factories to `engine`, and added atomic `Engine.install` for selecting and installing modules in parallel.
 
-```ts
-import { Engine } from 'ox/wasm'
+```diff
+ import { Engine as CoreEngine } from 'ox'
+ import { Engine, Hash } from 'ox/wasm'
 
-await Engine.load()
+-await Engine.load()
++await Engine.install()
++Hash.sha256('0xdeadbeef')
+
+-const wasm = await Engine.create()
++const wasm = await Engine.engine()
+
+-CoreEngine.set(await Hash.create())
++await CoreEngine.install({ Hash: Hash.engine() })
 ```

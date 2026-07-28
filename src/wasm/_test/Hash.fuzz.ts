@@ -8,10 +8,10 @@ import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect } from 'vp/test'
 import { numRuns } from '../../../test/fuzz/numRuns.js'
 
-let engine: WasmHash.create.ReturnType
+let engine: WasmHash.engine.ReturnType
 
 beforeAll(async () => {
-  engine = await WasmHash.create()
+  engine = await WasmHash.engine()
 })
 
 /**
@@ -76,24 +76,23 @@ const arbitraryKey = fc.oneof(
 const primitives = {
   blake3: {
     reference: (input: Uint8Array) => blake3(input),
-    wasm: (input: Uint8Array) => engine.Hash.blake3(input),
+    wasm: (input: Uint8Array) => engine.blake3(input),
   },
   hmacSha256: {
     reference: (input: Uint8Array, key: Uint8Array) => hmac(sha256, key, input),
-    wasm: (input: Uint8Array, key: Uint8Array) =>
-      engine.Hash.hmacSha256(key, input),
+    wasm: (input: Uint8Array, key: Uint8Array) => engine.hmacSha256(key, input),
   },
   keccak256: {
     reference: (input: Uint8Array) => keccak_256(input),
-    wasm: (input: Uint8Array) => engine.Hash.keccak256(input),
+    wasm: (input: Uint8Array) => engine.keccak256(input),
   },
   ripemd160: {
     reference: (input: Uint8Array) => ripemd160(input),
-    wasm: (input: Uint8Array) => engine.Hash.ripemd160(input),
+    wasm: (input: Uint8Array) => engine.ripemd160(input),
   },
   sha256: {
     reference: (input: Uint8Array) => sha256(input),
-    wasm: (input: Uint8Array) => engine.Hash.sha256(input),
+    wasm: (input: Uint8Array) => engine.sha256(input),
   },
 } as const
 
@@ -103,37 +102,35 @@ describe('Hash', () => {
   test.prop({ input: arbitraryInput }, { numRuns })(
     'blake3 ≡ @noble/hashes',
     ({ input }) => {
-      expect(engine.Hash.blake3(input)).toEqual(blake3(input))
+      expect(engine.blake3(input)).toEqual(blake3(input))
     },
   )
 
   test.prop({ input: arbitraryInput }, { numRuns })(
     'keccak256 ≡ @noble/hashes',
     ({ input }) => {
-      expect(engine.Hash.keccak256(input)).toEqual(keccak_256(input))
+      expect(engine.keccak256(input)).toEqual(keccak_256(input))
     },
   )
 
   test.prop({ input: arbitraryInput }, { numRuns })(
     'sha256 ≡ @noble/hashes',
     ({ input }) => {
-      expect(engine.Hash.sha256(input)).toEqual(sha256(input))
+      expect(engine.sha256(input)).toEqual(sha256(input))
     },
   )
 
   test.prop({ input: arbitraryInput }, { numRuns })(
     'ripemd160 ≡ @noble/hashes',
     ({ input }) => {
-      expect(engine.Hash.ripemd160(input)).toEqual(ripemd160(input))
+      expect(engine.ripemd160(input)).toEqual(ripemd160(input))
     },
   )
 
   test.prop({ input: arbitraryInput, key: arbitraryKey }, { numRuns })(
     'hmacSha256 ≡ @noble/hashes',
     ({ input, key }) => {
-      expect(engine.Hash.hmacSha256(key, input)).toEqual(
-        hmac(sha256, key, input),
-      )
+      expect(engine.hmacSha256(key, input)).toEqual(hmac(sha256, key, input))
     },
   )
 })
@@ -188,7 +185,7 @@ describe('memory', () => {
     // as zeroes rather than throwing.
     for (const pages of sizes) {
       const input = new Uint8Array(pages * 65_536).fill(pages & 0xff)
-      expect(engine.Hash.keccak256(input), `${pages} pages`).toEqual(
+      expect(engine.keccak256(input), `${pages} pages`).toEqual(
         keccak_256(input),
       )
     }
@@ -199,14 +196,14 @@ describe('memory', () => {
     ({ input }) => {
       // A digest returned as a view over linear memory would be silently
       // rewritten by the next call. Hold one across a larger call and check it.
-      const digest = engine.Hash.keccak256(input)
+      const digest = engine.keccak256(input)
       const snapshot = digest.slice()
-      engine.Hash.keccak256(new Uint8Array(input.length + 1024).fill(0xaa))
+      engine.keccak256(new Uint8Array(input.length + 1024).fill(0xaa))
       expect(digest).toEqual(snapshot)
 
-      const blake3Digest = engine.Hash.blake3(input)
+      const blake3Digest = engine.blake3(input)
       const blake3Snapshot = blake3Digest.slice()
-      engine.Hash.blake3(new Uint8Array(input.length + 1024).fill(0xaa))
+      engine.blake3(new Uint8Array(input.length + 1024).fill(0xaa))
       expect(blake3Digest).toEqual(blake3Snapshot)
     },
   )
@@ -215,11 +212,11 @@ describe('memory', () => {
     'inputs are not mutated',
     ({ input }) => {
       const snapshot = input.slice()
-      engine.Hash.blake3(input)
-      engine.Hash.keccak256(input)
-      engine.Hash.sha256(input)
-      engine.Hash.ripemd160(input)
-      engine.Hash.hmacSha256(input, input)
+      engine.blake3(input)
+      engine.keccak256(input)
+      engine.sha256(input)
+      engine.ripemd160(input)
+      engine.hmacSha256(input, input)
       expect(input).toEqual(snapshot)
     },
   )

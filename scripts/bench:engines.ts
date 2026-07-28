@@ -24,8 +24,8 @@ import * as mnemonic from '../src/core/internal/mnemonic.js'
 import * as p256 from '../src/core/internal/p256.js'
 import * as secp256k1 from '../src/core/internal/secp256k1.js'
 import * as x25519 from '../src/core/internal/x25519.js'
-import { create as createNode } from '../src/node/Engine.js'
-import { create as createWasm } from '../src/wasm/Engine.js'
+import { engine as nodeEngine } from '../src/node/Engine.js'
+import { engine as wasmEngine } from '../src/wasm/Engine.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -408,8 +408,8 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
     )
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
-const node = await createNode()
-const wasm = await createWasm()
+const node = await nodeEngine()
+const wasm = await wasmEngine()
 const rustRows = rust()
 
 const headers = [

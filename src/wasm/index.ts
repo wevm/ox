@@ -4,9 +4,8 @@
  * WASM implementations of Ox's supported cryptographic primitives, compiled
  * from C.
  *
- * Load it and hand the result to {@link ox#Engine.set}. WASM must be compiled
- * asynchronously, so the `await` lives here -- every call afterwards is
- * synchronous.
+ * Install it during startup. WASM must be compiled asynchronously, so the
+ * `await` lives there. Every cryptographic call afterwards is synchronous.
  *
  * :::note
  * Performance varies by primitive, input size, runtime, and processor. Run
@@ -17,12 +16,11 @@
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Hash } from 'ox'
- * import { Engine } from 'ox/wasm'
+ * import { Engine, Hash } from 'ox/wasm'
  *
- * await Engine.load()
+ * await Engine.install()
  *
- * Hash.keccak256('0xdeadbeef')
+ * Hash.sha256('0xdeadbeef')
  * ```
  *
  * @category Crypto
@@ -35,10 +33,10 @@ export * as Engine from './Engine.js'
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Ed25519, Engine } from 'ox'
- * import * as WasmEd25519 from 'ox/wasm/Ed25519'
+ * import { Engine } from 'ox'
+ * import { Ed25519 } from 'ox/wasm'
  *
- * Engine.set(await WasmEd25519.create())
+ * await Engine.install({ Ed25519: Ed25519.engine() })
  *
  * Ed25519.getPublicKey({ privateKey: '0x...' })
  * ```
@@ -53,12 +51,12 @@ export * as Ed25519 from './Ed25519.js'
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Hash } from 'ox'
- * import * as WasmHash from 'ox/wasm/Hash'
+ * import { Engine } from 'ox'
+ * import { Hash } from 'ox/wasm'
  *
- * Engine.set(await WasmHash.create())
+ * await Engine.install({ Hash: Hash.engine() })
  *
- * Hash.keccak256('0xdeadbeef')
+ * Hash.sha256('0xdeadbeef')
  * ```
  *
  * @category Crypto
@@ -71,10 +69,10 @@ export * as Hash from './Hash.js'
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Keystore } from 'ox'
- * import * as WasmKeystore from 'ox/wasm/Keystore'
+ * import { Engine } from 'ox'
+ * import { Keystore } from 'ox/wasm'
  *
- * Engine.set(await WasmKeystore.create())
+ * await Engine.install({ Keystore: Keystore.engine() })
  *
  * Keystore.pbkdf2({ password: 'testpassword' })
  * ```
@@ -89,10 +87,10 @@ export * as Keystore from './Keystore.js'
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, Mnemonic } from 'ox'
- * import * as WasmMnemonic from 'ox/wasm/Mnemonic'
+ * import { Engine } from 'ox'
+ * import { Mnemonic } from 'ox/wasm'
  *
- * Engine.set(await WasmMnemonic.create())
+ * await Engine.install({ Mnemonic: Mnemonic.engine() })
  *
  * Mnemonic.toSeed(
  *   'test test test test test test test test test test test junk'
@@ -109,10 +107,10 @@ export * as Mnemonic from './Mnemonic.js'
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, X25519 } from 'ox'
- * import * as WasmX25519 from 'ox/wasm/X25519'
+ * import { Engine } from 'ox'
+ * import { X25519 } from 'ox/wasm'
  *
- * Engine.set(await WasmX25519.create())
+ * await Engine.install({ X25519: X25519.engine() })
  *
  * X25519.getPublicKey({ privateKey: '0x...' })
  * ```

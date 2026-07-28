@@ -2,9 +2,11 @@ import * as crypto from 'node:crypto'
 import type * as Engine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
 
+export * from '../core/P256.js'
+
 /**
- * Creates a Node.js implementation of
- * [`P256.getPublicKey`](/api/P256/getPublicKey), without installing it.
+ * Creates a Node.js implementation of the [`P256`](/api/P256) engine slot,
+ * without installing it.
  *
  * Node's other P256 operations do not reproduce Ox's recovered-signature and
  * compressed-shared-point contracts, so they remain on Ox's defaults.
@@ -12,38 +14,34 @@ import type * as Errors from '../core/Errors.js'
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Engine, P256 } from 'ox'
- * import * as NodeP256 from 'ox/node/P256'
+ * import { Engine } from 'ox'
+ * import { P256 } from 'ox/node'
  *
- * Engine.set(await NodeP256.create())
+ * await Engine.install({ P256: P256.engine() })
  *
  * P256.getPublicKey({ privateKey: '0x...' })
  * ```
  *
- * @returns An engine supplying `P256.getPublicKey`.
+ * @returns The raw `P256` engine slot.
  */
-export function create(): Promise<create.ReturnType> {
+export function engine(): Promise<engine.ReturnType> {
   return Promise.resolve({
-    P256: {
-      getPublicKey: (privateKey) => {
-        if (privateKey.length !== 32)
-          throw new RangeError(
-            `P256 private key must be 32 bytes, got ${privateKey.length}`,
-          )
-        const ecdh = crypto.createECDH('prime256v1')
-        ecdh.setPrivateKey(privateKey)
-        return new Uint8Array(ecdh.getPublicKey(undefined, 'uncompressed'))
-      },
+    getPublicKey: (privateKey) => {
+      if (privateKey.length !== 32)
+        throw new RangeError(
+          `P256 private key must be 32 bytes, got ${privateKey.length}`,
+        )
+      const ecdh = crypto.createECDH('prime256v1')
+      ecdh.setPrivateKey(privateKey)
+      return new Uint8Array(ecdh.getPublicKey(undefined, 'uncompressed'))
     },
   })
 }
 
-export declare namespace create {
-  /** The `P256` slot, carrying every primitive this module implements. */
+export declare namespace engine {
+  /** Every `P256` primitive this module implements. */
   type ReturnType = {
-    P256: {
-      getPublicKey: NonNullable<Engine.Ecdsa['getPublicKey']>
-    }
+    getPublicKey: NonNullable<Engine.Ecdsa['getPublicKey']>
   }
 
   type ErrorType = Errors.GlobalErrorType

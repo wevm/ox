@@ -4,6 +4,7 @@ import * as crypto25519 from './internal/crypto25519.js'
 import * as internal from './internal/instantiate.js'
 import * as mnemonic from './internal/mnemonic.js'
 
+export * from '../core/Mnemonic.js'
 export { MemoryError } from './internal/instantiate.js'
 
 /**
@@ -14,29 +15,29 @@ export { MemoryError } from './internal/instantiate.js'
  * ```ts twoslash
  * // @noErrors
  * import { Engine } from 'ox'
- * import * as WasmMnemonic from 'ox/wasm/Mnemonic'
+ * import { Mnemonic } from 'ox/wasm'
  *
- * Engine.set(await WasmMnemonic.create())
+ * await Engine.install({ Mnemonic: Mnemonic.engine() })
+ *
+ * Mnemonic.toSeed(
+ *   'test test test test test test test test test test test junk'
+ * )
  * ```
  *
- * @returns An engine supplying the `Mnemonic` slot.
+ * @returns The WASM implementation of the `Mnemonic` slot.
  */
-export async function create(): Promise<create.ReturnType> {
+export async function engine(): Promise<engine.ReturnType> {
   const module = await crypto25519.load()
 
   return {
-    Mnemonic: {
-      toSeed: (value, passphrase) => mnemonic.toSeed(module, value, passphrase),
-    },
+    toSeed: (value, passphrase) => mnemonic.toSeed(module, value, passphrase),
   }
 }
 
-export declare namespace create {
-  /** The `Mnemonic` slot, carrying every primitive this module implements. */
+export declare namespace engine {
+  /** Every `Mnemonic` primitive this module implements. */
   type ReturnType = {
-    Mnemonic: {
-      toSeed: NonNullable<Engine.Mnemonic['toSeed']>
-    }
+    toSeed: NonNullable<Engine.Mnemonic['toSeed']>
   }
 
   type ErrorType = internal.MemoryError | Errors.GlobalErrorType
