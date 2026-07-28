@@ -306,11 +306,11 @@ validate correctness, constant-time behavior, or key handling.
 
 Ox's default engine uses audited cryptographic implementations. The WASM engine
 does not promise protection from timing or cache side channels. WebAssembly has
-no constant-time execution guarantee. The WASM HMAC implementation clears its
-copied inputs and explicit scratch buffer from linear memory in a `finally`
-block, including after recoverable WebAssembly traps. It cannot clear
-caller-owned buffers or runtime-managed state, and this does not make the
-surrounding runtime side-channel resistant.
+[no constant-time execution guarantee](https://webassembly.org/docs/security/).
+The WASM HMAC implementation clears its copied inputs and explicit scratch
+buffer from linear memory in a `finally` block, including after recoverable
+WebAssembly traps. It cannot clear caller-owned buffers or runtime-managed
+state, and this does not make the surrounding runtime side-channel resistant.
 
 The Node engine inherits the properties of the active Node and OpenSSL build.
 Using `node:crypto` does not itself mean FIPS mode is enabled or that every
