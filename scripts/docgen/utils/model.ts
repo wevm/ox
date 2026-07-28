@@ -99,7 +99,7 @@ export function createDataLookup(
         displayName: apiItem.displayName,
         excerpt: apiItem.excerpt.text,
         file: {
-          lineNumber: processLocation(sourceFilePath, module, apiItem),
+          lineNumber: processLocation(sourceFilePath, apiItem),
           path: sourceFilePath,
           url: apiItem.sourceLocation.fileUrl,
         },
@@ -274,7 +274,6 @@ function getLinkForApiItem(
 
 function processLocation(
   sourceFilePath: string | undefined,
-  module: string | undefined,
   item: model.ApiItem,
 ) {
   if (!sourceFilePath) return
@@ -284,18 +283,22 @@ function processLocation(
     item.kind === model.ApiItemKind.Function ||
     item.kind === model.ApiItemKind.TypeAlias
   ) {
-    const functionName =
-      module && module !== item.displayName
-        ? `${module}_${item.displayName}`
-        : item.displayName
+    const name = item.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const keyword =
+      item.kind === model.ApiItemKind.Class
+        ? 'class'
+        : item.kind === model.ApiItemKind.Function
+          ? 'function'
+          : 'type'
+    const suffix = item.kind === model.ApiItemKind.Function ? '_?' : ''
+    const declaration = new RegExp(
+      `^\\s*(?:export\\s+)?(?:declare\\s+)?(?:abstract\\s+)?(?:async\\s+)?${keyword}\\s+${name}${suffix}\\b`,
+    )
     const content = readFileSync(sourceFilePath, 'utf-8')
-    let lineNumber = 0
-    for (const line of content.split('\n')) {
-      lineNumber++
-      if (line.includes(' as ') || !line.includes(` ${functionName}`)) continue
-      break
-    }
-    return lineNumber
+    const lineNumber = content
+      .split('\n')
+      .findIndex((line) => declaration.test(line))
+    return lineNumber === -1 ? undefined : lineNumber + 1
   }
 
   return

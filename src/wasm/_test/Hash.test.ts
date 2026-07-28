@@ -5,7 +5,8 @@ import { keccak_256 } from '@noble/hashes/sha3.js'
 import { Bytes, Engine, Hash } from 'ox'
 import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect, test } from 'vp/test'
-import { wasmBase64 } from '../internal/hashes.wasm.js'
+import { hmacSha256ScratchSize, wasmBase64 } from '../internal/hashes.wasm.js'
+import * as hash from '../internal/hash.js'
 import * as internal from '../internal/instantiate.js'
 
 let engine: WasmHash.create.ReturnType
@@ -60,15 +61,6 @@ function input(size: number) {
   return new Uint8Array(size).map((_, index) => (index * 37 + 11) & 0xff)
 }
 
-function indexOfBytes(haystack: Uint8Array, needle: Uint8Array) {
-  search: for (let i = 0; i <= haystack.length - needle.length; i++) {
-    for (let j = 0; j < needle.length; j++)
-      if (haystack[i + j] !== needle[j]) continue search
-    return i
-  }
-  return -1
-}
-
 describe('Hash', () => {
   test.each(sizes)('keccak256 matches the default at %i bytes', (size) => {
     expect(engine.Hash.keccak256(input(size))).toEqual(keccak_256(input(size)))
@@ -116,56 +108,75 @@ describe('Hash', () => {
     expect(engine.Hash.sha256(small)).toEqual(sha256(small))
   })
 
-  test('behavior: hmacSha256 clears secret-derived stack state', async () => {
-    type Exports = {
-      hmac_sha256(
-        key: number,
-        keyLength: number,
-        message: number,
-        messageLength: number,
-        out: number,
-      ): void
-      zero(ptr: number, length: number): void
-    }
-
-    const module = await internal.instantiate<Exports>(wasmBase64)
+  test('behavior: hmacSha256 clears its complete memory region', async () => {
+    const module = await internal.instantiate<hash.Exports>(wasmBase64)
     const key = input(120)
     const message = input(17)
     const out = 32
-    module.reserve(key.length + message.length + out)
-    const keyPtr = module.heapBase
-    const messagePtr = keyPtr + key.length
-    const outPtr = messagePtr + message.length
-    module.view().set(key, keyPtr)
-    module.view().set(message, messagePtr)
-    module.exports.hmac_sha256(
-      keyPtr,
-      key.length,
-      messagePtr,
-      message.length,
-      outPtr,
+    const messagePtr = module.heapBase
+    const keyPtr = messagePtr + message.length
+    const outPtr = keyPtr + key.length
+    const scratchPtr = Math.ceil((outPtr + out) / 4) * 4
+    const end = scratchPtr + hmacSha256ScratchSize
+    const stack = module.view().slice(0, module.heapBase)
+
+    expect(hash.hmacSha256(module, key, message)).toEqual(
+      hmac(sha256, key, message),
     )
-    module.exports.zero(keyPtr, key.length)
 
-    const keyBlock = new Uint8Array(64)
-    keyBlock.set(sha256(key))
-    const innerInput = new Uint8Array(64 + message.length)
-    for (let i = 0; i < 64; i++) innerInput[i] = keyBlock[i]! ^ 0x36
-    innerInput.set(message, 64)
-    const inner = sha256(innerInput)
-    const innerWords = new Uint8Array(inner.length)
-    for (let i = 0; i < inner.length; i += 4) {
-      innerWords[i] = inner[i + 3]!
-      innerWords[i + 1] = inner[i + 2]!
-      innerWords[i + 2] = inner[i + 1]!
-      innerWords[i + 3] = inner[i]!
+    expect(module.view().slice(0, module.heapBase)).toEqual(stack)
+    expect(module.view().slice(messagePtr, end)).toEqual(
+      new Uint8Array(end - messagePtr),
+    )
+  })
+
+  test('behavior: hmacSha256 clears its complete region after a trap', async () => {
+    const module = await internal.instantiate<hash.Exports>(wasmBase64)
+    const key = input(120)
+    const message = input(17)
+    const out = 32
+    const messagePtr = module.heapBase
+    const keyPtr = messagePtr + message.length
+    const validOutPtr = keyPtr + key.length
+    const scratchPtr = Math.ceil((validOutPtr + out) / 4) * 4
+    const end = scratchPtr + hmacSha256ScratchSize
+    const stack = module.view().slice(0, module.heapBase)
+    // Preserve the production boundary while making the real export trap only
+    // after it has populated the scratch buffer.
+    const exports = {
+      hmac_sha256(
+        keyPtr: number,
+        keyLength: number,
+        messagePtr: number,
+        messageLength: number,
+        _outPtr: number,
+        scratchPtr: number,
+      ) {
+        module.exports.hmac_sha256(
+          keyPtr,
+          keyLength,
+          messagePtr,
+          messageLength,
+          module.view().length - 16,
+          scratchPtr,
+        )
+      },
+      zero: (ptr: number, length: number) => module.exports.zero(ptr, length),
     }
+    const trappingModule = { ...module, exports }
 
-    // The old artifact left the exact inner digest in its final-block scratch
-    // and native-endian copies in H and W, all below the JS-owned heap.
-    const stack = module.view().subarray(0, module.heapBase)
-    expect(indexOfBytes(stack, inner)).toBe(-1)
-    expect(indexOfBytes(stack, innerWords)).toBe(-1)
+    expect(() => hash.hmacSha256(trappingModule, key, message)).toThrow(
+      WebAssembly.RuntimeError,
+    )
+    expect(module.view().slice(0, module.heapBase)).toEqual(stack)
+    expect(module.view().slice(messagePtr, end)).toEqual(
+      new Uint8Array(end - messagePtr),
+    )
+
+    module.exports.zero(module.view().length - 16, 16)
+    expect(hash.hmacSha256(module, key, message)).toEqual(
+      hmac(sha256, key, message),
+    )
   })
 
   test('behavior: consecutive calls do not corrupt each other', () => {

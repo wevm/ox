@@ -1,26 +1,19 @@
 import type * as Engine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
+import * as hash from './internal/hash.js'
 import { wasmBase64 } from './internal/hashes.wasm.js'
 import * as internal from './internal/instantiate.js'
 
 export { MemoryError } from './internal/instantiate.js'
 
-type Exports = {
-  hmac_sha256(
-    key: number,
-    keyLength: number,
-    message: number,
-    messageLength: number,
-    out: number,
-  ): void
+type Exports = hash.Exports & {
   keccak256(input: number, length: number, out: number): void
   ripemd160(input: number, length: number, out: number): void
   sha256(input: number, length: number, out: number): void
-  zero(ptr: number, length: number): void
 }
 
 /** Digest sizes, in bytes. */
-const digestSize = { hmac_sha256: 32, keccak256: 32, ripemd160: 20, sha256: 32 }
+const digestSize = { keccak256: 32, ripemd160: 20, sha256: 32 }
 
 /**
  * Compilation is memoized; the engine object deliberately is not.
@@ -36,21 +29,18 @@ const instantiate = /*#__PURE__*/ internal.memoize(() =>
 )
 
 /**
- * Compiles the WASM implementation of the {@link ox#Hash} primitives, without
+ * Compiles the WASM implementation of the [`Hash`](/api/Hash) primitives, without
  * installing it.
  *
- * Most callers want {@link ox#wasm/Engine.load} instead, which compiles every
+ * Most callers want {@link ox#Engine.load} instead, which compiles every
  * implementation this entrypoint provides and installs them in one call. Reach
  * for this to take the `Hash` slot on its own, or to hold the implementation
  * without touching the installed engine.
  *
  * :::note
- * The win is uneven, and worth knowing before you reach for this. Measured with
- * `pnpm bench` on Node 22 against `@noble/hashes` 2.2.0, `keccak256` is ~12-14x
- * faster at every input size, including 32 bytes, because `@noble/hashes`'
- * Keccak is unusually slow (~19 MB/s, against ~148 MB/s for its own SHA-256).
- * `sha256` is a much narrower ~1.1-3x, widest on short inputs where the fixed
- * per-call cost dominates. Numbers vary by runtime -- re-measure on yours.
+ * Performance varies by primitive, input size, runtime, and processor. Run
+ * `pnpm bench:engines` to compare Ox's default, Node, WASM, and Alloy
+ * implementations on your target machine.
  * :::
  *
  * @example
@@ -88,30 +78,7 @@ export async function create(): Promise<create.ReturnType> {
 
     return {
       Hash: {
-        hmacSha256(key, message) {
-          const out = digestSize.hmac_sha256
-          module.reserve(key.length + message.length + out)
-          const keyPtr = module.heapBase
-          const messagePtr = keyPtr + key.length
-          const outPtr = messagePtr + message.length
-          const view = module.view()
-          try {
-            view.set(key, keyPtr)
-            view.set(message, messagePtr)
-            module.exports.hmac_sha256(
-              keyPtr,
-              key.length,
-              messagePtr,
-              message.length,
-              outPtr,
-            )
-            return module.view().slice(outPtr, outPtr + out)
-          } finally {
-            // The key is secret; do not leave it sitting in linear memory, even
-            // when copying, hashing, or copying the digest back out throws.
-            module.exports.zero(keyPtr, key.length)
-          }
-        },
+        hmacSha256: (key, message) => hash.hmacSha256(module, key, message),
         keccak256: (input) => call('keccak256', input),
         ripemd160: (input) => call('ripemd160', input),
         sha256: (input) => call('sha256', input),

@@ -2,4 +2,10 @@
 'ox': minor
 ---
 
-Added `ox/wasm`, a C-backed `Engine` covering `keccak256`, `sha256`, `ripemd160` and HMAC-SHA256, with `keccak256` around 12-14x faster than the `@noble/hashes` default.
+Added `ox/node` for native SHA-256, RIPEMD-160, and HMAC-SHA256, and `ox/wasm` for those hashes plus WASM-backed Keccak256.
+
+```ts
+import { Engine } from 'ox/wasm'
+
+await Engine.load()
+```

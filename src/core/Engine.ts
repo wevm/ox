@@ -17,10 +17,9 @@ export type {
  * Installs crypto implementations, replacing the `@noble/*` implementations ox
  * uses by default.
  *
- * Slots are named after ox modules, and both the slots and the functions within
- * them are optional -- anything you leave out keeps using the default. Calls
- * merge, so an engine can be installed wholesale and then have a single
- * primitive overridden.
+ * Slots and their functions are optional. Omissions preserve earlier
+ * overrides, or use Ox's default when none exists. Calls merge, so a later
+ * engine can override one primitive.
  *
  * Call this once, during application startup, before any crypto call. ox
  * resolves the engine at call time, so values computed beforehand used whatever

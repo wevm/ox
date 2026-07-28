@@ -13,7 +13,7 @@
     "deps:ci": "pnpx actions-up",
     "dev": "pnpm exports:update && zile dev",
     "docs:dev": "pnpm --filter site dev",
-    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
+    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.node.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
@@ -23,7 +23,7 @@
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
     "bench": "vp test bench",
-    "bench:hash": "node --import tsx ./scripts/bench-hash.mts",
+    "bench:engines": "node --import tsx ./scripts/bench:engines.ts",
     "test": "vp test",
     "test:cov": "vp test --coverage",
     "test:fuzz": "FUZZ=true vp test run --project fuzz",
@@ -644,6 +644,21 @@
       "src": "./src/erc8021/Attribution.ts",
       "types": "./dist/erc8021/Attribution.d.ts",
       "default": "./dist/erc8021/Attribution.js"
+    },
+    "./node": {
+      "src": "./src/node/index.ts",
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    },
+    "./node/Engine": {
+      "src": "./src/node/Engine.ts",
+      "types": "./dist/node/Engine.d.ts",
+      "default": "./dist/node/Engine.js"
+    },
+    "./node/Hash": {
+      "src": "./src/node/Hash.ts",
+      "types": "./dist/node/Hash.d.ts",
+      "default": "./dist/node/Hash.js"
     },
     "./tempo": {
       "src": "./src/tempo/index.ts",

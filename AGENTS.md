@@ -64,7 +64,7 @@
 - **Examples should be small** -- public examples should show the minimum useful shape and avoid unrelated setup.
 - **Source docs first** -- public API documentation usually belongs in TSDoc near the exported source.
 - **Site pages** -- human guides live under `site/src/pages/`.
-- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
+- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
 - **Check TSDoc when touching docs** -- run `pnpm docs:gen` after changing public comments or examples.
 - **SEO descriptions are auto-derived** -- every generated docs page emits a `description` frontmatter (used for `<meta name="description">` and OG images), targeting 5-15 words. It is derived from the TSDoc summary (markdown stripped, first paragraph, clamped). Add an optional `@description` TSDoc block tag to a function/namespace/schema to override the auto-derived text with hand-written SEO copy. Hand-written site pages should set their own `description` frontmatter (or a `# Title [description]` heading).
 
@@ -107,7 +107,7 @@
 - **`pnpm exports:update` mutates** -- it rewrites `package.json#exports`.
 - **`pnpm docs:gen` and `pnpm docs:build` mutate generated docs output** -- run only when docs generation is part of the task.
 - **`FC_NUM_RUNS` sets the fuzz budget, and CI owns the number** -- `pnpm test:fuzz` runs the `fuzz` project on Node at 100 cases per property; the workflow raises it to 2000 through the environment. Size it against a runner rather than a laptop: 10k timed out at the default per-test limit in CI. Browsers are opt-in via `pnpm test:fuzz --project fuzz-browser`, since they triple the wall time and their unique risk (native codecs differing between engine versions) is already pinned per pull request by the `*.conformance.ts` suites. The `fuzz` projects raise `testTimeout`: one `test` is thousands of cases, so the unit-test default does not apply.
-- **`pnpm bench:hash` needs `cargo`** -- it compares the default, `ox/wasm` and native Rust in one table, so it builds `bench/native` (toolchain pinned in `bench/native/rust-toolchain.toml`). Without `cargo` it drops the native column rather than failing. `pnpm bench` covers the first two through Vitest, which cannot run native code. A full run takes several minutes.
+- **`pnpm bench:engines` needs `cargo` for Alloy** -- it compares every Ox engine slot, plus `ox/node`, `ox/wasm`, and `alloy (Rust)` where those providers supply a primitive. It builds `bench/native` with its pinned toolchain. Without `cargo`, Alloy Keccak256 reports unavailable while the Ox columns still run. A full run takes several minutes.
 - **`pnpm contracts:build` mutates generated contract artifacts** -- it runs Forge and `contracts/scripts/generate-typed-artifacts.ts`.
 - **Install hooks can mutate** -- `pnpm install` runs `postinstall`, which initializes submodules, builds contracts, and runs `pnpm dev`.
 
@@ -128,7 +128,7 @@
 - **Source layout** -- source lives in `src/`; tests live under `src/**/_test`; docs live in `site`; shared test utilities live in `test`; vectors live in `vectors`; contracts live in `contracts`.
 - **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@11.0.8`.
 - **Generated exports** -- `scripts/exports:update.ts` derives `package.json#exports` from `src/`. It flattens `src/core/<Name>.ts` to root package subpaths and ignores test/bench/snapshot files.
-- **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
+- **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.
 - **WASM artifacts are generated** -- C lives in `wasm/src`, targets in `wasm/targets.ts`, and the committed base64 modules (`src/wasm/internal/*.wasm.ts`, `src/tempo/internal/mine.wasm.ts`) are written by `pnpm wasm:build`. Never hand-edit them. After changing any C or target config, run `pnpm wasm:build` and commit the result; `pnpm wasm:check` fails CI otherwise. The toolchain is pinned in `wasm/toolchain.json` because compiled bytes depend on the exact compiler version. See `wasm/README.md`.
 - **Secrets are local** -- `.env` is local. Do not print, rewrite, or commit secrets.

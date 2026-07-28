@@ -257,8 +257,8 @@ export type Bls = {
 }
 
 /**
- * Root engine type. Every slot, and every function within a slot, is optional:
- * anything omitted falls back to ox's default implementation.
+ * Root engine type. Slots and functions are optional; omissions preserve
+ * earlier overrides, or use Ox's default when none exists.
  *
  * @internal
  */
