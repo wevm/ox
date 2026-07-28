@@ -10,6 +10,7 @@ import * as X25519 from './X25519.js'
 export {
   AsyncScopeError,
   get,
+  InvalidSlotValueError,
   reset,
   set,
   UnknownPrimitiveError,
