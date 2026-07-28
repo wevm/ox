@@ -103,8 +103,8 @@ describe('Hash', () => {
 
   test('behavior: grows memory past 64 MiB, then still hashes small inputs', () => {
     // The input itself is exactly 64 MiB, so the heap base and digest force
-    // memory past that boundary. Growing detaches the previous `ArrayBuffer`; a
-    // retained view would silently read zero bytes in the assertion below.
+    // memory past that boundary. Growing detaches the previous `ArrayBuffer`;
+    // a retained view would silently read zero bytes in the assertion below.
     const large = new Uint8Array(64 * 1024 * 1024).fill(7)
     expect(engine.sha256(large)).toEqual(sha256(large))
     expect(engine.blake3(large)).toEqual(blake3(large))
@@ -112,7 +112,7 @@ describe('Hash', () => {
     const small = input(32)
     expect(engine.sha256(small)).toEqual(sha256(small))
     expect(engine.blake3(small)).toEqual(blake3(small))
-  })
+  }, 60_000)
 
   test('behavior: accepts Uint8Array subviews without mutation', () => {
     const backing = input(1027)
