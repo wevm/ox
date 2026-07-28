@@ -260,20 +260,6 @@ Binary values cross engine boundaries as raw `Uint8Array` values. Ox performs
 rather than relying on a side-effect import: Ox declares `sideEffects: false`,
 so a bundler may drop an import that appears unused.
 
-The `HdKey` slot receives BIP-32 seeds and extended private keys as trusted
-inputs and returns plain records rather than provider objects. Existing HD-key
-values resolve the currently installed implementation whenever `derive` is
-called, so scoped overrides and engine swaps do not retain provider instances.
-On derivation, `versions` selects the returned node's version bytes; providers
-must read the source private version from the encoded key independently.
-Providers must accept non-zero-offset seed views without mutation or retention
-and return fresh, owned buffers and version records.
-
-Serialized `Bls` implementations are responsible for matching Ox's default
-validation of compressed lengths, canonical encodings, curve membership,
-subgroups, and infinity. Providers must not mutate or retain input views and
-must return fresh, exact-length byte arrays.
-
 **Benefits**
 
 - Supports synchronous native libraries and policy-required providers.
@@ -300,10 +286,16 @@ Run the engine comparison with:
 pnpm bench:engines
 ```
 
-Run the BLS boundary benchmarks in Node and supported browsers with:
+Run focused benchmarks for the added public hash, serialized BLS, and HD-key
+paths with:
 
 ```sh
-pnpm bench --project core src/core/Bls.bench.ts src/core/Bls_crypto.bench.ts
+pnpm bench --project core src/core/Hash.bench.ts src/core/Bls.bench.ts src/core/Bls_crypto.bench.ts src/core/HdKey.bench.ts
+```
+
+Run the BLS boundary benchmarks in supported browsers with:
+
+```sh
 pnpm bench --project browser src/core/Bls.bench.ts --testNamePattern 'Bls\.(getPublicKey|sign|verify)'
 ```
 
@@ -327,31 +319,6 @@ engine. The provider columns count the primitives each implementation supplies:
 harness never times Ox's fallback under another engine's name.
 `alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
 engine.
-
-The harness reports the first provider factory call separately from steady
-state. A fresh process on the benchmark host, after module loading, measured:
-
-| Provider  | Initialization |
-| --------- | -------------- |
-| `ox/node` | 221.08 µs      |
-| `ox/wasm` | 5.22 ms        |
-
-Each provider initializes once, so these single-call measurements are startup
-costs rather than throughput distributions. WASM compilation is memoized after
-the first successful call.
-
-A separate Playwright run records the serialized BLS boundary in every
-supported browser. These rows compare the fastest serialized representation
-with the structured-object path:
-
-| Browser        | `getPublicKey` output | `sign` output | `verify` input |
-| -------------- | --------------------- | ------------- | -------------- |
-| Chromium 145   | 1.87×                 | 1.11×         | 1.10×          |
-| Firefox 146    | 2.48×                 | 1.29×         | 1.14×          |
-| WebKit 26      | 1.84×                 | 1.08×         | 1.07×          |
-
-Browser benchmark timers are coarser than Node's, especially for short calls;
-use these as directional conversion-cost measurements.
 
 Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1, using 50 ms
 warmups, 200 ms measurement budgets, and three repeats, produced the following

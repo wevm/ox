@@ -9,6 +9,16 @@ for (const size of sizes) {
   const bytes = Bytes.random(size)
   const hex = Hex.fromBytes(bytes)
 
+  describe(`Hash.blake3 (${size} bytes input)`, () => {
+    bench('Bytes.Bytes input', () => {
+      Hash.blake3(bytes)
+    })
+
+    bench('Hex.Hex input', () => {
+      Hash.blake3(hex)
+    })
+  })
+
   describe(`Hash.sha256 (${size} bytes input)`, () => {
     bench('Bytes.Bytes input', () => {
       Hash.sha256(bytes)
