@@ -296,9 +296,9 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          // The properties the `fuzz` project runs under Node, put in front of
-          // the native codecs only a browser has. Gated behind `FUZZ=true`
-          // alongside it.
+          // Browser-compatible properties from the `fuzz` project, put in
+          // front of native codecs only a browser has. Gated behind
+          // `FUZZ=true` alongside it.
           name: 'fuzz-browser',
           deps: {
             // Discover every direct fuzz oracle before browsers connect.
@@ -334,7 +334,7 @@ export default defineConfig({
               },
             },
           },
-          include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
+          include: process.env.FUZZ ? ['src/**/*.fuzz.ts', '!src/node/**'] : [],
           testTimeout: fuzzTimeout,
           browser: {
             enabled: true,

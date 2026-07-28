@@ -10,6 +10,7 @@ import type * as internal from './internal/instantiate.js'
 export {
   AsyncScopeError,
   get,
+  InvalidSlotValueError,
   reset,
   set,
   UnknownPrimitiveError,
