@@ -1,5 +1,11 @@
 # ox
 
+## 1.1.2
+
+### Patch Changes
+
+- [#326](https://github.com/wevm/ox/pull/326) [`030f319`](https://github.com/wevm/ox/commit/030f319d4fc5343a6d05200266da7d9fd6d022e4) Thanks [@jxom](https://github.com/jxom)! - Re-exported `Engine.InvalidSlotValueError` from the Node and WASM entrypoints.
+
 ## 1.1.1
 
 ### Patch Changes
