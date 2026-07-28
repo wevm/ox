@@ -3,7 +3,7 @@ import { ripemd160 as noble_ripemd160 } from '@noble/hashes/legacy.js'
 import { sha256 as noble_sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3.js'
 import { bench, describe } from 'vp/test'
-import { create as createWasm } from './Hash.js'
+import { engine as wasmEngine } from './Hash.js'
 
 // Sizes expose fixed boundary overhead and sustained throughput. Crossovers
 // vary by primitive, runtime, and processor.
@@ -12,7 +12,7 @@ import { create as createWasm } from './Hash.js'
 // run Rust, and this portable benchmark must remain browser-compatible.
 const sizes = [32, 64, 256, 1024, 4096, 65_536, 1_048_576] as const
 
-const wasm = (await createWasm()).Hash
+const wasm = await wasmEngine()
 const key = Uint8Array.from({ length: 32 }, (_, index) => index % 97)
 
 for (const size of sizes) {

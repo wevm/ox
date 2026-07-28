@@ -20,6 +20,17 @@ function fromHex(hex: string) {
   return bytes
 }
 
+/** BLAKE3 team's official portable test vectors. */
+export const blake3 = (() => {
+  const parsed = JSON.parse(read('blake3.json')) as {
+    cases: { hash: string; input_len: number }[]
+  }
+  return parsed.cases.map(({ hash, input_len }) => ({
+    digest: fromHex(hash.slice(0, 64)),
+    message: new Uint8Array(input_len).map((_, index) => index % 251),
+  }))
+})()
+
 /**
  * Parses the `Len` / `Msg` / `MD` shape shared by the NIST CAVP response files
  * and the files pyca reformatted to match them.

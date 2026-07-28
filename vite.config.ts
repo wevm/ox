@@ -233,6 +233,38 @@ export default defineConfig({
             'src/**/*.conformance.ts',
             '!src/webauthn/**',
           ],
+          deps: {
+            // Composite engine modules re-export the public API. Discover its
+            // default implementations before browsers connect.
+            optimizer: {
+              client: {
+                include: [
+                  '@noble/ciphers/aes.js',
+                  '@noble/curves/ed25519.js',
+                  '@noble/curves/secp256k1.js',
+                  '@noble/hashes/blake3.js',
+                  '@noble/hashes/hmac.js',
+                  '@noble/hashes/legacy.js',
+                  '@noble/hashes/pbkdf2.js',
+                  '@noble/hashes/scrypt.js',
+                  '@noble/hashes/sha2.js',
+                  '@noble/hashes/sha3.js',
+                  '@scure/bip32',
+                  '@scure/bip39',
+                  '@scure/bip39/wordlists/czech.js',
+                  '@scure/bip39/wordlists/english.js',
+                  '@scure/bip39/wordlists/french.js',
+                  '@scure/bip39/wordlists/italian.js',
+                  '@scure/bip39/wordlists/japanese.js',
+                  '@scure/bip39/wordlists/korean.js',
+                  '@scure/bip39/wordlists/portuguese.js',
+                  '@scure/bip39/wordlists/simplified-chinese.js',
+                  '@scure/bip39/wordlists/spanish.js',
+                  '@scure/bip39/wordlists/traditional-chinese.js',
+                ],
+              },
+            },
+          },
           browser: {
             enabled: true,
             provider: playwright() as never,
@@ -268,6 +300,40 @@ export default defineConfig({
           // the native codecs only a browser has. Gated behind `FUZZ=true`
           // alongside it.
           name: 'fuzz-browser',
+          deps: {
+            // Discover every direct fuzz oracle before browsers connect.
+            // Mid-run dependency optimization reloads the test runtime.
+            optimizer: {
+              client: {
+                include: [
+                  '@fast-check/vitest',
+                  '@noble/ciphers/aes.js',
+                  '@noble/curves/ed25519.js',
+                  '@noble/curves/nist.js',
+                  '@noble/curves/secp256k1.js',
+                  '@noble/hashes/blake3.js',
+                  '@noble/hashes/hmac.js',
+                  '@noble/hashes/legacy.js',
+                  '@noble/hashes/pbkdf2.js',
+                  '@noble/hashes/scrypt.js',
+                  '@noble/hashes/sha2.js',
+                  '@noble/hashes/sha3.js',
+                  '@scure/bip32',
+                  '@scure/bip39',
+                  '@scure/bip39/wordlists/czech.js',
+                  '@scure/bip39/wordlists/english.js',
+                  '@scure/bip39/wordlists/french.js',
+                  '@scure/bip39/wordlists/italian.js',
+                  '@scure/bip39/wordlists/japanese.js',
+                  '@scure/bip39/wordlists/korean.js',
+                  '@scure/bip39/wordlists/portuguese.js',
+                  '@scure/bip39/wordlists/simplified-chinese.js',
+                  '@scure/bip39/wordlists/spanish.js',
+                  '@scure/bip39/wordlists/traditional-chinese.js',
+                ],
+              },
+            },
+          },
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
           testTimeout: fuzzTimeout,
           browser: {

@@ -12,16 +12,17 @@ replaces individual implementations without changing the `Hash`, `Secp256k1`,
 
 | Engine      | Runtime                       | Benefits                                  | Trade-offs                              |
 | ----------- | ----------------------------- | ----------------------------------------- | --------------------------------------- |
-| `ox`        | Browser, Node, and edge       | Audited, isomorphic, no setup             | Slower for some hashes                  |
+| `ox`        | Browser, Node, and edge       | Audited, isomorphic, no setup             | Slower for some primitives              |
 | `ox/wasm`   | Runtimes with WebAssembly     | Fast, isomorphic, portable                | Async startup and memory marshalling    |
-| `ox/node`   | Node.js 22 and newer          | Native OpenSSL-backed hashes              | Node-only and no Keccak256              |
+| `ox/node`   | Node.js 22 and newer          | Native cryptography, no compilation       | Node-only and intentionally partial     |
 | Custom      | Implementation-dependent      | Any supported primitive or provider       | You own correctness and key handling    |
 
 Engines are partial. Anything they omit leaves the currently installed
 implementation unchanged, falling back to Ox's default when no override was
-installed earlier. Calls to [`Engine.set`](/api/Engine/set) merge, including
-within the same slot, and Ox selects an implementation when a cryptographic
-function is called.
+installed earlier. [`Engine.install`](/api/Engine/install) resolves selected
+provider modules in parallel and installs them only after every module is
+ready. Calls merge, including within the same slot, and Ox selects an
+implementation when a cryptographic function is called.
 
 Install an engine once during application startup, before making cryptographic
 calls. The registry belongs to one loaded Ox module instance, so separate
@@ -62,32 +63,52 @@ because defaults are fallbacks, not registered overrides.
 The WASM engine compiles and installs asynchronously:
 
 ```ts twoslash
-import { Hash } from 'ox'
-import { Engine } from 'ox/wasm'
+import { Engine, Hash } from 'ox/wasm'
 
-await Engine.load()
+await Engine.install()
 
 const digest = Hash.keccak256('0xdeadbeef')
 ```
 
-It supplies `hmacSha256`, `keccak256`, `ripemd160`, and `sha256`. BLAKE3 and
-every non-`Hash` operation keep their current implementation, or use Ox's
-default when no earlier override exists.
+It supplies the following partial slots:
 
-Use `create` when you need the engine without installing it:
+- `Hash`: BLAKE3, HMAC-SHA256, Keccak256, RIPEMD-160, and SHA-256.
+- `Keystore`: synchronous PBKDF2-HMAC-SHA256.
+- `Mnemonic`: BIP-39 seed derivation.
+- `Ed25519`: public-key derivation, signing, verification, and private-key
+  conversion to X25519.
+- `X25519`: public-key derivation and shared-secret calculation.
+
+Other operations keep their current implementation, or use Ox's default when
+no earlier override exists. In particular, asynchronous KDFs remain on the
+default because wrapping synchronous WASM in a promise would not make it yield.
+
+Provider modules expose the regular Ox API alongside an `engine` factory. Use
+this to install only the modules an application needs:
 
 ```ts twoslash
-import { Engine } from 'ox/wasm'
+import { Engine } from 'ox'
+import { Hash } from 'ox/wasm'
 
-const wasm = await Engine.create()
+await Engine.install({
+  Hash: Hash.engine(),
+})
+
+const digest = Hash.sha256('0xdeadbeef')
 ```
+
+`Engine.install` awaits all supplied slot promises together, then installs the
+resolved modules atomically. `Hash.engine()` returns the raw `Hash` slot;
+`Hash.sha256()` remains the normal formatted public API.
 
 **Benefits**
 
 - Runs in browsers, Node.js, and other runtimes with WebAssembly.
-- Provides a substantial Keccak256 speedup on common runtimes.
-- Keeps hashing synchronous after one asynchronous startup step.
+- Accelerates hashes, key derivation, Ed25519, and X25519 on common runtimes.
+- Keeps cryptographic calls synchronous after one asynchronous startup step.
 - Embeds the compiled module, with no separate WASM asset to host.
+- Clears copied secret inputs, staged outputs, and explicit workspaces after
+  each sensitive call, including after recoverable traps.
 
 **Trade-offs**
 
@@ -96,6 +117,8 @@ const wasm = await Engine.create()
 - Gains vary by primitive, input size, runtime, and processor.
 - Adds the WASM implementation without removing JavaScript fallbacks from the
   bundle.
+- Uses pinned portable C implementations that Ox must keep reviewed and
+  updated.
 
 ## Node Engine
 
@@ -103,44 +126,80 @@ The Node engine uses the built-in `node:crypto` implementation. Its setup is
 asynchronous to match `ox/wasm`, although Node requires no compilation:
 
 ```ts twoslash
-import { Hash } from 'ox'
-import { Engine } from 'ox/node'
+import { Engine, Hash } from 'ox/node'
 
-await Engine.load()
+await Engine.install()
 
 const digest = Hash.sha256('0xdeadbeef')
 ```
 
-It supplies `hmacSha256`, `ripemd160`, and `sha256`. Keccak256 and BLAKE3 keep
-their current implementation, or use Ox's default when no earlier override
-exists. Node's `sha3-256` is not Ethereum Keccak256 and must not be substituted
-for it.
+It supplies the following partial slots:
 
-Use `create` to obtain the engine without installing it:
+- `Hash`: HMAC-SHA256, RIPEMD-160, and SHA-256.
+- `Keystore`: AES-CTR and synchronous/asynchronous PBKDF2-HMAC-SHA256.
+- `Mnemonic`: BIP-39 seed derivation.
+- `Ed25519`: public-key derivation, signing, and private-key conversion to
+  X25519.
+- `P256`: public-key derivation.
+- `X25519`: public-key derivation and shared-secret calculation.
+
+Other operations keep their current implementation, or use Ox's default when
+no earlier override exists. Node's `sha3-256` is not Ethereum Keccak256 and
+must not be substituted for it. Ed25519 verification stays on the default
+because Node/OpenSSL does not implement Ox's ZIP-215 semantics. Scrypt also
+stays on the default because OpenSSL rejects parameter combinations accepted
+by Ox's public API.
+
+Install one Node module through the same core API:
 
 ```ts twoslash
-import { Engine } from 'ox/node'
+import { Engine } from 'ox'
+import { Hash } from 'ox/node'
 
-const node = await Engine.create()
+await Engine.install({
+  Hash: Hash.engine(),
+})
+
+const digest = Hash.sha256('0xdeadbeef')
 ```
 
-The Node and WASM engines compose through `Engine.set`:
+### Selecting Node and WASM modules
+
+Select modules from different providers in one atomic installation:
 
 ```ts twoslash
-import { Engine as NodeEngine } from 'ox/node'
-import { Engine as WasmEngine } from 'ox/wasm'
+import { Engine, Hash } from 'ox'
+import { Hash as NodeHash } from 'ox/node'
+import { Ed25519 as WasmEd25519 } from 'ox/wasm'
 
-await WasmEngine.load()
-await NodeEngine.load()
+await Engine.install({
+  Ed25519: WasmEd25519.engine(),
+  Hash: NodeHash.engine(),
+})
+
+const digest = Hash.sha256('0xdeadbeef')
 ```
 
-The second load replaces the three overlapping hashes with Node
-implementations while keeping WASM Keccak256 installed.
+The factories begin initializing while the argument is evaluated, then
+`Engine.install` awaits them together. If any factory rejects, none of the
+resolved modules are installed.
+
+Repeated installations merge primitives. Installing Node's `Hash` after WASM
+keeps WASM-only BLAKE3 and Keccak256 installed while replacing the three
+overlapping hashes. Reset the slot first when replacing it completely:
+
+```ts twoslash
+import { Engine } from 'ox'
+import { Hash } from 'ox/node'
+
+Engine.reset('Hash')
+await Engine.install({ Hash: Hash.engine() })
+```
 
 **Benefits**
 
-- Uses Node's native OpenSSL-backed cryptography.
-- Can use processor acceleration for SHA-256 and HMAC-SHA256.
+- Uses Node's native OpenSSL-backed cryptography and libuv threadpool.
+- Can use processor acceleration for hashes, AES, and supported curves.
 - Requires no WASM compilation or memory marshalling.
 - Lives in a separate entrypoint, so browser bundles do not resolve
   `node:crypto`.
@@ -148,7 +207,7 @@ implementations while keeping WASM Keccak256 installed.
 **Trade-offs**
 
 - Supports Node.js only and must not be imported into browser bundles.
-- Does not provide Keccak256 or BLAKE3.
+- Does not provide Keccak256, BLAKE3, scrypt, or ZIP-215 verification.
 - Native call overhead can affect short-input rankings.
 - Algorithm availability and validation modes depend on the Node and OpenSSL
   build. FIPS mode may reject RIPEMD-160.
@@ -181,6 +240,19 @@ Engine.set({ Secp256k1: mySecp256k1 })
 // ---cut-after---
 declare const myKeccak256: (input: Uint8Array) => Uint8Array
 declare const mySecp256k1: NonNullable<Engine.Engine['Secp256k1']>
+```
+
+Use `Engine.install` when one or more custom modules are asynchronous. Values
+may be slots or promises of slots:
+
+```ts twoslash
+import { Engine } from 'ox'
+
+await Engine.install({
+  Hash: Promise.resolve({ keccak256: myKeccak256 }),
+})
+// ---cut-after---
+declare const myKeccak256: (input: Uint8Array) => Uint8Array
 ```
 
 Binary values cross engine boundaries as raw `Uint8Array` values. Ox performs
@@ -220,42 +292,42 @@ engine. The provider columns count the primitives each implementation supplies:
 | Slot          | Primitives | `ox` | `ox/node` | `ox/wasm` | `alloy (Rust)` |
 | ------------- | ---------- | ---- | --------- | --------- | -------------- |
 | `Bls`         | 5          | 5    | n/a       | n/a       | n/a            |
-| `Ed25519`     | 6          | 6    | n/a       | n/a       | n/a            |
-| `Hash`        | 5          | 5    | 3         | 4         | 1              |
-| `Keystore`    | 6          | 6    | n/a       | n/a       | n/a            |
-| `Mnemonic`    | 1          | 1    | n/a       | n/a       | n/a            |
-| `P256`        | 6          | 6    | n/a       | n/a       | n/a            |
+| `Ed25519`     | 6          | 6    | 3         | 4         | n/a            |
+| `Hash`        | 5          | 5    | 3         | 5         | 1              |
+| `Keystore`    | 6          | 6    | 4         | 1         | n/a            |
+| `Mnemonic`    | 1          | 1    | 1         | 1         | n/a            |
+| `P256`        | 6          | 6    | 1         | n/a       | n/a            |
 | `Secp256k1`   | 6          | 6    | n/a       | n/a       | n/a            |
-| `X25519`      | 3          | 3    | n/a       | n/a       | n/a            |
-| **Total**     | **38**     | **38** | **3**     | **4**     | **1**          |
+| `X25519`      | 3          | 3    | 2         | 2         | n/a            |
+| **Total**     | **38**     | **38** | **14**    | **13**    | **1**          |
 
 `n/a` means the provider does not implement a primitive in that slot. The
 harness never times Ox's fallback under another engine's name.
 `alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
 engine.
 
-Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1 produced the
-following best-observed timings (lower is better). Speedup compares the
-fastest Ox engine in each row with `ox`; Alloy remains a reference only. The
-full command prints every primitive and input size:
+Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1, using 50 ms
+warmups, 200 ms measurement budgets, and three repeats, produced the following
+best-observed timings (lower is better). Speedup compares the fastest Ox engine
+in each row with `ox`; Alloy remains a reference only. The full command prints
+every primitive and input size:
 
 | Primitive and case                    | `ox`      | `ox/node` | `ox/wasm` | `alloy (Rust)` | Fastest Ox engine vs `ox` |
 | ------------------------------------- | --------- | --------- | --------- | -------------- | ------------------------- |
-| `Bls.sign`, 32 B message              | 15.59 ms  | n/a       | n/a       | n/a            | n/a                       |
-| `Ed25519.sign`, 32 B message          | 198.51 µs | n/a       | n/a       | n/a            | n/a                       |
-| `Hash.keccak256`, 32 B                | 2.58 µs   | n/a       | 277 ns    | 134 ns         | 9.31× (wasm)              |
-| `Hash.keccak256`, 1024 KiB            | 17.91 ms  | n/a       | 1.22 ms   | 1.02 ms        | 14.64× (wasm)             |
-| `Hash.sha256`, 32 B                   | 629 ns    | 468 ns    | 289 ns    | n/a            | 2.18× (wasm)              |
-| `Hash.sha256`, 1024 KiB               | 3.84 ms   | 334.46 µs | 3.01 ms   | n/a            | 11.47× (node)             |
-| `Hash.ripemd160`, 32 B                | 741 ns    | 567 ns    | 270 ns    | n/a            | 2.75× (wasm)              |
-| `Hash.ripemd160`, 1024 KiB            | 5.90 ms   | 2.16 ms   | 2.77 ms   | n/a            | 2.73× (node)              |
-| `Hash.hmacSha256`, 32 B               | 2.24 µs   | 1.08 µs   | 1.16 µs   | n/a            | 2.07× (node)              |
-| `Hash.hmacSha256`, 1024 KiB           | 5.31 ms   | 462.89 µs | 5.67 ms   | n/a            | 11.47× (node)             |
-| `Keystore.aesCtrEncrypt`, 4 KiB       | 38.25 µs  | n/a       | n/a       | n/a            | n/a                       |
-| `Mnemonic.toSeed`, 12 words           | 5.57 ms   | n/a       | n/a       | n/a            | n/a                       |
-| `P256.sign`, 32 B message             | 174.94 µs | n/a       | n/a       | n/a            | n/a                       |
-| `Secp256k1.sign`, 32 B message        | 180.89 µs | n/a       | n/a       | n/a            | n/a                       |
-| `X25519.getSharedSecret`, 32 B key    | 613.69 µs | n/a       | n/a       | n/a            | n/a                       |
+| `Bls.sign`, 32 B message              | 15.52 ms  | n/a       | n/a       | n/a            | n/a                       |
+| `Ed25519.getPublicKey`, 32 B key      | 95.37 µs  | 40.68 µs  | 21.75 µs  | n/a            | 4.38× (wasm)              |
+| `Ed25519.sign`, 32 B message          | 195.58 µs | 40.30 µs  | 43.92 µs  | n/a            | 4.85× (node)              |
+| `Ed25519.verify`, 32 B message        | 952.85 µs | n/a       | 58.06 µs  | n/a            | 16.41× (wasm)             |
+| `Hash.blake3`, 32 B                   | 1.21 µs   | n/a       | 421 ns    | n/a            | 2.87× (wasm)              |
+| `Hash.blake3`, 1024 KiB               | 11.06 ms  | n/a       | 1.03 ms   | n/a            | 10.75× (wasm)             |
+| `Hash.keccak256`, 32 B                | 2.57 µs   | n/a       | 274 ns    | 129 ns         | 9.40× (wasm)              |
+| `Hash.keccak256`, 1024 KiB            | 18.00 ms  | n/a       | 1.24 ms   | 1.04 ms        | 14.52× (wasm)             |
+| `Hash.sha256`, 1024 KiB               | 3.81 ms   | 348.39 µs | 2.96 ms   | n/a            | 10.93× (node)             |
+| `Keystore.aesCtrEncrypt`, 4 KiB       | 28.85 µs  | 2.71 µs   | n/a       | n/a            | 10.66× (node)             |
+| `Keystore.pbkdf2Sha256`, 262,144 runs | 234.08 ms | 21.55 ms  | 98.52 ms  | n/a            | 10.86× (node)             |
+| `Mnemonic.toSeed`, 12 words           | 5.60 ms   | 441.33 µs | 1.87 ms   | n/a            | 12.69× (node)             |
+| `P256.getPublicKey`, 32 B key         | 135.07 µs | 10.48 µs  | n/a       | n/a            | 12.89× (node)             |
+| `X25519.getSharedSecret`, 32 B key    | 597.48 µs | 47.00 µs  | 40.70 µs  | n/a            | 14.68× (wasm)             |
 
 The benchmark initializes engines outside the timed loops and sends each Ox
 call through the same engine resolver. It uses identical inputs, warmups,
@@ -278,39 +350,56 @@ beforeEach(() => {
 })
 ```
 
-For differential tests, obtain an implementation with `create`, then install it
+For differential tests, obtain an implementation with `engine`, then install it
 for one synchronous call with [`Engine.with`](/api/Engine/with):
 
 ```ts twoslash
 import { Engine, Hash } from 'ox'
 import { Engine as WasmEngine } from 'ox/wasm'
 
-const wasm = await WasmEngine.create()
+const wasm = await WasmEngine.engine()
 const digest = Engine.with(wasm, () => Hash.sha256('0xdeadbeef'))
 ```
 
 `Engine.with` rejects asynchronous functions because concurrent work could
-observe the module-instance-global override. `Engine.set` and `Engine.reset`
-clear Ox's derived cryptographic caches automatically.
+observe the module-instance-global override. `Engine.install`, `Engine.set`,
+and `Engine.reset` clear Ox's derived cryptographic caches automatically.
 
 Test custom implementations against published vectors, boundary-sized and
 empty inputs, and an independent implementation. Verify exact digest,
 signature, and key lengths rather than checking only that a call succeeds.
 
+Ox's built-in engines add independent conformance coverage for NIST AES-CTR,
+RFC 7914 PBKDF2, RFC 8032 Ed25519, all 196 ZIP-215 verification cases, RFC 7748
+X25519, libsodium's low-order X25519 corpus, official BLAKE3 vectors, and
+English and Japanese BIP-39 vectors. Differential fuzz tests also cover
+subviews, input immutability, output ownership, interleaved providers, memory
+growth, and boundary-sized inputs. WASM conformance runs in Chromium, Firefox,
+and WebKit as well as Node.js.
+
 ## Security
 
 Treat an engine as trusted code. Depending on the slot, it can receive HMAC
 keys, private keys, passwords, mnemonic phrases, and plaintext keystore
-material. `Engine.set` validates slot and primitive names, but it cannot
-validate correctness, constant-time behavior, or key handling.
+material. `Engine.install` and `Engine.set` validate slot and primitive names,
+but they cannot validate correctness, constant-time behavior, or key handling.
 
 Ox's default engine uses audited cryptographic implementations. The WASM engine
 does not promise protection from timing or cache side channels. WebAssembly has
 [no constant-time execution guarantee](https://webassembly.org/docs/security/).
-The WASM HMAC implementation clears its copied inputs and explicit scratch
-buffer from linear memory in a `finally` block, including after recoverable
-WebAssembly traps. It cannot clear caller-owned buffers or runtime-managed
-state, and this does not make the surrounding runtime side-channel resistant.
+The WASM providers clear copied secret inputs, staged outputs, and explicit
+workspaces from linear memory in `finally` blocks, including after recoverable
+WebAssembly traps. They cannot clear caller-owned buffers, JavaScript strings,
+runtime-managed state, or every compiler-created stack temporary. This does
+not make the surrounding runtime side-channel resistant.
+
+The WASM curve and mnemonic provider pins
+[Monocypher 4.0.3](https://github.com/LoupVaillant/Monocypher/tree/4.0.3).
+Its published Cure53 audit covered version 3.1.1, not the 4.x series, and 4.0.3
+includes a fix recorded in Monocypher's
+[security disclosures](https://monocypher.org/quality-assurance/disclosures).
+The BLAKE3 provider pins the official portable C implementation and disables
+architecture-specific SIMD and atomics.
 
 The Node engine inherits the properties of the active Node and OpenSSL build.
 Using `node:crypto` does not itself mean FIPS mode is enabled or that every

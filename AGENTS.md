@@ -56,6 +56,7 @@
 - **One resolver module per slot, one binding per primitive** -- each slot has an `internal/<slot>.ts` that pairs a `<name>Default` binding with an exported resolver picking `overrides.<Slot>?.<name> ?? <name>Default`. Separate bindings are what keep the primitives independently shakeable: grouping a slot's defaults into one object regresses `Keystore.pbkdf2` by 3.7 kB gzip by tying `@noble/ciphers/aes` and `@noble/hashes/scrypt` to it.
 - **Declare defaults and resolvers against the contract** -- both are typed `Complete<Slot>['name']`. `Complete` makes every slot function required, so a default that goes missing or drifts from the contract fails to compile at the declaration rather than at a call site.
 - **Public modules never spell the fallback** -- they do `import * as engine from './internal/<slot>.js'` and call `engine.<name>(...)`. A `?? default` at a call site means the slot is missing a resolver.
+- **Provider modules stay usable as Ox modules** -- `ox/node` and `ox/wasm` slot namespaces re-export the corresponding core API and expose `engine()` for their raw installable slot. Core `Engine.install` resolves slot promises in parallel and installs only after all resolve.
 
 ## Documentation Conventions
 

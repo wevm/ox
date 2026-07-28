@@ -17,6 +17,62 @@ type Unlisted = {
   >
 }[keyof Engine.Engine]
 
+describe('install', () => {
+  test('accepts raw and promised slots and preserves their resolved shape', () => {
+    const keccak256 = (input: Uint8Array) => input
+    const toSeed = (_mnemonic: string) => new Uint8Array(64)
+
+    expectTypeOf(
+      Engine.install({
+        Hash: Promise.resolve({ keccak256 }),
+        Mnemonic: { toSeed },
+      }),
+    ).toEqualTypeOf<
+      Promise<{
+        Hash: { keccak256: typeof keccak256 }
+        Mnemonic: { toSeed: typeof toSeed }
+      }>
+    >()
+  })
+
+  test('rejects an unknown slot', () => {
+    // @ts-expect-error
+    void Engine.install({ Keccak: Promise.resolve({}) })
+  })
+
+  test('rejects an unknown slot alongside a valid slot', () => {
+    void Engine.install({
+      Hash: { keccak256: (input) => input },
+      // @ts-expect-error
+      Keccak: {},
+    })
+  })
+
+  test('rejects a misspelled function', () => {
+    void Engine.install({
+      // @ts-expect-error
+      Hash: Promise.resolve({ keccak_256: (input: Uint8Array) => input }),
+    })
+  })
+
+  test('rejects a misspelled function alongside a valid function', () => {
+    void Engine.install({
+      // @ts-expect-error
+      Hash: {
+        keccak256: (input: Uint8Array) => input,
+        keccak_256: (input: Uint8Array) => input,
+      },
+    })
+  })
+
+  test('rejects a mistyped promised function', () => {
+    void Engine.install({
+      // @ts-expect-error
+      Hash: Promise.resolve({ keccak256: (input: string) => input }),
+    })
+  })
+})
+
 describe('set', () => {
   test('accepts a partial engine', () => {
     expectTypeOf(Engine.set).parameter(0).toEqualTypeOf<Engine.Engine>()

@@ -2,11 +2,11 @@ import { Hash as CoreHash, Hex } from 'ox'
 import { Hash } from 'ox/node'
 import { describe, expect, test } from 'vp/test'
 
-describe('create', () => {
+describe('engine', () => {
   test('behavior: exposes the supported primitives', async () => {
-    const engine = await Hash.create()
+    const engine = await Hash.engine()
 
-    expect(Object.keys(engine.Hash).sort()).toMatchInlineSnapshot(`
+    expect(Object.keys(engine).sort()).toMatchInlineSnapshot(`
       [
         "hmacSha256",
         "ripemd160",
@@ -16,7 +16,7 @@ describe('create', () => {
   })
 
   test('behavior: matches published empty-input vectors', async () => {
-    const { hmacSha256, ripemd160, sha256 } = (await Hash.create()).Hash
+    const { hmacSha256, ripemd160, sha256 } = await Hash.engine()
     const empty = new Uint8Array()
 
     expect(Hex.fromBytes(sha256(empty))).toMatchInlineSnapshot(
@@ -31,7 +31,7 @@ describe('create', () => {
   })
 
   test('behavior: agrees with the default across block boundaries', async () => {
-    const node = (await Hash.create()).Hash
+    const node = await Hash.engine()
 
     for (const size of [0, 1, 55, 56, 63, 64, 65, 127, 128, 129]) {
       const input = Uint8Array.from({ length: size }, (_, index) => index % 251)
@@ -45,7 +45,7 @@ describe('create', () => {
   })
 
   test('behavior: agrees with the default across HMAC key sizes', async () => {
-    const { hmacSha256 } = (await Hash.create()).Hash
+    const { hmacSha256 } = await Hash.engine()
     const message = Uint8Array.from({ length: 65 }, (_, index) => index % 251)
 
     for (const size of [0, 1, 32, 63, 64, 65, 200]) {
@@ -57,7 +57,7 @@ describe('create', () => {
   })
 
   test('behavior: respects typed-array offsets', async () => {
-    const node = (await Hash.create()).Hash
+    const node = await Hash.engine()
     const input = Uint8Array.from(
       { length: 80 },
       (_, index) => (index * 17) % 251,
@@ -77,15 +77,14 @@ describe('create', () => {
   })
 
   test('behavior: returns a fresh engine', async () => {
-    const first = await Hash.create()
-    const second = await Hash.create()
+    const first = await Hash.engine()
+    const second = await Hash.engine()
 
     expect(first === second).toMatchInlineSnapshot('false')
-    expect(first.Hash === second.Hash).toMatchInlineSnapshot('false')
   })
 
   test('behavior: returns owned Uint8Array values', async () => {
-    const { hmacSha256, ripemd160, sha256 } = (await Hash.create()).Hash
+    const { hmacSha256, ripemd160, sha256 } = await Hash.engine()
     const input = Uint8Array.of(1, 2, 3)
     const outputs = [hmacSha256(input, input), ripemd160(input), sha256(input)]
 

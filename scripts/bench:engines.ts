@@ -24,8 +24,8 @@ import * as mnemonic from '../src/core/internal/mnemonic.js'
 import * as p256 from '../src/core/internal/p256.js'
 import * as secp256k1 from '../src/core/internal/secp256k1.js'
 import * as x25519 from '../src/core/internal/x25519.js'
-import { create as createNode } from '../src/node/Engine.js'
-import { create as createWasm } from '../src/wasm/Engine.js'
+import { engine as nodeEngine } from '../src/node/Engine.js'
+import { engine as wasmEngine } from '../src/wasm/Engine.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -291,29 +291,29 @@ for (const size of hashSizes) {
   sync('Hash', 'sha256', case_, () => hash.sha256(input))
 }
 
-const aesKey = bytes(32, 97)
+const aesKey = bytes(16, 97)
 const aesIv = bytes(16, 53)
 const aesPlaintext = bytes(4096)
 const aesCiphertext = keystore.aesCtrEncrypt(aesKey, aesIv, aesPlaintext)
 const password = bytes(16, 97)
 const salt = bytes(32, 89)
-const pbkdf2Options = { c: 100_000, dkLen: 32 }
+const pbkdf2Options = { c: 262_144, dkLen: 32 }
 const scryptOptions = { N: 16_384, dkLen: 32, p: 1, r: 8 }
 
-sync('Keystore', 'aesCtrDecrypt', '4 KiB input, AES-256', () =>
+sync('Keystore', 'aesCtrDecrypt', '4 KiB input, AES-128', () =>
   keystore.aesCtrDecrypt(aesKey, aesIv, aesCiphertext),
 )
-sync('Keystore', 'aesCtrEncrypt', '4 KiB input, AES-256', () =>
+sync('Keystore', 'aesCtrEncrypt', '4 KiB input, AES-128', () =>
   keystore.aesCtrEncrypt(aesKey, aesIv, aesPlaintext),
 )
 sync(
   'Keystore',
   'pbkdf2Sha256',
-  '100,000 iterations, 32 B output',
+  '262,144 iterations, 32 B output',
   () => keystore.pbkdf2Sha256(password, salt, pbkdf2Options),
   { batch: 1 },
 )
-async_('Keystore', 'pbkdf2Sha256Async', '100,000 iterations, 32 B output', () =>
+async_('Keystore', 'pbkdf2Sha256Async', '262,144 iterations, 32 B output', () =>
   keystore.pbkdf2Sha256Async(password, salt, pbkdf2Options),
 )
 sync(
@@ -408,8 +408,8 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
     )
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
-const node = await createNode()
-const wasm = await createWasm()
+const node = await nodeEngine()
+const wasm = await wasmEngine()
 const rustRows = rust()
 
 const headers = [

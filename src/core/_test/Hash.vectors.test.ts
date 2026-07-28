@@ -1,6 +1,7 @@
 import { Hash } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import * as vectors from '../../../test/vectors/hashes/index.js'
+import * as hash from '../internal/hash.js'
 
 /**
  * Published vectors against ox's default (`@noble/hashes`) implementations.
@@ -10,6 +11,13 @@ import * as vectors from '../../../test/vectors/hashes/index.js'
  * the algorithms' designers, so they check the default path on its own terms.
  * See `test/vectors/hashes/README.md`.
  */
+
+describe('blake3', () => {
+  test(`matches ${vectors.blake3.length} official BLAKE3 vectors`, () => {
+    for (const { digest, message } of vectors.blake3)
+      expect(hash.blake3(message)).toEqual(digest)
+  })
+})
 
 describe('sha256', () => {
   test(`matches ${vectors.sha256.length} NIST CAVP vectors`, () => {

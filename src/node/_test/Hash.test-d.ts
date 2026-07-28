@@ -1,26 +1,32 @@
-import type { Engine } from 'ox'
 import { Hash as NodeHash } from 'ox/node'
 import { expectTypeOf, test } from 'vp/test'
+import type * as CoreEngine from '../../core/Engine.js'
+import * as CoreHash from '../../core/Hash.js'
 
-type Created = Awaited<ReturnType<typeof NodeHash.create>>
+type Slot = Awaited<ReturnType<typeof NodeHash.engine>>
 
 test('every implemented primitive is present', () => {
-  expectTypeOf<Created['Hash']['hmacSha256']>().toEqualTypeOf<
+  expectTypeOf<Slot['hmacSha256']>().toEqualTypeOf<
     (key: Uint8Array, message: Uint8Array) => Uint8Array
   >()
-  expectTypeOf<Created['Hash']['ripemd160']>().toEqualTypeOf<
+  expectTypeOf<Slot['ripemd160']>().toEqualTypeOf<
     (input: Uint8Array) => Uint8Array
   >()
-  expectTypeOf<Created['Hash']['sha256']>().toEqualTypeOf<
+  expectTypeOf<Slot['sha256']>().toEqualTypeOf<
     (input: Uint8Array) => Uint8Array
   >()
 })
 
 test('unsupported primitives are absent', () => {
-  expectTypeOf<Created['Hash']>().not.toHaveProperty('blake3')
-  expectTypeOf<Created['Hash']>().not.toHaveProperty('keccak256')
+  expectTypeOf<Slot>().not.toHaveProperty('blake3')
+  expectTypeOf<Slot>().not.toHaveProperty('keccak256')
 })
 
-test('the result is still an engine', () => {
-  expectTypeOf<Created>().toExtend<Engine.Engine>()
+test('the result is the raw slot, so `Engine.install` accepts it', () => {
+  expectTypeOf<{ Hash: Slot }>().toExtend<CoreEngine.Engine>()
+})
+
+test('the Node namespace exposes the public Hash API', () => {
+  expectTypeOf(NodeHash.sha256).toEqualTypeOf(CoreHash.sha256)
+  expectTypeOf<typeof NodeHash>().not.toHaveProperty('create')
 })

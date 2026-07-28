@@ -42,17 +42,64 @@ export type Target = {
   wasmOpt?: readonly string[] | undefined
 }
 
-const hmacSha256ScratchSize = 608
+const hmacSha256ScratchSize = 544
+const pbkdf2Sha256ScratchSize = hmacSha256ScratchSize
 
 export const targets = [
   {
-    defines: { HMAC_SHA256_SCRATCH_SIZE: hmacSha256ScratchSize },
-    extra: { hmacSha256ScratchSize: String(hmacSha256ScratchSize) },
+    defines: {
+      HMAC_SHA256_SCRATCH_SIZE: hmacSha256ScratchSize,
+      PBKDF2_SHA256_SCRATCH_SIZE: pbkdf2Sha256ScratchSize,
+    },
+    extra: {
+      hmacSha256ScratchSize: String(hmacSha256ScratchSize),
+      pbkdf2Sha256ScratchSize: String(pbkdf2Sha256ScratchSize),
+    },
     initialMemory: 1_048_576,
     maxBytes: 32_768,
     name: 'hashes',
     out: 'src/wasm/internal/hashes.wasm.ts',
     sources: ['wasm/src/hashes.c', 'wasm/src/ox_rt.c'],
+  },
+  {
+    cflags: ['-include', 'blake3_compat.h'],
+    defines: {
+      BLAKE3_ATOMICS: 0,
+      BLAKE3_NO_AVX2: 1,
+      BLAKE3_NO_AVX512: 1,
+      BLAKE3_NO_NEON: 1,
+      BLAKE3_NO_SSE2: 1,
+      BLAKE3_NO_SSE41: 1,
+    },
+    includes: ['wasm/shim/blake3', 'wasm/vendor/blake3'],
+    initialMemory: 131_072,
+    maxBytes: 24_576,
+    maxMemory: 4_294_967_296,
+    name: 'blake3',
+    out: 'src/wasm/internal/blake3.wasm.ts',
+    sources: [
+      'wasm/src/blake3.c',
+      'wasm/vendor/blake3/blake3.c',
+      'wasm/vendor/blake3/blake3_dispatch.c',
+      'wasm/vendor/blake3/blake3_portable.c',
+      'wasm/src/ox_rt.c',
+    ],
+    stackSize: 65_536,
+  },
+  {
+    includes: ['wasm/vendor/monocypher'],
+    initialMemory: 262_144,
+    maxBytes: 53_248,
+    maxMemory: 4_294_967_296,
+    name: 'crypto25519',
+    out: 'src/wasm/internal/crypto25519.wasm.ts',
+    sources: [
+      'wasm/src/crypto25519.c',
+      'wasm/vendor/monocypher/monocypher.c',
+      'wasm/vendor/monocypher/monocypher-ed25519.c',
+      'wasm/src/ox_rt.c',
+    ],
+    stackSize: 65_536,
   },
   {
     initialMemory: 131_072,
