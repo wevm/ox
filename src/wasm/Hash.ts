@@ -46,7 +46,7 @@ const instantiate = /*#__PURE__*/ internal.memoize(() =>
  *
  * :::note
  * Performance varies by primitive, input size, runtime, and processor. Run
- * `pnpm bench:hash` to compare Ox's default, Node, WASM, and Alloy
+ * `pnpm bench:engines` to compare Ox's default, Node, WASM, and Alloy
  * implementations on your target machine.
  * :::
  *

@@ -9,7 +9,7 @@
  *
  * :::note
  * Performance varies by primitive, input size, runtime, and processor. Run
- * `pnpm bench:hash` to compare the available implementations on your target
+ * `pnpm bench:engines` to compare the available implementations on your target
  * machine.
  * :::
  *

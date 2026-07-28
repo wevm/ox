@@ -208,46 +208,62 @@ so a bundler may drop an import that appears unused.
 
 ## Benchmarks
 
-Run the engine hash comparison with:
+Run the engine comparison with:
 
 ```sh
-pnpm bench:hash
+pnpm bench:engines
 ```
 
-The harness reports only implementations each provider actually supplies:
+The harness covers every engine slot and all 38 primitives in Ox's default
+engine. The provider columns count the primitives each implementation supplies:
 
-| Primitive       | `ox` | `ox/node` | `ox/wasm` | `alloy (Rust)` |
-| --------------- | ---- | --------- | --------- | -------------- |
-| `keccak256`     | yes  | n/a       | yes       | yes            |
-| `sha256`        | yes  | yes       | yes       | n/a            |
-| `ripemd160`     | yes  | yes       | yes       | n/a            |
-| `hmacSha256`    | yes  | yes       | yes       | n/a            |
+| Slot          | Primitives | `ox` | `ox/node` | `ox/wasm` | `alloy (Rust)` |
+| ------------- | ---------- | ---- | --------- | --------- | -------------- |
+| `Bls`         | 5          | 5    | n/a       | n/a       | n/a            |
+| `Ed25519`     | 6          | 6    | n/a       | n/a       | n/a            |
+| `Hash`        | 5          | 5    | 3         | 4         | 1              |
+| `Keystore`    | 6          | 6    | n/a       | n/a       | n/a            |
+| `Mnemonic`    | 1          | 1    | n/a       | n/a       | n/a            |
+| `P256`        | 6          | 6    | n/a       | n/a       | n/a            |
+| `Secp256k1`   | 6          | 6    | n/a       | n/a       | n/a            |
+| `X25519`      | 3          | 3    | n/a       | n/a       | n/a            |
+| **Total**     | **38**     | **38** | **3**     | **4**     | **1**          |
 
-`n/a` means the provider does not implement that primitive. The harness never
-times Ox's fallback under another engine's name. `alloy-primitives` provides
-Keccak256 only; it is a native reference, not an Ox engine.
+`n/a` means the provider does not implement a primitive in that slot. The
+harness never times Ox's fallback under another engine's name.
+`alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
+engine.
 
 One local run on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1 produced
 the following best-observed timings (lower is better). Speedup compares the
-fastest Ox engine in each row with `ox`; Alloy remains a reference only:
+fastest Ox engine in each row with `ox`; Alloy remains a reference only. The
+full command prints every primitive and input size:
 
-| Primitive and input    | `ox`     | `ox/node` | `ox/wasm` | `alloy (Rust)` | Fastest Ox engine vs `ox` |
-| ---------------------- | -------- | --------- | --------- | -------------- | ------------------------- |
-| `keccak256`, 32 B      | 2.57 µs  | n/a       | 268 ns    | 133 ns         | 9.59× (wasm)              |
-| `keccak256`, 1024 KiB  | 17.76 ms | n/a       | 1.23 ms   | 1.18 ms        | 14.44× (wasm)             |
-| `sha256`, 32 B         | 649 ns   | 447 ns    | 302 ns    | n/a            | 2.15× (wasm)              |
-| `sha256`, 1024 KiB     | 3.83 ms  | 349.83 µs | 3.04 ms   | n/a            | 10.94× (node)             |
-| `ripemd160`, 32 B      | 749 ns   | 564 ns    | 263 ns    | n/a            | 2.84× (wasm)              |
-| `ripemd160`, 1024 KiB  | 6.00 ms  | 2.21 ms   | 2.77 ms   | n/a            | 2.71× (node)              |
-| `hmacSha256`, 32 B     | 2.37 µs  | 1.01 µs   | 985 ns    | n/a            | 2.40× (wasm)              |
-| `hmacSha256`, 1024 KiB | 3.93 ms  | 345.87 µs | 2.94 ms   | n/a            | 11.38× (node)             |
+| Primitive and case                    | `ox`      | `ox/node` | `ox/wasm` | `alloy (Rust)` | Fastest Ox engine vs `ox` |
+| ------------------------------------- | --------- | --------- | --------- | -------------- | ------------------------- |
+| `Bls.sign`, 32 B message              | 15.59 ms  | n/a       | n/a       | n/a            | n/a                       |
+| `Ed25519.sign`, 32 B message          | 198.51 µs | n/a       | n/a       | n/a            | n/a                       |
+| `Hash.keccak256`, 32 B                | 2.58 µs   | n/a       | 277 ns    | 134 ns         | 9.31× (wasm)              |
+| `Hash.keccak256`, 1024 KiB            | 17.91 ms  | n/a       | 1.22 ms   | 1.02 ms        | 14.64× (wasm)             |
+| `Hash.sha256`, 32 B                   | 629 ns    | 468 ns    | 289 ns    | n/a            | 2.18× (wasm)              |
+| `Hash.sha256`, 1024 KiB               | 3.84 ms   | 334.46 µs | 3.01 ms   | n/a            | 11.47× (node)             |
+| `Hash.ripemd160`, 32 B                | 741 ns    | 567 ns    | 270 ns    | n/a            | 2.75× (wasm)              |
+| `Hash.ripemd160`, 1024 KiB            | 5.90 ms   | 2.16 ms   | 2.77 ms   | n/a            | 2.73× (node)              |
+| `Hash.hmacSha256`, 32 B               | 2.18 µs   | 1.02 µs   | 969 ns    | n/a            | 2.25× (wasm)              |
+| `Hash.hmacSha256`, 1024 KiB           | 3.90 ms   | 334.44 µs | 2.96 ms   | n/a            | 11.67× (node)             |
+| `Keystore.aesCtrEncrypt`, 4 KiB       | 38.25 µs  | n/a       | n/a       | n/a            | n/a                       |
+| `Mnemonic.toSeed`, 12 words           | 5.57 ms   | n/a       | n/a       | n/a            | n/a                       |
+| `P256.sign`, 32 B message             | 174.94 µs | n/a       | n/a       | n/a            | n/a                       |
+| `Secp256k1.sign`, 32 B message        | 180.89 µs | n/a       | n/a       | n/a            | n/a                       |
+| `X25519.getSharedSecret`, 32 B key    | 613.69 µs | n/a       | n/a       | n/a            | n/a                       |
 
-The benchmark initializes engines outside the timed loops and uses identical
-inputs, warmups, budgets, and repeats. It reports the best-observed repeat as a
-peak-throughput microbenchmark, not a latency distribution. It measures raw
-single-call byte-array implementations, not Ox formatting or whole applications.
-Treat the results as runtime-specific: Node/OpenSSL, CPU acceleration, the WASM
-runtime, Rust compiler, JIT state, and input size can all change the ranking.
+The benchmark initializes engines outside the timed loops and sends each Ox
+call through the same engine resolver. It uses identical inputs, warmups,
+budgets, and repeats, and reports the best-observed repeat as a peak-throughput
+microbenchmark, not a latency distribution. It measures raw single-call
+byte-array implementations, not Ox formatting or whole applications. Treat the
+results as runtime-specific: Node/OpenSSL, CPU acceleration, the WASM runtime,
+Rust compiler, JIT state, and input size can all change the ranking.
 
 ## Testing
 

@@ -8,7 +8,7 @@ import { create as createWasm } from './Hash.js'
 // Sizes expose fixed boundary overhead and sustained throughput. Crossovers
 // vary by primitive, runtime, and processor.
 //
-// Run `pnpm bench:hash` for the full four-provider comparison. Vitest cannot
+// Run `pnpm bench:engines` for the full engine comparison. Vitest cannot
 // run Rust, and this portable benchmark must remain browser-compatible.
 const sizes = [32, 64, 256, 1024, 4096, 65_536, 1_048_576] as const
 
