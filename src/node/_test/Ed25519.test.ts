@@ -75,7 +75,7 @@ describe('engine', () => {
     const engine = await Ed25519.engine()
     const digest = crypto
       .createHash('sha256')
-      .update(zip215Text.trimEnd())
+      .update(JSON.stringify(zip215))
       .digest('hex')
     const message = new TextEncoder().encode('Zcash')
     let defaultAccepted = 0
@@ -97,7 +97,7 @@ describe('engine', () => {
     }).toMatchInlineSnapshot(`
       {
         "defaultAccepted": 196,
-        "digest": "b2716ff6e90fed207942f9d000a6c83cc5c133096a63f3b12104da91b5f771cb",
+        "digest": "e99ef30c602df87b8d5970dea07f35bcd5993b003e5682ca2c8dc4dab9de4335",
         "legacyAccepted": 3,
         "nodeDisagrees": true,
         "vectors": 196,
