@@ -234,8 +234,8 @@ harness never times Ox's fallback under another engine's name.
 `alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
 engine.
 
-One local run on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1 produced
-the following best-observed timings (lower is better). Speedup compares the
+Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1 produced the
+following best-observed timings (lower is better). Speedup compares the
 fastest Ox engine in each row with `ox`; Alloy remains a reference only. The
 full command prints every primitive and input size:
 
@@ -249,8 +249,8 @@ full command prints every primitive and input size:
 | `Hash.sha256`, 1024 KiB               | 3.84 ms   | 334.46 µs | 3.01 ms   | n/a            | 11.47× (node)             |
 | `Hash.ripemd160`, 32 B                | 741 ns    | 567 ns    | 270 ns    | n/a            | 2.75× (wasm)              |
 | `Hash.ripemd160`, 1024 KiB            | 5.90 ms   | 2.16 ms   | 2.77 ms   | n/a            | 2.73× (node)              |
-| `Hash.hmacSha256`, 32 B               | 2.18 µs   | 1.02 µs   | 969 ns    | n/a            | 2.25× (wasm)              |
-| `Hash.hmacSha256`, 1024 KiB           | 3.90 ms   | 334.44 µs | 2.96 ms   | n/a            | 11.67× (node)             |
+| `Hash.hmacSha256`, 32 B               | 2.24 µs   | 1.08 µs   | 1.16 µs   | n/a            | 2.07× (node)              |
+| `Hash.hmacSha256`, 1024 KiB           | 5.31 ms   | 462.89 µs | 5.67 ms   | n/a            | 11.47× (node)             |
 | `Keystore.aesCtrEncrypt`, 4 KiB       | 38.25 µs  | n/a       | n/a       | n/a            | n/a                       |
 | `Mnemonic.toSeed`, 12 words           | 5.57 ms   | n/a       | n/a       | n/a            | n/a                       |
 | `P256.sign`, 32 B message             | 174.94 µs | n/a       | n/a       | n/a            | n/a                       |
@@ -304,10 +304,13 @@ keys, private keys, passwords, mnemonic phrases, and plaintext keystore
 material. `Engine.set` validates slot and primitive names, but it cannot
 validate correctness, constant-time behavior, or key handling.
 
-Neither the default nor WASM engine promises protection from timing or cache
-side channels. WebAssembly has no constant-time execution guarantee. The WASM
-HMAC implementation clears the copied key from linear memory, but that does
-not make the surrounding runtime side-channel resistant.
+Ox's default engine uses audited cryptographic implementations. The WASM engine
+does not promise protection from timing or cache side channels. WebAssembly has
+no constant-time execution guarantee. The WASM HMAC implementation clears its
+copied inputs and explicit scratch buffer from linear memory in a `finally`
+block, including after recoverable WebAssembly traps. It cannot clear
+caller-owned buffers or runtime-managed state, and this does not make the
+surrounding runtime side-channel resistant.
 
 The Node engine inherits the properties of the active Node and OpenSSL build.
 Using `node:crypto` does not itself mean FIPS mode is enabled or that every

@@ -42,8 +42,12 @@ export type Target = {
   wasmOpt?: readonly string[] | undefined
 }
 
+const hmacSha256ScratchSize = 608
+
 export const targets = [
   {
+    defines: { HMAC_SHA256_SCRATCH_SIZE: hmacSha256ScratchSize },
+    extra: { hmacSha256ScratchSize: String(hmacSha256ScratchSize) },
     initialMemory: 1_048_576,
     maxBytes: 32_768,
     name: 'hashes',

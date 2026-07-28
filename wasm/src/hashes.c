@@ -8,7 +8,7 @@
 //   keccak256(in, len, out32)
 //   sha256(in, len, out32)
 //   ripemd160(in, len, out20)
-//   hmac_sha256(key, keyLen, msg, msgLen, out32)
+//   hmac_sha256(key, keyLen, msg, msgLen, out32, scratch608)
 
 #include "keccak_f1600.h"
 #include "ox_rt.h"
@@ -168,13 +168,27 @@ void ox_sha256(const uint8_t *in, uint32_t len, uint8_t *out) {
 
 // HMAC-SHA256 — RFC 2104.
 
-__attribute__((export_name("hmac_sha256")))
-void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
-                    uint32_t msgLen, uint8_t *out) {
+struct hmac_sha256_scratch {
     uint8_t pad[64];
     uint32_t H[8];
     uint8_t block[128];
     uint32_t W[64];
+    uint8_t inner[32];
+    uint8_t outer[96];
+};
+
+_Static_assert(
+    sizeof(struct hmac_sha256_scratch) == HMAC_SHA256_SCRATCH_SIZE,
+    "HMAC-SHA256 scratch size must match the loader");
+
+__attribute__((export_name("hmac_sha256")))
+void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
+                    uint32_t msgLen, uint8_t *out,
+                    struct hmac_sha256_scratch *scratch) {
+    uint8_t *pad = scratch->pad;
+    uint32_t *H = scratch->H;
+    uint8_t *block = scratch->block;
+    uint32_t *W = scratch->W;
 
     for (int i = 0; i < 64; i++) pad[i] = 0;
     if (keyLen > 64)
@@ -202,21 +216,16 @@ void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
     sha256_compress(H, block, W);
     if (total == 128) sha256_compress(H, block + 64, W);
 
-    uint8_t inner[32];
+    uint8_t *inner = scratch->inner;
     for (int i = 0; i < 8; i++) store32_be(inner + i * 4, H[i]);
 
     // Outer: sha256(opad || inner).
-    uint8_t outer[96];
+    uint8_t *outer = scratch->outer;
     for (int i = 0; i < 64; i++) outer[i] = pad[i] ^ 0x5c;
     for (int i = 0; i < 32; i++) outer[64 + i] = inner[i];
     sha256_hash_with_scratch(outer, 96, out, H, block, W);
 
-    ox_zero(pad, 64);
-    ox_zero(inner, 32);
-    ox_zero(outer, 96);
-    ox_zero((uint8_t *)H, 32);
-    ox_zero(block, 128);
-    ox_zero((uint8_t *)W, 256);
+    ox_zero((uint8_t *)scratch, sizeof(*scratch));
 }
 
 // RIPEMD-160 — Dobbertin/Bosselaers/Preneel.

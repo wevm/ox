@@ -102,7 +102,9 @@ branchless C is not guaranteed to stay branchless, and data-cache timing is full
 exposed. These artifacts are not hardened against timing or cache side-channel
 attacks — and neither is the JavaScript they replace.
 
-Where a private key crosses into linear memory, the loader zeroes the scratch
-region afterwards using the exported `zero`, which writes through a `volatile`
-pointer so LTO cannot elide it. That bounds how long key material sits somewhere
-a heap snapshot could capture; it does not prevent side channels.
+Where HMAC inputs cross into linear memory, the loader zeroes its copied inputs
+and explicit scratch buffer in a `finally` block, including after recoverable
+WebAssembly traps. The exported `zero` writes through a `volatile` pointer so
+LTO cannot elide it. That bounds how long key material sits somewhere a heap
+snapshot could capture; it cannot clear caller-owned or runtime-managed state,
+and it does not prevent side channels.
