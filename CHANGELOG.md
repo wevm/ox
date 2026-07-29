@@ -1,5 +1,32 @@
 # ox
 
+## 1.2.0
+
+### Minor Changes
+
+- [#335](https://github.com/wevm/ox/pull/335) [`0aaacc4`](https://github.com/wevm/ox/commit/0aaacc4ee7c1e711cc9da162fb50432ef736a0a3) Thanks [@jxom](https://github.com/jxom)! - Added first-party trusted setup data and an explicit disposable c-kzg WASM factory for EIP-4844 and EIP-7594 operations.
+
+- [#333](https://github.com/wevm/ox/pull/333) [`a41c325`](https://github.com/wevm/ox/commit/a41c325bf33994c4a00caaf53ac186c8f6b87223) Thanks [@jxom](https://github.com/jxom)! - Added an opt-in `ox/wasm/Secp256k1` provider backed by libsecp256k1.
+
+  ```ts
+  import { Engine } from "ox";
+  import { Secp256k1 } from "ox/wasm";
+
+  await Engine.install({ Secp256k1: Secp256k1.engine() });
+  ```
+
+### Patch Changes
+
+- [#331](https://github.com/wevm/ox/pull/331) [`ee873dc`](https://github.com/wevm/ox/commit/ee873dc7f6a4fe2dbf7092e8b6a687f456d452f4) Thanks [@jxom](https://github.com/jxom)! - Added `Hash.blake3` for BLAKE3 hashing through Ox's default or an installed engine implementation.
+
+  ```ts
+  import { Hash } from "ox";
+
+  const digest = Hash.blake3("0xdeadbeef");
+  ```
+
+- [#334](https://github.com/wevm/ox/pull/334) [`1ef21a0`](https://github.com/wevm/ox/commit/1ef21a09675e4a1443a2098b0474ab2bb7cc34fa) Thanks [@jxom](https://github.com/jxom)! - Added opt-in synchronous scrypt to the WASM Keystore provider.
+
 ## 1.1.2
 
 ### Patch Changes
