@@ -83,6 +83,19 @@ Other operations keep their current implementation, or use Ox's default when
 no earlier override exists. In particular, asynchronous KDFs remain on the
 default because wrapping synchronous WASM in a promise would not make it yield.
 
+An opt-in `Secp256k1` provider supplies public-key derivation, shared-secret
+calculation, recovery, signing, and verification. Random key generation remains
+host-backed. Its 44.7 kB gzip artifact is excluded from the aggregate engine:
+
+```ts twoslash
+import { Engine } from 'ox'
+import { Secp256k1 } from 'ox/wasm'
+
+await Engine.install({
+  Secp256k1: Secp256k1.engine(),
+})
+```
+
 Provider modules expose the regular Ox API alongside an `engine` factory. Use
 this to install only the modules an application needs:
 
@@ -104,7 +117,8 @@ resolved modules atomically. `Hash.engine()` returns the raw `Hash` slot;
 **Benefits**
 
 - Runs in browsers, Node.js, and other runtimes with WebAssembly.
-- Accelerates hashes, key derivation, Ed25519, and X25519 on common runtimes.
+- Accelerates hashes, key derivation, Ed25519, X25519, and opt-in Secp256k1 on
+  common runtimes.
 - Keeps cryptographic calls synchronous after one asynchronous startup step.
 - Embeds the compiled module, with no separate WASM asset to host.
 - Clears copied secret inputs, staged outputs, and explicit workspaces after
@@ -297,14 +311,14 @@ engine. The provider columns count the primitives each implementation supplies:
 | `Keystore`    | 6          | 6    | 4         | 1         | n/a            |
 | `Mnemonic`    | 1          | 1    | 1         | 1         | n/a            |
 | `P256`        | 6          | 6    | 1         | n/a       | n/a            |
-| `Secp256k1`   | 6          | 6    | n/a       | n/a       | n/a            |
+| `Secp256k1`   | 6          | 6    | n/a       | 5         | n/a            |
 | `X25519`      | 3          | 3    | 2         | 2         | n/a            |
-| **Total**     | **38**     | **38** | **14**    | **13**    | **1**          |
+| **Total**     | **38**     | **38** | **14**    | **18**    | **1**          |
 
 `n/a` means the provider does not implement a primitive in that slot. The
 harness never times Ox's fallback under another engine's name.
 `alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
-engine.
+engine. The `ox/wasm` count includes the opt-in Secp256k1 provider.
 
 Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1, using 50 ms
 warmups, 200 ms measurement budgets, and three repeats, produced the following
@@ -327,6 +341,11 @@ every primitive and input size:
 | `Keystore.pbkdf2Sha256`, 262,144 runs | 234.08 ms | 21.55 ms  | 98.52 ms  | n/a            | 10.86× (node)             |
 | `Mnemonic.toSeed`, 12 words           | 5.60 ms   | 441.33 µs | 1.87 ms   | n/a            | 12.69× (node)             |
 | `P256.getPublicKey`, 32 B key         | 135.07 µs | 10.48 µs  | n/a       | n/a            | 12.89× (node)             |
+| `Secp256k1.getPublicKey`, 32 B key    | 139.20 µs | n/a       | 18.31 µs  | n/a            | 7.60× (wasm)              |
+| `Secp256k1.getSharedSecret`, 65 B key | 1.76 ms   | n/a       | 33.10 µs  | n/a            | 53.04× (wasm)             |
+| `Secp256k1.recoverPublicKey`, 32 B    | 1.11 ms   | n/a       | 35.61 µs  | n/a            | 31.18× (wasm)             |
+| `Secp256k1.sign`, 32 B message        | 178.37 µs | n/a       | 23.90 µs  | n/a            | 7.46× (wasm)              |
+| `Secp256k1.verify`, 32 B message      | 994.81 µs | n/a       | 30.45 µs  | n/a            | 32.67× (wasm)             |
 | `X25519.getSharedSecret`, 32 B key    | 597.48 µs | 47.00 µs  | 40.70 µs  | n/a            | 14.68× (wasm)             |
 
 The benchmark initializes engines outside the timed loops and sends each Ox

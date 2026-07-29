@@ -18,11 +18,12 @@ test/            C entrypoints used only by regression-test artifacts
 
 Generated artifacts, and the module that loads them:
 
-| target         | artifact                           | consumed by                                 |
-| -------------- | ---------------------------------- | ------------------------------------------- |
-| `hashes`       | `src/wasm/internal/hashes.wasm.ts` | `src/wasm/Hash.ts` (`ox/wasm/Hash`)         |
-| `mine`         | `src/tempo/internal/mine.wasm.ts`  | `src/tempo/internal/virtualMasterPool.ts`   |
-| `runtime-test` | `src/wasm/_test/runtime.wasm.ts`   | `src/wasm/_test/Runtime.test.ts` (test only) |
+| target         | artifact                              | consumed by                                      |
+| -------------- | ------------------------------------- | ------------------------------------------------ |
+| `hashes`       | `src/wasm/internal/hashes.wasm.ts`    | `src/wasm/Hash.ts` (`ox/wasm/Hash`)              |
+| `secp256k1`    | `src/wasm/internal/secp256k1.wasm.ts` | `src/wasm/Secp256k1.ts` (`ox/wasm/Secp256k1`)    |
+| `mine`         | `src/tempo/internal/mine.wasm.ts`     | `src/tempo/internal/virtualMasterPool.ts`        |
+| `runtime-test` | `src/wasm/_test/runtime.wasm.ts`      | `src/wasm/_test/Runtime.test.ts` (test only)     |
 
 ## Building
 

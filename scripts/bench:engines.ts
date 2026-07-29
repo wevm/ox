@@ -26,6 +26,7 @@ import * as secp256k1 from '../src/core/internal/secp256k1.js'
 import * as x25519 from '../src/core/internal/x25519.js'
 import { engine as nodeEngine } from '../src/node/Engine.js'
 import { engine as wasmEngine } from '../src/wasm/Engine.js'
+import { engine as wasmSecp256k1Engine } from '../src/wasm/Secp256k1.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -409,7 +410,11 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
 const node = await nodeEngine()
-const wasm = await wasmEngine()
+const [wasmAggregate, wasmSecp256k1] = await Promise.all([
+  wasmEngine(),
+  wasmSecp256k1Engine(),
+])
+const wasm = { ...wasmAggregate, Secp256k1: wasmSecp256k1 }
 const rustRows = rust()
 
 const headers = [
