@@ -4,6 +4,65 @@ import * as Hex from './Hex.js'
 import * as engine from './internal/hash.js'
 
 /**
+ * Calculates the [BLAKE3](https://github.com/BLAKE3-team/BLAKE3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ *
+ * Backed by `blake3` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library, unless another implementation is installed with {@link ox#Engine.set}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hash } from 'ox'
+ *
+ * Hash.blake3('0xdeadbeef')
+ * // @log: '0x53147f3ce49ed4f60dfa5b9654c36ba6103c11f5737df3dabd4cbd296c4161bd'
+ * ```
+ *
+ * @example
+ * ### Configure Return Type
+ *
+ * ```ts twoslash
+ * import { Hash } from 'ox'
+ *
+ * Hash.blake3('0xdeadbeef', { as: 'Bytes' })
+ * // @log: Uint8Array [...]
+ * ```
+ *
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ * @param options - Options.
+ * @returns BLAKE3 hash.
+ */
+export function blake3<
+  value extends Hex.Hex | Bytes.Bytes,
+  as extends 'Hex' | 'Bytes' =
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
+>(
+  value: value | Hex.Hex | Bytes.Bytes,
+  options: blake3.Options<as> = {},
+): blake3.ReturnType<as> {
+  const isBytes = value instanceof Uint8Array
+  const { as = isBytes ? 'Bytes' : 'Hex' } = options
+  const bytes = engine.blake3(isBytes ? value : Bytes.from(value))
+  if (as === 'Bytes') return bytes as never
+  return Hex.fromBytes(bytes) as never
+}
+
+export declare namespace blake3 {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    /** The return type. Defaults to the input format. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * Backed by `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library, unless another implementation is installed with {@link ox#Engine.set}.

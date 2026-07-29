@@ -12,9 +12,9 @@ export * from '../core/Hash.js'
  * which installs every implementation this entrypoint provides. Reach for this
  * to install or hold the `Hash` slot on its own.
  *
- * Node's `sha3-256` is not Ethereum Keccak256, so this engine deliberately
- * omits `keccak256`. Any earlier override remains installed; otherwise Ox uses
- * its default implementation.
+ * Node does not provide BLAKE3, and its `sha3-256` is not Ethereum Keccak256, so
+ * this engine deliberately omits `blake3` and `keccak256`. Any earlier override
+ * remains installed; otherwise Ox uses its default implementation.
  *
  * @example
  * ```ts twoslash
