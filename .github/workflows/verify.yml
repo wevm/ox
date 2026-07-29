@@ -27,6 +27,9 @@ jobs:
       - name: Check examples
         run: pnpm zile examples:check
 
+      - name: Verify trusted setup artifact
+        run: pnpm trusted-setups:check
+
   test-core:
     name: Test Runtime (core)
     runs-on: ubuntu-latest

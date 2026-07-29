@@ -122,6 +122,33 @@ export const targets = [
     stackSize: 65_536,
   },
   {
+    // Full LTO makes c-kzg trusted-setup initialization trap in WASM.
+    cflags: ['-fno-lto'],
+    defines: {
+      __BLST_NO_ASM__: 1,
+      __BLST_NO_CPUID__: 1,
+      __BLST_PORTABLE__: 1,
+    },
+    includes: [
+      'wasm/shim/kzg',
+      'wasm/vendor/c-kzg-4844/src',
+      'wasm/vendor/c-kzg-4844/blst/bindings',
+      'wasm/vendor/c-kzg-4844/blst/src',
+    ],
+    initialMemory: 8_388_608,
+    maxBytes: 196_608,
+    maxMemory: 134_217_728,
+    name: 'kzg',
+    out: 'src/wasm/internal/kzg.wasm.ts',
+    sources: [
+      'wasm/src/kzg.c',
+      'wasm/vendor/c-kzg-4844/src/ckzg.c',
+      'wasm/vendor/c-kzg-4844/blst/src/server.c',
+      'wasm/src/kzg_rt.c',
+    ],
+    stackSize: 1_048_576,
+  },
+  {
     initialMemory: 131_072,
     maxBytes: 8_192,
     maxMemory: 131_072,

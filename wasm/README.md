@@ -22,6 +22,7 @@ Generated artifacts, and the module that loads them:
 | -------------- | ---------------------------------- | ------------------------------------------- |
 | `hashes`       | `src/wasm/internal/hashes.wasm.ts` | `src/wasm/Hash.ts` (`ox/wasm/Hash`)         |
 | `scrypt`       | `src/wasm/internal/scrypt.wasm.ts` | `src/wasm/Keystore.ts` (`ox/wasm/Keystore`) |
+| `kzg`          | `src/wasm/internal/kzg.wasm.ts`    | `src/wasm/Kzg.ts` (`ox/wasm/Kzg`)           |
 | `mine`         | `src/tempo/internal/mine.wasm.ts`  | `src/tempo/internal/virtualMasterPool.ts`   |
 | `runtime-test` | `src/wasm/_test/runtime.wasm.ts`   | `src/wasm/_test/Runtime.test.ts` (test only) |
 
@@ -72,16 +73,19 @@ makes a toolchain change reviewable as a diff.
   exception is `mine`, which keeps its original fixed-offset layout: its I/O is
   84 bytes, it crosses the JS boundary once per million hashes, and its offsets
   are already shipped.
-- **`malloc` is a bump allocator and `free` is a no-op** (`ox_rt.c`). Allocation
-  metadata lets `realloc` preserve bytes and grow the latest allocation in place.
-  A target that allocates must be initialized before JS reads `heap_base`,
-  because the allocator advances past what it hands out.
+- **`malloc` is normally a bump allocator and `free` is a no-op** (`ox_rt.c`).
+  Allocation metadata lets `realloc` preserve bytes and grow the latest
+  allocation in place. KZG uses a reclaiming free-list allocator
+  (`kzg_rt.c`) because one instance retains setup state across repeated calls.
+  A target that allocates must initialize before JS reads `heap_base`.
 - **Every target is size-budgeted** by `maxBytes` in `targets.ts`. The build fails
   when a target exceeds it, so a size regression cannot land unnoticed.
 - **`producers` and `target_features` sections are stripped** and their absence
   asserted. Both record how the module was compiled rather than what it does, and
   both vary with the toolchain.
 - **Full `-flto`, never `-flto=thin`** — ThinLTO is not reliably deterministic.
+  KZG explicitly disables LTO because full LTO makes trusted-setup
+  initialization trap.
 - **Stack sizes are generous.** WASM has no guard page, so an overflow silently
   corrupts the data segment instead of trapping: a bug presents as a wrong answer
   rather than a crash.

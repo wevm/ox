@@ -28,6 +28,9 @@
     "test:cov": "vp test --coverage",
     "test:fuzz": "FUZZ=true vp test run --project fuzz",
     "test:types": "TYPES=true vp test",
+    "trusted-setups:build": "node --import tsx scripts/trusted-setups/build.ts",
+    "trusted-setups:check": "node --import tsx scripts/trusted-setups/build.ts --check",
+    "trusted-setups:update": "node --import tsx scripts/trusted-setups/build.ts --update",
     "vectors": "bun test vectors/**/*.test.ts",
     "vectors:generate": "bun vectors/generate.ts",
     "version:update": "node --import tsx ./scripts/version:update.ts",
@@ -127,10 +130,28 @@
       "import": "*"
     },
     {
+      "name": "import { Hash } from 'ox/wasm'",
+      "path": "./dist/wasm/index.js",
+      "import": "{ Hash }",
+      "limit": "24 kB"
+    },
+    {
       "name": "import * from 'ox/wasm/Hash'",
       "path": "./dist/wasm/Hash.js",
       "import": "*",
       "limit": "24 kB"
+    },
+    {
+      "name": "import * from 'ox/wasm/Kzg'",
+      "path": "./dist/wasm/Kzg.js",
+      "import": "*",
+      "limit": "64 kB"
+    },
+    {
+      "name": "import * from 'ox/trusted-setups/Setups'",
+      "path": "./dist/trusted-setups/Setups.js",
+      "import": "*",
+      "limit": "420 kB"
     }
   ],
   "[!start-pkg]": "",
@@ -800,6 +821,11 @@
       "types": "./dist/trusted-setups/Paths.d.ts",
       "default": "./dist/trusted-setups/Paths.js"
     },
+    "./trusted-setups/Setups": {
+      "src": "./src/trusted-setups/Setups.ts",
+      "types": "./dist/trusted-setups/Setups.d.ts",
+      "default": "./dist/trusted-setups/Setups.js"
+    },
     "./wasm": {
       "src": "./src/wasm/index.ts",
       "types": "./dist/wasm/index.d.ts",
@@ -824,6 +850,11 @@
       "src": "./src/wasm/Keystore.ts",
       "types": "./dist/wasm/Keystore.d.ts",
       "default": "./dist/wasm/Keystore.js"
+    },
+    "./wasm/Kzg": {
+      "src": "./src/wasm/Kzg.ts",
+      "types": "./dist/wasm/Kzg.d.ts",
+      "default": "./dist/wasm/Kzg.js"
     },
     "./wasm/Mnemonic": {
       "src": "./src/wasm/Mnemonic.ts",

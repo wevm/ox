@@ -48,18 +48,23 @@ function decode(base64: string): Uint8Array {
 }
 
 /**
- * Instantiates a base64-encoded WASM module.
- *
- * Always asynchronous: browsers refuse to compile modules larger than a few
- * kilobytes synchronously on the main thread, so there is no synchronous path to
- * fall back to. Callers await this once and then call the module synchronously.
+ * Compiles a base64-encoded WASM module without instantiating it.
  *
  * @internal
  */
-export async function instantiate<exports extends Record<string, unknown>>(
-  base64: string,
-): Promise<Module<exports>> {
-  const { instance } = await WebAssembly.instantiate(decode(base64), {})
+export async function compile(base64: string): Promise<WebAssembly.Module> {
+  return WebAssembly.compile(decode(base64))
+}
+
+/**
+ * Instantiates a compiled WASM module.
+ *
+ * @internal
+ */
+export async function instantiateModule<
+  exports extends Record<string, unknown>,
+>(compiled: WebAssembly.Module): Promise<Module<exports>> {
+  const instance = await WebAssembly.instantiate(compiled, {})
   const exports = instance.exports as {
     heap_base(): number
     memory: WebAssembly.Memory
@@ -92,6 +97,21 @@ export async function instantiate<exports extends Record<string, unknown>>(
       return cached
     },
   }
+}
+
+/**
+ * Instantiates a base64-encoded WASM module.
+ *
+ * Always asynchronous: browsers refuse to compile modules larger than a few
+ * kilobytes synchronously on the main thread, so there is no synchronous path to
+ * fall back to. Callers await this once and then call the module synchronously.
+ *
+ * @internal
+ */
+export async function instantiate<exports extends Record<string, unknown>>(
+  base64: string,
+): Promise<Module<exports>> {
+  return instantiateModule(await compile(base64))
 }
 
 /**

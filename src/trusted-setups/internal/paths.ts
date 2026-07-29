@@ -10,5 +10,8 @@ export function path(name: string) {
     import.meta.url,
   )
   const __dirname = dirname(__filename)
-  return resolve(__dirname, `./setups/${name}.json`)
+  return resolve(
+    __dirname,
+    `../../../src/trusted-setups/internal/setups/${name}.json`,
+  )
 }
