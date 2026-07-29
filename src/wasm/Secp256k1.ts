@@ -154,7 +154,7 @@ export async function engine(): Promise<engine.ReturnType> {
     verify(signature, payload, publicKey, options) {
       assertLength(signature, compactSignatureSize, 'signature')
       assertPublicKeyLength(publicKey)
-      if (!options.prehash) assertRawMessageLength(payload)
+      if (!options.prehash && payload.length > maxRawMessageSize) return false
       const size = compactSignatureSize + payload.length + publicKey.length
       module.reserve(size)
       const signaturePtr = module.heapBase

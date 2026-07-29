@@ -200,6 +200,7 @@ function c() {
         '-O3',
         '-fno-builtin',
         '-Wno-unused-function',
+        '-DOX_RT_HOST',
         // wasm32 does not auto-detect host SIMD. Keep the native reference on
         // the same portable BLAKE3 path.
         '-DBLAKE3_USE_NEON=0',

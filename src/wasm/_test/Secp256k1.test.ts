@@ -147,10 +147,20 @@ describe('engine', () => {
     )
   })
 
-  test('behavior: accepts large prehashed payloads only', async () => {
+  test('behavior: matches large payload boundaries', async () => {
     const engine = await Secp256k1.engine()
     const payload = bytes(8193)
     const publicKey = engine.getPublicKey(privateKey)
+    const truncatedSignature = secp256k1.sign(
+      payload.slice(0, 32),
+      privateKey,
+      {
+        extraEntropy: false,
+        format: 'compact',
+        lowS: true,
+        prehash: false,
+      },
+    )
 
     expect(() =>
       engine.sign(payload, privateKey, {
@@ -160,13 +170,20 @@ describe('engine', () => {
     ).toThrowError(
       'Secp256k1 unhashed payload must not exceed 8192 bytes, got 8193',
     )
-    expect(() =>
+    expect(
       engine.verify(new Uint8Array(64), payload, publicKey, {
         prehash: false,
       }),
-    ).toThrowError(
-      'Secp256k1 unhashed payload must not exceed 8192 bytes, got 8193',
-    )
+    ).toBe(false)
+    expect(
+      secp256k1.verify(truncatedSignature, payload, publicKey, {
+        lowS: true,
+        prehash: false,
+      }),
+    ).toBe(false)
+    expect(
+      engine.verify(truncatedSignature, payload, publicKey, { prehash: false }),
+    ).toBe(false)
     expect(() =>
       engine.recoverPublicKey(new Uint8Array(65), payload),
     ).toThrowError(
