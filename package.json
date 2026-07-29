@@ -152,6 +152,12 @@
       "path": "./dist/trusted-setups/Setups.js",
       "import": "*",
       "limit": "420 kB"
+    },
+    {
+      "name": "import { engine } from 'ox/wasm/Secp256k1'",
+      "path": "./dist/wasm/Secp256k1.js",
+      "import": "{ engine }",
+      "limit": "64 kB"
     }
   ],
   "[!start-pkg]": "",
@@ -862,6 +868,11 @@
       "src": "./src/wasm/Mnemonic.ts",
       "types": "./dist/wasm/Mnemonic.d.ts",
       "default": "./dist/wasm/Mnemonic.js"
+    },
+    "./wasm/Secp256k1": {
+      "src": "./src/wasm/Secp256k1.ts",
+      "types": "./dist/wasm/Secp256k1.d.ts",
+      "default": "./dist/wasm/Secp256k1.js"
     },
     "./wasm/X25519": {
       "src": "./src/wasm/X25519.ts",
