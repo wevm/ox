@@ -135,6 +135,19 @@ describe('recoverCellsAndKzgProofs', () => {
     )
   }, 120_000)
 
+  test('accepts unordered indices', () => {
+    const indices = cells
+      .map((_, index) => index)
+      .filter((index) => index % 2)
+      .reverse()
+    const partial = indices.map((index) => cells[index]!)
+
+    expect(instance.recoverCellsAndKzgProofs(indices, partial)).toEqual({
+      cells,
+      proofs,
+    })
+  }, 120_000)
+
   test('rejects duplicate indices', () => {
     expect(() =>
       instance.recoverCellsAndKzgProofs(

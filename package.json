@@ -184,7 +184,9 @@
   "files": [
     "CHANGELOG.md",
     "dist",
-    "src"
+    "src",
+    "wasm/vendor/c-kzg-4844/LICENSE",
+    "wasm/vendor/c-kzg-4844/blst/LICENSE"
   ],
   "dependencies": {
     "@adraffy/ens-normalize": "^1.11.0",

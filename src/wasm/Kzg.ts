@@ -2,7 +2,7 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type * as CoreKzg from '../core/Kzg.js'
-import * as kzg from './internal/kzg.js'
+import type * as kzg from './internal/kzg.js'
 
 export * from '../core/Kzg.js'
 
@@ -83,8 +83,9 @@ export async function create(
     ),
   }
 
-  let module: Awaited<ReturnType<typeof kzg.instantiate>> | undefined =
-    await kzg.instantiate()
+  const { instantiate } = await import('./internal/kzg.js')
+  let module: Awaited<ReturnType<typeof instantiate>> | undefined =
+    await instantiate()
 
   const getModule = () => {
     if (!module) throw new DisposedError()
@@ -188,9 +189,15 @@ export async function create(
       assertCellIndices(cellIndices, true)
       for (const cell of cells) assertBytes(cell, cellSize, 'cell')
 
+      const values = cellIndices
+        .map((index, i) => ({ cell: cells[i]!, index }))
+        .sort((a, b) => a.index - b.index)
+      const indices = values.map(({ index }) => index)
+      const sortedCells = values.map(({ cell }) => cell)
+
       const [recoveredCells, proofs] = withBuffers(
         getModule(),
-        [encodeIndices(cellIndices), concat(cells)],
+        [encodeIndices(indices), concat(sortedCells)],
         [cellsPerBlob * cellSize, cellsPerBlob * proofSize],
         ([indices, cells], [recoveredCells, proofs]) => {
           const module = getModule()
@@ -200,7 +207,7 @@ export async function create(
               proofs!,
               indices!,
               cells!,
-              cellIndices.length,
+              values.length,
             ),
             'recoverCellsAndKzgProofs',
           )
