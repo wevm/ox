@@ -46,6 +46,21 @@ void ox_pbkdf2_sha256(
     void *
 );
 void ox_ripemd160(const uint8_t *, uint32_t, uint8_t *);
+void ox_scrypt(
+    const uint8_t *,
+    uint32_t,
+    uint8_t *,
+    uint32_t,
+    uint32_t,
+    uint32_t,
+    uint32_t,
+    uint8_t *,
+    uint32_t,
+    uint8_t *,
+    uint32_t *,
+    uint32_t *,
+    void *
+);
 int ox_secp256k1_get_public_key(const uint8_t *, uint8_t *);
 int ox_secp256k1_get_shared_secret(
     const uint8_t *, const uint8_t *, uint32_t, uint8_t *);
@@ -275,6 +290,71 @@ static void run_pbkdf2_sha256(void *opaque) {
     );
 }
 
+union scrypt_scratch {
+    uint32_t align;
+    uint8_t bytes[SCRYPT_SCRATCH_SIZE];
+};
+
+struct scrypt_context {
+    uint8_t password[16];
+    uint32_t password_size;
+    uint8_t salt[36];
+    uint32_t salt_size;
+    uint32_t N;
+    uint32_t r;
+    uint32_t p;
+    uint8_t output[64];
+    uint32_t output_size;
+    uint8_t *B;
+    uint32_t *V;
+    uint32_t *tmp;
+    union scrypt_scratch scratch;
+};
+
+static void init_scrypt(
+    struct scrypt_context *context,
+    uint32_t N,
+    uint32_t r,
+    uint32_t p,
+    uint32_t output_size
+) {
+    memset(context, 0, sizeof(*context));
+    const size_t block_size = 128 * r;
+    context->N = N;
+    context->r = r;
+    context->p = p;
+    context->output_size = output_size;
+    context->B = malloc(block_size * p);
+    context->V = malloc(block_size * N);
+    context->tmp = malloc(block_size);
+    CHECK(context->B != NULL && context->V != NULL && context->tmp != NULL);
+}
+
+static void destroy_scrypt(struct scrypt_context *context) {
+    free(context->B);
+    free(context->V);
+    free(context->tmp);
+}
+
+static void run_scrypt(void *opaque) {
+    struct scrypt_context *context = opaque;
+    ox_scrypt(
+        context->password,
+        context->password_size,
+        context->salt,
+        context->salt_size,
+        context->N,
+        context->r,
+        context->p,
+        context->output,
+        context->output_size,
+        context->B,
+        context->V,
+        context->tmp,
+        context->scratch.bytes
+    );
+}
+
 struct mnemonic_context {
     const uint8_t *phrase;
     uint32_t phrase_size;
@@ -441,6 +521,52 @@ int main(void) {
         budget_ms,
         repeat_count
     );
+
+    static const uint8_t scrypt_expected[64] = {
+        0x77, 0xd6, 0x57, 0x62, 0x38, 0x65, 0x7b, 0x20,
+        0x3b, 0x19, 0xca, 0x42, 0xc1, 0x8a, 0x04, 0x97,
+        0xf1, 0x6b, 0x48, 0x44, 0xe3, 0x07, 0x4a, 0xe8,
+        0xdf, 0xdf, 0xfa, 0x3f, 0xed, 0xe2, 0x14, 0x42,
+        0xfc, 0xd0, 0x06, 0x9d, 0xed, 0x09, 0x48, 0xf8,
+        0x32, 0x6a, 0x75, 0x3a, 0x0f, 0xc8, 0x1f, 0x17,
+        0xe8, 0xd3, 0xe0, 0xfb, 0x2e, 0x0d, 0x36, 0x28,
+        0xcf, 0x35, 0xe2, 0x0c, 0x38, 0xd1, 0x89, 0x06,
+    };
+    struct scrypt_context scrypt_test;
+    init_scrypt(&scrypt_test, 16, 1, 1, 64);
+    run_scrypt(&scrypt_test);
+    CHECK(memcmp(
+        scrypt_test.output, scrypt_expected, sizeof(scrypt_expected)) == 0);
+    destroy_scrypt(&scrypt_test);
+
+    static const uint32_t scrypt_cases[][3] = {
+        {1024, 1, 1},
+        {16384, 8, 1},
+        {262144, 1, 8},
+    };
+    for (size_t i = 0;
+         i < sizeof(scrypt_cases) / sizeof(scrypt_cases[0]);
+         i++) {
+        struct scrypt_context scrypt;
+        const uint32_t N = scrypt_cases[i][0];
+        init_scrypt(
+            &scrypt, N, scrypt_cases[i][1], scrypt_cases[i][2], 32);
+        fill(scrypt.password, sizeof(scrypt.password), 97);
+        scrypt.password_size = sizeof(scrypt.password);
+        fill(scrypt.salt, 32, 89);
+        scrypt.salt_size = 32;
+        row_batch(
+            "keystore.scrypt",
+            N,
+            run_scrypt,
+            &scrypt,
+            1,
+            warmup_ms,
+            budget_ms,
+            repeat_count
+        );
+        destroy_scrypt(&scrypt);
+    }
 
     static const uint8_t phrase[] =
         "abandon abandon abandon abandon abandon abandon abandon abandon "

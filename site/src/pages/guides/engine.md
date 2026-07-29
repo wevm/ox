@@ -96,6 +96,10 @@ await Engine.install({
 })
 ```
 
+The dedicated `ox/wasm/Keystore` provider also supplies synchronous scrypt.
+Install that provider explicitly. The aggregate engine excludes scrypt because
+its relative performance depends on `N`, `r`, `p`, and the runtime.
+
 Provider modules expose the regular Ox API alongside an `engine` factory. Use
 this to install only the modules an application needs:
 
@@ -308,19 +312,19 @@ engine. The columns count the primitives each provider or reference supplies:
 | `Bls`       | 5          | 5      | n/a       | n/a       | n/a    |
 | `Ed25519`   | 6          | 6      | 3         | 4         | 4      |
 | `Hash`      | 5          | 5      | 3         | 5         | 5      |
-| `Keystore`  | 6          | 6      | 4         | 1         | 1      |
+| `Keystore`  | 6          | 6      | 4         | 2         | 2      |
 | `Mnemonic`  | 1          | 1      | 1         | 1         | 1      |
 | `P256`      | 6          | 6      | 1         | n/a       | n/a    |
 | `Secp256k1` | 6          | 6      | n/a       | 5         | 5      |
 | `X25519`    | 3          | 3      | 2         | 2         | 2      |
-| **Total**   | **38**     | **38** | **14**    | **18**    | **18** |
+| **Total**   | **38**     | **38** | **14**    | **19**    | **19** |
 
 `n/a` means the provider does not implement a primitive in that slot. The
 harness never times Ox's fallback under another engine's name.
 The C reference compiles the same primitive wrappers, vendored sources, and
 target configuration as `ox/wasm` for the host. C covers every primitive
 supplied by WASM, but is not an Ox engine. The `ox/wasm` count includes the
-opt-in Secp256k1 provider.
+opt-in Keystore and Secp256k1 providers.
 
 Local runs on an Apple M4 Max with Node.js 25.9.0 and Apple Clang 21.0.0 used
 50 ms warmups, 200 ms measurement budgets, and three repeats. The following
@@ -341,6 +345,9 @@ command prints every primitive and input size:
 | `Hash.sha256`, 1024 KiB               | 3.95 ms   | 368.29 µs | 3.25 ms   | 2.48 ms   | 10.72× (node)             |
 | `Keystore.aesCtrEncrypt`, 4 KiB       | 32.02 µs  | 2.92 µs   | n/a       | n/a       | 10.95× (node)             |
 | `Keystore.pbkdf2Sha256`, 262,144 runs | 241.53 ms | 22.94 ms  | 105.01 ms | 86.59 ms  | 10.53× (node)             |
+| `Keystore.scrypt`, N=1,024, r=1, p=1  | 207.76 µs | n/a       | 161.16 µs | 141.87 µs | 1.29× (wasm)              |
+| `Keystore.scrypt`, N=16,384, r=8, p=1 | 24.14 ms  | n/a       | 21.06 ms  | 18.38 ms  | 1.15× (wasm)              |
+| `Keystore.scrypt`, N=262,144, r=1, p=8 | 513.45 ms | n/a       | 443.69 ms | 445.30 ms | 1.16× (wasm)              |
 | `Mnemonic.toSeed`, 12 words           | 6.52 ms   | 470.29 µs | 1.93 ms   | 1.83 ms   | 13.86× (node)             |
 | `P256.getPublicKey`, 32 B key         | 142.41 µs | 11.03 µs  | n/a       | n/a       | 12.91× (node)             |
 | `Secp256k1.getPublicKey`, 32 B key    | 147.40 µs | n/a       | 19.14 µs  | 15.42 µs  | 7.70× (wasm)              |

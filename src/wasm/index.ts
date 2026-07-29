@@ -64,7 +64,8 @@ export * as Ed25519 from './Ed25519.js'
 export * as Hash from './Hash.js'
 
 /**
- * WASM implementation of Ox's synchronous PBKDF2-HMAC-SHA256 primitive.
+ * WASM implementations of Ox's synchronous PBKDF2-HMAC-SHA256 and scrypt
+ * primitives.
  *
  * @example
  * ```ts twoslash

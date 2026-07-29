@@ -2,7 +2,7 @@ import * as CoreEngine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
 import * as Ed25519 from './Ed25519.js'
 import * as Hash from './Hash.js'
-import * as Keystore from './Keystore.js'
+import * as keystore from './internal/keystore.js'
 import * as Mnemonic from './Mnemonic.js'
 import * as X25519 from './X25519.js'
 import type * as internal from './internal/instantiate.js'
@@ -54,7 +54,7 @@ export async function install(): Promise<install.ReturnType> {
   return CoreEngine.install({
     Ed25519: Ed25519.engine(),
     Hash: Hash.engine(),
-    Keystore: Keystore.engine(),
+    Keystore: keystore.engine(),
     Mnemonic: Mnemonic.engine(),
     X25519: X25519.engine(),
   })
@@ -91,17 +91,17 @@ export declare namespace install {
  * @returns An engine, ready to install.
  */
 export async function engine(): Promise<engine.ReturnType> {
-  const [ed25519, hash, keystore, mnemonic, x25519] = await Promise.all([
+  const [ed25519, hash, keystoreEngine, mnemonic, x25519] = await Promise.all([
     Ed25519.engine(),
     Hash.engine(),
-    Keystore.engine(),
+    keystore.engine(),
     Mnemonic.engine(),
     X25519.engine(),
   ])
   return {
     Ed25519: ed25519,
     Hash: hash,
-    Keystore: keystore,
+    Keystore: keystoreEngine,
     Mnemonic: mnemonic,
     X25519: x25519,
   }
@@ -112,7 +112,9 @@ export declare namespace engine {
   type ReturnType = {
     Ed25519: Ed25519.engine.ReturnType
     Hash: Hash.engine.ReturnType
-    Keystore: Keystore.engine.ReturnType
+    Keystore: {
+      pbkdf2Sha256: NonNullable<CoreEngine.Keystore['pbkdf2Sha256']>
+    }
     Mnemonic: Mnemonic.engine.ReturnType
     X25519: X25519.engine.ReturnType
   }

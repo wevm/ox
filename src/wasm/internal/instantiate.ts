@@ -128,7 +128,7 @@ export class MemoryError extends Errors.BaseError<Error> {
       cause,
       metaMessages: [
         `Required: ${bytes} bytes`,
-        'The input may be too large for this runtime. Reset the engine slot with `Engine.reset` to fall back to the default implementation.',
+        'The input or requested workspace may be too large for this runtime. Reset the engine slot with `Engine.reset` to fall back to the default implementation.',
       ],
     })
   }

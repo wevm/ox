@@ -29,6 +29,7 @@ import * as secp256k1 from '../src/core/internal/secp256k1.js'
 import * as x25519 from '../src/core/internal/x25519.js'
 import { engine as nodeEngine } from '../src/node/Engine.js'
 import { engine as wasmEngine } from '../src/wasm/Engine.js'
+import { engine as wasmKeystoreEngine } from '../src/wasm/Keystore.js'
 import { engine as wasmSecp256k1Engine } from '../src/wasm/Secp256k1.js'
 import { type Target, targets as wasmTargets } from '../wasm/targets.js'
 
@@ -151,12 +152,19 @@ function supports(engine: CoreEngine.Engine, benchmark: Benchmark) {
   return typeof slot?.[benchmark.primitive] === 'function'
 }
 
-const cTargetNames = new Set(['blake3', 'crypto25519', 'hashes', 'secp256k1'])
+const cTargetNames = new Set([
+  'blake3',
+  'crypto25519',
+  'hashes',
+  'scrypt',
+  'secp256k1',
+])
 const cSourceOverrides = {
   'wasm/src/blake3.c': 'bench/native/blake3.c',
   'wasm/src/crypto25519.c': 'bench/native/crypto25519.c',
   'wasm/src/hashes.c': 'bench/native/hashes.c',
   'wasm/src/ox_rt.c': 'bench/native/runtime.c',
+  'wasm/src/scrypt.c': 'bench/native/scrypt.c',
   'wasm/src/secp256k1.c': 'bench/native/secp256k1.c',
 } as const
 const cTargets: readonly Target[] = wasmTargets.filter((target) =>
@@ -383,7 +391,11 @@ const aesCiphertext = keystore.aesCtrEncrypt(aesKey, aesIv, aesPlaintext)
 const password = bytes(16, 97)
 const salt = bytes(32, 89)
 const pbkdf2Options = { c: 262_144, dkLen: 32 }
-const scryptOptions = { N: 16_384, dkLen: 32, p: 1, r: 8 }
+const scryptCases = [
+  { N: 1_024, dkLen: 32, p: 1, r: 1 },
+  { N: 16_384, dkLen: 32, p: 1, r: 8 },
+  { N: 262_144, dkLen: 32, p: 8, r: 1 },
+] as const
 
 sync('Keystore', 'aesCtrDecrypt', '4 KiB input, AES-128', () =>
   keystore.aesCtrDecrypt(aesKey, aesIv, aesCiphertext),
@@ -401,13 +413,15 @@ sync(
 async_('Keystore', 'pbkdf2Sha256Async', '262,144 iterations, 32 B output', () =>
   keystore.pbkdf2Sha256Async(password, salt, pbkdf2Options),
 )
-sync(
-  'Keystore',
-  'scrypt',
-  'N=16,384, r=8, p=1',
-  () => keystore.scrypt(password, salt, scryptOptions),
-  { batch: 1 },
-)
+for (const options of scryptCases)
+  sync(
+    'Keystore',
+    'scrypt',
+    `N=${options.N.toLocaleString('en-US')}, r=${options.r}, p=${options.p}`,
+    () => keystore.scrypt(password, salt, options),
+    { batch: 1, cKey: `keystore.scrypt:${options.N}` },
+  )
+const scryptOptions = scryptCases[1]
 async_('Keystore', 'scryptAsync', 'N=16,384, r=8, p=1', () =>
   keystore.scryptAsync(password, salt, scryptOptions),
 )
@@ -527,11 +541,16 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
 const node = await nodeEngine()
-const [wasmAggregate, wasmSecp256k1] = await Promise.all([
+const [wasmAggregate, wasmKeystore, wasmSecp256k1] = await Promise.all([
   wasmEngine(),
+  wasmKeystoreEngine(),
   wasmSecp256k1Engine(),
 ])
-const wasm = { ...wasmAggregate, Secp256k1: wasmSecp256k1 }
+const wasm = {
+  ...wasmAggregate,
+  Keystore: wasmKeystore,
+  Secp256k1: wasmSecp256k1,
+}
 const cRows = c()
 for (const benchmark of benchmarks) {
   if (supports(wasm, benchmark) !== Boolean(benchmark.cKey))
