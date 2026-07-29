@@ -94,7 +94,9 @@ export * as Keystore from './Keystore.js'
  * import { Setups } from 'ox/trusted-setups'
  * import { Kzg } from 'ox/wasm'
  *
- * const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
+ * const kzg = await Kzg.create({
+ *   trustedSetup: Setups.mainnet
+ * })
  *
  * kzg.dispose()
  * ```
