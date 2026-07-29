@@ -337,17 +337,6 @@ command prints every primitive and input size:
 | `P256.getPublicKey`, 32 B key         | 135.07 µs | 10.48 µs  | n/a       | n/a            | 12.89× (node)             |
 | `X25519.getSharedSecret`, 32 B key    | 597.48 µs | 47.00 µs  | 40.70 µs  | n/a            | 14.68× (wasm)             |
 
-The scrypt rows use the opt-in `ox/wasm/Keystore` provider. The aggregate WASM
-engine does not install scrypt. Run its benchmark separately:
-
-```sh
-pnpm bench --project core src/wasm/Keystore.bench.ts
-```
-
-These isolated measurements favored WASM. Complete-harness repeats for the
-middle case ranged from 1.10× faster to 1.32× slower, so the aggregate engine
-intentionally excludes scrypt.
-
 The benchmark initializes engines outside the timed loops and sends each Ox
 call through the same engine resolver. It uses identical inputs, warmups,
 budgets, and repeats, and reports the best-observed repeat as a peak-throughput
