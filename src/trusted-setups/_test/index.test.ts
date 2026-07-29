@@ -5,6 +5,7 @@ test('exports', () => {
   expect(Object.keys(Module)).toMatchInlineSnapshot(`
     [
       "Paths",
+      "Setups",
     ]
   `)
 })

@@ -1,13 +1,14 @@
 // Freestanding `stdlib.h`.
 //
-// `malloc` is a bump allocator and `free` is a no-op -- see `ox_rt.c`. Allocation
-// metadata is retained so `realloc` still preserves existing bytes.
+// The default `ox_rt.c` uses a bump allocator and no-op `free`. Targets with
+// persistent allocations may provide a reclaiming runtime.
 #ifndef OX_SHIM_STDLIB_H
 #define OX_SHIM_STDLIB_H
 
 #include <stddef.h>
 
 void abort(void);
+void *calloc(size_t count, size_t size);
 void free(void *ptr);
 void *malloc(size_t n);
 void *realloc(void *ptr, size_t n);

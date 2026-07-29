@@ -19,3 +19,12 @@ test('memmove compares flat-memory offsets rather than C object pointers', () =>
   expect(body).toContain('if ((size_t)d < (size_t)s)')
   expect(body).not.toMatch(/if\s*\(\s*d\s*<\s*s\s*\)/)
 })
+
+test('KZG artifact loads only when create runs', () => {
+  const source = readFileSync(new URL('../Kzg.ts', import.meta.url), 'utf8')
+
+  expect(source).not.toMatch(
+    /^import(?!\s+type\b)[^\n]*['"]\.\/internal\/kzg\.js['"]/m,
+  )
+  expect(source).toContain("await import('./internal/kzg.js')")
+})

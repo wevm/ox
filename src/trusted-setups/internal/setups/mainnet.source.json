@@ -1,0 +1,7 @@
+{
+  "path": "src/trusted_setup.txt",
+  "repository": "https://github.com/ethereum/c-kzg-4844",
+  "setupSha256": "c4732d98dd1452318e1f1943e240fa4c202a8973a44c24e68c937f86b00f9cb2",
+  "sourceSha256": "d39b9f2d047cc9dca2de58f264b6a09448ccd34db967881a6713eacacf0f26b7",
+  "tag": "v2.1.8"
+}

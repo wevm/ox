@@ -83,6 +83,29 @@ export * as Hash from './Hash.js'
 export * as Keystore from './Keystore.js'
 
 /**
+ * WASM implementation of Ox's KZG interface, backed by c-kzg-4844.
+ *
+ * This module is not installed into [`Engine`](/api/Engine). Create an explicit
+ * instance, pass it anywhere that accepts `Kzg.Kzg`, and dispose it when done.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Setups } from 'ox/trusted-setups'
+ * import { Kzg } from 'ox/wasm'
+ *
+ * const kzg = await Kzg.create({
+ *   trustedSetup: Setups.mainnet
+ * })
+ *
+ * kzg.dispose()
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Kzg from './Kzg.js'
+
+/**
  * WASM implementation of Ox's BIP-39 seed derivation.
  *
  * @example

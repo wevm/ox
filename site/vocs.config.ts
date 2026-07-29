@@ -78,6 +78,7 @@ export default defineConfig({
           },
           { text: 'Bytes & Hex', link: '/guides/bytes-hex' },
           { text: 'WASM & Engines', link: '/guides/engine' },
+          { text: 'WASM KZG', link: '/guides/kzg' },
           { text: 'ECDSA & Signers', link: '/guides/ecdsa' },
           {
             text: 'EIP-1193 Providers',

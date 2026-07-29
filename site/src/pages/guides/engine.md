@@ -100,6 +100,10 @@ The dedicated `ox/wasm/Keystore` provider also supplies synchronous scrypt.
 Install that provider explicitly. The aggregate engine excludes scrypt because
 its relative performance depends on `N`, `r`, `p`, and the runtime.
 
+KZG is intentionally outside the global registry. Use the explicit,
+independently owned factory described in the
+[WASM KZG guide](/guides/kzg).
+
 Provider modules expose the regular Ox API alongside an `engine` factory. Use
 this to install only the modules an application needs:
 

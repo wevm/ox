@@ -158,7 +158,11 @@ describe('fromRpc', () => {
         })
         .then(Transaction.fromRpc)
 
-      expect(transaction).toMatchInlineSnapshot(`
+      const { blockTimestamp: _, ...transaction_ } = {
+        blockTimestamp: undefined,
+        ...transaction,
+      }
+      expect(transaction_).toMatchInlineSnapshot(`
         {
           "blockHash": "0x8299a290ae51a8958965987e2caf178a09b8ecde01b737b5f9a8badbacb407cb",
           "blockNumber": 1110749n,
@@ -411,7 +415,12 @@ describe('fromRpc', () => {
           ],
         })
         .then(Transaction.fromRpc)
-      expect(transaction).toMatchInlineSnapshot(`
+
+      const { blockTimestamp: _, ...transaction_ } = {
+        blockTimestamp: undefined,
+        ...transaction,
+      }
+      expect(transaction_).toMatchInlineSnapshot(`
         {
           "accessList": [],
           "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
