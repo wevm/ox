@@ -21,6 +21,7 @@ Generated artifacts, and the module that loads them:
 | target         | artifact                           | consumed by                                 |
 | -------------- | ---------------------------------- | ------------------------------------------- |
 | `hashes`       | `src/wasm/internal/hashes.wasm.ts` | `src/wasm/Hash.ts` (`ox/wasm/Hash`)         |
+| `scrypt`       | `src/wasm/internal/scrypt.wasm.ts` | `src/wasm/Keystore.ts` (`ox/wasm/Keystore`) |
 | `mine`         | `src/tempo/internal/mine.wasm.ts`  | `src/tempo/internal/virtualMasterPool.ts`   |
 | `runtime-test` | `src/wasm/_test/runtime.wasm.ts`   | `src/wasm/_test/Runtime.test.ts` (test only) |
 
@@ -102,9 +103,9 @@ branchless C is not guaranteed to stay branchless, and data-cache timing is full
 exposed. These artifacts are not hardened against timing or cache side-channel
 attacks — and neither is the JavaScript they replace.
 
-Where HMAC inputs cross into linear memory, the loader zeroes its copied inputs
-and explicit scratch buffer in a `finally` block, including after recoverable
-WebAssembly traps. The exported `zero` writes through a `volatile` pointer so
-LTO cannot elide it. That bounds how long key material sits somewhere a heap
-snapshot could capture; it cannot clear caller-owned or runtime-managed state,
-and it does not prevent side channels.
+Where secrets cross into linear memory, the loader zeroes copied inputs,
+outputs, and explicit workspaces in a `finally` block, including after
+recoverable WebAssembly traps. The exported `zero` writes through a `volatile`
+pointer so LTO cannot elide it. That bounds how long key material sits somewhere
+a heap snapshot could capture; it cannot clear caller-owned or runtime-managed
+state, and it does not prevent side channels.

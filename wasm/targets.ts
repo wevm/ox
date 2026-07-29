@@ -44,6 +44,10 @@ export type Target = {
 
 const hmacSha256ScratchSize = 544
 const pbkdf2Sha256ScratchSize = hmacSha256ScratchSize
+// Leave almost 1 MiB above Noble's workspace limit for the stack, copied
+// inputs, output, and fixed scratch.
+const scryptMaxMemory = 1_074_790_400
+const scryptScratchSize = hmacSha256ScratchSize + 128
 
 export const targets = [
   {
@@ -84,6 +88,22 @@ export const targets = [
       'wasm/vendor/blake3/blake3_portable.c',
       'wasm/src/ox_rt.c',
     ],
+    stackSize: 65_536,
+  },
+  {
+    defines: {
+      SCRYPT_SCRATCH_SIZE: scryptScratchSize,
+    },
+    extra: {
+      scryptMaxMemory: String(scryptMaxMemory),
+      scryptScratchSize: String(scryptScratchSize),
+    },
+    initialMemory: 131_072,
+    maxBytes: 8_192,
+    maxMemory: scryptMaxMemory,
+    name: 'scrypt',
+    out: 'src/wasm/internal/scrypt.wasm.ts',
+    sources: ['wasm/src/scrypt.c', 'wasm/src/ox_rt.c'],
     stackSize: 65_536,
   },
   {

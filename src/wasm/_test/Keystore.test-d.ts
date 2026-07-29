@@ -15,11 +15,20 @@ test('synchronous PBKDF2 is present', () => {
   >()
 })
 
+test('synchronous scrypt is present', () => {
+  expectTypeOf<Slot['scrypt']>().toEqualTypeOf<
+    (
+      password: Uint8Array,
+      salt: Uint8Array,
+      options: { N: number; dkLen: number; p: number; r: number },
+    ) => Uint8Array
+  >()
+})
+
 test('unsupported primitives are absent', () => {
   expectTypeOf<Slot>().not.toHaveProperty('aesCtrDecrypt')
   expectTypeOf<Slot>().not.toHaveProperty('aesCtrEncrypt')
   expectTypeOf<Slot>().not.toHaveProperty('pbkdf2Sha256Async')
-  expectTypeOf<Slot>().not.toHaveProperty('scrypt')
   expectTypeOf<Slot>().not.toHaveProperty('scryptAsync')
 })
 
