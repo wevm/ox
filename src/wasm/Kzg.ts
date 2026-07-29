@@ -43,9 +43,9 @@ export type TrustedSetup = {
  * ```ts twoslash
  * // @noErrors
  * import { Setups } from 'ox/trusted-setups'
- * import { Kzg as WasmKzg } from 'ox/wasm'
+ * import { Kzg } from 'ox/wasm'
  *
- * const kzg = await WasmKzg.create({ trustedSetup: Setups.mainnet })
+ * const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
  * // Pass `kzg` anywhere that accepts `Kzg.Kzg`.
  *
  * kzg.dispose()

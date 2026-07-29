@@ -16,9 +16,9 @@ Supply the Ethereum trusted setup when creating an instance:
 ```ts twoslash
 import { Blobs } from 'ox'
 import { Setups } from 'ox/trusted-setups'
-import { Kzg as WasmKzg } from 'ox/wasm'
+import { Kzg } from 'ox/wasm'
 
-const kzg = await WasmKzg.create({ trustedSetup: Setups.mainnet })
+const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
 
 try {
   const blobs = Blobs.from('0xdeadbeef')
