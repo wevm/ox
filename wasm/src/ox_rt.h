@@ -7,11 +7,17 @@
 #ifndef OX_RT_H
 #define OX_RT_H
 
+#ifdef OX_RT_HOST
+// Native benchmarks use the host ABI's standard integer definitions.
+#include <stddef.h>
+#include <stdint.h>
+#else
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef unsigned long size_t;
+#endif
 
 /** Start of the region JS may write to. Emitted by `wasm-ld`. */
 extern unsigned char __heap_base;

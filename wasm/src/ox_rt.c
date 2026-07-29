@@ -1,4 +1,5 @@
 #include "ox_rt.h"
+#include <stdio.h>
 
 // libc replacements. Small and obvious rather than fast: the hot loops in each
 // target work on stack buffers, so these are only used for setup.
@@ -115,6 +116,19 @@ void *realloc(void *ptr, size_t n) {
 // input -- callers validate before entering WASM. `unreachable` surfaces in JS
 // as a `RuntimeError`, which the loader turns into an ox error.
 void abort(void) { __builtin_trap(); }
+
+struct ox_file {
+    int unused;
+};
+
+static FILE stderr_file;
+FILE *stderr = &stderr_file;
+
+int fprintf(FILE *stream, const char *format, ...) {
+    (void)stream;
+    (void)format;
+    return 0;
+}
 
 int printf(const char *format, ...) {
     (void)format;

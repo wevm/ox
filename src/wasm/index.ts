@@ -103,6 +103,27 @@ export * as Keystore from './Keystore.js'
 export * as Mnemonic from './Mnemonic.js'
 
 /**
+ * WASM implementations of deterministic Secp256k1 primitives.
+ *
+ * This provider is opt-in because its embedded libsecp256k1 artifact is larger
+ * than the modules installed by [`Engine.install`](/api/Engine/install).
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Engine } from 'ox'
+ * import { Secp256k1 } from 'ox/wasm'
+ *
+ * await Engine.install({ Secp256k1: Secp256k1.engine() })
+ *
+ * Secp256k1.getPublicKey({ privateKey: '0x...' })
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Secp256k1 from './Secp256k1.js'
+
+/**
  * WASM implementations of Ox's supported X25519 primitives.
  *
  * @example

@@ -1,17 +1,20 @@
 /**
- * Benchmarks across Ox's default, Node, WASM, and Rust implementations.
+ * Benchmarks across Ox's default, Node, and WASM implementations.
  *
  * Each Ox provider runs through the same core resolver, so the timings include
  * identical engine-dispatch overhead. Missing provider primitives report
  * `n/a`; they never time Ox's fallback under another engine's name.
  *
- * Alloy is a native reference, not an Ox engine. It currently supplies only
- * `Hash.keccak256` and is excluded from the fastest-Ox-engine calculation.
+ * C is a native reference, not an Ox engine. It compiles every implementation
+ * supplied by `ox/wasm` from the same sources and target defines for the host.
+ * It is excluded from the fastest-Ox-engine calculation.
  * `OX_BENCH_WARMUP_MS`, `OX_BENCH_BUDGET_MS`, and `OX_BENCH_REPEATS` can
  * shorten local validation runs without changing the measured cases.
  */
 
 import { execFileSync } from 'node:child_process'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as CoreEngine from '../src/core/Engine.js'
@@ -26,6 +29,9 @@ import * as secp256k1 from '../src/core/internal/secp256k1.js'
 import * as x25519 from '../src/core/internal/x25519.js'
 import { engine as nodeEngine } from '../src/node/Engine.js'
 import { engine as wasmEngine } from '../src/wasm/Engine.js'
+import { engine as wasmKeystoreEngine } from '../src/wasm/Keystore.js'
+import { engine as wasmSecp256k1Engine } from '../src/wasm/Secp256k1.js'
+import { type Target, targets as wasmTargets } from '../wasm/targets.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -46,9 +52,9 @@ if (
 type BenchmarkBase = {
   batch?: number | undefined
   case: string
+  cKey?: string | undefined
   primitive: string
   slot: keyof CoreEngine.Engine
-  alloyKey?: string | undefined
 }
 
 type SyncBenchmark = BenchmarkBase & {
@@ -70,7 +76,7 @@ function sync(
   primitive: string,
   case_: string,
   run: () => unknown,
-  options: Pick<BenchmarkBase, 'alloyKey' | 'batch'> = {},
+  options: Pick<BenchmarkBase, 'batch' | 'cKey'> = {},
 ) {
   benchmarks.push({ ...options, case: case_, primitive, run, slot })
 }
@@ -146,11 +152,73 @@ function supports(engine: CoreEngine.Engine, benchmark: Benchmark) {
   return typeof slot?.[benchmark.primitive] === 'function'
 }
 
-/** Alloy rows, or `undefined` where `cargo` is unavailable. */
-function rust() {
+const cTargetNames = new Set([
+  'blake3',
+  'crypto25519',
+  'hashes',
+  'scrypt',
+  'secp256k1',
+])
+const cSourceOverrides = {
+  'wasm/src/blake3.c': 'bench/native/blake3.c',
+  'wasm/src/crypto25519.c': 'bench/native/crypto25519.c',
+  'wasm/src/hashes.c': 'bench/native/hashes.c',
+  'wasm/src/ox_rt.c': 'bench/native/runtime.c',
+  'wasm/src/scrypt.c': 'bench/native/scrypt.c',
+  'wasm/src/secp256k1.c': 'bench/native/secp256k1.c',
+} as const
+const cTargets: readonly Target[] = wasmTargets.filter((target) =>
+  cTargetNames.has(target.name),
+)
+
+/** Native C rows, or `undefined` where a C compiler is unavailable. */
+function c() {
+  const directory = mkdtempSync(join(tmpdir(), 'ox-bench-native-'))
+  const binary = join(directory, 'bench')
+  const defines = cTargets.flatMap((target) =>
+    Object.entries(target.defines ?? {}).map(
+      ([key, value]) => `-D${key}=${value}`,
+    ),
+  )
+  const includes = [
+    '-Iwasm/src',
+    ...cTargets.flatMap((target) =>
+      (target.includes ?? []).map((include) => `-I${include}`),
+    ),
+  ]
+  const sources = cTargets
+    .flatMap((target) => target.sources)
+    .map(
+      (source) =>
+        cSourceOverrides[source as keyof typeof cSourceOverrides] ?? source,
+    )
   try {
-    const stdout = execFileSync('cargo', ['run', '--release', '--quiet'], {
-      cwd: join(root, 'bench/native'),
+    execFileSync(
+      process.env.CC ?? 'cc',
+      [
+        '-std=c11',
+        '-O3',
+        '-fno-builtin',
+        '-Wno-unused-function',
+        '-DOX_RT_HOST',
+        // wasm32 does not auto-detect host SIMD. Keep the native reference on
+        // the same portable BLAKE3 path.
+        '-DBLAKE3_USE_NEON=0',
+        ...defines,
+        ...includes,
+        ...cTargets.flatMap((target) => target.cflags ?? []),
+        'bench/native/bench.c',
+        ...new Set(sources),
+        '-o',
+        binary,
+      ],
+      {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'ignore', 'pipe'],
+      },
+    )
+    const stdout = execFileSync(binary, {
       encoding: 'utf8',
       env: {
         ...process.env,
@@ -171,8 +239,10 @@ function rust() {
       ?.trim()
       .split('\n')
       .pop()
-    console.log(`Rust unavailable: ${reason ?? 'cargo not available'}\n`)
+    console.log(`C unavailable: ${reason ?? 'a C compiler is not available'}\n`)
     return undefined
+  } finally {
+    rmSync(directory, { force: true, recursive: true })
   }
 }
 
@@ -259,21 +329,37 @@ const ed25519PrivateKey = bytes(32, 97)
 const ed25519PublicKey = ed25519.getPublicKey(ed25519PrivateKey)
 const ed25519Signature = ed25519.sign(payload, ed25519PrivateKey)
 
-sync('Ed25519', 'getPublicKey', '32 B key', () =>
-  ed25519.getPublicKey(ed25519PrivateKey),
+sync(
+  'Ed25519',
+  'getPublicKey',
+  '32 B key',
+  () => ed25519.getPublicKey(ed25519PrivateKey),
+  { cKey: 'ed25519.getPublicKey:32' },
 )
 sync('Ed25519', 'randomSecretKey', '32 B key', ed25519.randomSecretKey)
-sync('Ed25519', 'sign', '32 B message', () =>
-  ed25519.sign(payload, ed25519PrivateKey),
+sync(
+  'Ed25519',
+  'sign',
+  '32 B message',
+  () => ed25519.sign(payload, ed25519PrivateKey),
+  { cKey: 'ed25519.sign:32' },
 )
 sync('Ed25519', 'toMontgomery', '32 B public key', () =>
   ed25519.toMontgomery(ed25519PublicKey),
 )
-sync('Ed25519', 'toMontgomerySecret', '32 B private key', () =>
-  ed25519.toMontgomerySecret(ed25519PrivateKey),
+sync(
+  'Ed25519',
+  'toMontgomerySecret',
+  '32 B private key',
+  () => ed25519.toMontgomerySecret(ed25519PrivateKey),
+  { cKey: 'ed25519.toMontgomerySecret:32' },
 )
-sync('Ed25519', 'verify', '32 B message', () =>
-  ed25519.verify(ed25519Signature, payload, ed25519PublicKey),
+sync(
+  'Ed25519',
+  'verify',
+  '32 B message',
+  () => ed25519.verify(ed25519Signature, payload, ed25519PublicKey),
+  { cKey: 'ed25519.verify:32' },
 )
 
 const hashKey = bytes(32, 97)
@@ -282,13 +368,21 @@ const hashSizes = [32, 64, 256, 1024, 4096, 65_536, 1_048_576] as const
 for (const size of hashSizes) {
   const input = bytes(size)
   const case_ = `${sizeLabel(size)} input`
-  sync('Hash', 'blake3', case_, () => hash.blake3(input))
-  sync('Hash', 'hmacSha256', case_, () => hash.hmacSha256(hashKey, input))
-  sync('Hash', 'keccak256', case_, () => hash.keccak256(input), {
-    alloyKey: `keccak256:${size}`,
+  sync('Hash', 'blake3', case_, () => hash.blake3(input), {
+    cKey: `hash.blake3:${size}`,
   })
-  sync('Hash', 'ripemd160', case_, () => hash.ripemd160(input))
-  sync('Hash', 'sha256', case_, () => hash.sha256(input))
+  sync('Hash', 'hmacSha256', case_, () => hash.hmacSha256(hashKey, input), {
+    cKey: `hash.hmacSha256:${size}`,
+  })
+  sync('Hash', 'keccak256', case_, () => hash.keccak256(input), {
+    cKey: `hash.keccak256:${size}`,
+  })
+  sync('Hash', 'ripemd160', case_, () => hash.ripemd160(input), {
+    cKey: `hash.ripemd160:${size}`,
+  })
+  sync('Hash', 'sha256', case_, () => hash.sha256(input), {
+    cKey: `hash.sha256:${size}`,
+  })
 }
 
 const aesKey = bytes(16, 97)
@@ -298,7 +392,11 @@ const aesCiphertext = keystore.aesCtrEncrypt(aesKey, aesIv, aesPlaintext)
 const password = bytes(16, 97)
 const salt = bytes(32, 89)
 const pbkdf2Options = { c: 262_144, dkLen: 32 }
-const scryptOptions = { N: 16_384, dkLen: 32, p: 1, r: 8 }
+const scryptCases = [
+  { N: 1_024, dkLen: 32, p: 1, r: 1 },
+  { N: 16_384, dkLen: 32, p: 1, r: 8 },
+  { N: 262_144, dkLen: 32, p: 8, r: 1 },
+] as const
 
 sync('Keystore', 'aesCtrDecrypt', '4 KiB input, AES-128', () =>
   keystore.aesCtrDecrypt(aesKey, aesIv, aesCiphertext),
@@ -311,18 +409,20 @@ sync(
   'pbkdf2Sha256',
   '262,144 iterations, 32 B output',
   () => keystore.pbkdf2Sha256(password, salt, pbkdf2Options),
-  { batch: 1 },
+  { batch: 1, cKey: 'keystore.pbkdf2Sha256:32' },
 )
 async_('Keystore', 'pbkdf2Sha256Async', '262,144 iterations, 32 B output', () =>
   keystore.pbkdf2Sha256Async(password, salt, pbkdf2Options),
 )
-sync(
-  'Keystore',
-  'scrypt',
-  'N=16,384, r=8, p=1',
-  () => keystore.scrypt(password, salt, scryptOptions),
-  { batch: 1 },
-)
+for (const options of scryptCases)
+  sync(
+    'Keystore',
+    'scrypt',
+    `N=${options.N.toLocaleString('en-US')}, r=${options.r}, p=${options.p}`,
+    () => keystore.scrypt(password, salt, options),
+    { batch: 1, cKey: `keystore.scrypt:${options.N}` },
+  )
+const scryptOptions = scryptCases[1]
 async_('Keystore', 'scryptAsync', 'N=16,384, r=8, p=1', () =>
   keystore.scryptAsync(password, salt, scryptOptions),
 )
@@ -330,8 +430,12 @@ async_('Keystore', 'scryptAsync', 'N=16,384, r=8, p=1', () =>
 const phrase =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-sync('Mnemonic', 'toSeed', '12 words, empty passphrase', () =>
-  mnemonic.toSeed(phrase, ''),
+sync(
+  'Mnemonic',
+  'toSeed',
+  '12 words, empty passphrase',
+  () => mnemonic.toSeed(phrase, ''),
+  { cKey: 'mnemonic.toSeed:12' },
 )
 
 const ecdsaSignOptions = { extraEntropy: false, prehash: false } as const
@@ -364,37 +468,66 @@ const secp256k1PublicKeyB = secp256k1.getPublicKey(privateKeyB)
 const secp256k1Signature = secp256k1.sign(payload, privateKey, ecdsaSignOptions)
 const secp256k1CompactSignature = secp256k1Signature.slice(1)
 
-sync('Secp256k1', 'getPublicKey', '32 B private key', () =>
-  secp256k1.getPublicKey(privateKey),
+sync(
+  'Secp256k1',
+  'getPublicKey',
+  '32 B private key',
+  () => secp256k1.getPublicKey(privateKey),
+  { cKey: 'secp256k1.getPublicKey:32' },
 )
-sync('Secp256k1', 'getSharedSecret', 'uncompressed public key', () =>
-  secp256k1.getSharedSecret(privateKey, secp256k1PublicKeyB),
+sync(
+  'Secp256k1',
+  'getSharedSecret',
+  'uncompressed public key',
+  () => secp256k1.getSharedSecret(privateKey, secp256k1PublicKeyB),
+  { cKey: 'secp256k1.getSharedSecret:65' },
 )
-sync('Secp256k1', 'recoverPublicKey', '32 B message', () =>
-  secp256k1.recoverPublicKey(secp256k1Signature, payload),
+sync(
+  'Secp256k1',
+  'recoverPublicKey',
+  '32 B message',
+  () => secp256k1.recoverPublicKey(secp256k1Signature, payload),
+  { cKey: 'secp256k1.recoverPublicKey:32' },
 )
 sync('Secp256k1', 'randomSecretKey', '32 B key', secp256k1.randomSecretKey)
-sync('Secp256k1', 'sign', '32 B message', () =>
-  secp256k1.sign(payload, privateKey, ecdsaSignOptions),
+sync(
+  'Secp256k1',
+  'sign',
+  '32 B message',
+  () => secp256k1.sign(payload, privateKey, ecdsaSignOptions),
+  { cKey: 'secp256k1.sign:32' },
 )
-sync('Secp256k1', 'verify', '32 B message', () =>
-  secp256k1.verify(
-    secp256k1CompactSignature,
-    payload,
-    secp256k1PublicKey,
-    ecdsaVerifyOptions,
-  ),
+sync(
+  'Secp256k1',
+  'verify',
+  '32 B message',
+  () =>
+    secp256k1.verify(
+      secp256k1CompactSignature,
+      payload,
+      secp256k1PublicKey,
+      ecdsaVerifyOptions,
+    ),
+  { cKey: 'secp256k1.verify:32' },
 )
 
 const x25519PrivateKey = bytes(32, 97)
 const x25519PrivateKeyB = bytes(32, 89)
 const x25519PublicKeyB = x25519.getPublicKey(x25519PrivateKeyB)
 
-sync('X25519', 'getPublicKey', '32 B private key', () =>
-  x25519.getPublicKey(x25519PrivateKey),
+sync(
+  'X25519',
+  'getPublicKey',
+  '32 B private key',
+  () => x25519.getPublicKey(x25519PrivateKey),
+  { cKey: 'x25519.getPublicKey:32' },
 )
-sync('X25519', 'getSharedSecret', '32 B public key', () =>
-  x25519.getSharedSecret(x25519PrivateKey, x25519PublicKeyB),
+sync(
+  'X25519',
+  'getSharedSecret',
+  '32 B public key',
+  () => x25519.getSharedSecret(x25519PrivateKey, x25519PublicKeyB),
+  { cKey: 'x25519.getSharedSecret:32' },
 )
 sync('X25519', 'randomSecretKey', '32 B key', x25519.randomSecretKey)
 
@@ -409,8 +542,25 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
 const node = await nodeEngine()
-const wasm = await wasmEngine()
-const rustRows = rust()
+const [wasmAggregate, wasmKeystore, wasmSecp256k1] = await Promise.all([
+  wasmEngine(),
+  wasmKeystoreEngine(),
+  wasmSecp256k1Engine(),
+])
+const wasm = {
+  ...wasmAggregate,
+  Keystore: wasmKeystore,
+  Secp256k1: wasmSecp256k1,
+}
+const cRows = c()
+for (const benchmark of benchmarks) {
+  if (supports(wasm, benchmark) !== Boolean(benchmark.cKey))
+    throw new Error(
+      `Native C coverage does not match WASM for ${benchmark.slot}.${benchmark.primitive}`,
+    )
+  if (cRows && benchmark.cKey && !cRows.has(benchmark.cKey))
+    throw new Error(`Missing native C result for ${benchmark.cKey}`)
+}
 
 const headers = [
   'primitive',
@@ -418,12 +568,12 @@ const headers = [
   'ox',
   'ox/node',
   'ox/wasm',
-  'alloy (Rust)',
+  'C',
   'fastest Ox engine vs ox',
 ]
 
 console.log(
-  'Best-observed time per call. Lower is better; Alloy is reference only.',
+  'Best-observed time per call. Lower is better; C is reference only.',
 )
 
 for (const slot of engineContract.slots) {
@@ -438,19 +588,17 @@ for (const slot of engineContract.slots) {
     const wasmNs = supports(wasm, benchmark)
       ? await measure(benchmark, wasm)
       : undefined
-    const rustNs = benchmark.alloyKey
-      ? rustRows?.get(benchmark.alloyKey)
-      : undefined
+    const cNs = benchmark.cKey ? cRows?.get(benchmark.cKey) : undefined
     rows.push([
       benchmark.primitive,
       benchmark.case,
       format(base),
       nodeNs === undefined ? 'n/a' : format(nodeNs),
       wasmNs === undefined ? 'n/a' : format(wasmNs),
-      benchmark.alloyKey
-        ? rustNs === undefined
+      benchmark.cKey
+        ? cNs === undefined
           ? 'unavailable'
-          : format(rustNs)
+          : format(cNs)
         : 'n/a',
       speedup(base, [
         ['node', nodeNs],
