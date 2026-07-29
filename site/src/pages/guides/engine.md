@@ -83,6 +83,10 @@ Other operations keep their current implementation, or use Ox's default when
 no earlier override exists. In particular, asynchronous KDFs remain on the
 default because wrapping synchronous WASM in a promise would not make it yield.
 
+The dedicated `ox/wasm/Keystore` provider also supplies synchronous scrypt.
+Install that provider explicitly. The aggregate engine excludes scrypt because
+its relative performance depends on `N`, `r`, `p`, and the runtime.
+
 Provider modules expose the regular Ox API alongside an `engine` factory. Use
 this to install only the modules an application needs:
 
@@ -306,11 +310,12 @@ harness never times Ox's fallback under another engine's name.
 `alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
 engine.
 
-Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1, using 50 ms
-warmups, 200 ms measurement budgets, and three repeats, produced the following
-best-observed timings (lower is better). Speedup compares the fastest Ox engine
-in each row with `ox`; Alloy remains a reference only. The full command prints
-every primitive and input size:
+Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1 produced the
+following timings (lower is better). The main harness used 50 ms warmups,
+200 ms measurement budgets, and three repeats. Its rows report the best repeat;
+the scrypt rows report standalone benchmark means. Speedup compares the fastest
+Ox engine in each row with `ox`; Alloy remains a reference only. The full
+command prints every primitive and input size:
 
 | Primitive and case                    | `ox`      | `ox/node` | `ox/wasm` | `alloy (Rust)` | Fastest Ox engine vs `ox` |
 | ------------------------------------- | --------- | --------- | --------- | -------------- | ------------------------- |
@@ -325,6 +330,9 @@ every primitive and input size:
 | `Hash.sha256`, 1024 KiB               | 3.81 ms   | 348.39 µs | 2.96 ms   | n/a            | 10.93× (node)             |
 | `Keystore.aesCtrEncrypt`, 4 KiB       | 28.85 µs  | 2.71 µs   | n/a       | n/a            | 10.66× (node)             |
 | `Keystore.pbkdf2Sha256`, 262,144 runs | 234.08 ms | 21.55 ms  | 98.52 ms  | n/a            | 10.86× (node)             |
+| `Keystore.scrypt`, N=1,024, r=1, p=1  | 217.0 µs  | n/a       | 165.1 µs  | n/a            | 1.31× (wasm)              |
+| `Keystore.scrypt`, N=16,384, r=8, p=1 | 25.08 ms  | n/a       | 21.87 ms  | n/a            | 1.15× (wasm)              |
+| `Keystore.scrypt`, N=262,144, r=1, p=8 | 567.61 ms | n/a       | 497.77 ms | n/a            | 1.14× (wasm)              |
 | `Mnemonic.toSeed`, 12 words           | 5.60 ms   | 441.33 µs | 1.87 ms   | n/a            | 12.69× (node)             |
 | `P256.getPublicKey`, 32 B key         | 135.07 µs | 10.48 µs  | n/a       | n/a            | 12.89× (node)             |
 | `X25519.getSharedSecret`, 32 B key    | 597.48 µs | 47.00 µs  | 40.70 µs  | n/a            | 14.68× (wasm)             |

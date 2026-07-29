@@ -1,5 +1,6 @@
 import { fc, test } from '@fast-check/vitest'
 import { pbkdf2 as pbkdf2_noble } from '@noble/hashes/pbkdf2.js'
+import { scrypt as scrypt_noble } from '@noble/hashes/scrypt.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { beforeAll, describe, expect } from 'vp/test'
 import { numRuns } from '../../../test/fuzz/numRuns.js'
@@ -110,4 +111,53 @@ describe('pbkdf2Sha256', () => {
     expect(hash.sha256(input)).toEqual(sha256(input))
     expect(derived).toEqual(snapshot)
   })
+})
+
+describe('scrypt', () => {
+  test.prop(
+    {
+      dkLen: arbitraryDkLen,
+      logN: fc.integer({ max: 7, min: 1 }),
+      p: fc.integer({ max: 3, min: 1 }),
+      password: arbitraryPassword,
+      r: fc.integer({ max: 4, min: 1 }),
+      salt: arbitrarySalt,
+    },
+    { numRuns },
+  )(
+    'matches @noble/hashes for arbitrary parameters and inputs',
+    ({ dkLen, logN, p, password, r, salt }) => {
+      const options = { N: 2 ** logN, dkLen, p, r }
+      expect(keystore.scrypt(password, salt, options)).toEqual(
+        scrypt_noble(password, salt, options),
+      )
+    },
+  )
+
+  test.prop(
+    {
+      dkLen: arbitraryDkLen,
+      logN: fc.integer({ max: 7, min: 1 }),
+      p: fc.integer({ max: 3, min: 1 }),
+      password: arbitraryPassword,
+      r: fc.integer({ max: 4, min: 1 }),
+      salt: arbitrarySalt,
+    },
+    { numRuns },
+  )(
+    'handles subviews without mutating either backing buffer',
+    ({ dkLen, logN, p, password, r, salt }) => {
+      const password_ = asSubview(password)
+      const salt_ = asSubview(salt)
+      const passwordSnapshot = password_.backing.slice()
+      const saltSnapshot = salt_.backing.slice()
+      const options = { N: 2 ** logN, dkLen, p, r }
+
+      expect(keystore.scrypt(password_.view, salt_.view, options)).toEqual(
+        scrypt_noble(password_.view, salt_.view, options),
+      )
+      expect(password_.backing).toEqual(passwordSnapshot)
+      expect(salt_.backing).toEqual(saltSnapshot)
+    },
+  )
 })
