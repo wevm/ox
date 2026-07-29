@@ -41,7 +41,8 @@ use alloy_signer_local::PrivateKeySigner;
 const SIZES: [usize; 7] = [32, 64, 256, 1024, 4096, 65_536, 1_048_576];
 
 /// The 12-word vector the Ox harness derives a seed from.
-const PHRASE: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+const PHRASE: &str =
+    "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
 /// Mirrors `bytes()` in `scripts/bench:engines.ts`, so both sides hash, sign,
 /// and recover over byte-for-byte identical inputs.
@@ -157,7 +158,9 @@ fn main() {
     let signer =
         PrivateKeySigner::from_bytes(&B256::from(secret_key)).expect("private key in curve order");
     let payload = B256::from_slice(&bytes(32, 251));
-    let signature = signer.sign_hash_sync(&payload).expect("payload is signable");
+    let signature = signer
+        .sign_hash_sync(&payload)
+        .expect("payload is signable");
 
     // `signer.public_key()` alone re-encodes the point k256 already cached
     // inside the `SigningKey`, which measures an encoding rather than a
@@ -166,8 +169,8 @@ fn main() {
     // the same work as Ox's `getPublicKey`. Alloy has no bare private-key ->
     // public-key call, so the row also derives an address: one Keccak256 over
     // 64 bytes, about 1% of the total.
-    // Ox returns SEC1 uncompressed bytes; `public_key()` drops the `0x04` tag.
     let secret_key = B256::from(secret_key);
+    // Ox returns SEC1 uncompressed bytes; `public_key()` drops the `0x04` tag.
     let public_key = [&[0x04][..], signer.public_key().as_slice()].concat();
     row(
         "Secp256k1.getPublicKey",
