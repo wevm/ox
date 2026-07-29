@@ -1,5 +1,5 @@
 # Pinned for the same reason `wasm/toolchain.json` pins clang: a benchmark is
-# only meaningful against a known compiler. `alloy-primitives` also requires
-# 1.90 or newer, so the default toolchain is often too old to build this at all.
+# only meaningful against a known compiler. `alloy-signer-local` also requires
+# 1.94 or newer, so the default toolchain is often too old to build this at all.
 [toolchain]
-channel = "1.93"
+channel = "1.94"

@@ -289,22 +289,34 @@ pnpm bench:engines
 The harness covers every engine slot and all 38 primitives in Ox's default
 engine. The provider columns count the primitives each implementation supplies:
 
-| Slot          | Primitives | `ox` | `ox/node` | `ox/wasm` | `alloy (Rust)` |
-| ------------- | ---------- | ---- | --------- | --------- | -------------- |
-| `Bls`         | 5          | 5    | n/a       | n/a       | n/a            |
-| `Ed25519`     | 6          | 6    | 3         | 4         | n/a            |
-| `Hash`        | 5          | 5    | 3         | 5         | 1              |
-| `Keystore`    | 6          | 6    | 4         | 1         | n/a            |
-| `Mnemonic`    | 1          | 1    | 1         | 1         | n/a            |
-| `P256`        | 6          | 6    | 1         | n/a       | n/a            |
-| `Secp256k1`   | 6          | 6    | n/a       | n/a       | n/a            |
-| `X25519`      | 3          | 3    | 2         | 2         | n/a            |
-| **Total**     | **38**     | **38** | **14**    | **13**    | **1**          |
+| Slot        | Primitives | `ox`   | `ox/node` | `ox/wasm` | `alloy (Rust)` |
+| ----------- | ---------- | ------ | --------- | --------- | -------------- |
+| `Bls`       | 5          | 5      | n/a       | n/a       | n/a            |
+| `Ed25519`   | 6          | 6      | 3         | 4         | n/a            |
+| `Hash`      | 5          | 5      | 3         | 5         | 1              |
+| `Keystore`  | 6          | 6      | 4         | 1         | n/a            |
+| `Mnemonic`  | 1          | 1      | 1         | 1         | 1              |
+| `P256`      | 6          | 6      | 1         | n/a       | n/a            |
+| `Secp256k1` | 6          | 6      | n/a       | n/a       | 3              |
+| `X25519`    | 3          | 3      | 2         | 2         | n/a            |
+| **Total**   | **38**     | **38** | **14**    | **13**    | **5**          |
 
 `n/a` means the provider does not implement a primitive in that slot. The
 harness never times Ox's fallback under another engine's name.
-`alloy-primitives` provides Keccak256 only; it is a native reference, not an Ox
-engine.
+
+Alloy is a native reference, not an Ox engine. `alloy-primitives` supplies
+Keccak256, and `alloy-signer-local` supplies BIP-39 seed derivation plus three
+of the six `Secp256k1` primitives. The remaining cells are `n/a` because Alloy
+has no equivalent call rather than because it was left out: it exposes no key
+agreement, no bare ECDSA verify (it recovers and compares an address instead),
+and no P256, Ed25519, X25519, or BLS, and its keystore API encrypts a whole
+keystore file rather than exposing AES-CTR, PBKDF2, and scrypt individually.
+`bench/native/src/main.rs` records the reasoning per primitive.
+
+Where Alloy's closest call does more work than Ox's, the row still appears and
+the difference is called out below the timings. For every shared row the
+harness compares the two implementations' output bytes and aborts the run if
+they disagree, so a row cannot report two engines computing different things.
 
 Local runs on an Apple M4 Max with Node.js 25.9.0 and Rust 1.93.1, using 50 ms
 warmups, 200 ms measurement budgets, and three repeats, produced the following

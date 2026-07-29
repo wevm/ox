@@ -5,8 +5,11 @@
  * identical engine-dispatch overhead. Missing provider primitives report
  * `n/a`; they never time Ox's fallback under another engine's name.
  *
- * Alloy is a native reference, not an Ox engine. It currently supplies only
- * `Hash.keccak256` and is excluded from the fastest-Ox-engine calculation.
+ * Alloy is a native reference, not an Ox engine, and is excluded from the
+ * fastest-Ox-engine calculation. It covers the subset of the contract it
+ * implements with matching semantics -- `Hash.keccak256`, `Mnemonic.toSeed`,
+ * and three of the six `Secp256k1` primitives. `bench/native/src/main.rs`
+ * documents why each remaining primitive is absent.
  * `OX_BENCH_WARMUP_MS`, `OX_BENCH_BUDGET_MS`, and `OX_BENCH_REPEATS` can
  * shorten local validation runs without changing the measured cases.
  */
@@ -146,7 +149,9 @@ function supports(engine: CoreEngine.Engine, benchmark: Benchmark) {
   return typeof slot?.[benchmark.primitive] === 'function'
 }
 
-/** Alloy rows, or `undefined` where `cargo` is unavailable. */
+type AlloyRow = { ns: number; output: string }
+
+/** Alloy rows keyed by `alloyKey`, or `undefined` where `cargo` is unavailable. */
 function rust() {
   try {
     const stdout = execFileSync('cargo', ['run', '--release', '--quiet'], {
@@ -160,10 +165,10 @@ function rust() {
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     })
-    const rows = new Map<string, number>()
+    const rows = new Map<string, AlloyRow>()
     for (const line of stdout.trim().split('\n').slice(1)) {
-      const [primitive, size, ns] = line.split(',') as [string, string, string]
-      rows.set(`${primitive}:${size}`, Number(ns))
+      const [key, ns, output] = line.split(',') as [string, string, string]
+      rows.set(key, { ns: Number(ns), output })
     }
     return rows
   } catch (error) {
@@ -174,6 +179,28 @@ function rust() {
     console.log(`Rust unavailable: ${reason ?? 'cargo not available'}\n`)
     return undefined
   }
+}
+
+/**
+ * Aborts unless Alloy and ox's default engine return identical bytes.
+ *
+ * A shared row is only meaningful if both sides compute the same thing, and
+ * the ways that can quietly stop being true are easy to miss: an Alloy call
+ * that reuses a cached value instead of deriving it, or one whose byte layout
+ * drifts. Comparing the results turns either into a failed run.
+ */
+function checkAlloy(benchmark: Benchmark, expected: string) {
+  const value = benchmark.run()
+  if (!(value instanceof Uint8Array))
+    throw new Error(
+      `${benchmark.slot}.${benchmark.primitive} does not return bytes, so it cannot be compared with Alloy.`,
+    )
+  const actual = Buffer.from(value).toString('hex')
+  if (actual === expected) return
+  throw new Error(
+    `Alloy and ox disagree on ${benchmark.slot}.${benchmark.primitive} (${benchmark.case}).\n` +
+      `  ox:    ${actual}\n  alloy: ${expected}`,
+  )
 }
 
 const format = (ns: number) =>
@@ -285,7 +312,7 @@ for (const size of hashSizes) {
   sync('Hash', 'blake3', case_, () => hash.blake3(input))
   sync('Hash', 'hmacSha256', case_, () => hash.hmacSha256(hashKey, input))
   sync('Hash', 'keccak256', case_, () => hash.keccak256(input), {
-    alloyKey: `keccak256:${size}`,
+    alloyKey: `Hash.keccak256:${size}`,
   })
   sync('Hash', 'ripemd160', case_, () => hash.ripemd160(input))
   sync('Hash', 'sha256', case_, () => hash.sha256(input))
@@ -330,8 +357,12 @@ async_('Keystore', 'scryptAsync', 'N=16,384, r=8, p=1', () =>
 const phrase =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-sync('Mnemonic', 'toSeed', '12 words, empty passphrase', () =>
-  mnemonic.toSeed(phrase, ''),
+sync(
+  'Mnemonic',
+  'toSeed',
+  '12 words, empty passphrase',
+  () => mnemonic.toSeed(phrase, ''),
+  { alloyKey: 'Mnemonic.toSeed' },
 )
 
 const ecdsaSignOptions = { extraEntropy: false, prehash: false } as const
@@ -364,18 +395,30 @@ const secp256k1PublicKeyB = secp256k1.getPublicKey(privateKeyB)
 const secp256k1Signature = secp256k1.sign(payload, privateKey, ecdsaSignOptions)
 const secp256k1CompactSignature = secp256k1Signature.slice(1)
 
-sync('Secp256k1', 'getPublicKey', '32 B private key', () =>
-  secp256k1.getPublicKey(privateKey),
+sync(
+  'Secp256k1',
+  'getPublicKey',
+  '32 B private key',
+  () => secp256k1.getPublicKey(privateKey),
+  { alloyKey: 'Secp256k1.getPublicKey' },
 )
 sync('Secp256k1', 'getSharedSecret', 'uncompressed public key', () =>
   secp256k1.getSharedSecret(privateKey, secp256k1PublicKeyB),
 )
-sync('Secp256k1', 'recoverPublicKey', '32 B message', () =>
-  secp256k1.recoverPublicKey(secp256k1Signature, payload),
+sync(
+  'Secp256k1',
+  'recoverPublicKey',
+  '32 B message',
+  () => secp256k1.recoverPublicKey(secp256k1Signature, payload),
+  { alloyKey: 'Secp256k1.recoverPublicKey' },
 )
 sync('Secp256k1', 'randomSecretKey', '32 B key', secp256k1.randomSecretKey)
-sync('Secp256k1', 'sign', '32 B message', () =>
-  secp256k1.sign(payload, privateKey, ecdsaSignOptions),
+sync(
+  'Secp256k1',
+  'sign',
+  '32 B message',
+  () => secp256k1.sign(payload, privateKey, ecdsaSignOptions),
+  { alloyKey: 'Secp256k1.sign' },
 )
 sync('Secp256k1', 'verify', '32 B message', () =>
   secp256k1.verify(
@@ -438,9 +481,10 @@ for (const slot of engineContract.slots) {
     const wasmNs = supports(wasm, benchmark)
       ? await measure(benchmark, wasm)
       : undefined
-    const rustNs = benchmark.alloyKey
+    const alloy = benchmark.alloyKey
       ? rustRows?.get(benchmark.alloyKey)
       : undefined
+    if (alloy) checkAlloy(benchmark, alloy.output)
     rows.push([
       benchmark.primitive,
       benchmark.case,
@@ -448,9 +492,9 @@ for (const slot of engineContract.slots) {
       nodeNs === undefined ? 'n/a' : format(nodeNs),
       wasmNs === undefined ? 'n/a' : format(wasmNs),
       benchmark.alloyKey
-        ? rustNs === undefined
+        ? alloy === undefined
           ? 'unavailable'
-          : format(rustNs)
+          : format(alloy.ns)
         : 'n/a',
       speedup(base, [
         ['node', nodeNs],

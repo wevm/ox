@@ -4,9 +4,12 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
-# Native Alloy reference for Keccak256.
+# Native Alloy reference. `k256` unlocks `Signature::recover_from_prehash`, and
+# `mnemonic` unlocks the `coins_bip39` re-export behind `alloy-signer-local`.
 [dependencies]
-alloy-primitives = "1"
+alloy-primitives = { version = "1", features = ["k256"] }
+alloy-signer = "2"
+alloy-signer-local = { version = "2", features = ["mnemonic"] }
 
 [profile.release]
 opt-level = 3
