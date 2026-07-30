@@ -14,8 +14,8 @@ v0.14.33. The fastest result in each row is bold.
 
 | Operation | `ox v0` | `ox` | `ox/node` | `ox/wasm` |
 | --- | ---: | ---: | ---: | ---: |
-| `AbiFunction.encodeData` (cached) | 13.4 µs | **12.9 µs** | 13.1 µs | 13.1 µs |
-| `AbiFunction.encodeData` (dynamic) | 39.4 µs | 33.7 µs | 33.7 µs | **29.2 µs** |
+| `AbiFunction.encodeData` (cached) | 13.4 µs | **6.8 µs** | 7.0 µs | 7.0 µs |
+| `AbiFunction.encodeData` (dynamic) | 39.5 µs | 27.0 µs | 28.1 µs | **22.8 µs** |
 | `TransactionEnvelope.getSignPayload` | 5.5 µs | 3.9 µs | 3.9 µs | **1.5 µs** |
 | `PersonalMessage.getSignPayload` | 4.5 µs | 3.3 µs | 3.3 µs | **1.0 µs** |
 | `ContractAddress.fromCreate2` | 14.0 µs | 11.2 µs | 11.2 µs | **6.5 µs** |

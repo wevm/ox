@@ -218,6 +218,15 @@ describe('encodeData', () => {
     )
   })
 
+  test('behavior: malformed bytes compatibility', () => {
+    const abiFunction = AbiFunction.from('function foo(bytes)')
+    expect(
+      AbiFunction.encodeData(abiFunction, ['0xzz1']),
+    ).toMatchInlineSnapshot(
+      `"0x30c8d1da00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002zz10000000000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
+
   test('behavior: with overloads', () => {
     const abi = Abi.from([
       {

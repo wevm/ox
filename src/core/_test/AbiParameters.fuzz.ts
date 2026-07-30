@@ -32,5 +32,9 @@ function normalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(normalize)
   if (typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value))
     return value.toLowerCase()
+  if (value && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value).map(([key, value]) => [key, normalize(value)]),
+    )
   return value
 }

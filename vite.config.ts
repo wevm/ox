@@ -330,6 +330,7 @@ export default defineConfig({
                   '@scure/bip39/wordlists/simplified-chinese.js',
                   '@scure/bip39/wordlists/spanish.js',
                   '@scure/bip39/wordlists/traditional-chinese.js',
+                  'ethers',
                 ],
               },
             },

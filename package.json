@@ -59,6 +59,7 @@
     "eslint": "catalog:",
     "eslint-plugin-jsdoc": "catalog:",
     "eslint-plugin-tsdoc": "catalog:",
+    "ethers": "catalog:",
     "fast-check": "catalog:",
     "fs-extra": "catalog:",
     "knip": "catalog:",

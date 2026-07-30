@@ -25,9 +25,22 @@ export function arbitraryHexOfByteLength(
  * `maxByteLength`. Defaults to 128 bytes to keep parser fuzz inputs bounded.
  */
 export function arbitraryHex(maxByteLength = 128): fc.Arbitrary<Hex.Hex> {
-  return fc
-    .integer({ min: 0, max: maxByteLength })
-    .chain(arbitraryHexOfByteLength)
+  const boundaries = [0, 1, 31, 32, 33, 63, 64, 65, maxByteLength].filter(
+    (length, i, lengths) =>
+      length <= maxByteLength && lengths.indexOf(length) === i,
+  )
+  return fc.oneof(
+    {
+      weight: 4,
+      arbitrary: fc
+        .integer({ min: 0, max: maxByteLength })
+        .chain(arbitraryHexOfByteLength),
+    },
+    {
+      weight: 1,
+      arbitrary: fc.constantFrom(...boundaries).chain(arbitraryHexOfByteLength),
+    },
+  )
 }
 
 /**
@@ -47,13 +60,15 @@ export function arbitraryBigIntInBits(
   bits: number,
   signed: boolean,
 ): fc.Arbitrary<bigint> {
-  if (signed) {
-    const max = 2n ** (BigInt(bits) - 1n) - 1n
-    const min = -(2n ** (BigInt(bits) - 1n))
-    return fc.bigInt({ min, max })
-  }
-  const max = 2n ** BigInt(bits) - 1n
-  return fc.bigInt({ min: 0n, max })
+  const max = signed ? 2n ** (BigInt(bits) - 1n) - 1n : 2n ** BigInt(bits) - 1n
+  const min = signed ? -(2n ** (BigInt(bits) - 1n)) : 0n
+  const boundaries = [min, max, 0n, 1n, -1n, 2n ** 64n - 1n, 2n ** 64n].filter(
+    (value) => value >= min && value <= max,
+  )
+  return fc.oneof(
+    { weight: 4, arbitrary: fc.bigInt({ min, max }) },
+    { weight: 1, arbitrary: fc.constantFrom(...boundaries) },
+  )
 }
 
 /**
