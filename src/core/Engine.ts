@@ -9,6 +9,7 @@ export type {
   Eddsa,
   Engine,
   Hash,
+  HashState,
   Keystore,
   Mnemonic,
 } from './internal/engine.js'

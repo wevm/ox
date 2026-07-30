@@ -136,5 +136,14 @@ describe('Engine', () => {
     expectTypeOf<NonNullable<Engine.Hash['keccak256']>>().toEqualTypeOf<
       (input: Uint8Array) => Uint8Array
     >()
+    expectTypeOf<NonNullable<Engine.Hash['createKeccak256']>>().toEqualTypeOf<
+      () => Engine.HashState
+    >()
+    expectTypeOf<Engine.HashState>().toEqualTypeOf<{
+      clone(): Engine.HashState
+      destroy(): void
+      digestInto(output: Uint8Array): void
+      update(input: Uint8Array): void
+    }>()
   })
 })

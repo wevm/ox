@@ -1,6 +1,7 @@
 import * as crypto from 'node:crypto'
 import type * as Engine from '../core/Engine.js'
 import type * as Errors from '../core/Errors.js'
+import * as CoreHash from '../core/Hash.js'
 
 export * from '../core/Hash.js'
 
@@ -12,9 +13,11 @@ export * from '../core/Hash.js'
  * which installs every implementation this entrypoint provides. Reach for this
  * to install or hold the `Hash` slot on its own.
  *
- * Node does not provide BLAKE3, and its `sha3-256` is not Ethereum Keccak256, so
- * this engine deliberately omits `blake3` and `keccak256`. Any earlier override
- * remains installed; otherwise Ox uses its default implementation.
+ * Node does not provide BLAKE3, and its `sha3-256` is not Ethereum Keccak256.
+ * Node HMAC states cannot be cloned.
+ *
+ * The engine omits those implementations. Earlier overrides remain installed;
+ * Ox uses its defaults when no override exists.
  *
  * @example
  * ```ts twoslash
@@ -31,6 +34,8 @@ export * from '../core/Hash.js'
  */
 export function engine(): Promise<engine.ReturnType> {
   return Promise.resolve({
+    createRipemd160: () => fromHash(crypto.createHash('ripemd160'), 20),
+    createSha256: () => fromHash(crypto.createHash('sha256'), 32),
     hmacSha256: (key, message) =>
       new Uint8Array(crypto.createHmac('sha256', key).update(message).digest()),
     ripemd160: (input) =>
@@ -42,10 +47,42 @@ export function engine(): Promise<engine.ReturnType> {
 export declare namespace engine {
   /** Every `Hash` primitive this module implements. */
   type ReturnType = {
-    [key in 'hmacSha256' | 'ripemd160' | 'sha256']-?: NonNullable<
-      Engine.Hash[key]
-    >
+    [key in
+      | 'createRipemd160'
+      | 'createSha256'
+      | 'hmacSha256'
+      | 'ripemd160'
+      | 'sha256']-?: NonNullable<Engine.Hash[key]>
   }
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+function fromHash(initial: crypto.Hash, digestSize: number): Engine.HashState {
+  let hash: crypto.Hash | undefined = initial
+
+  const get = () => {
+    if (!hash) throw new CoreHash.HasherDestroyedError()
+    return hash
+  }
+
+  return {
+    clone: () => fromHash(get().copy(), digestSize),
+    destroy: () => {
+      hash = undefined
+    },
+    digestInto: (output) => {
+      const active = get()
+      if (output.length < digestSize)
+        throw new CoreHash.InvalidDigestSizeError({
+          minimum: digestSize,
+          size: output.length,
+        })
+      hash = undefined
+      output.set(active.digest())
+    },
+    update: (input) => {
+      get().update(input)
+    },
+  }
 }

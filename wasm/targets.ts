@@ -42,22 +42,36 @@ export type Target = {
   wasmOpt?: readonly string[] | undefined
 }
 
-const hmacSha256ScratchSize = 544
-const pbkdf2Sha256ScratchSize = hmacSha256ScratchSize
+const hmacSha256ScratchSize = 144
+const hmacSha256StateSize = hmacSha256ScratchSize
+const keccak256StateSize = 344
+const pbkdf2Sha256ScratchSize = 352
+const ripemd160StateSize = 96
+const sha256StateSize = 112
+const blake3StateSize = 1_912
 // Leave almost 1 MiB above Noble's workspace limit for the stack, copied
 // inputs, output, and fixed scratch.
 const scryptMaxMemory = 1_074_790_400
-const scryptScratchSize = hmacSha256ScratchSize + 128
+const scryptHmacSha256ScratchSize = 544
+const scryptScratchSize = scryptHmacSha256ScratchSize + 128
 
 export const targets = [
   {
     defines: {
       HMAC_SHA256_SCRATCH_SIZE: hmacSha256ScratchSize,
+      HMAC_SHA256_STATE_SIZE: hmacSha256StateSize,
+      KECCAK256_STATE_SIZE: keccak256StateSize,
       PBKDF2_SHA256_SCRATCH_SIZE: pbkdf2Sha256ScratchSize,
+      RIPEMD160_STATE_SIZE: ripemd160StateSize,
+      SHA256_STATE_SIZE: sha256StateSize,
     },
     extra: {
       hmacSha256ScratchSize: String(hmacSha256ScratchSize),
+      hmacSha256StateSize: String(hmacSha256StateSize),
+      keccak256StateSize: String(keccak256StateSize),
       pbkdf2Sha256ScratchSize: String(pbkdf2Sha256ScratchSize),
+      ripemd160StateSize: String(ripemd160StateSize),
+      sha256StateSize: String(sha256StateSize),
     },
     initialMemory: 1_048_576,
     maxBytes: 32_768,
@@ -74,6 +88,10 @@ export const targets = [
       BLAKE3_NO_NEON: 1,
       BLAKE3_NO_SSE2: 1,
       BLAKE3_NO_SSE41: 1,
+      BLAKE3_STATE_SIZE: blake3StateSize,
+    },
+    extra: {
+      blake3StateSize: String(blake3StateSize),
     },
     includes: ['wasm/shim/blake3', 'wasm/vendor/blake3'],
     initialMemory: 131_072,

@@ -1,5 +1,150 @@
-import { Engine, Hash } from 'ox'
+import { type Bytes, Engine, Hash, type Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
+
+type Factory = {
+  create(): Hash.Hasher
+  digest(value: Hex.Hex | Bytes.Bytes): Bytes.Bytes
+  digestSize: number
+  name: string
+}
+
+const factories = [
+  {
+    create: () => Hash.createBlake3(),
+    digest: (value) => Hash.blake3(value, { as: 'Bytes' }),
+    digestSize: 32,
+    name: 'createBlake3',
+  },
+  {
+    create: () => Hash.createHmac256('0x6b6579'),
+    digest: (value) => Hash.hmac256('0x6b6579', value, { as: 'Bytes' }),
+    digestSize: 32,
+    name: 'createHmac256',
+  },
+  {
+    create: () => Hash.createKeccak256(),
+    digest: (value) => Hash.keccak256(value, { as: 'Bytes' }),
+    digestSize: 32,
+    name: 'createKeccak256',
+  },
+  {
+    create: () => Hash.createRipemd160(),
+    digest: (value) => Hash.ripemd160(value, { as: 'Bytes' }),
+    digestSize: 20,
+    name: 'createRipemd160',
+  },
+  {
+    create: () => Hash.createSha256(),
+    digest: (value) => Hash.sha256(value, { as: 'Bytes' }),
+    digestSize: 32,
+    name: 'createSha256',
+  },
+] as const satisfies readonly Factory[]
+
+describe('incremental', () => {
+  test.each(factories)(
+    '$name: chunked input matches the one-shot function',
+    ({ create, digest }) => {
+      const hash = create()
+      hash.update('0xdead').update(Uint8Array.of(0xbe, 0xef))
+      expect(hash.digest({ as: 'Bytes' })).toEqual(digest('0xdeadbeef'))
+    },
+  )
+
+  test.each(factories)(
+    '$name: empty input matches the one-shot function',
+    ({ create, digest }) => {
+      expect(create().digest({ as: 'Bytes' })).toEqual(digest('0x'))
+    },
+  )
+
+  test.each(factories)(
+    '$name: clone branches from the same prefix',
+    ({ create, digest }) => {
+      const first = create().update('0xdead')
+      const second = first.clone()
+
+      first.update('0xbeef')
+      second.update('0xcafe')
+
+      expect(first.digest({ as: 'Bytes' })).toEqual(digest('0xdeadbeef'))
+      expect(second.digest({ as: 'Bytes' })).toEqual(digest('0xdeadcafe'))
+    },
+  )
+
+  test.each(factories)(
+    '$name: digestInto validates bounds without consuming the state',
+    ({ create, digest, digestSize }) => {
+      const hash = create().update('0xdeadbeef')
+
+      expect(() =>
+        hash.digestInto(new Uint8Array(digestSize - 1)),
+      ).toThrowError(Hash.InvalidDigestSizeError)
+
+      const output = new Uint8Array(digestSize + 2).fill(0xff)
+      hash.digestInto(output)
+
+      expect(output.slice(0, digestSize)).toEqual(digest('0xdeadbeef'))
+      expect(output.slice(digestSize)).toEqual(Uint8Array.of(0xff, 0xff))
+      expect(() => hash.update('0x')).toThrowError(Hash.HasherDestroyedError)
+    },
+  )
+
+  test.each(factories)(
+    '$name: digest consumes the state and destroy is idempotent',
+    ({ create }) => {
+      const hash = create()
+      hash.digest()
+
+      expect(() => hash.clone()).toThrowError(Hash.HasherDestroyedError)
+      expect(() => hash.digest()).toThrowError(Hash.HasherDestroyedError)
+      expect(() => hash.digestInto(new Uint8Array(32))).toThrowError(
+        Hash.HasherDestroyedError,
+      )
+      expect(() => hash.update('0x')).toThrowError(Hash.HasherDestroyedError)
+      expect(() => {
+        hash.destroy()
+        hash.destroy()
+      }).not.toThrow()
+    },
+  )
+
+  test.each(factories)(
+    '$name: destroy consumes the state and is idempotent',
+    ({ create }) => {
+      const hash = create()
+      hash.destroy()
+      hash.destroy()
+
+      expect(() => hash.clone()).toThrowError(Hash.HasherDestroyedError)
+      expect(() => hash.digest()).toThrowError(Hash.HasherDestroyedError)
+      expect(() => hash.update('0x')).toThrowError(Hash.HasherDestroyedError)
+    },
+  )
+
+  test('behavior: independent states can be interleaved', () => {
+    const first = Hash.createSha256().update('0xaa')
+    const second = Hash.createSha256().update('0xbb')
+
+    first.update('0xcc')
+    second.update('0xdd')
+
+    expect(first.digest()).toEqual(Hash.sha256('0xaacc'))
+    expect(second.digest()).toEqual(Hash.sha256('0xbbdd'))
+  })
+
+  test('behavior: a state keeps the provider captured at creation', () => {
+    Engine.set({ Hash: { createSha256: () => sentinelState(1) } })
+    const first = Hash.createSha256()
+
+    Engine.set({ Hash: { createSha256: () => sentinelState(2) } })
+
+    expect(first.digest({ as: 'Bytes' })[0]).toMatchInlineSnapshot('1')
+    expect(
+      Hash.createSha256().digest({ as: 'Bytes' })[0],
+    ).toMatchInlineSnapshot('2')
+  })
+})
 
 describe('blake3', () => {
   test('default', () => {
@@ -625,15 +770,48 @@ describe('validate', () => {
   })
 })
 
+function sentinelState(byte: number): Engine.HashState {
+  let active = true
+
+  const assertActive = () => {
+    if (!active) throw new Error('destroyed')
+  }
+
+  return {
+    clone: () => {
+      assertActive()
+      return sentinelState(byte)
+    },
+    destroy: () => {
+      active = false
+    },
+    digestInto: (output) => {
+      assertActive()
+      active = false
+      output.fill(byte, 0, 32)
+    },
+    update: () => {
+      assertActive()
+    },
+  }
+}
+
 test('exports', () => {
   expect(Object.keys(Hash)).toMatchInlineSnapshot(`
     [
+      "createBlake3",
+      "createHmac256",
+      "createKeccak256",
+      "createRipemd160",
+      "createSha256",
       "blake3",
       "keccak256",
       "hmac256",
       "ripemd160",
       "sha256",
       "validate",
+      "HasherDestroyedError",
+      "InvalidDigestSizeError",
     ]
   `)
 })

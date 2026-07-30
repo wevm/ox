@@ -27,6 +27,28 @@ describe('engine', () => {
     }
   })
 
+  test('behavior: incremental states clone and cross block boundaries', async () => {
+    const engine = await WasmHash.engine()
+    const prefix = new Uint8Array(137).fill(1)
+    const left = new Uint8Array(1025).fill(2)
+    const right = new Uint8Array(65).fill(3)
+    const state = engine.createBlake3()
+    state.update(prefix.subarray(0, 1))
+    state.update(prefix.subarray(1, 136))
+    state.update(prefix.subarray(136))
+    const clone = state.clone()
+    state.update(left)
+    clone.update(right)
+
+    const output = new Uint8Array(32)
+    state.digestInto(output)
+    expect(output).toEqual(blake3(new Uint8Array([...prefix, ...left])))
+
+    const clonedOutput = new Uint8Array(32)
+    clone.digestInto(clonedOutput)
+    expect(clonedOutput).toEqual(blake3(new Uint8Array([...prefix, ...right])))
+  })
+
   test('behavior: grows memory in a real browser, then hashes a small input', async () => {
     const engine = await WasmHash.engine()
 
@@ -48,6 +70,12 @@ describe('engine', () => {
         '0x53147f3ce49ed4f60dfa5b9654c36ba6103c11f5737df3dabd4cbd296c4161bd',
       )
       expect(Hash.keccak256('0xdeadbeef')).toBe(
+        '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',
+      )
+      const state = Hash.createKeccak256()
+      state.update('0xdead')
+      state.update('0xbeef')
+      expect(state.digest()).toBe(
         '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',
       )
     } finally {

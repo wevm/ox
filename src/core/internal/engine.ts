@@ -19,13 +19,47 @@
  */
 
 /**
- * Hash primitives. One-shot, synchronous, bytes in / bytes out.
+ * Mutable hash state.
+ *
+ * `digestInto` consumes the state. `destroy` is idempotent, and no other method
+ * may be called after the state is consumed or destroyed.
+ *
+ * @internal
+ */
+export type HashState = {
+  /** Clones the current state. */
+  clone(): HashState
+  /** Destroys the state. */
+  destroy(): void
+  /**
+   * Finalizes into `output` and consumes the state.
+   *
+   * A short output throws without consuming the state. A longer output keeps
+   * bytes after the digest unchanged.
+   */
+  digestInto(output: Uint8Array): void
+  /** Absorbs a message chunk. */
+  update(input: Uint8Array): void
+}
+
+/**
+ * Hash primitives. Synchronous, bytes in / bytes out.
  *
  * @internal
  */
 export type Hash = {
   /** BLAKE3, 32-byte digest. */
   blake3?: ((input: Uint8Array) => Uint8Array) | undefined
+  /** Creates a BLAKE3 state. */
+  createBlake3?: (() => HashState) | undefined
+  /** Creates an HMAC-SHA256 state. */
+  createHmacSha256?: ((key: Uint8Array) => HashState) | undefined
+  /** Creates a Keccak256 state. */
+  createKeccak256?: (() => HashState) | undefined
+  /** Creates a RIPEMD-160 state. */
+  createRipemd160?: (() => HashState) | undefined
+  /** Creates a SHA-256 state. */
+  createSha256?: (() => HashState) | undefined
   /** HMAC-SHA256. */
   hmacSha256?:
     | ((key: Uint8Array, message: Uint8Array) => Uint8Array)
@@ -331,7 +365,18 @@ export const primitives = {
     'toMontgomerySecret',
     'verify',
   ],
-  Hash: ['blake3', 'hmacSha256', 'keccak256', 'ripemd160', 'sha256'],
+  Hash: [
+    'blake3',
+    'createBlake3',
+    'createHmacSha256',
+    'createKeccak256',
+    'createRipemd160',
+    'createSha256',
+    'hmacSha256',
+    'keccak256',
+    'ripemd160',
+    'sha256',
+  ],
   Keystore: [
     'aesCtrDecrypt',
     'aesCtrEncrypt',

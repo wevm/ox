@@ -8,6 +8,8 @@ describe('engine', () => {
 
     expect(Object.keys(engine).sort()).toMatchInlineSnapshot(`
       [
+        "createRipemd160",
+        "createSha256",
         "hmacSha256",
         "ripemd160",
         "sha256",
@@ -97,5 +99,49 @@ describe('engine', () => {
       ]
     `)
     expect(sha256(input) === sha256(input)).toMatchInlineSnapshot('false')
+  })
+
+  test('behavior: incremental states support chunking and cloning', async () => {
+    const { createRipemd160, createSha256 } = await Hash.engine()
+
+    for (const [create, digest, size] of [
+      [createRipemd160, CoreHash.ripemd160, 20],
+      [createSha256, CoreHash.sha256, 32],
+    ] as const) {
+      const first = create()
+      first.update(Uint8Array.of(0xde, 0xad))
+      const second = first.clone()
+      first.update(Uint8Array.of(0xbe, 0xef))
+      second.update(Uint8Array.of(0xca, 0xfe))
+
+      const firstOutput = new Uint8Array(size)
+      const secondOutput = new Uint8Array(size)
+      first.digestInto(firstOutput)
+      second.digestInto(secondOutput)
+
+      expect(firstOutput).toEqual(digest('0xdeadbeef', { as: 'Bytes' }))
+      expect(secondOutput).toEqual(digest('0xdeadcafe', { as: 'Bytes' }))
+    }
+  })
+
+  test('behavior: incremental states enforce lifecycle and output bounds', async () => {
+    const { createSha256 } = await Hash.engine()
+    const hash = createSha256()
+    hash.update(Uint8Array.of(0xde, 0xad))
+
+    expect(() => hash.digestInto(new Uint8Array(31))).toThrowError(
+      Hash.InvalidDigestSizeError,
+    )
+
+    const output = new Uint8Array(34).fill(0xff)
+    hash.digestInto(output)
+    expect(output.slice(32)).toEqual(Uint8Array.of(0xff, 0xff))
+    expect(() => hash.update(new Uint8Array())).toThrowError(
+      Hash.HasherDestroyedError,
+    )
+    expect(() => {
+      hash.destroy()
+      hash.destroy()
+    }).not.toThrow()
   })
 })

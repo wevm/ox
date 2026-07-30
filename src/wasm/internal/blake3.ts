@@ -1,4 +1,5 @@
-import { wasmBase64 } from './blake3.wasm.js'
+import { blake3StateSize, wasmBase64 } from './blake3.wasm.js'
+import * as hashState from './hashState.js'
 import * as internal from './instantiate.js'
 
 const digestSize = 32
@@ -10,8 +11,16 @@ export type Exports = {
   zero(ptr: number, length: number): void
 }
 
+/** Exports supplied for incremental BLAKE3 states. @internal */
+export type StateExports = {
+  blake3_finalize(state: number, out: number): void
+  blake3_init(state: number): void
+  blake3_update(state: number, input: number, inputLength: number): void
+  zero(ptr: number, length: number): void
+}
+
 const instantiate = /*#__PURE__*/ internal.memoize(() =>
-  internal.instantiate<Exports>(wasmBase64),
+  internal.instantiate<Exports & StateExports>(wasmBase64),
 )
 
 /** Returns the one memoized BLAKE3 instance shared by its providers. */
@@ -42,4 +51,16 @@ export function hash(
   } finally {
     module.exports.zero(inputPtr, size)
   }
+}
+
+/** Creates an incremental BLAKE3 state. @internal */
+export function create(module: internal.Module<Exports & StateExports>) {
+  return hashState.create(module, {
+    digestSize,
+    finalize: (exports, state, out) => exports.blake3_finalize(state, out),
+    init: (exports, state) => exports.blake3_init(state),
+    stateSize: blake3StateSize,
+    update: (exports, state, input, inputLength) =>
+      exports.blake3_update(state, input, inputLength),
+  })
 }

@@ -266,7 +266,7 @@ describe('set', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [Engine.UnknownPrimitiveError: \`keccak_256\` is not a valid primitive for the \`Hash\` slot.
 
-      Valid primitives: blake3, hmacSha256, keccak256, ripemd160, sha256]
+      Valid primitives: blake3, createBlake3, createHmacSha256, createKeccak256, createRipemd160, createSha256, hmacSha256, keccak256, ripemd160, sha256]
     `)
   })
 

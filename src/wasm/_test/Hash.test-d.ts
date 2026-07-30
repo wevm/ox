@@ -21,6 +21,21 @@ test('every primitive is present, so callers need no assertion', () => {
   expectTypeOf<Slot['hmacSha256']>().toEqualTypeOf<
     (key: Uint8Array, message: Uint8Array) => Uint8Array
   >()
+  expectTypeOf<Slot['createBlake3']>().toEqualTypeOf<
+    () => CoreEngine.HashState
+  >()
+  expectTypeOf<Slot['createHmacSha256']>().toEqualTypeOf<
+    (key: Uint8Array) => CoreEngine.HashState
+  >()
+  expectTypeOf<Slot['createKeccak256']>().toEqualTypeOf<
+    () => CoreEngine.HashState
+  >()
+  expectTypeOf<Slot['createRipemd160']>().toEqualTypeOf<
+    () => CoreEngine.HashState
+  >()
+  expectTypeOf<Slot['createSha256']>().toEqualTypeOf<
+    () => CoreEngine.HashState
+  >()
 })
 
 test('the result is the raw slot, so `Engine.install` accepts it', () => {
@@ -29,6 +44,7 @@ test('the result is the raw slot, so `Engine.install` accepts it', () => {
 
 test('the WASM namespace exposes the public Hash API', () => {
   expectTypeOf(WasmHash.blake3).toEqualTypeOf(CoreHash.blake3)
+  expectTypeOf(WasmHash.createBlake3).toEqualTypeOf(CoreHash.createBlake3)
   expectTypeOf(WasmHash.sha256).toEqualTypeOf(CoreHash.sha256)
   expectTypeOf<typeof WasmHash>().not.toHaveProperty('create')
 })

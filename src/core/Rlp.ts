@@ -8,6 +8,18 @@ import type { ExactPartial, RecursiveArray } from './internal/types.js'
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
 
+/** Synchronous destination for encoded RLP byte chunks. */
+export type Sink = {
+  /**
+   * Writes an encoded RLP chunk.
+   *
+   * Ox does not mutate the chunk after this function returns. A chunk may
+   * alias a byte-array leaf from the encoded value. The sink must not mutate
+   * the chunk before `encodeTo` returns.
+   */
+  write(value: Bytes.Bytes): undefined
+}
+
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
@@ -193,6 +205,47 @@ export declare namespace readList {
 }
 
 /**
+ * Encodes a value as Recursive-Length Prefix (RLP) and writes the encoded bytes
+ * to a synchronous sink without allocating the complete encoding.
+ *
+ * Ox validates the complete input before the first write. If the sink throws,
+ * the error propagates and chunks written before the sink failure remain
+ * written.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes, Rlp } from 'ox'
+ *
+ * const chunks: Uint8Array[] = []
+ * Rlp.encodeTo(['0x01', '0x0203'], {
+ *   write(chunk) {
+ *     chunks.push(chunk)
+ *   }
+ * })
+ *
+ * const encoded = Bytes.concat(...chunks)
+ * // @log: Uint8Array([196, 1, 130, 2, 3])
+ * ```
+ *
+ * @param value - The bytes or Hex value, or nested list of values, to encode.
+ * @param sink - The synchronous destination for encoded chunks.
+ * @returns Nothing.
+ */
+export function encodeTo(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  sink: Sink,
+): void {
+  const snapshot = snapshotValue(value)
+  const ctx: EncodeCtx = { lengths: [], cursor: 0 }
+  measure(snapshot, ctx)
+  writeEncodedTo(sink, snapshot, { lengths: ctx.lengths, cursor: 0 })
+}
+
+export declare namespace encodeTo {
+  type ErrorType = Errors.BaseError | Errors.GlobalErrorType
+}
+
+/**
  * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
@@ -368,7 +421,29 @@ function getSizeOfLength(length: number) {
  *
  * @internal
  */
-type EncodeCtx = { lengths: number[]; cursor: number }
+type EncodeCtx = {
+  cursor: number
+  lengths: number[]
+}
+
+type Encodable = RecursiveArray<Bytes.Bytes | Hex.Hex>
+
+/**
+ * Validates Hex leaves and copies list structure before a sink can mutate the
+ * input during encoding. Byte leaves remain zero-copy.
+ *
+ * @internal
+ */
+function snapshotValue(value: Encodable): Encodable {
+  if (Array.isArray(value)) {
+    const snapshot: Encodable[] = []
+    for (let i = 0; i < value.length; i++)
+      snapshot.push(snapshotValue(value[i]!))
+    return snapshot
+  }
+  if (typeof value === 'string') validateHexLeaf(value)
+  return value
+}
 
 /**
  * Walks `value` once, caches each list's `bodyLength` into `ctx.lengths`,
@@ -377,10 +452,7 @@ type EncodeCtx = { lengths: number[]; cursor: number }
  *
  * @internal
  */
-function measure(
-  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
-  ctx: EncodeCtx,
-): number {
+function measure(value: Encodable, ctx: EncodeCtx): number {
   if (Array.isArray(value)) {
     // Reserve this list's slot before descending so children's slots come
     // after ours; `writeEncoded` walks in the same order and reads slot N
@@ -456,6 +528,110 @@ function writeEncoded(
   if (typeof value === 'string') return writeHexLeaf(bytes, offset, value)
 
   return writeBytesLeaf(bytes, offset, value as Bytes.Bytes)
+}
+
+const sinkChunkSize = 16_384
+
+/**
+ * Writes an RLP value to `sink` using list lengths cached by `measure`.
+ *
+ * @internal
+ */
+function writeEncodedTo(sink: Sink, value: Encodable, ctx: EncodeCtx): void {
+  if (Array.isArray(value)) {
+    sink.write(encodePrefix(ctx.lengths[ctx.cursor++]!, 0xc0))
+    for (let i = 0; i < value.length; i++) writeEncodedTo(sink, value[i]!, ctx)
+    return
+  }
+
+  if (typeof value === 'string') {
+    writeHexLeafTo(sink, value)
+    return
+  }
+
+  writeBytesLeafTo(sink, value as Bytes.Bytes)
+}
+
+/**
+ * Writes a Hex leaf in bounded chunks. `snapshotValue` validated every nibble
+ * before this function can run.
+ *
+ * @internal
+ */
+function writeHexLeafTo(sink: Sink, hex: Hex.Hex): void {
+  const byteLength = (hex.length - 1) >> 1
+  if (byteLength === 1 && readHexByte(hex, 0) < 0x80) {
+    sink.write(Uint8Array.of(readHexByte(hex, 0)))
+    return
+  }
+
+  sink.write(encodePrefix(byteLength, 0x80))
+  for (let offset = 0; offset < byteLength; offset += sinkChunkSize) {
+    const length = Math.min(sinkChunkSize, byteLength - offset)
+    const chunk = new Uint8Array(length)
+    for (let i = 0; i < length; i++) chunk[i] = readHexByte(hex, offset + i)
+    sink.write(chunk)
+  }
+}
+
+/**
+ * Writes a byte leaf without copying its body.
+ *
+ * @internal
+ */
+function writeBytesLeafTo(sink: Sink, leaf: Bytes.Bytes): void {
+  const length = leaf.length
+  if (length === 1 && leaf[0]! < 0x80) {
+    sink.write(leaf)
+    return
+  }
+
+  sink.write(encodePrefix(length, 0x80))
+  if (length > 0) sink.write(leaf)
+}
+
+/**
+ * Encodes a string or list length prefix.
+ *
+ * @internal
+ */
+function encodePrefix(length: number, offset: 0x80 | 0xc0): Uint8Array {
+  if (length <= 55) return Uint8Array.of(offset + length)
+
+  const size = getSizeOfLength(length)
+  const prefix = new Uint8Array(size + 1)
+  prefix[0] = offset + 55 + size
+  writeBigEndian(prefix, 1, length, size)
+  return prefix
+}
+
+/**
+ * Reads one byte from an odd- or even-nibble Hex value.
+ *
+ * @internal
+ */
+function readHexByte(hex: Hex.Hex, index: number): number {
+  const odd = (hex.length & 1) === 1
+  if (odd && index === 0)
+    return internal_bytes.charCodeToBase16(hex.charCodeAt(2))!
+
+  const nibble = odd ? index * 2 - 1 : index * 2
+  const high = internal_bytes.charCodeToBase16(hex.charCodeAt(2 + nibble))!
+  const low = internal_bytes.charCodeToBase16(hex.charCodeAt(3 + nibble))!
+  return (high << 4) | low
+}
+
+/**
+ * Validates a Hex leaf while preserving RLP's odd-nibble left-padding.
+ *
+ * @internal
+ */
+function validateHexLeaf(hex: string): asserts hex is Hex.Hex {
+  if (hex.length < 2 || hex.charCodeAt(0) !== 48 || hex.charCodeAt(1) !== 120)
+    throw invalidNibble(hex as Hex.Hex)
+  for (let i = 2; i < hex.length; i++)
+    if (internal_bytes.charCodeToBase16(hex.charCodeAt(i)) === undefined)
+      throw invalidNibble(hex as Hex.Hex)
 }
 
 /**

@@ -133,13 +133,13 @@
       "name": "import { Hash } from 'ox/wasm'",
       "path": "./dist/wasm/index.js",
       "import": "{ Hash }",
-      "limit": "24 kB"
+      "limit": "26 kB"
     },
     {
       "name": "import * from 'ox/wasm/Hash'",
       "path": "./dist/wasm/Hash.js",
       "import": "*",
-      "limit": "24 kB"
+      "limit": "26 kB"
     },
     {
       "name": "import * from 'ox/wasm/Kzg'",
