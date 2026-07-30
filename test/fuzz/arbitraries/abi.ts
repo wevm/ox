@@ -7,15 +7,27 @@ import {
   arbitraryHexOfByteLength,
 } from './bytes.js'
 
-/**
- * Width set for `uint<M>` / `int<M>` arbitraries. Restricted to a
- * representative subset; the encoder accepts any multiple of 8 from 8 to 256,
- * but exhaustive coverage isn't useful for fuzz purposes.
- */
-const intBits = [8, 16, 32, 64, 128, 256] as const
+/** Width set for every valid `uint<M>` / `int<M>` type. */
+const intBits = Array.from({ length: 32 }, (_, i) => (i + 1) * 8)
 
-/** Width set for fixed-length `bytes<M>` arbitraries. */
-const fixedBytesSizes = [1, 4, 20, 32] as const
+/** Width set for every valid fixed-length `bytes<M>` type. */
+const fixedBytesSizes = Array.from({ length: 32 }, (_, i) => i + 1)
+
+const stringBoundaries = [
+  '',
+  'a',
+  'a'.repeat(31),
+  'a'.repeat(32),
+  'a'.repeat(33),
+  'a'.repeat(63),
+  'a'.repeat(64),
+  'a'.repeat(65),
+  '\u0000',
+  'é',
+  '€',
+  '😀',
+  'a😀b',
+] as const
 
 /** Caps for the recursive ABI parameter arbitrary. */
 export type AbiArbitraryOptions = {
@@ -24,19 +36,21 @@ export type AbiArbitraryOptions = {
   /** Max number of components in a tuple. Default `4`. */
   maxTupleArity?: number
   /**
-   * Max length of a dynamic array, and exclusive upper bound for fixed-length
-   * array sizes. Default `4`.
+   * Max length of a dynamic or fixed-length array. Default `4`.
    */
   maxArrayLength?: number
+  /** Min length of a fixed-length array. Default `1`. */
+  minFixedArrayLength?: number
   /** Max byte length for dynamic `string` and `bytes` values. Default `128`. */
   maxBytesLength?: number
 }
 
 const defaults: Required<AbiArbitraryOptions> = {
-  maxDepth: 3,
-  maxTupleArity: 4,
   maxArrayLength: 4,
   maxBytesLength: 128,
+  maxDepth: 3,
+  maxTupleArity: 4,
+  minFixedArrayLength: 1,
 }
 
 /**
@@ -103,13 +117,31 @@ export function arbitraryAbiValueFor(
       parameter as { components?: readonly AbiParameters.Parameter[] }
     ).components
     if (!components || components.length === 0) return fc.constant([])
-    return fc.tuple(...components.map((c) => arbitraryAbiValueFor(c)))
+    const values = fc.tuple(
+      ...components.map((component) => arbitraryAbiValueFor(component)),
+    )
+    if (components.every((component) => component.name))
+      return values.map((values) =>
+        Object.fromEntries(
+          components.map((component, i) => [component.name, values[i]]),
+        ),
+      )
+    return values
   }
 
   if (parameter.type === 'bool') return fc.boolean()
   if (parameter.type === 'address') return arbitraryAddressHex()
   if (parameter.type === 'string')
-    return fc.string({ maxLength: defaults.maxBytesLength })
+    return fc.oneof(
+      {
+        weight: 4,
+        arbitrary: fc.string({ maxLength: defaults.maxBytesLength }),
+      },
+      {
+        weight: 1,
+        arbitrary: fc.constantFrom(...stringBoundaries),
+      },
+    )
   if (parameter.type === 'bytes') return arbitraryHex(defaults.maxBytesLength)
 
   if (parameter.type.startsWith('bytes')) {
@@ -124,11 +156,15 @@ export function arbitraryAbiValueFor(
     // come back as `number`. Match the decoder's output type so the
     // round-trip equality check doesn't have to coerce.
     if (bits > 48) return arbitraryBigIntInBits(bits, signed)
-    if (signed) {
-      const max = 2 ** (bits - 1) - 1
-      return fc.integer({ min: -(2 ** (bits - 1)), max })
-    }
-    return fc.integer({ min: 0, max: 2 ** bits - 1 })
+    const min = signed ? -(2 ** (bits - 1)) : 0
+    const max = signed ? 2 ** (bits - 1) - 1 : 2 ** bits - 1
+    const boundaries = [min, max, 0, 1, -1].filter(
+      (value) => value >= min && value <= max,
+    )
+    return fc.oneof(
+      { weight: 4, arbitrary: fc.integer({ min, max }) },
+      { weight: 1, arbitrary: fc.constantFrom(...boundaries) },
+    )
   }
 
   throw new Error(`unhandled abi type for fuzz value: \`${parameter.type}\``)
@@ -161,7 +197,17 @@ function tupleParameter(
       maxLength: opts.maxTupleArity,
     })
     .chain((components) =>
-      maybeArraySuffix('tuple', opts).map((type) => ({ type, components })),
+      fc
+        .tuple(fc.boolean(), maybeArraySuffix('tuple', opts))
+        .map(([named, type]) => ({
+          components: named
+            ? components.map((component, i) => ({
+                ...component,
+                name: `field${i}`,
+              }))
+            : components,
+          type,
+        })),
     )
     .map(
       (p) =>
@@ -194,7 +240,10 @@ function maybeArraySuffix(
     {
       weight: 1,
       arbitrary: fc
-        .integer({ min: 1, max: opts.maxArrayLength })
+        .integer({
+          min: opts.minFixedArrayLength,
+          max: opts.maxArrayLength,
+        })
         .map((n) => `${type}[${n}]`),
     },
   )

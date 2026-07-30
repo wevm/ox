@@ -212,29 +212,17 @@ export function encode<
   options?: encode.Options,
 ): Hex.Hex {
   const { checksumAddress = false } = options ?? {}
-
-  if (parameters.length !== values.length)
-    throw new LengthMismatchError({
-      expectedLength: parameters.length as number,
-      givenLength: values.length as any,
-    })
-  // Prepare the parameters to determine dynamic types to encode.
-  const preparedParameters = internal.prepareParameters({
-    checksumAddress,
-    parameters: parameters as readonly Parameter[],
-    values: values as any,
-  })
-  const data = internal.encode(preparedParameters)
-  if (data.length === 0) return '0x'
-  return data
+  return internal.encodeParameters(
+    parameters as readonly Parameter[],
+    values as readonly unknown[],
+    {
+      checksumAddress,
+    },
+  )
 }
 
 export declare namespace encode {
-  type ErrorType =
-    | LengthMismatchError
-    | internal.encode.ErrorType
-    | internal.prepareParameters.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = internal.encodeParameters.ErrorType | Errors.GlobalErrorType
 
   type Options = {
     /**

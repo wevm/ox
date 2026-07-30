@@ -1,50 +1,81 @@
-import { bench, describe } from 'vp/test'
+import { afterAll, bench, describe } from 'vp/test'
 import { seaportContractConfig } from '../constants/abis.js'
 
 export type Operations = {
   abiEventEncode: () => unknown
   abiFunctionEncodeDataCached: () => unknown
   abiFunctionEncodeDataDynamic: () => unknown
+  abiFunctionEncodeDataUniswapCached: () => unknown
+  abiFunctionEncodeDataUniswapDynamic: () => unknown
   contractAddressFromCreate2: () => unknown
   keystoreDecrypt: () => unknown
   mnemonicToPrivateKey: () => unknown
   personalMessageGetSignPayload: () => unknown
+  rlpDecode: () => unknown
+  rlpEncode: () => unknown
   secp256k1RandomPrivateKey: () => unknown
   transactionEnvelopeGetSignPayload: () => unknown
   typedDataGetSignPayload: () => unknown
+  u256GetAmountIn: () => unknown
+  u256GetAmountOut: () => unknown
 }
 
 export function register(provider: string, operations: Operations) {
   describe(provider, () => {
-    bench('AbiFunction.encodeData (cached)', () => {
-      operations.abiFunctionEncodeDataCached()
-    })
-    bench('AbiFunction.encodeData (dynamic)', () => {
-      operations.abiFunctionEncodeDataDynamic()
-    })
-    bench('TransactionEnvelope.getSignPayload', () => {
-      operations.transactionEnvelopeGetSignPayload()
-    })
-    bench('PersonalMessage.getSignPayload', () => {
-      operations.personalMessageGetSignPayload()
-    })
-    bench('ContractAddress.fromCreate2', () => {
-      operations.contractAddressFromCreate2()
-    })
-    bench('AbiEvent.encode', () => {
-      operations.abiEventEncode()
-    })
-    bench('TypedData.getSignPayload', () => {
-      operations.typedDataGetSignPayload()
-    })
-    bench('Keystore.decrypt', () => {
-      operations.keystoreDecrypt()
-    })
-    bench('Mnemonic.toPrivateKey', () => {
-      operations.mnemonicToPrivateKey()
-    })
-    bench('Secp256k1.randomPrivateKey', () => {
-      operations.secp256k1RandomPrivateKey()
+    let result: unknown
+
+    const registerOperation = (name: string, operation: () => unknown) =>
+      bench(name, () => {
+        result = operation()
+      })
+
+    registerOperation(
+      'AbiFunction.encodeData (cached)',
+      operations.abiFunctionEncodeDataCached,
+    )
+    registerOperation(
+      'AbiFunction.encodeData (dynamic)',
+      operations.abiFunctionEncodeDataDynamic,
+    )
+    registerOperation(
+      'AbiFunction.encodeData (Uniswap cached)',
+      operations.abiFunctionEncodeDataUniswapCached,
+    )
+    registerOperation(
+      'AbiFunction.encodeData (Uniswap dynamic)',
+      operations.abiFunctionEncodeDataUniswapDynamic,
+    )
+    registerOperation(
+      'TransactionEnvelope.getSignPayload',
+      operations.transactionEnvelopeGetSignPayload,
+    )
+    registerOperation(
+      'PersonalMessage.getSignPayload',
+      operations.personalMessageGetSignPayload,
+    )
+    registerOperation(
+      'ContractAddress.fromCreate2',
+      operations.contractAddressFromCreate2,
+    )
+    registerOperation('AbiEvent.encode', operations.abiEventEncode)
+    registerOperation(
+      'TypedData.getSignPayload',
+      operations.typedDataGetSignPayload,
+    )
+    registerOperation('Keystore.decrypt', operations.keystoreDecrypt)
+    registerOperation('Mnemonic.toPrivateKey', operations.mnemonicToPrivateKey)
+    registerOperation(
+      'Secp256k1.randomPrivateKey',
+      operations.secp256k1RandomPrivateKey,
+    )
+    registerOperation('getAmountIn (bigint)', operations.u256GetAmountIn)
+    registerOperation('getAmountOut (bigint)', operations.u256GetAmountOut)
+    registerOperation('Rlp.fromBytes', operations.rlpEncode)
+    registerOperation('Rlp.toBytes', operations.rlpDecode)
+
+    afterAll(() => {
+      if (result === undefined)
+        throw new Error(`${provider} produced no benchmark result.`)
     })
   })
 }
@@ -205,3 +236,121 @@ export const keystoreKeyOptions = {
 
 export const mnemonic =
   'test test test test test test test test test test test junk'
+
+export const uniswapSwapAbi = {
+  inputs: [
+    {
+      internalType: 'uint256',
+      name: 'amount0Out',
+      type: 'uint256',
+    },
+    {
+      internalType: 'uint256',
+      name: 'amount1Out',
+      type: 'uint256',
+    },
+    {
+      internalType: 'address',
+      name: 'to',
+      type: 'address',
+    },
+    {
+      internalType: 'bytes',
+      name: 'data',
+      type: 'bytes',
+    },
+  ],
+  name: 'swap',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const
+
+export const uniswapSwapJson = `{
+  "type": "function",
+  "name": "swap",
+  "inputs": [
+    {
+      "name": "amount0Out",
+      "type": "uint256",
+      "internalType": "uint256"
+    },
+    {
+      "name": "amount1Out",
+      "type": "uint256",
+      "internalType": "uint256"
+    },
+    {
+      "name": "to",
+      "type": "address",
+      "internalType": "address"
+    },
+    {
+      "name": "data",
+      "type": "bytes",
+      "internalType": "bytes"
+    }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+}`
+
+export const uniswapSwapTo =
+  '0x4242424242424242424242424242424242424242' as const
+
+export const uniswapReserve0 = 6_227_630_995_751_221_000_110_015n
+export const uniswapReserve1 = 2_634_810_784_674_972_449_382n
+export const sushiReserve0 = 4_314_397_529_132_715_691_120_541n
+export const sushiReserve1 = 1_845_242_683_965_617_816_423n
+export const uniswapAmountIn = 1_000_000_000_000_000_000n
+
+export const rlpValue = [
+  Uint8Array.of(42),
+  Uint8Array.of(1, 2, 3, 4, 5),
+] as const
+
+export function getAmountOut(
+  reserveIn: bigint,
+  reserveOut: bigint,
+  amountIn: bigint,
+) {
+  const amountInWithFee = amountIn * 997n
+  const numerator = amountInWithFee * reserveOut
+  const denominator = reserveIn * 1_000n + amountInWithFee
+  return numerator / denominator
+}
+
+export function getAmountIn(
+  reserves00: bigint,
+  reserves01: bigint,
+  isWeth0: boolean,
+  reserves10: bigint,
+  reserves11: bigint,
+) {
+  const fee = 997n
+  const numerator = (() => {
+    if (isWeth0) {
+      const presqrt =
+        (fee * fee * reserves01 * reserves10) / reserves11 / reserves00
+      return (sqrt(presqrt) - 1_000n) * reserves11 * reserves00
+    }
+    const presqrt =
+      (fee * fee * reserves00 * reserves11) / reserves10 / reserves01
+    return (sqrt(presqrt) - 1_000n) * reserves10 * reserves01
+  })()
+  const denominator = isWeth0
+    ? fee * reserves11 * 1_000n + fee * fee * reserves01
+    : fee * reserves10 * 1_000n + fee * fee * reserves00
+  return (numerator * 1_000n) / denominator
+}
+
+function sqrt(value: bigint) {
+  if (value === 0n) return 0n
+  let z = (value + 1n) / 2n
+  let y = value
+  while (z < y) {
+    y = z
+    z = (value / z + z) / 2n
+  }
+  return y
+}

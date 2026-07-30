@@ -6,7 +6,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiFunction.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
-import type * as AbiParameters_internal from './internal/abiParameters.js'
+import * as AbiParameters_internal from './internal/abiParameters.js'
 import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable } from './internal/types.js'
 
@@ -670,10 +670,10 @@ export function encodeData(
 
   const selector = getSelector(item)
 
-  const data =
-    args.length > 0 ? AbiParameters.encode(item.inputs, args) : undefined
-
-  return data ? Hex.concat(selector, data) : selector
+  if (args.length === 0) return selector
+  return AbiParameters_internal.encodeParameters(item.inputs, args, {
+    prefix: selector,
+  })
 }
 
 export declare namespace encodeData {
