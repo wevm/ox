@@ -8,18 +8,6 @@ import type { ExactPartial, RecursiveArray } from './internal/types.js'
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
 
-/** Synchronous destination for encoded RLP byte chunks. */
-export type Sink = {
-  /**
-   * Writes an encoded RLP chunk.
-   *
-   * Ox does not mutate the chunk after this function returns. A chunk may
-   * alias a byte-array leaf from the encoded value. The sink must not mutate
-   * the chunk before `encodeTo` returns.
-   */
-  write(value: Bytes.Bytes): undefined
-}
-
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
@@ -206,21 +194,22 @@ export declare namespace readList {
 
 /**
  * Encodes a value as Recursive-Length Prefix (RLP) and writes the encoded bytes
- * to a synchronous sink without allocating the complete encoding.
+ * through a synchronous callback without allocating the complete encoding.
  *
- * Ox validates the complete input before the first write. If the sink throws,
- * the error propagates and chunks written before the sink failure remain
- * written.
+ * Ox validates the complete input before the first write. If the callback
+ * throws, the error propagates and earlier callback side effects remain.
+ *
+ * Ox does not mutate a chunk after the callback returns. A chunk may alias a
+ * byte-array leaf from the encoded value. The callback must not mutate the
+ * chunk before `encodeTo` returns.
  *
  * @example
  * ```ts twoslash
  * import { Bytes, Rlp } from 'ox'
  *
  * const chunks: Uint8Array[] = []
- * Rlp.encodeTo(['0x01', '0x0203'], {
- *   write(chunk) {
- *     chunks.push(chunk)
- *   }
+ * Rlp.encodeTo(['0x01', '0x0203'], (chunk) => {
+ *   chunks.push(chunk)
  * })
  *
  * const encoded = Bytes.concat(...chunks)
@@ -228,17 +217,17 @@ export declare namespace readList {
  * ```
  *
  * @param value - The bytes or Hex value, or nested list of values, to encode.
- * @param sink - The synchronous destination for encoded chunks.
+ * @param write - The synchronous callback for encoded chunks.
  * @returns Nothing.
  */
 export function encodeTo(
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
-  sink: Sink,
+  write: (chunk: Bytes.Bytes) => undefined,
 ): void {
   const snapshot = snapshotValue(value)
   const ctx: EncodeCtx = { lengths: [], cursor: 0 }
   measure(snapshot, ctx)
-  writeEncodedTo(sink, snapshot, { lengths: ctx.lengths, cursor: 0 })
+  writeEncodedTo(write, snapshot, { lengths: ctx.lengths, cursor: 0 })
 }
 
 export declare namespace encodeTo {
@@ -429,8 +418,8 @@ type EncodeCtx = {
 type Encodable = RecursiveArray<Bytes.Bytes | Hex.Hex>
 
 /**
- * Validates Hex leaves and copies list structure before a sink can mutate the
- * input during encoding. Byte leaves remain zero-copy.
+ * Validates Hex leaves and copies list structure before the callback can mutate
+ * the input during encoding. Byte leaves remain zero-copy.
  *
  * @internal
  */
@@ -530,26 +519,28 @@ function writeEncoded(
   return writeBytesLeaf(bytes, offset, value as Bytes.Bytes)
 }
 
-const sinkChunkSize = 16_384
+const writeChunkSize = 16_384
+
+type Write = (chunk: Bytes.Bytes) => undefined
 
 /**
- * Writes an RLP value to `sink` using list lengths cached by `measure`.
+ * Writes an RLP value using list lengths cached by `measure`.
  *
  * @internal
  */
-function writeEncodedTo(sink: Sink, value: Encodable, ctx: EncodeCtx): void {
+function writeEncodedTo(write: Write, value: Encodable, ctx: EncodeCtx): void {
   if (Array.isArray(value)) {
-    sink.write(encodePrefix(ctx.lengths[ctx.cursor++]!, 0xc0))
-    for (let i = 0; i < value.length; i++) writeEncodedTo(sink, value[i]!, ctx)
+    write(encodePrefix(ctx.lengths[ctx.cursor++]!, 0xc0))
+    for (let i = 0; i < value.length; i++) writeEncodedTo(write, value[i]!, ctx)
     return
   }
 
   if (typeof value === 'string') {
-    writeHexLeafTo(sink, value)
+    writeHexLeafTo(write, value)
     return
   }
 
-  writeBytesLeafTo(sink, value as Bytes.Bytes)
+  writeBytesLeafTo(write, value as Bytes.Bytes)
 }
 
 /**
@@ -558,19 +549,19 @@ function writeEncodedTo(sink: Sink, value: Encodable, ctx: EncodeCtx): void {
  *
  * @internal
  */
-function writeHexLeafTo(sink: Sink, hex: Hex.Hex): void {
+function writeHexLeafTo(write: Write, hex: Hex.Hex): void {
   const byteLength = (hex.length - 1) >> 1
   if (byteLength === 1 && readHexByte(hex, 0) < 0x80) {
-    sink.write(Uint8Array.of(readHexByte(hex, 0)))
+    write(Uint8Array.of(readHexByte(hex, 0)))
     return
   }
 
-  sink.write(encodePrefix(byteLength, 0x80))
-  for (let offset = 0; offset < byteLength; offset += sinkChunkSize) {
-    const length = Math.min(sinkChunkSize, byteLength - offset)
+  write(encodePrefix(byteLength, 0x80))
+  for (let offset = 0; offset < byteLength; offset += writeChunkSize) {
+    const length = Math.min(writeChunkSize, byteLength - offset)
     const chunk = new Uint8Array(length)
     for (let i = 0; i < length; i++) chunk[i] = readHexByte(hex, offset + i)
-    sink.write(chunk)
+    write(chunk)
   }
 }
 
@@ -579,15 +570,15 @@ function writeHexLeafTo(sink: Sink, hex: Hex.Hex): void {
  *
  * @internal
  */
-function writeBytesLeafTo(sink: Sink, leaf: Bytes.Bytes): void {
+function writeBytesLeafTo(write: Write, leaf: Bytes.Bytes): void {
   const length = leaf.length
   if (length === 1 && leaf[0]! < 0x80) {
-    sink.write(leaf)
+    write(leaf)
     return
   }
 
-  sink.write(encodePrefix(length, 0x80))
-  if (length > 0) sink.write(leaf)
+  write(encodePrefix(length, 0x80))
+  if (length > 0) write(leaf)
 }
 
 /**

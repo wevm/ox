@@ -8,10 +8,8 @@ Added incremental hash state factories with chunk updates, cloning, caller-owned
 import { Hash, Rlp } from 'ox'
 
 const hash = Hash.createKeccak256()
-Rlp.encodeTo(['0x01', '0x0203'], {
-  write(chunk) {
-    hash.update(chunk)
-  },
+Rlp.encodeTo(['0x01', '0x0203'], (chunk) => {
+  hash.update(chunk)
 })
 const digest = hash.digest()
 ```

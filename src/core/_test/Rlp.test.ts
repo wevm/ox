@@ -35,10 +35,8 @@ const generateList = (length: number) => {
 
 function encodeToBytes(value: Parameters<typeof Rlp.encodeTo>[0]) {
   const chunks: Uint8Array[] = []
-  Rlp.encodeTo(value, {
-    write(chunk) {
-      chunks.push(chunk)
-    },
+  Rlp.encodeTo(value, (chunk) => {
+    chunks.push(chunk)
   })
   return Bytes.concat(...chunks)
 }
@@ -80,11 +78,9 @@ describe('Rlp.encodeTo', () => {
     const chunks: Uint8Array[] = []
     const values: Hex.Hex[] = []
 
-    Rlp.encodeTo(['0x01', `0x${'ab'.repeat(16_386)}`, '0x80'], {
-      write(chunk) {
-        chunks.push(chunk)
-        values.push(Hex.fromBytes(chunk))
-      },
+    Rlp.encodeTo(['0x01', `0x${'ab'.repeat(16_386)}`, '0x80'], (chunk) => {
+      chunks.push(chunk)
+      values.push(Hex.fromBytes(chunk))
     })
 
     expect(chunks.map((chunk) => Hex.fromBytes(chunk))).toEqual(values)
@@ -94,10 +90,8 @@ describe('Rlp.encodeTo', () => {
     const leaf = generateBytes(64)
     let found = false
 
-    Rlp.encodeTo(leaf, {
-      write(chunk) {
-        if (chunk === leaf) found = true
-      },
+    Rlp.encodeTo(leaf, (chunk) => {
+      if (chunk === leaf) found = true
     })
 
     expect(found).toMatchInlineSnapshot(`true`)
@@ -107,10 +101,8 @@ describe('Rlp.encodeTo', () => {
     let writes = 0
 
     expect(() =>
-      Rlp.encodeTo(['0x01', ['0x02', '0xzz' as Hex.Hex]], {
-        write() {
-          writes++
-        },
+      Rlp.encodeTo(['0x01', ['0x02', '0xzz' as Hex.Hex]], () => {
+        writes++
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[BaseError: Invalid hex string \`0xzz\`.]`,
@@ -118,17 +110,15 @@ describe('Rlp.encodeTo', () => {
     expect(writes).toMatchInlineSnapshot(`0`)
   })
 
-  test('propagates sink errors after partial output', () => {
+  test('propagates callback errors after partial output', () => {
     const chunks: Uint8Array[] = []
 
     expect(() =>
-      Rlp.encodeTo([Uint8Array.of(1), Uint8Array.of(2)], {
-        write(chunk) {
-          chunks.push(chunk)
-          if (chunks.length === 2) throw new Error('sink failed')
-        },
+      Rlp.encodeTo([Uint8Array.of(1), Uint8Array.of(2)], (chunk) => {
+        chunks.push(chunk)
+        if (chunks.length === 2) throw new Error('write failed')
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`[Error: sink failed]`)
+    ).toThrowErrorMatchingInlineSnapshot(`[Error: write failed]`)
     expect(chunks.map((chunk) => Hex.fromBytes(chunk))).toMatchInlineSnapshot(`
       [
         "0xc2",
@@ -142,11 +132,9 @@ describe('Rlp.encodeTo', () => {
     const expected = Rlp.from(value, { as: 'Bytes' })
     const chunks: Uint8Array[] = []
 
-    Rlp.encodeTo(value, {
-      write(chunk) {
-        chunks.push(chunk)
-        if (chunks.length === 1) value.push('0x02')
-      },
+    Rlp.encodeTo(value, (chunk) => {
+      chunks.push(chunk)
+      if (chunks.length === 1) value.push('0x02')
     })
 
     expect(Bytes.concat(...chunks)).toEqual(expected)

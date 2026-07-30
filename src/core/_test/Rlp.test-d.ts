@@ -3,25 +3,20 @@ import { describe, expectTypeOf, test } from 'vp/test'
 import type { RecursiveArray } from '../internal/types.js'
 
 describe('Rlp.encodeTo', () => {
-  test('sink', () => {
-    const sink: Rlp.Sink = {
-      write(value) {
+  test('write', () => {
+    expectTypeOf(
+      Rlp.encodeTo('0x', (value) => {
         expectTypeOf(value).toEqualTypeOf<Bytes.Bytes>()
-      },
-    }
-
-    expectTypeOf(Rlp.encodeTo('0x', sink)).toEqualTypeOf<void>()
-    expectTypeOf<Rlp.Sink>().toEqualTypeOf<{
-      write(value: Bytes.Bytes): undefined
-    }>()
+      }),
+    ).toEqualTypeOf<void>()
   })
 
-  test('rejects asynchronous sinks', () => {
-    const sink: Rlp.Sink = {
-      // @ts-expect-error RLP sinks are synchronous.
-      async write() {},
-    }
-    void sink
+  test('rejects asynchronous callbacks', () => {
+    Rlp.encodeTo(
+      '0x',
+      // @ts-expect-error RLP write callbacks are synchronous.
+      async () => {},
+    )
   })
 })
 
