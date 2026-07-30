@@ -24,6 +24,7 @@ running macOS 26.5.2 and Node.js 25.9.0. The comparison uses Ox 1.2.0 and
 | Hash Typed Data | `TypedData.getSignPayload` | 70.3 µs | 52.0 µs | 52.5 µs | **20.0 µs** | 3.5× faster |
 | Decrypt JSON Keystore | `Keystore.decrypt` | 5.9 µs | 4.7 µs | 5.2 µs | **2.4 µs** | 2.5× faster |
 | Derive Mnemonic Private Key | `Mnemonic.toPrivateKey` | 7.26 ms | 7.34 ms | **1.82 ms** | 3.04 ms | 4.0× faster |
+| Generate Random Private Key | `Secp256k1.randomPrivateKey` | 1.61 µs | **1.47 µs** | 1.51 µs | 1.54 µs | 1.1× faster |
 | Calculate Swap Input Amount | `getAmountIn` (bigint) | 484.0 ns | 526.4 ns | 480.0 ns | **479.6 ns** | 1.0× faster |
 | Calculate Swap Output Amount | `getAmountOut` (bigint) | 186.7 ns | **184.4 ns** | 191.3 ns | 184.7 ns | 1.0× faster |
 | Encode RLP Struct | `Rlp.fromBytes` | 257.0 ns | 118.5 ns | 118.9 ns | **117.6 ns** | 2.2× faster |
