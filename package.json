@@ -8,7 +8,7 @@
     "check:examples": "zile examples:check --fix",
     "check:repo": "sherif",
     "check:types": "tsc -b",
-    "contracts:build": "forge build --config-path ./contracts/foundry.toml && node --import tsx contracts/scripts/generate-typed-artifacts.ts",
+    "contracts:build": "forge clean --root ./contracts && forge build --config-path ./contracts/foundry.toml && node --import tsx contracts/scripts/generate-typed-artifacts.ts",
     "deps": "pnpx taze -r",
     "deps:ci": "pnpx actions-up",
     "dev": "pnpm exports:update && zile dev",
@@ -121,8 +121,7 @@
     },
     {
       "name": "import { Hex } from 'ox'; console.log(Hex.assert)",
-      "path": "./dist/index.js",
-      "import": "{ Hex.assert }"
+      "path": "./scripts/size-limit/hex-assert.js"
     },
     {
       "name": "import * from 'ox/wasm'",
