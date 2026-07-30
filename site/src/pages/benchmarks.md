@@ -1,16 +1,15 @@
 ---
-description: "Compare Ox v0, core, Node, and WASM performance."
+description: "Compare Ox implementations and engine provider performance."
 ---
 
 # Benchmarks
 
-These benchmarks compare high-level operations across Ox v0, Ox's default
-implementations, the Node.js engine, and the WASM engine. Lower timings are
-better.
+These benchmarks compare high-level operations across Ox implementations and
+engine providers. Lower timings are better.
 
 The following results are mean single-call durations from an Apple M4 Max
-running macOS 26.5.2 and Node.js 25.9.0. The comparison uses Ox 1.2.0 and Ox
-v0.14.33. The fastest result in each row is bold.
+running macOS 26.5.2 and Node.js 25.9.0. The comparison uses Ox 1.2.0 and
+0.14.33. The fastest result in each row is bold.
 
 | Operation | `ox v0` | `ox` | `ox/node` | `ox/wasm` |
 | --- | ---: | ---: | ---: | ---: |
@@ -55,10 +54,9 @@ key derivation happen outside the timed functions. The `ox/wasm` variant
 combines the aggregate WASM engine with its opt-in Keystore and Secp256k1
 providers.
 
-Ox v0 does not expose the generic
-`TransactionEnvelope.getSignPayload` function. That column uses
-`TxEnvelopeEip1559.getSignPayload`, the v0 equivalent for the EIP-1559
-fixture.
+Ox 0.14.33 does not expose the generic `TransactionEnvelope.getSignPayload`
+function. That column uses `TxEnvelopeEip1559.getSignPayload`, the equivalent
+for the EIP-1559 fixture.
 
 Ox exposes event topic encoding as `AbiEvent.encode`. This benchmark measures
 the operation sometimes described as `AbiEvent.encodeTopics`.
