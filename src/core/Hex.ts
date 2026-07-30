@@ -74,10 +74,7 @@ export function concat(...values: readonly Hex[]): Hex {
   if (values.length === 1) return values[0]!
   if (values.length === 2)
     return `0x${(values[0] as string).slice(2)}${(values[1] as string).slice(2)}` as Hex
-  const parts = Array.from<string>({ length: values.length })
-  for (let i = 0; i < values.length; i++)
-    parts[i] = (values[i] as string).slice(2)
-  return `0x${parts.join('')}` as Hex
+  return `0x${values.reduce((hex, value) => hex + value.replace('0x', ''), '')}`
 }
 
 export declare namespace concat {

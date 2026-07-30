@@ -1825,6 +1825,28 @@ test('invalid bytes', () => {
   )
 })
 
+test('invalid bytes type', () => {
+  expect(() =>
+    AbiParameters.encode([{ name: 'x', type: 'bytes0' }], ['0x']),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[AbiParameters.InvalidTypeError: Type `bytes0` is not a valid ABI Type.]',
+  )
+  expect(() =>
+    AbiParameters.encode(
+      [
+        { name: 'x', type: 'bytes33' },
+        { name: 'following', type: 'uint256' },
+      ],
+      [
+        '0x000000000000000000000000000000000000000000000000000000000000000000',
+        1n,
+      ],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[AbiParameters.InvalidTypeError: Type `bytes33` is not a valid ABI Type.]',
+  )
+})
+
 test('integer out of range', () => {
   expect(() =>
     AbiParameters.encode(
