@@ -9,7 +9,7 @@ import * as Address from '../Address.js'
 import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
-import { integerRegex } from '../Solidity.js'
+import { bytesRegex, integerRegex } from '../Solidity.js'
 import { encoder } from './codec/utf8.js'
 import type * as Cursor from './cursor.js'
 import type { Compute, IsNarrowable, UnionToIntersection } from './types.js'
@@ -620,6 +620,8 @@ function compileParameter(
   }
 
   if (parameter.type.startsWith('bytes')) {
+    if (!bytesRegex.test(parameter.type))
+      throw new AbiParameters.InvalidTypeError(parameter.type)
     const [, size] = parameter.type.split('bytes')
     return {
       dynamic: !size,
