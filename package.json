@@ -121,7 +121,8 @@
     },
     {
       "name": "import { Hex } from 'ox'; console.log(Hex.assert)",
-      "path": "./scripts/size-limit/hex-assert.js"
+      "path": "./dist/index.js",
+      "import": "{ Hex.assert }"
     },
     {
       "name": "import * from 'ox/wasm'",
