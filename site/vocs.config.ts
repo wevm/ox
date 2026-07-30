@@ -68,6 +68,7 @@ export default defineConfig({
       { text: 'Error Handling', link: '/error-handling' },
       { text: 'Platform Compatibility', link: '/platform-compatibility' },
       { text: 'Migrating from v0', link: '/migrating-from-v0' },
+      { text: 'Benchmarks', link: '/benchmarks' },
       {
         text: 'Guides',
         items: [
