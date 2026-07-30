@@ -75,6 +75,11 @@ describe('install', () => {
           ],
           "Hash": [
             "blake3",
+            "createBlake3",
+            "createHmacSha256",
+            "createKeccak256",
+            "createRipemd160",
+            "createSha256",
             "hmacSha256",
             "keccak256",
             "ripemd160",

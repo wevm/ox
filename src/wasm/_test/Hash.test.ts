@@ -8,8 +8,14 @@ import { Hash as WasmHash } from 'ox/wasm'
 import { beforeAll, describe, expect, test } from 'vp/test'
 import { wasmBase64 as blake3WasmBase64 } from '../internal/blake3.wasm.js'
 import * as blake3_internal from '../internal/blake3.js'
-import { hmacSha256ScratchSize, wasmBase64 } from '../internal/hashes.wasm.js'
+import { blake3StateSize } from '../internal/blake3.wasm.js'
+import {
+  hmacSha256ScratchSize,
+  hmacSha256StateSize,
+  wasmBase64,
+} from '../internal/hashes.wasm.js'
 import * as hash from '../internal/hash.js'
+import * as hashes_internal from '../internal/hashes.js'
 import * as internal from '../internal/instantiate.js'
 
 let engine: WasmHash.engine.ReturnType
@@ -23,6 +29,11 @@ describe('engine', () => {
     expect(Object.keys(await WasmHash.engine())).toMatchInlineSnapshot(`
       [
         "blake3",
+        "createBlake3",
+        "createHmacSha256",
+        "createKeccak256",
+        "createRipemd160",
+        "createSha256",
         "hmacSha256",
         "keccak256",
         "ripemd160",
@@ -58,6 +69,79 @@ function input(size: number) {
   return new Uint8Array(size).map((_, index) => (index * 37 + 11) & 0xff)
 }
 
+type HashState = ReturnType<WasmHash.engine.ReturnType['createSha256']>
+
+type IncrementalCase = {
+  create: () => HashState
+  digestSize: number
+  name: string
+  oneShot: (input: Uint8Array) => Uint8Array
+  wasmOneShot: (input: Uint8Array) => Uint8Array
+}
+
+function concat(...values: readonly Uint8Array[]) {
+  const output = new Uint8Array(
+    values.reduce((length, value) => length + value.length, 0),
+  )
+  let offset = 0
+  for (const value of values) {
+    output.set(value, offset)
+    offset += value.length
+  }
+  return output
+}
+
+function align8(value: number) {
+  return Math.ceil(value / 8) * 8
+}
+
+function digest(state: HashState, size: number) {
+  const output = new Uint8Array(size)
+  state.digestInto(output)
+  return output
+}
+
+function incrementalCases(): readonly IncrementalCase[] {
+  const key = input(100)
+  return [
+    {
+      create: () => engine.createBlake3(),
+      digestSize: 32,
+      name: 'blake3',
+      oneShot: blake3,
+      wasmOneShot: (value) => engine.blake3(value),
+    },
+    {
+      create: () => engine.createHmacSha256(key),
+      digestSize: 32,
+      name: 'hmacSha256',
+      oneShot: (value) => hmac(sha256, key, value),
+      wasmOneShot: (value) => engine.hmacSha256(key, value),
+    },
+    {
+      create: () => engine.createKeccak256(),
+      digestSize: 32,
+      name: 'keccak256',
+      oneShot: keccak_256,
+      wasmOneShot: (value) => engine.keccak256(value),
+    },
+    {
+      create: () => engine.createRipemd160(),
+      digestSize: 20,
+      name: 'ripemd160',
+      oneShot: ripemd160,
+      wasmOneShot: (value) => engine.ripemd160(value),
+    },
+    {
+      create: () => engine.createSha256(),
+      digestSize: 32,
+      name: 'sha256',
+      oneShot: sha256,
+      wasmOneShot: (value) => engine.sha256(value),
+    },
+  ]
+}
+
 describe('Hash', () => {
   test.each(sizes)('blake3 matches the default at %i bytes', (size) => {
     expect(engine.blake3(input(size))).toEqual(blake3(input(size)))
@@ -83,6 +167,97 @@ describe('Hash', () => {
       expect(engine.hmacSha256(key, message)).toEqual(
         hmac(sha256, key, message),
       )
+    },
+  )
+
+  test.each(incrementalCases())(
+    '$name matches arbitrary chunk boundaries',
+    ({ create, digestSize, oneShot }) => {
+      const message = input(4097)
+      const snapshot = message.slice()
+      const chunks = [0, 1, 7, 55, 64, 129, 1023, 136, 2]
+      const state = create()
+      let offset = 0
+      let index = 0
+      while (offset < message.length) {
+        const length = Math.min(
+          chunks[index++ % chunks.length]!,
+          message.length - offset,
+        )
+        state.update(message.subarray(offset, offset + length))
+        offset += length
+      }
+
+      expect(digest(state, digestSize)).toEqual(oneShot(message))
+      expect(message).toEqual(snapshot)
+    },
+  )
+
+  test.each(incrementalCases())(
+    '$name clones an independent prefix',
+    ({ create, digestSize, oneShot }) => {
+      const prefix = input(137)
+      const left = input(63)
+      const right = input(1025)
+      const state = create()
+      state.update(prefix)
+      const clone = state.clone()
+      state.update(left)
+      clone.update(right)
+
+      expect(digest(state, digestSize)).toEqual(oneShot(concat(prefix, left)))
+      expect(digest(clone, digestSize)).toEqual(oneShot(concat(prefix, right)))
+    },
+  )
+
+  test.each(incrementalCases())(
+    '$name keeps interleaved states independent',
+    ({ create, digestSize, oneShot }) => {
+      const a = input(2049)
+      const b = input(271)
+      const stateA = create()
+      const stateB = create()
+
+      stateA.update(a.subarray(0, 55))
+      stateB.update(b.subarray(0, 136))
+      stateA.update(a.subarray(55, 1024))
+      stateB.update(b.subarray(136))
+      stateA.update(a.subarray(1024))
+
+      expect(digest(stateB, digestSize)).toEqual(oneShot(b))
+      expect(digest(stateA, digestSize)).toEqual(oneShot(a))
+    },
+  )
+
+  test.each(incrementalCases())(
+    '$name survives one-shot calls through the shared module',
+    ({ create, digestSize, oneShot, wasmOneShot }) => {
+      const message = input(1025)
+      const state = create()
+      state.update(message.subarray(0, 136))
+
+      expect(wasmOneShot(input(2049))).toEqual(oneShot(input(2049)))
+
+      state.update(message.subarray(136))
+      expect(digest(state, digestSize)).toEqual(oneShot(message))
+    },
+  )
+
+  test.each(incrementalCases())(
+    '$name consumes and clears its lifecycle',
+    ({ create, digestSize, oneShot }) => {
+      const message = input(72)
+      const state = create()
+      state.update(message)
+      const output = new Uint8Array(digestSize + 7).fill(0xa5)
+      state.digestInto(output)
+
+      expect(output.subarray(0, digestSize)).toEqual(oneShot(message))
+      expect(output.subarray(digestSize)).toEqual(new Uint8Array(7).fill(0xa5))
+      expect(() => state.update(message)).toThrow('destroyed')
+      expect(() => state.clone()).toThrow('destroyed')
+      expect(() => state.digestInto(output)).toThrow('destroyed')
+      expect(() => state.destroy()).not.toThrow()
     },
   )
 
@@ -131,6 +306,34 @@ describe('Hash', () => {
     expect(blake3_internal.hash(module, message)).toEqual(blake3(message))
     expect(module.view().slice(module.heapBase, end)).toEqual(
       new Uint8Array(end - module.heapBase),
+    )
+  })
+
+  test('behavior: incremental blake3 clears every WASM workspace', async () => {
+    const module = await internal.instantiate<
+      blake3_internal.Exports & blake3_internal.StateExports
+    >(blake3WasmBase64)
+    const initEnd = align8(module.heapBase) + blake3StateSize
+    module.view().fill(0xa5, module.heapBase, initEnd)
+    const state = blake3_internal.create(module)
+    expect(module.view().slice(module.heapBase, initEnd)).toEqual(
+      new Uint8Array(initEnd - module.heapBase),
+    )
+
+    const message = input(1025)
+    const updateEnd = align8(module.heapBase + message.length) + blake3StateSize
+    state.update(message)
+    expect(module.view().slice(module.heapBase, updateEnd)).toEqual(
+      new Uint8Array(updateEnd - module.heapBase),
+    )
+
+    const output = new Uint8Array(32)
+    const finalizeEnd =
+      align8(module.heapBase) + blake3StateSize + output.length
+    state.digestInto(output)
+    expect(output).toEqual(blake3(message))
+    expect(module.view().slice(module.heapBase, finalizeEnd)).toEqual(
+      new Uint8Array(finalizeEnd - module.heapBase),
     )
   })
 
@@ -215,6 +418,35 @@ describe('Hash', () => {
     )
   })
 
+  test('behavior: incremental hmacSha256 clears every WASM workspace', async () => {
+    const module =
+      await internal.instantiate<hashes_internal.Exports>(wasmBase64)
+    const key = input(100)
+    const initEnd = align8(module.heapBase + key.length) + hmacSha256StateSize
+    module.view().fill(0xa5, module.heapBase, initEnd)
+    const state = hash.createHmacSha256(module, key)
+    expect(module.view().slice(module.heapBase, initEnd)).toEqual(
+      new Uint8Array(initEnd - module.heapBase),
+    )
+
+    const message = input(137)
+    const updateEnd =
+      align8(module.heapBase + message.length) + hmacSha256StateSize
+    state.update(message)
+    expect(module.view().slice(module.heapBase, updateEnd)).toEqual(
+      new Uint8Array(updateEnd - module.heapBase),
+    )
+
+    const output = new Uint8Array(32)
+    const finalizeEnd =
+      align8(module.heapBase) + hmacSha256StateSize + output.length
+    state.digestInto(output)
+    expect(output).toEqual(hmac(sha256, key, message))
+    expect(module.view().slice(module.heapBase, finalizeEnd)).toEqual(
+      new Uint8Array(finalizeEnd - module.heapBase),
+    )
+  })
+
   test('behavior: hmacSha256 clears its complete region after a trap', async () => {
     const module = await internal.instantiate<hash.Exports>(wasmBase64)
     const key = input(120)
@@ -263,6 +495,23 @@ describe('Hash', () => {
       hmac(sha256, key, message),
     )
   })
+
+  test('behavior: streams a large total input through bounded memory', async () => {
+    const module =
+      await internal.instantiate<hashes_internal.Exports>(wasmBase64)
+    const state = hashes_internal.create(module, 'sha256')
+    const expected = sha256.create()
+    const chunk = input(64 * 1024)
+    const memorySize = module.view().length
+
+    for (let index = 0; index < 1024; index++) {
+      state.update(chunk)
+      expected.update(chunk)
+    }
+
+    expect(module.view().length).toBe(memorySize)
+    expect(digest(state, 32)).toEqual(expected.digest())
+  }, 60_000)
 
   test('behavior: consecutive calls do not corrupt each other', () => {
     const a = input(200)

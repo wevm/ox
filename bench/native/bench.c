@@ -18,7 +18,10 @@
 
 typedef void (*operation)(void *);
 
+void blake3_finalize(const void *, uint8_t *);
 void blake3_hash(const uint8_t *, uint32_t, uint8_t *);
+void blake3_init(void *);
+void blake3_update(void *, const uint8_t *, uint32_t);
 void ox_ed25519_get_public_key(uint8_t *, uint8_t *);
 void ox_ed25519_sign(uint8_t *, const uint8_t *, uint32_t, uint8_t *);
 void ox_ed25519_to_montgomery_secret(const uint8_t *, uint8_t *);
@@ -32,7 +35,13 @@ void ox_hmac_sha256(
     uint8_t *,
     void *
 );
+void ox_hmac_sha256_finalize(void *, uint8_t *);
+void ox_hmac_sha256_init(void *, const uint8_t *, uint32_t);
+void ox_hmac_sha256_update(void *, const uint8_t *, uint32_t);
 void ox_keccak256(const uint8_t *, uint32_t, uint8_t *);
+void ox_keccak256_finalize(void *, uint8_t *);
+void ox_keccak256_init(void *);
+void ox_keccak256_update(void *, const uint8_t *, uint32_t);
 void ox_mnemonic_to_seed(
     const uint8_t *, uint32_t, const uint8_t *, uint32_t, uint8_t *);
 void ox_pbkdf2_sha256(
@@ -46,6 +55,9 @@ void ox_pbkdf2_sha256(
     void *
 );
 void ox_ripemd160(const uint8_t *, uint32_t, uint8_t *);
+void ox_ripemd160_finalize(void *, uint8_t *);
+void ox_ripemd160_init(void *);
+void ox_ripemd160_update(void *, const uint8_t *, uint32_t);
 void ox_scrypt(
     const uint8_t *,
     uint32_t,
@@ -85,6 +97,10 @@ int ox_secp256k1_verify(
     int
 );
 void ox_sha256(const uint8_t *, uint32_t, uint8_t *);
+void ox_sha256_finalize(void *, uint8_t *);
+void ox_sha256_init(void *);
+void ox_sha256_update(void *, const uint8_t *, uint32_t);
+void ox_zero(uint8_t *, uint32_t);
 void ox_x25519_get_public_key(const uint8_t *, uint8_t *);
 int ox_x25519_get_shared_secret(
     const uint8_t *, const uint8_t *, uint8_t *);
@@ -185,12 +201,18 @@ union hash_scratch {
     uint8_t bytes[544];
 };
 
+union hash_state {
+    uint64_t align;
+    uint8_t bytes[BLAKE3_STATE_SIZE];
+};
+
 struct hash_context {
     const uint8_t *input;
     uint32_t input_size;
     uint8_t key[32];
     uint8_t output[32];
     union hash_scratch scratch;
+    union hash_state state;
 };
 
 static void run_blake3(void *opaque) {
@@ -227,6 +249,89 @@ static void run_sha256(void *opaque) {
     struct hash_context *context = opaque;
     ox_sha256(
         context->input, context->input_size, context->output);
+}
+
+#define HASH_STREAM_CHUNK_SIZE 65536
+
+static uint32_t hash_stream_chunk_size(
+    const struct hash_context *context,
+    uint32_t offset
+) {
+    const uint32_t remaining = context->input_size - offset;
+    return remaining < HASH_STREAM_CHUNK_SIZE
+        ? remaining
+        : HASH_STREAM_CHUNK_SIZE;
+}
+
+static void run_blake3_stream(void *opaque) {
+    struct hash_context *context = opaque;
+    blake3_init(context->state.bytes);
+    for (uint32_t offset = 0; offset < context->input_size;
+         offset += HASH_STREAM_CHUNK_SIZE)
+        blake3_update(
+            context->state.bytes,
+            context->input + offset,
+            hash_stream_chunk_size(context, offset)
+        );
+    blake3_finalize(context->state.bytes, context->output);
+    ox_zero(context->state.bytes, BLAKE3_STATE_SIZE);
+}
+
+static void run_hmac_sha256_stream(void *opaque) {
+    struct hash_context *context = opaque;
+    ox_hmac_sha256_init(
+        context->state.bytes, context->key, sizeof(context->key));
+    for (uint32_t offset = 0; offset < context->input_size;
+         offset += HASH_STREAM_CHUNK_SIZE)
+        ox_hmac_sha256_update(
+            context->state.bytes,
+            context->input + offset,
+            hash_stream_chunk_size(context, offset)
+        );
+    ox_hmac_sha256_finalize(context->state.bytes, context->output);
+    ox_zero(context->state.bytes, HMAC_SHA256_STATE_SIZE);
+}
+
+static void run_keccak256_stream(void *opaque) {
+    struct hash_context *context = opaque;
+    ox_keccak256_init(context->state.bytes);
+    for (uint32_t offset = 0; offset < context->input_size;
+         offset += HASH_STREAM_CHUNK_SIZE)
+        ox_keccak256_update(
+            context->state.bytes,
+            context->input + offset,
+            hash_stream_chunk_size(context, offset)
+        );
+    ox_keccak256_finalize(context->state.bytes, context->output);
+    ox_zero(context->state.bytes, KECCAK256_STATE_SIZE);
+}
+
+static void run_ripemd160_stream(void *opaque) {
+    struct hash_context *context = opaque;
+    ox_ripemd160_init(context->state.bytes);
+    for (uint32_t offset = 0; offset < context->input_size;
+         offset += HASH_STREAM_CHUNK_SIZE)
+        ox_ripemd160_update(
+            context->state.bytes,
+            context->input + offset,
+            hash_stream_chunk_size(context, offset)
+        );
+    ox_ripemd160_finalize(context->state.bytes, context->output);
+    ox_zero(context->state.bytes, RIPEMD160_STATE_SIZE);
+}
+
+static void run_sha256_stream(void *opaque) {
+    struct hash_context *context = opaque;
+    ox_sha256_init(context->state.bytes);
+    for (uint32_t offset = 0; offset < context->input_size;
+         offset += HASH_STREAM_CHUNK_SIZE)
+        ox_sha256_update(
+            context->state.bytes,
+            context->input + offset,
+            hash_stream_chunk_size(context, offset)
+        );
+    ox_sha256_finalize(context->state.bytes, context->output);
+    ox_zero(context->state.bytes, SHA256_STATE_SIZE);
 }
 
 struct ed25519_context {
@@ -485,6 +590,56 @@ int main(void) {
             warmup_ms, budget_ms, repeat_count);
         row("hash.sha256", size, run_sha256, &hash,
             warmup_ms, budget_ms, repeat_count);
+
+        if (size == 1048576) {
+            uint8_t expected[32];
+
+            blake3_hash(input, (uint32_t)size, expected);
+            run_blake3_stream(&hash);
+            CHECK(memcmp(hash.output, expected, 32) == 0);
+
+            ox_hmac_sha256(
+                hash.key,
+                sizeof(hash.key),
+                input,
+                (uint32_t)size,
+                expected,
+                hash.scratch.bytes
+            );
+            run_hmac_sha256_stream(&hash);
+            CHECK(memcmp(hash.output, expected, 32) == 0);
+
+            ox_keccak256(input, (uint32_t)size, expected);
+            run_keccak256_stream(&hash);
+            CHECK(memcmp(hash.output, expected, 32) == 0);
+
+            ox_ripemd160(input, (uint32_t)size, expected);
+            run_ripemd160_stream(&hash);
+            CHECK(memcmp(hash.output, expected, 20) == 0);
+
+            ox_sha256(input, (uint32_t)size, expected);
+            run_sha256_stream(&hash);
+            CHECK(memcmp(hash.output, expected, 32) == 0);
+
+            row_batch("hash.blake3_stream", size, run_blake3_stream, &hash,
+                1, warmup_ms, budget_ms, repeat_count);
+            row_batch(
+                "hash.hmac_sha256_stream",
+                size,
+                run_hmac_sha256_stream,
+                &hash,
+                1,
+                warmup_ms,
+                budget_ms,
+                repeat_count
+            );
+            row_batch("hash.keccak256_stream", size, run_keccak256_stream,
+                &hash, 1, warmup_ms, budget_ms, repeat_count);
+            row_batch("hash.ripemd160_stream", size, run_ripemd160_stream,
+                &hash, 1, warmup_ms, budget_ms, repeat_count);
+            row_batch("hash.sha256_stream", size, run_sha256_stream, &hash,
+                1, warmup_ms, budget_ms, repeat_count);
+        }
         free(input);
     }
 

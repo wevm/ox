@@ -2,4 +2,4 @@
 libs = ["lib"]
 src = "src"
 out = "out"
-
+solc = "0.8.33"

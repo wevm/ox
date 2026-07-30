@@ -127,6 +127,9 @@ packages:
   - .
   - site
 
+patchedDependencies:
+  size-limit@11.1.4: patches/size-limit@11.1.4.patch
+
 peerDependencyRules:
   allowAny:
     - vite

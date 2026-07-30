@@ -14,6 +14,7 @@ test('install and engine expose the same precise engine', () => {
 })
 
 test('the WASM Engine namespace exposes synchronous core operations', () => {
+  expectTypeOf<Engine.HashState>().toEqualTypeOf<CoreEngine.HashState>()
   expectTypeOf(Engine.get).toEqualTypeOf(CoreEngine.get)
   expectTypeOf(Engine.InvalidSlotValueError).toEqualTypeOf(
     CoreEngine.InvalidSlotValueError,

@@ -169,6 +169,9 @@ overrides:
   ws@>=8.0.0 <8.17.1: '>=8.17.1'
   yaml@>=2.0.0 <2.8.3: '>=2.8.3'
 
+patchedDependencies:
+  size-limit@11.1.4: 08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49
+
 importers:
 
   .:
@@ -230,7 +233,7 @@ importers:
         version: 0.2.0
       '@size-limit/preset-big-lib':
         specifier: 'catalog:'
-        version: 11.1.4(esbuild@0.27.7)(size-limit@11.1.4)
+        version: 11.1.4(esbuild@0.27.7)(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))
       '@types/bun':
         specifier: 'catalog:'
         version: 1.1.6
@@ -287,7 +290,7 @@ importers:
         version: 2.11.1
       size-limit:
         specifier: 'catalog:'
-        version: 11.1.4
+        version: 11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49)
       testcontainers:
         specifier: 'catalog:'
         version: 11.10.0
@@ -7971,16 +7974,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@size-limit/file@11.1.4(size-limit@11.1.4)':
+  '@size-limit/file@11.1.4(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))':
     dependencies:
-      size-limit: 11.1.4
+      size-limit: 11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49)
 
-  '@size-limit/preset-big-lib@11.1.4(esbuild@0.27.7)(size-limit@11.1.4)':
+  '@size-limit/preset-big-lib@11.1.4(esbuild@0.27.7)(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))':
     dependencies:
-      '@size-limit/file': 11.1.4(size-limit@11.1.4)
-      '@size-limit/time': 11.1.4(size-limit@11.1.4)
-      '@size-limit/webpack': 11.1.4(esbuild@0.27.7)(size-limit@11.1.4)
-      size-limit: 11.1.4
+      '@size-limit/file': 11.1.4(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))
+      '@size-limit/time': 11.1.4(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))
+      '@size-limit/webpack': 11.1.4(esbuild@0.27.7)(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))
+      size-limit: 11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49)
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@swc/core'
@@ -8001,10 +8004,10 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@size-limit/time@11.1.4(size-limit@11.1.4)':
+  '@size-limit/time@11.1.4(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))':
     dependencies:
       estimo: 3.0.3
-      size-limit: 11.1.4
+      size-limit: 11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49)
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -8012,10 +8015,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@size-limit/webpack@11.1.4(esbuild@0.27.7)(size-limit@11.1.4)':
+  '@size-limit/webpack@11.1.4(esbuild@0.27.7)(size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49))':
     dependencies:
       nanoid: 5.1.11
-      size-limit: 11.1.4
+      size-limit: 11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49)
       webpack: 5.104.1(esbuild@0.27.7)
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -12006,7 +12009,7 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
-  size-limit@11.1.4:
+  size-limit@11.1.4(patch_hash=08e629b21ded03973a7905d6939d4dfb62d5d1b071120c70a507bbcf83f9cf49):
     dependencies:
       bytes-iec: 3.1.1
       chokidar: 3.6.0

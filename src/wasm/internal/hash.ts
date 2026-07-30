@@ -1,4 +1,5 @@
-import { hmacSha256ScratchSize } from './hashes.wasm.js'
+import { hmacSha256ScratchSize, hmacSha256StateSize } from './hashes.wasm.js'
+import * as hashState from './hashState.js'
 import type { Module } from './instantiate.js'
 
 /** WASM exports used by the HMAC-SHA256 loader. @internal */
@@ -11,6 +12,14 @@ export type Exports = {
     out: number,
     scratch: number,
   ): void
+  zero(ptr: number, length: number): void
+}
+
+/** WASM exports used by incremental HMAC-SHA256 states. @internal */
+export type StateExports = {
+  hmac_sha256_finalize(state: number, out: number): void
+  hmac_sha256_init(state: number, key: number, keyLength: number): void
+  hmac_sha256_update(state: number, input: number, inputLength: number): void
   zero(ptr: number, length: number): void
 }
 
@@ -47,4 +56,21 @@ export function hmacSha256(
     // copying, hashing, or copying the digest back out throws.
     module.exports.zero(messagePtr, end - messagePtr)
   }
+}
+
+/** Creates an incremental HMAC-SHA256 state. @internal */
+export function createHmacSha256(
+  module: Module<Exports & StateExports>,
+  key: Uint8Array,
+) {
+  return hashState.create(module, {
+    digestSize: 32,
+    finalize: (exports, state, out) => exports.hmac_sha256_finalize(state, out),
+    init: (exports, state, input, inputLength) =>
+      exports.hmac_sha256_init(state, input, inputLength),
+    input: key,
+    stateSize: hmacSha256StateSize,
+    update: (exports, state, input, inputLength) =>
+      exports.hmac_sha256_update(state, input, inputLength),
+  })
 }

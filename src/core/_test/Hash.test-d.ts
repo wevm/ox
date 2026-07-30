@@ -16,3 +16,26 @@ describe('blake3', () => {
     ).toEqualTypeOf<Hex.Hex>()
   })
 })
+
+describe('incremental', () => {
+  test('factories', () => {
+    expectTypeOf(Hash.createBlake3()).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(Hash.createHmac256('0x')).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(Hash.createKeccak256()).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(Hash.createRipemd160()).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(Hash.createSha256()).toEqualTypeOf<Hash.Hasher>()
+  })
+
+  test('Hasher', () => {
+    const hash = Hash.createSha256()
+
+    expectTypeOf(hash.update('0x')).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(hash.update(new Uint8Array())).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(hash.clone()).toEqualTypeOf<Hash.Hasher>()
+    expectTypeOf(hash.digest()).toEqualTypeOf<Hex.Hex>()
+    expectTypeOf(hash.digest({ as: 'Hex' })).toEqualTypeOf<Hex.Hex>()
+    expectTypeOf(hash.digest({ as: 'Bytes' })).toEqualTypeOf<Bytes.Bytes>()
+    expectTypeOf(hash.digestInto(new Uint8Array())).toEqualTypeOf<void>()
+    expectTypeOf(hash.destroy()).toEqualTypeOf<void>()
+  })
+})

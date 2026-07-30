@@ -10,6 +10,7 @@ test('exports', () => {
       "decodeRlpCursor",
       "readLength",
       "readList",
+      "encodeTo",
       "from",
       "fromBytes",
       "fromHex",
@@ -31,6 +32,114 @@ const generateList = (length: number) => {
   for (let i = 0; i < length; i++) bytes.push(generateBytes(i % 8))
   return bytes
 }
+
+function encodeToBytes(value: Parameters<typeof Rlp.encodeTo>[0]) {
+  const chunks: Uint8Array[] = []
+  Rlp.encodeTo(value, (chunk) => {
+    chunks.push(chunk)
+  })
+  return Bytes.concat(...chunks)
+}
+
+describe('Rlp.encodeTo', () => {
+  test('matches `from` for nested Hex values', () => {
+    const values = [
+      '0x',
+      '0x00',
+      '0x7f',
+      '0x80',
+      '0x1',
+      '0xabc',
+      ['0x', '0x80', ['0x1', `0x${'ab'.repeat(56)}`], `0x${'cd'.repeat(256)}`],
+    ] as const
+
+    for (const value of values)
+      expect(encodeToBytes(value)).toEqual(Rlp.from(value, { as: 'Bytes' }))
+  })
+
+  test('matches `from` for nested byte values', () => {
+    const values = [
+      new Uint8Array(),
+      Uint8Array.of(0),
+      Uint8Array.of(0x7f),
+      Uint8Array.of(0x80),
+      [
+        new Uint8Array(),
+        Uint8Array.of(0x80),
+        [generateBytes(56), generateBytes(256)],
+      ],
+    ] as const
+
+    for (const value of values)
+      expect(encodeToBytes(value)).toEqual(Rlp.from(value, { as: 'Bytes' }))
+  })
+
+  test('does not mutate emitted chunks', () => {
+    const chunks: Uint8Array[] = []
+    const values: Hex.Hex[] = []
+
+    Rlp.encodeTo(['0x01', `0x${'ab'.repeat(16_386)}`, '0x80'], (chunk) => {
+      chunks.push(chunk)
+      values.push(Hex.fromBytes(chunk))
+    })
+
+    expect(chunks.map((chunk) => Hex.fromBytes(chunk))).toEqual(values)
+  })
+
+  test('passes byte leaves without copying', () => {
+    const leaf = generateBytes(64)
+    let found = false
+
+    Rlp.encodeTo(leaf, (chunk) => {
+      if (chunk === leaf) found = true
+    })
+
+    expect(found).toMatchInlineSnapshot(`true`)
+  })
+
+  test('validates every Hex leaf before writing', () => {
+    let writes = 0
+
+    expect(() =>
+      Rlp.encodeTo(['0x01', ['0x02', '0xzz' as Hex.Hex]], () => {
+        writes++
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid hex string \`0xzz\`.]`,
+    )
+    expect(writes).toMatchInlineSnapshot(`0`)
+  })
+
+  test('propagates callback errors after partial output', () => {
+    const chunks: Uint8Array[] = []
+
+    expect(() =>
+      Rlp.encodeTo([Uint8Array.of(1), Uint8Array.of(2)], (chunk) => {
+        chunks.push(chunk)
+        if (chunks.length === 2) throw new Error('write failed')
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`[Error: write failed]`)
+    expect(chunks.map((chunk) => Hex.fromBytes(chunk))).toMatchInlineSnapshot(`
+      [
+        "0xc2",
+        "0x01",
+      ]
+    `)
+  })
+
+  test('snapshots list structure before writing', () => {
+    const value: Hex.Hex[] = ['0x01']
+    const expected = Rlp.from(value, { as: 'Bytes' })
+    const chunks: Uint8Array[] = []
+
+    Rlp.encodeTo(value, (chunk) => {
+      chunks.push(chunk)
+      if (chunks.length === 1) value.push('0x02')
+    })
+
+    expect(Bytes.concat(...chunks)).toEqual(expected)
+  })
+})
 
 describe('Rlp.to', () => {
   test('no bytes', () => {

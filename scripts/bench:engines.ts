@@ -364,6 +364,25 @@ sync(
 
 const hashKey = bytes(32, 97)
 const hashSizes = [32, 64, 256, 1024, 4096, 65_536, 1_048_576] as const
+const hashStreamInput = bytes(1_048_576)
+const hashStreamChunkSize = 65_536
+
+function streamHash(create: () => CoreEngine.HashState, digestSize: number) {
+  const output = new Uint8Array(digestSize)
+  return () => {
+    const state = create()
+    for (
+      let offset = 0;
+      offset < hashStreamInput.length;
+      offset += hashStreamChunkSize
+    )
+      state.update(
+        hashStreamInput.subarray(offset, offset + hashStreamChunkSize),
+      )
+    state.digestInto(output)
+    return output
+  }
+}
 
 for (const size of hashSizes) {
   const input = bytes(size)
@@ -384,6 +403,58 @@ for (const size of hashSizes) {
     cKey: `hash.sha256:${size}`,
   })
 }
+
+const hashStreamCase = '1 MiB input, 64 KiB chunks'
+sync(
+  'Hash',
+  'createBlake3',
+  hashStreamCase,
+  streamHash(hash.createBlake3, 32),
+  {
+    batch: 1,
+    cKey: 'hash.blake3_stream:1048576',
+  },
+)
+sync(
+  'Hash',
+  'createHmacSha256',
+  hashStreamCase,
+  streamHash(() => hash.createHmacSha256(hashKey), 32),
+  {
+    batch: 1,
+    cKey: 'hash.hmac_sha256_stream:1048576',
+  },
+)
+sync(
+  'Hash',
+  'createKeccak256',
+  hashStreamCase,
+  streamHash(hash.createKeccak256, 32),
+  {
+    batch: 1,
+    cKey: 'hash.keccak256_stream:1048576',
+  },
+)
+sync(
+  'Hash',
+  'createRipemd160',
+  hashStreamCase,
+  streamHash(hash.createRipemd160, 20),
+  {
+    batch: 1,
+    cKey: 'hash.ripemd160_stream:1048576',
+  },
+)
+sync(
+  'Hash',
+  'createSha256',
+  hashStreamCase,
+  streamHash(hash.createSha256, 32),
+  {
+    batch: 1,
+    cKey: 'hash.sha256_stream:1048576',
+  },
+)
 
 const aesKey = bytes(16, 97)
 const aesIv = bytes(16, 53)

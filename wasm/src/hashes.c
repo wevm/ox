@@ -6,14 +6,31 @@
 //
 // Exports:
 //   keccak256(in, len, out32)
+//   keccak256_init(state344)
+//   keccak256_update(state344, in, len)
+//   keccak256_finalize(state344, out32)
 //   sha256(in, len, out32)
+//   sha256_init(state112)
+//   sha256_update(state112, in, len)
+//   sha256_finalize(state112, out32)
 //   ripemd160(in, len, out20)
-//   hmac_sha256(key, keyLen, msg, msgLen, out32, scratch544)
+//   ripemd160_init(state96)
+//   ripemd160_update(state96, in, len)
+//   ripemd160_finalize(state96, out20)
+//   hmac_sha256(key, keyLen, msg, msgLen, out32, scratch144)
+//   hmac_sha256_init(state144, key, keyLen)
+//   hmac_sha256_update(state144, in, len)
+//   hmac_sha256_finalize(state144, out32)
 //   pbkdf2_sha256(password, passwordLen, saltAndCounter, saltLen, iterations,
-//                 out, outLen, scratch544)
+//                 out, outLen, scratch352)
 
 #include "keccak_f1600.h"
 #include "ox_rt.h"
+
+__attribute__((noinline))
+static void hashes_zero(uint8_t *ptr, uint32_t len) {
+    ox_zero(ptr, len);
+}
 
 // Keccak256 — rate 136 bytes, 0x01 domain padding (not FIPS-202's 0x06).
 
@@ -29,11 +46,16 @@
  * the only way to test that core directly, and to localize a regression to a
  * specific round when someone edits the unrolled macros.
  */
+__attribute__((noinline))
+static void keccak256_permute(uint64_t *A) {
+    keccak_f1600(A);
+}
+
 __attribute__((export_name("keccak_f1600")))
 void ox_keccak_f1600(uint8_t *state) {
     uint64_t A[25];
     for (int i = 0; i < 25; i++) A[i] = load64_le(state + i * 8);
-    keccak_f1600(A);
+    keccak256_permute(A);
     for (int i = 0; i < 25; i++) store64_le(state + i * 8, A[i]);
 }
 
@@ -42,28 +64,74 @@ static void keccak256_absorb(uint64_t *A, const uint8_t *block) {
         A[i] ^= load64_le(block + i * 8);
 }
 
-__attribute__((export_name("keccak256")))
-void ox_keccak256(const uint8_t *in, uint32_t len, uint8_t *out) {
+struct keccak256_state {
     uint64_t A[25];
-    for (int i = 0; i < 25; i++) A[i] = 0;
+    uint32_t buffered;
+    uint8_t block[KECCAK256_RATE];
+};
 
+_Static_assert(
+    sizeof(struct keccak256_state) == KECCAK256_STATE_SIZE,
+    "Keccak256 state size must match the loader");
+
+__attribute__((noinline, export_name("keccak256_init")))
+void ox_keccak256_init(struct keccak256_state *state) {
+    for (int i = 0; i < 25; i++) state->A[i] = 0;
+    state->buffered = 0;
+    for (int i = 0; i < KECCAK256_RATE; i++) state->block[i] = 0;
+}
+
+__attribute__((noinline, export_name("keccak256_update")))
+void ox_keccak256_update(struct keccak256_state *state, const uint8_t *in,
+                         uint32_t len) {
     uint32_t offset = 0;
+
+    if (state->buffered) {
+        const uint32_t available = KECCAK256_RATE - state->buffered;
+        const uint32_t take = len < available ? len : available;
+        for (uint32_t i = 0; i < take; i++)
+            state->block[state->buffered + i] = in[i];
+        state->buffered += take;
+        offset += take;
+
+        if (state->buffered == KECCAK256_RATE) {
+            keccak256_absorb(state->A, state->block);
+            keccak256_permute(state->A);
+            state->buffered = 0;
+        }
+        if (offset == len) return;
+    }
+
     while (len - offset >= KECCAK256_RATE) {
-        keccak256_absorb(A, in + offset);
-        keccak_f1600(A);
+        keccak256_absorb(state->A, in + offset);
+        keccak256_permute(state->A);
         offset += KECCAK256_RATE;
     }
 
-    uint8_t block[KECCAK256_RATE];
     const uint32_t remaining = len - offset;
-    for (uint32_t i = 0; i < KECCAK256_RATE; i++) block[i] = 0;
-    for (uint32_t i = 0; i < remaining; i++) block[i] = in[offset + i];
-    block[remaining] = 0x01;
-    block[KECCAK256_RATE - 1] |= 0x80;
-    keccak256_absorb(A, block);
-    keccak_f1600(A);
+    for (uint32_t i = 0; i < remaining; i++)
+        state->block[i] = in[offset + i];
+    state->buffered = remaining;
+}
 
-    for (int i = 0; i < 4; i++) store64_le(out + i * 8, A[i]);
+__attribute__((noinline, export_name("keccak256_finalize")))
+void ox_keccak256_finalize(struct keccak256_state *state, uint8_t *out) {
+    for (uint32_t i = state->buffered; i < KECCAK256_RATE; i++)
+        state->block[i] = 0;
+    state->block[state->buffered] = 0x01;
+    state->block[KECCAK256_RATE - 1] |= 0x80;
+    keccak256_absorb(state->A, state->block);
+    keccak256_permute(state->A);
+
+    for (int i = 0; i < 4; i++) store64_le(out + i * 8, state->A[i]);
+}
+
+__attribute__((export_name("keccak256")))
+void ox_keccak256(const uint8_t *in, uint32_t len, uint8_t *out) {
+    struct keccak256_state state;
+    ox_keccak256_init(&state);
+    ox_keccak256_update(&state, in, len);
+    ox_keccak256_finalize(&state, out);
 }
 
 // SHA-256 — FIPS 180-4.
@@ -94,6 +162,7 @@ static void store32_be(uint8_t *p, uint32_t v) {
     p[2] = (uint8_t)(v >> 8);  p[3] = (uint8_t)v;
 }
 
+__attribute__((noinline))
 static void sha256_compress(uint32_t *H, const uint8_t *block, uint32_t *W) {
     for (int i = 0; i < 16; i++) W[i] = load32_be(block + i * 4);
     for (int i = 16; i < 64; i++) {
@@ -122,120 +191,216 @@ static void sha256_compress(uint32_t *H, const uint8_t *block, uint32_t *W) {
     H[4] += e; H[5] += f; H[6] += g; H[7] += h;
 }
 
-static void sha256_init(uint32_t *H) {
+static void sha256_init_words(uint32_t *H) {
     H[0] = 0x6a09e667; H[1] = 0xbb67ae85;
     H[2] = 0x3c6ef372; H[3] = 0xa54ff53a;
     H[4] = 0x510e527f; H[5] = 0x9b05688c;
     H[6] = 0x1f83d9ab; H[7] = 0x5be0cd19;
 }
 
-static void sha256_finish_with_scratch(const uint8_t *in, uint32_t len,
-                                       uint64_t prefixLen, uint8_t *out,
-                                       uint32_t *H, uint8_t *block,
-                                       uint32_t *W) {
+struct sha256_state {
+    uint64_t length;
+    uint32_t H[8];
+    uint32_t buffered;
+    uint8_t block[64];
+};
+
+_Static_assert(
+    sizeof(struct sha256_state) == SHA256_STATE_SIZE,
+    "SHA-256 state size must match the loader");
+
+__attribute__((noinline))
+static void sha256_state_init(struct sha256_state *state) {
+    state->length = 0;
+    sha256_init_words(state->H);
+    state->buffered = 0;
+    for (int i = 0; i < 64; i++) state->block[i] = 0;
+}
+
+__attribute__((noinline))
+static void sha256_state_update(struct sha256_state *state, const uint8_t *in,
+                                uint32_t len) {
+    uint32_t W[64];
     uint32_t offset = 0;
+    state->length += len;
+
+    if (state->buffered) {
+        const uint32_t available = 64 - state->buffered;
+        const uint32_t take = len < available ? len : available;
+        for (uint32_t i = 0; i < take; i++)
+            state->block[state->buffered + i] = in[i];
+        state->buffered += take;
+        offset += take;
+
+        if (state->buffered == 64) {
+            sha256_compress(state->H, state->block, W);
+            state->buffered = 0;
+        }
+        if (offset == len) {
+            hashes_zero((uint8_t *)W, sizeof(W));
+            return;
+        }
+    }
+
     while (len - offset >= 64) {
-        sha256_compress(H, in + offset, W);
+        sha256_compress(state->H, in + offset, W);
         offset += 64;
     }
 
-    // Final block(s): message remainder, 0x80, zeroes, then a 64-bit bit count.
     const uint32_t remaining = len - offset;
-    const uint32_t total = remaining >= 56 ? 128 : 64;
-    for (uint32_t i = 0; i < total; i++) block[i] = 0;
-    for (uint32_t i = 0; i < remaining; i++) block[i] = in[offset + i];
-    block[remaining] = 0x80;
+    for (uint32_t i = 0; i < remaining; i++)
+        state->block[i] = in[offset + i];
+    state->buffered = remaining;
+    hashes_zero((uint8_t *)W, sizeof(W));
+}
 
-    const uint64_t bits = (prefixLen + len) * 8;
+__attribute__((noinline))
+static void sha256_state_finalize(struct sha256_state *state, uint8_t *out) {
+    uint8_t block[128];
+    uint32_t W[64];
+    const uint32_t total = state->buffered >= 56 ? 128 : 64;
+
+    for (uint32_t i = 0; i < total; i++) block[i] = 0;
+    for (uint32_t i = 0; i < state->buffered; i++)
+        block[i] = state->block[i];
+    block[state->buffered] = 0x80;
+
+    const uint64_t bits = state->length * 8;
     for (int i = 0; i < 8; i++)
         block[total - 1 - i] = (uint8_t)(bits >> (i * 8));
 
-    sha256_compress(H, block, W);
-    if (total == 128) sha256_compress(H, block + 64, W);
+    sha256_compress(state->H, block, W);
+    if (total == 128) sha256_compress(state->H, block + 64, W);
+    for (int i = 0; i < 8; i++) store32_be(out + i * 4, state->H[i]);
 
-    for (int i = 0; i < 8; i++) store32_be(out + i * 4, H[i]);
+    hashes_zero(block, sizeof(block));
+    hashes_zero((uint8_t *)W, sizeof(W));
 }
 
-static void sha256_hash_with_scratch(const uint8_t *in, uint32_t len,
-                                     uint8_t *out, uint32_t *H,
-                                     uint8_t *block, uint32_t *W) {
-    sha256_init(H);
-    sha256_finish_with_scratch(in, len, 0, out, H, block, W);
+__attribute__((export_name("sha256_init")))
+void ox_sha256_init(struct sha256_state *state) {
+    sha256_state_init(state);
 }
 
-static void sha256_hash(const uint8_t *in, uint32_t len, uint8_t *out) {
-    uint32_t H[8];
-    uint8_t block[128];
-    uint32_t W[64];
-    sha256_hash_with_scratch(in, len, out, H, block, W);
+__attribute__((export_name("sha256_update")))
+void ox_sha256_update(struct sha256_state *state, const uint8_t *in,
+                      uint32_t len) {
+    sha256_state_update(state, in, len);
+}
+
+__attribute__((export_name("sha256_finalize")))
+void ox_sha256_finalize(struct sha256_state *state, uint8_t *out) {
+    sha256_state_finalize(state, out);
 }
 
 __attribute__((export_name("sha256")))
 void ox_sha256(const uint8_t *in, uint32_t len, uint8_t *out) {
-    sha256_hash(in, len, out);
+    struct sha256_state state;
+    sha256_state_init(&state);
+    sha256_state_update(&state, in, len);
+    sha256_state_finalize(&state, out);
 }
 
 // HMAC-SHA256 — RFC 2104.
 
-struct hmac_sha256_scratch {
-    uint8_t pad[64];
-    uint32_t H[8];
-    uint8_t block[128];
-    uint32_t W[64];
-    uint32_t innerH[8];
+struct hmac_sha256_state {
+    struct sha256_state inner;
     uint32_t outerH[8];
 };
 
 _Static_assert(
-    sizeof(struct hmac_sha256_scratch) == HMAC_SHA256_SCRATCH_SIZE,
+    sizeof(struct hmac_sha256_state) == HMAC_SHA256_STATE_SIZE,
+    "HMAC-SHA256 state size must match the loader");
+
+_Static_assert(
+    sizeof(struct hmac_sha256_state) == HMAC_SHA256_SCRATCH_SIZE,
     "HMAC-SHA256 scratch size must match the loader");
 
-static void hmac_sha256_init(const uint8_t *key, uint32_t keyLen,
-                             struct hmac_sha256_scratch *scratch) {
-    uint8_t *pad = scratch->pad;
-    uint32_t *H = scratch->H;
-    uint8_t *block = scratch->block;
-    uint32_t *W = scratch->W;
-
+__attribute__((noinline))
+static void hmac_sha256_state_init(struct hmac_sha256_state *state,
+                                   const uint8_t *key, uint32_t keyLen) {
+    uint8_t pad[64];
     for (int i = 0; i < 64; i++) pad[i] = 0;
-    if (keyLen > 64)
-        sha256_hash_with_scratch(key, keyLen, pad, H, block, W);
-    else for (uint32_t i = 0; i < keyLen; i++) pad[i] = key[i];
+    if (keyLen > 64) {
+        struct sha256_state keyState;
+        sha256_state_init(&keyState);
+        sha256_state_update(&keyState, key, keyLen);
+        sha256_state_finalize(&keyState, pad);
+        hashes_zero((uint8_t *)&keyState, sizeof(keyState));
+    } else for (uint32_t i = 0; i < keyLen; i++) pad[i] = key[i];
 
-    sha256_init(scratch->innerH);
-    for (int i = 0; i < 64; i++) block[i] = pad[i] ^ 0x36;
-    sha256_compress(scratch->innerH, block, W);
+    sha256_state_init(&state->inner);
+    for (int i = 0; i < 64; i++) pad[i] ^= 0x36;
+    sha256_state_update(&state->inner, pad, 64);
 
-    sha256_init(scratch->outerH);
-    for (int i = 0; i < 64; i++) block[i] = pad[i] ^ 0x5c;
-    sha256_compress(scratch->outerH, block, W);
+    struct sha256_state outer;
+    sha256_state_init(&outer);
+    for (int i = 0; i < 64; i++) pad[i] ^= 0x36 ^ 0x5c;
+    sha256_state_update(&outer, pad, 64);
+    for (int i = 0; i < 8; i++) state->outerH[i] = outer.H[i];
+
+    hashes_zero((uint8_t *)&outer, sizeof(outer));
+    hashes_zero(pad, sizeof(pad));
 }
 
-static void hmac_sha256_from_states(const uint8_t *msg, uint32_t msgLen,
-                                    uint8_t *intermediate, uint8_t *out,
-                                    struct hmac_sha256_scratch *scratch) {
-    for (int i = 0; i < 8; i++) scratch->H[i] = scratch->innerH[i];
-    sha256_finish_with_scratch(msg, msgLen, 64, intermediate, scratch->H,
-                               scratch->block, scratch->W);
+__attribute__((noinline))
+static void hmac_sha256_state_update(struct hmac_sha256_state *state,
+                                     const uint8_t *in, uint32_t len) {
+    sha256_state_update(&state->inner, in, len);
+}
 
-    for (int i = 0; i < 8; i++) scratch->H[i] = scratch->outerH[i];
-    sha256_finish_with_scratch(intermediate, 32, 64, out, scratch->H,
-                               scratch->block, scratch->W);
+__attribute__((noinline))
+static void hmac_sha256_state_finalize(struct hmac_sha256_state *state,
+                                       uint8_t *out) {
+    uint8_t intermediate[32];
+    sha256_state_finalize(&state->inner, intermediate);
+
+    struct sha256_state outer;
+    sha256_state_init(&outer);
+    outer.length = 64;
+    for (int i = 0; i < 8; i++) outer.H[i] = state->outerH[i];
+    sha256_state_update(&outer, intermediate, sizeof(intermediate));
+    sha256_state_finalize(&outer, state->inner.block);
+
+    hashes_zero((uint8_t *)&outer, sizeof(outer));
+    hashes_zero(intermediate, sizeof(intermediate));
+    for (int i = 0; i < 32; i++) out[i] = state->inner.block[i];
+}
+
+__attribute__((export_name("hmac_sha256_init")))
+void ox_hmac_sha256_init(struct hmac_sha256_state *state, const uint8_t *key,
+                         uint32_t keyLen) {
+    hmac_sha256_state_init(state, key, keyLen);
+}
+
+__attribute__((export_name("hmac_sha256_update")))
+void ox_hmac_sha256_update(struct hmac_sha256_state *state, const uint8_t *in,
+                           uint32_t len) {
+    hmac_sha256_state_update(state, in, len);
+}
+
+__attribute__((export_name("hmac_sha256_finalize")))
+void ox_hmac_sha256_finalize(struct hmac_sha256_state *state, uint8_t *out) {
+    hmac_sha256_state_finalize(state, out);
 }
 
 __attribute__((export_name("hmac_sha256")))
 void ox_hmac_sha256(const uint8_t *key, uint32_t keyLen, const uint8_t *msg,
                     uint32_t msgLen, uint8_t *out,
-                    struct hmac_sha256_scratch *scratch) {
-    hmac_sha256_init(key, keyLen, scratch);
-    hmac_sha256_from_states(msg, msgLen, scratch->pad, out, scratch);
-    ox_zero((uint8_t *)scratch, sizeof(*scratch));
+                    struct hmac_sha256_state *scratch) {
+    hmac_sha256_state_init(scratch, key, keyLen);
+    hmac_sha256_state_update(scratch, msg, msgLen);
+    hmac_sha256_state_finalize(scratch, out);
+    hashes_zero((uint8_t *)scratch, sizeof(*scratch));
 }
 
 // PBKDF2-HMAC-SHA256 — RFC 8018.
 
 struct pbkdf2_sha256_scratch {
-    struct hmac_sha256_scratch hmac;
+    struct hmac_sha256_state base;
+    struct hmac_sha256_state working;
+    uint8_t u[32];
+    uint8_t t[32];
 };
 
 _Static_assert(
@@ -249,29 +414,32 @@ void ox_pbkdf2_sha256(const uint8_t *password, uint32_t passwordLen,
                       struct pbkdf2_sha256_scratch *scratch) {
     uint32_t offset = 0;
     uint32_t blockIndex = 1;
-    uint8_t *u = scratch->hmac.pad;
-    uint8_t *t = u + 32;
-
-    hmac_sha256_init(password, passwordLen, &scratch->hmac);
+    hmac_sha256_state_init(&scratch->base, password, passwordLen);
 
     while (offset < outLen) {
         store32_be(salt + saltLen, blockIndex);
-        hmac_sha256_from_states(salt, saltLen + 4, u, u, &scratch->hmac);
-        for (int i = 0; i < 32; i++) t[i] = u[i];
+        scratch->working = scratch->base;
+        hmac_sha256_state_update(&scratch->working, salt, saltLen + 4);
+        hmac_sha256_state_finalize(&scratch->working, scratch->u);
+        for (int i = 0; i < 32; i++) scratch->t[i] = scratch->u[i];
 
         for (uint32_t iteration = 1; iteration < iterations; iteration++) {
-            hmac_sha256_from_states(u, 32, u, u, &scratch->hmac);
-            for (int i = 0; i < 32; i++) t[i] ^= u[i];
+            scratch->working = scratch->base;
+            hmac_sha256_state_update(
+                &scratch->working, scratch->u, sizeof(scratch->u));
+            hmac_sha256_state_finalize(&scratch->working, scratch->u);
+            for (int i = 0; i < 32; i++) scratch->t[i] ^= scratch->u[i];
         }
 
         const uint32_t remaining = outLen - offset;
         const uint32_t take = remaining < 32 ? remaining : 32;
-        for (uint32_t i = 0; i < take; i++) out[offset + i] = t[i];
+        for (uint32_t i = 0; i < take; i++)
+            out[offset + i] = scratch->t[i];
         offset += take;
         blockIndex++;
     }
 
-    ox_zero((uint8_t *)scratch, sizeof(*scratch));
+    hashes_zero((uint8_t *)scratch, sizeof(*scratch));
 }
 
 // RIPEMD-160 — Dobbertin/Bosselaers/Preneel.
@@ -321,6 +489,7 @@ static uint32_t rmd_f(int round, uint32_t x, uint32_t y, uint32_t z) {
     return x ^ (y | ~z);
 }
 
+__attribute__((noinline))
 static void ripemd160_compress(uint32_t *H, const uint8_t *block) {
     uint32_t X[16];
     for (int i = 0; i < 16; i++) X[i] = load32_le(block + i * 4);
@@ -347,36 +516,90 @@ static void ripemd160_compress(uint32_t *H, const uint8_t *block) {
     H[0] = t;
 }
 
-__attribute__((export_name("ripemd160")))
-void ox_ripemd160(const uint8_t *in, uint32_t len, uint8_t *out) {
-    uint32_t H[5] = {
-        0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0,
-    };
+struct ripemd160_state {
+    uint64_t length;
+    uint32_t H[5];
+    uint32_t buffered;
+    uint8_t block[64];
+};
 
+_Static_assert(
+    sizeof(struct ripemd160_state) == RIPEMD160_STATE_SIZE,
+    "RIPEMD-160 state size must match the loader");
+
+__attribute__((noinline, export_name("ripemd160_init")))
+void ox_ripemd160_init(struct ripemd160_state *state) {
+    state->length = 0;
+    state->H[0] = 0x67452301;
+    state->H[1] = 0xefcdab89;
+    state->H[2] = 0x98badcfe;
+    state->H[3] = 0x10325476;
+    state->H[4] = 0xc3d2e1f0;
+    state->buffered = 0;
+    for (int i = 0; i < 64; i++) state->block[i] = 0;
+}
+
+__attribute__((noinline, export_name("ripemd160_update")))
+void ox_ripemd160_update(struct ripemd160_state *state, const uint8_t *in,
+                         uint32_t len) {
     uint32_t offset = 0;
+    state->length += len;
+
+    if (state->buffered) {
+        const uint32_t available = 64 - state->buffered;
+        const uint32_t take = len < available ? len : available;
+        for (uint32_t i = 0; i < take; i++)
+            state->block[state->buffered + i] = in[i];
+        state->buffered += take;
+        offset += take;
+
+        if (state->buffered == 64) {
+            ripemd160_compress(state->H, state->block);
+            state->buffered = 0;
+        }
+        if (offset == len) return;
+    }
+
     while (len - offset >= 64) {
-        ripemd160_compress(H, in + offset);
+        ripemd160_compress(state->H, in + offset);
         offset += 64;
     }
 
-    uint8_t block[128];
     const uint32_t remaining = len - offset;
-    const uint32_t total = remaining >= 56 ? 128 : 64;
-    for (uint32_t i = 0; i < total; i++) block[i] = 0;
-    for (uint32_t i = 0; i < remaining; i++) block[i] = in[offset + i];
-    block[remaining] = 0x80;
+    for (uint32_t i = 0; i < remaining; i++)
+        state->block[i] = in[offset + i];
+    state->buffered = remaining;
+}
 
-    const uint64_t bits = (uint64_t)len * 8;
+__attribute__((noinline, export_name("ripemd160_finalize")))
+void ox_ripemd160_finalize(struct ripemd160_state *state, uint8_t *out) {
+    uint8_t block[128];
+    const uint32_t total = state->buffered >= 56 ? 128 : 64;
+
+    for (uint32_t i = 0; i < total; i++) block[i] = 0;
+    for (uint32_t i = 0; i < state->buffered; i++)
+        block[i] = state->block[i];
+    block[state->buffered] = 0x80;
+
+    const uint64_t bits = state->length * 8;
     for (int i = 0; i < 8; i++)
         block[total - 8 + i] = (uint8_t)(bits >> (i * 8));
 
-    ripemd160_compress(H, block);
-    if (total == 128) ripemd160_compress(H, block + 64);
-
+    ripemd160_compress(state->H, block);
+    if (total == 128) ripemd160_compress(state->H, block + 64);
     for (int i = 0; i < 5; i++) {
-        out[i * 4 + 0] = (uint8_t)H[i];
-        out[i * 4 + 1] = (uint8_t)(H[i] >> 8);
-        out[i * 4 + 2] = (uint8_t)(H[i] >> 16);
-        out[i * 4 + 3] = (uint8_t)(H[i] >> 24);
+        out[i * 4 + 0] = (uint8_t)state->H[i];
+        out[i * 4 + 1] = (uint8_t)(state->H[i] >> 8);
+        out[i * 4 + 2] = (uint8_t)(state->H[i] >> 16);
+        out[i * 4 + 3] = (uint8_t)(state->H[i] >> 24);
     }
+    hashes_zero(block, sizeof(block));
+}
+
+__attribute__((export_name("ripemd160")))
+void ox_ripemd160(const uint8_t *in, uint32_t len, uint8_t *out) {
+    struct ripemd160_state state;
+    ox_ripemd160_init(&state);
+    ox_ripemd160_update(&state, in, len);
+    ox_ripemd160_finalize(&state, out);
 }

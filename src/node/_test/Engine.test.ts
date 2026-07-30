@@ -51,6 +51,8 @@ describe('install', () => {
             "toMontgomerySecret",
           ],
           "Hash": [
+            "createRipemd160",
+            "createSha256",
             "hmacSha256",
             "ripemd160",
             "sha256",

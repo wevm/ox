@@ -65,6 +65,11 @@ export async function engine(): Promise<engine.ReturnType> {
 
     return {
       blake3: (input) => blake3.hash(blake3Module, input),
+      createBlake3: () => blake3.create(blake3Module),
+      createHmacSha256: (key) => hash.createHmacSha256(module, key),
+      createKeccak256: () => hashes.create(module, 'keccak256'),
+      createRipemd160: () => hashes.create(module, 'ripemd160'),
+      createSha256: () => hashes.create(module, 'sha256'),
       hmacSha256: (key, message) => hash.hmacSha256(module, key, message),
       keccak256: (input) => call('keccak256', input),
       ripemd160: (input) => call('ripemd160', input),
@@ -78,6 +83,11 @@ export declare namespace engine {
   type ReturnType = {
     [key in
       | 'blake3'
+      | 'createBlake3'
+      | 'createHmacSha256'
+      | 'createKeccak256'
+      | 'createRipemd160'
+      | 'createSha256'
       | 'hmacSha256'
       | 'keccak256'
       | 'ripemd160'

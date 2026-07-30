@@ -24,6 +24,7 @@ export type {
   Eddsa,
   Engine,
   Hash,
+  HashState,
   Keystore,
   Mnemonic,
 } from '../core/Engine.js'

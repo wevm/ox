@@ -101,7 +101,6 @@
 
 - **Use targeted commands** -- prefer the smallest command that covers the touched behavior.
 - **Types** -- run `pnpm check:types` after TypeScript changes.
-- **TSDoc** -- run `pnpm check:tsdoc` after public documentation changes.
 - **Repo checks** -- run `pnpm check:repo` when package metadata or workspace shape changes.
 - **Docs dev server** -- use `pnpm docs:dev` for documentation UI work.
 - **`pnpm check` mutates** -- it runs `vp check --fix`. Use it only when intentionally applying lint/format fixes.
@@ -111,7 +110,7 @@
 - **`pnpm bench:engines` needs a C compiler for native references** -- it compares every Ox engine slot, plus `ox/node`, `ox/wasm`, and native C for every WASM primitive. It builds a temporary executable from `bench/native`. Without a C compiler, C reports unavailable while the Ox columns still run. A full run takes several minutes.
 - **Native C benchmarks mirror WASM target configuration** -- compile the same wrappers, vendored sources, and target defines for the host. Use raw Engine inputs, preserve encodings, and exclude C from fastest-engine calculations.
 - **`pnpm contracts:build` mutates generated contract artifacts** -- it runs Forge and `contracts/scripts/generate-typed-artifacts.ts`.
-- **Install hooks can mutate** -- `pnpm install` runs `postinstall`, which initializes submodules, builds contracts, and runs `pnpm dev`.
+- **Install hooks can mutate** -- `pnpm install` runs `postinstall`, which initializes submodules, builds contracts with the compiler pinned in `contracts/foundry.toml`, and runs `pnpm dev`.
 
 ## Changeset Conventions
 
