@@ -9,8 +9,11 @@ implementations, the Node.js engine, and the WASM engine. Lower timings are
 better.
 
 The following results are mean single-call durations from an Apple M4 Max
-running macOS 26.5.2 and Node.js 25.9.0. The comparison uses Ox 1.2.0 and Ox
-v0.14.33. The fastest result in each row is bold.
+running macOS 26.5.2 and Node.js 25.9.0. The comparison uses current Ox source,
+based on 1.2.0, and Ox v0.14.33. For the current Ox variants, the
+`Secp256k1.randomPrivateKey` row applies the unreleased Noble optimization from
+[`88b3478`](https://github.com/paulmillr/noble-curves/commit/88b3478296ab405b2ba330054efaa92070252b2e)
+to `@noble/curves` 2.2.0. The fastest result in each row is bold.
 
 | Operation | `ox v0` | `ox` | `ox/node` | `ox/wasm` |
 | --- | ---: | ---: | ---: | ---: |
@@ -23,7 +26,7 @@ v0.14.33. The fastest result in each row is bold.
 | `TypedData.getSignPayload` | 70.9 µs | 49.1 µs | 48.5 µs | **15.9 µs** |
 | `Keystore.decrypt` | 5.8 µs | 4.7 µs | 5.3 µs | **2.3 µs** |
 | `Mnemonic.toPrivateKey` | 6.98 ms | 7.09 ms | **1.76 ms** | 3.03 ms |
-| `Secp256k1.randomPrivateKey` | **1.7 µs** | 5.8 µs | 5.8 µs | 6.0 µs |
+| `Secp256k1.randomPrivateKey` | 1.61 µs | **1.47 µs** | 1.51 µs | 1.54 µs |
 
 WASM has the largest effect on operations that perform one or more
 Keccak-256 hashes. Node.js has the largest effect on mnemonic derivation
