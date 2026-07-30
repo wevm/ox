@@ -13,22 +13,26 @@ running macOS 26.5.2 and Node.js 25.9.0. The comparison uses Ox 1.2.0 and
 
 | Task | Operation | `ox v0` | `ox` | `ox/node` | `ox/wasm` | Fastest vs. Ox v0 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Calculate Swap Input Amount | `getAmountIn` (bigint) | 484.0 ns | 526.4 ns | 480.0 ns | **479.6 ns** | 1.0× faster |
+| Calculate Swap Output Amount | `getAmountOut` (bigint) | 186.7 ns | **184.4 ns** | 191.3 ns | 184.7 ns | 1.0× faster |
+| Decode RLP Struct | `Rlp.toBytes` | **146.8 ns** | 149.9 ns | 150.7 ns | 161.0 ns | Baseline |
+| Decrypt JSON Keystore | `Keystore.decrypt` | 5.9 µs | 4.7 µs | 5.2 µs | **2.4 µs** | 2.5× faster |
+| Derive CREATE2 Contract Address | `ContractAddress.fromCreate2` | 14.7 µs | 11.4 µs | 11.6 µs | **6.8 µs** | 2.2× faster |
+| Derive Mnemonic Private Key | `Mnemonic.toPrivateKey` | 7.26 ms | 7.34 ms | **1.82 ms** | 3.04 ms | 4.0× faster |
+| Encode Event Topics | `AbiEvent.encode` | 4.5 µs | 3.3 µs | 3.3 µs | **1.0 µs** | 4.7× faster |
+| Encode RLP Struct | `Rlp.fromBytes` | 257.0 ns | 118.5 ns | 118.9 ns | **117.6 ns** | 2.2× faster |
 | Encode Seaport Fulfill Order | `AbiFunction.encodeData` (cached) | 13.4 µs | 7.4 µs | 7.3 µs | **7.2 µs** | 1.9× faster |
 | Encode Seaport Fulfill Order | `AbiFunction.encodeData` (dynamic) | 39.5 µs | 29.3 µs | 28.4 µs | **24.1 µs** | 1.6× faster |
 | Encode Uniswap V2 Swap | `AbiFunction.encodeData` (cached) | 1.72 µs | 1.08 µs | **1.07 µs** | 1.19 µs | 1.6× faster |
 | Encode Uniswap V2 Swap | `AbiFunction.encodeData` (dynamic) | 8.8 µs | 6.9 µs | 6.7 µs | **4.2 µs** | 2.1× faster |
-| Get Transaction Sign Payload | `TransactionEnvelope.getSignPayload` | 5.6 µs | 3.9 µs | 4.0 µs | **1.5 µs** | 3.6× faster |
-| Get Personal Message Sign Payload | `PersonalMessage.getSignPayload` | 4.9 µs | 3.4 µs | 3.4 µs | **1.0 µs** | 4.8× faster |
-| Derive CREATE2 Contract Address | `ContractAddress.fromCreate2` | 14.7 µs | 11.4 µs | 11.6 µs | **6.8 µs** | 2.2× faster |
-| Encode Event Topics | `AbiEvent.encode` | 4.5 µs | 3.3 µs | 3.3 µs | **1.0 µs** | 4.7× faster |
-| Hash Typed Data | `TypedData.getSignPayload` | 70.3 µs | 52.0 µs | 52.5 µs | **20.0 µs** | 3.5× faster |
-| Decrypt JSON Keystore | `Keystore.decrypt` | 5.9 µs | 4.7 µs | 5.2 µs | **2.4 µs** | 2.5× faster |
-| Derive Mnemonic Private Key | `Mnemonic.toPrivateKey` | 7.26 ms | 7.34 ms | **1.82 ms** | 3.04 ms | 4.0× faster |
 | Generate Random Private Key | `Secp256k1.randomPrivateKey` | 1.61 µs | **1.47 µs** | 1.51 µs | 1.54 µs | 1.1× faster |
-| Calculate Swap Input Amount | `getAmountIn` (bigint) | 484.0 ns | 526.4 ns | 480.0 ns | **479.6 ns** | 1.0× faster |
-| Calculate Swap Output Amount | `getAmountOut` (bigint) | 186.7 ns | **184.4 ns** | 191.3 ns | 184.7 ns | 1.0× faster |
-| Encode RLP Struct | `Rlp.fromBytes` | 257.0 ns | 118.5 ns | 118.9 ns | **117.6 ns** | 2.2× faster |
-| Decode RLP Struct | `Rlp.toBytes` | **146.8 ns** | 149.9 ns | 150.7 ns | 161.0 ns | Baseline |
+| Get Personal Message Sign Payload | `PersonalMessage.getSignPayload` | 4.9 µs | 3.4 µs | 3.4 µs | **1.0 µs** | 4.8× faster |
+| Get Transaction Sign Payload | `TransactionEnvelope.getSignPayload` | 5.6 µs | 3.9 µs | 4.0 µs | **1.5 µs** | 3.6× faster |
+| Hash 32-byte Payload | `Hash.keccak256` (32 B) | 3.55 µs | 2.59 µs | 2.60 µs | **343 ns** | 10.4× faster |
+| Hash Typed Data | `TypedData.getSignPayload` | 70.3 µs | 52.0 µs | 52.5 µs | **20.0 µs** | 3.5× faster |
+| Recover Secp256k1 Public Key | `Secp256k1.recoverPublicKey` (32 B) | 1.05 ms | 1.10 ms | 1.10 ms | **36.6 µs** | 28.8× faster |
+| Sign Secp256k1 Message | `Secp256k1.sign` (32 B message) | 178.6 µs | 172.6 µs | 171.9 µs | **24.2 µs** | 7.4× faster |
+| Verify Secp256k1 Signature | `Secp256k1.verify` (32 B message) | 1.83 ms | 963.1 µs | 965.0 µs | **31.3 µs** | 58.3× faster |
 
 WASM has the largest effect on operations that perform one or more
 Keccak-256 hashes. Node.js has the largest effect on mnemonic derivation
@@ -56,7 +60,7 @@ pnpm bench:comparison --run
 
 The harness uses Vitest bench through Vite+. It runs each provider in an
 isolated file and runs the files sequentially to avoid CPU contention. Every
-provider receives the same inputs and output formats.
+provider receives the same inputs.
 
 Provider initialization, WASM compilation, fixture preparation, and keystore
 key derivation happen outside the timed functions. The `ox/wasm` variant

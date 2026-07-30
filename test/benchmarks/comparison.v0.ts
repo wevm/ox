@@ -2,6 +2,7 @@ import {
   AbiEvent,
   AbiFunction,
   ContractAddress,
+  Hash,
   Keystore,
   Mnemonic,
   PersonalMessage,
@@ -23,6 +24,8 @@ import {
   rlpValue,
   seaportAbi,
   seaportArgs,
+  secp256k1Payload,
+  secp256k1PrivateKey,
   sushiReserve0,
   sushiReserve1,
   transactionEnvelope,
@@ -42,6 +45,14 @@ export function createOperations(): Operations {
   const [keystoreKey] = Keystore.pbkdf2(keystoreKeyOptions)
   const swap = AbiFunction.from(uniswapSwapAbi)
   const rlp = Rlp.fromBytes(rlpValue)
+  const secp256k1PublicKey = Secp256k1.getPublicKey({
+    privateKey: secp256k1PrivateKey,
+  })
+  const secp256k1Signature = Secp256k1.sign({
+    extraEntropy: false,
+    payload: secp256k1Payload,
+    privateKey: secp256k1PrivateKey,
+  })
 
   return {
     abiEventEncode: () => AbiEvent.encode(messageEvent, eventArgs),
@@ -60,6 +71,7 @@ export function createOperations(): Operations {
       ]),
     contractAddressFromCreate2: () =>
       ContractAddress.fromCreate2(create2Options),
+    hashKeccak256: () => Hash.keccak256(secp256k1Payload),
     keystoreDecrypt: () => Keystore.decrypt(keystore, keystoreKey),
     mnemonicToPrivateKey: () => Mnemonic.toPrivateKey(mnemonic, { as: 'Hex' }),
     personalMessageGetSignPayload: () =>
@@ -67,6 +79,23 @@ export function createOperations(): Operations {
     rlpDecode: () => Rlp.toBytes(rlp),
     rlpEncode: () => Rlp.fromBytes(rlpValue),
     secp256k1RandomPrivateKey: () => Secp256k1.randomPrivateKey(),
+    secp256k1RecoverPublicKey: () =>
+      Secp256k1.recoverPublicKey({
+        payload: secp256k1Payload,
+        signature: secp256k1Signature,
+      }),
+    secp256k1Sign: () =>
+      Secp256k1.sign({
+        extraEntropy: false,
+        payload: secp256k1Payload,
+        privateKey: secp256k1PrivateKey,
+      }),
+    secp256k1Verify: () =>
+      Secp256k1.verify({
+        payload: secp256k1Payload,
+        publicKey: secp256k1PublicKey,
+        signature: secp256k1Signature,
+      }),
     transactionEnvelopeGetSignPayload: () =>
       TxEnvelopeEip1559.getSignPayload(transactionEnvelope),
     typedDataGetSignPayload: () => TypedData.getSignPayload(typedData),

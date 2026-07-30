@@ -8,12 +8,16 @@ export type Operations = {
   abiFunctionEncodeDataUniswapCached: () => unknown
   abiFunctionEncodeDataUniswapDynamic: () => unknown
   contractAddressFromCreate2: () => unknown
+  hashKeccak256: () => unknown
   keystoreDecrypt: () => unknown
   mnemonicToPrivateKey: () => unknown
   personalMessageGetSignPayload: () => unknown
   rlpDecode: () => unknown
   rlpEncode: () => unknown
   secp256k1RandomPrivateKey: () => unknown
+  secp256k1RecoverPublicKey: () => unknown
+  secp256k1Sign: () => unknown
+  secp256k1Verify: () => unknown
   transactionEnvelopeGetSignPayload: () => unknown
   typedDataGetSignPayload: () => unknown
   u256GetAmountIn: () => unknown
@@ -62,11 +66,21 @@ export function register(provider: string, operations: Operations) {
       'TypedData.getSignPayload',
       operations.typedDataGetSignPayload,
     )
+    registerOperation('Hash.keccak256 (32 B)', operations.hashKeccak256)
     registerOperation('Keystore.decrypt', operations.keystoreDecrypt)
     registerOperation('Mnemonic.toPrivateKey', operations.mnemonicToPrivateKey)
     registerOperation(
       'Secp256k1.randomPrivateKey',
       operations.secp256k1RandomPrivateKey,
+    )
+    registerOperation(
+      'Secp256k1.recoverPublicKey (32 B)',
+      operations.secp256k1RecoverPublicKey,
+    )
+    registerOperation('Secp256k1.sign (32 B message)', operations.secp256k1Sign)
+    registerOperation(
+      'Secp256k1.verify (32 B message)',
+      operations.secp256k1Verify,
     )
     registerOperation('getAmountIn (bigint)', operations.u256GetAmountIn)
     registerOperation('getAmountOut (bigint)', operations.u256GetAmountOut)
@@ -236,6 +250,15 @@ export const keystoreKeyOptions = {
 
 export const mnemonic =
   'test test test test test test test test test test test junk'
+
+export const secp256k1Payload = Uint8Array.from(
+  { length: 32 },
+  (_, index) => index,
+)
+
+export const secp256k1PrivateKey = Uint8Array.from({ length: 32 }, (_, index) =>
+  index === 31 ? 1 : 0,
+)
 
 export const uniswapSwapAbi = {
   inputs: [

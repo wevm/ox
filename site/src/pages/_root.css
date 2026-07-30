@@ -378,6 +378,11 @@ body > div:has(> div > .twoslash-completion-list) {
   text-decoration: none;
 }
 
+/* Keep the benchmark table single-line inside Vocs' horizontal scroll container. */
+[data-v-content]:has(> h1#benchmarks) [data-v-table-wrapper] :is(th, td) {
+  white-space: nowrap;
+}
+
 /*
  * LightningCSS compiles light-dark() into a polyfill that uses
  * @media (prefers-color-scheme), which only responds to the OS
