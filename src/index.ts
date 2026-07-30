@@ -3708,17 +3708,19 @@ export * as ValidatorData from './core/ValidatorData.js'
 export * as Value from './core/Value.js'
 
 /**
- * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
+ * Utilities for WebAuthn credentials, credential-bound PRFs, and
+ * [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf)
+ * signatures.
  *
  * @example
  * ### Creating Credentials
  *
- * Credentials can be created using {@link ox#WebAuthnP256.(createCredential:function)}:
+ * Credentials can be created using {@link ox#WebAuthn.(createCredential:function)}:
  *
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * }) // [!code focus]
  * // @log: {
@@ -3727,7 +3729,7 @@ export * as Value from './core/Value.js'
  * // @log:   raw: PublicKeyCredential {},
  * // @log: }
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   credentialId: credential.id,
  *   challenge: '0xdeadbeef'
  * })
@@ -3736,16 +3738,16 @@ export * as Value from './core/Value.js'
  * @example
  * ### Signing Payloads
  *
- * Payloads can be signed using {@link ox#WebAuthnP256.(sign:function)}:
+ * Payloads can be signed using {@link ox#WebAuthn.(sign:function)}:
  *
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   // [!code focus]
  *   credentialId: credential.id, // [!code focus]
  *   challenge: '0xdeadbeef' // [!code focus]
@@ -3765,21 +3767,21 @@ export * as Value from './core/Value.js'
  * @example
  * ### Verifying Signatures
  *
- * Signatures can be verified using {@link ox#WebAuthnP256.(verify:function)}:
+ * Signatures can be verified using {@link ox#WebAuthn.(verify:function)}:
  *
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   credentialId: credential.id,
  *   challenge: '0xdeadbeef'
  * })
  *
- * const result = await WebAuthnP256.verify({
+ * const result = await WebAuthn.verify({
  *   // [!code focus]
  *   metadata, // [!code focus]
  *   challenge: '0xdeadbeef', // [!code focus]
@@ -3789,6 +3791,14 @@ export * as Value from './core/Value.js'
  * // @log: true
  * ```
  *
+ * @category Crypto
+ */
+export * as WebAuthn from './core/WebAuthn.js'
+
+/**
+ * `WebAuthnP256` is deprecated. Use `WebAuthn` instead.
+ *
+ * @deprecated Use `WebAuthn` instead.
  * @category Crypto
  */
 export * as WebAuthnP256 from './core/WebAuthnP256.js'

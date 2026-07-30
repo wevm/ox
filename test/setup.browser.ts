@@ -9,6 +9,7 @@ beforeAll(async () => {
     options: {
       protocol: 'ctap2',
       transport: 'usb',
+      hasPrf: true,
       hasUserVerification: true,
       isUserVerified: true,
       hasResidentKey: true,

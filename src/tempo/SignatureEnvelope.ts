@@ -814,7 +814,7 @@ function deserialize_(
  *
  * Accepts either a serialized hex string or an existing signature envelope object.
  * Use this to wrap raw signatures from {@link ox#Secp256k1.(sign:function)}, {@link ox#P256.(sign:function)},
- * {@link ox#WebCryptoP256.(sign:function)}, or {@link ox#WebAuthnP256.(sign:function)} into the envelope format
+ * {@link ox#WebCryptoP256.(sign:function)}, or {@link ox#WebAuthn.(sign:function)} into the envelope format
  * required by Tempo transactions.
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
@@ -893,14 +893,14 @@ function deserialize_(
  *
  * ```ts twoslash
  * // @noErrors
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  * import { SignatureEnvelope } from 'ox/tempo'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   challenge: '0xdeadbeef',
  *   credentialId: credential.id
  * })
@@ -1819,18 +1819,18 @@ export declare namespace validate {
  * ```
  *
  * @example
- * ### WebAuthnP256
+ * ### WebAuthn
  *
  * ```ts twoslash
  * import { SignatureEnvelope } from 'ox/tempo'
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  * const payload = '0xdeadbeef'
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   challenge: payload,
  *   credentialId: credential.id
  * })

@@ -329,6 +329,15 @@ describe('getOptions', () => {
     `)
   })
 
+  test('options: timeout', () => {
+    const options = Registration.getOptions({
+      name: 'Foo',
+      timeout: 30_000,
+    })
+
+    expect(options.publicKey?.timeout).toMatchInlineSnapshot(`30000`)
+  })
+
   test('args: excludeCredentialIds', () => {
     expect(
       Registration.getOptions({
@@ -608,6 +617,7 @@ describe('serializeOptions', () => {
           prf: {
             eval: {
               first: new Uint8Array([7, 8, 9]),
+              second: new Uint8Array(),
             },
           },
         },
@@ -615,9 +625,10 @@ describe('serializeOptions', () => {
     }
     const serialized = Registration.serializeOptions(options)
 
-    expect(typeof serialized.publicKey!.extensions!.prf!.eval.first).toBe(
+    expect(typeof serialized.publicKey!.extensions!.prf!.eval!.first).toBe(
       'string',
     )
+    expect(serialized.publicKey!.extensions!.prf!.eval!.second).toBe('')
     expect(() => JSON.stringify(serialized)).not.toThrow()
   })
 
@@ -674,6 +685,7 @@ describe('deserializeOptions', () => {
           prf: {
             eval: {
               first: new Uint8Array([7, 8, 9]),
+              second: new Uint8Array(),
             },
           },
         },
@@ -682,11 +694,14 @@ describe('deserializeOptions', () => {
     const serialized = Registration.serializeOptions(options)
     const deserialized = Registration.deserializeOptions(serialized)
 
-    expect(deserialized.publicKey!.extensions!.prf!.eval.first).toBeInstanceOf(
+    expect(deserialized.publicKey!.extensions!.prf!.eval!.first).toBeInstanceOf(
       Uint8Array,
     )
-    expect(deserialized.publicKey!.extensions!.prf!.eval.first).toEqual(
+    expect(deserialized.publicKey!.extensions!.prf!.eval!.first).toEqual(
       new Uint8Array([7, 8, 9]),
+    )
+    expect(deserialized.publicKey!.extensions!.prf!.eval!.second).toEqual(
+      new Uint8Array(),
     )
   })
 

@@ -582,6 +582,11 @@
       "types": "./dist/core/Value.d.ts",
       "default": "./dist/core/Value.js"
     },
+    "./WebAuthn": {
+      "src": "./src/core/WebAuthn.ts",
+      "types": "./dist/core/WebAuthn.d.ts",
+      "default": "./dist/core/WebAuthn.js"
+    },
     "./WebAuthnP256": {
       "src": "./src/core/WebAuthnP256.ts",
       "types": "./dist/core/WebAuthnP256.d.ts",

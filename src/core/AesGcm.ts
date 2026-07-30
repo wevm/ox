@@ -1,5 +1,5 @@
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 
 export const ivLength = 16
@@ -135,6 +135,70 @@ export declare namespace encrypt {
 }
 
 /**
+ * Derives an AES-256-GCM key from a 32-byte WebAuthn PRF output.
+ *
+ * The permanent derivation contract uses the PRF output as the HMAC-SHA256
+ * key. Its message is the UTF-8 bytes of `ox.aesGcm.fromPrf.v1` followed by
+ * a 32-bit big-endian counter set to zero.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AesGcm } from 'ox'
+ *
+ * const key = await AesGcm.fromPrf(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param value - A 32-byte WebAuthn PRF output.
+ * @returns A nonextractable AES-256-GCM key for encryption and decryption.
+ */
+export async function fromPrf(
+  value: Hex.Hex | Bytes.Bytes,
+): Promise<CryptoKey> {
+  const bytes = Bytes.from(value)
+  if (bytes.length !== 32) throw new InvalidPrfSizeError({ size: bytes.length })
+
+  const prfKey = await globalThis.crypto.subtle.importKey(
+    'raw',
+    bytes,
+    {
+      name: 'HMAC',
+      hash: 'SHA-256',
+    },
+    false,
+    ['sign'],
+  )
+  const key = new Uint8Array(
+    await globalThis.crypto.subtle.sign(
+      'HMAC',
+      prfKey,
+      Bytes.concat(fromPrfLabel, Bytes.fromNumber(0, { size: 4 })),
+    ),
+  )
+  try {
+    return await globalThis.crypto.subtle.importKey(
+      'raw',
+      key,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt'],
+    )
+  } finally {
+    key.fill(0)
+  }
+}
+
+export declare namespace fromPrf {
+  type ErrorType =
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.fromNumber.ErrorType
+    | InvalidPrfSizeError
+    | Errors.GlobalErrorType
+}
+
+/**
  * Derives an AES-GCM key from a password using PBKDF2.
  *
  * @example
@@ -206,3 +270,24 @@ export function randomSalt(size = 32): Bytes.Bytes {
 export declare namespace randomSalt {
   type ErrorType = Bytes.random.ErrorType | Errors.GlobalErrorType
 }
+
+/** Thrown when a WebAuthn PRF output is not 32 bytes. */
+export class InvalidPrfSizeError extends Errors.BaseError {
+  override readonly name = 'AesGcm.InvalidPrfSizeError'
+
+  constructor(options: InvalidPrfSizeError.Options) {
+    super(
+      `PRF output must be exactly 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidPrfSizeError {
+  /** Options for {@link ox#AesGcm.InvalidPrfSizeError}. */
+  type Options = {
+    /** Received PRF output size. */
+    size: number
+  }
+}
+
+const fromPrfLabel = Bytes.fromString('ox.aesGcm.fromPrf.v1')

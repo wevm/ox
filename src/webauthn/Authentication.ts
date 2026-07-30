@@ -175,6 +175,7 @@ export function getOptions(
     challenge,
     extensions,
     rpId = window.location.hostname,
+    timeout,
     userVerification = 'required',
   } = options
   return {
@@ -197,6 +198,7 @@ export function getOptions(
       challenge: Bytes.fromHex(challenge),
       ...(extensions && { extensions }),
       rpId,
+      ...(timeout !== undefined && { timeout }),
       userVerification,
     },
   }
@@ -214,6 +216,8 @@ export declare namespace getOptions {
       | undefined
     /** The relying party identifier to use. */
     rpId?: Types.PublicKeyCredentialRequestOptions['rpId'] | undefined
+    /** Time, in milliseconds, that the caller is willing to wait for the operation. */
+    timeout?: Types.PublicKeyCredentialRequestOptions['timeout'] | undefined
     /** The user verification requirement. */
     userVerification?:
       | Types.PublicKeyCredentialRequestOptions['userVerification']

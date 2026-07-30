@@ -1,7 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import {
   formatPublicKey,
@@ -68,6 +69,75 @@ export declare namespace createKeyPair {
   type ErrorType =
     | Hex.fromBytes.ErrorType
     | PublicKey.from.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives a valid secp256k1 private key from a 32-byte WebAuthn PRF output.
+ *
+ * The permanent derivation contract uses the PRF output as the HMAC-SHA256
+ * key. Its message is the UTF-8 bytes of `ox.secp256k1.fromPrf.v1` followed by
+ * a 32-bit big-endian counter starting at zero. Invalid scalars are skipped.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.fromPrf(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param value - A 32-byte WebAuthn PRF output.
+ * @param options - Options.
+ * @returns A valid secp256k1 private key.
+ */
+export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  value: Hex.Hex | Bytes.Bytes,
+  options: fromPrf.Options<as> = {},
+): fromPrf.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const bytes = Bytes.from(value)
+  if (bytes.length !== 32) throw new InvalidPrfSizeError({ size: bytes.length })
+
+  for (let counter = 0; ; counter++) {
+    const candidate = Hash.hmac256(
+      bytes,
+      Bytes.concat(fromPrfLabel, Bytes.fromNumber(counter, { size: 4 })),
+      { as: 'Bytes' },
+    )
+    if (noble.utils.isValidSecretKey(candidate)) {
+      if (as === 'Hex') {
+        const value = Hex.fromBytes(candidate)
+        candidate.fill(0)
+        return value as never
+      }
+      return candidate as never
+    }
+    candidate.fill(0)
+  }
+}
+
+export declare namespace fromPrf {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.fromNumber.ErrorType
+    | Hash.hmac256.ErrorType
+    | Hex.fromBytes.ErrorType
+    | InvalidPrfSizeError
     | Errors.GlobalErrorType
 }
 
@@ -503,3 +573,24 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
+
+/** Thrown when a WebAuthn PRF output is not 32 bytes. */
+export class InvalidPrfSizeError extends Errors.BaseError {
+  override readonly name = 'Secp256k1.InvalidPrfSizeError'
+
+  constructor(options: InvalidPrfSizeError.Options) {
+    super(
+      `PRF output must be exactly 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidPrfSizeError {
+  /** Options for {@link ox#Secp256k1.InvalidPrfSizeError}. */
+  type Options = {
+    /** Received PRF output size. */
+    size: number
+  }
+}
+
+const fromPrfLabel = Bytes.fromString('ox.secp256k1.fromPrf.v1')

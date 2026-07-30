@@ -38,7 +38,29 @@ export type LargeBlobSupport = {
 
 export type BufferSource = ArrayBufferView | ArrayBuffer
 
-export type PrfExtension = Record<'eval', Record<'first', Uint8Array>>
+/** Inputs or outputs for a WebAuthn PRF evaluation. */
+export type PrfValues<serialized extends boolean = false> = {
+  /** First PRF input or output. */
+  first: serialized extends true ? string : BufferSource
+  /** Optional second PRF input or output. */
+  second?: (serialized extends true ? string : BufferSource) | undefined
+}
+
+/** Inputs for the WebAuthn PRF extension. */
+export type PrfExtension<serialized extends boolean = false> = {
+  /** PRF inputs for the selected credential. */
+  eval?: PrfValues<serialized> | undefined
+  /** PRF inputs keyed by base64url-encoded credential ID. */
+  evalByCredential?: Record<string, PrfValues<serialized>> | undefined
+}
+
+/** Outputs from the WebAuthn PRF extension. */
+export type PrfExtensionOutput = {
+  /** Whether the created credential supports PRF evaluation. */
+  enabled?: boolean | undefined
+  /** PRF evaluation results. */
+  results?: PrfValues | undefined
+}
 
 export interface AuthenticationExtensionsClientInputs<
   serialized extends boolean = false,
@@ -47,8 +69,16 @@ export interface AuthenticationExtensionsClientInputs<
   credProps?: boolean
   hmacCreateSecret?: boolean
   minPinLength?: boolean
-  prf?: serialized extends true ? { eval: { first: string } } : PrfExtension
+  prf?: PrfExtension<serialized> | undefined
   largeBlob?: LargeBlobSupport
+}
+
+/** Outputs from WebAuthn client extension processing. */
+export type AuthenticationExtensionsClientOutputs = ReturnType<
+  globalThis.PublicKeyCredential['getClientExtensionResults']
+> & {
+  /** WebAuthn PRF extension output. */
+  prf?: PrfExtensionOutput | undefined
 }
 
 export interface AuthenticatorSelectionCriteria {

@@ -219,13 +219,13 @@ export type TupleListSigned = TupleList<true>
  *
  * ```ts twoslash
  * // @noErrors
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  * import {
  *   AuthorizationTempo,
  *   SignatureEnvelope
  * } from 'ox/tempo'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
@@ -235,7 +235,7 @@ export type TupleListSigned = TupleList<true>
  *   nonce: 40n
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   challenge:
  *     AuthorizationTempo.getSignPayload(authorization),
  *   credentialId: credential.id
@@ -657,13 +657,13 @@ export declare namespace fromTupleList {
  *
  * ```ts twoslash
  * // @noErrors
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  * import {
  *   AuthorizationTempo,
  *   SignatureEnvelope
  * } from 'ox/tempo'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
@@ -676,7 +676,7 @@ export declare namespace fromTupleList {
  * const challenge =
  *   AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   challenge,
  *   credentialId: credential.id
  * })

@@ -5,7 +5,7 @@ import * as P256 from '../../core/P256.js'
 import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
 import * as WebCryptoP256 from '../../core/WebCryptoP256.js'
-import { Authentication } from '../index.js'
+import { Authentication, type Types } from '../index.js'
 
 beforeAll(() => {
   vi.stubGlobal('window', {
@@ -71,6 +71,16 @@ describe('getOptions', () => {
         },
       }
     `)
+  })
+
+  test('options: timeout', () => {
+    const options = Authentication.getOptions({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      timeout: 30_000,
+    })
+
+    expect(options.publicKey?.timeout).toMatchInlineSnapshot(`30000`)
   })
 
   test('options: credentialId', () => {
@@ -200,6 +210,57 @@ describe('serializeOptions', () => {
     expect(() => JSON.stringify(serialized)).not.toThrow()
   })
 
+  test('with extensions (prf.evalByCredential)', () => {
+    const options: Types.CredentialRequestOptions = {
+      publicKey: {
+        challenge: new Uint8Array([1, 2, 3]),
+        extensions: {
+          prf: {
+            evalByCredential: {
+              credential: {
+                first: new Uint8Array([4, 5, 6]),
+                second: new Uint8Array(),
+              },
+            },
+          },
+        },
+      },
+    }
+    const serialized = Authentication.serializeOptions(options)
+
+    expect(serialized.publicKey!.extensions).toMatchInlineSnapshot(`
+      {
+        "prf": {
+          "evalByCredential": {
+            "credential": {
+              "first": "BAUG",
+              "second": "",
+            },
+          },
+        },
+      }
+    `)
+    expect(() => JSON.stringify(serialized)).not.toThrow()
+  })
+
+  test('with extensions (empty prf)', () => {
+    const options: Types.CredentialRequestOptions = {
+      publicKey: {
+        challenge: new Uint8Array([1, 2, 3]),
+        extensions: {
+          prf: {},
+        },
+      },
+    }
+    const serialized = Authentication.serializeOptions(options)
+
+    expect(serialized.publicKey!.extensions).toMatchInlineSnapshot(`
+      {
+        "prf": {},
+      }
+    `)
+  })
+
   test('empty publicKey', () => {
     const serialized = Authentication.serializeOptions({})
     expect(serialized).toEqual({})
@@ -239,6 +300,62 @@ describe('deserializeOptions', () => {
     expect(deserialized.publicKey!.allowCredentials![0]!.id).toEqual(
       options.publicKey!.allowCredentials![0]!.id,
     )
+  })
+
+  test('with extensions (prf.evalByCredential)', () => {
+    const options: Types.CredentialRequestOptions = {
+      publicKey: {
+        challenge: new Uint8Array([1, 2, 3]),
+        extensions: {
+          prf: {
+            evalByCredential: {
+              credential: {
+                first: new Uint8Array([4, 5, 6]),
+                second: new Uint8Array(),
+              },
+            },
+          },
+        },
+      },
+    }
+    const serialized = Authentication.serializeOptions(options)
+    const deserialized = Authentication.deserializeOptions(serialized)
+
+    expect(deserialized.publicKey!.extensions).toMatchInlineSnapshot(`
+      {
+        "prf": {
+          "evalByCredential": {
+            "credential": {
+              "first": Uint8Array [
+                4,
+                5,
+                6,
+              ],
+              "second": Uint8Array [],
+            },
+          },
+        },
+      }
+    `)
+  })
+
+  test('with extensions (empty prf)', () => {
+    const options: Types.CredentialRequestOptions = {
+      publicKey: {
+        challenge: new Uint8Array([1, 2, 3]),
+        extensions: {
+          prf: {},
+        },
+      },
+    }
+    const serialized = Authentication.serializeOptions(options)
+    const deserialized = Authentication.deserializeOptions(serialized)
+
+    expect(deserialized.publicKey!.extensions).toMatchInlineSnapshot(`
+      {
+        "prf": {},
+      }
+    `)
   })
 
   test('empty publicKey', () => {

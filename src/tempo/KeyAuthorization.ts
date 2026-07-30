@@ -366,12 +366,7 @@ export type TokenLimit<bigintType = bigint, numberType = number> = {
  *
  * ```ts twoslash
  * // @noErrors
- * import {
- *   Address,
- *   Value,
- *   WebCryptoP256,
- *   WebAuthnP256
- * } from 'ox'
+ * import { Address, Value, WebCryptoP256, WebAuthn } from 'ox'
  * import {
  *   KeyAuthorization,
  *   SignatureEnvelope
@@ -393,11 +388,11 @@ export type TokenLimit<bigintType = bigint, numberType = number> = {
  *   ]
  * })
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   challenge: KeyAuthorization.getSignPayload(authorization),
  *   credentialId: credential.id
  * })

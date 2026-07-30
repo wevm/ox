@@ -160,6 +160,7 @@ export function getOptions(
       id: window.location.hostname,
       name: window.document.title,
     },
+    timeout,
     user,
   } = options
   const name = (user?.name ?? name_)!
@@ -184,6 +185,7 @@ export function getOptions(
         },
       ],
       rp,
+      ...(timeout !== undefined && { timeout }),
       user: {
         id: user?.id ?? Hash.keccak256(Bytes.fromString(name), { as: 'Bytes' }),
         name,

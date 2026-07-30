@@ -75,6 +75,7 @@ test('exports', () => {
       "TypedData",
       "ValidatorData",
       "Value",
+      "WebAuthn",
       "WebAuthnP256",
       "WebCryptoP256",
       "Withdrawal",
