@@ -2084,6 +2084,22 @@ export * as P256 from './core/P256.js'
  */
 export * as PersonalMessage from './core/PersonalMessage.js'
 /**
+ * Utilities for constructing credential-bound PRF configurations.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Prf, WebAuthn } from 'ox'
+ *
+ * const credential = await WebAuthn.getCredential({
+ *   credentialId: 'oZ48...',
+ *   prf: Prf.tag('account.1')
+ * })
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Prf from './core/Prf.js'
+/**
  * Utilities & types for working with [EIP-1193 Providers](https://eips.ethereum.org/EIPS/eip-1193)
  *
  * @example

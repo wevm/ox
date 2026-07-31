@@ -463,6 +463,11 @@
       "types": "./dist/core/PersonalMessage.d.ts",
       "default": "./dist/core/PersonalMessage.js"
     },
+    "./Prf": {
+      "src": "./src/core/Prf.ts",
+      "types": "./dist/core/Prf.d.ts",
+      "default": "./dist/core/Prf.js"
+    },
     "./Provider": {
       "src": "./src/core/Provider.ts",
       "types": "./dist/core/Provider.d.ts",
