@@ -171,6 +171,7 @@ function renderNamespaces(options: {
   for (const namespace of namespaces) {
     const name = namespace.displayName.replace(/_\d+$/, '')
     const docComment = docComments[name]
+    if (docComment?.deprecated) continue
     const basePath = docComment ? getPath(docComment) : '/'
     const baseLink = `${basePath}/${name}`
     const dir = `${pagesDir}${baseLink}`
