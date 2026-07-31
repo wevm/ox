@@ -1,4 +1,4 @@
-import { Bytes, Ed25519, Hex, X25519 } from 'ox'
+import { Bytes, Ed25519, Engine, Hex, X25519 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 describe('createKeyPair', () => {
@@ -41,6 +41,108 @@ describe('createKeyPair', () => {
 
     expect(keyPair1.privateKey).not.toBe(keyPair2.privateKey)
     expect(keyPair1.publicKey).not.toBe(keyPair2.publicKey)
+  })
+})
+
+describe('fromPrf', () => {
+  test.each([
+    {
+      privateKey:
+        '0x2c513679b40b7572cbfaf5aee41680258ab23de9ec68d6eaf243470c28e7cea3',
+      prf: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    },
+    {
+      privateKey:
+        '0x7ad5cfcdff4bd56cf35bd854b794c9e18f9bcc3e6e12f9ecc0ef44bb23c6d920',
+      prf: '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    },
+  ] as const)('vector: $prf', ({ privateKey, prf }) => {
+    expect(Ed25519.fromPrf(prf)).toBe(privateKey)
+  })
+
+  test('value: Bytes', () => {
+    const prf = Bytes.fromHex(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    )
+    expect(Ed25519.fromPrf(prf)).toMatchInlineSnapshot(
+      `"0x7ad5cfcdff4bd56cf35bd854b794c9e18f9bcc3e6e12f9ecc0ef44bb23c6d920"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = Ed25519.fromPrf(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+      { as: 'Bytes' },
+    )
+    expect(privateKey).toEqual(
+      Bytes.fromHex(
+        '0x7ad5cfcdff4bd56cf35bd854b794c9e18f9bcc3e6e12f9ecc0ef44bb23c6d920',
+      ),
+    )
+  })
+
+  test('behavior: output signs and verifies', () => {
+    const privateKey = Ed25519.fromPrf(Bytes.random(32))
+    const publicKey = Ed25519.getPublicKey({ privateKey })
+    const payload = '0xdeadbeef'
+    const signature = Ed25519.sign({ payload, privateKey })
+
+    expect(Ed25519.verify({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('behavior: uses versioned label and zero counter', () => {
+    const messages: Hex.Hex[] = []
+    Engine.with(
+      {
+        Hash: {
+          hmacSha256: (_key, message) => {
+            messages.push(Hex.fromBytes(message))
+            return new Uint8Array(32)
+          },
+        },
+      },
+      () =>
+        Ed25519.fromPrf(
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+    )
+
+    expect(messages).toMatchInlineSnapshot(`
+      [
+        "0x6f782e656432353531392e66726f6d5072662e763100000000",
+      ]
+    `)
+  })
+
+  test('behavior: zeroes intermediate key for Hex output', () => {
+    const candidate = new Uint8Array(32).fill(1)
+    Engine.with(
+      {
+        Hash: {
+          hmacSha256: () => candidate,
+        },
+      },
+      () =>
+        Ed25519.fromPrf(
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+    )
+
+    expect(candidate).toEqual(new Uint8Array(32))
+  })
+
+  test('error: PRF output is too short', () => {
+    expect(() => Ed25519.fromPrf(new Uint8Array(31)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [Ed25519.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 31 bytes.]
+      `)
+  })
+
+  test('error: PRF output is too long', () => {
+    expect(() => Ed25519.fromPrf(new Uint8Array(33)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [Ed25519.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 33 bytes.]
+      `)
   })
 })
 
@@ -435,4 +537,21 @@ describe('noble export', () => {
     expect(Ed25519.noble.verify).toBeDefined()
     expect(Ed25519.noble.getPublicKey).toBeDefined()
   })
+})
+
+test('exports', () => {
+  expect(Object.keys(Ed25519)).toMatchInlineSnapshot(`
+    [
+      "noble",
+      "createKeyPair",
+      "fromPrf",
+      "getPublicKey",
+      "randomPrivateKey",
+      "sign",
+      "verify",
+      "toX25519PublicKey",
+      "toX25519PrivateKey",
+      "InvalidPrfSizeError",
+    ]
+  `)
 })

@@ -1,6 +1,7 @@
 import { ed25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as engine from './internal/ed25519.js'
 
@@ -55,6 +56,70 @@ export declare namespace createKeyPair {
     | Hex.fromBytes.ErrorType
     | randomPrivateKey.ErrorType
     | getPublicKey.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an Ed25519 private key from a 32-byte WebAuthn PRF output.
+ *
+ * The permanent derivation contract uses the PRF output as the HMAC-SHA256
+ * key. Its message is the UTF-8 bytes of `ox.ed25519.fromPrf.v1` followed by
+ * a 32-bit big-endian counter set to zero.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Ed25519 } from 'ox'
+ *
+ * const privateKey = Ed25519.fromPrf(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param value - A 32-byte WebAuthn PRF output.
+ * @param options - Options.
+ * @returns An Ed25519 private key.
+ */
+export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  value: Hex.Hex | Bytes.Bytes,
+  options: fromPrf.Options<as> = {},
+): fromPrf.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const bytes = Bytes.from(value)
+  if (bytes.length !== 32) throw new InvalidPrfSizeError({ size: bytes.length })
+
+  const privateKey = Hash.hmac256(
+    bytes,
+    Bytes.concat(fromPrfLabel, Bytes.fromNumber(0, { size: 4 })),
+    { as: 'Bytes' },
+  )
+  if (as === 'Hex') {
+    const value = Hex.fromBytes(privateKey)
+    privateKey.fill(0)
+    return value as never
+  }
+  return privateKey as never
+}
+
+export declare namespace fromPrf {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.fromNumber.ErrorType
+    | Hash.hmac256.ErrorType
+    | Hex.fromBytes.ErrorType
+    | InvalidPrfSizeError
     | Errors.GlobalErrorType
 }
 
@@ -345,3 +410,24 @@ export declare namespace toX25519PrivateKey {
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
+
+/** Thrown when a WebAuthn PRF output is not 32 bytes. */
+export class InvalidPrfSizeError extends Errors.BaseError {
+  override readonly name = 'Ed25519.InvalidPrfSizeError'
+
+  constructor(options: InvalidPrfSizeError.Options) {
+    super(
+      `PRF output must be exactly 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidPrfSizeError {
+  /** Options for {@link ox#Ed25519.InvalidPrfSizeError}. */
+  type Options = {
+    /** Received PRF output size. */
+    size: number
+  }
+}
+
+const fromPrfLabel = Bytes.fromString('ox.ed25519.fromPrf.v1')

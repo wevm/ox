@@ -1,17 +1,17 @@
 ```ts twoslash
 // @noErrors
-import { Hash, Hex, WebAuthnP256 } from 'ox'
+import { Hash, Hex, WebAuthn } from 'ox'
 
-const credential = await WebAuthnP256.createCredential({ name: 'Ox' })
+const credential = await WebAuthn.createCredential({ name: 'Ox' })
 
 const challenge = Hash.keccak256(Hex.fromString('login:nonce-1234'))
 
-const { metadata, signature } = await WebAuthnP256.sign({
+const { metadata, signature } = await WebAuthn.sign({
   credentialId: credential.id,
   challenge,
 })
 
-const valid = WebAuthnP256.verify({
+const valid = WebAuthn.verify({
   challenge,
   metadata,
   publicKey: credential.publicKey,

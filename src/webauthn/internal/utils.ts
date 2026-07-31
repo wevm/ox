@@ -24,8 +24,9 @@ export function bytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 /** @internal */
 export function bufferSourceToBytes(source: Types.BufferSource): Uint8Array {
   if (source instanceof Uint8Array) return source
-  if (source instanceof ArrayBuffer) return new Uint8Array(source)
-  return new Uint8Array(source.buffer, source.byteOffset, source.byteLength)
+  if (ArrayBuffer.isView(source))
+    return new Uint8Array(source.buffer, source.byteOffset, source.byteLength)
+  return new Uint8Array(source)
 }
 
 /**
@@ -119,13 +120,20 @@ export function serializeExtensions(
   extensions: Types.AuthenticationExtensionsClientInputs,
 ): Types.AuthenticationExtensionsClientInputs<true> {
   const { prf, ...rest } = extensions
+  const { eval: eval_, evalByCredential } = prf ?? {}
   return {
     ...rest,
     ...(prf && {
       prf: {
-        eval: {
-          first: Base64.fromBytes(prf.eval.first, base64UrlOptions),
-        },
+        ...(eval_ && { eval: serializePrfValues(eval_) }),
+        ...(evalByCredential && {
+          evalByCredential: Object.fromEntries(
+            Object.entries(evalByCredential).map(([id, values]) => [
+              id,
+              serializePrfValues(values),
+            ]),
+          ),
+        }),
       },
     }),
   }
@@ -136,14 +144,39 @@ export function deserializeExtensions(
   extensions: Types.AuthenticationExtensionsClientInputs<true>,
 ): Types.AuthenticationExtensionsClientInputs {
   const { prf, ...rest } = extensions
+  const { eval: eval_, evalByCredential } = prf ?? {}
   return {
     ...rest,
     ...(prf && {
       prf: {
-        eval: {
-          first: Base64.toBytes(prf.eval.first),
-        },
+        ...(eval_ && { eval: deserializePrfValues(eval_) }),
+        ...(evalByCredential && {
+          evalByCredential: Object.fromEntries(
+            Object.entries(evalByCredential).map(([id, values]) => [
+              id,
+              deserializePrfValues(values),
+            ]),
+          ),
+        }),
       },
     }),
+  }
+}
+
+function serializePrfValues(values: Types.PrfValues): Types.PrfValues<true> {
+  const { first, second } = values
+  return {
+    first: Base64.fromBytes(bufferSourceToBytes(first), base64UrlOptions),
+    ...(second !== undefined && {
+      second: Base64.fromBytes(bufferSourceToBytes(second), base64UrlOptions),
+    }),
+  }
+}
+
+function deserializePrfValues(values: Types.PrfValues<true>): Types.PrfValues {
+  const { first, second } = values
+  return {
+    first: Base64.toBytes(first),
+    ...(second !== undefined && { second: Base64.toBytes(second) }),
   }
 }

@@ -16,9 +16,9 @@ export const createChallenge = Registration.createChallenge
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * }) // [!code focus]
  * // @log: {
@@ -27,7 +27,7 @@ export const createChallenge = Registration.createChallenge
  * // @log:   raw: PublicKeyCredential {},
  * // @log: }
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   credentialId: credential.id,
  *   challenge: '0xdeadbeef'
  * })
@@ -49,27 +49,25 @@ export declare namespace createCredential {
 
 /**
  * Gets the authenticator data which contains information about the
- * processing of an authenticator request (ie. from `WebAuthnP256.sign`).
+ * processing of an authenticator request (ie. from `WebAuthn.sign`).
  *
  * :::warning
  *
  * This function is mainly for testing purposes or for manually constructing
  * autenticator data. In most cases you will not need this function.
  * `authenticatorData` is typically returned as part of the
- * {@link ox#WebAuthnP256.(sign:function)} response (ie. an authenticator response).
+ * {@link ox#WebAuthn.(sign:function)} response (ie. an authenticator response).
  *
  * :::
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const authenticatorData = WebAuthnP256.getAuthenticatorData(
- *   {
- *     rpId: 'example.com',
- *     signCount: 420
- *   }
- * )
+ * const authenticatorData = WebAuthn.getAuthenticatorData({
+ *   rpId: 'example.com',
+ *   signCount: 420
+ * })
  * // @log: "0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194705000001a4"
  * ```
  *
@@ -79,20 +77,18 @@ export declare namespace createCredential {
  * Include a credential ID and public key in the authenticator data (for registration responses):
  *
  * ```ts twoslash
- * import { P256, WebAuthnP256 } from 'ox'
+ * import { P256, WebAuthn } from 'ox'
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const authenticatorData = WebAuthnP256.getAuthenticatorData(
- *   {
- *     rpId: 'example.com',
- *     flag: 0x41, // UP + AT
- *     credential: {
- *       id: new Uint8Array(32),
- *       publicKey
- *     }
+ * const authenticatorData = WebAuthn.getAuthenticatorData({
+ *   rpId: 'example.com',
+ *   flag: 0x41, // UP + AT
+ *   credential: {
+ *     id: new Uint8Array(32),
+ *     publicKey
  *   }
- * )
+ * })
  * ```
  *
  * @param options - Options to construct the authenticator data.
@@ -108,22 +104,22 @@ export declare namespace getAuthenticatorData {
 
 /**
  * Constructs the Client Data in stringified JSON format which represents client data that
- * was passed to `credentials.get()` in {@link ox#WebAuthnP256.(sign:function)}.
+ * was passed to `credentials.get()` in {@link ox#WebAuthn.(sign:function)}.
  *
  * :::warning
  *
  * This function is mainly for testing purposes or for manually constructing
  * client data. In most cases you will not need this function.
  * `clientDataJSON` is typically returned as part of the
- * {@link ox#WebAuthnP256.(sign:function)} response (ie. an authenticator response).
+ * {@link ox#WebAuthn.(sign:function)} response (ie. an authenticator response).
  *
  * :::
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const clientDataJSON = WebAuthnP256.getClientDataJSON({
+ * const clientDataJSON = WebAuthn.getClientDataJSON({
  *   challenge: '0xdeadbeef',
  *   origin: 'https://example.com'
  * })
@@ -154,19 +150,17 @@ export declare namespace getClientDataJSON {
  *
  * @example
  * ```ts twoslash
- * import { P256, WebAuthnP256 } from 'ox'
+ * import { P256, WebAuthn } from 'ox'
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const attestationObject = WebAuthnP256.getAttestationObject(
- *   {
- *     authData: WebAuthnP256.getAuthenticatorData({
- *       rpId: 'example.com',
- *       flag: 0x41,
- *       credential: { id: new Uint8Array(32), publicKey }
- *     })
- *   }
- * )
+ * const attestationObject = WebAuthn.getAttestationObject({
+ *   authData: WebAuthn.getAuthenticatorData({
+ *     rpId: 'example.com',
+ *     flag: 0x41,
+ *     credential: { id: new Uint8Array(32), publicKey }
+ *   })
+ * })
  * ```
  *
  * @param options - Options to construct the attestation object.
@@ -186,9 +180,9 @@ export declare namespace getAttestationObject {
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const options = WebAuthnP256.getCredentialCreationOptions({
+ * const options = WebAuthn.getCredentialCreationOptions({
  *   name: 'Example'
  * })
  *
@@ -212,9 +206,9 @@ export declare namespace getCredentialCreationOptions {
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const options = WebAuthnP256.getCredentialRequestOptions({
+ * const options = WebAuthn.getCredentialRequestOptions({
  *   challenge: '0xdeadbeef'
  * })
  *
@@ -242,15 +236,15 @@ export declare namespace getCredentialRequestOptions {
  *
  * This function is mainly for testing purposes or for manually constructing
  * signing payloads. In most cases you will not need this function and
- * instead use {@link ox#WebAuthnP256.(sign:function)}.
+ * instead use {@link ox#WebAuthn.(sign:function)}.
  *
  * :::
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256, WebCryptoP256 } from 'ox'
+ * import { WebAuthn, WebCryptoP256 } from 'ox'
  *
- * const { metadata, payload } = WebAuthnP256.getSignPayload({
+ * const { metadata, payload } = WebAuthn.getSignPayload({
  *   // [!code focus]
  *   challenge: '0xdeadbeef' // [!code focus]
  * }) // [!code focus]
@@ -294,13 +288,13 @@ export declare namespace getSignPayload {
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   // [!code focus]
  *   credentialId: credential.id, // [!code focus]
  *   challenge: '0xdeadbeef' // [!code focus]
@@ -337,18 +331,18 @@ export declare namespace sign {
  *
  * @example
  * ```ts twoslash
- * import { WebAuthnP256 } from 'ox'
+ * import { WebAuthn } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({
+ * const credential = await WebAuthn.createCredential({
  *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({
+ * const { metadata, signature } = await WebAuthn.sign({
  *   credentialId: credential.id,
  *   challenge: '0xdeadbeef'
  * })
  *
- * const result = await WebAuthnP256.verify({
+ * const result = await WebAuthn.verify({
  *   // [!code focus]
  *   metadata, // [!code focus]
  *   challenge: '0xdeadbeef', // [!code focus]
@@ -398,3 +392,6 @@ export type {
   ResidentKeyRequirement,
   UserVerificationRequirement,
 } from '../webauthn/Types.js'
+
+/** @deprecated Use `WebAuthn` instead. */
+declare module './WebAuthnP256.js' {}

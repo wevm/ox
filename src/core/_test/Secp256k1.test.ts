@@ -1,4 +1,4 @@
-import { Address, Bytes, Hex, PublicKey, Secp256k1 } from 'ox'
+import { Address, Bytes, Engine, Hex, PublicKey, Secp256k1 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -120,6 +120,94 @@ describe('createKeyPair', () => {
     })
 
     expect(keyPair.publicKey).toEqual(derivedPublicKey)
+  })
+})
+
+describe('fromPrf', () => {
+  test.each([
+    {
+      privateKey:
+        '0xd23e6d2bbfdc109c1d4706bc3a78a32356682a4e6ef09c3bbeabf5460235de36',
+      prf: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    },
+    {
+      privateKey:
+        '0xcf0eab798d92f274ee2b9b6f3397186cdd3a08b09c77b7313fb1abf529611bc5',
+      prf: '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    },
+  ] as const)('vector: $prf', ({ privateKey, prf }) => {
+    expect(Secp256k1.fromPrf(prf)).toBe(privateKey)
+  })
+
+  test('value: Bytes', () => {
+    const prf = Bytes.fromHex(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    )
+    expect(Secp256k1.fromPrf(prf)).toMatchInlineSnapshot(
+      `"0xcf0eab798d92f274ee2b9b6f3397186cdd3a08b09c77b7313fb1abf529611bc5"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = Secp256k1.fromPrf(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+      { as: 'Bytes' },
+    )
+    expect(privateKey).toEqual(
+      Bytes.fromHex(
+        '0xcf0eab798d92f274ee2b9b6f3397186cdd3a08b09c77b7313fb1abf529611bc5',
+      ),
+    )
+  })
+
+  test('behavior: output is a valid secp256k1 private key', () => {
+    const privateKey = Secp256k1.fromPrf(Bytes.random(32), { as: 'Bytes' })
+    expect(Secp256k1.noble.utils.isValidSecretKey(privateKey)).toBe(true)
+  })
+
+  test('behavior: skips invalid scalar candidates', () => {
+    const messages: Hex.Hex[] = []
+    const privateKey = Engine.with(
+      {
+        Hash: {
+          hmacSha256: (_key, message) => {
+            messages.push(Hex.fromBytes(message))
+            if (messages.length === 1) return new Uint8Array(32)
+            return Bytes.fromHex(
+              '0xef3f982137910a4c362017e69ba173fbb342325802ec827767aa6942027af35b',
+            )
+          },
+        },
+      },
+      () =>
+        Secp256k1.fromPrf(
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+    )
+
+    expect(privateKey).toBe(
+      '0xef3f982137910a4c362017e69ba173fbb342325802ec827767aa6942027af35b',
+    )
+    expect(messages).toMatchInlineSnapshot(`
+      [
+        "0x6f782e736563703235366b312e66726f6d5072662e763100000000",
+        "0x6f782e736563703235366b312e66726f6d5072662e763100000001",
+      ]
+    `)
+  })
+
+  test('error: PRF output is too short', () => {
+    expect(() => Secp256k1.fromPrf(new Uint8Array(31)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [Secp256k1.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 31 bytes.]
+      `)
+  })
+
+  test('error: PRF output is too long', () => {
+    expect(() => Secp256k1.fromPrf(new Uint8Array(33)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [Secp256k1.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 33 bytes.]
+      `)
   })
 })
 
@@ -483,6 +571,7 @@ test('exports', () => {
     [
       "noble",
       "createKeyPair",
+      "fromPrf",
       "getPublicKey",
       "getSharedSecret",
       "randomPrivateKey",
@@ -490,6 +579,7 @@ test('exports', () => {
       "recoverPublicKey",
       "sign",
       "verify",
+      "InvalidPrfSizeError",
     ]
   `)
 })

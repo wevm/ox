@@ -159,10 +159,10 @@ const modules: Module[] = [
   },
   {
     id: 'webauthn',
-    name: 'WebAuthnP256',
+    name: 'WebAuthn',
     icon: IconFingerprint,
     desc: 'Create passkey credentials, sign challenges, and verify with WebAuthn P-256.',
-    docHref: '/api/WebAuthnP256',
+    docHref: '/api/WebAuthn',
   },
   {
     id: 'x25519',

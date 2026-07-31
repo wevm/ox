@@ -1,5 +1,5 @@
 import { attest } from '@ark/attest'
-import { Ed25519 } from 'ox'
+import { type Bytes, Ed25519, type Hex } from 'ox'
 import { expectTypeOf, test } from 'vp/test'
 
 test('createKeyPair', () => {
@@ -26,6 +26,18 @@ test('createKeyPair', () => {
     expectTypeOf(keyPair.privateKey).toMatchTypeOf<Uint8Array>()
     expectTypeOf(keyPair.publicKey).toMatchTypeOf<Uint8Array>()
   }
+})
+
+test('fromPrf', () => {
+  const prf =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  expectTypeOf(Ed25519.fromPrf(prf)).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(Ed25519.fromPrf(new Uint8Array(32))).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(Ed25519.fromPrf(prf, { as: 'Hex' })).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    Ed25519.fromPrf(prf, { as: 'Bytes' }),
+  ).toEqualTypeOf<Bytes.Bytes>()
 })
 
 test('getPublicKey', () => {
