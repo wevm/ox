@@ -1,5 +1,11 @@
 # ox
 
+## 1.4.0
+
+### Minor Changes
+
+- [#345](https://github.com/wevm/ox/pull/345) [`2e75896`](https://github.com/wevm/ox/commit/2e75896faafec75749c1a565f268e41a7e8663bc) Thanks [@jxom](https://github.com/jxom)! - Added `Prf.tag` to create credential-bound PRF configurations from stable UTF-8 tags.
+
 ## 1.3.1
 
 ### Patch Changes
