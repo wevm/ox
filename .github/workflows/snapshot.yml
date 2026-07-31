@@ -30,7 +30,8 @@ jobs:
           npm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
           pnpm clean
           pnpm changeset version --no-git-tag --snapshot $snapshot
+          pnpm exports:update
           pnpm exec zile publish:prepare
-          pnpm exports:internal-types
+          node --import tsx ./scripts/exports:internal-types.ts
           pnpm changeset publish --no-git-tag --snapshot $snapshot --tag $snapshot
           pnpm exec zile publish:post

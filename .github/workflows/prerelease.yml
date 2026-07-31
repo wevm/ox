@@ -16,6 +16,7 @@ jobs:
 
       - name: Prerelease
         run: |
+          pnpm exports:update
           pnpm exec zile publish:prepare
-          pnpm exports:internal-types
+          node --import tsx ./scripts/exports:internal-types.ts
           pnpx pkg-pr-new publish --pnpm

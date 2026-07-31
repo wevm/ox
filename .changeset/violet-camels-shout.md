@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Fixed the published package missing the `ox/_types/*` subpath: `zile publish:prepare` rebuilds `exports` and dropped the entry added in v1.3.0, so it now gets re-applied before publishing.
+Fixed the published package missing the `ox/_types/*` subpath: `postinstall` regenerates `exports` without it, and `zile publish:prepare` strips the `scripts` needed to re-apply it, so publishing now re-applies it directly before `changeset publish`.

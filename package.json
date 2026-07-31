@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm exports:update && zile && pnpm exports:internal-types",
-    "changeset:publish": "zile publish:prepare && pnpm exports:internal-types && changeset publish && zile publish:post",
+    "changeset:publish": "pnpm exports:update && zile publish:prepare && node --import tsx ./scripts/exports:internal-types.ts && changeset publish && zile publish:post",
     "changeset:version": "changeset version && pnpm version:update && pnpm check",
     "check": "vp check --fix",
     "check:examples": "zile examples:check --fix",
