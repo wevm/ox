@@ -77,23 +77,23 @@ const valid = SignatureEnvelope.verify(envelope, {
 
 ### Wrap and Verify a WebAuthn Signature
 
-[`WebAuthnP256.sign`](/api/WebAuthnP256/sign) returns the authenticator metadata that the
+[`WebAuthn.sign`](/api/WebAuthn/sign) returns the authenticator metadata that the
 signature envelope must carry. This recipe runs in a browser and may prompt the user.
 
 ```ts twoslash
-import { WebAuthnP256 } from 'ox'
+import { WebAuthn } from 'ox'
 import { SignatureEnvelope } from 'ox/tempo'
 
 const payload =
   '0x1111111111111111111111111111111111111111111111111111111111111111'
 
 // 1. Create a WebAuthn credential.
-const credential = await WebAuthnP256.createCredential({
+const credential = await WebAuthn.createCredential({
   name: 'Tempo',
 })
 // [!code focus:start]
 // 2. Sign the payload with the credential.
-const { metadata, signature } = await WebAuthnP256.sign({
+const { metadata, signature } = await WebAuthn.sign({
   challenge: payload,
   credentialId: credential.id,
 })
