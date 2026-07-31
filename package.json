@@ -823,6 +823,11 @@
       "types": "./dist/tempo/VirtualMaster.d.ts",
       "default": "./dist/tempo/VirtualMaster.js"
     },
+    "./tempo/WithdrawalSenderTag": {
+      "src": "./src/tempo/WithdrawalSenderTag.ts",
+      "types": "./dist/tempo/WithdrawalSenderTag.d.ts",
+      "default": "./dist/tempo/WithdrawalSenderTag.js"
+    },
     "./tempo/ZoneId": {
       "src": "./src/tempo/ZoneId.ts",
       "types": "./dist/tempo/ZoneId.d.ts",

@@ -530,6 +530,30 @@ export * as VirtualAddress from './VirtualAddress.js'
 export * as VirtualMaster from './VirtualMaster.js'
 
 /**
+ * Utilities for deriving the sender tag that correlates a Zone withdrawal with
+ * its indexed parent-chain `WithdrawalProcessed` event.
+ *
+ * The sender tag commits to the withdrawal sender and the Zone transaction hash
+ * containing the `ZoneOutbox.requestWithdrawal` call.
+ *
+ * [Authenticated Withdrawals Specification](https://github.com/tempoxyz/zones/blob/main/specs/spec.md#authenticated-withdrawals)
+ *
+ * @example
+ * ```ts twoslash
+ * import { WithdrawalSenderTag } from 'ox/tempo'
+ *
+ * const senderTag = WithdrawalSenderTag.from({
+ *   sender: '0x1234567890abcdef1234567890abcdef12345678',
+ *   transactionHash:
+ *     '0xabababababababababababababababababababababababababababababababab'
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as WithdrawalSenderTag from './WithdrawalSenderTag.js'
+
+/**
  * Zone ID utilities for converting between zone IDs and zone chain IDs.
  *
  * Zone chain IDs use the base and range assigned to their Tempo source chain.
