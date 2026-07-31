@@ -168,7 +168,7 @@
   "name": "ox",
   "description": "Ethereum Standard Library",
   "type": "module",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "main": "./dist/index.js",
   "sideEffects": false,
   "license": "MIT",
