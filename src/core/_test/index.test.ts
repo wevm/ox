@@ -51,6 +51,7 @@ test('exports', () => {
       "Mnemonic",
       "P256",
       "PersonalMessage",
+      "Prf",
       "Provider",
       "PublicKey",
       "Rlp",
