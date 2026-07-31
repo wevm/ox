@@ -1,5 +1,39 @@
 # ox
 
+## 1.3.0
+
+### Minor Changes
+
+- [#341](https://github.com/wevm/ox/pull/341) [`c672615`](https://github.com/wevm/ox/commit/c6726154b74e2ab77cfbe755e66bc6344684d970) Thanks [@jxom](https://github.com/jxom)! - Added WebAuthn PRF output and secp256k1, Ed25519, and AES-GCM key derivation, and deprecated `WebAuthnP256` in favor of `WebAuthn`.
+
+  ```ts
+  import { AesGcm, Ed25519, Secp256k1, WebAuthn } from "ox";
+
+  const credential = await WebAuthn.createCredential({
+    name: "Example",
+    prf: true,
+  });
+  const secp256k1PrivateKey = Secp256k1.fromPrf(credential.prf);
+  const ed25519PrivateKey = Ed25519.fromPrf(credential.prf);
+  const encryptionKey = await AesGcm.fromPrf(credential.prf);
+  ```
+
+- [#336](https://github.com/wevm/ox/pull/336) [`e17518b`](https://github.com/wevm/ox/commit/e17518bf3398e5d6976137733475add42b44d8f7) Thanks [@jxom](https://github.com/jxom)! - Added incremental hash state factories with chunk updates, cloning, caller-owned output buffers, and destruction, plus `Rlp.encodeTo` for streaming encoded bytes.
+
+  ```ts
+  import { Hash, Rlp } from "ox";
+
+  const hash = Hash.createKeccak256();
+  Rlp.encodeTo(["0x01", "0x0203"], (chunk) => {
+    hash.update(chunk);
+  });
+  const digest = hash.digest();
+  ```
+
+### Patch Changes
+
+- [#342](https://github.com/wevm/ox/pull/342) [`d5197b9`](https://github.com/wevm/ox/commit/d5197b9f2688632e3b5e13cd88f0ce1ccbfeb387) Thanks [@jxom](https://github.com/jxom)! - Added an `ox/_types/*` subpath.
+
 ## 1.2.0
 
 ### Minor Changes
