@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vp/test'
 import * as Base64 from '../../core/Base64.js'
 import * as Bytes from '../../core/Bytes.js'
@@ -603,6 +604,9 @@ describe('serializeOptions', () => {
   })
 
   test('with extensions (prf)', () => {
+    const first = runInNewContext(
+      'Uint8Array.from([7, 8, 9]).buffer',
+    ) as ArrayBuffer
     const options: Types.CredentialCreationOptions = {
       publicKey: {
         challenge: new Uint8Array([1, 2, 3]),
@@ -616,7 +620,7 @@ describe('serializeOptions', () => {
         extensions: {
           prf: {
             eval: {
-              first: new Uint8Array([7, 8, 9]),
+              first,
               second: new Uint8Array(),
             },
           },
@@ -625,9 +629,10 @@ describe('serializeOptions', () => {
     }
     const serialized = Registration.serializeOptions(options)
 
-    expect(typeof serialized.publicKey!.extensions!.prf!.eval!.first).toBe(
-      'string',
-    )
+    expect(first).not.toBeInstanceOf(ArrayBuffer)
+    expect(
+      serialized.publicKey!.extensions!.prf!.eval!.first,
+    ).toMatchInlineSnapshot(`"BwgJ"`)
     expect(serialized.publicKey!.extensions!.prf!.eval!.second).toBe('')
     expect(() => JSON.stringify(serialized)).not.toThrow()
   })

@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vp/test'
 import * as Bytes from '../../core/Bytes.js'
 import * as Hash from '../../core/Hash.js'
@@ -211,6 +212,9 @@ describe('serializeOptions', () => {
   })
 
   test('with extensions (prf.evalByCredential)', () => {
+    const first = runInNewContext(
+      'Uint8Array.from([4, 5, 6]).buffer',
+    ) as ArrayBuffer
     const options: Types.CredentialRequestOptions = {
       publicKey: {
         challenge: new Uint8Array([1, 2, 3]),
@@ -218,7 +222,7 @@ describe('serializeOptions', () => {
           prf: {
             evalByCredential: {
               credential: {
-                first: new Uint8Array([4, 5, 6]),
+                first,
                 second: new Uint8Array(),
               },
             },
@@ -228,6 +232,7 @@ describe('serializeOptions', () => {
     }
     const serialized = Authentication.serializeOptions(options)
 
+    expect(first).not.toBeInstanceOf(ArrayBuffer)
     expect(serialized.publicKey!.extensions).toMatchInlineSnapshot(`
       {
         "prf": {
