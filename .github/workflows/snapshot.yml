@@ -31,5 +31,6 @@ jobs:
           pnpm clean
           pnpm changeset version --no-git-tag --snapshot $snapshot
           pnpm exec zile publish:prepare
+          pnpm exports:internal-types
           pnpm changeset publish --no-git-tag --snapshot $snapshot --tag $snapshot
           pnpm exec zile publish:post
