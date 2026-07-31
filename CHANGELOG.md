@@ -1,5 +1,11 @@
 # ox
 
+## 1.3.1
+
+### Patch Changes
+
+- [#343](https://github.com/wevm/ox/pull/343) [`0068849`](https://github.com/wevm/ox/commit/0068849cc6ac3197ce9974b5f10fb02192a5a35c) Thanks [@jxom](https://github.com/jxom)! - Fixed the published package missing the `ox/_types/*` subpath: `postinstall` regenerates `exports` without it, and `zile publish:prepare` strips the `scripts` needed to re-apply it, so publishing now re-applies it directly before `changeset publish`.
+
 ## 1.3.0
 
 ### Minor Changes
