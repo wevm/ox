@@ -1952,7 +1952,7 @@ export * as Log from './core/Log.js'
  * })
  * ```
  *
- * @category Crypto
+ * @category Post Quantum
  */
 export * as MlDsa44 from './core/MlDsa44.js'
 

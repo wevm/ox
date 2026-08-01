@@ -123,7 +123,7 @@ export * as Kzg from './Kzg.js'
  * MlDsa44.getPublicKey({ privateKey: '0x...' })
  * ```
  *
- * @category Crypto
+ * @category Post Quantum
  */
 export * as MlDsa44 from './MlDsa44.js'
 
