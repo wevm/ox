@@ -1915,6 +1915,47 @@ export * as Kzg from './core/Kzg.js'
  * @category Execution Spec
  */
 export * as Log from './core/Log.js'
+
+/**
+ * Utilities for working with ML-DSA-44 signatures and key pairs, as defined in [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final).
+ *
+ * ML-DSA is a post-quantum digital signature scheme, standardized by NIST as the
+ * primary quantum-resistant replacement for elliptic-curve signatures. The `44`
+ * parameter set targets NIST security category 2 (128-bit classical security).
+ *
+ * Private keys are the 32-byte FIPS 204 seed. Public keys are 1,312 bytes and
+ * signatures are 2,420 bytes.
+ *
+ * @example
+ * ### Creating Key Pairs
+ *
+ * ```ts twoslash
+ * import { MlDsa44 } from 'ox'
+ *
+ * const { privateKey, publicKey } = MlDsa44.createKeyPair()
+ * ```
+ *
+ * @example
+ * ### Signing & Verifying
+ *
+ * ```ts twoslash
+ * import { MlDsa44 } from 'ox'
+ *
+ * const { privateKey, publicKey } = MlDsa44.createKeyPair()
+ * const payload = '0xdeadbeef'
+ *
+ * const signature = MlDsa44.sign({ payload, privateKey })
+ * const isValid = MlDsa44.verify({
+ *   payload,
+ *   publicKey,
+ *   signature
+ * })
+ * ```
+ *
+ * @category Crypto
+ */
+export * as MlDsa44 from './core/MlDsa44.js'
+
 /**
  * Utility functions for generating and working with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
  *

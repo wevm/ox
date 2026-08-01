@@ -159,6 +159,51 @@ export type Eddsa = {
 }
 
 /**
+ * Module-lattice digital signatures (ML-DSA, FIPS 204). Used by the `MlDsa44`
+ * slot.
+ *
+ * Private keys cross this boundary in their 32-byte seed form (`ξ`), never as
+ * the expanded secret key -- the seed is the canonical interchange form, and an
+ * engine expands it internally.
+ *
+ * @internal
+ */
+export type MlDsa = {
+  /** Derives the public key from a 32-byte private-key seed. */
+  getPublicKey?: ((privateKey: Uint8Array) => Uint8Array) | undefined
+  /** Generates a random 32-byte private-key seed. */
+  randomSecretKey?: (() => Uint8Array) | undefined
+  /** Signs a payload. */
+  sign?:
+    | ((
+        payload: Uint8Array,
+        privateKey: Uint8Array,
+        options: {
+          /** Context string for domain separation, at most 255 bytes. */
+          context?: Uint8Array | undefined
+          /**
+           * Extra entropy for hedged signing: exactly 32 bytes, `true` for 32
+           * random bytes, or `false` for the deterministic variant.
+           */
+          extraEntropy: boolean | Uint8Array
+        },
+      ) => Uint8Array)
+    | undefined
+  /** Verifies a signature. */
+  verify?:
+    | ((
+        signature: Uint8Array,
+        payload: Uint8Array,
+        publicKey: Uint8Array,
+        options: {
+          /** Context string for domain separation, at most 255 bytes. */
+          context?: Uint8Array | undefined
+        },
+      ) => boolean)
+    | undefined
+}
+
+/**
  * Montgomery-curve key agreement (X25519).
  *
  * @internal
@@ -305,6 +350,8 @@ export type Engine = {
   Hash?: Hash | undefined
   /** Implementation for [`Keystore`](/api/Keystore). */
   Keystore?: Keystore | undefined
+  /** Implementation for [`MlDsa44`](/api/MlDsa44). */
+  MlDsa44?: MlDsa | undefined
   /** Implementation for [`Mnemonic`](/api/Mnemonic). */
   Mnemonic?: Mnemonic | undefined
   /** Implementation for [`P256`](/api/P256). */
@@ -338,6 +385,7 @@ export const slots = [
   'Ed25519',
   'Hash',
   'Keystore',
+  'MlDsa44',
   'Mnemonic',
   'P256',
   'Secp256k1',
@@ -385,6 +433,7 @@ export const primitives = {
     'scrypt',
     'scryptAsync',
   ],
+  MlDsa44: ['getPublicKey', 'randomSecretKey', 'sign', 'verify'],
   Mnemonic: ['toSeed'],
   P256: [
     'getPublicKey',

@@ -23,6 +23,7 @@ import * as ed25519 from '../src/core/internal/ed25519.js'
 import * as engineContract from '../src/core/internal/engine.js'
 import * as hash from '../src/core/internal/hash.js'
 import * as keystore from '../src/core/internal/keystore.js'
+import * as mlDsa44 from '../src/core/internal/mlDsa44.js'
 import * as mnemonic from '../src/core/internal/mnemonic.js'
 import * as p256 from '../src/core/internal/p256.js'
 import * as secp256k1 from '../src/core/internal/secp256k1.js'
@@ -30,6 +31,7 @@ import * as x25519 from '../src/core/internal/x25519.js'
 import { engine as nodeEngine } from '../src/node/Engine.js'
 import { engine as wasmEngine } from '../src/wasm/Engine.js'
 import { engine as wasmKeystoreEngine } from '../src/wasm/Keystore.js'
+import { engine as wasmMlDsa44Engine } from '../src/wasm/MlDsa44.js'
 import { engine as wasmSecp256k1Engine } from '../src/wasm/Secp256k1.js'
 import { type Target, targets as wasmTargets } from '../wasm/targets.js'
 
@@ -156,6 +158,7 @@ const cTargetNames = new Set([
   'blake3',
   'crypto25519',
   'hashes',
+  'mldsa44',
   'scrypt',
   'secp256k1',
 ])
@@ -163,6 +166,7 @@ const cSourceOverrides = {
   'wasm/src/blake3.c': 'bench/native/blake3.c',
   'wasm/src/crypto25519.c': 'bench/native/crypto25519.c',
   'wasm/src/hashes.c': 'bench/native/hashes.c',
+  'wasm/src/mldsa44.c': 'bench/native/mldsa44.c',
   'wasm/src/ox_rt.c': 'bench/native/runtime.c',
   'wasm/src/scrypt.c': 'bench/native/scrypt.c',
   'wasm/src/secp256k1.c': 'bench/native/secp256k1.c',
@@ -498,6 +502,38 @@ async_('Keystore', 'scryptAsync', 'N=16,384, r=8, p=1', () =>
   keystore.scryptAsync(password, salt, scryptOptions),
 )
 
+const mlDsa44PrivateKey = bytes(32, 97)
+const mlDsa44PublicKey = mlDsa44.getPublicKey(mlDsa44PrivateKey)
+const mlDsa44SignOptions = { extraEntropy: false } as const
+const mlDsa44Signature = mlDsa44.sign(
+  payload,
+  mlDsa44PrivateKey,
+  mlDsa44SignOptions,
+)
+
+sync(
+  'MlDsa44',
+  'getPublicKey',
+  '32 B seed',
+  () => mlDsa44.getPublicKey(mlDsa44PrivateKey),
+  { cKey: 'mldsa44.getPublicKey:32' },
+)
+sync('MlDsa44', 'randomSecretKey', '32 B seed', mlDsa44.randomSecretKey)
+sync(
+  'MlDsa44',
+  'sign',
+  '32 B message',
+  () => mlDsa44.sign(payload, mlDsa44PrivateKey, mlDsa44SignOptions),
+  { cKey: 'mldsa44.sign:32' },
+)
+sync(
+  'MlDsa44',
+  'verify',
+  '32 B message',
+  () => mlDsa44.verify(mlDsa44Signature, payload, mlDsa44PublicKey, {}),
+  { cKey: 'mldsa44.verify:32' },
+)
+
 const phrase =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
@@ -613,14 +649,17 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
 const node = await nodeEngine()
-const [wasmAggregate, wasmKeystore, wasmSecp256k1] = await Promise.all([
-  wasmEngine(),
-  wasmKeystoreEngine(),
-  wasmSecp256k1Engine(),
-])
+const [wasmAggregate, wasmKeystore, wasmMlDsa44, wasmSecp256k1] =
+  await Promise.all([
+    wasmEngine(),
+    wasmKeystoreEngine(),
+    wasmMlDsa44Engine(),
+    wasmSecp256k1Engine(),
+  ])
 const wasm = {
   ...wasmAggregate,
   Keystore: wasmKeystore,
+  MlDsa44: wasmMlDsa44,
   Secp256k1: wasmSecp256k1,
 }
 const cRows = c()

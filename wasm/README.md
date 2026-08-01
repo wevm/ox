@@ -23,6 +23,7 @@ Generated artifacts, and the module that loads them:
 | `hashes`       | `src/wasm/internal/hashes.wasm.ts`    | `src/wasm/Hash.ts` (`ox/wasm/Hash`)              |
 | `scrypt`       | `src/wasm/internal/scrypt.wasm.ts`    | `src/wasm/Keystore.ts` (`ox/wasm/Keystore`)      |
 | `secp256k1`    | `src/wasm/internal/secp256k1.wasm.ts` | `src/wasm/Secp256k1.ts` (`ox/wasm/Secp256k1`)    |
+| `mldsa44`      | `src/wasm/internal/mldsa44.wasm.ts`   | `src/wasm/MlDsa44.ts` (`ox/wasm/MlDsa44`)        |
 | `kzg`          | `src/wasm/internal/kzg.wasm.ts`       | `src/wasm/Kzg.ts` (`ox/wasm/Kzg`)                |
 | `mine`         | `src/tempo/internal/mine.wasm.ts`     | `src/tempo/internal/virtualMasterPool.ts`        |
 | `runtime-test` | `src/wasm/_test/runtime.wasm.ts`      | `src/wasm/_test/Runtime.test.ts` (test only)     |

@@ -42,6 +42,24 @@ void ox_keccak256(const uint8_t *, uint32_t, uint8_t *);
 void ox_keccak256_finalize(void *, uint8_t *);
 void ox_keccak256_init(void *);
 void ox_keccak256_update(void *, const uint8_t *, uint32_t);
+int ox_mldsa44_get_public_key(const uint8_t *, uint8_t *);
+int ox_mldsa44_sign(
+    const uint8_t *,
+    const uint8_t *,
+    uint32_t,
+    const uint8_t *,
+    uint32_t,
+    const uint8_t *,
+    uint8_t *
+);
+int ox_mldsa44_verify(
+    const uint8_t *,
+    const uint8_t *,
+    uint32_t,
+    const uint8_t *,
+    uint32_t,
+    const uint8_t *
+);
 void ox_mnemonic_to_seed(
     const uint8_t *, uint32_t, const uint8_t *, uint32_t, uint8_t *);
 void ox_pbkdf2_sha256(
@@ -374,6 +392,46 @@ static void run_ed25519_verify(void *opaque) {
     );
 }
 
+struct mldsa44_context {
+    uint8_t seed[32];
+    uint8_t public_key[1312];
+    uint8_t payload[32];
+    uint8_t random[32];
+    uint8_t signature[2420];
+    uint8_t output[2420];
+    int valid;
+};
+
+static void run_mldsa44_get_public_key(void *opaque) {
+    struct mldsa44_context *context = opaque;
+    CHECK(ox_mldsa44_get_public_key(context->seed, context->output));
+}
+
+static void run_mldsa44_sign(void *opaque) {
+    struct mldsa44_context *context = opaque;
+    CHECK(ox_mldsa44_sign(
+        context->seed,
+        context->payload,
+        sizeof(context->payload),
+        NULL,
+        0,
+        context->random,
+        context->output
+    ));
+}
+
+static void run_mldsa44_verify(void *opaque) {
+    struct mldsa44_context *context = opaque;
+    context->valid = ox_mldsa44_verify(
+        context->signature,
+        context->payload,
+        sizeof(context->payload),
+        NULL,
+        0,
+        context->public_key
+    );
+}
+
 struct pbkdf2_context {
     uint8_t password[16];
     uint8_t salt[36];
@@ -661,6 +719,23 @@ int main(void) {
         run_ed25519_to_montgomery_secret, &ed25519,
         warmup_ms, budget_ms, repeat_count);
     row("ed25519.verify", 32, run_ed25519_verify, &ed25519,
+        warmup_ms, budget_ms, repeat_count);
+
+    static struct mldsa44_context mldsa44;
+    fill(mldsa44.seed, sizeof(mldsa44.seed), 97);
+    fill(mldsa44.payload, sizeof(mldsa44.payload), 251);
+    run_mldsa44_get_public_key(&mldsa44);
+    memcpy(mldsa44.public_key, mldsa44.output, sizeof(mldsa44.public_key));
+    run_mldsa44_sign(&mldsa44);
+    memcpy(mldsa44.signature, mldsa44.output, sizeof(mldsa44.signature));
+    run_mldsa44_verify(&mldsa44);
+    CHECK(mldsa44.valid);
+
+    row("mldsa44.getPublicKey", 32, run_mldsa44_get_public_key, &mldsa44,
+        warmup_ms, budget_ms, repeat_count);
+    row("mldsa44.sign", 32, run_mldsa44_sign, &mldsa44,
+        warmup_ms, budget_ms, repeat_count);
+    row("mldsa44.verify", 32, run_mldsa44_verify, &mldsa44,
         warmup_ms, budget_ms, repeat_count);
 
     struct pbkdf2_context pbkdf2 = {0};

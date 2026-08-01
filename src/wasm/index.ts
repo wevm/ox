@@ -106,6 +106,28 @@ export * as Keystore from './Keystore.js'
 export * as Kzg from './Kzg.js'
 
 /**
+ * WASM implementations of Ox's supported ML-DSA-44 primitives, backed by
+ * [mldsa-native](https://github.com/pq-code-package/mldsa-native).
+ *
+ * This provider is opt-in because its embedded artifact is larger than the
+ * modules installed by [`Engine.install`](/api/Engine/install).
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Engine } from 'ox'
+ * import { MlDsa44 } from 'ox/wasm'
+ *
+ * await Engine.install({ MlDsa44: MlDsa44.engine() })
+ *
+ * MlDsa44.getPublicKey({ privateKey: '0x...' })
+ * ```
+ *
+ * @category Crypto
+ */
+export * as MlDsa44 from './MlDsa44.js'
+
+/**
  * WASM implementation of Ox's BIP-39 seed derivation.
  *
  * @example

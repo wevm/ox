@@ -48,6 +48,7 @@ test('exports', () => {
       "Keystore",
       "Kzg",
       "Log",
+      "MlDsa44",
       "Mnemonic",
       "P256",
       "PersonalMessage",
