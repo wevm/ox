@@ -1,6 +1,7 @@
 import { ml_dsa44 } from '@noble/post-quantum/ml-dsa.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Entropy from './internal/entropy.js'
 import * as engine from './internal/mlDsa44.js'
@@ -69,6 +70,70 @@ export declare namespace createKeyPair {
   type ErrorType =
     | randomPrivateKey.ErrorType
     | getPublicKey.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an ML-DSA-44 private key from a 32-byte WebAuthn PRF output.
+ *
+ * The permanent derivation contract uses the PRF output as the HMAC-SHA256
+ * key. Its message is the UTF-8 bytes of `ox.mldsa44.fromPrf.v1` followed by
+ * a 32-bit big-endian counter set to zero.
+ *
+ * @example
+ * ```ts twoslash
+ * import { MlDsa44 } from 'ox'
+ *
+ * const privateKey = MlDsa44.fromPrf(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param value - A 32-byte WebAuthn PRF output.
+ * @param options - Options.
+ * @returns An ML-DSA-44 private key (32-byte seed).
+ */
+export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  value: Hex.Hex | Bytes.Bytes,
+  options: fromPrf.Options<as> = {},
+): fromPrf.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const bytes = Bytes.from(value)
+  if (bytes.length !== 32) throw new InvalidPrfSizeError({ size: bytes.length })
+
+  const privateKey = Hash.hmac256(
+    bytes,
+    Bytes.concat(fromPrfLabel, Bytes.fromNumber(0, { size: 4 })),
+    { as: 'Bytes' },
+  )
+  if (as === 'Hex') {
+    const value = Hex.fromBytes(privateKey)
+    privateKey.fill(0)
+    return value as never
+  }
+  return privateKey as never
+}
+
+export declare namespace fromPrf {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.fromNumber.ErrorType
+    | Hash.hmac256.ErrorType
+    | Hex.fromBytes.ErrorType
+    | InvalidPrfSizeError
     | Errors.GlobalErrorType
 }
 
@@ -318,6 +383,25 @@ export declare namespace InvalidContextSizeError {
   }
 }
 
+/** Thrown when a WebAuthn PRF output is not 32 bytes. */
+export class InvalidPrfSizeError extends Errors.BaseError {
+  override readonly name = 'MlDsa44.InvalidPrfSizeError'
+
+  constructor(options: InvalidPrfSizeError.Options) {
+    super(
+      `PRF output must be exactly 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidPrfSizeError {
+  /** Options for {@link ox#MlDsa44.InvalidPrfSizeError}. */
+  type Options = {
+    /** Received PRF output size. */
+    size: number
+  }
+}
+
 function toContextBytes(
   context: Hex.Hex | Bytes.Bytes | undefined,
 ): Bytes.Bytes | undefined {
@@ -327,3 +411,5 @@ function toContextBytes(
     throw new InvalidContextSizeError({ size: bytes.length })
   return bytes
 }
+
+const fromPrfLabel = Bytes.fromString('ox.mldsa44.fromPrf.v1')

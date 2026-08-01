@@ -38,6 +38,107 @@ describe('createKeyPair', () => {
   })
 })
 
+describe('fromPrf', () => {
+  test.each([
+    {
+      privateKey:
+        '0x72bd14bc34a4c7ce64bd5dbfe0d432a1ab34cf1c364216c471d68a073d4fbb5b',
+      prf: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    },
+    {
+      privateKey:
+        '0xcc686ddfafe85330d7f270bf2fab31202b499a7e920ddbbd82cbb53759d4925c',
+      prf: '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    },
+  ] as const)('vector: $prf', ({ privateKey, prf }) => {
+    expect(MlDsa44.fromPrf(prf)).toBe(privateKey)
+  })
+
+  test('value: Bytes', () => {
+    const prf = Bytes.fromHex(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    )
+    expect(MlDsa44.fromPrf(prf)).toMatchInlineSnapshot(
+      `"0xcc686ddfafe85330d7f270bf2fab31202b499a7e920ddbbd82cbb53759d4925c"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = MlDsa44.fromPrf(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+      { as: 'Bytes' },
+    )
+    expect(privateKey).toEqual(
+      Bytes.fromHex(
+        '0xcc686ddfafe85330d7f270bf2fab31202b499a7e920ddbbd82cbb53759d4925c',
+      ),
+    )
+  })
+
+  test('behavior: output signs and verifies', () => {
+    const privateKey = MlDsa44.fromPrf(Bytes.random(32))
+    const publicKey = MlDsa44.getPublicKey({ privateKey })
+    const signature = MlDsa44.sign({ payload, privateKey })
+
+    expect(MlDsa44.verify({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('behavior: uses versioned label and zero counter', () => {
+    const messages: Hex.Hex[] = []
+    Engine.with(
+      {
+        Hash: {
+          hmacSha256: (_key, message) => {
+            messages.push(Hex.fromBytes(message))
+            return new Uint8Array(32)
+          },
+        },
+      },
+      () =>
+        MlDsa44.fromPrf(
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+    )
+
+    expect(messages).toMatchInlineSnapshot(`
+      [
+        "0x6f782e6d6c64736134342e66726f6d5072662e763100000000",
+      ]
+    `)
+  })
+
+  test('behavior: zeroes intermediate key for Hex output', () => {
+    const candidate = new Uint8Array(32).fill(1)
+    Engine.with(
+      {
+        Hash: {
+          hmacSha256: () => candidate,
+        },
+      },
+      () =>
+        MlDsa44.fromPrf(
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+    )
+
+    expect(candidate).toEqual(new Uint8Array(32))
+  })
+
+  test('error: PRF output is too short', () => {
+    expect(() => MlDsa44.fromPrf(new Uint8Array(31)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [MlDsa44.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 31 bytes.]
+      `)
+  })
+
+  test('error: PRF output is too long', () => {
+    expect(() => MlDsa44.fromPrf(new Uint8Array(33)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [MlDsa44.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 33 bytes.]
+      `)
+  })
+})
+
 describe('getPublicKey', () => {
   test('default', () => {
     const publicKey = MlDsa44.getPublicKey({ privateKey })
