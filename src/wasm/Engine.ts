@@ -26,6 +26,7 @@ export type {
   Hash,
   HashState,
   Keystore,
+  MlDsa,
   Mnemonic,
 } from '../core/Engine.js'
 

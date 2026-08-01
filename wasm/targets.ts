@@ -190,6 +190,28 @@ export const targets = [
     stackSize: 1_048_576,
   },
   {
+    defines: {
+      MLD_CONFIG_CORE_API_ONLY: 1,
+      MLD_CONFIG_NAMESPACE_PREFIX: 'mld44',
+      MLD_CONFIG_NO_SUPERCOP: 1,
+      MLD_CONFIG_PARAMETER_SET: 44,
+    },
+    includes: ['wasm/shim/mldsa', 'wasm/vendor/mldsa-native/mldsa'],
+    initialMemory: 262_144,
+    maxBytes: 49_152,
+    maxMemory: 4_294_967_296,
+    name: 'mldsa44',
+    out: 'src/wasm/internal/mldsa44.wasm.ts',
+    sources: [
+      'wasm/src/mldsa44.c',
+      'wasm/vendor/mldsa-native/mldsa/mldsa_native.c',
+      'wasm/src/ox_rt.c',
+    ],
+    // ML-DSA-44 signing peaks at MLD_TOTAL_ALLOC_44_SIGN (44,704) bytes of
+    // stack inside mldsa-native, plus the wrapper's expanded key pair.
+    stackSize: 131_072,
+  },
+  {
     initialMemory: 131_072,
     maxBytes: 8_192,
     maxMemory: 131_072,

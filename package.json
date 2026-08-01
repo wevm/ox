@@ -162,6 +162,12 @@
       "path": "./dist/wasm/Secp256k1.js",
       "import": "{ engine }",
       "limit": "64 kB"
+    },
+    {
+      "name": "import { engine } from 'ox/wasm/MlDsa44'",
+      "path": "./dist/wasm/MlDsa44.js",
+      "import": "{ engine }",
+      "limit": "24 kB"
     }
   ],
   "[!start-pkg]": "",
@@ -196,13 +202,15 @@
     "dist",
     "src",
     "wasm/vendor/c-kzg-4844/LICENSE",
-    "wasm/vendor/c-kzg-4844/blst/LICENSE"
+    "wasm/vendor/c-kzg-4844/blst/LICENSE",
+    "wasm/vendor/mldsa-native/LICENSE"
   ],
   "dependencies": {
     "@adraffy/ens-normalize": "^1.11.0",
     "@noble/ciphers": "^2.2.0",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
+    "@noble/post-quantum": "^0.6.1",
     "@scure/bip32": "^2.0.0",
     "@scure/bip39": "^2.0.0",
     "abitype": "^1.3.0",
@@ -447,6 +455,11 @@
       "src": "./src/core/Log.ts",
       "types": "./dist/core/Log.d.ts",
       "default": "./dist/core/Log.js"
+    },
+    "./MlDsa44": {
+      "src": "./src/core/MlDsa44.ts",
+      "types": "./dist/core/MlDsa44.d.ts",
+      "default": "./dist/core/MlDsa44.js"
     },
     "./Mnemonic": {
       "src": "./src/core/Mnemonic.ts",
@@ -882,6 +895,11 @@
       "src": "./src/wasm/Kzg.ts",
       "types": "./dist/wasm/Kzg.d.ts",
       "default": "./dist/wasm/Kzg.js"
+    },
+    "./wasm/MlDsa44": {
+      "src": "./src/wasm/MlDsa44.ts",
+      "types": "./dist/wasm/MlDsa44.d.ts",
+      "default": "./dist/wasm/MlDsa44.js"
     },
     "./wasm/Mnemonic": {
       "src": "./src/wasm/Mnemonic.ts",

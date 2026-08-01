@@ -255,7 +255,7 @@ describe('set', () => {
       `
       [Engine.UnknownSlotError: \`Keccak\` is not a valid engine slot.
 
-      Valid slots: Bls, Ed25519, Hash, Keystore, Mnemonic, P256, Secp256k1, X25519]
+      Valid slots: Bls, Ed25519, Hash, Keystore, MlDsa44, Mnemonic, P256, Secp256k1, X25519]
     `,
     )
   })
@@ -336,7 +336,7 @@ describe('reset', () => {
       .toThrowErrorMatchingInlineSnapshot(`
       [Engine.UnknownSlotError: \`Hsah\` is not a valid engine slot.
 
-      Valid slots: Bls, Ed25519, Hash, Keystore, Mnemonic, P256, Secp256k1, X25519]
+      Valid slots: Bls, Ed25519, Hash, Keystore, MlDsa44, Mnemonic, P256, Secp256k1, X25519]
     `)
 
     // The override the caller meant to remove is still installed, which is the

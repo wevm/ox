@@ -11,6 +11,7 @@ export type {
   Hash,
   HashState,
   Keystore,
+  MlDsa,
   Mnemonic,
 } from './internal/engine.js'
 
