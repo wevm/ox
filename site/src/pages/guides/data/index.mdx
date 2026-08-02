@@ -17,8 +17,8 @@ plus bigint-safe JSON and lossless ether/gwei unit conversion.
 import { Hex, Value } from 'ox'
 
 // [!code focus:start]
-const amount = Value.fromEther('1.5')
 // @log: 1500000000000000000n
+const amount = Value.fromEther('1.5')
 
 const quantity = Hex.fromNumber(amount)
 // @log: '0x14d1120d7b160000'
