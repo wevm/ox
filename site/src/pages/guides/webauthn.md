@@ -64,9 +64,9 @@ Treat PRF outputs and derived keys as secrets. Do not serialize or send the raw 
 PRF-derived keys are software keys. Code on any origin allowed to use the same RP ID can request the same output after user verification.
 :::
 
-### Releasing Key Material
+### Releasing the PRF Output
 
-PRF outputs and keys derived with `as: 'Bytes'` carry a `Symbol.dispose` handler that zero-fills them, so they can be bound with a [`using` declaration](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using) to release the secret as soon as the scope exits.
+The PRF output is the root secret — every key above derives from it. It carries a `Symbol.dispose` handler that zero-fills it, so it can be bound with a [`using` declaration](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using) to release it as soon as the scope exits.
 
 ```ts twoslash
 import { Secp256k1, WebAuthn } from 'ox'
@@ -78,13 +78,13 @@ async function sign(payload: `0x${string}`) {
   })
 
   using prf = credential.prf
-  using privateKey = Secp256k1.fromPrf(prf, { as: 'Bytes' })
+  const privateKey = Secp256k1.fromPrf(prf)
   return Secp256k1.sign({ payload, privateKey })
-  // `prf` and `privateKey` are zero-filled on scope exit.
+  // `prf` is zero-filled on scope exit.
 }
 ```
 
-Both can also be released manually at any point with `.fill(0)` (equivalent to what disposal does). The default `Hex` key output is an immutable string, so it cannot be zeroed; prefer `as: 'Bytes'` when key lifetime matters. `AesGcm.fromPrf` needs no cleanup — it zeroes its intermediate material internally and returns a non-extractable `CryptoKey`.
+It can also be released manually at any point with `prf.fill(0)` (equivalent to what disposal does). The `fromPrf` functions zero their intermediate material internally; keys derived with the default `Hex` output are immutable strings, while `as: 'Bytes'` hands you the only copy, which you can release with `privateKey.fill(0)`. `AesGcm.fromPrf` needs no cleanup — it returns a non-extractable `CryptoKey`.
 
 ### Signing a Payload
 

@@ -26,7 +26,7 @@ describe('createCredential + getCredential', () => {
     expect(Secp256k1.fromPrf(credential.prf)).toBe(Secp256k1.fromPrf(next.prf))
   })
 
-  test('releases secrets on scope exit', async () => {
+  test('releases PRF output on scope exit', async () => {
     const credential = await WebAuthn.createCredential({
       name: `prf-dispose-${Date.now()}`,
       prf: true,
@@ -36,14 +36,10 @@ describe('createCredential + getCredential', () => {
       },
     })
 
-    const privateKey = Secp256k1.fromPrf(credential.prf, { as: 'Bytes' })
     {
       using prf = credential.prf
-      using key = privateKey
       expect(prf.some((byte) => byte !== 0)).toBe(true)
-      expect(key.some((byte) => byte !== 0)).toBe(true)
     }
     expect(credential.prf.every((byte) => byte === 0)).toBe(true)
-    expect(privateKey.every((byte) => byte === 0)).toBe(true)
   })
 })

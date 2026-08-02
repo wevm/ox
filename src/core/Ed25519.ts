@@ -3,7 +3,6 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import { toDisposableBytes } from './internal/disposable.js'
 import * as engine from './internal/ed25519.js'
 
 /** Re-export of noble/curves Ed25519 utilities. */
@@ -76,28 +75,10 @@ export declare namespace createKeyPair {
  * )
  * ```
  *
- * @example
- * ### Releasing Key Material
- *
- * With `as: 'Bytes'`, the returned key carries a `Symbol.dispose` handler
- * that zero-fills it, so it can be bound with a `using` declaration to
- * release the key material when the scope exits:
- *
- * ```ts twoslash
- * import { Ed25519 } from 'ox'
- *
- * function example() {
- *   using privateKey = Ed25519.fromPrf(
- *     '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
- *     { as: 'Bytes' }
- *   )
- *   return Ed25519.getPublicKey({ privateKey })
- *   // `privateKey` is zero-filled on scope exit.
- * }
- * ```
- *
- * Outside of `using`, release manually with `privateKey.fill(0)`. The default
- * `'Hex'` output is an immutable string and cannot be zeroed.
+ * Intermediate key material is zeroed internally. With `as: 'Bytes'`, the
+ * caller owns the returned bytes and can release them with
+ * `privateKey.fill(0)`. The default `'Hex'` output is an immutable string
+ * and cannot be zeroed.
  *
  * @param value - A 32-byte WebAuthn PRF output.
  * @param options - Options.
@@ -121,7 +102,7 @@ export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
     privateKey.fill(0)
     return value as never
   }
-  return toDisposableBytes(privateKey) as never
+  return privateKey as never
 }
 
 export declare namespace fromPrf {
@@ -134,7 +115,7 @@ export declare namespace fromPrf {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes & Disposable : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
     | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =

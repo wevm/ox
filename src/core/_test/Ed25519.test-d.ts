@@ -35,9 +35,9 @@ test('fromPrf', () => {
   expectTypeOf(Ed25519.fromPrf(prf)).toEqualTypeOf<Hex.Hex>()
   expectTypeOf(Ed25519.fromPrf(new Uint8Array(32))).toEqualTypeOf<Hex.Hex>()
   expectTypeOf(Ed25519.fromPrf(prf, { as: 'Hex' })).toEqualTypeOf<Hex.Hex>()
-  expectTypeOf(Ed25519.fromPrf(prf, { as: 'Bytes' })).toEqualTypeOf<
-    Bytes.Bytes & Disposable
-  >()
+  expectTypeOf(
+    Ed25519.fromPrf(prf, { as: 'Bytes' }),
+  ).toEqualTypeOf<Bytes.Bytes>()
 })
 
 test('getPublicKey', () => {

@@ -10,7 +10,6 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
-import { toDisposableBytes } from './internal/disposable.js'
 import * as engine from './internal/secp256k1.js'
 import * as Entropy from './internal/entropy.js'
 import {
@@ -89,28 +88,10 @@ export declare namespace createKeyPair {
  * )
  * ```
  *
- * @example
- * ### Releasing Key Material
- *
- * With `as: 'Bytes'`, the returned key carries a `Symbol.dispose` handler
- * that zero-fills it, so it can be bound with a `using` declaration to
- * release the key material when the scope exits:
- *
- * ```ts twoslash
- * import { Secp256k1 } from 'ox'
- *
- * function example() {
- *   using privateKey = Secp256k1.fromPrf(
- *     '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
- *     { as: 'Bytes' }
- *   )
- *   return Secp256k1.getPublicKey({ privateKey })
- *   // `privateKey` is zero-filled on scope exit.
- * }
- * ```
- *
- * Outside of `using`, release manually with `privateKey.fill(0)`. The default
- * `'Hex'` output is an immutable string and cannot be zeroed.
+ * Intermediate key material is zeroed internally. With `as: 'Bytes'`, the
+ * caller owns the returned bytes and can release them with
+ * `privateKey.fill(0)`. The default `'Hex'` output is an immutable string
+ * and cannot be zeroed.
  *
  * @param value - A 32-byte WebAuthn PRF output.
  * @param options - Options.
@@ -136,7 +117,7 @@ export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
         candidate.fill(0)
         return value as never
       }
-      return toDisposableBytes(candidate) as never
+      return candidate as never
     }
     candidate.fill(0)
   }
@@ -152,7 +133,7 @@ export declare namespace fromPrf {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes & Disposable : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
     | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =

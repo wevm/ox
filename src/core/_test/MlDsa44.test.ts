@@ -75,22 +75,6 @@ describe('fromPrf', () => {
     )
   })
 
-  test('behavior: `using` releases key material on scope exit', () => {
-    const privateKey = MlDsa44.fromPrf(Bytes.random(32), { as: 'Bytes' })
-    {
-      using key = privateKey
-      expect(key.some((byte) => byte !== 0)).toBe(true)
-    }
-    expect(privateKey.every((byte) => byte === 0)).toBe(true)
-  })
-
-  test('behavior: disposal is idempotent', () => {
-    const privateKey = MlDsa44.fromPrf(Bytes.random(32), { as: 'Bytes' })
-    privateKey[Symbol.dispose]()
-    privateKey[Symbol.dispose]()
-    expect(privateKey.every((byte) => byte === 0)).toBe(true)
-  })
-
   test('behavior: output signs and verifies', () => {
     const privateKey = MlDsa44.fromPrf(Bytes.random(32))
     const publicKey = MlDsa44.getPublicKey({ privateKey })
