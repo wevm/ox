@@ -1,5 +1,11 @@
 # ox
 
+## 1.6.0
+
+### Minor Changes
+
+- [#350](https://github.com/wevm/ox/pull/350) [`7cabe8b`](https://github.com/wevm/ox/commit/7cabe8bcda8d54c4b63cb39f601ed77e586bd47e) Thanks [@jxom](https://github.com/jxom)! - Added `MlDsa44` for ML-DSA-44 signatures and included its WASM provider with `Secp256k1` in `ox/wasm`'s aggregate engine.
+
 ## 1.5.0
 
 ### Minor Changes
