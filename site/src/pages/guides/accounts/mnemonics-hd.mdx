@@ -1,0 +1,172 @@
+---
+description: Generate BIP-39 mnemonics and derive BIP-32 HD wallet keys.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Mnemonics & HD Wallets
+
+## Overview
+
+A [BIP-39 mnemonic phrase](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) is a
+list of words that is a representation of a seed, which can be used to derive the keys of a
+[BIP-32 Hierarchical Deterministic (HD) Wallet](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki).
+We can combine a mnemonic phrase (or seed) with an Ethereum-specific derivation path (e.g.
+`m/44'/60'/0'/0/0`) to derive a private key and its associated Ethereum address. The
+[`Mnemonic`](/api/Mnemonic) module handles phrases; the [`HdKey`](/api/HdKey) module handles
+the derived key tree.
+
+## Recipes
+
+### Generate a Random Mnemonic
+
+We can generate a random mnemonic phrase using [`Mnemonic.random`](/api/Mnemonic/random).
+
+```ts twoslash
+import { Mnemonic } from 'ox'
+
+const mnemonic = Mnemonic.random(Mnemonic.english)
+// @log: 'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+```
+
+Ox supports the following languages:
+
+| Language            | Export                        |
+| ------------------- | ----------------------------- |
+| English             | `Mnemonic.english`            |
+| Czech               | `Mnemonic.czech`              |
+| French              | `Mnemonic.french`             |
+| Italian             | `Mnemonic.italian`            |
+| Japanese            | `Mnemonic.japanese`           |
+| Korean              | `Mnemonic.korean`             |
+| Portuguese          | `Mnemonic.portuguese`         |
+| Simplified Chinese  | `Mnemonic.simplifiedChinese`  |
+| Spanish             | `Mnemonic.spanish`            |
+| Traditional Chinese | `Mnemonic.traditionalChinese` |
+
+### Derive a Private Key at a Path
+
+Derive a private key from a mnemonic phrase using
+[`Mnemonic.toPrivateKey`](/api/Mnemonic/toPrivateKey). This will use the default path of
+`m/44'/60'/0'/0/0`.
+
+```ts twoslash
+import { Mnemonic } from 'ox'
+
+const mnemonic = Mnemonic.random(Mnemonic.english)
+const privateKey = Mnemonic.toPrivateKey(mnemonic)
+```
+
+We can also specify a custom path using the [`Mnemonic.path`](/api/Mnemonic/path) function.
+
+```ts twoslash
+import { Mnemonic } from 'ox'
+
+const mnemonic = Mnemonic.random(Mnemonic.english)
+
+// [!code focus:start]
+const path = Mnemonic.path({ account: 1, index: 2 }) // `m/44'/60'/1'/0/2`
+const privateKey = Mnemonic.toPrivateKey(mnemonic, { path })
+
+// or, we can pass the path as a string
+const privateKey_2 = Mnemonic.toPrivateKey(mnemonic, {
+  path: "m/44'/60'/1'/0/2",
+})
+// [!code focus:end]
+```
+
+Mnemonic private keys are derived on the secp256k1 curve, so an address follows via
+[`Secp256k1.getPublicKey`](/api/Secp256k1/getPublicKey) and
+[`Address.fromPublicKey`](/api/Address/fromPublicKey) — see
+[Derive & Validate Addresses](/guides/accounts/addresses).
+
+### Derive Many Accounts (HD Paths)
+
+Convert the mnemonic to an HD key once with [`Mnemonic.toHdKey`](/api/Mnemonic/toHdKey), then
+derive one account per address index.
+
+```ts twoslash
+import { Address, Mnemonic } from 'ox'
+
+const mnemonic = Mnemonic.random(Mnemonic.english)
+const hdKey = Mnemonic.toHdKey(mnemonic)
+
+// [!code focus:start]
+const addresses = []
+for (let index = 0; index < 3; index++) {
+  const account = hdKey.derive(Mnemonic.path({ index }))
+  addresses.push(Address.fromPublicKey(account.publicKey))
+}
+// [!code focus:end]
+```
+
+Each `account` also exposes `privateKey`, `publicKey`, and extended keys — see the
+[`HdKey`](/api/HdKey) reference.
+
+### Restore an HD Key from a Seed or Extended Key
+
+An HD key does not have to come from a mnemonic. Restore one from a master seed with
+[`HdKey.fromSeed`](/api/HdKey/fromSeed), or from a serialized extended private key (`xpriv`)
+with [`HdKey.fromExtendedKey`](/api/HdKey/fromExtendedKey).
+
+```ts twoslash
+import { HdKey, Mnemonic } from 'ox'
+
+declare const xpriv: string
+
+// [!code focus:start]
+// From a master seed.
+const seed = Mnemonic.toSeed(
+  'test test test test test test test test test test test junk',
+)
+const hdKey = HdKey.fromSeed(seed)
+
+// From an extended private key.
+const hdKey_2 = HdKey.fromExtendedKey(xpriv)
+// [!code focus:end]
+
+const account = hdKey.derive(HdKey.path({ index: 0 }))
+```
+
+## Best Practices
+
+### Store the Phrase, Not the Keys
+
+Every account is re-derivable from the mnemonic, so the phrase is the single secret worth
+protecting. Never persist it in plaintext — encrypt derived keys at rest with a
+[JSON keystore](/guides/accounts/keystores).
+
+### Validate Before Deriving
+
+User-entered phrases should be checked with [`Mnemonic.validate`](/api/Mnemonic/validate)
+against the expected wordlist before derivation — a typo otherwise silently derives a
+different (empty) wallet.
+
+### Use Hardened Account Paths
+
+Stick to the BIP-44 layout that `Mnemonic.path`/`HdKey.path` produce (`m/44'/60'/account'/0/index`).
+Non-hardened variations of the same numbers derive entirely different keys and break
+interoperability with other wallets.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:at-sign"
+    title="Derive & Validate Addresses"
+    description="Turn derived keys into checksummed addresses."
+    to="/guides/accounts/addresses"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Encrypt Keys with Keystores"
+    description="Encrypt derived private keys at rest."
+    to="/guides/accounts/keystores"
+  />
+  <Card
+    icon="lucide:pen-tool"
+    title="Work with Secp256k1"
+    description="Sign and verify with the keys you derive."
+    to="/guides/crypto/secp256k1"
+  />
+</Cards>
