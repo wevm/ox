@@ -31,8 +31,6 @@ import * as x25519 from '../src/core/internal/x25519.js'
 import { engine as nodeEngine } from '../src/node/Engine.js'
 import { engine as wasmEngine } from '../src/wasm/Engine.js'
 import { engine as wasmKeystoreEngine } from '../src/wasm/Keystore.js'
-import { engine as wasmMlDsa44Engine } from '../src/wasm/MlDsa44.js'
-import { engine as wasmSecp256k1Engine } from '../src/wasm/Secp256k1.js'
 import { type Target, targets as wasmTargets } from '../wasm/targets.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -649,18 +647,13 @@ for (const [slot, primitives] of Object.entries(engineContract.primitives))
       throw new Error(`Missing benchmark for ${slot}.${primitive}`)
 
 const node = await nodeEngine()
-const [wasmAggregate, wasmKeystore, wasmMlDsa44, wasmSecp256k1] =
-  await Promise.all([
-    wasmEngine(),
-    wasmKeystoreEngine(),
-    wasmMlDsa44Engine(),
-    wasmSecp256k1Engine(),
-  ])
+const [wasmAggregate, wasmKeystore] = await Promise.all([
+  wasmEngine(),
+  wasmKeystoreEngine(),
+])
 const wasm = {
   ...wasmAggregate,
   Keystore: wasmKeystore,
-  MlDsa44: wasmMlDsa44,
-  Secp256k1: wasmSecp256k1,
 }
 const cRows = c()
 for (const benchmark of benchmarks) {
