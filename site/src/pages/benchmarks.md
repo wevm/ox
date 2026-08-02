@@ -77,4 +77,4 @@ the operation sometimes described as `AbiEvent.encodeTopics`.
 These results are a local snapshot, not a performance guarantee. CPU,
 JavaScript runtime, OpenSSL, WASM runtime, inputs, and background load can
 change both timings and rankings. For lower-level cryptographic measurements,
-see [WASM and engine benchmarks](/guides/engine#benchmarks).
+see [WASM and engine benchmarks](/guides/runtime/engines#benchmarks).

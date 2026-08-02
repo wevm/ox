@@ -1,0 +1,101 @@
+---
+description: Task-oriented guides for working with Ethereum primitives in Ox.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Guides
+
+## Overview
+
+Task-oriented guides for building with Ox. Each guide combines related modules into a
+complete workflow and links to the [API reference](/api) for deeper detail.
+
+New to Ox? Start with [Installation](/installation), then choose a guide below.
+
+<Cards>
+  <Card
+    icon="lucide:file-code-2"
+    title="ABIs & Contracts"
+    description="Parse ABIs, encode calls, and decode events, results, and reverts."
+    to="/guides/abi"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Account Abstraction"
+    description="Build ERC-4337 user operations, ERC-7821 batches, and ERC-8021 attributions."
+    to="/guides/account-abstraction"
+  />
+  <Card
+    icon="lucide:wallet"
+    title="Accounts & Keys"
+    description="Derive addresses, manage mnemonics and HD wallets, and encrypt keystores."
+    to="/guides/accounts"
+  />
+  <Card
+    icon="lucide:database"
+    title="Chain Data & State"
+    description="Decode blocks, logs, proofs, and ENS names, and override state for simulation."
+    to="/guides/chain-data"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Cryptography"
+    description="Sign, hash, encrypt, and verify with Ethereum's cryptographic primitives."
+    to="/guides/crypto"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Data & Encoding"
+    description="Work with Bytes and Hex, RLP, base encodings, JSON, and ether values."
+    to="/guides/data"
+  />
+  <Card
+    icon="lucide:circle-alert"
+    title="Error Handling"
+    description="Type, match, and walk the errors Ox functions throw."
+    to="/error-handling"
+  />
+  <Card
+    icon="lucide:network"
+    title="JSON-RPC & Providers"
+    description="Send type-safe JSON-RPC requests and work with EIP-1193 providers."
+    to="/guides/rpc"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Messages & Authentication"
+    description="Sign personal messages and typed data, authenticate with SIWE, and verify smart account signatures."
+    to="/guides/messages"
+  />
+  <Card
+    icon="lucide:gauge"
+    title="Runtime & Performance"
+    description="Swap crypto engines, tune WASM KZG, and manage caches and bundle size."
+    to="/guides/runtime"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Schemas & Validation"
+    description="Validate and transform Ethereum data with Zod schemas."
+    to="/guides/schemas"
+  />
+  <Card
+    icon="lucide:zap"
+    title="Tempo"
+    description="Construct, sign, and inspect Tempo protocol data."
+    to="/tempo/guides"
+  />
+  <Card
+    icon="lucide:send"
+    title="Transactions"
+    description="Build, sign, serialize, and inspect every Ethereum transaction type."
+    to="/guides/transactions"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="WebAuthn & Passkeys"
+    description="Register credentials, sign with passkeys, and derive secrets with PRF."
+    to="/guides/webauthn"
+  />
+</Cards>
