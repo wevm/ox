@@ -11,6 +11,8 @@ test('install and engine expose the same precise engine', () => {
     (input: Uint8Array) => Uint8Array
   >()
   expectTypeOf<Installed['Keystore']>().not.toHaveProperty('scrypt')
+  expectTypeOf<Installed['MlDsa44']>().not.toHaveProperty('randomSecretKey')
+  expectTypeOf<Installed['Secp256k1']>().not.toHaveProperty('randomSecretKey')
 })
 
 test('the WASM Engine namespace exposes synchronous core operations', () => {

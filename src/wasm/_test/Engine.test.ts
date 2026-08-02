@@ -10,7 +10,9 @@ describe('engine', () => {
         "Ed25519",
         "Hash",
         "Keystore",
+        "MlDsa44",
         "Mnemonic",
+        "Secp256k1",
         "X25519",
       ]
     `)
@@ -39,7 +41,9 @@ describe('install', () => {
         "Ed25519",
         "Hash",
         "Keystore",
+        "MlDsa44",
         "Mnemonic",
+        "Secp256k1",
         "X25519",
       ]
     `)
@@ -88,8 +92,20 @@ describe('install', () => {
           "Keystore": [
             "pbkdf2Sha256",
           ],
+          "MlDsa44": [
+            "getPublicKey",
+            "sign",
+            "verify",
+          ],
           "Mnemonic": [
             "toSeed",
+          ],
+          "Secp256k1": [
+            "getPublicKey",
+            "getSharedSecret",
+            "recoverPublicKey",
+            "sign",
+            "verify",
           ],
           "X25519": [
             "getPublicKey",

@@ -74,7 +74,10 @@ It supplies the following partial slots:
 
 - `Hash`: BLAKE3, HMAC-SHA256, Keccak256, RIPEMD-160, and SHA-256.
 - `Keystore`: synchronous PBKDF2-HMAC-SHA256.
+- `MlDsa44`: public-key derivation, signing, and verification.
 - `Mnemonic`: BIP-39 seed derivation.
+- `Secp256k1`: public-key derivation, shared-secret calculation, recovery,
+  signing, and verification.
 - `Ed25519`: public-key derivation, signing, verification, and private-key
   conversion to X25519.
 - `X25519`: public-key derivation and shared-secret calculation.
@@ -83,18 +86,7 @@ Other operations keep their current implementation, or use Ox's default when
 no earlier override exists. In particular, asynchronous KDFs remain on the
 default because wrapping synchronous WASM in a promise would not make it yield.
 
-An opt-in `Secp256k1` provider supplies public-key derivation, shared-secret
-calculation, recovery, signing, and verification. Random key generation remains
-host-backed. Its 44.7 kB gzip artifact is excluded from the aggregate engine:
-
-```ts twoslash
-import { Engine } from 'ox'
-import { Secp256k1 } from 'ox/wasm'
-
-await Engine.install({
-  Secp256k1: Secp256k1.engine(),
-})
-```
+Random key generation for `MlDsa44` and `Secp256k1` remains host-backed.
 
 The dedicated `ox/wasm/Keystore` provider also supplies synchronous scrypt.
 Install that provider explicitly. The aggregate engine excludes scrypt because
@@ -125,8 +117,8 @@ resolved modules atomically. `Hash.engine()` returns the raw `Hash` slot;
 **Benefits**
 
 - Runs in browsers, Node.js, and other runtimes with WebAssembly.
-- Accelerates hashes, key derivation, Ed25519, X25519, and opt-in Secp256k1 on
-  common runtimes.
+- Accelerates hashes, key derivation, Ed25519, ML-DSA-44, Secp256k1, and X25519
+  on common runtimes.
 - Keeps cryptographic calls synchronous after one asynchronous startup step.
 - Embeds the compiled module, with no separate WASM asset to host.
 - Clears copied secret inputs, staged outputs, and explicit workspaces after
@@ -317,18 +309,19 @@ engine. The columns count the primitives each provider or reference supplies:
 | `Ed25519`   | 6          | 6      | 3         | 4         | 4      |
 | `Hash`      | 5          | 5      | 3         | 5         | 5      |
 | `Keystore`  | 6          | 6      | 4         | 2         | 2      |
+| `MlDsa44`   | 4          | 4      | n/a       | 3         | 3      |
 | `Mnemonic`  | 1          | 1      | 1         | 1         | 1      |
 | `P256`      | 6          | 6      | 1         | n/a       | n/a    |
 | `Secp256k1` | 6          | 6      | n/a       | 5         | 5      |
 | `X25519`    | 3          | 3      | 2         | 2         | 2      |
-| **Total**   | **38**     | **38** | **14**    | **19**    | **19** |
+| **Total**   | **42**     | **42** | **14**    | **22**    | **22** |
 
 `n/a` means the provider does not implement a primitive in that slot. The
 harness never times Ox's fallback under another engine's name.
 The C reference compiles the same primitive wrappers, vendored sources, and
 target configuration as `ox/wasm` for the host. C covers every primitive
 supplied by WASM, but is not an Ox engine. The `ox/wasm` count includes the
-opt-in Keystore and Secp256k1 providers.
+opt-in Keystore scrypt provider.
 
 Local runs on an Apple M4 Max with Node.js 25.9.0 and Apple Clang 21.0.0 used
 50 ms warmups, 200 ms measurement budgets, and three repeats. The following

@@ -109,8 +109,8 @@ export * as Kzg from './Kzg.js'
  * WASM implementations of Ox's supported ML-DSA-44 primitives, backed by
  * [mldsa-native](https://github.com/pq-code-package/mldsa-native).
  *
- * This provider is opt-in because its embedded artifact is larger than the
- * modules installed by [`Engine.install`](/api/Engine/install).
+ * This provider is installed by [`Engine.install`](/api/Engine/install), or
+ * can be installed individually.
  *
  * @example
  * ```ts twoslash
@@ -150,8 +150,8 @@ export * as Mnemonic from './Mnemonic.js'
 /**
  * WASM implementations of deterministic Secp256k1 primitives.
  *
- * This provider is opt-in because its embedded libsecp256k1 artifact is larger
- * than the modules installed by [`Engine.install`](/api/Engine/install).
+ * This provider is installed by [`Engine.install`](/api/Engine/install), or
+ * can be installed individually.
  *
  * @example
  * ```ts twoslash
