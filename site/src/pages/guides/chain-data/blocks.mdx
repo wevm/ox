@@ -1,0 +1,131 @@
+---
+description: Convert RPC blocks, withdrawals, and transaction receipts into typed objects.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with Blocks & Receipts
+
+## Overview
+
+[`Block`](/api/Block), [`Withdrawal`](/api/Withdrawal), and
+[`TransactionReceipt`](/api/TransactionReceipt) convert between the hex-quantity RPC
+representation and typed objects with `bigint` quantities. Each module offers `fromRpc` for
+decoding node responses and `toRpc` for serializing back to the wire format.
+
+## Recipes
+
+### Convert an RPC Block to a Typed Object
+
+Fetch a block with `eth_getBlockByNumber` and pass the result to
+[`Block.fromRpc`](/api/Block/fromRpc).
+
+```ts twoslash
+import { Block, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const block = await transport
+  .request({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+  .then(Block.fromRpc)
+// @log: {
+// @log:   hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+// @log:   number: 19868020n,
+// @log:   size: 520n,
+// @log:   timestamp: 1662222222n,
+// @log:   ...
+// @log: }
+```
+
+`Block.fromRpc` returns `null` when the block is not found, and converts embedded transactions
+when the block was fetched with full transaction objects.
+
+### Read Consensus Withdrawals
+
+Post-Shanghai blocks embed validator withdrawals. `Block.fromRpc` converts the embedded
+`withdrawals` list automatically; use [`Withdrawal.fromRpc`](/api/Withdrawal/fromRpc) for
+standalone RPC values.
+
+```ts twoslash
+import { Withdrawal } from 'ox'
+
+const withdrawal = Withdrawal.fromRpc({
+  address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
+  amount: '0x620323',
+  index: '0x0',
+  validatorIndex: '0x1',
+})
+// @log: {
+// @log:   address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
+// @log:   amount: 6423331n,
+// @log:   index: 0,
+// @log:   validatorIndex: 1
+// @log: }
+```
+
+The `amount` is denominated in Gwei, as defined by the consensus specification.
+
+### Convert Receipts
+
+Fetch a receipt with `eth_getTransactionReceipt` and decode it with
+[`TransactionReceipt.fromRpc`](/api/TransactionReceipt/fromRpc), which also converts the
+receipt's embedded logs and maps `status` and `type` to their named variants.
+
+```ts twoslash
+import { RpcTransport, TransactionReceipt } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const receipt = await transport
+  .request({
+    method: 'eth_getTransactionReceipt',
+    params: [
+      '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+    ],
+  })
+  .then(TransactionReceipt.fromRpc)
+// @log: {
+// @log:   blockNumber: 19868015n,
+// @log:   gasUsed: 175034n,
+// @log:   status: 'success',
+// @log:   type: 'eip1559',
+// @log:   ...
+// @log: }
+```
+
+## Best Practices
+
+### Handle the `null` Case
+
+`eth_getBlockByNumber` and `eth_getTransactionReceipt` return `null` for unknown hashes and
+not-yet-mined transactions — the `fromRpc` functions preserve that `null` in their return type,
+so narrow before use.
+
+### Round-Trip with `toRpc`
+
+When persisting or forwarding chain data, serialize typed objects back to the wire format with
+`Block.toRpc`, `Withdrawal.toRpc`, and `TransactionReceipt.toRpc` instead of hand-rolling hex
+conversions.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:filter"
+    title="Query Logs, Filters & Bloom"
+    description="Query and decode the logs referenced by a receipt."
+    to="/guides/chain-data/logs-filters"
+  />
+  <Card
+    icon="lucide:search"
+    title="Parse & Inspect Transactions"
+    description="Convert RPC transactions and recover senders from raw payloads."
+    to="/guides/transactions/parse-inspect"
+  />
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Fetch blocks and receipts over raw JSON-RPC."
+    to="/guides/rpc/requests"
+  />
+</Cards>

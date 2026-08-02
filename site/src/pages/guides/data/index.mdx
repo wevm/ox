@@ -1,0 +1,87 @@
+---
+description: Ox's primitive data types and the codecs that move data between wire formats.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Data & Encoding
+
+## Overview
+
+Everything on Ethereum bottoms out in byte data. Ox represents it with two primitive types —
+[`Hex`](/api/Hex) and [`Bytes`](/api/Bytes) — and ships the codecs that move values between them
+and the wire: RLP for protocol serialization, Base64/Base58/Bech32m/CBOR for ecosystem interchange,
+plus bigint-safe JSON and lossless ether/gwei unit conversion.
+
+```ts twoslash
+import { Hex, Value } from 'ox'
+
+const amount = Value.fromEther('1.5')
+// @log: 1500000000000000000n
+
+const quantity = Hex.fromNumber(amount)
+// @log: '0x14d1120d7b160000'
+```
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base32 Coding"
+    description="Encode and decode raw BIP-173 base32 data."
+    to="/guides/data/base32"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Base58 Coding"
+    description="Handle Bitcoin-, IPFS-, and Solana-style identifiers."
+    to="/guides/data/base58"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Base64 Coding"
+    description="Encode payloads for data URLs, HTTP, and WebAuthn transport."
+    to="/guides/data/base64"
+  />
+  <Card
+    icon="lucide:at-sign"
+    title="Bech32m Coding"
+    description="Encode and verify checksummed, prefixed addresses (BIP-350)."
+    to="/guides/data/bech32m"
+  />
+  <Card
+    icon="lucide:package"
+    title="CBOR Coding"
+    description="Round-trip WebAuthn attestation and COSE payloads."
+    to="/guides/data/cbor"
+  />
+  <Card
+    icon="lucide:ruler"
+    title="CompactSize Coding"
+    description="Encode and decode Bitcoin wire-format varints."
+    to="/guides/data/compact-size"
+  />
+  <Card
+    icon="lucide:coins"
+    title="Format Ether & Gwei Values"
+    description="Parse user input to wei and format bigint values for display."
+    to="/guides/data/value"
+  />
+  <Card
+    icon="lucide:braces"
+    title="Serialize JSON Safely"
+    description="Stringify, parse, and canonicalize JSON with bigint support."
+    to="/guides/data/json"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="Instantiate, convert, and manipulate Ox's two primitive data types."
+    to="/guides/data/bytes-hex"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Work with RLP"
+    description="Encode and decode Recursive Length Prefix data."
+    to="/guides/data/rlp"
+  />
+</Cards>

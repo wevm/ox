@@ -1,0 +1,184 @@
+---
+description: Construct, sign, pack, and submit ERC-4337 user operations.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Build ERC-4337 User Operations
+
+:::info
+This guide is intended to be low-level. If you are looking for a high-level bundler and smart
+account client, check out [Viem's Account Abstraction guides](https://viem.sh/account-abstraction).
+:::
+
+## Overview
+
+[ERC-4337](https://eips.ethereum.org/EIPS/eip-4337) routes smart account transactions as "user
+operations" through bundlers and the EntryPoint contract. The
+[`UserOperation`](/ercs/erc4337/UserOperation) module constructs, hashes, signs, and packs user
+operations, [`EntryPoint`](/ercs/erc4337/EntryPoint) provides the ABIs and addresses for
+EntryPoint versions `0.6`–`0.9`, and [`UserOperationGas`](/ercs/erc4337/UserOperationGas) and
+[`UserOperationReceipt`](/ercs/erc4337/UserOperationReceipt) convert bundler RPC responses.
+
+## Recipes
+
+### Construct a User Operation
+
+Instantiate a user operation with `UserOperation.from`. The `callData` is what the smart account
+executes — typically an encoded [ERC-7821 batch](/guides/account-abstraction/erc-7821) or another
+account-specific `execute` call.
+
+```ts twoslash
+import { Value } from 'ox'
+import { UserOperation } from 'ox/erc4337'
+
+const userOperation = UserOperation.from({
+  callData: '0xdeadbeef',
+  callGasLimit: 300_000n,
+  maxFeePerGas: Value.fromGwei('20'),
+  maxPriorityFeePerGas: Value.fromGwei('2'),
+  nonce: 69n,
+  preVerificationGas: 100_000n,
+  sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+  verificationGasLimit: 100_000n,
+})
+```
+
+For a counterfactual (not yet deployed) account on EntryPoint `0.7`+, also set `factory` and
+`factoryData` so the EntryPoint can deploy the account on first use.
+
+### Compute the Hash & Sign Payload
+
+Compute the signing payload for a target chain and EntryPoint with
+`UserOperation.getSignPayload`, sign it, and attach the signature.
+
+```ts twoslash
+import { Secp256k1, Value } from 'ox'
+import { EntryPoint, UserOperation } from 'ox/erc4337'
+
+const userOperation = UserOperation.from({
+  callData: '0xdeadbeef',
+  callGasLimit: 300_000n,
+  maxFeePerGas: Value.fromGwei('20'),
+  maxPriorityFeePerGas: Value.fromGwei('2'),
+  nonce: 69n,
+  preVerificationGas: 100_000n,
+  sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+  verificationGasLimit: 100_000n,
+})
+
+const payload = UserOperation.getSignPayload(userOperation, {
+  chainId: 1,
+  entryPointAddress: EntryPoint.addressV07, // [!code hl]
+  entryPointVersion: '0.7', // [!code hl]
+})
+
+const signature = Secp256k1.sign({
+  payload,
+  privateKey: '0x...',
+})
+
+const userOperation_signed = UserOperation.from(userOperation, { signature })
+```
+
+The same value is the "user operation hash" bundlers and explorers use — compute it directly with
+`UserOperation.hash`. On EntryPoint `0.8`+ the payload is EIP-712 based; use
+`UserOperation.toTypedData` when signing with a wallet's `eth_signTypedData_v4`.
+
+### Pack for the EntryPoint
+
+EntryPoint `0.7`+ consumes the packed representation onchain. Convert a signed user operation
+with `UserOperation.toPacked`, and unpack contract data with `UserOperation.fromPacked`.
+
+```ts twoslash
+import { UserOperation } from 'ox/erc4337'
+
+declare const userOperation: UserOperation.UserOperation<'0.7', true>
+
+const packed = UserOperation.toPacked(userOperation) // [!code hl]
+
+// Recover the structured form from a packed user operation.
+const unpacked = UserOperation.fromPacked(packed)
+```
+
+`UserOperation.toInitCode` computes the packed `initCode` field on its own, including the special
+EIP-7702 `0x7702` factory convention.
+
+### Convert to & from RPC
+
+Bundler JSON-RPC methods exchange hex-quantity payloads. Convert with `UserOperation.toRpc` and
+submit via a [`RpcTransport`](/api/RpcTransport) typed with the
+[`RpcSchema.Bundler`](/ercs/erc4337/RpcSchema) schema.
+
+```ts twoslash
+import { RpcSchema, RpcTransport } from 'ox'
+import {
+  EntryPoint,
+  RpcSchema as RpcSchema_erc4337,
+  UserOperation,
+  UserOperationReceipt,
+} from 'ox/erc4337'
+
+declare const userOperation: UserOperation.UserOperation<'0.7', true>
+
+const transport = RpcTransport.fromHttp('https://bundler.example.com', {
+  schema: RpcSchema.from<RpcSchema_erc4337.Bundler<'0.7'>>(),
+})
+
+const userOpHash = await transport.request({
+  method: 'eth_sendUserOperation',
+  params: [UserOperation.toRpc(userOperation), EntryPoint.addressV07], // [!code hl]
+})
+
+const receipt = await transport.request({
+  method: 'eth_getUserOperationReceipt',
+  params: [userOpHash],
+})
+if (receipt) {
+  const { success, actualGasUsed } = UserOperationReceipt.fromRpc(receipt)
+}
+```
+
+Convert incoming payloads the other way with `UserOperation.fromRpc`, and gas estimates from
+`eth_estimateUserOperationGas` with `UserOperationGas.fromRpc`.
+
+## Best Practices
+
+### Pin the EntryPoint Version
+
+The hash — and therefore the signature — commits to the EntryPoint address, version, and chain ID.
+Use the `EntryPoint.addressV06`–`addressV09` constants and keep the `entryPointVersion` consistent
+across hashing, signing, and submission.
+
+### Sign After Gas Values Are Final
+
+All gas limits and fee fields are part of the signed hash. Estimate with
+`eth_estimateUserOperationGas` first; changing any field after signing invalidates the signature.
+
+### Prefer Typed Data on EntryPoint 0.8+
+
+`UserOperation.toTypedData` produces an EIP-712 definition, so wallet users see a structured,
+human-readable signing prompt instead of an opaque hash.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="Batch Calls with ERC-7821"
+    description="Encode the callData a smart account executes."
+    to="/guides/account-abstraction/erc-7821"
+  />
+  <Card
+    icon="lucide:sparkles"
+    title="Delegate with EIP-7702"
+    description="Sign authorizations that upgrade an EOA to a smart account."
+    to="/guides/transactions/eip-7702"
+  />
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Build, send, and parse raw JSON-RPC requests."
+    to="/guides/rpc/requests"
+  />
+</Cards>

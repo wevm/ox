@@ -1,0 +1,61 @@
+---
+description: Convert RPC chain data into typed blocks, logs, proofs, and state.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Chain Data & State
+
+## Overview
+
+Everything a node returns — blocks, receipts, logs, proofs — arrives as hex-encoded RPC objects.
+Ox's chain-data modules ([`Block`](/api/Block), [`TransactionReceipt`](/api/TransactionReceipt),
+[`Log`](/api/Log), [`Filter`](/api/Filter), [`AccountProof`](/api/AccountProof), and friends)
+convert between that wire format and typed JavaScript objects with a consistent `fromRpc`/`toRpc`
+pattern. Alongside them sit [`Ens`](/api/Ens) for name hashing, [`Bloom`](/api/Bloom) for log
+pre-checks, and [`StateOverrides`](/api/StateOverrides) /
+[`BlockOverrides`](/api/BlockOverrides) for simulation.
+
+```ts twoslash
+import { Block, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const block = await transport
+  .request({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+  .then(Block.fromRpc) // [!code hl]
+// @log: { number: 19868020n, timestamp: 1662222222n, ... }
+```
+
+<Cards>
+  <Card
+    icon="lucide:filter"
+    title="Query Logs, Filters & Bloom"
+    description="Build log filters, convert results, and pre-check bloom membership."
+    to="/guides/chain-data/logs-filters"
+  />
+  <Card
+    icon="lucide:at-sign"
+    title="Resolve ENS Names"
+    description="Normalize names and compute namehashes, labelhashes, and coin types."
+    to="/guides/chain-data/ens"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Simulate with State Overrides"
+    description="Override account state and block context for eth_call simulations."
+    to="/guides/chain-data/overrides"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Verify State & Account Proofs"
+    description="Convert eth_getProof results and build binary state trees."
+    to="/guides/chain-data/proofs"
+  />
+  <Card
+    icon="lucide:box"
+    title="Work with Blocks & Receipts"
+    description="Convert RPC blocks, withdrawals, and receipts into typed objects."
+    to="/guides/chain-data/blocks"
+  />
+</Cards>

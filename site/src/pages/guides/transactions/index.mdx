@@ -1,0 +1,80 @@
+---
+description: Construct, sign, serialize, and inspect every Ethereum transaction type with Ox.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Transactions
+
+## Overview
+
+Ox provides protocol-level primitives for every Ethereum transaction envelope type — from legacy
+transactions through [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) blobs and
+[EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) delegations. The
+[`TxEnvelope*`](/api/TransactionEnvelope) modules construct, sign, serialize, and deserialize
+envelopes locally, with no client required. Recipes end at the network boundary — hand the
+serialized payload to a JSON-RPC transport, or use a higher-level client like
+[Viem](https://viem.sh) when an application also needs to fill and track transactions.
+
+```ts twoslash
+import { Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
+
+// 1. Construct the envelope.
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+
+// 2. Sign over the envelope.
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip1559.getSignPayload(envelope),
+  privateKey: '0x...',
+})
+
+// 3. Serialize it, ready for `eth_sendRawTransaction`.
+const serialized = TxEnvelopeEip1559.serialize(envelope, { signature })
+```
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Take an envelope from construction to broadcast."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Choose an Envelope Type"
+    description="Compare Legacy, EIP-2930, EIP-1559, EIP-4844, and EIP-7702 envelopes."
+    to="/guides/transactions/envelope-types"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Delegate with EIP-7702"
+    description="Sign authorizations and attach delegations to transactions."
+    to="/guides/transactions/eip-7702"
+  />
+  <Card
+    icon="lucide:gauge"
+    title="Estimate Fees & Access Lists"
+    description="Work with fee history, gas prices, and access lists."
+    to="/guides/transactions/fees-access-lists"
+  />
+  <Card
+    icon="lucide:search"
+    title="Parse & Inspect Transactions"
+    description="Decode raw transactions and convert RPC data to typed objects."
+    to="/guides/transactions/parse-inspect"
+  />
+  <Card
+    icon="lucide:database"
+    title="Send Blob Transactions (EIP-4844)"
+    description="Pack data into blobs with KZG commitments and sidecars."
+    to="/guides/transactions/blobs"
+  />
+</Cards>

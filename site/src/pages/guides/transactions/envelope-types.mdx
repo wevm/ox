@@ -1,0 +1,192 @@
+---
+description: Pick the right Ethereum transaction envelope type for the job.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Choose an Envelope Type
+
+## Overview
+
+Ox supports the five core Ethereum transaction envelope types, each with a dedicated module.
+They share the same lifecycle functions (`from`, `getSignPayload`, `serialize`, `toRpc`), so
+switching types means changing which fields you supply. The generic
+[`TransactionEnvelope`](/api/TransactionEnvelope) module dispatches to the right type
+automatically, inferring it from the envelope's shape when `type` is omitted.
+
+| Module                                        | EIP                                                 | Type   | Fee fields                             | Adds                              |
+| --------------------------------------------- | --------------------------------------------------- | ------ | -------------------------------------- | --------------------------------- |
+| [`TxEnvelopeLegacy`](/api/TxEnvelopeLegacy)   | —                                                   | `0x00` | `gasPrice`                             | Original, pre-typed format        |
+| [`TxEnvelopeEip2930`](/api/TxEnvelopeEip2930) | [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) | `0x01` | `gasPrice`                             | `accessList`                      |
+| [`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) | [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) | `0x02` | `maxFeePerGas`, `maxPriorityFeePerGas` | Dynamic fee market                |
+| [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) | [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) | `0x03` | EIP-1559 fields + `maxFeePerBlobGas`   | `blobVersionedHashes`, `sidecars` |
+| [`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) | [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) | `0x04` | EIP-1559 fields                        | `authorizationList`               |
+
+## Recipes
+
+### Send a Legacy Transaction
+
+Use [`TxEnvelopeLegacy`](/api/TxEnvelopeLegacy) for chains or tooling that predate typed
+transactions. Legacy envelopes price gas with a single `gasPrice` field.
+
+```ts twoslash
+import { TxEnvelopeLegacy, Value } from 'ox'
+
+const envelope = TxEnvelopeLegacy.from({
+  chainId: 1,
+  gasPrice: Value.fromGwei('10'), // [!code hl]
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1'),
+})
+```
+
+Omitting `chainId` produces a pre-EIP-155 transaction that is replayable across chains — only
+do that deliberately.
+
+### Warm Storage with an EIP-2930 Access List
+
+Use [`TxEnvelopeEip2930`](/api/TxEnvelopeEip2930) to declare the addresses and storage slots a
+transaction will touch, pre-warming them at a discount.
+
+```ts twoslash
+import { TxEnvelopeEip2930, Value } from 'ox'
+
+const envelope = TxEnvelopeEip2930.from({
+  // [!code hl:start]
+  accessList: [
+    {
+      address: '0x1e0049783f008a0085193e00003d00cd54003c71',
+      storageKeys: [
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      ],
+    },
+  ],
+  // [!code hl:end]
+  chainId: 1,
+  gasPrice: Value.fromGwei('10'),
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1'),
+})
+```
+
+EIP-1559, EIP-4844, and EIP-7702 envelopes also accept `accessList` — see
+[Estimate Fees & Access Lists](/guides/transactions/fees-access-lists) for building them.
+
+### Pay Dynamic Fees with EIP-1559
+
+Use [`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) — the default choice on
+post-London networks. The sender caps total spend with `maxFeePerGas` and tips the block
+producer with `maxPriorityFeePerGas`.
+
+```ts twoslash
+import { TxEnvelopeEip1559, Value } from 'ox'
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  maxFeePerGas: Value.fromGwei('10'), // [!code hl]
+  maxPriorityFeePerGas: Value.fromGwei('1'), // [!code hl]
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+```
+
+See [Build, Sign & Send](/guides/transactions/build-sign-send) for the full lifecycle of this
+envelope.
+
+### Carry Blob Data with EIP-4844
+
+Use [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) to post data blobs (typically rollup batches).
+The envelope commits to its blobs through `blobVersionedHashes` and prices blob space with a
+separate `maxFeePerBlobGas` market.
+
+```ts twoslash
+import { TxEnvelopeEip4844, Value } from 'ox'
+
+const envelope = TxEnvelopeEip4844.from({
+  // [!code hl:start]
+  blobVersionedHashes: [
+    '0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09',
+  ],
+  maxFeePerBlobGas: Value.fromGwei('3'),
+  // [!code hl:end]
+  chainId: 1,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+})
+```
+
+Computing versioned hashes and sidecars requires a KZG implementation — see
+[Send Blob Transactions (EIP-4844)](/guides/transactions/blobs) for the complete flow.
+
+### Delegate Code with EIP-7702
+
+Use [`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) to set contract code on Externally Owned
+Accounts via a signed `authorizationList`.
+
+```ts twoslash
+import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+
+// Sign an authorization over the delegate contract.
+const authorization = Authorization.from({
+  address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  chainId: 1,
+  nonce: 40n,
+})
+const signature = Secp256k1.sign({
+  payload: Authorization.getSignPayload(authorization),
+  privateKey: '0x...',
+})
+
+const envelope = TxEnvelopeEip7702.from({
+  authorizationList: [Authorization.from(authorization, { signature })], // [!code hl]
+  chainId: 1,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1'),
+})
+```
+
+See [Delegate with EIP-7702](/guides/transactions/eip-7702) for authorization semantics and
+RPC conversion.
+
+## Best Practices
+
+### Default to EIP-1559
+
+Unless a transaction needs blobs, delegations, or targets a chain without the London fee
+market, use `TxEnvelopeEip1559`. Legacy and EIP-2930 envelopes overpay whenever `gasPrice` is
+set above the block's base fee plus a competitive tip.
+
+### Let the Envelope Shape Pick the Type
+
+When handling heterogeneous input, use the generic
+[`TransactionEnvelope.from`](/api/TransactionEnvelope/from): it infers `eip1559` from
+`maxFeePerGas`, `eip4844` from blob fields, `eip7702` from `authorizationList`, and so on —
+no manual `type` bookkeeping.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Take an envelope from construction to broadcast."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:badge-check"
+    title="Delegate with EIP-7702"
+    description="Sign authorizations and attach delegations to transactions."
+    to="/guides/transactions/eip-7702"
+  />
+  <Card
+    icon="lucide:database"
+    title="Send Blob Transactions (EIP-4844)"
+    description="Pack data into blobs with KZG commitments and sidecars."
+    to="/guides/transactions/blobs"
+  />
+</Cards>

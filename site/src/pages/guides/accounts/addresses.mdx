@@ -1,0 +1,128 @@
+---
+description: Derive, checksum, validate, and compare Ethereum addresses.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Derive & Validate Addresses
+
+## Overview
+
+An Ethereum address is the last 20 bytes of the keccak256 hash of an uncompressed secp256k1
+public key. The [`Address`](/api/Address) module derives, checksums, validates, and compares
+addresses; the [`PublicKey`](/api/PublicKey) module handles the public keys they are derived
+from.
+
+## Recipes
+
+### Derive an Address from a Private Key
+
+Extract the public key with [`Secp256k1.getPublicKey`](/api/Secp256k1/getPublicKey), then
+convert it to an address with [`Address.fromPublicKey`](/api/Address/fromPublicKey).
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+
+const privateKey = Secp256k1.randomPrivateKey()
+
+const publicKey = Secp256k1.getPublicKey({ privateKey })
+const address = Address.fromPublicKey(publicKey)
+```
+
+### Derive an Address from a Public Key
+
+When you already have a serialized public key — for example one recovered from a signature —
+instantiate it with [`PublicKey.from`](/api/PublicKey/from) before deriving the address.
+
+```ts twoslash
+import { Address, PublicKey } from 'ox'
+
+const publicKey = PublicKey.from(
+  '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+)
+const address = Address.fromPublicKey(publicKey)
+// @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+```
+
+Pass `{ checksum: true }` to return the [ERC-55](https://eips.ethereum.org/EIPS/eip-55)
+checksummed form instead of lowercase.
+
+### Checksum & Validate an Address
+
+Compute the ERC-55 mixed-case form with [`Address.checksum`](/api/Address/checksum), and check
+untrusted input with [`Address.validate`](/api/Address/validate) (returns `false`) or
+[`Address.assert`](/api/Address/assert) (throws).
+
+```ts twoslash
+import { Address } from 'ox'
+
+const checksummed = Address.checksum(
+  '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
+)
+// @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+
+const valid = Address.validate('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+// @log: true
+
+const invalid = Address.validate('0xdeadbeef')
+// @log: false
+```
+
+By default, mixed-case input is also verified against its checksum (`strict: true`). Pass
+`{ strict: false }` to accept any correctly-shaped 20-byte hex string. Use
+[`Address.from`](/api/Address/from) to convert a validated string into a typed `Address`.
+
+### Compare Addresses
+
+Use [`Address.isEqual`](/api/Address/isEqual) to compare addresses regardless of casing.
+
+```ts twoslash
+import { Address } from 'ox'
+
+const equal = Address.isEqual(
+  '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
+  '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+)
+// @log: true
+```
+
+## Best Practices
+
+### Compare with Address.isEqual, Not ===
+
+The same address can arrive lowercase, uppercase, or checksummed. Strict string equality
+produces false negatives; `Address.isEqual` does not.
+
+### Validate at the Boundary
+
+Run `Address.validate` (or `Address.assert`) on user input, RPC responses, and decoded
+calldata before storing or acting on an address — checksum verification catches most
+transcription errors.
+
+### Checksum for Display
+
+Store and compare addresses in lowercase, but render the `Address.checksum` form in UIs so
+users (and their wallets) can spot corruption.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Mnemonics & HD Wallets"
+    description="Derive private keys and addresses from mnemonic phrases."
+    to="/guides/accounts/mnemonics-hd"
+  />
+  <Card
+    icon="lucide:pen-tool"
+    title="Work with Secp256k1"
+    description="Create key pairs, sign payloads, and recover signers."
+    to="/guides/crypto/secp256k1"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Sign Personal Messages (EIP-191)"
+    description="Recover signer addresses from signed messages."
+    to="/guides/messages/personal-messages"
+  />
+</Cards>

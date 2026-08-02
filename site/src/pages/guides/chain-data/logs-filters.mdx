@@ -1,0 +1,140 @@
+---
+description: Build log filters, convert RPC logs, and pre-check membership with bloom filters.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Query Logs, Filters & Bloom
+
+## Overview
+
+[`Filter`](/api/Filter) expresses `eth_getLogs` queries in typed form, [`Log`](/api/Log) converts
+the results, and [`Bloom`](/api/Bloom) checks a block's `logsBloom` before you pay for a log
+query. Pair them with [`AbiEvent`](/api/AbiEvent) to build topics from Solidity event signatures.
+
+## Recipes
+
+### Build Log Filters
+
+Encode an event into topics with [`AbiEvent.encode`](/api/AbiEvent/encode), then serialize the
+filter for the wire with [`Filter.toRpc`](/api/Filter/toRpc).
+
+```ts twoslash
+import { AbiEvent, Filter, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+const { topics } = AbiEvent.encode(transfer)
+
+const filter = Filter.toRpc({
+  address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+  fromBlock: 19760235n,
+  toBlock: 19760240n,
+  topics,
+})
+
+const logs = await transport.request({
+  method: 'eth_getLogs',
+  params: [filter],
+})
+```
+
+The same RPC filter object works with `eth_newFilter` + `eth_getFilterChanges` for
+polling-based subscriptions.
+
+### Convert RPC Logs
+
+[`Log.fromRpc`](/api/Log/fromRpc) converts hex block numbers and indices into `bigint` and
+`number` values.
+
+```ts twoslash
+import { Log, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const logs = await transport.request({
+  method: 'eth_getLogs',
+  params: [
+    {
+      address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+      fromBlock: '0x12d846b',
+      toBlock: '0x12d8470',
+    },
+  ],
+})
+
+const converted = logs.map((log) => Log.fromRpc(log))
+// @log: [{
+// @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+// @log:   blockNumber: 19760236n,
+// @log:   logIndex: 271,
+// @log:   ...
+// @log: }]
+```
+
+To decode a log's `topics` and `data` into named event arguments, use
+[`AbiEvent.decode`](/api/AbiEvent/decode) — see
+[Work with Events & Logs](/guides/abi/events).
+
+### Pre-Check Membership with Bloom Filters
+
+Every block header carries a 256-byte `logsBloom`. [`Bloom.contains`](/api/Bloom/contains) tests
+whether an address or topic _may_ appear in the block's logs, letting you skip `eth_getLogs`
+calls for blocks that definitely contain nothing of interest.
+
+```ts twoslash
+import { Block, Bloom, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const block = await transport
+  .request({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+  .then(Block.fromRpc)
+
+const mayContain = Bloom.contains(
+  block!.logsBloom,
+  '0xef2d6d194084c2de36e0dabfce45d046b37d1106',
+)
+// @log: true
+```
+
+For repeated checks against the same bloom, use [`Bloom.prepare`](/api/Bloom/prepare) with
+[`Bloom.containsPrepared`](/api/Bloom/containsPrepared) to skip the per-call conversion.
+
+## Best Practices
+
+### Treat Bloom Hits as Maybes
+
+Bloom filters are probabilistic: a negative result is definitive, but a positive result may be a
+false positive. Always confirm a hit by fetching and decoding the actual logs.
+
+### Scope Filters Tightly
+
+Providers cap `eth_getLogs` ranges and result sizes. Constrain `address`, `topics`, and the block
+range, and paginate long backfills in fixed-size windows.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:radio"
+    title="Work with Events & Logs"
+    description="Decode log topics and data into named event arguments."
+    to="/guides/abi/events"
+  />
+  <Card
+    icon="lucide:box"
+    title="Work with Blocks & Receipts"
+    description="Convert the blocks and receipts that carry your logs."
+    to="/guides/chain-data/blocks"
+  />
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Send eth_getLogs and filter requests over raw JSON-RPC."
+    to="/guides/rpc/requests"
+  />
+</Cards>

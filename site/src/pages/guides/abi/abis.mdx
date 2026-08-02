@@ -1,0 +1,170 @@
+---
+description: Parse, format, and inspect ABIs, ABI items, and parameters.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with ABIs
+
+## Overview
+
+[`Abi`](/api/Abi) parses human-readable and JSON ABIs into typed objects, and
+[`AbiItem`](/api/AbiItem) and [`AbiParameter`](/api/AbiParameter) operate on individual items and
+parameters — extraction, formatting, signatures, and selectors. The `Solidity` module supplies
+companion constants (e.g. `Solidity.maxUint256`) and regexes for validating types and values.
+
+## Recipes
+
+### Use Human-Readable ABIs
+
+[`Abi.from`](/api/Abi/from) parses Solidity-style signatures into a fully typed JSON ABI — types
+are inferred at the type level, so downstream encoding and decoding stay type-safe.
+
+```ts twoslash
+import { Abi } from 'ox'
+
+const abi = Abi.from([
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'event Transfer(address indexed from, address indexed to, uint256 amount)',
+  'error InsufficientBalance(uint256 available, uint256 required)',
+])
+```
+
+Human-readable signatures support functions, events, errors, constructors, fallback/receive
+functions, structs, and bare parameters:
+
+```ts
+'function balanceOf(address owner) view returns (uint256)'
+'event Transfer(address indexed from, address indexed to, uint256 amount)'
+'error Unauthorized(address caller)'
+'constructor(address owner) payable'
+'fallback() external payable'
+'receive() external payable'
+'struct Account { address owner; uint256 balance; }'
+'address spender, uint256 amount'
+```
+
+Some syntax rules are enforced for parity between runtime parsing and type-level inference:
+whitespace matters (`'function name() returns (string)'`, not `'function name()returns(string)'`),
+semicolons are omitted, parameters may be named or unnamed, inline tuples map to `tuple`
+parameters, and struct signatures must be declared before the signature that uses them
+(recursive structs are not supported).
+
+### Parse a JSON ABI
+
+[`Abi.from`](/api/Abi/from) also accepts JSON ABIs (e.g. compiler output). Extract typed items
+with the per-type extractors, such as [`AbiFunction.fromAbi`](/api/AbiFunction/fromAbi).
+
+```ts twoslash
+import { Abi, AbiFunction } from 'ox'
+
+const abi = Abi.from([
+  {
+    type: 'function',
+    name: 'approve',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ type: 'bool' }],
+  },
+])
+
+const approve = AbiFunction.fromAbi(abi, 'approve')
+```
+
+Each item type has its own extractor — [`AbiEvent.fromAbi`](/api/AbiEvent/fromAbi),
+[`AbiError.fromAbi`](/api/AbiError/fromAbi), and
+[`AbiConstructor.fromAbi`](/api/AbiConstructor/fromAbi).
+
+### Format Back to Human-Readable
+
+[`Abi.format`](/api/Abi/format) converts a JSON ABI back into human-readable signatures — useful
+for display, logging, or storing ABIs compactly.
+
+```ts twoslash
+import { Abi } from 'ox'
+
+const abi = Abi.from([
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'event Transfer(address indexed from, address indexed to, uint256 amount)',
+])
+
+const formatted = Abi.format(abi)
+// @log: [
+// @log:   'function approve(address spender, uint256 amount) returns (bool)',
+// @log:   'event Transfer(address indexed from, address indexed to, uint256 amount)',
+// @log: ]
+```
+
+Single items and parameters format the same way with
+[`AbiItem.format`](/api/AbiItem/format) and [`AbiParameter.format`](/api/AbiParameter/format).
+
+### Extract Items & Compute Selectors
+
+[`AbiItem.fromAbi`](/api/AbiItem/fromAbi) extracts an item by name — or by selector, which is
+handy for reverse-lookups from calldata or log topics.
+[`AbiItem.getSelector`](/api/AbiItem/getSelector) and
+[`AbiItem.getSignatureHash`](/api/AbiItem/getSignatureHash) compute the identifiers themselves.
+
+```ts twoslash
+import { Abi, AbiItem } from 'ox'
+
+const abi = Abi.from([
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'event Transfer(address indexed from, address indexed to, uint256 amount)',
+])
+
+const approve = AbiItem.fromAbi(abi, 'approve')
+
+const signature = AbiItem.getSignature(approve)
+// @log: 'approve(address,uint256)'
+
+const selector = AbiItem.getSelector(approve)
+// @log: '0x095ea7b3'
+
+const topic = AbiItem.getSignatureHash(abi, 'Transfer')
+// @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+
+const bySelector = AbiItem.fromAbi(abi, '0x095ea7b3')
+```
+
+Functions and errors are identified by the first 4 bytes of the signature hash (the selector);
+events are identified by the full 32-byte signature hash in `topics[0]`.
+
+## Best Practices
+
+### Keep ABIs Statically Analyzable
+
+Type inference only works when the ABI is a literal in source (or generated as one). ABIs parsed
+from runtime strings or fetched JSON widen to generic types — encoding still works, but you lose
+compile-time checking of names and arguments.
+
+### Prefer Human-Readable ABIs in Source
+
+They diff cleanly, carry parameter names, and parse to the same JSON ABI. Reserve raw JSON for
+ABIs consumed directly from compiler artifacts.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Work with Function Calls"
+    description="Encode calldata for reads and writes, and decode results and inputs."
+    to="/guides/abi/function-calls"
+  />
+  <Card
+    icon="lucide:radio"
+    title="Work with Events & Logs"
+    description="Filter logs by topic and decode indexed and non-indexed arguments."
+    to="/guides/abi/events"
+  />
+  <Card
+    icon="lucide:rocket"
+    title="Deploy Contracts & Compute Addresses"
+    description="Encode constructor calldata and precompute CREATE and CREATE2 addresses."
+    to="/guides/abi/deployment"
+  />
+</Cards>

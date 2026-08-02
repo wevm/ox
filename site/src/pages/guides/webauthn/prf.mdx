@@ -1,0 +1,204 @@
+---
+description: Derive signing and encryption keys from WebAuthn PRF outputs.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Derive Secrets with PRF
+
+## Overview
+
+The WebAuthn [PRF extension](https://w3c.github.io/webauthn/#prf-extension) evaluates a
+pseudo-random function bound to a credential, returning a 32-byte output for a given input. The
+same credential and input always reproduce the same output, which makes it usable as deterministic
+key material.
+
+The [`Prf`](/api/Prf) module builds PRF inputs ("tags"), [`WebAuthn`](/api/WebAuthn) requests
+outputs from a credential, and [`Secp256k1`](/api/Secp256k1), [`Ed25519`](/api/Ed25519),
+[`MlDsa44`](/api/MlDsa44), and [`AesGcm`](/api/AesGcm) each expose a `fromPrf` function that
+derives an independent key from the same output using a fixed derivation domain.
+
+:::warning
+Treat PRF outputs and derived keys as secrets. Do not serialize or send the raw WebAuthn
+credential or response.
+
+PRF-derived keys are software keys. Code on any origin allowed to use the same RP ID can request
+the same output after user verification.
+:::
+
+## Recipes
+
+### Configure a PRF Tag & Request Outputs
+
+Encode an application-owned PRF input with [`Prf.tag`](/api/Prf/tag) and pass it when creating or
+requesting a credential. Using the same tag with the same credential reproduces the output.
+
+```ts twoslash
+import { Prf, WebAuthn } from 'ox'
+
+// Register a credential with PRF evaluation enabled.
+const credential = await WebAuthn.createCredential({
+  name: 'Example',
+  prf: Prf.tag('account.1'), // [!code hl]
+})
+
+// Later — reproduce the same 32-byte output from the stored credential.
+const { prf } = await WebAuthn.getCredential({
+  credentialId: credential.id,
+  prf: Prf.tag('account.1'), // [!code hl]
+})
+```
+
+Passing `prf: true` instead of a tag uses the stable default input `ox.webauthn.prf.v1`. Tags are
+public identifiers — store them alongside the credential metadata, not as secrets.
+
+### Sign Ethereum Transactions with a Passkey-Derived Key
+
+Derive a secp256k1 private key with [`Secp256k1.fromPrf`](/api/Secp256k1/fromPrf) and use it like
+any other Ethereum key — here, to sign an EIP-1559 transaction envelope.
+
+```ts twoslash
+import { Secp256k1, TxEnvelopeEip1559, Value, WebAuthn } from 'ox'
+
+const { prf } = await WebAuthn.getCredential({
+  credentialId: 'oZ48...',
+  prf: true,
+})
+
+const privateKey = Secp256k1.fromPrf(prf) // [!code hl]
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 0n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('0.1'),
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip1559.getSignPayload(envelope),
+  privateKey,
+})
+
+const serialized = TxEnvelopeEip1559.serialize(envelope, { signature })
+```
+
+Broadcast `serialized` with `eth_sendRawTransaction` — see
+[Build, Sign & Send](/guides/transactions/build-sign-send).
+
+### Derive an Ed25519 Key
+
+Derive an Ed25519 private key with [`Ed25519.fromPrf`](/api/Ed25519/fromPrf) for off-chain
+signing (session tokens, sync payloads, non-EVM chains).
+
+```ts twoslash
+import { Ed25519, WebAuthn } from 'ox'
+
+const { prf } = await WebAuthn.getCredential({
+  credentialId: 'oZ48...',
+  prf: true,
+})
+
+const privateKey = Ed25519.fromPrf(prf) // [!code hl]
+const publicKey = Ed25519.getPublicKey({ privateKey })
+
+const signature = Ed25519.sign({
+  payload: '0xdeadbeef',
+  privateKey,
+})
+```
+
+### Derive a Post-Quantum Key
+
+Derive an ML-DSA-44 (FIPS 204) private key with [`MlDsa44.fromPrf`](/api/MlDsa44/fromPrf) to sign
+with a post-quantum scheme.
+
+```ts twoslash
+import { MlDsa44, WebAuthn } from 'ox'
+
+const { prf } = await WebAuthn.getCredential({
+  credentialId: 'oZ48...',
+  prf: true,
+})
+
+const privateKey = MlDsa44.fromPrf(prf) // [!code hl]
+const publicKey = MlDsa44.getPublicKey({ privateKey })
+
+const signature = MlDsa44.sign({
+  payload: '0xdeadbeef',
+  privateKey,
+})
+
+const verified = MlDsa44.verify({
+  payload: '0xdeadbeef',
+  publicKey,
+  signature,
+})
+// @log: true
+```
+
+### Encrypt User Data
+
+Derive an AES-256-GCM key with [`AesGcm.fromPrf`](/api/AesGcm/fromPrf) to encrypt data that only
+the passkey holder can decrypt. Unlike the signing variants, `AesGcm.fromPrf` is **async** — it
+returns a non-extractable Web Crypto `CryptoKey`.
+
+```ts twoslash
+import { AesGcm, Hex, WebAuthn } from 'ox'
+
+const { prf } = await WebAuthn.getCredential({
+  credentialId: 'oZ48...',
+  prf: true,
+})
+
+const key = await AesGcm.fromPrf(prf) // [!code hl]
+
+const secret = Hex.fromString('i am a secret message')
+
+const encrypted = await AesGcm.encrypt(secret, key)
+const decrypted = await AesGcm.decrypt(encrypted, key)
+// @log: Hex.fromString('i am a secret message')
+```
+
+## Best Practices
+
+### Namespace Tags per Purpose
+
+Use one tag per account or feature (e.g. `account.1`, `backup.v2`) so keys stay independent and
+rotatable. Each `fromPrf` module already applies its own derivation domain, so the same output
+safely feeds different algorithms.
+
+### Re-Derive Instead of Persisting
+
+PRF outputs are reproducible on demand after user verification. Re-derive keys when needed rather
+than storing private keys, and keep derived material out of logs, storage, and analytics.
+
+### Plan for Credential Loss
+
+A PRF output is bound to a single credential — losing the passkey loses every key derived from it.
+Register a backup credential or escrow encrypted recovery material before deriving long-lived keys.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:fingerprint"
+    title="Register & Authenticate Credentials"
+    description="Run registration and login ceremonies, and verify them on a server."
+    to="/guides/webauthn/credentials"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Work with AES-GCM"
+    description="Derive keys from passwords and encrypt arbitrary data."
+    to="/guides/crypto/encryption"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Work with Secp256k1"
+    description="Create key pairs, sign payloads, and recover signers."
+    to="/guides/crypto/secp256k1"
+  />
+</Cards>

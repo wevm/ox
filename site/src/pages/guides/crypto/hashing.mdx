@@ -1,0 +1,117 @@
+---
+description: Hash data with keccak256, SHA-256, RIPEMD-160, HMAC, and BLAKE3.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Hash Data
+
+## Overview
+
+[`Hash`](/api/Hash) computes the digests Ethereum and its ecosystem rely on: keccak256 for
+addresses, selectors, and sign payloads, plus SHA-256, RIPEMD-160, HMAC-SHA256, and BLAKE3.
+Every function accepts `Hex` or `Bytes` and returns the same format it was given. The default
+implementation is the audited [noble-hashes](https://github.com/paulmillr/noble-hashes)
+library; a faster backend can be installed via [engines](/guides/runtime/engines).
+
+## Recipes
+
+### Hash with Keccak256
+
+[`Hash.keccak256`](/api/Hash/keccak256) is Ethereum's canonical hash — use it for sign
+payloads, event topics, and anything consumed onchain.
+
+```ts twoslash
+import { Hash, Hex } from 'ox'
+
+const hash = Hash.keccak256(Hex.fromString('hello world')) // [!code hl]
+// @log: '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
+```
+
+Pass `{ as: 'Bytes' }` to get a `Uint8Array` regardless of the input format.
+
+### Hash with SHA-256 and RIPEMD-160
+
+[`Hash.sha256`](/api/Hash/sha256) and [`Hash.ripemd160`](/api/Hash/ripemd160) cover the
+precompile-backed hashes (addresses `0x02` and `0x03`) and Bitcoin-style key hashing.
+
+```ts twoslash
+import { Hash } from 'ox'
+
+const sha = Hash.sha256('0xdeadbeef')
+// @log: '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
+
+const ripemd = Hash.ripemd160('0xdeadbeef')
+// @log: '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
+```
+
+### Compute HMAC and BLAKE3
+
+[`Hash.hmac256`](/api/Hash/hmac256) produces keyed HMAC-SHA256 digests — the standard tool for
+deriving keys from shared secrets. [`Hash.blake3`](/api/Hash/blake3) is a fast modern hash for
+content addressing and checksums.
+
+```ts twoslash
+import { Hash, Hex } from 'ox'
+
+const mac = Hash.hmac256(Hex.fromString('secret-key'), '0xdeadbeef') // [!code hl]
+
+const digest = Hash.blake3('0xdeadbeef')
+// @log: '0x53147f3ce49ed4f60dfa5b9654c36ba6103c11f5737df3dabd4cbd296c4161bd'
+```
+
+### Hash Incrementally
+
+For streamed or chunked data, the `create*` variants ([`Hash.createKeccak256`](/api/Hash/createKeccak256),
+[`Hash.createSha256`](/api/Hash/createSha256), [`Hash.createRipemd160`](/api/Hash/createRipemd160),
+[`Hash.createHmac256`](/api/Hash/createHmac256), [`Hash.createBlake3`](/api/Hash/createBlake3))
+return a stateful hasher that absorbs any number of chunks.
+
+```ts twoslash
+import { Hash } from 'ox'
+
+const hasher = Hash.createKeccak256()
+hasher.update('0xdead')
+hasher.update('0xbeef')
+
+const hash = hasher.digest() // [!code hl]
+// @log: '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1'
+```
+
+`digest` consumes the state — call `clone()` first to branch several digests from the same
+prefix.
+
+## Best Practices
+
+### Use keccak256 for Anything Onchain
+
+Addresses, function selectors, event topics, and EIP-191/EIP-712 sign payloads are all
+keccak256. Reach for SHA-256 only when a spec (WebAuthn, P256, precompiles) demands it.
+
+### Validate Digest Inputs
+
+When accepting a "hash" from external input, [`Hash.validate`](/api/Hash/validate) checks that
+the value is well-formed 32-byte hex before you use it as a sign payload.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Work with Bytes & Hex"
+    description="Instantiate and convert the values you hash."
+    to="/guides/data/bytes-hex"
+  />
+  <Card
+    icon="lucide:key"
+    title="Work with Secp256k1"
+    description="Sign the keccak256 digests you compute."
+    to="/guides/crypto/secp256k1"
+  />
+  <Card
+    icon="lucide:cpu"
+    title="WASM & Engines"
+    description="Swap in faster hash implementations."
+    to="/guides/runtime/engines"
+  />
+</Cards>

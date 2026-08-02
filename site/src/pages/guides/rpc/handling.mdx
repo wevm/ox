@@ -1,0 +1,113 @@
+---
+description: Handle incoming JSON-RPC requests and respond with typed results and errors.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Serve & Handle RPC Requests
+
+## Overview
+
+On the serving side of JSON-RPC — an API route, a service worker, or an
+[EIP-1193 Provider `request` handler](/api/Provider/from) in a Wallet —
+[`RpcResponse.from`](/api/RpcResponse/from) builds spec-compliant response objects for incoming
+[`RpcRequest`](/api/RpcRequest)s.
+
+## Recipes
+
+### Handle Requests in a Server or Worker
+
+Match on `request.method`, answer what you can locally, and proxy the rest to an upstream node.
+Passing `{ request }` fills the response's `id` and `jsonrpc` properties from the request.
+
+```ts twoslash
+import { RpcRequest, RpcResponse, RpcSchema } from 'ox'
+
+const accounts = [
+  '0xd2135CfB216b74109775236E36d4b433F1DF507B',
+  '0x0D44f617435088c947F00B31160f64b074e412B4',
+] as const
+
+async function handleRequest(request: RpcRequest.RpcRequest<RpcSchema.Eth>) {
+  if (request.method === 'eth_accounts') {
+    return RpcResponse.from({ result: accounts }, { request }) // [!code hl]
+  }
+  if (request.method === 'eth_chainId') {
+    return RpcResponse.from({ result: '0x1' }, { request }) // [!code hl]
+  }
+
+  // Fall back to an upstream node for everything else.
+  return await fetch('https://1.rpc.thirdweb.com', {
+    body: JSON.stringify(request),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((res) => res.json())
+    .then((res) => RpcResponse.from(res))
+}
+```
+
+The `RpcSchema.Eth` annotation narrows `request.method` and types each `result` against the
+method's return type.
+
+### Return Typed Errors
+
+[`RpcResponse`](/api/RpcResponse) exports an error class for every JSON-RPC error code (see
+[RpcResponse errors](/api/RpcResponse/errors)). Throw them inside your handler and convert
+anything caught with [`RpcResponse.parseError`](/api/RpcResponse/parseError) before responding.
+
+```ts twoslash
+import { RpcRequest, RpcResponse, RpcSchema } from 'ox'
+
+function handleRequest(request: RpcRequest.RpcRequest<RpcSchema.Eth>) {
+  try {
+    if (request.method !== 'eth_chainId')
+      throw new RpcResponse.MethodNotSupportedError() // [!code hl]
+    return RpcResponse.from({ result: '0x1' }, { request })
+  } catch (error) {
+    const { code, message } = RpcResponse.parseError(error) // [!code hl]
+    return RpcResponse.from({ error: { code, message } }, { request }) // [!code hl]
+  }
+}
+```
+
+`RpcResponse.parseError` maps unknown exceptions to
+[`RpcResponse.InternalError`](/api/RpcResponse/errors) (code `-32603`), so callers always receive
+a structured JSON-RPC error object.
+
+## Best Practices
+
+### Always Echo the Request `id`
+
+JSON-RPC clients correlate responses by `id`. Pass `{ request }` to `RpcResponse.from` instead of
+filling `id` and `jsonrpc` by hand.
+
+### Respond with JSON-RPC Errors, Not Exceptions
+
+A thrown exception terminates the transport; a JSON-RPC error keeps the session alive and tells
+the client what went wrong. Map failures to the typed error classes and their well-known codes.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Build request objects, send them over HTTP, and parse responses."
+    to="/guides/rpc/requests"
+  />
+  <Card
+    icon="lucide:plug"
+    title="Use EIP-1193 Providers"
+    description="Serve your handler behind an EIP-1193 provider interface."
+    to="/guides/rpc/providers"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Validate with Zod"
+    description="Validate untrusted JSON-RPC input with runtime schemas."
+    to="/guides/schemas/zod"
+  />
+</Cards>

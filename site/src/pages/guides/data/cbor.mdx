@@ -1,0 +1,66 @@
+---
+description: Encode and decode CBOR payloads such as WebAuthn attestation data.
+---
+
+import { Card, Cards } from 'vocs'
+
+# CBOR Coding
+
+## Overview
+
+[`Cbor`](/api/Cbor) round-trips JavaScript values through the Concise Binary Object
+Representation (RFC 8949) — the serialization behind WebAuthn attestation objects, COSE keys,
+and IPFS/IPLD blocks.
+
+## Recipes
+
+### Encode & Decode Values
+
+[`Cbor.encode`](/api/Cbor/encode) serializes objects, arrays, and primitives;
+[`Cbor.decode`](/api/Cbor/decode) recovers them.
+
+```ts twoslash
+import { Cbor } from 'ox'
+
+const encoded = Cbor.encode({ foo: 'bar', baz: [1, 2, 3] })
+// @log: '0xa263666f6f636261726362617a83010203'
+const decoded = Cbor.decode(encoded)
+// @log: { foo: 'bar', baz: [1, 2, 3] }
+```
+
+### Choose the Output Type
+
+Pass `{ as: 'Bytes' }` to encode straight to a `Uint8Array` when the payload feeds an API that
+expects raw bytes rather than hex.
+
+```ts twoslash
+import { Cbor } from 'ox'
+
+const bytes = Cbor.encode({ alg: -7 }, { as: 'Bytes' }) // [!code hl]
+// @log: Uint8Array [161, 99, 97, 108, 103, 38]
+```
+
+## Best Practices
+
+### Decode Before You Trust
+
+CBOR from an authenticator or a network peer is untrusted input. Decode it, then validate the
+shape of the result — decoding succeeding says nothing about the payload matching the structure
+your code expects.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:fingerprint"
+    title="Register & Authenticate Credentials"
+    description="Work with WebAuthn's CBOR-encoded attestation data."
+    to="/guides/webauthn/credentials"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Work with RLP"
+    description="Ethereum's own serialization format for nested byte data."
+    to="/guides/data/rlp"
+  />
+</Cards>

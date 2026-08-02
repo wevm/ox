@@ -1,0 +1,87 @@
+---
+description: Signing curves, hashes, and ciphers for Ethereum — audited and tree-shakable.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Cryptography
+
+## Overview
+
+The signing curves, hashes, and ciphers Ethereum (and its ecosystem) runs on — audited
+implementations, tree-shakable. Modules such as [`Secp256k1`](/api/Secp256k1),
+[`P256`](/api/P256), and [`Hash`](/api/Hash) expose stateless functions that accept and return
+`Hex` or `Bytes`. Heavy algorithms (BLS12-381, ML-DSA, some hashes) can be backed by pluggable
+[engines](/guides/runtime/engines) such as WASM or native Node.js crypto.
+
+```ts twoslash
+import { Hash, Hex, Secp256k1 } from 'ox'
+
+declare const privateKey: Hex.Hex
+
+const payload = Hash.keccak256(Hex.fromString('agree to terms'))
+// @log: '0x6f7a…b21c'
+
+const signature = Secp256k1.sign({ payload, privateKey })
+// @log: { r: '0x1c34…', s: '0x4f8d…', yParity: 0 }
+
+const signer = Secp256k1.recoverAddress({ payload, signature })
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
+```
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="BLS Signatures & Aggregation"
+    description="Sign, verify, and aggregate BLS12-381 signatures and public keys."
+    to="/guides/crypto/bls"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Convert Signature Formats"
+    description="Move signatures between hex, bytes, DER, legacy, RPC, and tuple forms."
+    to="/guides/crypto/signatures"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Ed25519 & X25519"
+    description="Sign with Ed25519 and derive shared secrets with X25519."
+    to="/guides/crypto/ed25519-x25519"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Hash Data"
+    description="keccak256, SHA-256, RIPEMD-160, HMAC, BLAKE3, and incremental hashing."
+    to="/guides/crypto/hashing"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Post-Quantum Signatures (ML-DSA)"
+    description="Generate keys, sign, and verify with ML-DSA-44 (FIPS 204)."
+    to="/guides/crypto/ml-dsa"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Work with AES-GCM"
+    description="Derive keys from passwords and encrypt arbitrary data."
+    to="/guides/crypto/encryption"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Work with P256"
+    description="Key pairs, signatures, recovery, and ECDH on the NIST P256 curve."
+    to="/guides/crypto/p256"
+  />
+  <Card
+    icon="lucide:key"
+    title="Work with Secp256k1"
+    description="Sign, verify, and recover on Ethereum's primary curve."
+    to="/guides/crypto/secp256k1"
+  />
+  <Card
+    icon="lucide:globe"
+    title="Work with WebCryptoP256"
+    description="Non-extractable P256 keys via the Web Crypto API."
+    to="/guides/crypto/webcrypto-p256"
+  />
+</Cards>

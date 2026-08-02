@@ -1,0 +1,135 @@
+---
+description: Encode and decode ERC-7821 batched execution calls.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Batch Calls with ERC-7821
+
+## Overview
+
+[ERC-7821](https://eips.ethereum.org/EIPS/eip-7821) is a minimal interface —
+`execute(bytes32 mode, bytes executionData)` — that smart accounts expose to execute a batch of
+calls atomically. The [`Calls`](/ercs/erc7821/Calls) module encodes and decodes the
+`executionData` payload, and [`Execute`](/ercs/erc7821/Execute) produces complete `execute`
+function data with the correct mode.
+
+## Recipes
+
+### Encode a Batch of Calls
+
+Encode an array of `{ to, value, data }` calls into ERC-7821 `executionData` with `Calls.encode`.
+
+```ts twoslash
+import { Calls } from 'ox/erc7821'
+
+const executionData = Calls.encode([
+  {
+    data: '0xdeadbeef',
+    to: '0xcafebabecafebabecafebabecafebabecafebabe',
+    value: 1n,
+  },
+  {
+    data: '0xcafebabe',
+    to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    value: 2n,
+  },
+])
+```
+
+`value` and `data` are optional and default to `0n` and `0x`. This is only the `executionData`
+argument — see the next recipe for complete `execute` calldata.
+
+### Encode an `execute` Payload
+
+Produce the full calldata for the account's `execute` function with `Execute.encodeData`. The
+mode is selected automatically based on whether `opData` is present.
+
+```ts twoslash
+import { Execute } from 'ox/erc7821'
+
+const data = Execute.encodeData([
+  {
+    data: '0xcafebabe',
+    to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    value: 1n,
+  },
+])
+
+// With account-defined authorization data (`opData` mode).
+const dataWithOpData = Execute.encodeData(
+  [
+    {
+      data: '0xcafebabe',
+      to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      value: 1n,
+    },
+  ],
+  { opData: '0xdeadbeef' },
+)
+```
+
+Use the resulting data as a transaction's `data` field, or as the `callData` of an
+[ERC-4337 user operation](/guides/account-abstraction/user-operations).
+
+### Decode Incoming Executions
+
+Recover the calls (and optional `opData`) from `execute` calldata with `Execute.decodeData` — for
+example inside a wallet, simulator, or indexer inspecting a batch.
+
+```ts twoslash
+import { Hex } from 'ox'
+import { Execute } from 'ox/erc7821'
+
+// Calldata for `execute(bytes32,bytes)` (eg. from a transaction request).
+declare const data: Hex.Hex
+
+const { calls, opData } = Execute.decodeData(data) // [!code hl]
+// @log: {
+// @log:   calls: [
+// @log:     {
+// @log:       data: '0xcafebabe',
+// @log:       to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+// @log:       value: 1n,
+// @log:     },
+// @log:   ],
+// @log: }
+```
+
+For the "batch of batches" mode, use `Execute.decodeBatchOfBatchesData` (and
+`Execute.encodeBatchOfBatchesData` to produce it).
+
+## Best Practices
+
+### Batches Are Ordered and Atomic
+
+ERC-7821 accounts execute calls in order and revert the whole batch if any call fails. Sequence
+dependent calls (approve → swap) accordingly, and do not assume partial execution.
+
+### Treat `opData` as Account-Defined
+
+The meaning of `opData` (signatures, paymaster data, nonces) is defined by the account
+implementation, not the standard. Encode exactly what the target account expects.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:box"
+    title="Build ERC-4337 User Operations"
+    description="Use batched calldata as a user operation's callData."
+    to="/guides/account-abstraction/user-operations"
+  />
+  <Card
+    icon="lucide:qr-code"
+    title="Attribute Calldata with ERC-8021"
+    description="Append and parse entity attribution codes on transaction calldata."
+    to="/guides/account-abstraction/erc-8021"
+  />
+  <Card
+    icon="lucide:file-code-2"
+    title="Work with Function Calls"
+    description="Encode calldata and decode results with ABI functions."
+    to="/guides/abi/function-calls"
+  />
+</Cards>

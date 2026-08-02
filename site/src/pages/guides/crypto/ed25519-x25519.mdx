@@ -1,0 +1,123 @@
+---
+description: Sign with Ed25519 and derive shared secrets with X25519.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Ed25519 & X25519
+
+## Overview
+
+[`Ed25519`](/api/Ed25519) provides EdDSA signatures and [`X25519`](/api/X25519) provides
+Diffie-Hellman key agreement, both on Curve25519. They are the workhorses of off-chain
+infrastructure — session keys, encrypted channels, p2p identities — and complement the ECDSA
+curves Ethereum uses onchain. Keys, signatures, and secrets are plain `Hex` or `Bytes` values.
+
+## Recipes
+
+### Sign and Verify with Ed25519
+
+[`Ed25519.createKeyPair`](/api/Ed25519/createKeyPair) generates a key pair;
+[`Ed25519.sign`](/api/Ed25519/sign) and [`Ed25519.verify`](/api/Ed25519/verify) sign and check
+payloads.
+
+```ts twoslash
+import { Ed25519 } from 'ox'
+
+const { privateKey, publicKey } = Ed25519.createKeyPair()
+
+const signature = Ed25519.sign({ payload: '0xdeadbeef', privateKey }) // [!code hl]
+
+const verified = Ed25519.verify({
+  payload: '0xdeadbeef',
+  publicKey,
+  signature,
+})
+// @log: true
+```
+
+Ed25519 hashes internally, so payloads of any length can be signed directly — no keccak256
+step required.
+
+### Derive a Shared Secret with X25519
+
+[`X25519.getSharedSecret`](/api/X25519/getSharedSecret) computes the same 32-byte secret on
+both sides of an exchange from one party's private key and the other's public key.
+
+```ts twoslash
+import { X25519 } from 'ox'
+
+const alice = X25519.createKeyPair()
+const bob = X25519.createKeyPair()
+
+const sharedSecretAlice = X25519.getSharedSecret({
+  privateKey: alice.privateKey, // [!code hl]
+  publicKey: bob.publicKey, // [!code hl]
+})
+
+const sharedSecretBob = X25519.getSharedSecret({
+  privateKey: bob.privateKey,
+  publicKey: alice.publicKey,
+})
+// @log: sharedSecretAlice === sharedSecretBob
+```
+
+Feed the secret into a KDF before using it as an encryption key — see
+[Work with AES-GCM](/guides/crypto/encryption).
+
+### Reuse an Ed25519 Key Pair for X25519
+
+An existing Ed25519 identity can also perform key agreement.
+[`Ed25519.toX25519PrivateKey`](/api/Ed25519/toX25519PrivateKey) and
+[`Ed25519.toX25519PublicKey`](/api/Ed25519/toX25519PublicKey) convert signing keys to their
+Montgomery-curve equivalents.
+
+```ts twoslash
+import { Ed25519, X25519 } from 'ox'
+
+const signer = Ed25519.createKeyPair()
+const peer = Ed25519.createKeyPair()
+
+const sharedSecret = X25519.getSharedSecret({
+  privateKey: Ed25519.toX25519PrivateKey({ privateKey: signer.privateKey }), // [!code hl]
+  publicKey: Ed25519.toX25519PublicKey({ publicKey: peer.publicKey }), // [!code hl]
+})
+```
+
+Both parties convert their own private key and the peer's public key, then derive the secret
+as usual.
+
+## Best Practices
+
+### Run Shared Secrets Through a KDF
+
+Raw X25519 output is a curve point coordinate, not a uniformly random key. Derive the actual
+symmetric key with HKDF or [`Hash.hmac256`](/api/Hash/hmac256) before encrypting.
+
+### Separate Long-Lived Identities from Session Keys
+
+Key conversion is convenient, but a compromised session secret should not burn a signing
+identity. Prefer fresh X25519 pairs per session and sign them with the Ed25519 identity.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:lock"
+    title="Work with AES-GCM"
+    description="Encrypt payloads with keys derived from shared secrets."
+    to="/guides/crypto/encryption"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Post-Quantum Signatures (ML-DSA)"
+    description="Quantum-resistant alternative for long-lived signatures."
+    to="/guides/crypto/ml-dsa"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Derive Secrets with PRF"
+    description="Derive Ed25519 keys from a WebAuthn passkey."
+    to="/guides/webauthn/prf"
+  />
+</Cards>

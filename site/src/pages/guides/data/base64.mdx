@@ -1,0 +1,72 @@
+---
+description: Encode and decode Base64 strings, bytes, and hex payloads.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Base64 Coding
+
+## Overview
+
+[`Base64`](/api/Base64) converts between Base64 strings and Ox's primitive types — the encoding
+behind data URLs, HTTP payloads, and WebAuthn's transport format. Encoders exist for
+[`Hex`](/api/Base64/fromHex), [`Bytes`](/api/Base64/fromBytes), and plain
+[strings](/api/Base64/fromString), each with a matching decoder.
+
+## Recipes
+
+### Encode & Decode Data
+
+Round-trip a value with [`Base64.fromString`](/api/Base64/fromString) and
+[`Base64.toString`](/api/Base64/toString).
+
+```ts twoslash
+import { Base64 } from 'ox'
+
+const encoded = Base64.fromString('hello world')
+// @log: 'aGVsbG8gd29ybGQ='
+const decoded = Base64.toString(encoded)
+// @log: 'hello world'
+```
+
+[`Base64.fromBytes`](/api/Base64/fromBytes) and [`Base64.toBytes`](/api/Base64/toBytes) do the
+same for `Uint8Array` payloads.
+
+### Embed Calldata in URLs
+
+Use [`Base64.fromHex`](/api/Base64/fromHex) with URL-safe characters to embed calldata or other
+hex payloads in query strings, data URLs, and JSON APIs, then recover the hex with
+[`Base64.toHex`](/api/Base64/toHex).
+
+```ts twoslash
+import { Base64 } from 'ox'
+
+const encoded = Base64.fromHex('0xa9059cbb', { url: true, pad: false }) // [!code hl]
+// @log: 'qQWcuw'
+const calldata = Base64.toHex(encoded)
+// @log: '0xa9059cbb'
+```
+
+## Best Practices
+
+### Use URL-Safe Base64 on the Wire
+
+The standard Base64 alphabet contains `+` and `/`, which break query strings and path segments.
+Pass `{ url: true }` whenever the encoded value travels inside a URL.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base58 Coding"
+    description="The alphabet behind Bitcoin, IPFS, and Solana identifiers."
+    to="/guides/data/base58"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="The primitive types every codec converts to and from."
+    to="/guides/data/bytes-hex"
+  />
+</Cards>

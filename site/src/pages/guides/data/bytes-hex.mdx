@@ -1,0 +1,184 @@
+---
+description: Instantiate, convert, and manipulate Bytes and Hex values.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with Bytes & Hex
+
+## Overview
+
+When working with Ethereum, byte data — addresses, hashes, signatures, serialized payloads — is
+commonly represented as either **hexadecimal strings** or **byte arrays**. Ox models the two with
+[`Hex`](/api/Hex) ([`Hex.Hex`](/api/Hex/types#hexhex), a `0x`-prefixed `string`) and
+[`Bytes`](/api/Bytes) ([`Bytes.Bytes`](/api/Bytes/types#bytesbytes), a `Uint8Array` instance).
+Every operation on one module has a mirror on the other, so recipes below show whichever side is
+most idiomatic.
+
+## Recipes
+
+### Instantiate from Primitives
+
+Construct values with [`Hex.from`](/api/Hex/from) & [`Bytes.from`](/api/Bytes/from), or lift
+booleans, numbers, and strings with the typed constructors:
+[`Hex.fromBoolean`](/api/Hex/fromBoolean) / [`Bytes.fromBoolean`](/api/Bytes/fromBoolean),
+[`Hex.fromNumber`](/api/Hex/fromNumber) / [`Bytes.fromNumber`](/api/Bytes/fromNumber), and
+[`Hex.fromString`](/api/Hex/fromString) / [`Bytes.fromString`](/api/Bytes/fromString).
+
+```ts twoslash
+import { Bytes, Hex } from 'ox'
+
+const hex = Hex.from('0xdeadbeef')
+// @log: '0xdeadbeef'
+
+const bytes = Bytes.from([0xde, 0xad, 0xbe, 0xef])
+// @log: Uint8Array [0xde, 0xad, 0xbe, 0xef]
+
+const bool = Hex.fromBoolean(true)
+// @log: '0x1'
+
+const bigint = Hex.fromNumber(420n)
+// @log: '0x1a4'
+
+const string = Hex.fromString('hello')
+// @log: '0x68656c6c6f'
+```
+
+`Hex` can also be instantiated from `Bytes`, and vice versa — `Hex.from(bytes)` and
+`Bytes.from(hex)` convert between the two representations.
+
+### Convert Between Types
+
+Recover primitive JavaScript values with [`Hex.toBigInt`](/api/Hex/toBigInt) /
+[`Bytes.toBigInt`](/api/Bytes/toBigInt), [`Hex.toBoolean`](/api/Hex/toBoolean) /
+[`Bytes.toBoolean`](/api/Bytes/toBoolean), [`Hex.toNumber`](/api/Hex/toNumber) /
+[`Bytes.toNumber`](/api/Bytes/toNumber), and [`Hex.toString`](/api/Hex/toString) /
+[`Bytes.toString`](/api/Bytes/toString).
+
+```ts twoslash
+import { Bytes, Hex } from 'ox'
+
+const bool = Bytes.toBoolean(Bytes.from([1]))
+// @log: true
+
+const bigint = Hex.toBigInt('0x01a4')
+// @log: 420n
+
+const number = Bytes.toNumber(Bytes.from([1, 164]))
+// @log: 420
+
+const string = Hex.toString('0x68656c6c6f')
+// @log: 'hello'
+```
+
+Prefer `toBigInt` over `toNumber` for on-chain quantities — wei amounts routinely exceed
+`Number.MAX_SAFE_INTEGER`.
+
+### Concatenate, Pad, Slice & Trim
+
+Byte-manipulation helpers exist on both modules — [`Hex.concat`](/api/Hex/concat) /
+[`Bytes.concat`](/api/Bytes/concat), [`Hex.padLeft`](/api/Hex/padLeft) /
+[`Hex.padRight`](/api/Hex/padRight), [`Hex.slice`](/api/Hex/slice) /
+[`Bytes.slice`](/api/Bytes/slice), [`Hex.trimLeft`](/api/Hex/trimLeft) /
+[`Hex.trimRight`](/api/Hex/trimRight), and [`Hex.size`](/api/Hex/size) /
+[`Bytes.size`](/api/Bytes/size). Sizes and offsets are measured in bytes, not characters.
+
+```ts twoslash
+import { Bytes, Hex } from 'ox'
+
+const concatenated = Hex.concat('0xdead', '0xbeef')
+// @log: '0xdeadbeef'
+
+const padded = Hex.padLeft('0xdead', 4)
+// @log: '0x0000dead'
+
+const sliced = Hex.slice('0x0123456789', 1, 4)
+// @log: '0x234567'
+
+const trimmed = Bytes.trimLeft(Bytes.from([0x00, 0x00, 0xde, 0xad]))
+// @log: Uint8Array [0xde, 0xad]
+
+const size = Hex.size('0xdeadbeefdeadbeefdeadbeefdeadbeef')
+// @log: 16
+```
+
+`padLeft` & `padRight` default to a size of `32` bytes — the width of an EVM word — so
+`Hex.padLeft('0xdead')` produces an ABI-ready word.
+
+### Compare & Validate
+
+[`Hex.isEqual`](/api/Hex/isEqual) & [`Bytes.isEqual`](/api/Bytes/isEqual) compare by value;
+[`Hex.validate`](/api/Hex/validate) & [`Bytes.validate`](/api/Bytes/validate) return a boolean
+for untrusted input, while [`Hex.assert`](/api/Hex/assert) & [`Bytes.assert`](/api/Bytes/assert)
+throw a typed error instead.
+
+```ts twoslash
+import { Bytes, Hex } from 'ox'
+
+const equal = Bytes.isEqual(
+  Bytes.from([0xde, 0xad, 0xbe, 0xef]),
+  Bytes.from([0xca, 0xfe, 0xba, 0xbe]),
+)
+// @log: false
+
+const valid = Hex.validate('0xdeadbeefz')
+// @log: false
+
+Hex.assert('abc')
+// @error: Error: Hex.InvalidHexValueError
+```
+
+Reach for `assert` at trust boundaries where invalid data should halt processing, and `validate`
+where you branch on the result.
+
+### Generate Random Values
+
+[`Hex.random`](/api/Hex/random) & [`Bytes.random`](/api/Bytes/random) produce cryptographically
+secure random bytes of a given length — ready for `CREATE2` salts, nonces, and session
+identifiers.
+
+```ts twoslash
+import { Bytes, Hex } from 'ox'
+
+const salt = Hex.random(32)
+// @log: '0x86d8b4…' (32 random bytes)
+
+const nonce = Bytes.random(16)
+// @log: Uint8Array(16) [134, 216, …]
+```
+
+## Best Practices
+
+### Choose the Representation per Boundary
+
+Most Ox functions accept either type. Use `Hex` at serialization boundaries — JSON-RPC and
+signing payloads speak `0x`-prefixed strings — and keep `Bytes` for repeated binary work, where
+avoiding hex round-trips in hot paths saves allocations.
+
+### Validate Before You Trust
+
+A `0x` prefix does not make a string valid hex. Run external input through `validate` or
+`assert` before slicing, padding, or converting it, so malformed data fails loudly at the edge.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base64 Coding"
+    description="Move Bytes & Hex payloads through Base64."
+    to="/guides/data/base64"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Work with RLP"
+    description="Serialize nested Bytes & Hex structures for the protocol."
+    to="/guides/data/rlp"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Hash Data"
+    description="Compute keccak256 and other digests over Bytes & Hex."
+    to="/guides/crypto/hashing"
+  />
+</Cards>

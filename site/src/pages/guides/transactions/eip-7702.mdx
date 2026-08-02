@@ -1,0 +1,150 @@
+---
+description: Sign EIP-7702 authorizations and build delegation transactions.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Delegate with EIP-7702
+
+## Overview
+
+[EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) lets an Externally Owned Account set
+contract code for itself by signing an authorization over a delegate contract's address. The
+[`Authorization`](/api/Authorization) module creates, signs, and converts authorization tuples;
+[`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) carries a list of them in a type-4 transaction.
+
+The account that signs an authorization (the authority) and the account that sends the
+transaction (the sponsor) can be different — that is what enables gas sponsorship.
+
+## Recipes
+
+### Sign an Authorization
+
+Construct the authorization with [`Authorization.from`](/api/Authorization/from), sign its
+[`getSignPayload`](/api/Authorization/getSignPayload) —
+`keccak256('0x05' || rlp([chain_id, address, nonce]))` — with the **authority's** private key,
+then attach the signature.
+
+```ts twoslash
+import { Authorization, Secp256k1 } from 'ox'
+
+// `address` is the delegate contract; `nonce` is the authority's
+// nonce at execution time.
+const authorization = Authorization.from({
+  address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // [!code hl]
+  chainId: 1,
+  nonce: 40n,
+})
+
+const signature = Secp256k1.sign({
+  payload: Authorization.getSignPayload(authorization),
+  privateKey: '0x...', // the authority's private key
+})
+
+const authorization_signed = Authorization.from(authorization, { signature })
+// @log: { address: '0x7099...79c8', chainId: 1, nonce: 40n, r: '0x...', s: '0x...', yParity: 1 }
+```
+
+### Build a 7702 Envelope
+
+Attach one or more signed authorizations to a
+[`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702), then sign and serialize the envelope with the
+**sender's** key like any other transaction.
+
+```ts twoslash
+import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+
+const authorization = Authorization.from({
+  address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  chainId: 1,
+  nonce: 40n,
+})
+const authorization_signed = Authorization.from(authorization, {
+  signature: Secp256k1.sign({
+    payload: Authorization.getSignPayload(authorization),
+    privateKey: '0x...', // authority
+  }),
+})
+
+const envelope = TxEnvelopeEip7702.from({
+  authorizationList: [authorization_signed], // [!code hl]
+  chainId: 1,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 0n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+})
+
+// Sign & serialize with the sender's key, ready for `eth_sendRawTransaction`.
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip7702.getSignPayload(envelope),
+  privateKey: '0x...', // sender (sponsor)
+})
+const serialized = TxEnvelopeEip7702.serialize(envelope, { signature })
+```
+
+See [Build, Sign & Send](/guides/transactions/build-sign-send) for broadcasting the serialized
+envelope.
+
+### Convert Authorization Lists for RPC
+
+Wallet-facing flows exchange authorizations in hex-quantity RPC format. Use
+[`Authorization.toRpcList`](/api/Authorization/toRpcList) before placing a list on an
+`eth_sendTransaction` request, and
+[`Authorization.fromRpcList`](/api/Authorization/fromRpcList) to restore typed values from RPC
+transactions.
+
+```ts twoslash
+import { Authorization } from 'ox'
+
+declare const authorizationList: Authorization.ListSigned
+
+// Typed -> RPC (e.g. for `eth_sendTransaction` params).
+// @log: [{ address: '0x...', chainId: '0x1', nonce: '0x28', r: '0x...', s: '0x...', yParity: '0x1' }]
+const authorizationList_rpc = Authorization.toRpcList(authorizationList)
+
+// RPC -> typed (e.g. from `eth_getTransactionByHash` results).
+const authorizationList_typed = Authorization.fromRpcList(authorizationList_rpc)
+// @log: [{ address: '0x...', chainId: 1, nonce: 40n, r: '0x...', s: '0x...', yParity: 1 }]
+```
+
+## Best Practices
+
+### Mind the Authority's Nonce
+
+An authorization is only valid while its `nonce` equals the authority's account nonce at
+execution. When the authority sends its own delegation transaction, the transaction nonce is
+consumed first — sign the authorization with the account nonce **plus one**.
+
+### Scope Delegations by Chain
+
+A `chainId` of `0` makes the authorization valid on every chain. Prefer an explicit chain ID
+unless a cross-chain delegation is exactly what you intend.
+
+### Revoke by Delegating to the Zero Address
+
+Delegations persist until replaced. To clear an account's code, sign a new authorization whose
+`address` is `0x0000000000000000000000000000000000000000`.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="Choose an Envelope Type"
+    description="Compare the five envelope types and when to use each."
+    to="/guides/transactions/envelope-types"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Take an envelope from construction to broadcast."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:search"
+    title="Parse & Inspect Transactions"
+    description="Decode raw transactions and convert RPC data to typed objects."
+    to="/guides/transactions/parse-inspect"
+  />
+</Cards>

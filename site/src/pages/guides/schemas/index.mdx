@@ -1,0 +1,30 @@
+---
+description: Validate, decode, and encode Ethereum data with type-safe schemas.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Schemas & Validation
+
+## Overview
+
+Ox ships [Zod](https://zod.dev) schemas for Ethereum data structures via the
+[`ox/zod`](/zod) entrypoint. Most schemas are codecs that convert between the JSON-RPC wire
+format (hex-string quantities) and the ergonomic decoded format used in application code
+(`bigint`/`number`), and every schema doubles as a validator for untrusted input.
+
+```ts twoslash
+import { z } from 'ox/zod'
+
+const value = z.decode(z.Uint256, '0x2a')
+// @log: 42n
+```
+
+<Cards>
+  <Card
+    icon="lucide:badge-check"
+    title="Validate with Zod"
+    description="Import, decode, encode, and validate Ethereum data with Ox's Zod schemas."
+    to="/guides/schemas/zod"
+  />
+</Cards>

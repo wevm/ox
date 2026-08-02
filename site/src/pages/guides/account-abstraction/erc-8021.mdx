@@ -1,0 +1,106 @@
+---
+description: Append and parse ERC-8021 attribution suffixes on transaction calldata.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Attribute Calldata with ERC-8021
+
+## Overview
+
+[ERC-8021](https://eip.tools/eip/8021) appends a self-describing suffix to transaction calldata so
+the entities that facilitated a transaction — apps, wallets, and services — can be attributed
+onchain. Because ABI decoding ignores trailing calldata bytes, the suffix travels with the
+transaction without changing its behavior. The [`Attribution`](/ercs/erc8021/Attribution) module
+encodes and extracts these suffixes.
+
+## Recipes
+
+### Append an Attribution Suffix
+
+Convert attribution codes to a data suffix with `Attribution.toDataSuffix` and concatenate it onto
+the encoded call.
+
+```ts twoslash
+import { AbiFunction, Hex } from 'ox'
+import { Attribution } from 'ox/erc8021'
+
+const transfer = AbiFunction.from(
+  'function transfer(address recipient, uint256 amount)',
+)
+const data = AbiFunction.encodeData(transfer, [
+  '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+  100n,
+])
+
+const suffix = Attribution.toDataSuffix({
+  codes: ['baseapp', 'morpho'], // [!code hl]
+})
+// @log: '0x626173656170702c6d6f7270686f0e0080218021802180218021802180218021'
+
+const calldata = Hex.concat(data, suffix)
+```
+
+The example above uses schema 0 (canonical registry). Pass a `codeRegistry` for schema 1 (custom
+registry), or fields like `appCode`, `walletCode`, and `metadata` for schema 2 (CBOR-encoded).
+
+### Parse Attribution Codes
+
+Extract the attribution from transaction calldata with `Attribution.fromData`. It returns
+`undefined` when no valid suffix is present.
+
+```ts twoslash
+import { Attribution } from 'ox/erc8021'
+
+const attribution = Attribution.fromData(
+  '0xdddddddd62617365617070070080218021802180218021802180218021',
+)
+// @log: { codes: ['baseapp'], id: 0 }
+
+if (attribution?.codes) {
+  // Resolve `attribution.codes` against the code registry.
+}
+```
+
+The `id` field reports the schema (`0` canonical registry, `1` custom registry, `2` CBOR-encoded),
+so consumers can resolve codes against the right registry.
+
+## Best Practices
+
+### Append the Suffix Last
+
+The ERC-8021 marker must be the final bytes of calldata. Apply the suffix after all other calldata
+construction and wrapping, or parsers will not find it.
+
+### Pick the Smallest Schema That Fits
+
+Schema 0 with registered codes is the cheapest. Reach for schema 1 only when you operate a custom
+registry, and schema 2 only when you need optional fields or arbitrary metadata.
+
+### Parse Defensively
+
+Any transaction can carry trailing bytes that look like data. `Attribution.fromData` validates the
+marker and structure and returns `undefined` otherwise — always handle that case.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="Batch Calls with ERC-7821"
+    description="Encode and decode batched executions for the execute interface."
+    to="/guides/account-abstraction/erc-7821"
+  />
+  <Card
+    icon="lucide:file-code-2"
+    title="Work with Function Calls"
+    description="Encode calldata and decode results with ABI functions."
+    to="/guides/abi/function-calls"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Construct and broadcast transactions carrying the attributed calldata."
+    to="/guides/transactions/build-sign-send"
+  />
+</Cards>

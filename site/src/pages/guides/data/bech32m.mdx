@@ -1,0 +1,68 @@
+---
+description: Encode and decode checksummed Bech32m addresses (BIP-350).
+---
+
+import { Card, Cards } from 'vocs'
+
+# Bech32m Coding
+
+## Overview
+
+[`Bech32m`](/api/Bech32m) (BIP-350) combines a human-readable prefix with a checksummed data
+part — the format behind Bitcoin Taproot addresses and other modern address schemes. The
+checksum catches transcription errors before they become lost funds.
+
+## Recipes
+
+### Encode Data with a Prefix
+
+[`Bech32m.encode`](/api/Bech32m/encode) takes a human-readable part (HRP) and the data bytes to
+protect.
+
+```ts twoslash
+import { Bech32m } from 'ox'
+
+const address = Bech32m.encode('tempo', new Uint8Array(20)) // [!code hl]
+// @log: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqwa7xtm'
+```
+
+### Decode & Verify a Checksum
+
+[`Bech32m.decode`](/api/Bech32m/decode) verifies the checksum and returns the prefix and data,
+throwing a typed error on corruption.
+
+```ts twoslash
+import { Bech32m } from 'ox'
+
+declare const address: string
+
+const { hrp, data } = Bech32m.decode(address) // [!code hl]
+// @log: { hrp: 'tempo', data: Uint8Array(20) }
+```
+
+For raw BIP-173 base32 data without a checksum, use [`Base32`](/guides/data/base32).
+
+## Best Practices
+
+### Treat the Prefix as Part of the Address
+
+The HRP is covered by the checksum: `tempo1…` and `other1…` encoding the same bytes are
+different addresses. Validate that a decoded `hrp` matches the network you expect before using
+the data part.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base32 Coding"
+    description="The raw, checksum-free alphabet Bech32m builds on."
+    to="/guides/data/base32"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="The primitive types every codec converts to and from."
+    to="/guides/data/bytes-hex"
+  />
+</Cards>

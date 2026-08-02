@@ -1,0 +1,123 @@
+---
+description: Override account state and block context for eth_call simulations.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Simulate with State Overrides
+
+## Overview
+
+`eth_call` and `eth_simulateV1` accept override sets that ephemerally patch chain state for the
+duration of a call. [`StateOverrides`](/api/StateOverrides) types per-account overrides
+(balance, nonce, code, storage) and [`BlockOverrides`](/api/BlockOverrides) types the block
+context (number, timestamp, fees); both convert to the wire format with `toRpc`.
+
+## Recipes
+
+### Override Balances & Code for `eth_call`
+
+Give the caller a funded balance or swap a contract's bytecode with
+[`StateOverrides.toRpc`](/api/StateOverrides/toRpc), then pass the set as the third parameter of
+`eth_call`.
+
+```ts twoslash
+import { RpcTransport, StateOverrides } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const stateOverrides = StateOverrides.toRpc({
+  // Fund the caller with 1 ETH.
+  '0xd2135CfB216b74109775236E36d4b433F1DF507B': {
+    balance: 1_000_000_000_000_000_000n, // [!code hl]
+  },
+  // Replace the callee's bytecode with a mock.
+  '0x0D44f617435088c947F00B31160f64b074e412B4': {
+    code: '0x6042805f5260205ff3', // [!code hl]
+  },
+})
+
+const result = await transport.request({
+  method: 'eth_call',
+  params: [
+    {
+      from: '0xd2135CfB216b74109775236E36d4b433F1DF507B',
+      to: '0x0D44f617435088c947F00B31160f64b074e412B4',
+      data: '0xdeadbeef',
+    },
+    'latest',
+    stateOverrides, // [!code hl]
+  ],
+})
+```
+
+Storage can be overridden too: `state` replaces the account's entire storage, while `stateDiff`
+patches individual slots.
+
+### Override Block Context
+
+Simulate a call as if it executed in a different block — a future timestamp, another block
+number, or a custom base fee — with [`BlockOverrides.toRpc`](/api/BlockOverrides/toRpc) as the
+fourth `eth_call` parameter.
+
+```ts twoslash
+import { BlockOverrides, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const blockOverrides = BlockOverrides.toRpc({
+  number: 19868021n, // [!code hl]
+  time: 1735689600n, // [!code hl]
+})
+
+const result = await transport.request({
+  method: 'eth_call',
+  params: [
+    {
+      to: '0x0D44f617435088c947F00B31160f64b074e412B4',
+      data: '0xdeadbeef',
+    },
+    'latest',
+    {},
+    blockOverrides, // [!code hl]
+  ],
+})
+```
+
+`eth_simulateV1` accepts the same `stateOverrides` and `blockOverrides` objects per simulated
+block in its `blockStateCalls`.
+
+## Best Practices
+
+### Prefer `stateDiff` over `state`
+
+`state` wipes every storage slot the override does not mention, which silently breaks contracts
+that read untouched slots. Use `stateDiff` unless you intend to replace the whole storage layout.
+
+### Build Overrides in Typed Form
+
+Keep balances and nonces as `bigint` throughout your code and convert once at the boundary with
+`toRpc` — hand-built hex quantities are a common source of off-by-encoding bugs.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:shield-check"
+    title="Verify State & Account Proofs"
+    description="Prove the real values of the state you are overriding."
+    to="/guides/chain-data/proofs"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="Work with Function Calls"
+    description="Build the calldata for the calls you simulate."
+    to="/guides/abi/function-calls"
+  />
+  <Card
+    icon="lucide:fuel"
+    title="Estimate Fees & Access Lists"
+    description="Derive fee parameters for the transactions you simulate."
+    to="/guides/transactions/fees-access-lists"
+  />
+</Cards>

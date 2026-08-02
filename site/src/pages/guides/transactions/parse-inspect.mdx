@@ -1,0 +1,170 @@
+---
+description: Decode raw transactions and convert RPC transactions, receipts, and requests.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Parse & Inspect Transactions
+
+## Overview
+
+The generic [`TransactionEnvelope`](/api/TransactionEnvelope) module deserializes any raw
+transaction, inferring the envelope type from its serialized prefix.
+[`Transaction`](/api/Transaction), [`TransactionReceipt`](/api/TransactionReceipt), and
+[`TransactionRequest`](/api/TransactionRequest) convert the hex-quantity payloads that JSON-RPC
+returns into typed objects with `bigint` numerics — and back.
+
+## Recipes
+
+### Deserialize a Raw Transaction
+
+Use [`TransactionEnvelope.deserialize`](/api/TransactionEnvelope/deserialize) on any raw
+transaction — from a mempool feed, `eth_getRawTransactionByHash`, or a signing service — and
+get back a typed envelope.
+
+```ts twoslash
+import { TransactionEnvelope } from 'ox'
+
+const envelope = TransactionEnvelope.deserialize(
+  '0x02f8730145843b9aca008502540be4008252089470997970c51812dc3a010c7d01b50e0d17dc79c88814d1120d7b16000080c080a098ebfabbfbe83dfcdc039bd68cce49cb55bb3d32e58f5caef200d3cb6e10351ca07b39f98ad5f89675a2e5014331283c79f3744e857681a03f445a802023297de9',
+)
+// @log: {
+// @log:   chainId: 1,
+// @log:   gas: 21000n,
+// @log:   maxFeePerGas: 10000000000n,
+// @log:   maxPriorityFeePerGas: 1000000000n,
+// @log:   nonce: 69n,
+// @log:   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+// @log:   type: 'eip1559',
+// @log:   value: 1500000000000000000n,
+// @log:   r: '0x...', s: '0x...', yParity: 0,
+// @log: }
+```
+
+Use [`TransactionEnvelope.validate`](/api/TransactionEnvelope/validate) first when the input is
+untrusted and a `boolean` is preferable to a thrown error.
+
+### Recover the Sender Address
+
+Extract the signature from a signed envelope, then recover the signer of the envelope's sign
+payload with [`Secp256k1.recoverAddress`](/api/Secp256k1/recoverAddress).
+
+```ts twoslash
+import { Secp256k1, Signature, TransactionEnvelope } from 'ox'
+
+const envelope = TransactionEnvelope.deserialize(
+  '0x02f8730145843b9aca008502540be4008252089470997970c51812dc3a010c7d01b50e0d17dc79c88814d1120d7b16000080c080a098ebfabbfbe83dfcdc039bd68cce49cb55bb3d32e58f5caef200d3cb6e10351ca07b39f98ad5f89675a2e5014331283c79f3744e857681a03f445a802023297de9',
+)
+
+const signature = Signature.extract(envelope)
+if (!signature) throw new Error('transaction is unsigned')
+
+const sender = Secp256k1.recoverAddress({
+  payload: TransactionEnvelope.getSignPayload(envelope), // [!code hl]
+  signature,
+})
+// @log: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+```
+
+### Convert RPC Transactions & Receipts
+
+Pipe `eth_getTransactionByHash` and `eth_getTransactionReceipt` results through
+[`Transaction.fromRpc`](/api/Transaction/fromRpc) and
+[`TransactionReceipt.fromRpc`](/api/TransactionReceipt/fromRpc) to get typed objects — hex
+quantities become `bigint`/`number`, `type` becomes `'eip1559'`-style strings, and `status`
+becomes `'success' | 'reverted'`.
+
+```ts twoslash
+import { RpcTransport, Transaction, TransactionReceipt } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+const hash =
+  '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0'
+
+const transaction = await transport
+  .request({ method: 'eth_getTransactionByHash', params: [hash] })
+  // @log: { ..., gas: 278365n, type: 'eip1559', value: 700000000000000000n }
+  .then(Transaction.fromRpc) // [!code hl]
+
+const receipt = await transport
+  .request({ method: 'eth_getTransactionReceipt', params: [hash] })
+  .then(TransactionReceipt.fromRpc) // [!code hl]
+// @log: { ..., gasUsed: 175034n, status: 'success', type: 'eip1559' }
+```
+
+Both converters pass `null` through, so missing transactions stay `null` rather than throwing.
+
+### Prepare a Transaction Request
+
+Flatten an envelope into a [`TransactionRequest`](/api/TransactionRequest) with
+[`TransactionEnvelope.toTransactionRequest`](/api/TransactionEnvelope/toTransactionRequest),
+then serialize it to RPC form for methods like `eth_estimateGas`, `eth_call`, or
+`eth_sendTransaction`.
+
+```ts twoslash
+import {
+  RpcTransport,
+  TransactionEnvelope,
+  TransactionRequest,
+  Value,
+} from 'ox'
+
+const envelope = TransactionEnvelope.from({
+  chainId: 1,
+  maxFeePerGas: Value.fromGwei('10'),
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+
+const request = TransactionRequest.toRpc(
+  TransactionEnvelope.toTransactionRequest(envelope), // [!code hl]
+)
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+const gas = await transport.request({
+  method: 'eth_estimateGas',
+  params: [request],
+})
+// @log: '0x5208'
+```
+
+The reverse direction works too: normalize wallet input with
+[`TransactionRequest.fromRpc`](/api/TransactionRequest/fromRpc), then promote it to a signable
+envelope with [`TransactionRequest.toEnvelope`](/api/TransactionRequest/toEnvelope).
+
+## Best Practices
+
+### Validate Untrusted Payloads Before Use
+
+Raw transactions from user input or third-party feeds may be truncated or carry an unknown type
+prefix. Gate on `TransactionEnvelope.validate` (or catch
+`TransactionEnvelope.InvalidSerializedError`) before acting on the decoded fields.
+
+### Convert at the RPC Boundary Once
+
+JSON-RPC encodes every quantity as hex strings. Run `fromRpc` converters immediately after each
+request — and `toRpc` immediately before — so the rest of the application only ever handles
+typed `bigint` values.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Construct and broadcast the envelopes you just decoded."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Choose an Envelope Type"
+    description="Field-by-field comparison of the five envelope types."
+    to="/guides/transactions/envelope-types"
+  />
+  <Card
+    icon="lucide:box"
+    title="Work with Blocks & Receipts"
+    description="Convert whole RPC blocks and their receipts to typed objects."
+    to="/guides/chain-data/blocks"
+  />
+</Cards>

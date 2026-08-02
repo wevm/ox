@@ -1,0 +1,138 @@
+---
+description: Instantiate, type, and consume EIP-1193 Ethereum providers.
+---
+
+import { Card, Cards } from 'vocs'
+import ProviderErrors from '../../../snippets/provider.mdx'
+
+# Use EIP-1193 Providers
+
+## Overview
+
+[EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) defines a JavaScript Ethereum Provider API for
+interacting with the Ethereum network from an arbitrary JavaScript environment (e.g. Web
+Application, Server, etc). You would typically use one when communicating with a Wallet — most
+Browser Extension Wallets inject a `window.ethereum` object that conforms to the EIP-1193 API.
+Ox's [`Provider`](/api/Provider) module instantiates typed providers, and the `ox/window`
+entrypoint augments `window.ethereum` with the provider types.
+
+## Recipes
+
+### Wrap an Injected Provider
+
+External EIP-1193 Providers can be instantiated with [`Provider.from`](/api/Provider/from).
+Importing `ox/window` types `window.ethereum`.
+
+```ts twoslash
+import 'ox/window'
+import { Provider } from 'ox'
+
+const provider = Provider.from(window.ethereum)
+
+const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+```
+
+You can also plug in a Provider distributed by a library:
+
+| Library                                                                                                                 | Description                                             |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [`mipd`](https://github.com/wevm/mipd)                                                                                  | Multi-injected browser wallet provider discovery        |
+| [`@walletconnect/ethereum-provider`](https://www.npmjs.com/package/@walletconnect/ethereum-provider)                    | Connect and interact with WalletConnect-enabled wallets |
+| [`@metamask/sdk`](https://docs.metamask.io/wallet/connect/metamask-sdk/javascript/)                                     | Connect and interact with MetaMask Wallet               |
+| [`@coinbase/wallet-sdk`](https://github.com/coinbase/coinbase-wallet-sdk)                                               | Connect and interact with Coinbase Wallet               |
+| [`@safe-global/safe-apps-provider`](https://github.com/safe-global/safe-apps-sdk/tree/main/packages/safe-apps-provider) | Connect and interact with Safe Wallets                  |
+
+### Create a Provider from a Transport
+
+Ox's [`RpcTransport`](/api/RpcTransport) is also EIP-1193 compliant, and can be used to
+instantiate an EIP-1193 Provider. This means you can use any HTTP RPC endpoint as an EIP-1193
+Provider.
+
+```ts twoslash
+import { Provider, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+const provider = Provider.from(transport)
+
+const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+```
+
+### Emit Provider Events
+
+Event emitters for EIP-1193 Providers can be created using
+[`Provider.createEmitter`](/api/Provider/createEmitter) — useful for Wallets that distribute a
+Provider (e.g. webpage injection via `window.ethereum`).
+
+```ts twoslash
+import { Provider, RpcRequest, RpcResponse } from 'ox'
+
+// 1. Instantiate a Provider Emitter.
+const emitter = Provider.createEmitter() // [!code hl]
+
+const store = RpcRequest.createStore()
+
+const provider = Provider.from({
+  // 2. Pass the Emitter to the Provider.
+  ...emitter, // [!code hl]
+  async request(args) {
+    return await fetch('https://1.rpc.thirdweb.com', {
+      body: JSON.stringify(store.prepare(args)),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then(RpcResponse.parse)
+  },
+})
+
+// 3. Emit Provider Events.
+emitter.emit('accountsChanged', ['0x...']) // [!code hl]
+```
+
+Consumers subscribe with `provider.on('accountsChanged', ...)` and the other
+[EIP-1193 events](https://eips.ethereum.org/EIPS/eip-1193#events).
+
+### Handle Provider Errors
+
+Wallets reject requests with well-known EIP-1193 error codes.
+[`Provider.parseError`](/api/Provider/parseError) converts an unknown thrown value into a typed
+[Provider error](/api/Provider/errors), such as `Provider.UserRejectedRequestError`.
+
+<ProviderErrors />
+
+## Best Practices
+
+### Feature-Detect the Injected Provider
+
+`window.ethereum` is `undefined` outside wallet-enabled browsers. Check for it (or discover
+providers with [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) via `mipd`) before wrapping.
+
+### Parse Errors at the Boundary
+
+Wrap `provider.request` calls in `try`/`catch` and normalize failures with `Provider.parseError`
+so application code can branch on typed error classes instead of numeric codes.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Drop below providers and speak raw JSON-RPC over HTTP."
+    to="/guides/rpc/requests"
+  />
+  <Card
+    icon="lucide:braces"
+    title="Type-Safe RPC Schemas"
+    description="Type a provider's request function with custom wallet methods."
+    to="/guides/rpc/schemas"
+  />
+  <Card
+    icon="lucide:box"
+    title="Work with Blocks & Receipts"
+    description="Convert the RPC data a provider returns into typed objects."
+    to="/guides/chain-data/blocks"
+  />
+</Cards>

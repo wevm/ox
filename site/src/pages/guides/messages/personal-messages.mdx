@@ -1,0 +1,150 @@
+---
+description: Compute, sign, and verify EIP-191 personal messages and intended-validator data.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Sign Personal Messages (EIP-191)
+
+## Overview
+
+The [ERC-191 Signed Data](https://eips.ethereum.org/EIPS/eip-191) standard defines a specification
+for handling signed data in Ethereum contracts. Signable data is prefixed with a version byte
+(e.g. `0x45` for personal messages). This protects an end-user from signing obscured transaction
+data constructed by a malicious actor and consequently losing funds.
+
+[`PersonalMessage`](/api/PersonalMessage) handles the `0x45` (personal message) version and
+[`ValidatorData`](/api/ValidatorData) the `0x00` (intended validator) version. Ox supports the
+following ERC-191 versions:
+
+| Module                                    | Name                                                                      | Version |
+| ----------------------------------------- | ------------------------------------------------------------------------- | ------- |
+| [`PersonalMessage`](/api/PersonalMessage) | Personal Message (aka. `personal_sign`)                                   | `0x45`  |
+| [`TypedData`](/api/TypedData)             | Typed Data — see [Sign Typed Data (EIP-712)](/guides/messages/typed-data) | `0x01`  |
+| [`ValidatorData`](/api/ValidatorData)     | Data with intended validator                                              | `0x00`  |
+
+## Recipes
+
+### Compute the Sign Payload & Sign
+
+Personal messages are typically used to sign arbitrary messages that will be displayed to the
+user, for example, a [Sign-In with Ethereum (SIWE) message](/guides/messages/siwe). Compute the
+signable payload with [`PersonalMessage.getSignPayload`](/api/PersonalMessage/getSignPayload),
+then sign it — here with [`Secp256k1.sign`](/api/Secp256k1/sign).
+
+```ts twoslash
+import { Hex, PersonalMessage, Secp256k1 } from 'ox'
+
+const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
+
+const signature = Secp256k1.sign({
+  payload,
+  privateKey: '0x...',
+})
+```
+
+Any Ox signer works — see [Work with Secp256k1](/guides/crypto/secp256k1) for the full signer
+lifecycle.
+
+### Verify & Recover the Signer
+
+Recompute the payload from the exact message that was signed, then recover the signing address
+with [`Secp256k1.recoverAddress`](/api/Secp256k1/recoverAddress), or check against a known
+address with [`Secp256k1.verify`](/api/Secp256k1/verify).
+
+```ts twoslash
+import { Hex, PersonalMessage, Secp256k1, Signature } from 'ox'
+
+declare const signature: Signature.Signature
+
+const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
+
+const signer = Secp256k1.recoverAddress({ payload, signature })
+
+const verified = Secp256k1.verify({
+  address: signer,
+  payload,
+  signature,
+})
+// @log: true
+```
+
+### Sign with a Wallet (personal_sign)
+
+Most Wallets expose a [`personal_sign` RPC interface](https://docs.metamask.io/wallet/reference/json-rpc-methods/personal_sign/)
+that can be used to sign Personal Messages. This means you can use the `personal_sign` RPC method
+to sign a message without the ceremony of constructing and signing it yourself.
+
+```ts twoslash
+import 'ox/window'
+import { Hex, Provider } from 'ox'
+
+const provider = Provider.from(window.ethereum)
+
+const [address] = await provider.request({ method: 'eth_requestAccounts' })
+
+const signature = await provider.request({
+  method: 'personal_sign',
+  params: [Hex.fromString('hello world'), address],
+})
+```
+
+### Sign Intended-Validator Data (ERC-191 0x00)
+
+The `0x00` version binds a signature to an intended validator (e.g. the contract that will
+consume it), so it cannot be replayed against another verifier. Compute the payload with
+[`ValidatorData.getSignPayload`](/api/ValidatorData/getSignPayload).
+
+```ts twoslash
+import { Hex, Secp256k1, ValidatorData } from 'ox'
+
+const payload = ValidatorData.getSignPayload({
+  data: Hex.fromString('hello world'),
+  validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+})
+
+const signature = Secp256k1.sign({
+  payload,
+  privateKey: '0x...',
+})
+```
+
+If you need the raw `0x19 ‖ 0x00 ‖ validator ‖ data` envelope before hashing, use
+[`ValidatorData.encode`](/api/ValidatorData/encode).
+
+## Best Practices
+
+### Hash via the Module, Not by Hand
+
+Always derive payloads with `PersonalMessage.getSignPayload` (or `ValidatorData.getSignPayload`)
+so the ERC-191 version byte and length prefix are applied. The prefix is what prevents a signed
+message from doubling as a valid transaction or other signable payload.
+
+### Recover Against the Exact Bytes
+
+Verification recomputes the payload from the message bytes. Any difference in encoding or
+whitespace between what the user signed and what the server hashes will recover a different
+address.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:scroll-text"
+    title="Sign Typed Data (EIP-712)"
+    description="Present structured, human-readable data for signing."
+    to="/guides/messages/typed-data"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Sign-In with Ethereum (SIWE)"
+    description="Authenticate users with signed EIP-4361 messages."
+    to="/guides/messages/siwe"
+  />
+  <Card
+    icon="lucide:pen-tool"
+    title="Work with Secp256k1"
+    description="Create key pairs, sign payloads, and recover signers."
+    to="/guides/crypto/secp256k1"
+  />
+</Cards>

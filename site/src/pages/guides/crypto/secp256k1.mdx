@@ -1,0 +1,131 @@
+---
+description: Sign, verify, and recover secp256k1 signatures for Ethereum accounts.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with Secp256k1
+
+## Overview
+
+[`Secp256k1`](/api/Secp256k1) implements ECDSA on the curve behind Ethereum accounts and
+transactions. Signing returns a structured [`Signature`](/api/Signature) object (`r`, `s`,
+`yParity`), and public keys are structured [`PublicKey`](/api/PublicKey) objects, so results
+plug directly into transaction envelopes and message signing.
+
+## Recipes
+
+### Create a Key Pair
+
+[`Secp256k1.createKeyPair`](/api/Secp256k1/createKeyPair) generates a random private key with
+its corresponding public key. Derive the Ethereum address with
+[`Address.fromPublicKey`](/api/Address/fromPublicKey).
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+
+const { privateKey, publicKey } = Secp256k1.createKeyPair()
+
+const address = Address.fromPublicKey(publicKey) // [!code hl]
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
+```
+
+[`Secp256k1.randomPrivateKey`](/api/Secp256k1/randomPrivateKey) and
+[`Secp256k1.getPublicKey`](/api/Secp256k1/getPublicKey) perform the two steps separately.
+
+### Sign a Payload
+
+Hash the message first — [`Secp256k1.sign`](/api/Secp256k1/sign) signs the 32-byte payload it
+is given.
+
+```ts twoslash
+import { Hash, Hex, Secp256k1 } from 'ox'
+
+declare const privateKey: Hex.Hex
+
+const payload = Hash.keccak256(Hex.fromString('agree to terms'))
+
+const signature = Secp256k1.sign({ payload, privateKey }) // [!code hl]
+// @log: { r: '0x1c34…', s: '0x4f8d…', yParity: 0 }
+```
+
+Serialize the result with [`Signature.toHex`](/api/Signature/toHex) — see
+[Convert Signature Formats](/guides/crypto/signatures).
+
+### Verify a Signature
+
+[`Secp256k1.verify`](/api/Secp256k1/verify) accepts either the signer's address or their
+public key.
+
+```ts twoslash
+import { Address, Secp256k1 } from 'ox'
+
+const { privateKey, publicKey } = Secp256k1.createKeyPair()
+const address = Address.fromPublicKey(publicKey)
+const payload = '0xdeadbeef'
+const signature = Secp256k1.sign({ payload, privateKey })
+
+const verified = Secp256k1.verify({ address, payload, signature }) // [!code hl]
+// @log: true
+```
+
+Pass `publicKey` instead of `address` to verify against the key directly — required when the
+signature has no `yParity` to recover from.
+
+### Recover the Signer
+
+[`Secp256k1.recoverAddress`](/api/Secp256k1/recoverAddress) and
+[`Secp256k1.recoverPublicKey`](/api/Secp256k1/recoverPublicKey) recover the signer from the
+payload and a signature that carries its recovery bit (`yParity`).
+
+```ts twoslash
+import { Hex, Secp256k1 } from 'ox'
+
+declare const privateKey: Hex.Hex
+
+const payload = '0xdeadbeef'
+const signature = Secp256k1.sign({ payload, privateKey })
+
+const address = Secp256k1.recoverAddress({ payload, signature }) // [!code hl]
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
+
+const publicKey = Secp256k1.recoverPublicKey({ payload, signature })
+// @log: { prefix: 4, x: '0xd6c2…', y: '0x9a47…' }
+```
+
+## Best Practices
+
+### Hash Before Signing
+
+Sign keccak256 digests, never raw application data. For user-facing messages, prefer the
+EIP-191 flow in [Sign Personal Messages](/guides/messages/personal-messages), which prefixes
+and hashes for you.
+
+### Preserve the Recovery Bit
+
+`yParity` is what makes address recovery possible. Serialize signatures with
+[`Signature.toHex`](/api/Signature/toHex) (65 bytes) rather than dropping to `r ++ s` when the
+verifier needs to identify the signer.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:signature"
+    title="Convert Signature Formats"
+    description="Serialize signatures to hex, DER, legacy, RPC, and tuple forms."
+    to="/guides/crypto/signatures"
+  />
+  <Card
+    icon="lucide:wallet"
+    title="Derive & Validate Addresses"
+    description="Derive checksummed Ethereum addresses from keys."
+    to="/guides/accounts/addresses"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Sign transaction envelopes with Secp256k1 and broadcast them."
+    to="/guides/transactions/build-sign-send"
+  />
+</Cards>

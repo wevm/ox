@@ -1,0 +1,137 @@
+---
+description: Decode contract revert data into typed errors with AbiError.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with Reverts & Custom Errors
+
+## Overview
+
+When a contract call reverts, the node returns ABI-encoded revert data: a 4-byte error selector
+followed by the encoded arguments. [`AbiError`](/api/AbiError) decodes custom errors, legacy
+`Error(string)` revert reasons, and compiler `Panic` codes back into typed values — and encodes
+them again for testing.
+
+## Recipes
+
+### Decode Revert Data from `eth_call`
+
+A reverted `eth_call` surfaces its revert data on the `data` field of the JSON-RPC error response.
+[`AbiError.extract`](/api/AbiError/extract) matches the data's selector against the ABI and
+decodes the arguments in one step.
+
+```ts twoslash
+import { Abi, AbiError, Hex } from 'ox'
+
+// Revert data from an `eth_call` JSON-RPC error response.
+declare const data: Hex.Hex
+
+const abi = Abi.from([
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'error InsufficientBalance(uint256 available, uint256 required)',
+])
+
+const { error, args } = AbiError.extract(abi, data)
+// @log: {
+// @log:   error: { name: 'InsufficientBalance', type: 'error', ... },
+// @log:   args: [100n, 320n],
+// @log: }
+```
+
+`Error(string)` reverts (from `require(condition, "reason")`) and `Panic` reverts (from failed
+`assert`s, overflows, etc.) are matched automatically, even when they are not present in the ABI.
+
+### Match an Error by Selector
+
+To branch on a specific error before decoding, compare the first 4 bytes of the revert data
+against the error's selector from [`AbiError.getSelector`](/api/AbiError/getSelector).
+
+```ts twoslash
+import { AbiError, Hex } from 'ox'
+
+declare const data: Hex.Hex
+
+const insufficientBalance = AbiError.from(
+  'error InsufficientBalance(uint256 available, uint256 required)',
+)
+
+const selector = Hex.slice(data, 0, 4) // [!code hl]
+
+if (selector === AbiError.getSelector(insufficientBalance)) {
+  const [available, required] = AbiError.decode(insufficientBalance, data)
+}
+```
+
+The built-in Solidity cases have exported selectors and definitions — `Panic` codes map to
+human-readable descriptions via [`AbiError.panicReasons`](/api/AbiError).
+
+```ts twoslash
+import { AbiError, Hex } from 'ox'
+
+declare const data: Hex.Hex
+
+if (Hex.slice(data, 0, 4) === AbiError.solidityErrorSelector) {
+  const reason = AbiError.decode(AbiError.solidityError, data)
+}
+// @log: 'Not enough Ether provided.'
+
+if (Hex.slice(data, 0, 4) === AbiError.solidityPanicSelector) {
+  const code = AbiError.decode(AbiError.solidityPanic, data)
+  // @log: 'Arithmetic operation resulted in underflow or overflow.'
+  const reason = AbiError.panicReasons[Number(code)]
+}
+```
+
+### Encode Errors for Testing
+
+[`AbiError.encode`](/api/AbiError/encode) produces the selector-prefixed revert data for an error
+and its arguments — useful for stubbing `eth_call` responses or asserting expected reverts in
+tests.
+
+```ts twoslash
+import { AbiError } from 'ox'
+
+const error = AbiError.from(
+  'error InsufficientBalance(uint256 available, uint256 required)',
+)
+
+const data = AbiError.encode(error, [100n, 320n])
+// @log: '0xcf47918100000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000000000140'
+```
+
+## Best Practices
+
+### Keep Custom Errors in the ABI
+
+Revert data identifies an error only by its 4-byte selector. Include every custom error the
+contract (and the libraries it calls) can throw in the ABI you pass to `AbiError.extract`, or
+matching will fail with a "not found" error.
+
+### Treat Revert Reasons as Untrusted Output
+
+Revert strings and error arguments come from contract code. Log them for diagnostics, but do not
+render them unescaped or branch security decisions on their contents.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Work with Function Calls"
+    description="Encode calldata for reads and writes, and decode results and inputs."
+    to="/guides/abi/function-calls"
+  />
+  <Card
+    icon="lucide:radio"
+    title="Work with Events & Logs"
+    description="Filter logs by topic and decode indexed and non-indexed arguments."
+    to="/guides/abi/events"
+  />
+  <Card
+    icon="lucide:book-open"
+    title="Error Handling"
+    description="Handle and match errors thrown by Ox functions."
+    to="/error-handling"
+  />
+</Cards>

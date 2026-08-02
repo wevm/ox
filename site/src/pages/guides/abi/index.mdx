@@ -1,0 +1,68 @@
+---
+description: Parse ABIs, encode contract calls, and decode events, results, and reverts.
+---
+
+import { Card, Cards } from 'vocs'
+
+# ABIs & Contracts
+
+## Overview
+
+The [Application Binary Interface (ABI)](https://docs.soliditylang.org/en/latest/abi-spec.html)
+defines how data is encoded and decoded between your application and a contract's bytecode. Ox
+provides a module for each ABI item type — [`Abi`](/api/Abi), [`AbiFunction`](/api/AbiFunction),
+[`AbiEvent`](/api/AbiEvent), [`AbiError`](/api/AbiError), and
+[`AbiConstructor`](/api/AbiConstructor) — covering everything between your app and the contract:
+parsing ABIs, encoding calls, and decoding what comes back. Recipes end at the encoded payload;
+hand it to a JSON-RPC transport, or use a higher-level client like [Viem](https://viem.sh) for
+full contract workflows.
+
+```ts twoslash
+import { Abi, AbiFunction } from 'ox'
+
+const abi = Abi.from([
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'event Transfer(address indexed from, address indexed to, uint256 amount)',
+])
+
+const approve = AbiFunction.fromAbi(abi, 'approve')
+
+const data = AbiFunction.encodeData(approve, [
+  '0xcb98643b8786950f0461f3b0edf99d88f274574d',
+  100_000_000n,
+])
+// @log: '0x095ea7b3000000000000000000000000cb98643b8786950f0461f3b0edf99d88f274574d0000000000000000000000000000000000000000000000000000000005f5e100'
+```
+
+<Cards>
+  <Card
+    icon="lucide:rocket"
+    title="Deploy Contracts & Compute Addresses"
+    description="Encode constructor calldata and precompute CREATE and CREATE2 addresses."
+    to="/guides/abi/deployment"
+  />
+  <Card
+    icon="lucide:file-code-2"
+    title="Work with ABIs"
+    description="Parse, format, and inspect ABIs, items, parameters, and selectors."
+    to="/guides/abi/abis"
+  />
+  <Card
+    icon="lucide:radio"
+    title="Work with Events & Logs"
+    description="Filter logs by topic and decode indexed and non-indexed arguments."
+    to="/guides/abi/events"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Work with Function Calls"
+    description="Encode calldata for reads and writes, and decode results and inputs."
+    to="/guides/abi/function-calls"
+  />
+  <Card
+    icon="lucide:circle-alert"
+    title="Work with Reverts & Custom Errors"
+    description="Turn revert data into typed errors, reasons, and panic codes."
+    to="/guides/abi/errors"
+  />
+</Cards>

@@ -1,0 +1,53 @@
+---
+description: Send, serve, and type JSON-RPC requests and EIP-1193 providers with Ox.
+---
+
+import { Card, Cards } from 'vocs'
+
+# JSON-RPC & Providers
+
+## Overview
+
+For an application to communicate with the Ethereum network, it needs to connect to an Ethereum
+Node and exchange messages in a standardized format. All Ethereum Nodes implement the
+[JSON-RPC specification](https://www.jsonrpc.org/specification), and most Wallets expose an
+[EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) Provider interface on top of it. Ox provides
+type-safe primitives for both sides of the wire: [`RpcRequest`](/api/RpcRequest),
+[`RpcResponse`](/api/RpcResponse), [`RpcTransport`](/api/RpcTransport),
+[`RpcSchema`](/api/RpcSchema), and [`Provider`](/api/Provider).
+
+```ts twoslash
+import { RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code hl]
+
+const blockNumber = await transport.request({ method: 'eth_blockNumber' })
+// @log: '0x1a2b3c'
+```
+
+<Cards>
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Build request objects, send them over HTTP, and parse responses."
+    to="/guides/rpc/requests"
+  />
+  <Card
+    icon="lucide:server"
+    title="Serve & Handle RPC Requests"
+    description="Answer incoming requests in a server, worker, or wallet with typed errors."
+    to="/guides/rpc/handling"
+  />
+  <Card
+    icon="lucide:braces"
+    title="Type-Safe RPC Schemas"
+    description="Statically type methods, parameters, and return values end-to-end."
+    to="/guides/rpc/schemas"
+  />
+  <Card
+    icon="lucide:plug"
+    title="Use EIP-1193 Providers"
+    description="Wrap injected providers, create your own, and emit provider events."
+    to="/guides/rpc/providers"
+  />
+</Cards>

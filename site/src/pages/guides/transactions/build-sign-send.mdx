@@ -1,0 +1,218 @@
+---
+description: Construct, sign, serialize, and broadcast an Ethereum transaction envelope.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Build, Sign & Send
+
+## Overview
+
+A transaction envelope is a structure that defines the properties of a transaction, and is
+generally used to construct transactions to be broadcast to a network. This guide walks an
+[`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) — the most commonly used envelope type — through
+its full lifecycle with [`Secp256k1`](/api/Secp256k1) for signing and
+[`RpcTransport`](/api/RpcTransport) for broadcasting.
+
+Every envelope module shares the same lifecycle functions (`from`, `getSignPayload`,
+`serialize`, `toRpc`), so these recipes apply to all five envelope types. See
+[Choose an Envelope Type](/guides/transactions/envelope-types) for the others.
+
+## Recipes
+
+### Construct an EIP-1559 Envelope
+
+Use [`TxEnvelopeEip1559.from`](/api/TxEnvelopeEip1559/from) to instantiate an envelope. Ox is
+stateless — it does not query a node — so supply `nonce`, `gas`, and fee values yourself, or
+[hand off to a wallet](#sign-remotely-wallets--signing-servers) that fills them.
+
+```ts twoslash
+import { TxEnvelopeEip1559, Value } from 'ox'
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+```
+
+See [Estimate Fees & Access Lists](/guides/transactions/fees-access-lists) for deriving
+`maxFeePerGas` from fee history.
+
+### Compute the Sign Payload & Sign
+
+Pass the result of [`TxEnvelopeEip1559.getSignPayload`](/api/TxEnvelopeEip1559/getSignPayload) —
+the keccak256 hash of the presign serialization — to a signer such as
+[`Secp256k1.sign`](/api/Secp256k1/sign).
+
+```ts twoslash
+import { Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip1559.getSignPayload(envelope), // [!code hl]
+  privateKey: '0x...',
+})
+// @log: { r: '0x...', s: '0x...', yParity: 0 }
+```
+
+### Attach the Signature & Serialize
+
+Attach the signature with `TxEnvelopeEip1559.from`, then serialize into RLP-encoded form with
+[`TxEnvelopeEip1559.serialize`](/api/TxEnvelopeEip1559/serialize). `deserialize` reverses the
+transformation.
+
+```ts twoslash
+import { Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip1559.getSignPayload(envelope),
+  privateKey: '0x...',
+})
+
+// Attach the signature to the envelope.
+// @log: { ..., r: '0x...', s: '0x...', yParity: 0 }
+const signed = TxEnvelopeEip1559.from(envelope, { signature }) // [!code hl]
+
+// Serialize the signed envelope.
+// @log: '0x02f8730145843b9aca00...'
+const serialized = TxEnvelopeEip1559.serialize(signed) // [!code hl]
+
+// Deserialize it back into a typed envelope.
+const deserialized = TxEnvelopeEip1559.deserialize(serialized)
+```
+
+### Broadcast via `eth_sendRawTransaction`
+
+Serialize the envelope with its signature, then broadcast it over JSON-RPC. The example below
+uses [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) to send a `eth_sendRawTransaction`
+request over HTTP.
+
+```ts twoslash
+import { RpcTransport, Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
+
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip1559.getSignPayload(envelope),
+  privateKey: '0x...',
+})
+
+// Serialize the envelope with the signature.
+const serialized = TxEnvelopeEip1559.serialize(envelope, { signature })
+
+// Broadcast the envelope with `eth_sendRawTransaction`.
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+const hash = await transport.request({
+  method: 'eth_sendRawTransaction', // [!code hl]
+  params: [serialized], // [!code hl]
+})
+```
+
+If an application also needs to fill fields, wait for receipts, or retry, a client like
+[Viem](https://viem.sh/docs/actions/wallet/sendRawTransaction) handles that on top of the same
+primitives.
+
+### Sign Remotely (Wallets & Signing Servers)
+
+The recipes above manually fill and sign the transaction. When a wallet — or more generally an
+entity responsible for filling and signing transactions — manages the account, skip that
+ceremony with the `eth_sendTransaction` RPC method. The example below uses an
+[EIP-1193 Provider](/api/Provider) to interact with a browser extension wallet; a
+`RpcTransport.fromHttp` works the same way if a backend supports `eth_sendTransaction`.
+
+```ts twoslash
+import 'ox/window'
+import { Provider, TxEnvelopeEip1559, Value } from 'ox'
+
+// Construct the envelope. The wallet fills nonce, gas & fees.
+const envelope = TxEnvelopeEip1559.from({
+  chainId: 1,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+
+// Convert the envelope to an RPC-compatible format.
+const envelope_rpc = TxEnvelopeEip1559.toRpc(envelope) // [!code hl]
+
+// Broadcast the envelope with `eth_sendTransaction`.
+const provider = Provider.from(window.ethereum)
+const hash = await provider.request({
+  method: 'eth_sendTransaction',
+  params: [envelope_rpc],
+})
+```
+
+## Best Practices
+
+### Fill Every Field Before Signing
+
+Ox never reads chain state. A transaction signed with a stale `nonce` or an underpriced
+`maxFeePerGas` serializes fine but will be rejected or stall at broadcast. Fetch `nonce`
+(`eth_getTransactionCount`), estimate `gas` (`eth_estimateGas`), and derive fees before signing.
+
+### Always Sign the Sign Payload
+
+`getSignPayload` hashes the type-prefixed presign serialization. Signing anything else — the
+raw serialized bytes, or a hash computed by hand — produces a signature the network will
+attribute to a different transaction (or no valid sender at all).
+
+### Prefer `eth_sendTransaction` for Wallet-Managed Accounts
+
+When the key lives in a wallet or signing server, send an RPC-formatted envelope with
+`eth_sendTransaction` instead of exporting key material or replicating the wallet's
+fee-filling logic.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="Choose an Envelope Type"
+    description="Compare the five envelope types and when to use each."
+    to="/guides/transactions/envelope-types"
+  />
+  <Card
+    icon="lucide:gauge"
+    title="Estimate Fees & Access Lists"
+    description="Derive maxFeePerGas from fee history before signing."
+    to="/guides/transactions/fees-access-lists"
+  />
+  <Card
+    icon="lucide:search"
+    title="Parse & Inspect Transactions"
+    description="Deserialize raw transactions and recover their senders."
+    to="/guides/transactions/parse-inspect"
+  />
+</Cards>

@@ -155,7 +155,7 @@ const modules: Module[] = [
     name: 'TxEnvelope',
     icon: IconSend,
     desc: 'Build, sign, and serialize legacy, EIP-1559, EIP-2930, EIP-4844, and EIP-7702 envelopes.',
-    docHref: '/guides/transaction-envelopes',
+    docHref: '/guides/transactions/build-sign-send',
   },
   {
     id: 'webauthn',

@@ -1,0 +1,127 @@
+---
+description: Sign, verify, and aggregate BLS12-381 signatures and public keys.
+---
+
+import { Card, Cards } from 'vocs'
+
+# BLS Signatures & Aggregation
+
+## Overview
+
+[`Bls`](/api/Bls) implements BLS12-381 signatures — the scheme Ethereum consensus validators
+use — with points represented as structured [`BlsPoint`](/api/BlsPoint) values. By default,
+public keys are short G1 points (48 bytes) and signatures are long G2 points (96 bytes); pass
+`size: 'long-key:short-sig'` to flip that trade-off. Pairing operations are heavy, so the
+default implementation can be swapped for a faster backend via
+[engines](/guides/runtime/engines).
+
+## Recipes
+
+### Sign and Verify a Payload
+
+[`Bls.createKeyPair`](/api/Bls/createKeyPair) generates a key pair, and
+[`Bls.sign`](/api/Bls/sign) / [`Bls.verify`](/api/Bls/verify) sign and check payloads.
+
+```ts twoslash
+import { Bls, Hex } from 'ox'
+
+const payload = Hex.random(32)
+const { privateKey, publicKey } = Bls.createKeyPair()
+
+const signature = Bls.sign({ payload, privateKey }) // [!code hl]
+
+const verified = Bls.verify({ payload, publicKey, signature })
+// @log: true
+```
+
+`verify` infers the point groups from the inputs, so it works unchanged with either key size.
+
+### Aggregate Signatures and Public Keys
+
+[`Bls.aggregate`](/api/Bls/aggregate) combines many signatures over the same payload into one,
+and many public keys into one — a single pairing check then verifies the whole set.
+
+```ts twoslash
+import { Bls, Hex } from 'ox'
+
+const payload = Hex.random(32)
+const privateKeys = Array.from({ length: 100 }, () => Bls.randomPrivateKey())
+
+const publicKeys = privateKeys.map((privateKey) =>
+  Bls.getPublicKey({ privateKey }),
+)
+const signatures = privateKeys.map((privateKey) =>
+  Bls.sign({ payload, privateKey }),
+)
+
+const publicKey = Bls.aggregate(publicKeys) // [!code hl]
+const signature = Bls.aggregate(signatures) // [!code hl]
+
+const verified = Bls.verify({ payload, publicKey, signature })
+// @log: true
+```
+
+All points in one call must come from the same group. When aggregating serialized (hex or
+bytes) points, pass `{ group: 'G1' }` or `{ group: 'G2' }` so they can be deserialized.
+
+### Serialize BLS Points
+
+Structured points serialize to compressed hex or bytes with
+[`BlsPoint.toHex`](/api/BlsPoint/toHex) and [`BlsPoint.toBytes`](/api/BlsPoint/toBytes), and
+deserialize with [`BlsPoint.fromHex`](/api/BlsPoint/fromHex) and
+[`BlsPoint.fromBytes`](/api/BlsPoint/fromBytes).
+
+```ts twoslash
+import { Bls, BlsPoint, Hex } from 'ox'
+
+const payload = Hex.random(32)
+const { privateKey, publicKey } = Bls.createKeyPair()
+const signature = Bls.sign({ payload, privateKey })
+
+const publicKeyHex = BlsPoint.toHex(publicKey) // [!code hl]
+// @log: '0xacafff52…b32d9e66' (48 bytes)
+
+const signatureHex = BlsPoint.toHex(signature)
+// @log: '0xb4698f76…4ebe427c' (96 bytes)
+
+const publicKey2 = BlsPoint.fromHex(publicKeyHex, 'G1')
+const signature2 = BlsPoint.fromHex(signatureHex, 'G2')
+```
+
+Deserialization needs the group name because 48-byte values are G1 and 96-byte values are G2.
+
+## Best Practices
+
+### Aggregate Over a Single Payload
+
+A plain aggregate verification assumes every signer signed the same payload. Mixing payloads
+without a proof-of-possession scheme opens rogue-key attacks — stick to one payload per
+aggregate unless you know why you are deviating.
+
+### Install a Faster Engine for Bulk Verification
+
+Pairing checks dominate BLS cost. For validator-scale workloads, install the WASM or Node
+[engine](/guides/runtime/engines) instead of the pure-JS default.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:hash"
+    title="Hash Data"
+    description="Prepare 32-byte payloads before signing."
+    to="/guides/crypto/hashing"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Post-Quantum Signatures (ML-DSA)"
+    description="A quantum-resistant alternative signature scheme."
+    to="/guides/crypto/ml-dsa"
+  />
+  <Card
+    icon="lucide:cpu"
+    title="WASM & Engines"
+    description="Back BLS with a faster WASM or native implementation."
+    to="/guides/runtime/engines"
+  />
+</Cards>

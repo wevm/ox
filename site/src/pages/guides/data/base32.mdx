@@ -1,0 +1,55 @@
+---
+description: Encode and decode raw Base32 data without a checksum.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Base32 Coding
+
+## Overview
+
+[`Base32`](/api/Base32) implements the raw BIP-173 character set — the alphabet Bech32 addresses
+build on — without a checksum or human-readable prefix. Reach for it when a protocol hands you
+bare base32 data; for checksummed addresses use [`Bech32m`](/api/Bech32m) instead.
+
+## Recipes
+
+### Encode & Decode Data
+
+Round-trip hex payloads with [`Base32.fromHex`](/api/Base32/fromHex) and
+[`Base32.toHex`](/api/Base32/toHex); [`Base32.fromBytes`](/api/Base32/fromBytes) and
+[`Base32.toBytes`](/api/Base32/toBytes) cover `Uint8Array` payloads.
+
+```ts twoslash
+import { Base32 } from 'ox'
+
+const encoded = Base32.fromHex('0xdeadbeef')
+// @log: 'm6kmamc'
+const decoded = Base32.toHex(encoded)
+// @log: '0xdeadbeef'
+```
+
+## Best Practices
+
+### Prefer Bech32m for Addresses
+
+Base32 carries no integrity protection. When encoding anything a user might copy by hand — an
+address, an invoice — use [`Bech32m`](/guides/data/bech32m), which adds a prefix and a
+checksum that catches transcription errors.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:at-sign"
+    title="Bech32m Coding"
+    description="Checksummed, prefixed addresses built on this alphabet."
+    to="/guides/data/bech32m"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="The primitive types every codec converts to and from."
+    to="/guides/data/bytes-hex"
+  />
+</Cards>

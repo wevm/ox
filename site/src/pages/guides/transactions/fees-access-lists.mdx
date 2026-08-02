@@ -1,0 +1,147 @@
+---
+description: Estimate EIP-1559 fees from history and build transaction access lists.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Estimate Fees & Access Lists
+
+## Overview
+
+The [`Fee`](/api/Fee) module converts `eth_feeHistory` payloads and provides the fee math for
+EIP-1559 transactions; [`AccessList`](/api/AccessList) converts access lists between their
+object and serialized tuple forms. Both operate on plain data — pair them with an
+[`RpcTransport`](/api/RpcTransport) when values come from a node.
+
+## Recipes
+
+### Compute the Effective Gas Price
+
+Use [`Fee.effectiveGasPrice`](/api/Fee/effectiveGasPrice) to determine what an EIP-1559
+transaction actually pays per gas:
+`min(maxFeePerGas, baseFeePerGas + maxPriorityFeePerGas)`.
+
+```ts twoslash
+import { Fee, Value } from 'ox'
+
+const effectiveGasPrice = Fee.effectiveGasPrice({
+  baseFeePerGas: Value.fromGwei('20'),
+  maxFeePerGas: Value.fromGwei('30'),
+  maxPriorityFeePerGas: Value.fromGwei('2'),
+})
+// @log: 22000000000n (22 gwei = base fee + tip, under the 30 gwei cap)
+```
+
+`maxFeePerGas` is a cap, not a price — the difference between the cap and the effective price
+is refunded to the sender.
+
+### Estimate `maxFeePerGas` from Fee History
+
+Fetch recent blocks with `eth_feeHistory`, convert the payload with
+[`Fee.fromHistoryRpc`](/api/Fee/fromHistoryRpc), then derive a cap with
+[`Fee.estimateMaxFeePerGas`](/api/Fee/estimateMaxFeePerGas). The default multiplier doubles the
+base fee for headroom against base-fee bumps.
+
+```ts twoslash
+import { Fee, RpcTransport, Value } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+// Fetch the last 5 blocks with the 20th-percentile priority fee.
+const history = Fee.fromHistoryRpc(
+  await transport.request({
+    method: 'eth_feeHistory', // [!code hl]
+    params: ['0x5', 'latest', [20]],
+  }),
+)
+
+// `baseFeePerGas` includes the *next* block's base fee as its last element.
+const baseFeePerGas = history.baseFeePerGas[history.baseFeePerGas.length - 1]!
+
+// Tip at the sampled percentile of the most recent block.
+const rewards = history.reward ?? []
+const maxPriorityFeePerGas =
+  rewards[rewards.length - 1]?.[0] ?? Value.fromGwei('1')
+
+const maxFeePerGas = Fee.estimateMaxFeePerGas({
+  baseFeePerGas,
+  maxPriorityFeePerGas,
+})
+// @log: baseFeePerGas * 2n + maxPriorityFeePerGas
+```
+
+Tune the headroom with `multiplierNumerator`/`multiplierDenominator` (e.g. `3n`/`2n` for 1.5x).
+
+### Build & Serialize Access Lists
+
+Attach an access list of addresses and storage keys directly to an envelope — `serialize`
+converts it to tuple form automatically. Use
+[`AccessList.toTupleList`](/api/AccessList/toTupleList) and
+[`AccessList.fromTupleList`](/api/AccessList/fromTupleList) when working at the RLP boundary
+yourself.
+
+```ts twoslash
+import { AccessList, TxEnvelopeEip1559, Value } from 'ox'
+
+const envelope = TxEnvelopeEip1559.from({
+  // [!code hl:start]
+  accessList: [
+    {
+      address: '0x1e0049783f008a0085193e00003d00cd54003c71',
+      storageKeys: [
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      ],
+    },
+  ],
+  // [!code hl:end]
+  chainId: 1,
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+})
+
+// Object form <-> serialized tuple form.
+// @log: [['0x1e0049783f008a0085193e00003d00cd54003c71', ['0x0000...0001']]]
+const tuples = AccessList.toTupleList(envelope.accessList)
+const accessList = AccessList.fromTupleList(tuples)
+```
+
+Both directions validate address shape and enforce 32-byte storage keys, throwing
+`AccessList.InvalidStorageKeySizeError` on malformed input.
+
+## Best Practices
+
+### Give the Base Fee Headroom
+
+The base fee can rise 12.5% per block, and a transaction may not be included immediately. The
+2x default multiplier in `Fee.estimateMaxFeePerGas` absorbs roughly six consecutive full
+blocks; lower it only when inclusion time is not critical.
+
+### Access Lists Only Pay Off When Used
+
+Each listed address costs 2,400 gas and each storage key 1,900 gas up front. The discount only
+nets out if the transaction actually touches the listed slots — measure with real workloads
+before shipping EIP-2930-style lists.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Apply estimated fees when constructing an envelope."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Choose an Envelope Type"
+    description="Compare fee fields across the five envelope types."
+    to="/guides/transactions/envelope-types"
+  />
+  <Card
+    icon="lucide:search"
+    title="Parse & Inspect Transactions"
+    description="Convert RPC transactions and receipts to typed objects."
+    to="/guides/transactions/parse-inspect"
+  />
+</Cards>
