@@ -352,8 +352,8 @@ importers:
         specifier: ^4.3.0
         version: 4.3.0
       vocs:
-        specifier: 2.5.3
-        version: 2.5.3(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7))
+        specifier: 2.8.1
+        version: 2.8.1(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7))
       waku:
         specifier: 1.0.0-beta.6
         version: 1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)
@@ -936,6 +936,9 @@ packages:
 
   '@iconify-json/lucide@1.2.107':
     resolution: {integrity: sha512-Q4JmCICVwHqaGhB3ugDFdb4uGXuU/o8OJrJuo1YjeZhGeT3jX5fc//7qMNsCb10VuL2PVDM/CkaqO9chnmI3gg==}
+
+  '@iconify-json/ri@1.2.10':
+    resolution: {integrity: sha512-WWMhoncVVM+Xmu9T5fgu2lhYRrKTEWhKk3Com0KiM111EeEsRLiASjpsFKnC/SrB6covhUp95r2mH8tGxhgd5Q==}
 
   '@iconify-json/simple-icons@1.2.82':
     resolution: {integrity: sha512-4p978qHx8eD/QBOhgBzp/p7uS3OO2KCnVpFPJTUvuhuDXv1Hr4RcxcZ5MWc6ptkf/3Dlb1xb23068OtPyx10mA==}
@@ -6027,8 +6030,8 @@ packages:
       vite:
         optional: true
 
-  vocs@2.5.3:
-    resolution: {integrity: sha512-4qcFOgjHnmsM++Kei33sHsS4HrG7wii4DcxRTpuZfxA1dRz49WyDNzks9j0Sgyp9Cr/u2tn1hlTtReiSK4gGuQ==}
+  vocs@2.8.1:
+    resolution: {integrity: sha512-QWPesEssGaFS+cIb33nhqRZ87Su9oaGpeIZWlX1qb9FdokQOMjfskx/XinbZ1w0nqCLMDRH+bce+l+x/WIWE9Q==}
     hasBin: true
     peerDependencies:
       '@vocs/twoslash-rust': ^0.1.0
@@ -6943,6 +6946,10 @@ snapshots:
   '@humanwhocodes/retry@0.4.3': {}
 
   '@iconify-json/lucide@1.2.107':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/ri@1.2.10':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -12782,12 +12789,13 @@ snapshots:
     optionalDependencies:
       vite: '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)'
 
-  vocs@2.5.3(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7)):
+  vocs@2.8.1(@types/node@24.10.2)(@types/react@19.2.16)(@vue/compiler-sfc@3.5.39)(change-case@5.4.4)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.6(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))(webpack@5.104.1(esbuild@0.27.7)):
     dependencies:
       '@base-ui/react': 1.4.1(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@codesandbox/sandpack-react': 2.20.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@hono/node-server': 2.0.8(hono@4.12.18)
       '@iconify-json/lucide': 1.2.107
+      '@iconify-json/ri': 1.2.10
       '@iconify-json/simple-icons': 1.2.82
       '@iconify-json/vscode-icons': 1.2.50
       '@iconify/types': 2.0.0
