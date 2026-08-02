@@ -64,6 +64,28 @@ Treat PRF outputs and derived keys as secrets. Do not serialize or send the raw 
 PRF-derived keys are software keys. Code on any origin allowed to use the same RP ID can request the same output after user verification.
 :::
 
+### Releasing Key Material
+
+PRF outputs and keys derived with `as: 'Bytes'` carry a `Symbol.dispose` handler that zero-fills them, so they can be bound with a [`using` declaration](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using) to release the secret as soon as the scope exits.
+
+```ts twoslash
+import { Secp256k1, WebAuthn } from 'ox'
+
+async function sign(payload: `0x${string}`) {
+  const credential = await WebAuthn.createCredential({
+    name: 'Example',
+    prf: true,
+  })
+
+  using prf = credential.prf
+  using privateKey = Secp256k1.fromPrf(prf, { as: 'Bytes' })
+  return Secp256k1.sign({ payload, privateKey })
+  // `prf` and `privateKey` are zero-filled on scope exit.
+}
+```
+
+Both can also be released manually at any point with `.fill(0)` (equivalent to what disposal does). The default `Hex` key output is an immutable string, so it cannot be zeroed; prefer `as: 'Bytes'` when key lifetime matters. `AesGcm.fromPrf` needs no cleanup — it zeroes its intermediate material internally and returns a non-extractable `CryptoKey`.
+
 ### Signing a Payload
 
 Once we have a credential, we can use the [`WebAuthn.sign`](/api/WebAuthn/sign) function to sign a challenge (payload).

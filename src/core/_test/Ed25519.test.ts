@@ -90,6 +90,22 @@ describe('fromPrf', () => {
     expect(Ed25519.verify({ payload, publicKey, signature })).toBe(true)
   })
 
+  test('behavior: `using` releases key material on scope exit', () => {
+    const privateKey = Ed25519.fromPrf(Bytes.random(32), { as: 'Bytes' })
+    {
+      using key = privateKey
+      expect(key.some((byte) => byte !== 0)).toBe(true)
+    }
+    expect(privateKey.every((byte) => byte === 0)).toBe(true)
+  })
+
+  test('behavior: disposal is idempotent', () => {
+    const privateKey = Ed25519.fromPrf(Bytes.random(32), { as: 'Bytes' })
+    privateKey[Symbol.dispose]()
+    privateKey[Symbol.dispose]()
+    expect(privateKey.every((byte) => byte === 0)).toBe(true)
+  })
+
   test('behavior: uses versioned label and zero counter', () => {
     const messages: Hex.Hex[] = []
     Engine.with(

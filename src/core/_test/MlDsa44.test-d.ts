@@ -19,9 +19,9 @@ test('fromPrf', () => {
   expectTypeOf(MlDsa44.fromPrf(prf)).toEqualTypeOf<Hex.Hex>()
   expectTypeOf(MlDsa44.fromPrf(new Uint8Array(32))).toEqualTypeOf<Hex.Hex>()
   expectTypeOf(MlDsa44.fromPrf(prf, { as: 'Hex' })).toEqualTypeOf<Hex.Hex>()
-  expectTypeOf(
-    MlDsa44.fromPrf(prf, { as: 'Bytes' }),
-  ).toEqualTypeOf<Bytes.Bytes>()
+  expectTypeOf(MlDsa44.fromPrf(prf, { as: 'Bytes' })).toEqualTypeOf<
+    Bytes.Bytes & Disposable
+  >()
 })
 
 test('getPublicKey', () => {

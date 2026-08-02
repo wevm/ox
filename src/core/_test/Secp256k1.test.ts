@@ -165,6 +165,22 @@ describe('fromPrf', () => {
     expect(Secp256k1.noble.utils.isValidSecretKey(privateKey)).toBe(true)
   })
 
+  test('behavior: `using` releases key material on scope exit', () => {
+    const privateKey = Secp256k1.fromPrf(Bytes.random(32), { as: 'Bytes' })
+    {
+      using key = privateKey
+      expect(key.some((byte) => byte !== 0)).toBe(true)
+    }
+    expect(privateKey.every((byte) => byte === 0)).toBe(true)
+  })
+
+  test('behavior: disposal is idempotent', () => {
+    const privateKey = Secp256k1.fromPrf(Bytes.random(32), { as: 'Bytes' })
+    privateKey[Symbol.dispose]()
+    privateKey[Symbol.dispose]()
+    expect(privateKey.every((byte) => byte === 0)).toBe(true)
+  })
+
   test('behavior: skips invalid scalar candidates', () => {
     const messages: Hex.Hex[] = []
     const privateKey = Engine.with(

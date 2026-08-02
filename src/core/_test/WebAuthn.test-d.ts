@@ -17,7 +17,7 @@ describe('createCredential', () => {
         prf: true,
       })
 
-      expectTypeOf(credential.prf).toEqualTypeOf<Bytes.Bytes>()
+      expectTypeOf(credential.prf).toEqualTypeOf<Bytes.Bytes & Disposable>()
       expectTypeOf(Secp256k1.fromPrf(credential.prf)).toEqualTypeOf<Hex.Hex>()
     }
     expectTypeOf(infer).toBeFunction()
@@ -45,7 +45,7 @@ describe('createCredential', () => {
         },
       })
 
-      expectTypeOf(credential.prf).toEqualTypeOf<Bytes.Bytes>()
+      expectTypeOf(credential.prf).toEqualTypeOf<Bytes.Bytes & Disposable>()
     }
     expectTypeOf(infer).toBeFunction()
   })
@@ -97,7 +97,7 @@ describe('getCredential', () => {
         prf: true,
       })
 
-      expectTypeOf(credential.prf).toEqualTypeOf<Bytes.Bytes>()
+      expectTypeOf(credential.prf).toEqualTypeOf<Bytes.Bytes & Disposable>()
       expectTypeOf(credential.id).toEqualTypeOf<string>()
       expectTypeOf(credential.raw).toEqualTypeOf<WebAuthn.PublicKeyCredential>()
       // @ts-expect-error PRF requests do not parse the assertion signature.

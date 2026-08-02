@@ -270,6 +270,23 @@ describe('createCredential', () => {
     expect(result.prf).toEqual(new Uint8Array(32))
   })
 
+  test('behavior: `using` releases PRF output on scope exit', async () => {
+    const output = Uint8Array.from({ length: 32 }, (_, index) => index + 64)
+    const credential = await WebAuthn.createCredential({
+      createFn() {
+        return Promise.resolve(registrationCredential({ output }))
+      },
+      name: 'Example',
+      prf: true,
+    })
+
+    {
+      using prf = credential.prf
+      expect(prf.some((byte) => byte !== 0)).toBe(true)
+    }
+    expect(credential.prf.every((byte) => byte === 0)).toBe(true)
+  })
+
   test('error: unsupported credential is retained', async () => {
     const promise = WebAuthn.createCredential({
       createFn() {
@@ -550,6 +567,22 @@ describe('getCredential', () => {
     })
 
     expect(result.id).toMatchInlineSnapshot(`"AQID"`)
+  })
+
+  test('behavior: `using` releases PRF output on scope exit', async () => {
+    const output = Uint8Array.from({ length: 32 }, (_, index) => index + 128)
+    const result = await WebAuthn.getCredential({
+      getFn() {
+        return Promise.resolve(authenticationCredential({ output }))
+      },
+      prf: true,
+    })
+
+    {
+      using prf = result.prf
+      expect(prf.some((byte) => byte !== 0)).toBe(true)
+    }
+    expect(result.prf.every((byte) => byte === 0)).toBe(true)
   })
 
   test('error: failed credential request', async () => {

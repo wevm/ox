@@ -1,6 +1,7 @@
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import { toDisposableBytes } from './internal/disposable.js'
 import type { UnionOmit } from './internal/types.js'
 import * as WebAuthnP256 from './WebAuthnP256.js'
 import * as Authentication from '../webauthn/Authentication.js'
@@ -42,6 +43,10 @@ export type Prf =
  *
  * `prf: true` uses the stable input `ox.webauthn.prf.v1`. Pass
  * `{ input }` to use an application-owned input instead.
+ *
+ * The returned `prf` bytes carry a `Symbol.dispose` handler that zero-fills
+ * them, so they can be bound with a `using` declaration (or released manually
+ * with `prf.fill(0)`) once keys have been derived from them.
  *
  * When credential creation enables PRF but does not return an output, this
  * function performs a follow-up assertion. The user may be prompted twice.
@@ -210,8 +215,13 @@ export declare namespace createCredential {
 
   /** Created WebAuthn credential with its credential-bound PRF output. */
   type PrfReturnType = Credential.Credential & {
-    /** Copied 32-byte credential-bound PRF output. */
-    prf: Bytes.Bytes
+    /**
+     * Copied 32-byte credential-bound PRF output.
+     *
+     * Carries a `Symbol.dispose` handler that zero-fills it, for use with a
+     * `using` declaration.
+     */
+    prf: Bytes.Bytes & Disposable
   }
 
   /** Return type for a WebAuthn credential creation request. */
@@ -244,6 +254,10 @@ export declare namespace createCredential {
  *
  * `prf: true` uses the stable input `ox.webauthn.prf.v1`. Pass
  * `{ input }` to use an application-owned input instead.
+ *
+ * The returned `prf` bytes carry a `Symbol.dispose` handler that zero-fills
+ * them, so they can be bound with a `using` declaration (or released manually
+ * with `prf.fill(0)`) once keys have been derived from them.
  *
  * When more than one credential can be selected, check `result.id`
  * before using the PRF output.
@@ -364,8 +378,13 @@ export declare namespace getCredential {
   }
 
   type ReturnType = Response & {
-    /** Copied 32-byte credential-bound PRF output. */
-    prf: Bytes.Bytes
+    /**
+     * Copied 32-byte credential-bound PRF output.
+     *
+     * Carries a `Symbol.dispose` handler that zero-fills it, for use with a
+     * `using` declaration.
+     */
+    prf: Bytes.Bytes & Disposable
   }
 
   type ErrorType =
@@ -391,18 +410,16 @@ type PrfResultContext = {
 function parsePrfOutput(
   value: unknown,
   context: PrfResultContext,
-): Bytes.Bytes {
+): Bytes.Bytes & Disposable {
   if (ArrayBuffer.isView(value)) {
     if (value.byteLength !== 32)
       throw new InvalidPrfOutputError({
         ...context,
         size: value.byteLength,
       })
-    return new Uint8Array(
-      value.buffer,
-      value.byteOffset,
-      value.byteLength,
-    ).slice()
+    return toDisposableBytes(
+      new Uint8Array(value.buffer, value.byteOffset, value.byteLength).slice(),
+    )
   }
 
   const arrayBufferSize = getArrayBufferSize(value)
@@ -412,7 +429,7 @@ function parsePrfOutput(
         ...context,
         size: arrayBufferSize,
       })
-    return new Uint8Array(value as ArrayBuffer).slice()
+    return toDisposableBytes(new Uint8Array(value as ArrayBuffer).slice())
   }
 
   if (
@@ -439,7 +456,7 @@ function parsePrfOutput(
         throw new InvalidPrfOutputError(context)
       output[index] = byte
     }
-    return output
+    return toDisposableBytes(output)
   }
 
   throw new InvalidPrfOutputError(context)
