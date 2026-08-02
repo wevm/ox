@@ -29,10 +29,12 @@ const accounts = [
 ] as const
 
 async function handleRequest(request: RpcRequest.RpcRequest<RpcSchema.Eth>) {
-  if (request.method === 'eth_accounts') // [!code hl]
+  if (request.method === 'eth_accounts') {
     return RpcResponse.from({ result: accounts }, { request }) // [!code hl]
-  if (request.method === 'eth_chainId') // [!code hl]
+  }
+  if (request.method === 'eth_chainId') {
     return RpcResponse.from({ result: '0x1' }, { request }) // [!code hl]
+  }
 
   // Fall back to an upstream node for everything else.
   return await fetch('https://1.rpc.thirdweb.com', {
