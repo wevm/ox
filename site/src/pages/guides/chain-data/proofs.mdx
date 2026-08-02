@@ -32,9 +32,7 @@ const proof = await transport
     method: 'eth_getProof',
     params: [
       '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
-      [
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-      ],
+      ['0x0000000000000000000000000000000000000000000000000000000000000000'],
       'latest',
     ],
   })
@@ -63,7 +61,8 @@ import { BinaryStateTree, Bytes } from 'ox'
 
 const tree = BinaryStateTree.create() // [!code focus]
 
-BinaryStateTree.insert( // [!code focus]
+BinaryStateTree.insert(
+  // [!code focus]
   tree,
   Bytes.fromHex(
     '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54',

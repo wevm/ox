@@ -25,7 +25,8 @@ import { RpcRequest } from 'ox'
 
 const store = RpcRequest.createStore() // [!code focus]
 
-const request_1 = store.prepare({ // [!code focus]
+const request_1 = store.prepare({
+  // [!code focus]
   method: 'eth_blockNumber', // [!code focus]
 }) // [!code focus]
 // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }

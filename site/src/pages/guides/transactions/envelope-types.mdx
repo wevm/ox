@@ -14,13 +14,13 @@ switching types means changing which fields you supply. The generic
 [`TransactionEnvelope`](/api/TransactionEnvelope) module dispatches to the right type
 automatically, inferring it from the envelope's shape when `type` is omitted.
 
-| Module                                        | EIP                                                            | Type   | Fee fields                             | Adds                              |
-| --------------------------------------------- | -------------------------------------------------------------- | ------ | -------------------------------------- | --------------------------------- |
-| [`TxEnvelopeLegacy`](/api/TxEnvelopeLegacy)   | —                                                              | `0x00` | `gasPrice`                              | Original, pre-typed format        |
-| [`TxEnvelopeEip2930`](/api/TxEnvelopeEip2930) | [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930)            | `0x01` | `gasPrice`                              | `accessList`                      |
-| [`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) | [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559)            | `0x02` | `maxFeePerGas`, `maxPriorityFeePerGas`  | Dynamic fee market                |
-| [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) | [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844)            | `0x03` | EIP-1559 fields + `maxFeePerBlobGas`    | `blobVersionedHashes`, `sidecars` |
-| [`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) | [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702)            | `0x04` | EIP-1559 fields                         | `authorizationList`               |
+| Module                                        | EIP                                                 | Type   | Fee fields                             | Adds                              |
+| --------------------------------------------- | --------------------------------------------------- | ------ | -------------------------------------- | --------------------------------- |
+| [`TxEnvelopeLegacy`](/api/TxEnvelopeLegacy)   | —                                                   | `0x00` | `gasPrice`                             | Original, pre-typed format        |
+| [`TxEnvelopeEip2930`](/api/TxEnvelopeEip2930) | [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) | `0x01` | `gasPrice`                             | `accessList`                      |
+| [`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) | [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) | `0x02` | `maxFeePerGas`, `maxPriorityFeePerGas` | Dynamic fee market                |
+| [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) | [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) | `0x03` | EIP-1559 fields + `maxFeePerBlobGas`   | `blobVersionedHashes`, `sidecars` |
+| [`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) | [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) | `0x04` | EIP-1559 fields                        | `authorizationList`               |
 
 ## Recipes
 

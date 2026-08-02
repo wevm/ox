@@ -84,7 +84,7 @@ To decode a log's `topics` and `data` into named event arguments, use
 ### Pre-Check Membership with Bloom Filters
 
 Every block header carries a 256-byte `logsBloom`. [`Bloom.contains`](/api/Bloom/contains) tests
-whether an address or topic *may* appear in the block's logs, letting you skip `eth_getLogs`
+whether an address or topic _may_ appear in the block's logs, letting you skip `eth_getLogs`
 calls for blocks that definitely contain nothing of interest.
 
 ```ts twoslash
