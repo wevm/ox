@@ -1,0 +1,129 @@
+---
+description: Encode constructor calldata and compute CREATE and CREATE2 contract addresses.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Deploy Contracts & Compute Addresses
+
+## Overview
+
+A contract deployment is a transaction whose calldata is the contract's bytecode with the
+ABI-encoded constructor arguments appended, and no `to` address.
+[`AbiConstructor`](/api/AbiConstructor) encodes that deploy data, and
+[`ContractAddress`](/api/ContractAddress) computes the address the deployment will land on —
+before anything is broadcast.
+
+## Recipes
+
+### Encode Constructor Arguments
+
+Define the constructor with [`AbiConstructor.from`](/api/AbiConstructor/from), then append the
+encoded arguments to the bytecode with [`AbiConstructor.encode`](/api/AbiConstructor/encode). The
+result is the deploy transaction's calldata.
+
+```ts twoslash
+import { AbiConstructor, RpcTransport } from 'ox'
+
+const bytecode = '0x...'
+
+const constructor = AbiConstructor.from('constructor(address owner)')
+
+// [!code focus:start]
+const data = AbiConstructor.encode(constructor, {
+  bytecode,
+  args: ['0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'],
+})
+// [!code focus:end]
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const hash = await transport.request({
+  method: 'eth_sendTransaction',
+  params: [{ data }],
+})
+```
+
+If you are working with a JSON ABI, extract the constructor with
+[`AbiConstructor.fromAbi`](/api/AbiConstructor/fromAbi). Note that deploy transactions omit the
+`to` address.
+
+### Compute a CREATE Address
+
+Ordinary deployments use the `CREATE` opcode: the resulting address is derived from the deployer
+address and its account nonce at deployment time.
+[`ContractAddress.fromCreate`](/api/ContractAddress/fromCreate) computes it locally.
+
+```ts twoslash
+import { ContractAddress } from 'ox'
+
+// [!code focus:start]
+const address = ContractAddress.fromCreate({
+  from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
+  nonce: 0n, // [!code hl]
+})
+// @log: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+// [!code focus:end]
+```
+
+`nonce` is the deployer's transaction count at the moment of deployment (`eth_getTransactionCount`
+for an EOA), not a value you choose.
+
+### Compute a CREATE2 Address
+
+Factory deployments via the [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode derive the
+address from the factory address, a salt, and the init code — so the address is deterministic and
+independent of nonces. Use
+[`ContractAddress.fromCreate2`](/api/ContractAddress/fromCreate2).
+
+```ts twoslash
+import { ContractAddress, Hex } from 'ox'
+
+// [!code focus:start]
+const address = ContractAddress.fromCreate2({
+  from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
+  bytecode: '0x6394198df16000526103ff60206004601c335afa6040516060f3',
+  salt: Hex.fromString('hello world'), // [!code hl]
+})
+// @log: '0x59fbb593abe27cb193b6ee5c5dc7bbde312290ab'
+// [!code focus:end]
+```
+
+`bytecode` is the full init code — the deployment bytecode plus encoded constructor arguments,
+i.e. the same `data` produced by `AbiConstructor.encode`. If you already have `keccak256` of the
+init code, pass it as `bytecodeHash` instead.
+
+## Best Practices
+
+### CREATE2 Commits to the Init Code
+
+Constructor arguments are part of the init code, so changing them changes the CREATE2 address.
+Compute the address from the exact `data` you will deploy, not from the bare bytecode.
+
+### Pin the Deployer Nonce
+
+CREATE addresses shift with every transaction the deployer sends. If a predictable address
+matters, compute it from a fresh nonce and deploy before anything else, or use CREATE2.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Encode & Decode Function Calls"
+    description="Encode calldata for reads and writes, and decode results and inputs."
+    to="/guides/abi/function-calls"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send Transactions"
+    description="Construct, sign, and broadcast transaction envelopes."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="ContractAddress.fromCreate2"
+    description="Review accepted bytecode, bytecodeHash, and salt inputs."
+    to="/api/ContractAddress/fromCreate2"
+  />
+</Cards>

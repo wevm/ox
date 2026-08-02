@@ -1,0 +1,112 @@
+---
+description: Generate keys, sign, and verify with post-quantum ML-DSA-44.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Post-Quantum Signatures (ML-DSA)
+
+## Overview
+
+[`MlDsa44`](/api/MlDsa44) implements ML-DSA-44 (FIPS 204, the standardized Dilithium2) — a
+lattice-based signature scheme that stays secure against quantum attackers. The private key is
+a compact 32-byte seed; the public key is 1,312 bytes and signatures are 2,420 bytes. The
+default implementation can be swapped for a faster backend via
+[engines](/guides/runtime/engines).
+
+## Recipes
+
+### Generate Keys, Sign, and Verify
+
+[`MlDsa44.createKeyPair`](/api/MlDsa44/createKeyPair) generates the seed and expands its
+public key; [`MlDsa44.sign`](/api/MlDsa44/sign) and [`MlDsa44.verify`](/api/MlDsa44/verify)
+mirror the ECDSA signer APIs.
+
+```ts twoslash
+import { MlDsa44 } from 'ox'
+
+// [!code focus:start]
+const { privateKey, publicKey } = MlDsa44.createKeyPair()
+
+const signature = MlDsa44.sign({ payload: '0xdeadbeef', privateKey }) // [!code hl]
+
+const verified = MlDsa44.verify({
+  payload: '0xdeadbeef',
+  publicKey,
+  signature,
+})
+// @log: true
+// [!code focus:end]
+```
+
+The 32-byte seed is the canonical interchange form of an ML-DSA private key — back up the
+seed, and [`MlDsa44.getPublicKey`](/api/MlDsa44/getPublicKey) deterministically re-derives the
+public key.
+
+### Domain-Separate with a Context String
+
+FIPS 204 supports a context string (up to 255 bytes) so signatures from one protocol cannot be
+replayed in another. Pass the same `context` to both `sign` and `verify`.
+
+```ts twoslash
+import { Hex, MlDsa44 } from 'ox'
+
+const { privateKey, publicKey } = MlDsa44.createKeyPair()
+
+// [!code focus:start]
+const context = Hex.fromString('my-app:login:v1')
+
+const signature = MlDsa44.sign({
+  context, // [!code hl]
+  payload: '0xdeadbeef',
+  privateKey,
+})
+
+const verified = MlDsa44.verify({
+  context, // [!code hl]
+  payload: '0xdeadbeef',
+  publicKey,
+  signature,
+})
+// @log: true
+// [!code focus:end]
+```
+
+Verification with a different (or missing) context returns `false`.
+
+## Best Practices
+
+### Enable Hedged Signing on Hardware
+
+Signing is deterministic by default. Pass `extraEntropy: true` to `sign` for the hedged FIPS
+204 variant, which protects against fault attacks and randomness-reuse pitfalls at the cost of
+reproducibility.
+
+### Budget for Signature Size
+
+At 2,420 bytes per signature and 1,312 bytes per public key, ML-DSA payloads are two orders of
+magnitude larger than ECDSA. Plan storage and calldata costs accordingly before committing to
+onchain verification.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Ed25519 & X25519"
+    description="Compact classical signatures and key agreement."
+    to="/guides/crypto/ed25519-x25519"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Derive Secrets with PRF"
+    description="Derive an ML-DSA-44 key from a WebAuthn passkey."
+    to="/guides/webauthn/prf"
+  />
+  <Card
+    icon="lucide:cpu"
+    title="WASM & Engines"
+    description="Back ML-DSA with a faster WASM or native implementation."
+    to="/guides/runtime/engines"
+  />
+</Cards>

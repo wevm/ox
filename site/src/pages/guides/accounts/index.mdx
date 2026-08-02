@@ -1,0 +1,49 @@
+---
+description: Derive addresses, manage mnemonics and HD wallets, and encrypt keys.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Accounts & Keys
+
+## Overview
+
+An Ethereum account is a secp256k1 key pair and the address derived from it. Ox provides the
+primitives for the whole key lifecycle: generating [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
+mnemonics, deriving [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD
+keys, computing and validating addresses, and encrypting private keys at rest as JSON keystores.
+
+```ts twoslash
+import { Address, Mnemonic, Secp256k1 } from 'ox'
+
+// Generate a mnemonic and derive a private key (`m/44'/60'/0'/0/0`).
+const mnemonic = Mnemonic.random(Mnemonic.english)
+const privateKey = Mnemonic.toPrivateKey(mnemonic)
+
+// Derive the public key and address.
+const publicKey = Secp256k1.getPublicKey({ privateKey })
+const address = Address.fromPublicKey(publicKey)
+```
+
+## Guides
+
+<Cards>
+  <Card
+    icon="lucide:at-sign"
+    title="Derive & Validate Addresses"
+    description="Derive addresses from keys, checksum, validate, and compare."
+    to="/guides/accounts/addresses"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Encrypt Keys with Keystores"
+    description="Encrypt private keys as JSON keystores with scrypt or PBKDF2."
+    to="/guides/accounts/keystores"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Mnemonics & HD Wallets"
+    description="Generate BIP-39 phrases and derive accounts along HD paths."
+    to="/guides/accounts/mnemonics-hd"
+  />
+</Cards>

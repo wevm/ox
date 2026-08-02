@@ -1,0 +1,160 @@
+---
+description: Wrap and unwrap ERC-6492 and ERC-8010 signatures for smart accounts.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Smart Account Signatures (6492/8010)
+
+## Overview
+
+Smart accounts verify signatures onchain via [ERC-1271](https://eips.ethereum.org/EIPS/eip-1271)
+`isValidSignature` — which fails when the account contract does not exist yet.
+[`SignatureErc6492`](/ercs/erc6492/SignatureErc6492) wraps a signature with the factory call
+that deploys the account, so verifiers can validate signatures from **counterfactual**
+(not-yet-deployed) accounts. [`SignatureErc8010`](/ercs/erc8010/SignatureErc8010) wraps a
+signature with a signed [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) authorization, so
+verifiers can validate against an EOA whose delegation is not yet live onchain.
+
+## Recipes
+
+### Wrap a Signature for a Counterfactual Account (ERC-6492)
+
+Wrap the account's signature together with the factory address (`to`) and the calldata that
+deploys the account (`data`) using [`SignatureErc6492.wrap`](/ercs/erc6492/SignatureErc6492/wrap).
+
+```ts twoslash
+import { Address, Hex, PersonalMessage, Secp256k1, Signature } from 'ox'
+import { SignatureErc6492 } from 'ox/erc6492'
+
+declare const factory: Address.Address
+declare const factoryData: Hex.Hex
+
+const payload = PersonalMessage.getSignPayload(
+  Hex.fromString('hello world'),
+)
+const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+
+const wrapped = SignatureErc6492.wrap({ // [!code focus]
+  data: factoryData, // [!code focus]
+  signature: Signature.toHex(signature), // [!code focus]
+  to: factory, // [!code focus]
+}) // [!code focus]
+```
+
+The wrapped value ends in the ERC-6492 magic bytes
+(`SignatureErc6492.magicBytes`), which is how verifiers distinguish it from a plain signature.
+
+### Unwrap & Verify (ERC-6492)
+
+Detect the wrapper with [`SignatureErc6492.validate`](/ercs/erc6492/SignatureErc6492/validate),
+then recover the constituent parts with
+[`SignatureErc6492.unwrap`](/ercs/erc6492/SignatureErc6492/unwrap).
+
+```ts twoslash
+import { SignatureErc6492 } from 'ox/erc6492'
+
+declare const wrapped: SignatureErc6492.Wrapped
+
+// [!code focus:start]
+if (!SignatureErc6492.validate(wrapped))
+  throw new Error('not an ERC-6492 wrapped signature')
+
+const { data, signature, to } = SignatureErc6492.unwrap(wrapped) // [!code hl]
+// [!code focus:end]
+```
+
+For full counterfactual verification, perform an `eth_call` that deploys
+[`SignatureErc6492.universalSignatureValidatorBytecode`](/ercs/erc6492/SignatureErc6492)
+with the signer, payload hash, and wrapped signature as constructor arguments — it validates
+deployed accounts (ERC-1271), undeployed accounts, and plain ECDSA signatures alike.
+
+### Delegate Verification with ERC-8010
+
+Wrap a signature together with a signed EIP-7702 authorization using
+[`SignatureErc8010.wrap`](/ercs/erc8010/SignatureErc8010/wrap), so verifiers can apply the
+delegation before checking the signature.
+
+```ts twoslash
+import { Authorization, PersonalMessage, Secp256k1, Signature } from 'ox'
+import { SignatureErc8010 } from 'ox/erc8010'
+
+// 1. Sign the EIP-7702 authorization for the delegation.
+const authorization = Authorization.from({
+  address: '0x1234567890abcdef1234567890abcdef12345678',
+  chainId: 1,
+  nonce: 69n,
+})
+const authorizationSignature = Secp256k1.sign({
+  payload: Authorization.getSignPayload(authorization),
+  privateKey: '0x...',
+})
+const authorizationSigned = Authorization.from(authorization, {
+  signature: authorizationSignature,
+})
+
+// 2. Sign the payload.
+const signature = Secp256k1.sign({
+  payload: PersonalMessage.getSignPayload('0xdeadbeef'),
+  privateKey: '0x...',
+})
+
+// 3. Wrap the signature with the authorization.
+const wrapped = SignatureErc8010.wrap({ // [!code focus]
+  authorization: authorizationSigned, // [!code focus]
+  signature: Signature.toHex(signature), // [!code focus]
+}) // [!code focus]
+```
+
+On the verifying side, [`SignatureErc8010.unwrap`](/ercs/erc8010/SignatureErc8010/unwrap)
+recovers the authorization and the inner signature:
+
+```ts twoslash
+import { SignatureErc8010 } from 'ox/erc8010'
+
+declare const wrapped: SignatureErc8010.Wrapped
+
+const { authorization, signature } = SignatureErc8010.unwrap(wrapped)
+```
+
+## Best Practices
+
+### Check the Magic Bytes First
+
+Both formats terminate in distinctive magic bytes. Use `validate` before unwrapping, and fall
+back to plain ECDSA verification when it returns `false` — EOAs and deployed accounts still
+produce unwrapped signatures.
+
+### Serialize the Inner Signature
+
+`wrap` expects the inner signature as serialized hex. Convert structured signatures with
+[`Signature.toHex`](/api/Signature/toHex) before wrapping.
+
+### Verify Against Live Chain State
+
+Wrappers only carry the *instructions* to make verification possible. Trustworthy verification
+still requires executing them against current chain state (e.g. the universal validator via
+`eth_call`), since the account may have been deployed, upgraded, or re-delegated since signing.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:fingerprint"
+    title="Sign-In with Ethereum (SIWE)"
+    description="Authenticate smart account users with SIWE."
+    to="/guides/messages/siwe"
+  />
+  <Card
+    icon="lucide:wallet"
+    title="Delegate with EIP-7702"
+    description="Sign authorizations and build 7702 transaction envelopes."
+    to="/guides/transactions/eip-7702"
+  />
+  <Card
+    icon="lucide:users"
+    title="Build ERC-4337 User Operations"
+    description="Construct, hash, and pack UserOperations for the EntryPoint."
+    to="/guides/account-abstraction/user-operations"
+  />
+</Cards>

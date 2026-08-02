@@ -1,0 +1,112 @@
+---
+description: Encrypt and decrypt data with AES-GCM using password-derived keys.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Encrypt Data (AES-GCM)
+
+## Overview
+
+[`AesGcm`](/api/AesGcm) wraps the Web Crypto API's
+[AES-GCM](https://developer.mozilla.org/en-US/docs/Web/API/AesGcmParams) cipher, which combines
+high-performance encryption with built-in message integrity. Keys are non-extractable
+`CryptoKey`s derived from a password with [`AesGcm.getKey`](/api/AesGcm/getKey) (PBKDF2) or
+from a WebAuthn PRF output with [`AesGcm.fromPrf`](/api/AesGcm/fromPrf). All functions are
+async.
+
+## Recipes
+
+### Derive a Key from a Password
+
+[`AesGcm.getKey`](/api/AesGcm/getKey) stretches a password into an AES-256-GCM key using
+PBKDF2 (900,000 iterations by default).
+
+```ts twoslash
+import { AesGcm } from 'ox'
+
+// [!code focus:start]
+const key = await AesGcm.getKey({ password: 'qwerty' }) // [!code hl]
+// @log: CryptoKey {}
+// [!code focus:end]
+```
+
+A random salt is generated per call — pass explicit `salt` (and optionally `iterations`)
+[options](/api/AesGcm/getKey) and persist the salt, or a key derived later from the same
+password will not decrypt earlier data.
+
+### Encrypt Data
+
+[`AesGcm.encrypt`](/api/AesGcm/encrypt) encrypts `Hex` or `Bytes` data with the derived key.
+
+```ts twoslash
+import { AesGcm, Hex } from 'ox'
+
+const key = await AesGcm.getKey({ password: 'qwerty' })
+
+// [!code focus:start]
+const data = Hex.fromString('i am top secret')
+
+const encrypted = await AesGcm.encrypt(data, key) // [!code hl]
+// @log: '0x5e257b25bcf53d5431e54e5a68ca0138306d31bb6154f35a97bb8ea18111e7d82bcf619d3c76c4650688bc5310eed80b8fc86d1e3e'
+// [!code focus:end]
+```
+
+A fresh random initialization vector is generated on every call and prepended to the
+ciphertext, so the output is self-contained.
+
+### Decrypt Data
+
+[`AesGcm.decrypt`](/api/AesGcm/decrypt) reads the prepended IV and returns the original data.
+GCM authentication means tampered ciphertext throws instead of decrypting to garbage.
+
+```ts twoslash
+import { AesGcm, Hex } from 'ox'
+
+const key = await AesGcm.getKey({ password: 'qwerty' })
+const data = Hex.fromString('i am top secret')
+const encrypted = await AesGcm.encrypt(data, key)
+
+// [!code focus:start]
+const decrypted = await AesGcm.decrypt(encrypted, key) // [!code hl]
+// @log: '0x6920616d20746f7020736563726574'
+// [!code focus:end]
+```
+
+Convert back to a string with [`Hex.toString`](/api/Hex/toString).
+
+## Best Practices
+
+### Persist the Salt
+
+The default random salt makes each derived key unique. Store it (it is not secret) next to the
+ciphertext and pass it back to `getKey` when decrypting.
+
+### Prefer Hardware-Derived Keys Over Passwords
+
+Where a passkey is available, [`AesGcm.fromPrf`](/api/AesGcm/fromPrf) derives the key from the
+authenticator's PRF output — no password to phish or brute-force. See
+[Derive Secrets with PRF](/guides/webauthn/prf).
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Derive Secrets with PRF"
+    description="Derive AES-GCM keys from a WebAuthn passkey."
+    to="/guides/webauthn/prf"
+  />
+  <Card
+    icon="lucide:vault"
+    title="Encrypt Keys with Keystores"
+    description="Password-protect private keys as JSON keystores."
+    to="/guides/accounts/keystores"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Ed25519 & X25519"
+    description="Derive shared secrets to encrypt for a peer."
+    to="/guides/crypto/ed25519-x25519"
+  />
+</Cards>

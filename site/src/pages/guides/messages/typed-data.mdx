@@ -1,0 +1,203 @@
+---
+description: Define, hash, sign, and verify EIP-712 typed data.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Sign Typed Data (EIP-712)
+
+## Overview
+
+Typed Data is signed data that presents structured, human-readable data to the user to sign.
+This structure (and encoding format) is defined by the
+[EIP-712 standard](https://eips.ethereum.org/EIPS/eip-712). The
+[`TypedData`](/api/TypedData) module computes sign payloads, domain separators, and serialized
+representations of typed data.
+
+## Recipes
+
+### Define & Hash Typed Data
+
+A signable Typed Data payload can be computed using
+[`TypedData.getSignPayload`](/api/TypedData/getSignPayload):
+
+```ts twoslash
+import { TypedData } from 'ox'
+
+const payload = TypedData.getSignPayload({
+  domain: {
+    name: 'Ether Mail',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0x0000000000000000000000000000000000000000',
+  },
+  types: {
+    Person: [
+      { name: 'name', type: 'string' },
+      { name: 'wallet', type: 'address' },
+    ],
+    Mail: [
+      { name: 'from', type: 'Person' },
+      { name: 'to', type: 'Person' },
+      { name: 'contents', type: 'string' },
+    ],
+  },
+  primaryType: 'Mail',
+  message: {
+    from: {
+      name: 'Cow',
+      wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+    },
+    to: {
+      name: 'Bob',
+      wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+    },
+    contents: 'Hello, Bob!',
+  },
+})
+```
+
+The payload is `keccak256(0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message))` — the ERC-191
+`0x01` version envelope.
+
+### Sign & Verify
+
+Sign the payload using a signer — here [`Secp256k1.sign`](/api/Secp256k1/sign) — then recover
+the signer with [`Secp256k1.recoverAddress`](/api/Secp256k1/recoverAddress).
+
+```ts twoslash
+import { Secp256k1, TypedData } from 'ox'
+
+const payload = TypedData.getSignPayload({
+  domain: {
+    name: 'Ether Mail',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0x0000000000000000000000000000000000000000',
+  },
+  types: {
+    Person: [
+      { name: 'name', type: 'string' },
+      { name: 'wallet', type: 'address' },
+    ],
+    Mail: [
+      { name: 'from', type: 'Person' },
+      { name: 'to', type: 'Person' },
+      { name: 'contents', type: 'string' },
+    ],
+  },
+  primaryType: 'Mail',
+  message: {
+    from: {
+      name: 'Cow',
+      wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+    },
+    to: {
+      name: 'Bob',
+      wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+    },
+    contents: 'Hello, Bob!',
+  },
+})
+
+const signature = Secp256k1.sign({ // [!code focus]
+  payload, // [!code focus]
+  privateKey: '0x...', // [!code focus]
+}) // [!code focus]
+
+const signer = Secp256k1.recoverAddress({ payload, signature }) // [!code focus]
+```
+
+Compare the recovered signer against the expected address with
+[`Address.isEqual`](/api/Address/isEqual).
+
+### Sign with a Wallet (eth_signTypedData_v4)
+
+Most Wallets expose a [`eth_signTypedData_v4` RPC interface](https://docs.metamask.io/wallet/reference/json-rpc-methods/eth_signtypeddata_v4/)
+that can be used to sign Typed Data. This means you can use the `eth_signTypedData_v4` RPC method
+to sign a message without the ceremony of constructing and signing it yourself.
+
+```ts twoslash
+// @noErrors
+import 'ox/window'
+import { Hex, Provider, Secp256k1, TypedData } from 'ox'
+
+const provider = Provider.from(window.ethereum)
+
+const [address] = await provider.request({ method: 'eth_requestAccounts' })
+
+const payload = TypedData.serialize({ /* ... */ }) // [!code focus]
+
+const signature = await provider.request({ // [!code focus]
+  method: 'eth_signTypedData_v4', // [!code focus]
+  params: [address, payload], // [!code focus]
+}) // [!code focus]
+```
+
+[`TypedData.serialize`](/api/TypedData/serialize) produces the JSON string that
+`eth_signTypedData_v4` expects as its second parameter.
+
+### Extract the Domain
+
+Derive the EIP-712 domain schema with
+[`TypedData.extractEip712DomainTypes`](/api/TypedData/extractEip712DomainTypes), and its
+[`domainSeparator`](/api/TypedData/domainSeparator) — useful when interoperating with contracts
+that expose `eip712Domain()` (ERC-5267).
+
+```ts twoslash
+import { TypedData } from 'ox'
+
+const domain = {
+  name: 'Ether!',
+  version: '1',
+  chainId: 1,
+  verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+} as const
+
+const types = TypedData.extractEip712DomainTypes(domain) // [!code focus]
+// @log: [
+// @log:   { 'name': 'name', 'type': 'string' },
+// @log:   { 'name': 'version', 'type': 'string' },
+// @log:   { 'name': 'chainId', 'type': 'uint256' },
+// @log:   { 'name': 'verifyingContract', 'type': 'address' },
+// @log: ]
+
+const separator = TypedData.domainSeparator(domain) // [!code focus]
+// @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
+```
+
+## Best Practices
+
+### Bind Signatures to a Domain
+
+Include `chainId` and `verifyingContract` in the domain so a signature for one contract on one
+chain cannot be replayed against another.
+
+### Validate Untrusted Definitions
+
+When typed data arrives from an external source, check it with
+[`TypedData.validate`](/api/TypedData/validate) (returns `false`) or
+[`TypedData.assert`](/api/TypedData/assert) (throws) before hashing or signing.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:signature"
+    title="Sign Personal Messages (EIP-191)"
+    description="Sign arbitrary human-readable messages."
+    to="/guides/messages/personal-messages"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Smart Account Signatures (6492/8010)"
+    description="Wrap signatures for counterfactual and delegated accounts."
+    to="/guides/messages/smart-account-signatures"
+  />
+  <Card
+    icon="lucide:pen-tool"
+    title="Work with Secp256k1"
+    description="Create key pairs, sign payloads, and recover signers."
+    to="/guides/crypto/secp256k1"
+  />
+</Cards>

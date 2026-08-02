@@ -1,0 +1,128 @@
+---
+description: Use non-extractable P256 keys with the Web Crypto API.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with WebCryptoP256
+
+## Overview
+
+[`WebCryptoP256`](/api/WebCryptoP256) wraps the
+[Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) for P256:
+private keys are non-extractable
+[`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey)s that the runtime
+never exposes to JavaScript, while public keys and signatures use Ox's structured
+[`PublicKey`](/api/PublicKey) and [`Signature`](/api/Signature) shapes. All functions are
+async.
+
+## Recipes
+
+### Create a Non-Extractable Key Pair
+
+[`WebCryptoP256.createKeyPair`](/api/WebCryptoP256/createKeyPair) generates an ECDSA signing
+key. The private key cannot be exported or serialized by default.
+
+```ts twoslash
+import { WebCryptoP256 } from 'ox'
+
+// [!code focus:start]
+const { privateKey, publicKey } = await WebCryptoP256.createKeyPair() // [!code hl]
+// @log: {
+// @log:   privateKey: CryptoKey {},
+// @log:   publicKey: { prefix: 4, x: '0x…', y: '0x…' },
+// @log: }
+// [!code focus:end]
+```
+
+Persist the `CryptoKey` in IndexedDB if the key must survive a page reload — only pass
+`extractable: true` if you genuinely need to export it.
+
+### Sign and Verify in the Browser
+
+[`WebCryptoP256.sign`](/api/WebCryptoP256/sign) SHA-256-hashes the payload and signs it with
+the `CryptoKey`; [`WebCryptoP256.verify`](/api/WebCryptoP256/verify) checks the result against
+the structured public key.
+
+```ts twoslash
+import { WebCryptoP256 } from 'ox'
+
+const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+
+// [!code focus:start]
+const signature = await WebCryptoP256.sign({
+  payload: '0xdeadbeef',
+  privateKey, // [!code hl]
+})
+
+const verified = await WebCryptoP256.verify({
+  payload: '0xdeadbeef',
+  publicKey,
+  signature,
+})
+// @log: true
+// [!code focus:end]
+```
+
+Web Crypto signatures carry no `yParity`, so the signer cannot be recovered — store the public
+key alongside whatever the signature protects. Ox normalizes signatures to low-S so they
+round-trip with [`P256.verify`](/api/P256/verify) and onchain verifiers.
+
+### Derive a Shared Secret (ECDH)
+
+Key agreement needs a dedicated key pair from
+[`WebCryptoP256.createKeyPairECDH`](/api/WebCryptoP256/createKeyPairECDH); then
+[`WebCryptoP256.getSharedSecret`](/api/WebCryptoP256/getSharedSecret) computes the
+Diffie-Hellman secret.
+
+```ts twoslash
+import { WebCryptoP256 } from 'ox'
+
+const alice = await WebCryptoP256.createKeyPairECDH()
+const bob = await WebCryptoP256.createKeyPairECDH()
+
+// [!code focus:start]
+const sharedSecret = await WebCryptoP256.getSharedSecret({
+  privateKey: alice.privateKey, // [!code hl]
+  publicKey: bob.publicKey, // [!code hl]
+})
+// [!code focus:end]
+```
+
+Passing an ECDSA `CryptoKey` throws — Web Crypto binds each key to a single algorithm, so
+signing and agreement always use separate pairs.
+
+## Best Practices
+
+### Keep Keys Non-Extractable
+
+The default `extractable: false` is the point of this module: even an XSS payload cannot read
+the private key, only ask the runtime to sign with it.
+
+### Verify With a Stored Public Key
+
+Without a recovery bit there is no "recover the signer" flow. Treat the public key as part of
+the credential record and verify against it explicitly.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:fingerprint"
+    title="Work with P256"
+    description="The same curve with portable hex private keys."
+    to="/guides/crypto/p256"
+  />
+  <Card
+    icon="lucide:scan-face"
+    title="Sign & Verify with Passkeys"
+    description="Hardware-bound P256 signing via WebAuthn."
+    to="/guides/webauthn/signing"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Encrypt Data (AES-GCM)"
+    description="Turn shared secrets into encrypted payloads."
+    to="/guides/crypto/encryption"
+  />
+</Cards>

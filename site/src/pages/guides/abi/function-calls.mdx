@@ -1,0 +1,198 @@
+---
+description: Encode calldata and decode results for contract function calls.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Encode & Decode Function Calls
+
+## Overview
+
+[`AbiFunction`](/api/AbiFunction) encodes a function and its arguments into calldata, and decodes
+call results and incoming calldata back into typed values. Underneath sits
+[`AbiParameters`](/api/AbiParameters), the coder for standalone parameter lists. Recipes below use
+a raw JSON-RPC transport; any [EIP-1193 provider](/api/Provider) or client works the same way.
+
+## Recipes
+
+### Encode a Read Call & Decode the Result
+
+Read-only (`pure`/`view`) functions execute via `eth_call` — no transaction, no gas. Encode the
+call with [`AbiFunction.encodeData`](/api/AbiFunction/encodeData) and decode the return value with
+[`AbiFunction.decodeResult`](/api/AbiFunction/decodeResult). Below, we read an ERC-20 balance.
+
+```ts twoslash
+import { AbiFunction, RpcTransport } from 'ox'
+
+const balanceOf = AbiFunction.from(
+  'function balanceOf(address) returns (uint256)',
+)
+
+// [!code focus:start]
+const data = AbiFunction.encodeData(balanceOf, [
+  '0xcb98643b8786950f0461f3b0edf99d88f274574d',
+])
+// [!code focus:end]
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const result = await transport.request({
+  method: 'eth_call',
+  params: [{
+    data,
+    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  }],
+})
+
+const balance = AbiFunction.decodeResult(balanceOf, result) // [!code focus]
+```
+
+If you are working with a JSON ABI, extract the function with
+[`AbiFunction.fromAbi`](/api/AbiFunction/fromAbi) instead of defining it inline.
+
+### Encode a State-Modifying Call
+
+State-modifying (`nonpayable`/`payable`) functions require a transaction. The calldata is encoded
+exactly the same way — only the JSON-RPC method changes. Below, we approve an ERC-20 spend.
+
+```ts twoslash
+import { AbiFunction, RpcTransport, Value } from 'ox'
+
+const approve = AbiFunction.from(
+  'function approve(address spender, uint256 amount) returns (bool)',
+)
+
+// [!code focus:start]
+const data = AbiFunction.encodeData(approve, [
+  '0xcb98643b8786950f0461f3b0edf99d88f274574d',
+  Value.from('100', 6), // 100 USDC (6 decimals) // [!code hl]
+])
+// [!code focus:end]
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const hash = await transport.request({
+  method: 'eth_sendTransaction',
+  params: [{
+    data,
+    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  }],
+})
+```
+
+Swap `eth_sendTransaction` for `eth_call` to simulate the call (and decode its return value with
+`AbiFunction.decodeResult`), or `eth_estimateGas` to estimate its gas. To sign with a local key
+instead of a node-managed account, place the calldata in a
+[transaction envelope](/guides/transactions/build-sign-send).
+
+### Decode Incoming Calldata
+
+For routers, inspectors, or smart account implementations, reverse the flow: extract the function
+by the calldata's 4-byte selector with [`AbiFunction.fromAbi`](/api/AbiFunction/fromAbi), then
+decode the arguments with [`AbiFunction.decodeData`](/api/AbiFunction/decodeData).
+
+```ts twoslash
+import { Abi, AbiFunction, Hex } from 'ox'
+
+// Calldata from a transaction `input` or a user operation.
+declare const data: Hex.Hex
+
+const abi = Abi.from([
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transfer(address to, uint256 amount) returns (bool)',
+])
+
+// [!code focus:start]
+const fn = AbiFunction.fromAbi(abi, data) // [!code hl]
+const args = AbiFunction.decodeData(fn, data)
+// @log: fn.name: 'approve'
+// @log: args: ['0xcb98643b8786950F0461f3B0edf99D88F274574D', 100000000n]
+// [!code focus:end]
+```
+
+`fromAbi` throws if no item in the ABI matches the selector — branch on `fn.name` to route the
+call.
+
+### Encode & Decode Standalone Parameters
+
+[`AbiParameters.encode`](/api/AbiParameters/encode) and
+[`AbiParameters.decode`](/api/AbiParameters/decode) code raw parameter lists without a function
+selector — the building blocks for structured data that is hashed, signed, or embedded in other
+payloads.
+
+```ts twoslash
+import { AbiParameters } from 'ox'
+
+// [!code focus:start]
+const encoded = AbiParameters.encode(
+  AbiParameters.from(['address', 'uint32[]']),
+  ['0xcb98643b8786950F0461f3B0edf99D88F274574D', [1, 2, 3]],
+)
+// [!code focus:end]
+
+const decoded = AbiParameters.decode(
+  AbiParameters.from(['address', 'uint32[]']),
+  encoded,
+)
+// @log: ['0xcb98643b8786950F0461f3B0edf99D88F274574D', [1, 2, 3]]
+```
+
+Parameters can also be defined as JSON objects (e.g. `[{ type: 'address' }]`) or full
+human-readable signatures via [`AbiParameters.from`](/api/AbiParameters/from).
+
+### Packed Encoding
+
+[`AbiParameters.encodePacked`](/api/AbiParameters/encodePacked) implements Solidity's
+[`abi.encodePacked`](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode):
+values are concatenated without padding or offsets.
+
+```ts twoslash
+import { AbiParameters } from 'ox'
+
+// [!code focus:start]
+const encoded = AbiParameters.encodePacked(
+  ['address', 'string'],
+  ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world'],
+)
+// @log: '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
+// [!code focus:end]
+```
+
+Packed encoding is not self-describing and cannot be decoded — use it for hashing and signature
+payloads, not for data you need to read back.
+
+## Best Practices
+
+### Simulate Before You Send
+
+Run the same calldata through `eth_call` before broadcasting a transaction. Reverts surface as
+decodable [error data](/guides/abi/errors) instead of a wasted transaction fee.
+
+### Prefer Standard Encoding Over Packed
+
+Packed encoding of multiple dynamic types is ambiguous (`("a", "bc")` and `("ab", "c")` collide).
+Reserve `encodePacked` for cases that require byte-exact parity with Solidity, and hash structured
+data with standard encoding otherwise.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:circle-alert"
+    title="Decode Reverts & Custom Errors"
+    description="Turn revert data into typed errors, reasons, and panic codes."
+    to="/guides/abi/errors"
+  />
+  <Card
+    icon="lucide:file-code-2"
+    title="Work with ABIs"
+    description="Parse, format, and inspect ABIs, items, parameters, and selectors."
+    to="/guides/abi/abis"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send Transactions"
+    description="Construct, sign, and broadcast transaction envelopes."
+    to="/guides/transactions/build-sign-send"
+  />
+</Cards>

@@ -1,0 +1,148 @@
+---
+description: Build event filters and decode Ethereum logs with AbiEvent.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Decode Events & Logs
+
+## Overview
+
+Contracts emit events as logs: indexed arguments become `topics` (filterable by the node), while
+non-indexed arguments are ABI-encoded into `data`. [`AbiEvent`](/api/AbiEvent) encodes an event's
+indexed arguments into topics for log queries (e.g. `eth_getLogs`), and decodes the resulting logs
+back into named, typed arguments.
+
+## Recipes
+
+### Build an Event Filter
+
+Encode an event and its indexed arguments into topics with [`AbiEvent.encode`](/api/AbiEvent/encode),
+then pass the topics to a log query. Below, we filter for ERC-20 `Transfer` events sent from a
+specific address.
+
+```ts twoslash
+import { AbiEvent, RpcTransport } from 'ox'
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+
+// [!code focus:start]
+const { topics } = AbiEvent.encode(transfer, {
+  from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357', // [!code hl]
+})
+// [!code focus:end]
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const logs = await transport.request({
+  method: 'eth_getLogs',
+  params: [{ topics }],
+})
+```
+
+If you are working with a JSON ABI, extract the event with
+[`AbiEvent.fromAbi`](/api/AbiEvent/fromAbi) instead of defining it inline.
+
+### Decode a Log Against an Event
+
+Decode each returned log's `topics` and `data` into named arguments with
+[`AbiEvent.decode`](/api/AbiEvent/decode).
+
+```ts twoslash
+import { AbiEvent, RpcTransport } from 'ox'
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+
+const { topics } = AbiEvent.encode(transfer, {
+  from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+})
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const logs = await transport.request({
+  method: 'eth_getLogs',
+  params: [{ topics }],
+})
+
+const decoded = logs.map((log) => AbiEvent.decode(transfer, log)) // [!code focus]
+// @log: [
+// @log:   {
+// @log:     from: '0x9F1fdAb6458c5fc642fa0F4C5af7473C46837357',
+// @log:     to: '0xcb98643b8786950F0461f3B0edf99D88F274574D',
+// @log:     value: 1n,
+// @log:   },
+// @log:   ...
+// @log: ]
+```
+
+Decoding throws if the log's selector (`topics[0]`) does not match the event. To decode
+heterogeneous logs against a whole ABI, use [`AbiEvent.extractLogs`](/api/AbiEvent/extractLogs),
+which matches each log by selector and skips non-matching entries.
+
+### Handle Indexed & Non-Indexed Arguments
+
+Only indexed arguments can be filtered on. Omitted indexed arguments produce a `null` topic,
+which matches any value — non-indexed arguments (like `value` below) never appear in `topics`.
+
+```ts twoslash
+import { AbiEvent } from 'ox'
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+
+// [!code focus:start]
+const { topics } = AbiEvent.encode(transfer, {
+  to: '0xcb98643b8786950f0461f3b0edf99d88f274574d', // [!code hl]
+})
+// @log: [
+// @log:   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+// @log:   null,
+// @log:   '0x000000000000000000000000cb98643b8786950f0461f3b0edf99d88f274574d',
+// @log: ]
+// [!code focus:end]
+```
+
+Dynamic indexed types (`string`, `bytes`, arrays, and tuples) are stored as keccak256 hashes in
+topics, so decoding returns the 32-byte hash — not the original value. Keep such arguments
+non-indexed when you need to read them back from logs.
+
+## Best Practices
+
+### Match the Deployed Signature Exactly
+
+The selector and topic layout are derived from the event signature, including which parameters
+are `indexed`. A signature that drifts from the deployed contract will fail to match logs or
+mis-assign arguments.
+
+### Constrain Block Ranges
+
+Most providers cap `eth_getLogs` queries. Pass `fromBlock`/`toBlock` bounds and paginate over
+ranges instead of querying the entire chain in one request.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:list-tree"
+    title="Query Logs, Filters & Bloom"
+    description="Build log filters and pre-check membership with bloom filters."
+    to="/guides/chain-data/logs-filters"
+  />
+  <Card
+    icon="lucide:circle-alert"
+    title="Decode Reverts & Custom Errors"
+    description="Turn revert data into typed errors, reasons, and panic codes."
+    to="/guides/abi/errors"
+  />
+  <Card
+    icon="lucide:square-function"
+    title="AbiEvent.decode"
+    description="Review decoding options and error behavior."
+    to="/api/AbiEvent/decode"
+  />
+</Cards>

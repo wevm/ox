@@ -1,0 +1,60 @@
+---
+description: Sign and verify EIP-191 messages, EIP-712 typed data, SIWE, and smart account signatures.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Messages & Authentication
+
+## Overview
+
+Ethereum accounts prove ownership and intent off-chain by signing structured messages.
+Ox provides primitives for every common signing envelope: [ERC-191](https://eips.ethereum.org/EIPS/eip-191)
+personal messages, [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data,
+[Sign-In with Ethereum](https://eips.ethereum.org/EIPS/eip-4361) authentication, and the
+[ERC-6492](https://eips.ethereum.org/EIPS/eip-6492)/[ERC-8010](https://eips.ethereum.org/EIPS/eip-8010)
+wrappers used by smart accounts.
+
+```ts twoslash
+import { Hex, PersonalMessage, Secp256k1 } from 'ox'
+
+// Compute the EIP-191 payload for a message.
+const payload = PersonalMessage.getSignPayload(
+  Hex.fromString('hello world'),
+)
+
+// Sign the payload.
+const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+
+// Recover the signer.
+const signer = Secp256k1.recoverAddress({ payload, signature })
+```
+
+## Guides
+
+<Cards>
+  <Card
+    icon="lucide:signature"
+    title="Sign Personal Messages (EIP-191)"
+    description="Compute EIP-191 sign payloads, sign, and recover signers."
+    to="/guides/messages/personal-messages"
+  />
+  <Card
+    icon="lucide:scroll-text"
+    title="Sign Typed Data (EIP-712)"
+    description="Hash and sign EIP-712 structured data."
+    to="/guides/messages/typed-data"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Sign-In with Ethereum (SIWE)"
+    description="Authenticate users with signed EIP-4361 messages."
+    to="/guides/messages/siwe"
+  />
+  <Card
+    icon="lucide:shield-check"
+    title="Smart Account Signatures (6492/8010)"
+    description="Wrap signatures for counterfactual and delegated accounts."
+    to="/guides/messages/smart-account-signatures"
+  />
+</Cards>
