@@ -75,11 +75,6 @@ export declare namespace createKeyPair {
  * )
  * ```
  *
- * Intermediate key material is zeroed internally. With `as: 'Bytes'`, the
- * caller owns the returned bytes and can release them with
- * `privateKey.fill(0)`. The default `'Hex'` output is an immutable string
- * and cannot be zeroed.
- *
  * @param value - A 32-byte WebAuthn PRF output.
  * @param options - Options.
  * @returns An Ed25519 private key.
