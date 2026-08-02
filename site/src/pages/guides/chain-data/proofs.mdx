@@ -1,0 +1,115 @@
+---
+description: Convert eth_getProof results and work with EIP-7864 binary state trees.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Verify State & Account Proofs
+
+## Overview
+
+[`AccountProof`](/api/AccountProof) types the Merkle proofs returned by `eth_getProof`, covering
+an account's balance, nonce, code hash, and storage slots.
+[`BinaryStateTree`](/api/BinaryStateTree) implements the
+[EIP-7864](https://eips.ethereum.org/EIPS/eip-7864) binary state tree, the proposed successor to
+Ethereum's hexary state trie.
+
+## Recipes
+
+### Fetch & Convert `eth_getProof` Results
+
+Request a proof for an account and a set of storage keys, then decode it with
+[`AccountProof.fromRpc`](/api/AccountProof/fromRpc).
+
+```ts twoslash
+import { AccountProof, RpcTransport } from 'ox'
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+// [!code focus:start]
+const proof = await transport
+  .request({
+    method: 'eth_getProof',
+    params: [
+      '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+      [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ],
+      'latest',
+    ],
+  })
+  .then(AccountProof.fromRpc)
+// @log: {
+// @log:   address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+// @log:   balance: 1n,
+// @log:   nonce: 2,
+// @log:   storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+// @log:   accountProof: [...],
+// @log:   storageProof: [{ key: '0x00...00', proof: [...], value: 3n }],
+// @log: }
+// [!code focus:end]
+```
+
+The `accountProof` and `storageProof` arrays contain the RLP-encoded trie nodes linking the
+account (and each storage slot) to the block's `stateRoot`.
+
+### Work with Binary State Trees (EIP-7864)
+
+Build a binary state tree from key-value pairs and compute its Merkle root with
+[`BinaryStateTree.merkelize`](/api/BinaryStateTree/merkelize).
+
+```ts twoslash
+import { BinaryStateTree, Bytes } from 'ox'
+
+const tree = BinaryStateTree.create() // [!code focus]
+
+BinaryStateTree.insert( // [!code focus]
+  tree,
+  Bytes.fromHex(
+    '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54',
+  ),
+  Bytes.fromHex(
+    '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1',
+  ),
+)
+
+const root = BinaryStateTree.merkelize(tree) // [!code focus]
+```
+
+Keys are split into a 31-byte stem and a 1-byte sub-index, mirroring the EIP-7864 layout.
+
+## Best Practices
+
+### Verify Against a Trusted Root
+
+A proof is only as good as the root it is checked against. Compare proofs to the `stateRoot` of a
+block header you have independently verified (or received from a trusted light-client protocol),
+not to a value returned by the same untrusted node.
+
+### Pin the Block
+
+Fetch proofs with an explicit block number or hash rather than `latest`, so the proof and the
+header you verify against cannot drift across a reorg between requests.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:box"
+    title="Decode Blocks & Receipts"
+    description="Fetch the block headers that carry the state roots proofs commit to."
+    to="/guides/chain-data/blocks"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Simulate with State Overrides"
+    description="Override the state you just proved for what-if calls."
+    to="/guides/chain-data/overrides"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Work with RLP"
+    description="Decode the RLP-encoded trie nodes inside a proof."
+    to="/guides/data/rlp"
+  />
+</Cards>
