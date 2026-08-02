@@ -1,0 +1,202 @@
+---
+description: Build EIP-4844 blob transactions with KZG commitments and PeerDAS sidecars.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Send Blob Transactions (EIP-4844)
+
+## Overview
+
+[EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) transactions carry data in blobs that are
+committed to with KZG proofs and pruned after the availability window. The
+[`Blobs`](/api/Blobs) module packs data into blobs and computes their commitments and proofs;
+[`BlobCells`](/api/BlobCells) handles PeerDAS ([EIP-7594](https://eips.ethereum.org/EIPS/eip-7594))
+cells; [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) builds the type-3 envelope. KZG operations
+use Ox's opt-in WASM implementation ([`Kzg`](/wasm/Kzg)) — see the
+[WASM KZG guide](/guides/runtime/kzg) for setup, memory, and disposal details.
+
+## Recipes
+
+### Turn Data into Blobs
+
+Use [`Blobs.from`](/api/Blobs/from) to pack arbitrary data into 131,072-byte blobs, and
+[`Blobs.toHex`](/api/Blobs/toHex) to recover the original data. No KZG implementation is needed
+for this step.
+
+```ts twoslash
+import { Blobs } from 'ox'
+
+// [!code focus:start]
+const blobs = Blobs.from('0xdeadbeef') // [!code hl]
+// @log: ['0x00de00adbe...'] (one 131,072-byte blob)
+
+const data = Blobs.toHex(blobs)
+// @log: '0xdeadbeef'
+// [!code focus:end]
+```
+
+A single transaction can carry up to six blobs (~761 KiB of payload after field-element
+encoding); `Blobs.from` throws `Blobs.BlobSizeTooLargeError` beyond that.
+
+### Compute Commitments & Proofs
+
+Create a KZG instance from the Ethereum trusted setup, then derive one commitment per blob with
+[`Blobs.toCommitments`](/api/Blobs/toCommitments), 128 cell proofs per blob with
+[`Blobs.toCellProofs`](/api/Blobs/toCellProofs), and the versioned hashes that anchor the
+envelope with
+[`Blobs.commitmentsToVersionedHashes`](/api/Blobs/commitmentsToVersionedHashes).
+
+```ts twoslash
+import { Blobs } from 'ox'
+import { Setups } from 'ox/trusted-setups'
+import { Kzg } from 'ox/wasm'
+
+const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
+
+const blobs = Blobs.from('0xdeadbeef')
+
+// [!code focus:start]
+const commitments = Blobs.toCommitments(blobs, { kzg }) // [!code hl]
+const cellProofs = Blobs.toCellProofs(blobs, { kzg }) // [!code hl]
+// @log: 128 cell proofs per blob (EIP-7594)
+
+const blobVersionedHashes = Blobs.commitmentsToVersionedHashes(commitments)
+// @log: ['0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09']
+// [!code focus:end]
+
+kzg.dispose()
+```
+
+Only the versioned hashes go into the signed envelope; blobs, commitments, and cell proofs
+travel alongside it as sidecars.
+
+### Build a 4844 Envelope with Sidecars
+
+Construct the envelope from the versioned hashes, sign it, then serialize with `sidecars` to
+produce the 5-element `PooledTransactions` network wrapper that `eth_sendRawTransaction`
+expects.
+
+```ts twoslash
+import { Blobs, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+import { Setups } from 'ox/trusted-setups'
+import { Kzg } from 'ox/wasm'
+
+const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
+
+const blobs = Blobs.from('0xdeadbeef')
+
+// [!code focus:start]
+const envelope = TxEnvelopeEip4844.from({
+  blobVersionedHashes: Blobs.toVersionedHashes(blobs, { kzg }), // [!code hl]
+  chainId: 1,
+  gas: 21_000n,
+  maxFeePerBlobGas: Value.fromGwei('3'),
+  maxFeePerGas: Value.fromGwei('10'),
+  maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 0n,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+})
+
+const signature = Secp256k1.sign({
+  payload: TxEnvelopeEip4844.getSignPayload(envelope),
+  privateKey: '0x...',
+})
+
+// Serialize into the PeerDAS network wrapper, ready for `eth_sendRawTransaction`.
+const serialized = TxEnvelopeEip4844.serialize(envelope, {
+  signature,
+  sidecars: {
+    // [!code hl:start]
+    blobs,
+    commitments: Blobs.toCommitments(blobs, { kzg }),
+    cellProofs: Blobs.toCellProofs(blobs, { kzg }),
+    // [!code hl:end]
+  },
+})
+// [!code focus:end]
+
+kzg.dispose()
+```
+
+[`TxEnvelopeEip4844.hash`](/api/TxEnvelopeEip4844/hash) always operates on the bare envelope —
+the transaction hash never includes the sidecar wrapper. See
+[Build, Sign & Send](/guides/transactions/build-sign-send) for broadcasting.
+
+### Verify Blob Cells (PeerDAS)
+
+Split a blob into its 128 extended cells with
+[`BlobCells.fromBlob`](/api/BlobCells/fromBlob), then check any subset of cells against the
+blob's commitment with [`BlobCells.verify`](/api/BlobCells/verify).
+
+```ts twoslash
+import { BlobCells, Blobs } from 'ox'
+import { Setups } from 'ox/trusted-setups'
+import { Kzg } from 'ox/wasm'
+
+const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
+
+const [blob] = Blobs.from('0xdeadbeef')
+const [commitment] = Blobs.toCommitments([blob], { kzg })
+
+// [!code focus:start]
+const { cells, proofs } = BlobCells.fromBlob(blob, { kzg }) // [!code hl]
+// @log: 128 cells (2,048 bytes each), 128 proofs
+
+const valid = BlobCells.verify({
+  cells,
+  cellIndices: cells.map((_, i) => i),
+  commitments: cells.map(() => commitment),
+  proofs,
+  kzg,
+})
+// @log: true
+// [!code focus:end]
+
+kzg.dispose()
+```
+
+Any 64 of the 128 cells are enough to reconstruct the rest with
+[`BlobCells.recover`](/api/BlobCells/recover).
+
+## Best Practices
+
+### Reuse and Dispose KZG Instances
+
+Each `Kzg.create` call owns separate WASM memory (8 MiB and up). Create one instance per worker,
+reuse it across operations, and call `dispose` when done — see the
+[WASM KZG guide](/guides/runtime/kzg) for ownership details.
+
+### Blobs Are Not Permanent Storage
+
+Blob data is pruned after the availability window and is never readable from the EVM — only the
+versioned hashes remain on-chain. Persist the underlying data elsewhere if it must stay
+retrievable.
+
+### Budget Blob Gas Separately
+
+`maxFeePerBlobGas` prices a fee market independent of execution gas. A transaction can be
+priced competitively on one market and stall on the other, so derive both caps before signing.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:layers"
+    title="Choose an Envelope Type"
+    description="How EIP-4844 compares to the other envelope types."
+    to="/guides/transactions/envelope-types"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="Broadcast the serialized wrapper over JSON-RPC."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:zap"
+    title="WASM KZG"
+    description="Instance ownership, memory, and precomputation trade-offs."
+    to="/guides/runtime/kzg"
+  />
+</Cards>
