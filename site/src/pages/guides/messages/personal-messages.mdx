@@ -17,11 +17,11 @@ data constructed by a malicious actor and consequently losing funds.
 [`ValidatorData`](/api/ValidatorData) the `0x00` (intended validator) version. Ox supports the
 following ERC-191 versions:
 
-| Module                                    | Name                                    | Version |
-| ----------------------------------------- | --------------------------------------- | ------- |
-| [`PersonalMessage`](/api/PersonalMessage) | Personal Message (aka. `personal_sign`) | `0x45`  |
+| Module                                    | Name                                                                      | Version |
+| ----------------------------------------- | ------------------------------------------------------------------------- | ------- |
+| [`PersonalMessage`](/api/PersonalMessage) | Personal Message (aka. `personal_sign`)                                   | `0x45`  |
 | [`TypedData`](/api/TypedData)             | Typed Data — see [Sign Typed Data (EIP-712)](/guides/messages/typed-data) | `0x01`  |
-| [`ValidatorData`](/api/ValidatorData)     | Data with intended validator            | `0x00`  |
+| [`ValidatorData`](/api/ValidatorData)     | Data with intended validator                                              | `0x00`  |
 
 ## Recipes
 
@@ -35,11 +35,10 @@ then sign it — here with [`Secp256k1.sign`](/api/Secp256k1/sign).
 ```ts twoslash
 import { Hex, PersonalMessage, Secp256k1 } from 'ox'
 
-const payload = PersonalMessage.getSignPayload(
-  Hex.fromString('hello world')
-)
+const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
-const signature = Secp256k1.sign({ // [!code focus]
+const signature = Secp256k1.sign({
+  // [!code focus]
   payload, // [!code focus]
   privateKey: '0x...', // [!code focus]
 }) // [!code focus]
@@ -59,9 +58,7 @@ import { Hex, PersonalMessage, Secp256k1, Signature } from 'ox'
 
 declare const signature: Signature.Signature
 
-const payload = PersonalMessage.getSignPayload(
-  Hex.fromString('hello world')
-)
+const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
 // [!code focus:start]
 const signer = Secp256k1.recoverAddress({ payload, signature })
@@ -89,7 +86,8 @@ const provider = Provider.from(window.ethereum)
 
 const [address] = await provider.request({ method: 'eth_requestAccounts' })
 
-const signature = await provider.request({ // [!code focus]
+const signature = await provider.request({
+  // [!code focus]
   method: 'personal_sign', // [!code focus]
   params: [Hex.fromString('hello world'), address], // [!code focus]
 }) // [!code focus]
@@ -104,7 +102,8 @@ consume it), so it cannot be replayed against another verifier. Compute the payl
 ```ts twoslash
 import { Hex, Secp256k1, ValidatorData } from 'ox'
 
-const payload = ValidatorData.getSignPayload({ // [!code focus]
+const payload = ValidatorData.getSignPayload({
+  // [!code focus]
   data: Hex.fromString('hello world'), // [!code focus]
   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045', // [!code focus]
 }) // [!code focus]

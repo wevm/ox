@@ -38,10 +38,12 @@ const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
 const result = await transport.request({
   method: 'eth_call',
-  params: [{
-    data,
-    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  }],
+  params: [
+    {
+      data,
+      to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+  ],
 })
 
 const balance = AbiFunction.decodeResult(balanceOf, result) // [!code focus]
@@ -73,10 +75,12 @@ const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
 const hash = await transport.request({
   method: 'eth_sendTransaction',
-  params: [{
-    data,
-    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  }],
+  params: [
+    {
+      data,
+      to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+  ],
 })
 ```
 

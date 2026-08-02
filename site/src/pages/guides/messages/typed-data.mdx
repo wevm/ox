@@ -100,7 +100,8 @@ const payload = TypedData.getSignPayload({
   },
 })
 
-const signature = Secp256k1.sign({ // [!code focus]
+const signature = Secp256k1.sign({
+  // [!code focus]
   payload, // [!code focus]
   privateKey: '0x...', // [!code focus]
 }) // [!code focus]
@@ -126,9 +127,12 @@ const provider = Provider.from(window.ethereum)
 
 const [address] = await provider.request({ method: 'eth_requestAccounts' })
 
-const payload = TypedData.serialize({ /* ... */ }) // [!code focus]
+const payload = TypedData.serialize({
+  /* ... */
+}) // [!code focus]
 
-const signature = await provider.request({ // [!code focus]
+const signature = await provider.request({
+  // [!code focus]
   method: 'eth_signTypedData_v4', // [!code focus]
   params: [address, payload], // [!code focus]
 }) // [!code focus]

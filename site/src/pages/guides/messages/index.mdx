@@ -19,9 +19,7 @@ wrappers used by smart accounts.
 import { Hex, PersonalMessage, Secp256k1 } from 'ox'
 
 // Compute the EIP-191 payload for a message.
-const payload = PersonalMessage.getSignPayload(
-  Hex.fromString('hello world'),
-)
+const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
 // Sign the payload.
 const signature = Secp256k1.sign({ payload, privateKey: '0x...' })

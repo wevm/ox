@@ -70,7 +70,8 @@ function onClick() {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
     chainId: 1,
     domain: 'example.com',
-    nonce: '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1',
+    nonce:
+      '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1',
     uri: 'https://example.com/path',
     version: '1',
   } as const satisfies Siwe.Message
@@ -104,16 +105,19 @@ async function onClick() {
     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
     chainId: 1,
     domain: 'example.com',
-    nonce: '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1',
+    nonce:
+      '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1',
     uri: 'https://example.com/path',
     version: '1',
   } as const satisfies Siwe.Message
   const message = Siwe.createMessage(data)
-  const provider = Provider.from(window.ethereum)  // [!code focus]
-  const signature = await provider.request({  // [!code focus]
-    method: 'personal_sign',  // [!code focus]
-    params: [Hex.fromString(message), data.address],  // [!code focus]
-  })  // [!code focus]
+  // [!code focus:start]
+  const provider = Provider.from(window.ethereum)
+  const signature = await provider.request({
+    method: 'personal_sign',
+    params: [Hex.fromString(message), data.address],
+  })
+  // [!code focus:end]
 }
 ```
 
@@ -149,10 +153,15 @@ function handler() {
   })
   if (!isValid) return false
 
-  const personalMessage = PersonalMessage.encode(Hex.fromString(payload.message))
+  const personalMessage = PersonalMessage.encode(
+    Hex.fromString(payload.message),
+  )
   const verified = Address.isEqual(
     Address.from(parsed.address),
-    Secp256k1.recoverAddress({ payload: personalMessage, signature: payload.signature }),
+    Secp256k1.recoverAddress({
+      payload: personalMessage,
+      signature: payload.signature,
+    }),
   )
   return verified
 }

@@ -30,12 +30,11 @@ import { SignatureErc6492 } from 'ox/erc6492'
 declare const factory: Address.Address
 declare const factoryData: Hex.Hex
 
-const payload = PersonalMessage.getSignPayload(
-  Hex.fromString('hello world'),
-)
+const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
 
-const wrapped = SignatureErc6492.wrap({ // [!code focus]
+const wrapped = SignatureErc6492.wrap({
+  // [!code focus]
   data: factoryData, // [!code focus]
   signature: Signature.toHex(signature), // [!code focus]
   to: factory, // [!code focus]
@@ -100,7 +99,8 @@ const signature = Secp256k1.sign({
 })
 
 // 3. Wrap the signature with the authorization.
-const wrapped = SignatureErc8010.wrap({ // [!code focus]
+const wrapped = SignatureErc8010.wrap({
+  // [!code focus]
   authorization: authorizationSigned, // [!code focus]
   signature: Signature.toHex(signature), // [!code focus]
 }) // [!code focus]
@@ -132,7 +132,7 @@ produce unwrapped signatures.
 
 ### Verify Against Live Chain State
 
-Wrappers only carry the *instructions* to make verification possible. Trustworthy verification
+Wrappers only carry the _instructions_ to make verification possible. Trustworthy verification
 still requires executing them against current chain state (e.g. the universal validator via
 `eth_call`), since the account may have been deployed, upgraded, or re-delegated since signing.
 
