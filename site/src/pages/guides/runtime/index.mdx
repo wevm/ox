@@ -1,0 +1,43 @@
+---
+description: Speed up and slim down Ox with engines, caches, and lean imports.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Runtime & Performance
+
+## Overview
+
+Ox runs on portable JavaScript cryptography by default and lets performance-sensitive
+applications opt into faster backends. Install a WASM or Node.js [`Engine`](/api/Engine) to
+accelerate cryptography without changing calling code, create an independently owned WASM KZG
+instance for blobs and PeerDAS, and manage Ox's global caches and bundle footprint.
+
+```ts twoslash
+import { Engine, Hash } from 'ox/wasm'
+
+await Engine.install()
+
+const digest = Hash.keccak256('0xdeadbeef')
+```
+
+<Cards>
+  <Card
+    icon="lucide:database"
+    title="Caching & Bundle Size"
+    description="Clear and tune Ox's global caches, and keep application bundles small."
+    to="/guides/runtime/caches-bundle"
+  />
+  <Card
+    icon="lucide:cpu"
+    title="WASM & Engines"
+    description="Choose between Ox's default, WASM, Node, and custom cryptography engines."
+    to="/guides/runtime/engines"
+  />
+  <Card
+    icon="lucide:box"
+    title="WASM KZG"
+    description="Create and dispose an owned KZG instance for blobs and PeerDAS."
+    to="/guides/runtime/kzg"
+  />
+</Cards>

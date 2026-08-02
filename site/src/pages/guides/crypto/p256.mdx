@@ -1,0 +1,156 @@
+---
+description: Create key pairs, sign, verify, recover, and derive shared secrets on P256.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with P256
+
+## Overview
+
+[`P256`](/api/P256) implements ECDSA and ECDH on the NIST P256 (secp256r1) curve — the curve
+used by passkeys, secure enclaves, and much of Ethereum account abstraction. Signatures and
+public keys use the same structured [`Signature`](/api/Signature) and
+[`PublicKey`](/api/PublicKey) shapes as `Secp256k1`, so the two signers are interchangeable at
+the type level.
+
+## Recipes
+
+### Create a Key Pair
+
+[`P256.createKeyPair`](/api/P256/createKeyPair) generates a random private key and its
+corresponding public key in one call.
+
+```ts twoslash
+import { P256 } from 'ox'
+
+// [!code focus:start]
+const { privateKey, publicKey } = P256.createKeyPair() // [!code hl]
+// @log: {
+// @log:   privateKey: '0x…',
+// @log:   publicKey: { prefix: 4, x: '0x…', y: '0x…' },
+// @log: }
+// [!code focus:end]
+```
+
+[`P256.randomPrivateKey`](/api/P256/randomPrivateKey) and
+[`P256.getPublicKey`](/api/P256/getPublicKey) perform the two steps separately.
+
+### Sign a Payload
+
+[`P256.sign`](/api/P256/sign) signs the payload as-is and returns a structured signature with
+a recovery bit.
+
+```ts twoslash
+import { Hex, P256 } from 'ox'
+
+declare const privateKey: Hex.Hex
+
+// [!code focus:start]
+const signature = P256.sign({ payload: '0xdeadbeef', privateKey }) // [!code hl]
+// @log: { r: '0x…', s: '0x…', yParity: 0 }
+// [!code focus:end]
+```
+
+Pass `hash: true` to SHA-256-hash the payload before signing — matching what WebAuthn
+authenticators and Web Crypto verifiers expect.
+
+### Verify a Signature
+
+[`P256.verify`](/api/P256/verify) checks a signature against the payload and the signer's
+public key.
+
+```ts twoslash
+import { P256 } from 'ox'
+
+const { privateKey, publicKey } = P256.createKeyPair()
+const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+
+// [!code focus:start]
+const verified = P256.verify({ payload: '0xdeadbeef', publicKey, signature }) // [!code hl]
+// @log: true
+// [!code focus:end]
+```
+
+If signing used `hash: true`, pass `hash: true` here as well.
+
+### Recover a Public Key
+
+[`P256.recoverPublicKey`](/api/P256/recoverPublicKey) recovers the signing public key from the
+payload and a signature that carries `yParity`.
+
+```ts twoslash
+import { P256 } from 'ox'
+
+const { privateKey } = P256.createKeyPair()
+const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+
+// [!code focus:start]
+const publicKey = P256.recoverPublicKey({
+  payload: '0xdeadbeef',
+  signature, // [!code hl]
+})
+// @log: { prefix: 4, x: '0x…', y: '0x…' }
+// [!code focus:end]
+```
+
+Signatures from `WebCryptoP256` or WebAuthn have no `yParity`, so they cannot be recovered —
+verify those against a stored public key instead.
+
+### Derive a Shared Secret (ECDH)
+
+[`P256.getSharedSecret`](/api/P256/getSharedSecret) computes an Elliptic Curve Diffie-Hellman
+secret between one party's private key and the other's public key.
+
+```ts twoslash
+import { P256 } from 'ox'
+
+const alice = P256.createKeyPair()
+const bob = P256.createKeyPair()
+
+// [!code focus:start]
+const sharedSecret = P256.getSharedSecret({
+  privateKey: alice.privateKey, // [!code hl]
+  publicKey: bob.publicKey, // [!code hl]
+})
+// [!code focus:end]
+```
+
+Both sides derive the same secret. Run it through a KDF (for example
+[`Hash.hmac256`](/api/Hash/hmac256)) before using it as a symmetric key.
+
+## Best Practices
+
+### Match Hashing on Both Sides
+
+`sign` and `verify` must agree on `hash`. Signing a pre-hashed digest but verifying with
+`hash: true` (or vice versa) fails silently with `false`.
+
+### Prefer Hardware-Backed Keys in Browsers
+
+Raw hex private keys live in JavaScript memory. In browser contexts, prefer
+[`WebCryptoP256`](/guides/crypto/webcrypto-p256) (non-extractable `CryptoKey`s) or
+[passkeys](/guides/webauthn/signing).
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:globe"
+    title="Work with WebCryptoP256"
+    description="Same curve with non-extractable Web Crypto keys."
+    to="/guides/crypto/webcrypto-p256"
+  />
+  <Card
+    icon="lucide:scan-face"
+    title="Sign & Verify with Passkeys"
+    description="P256 signatures produced by WebAuthn authenticators."
+    to="/guides/webauthn/signing"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Convert Signature Formats"
+    description="Serialize P256 signatures to hex, DER, and compact forms."
+    to="/guides/crypto/signatures"
+  />
+</Cards>

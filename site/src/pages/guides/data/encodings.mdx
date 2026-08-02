@@ -1,0 +1,158 @@
+---
+description: Encode and decode Base64, Base58, Bech32m, CBOR, and CompactSize data.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Base & Binary Encodings
+
+## Overview
+
+Ox ships codecs for the encodings you meet at Ethereum's edges: [`Base64`](/api/Base64) for data
+URLs and calldata interchange, [`Base58`](/api/Base58) for Bitcoin-, IPFS-, and Solana-style
+identifiers, [`Bech32m`](/api/Bech32m) and [`Base32`](/api/Base32) for checksummed human-readable
+addresses, [`Cbor`](/api/Cbor) for WebAuthn and IPFS-adjacent payloads, and
+[`CompactSize`](/api/CompactSize) for Bitcoin wire data. All of them convert to and from
+[`Hex`](/api/Hex) and [`Bytes`](/api/Bytes).
+
+## Recipes
+
+### Base64-Encode Calldata for URLs
+
+Use [`Base64.fromHex`](/api/Base64/fromHex) with URL-safe characters to embed calldata or other
+hex payloads in query strings, data URLs, and JSON APIs, then recover the hex with
+[`Base64.toHex`](/api/Base64/toHex).
+
+```ts twoslash
+import { Base64 } from 'ox'
+
+// [!code focus:start]
+const encoded = Base64.fromHex('0xa9059cbb', { url: true, pad: false }) // [!code hl]
+// @log: 'qQWcuw'
+
+const calldata = Base64.toHex(encoded)
+// @log: '0xa9059cbb'
+// [!code focus:end]
+```
+
+[`Base64.fromString`](/api/Base64/fromString) and [`Base64.toString`](/api/Base64/toString) cover
+plain-text payloads such as JSON blobs inside data URLs.
+
+### Exchange Base58-Encoded Data
+
+Base58 is the alphabet behind Bitcoin addresses, IPFS CIDv0 hashes, and Solana public keys. Use
+[`Base58.toHex`](/api/Base58/toHex) or [`Base58.toBytes`](/api/Base58/toBytes) to bring those
+identifiers into Ox's primitive types.
+
+```ts twoslash
+import { Base58 } from 'ox'
+
+// [!code focus:start]
+const value = Base58.fromString('Hello World!')
+// @log: '2NEpo7TZRRrLZSi2U'
+
+const hex = Base58.toHex('2NEpo7TZRRrLZSi2U')
+// @log: '0x48656c6c6f20576f726c6421'
+// [!code focus:end]
+```
+
+Decoding preserves leading zero bytes (encoded as `1` characters), matching Bitcoin's address
+conventions.
+
+### Encode Bech32m Addresses
+
+[`Bech32m.encode`](/api/Bech32m/encode) (BIP-350) combines a human-readable prefix with a
+checksummed data part — the format behind Bitcoin Taproot addresses and other modern address
+schemes.
+
+```ts twoslash
+import { Bech32m } from 'ox'
+
+// [!code focus:start]
+const address = Bech32m.encode('tempo', new Uint8Array(20))
+// @log: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqwa7xtm'
+
+const { hrp, data } = Bech32m.decode(address) // [!code hl]
+// @log: { hrp: 'tempo', data: Uint8Array(20) }
+// [!code focus:end]
+```
+
+[`Bech32m.decode`](/api/Bech32m/decode) verifies the checksum and throws a typed error on
+corruption. For raw BIP-173 base32 data without a checksum, use [`Base32`](/api/Base32).
+
+### Encode & Decode CBOR Payloads
+
+WebAuthn attestation objects, COSE keys, and IPFS/IPLD blocks are CBOR-encoded.
+[`Cbor.encode`](/api/Cbor/encode) and [`Cbor.decode`](/api/Cbor/decode) round-trip JavaScript
+values through the format.
+
+```ts twoslash
+import { Cbor } from 'ox'
+
+// [!code focus:start]
+const encoded = Cbor.encode({ foo: 'bar', baz: [1, 2, 3] })
+// @log: '0xa263666f6f636261726362617a83010203'
+
+const decoded = Cbor.decode(encoded)
+// @log: { foo: 'bar', baz: [1, 2, 3] }
+// [!code focus:end]
+```
+
+Pass `{ as: 'Bytes' }` to encode straight to a `Uint8Array` instead of hex.
+
+### Read Bitcoin CompactSize Varints
+
+Bitcoin's wire protocol length-prefixes scripts and payloads with CompactSize varints.
+[`CompactSize.fromHex`](/api/CompactSize/fromHex) returns both the decoded value and the number of
+bytes consumed, so a parser knows how far to advance its cursor.
+
+```ts twoslash
+import { CompactSize } from 'ox'
+
+// [!code focus:start]
+const encoded = CompactSize.toHex(520)
+// @log: '0xfd0802'
+
+const { value, size } = CompactSize.fromHex('0xfd0802') // [!code hl]
+// @log: { value: 520n, size: 3 }
+// [!code focus:end]
+```
+
+Decoding enforces minimal encodings and throws `CompactSize.NonMinimalEncodingError` on padded
+values, matching Bitcoin consensus rules.
+
+## Best Practices
+
+### Use URL-Safe Base64 on the Wire
+
+The standard Base64 alphabet contains `+` and `/`, which break query strings and path segments.
+Pass `{ url: true }` whenever the encoded value travels inside a URL.
+
+### Expect Typed Errors from Decoders
+
+Every decoder validates its input — alphabet, checksum, padding, minimality — and throws a typed
+error (e.g. `Base58.InvalidCharacterError`, `Bech32m.InvalidChecksumError`). Wrap decoding of
+untrusted input and surface the failure instead of propagating malformed bytes.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="The primitive types every codec converts to and from."
+    to="/guides/data/bytes-hex"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Register & Authenticate Credentials"
+    description="Work with WebAuthn's CBOR-encoded attestation data."
+    to="/guides/webauthn/credentials"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Work with RLP"
+    description="Ethereum's own serialization format for nested byte data."
+    to="/guides/data/rlp"
+  />
+</Cards>

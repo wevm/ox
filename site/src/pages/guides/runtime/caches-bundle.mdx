@@ -1,0 +1,97 @@
+---
+description: Manage Ox's global caches and keep application bundles small.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Caching & Bundle Size
+
+## Overview
+
+Ox keeps a small set of module-instance-global caches to avoid recomputing derived values.
+The `Caches` module exposes them: [`Address.checksum`](/api/Address/checksum) results are
+memoized in a bounded map holding up to 32,768 entries with first-in-first-out eviction.
+Long-running processes and test suites can clear or tune these caches directly.
+
+## Recipes
+
+### Clear Global Caches
+
+Reset every global cache in one call — for example between test cases, or in a long-running
+process after a burst of one-off work.
+
+```ts twoslash
+import { Address, Caches } from 'ox'
+
+// Checksumming populates the global checksum cache.
+Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+
+Caches.clear() // [!code focus]
+```
+
+Installing, setting, or resetting an [engine](/guides/runtime/engines) also clears Ox's
+derived cryptographic caches automatically.
+
+### Clear a Single Cache
+
+Each cache is exported as a bounded `Map`, so the standard `Map` API applies when only one
+cache should be inspected or reset.
+
+```ts twoslash
+import { Address, Caches } from 'ox'
+
+Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+
+// [!code focus:start]
+Caches.checksum.size
+// @log: 1
+Caches.checksum.clear()
+// [!code focus:end]
+```
+
+### Tune Cache Capacity
+
+Lower `maxSize` to trade hit rate for memory in constrained environments. Once the bound is
+reached, writes evict the oldest entry first.
+
+```ts twoslash
+import { Caches } from 'ox'
+
+Caches.checksum.maxSize = 1_024 // [!code focus]
+```
+
+The default bound is 32,768 entries per cache.
+
+## Bundle Size
+
+Ox modules are collections of pure, stateless functions — not stateful instances — so
+bundlers can tree-shake unused functions out of the final bundle. Both named imports
+(`import { Hex } from 'ox'`) and entrypoint imports (`import * as Hex from 'ox/Hex'`) stay
+tree-shakable; the [Imports & Bundle Size](/imports) page covers both approaches and which
+bundlers support them.
+
+Optional entrypoints such as `ox/wasm` and `ox/node` live outside the default entrypoint, so
+their runtime-specific artifacts are only bundled when an application imports them.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:package"
+    title="Imports & Bundle Size"
+    description="Compare named and entrypoint imports, and how tree-shaking applies."
+    to="/imports"
+  />
+  <Card
+    icon="lucide:user-check"
+    title="Derive & Validate Addresses"
+    description="Checksum, validate, and compare Ethereum addresses."
+    to="/guides/accounts/addresses"
+  />
+  <Card
+    icon="lucide:cpu"
+    title="WASM & Engines"
+    description="Install faster cryptography backends without changing calling code."
+    to="/guides/runtime/engines"
+  />
+</Cards>

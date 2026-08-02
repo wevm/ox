@@ -1,0 +1,113 @@
+---
+description: Parse and format ether, gwei, and token values without precision loss.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Format Ether & Gwei Values
+
+## Overview
+
+User interfaces speak decimal strings; Ethereum speaks integral wei. [`Value`](/api/Value)
+converts between the two with pure bigint arithmetic — no floating point, no precision loss.
+
+## Recipes
+
+### Parse User Input to Wei
+
+Use [`Value.fromEther`](/api/Value/fromEther) to turn a decimal string from a form input into a
+wei amount ready for a transaction's `value` field, and [`Value.fromGwei`](/api/Value/fromGwei)
+for user-supplied gas prices.
+
+```ts twoslash
+import { Value } from 'ox'
+
+// [!code focus:start]
+const value = Value.fromEther('0.05') // [!code hl]
+// @log: 50000000000000000n
+
+const maxFeePerGas = Value.fromGwei('20')
+// @log: 20000000000n
+// [!code focus:end]
+```
+
+Malformed input such as `'1.2.3'` throws `Value.InvalidDecimalNumberError` — surface it as form
+validation feedback instead of letting garbage reach a transaction.
+
+### Format Wei for Display
+
+[`Value.formatEther`](/api/Value/formatEther) and [`Value.formatGwei`](/api/Value/formatGwei)
+render wei balances and gas prices as human-readable decimal strings.
+
+```ts twoslash
+import { Value } from 'ox'
+
+// [!code focus:start]
+const balance = Value.formatEther(1_500_000_000_000_000_000n)
+// @log: '1.5'
+
+const gasPrice = Value.formatGwei(20_000_000_000n)
+// @log: '20'
+// [!code focus:end]
+```
+
+Trailing zeros are trimmed, so `1_000_000_000_000_000_000n` formats as `'1'`, not `'1.000000'`.
+
+### Handle Token Decimals
+
+ERC-20 tokens define their own precision — pass the token's `decimals` to
+[`Value.from`](/api/Value/from) and [`Value.format`](/api/Value/format) to parse and render token
+amounts (e.g. `6` for USDC).
+
+```ts twoslash
+import { Value } from 'ox'
+
+const decimals = 6 // from the token contract's `decimals()` function
+
+// [!code focus:start]
+const amount = Value.from('100.5', decimals) // [!code hl]
+// @log: 100500000n
+
+const display = Value.format(100_500_000n, decimals)
+// @log: '100.5'
+// [!code focus:end]
+```
+
+Input with more fractional digits than `decimals` is rounded half-away-from-zero rather than
+silently truncated.
+
+## Best Practices
+
+### Keep Amounts as BigInt
+
+Convert only at the edges: parse once when input arrives, format once when a value is displayed.
+All arithmetic, comparison, and storage in between should stay in wei (`bigint`).
+
+### Never Round-Trip Through Number
+
+`Number` loses integer precision above 2^53 — roughly 0.009 ether in wei. Avoid `parseFloat`,
+`Number(value)`, and arithmetic operators on stringified amounts; `Value` exists so you never
+need them.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:braces"
+    title="Serialize JSON Safely"
+    description="Move bigint wei amounts through JSON without corruption."
+    to="/guides/data/json"
+  />
+  <Card
+    icon="lucide:gauge"
+    title="Estimate Fees & Access Lists"
+    description="Compute gas prices and fee caps for transactions."
+    to="/guides/transactions/fees-access-lists"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="Convert bigint amounts to hex quantities for JSON-RPC."
+    to="/guides/data/bytes-hex"
+  />
+</Cards>

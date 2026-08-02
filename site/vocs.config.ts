@@ -61,18 +61,58 @@ export default defineConfig({
   },
   rootDir: '.',
   redirects: [
-    { source: '/guides/bytes-hex', destination: '/guides/data/bytes-hex', status: 301 },
-    { source: '/guides/ecdsa', destination: '/guides/crypto/secp256k1', status: 301 },
-    { source: '/guides/eip-1193', destination: '/guides/rpc/providers', status: 301 },
-    { source: '/guides/encryption', destination: '/guides/crypto/encryption', status: 301 },
-    { source: '/guides/engine', destination: '/guides/runtime/engines', status: 301 },
-    { source: '/guides/json-rpc', destination: '/guides/rpc/requests', status: 301 },
+    {
+      source: '/guides/bytes-hex',
+      destination: '/guides/data/bytes-hex',
+      status: 301,
+    },
+    {
+      source: '/guides/ecdsa',
+      destination: '/guides/crypto/secp256k1',
+      status: 301,
+    },
+    {
+      source: '/guides/eip-1193',
+      destination: '/guides/rpc/providers',
+      status: 301,
+    },
+    {
+      source: '/guides/encryption',
+      destination: '/guides/crypto/encryption',
+      status: 301,
+    },
+    {
+      source: '/guides/engine',
+      destination: '/guides/runtime/engines',
+      status: 301,
+    },
+    {
+      source: '/guides/json-rpc',
+      destination: '/guides/rpc/requests',
+      status: 301,
+    },
     { source: '/guides/kzg', destination: '/guides/runtime/kzg', status: 301 },
-    { source: '/guides/mnemonics', destination: '/guides/accounts/mnemonics-hd', status: 301 },
+    {
+      source: '/guides/mnemonics',
+      destination: '/guides/accounts/mnemonics-hd',
+      status: 301,
+    },
     { source: '/guides/rlp', destination: '/guides/data/rlp', status: 301 },
-    { source: '/guides/signed-data', destination: '/guides/messages/personal-messages', status: 301 },
-    { source: '/guides/siwe', destination: '/guides/messages/siwe', status: 301 },
-    { source: '/guides/transaction-envelopes', destination: '/guides/transactions/build-sign-send', status: 301 },
+    {
+      source: '/guides/signed-data',
+      destination: '/guides/messages/personal-messages',
+      status: 301,
+    },
+    {
+      source: '/guides/siwe',
+      destination: '/guides/messages/siwe',
+      status: 301,
+    },
+    {
+      source: '/guides/transaction-envelopes',
+      destination: '/guides/transactions/build-sign-send',
+      status: 301,
+    },
     { source: '/guides/zod', destination: '/guides/schemas/zod', status: 301 },
   ],
   sidebar: {

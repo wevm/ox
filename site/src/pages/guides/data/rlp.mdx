@@ -1,0 +1,88 @@
+---
+description: Encode and decode Recursive Length Prefix (RLP) data.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Work with RLP
+
+## Overview
+
+Recursive Length Prefix (RLP) is the Ethereum protocol's core serialization method — a
+space-efficient standard for packaging and transferring arbitrarily nested byte data.
+[`Rlp`](/api/Rlp) encodes and decodes it. RLP underpins
+[transaction envelope serialization](/guides/transactions/build-sign-send),
+[EIP-7702 authorization](/api/Authorization/getSignPayload) sign payloads, and
+[`CREATE` contract address derivation](/api/ContractAddress/fromCreate).
+
+## Recipes
+
+### Encode Nested Data
+
+[`Rlp.fromHex`](/api/Rlp/fromHex) serializes arbitrarily nested arrays of
+[`Hex`](/api/Hex) values into a single RLP payload.
+
+```ts twoslash
+import { Hex, Rlp } from 'ox'
+
+// [!code focus:start]
+const rlp = Rlp.fromHex([
+  Hex.fromString('hello'),
+  Hex.fromNumber(1337),
+  [Hex.fromString('foo'), Hex.fromString('bar')], // [!code hl]
+])
+// @log: '0xd28568656c6c6f820539c883666f6f83626172'
+// [!code focus:end]
+```
+
+Working with `Uint8Array` data instead? [`Rlp.fromBytes`](/api/Rlp/fromBytes) accepts nested
+[`Bytes`](/api/Bytes) and returns `Bytes`.
+
+### Decode to Hex or Bytes
+
+[`Rlp.toHex`](/api/Rlp/toHex) deserializes an RLP payload back into its original nested
+structure with `Hex` leaves; [`Rlp.toBytes`](/api/Rlp/toBytes) does the same with `Bytes`
+leaves.
+
+```ts twoslash
+import { Rlp } from 'ox'
+
+// [!code focus:start]
+const values = Rlp.toHex('0xd28568656c6c6f820539c883666f6f83626172')
+// @log: ['0x68656c6c6f', '0x0539', ['0x666f6f', '0x626172']]
+// [!code focus:end]
+```
+
+Either function accepts `Hex` or `Bytes` input, so raw payloads from the wire decode without a
+manual conversion step.
+
+## Best Practices
+
+### Bring Your Own Schema
+
+RLP encodes structure, not types. Decoding returns nested `Hex` (or `Bytes`) leaves — it is up
+to you to reinterpret each position (`Hex.toString`, `Hex.toNumber`, …) according to the schema
+the data was encoded with, in the same order.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="Instantiate and convert the values RLP serializes."
+    to="/guides/data/bytes-hex"
+  />
+  <Card
+    icon="lucide:send"
+    title="Build, Sign & Send"
+    description="See RLP at work in transaction envelope serialization."
+    to="/guides/transactions/build-sign-send"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Delegate with EIP-7702"
+    description="Sign over RLP-encoded authorization tuples."
+    to="/guides/transactions/eip-7702"
+  />
+</Cards>

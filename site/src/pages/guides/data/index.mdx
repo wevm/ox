@@ -1,0 +1,57 @@
+---
+description: Ox's primitive data types and the codecs that move data between wire formats.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Data & Encoding
+
+## Overview
+
+Everything on Ethereum bottoms out in byte data. Ox represents it with two primitive types —
+[`Hex`](/api/Hex) and [`Bytes`](/api/Bytes) — and ships the codecs that move values between them
+and the wire: RLP for protocol serialization, Base64/Base58/Bech32m/CBOR for ecosystem interchange,
+plus bigint-safe JSON and lossless ether/gwei unit conversion.
+
+```ts twoslash
+import { Hex, Value } from 'ox'
+
+const amount = Value.fromEther('1.5') // [!code focus]
+// @log: 1500000000000000000n
+
+const quantity = Hex.fromNumber(amount) // [!code focus]
+// @log: '0x14d1120d7b160000'
+```
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base & Binary Encodings"
+    description="Move data through Base64, Base58, Bech32m, CBOR, and CompactSize."
+    to="/guides/data/encodings"
+  />
+  <Card
+    icon="lucide:coins"
+    title="Format Ether & Gwei Values"
+    description="Parse user input to wei and format bigint values for display."
+    to="/guides/data/value"
+  />
+  <Card
+    icon="lucide:braces"
+    title="Serialize JSON Safely"
+    description="Stringify, parse, and canonicalize JSON with bigint support."
+    to="/guides/data/json"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="Instantiate, convert, and manipulate Ox's two primitive data types."
+    to="/guides/data/bytes-hex"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Work with RLP"
+    description="Encode and decode Recursive Length Prefix data."
+    to="/guides/data/rlp"
+  />
+</Cards>

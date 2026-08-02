@@ -1,0 +1,111 @@
+---
+description: Serialize and parse JSON with bigint support and canonical output.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Serialize JSON Safely
+
+## Overview
+
+`JSON.stringify` throws on `bigint`, and integers above `Number.MAX_SAFE_INTEGER` silently lose
+precision in `JSON.parse` — routine hazards once wei amounts move through APIs, caches, and
+storage. [`Json`](/api/Json) provides drop-in replacements that round-trip bigints intact, plus
+[RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) canonicalization for hashing and signing.
+
+## Recipes
+
+### Parse JSON Containing BigInts
+
+[`Json.parse`](/api/Json/parse) restores bigint values that were serialized with
+[`Json.stringify`](/api/Json/stringify), so wei balances survive the round-trip through your API
+or database without truncating to a lossy `number`.
+
+```ts twoslash
+import { Json } from 'ox'
+
+// [!code focus:start]
+const data = Json.parse(
+  '{"balance":"69420694206942069420694206942069420694206942069420#__bigint"}',
+)
+// @log: { balance: 69420694206942069420694206942069420694206942069420n }
+// [!code focus:end]
+```
+
+Plain JSON without the bigint marker takes a fast path through native `JSON.parse`, so it is safe
+to use `Json.parse` for every payload.
+
+### Stringify Without Precision Loss
+
+[`Json.stringify`](/api/Json/stringify) serializes bigint values with a marker suffix instead of
+throwing, letting wei-denominated state travel through JSON APIs unchanged.
+
+```ts twoslash
+import { Json } from 'ox'
+
+// [!code focus:start]
+const json = Json.stringify({
+  to: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+  value: 1_000_000_000_000_000_000n, // [!code hl]
+})
+// @log: '{"to":"0xd8da6bf26964af9d7eed9e03e53415d37aa96045","value":"1000000000000000000#__bigint"}'
+// [!code focus:end]
+```
+
+It accepts the same `replacer` and `space` arguments as native `JSON.stringify`.
+
+### Canonicalize for Hashing & Signing
+
+[`Json.canonicalize`](/api/Json/canonicalize) emits RFC 8785 canonical JSON — keys recursively
+sorted, no whitespace — so structurally equal objects always hash to the same digest.
+
+```ts twoslash
+import { Hash, Hex, Json } from 'ox'
+
+// [!code focus:start]
+const canonical = Json.canonicalize({ b: 2, a: 1 }) // [!code hl]
+// @log: '{"a":1,"b":2}'
+
+const digest = Hash.keccak256(Hex.fromString(canonical))
+// [!code focus:end]
+```
+
+Canonicalization rejects `bigint` and non-finite numbers by design — convert those to strings
+before hashing.
+
+## Best Practices
+
+### Pair Stringify with Parse
+
+The `#__bigint` marker is an Ox convention: only `Json.parse` revives it. When the consumer is a
+third party, convert bigints to explicit decimal strings (e.g. with
+[`Value.format`](/api/Value/format)) instead of leaking the marker into their schema.
+
+### Canonicalize Before You Hash
+
+Plain `JSON.stringify` output depends on key insertion order, so equal objects can produce
+different digests. Any time a JSON document feeds a hash or a signature, build it with
+`Json.canonicalize`.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:coins"
+    title="Format Ether & Gwei Values"
+    description="Parse and format the bigint amounts you serialize."
+    to="/guides/data/value"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Hash Data"
+    description="Compute keccak256 and friends over canonical payloads."
+    to="/guides/crypto/hashing"
+  />
+  <Card
+    icon="lucide:send"
+    title="Send JSON-RPC Requests"
+    description="Build, send, and parse JSON-RPC payloads."
+    to="/guides/rpc/requests"
+  />
+</Cards>
