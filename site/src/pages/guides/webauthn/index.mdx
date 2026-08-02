@@ -1,0 +1,65 @@
+---
+description: Register passkeys, sign Ethereum payloads, and derive secrets with WebAuthn.
+---
+
+import { Card, Cards } from 'vocs'
+
+# WebAuthn & Passkeys
+
+## Overview
+
+The [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
+exposes P256 credentials held by authenticators such as [Passkeys](https://passkeys.dev) and
+[YubiKeys](https://en.wikipedia.org/wiki/YubiKey), so users can sign transactions and arbitrary
+payloads without handling a raw private key. Combined with Account Abstraction, Smart Contract
+Accounts can verify these signatures onchain via mechanisms such as
+[ERC-1271](https://eips.ethereum.org/EIPS/eip-1271).
+
+The [`WebAuthn`](/api/WebAuthn) module covers the credential lifecycle end-to-end, while the
+[`ox/webauthn` entrypoint](/webauthn) adds granular registration, authentication, and server-side
+verification utilities.
+
+```ts twoslash
+import { WebAuthn } from 'ox'
+
+// 1. Register a credential (ie. passkey).
+const credential = await WebAuthn.createCredential({ name: 'Example' })
+
+// 2. Sign a challenge with the credential.
+const { metadata, signature } = await WebAuthn.sign({
+  challenge: '0xdeadbeef',
+  credentialId: credential.id,
+})
+
+// 3. Verify the signature.
+const verified = WebAuthn.verify({
+  challenge: '0xdeadbeef',
+  metadata,
+  publicKey: credential.publicKey,
+  signature,
+})
+// @log: true
+```
+
+## Guides
+
+<Cards>
+  <Card
+    icon="lucide:key-round"
+    title="Derive Secrets with PRF"
+    description="Turn PRF outputs into signing and encryption keys."
+    to="/guides/webauthn/prf"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Register & Authenticate Credentials"
+    description="Run registration and login ceremonies, and verify them on a server."
+    to="/guides/webauthn/credentials"
+  />
+  <Card
+    icon="lucide:signature"
+    title="Sign & Verify with Passkeys"
+    description="Sign payloads with a passkey and verify WebAuthn P256 signatures."
+    to="/guides/webauthn/signing"
+  />
+</Cards>
