@@ -22,10 +22,8 @@ protect.
 ```ts twoslash
 import { Bech32m } from 'ox'
 
-// [!code focus:start]
 const address = Bech32m.encode('tempo', new Uint8Array(20)) // [!code hl]
 // @log: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqwa7xtm'
-// [!code focus:end]
 ```
 
 ### Decode & Verify a Checksum
@@ -38,10 +36,8 @@ import { Bech32m } from 'ox'
 
 declare const address: string
 
-// [!code focus:start]
 const { hrp, data } = Bech32m.decode(address) // [!code hl]
 // @log: { hrp: 'tempo', data: Uint8Array(20) }
-// [!code focus:end]
 ```
 
 For raw BIP-173 base32 data without a checksum, use [`Base32`](/guides/data/base32).

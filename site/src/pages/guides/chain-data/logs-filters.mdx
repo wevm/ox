@@ -24,7 +24,6 @@ import { AbiEvent, Filter, RpcTransport } from 'ox'
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-// [!code focus:start]
 const transfer = AbiEvent.from(
   'event Transfer(address indexed from, address indexed to, uint256 value)',
 )
@@ -36,7 +35,6 @@ const filter = Filter.toRpc({
   toBlock: 19760240n,
   topics,
 })
-// [!code focus:end]
 
 const logs = await transport.request({
   method: 'eth_getLogs',
@@ -68,7 +66,6 @@ const logs = await transport.request({
   ],
 })
 
-// [!code focus:start]
 const converted = logs.map((log) => Log.fromRpc(log))
 // @log: [{
 // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
@@ -76,7 +73,6 @@ const converted = logs.map((log) => Log.fromRpc(log))
 // @log:   logIndex: 271,
 // @log:   ...
 // @log: }]
-// [!code focus:end]
 ```
 
 To decode a log's `topics` and `data` into named event arguments, use
@@ -98,13 +94,11 @@ const block = await transport
   .request({ method: 'eth_getBlockByNumber', params: ['latest', false] })
   .then(Block.fromRpc)
 
-// [!code focus:start]
 const mayContain = Bloom.contains(
   block!.logsBloom,
   '0xef2d6d194084c2de36e0dabfce45d046b37d1106',
 )
 // @log: true
-// [!code focus:end]
 ```
 
 For repeated checks against the same bloom, use [`Bloom.prepare`](/api/Bloom/prepare) with

@@ -28,11 +28,9 @@ const transfer = AbiEvent.from(
   'event Transfer(address indexed from, address indexed to, uint256 value)',
 )
 
-// [!code focus:start]
 const { topics } = AbiEvent.encode(transfer, {
   from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357', // [!code hl]
 })
-// [!code focus:end]
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
@@ -68,7 +66,6 @@ const logs = await transport.request({
   params: [{ topics }],
 })
 
-// [!code focus:start]
 const decoded = logs.map((log) => AbiEvent.decode(transfer, log))
 // @log: [
 // @log:   {
@@ -78,7 +75,6 @@ const decoded = logs.map((log) => AbiEvent.decode(transfer, log))
 // @log:   },
 // @log:   ...
 // @log: ]
-// [!code focus:end]
 ```
 
 Decoding throws if the log's selector (`topics[0]`) does not match the event. To decode
@@ -97,7 +93,6 @@ const transfer = AbiEvent.from(
   'event Transfer(address indexed from, address indexed to, uint256 value)',
 )
 
-// [!code focus:start]
 const { topics } = AbiEvent.encode(transfer, {
   to: '0xcb98643b8786950f0461f3b0edf99d88f274574d', // [!code hl]
 })
@@ -106,7 +101,6 @@ const { topics } = AbiEvent.encode(transfer, {
 // @log:   null,
 // @log:   '0x000000000000000000000000cb98643b8786950f0461f3b0edf99d88f274574d',
 // @log: ]
-// [!code focus:end]
 ```
 
 Dynamic indexed types (`string`, `bytes`, arrays, and tuples) are stored as keccak256 hashes in

@@ -23,12 +23,10 @@ Round-trip a value with [`Base64.fromString`](/api/Base64/fromString) and
 ```ts twoslash
 import { Base64 } from 'ox'
 
-// [!code focus:start]
 // @log: 'aGVsbG8gd29ybGQ='
 const encoded = Base64.fromString('hello world')
 const decoded = Base64.toString(encoded)
 // @log: 'hello world'
-// [!code focus:end]
 ```
 
 [`Base64.fromBytes`](/api/Base64/fromBytes) and [`Base64.toBytes`](/api/Base64/toBytes) do the
@@ -43,12 +41,10 @@ hex payloads in query strings, data URLs, and JSON APIs, then recover the hex wi
 ```ts twoslash
 import { Base64 } from 'ox'
 
-// [!code focus:start]
 // @log: 'qQWcuw'
 const encoded = Base64.fromHex('0xa9059cbb', { url: true, pad: false }) // [!code hl]
 const calldata = Base64.toHex(encoded)
 // @log: '0xa9059cbb'
-// [!code focus:end]
 ```
 
 ## Best Practices

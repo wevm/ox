@@ -22,13 +22,11 @@ for user-supplied gas prices.
 ```ts twoslash
 import { Value } from 'ox'
 
-// [!code focus:start]
 // @log: 50000000000000000n
 const value = Value.fromEther('0.05') // [!code hl]
 
 const maxFeePerGas = Value.fromGwei('20')
 // @log: 20000000000n
-// [!code focus:end]
 ```
 
 Malformed input such as `'1.2.3'` throws `Value.InvalidDecimalNumberError` — surface it as form
@@ -42,13 +40,11 @@ render wei balances and gas prices as human-readable decimal strings.
 ```ts twoslash
 import { Value } from 'ox'
 
-// [!code focus:start]
 // @log: '1.5'
 const balance = Value.formatEther(1_500_000_000_000_000_000n)
 
 const gasPrice = Value.formatGwei(20_000_000_000n)
 // @log: '20'
-// [!code focus:end]
 ```
 
 Trailing zeros are trimmed, so `1_000_000_000_000_000_000n` formats as `'1'`, not `'1.000000'`.
@@ -64,13 +60,11 @@ import { Value } from 'ox'
 
 const decimals = 6 // from the token contract's `decimals()` function
 
-// [!code focus:start]
 // @log: 100500000n
 const amount = Value.from('100.5', decimals) // [!code hl]
 
 const display = Value.format(100_500_000n, decimals)
 // @log: '100.5'
-// [!code focus:end]
 ```
 
 Input with more fractional digits than `decimals` is rounded half-away-from-zero rather than

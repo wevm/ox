@@ -27,13 +27,11 @@ for this step.
 ```ts twoslash
 import { Blobs } from 'ox'
 
-// [!code focus:start]
 // @log: ['0x00de00adbe...'] (one 131,072-byte blob)
 const blobs = Blobs.from('0xdeadbeef') // [!code hl]
 
 const data = Blobs.toHex(blobs)
 // @log: '0xdeadbeef'
-// [!code focus:end]
 ```
 
 A single transaction can carry up to six blobs (761,855 bytes of payload after field-element
@@ -56,14 +54,12 @@ const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
 
 const blobs = Blobs.from('0xdeadbeef')
 
-// [!code focus:start]
 const commitments = Blobs.toCommitments(blobs, { kzg }) // [!code hl]
 // @log: 128 cell proofs per blob (EIP-7594)
 const cellProofs = Blobs.toCellProofs(blobs, { kzg }) // [!code hl]
 
 // @log: ['0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09']
 const blobVersionedHashes = Blobs.commitmentsToVersionedHashes(commitments)
-// [!code focus:end]
 
 kzg.dispose()
 ```
@@ -86,7 +82,6 @@ const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
 
 const blobs = Blobs.from('0xdeadbeef')
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip4844.from({
   blobVersionedHashes: Blobs.toVersionedHashes(blobs, { kzg }), // [!code hl]
   chainId: 1,
@@ -114,7 +109,6 @@ const serialized = TxEnvelopeEip4844.serialize(envelope, {
     // [!code hl:end]
   },
 })
-// [!code focus:end]
 
 kzg.dispose()
 ```
@@ -139,7 +133,6 @@ const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
 const [blob] = Blobs.from('0xdeadbeef')
 const [commitment] = Blobs.toCommitments([blob], { kzg })
 
-// [!code focus:start]
 // @log: 128 cells (2,048 bytes each), 128 proofs
 const { cells, proofs } = BlobCells.fromBlob(blob, { kzg }) // [!code hl]
 
@@ -151,7 +144,6 @@ const valid = BlobCells.verify({
   kzg,
   // @log: true
 })
-// [!code focus:end]
 
 kzg.dispose()
 ```

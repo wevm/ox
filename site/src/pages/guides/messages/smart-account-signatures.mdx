@@ -33,13 +33,11 @@ declare const factoryData: Hex.Hex
 const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
 
-// [!code focus:start]
 const wrapped = SignatureErc6492.wrap({
   data: factoryData,
   signature: Signature.toHex(signature),
   to: factory,
 })
-// [!code focus:end]
 ```
 
 The wrapped value ends in the ERC-6492 magic bytes
@@ -56,12 +54,10 @@ import { SignatureErc6492 } from 'ox/erc6492'
 
 declare const wrapped: SignatureErc6492.Wrapped
 
-// [!code focus:start]
 if (!SignatureErc6492.validate(wrapped))
   throw new Error('not an ERC-6492 wrapped signature')
 
 const { data, signature, to } = SignatureErc6492.unwrap(wrapped) // [!code hl]
-// [!code focus:end]
 ```
 
 For full counterfactual verification, perform an `eth_call` that deploys
@@ -100,12 +96,10 @@ const signature = Secp256k1.sign({
 })
 
 // 3. Wrap the signature with the authorization.
-// [!code focus:start]
 const wrapped = SignatureErc8010.wrap({
   authorization: authorizationSigned,
   signature: Signature.toHex(signature),
 })
-// [!code focus:end]
 ```
 
 On the verifying side, [`SignatureErc8010.unwrap`](/ercs/erc8010/SignatureErc8010/unwrap)

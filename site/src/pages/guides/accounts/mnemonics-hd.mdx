@@ -64,7 +64,6 @@ import { Mnemonic } from 'ox'
 
 const mnemonic = Mnemonic.random(Mnemonic.english)
 
-// [!code focus:start]
 const path = Mnemonic.path({ account: 1, index: 2 }) // `m/44'/60'/1'/0/2`
 const privateKey = Mnemonic.toPrivateKey(mnemonic, { path })
 
@@ -72,7 +71,6 @@ const privateKey = Mnemonic.toPrivateKey(mnemonic, { path })
 const privateKey_2 = Mnemonic.toPrivateKey(mnemonic, {
   path: "m/44'/60'/1'/0/2",
 })
-// [!code focus:end]
 ```
 
 Mnemonic private keys are derived on the secp256k1 curve, so an address follows via
@@ -91,13 +89,11 @@ import { Address, Mnemonic } from 'ox'
 const mnemonic = Mnemonic.random(Mnemonic.english)
 const hdKey = Mnemonic.toHdKey(mnemonic)
 
-// [!code focus:start]
 const addresses = []
 for (let index = 0; index < 3; index++) {
   const account = hdKey.derive(Mnemonic.path({ index }))
   addresses.push(Address.fromPublicKey(account.publicKey))
 }
-// [!code focus:end]
 ```
 
 Each `account` also exposes `privateKey`, `publicKey`, and extended keys — see the
@@ -114,7 +110,6 @@ import { HdKey, Mnemonic } from 'ox'
 
 declare const xpriv: string
 
-// [!code focus:start]
 // From a master seed.
 const seed = Mnemonic.toSeed(
   'test test test test test test test test test test test junk',
@@ -123,7 +118,6 @@ const hdKey = HdKey.fromSeed(seed)
 
 // From an extended private key.
 const hdKey_2 = HdKey.fromExtendedKey(xpriv)
-// [!code focus:end]
 
 const account = hdKey.derive(HdKey.path({ index: 0 }))
 ```

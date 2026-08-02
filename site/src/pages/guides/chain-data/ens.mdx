@@ -24,10 +24,8 @@ disallowed characters.
 ```ts twoslash
 import { Ens } from 'ox'
 
-// [!code focus:start]
 const name = Ens.normalize('WEVM.eth')
 // @log: 'wevm.eth'
-// [!code focus:end]
 ```
 
 ### Compute Namehash & Labelhash
@@ -39,13 +37,11 @@ IDs).
 ```ts twoslash
 import { Ens } from 'ox'
 
-// [!code focus:start]
 // @log: '0x08c85f2f4059e930c45a6aeff9dcd3bd95dc3c5c1cddef6a0626b31152248560'
 const node = Ens.namehash('wevm.eth')
 
 const label = Ens.labelhash('wevm')
 // @log: '0xcca19c3b64f2cbc38b510a15f4c577cb455225ed774a1e100cd539af6d3f2eb7'
-// [!code focus:end]
 ```
 
 Pass the `namehash` output to registry and resolver calls such as `resolver(bytes32)` and
@@ -59,10 +55,8 @@ Multichain resolvers key addresses by [ENSIP-11](https://docs.ens.domains/ensip/
 ```ts twoslash
 import { Ens } from 'ox'
 
-// [!code focus:start]
 const coinType = Ens.toCoinType(10n)
 // @log: 2147483658n
-// [!code focus:end]
 
 const mainnet = Ens.toCoinType(1n)
 // @log: 60n

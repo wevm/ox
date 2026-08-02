@@ -23,13 +23,11 @@ are inferred at the type level, so downstream encoding and decoding stay type-sa
 ```ts twoslash
 import { Abi } from 'ox'
 
-// [!code focus:start]
 const abi = Abi.from([
   'function approve(address spender, uint256 amount) returns (bool)',
   'event Transfer(address indexed from, address indexed to, uint256 amount)',
   'error InsufficientBalance(uint256 available, uint256 required)',
 ])
-// [!code focus:end]
 ```
 
 Human-readable signatures support functions, events, errors, constructors, fallback/receive
@@ -60,7 +58,6 @@ with the per-type extractors, such as [`AbiFunction.fromAbi`](/api/AbiFunction/f
 ```ts twoslash
 import { Abi, AbiFunction } from 'ox'
 
-// [!code focus:start]
 const abi = Abi.from([
   {
     type: 'function',
@@ -73,7 +70,6 @@ const abi = Abi.from([
     outputs: [{ type: 'bool' }],
   },
 ])
-// [!code focus:end]
 
 const approve = AbiFunction.fromAbi(abi, 'approve')
 ```
@@ -95,13 +91,11 @@ const abi = Abi.from([
   'event Transfer(address indexed from, address indexed to, uint256 amount)',
 ])
 
-// [!code focus:start]
 const formatted = Abi.format(abi)
 // @log: [
 // @log:   'function approve(address spender, uint256 amount) returns (bool)',
 // @log:   'event Transfer(address indexed from, address indexed to, uint256 amount)',
 // @log: ]
-// [!code focus:end]
 ```
 
 Single items and parameters format the same way with
@@ -122,7 +116,6 @@ const abi = Abi.from([
   'event Transfer(address indexed from, address indexed to, uint256 amount)',
 ])
 
-// [!code focus:start]
 const approve = AbiItem.fromAbi(abi, 'approve')
 
 // @log: 'approve(address,uint256)'
@@ -133,7 +126,6 @@ const selector = AbiItem.getSelector(approve)
 
 // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 const topic = AbiItem.getSignatureHash(abi, 'Transfer')
-// [!code focus:end]
 
 const bySelector = AbiItem.fromAbi(abi, '0x095ea7b3')
 ```

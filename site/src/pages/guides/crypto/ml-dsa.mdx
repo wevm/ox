@@ -25,7 +25,6 @@ mirror the ECDSA signer APIs.
 ```ts twoslash
 import { MlDsa44 } from 'ox'
 
-// [!code focus:start]
 const { privateKey, publicKey } = MlDsa44.createKeyPair()
 
 const signature = MlDsa44.sign({ payload: '0xdeadbeef', privateKey }) // [!code hl]
@@ -36,7 +35,6 @@ const verified = MlDsa44.verify({
   signature,
 })
 // @log: true
-// [!code focus:end]
 ```
 
 The 32-byte seed is the canonical interchange form of an ML-DSA private key — back up the
@@ -53,7 +51,6 @@ import { Hex, MlDsa44 } from 'ox'
 
 const { privateKey, publicKey } = MlDsa44.createKeyPair()
 
-// [!code focus:start]
 const context = Hex.fromString('my-app:login:v1')
 
 const signature = MlDsa44.sign({
@@ -69,7 +66,6 @@ const verified = MlDsa44.verify({
   signature,
 })
 // @log: true
-// [!code focus:end]
 ```
 
 Verification with a different (or missing) context returns `false`.

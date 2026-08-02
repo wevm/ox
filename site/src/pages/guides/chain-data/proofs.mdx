@@ -26,7 +26,6 @@ import { AccountProof, RpcTransport } from 'ox'
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-// [!code focus:start]
 const proof = await transport
   .request({
     method: 'eth_getProof',
@@ -45,7 +44,6 @@ const proof = await transport
 // @log:   accountProof: [...],
 // @log:   storageProof: [{ key: '0x00...00', proof: [...], value: 3n }],
 // @log: }
-// [!code focus:end]
 ```
 
 The `accountProof` and `storageProof` arrays contain the RLP-encoded trie nodes linking the
@@ -59,7 +57,6 @@ Build a binary state tree from key-value pairs and compute its Merkle root with
 ```ts twoslash
 import { BinaryStateTree, Bytes } from 'ox'
 
-// [!code focus:start]
 const tree = BinaryStateTree.create()
 
 BinaryStateTree.insert(
@@ -73,7 +70,6 @@ BinaryStateTree.insert(
 )
 
 const root = BinaryStateTree.merkelize(tree)
-// [!code focus:end]
 ```
 
 Keys are split into a 31-byte stem and a 1-byte sub-index, mirroring the EIP-7864 layout.

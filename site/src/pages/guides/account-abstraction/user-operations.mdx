@@ -32,7 +32,6 @@ account-specific `execute` call.
 import { Value } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 
-// [!code focus:start]
 const userOperation = UserOperation.from({
   callData: '0xdeadbeef',
   callGasLimit: 300_000n,
@@ -43,7 +42,6 @@ const userOperation = UserOperation.from({
   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
   verificationGasLimit: 100_000n,
 })
-// [!code focus:end]
 ```
 
 For a counterfactual (not yet deployed) account on EntryPoint `0.7`+, also set `factory` and
@@ -69,7 +67,6 @@ const userOperation = UserOperation.from({
   verificationGasLimit: 100_000n,
 })
 
-// [!code focus:start]
 const payload = UserOperation.getSignPayload(userOperation, {
   chainId: 1,
   entryPointAddress: EntryPoint.addressV07, // [!code hl]
@@ -82,7 +79,6 @@ const signature = Secp256k1.sign({
 })
 
 const userOperation_signed = UserOperation.from(userOperation, { signature })
-// [!code focus:end]
 ```
 
 The same value is the "user operation hash" bundlers and explorers use — compute it directly with
@@ -99,9 +95,7 @@ import { UserOperation } from 'ox/erc4337'
 
 declare const userOperation: UserOperation.UserOperation<'0.7', true>
 
-// [!code focus:start]
 const packed = UserOperation.toPacked(userOperation) // [!code hl]
-// [!code focus:end]
 
 // Recover the structured form from a packed user operation.
 const unpacked = UserOperation.fromPacked(packed)
@@ -131,12 +125,10 @@ const transport = RpcTransport.fromHttp('https://bundler.example.com', {
   schema: RpcSchema.from<RpcSchema_erc4337.Bundler<'0.7'>>(),
 })
 
-// [!code focus:start]
 const userOpHash = await transport.request({
   method: 'eth_sendUserOperation',
   params: [UserOperation.toRpc(userOperation), EntryPoint.addressV07], // [!code hl]
 })
-// [!code focus:end]
 
 const receipt = await transport.request({
   method: 'eth_getUserOperationReceipt',

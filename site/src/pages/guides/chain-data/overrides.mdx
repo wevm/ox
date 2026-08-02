@@ -26,7 +26,6 @@ import { RpcTransport, StateOverrides } from 'ox'
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-// [!code focus:start]
 const stateOverrides = StateOverrides.toRpc({
   // Fund the caller with 1 ETH.
   '0xd2135CfB216b74109775236E36d4b433F1DF507B': {
@@ -50,7 +49,6 @@ const result = await transport.request({
     stateOverrides, // [!code hl]
   ],
 })
-// [!code focus:end]
 ```
 
 Storage can be overridden too: `state` replaces the account's entire storage, while `stateDiff`
@@ -67,7 +65,6 @@ import { BlockOverrides, RpcTransport } from 'ox'
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-// [!code focus:start]
 const blockOverrides = BlockOverrides.toRpc({
   number: 19868021n, // [!code hl]
   time: 1735689600n, // [!code hl]
@@ -85,7 +82,6 @@ const result = await transport.request({
     blockOverrides, // [!code hl]
   ],
 })
-// [!code focus:end]
 ```
 
 `eth_simulateV1` accepts the same `stateOverrides` and `blockOverrides` objects per simulated

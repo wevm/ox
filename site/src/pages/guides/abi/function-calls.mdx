@@ -28,11 +28,9 @@ const balanceOf = AbiFunction.from(
   'function balanceOf(address) returns (uint256)',
 )
 
-// [!code focus:start]
 const data = AbiFunction.encodeData(balanceOf, [
   '0xcb98643b8786950f0461f3b0edf99d88f274574d',
 ])
-// [!code focus:end]
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
@@ -46,7 +44,7 @@ const result = await transport.request({
   ],
 })
 
-const balance = AbiFunction.decodeResult(balanceOf, result) // [!code focus]
+const balance = AbiFunction.decodeResult(balanceOf, result)
 ```
 
 If you are working with a JSON ABI, extract the function with
@@ -64,12 +62,10 @@ const approve = AbiFunction.from(
   'function approve(address spender, uint256 amount) returns (bool)',
 )
 
-// [!code focus:start]
 const data = AbiFunction.encodeData(approve, [
   '0xcb98643b8786950f0461f3b0edf99d88f274574d',
   Value.from('100', 6), // 100 USDC (6 decimals) // [!code hl]
 ])
-// [!code focus:end]
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
@@ -106,12 +102,10 @@ const abi = Abi.from([
   'function transfer(address to, uint256 amount) returns (bool)',
 ])
 
-// [!code focus:start]
 const fn = AbiFunction.fromAbi(abi, data) // [!code hl]
 const args = AbiFunction.decodeData(fn, data)
 // @log: fn.name: 'approve'
 // @log: args: ['0xcb98643b8786950F0461f3B0edf99D88F274574D', 100000000n]
-// [!code focus:end]
 ```
 
 `fromAbi` throws if no item in the ABI matches the selector — branch on `fn.name` to route the
@@ -127,12 +121,10 @@ payloads.
 ```ts twoslash
 import { AbiParameters } from 'ox'
 
-// [!code focus:start]
 const encoded = AbiParameters.encode(
   AbiParameters.from(['address', 'uint32[]']),
   ['0xcb98643b8786950F0461f3B0edf99D88F274574D', [1, 2, 3]],
 )
-// [!code focus:end]
 
 const decoded = AbiParameters.decode(
   AbiParameters.from(['address', 'uint32[]']),
@@ -153,13 +145,11 @@ values are concatenated without padding or offsets.
 ```ts twoslash
 import { AbiParameters } from 'ox'
 
-// [!code focus:start]
 const encoded = AbiParameters.encodePacked(
   ['address', 'string'],
   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world'],
 )
 // @log: '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
-// [!code focus:end]
 ```
 
 Packed encoding is not self-describing and cannot be decoded — use it for hashing and signature

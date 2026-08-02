@@ -75,7 +75,7 @@ function onClick() {
     uri: 'https://example.com/path',
     version: '1',
   } as const satisfies Siwe.Message
-  const message = Siwe.createMessage(data) // [!code focus]
+  const message = Siwe.createMessage(data)
 }
 ```
 
@@ -111,13 +111,11 @@ async function onClick() {
     version: '1',
   } as const satisfies Siwe.Message
   const message = Siwe.createMessage(data)
-  // [!code focus:start]
   const provider = Provider.from(window.ethereum)
   const signature = await provider.request({
     method: 'personal_sign',
     params: [Hex.fromString(message), data.address],
   })
-  // [!code focus:end]
 }
 ```
 

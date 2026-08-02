@@ -24,10 +24,8 @@ payloads, event topics, and anything consumed onchain.
 ```ts twoslash
 import { Hash, Hex } from 'ox'
 
-// [!code focus:start]
 const hash = Hash.keccak256(Hex.fromString('hello world')) // [!code hl]
 // @log: '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
-// [!code focus:end]
 ```
 
 Pass `{ as: 'Bytes' }` to get a `Uint8Array` regardless of the input format.
@@ -40,13 +38,11 @@ precompile-backed hashes (addresses `0x02` and `0x03`) and Bitcoin-style key has
 ```ts twoslash
 import { Hash } from 'ox'
 
-// [!code focus:start]
 // @log: '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
 const sha = Hash.sha256('0xdeadbeef')
 
 const ripemd = Hash.ripemd160('0xdeadbeef')
 // @log: '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
-// [!code focus:end]
 ```
 
 ### Compute HMAC and BLAKE3
@@ -58,12 +54,10 @@ content addressing and checksums.
 ```ts twoslash
 import { Hash, Hex } from 'ox'
 
-// [!code focus:start]
 const mac = Hash.hmac256(Hex.fromString('secret-key'), '0xdeadbeef') // [!code hl]
 
 const digest = Hash.blake3('0xdeadbeef')
 // @log: '0x53147f3ce49ed4f60dfa5b9654c36ba6103c11f5737df3dabd4cbd296c4161bd'
-// [!code focus:end]
 ```
 
 ### Hash Incrementally
@@ -76,14 +70,12 @@ return a stateful hasher that absorbs any number of chunks.
 ```ts twoslash
 import { Hash } from 'ox'
 
-// [!code focus:start]
 const hasher = Hash.createKeccak256()
 hasher.update('0xdead')
 hasher.update('0xbeef')
 
 const hash = hasher.digest() // [!code hl]
 // @log: '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1'
-// [!code focus:end]
 ```
 
 `digest` consumes the state — call `clone()` first to branch several digests from the same

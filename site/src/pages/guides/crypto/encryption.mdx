@@ -25,10 +25,8 @@ PBKDF2 (900,000 iterations by default).
 ```ts twoslash
 import { AesGcm } from 'ox'
 
-// [!code focus:start]
 const key = await AesGcm.getKey({ password: 'qwerty' }) // [!code hl]
 // @log: CryptoKey {}
-// [!code focus:end]
 ```
 
 A random salt is generated per call — pass explicit `salt` (and optionally `iterations`)
@@ -44,12 +42,10 @@ import { AesGcm, Hex } from 'ox'
 
 const key = await AesGcm.getKey({ password: 'qwerty' })
 
-// [!code focus:start]
 const data = Hex.fromString('i am top secret')
 
 const encrypted = await AesGcm.encrypt(data, key) // [!code hl]
 // @log: '0x5e257b25bcf53d5431e54e5a68ca0138306d31bb6154f35a97bb8ea18111e7d82bcf619d3c76c4650688bc5310eed80b8fc86d1e3e'
-// [!code focus:end]
 ```
 
 A fresh random initialization vector is generated on every call and prepended to the
@@ -67,10 +63,8 @@ const key = await AesGcm.getKey({ password: 'qwerty' })
 const data = Hex.fromString('i am top secret')
 const encrypted = await AesGcm.encrypt(data, key)
 
-// [!code focus:start]
 const decrypted = await AesGcm.decrypt(encrypted, key) // [!code hl]
 // @log: '0x6920616d20746f7020736563726574'
-// [!code focus:end]
 ```
 
 Convert back to a string with [`Hex.toString`](/api/Hex/toString).

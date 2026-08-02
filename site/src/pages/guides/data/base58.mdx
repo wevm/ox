@@ -22,12 +22,10 @@ Round-trip a value with [`Base58.fromString`](/api/Base58/fromString) and
 ```ts twoslash
 import { Base58 } from 'ox'
 
-// [!code focus:start]
 // @log: '2NEpo7TZRRrLZSi2U'
 const encoded = Base58.fromString('Hello World!')
 const decoded = Base58.toString(encoded)
 // @log: 'Hello World!'
-// [!code focus:end]
 ```
 
 ### Bring Base58 Identifiers into Primitive Types
@@ -39,10 +37,8 @@ operates on.
 ```ts twoslash
 import { Base58 } from 'ox'
 
-// [!code focus:start]
 const hex = Base58.toHex('2NEpo7TZRRrLZSi2U') // [!code hl]
 // @log: '0x48656c6c6f20576f726c6421'
-// [!code focus:end]
 ```
 
 Decoding preserves leading zero bytes (encoded as `1` characters), matching Bitcoin's address

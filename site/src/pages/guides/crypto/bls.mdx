@@ -28,12 +28,10 @@ import { Bls, Hex } from 'ox'
 const payload = Hex.random(32)
 const { privateKey, publicKey } = Bls.createKeyPair()
 
-// [!code focus:start]
 const signature = Bls.sign({ payload, privateKey }) // [!code hl]
 
 const verified = Bls.verify({ payload, publicKey, signature })
 // @log: true
-// [!code focus:end]
 ```
 
 `verify` infers the point groups from the inputs, so it works unchanged with either key size.
@@ -56,13 +54,11 @@ const signatures = privateKeys.map((privateKey) =>
   Bls.sign({ payload, privateKey }),
 )
 
-// [!code focus:start]
 const publicKey = Bls.aggregate(publicKeys) // [!code hl]
 const signature = Bls.aggregate(signatures) // [!code hl]
 
 const verified = Bls.verify({ payload, publicKey, signature })
 // @log: true
-// [!code focus:end]
 ```
 
 All points in one call must come from the same group. When aggregating serialized (hex or
@@ -82,7 +78,6 @@ const payload = Hex.random(32)
 const { privateKey, publicKey } = Bls.createKeyPair()
 const signature = Bls.sign({ payload, privateKey })
 
-// [!code focus:start]
 // @log: '0xacafff52…b32d9e66' (48 bytes)
 const publicKeyHex = BlsPoint.toHex(publicKey) // [!code hl]
 
@@ -91,7 +86,6 @@ const signatureHex = BlsPoint.toHex(signature)
 
 const publicKey2 = BlsPoint.fromHex(publicKeyHex, 'G1')
 const signature2 = BlsPoint.fromHex(signatureHex, 'G2')
-// [!code focus:end]
 ```
 
 Deserialization needs the group name because 48-byte values are G1 and 96-byte values are G2.

@@ -26,7 +26,6 @@ import { Ed25519 } from 'ox'
 
 const { privateKey, publicKey } = Ed25519.createKeyPair()
 
-// [!code focus:start]
 const signature = Ed25519.sign({ payload: '0xdeadbeef', privateKey }) // [!code hl]
 
 const verified = Ed25519.verify({
@@ -35,7 +34,6 @@ const verified = Ed25519.verify({
   signature,
 })
 // @log: true
-// [!code focus:end]
 ```
 
 Ed25519 hashes internally, so payloads of any length can be signed directly — no keccak256
@@ -52,7 +50,6 @@ import { X25519 } from 'ox'
 const alice = X25519.createKeyPair()
 const bob = X25519.createKeyPair()
 
-// [!code focus:start]
 const sharedSecretAlice = X25519.getSharedSecret({
   privateKey: alice.privateKey, // [!code hl]
   publicKey: bob.publicKey, // [!code hl]
@@ -63,7 +60,6 @@ const sharedSecretBob = X25519.getSharedSecret({
   publicKey: alice.publicKey,
 })
 // @log: sharedSecretAlice === sharedSecretBob
-// [!code focus:end]
 ```
 
 Feed the secret into a KDF before using it as an encryption key — see
@@ -82,12 +78,10 @@ import { Ed25519, X25519 } from 'ox'
 const signer = Ed25519.createKeyPair()
 const peer = Ed25519.createKeyPair()
 
-// [!code focus:start]
 const sharedSecret = X25519.getSharedSecret({
   privateKey: Ed25519.toX25519PrivateKey({ privateKey: signer.privateKey }), // [!code hl]
   publicKey: Ed25519.toX25519PublicKey({ publicKey: peer.publicKey }), // [!code hl]
 })
-// [!code focus:end]
 ```
 
 Both parties convert their own private key and the peer's public key, then derive the secret

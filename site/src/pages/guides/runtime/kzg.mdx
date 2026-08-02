@@ -71,10 +71,8 @@ import { Kzg } from 'ox/wasm'
 
 const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
 
-// [!code focus:start]
 kzg.dispose()
 kzg.dispose() // idempotent
-// [!code focus:end]
 ```
 
 Concurrent factory calls share only the compiled module, not mutable memory or

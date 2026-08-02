@@ -23,10 +23,8 @@ representation.
 ```ts twoslash
 import { CompactSize } from 'ox'
 
-// [!code focus:start]
 const encoded = CompactSize.toHex(520) // [!code hl]
 // @log: '0xfd0802'
-// [!code focus:end]
 ```
 
 ### Decode a Varint & Advance a Cursor
@@ -37,10 +35,8 @@ of bytes consumed, so a parser knows how far to advance its cursor.
 ```ts twoslash
 import { CompactSize } from 'ox'
 
-// [!code focus:start]
 const { value, size } = CompactSize.fromHex('0xfd0802') // [!code hl]
 // @log: { value: 520n, size: 3 }
-// [!code focus:end]
 ```
 
 Decoding enforces minimal encodings and throws `CompactSize.NonMinimalEncodingError` on padded

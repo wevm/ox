@@ -29,7 +29,6 @@ stateless — it does not query a node — so supply `nonce`, `gas`, and fee val
 ```ts twoslash
 import { TxEnvelopeEip1559, Value } from 'ox'
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   gas: 21_000n,
@@ -39,7 +38,6 @@ const envelope = TxEnvelopeEip1559.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
-// [!code focus:end]
 ```
 
 See [Estimate Fees & Access Lists](/guides/transactions/fees-access-lists) for deriving
@@ -64,13 +62,11 @@ const envelope = TxEnvelopeEip1559.from({
   value: Value.fromEther('1.5'),
 })
 
-// [!code focus:start]
 const signature = Secp256k1.sign({
   payload: TxEnvelopeEip1559.getSignPayload(envelope), // [!code hl]
   privateKey: '0x...',
 })
 // @log: { r: '0x...', s: '0x...', yParity: 0 }
-// [!code focus:end]
 ```
 
 ### Attach the Signature & Serialize
@@ -97,7 +93,6 @@ const signature = Secp256k1.sign({
   privateKey: '0x...',
 })
 
-// [!code focus:start]
 // Attach the signature to the envelope.
 // @log: { ..., r: '0x...', s: '0x...', yParity: 0 }
 const signed = TxEnvelopeEip1559.from(envelope, { signature }) // [!code hl]
@@ -108,7 +103,6 @@ const serialized = TxEnvelopeEip1559.serialize(signed) // [!code hl]
 
 // Deserialize it back into a typed envelope.
 const deserialized = TxEnvelopeEip1559.deserialize(serialized)
-// [!code focus:end]
 ```
 
 ### Broadcast via `eth_sendRawTransaction`
@@ -135,7 +129,6 @@ const signature = Secp256k1.sign({
   privateKey: '0x...',
 })
 
-// [!code focus:start]
 // Serialize the envelope with the signature.
 const serialized = TxEnvelopeEip1559.serialize(envelope, { signature })
 
@@ -145,7 +138,6 @@ const hash = await transport.request({
   method: 'eth_sendRawTransaction', // [!code hl]
   params: [serialized], // [!code hl]
 })
-// [!code focus:end]
 ```
 
 If an application also needs to fill fields, wait for receipts, or retry, a client like
@@ -171,7 +163,6 @@ const envelope = TxEnvelopeEip1559.from({
   value: Value.fromEther('1.5'),
 })
 
-// [!code focus:start]
 // Convert the envelope to an RPC-compatible format.
 const envelope_rpc = TxEnvelopeEip1559.toRpc(envelope) // [!code hl]
 
@@ -181,7 +172,6 @@ const hash = await provider.request({
   method: 'eth_sendTransaction',
   params: [envelope_rpc],
 })
-// [!code focus:end]
 ```
 
 ## Best Practices

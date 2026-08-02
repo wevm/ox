@@ -37,12 +37,10 @@ import { Hex, PersonalMessage, Secp256k1 } from 'ox'
 
 const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
-// [!code focus:start]
 const signature = Secp256k1.sign({
   payload,
   privateKey: '0x...',
 })
-// [!code focus:end]
 ```
 
 Any Ox signer works — see [Work with Secp256k1](/guides/crypto/secp256k1) for the full signer
@@ -61,7 +59,6 @@ declare const signature: Signature.Signature
 
 const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
-// [!code focus:start]
 const signer = Secp256k1.recoverAddress({ payload, signature })
 
 const verified = Secp256k1.verify({
@@ -70,7 +67,6 @@ const verified = Secp256k1.verify({
   signature,
 })
 // @log: true
-// [!code focus:end]
 ```
 
 ### Sign with a Wallet (personal_sign)
@@ -87,12 +83,10 @@ const provider = Provider.from(window.ethereum)
 
 const [address] = await provider.request({ method: 'eth_requestAccounts' })
 
-// [!code focus:start]
 const signature = await provider.request({
   method: 'personal_sign',
   params: [Hex.fromString('hello world'), address],
 })
-// [!code focus:end]
 ```
 
 ### Sign Intended-Validator Data (ERC-191 0x00)
@@ -104,12 +98,10 @@ consume it), so it cannot be replayed against another verifier. Compute the payl
 ```ts twoslash
 import { Hex, Secp256k1, ValidatorData } from 'ox'
 
-// [!code focus:start]
 const payload = ValidatorData.getSignPayload({
   data: Hex.fromString('hello world'),
   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
 })
-// [!code focus:end]
 
 const signature = Secp256k1.sign({
   payload,

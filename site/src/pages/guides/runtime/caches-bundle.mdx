@@ -26,7 +26,7 @@ import { Address, Caches } from 'ox'
 // Checksumming populates the global checksum cache.
 Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
 
-Caches.clear() // [!code focus]
+Caches.clear()
 ```
 
 Installing, setting, or resetting an [engine](/guides/runtime/engines) also clears Ox's
@@ -42,11 +42,9 @@ import { Address, Caches } from 'ox'
 
 Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
 
-// [!code focus:start]
 // @log: 1
 Caches.checksum.size
 Caches.checksum.clear()
-// [!code focus:end]
 ```
 
 ### Tune Cache Capacity
@@ -57,7 +55,7 @@ reached, writes evict the oldest entry first.
 ```ts twoslash
 import { Caches } from 'ox'
 
-Caches.checksum.maxSize = 1_024 // [!code focus]
+Caches.checksum.maxSize = 1_024
 ```
 
 The default bound is 32,768 entries per cache.

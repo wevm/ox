@@ -25,12 +25,10 @@ Round-trip a single value with [`Rlp.fromHex`](/api/Rlp/fromHex) and
 ```ts twoslash
 import { Rlp } from 'ox'
 
-// [!code focus:start]
 // @log: '0x8568656c6c6f'
 const rlp = Rlp.fromHex('0x68656c6c6f')
 const value = Rlp.toHex(rlp)
 // @log: '0x68656c6c6f'
-// [!code focus:end]
 ```
 
 ### Encode Nested Data
@@ -41,14 +39,12 @@ const value = Rlp.toHex(rlp)
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
 
-// [!code focus:start]
 const rlp = Rlp.fromHex([
   Hex.fromString('hello'),
   Hex.fromNumber(1337),
   [Hex.fromString('foo'), Hex.fromString('bar')], // [!code hl]
 ])
 // @log: '0xd28568656c6c6f820539c883666f6f83626172'
-// [!code focus:end]
 ```
 
 Working with `Uint8Array` data instead? [`Rlp.fromBytes`](/api/Rlp/fromBytes) accepts nested
@@ -63,10 +59,8 @@ leaves.
 ```ts twoslash
 import { Rlp } from 'ox'
 
-// [!code focus:start]
 const values = Rlp.toHex('0xd28568656c6c6f820539c883666f6f83626172')
 // @log: ['0x68656c6c6f', '0x0539', ['0x666f6f', '0x626172']]
-// [!code focus:end]
 ```
 
 Either function accepts `Hex` or `Bytes` input, so raw payloads from the wire decode without a

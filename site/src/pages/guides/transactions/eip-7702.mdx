@@ -28,7 +28,6 @@ then attach the signature.
 ```ts twoslash
 import { Authorization, Secp256k1 } from 'ox'
 
-// [!code focus:start]
 // `address` is the delegate contract; `nonce` is the authority's
 // nonce at execution time.
 const authorization = Authorization.from({
@@ -44,7 +43,6 @@ const signature = Secp256k1.sign({
 
 const authorization_signed = Authorization.from(authorization, { signature })
 // @log: { address: '0x7099...79c8', chainId: 1, nonce: 40n, r: '0x...', s: '0x...', yParity: 1 }
-// [!code focus:end]
 ```
 
 ### Build a 7702 Envelope
@@ -68,7 +66,6 @@ const authorization_signed = Authorization.from(authorization, {
   }),
 })
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip7702.from({
   authorizationList: [authorization_signed], // [!code hl]
   chainId: 1,
@@ -84,7 +81,6 @@ const signature = Secp256k1.sign({
   privateKey: '0x...', // sender (sponsor)
 })
 const serialized = TxEnvelopeEip7702.serialize(envelope, { signature })
-// [!code focus:end]
 ```
 
 See [Build, Sign & Send](/guides/transactions/build-sign-send) for broadcasting the serialized
@@ -103,7 +99,6 @@ import { Authorization } from 'ox'
 
 declare const authorizationList: Authorization.ListSigned
 
-// [!code focus:start]
 // Typed -> RPC (e.g. for `eth_sendTransaction` params).
 // @log: [{ address: '0x...', chainId: '0x1', nonce: '0x28', r: '0x...', s: '0x...', yParity: '0x1' }]
 const authorizationList_rpc = Authorization.toRpcList(authorizationList)
@@ -111,7 +106,6 @@ const authorizationList_rpc = Authorization.toRpcList(authorizationList)
 // RPC -> typed (e.g. from `eth_getTransactionByHash` results).
 const authorizationList_typed = Authorization.fromRpcList(authorizationList_rpc)
 // @log: [{ address: '0x...', chainId: 1, nonce: 40n, r: '0x...', s: '0x...', yParity: 1 }]
-// [!code focus:end]
 ```
 
 ## Best Practices

@@ -28,7 +28,6 @@ booleans, numbers, and strings with the typed constructors:
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// [!code focus:start]
 // @log: '0xdeadbeef'
 const hex = Hex.from('0xdeadbeef')
 
@@ -43,7 +42,6 @@ const bigint = Hex.fromNumber(420n)
 
 const string = Hex.fromString('hello')
 // @log: '0x68656c6c6f'
-// [!code focus:end]
 ```
 
 `Hex` can also be instantiated from `Bytes`, and vice versa — `Hex.from(bytes)` and
@@ -60,7 +58,6 @@ Recover primitive JavaScript values with [`Hex.toBigInt`](/api/Hex/toBigInt) /
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// [!code focus:start]
 // @log: true
 const bool = Bytes.toBoolean(Bytes.from([1]))
 
@@ -72,7 +69,6 @@ const number = Bytes.toNumber(Bytes.from([1, 164]))
 
 const string = Hex.toString('0x68656c6c6f')
 // @log: 'hello'
-// [!code focus:end]
 ```
 
 Prefer `toBigInt` over `toNumber` for on-chain quantities — wei amounts routinely exceed
@@ -90,7 +86,6 @@ Byte-manipulation helpers exist on both modules — [`Hex.concat`](/api/Hex/conc
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// [!code focus:start]
 // @log: '0xdeadbeef'
 const concatenated = Hex.concat('0xdead', '0xbeef')
 
@@ -105,7 +100,6 @@ const trimmed = Bytes.trimLeft(Bytes.from([0x00, 0x00, 0xde, 0xad]))
 
 const size = Hex.size('0xdeadbeefdeadbeefdeadbeefdeadbeef')
 // @log: 16
-// [!code focus:end]
 ```
 
 `padLeft` & `padRight` default to a size of `32` bytes — the width of an EVM word — so
@@ -121,7 +115,6 @@ throw a typed error instead.
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// [!code focus:start]
 const equal = Bytes.isEqual(
   Bytes.from([0xde, 0xad, 0xbe, 0xef]),
   Bytes.from([0xca, 0xfe, 0xba, 0xbe]),
@@ -133,7 +126,6 @@ const valid = Hex.validate('0xdeadbeefz')
 
 Hex.assert('abc')
 // @error: Error: Hex.InvalidHexValueError
-// [!code focus:end]
 ```
 
 Reach for `assert` at trust boundaries where invalid data should halt processing, and `validate`
@@ -148,13 +140,11 @@ identifiers.
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// [!code focus:start]
 // @log: '0x86d8b4…' (32 random bytes)
 const salt = Hex.random(32)
 
 const nonce = Bytes.random(16)
 // @log: Uint8Array(16) [134, 216, …]
-// [!code focus:end]
 ```
 
 ## Best Practices

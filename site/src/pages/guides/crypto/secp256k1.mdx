@@ -24,12 +24,10 @@ its corresponding public key. Derive the Ethereum address with
 ```ts twoslash
 import { Address, Secp256k1 } from 'ox'
 
-// [!code focus:start]
 const { privateKey, publicKey } = Secp256k1.createKeyPair()
 
 const address = Address.fromPublicKey(publicKey) // [!code hl]
 // @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
-// [!code focus:end]
 ```
 
 [`Secp256k1.randomPrivateKey`](/api/Secp256k1/randomPrivateKey) and
@@ -45,12 +43,10 @@ import { Hash, Hex, Secp256k1 } from 'ox'
 
 declare const privateKey: Hex.Hex
 
-// [!code focus:start]
 const payload = Hash.keccak256(Hex.fromString('agree to terms'))
 
 const signature = Secp256k1.sign({ payload, privateKey }) // [!code hl]
 // @log: { r: '0x1c34…', s: '0x4f8d…', yParity: 0 }
-// [!code focus:end]
 ```
 
 Serialize the result with [`Signature.toHex`](/api/Signature/toHex) — see
@@ -69,10 +65,8 @@ const address = Address.fromPublicKey(publicKey)
 const payload = '0xdeadbeef'
 const signature = Secp256k1.sign({ payload, privateKey })
 
-// [!code focus:start]
 const verified = Secp256k1.verify({ address, payload, signature }) // [!code hl]
 // @log: true
-// [!code focus:end]
 ```
 
 Pass `publicKey` instead of `address` to verify against the key directly — required when the
@@ -92,13 +86,11 @@ declare const privateKey: Hex.Hex
 const payload = '0xdeadbeef'
 const signature = Secp256k1.sign({ payload, privateKey })
 
-// [!code focus:start]
 // @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
 const address = Secp256k1.recoverAddress({ payload, signature }) // [!code hl]
 
 const publicKey = Secp256k1.recoverPublicKey({ payload, signature })
 // @log: { prefix: 4, x: '0xd6c2…', y: '0x9a47…' }
-// [!code focus:end]
 ```
 
 ## Best Practices

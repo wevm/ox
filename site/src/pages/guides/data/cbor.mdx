@@ -22,12 +22,10 @@ and IPFS/IPLD blocks.
 ```ts twoslash
 import { Cbor } from 'ox'
 
-// [!code focus:start]
 // @log: '0xa263666f6f636261726362617a83010203'
 const encoded = Cbor.encode({ foo: 'bar', baz: [1, 2, 3] })
 const decoded = Cbor.decode(encoded)
 // @log: { foo: 'bar', baz: [1, 2, 3] }
-// [!code focus:end]
 ```
 
 ### Choose the Output Type
@@ -38,10 +36,8 @@ expects raw bytes rather than hex.
 ```ts twoslash
 import { Cbor } from 'ox'
 
-// [!code focus:start]
 const bytes = Cbor.encode({ alg: -7 }, { as: 'Bytes' }) // [!code hl]
 // @log: Uint8Array [161, 99, 97, 108, 103, 38]
-// [!code focus:end]
 ```
 
 ## Best Practices

@@ -100,14 +100,12 @@ const payload = TypedData.getSignPayload({
   },
 })
 
-// [!code focus:start]
 const signature = Secp256k1.sign({
   payload,
   privateKey: '0x...',
 })
 
 const signer = Secp256k1.recoverAddress({ payload, signature })
-// [!code focus:end]
 ```
 
 Compare the recovered signer against the expected address with
@@ -128,7 +126,6 @@ const provider = Provider.from(window.ethereum)
 
 const [address] = await provider.request({ method: 'eth_requestAccounts' })
 
-// [!code focus:start]
 const payload = TypedData.serialize({
   /* ... */
 })
@@ -137,7 +134,6 @@ const signature = await provider.request({
   method: 'eth_signTypedData_v4',
   params: [address, payload],
 })
-// [!code focus:end]
 ```
 
 [`TypedData.serialize`](/api/TypedData/serialize) produces the JSON string that
@@ -160,7 +156,6 @@ const domain = {
   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
 } as const
 
-// [!code focus:start]
 // @log: [
 // @log:   { 'name': 'name', 'type': 'string' },
 // @log:   { 'name': 'version', 'type': 'string' },
@@ -171,7 +166,6 @@ const types = TypedData.extractEip712DomainTypes(domain)
 
 const separator = TypedData.domainSeparator(domain)
 // @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
-// [!code focus:end]
 ```
 
 ## Best Practices

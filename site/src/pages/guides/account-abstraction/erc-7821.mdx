@@ -23,7 +23,6 @@ Encode an array of `{ to, value, data }` calls into ERC-7821 `executionData` wit
 ```ts twoslash
 import { Calls } from 'ox/erc7821'
 
-// [!code focus:start]
 const executionData = Calls.encode([
   {
     data: '0xdeadbeef',
@@ -36,7 +35,6 @@ const executionData = Calls.encode([
     value: 2n,
   },
 ])
-// [!code focus:end]
 ```
 
 `value` and `data` are optional and default to `0n` and `0x`. This is only the `executionData`
@@ -50,7 +48,6 @@ mode is selected automatically based on whether `opData` is present.
 ```ts twoslash
 import { Execute } from 'ox/erc7821'
 
-// [!code focus:start]
 const data = Execute.encodeData([
   {
     data: '0xcafebabe',
@@ -58,7 +55,6 @@ const data = Execute.encodeData([
     value: 1n,
   },
 ])
-// [!code focus:end]
 
 // With account-defined authorization data (`opData` mode).
 const dataWithOpData = Execute.encodeData(
@@ -88,7 +84,6 @@ import { Execute } from 'ox/erc7821'
 // Calldata for `execute(bytes32,bytes)` (eg. from a transaction request).
 declare const data: Hex.Hex
 
-// [!code focus:start]
 const { calls, opData } = Execute.decodeData(data) // [!code hl]
 // @log: {
 // @log:   calls: [
@@ -99,7 +94,6 @@ const { calls, opData } = Execute.decodeData(data) // [!code hl]
 // @log:     },
 // @log:   ],
 // @log: }
-// [!code focus:end]
 ```
 
 For the "batch of batches" mode, use `Execute.decodeBatchOfBatchesData` (and

@@ -25,7 +25,6 @@ import { Block, RpcTransport } from 'ox'
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-// [!code focus:start]
 const block = await transport
   .request({ method: 'eth_getBlockByNumber', params: ['latest', false] })
   .then(Block.fromRpc)
@@ -36,7 +35,6 @@ const block = await transport
 // @log:   timestamp: 1662222222n,
 // @log:   ...
 // @log: }
-// [!code focus:end]
 ```
 
 `Block.fromRpc` returns `null` when the block is not found, and converts embedded transactions
@@ -51,7 +49,6 @@ standalone RPC values.
 ```ts twoslash
 import { Withdrawal } from 'ox'
 
-// [!code focus:start]
 const withdrawal = Withdrawal.fromRpc({
   address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
   amount: '0x620323',
@@ -64,7 +61,6 @@ const withdrawal = Withdrawal.fromRpc({
 // @log:   index: 0,
 // @log:   validatorIndex: 1
 // @log: }
-// [!code focus:end]
 ```
 
 The `amount` is denominated in Gwei, as defined by the consensus specification.
@@ -80,7 +76,6 @@ import { RpcTransport, TransactionReceipt } from 'ox'
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-// [!code focus:start]
 const receipt = await transport
   .request({
     method: 'eth_getTransactionReceipt',
@@ -96,7 +91,6 @@ const receipt = await transport
 // @log:   type: 'eip1559',
 // @log:   ...
 // @log: }
-// [!code focus:end]
 ```
 
 ## Best Practices

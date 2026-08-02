@@ -42,13 +42,11 @@ const credential = await WebAuthn.createCredential({
   prf: Prf.tag('account.1'), // [!code hl]
 })
 
-// [!code focus:start]
 // Later — reproduce the same 32-byte output from the stored credential.
 const { prf } = await WebAuthn.getCredential({
   credentialId: credential.id,
   prf: Prf.tag('account.1'), // [!code hl]
 })
-// [!code focus:end]
 ```
 
 Passing `prf: true` instead of a tag uses the stable default input `ox.webauthn.prf.v1`. Tags are
@@ -69,7 +67,6 @@ const { prf } = await WebAuthn.getCredential({
 
 const privateKey = Secp256k1.fromPrf(prf) // [!code hl]
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   gas: 21_000n,
@@ -86,7 +83,6 @@ const signature = Secp256k1.sign({
 })
 
 const serialized = TxEnvelopeEip1559.serialize(envelope, { signature })
-// [!code focus:end]
 ```
 
 Broadcast `serialized` with `eth_sendRawTransaction` — see
@@ -105,7 +101,6 @@ const { prf } = await WebAuthn.getCredential({
   prf: true,
 })
 
-// [!code focus:start]
 const privateKey = Ed25519.fromPrf(prf) // [!code hl]
 const publicKey = Ed25519.getPublicKey({ privateKey })
 
@@ -113,7 +108,6 @@ const signature = Ed25519.sign({
   payload: '0xdeadbeef',
   privateKey,
 })
-// [!code focus:end]
 ```
 
 ### Derive a Post-Quantum Key
@@ -129,7 +123,6 @@ const { prf } = await WebAuthn.getCredential({
   prf: true,
 })
 
-// [!code focus:start]
 const privateKey = MlDsa44.fromPrf(prf) // [!code hl]
 const publicKey = MlDsa44.getPublicKey({ privateKey })
 
@@ -144,7 +137,6 @@ const verified = MlDsa44.verify({
   signature,
 })
 // @log: true
-// [!code focus:end]
 ```
 
 ### Encrypt User Data
@@ -161,7 +153,6 @@ const { prf } = await WebAuthn.getCredential({
   prf: true,
 })
 
-// [!code focus:start]
 const key = await AesGcm.fromPrf(prf) // [!code hl]
 
 const secret = Hex.fromString('i am a secret message')
@@ -169,7 +160,6 @@ const secret = Hex.fromString('i am a secret message')
 const encrypted = await AesGcm.encrypt(secret, key)
 const decrypted = await AesGcm.decrypt(encrypted, key)
 // @log: Hex.fromString('i am a secret message')
-// [!code focus:end]
 ```
 
 ## Best Practices

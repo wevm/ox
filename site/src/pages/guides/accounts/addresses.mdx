@@ -25,8 +25,8 @@ import { Address, Secp256k1 } from 'ox'
 
 const privateKey = Secp256k1.randomPrivateKey()
 
-const publicKey = Secp256k1.getPublicKey({ privateKey }) // [!code focus]
-const address = Address.fromPublicKey(publicKey) // [!code focus]
+const publicKey = Secp256k1.getPublicKey({ privateKey })
+const address = Address.fromPublicKey(publicKey)
 ```
 
 ### Derive an Address from a Public Key
@@ -40,10 +40,8 @@ import { Address, PublicKey } from 'ox'
 const publicKey = PublicKey.from(
   '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
 )
-// [!code focus:start]
 const address = Address.fromPublicKey(publicKey)
 // @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-// [!code focus:end]
 ```
 
 Pass `{ checksum: true }` to return the [ERC-55](https://eips.ethereum.org/EIPS/eip-55)
@@ -58,7 +56,6 @@ untrusted input with [`Address.validate`](/api/Address/validate) (returns `false
 ```ts twoslash
 import { Address } from 'ox'
 
-// [!code focus:start]
 const checksummed = Address.checksum(
   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
   // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
@@ -69,7 +66,6 @@ const valid = Address.validate('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
 
 const invalid = Address.validate('0xdeadbeef')
 // @log: false
-// [!code focus:end]
 ```
 
 By default, mixed-case input is also verified against its checksum (`strict: true`). Pass
@@ -83,13 +79,11 @@ Use [`Address.isEqual`](/api/Address/isEqual) to compare addresses regardless of
 ```ts twoslash
 import { Address } from 'ox'
 
-// [!code focus:start]
 const equal = Address.isEqual(
   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
 )
 // @log: true
-// [!code focus:end]
 ```
 
 ## Best Practices

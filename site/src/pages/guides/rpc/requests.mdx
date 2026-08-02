@@ -23,14 +23,12 @@ strongly-typed JSON-RPC request objects with an auto-incrementing `id`.
 ```ts twoslash
 import { RpcRequest } from 'ox'
 
-// [!code focus:start]
 const store = RpcRequest.createStore()
 
 const request_1 = store.prepare({
   method: 'eth_blockNumber',
 })
 // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
-// [!code focus:end]
 
 const request_2 = store.prepare({
   method: 'eth_getBlockByNumber',
@@ -56,7 +54,6 @@ const request = store.prepare({
   params: ['latest', false],
 })
 
-// [!code focus:start]
 const response = await fetch('https://1.rpc.thirdweb.com', {
   body: JSON.stringify(request),
   method: 'POST',
@@ -64,7 +61,6 @@ const response = await fetch('https://1.rpc.thirdweb.com', {
     'Content-Type': 'application/json',
   },
 }).then((res) => res.json())
-// [!code focus:end]
 ```
 
 ### Send with an RPC Transport
@@ -75,12 +71,10 @@ a single `request` function that manages `id`s and raises JSON-RPC errors for yo
 ```ts twoslash
 import { RpcTransport } from 'ox'
 
-// [!code focus:start]
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
 const blockNumber = await transport.request({ method: 'eth_blockNumber' })
 // @log: '0x1a2b3c'
-// [!code focus:end]
 ```
 
 The transport is also EIP-1193 compatible — see
@@ -110,7 +104,7 @@ const block = await fetch('https://1.rpc.thirdweb.com', {
   },
 })
   .then((res) => res.json())
-  .then((res) => RpcResponse.parse(res, { request })) // [!code focus]
+  .then((res) => RpcResponse.parse(res, { request }))
 ```
 
 Set `raw: true` to receive the whole `{ result, error }` response object instead of throwing on

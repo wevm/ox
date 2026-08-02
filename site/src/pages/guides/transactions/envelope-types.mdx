@@ -32,7 +32,6 @@ transactions. Legacy envelopes price gas with a single `gasPrice` field.
 ```ts twoslash
 import { TxEnvelopeLegacy, Value } from 'ox'
 
-// [!code focus:start]
 const envelope = TxEnvelopeLegacy.from({
   chainId: 1,
   gasPrice: Value.fromGwei('10'), // [!code hl]
@@ -40,7 +39,6 @@ const envelope = TxEnvelopeLegacy.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1'),
 })
-// [!code focus:end]
 ```
 
 Omitting `chainId` produces a pre-EIP-155 transaction that is replayable across chains — only
@@ -54,7 +52,6 @@ transaction will touch, pre-warming them at a discount.
 ```ts twoslash
 import { TxEnvelopeEip2930, Value } from 'ox'
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip2930.from({
   // [!code hl:start]
   accessList: [
@@ -71,7 +68,6 @@ const envelope = TxEnvelopeEip2930.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1'),
 })
-// [!code focus:end]
 ```
 
 EIP-1559, EIP-4844, and EIP-7702 envelopes also accept `accessList` — see
@@ -86,7 +82,6 @@ producer with `maxPriorityFeePerGas`.
 ```ts twoslash
 import { TxEnvelopeEip1559, Value } from 'ox'
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'), // [!code hl]
@@ -95,7 +90,6 @@ const envelope = TxEnvelopeEip1559.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
-// [!code focus:end]
 ```
 
 See [Build, Sign & Send](/guides/transactions/build-sign-send) for the full lifecycle of this
@@ -110,7 +104,6 @@ separate `maxFeePerBlobGas` market.
 ```ts twoslash
 import { TxEnvelopeEip4844, Value } from 'ox'
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip4844.from({
   // [!code hl:start]
   blobVersionedHashes: [
@@ -123,7 +116,6 @@ const envelope = TxEnvelopeEip4844.from({
   maxPriorityFeePerGas: Value.fromGwei('1'),
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
 })
-// [!code focus:end]
 ```
 
 Computing versioned hashes and sidecars requires a KZG implementation — see
@@ -148,7 +140,6 @@ const signature = Secp256k1.sign({
   privateKey: '0x...',
 })
 
-// [!code focus:start]
 const envelope = TxEnvelopeEip7702.from({
   authorizationList: [Authorization.from(authorization, { signature })], // [!code hl]
   chainId: 1,
@@ -157,7 +148,6 @@ const envelope = TxEnvelopeEip7702.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1'),
 })
-// [!code focus:end]
 ```
 
 See [Delegate with EIP-7702](/guides/transactions/eip-7702) for authorization semantics and

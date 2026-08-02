@@ -27,7 +27,7 @@ Importing `ox/window` types `window.ethereum`.
 import 'ox/window'
 import { Provider } from 'ox'
 
-const provider = Provider.from(window.ethereum) // [!code focus]
+const provider = Provider.from(window.ethereum)
 
 const blockNumber = await provider.request({ method: 'eth_blockNumber' })
 ```
@@ -51,8 +51,8 @@ Provider.
 ```ts twoslash
 import { Provider, RpcTransport } from 'ox'
 
-const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
-const provider = Provider.from(transport) // [!code focus]
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+const provider = Provider.from(transport)
 
 const blockNumber = await provider.request({ method: 'eth_blockNumber' })
 ```

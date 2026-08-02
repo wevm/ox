@@ -24,13 +24,11 @@ corresponding public key in one call.
 ```ts twoslash
 import { P256 } from 'ox'
 
-// [!code focus:start]
 const { privateKey, publicKey } = P256.createKeyPair() // [!code hl]
 // @log: {
 // @log:   privateKey: '0x…',
 // @log:   publicKey: { prefix: 4, x: '0x…', y: '0x…' },
 // @log: }
-// [!code focus:end]
 ```
 
 [`P256.randomPrivateKey`](/api/P256/randomPrivateKey) and
@@ -46,10 +44,8 @@ import { Hex, P256 } from 'ox'
 
 declare const privateKey: Hex.Hex
 
-// [!code focus:start]
 const signature = P256.sign({ payload: '0xdeadbeef', privateKey }) // [!code hl]
 // @log: { r: '0x…', s: '0x…', yParity: 0 }
-// [!code focus:end]
 ```
 
 Pass `hash: true` to SHA-256-hash the payload before signing — matching what WebAuthn
@@ -66,10 +62,8 @@ import { P256 } from 'ox'
 const { privateKey, publicKey } = P256.createKeyPair()
 const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
 
-// [!code focus:start]
 const verified = P256.verify({ payload: '0xdeadbeef', publicKey, signature }) // [!code hl]
 // @log: true
-// [!code focus:end]
 ```
 
 If signing used `hash: true`, pass `hash: true` here as well.
@@ -85,13 +79,11 @@ import { P256 } from 'ox'
 const { privateKey } = P256.createKeyPair()
 const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
 
-// [!code focus:start]
 const publicKey = P256.recoverPublicKey({
   payload: '0xdeadbeef',
   signature, // [!code hl]
 })
 // @log: { prefix: 4, x: '0x…', y: '0x…' }
-// [!code focus:end]
 ```
 
 Signatures from `WebCryptoP256` or WebAuthn have no `yParity`, so they cannot be recovered —
@@ -108,12 +100,10 @@ import { P256 } from 'ox'
 const alice = P256.createKeyPair()
 const bob = P256.createKeyPair()
 
-// [!code focus:start]
 const sharedSecret = P256.getSharedSecret({
   privateKey: alice.privateKey, // [!code hl]
   publicKey: bob.publicKey, // [!code hl]
 })
-// [!code focus:end]
 ```
 
 Both sides derive the same secret. Run it through a KDF (for example

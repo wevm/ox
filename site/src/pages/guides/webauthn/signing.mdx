@@ -25,14 +25,12 @@ import { Hash, Hex, WebAuthn } from 'ox'
 
 const credential = await WebAuthn.createCredential({ name: 'Example' })
 
-// [!code focus:start]
 const challenge = Hash.keccak256(Hex.fromString('hello world'))
 
 const { metadata, signature } = await WebAuthn.sign({
   challenge, // [!code hl]
   credentialId: credential.id,
 })
-// [!code focus:end]
 ```
 
 Omitting `credentialId` prompts the user to pick any credential previously registered for the
@@ -48,10 +46,8 @@ import { PublicKey, WebAuthn } from 'ox'
 
 const credential = await WebAuthn.createCredential({ name: 'Example' })
 
-// [!code focus:start]
 // @log: '0x04ab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7...'
 const publicKey = PublicKey.toHex(credential.publicKey) // [!code hl]
-// [!code focus:end]
 
 // Rehydrate the stored key when verifying.
 const restored = PublicKey.fromHex(publicKey)
@@ -72,7 +68,6 @@ const { metadata, signature } = await WebAuthn.sign({
   credentialId: credential.id,
 })
 
-// [!code focus:start]
 const verified = WebAuthn.verify({
   challenge: '0xdeadbeef',
   metadata,
@@ -80,7 +75,6 @@ const verified = WebAuthn.verify({
   signature,
 })
 // @log: true
-// [!code focus:end]
 ```
 
 When verifying on a server, also pass `origin` and `rpId` so the client data and relying party
