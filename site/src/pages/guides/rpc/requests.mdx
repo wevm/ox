@@ -23,13 +23,14 @@ strongly-typed JSON-RPC request objects with an auto-incrementing `id`.
 ```ts twoslash
 import { RpcRequest } from 'ox'
 
-const store = RpcRequest.createStore() // [!code focus]
+// [!code focus:start]
+const store = RpcRequest.createStore()
 
 const request_1 = store.prepare({
-  // [!code focus]
-  method: 'eth_blockNumber', // [!code focus]
-}) // [!code focus]
+  method: 'eth_blockNumber',
+})
 // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
+// [!code focus:end]
 
 const request_2 = store.prepare({
   method: 'eth_getBlockByNumber',
@@ -74,10 +75,12 @@ a single `request` function that manages `id`s and raises JSON-RPC errors for yo
 ```ts twoslash
 import { RpcTransport } from 'ox'
 
-const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+// [!code focus:start]
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-const blockNumber = await transport.request({ method: 'eth_blockNumber' }) // [!code focus]
+const blockNumber = await transport.request({ method: 'eth_blockNumber' })
 // @log: '0x1a2b3c'
+// [!code focus:end]
 ```
 
 The transport is also EIP-1193 compatible — see

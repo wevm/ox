@@ -68,7 +68,8 @@ const logs = await transport.request({
   params: [{ topics }],
 })
 
-const decoded = logs.map((log) => AbiEvent.decode(transfer, log)) // [!code focus]
+// [!code focus:start]
+const decoded = logs.map((log) => AbiEvent.decode(transfer, log))
 // @log: [
 // @log:   {
 // @log:     from: '0x9F1fdAb6458c5fc642fa0F4C5af7473C46837357',
@@ -77,6 +78,7 @@ const decoded = logs.map((log) => AbiEvent.decode(transfer, log)) // [!code focu
 // @log:   },
 // @log:   ...
 // @log: ]
+// [!code focus:end]
 ```
 
 Decoding throws if the log's selector (`topics[0]`) does not match the event. To decode

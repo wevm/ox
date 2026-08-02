@@ -38,11 +38,11 @@ const schema = RpcSchema.from<
 // [!code focus:end]
 
 const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com', {
-  schema, // [!code focus]
+  schema, // [!code hl]
 })
 
 const magic = await transport.request({
-  method: 'ox_getMagic', // [!code focus]
+  method: 'ox_getMagic', // [!code hl]
   params: [1],
 })
 ```
@@ -63,10 +63,10 @@ const schema = RpcSchema.from<
   | RpcSchema.Default
   | {
       Request: {
-        method: 'wallet_getSecret' // [!code focus]
-        params: [id: string] // [!code focus]
+        method: 'wallet_getSecret' // [!code hl]
+        params: [id: string] // [!code hl]
       }
-      ReturnType: `0x${string}` // [!code focus]
+      ReturnType: `0x${string}` // [!code hl]
     }
 >()
 

@@ -160,7 +160,8 @@ const domain = {
   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
 } as const
 
-const types = TypedData.extractEip712DomainTypes(domain) // [!code focus]
+// [!code focus:start]
+const types = TypedData.extractEip712DomainTypes(domain)
 // @log: [
 // @log:   { 'name': 'name', 'type': 'string' },
 // @log:   { 'name': 'version', 'type': 'string' },
@@ -168,8 +169,9 @@ const types = TypedData.extractEip712DomainTypes(domain) // [!code focus]
 // @log:   { 'name': 'verifyingContract', 'type': 'address' },
 // @log: ]
 
-const separator = TypedData.domainSeparator(domain) // [!code focus]
+const separator = TypedData.domainSeparator(domain)
 // @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
+// [!code focus:end]
 ```
 
 ## Best Practices

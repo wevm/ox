@@ -59,10 +59,10 @@ Build a binary state tree from key-value pairs and compute its Merkle root with
 ```ts twoslash
 import { BinaryStateTree, Bytes } from 'ox'
 
-const tree = BinaryStateTree.create() // [!code focus]
+// [!code focus:start]
+const tree = BinaryStateTree.create()
 
 BinaryStateTree.insert(
-  // [!code focus]
   tree,
   Bytes.fromHex(
     '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54',
@@ -72,7 +72,8 @@ BinaryStateTree.insert(
   ),
 )
 
-const root = BinaryStateTree.merkelize(tree) // [!code focus]
+const root = BinaryStateTree.merkelize(tree)
+// [!code focus:end]
 ```
 
 Keys are split into a 31-byte stem and a 1-byte sub-index, mirroring the EIP-7864 layout.

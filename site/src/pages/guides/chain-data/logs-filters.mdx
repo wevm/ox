@@ -68,13 +68,15 @@ const logs = await transport.request({
   ],
 })
 
-const converted = logs.map((log) => Log.fromRpc(log)) // [!code focus]
+// [!code focus:start]
+const converted = logs.map((log) => Log.fromRpc(log))
 // @log: [{
 // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
 // @log:   blockNumber: 19760236n,
 // @log:   logIndex: 271,
 // @log:   ...
 // @log: }]
+// [!code focus:end]
 ```
 
 To decode a log's `topics` and `data` into named event arguments, use

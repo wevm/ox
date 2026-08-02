@@ -29,12 +29,10 @@ const accounts = [
 ] as const
 
 async function handleRequest(request: RpcRequest.RpcRequest<RpcSchema.Eth>) {
-  // [!code focus:start]
-  if (request.method === 'eth_accounts')
-    return RpcResponse.from({ result: accounts }, { request })
-  if (request.method === 'eth_chainId')
-    return RpcResponse.from({ result: '0x1' }, { request })
-  // [!code focus:end]
+  if (request.method === 'eth_accounts') // [!code hl]
+    return RpcResponse.from({ result: accounts }, { request }) // [!code hl]
+  if (request.method === 'eth_chainId') // [!code hl]
+    return RpcResponse.from({ result: '0x1' }, { request }) // [!code hl]
 
   // Fall back to an upstream node for everything else.
   return await fetch('https://1.rpc.thirdweb.com', {
@@ -64,11 +62,11 @@ import { RpcRequest, RpcResponse, RpcSchema } from 'ox'
 function handleRequest(request: RpcRequest.RpcRequest<RpcSchema.Eth>) {
   try {
     if (request.method !== 'eth_chainId')
-      throw new RpcResponse.MethodNotSupportedError() // [!code focus]
+      throw new RpcResponse.MethodNotSupportedError() // [!code hl]
     return RpcResponse.from({ result: '0x1' }, { request })
   } catch (error) {
-    const { code, message } = RpcResponse.parseError(error) // [!code focus]
-    return RpcResponse.from({ error: { code, message } }, { request }) // [!code focus]
+    const { code, message } = RpcResponse.parseError(error) // [!code hl]
+    return RpcResponse.from({ error: { code, message } }, { request }) // [!code hl]
   }
 }
 ```
