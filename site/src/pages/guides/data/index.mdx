@@ -26,9 +26,39 @@ const quantity = Hex.fromNumber(amount) // [!code focus]
 <Cards>
   <Card
     icon="lucide:binary"
-    title="Base & Binary Encodings"
-    description="Move data through Base64, Base58, Bech32m, CBOR, and CompactSize."
-    to="/guides/data/encodings"
+    title="Base32 Coding"
+    description="Encode and decode raw BIP-173 base32 data."
+    to="/guides/data/base32"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Base58 Coding"
+    description="Handle Bitcoin-, IPFS-, and Solana-style identifiers."
+    to="/guides/data/base58"
+  />
+  <Card
+    icon="lucide:binary"
+    title="Base64 Coding"
+    description="Encode payloads for data URLs, HTTP, and WebAuthn transport."
+    to="/guides/data/base64"
+  />
+  <Card
+    icon="lucide:at-sign"
+    title="Bech32m Coding"
+    description="Encode and verify checksummed, prefixed addresses (BIP-350)."
+    to="/guides/data/bech32m"
+  />
+  <Card
+    icon="lucide:package"
+    title="CBOR Coding"
+    description="Round-trip WebAuthn attestation and COSE payloads."
+    to="/guides/data/cbor"
+  />
+  <Card
+    icon="lucide:ruler"
+    title="CompactSize Coding"
+    description="Encode and decode Bitcoin wire-format varints."
+    to="/guides/data/compact-size"
   />
   <Card
     icon="lucide:coins"

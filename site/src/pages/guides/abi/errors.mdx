@@ -4,7 +4,7 @@ description: Decode contract revert data into typed errors with AbiError.
 
 import { Card, Cards } from 'vocs'
 
-# Decode Reverts & Custom Errors
+# Work with Reverts & Custom Errors
 
 ## Overview
 
@@ -77,14 +77,14 @@ declare const data: Hex.Hex
 
 // [!code focus:start]
 if (Hex.slice(data, 0, 4) === AbiError.solidityErrorSelector) {
-  const reason = AbiError.decode(AbiError.solidityError, data)
   // @log: 'Not enough Ether provided.'
+  const reason = AbiError.decode(AbiError.solidityError, data)
 }
 
 if (Hex.slice(data, 0, 4) === AbiError.solidityPanicSelector) {
   const code = AbiError.decode(AbiError.solidityPanic, data)
-  const reason = AbiError.panicReasons[Number(code)]
   // @log: 'Arithmetic operation resulted in underflow or overflow.'
+  const reason = AbiError.panicReasons[Number(code)]
 }
 // [!code focus:end]
 ```
@@ -126,13 +126,13 @@ render them unescaped or branch security decisions on their contents.
 <Cards>
   <Card
     icon="lucide:binary"
-    title="Encode & Decode Function Calls"
+    title="Work with Function Calls"
     description="Encode calldata for reads and writes, and decode results and inputs."
     to="/guides/abi/function-calls"
   />
   <Card
     icon="lucide:radio"
-    title="Decode Events & Logs"
+    title="Work with Events & Logs"
     description="Filter logs by topic and decode indexed and non-indexed arguments."
     to="/guides/abi/events"
   />

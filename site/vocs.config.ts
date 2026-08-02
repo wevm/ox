@@ -133,20 +133,20 @@ export default defineConfig({
             collapsed: true,
             items: [
               { text: 'Overview', link: '/guides/abi' },
-              { text: 'Decode Events & Logs', link: '/guides/abi/events' },
-              {
-                text: 'Decode Reverts & Custom Errors',
-                link: '/guides/abi/errors',
-              },
               {
                 text: 'Deploy Contracts & Compute Addresses',
                 link: '/guides/abi/deployment',
               },
+              { text: 'Work with ABIs', link: '/guides/abi/abis' },
+              { text: 'Work with Events & Logs', link: '/guides/abi/events' },
               {
-                text: 'Encode & Decode Function Calls',
+                text: 'Work with Function Calls',
                 link: '/guides/abi/function-calls',
               },
-              { text: 'Work with ABIs', link: '/guides/abi/abis' },
+              {
+                text: 'Work with Reverts & Custom Errors',
+                link: '/guides/abi/errors',
+              },
             ],
           },
           {
@@ -178,12 +178,12 @@ export default defineConfig({
                 link: '/guides/accounts/addresses',
               },
               {
-                text: 'Encrypt Keys with Keystores',
-                link: '/guides/accounts/keystores',
-              },
-              {
                 text: 'Mnemonics & HD Wallets',
                 link: '/guides/accounts/mnemonics-hd',
+              },
+              {
+                text: 'Work with Keystores',
+                link: '/guides/accounts/keystores',
               },
             ],
           },
@@ -192,10 +192,6 @@ export default defineConfig({
             collapsed: true,
             items: [
               { text: 'Overview', link: '/guides/chain-data' },
-              {
-                text: 'Decode Blocks & Receipts',
-                link: '/guides/chain-data/blocks',
-              },
               {
                 text: 'Query Logs, Filters & Bloom',
                 link: '/guides/chain-data/logs-filters',
@@ -208,6 +204,10 @@ export default defineConfig({
               {
                 text: 'Verify State & Account Proofs',
                 link: '/guides/chain-data/proofs',
+              },
+              {
+                text: 'Work with Blocks & Receipts',
+                link: '/guides/chain-data/blocks',
               },
             ],
           },
@@ -228,14 +228,14 @@ export default defineConfig({
                 text: 'Ed25519 & X25519',
                 link: '/guides/crypto/ed25519-x25519',
               },
-              {
-                text: 'Encrypt Data (AES-GCM)',
-                link: '/guides/crypto/encryption',
-              },
               { text: 'Hash Data', link: '/guides/crypto/hashing' },
               {
                 text: 'Post-Quantum Signatures (ML-DSA)',
                 link: '/guides/crypto/ml-dsa',
+              },
+              {
+                text: 'Work with AES-GCM',
+                link: '/guides/crypto/encryption',
               },
               { text: 'Work with P256', link: '/guides/crypto/p256' },
               {
@@ -253,10 +253,12 @@ export default defineConfig({
             collapsed: true,
             items: [
               { text: 'Overview', link: '/guides/data' },
-              {
-                text: 'Base & Binary Encodings',
-                link: '/guides/data/encodings',
-              },
+              { text: 'Base32 Coding', link: '/guides/data/base32' },
+              { text: 'Base58 Coding', link: '/guides/data/base58' },
+              { text: 'Base64 Coding', link: '/guides/data/base64' },
+              { text: 'Bech32m Coding', link: '/guides/data/bech32m' },
+              { text: 'CBOR Coding', link: '/guides/data/cbor' },
+              { text: 'CompactSize Coding', link: '/guides/data/compact-size' },
               {
                 text: 'Format Ether & Gwei Values',
                 link: '/guides/data/value',

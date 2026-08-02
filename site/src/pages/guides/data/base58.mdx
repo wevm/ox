@@ -1,0 +1,74 @@
+---
+description: Encode and decode Base58 identifiers used by Bitcoin, IPFS, and Solana.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Base58 Coding
+
+## Overview
+
+[`Base58`](/api/Base58) is the alphabet behind Bitcoin addresses, IPFS CIDv0 hashes, and Solana
+public keys — Base64 without the visually ambiguous characters (`0`, `O`, `I`, `l`). Ox converts
+Base58 values to and from [`Hex`](/api/Hex), [`Bytes`](/api/Bytes), and plain strings.
+
+## Recipes
+
+### Encode & Decode Data
+
+Round-trip a value with [`Base58.fromString`](/api/Base58/fromString) and
+[`Base58.toString`](/api/Base58/toString).
+
+```ts twoslash
+import { Base58 } from 'ox'
+
+// [!code focus:start]
+// @log: '2NEpo7TZRRrLZSi2U'
+const encoded = Base58.fromString('Hello World!')
+const decoded = Base58.toString(encoded)
+// @log: 'Hello World!'
+// [!code focus:end]
+```
+
+### Bring Base58 Identifiers into Primitive Types
+
+Use [`Base58.toHex`](/api/Base58/toHex) or [`Base58.toBytes`](/api/Base58/toBytes) to convert
+external identifiers — a Solana public key, an IPFS CIDv0 hash — into the types the rest of Ox
+operates on.
+
+```ts twoslash
+import { Base58 } from 'ox'
+
+// [!code focus:start]
+const hex = Base58.toHex('2NEpo7TZRRrLZSi2U') // [!code hl]
+// @log: '0x48656c6c6f20576f726c6421'
+// [!code focus:end]
+```
+
+Decoding preserves leading zero bytes (encoded as `1` characters), matching Bitcoin's address
+conventions.
+
+## Best Practices
+
+### Expect Typed Errors from Untrusted Input
+
+The decoder validates every character against the Base58 alphabet and throws
+`Base58.InvalidCharacterError` on corruption. Wrap decoding of user-supplied identifiers and
+surface the failure instead of propagating malformed bytes.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base64 Coding"
+    description="Encode payloads for data URLs and HTTP transport."
+    to="/guides/data/base64"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="The primitive types every codec converts to and from."
+    to="/guides/data/bytes-hex"
+  />
+</Cards>

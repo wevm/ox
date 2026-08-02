@@ -17,6 +17,22 @@ space-efficient standard for packaging and transferring arbitrarily nested byte 
 
 ## Recipes
 
+### Encode & Decode a Value
+
+Round-trip a single value with [`Rlp.fromHex`](/api/Rlp/fromHex) and
+[`Rlp.toHex`](/api/Rlp/toHex).
+
+```ts twoslash
+import { Rlp } from 'ox'
+
+// [!code focus:start]
+// @log: '0x8568656c6c6f'
+const rlp = Rlp.fromHex('0x68656c6c6f')
+const value = Rlp.toHex(rlp)
+// @log: '0x68656c6c6f'
+// [!code focus:end]
+```
+
 ### Encode Nested Data
 
 [`Rlp.fromHex`](/api/Rlp/fromHex) serializes arbitrarily nested arrays of

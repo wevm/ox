@@ -105,8 +105,8 @@ declare const authorizationList: Authorization.ListSigned
 
 // [!code focus:start]
 // Typed -> RPC (e.g. for `eth_sendTransaction` params).
-const authorizationList_rpc = Authorization.toRpcList(authorizationList)
 // @log: [{ address: '0x...', chainId: '0x1', nonce: '0x28', r: '0x...', s: '0x...', yParity: '0x1' }]
+const authorizationList_rpc = Authorization.toRpcList(authorizationList)
 
 // RPC -> typed (e.g. from `eth_getTransactionByHash` results).
 const authorizationList_typed = Authorization.fromRpcList(authorizationList_rpc)

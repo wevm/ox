@@ -99,12 +99,12 @@ const signature = Secp256k1.sign({
 
 // [!code focus:start]
 // Attach the signature to the envelope.
-const signed = TxEnvelopeEip1559.from(envelope, { signature }) // [!code hl]
 // @log: { ..., r: '0x...', s: '0x...', yParity: 0 }
+const signed = TxEnvelopeEip1559.from(envelope, { signature }) // [!code hl]
 
 // Serialize the signed envelope.
-const serialized = TxEnvelopeEip1559.serialize(signed) // [!code hl]
 // @log: '0x02f8730145843b9aca00...'
+const serialized = TxEnvelopeEip1559.serialize(signed) // [!code hl]
 
 // Deserialize it back into a typed envelope.
 const deserialized = TxEnvelopeEip1559.deserialize(serialized)

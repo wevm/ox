@@ -41,8 +41,8 @@ precompile-backed hashes (addresses `0x02` and `0x03`) and Bitcoin-style key has
 import { Hash } from 'ox'
 
 // [!code focus:start]
-const sha = Hash.sha256('0xdeadbeef')
 // @log: '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
+const sha = Hash.sha256('0xdeadbeef')
 
 const ripemd = Hash.ripemd160('0xdeadbeef')
 // @log: '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'

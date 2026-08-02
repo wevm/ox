@@ -79,7 +79,7 @@ const converted = logs.map((log) => Log.fromRpc(log)) // [!code focus]
 
 To decode a log's `topics` and `data` into named event arguments, use
 [`AbiEvent.decode`](/api/AbiEvent/decode) — see
-[Decode Events & Logs](/guides/abi/events).
+[Work with Events & Logs](/guides/abi/events).
 
 ### Pre-Check Membership with Bloom Filters
 
@@ -125,13 +125,13 @@ range, and paginate long backfills in fixed-size windows.
 <Cards>
   <Card
     icon="lucide:radio"
-    title="Decode Events & Logs"
+    title="Work with Events & Logs"
     description="Decode log topics and data into named event arguments."
     to="/guides/abi/events"
   />
   <Card
     icon="lucide:box"
-    title="Decode Blocks & Receipts"
+    title="Work with Blocks & Receipts"
     description="Convert the blocks and receipts that carry your logs."
     to="/guides/chain-data/blocks"
   />

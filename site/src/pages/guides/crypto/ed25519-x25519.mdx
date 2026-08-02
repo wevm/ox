@@ -67,7 +67,7 @@ const sharedSecretBob = X25519.getSharedSecret({
 ```
 
 Feed the secret into a KDF before using it as an encryption key — see
-[Encrypt Data (AES-GCM)](/guides/crypto/encryption).
+[Work with AES-GCM](/guides/crypto/encryption).
 
 ### Reuse an Ed25519 Key Pair for X25519
 
@@ -110,7 +110,7 @@ identity. Prefer fresh X25519 pairs per session and sign them with the Ed25519 i
 <Cards>
   <Card
     icon="lucide:lock"
-    title="Encrypt Data (AES-GCM)"
+    title="Work with AES-GCM"
     description="Encrypt payloads with keys derived from shared secrets."
     to="/guides/crypto/encryption"
   />

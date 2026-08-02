@@ -83,11 +83,11 @@ const { privateKey, publicKey } = Bls.createKeyPair()
 const signature = Bls.sign({ payload, privateKey })
 
 // [!code focus:start]
-const publicKeyHex = BlsPoint.toHex(publicKey) // [!code hl]
 // @log: '0xacafff52…b32d9e66' (48 bytes)
+const publicKeyHex = BlsPoint.toHex(publicKey) // [!code hl]
 
-const signatureHex = BlsPoint.toHex(signature)
 // @log: '0xb4698f76…4ebe427c' (96 bytes)
+const signatureHex = BlsPoint.toHex(signature)
 
 const publicKey2 = BlsPoint.fromHex(publicKeyHex, 'G1')
 const signature2 = BlsPoint.fromHex(signatureHex, 'G2')

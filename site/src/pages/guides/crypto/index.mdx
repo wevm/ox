@@ -49,12 +49,6 @@ const signer = Secp256k1.recoverAddress({ payload, signature })
     to="/guides/crypto/ed25519-x25519"
   />
   <Card
-    icon="lucide:lock"
-    title="Encrypt Data (AES-GCM)"
-    description="Derive keys from passwords and encrypt arbitrary data."
-    to="/guides/crypto/encryption"
-  />
-  <Card
     icon="lucide:hash"
     title="Hash Data"
     description="keccak256, SHA-256, RIPEMD-160, HMAC, BLAKE3, and incremental hashing."
@@ -65,6 +59,12 @@ const signer = Secp256k1.recoverAddress({ payload, signature })
     title="Post-Quantum Signatures (ML-DSA)"
     description="Generate keys, sign, and verify with ML-DSA-44 (FIPS 204)."
     to="/guides/crypto/ml-dsa"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Work with AES-GCM"
+    description="Derive keys from passwords and encrypt arbitrary data."
+    to="/guides/crypto/encryption"
   />
   <Card
     icon="lucide:fingerprint"

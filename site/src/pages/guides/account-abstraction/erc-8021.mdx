@@ -36,8 +36,8 @@ const data = AbiFunction.encodeData(transfer, [
 // [!code focus:start]
 const suffix = Attribution.toDataSuffix({
   codes: ['baseapp', 'morpho'], // [!code hl]
-})
 // @log: '0x626173656170702c6d6f7270686f0e0080218021802180218021802180218021'
+})
 
 const calldata = Hex.concat(data, suffix)
 // [!code focus:end]
@@ -57,8 +57,8 @@ import { Attribution } from 'ox/erc8021'
 // [!code focus:start]
 const attribution = Attribution.fromData(
   '0xdddddddd62617365617070070080218021802180218021802180218021',
-)
 // @log: { codes: ['baseapp'], id: 0 }
+)
 // [!code focus:end]
 
 if (attribution?.codes) {
@@ -97,7 +97,7 @@ marker and structure and returns `undefined` otherwise — always handle that ca
   />
   <Card
     icon="lucide:file-code-2"
-    title="Encode & Decode Function Calls"
+    title="Work with Function Calls"
     description="Encode calldata and decode results with ABI functions."
     to="/guides/abi/function-calls"
   />

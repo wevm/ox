@@ -49,8 +49,8 @@ import { PublicKey, WebAuthn } from 'ox'
 const credential = await WebAuthn.createCredential({ name: 'Example' })
 
 // [!code focus:start]
-const publicKey = PublicKey.toHex(credential.publicKey) // [!code hl]
 // @log: '0x04ab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7...'
+const publicKey = PublicKey.toHex(credential.publicKey) // [!code hl]
 // [!code focus:end]
 
 // Rehydrate the stored key when verifying.

@@ -1,0 +1,71 @@
+---
+description: Encode and decode Bitcoin CompactSize varints.
+---
+
+import { Card, Cards } from 'vocs'
+
+# CompactSize Coding
+
+## Overview
+
+[`CompactSize`](/api/CompactSize) implements Bitcoin's variable-length integer encoding, used to
+length-prefix scripts and payloads on the wire. Values up to `0xfc` take one byte; larger values
+get a marker byte plus a little-endian integer.
+
+## Recipes
+
+### Encode a Length Prefix
+
+[`CompactSize.toHex`](/api/CompactSize/toHex) (or
+[`CompactSize.toBytes`](/api/CompactSize/toBytes)) encodes an integer with the smallest valid
+representation.
+
+```ts twoslash
+import { CompactSize } from 'ox'
+
+// [!code focus:start]
+const encoded = CompactSize.toHex(520) // [!code hl]
+// @log: '0xfd0802'
+// [!code focus:end]
+```
+
+### Decode a Varint & Advance a Cursor
+
+[`CompactSize.fromHex`](/api/CompactSize/fromHex) returns both the decoded value and the number
+of bytes consumed, so a parser knows how far to advance its cursor.
+
+```ts twoslash
+import { CompactSize } from 'ox'
+
+// [!code focus:start]
+const { value, size } = CompactSize.fromHex('0xfd0802') // [!code hl]
+// @log: { value: 520n, size: 3 }
+// [!code focus:end]
+```
+
+Decoding enforces minimal encodings and throws `CompactSize.NonMinimalEncodingError` on padded
+values, matching Bitcoin consensus rules.
+
+## Best Practices
+
+### Track the Consumed Size
+
+A CompactSize prefix is one, three, five, or nine bytes long. Always advance parsing offsets by
+the returned `size` rather than assuming a fixed width.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:binary"
+    title="Base58 Coding"
+    description="Bitcoin's address alphabet, for the identifiers those payloads carry."
+    to="/guides/data/base58"
+  />
+  <Card
+    icon="lucide:hash"
+    title="Work with Bytes & Hex"
+    description="The primitive types every codec converts to and from."
+    to="/guides/data/bytes-hex"
+  />
+</Cards>

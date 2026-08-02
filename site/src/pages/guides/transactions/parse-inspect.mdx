@@ -88,8 +88,8 @@ const hash =
 // [!code focus:start]
 const transaction = await transport
   .request({ method: 'eth_getTransactionByHash', params: [hash] })
+  // @log: { ..., gas: 278365n, type: 'eip1559', value: 700000000000000000n }
   .then(Transaction.fromRpc) // [!code hl]
-// @log: { ..., gas: 278365n, type: 'eip1559', value: 700000000000000000n }
 
 const receipt = await transport
   .request({ method: 'eth_getTransactionReceipt', params: [hash] })
@@ -171,7 +171,7 @@ typed `bigint` values.
   />
   <Card
     icon="lucide:box"
-    title="Decode Blocks & Receipts"
+    title="Work with Blocks & Receipts"
     description="Convert whole RPC blocks and their receipts to typed objects."
     to="/guides/chain-data/blocks"
   />

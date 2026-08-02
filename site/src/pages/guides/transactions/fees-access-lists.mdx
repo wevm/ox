@@ -106,8 +106,8 @@ const envelope = TxEnvelopeEip1559.from({
 })
 
 // Object form <-> serialized tuple form.
-const tuples = AccessList.toTupleList(envelope.accessList)
 // @log: [['0x1e0049783f008a0085193e00003d00cd54003c71', ['0x0000...0001']]]
+const tuples = AccessList.toTupleList(envelope.accessList)
 const accessList = AccessList.fromTupleList(tuples)
 // [!code focus:end]
 ```
