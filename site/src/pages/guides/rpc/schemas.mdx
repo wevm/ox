@@ -1,0 +1,117 @@
+---
+description: Statically type JSON-RPC methods, parameters, and return values with RpcSchema.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Type-Safe RPC Schemas
+
+## Overview
+
+[`RpcSchema`](/api/RpcSchema) statically types JSON-RPC method names, parameters, and return
+values. The default schema covers the `eth_` and `wallet_` namespaces; a schema built with
+[`RpcSchema.from`](/api/RpcSchema/from) plugs the same type information into
+[`RpcTransport`](/api/RpcTransport), [`Provider`](/api/Provider), and
+[`RpcRequest.createStore`](/api/RpcRequest/createStore).
+
+## Recipes
+
+### Type a Transport with a Schema
+
+`RpcSchema.from` is a runtime no-op — it exists purely to tag a transport with the union of
+methods it supports.
+
+```ts twoslash
+import { RpcSchema, RpcTransport } from 'ox'
+
+// [!code focus:start]
+const schema = RpcSchema.from<
+  | RpcSchema.Default
+  | {
+      Request: {
+        method: 'ox_getMagic'
+        params: [id: number]
+      }
+      ReturnType: `0x${string}`
+    }
+>()
+// [!code focus:end]
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com', {
+  schema, // [!code focus]
+})
+
+const magic = await transport.request({
+  method: 'ox_getMagic', // [!code focus]
+  params: [1],
+})
+```
+
+Include `RpcSchema.Default` in the union to keep the standard `eth_` and `wallet_` methods
+available alongside your custom ones.
+
+### Extend with Custom Methods
+
+The same schema types an [EIP-1193 Provider](/api/Provider)'s `request` function — useful when a
+Wallet exposes methods beyond the standard namespaces.
+
+```ts twoslash
+import 'ox/window'
+import { Provider, RpcSchema } from 'ox'
+
+const schema = RpcSchema.from<
+  | RpcSchema.Default
+  | {
+      Request: {
+        method: 'wallet_getSecret' // [!code focus]
+        params: [id: string] // [!code focus]
+      }
+      ReturnType: `0x${string}` // [!code focus]
+    }
+>()
+
+const provider = Provider.from(window.ethereum, { schema }) // [!code focus]
+
+const secret = await provider.request({
+  method: 'wallet_getSecret',
+  params: ['1'],
+})
+```
+
+`RpcRequest.createStore({ schema })` accepts the same option, so a Wallet can share one schema
+between the requests it sends and the requests it handles.
+
+## Best Practices
+
+### Define the Schema Once
+
+Declare the schema in a shared module and import it wherever a store, transport, or provider is
+created. Diverging copies defeat the purpose of end-to-end typing.
+
+### Types Are Not Validation
+
+A schema types the compile-time surface only — nothing is checked at runtime. Validate untrusted
+requests and responses with runtime schemas — see [Validate with Zod](/guides/schemas/zod).
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:network"
+    title="Send JSON-RPC Requests"
+    description="Build request objects, send them over HTTP, and parse responses."
+    to="/guides/rpc/requests"
+  />
+  <Card
+    icon="lucide:plug"
+    title="Use EIP-1193 Providers"
+    description="Wrap injected providers, create your own, and emit provider events."
+    to="/guides/rpc/providers"
+  />
+  <Card
+    icon="lucide:list-tree"
+    title="Validate with Zod"
+    description="Add runtime validation on top of static RPC schemas."
+    to="/guides/schemas/zod"
+  />
+</Cards>

@@ -1,0 +1,130 @@
+---
+description: Sign payloads with passkeys and verify WebAuthn P256 signatures.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Sign & Verify with Passkeys
+
+## Overview
+
+Once a credential is registered, it can sign arbitrary challenges — transaction hashes, message
+digests, or login nonces. The [`WebAuthn`](/api/WebAuthn) module signs with
+[`WebAuthn.sign`](/api/WebAuthn/sign) and verifies with [`WebAuthn.verify`](/api/WebAuthn/verify),
+while [`PublicKey`](/api/PublicKey) serializes the credential's P256 public key for storage.
+
+## Recipes
+
+### Sign a Payload
+
+Hash the payload into a 32-byte challenge and sign it with a stored credential. The response
+contains the `signature` and the authenticator `metadata` required to verify it.
+
+```ts twoslash
+import { Hash, Hex, WebAuthn } from 'ox'
+
+const credential = await WebAuthn.createCredential({ name: 'Example' })
+
+// [!code focus:start]
+const challenge = Hash.keccak256(Hex.fromString('hello world'))
+
+const { metadata, signature } = await WebAuthn.sign({
+  challenge, // [!code hl]
+  credentialId: credential.id,
+})
+// [!code focus:end]
+```
+
+Omitting `credentialId` prompts the user to pick any credential previously registered for the
+origin.
+
+### Extract the Public Key
+
+Serialize the credential's public key with [`PublicKey.toHex`](/api/PublicKey/toHex) so it can be
+persisted (or registered with an onchain verifier), and rehydrate it when verifying.
+
+```ts twoslash
+import { PublicKey, WebAuthn } from 'ox'
+
+const credential = await WebAuthn.createCredential({ name: 'Example' })
+
+// [!code focus:start]
+const publicKey = PublicKey.toHex(credential.publicKey) // [!code hl]
+// @log: '0x04ab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7...'
+// [!code focus:end]
+
+// Rehydrate the stored key when verifying.
+const restored = PublicKey.fromHex(publicKey)
+```
+
+### Verify a Signature
+
+Verify the signature against the challenge, the credential's public key, and the authenticator
+metadata returned by `WebAuthn.sign`.
+
+```ts twoslash
+import { WebAuthn } from 'ox'
+
+const credential = await WebAuthn.createCredential({ name: 'Example' })
+
+const { metadata, signature } = await WebAuthn.sign({
+  challenge: '0xdeadbeef',
+  credentialId: credential.id,
+})
+
+// [!code focus:start]
+const verified = WebAuthn.verify({
+  challenge: '0xdeadbeef',
+  metadata,
+  publicKey: credential.publicKey,
+  signature,
+})
+// @log: true
+// [!code focus:end]
+```
+
+When verifying on a server, also pass `origin` and `rpId` so the client data and relying party
+binding are validated — see
+[Register & Authenticate Credentials](/guides/webauthn/credentials).
+
+## Best Practices
+
+### Bind Challenges to Content
+
+Derive the challenge from what is actually being authorized — e.g. `Hash.keccak256` of the
+serialized transaction or message — so a signature cannot be replayed for a different action.
+
+### Keep the Metadata with the Signature
+
+`metadata` (authenticator data + client data JSON) is part of the signed material. Store and
+transmit it alongside the signature; verification is impossible without it.
+
+### Verify Onchain via ERC-1271
+
+Smart Contract Accounts can validate WebAuthn P256 signatures with
+[ERC-1271](https://eips.ethereum.org/EIPS/eip-1271)-style verifiers. Use
+[`WebAuthn.getSignPayload`](/api/WebAuthn/getSignPayload) when a contract expects the raw P256
+digest instead of the WebAuthn envelope.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:fingerprint"
+    title="Register & Authenticate Credentials"
+    description="Run registration and login ceremonies, and verify them on a server."
+    to="/guides/webauthn/credentials"
+  />
+  <Card
+    icon="lucide:key-round"
+    title="Derive Secrets with PRF"
+    description="Turn PRF outputs into signing and encryption keys."
+    to="/guides/webauthn/prf"
+  />
+  <Card
+    icon="lucide:box"
+    title="Build ERC-4337 User Operations"
+    description="Sign user operations for passkey-backed smart accounts."
+    to="/guides/account-abstraction/user-operations"
+  />
+</Cards>

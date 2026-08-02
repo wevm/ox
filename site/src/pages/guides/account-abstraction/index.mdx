@@ -1,0 +1,81 @@
+---
+description: Build user operations, batch calls, and attribute calldata for smart accounts.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Account Abstraction
+
+:::info
+These guides cover Ox's low-level primitives. If you are looking for a high-level bundler and
+smart account client, check out [Viem's Account Abstraction guides](https://viem.sh/account-abstraction).
+:::
+
+## Overview
+
+Account abstraction moves accounts from externally-owned key pairs to smart contracts, changing
+how transactions are built, executed, and attributed. Ox ships primitives for each layer of that
+stack: [`UserOperation`](/ercs/erc4337/UserOperation) constructs and signs ERC-4337 user
+operations, [`Calls`](/ercs/erc7821/Calls) and [`Execute`](/ercs/erc7821/Execute) encode ERC-7821
+batched executions, and [`Attribution`](/ercs/erc8021/Attribution) appends ERC-8021 attribution
+codes to calldata. To upgrade an existing EOA into a smart account, see
+[Delegate with EIP-7702](/guides/transactions/eip-7702).
+
+```ts twoslash
+import { Value } from 'ox'
+import { UserOperation } from 'ox/erc4337'
+import { Execute } from 'ox/erc7821'
+
+// 1. Encode a batch of calls for an ERC-7821 account.
+const callData = Execute.encodeData([
+  {
+    to: '0xcafebabecafebabecafebabecafebabecafebabe',
+    value: Value.fromEther('1'),
+  },
+  {
+    data: '0xdeadbeef',
+    to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+  },
+])
+
+// 2. Wrap it in an ERC-4337 user operation.
+const userOperation = UserOperation.from({
+  callData,
+  callGasLimit: 300_000n,
+  maxFeePerGas: Value.fromGwei('20'),
+  maxPriorityFeePerGas: Value.fromGwei('2'),
+  nonce: 0n,
+  preVerificationGas: 100_000n,
+  sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+  verificationGasLimit: 100_000n,
+})
+```
+
+## Guides
+
+<Cards>
+  <Card
+    icon="lucide:qr-code"
+    title="Attribute Calldata with ERC-8021"
+    description="Append and parse entity attribution codes on transaction calldata."
+    to="/guides/account-abstraction/erc-8021"
+  />
+  <Card
+    icon="lucide:layers"
+    title="Batch Calls with ERC-7821"
+    description="Encode and decode batched executions for the execute interface."
+    to="/guides/account-abstraction/erc-7821"
+  />
+  <Card
+    icon="lucide:box"
+    title="Build ERC-4337 User Operations"
+    description="Construct, sign, pack, and submit user operations to bundlers."
+    to="/guides/account-abstraction/user-operations"
+  />
+  <Card
+    icon="lucide:sparkles"
+    title="Delegate with EIP-7702"
+    description="Sign authorizations that upgrade an EOA to a smart account."
+    to="/guides/transactions/eip-7702"
+  />
+</Cards>
