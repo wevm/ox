@@ -22,8 +22,8 @@ for user-supplied gas prices.
 ```ts twoslash
 import { Value } from 'ox'
 
-// @log: 50000000000000000n
 const value = Value.fromEther('0.05') // [!code hl]
+// @log: 50000000000000000n
 
 const maxFeePerGas = Value.fromGwei('20')
 // @log: 20000000000n
@@ -40,8 +40,8 @@ render wei balances and gas prices as human-readable decimal strings.
 ```ts twoslash
 import { Value } from 'ox'
 
-// @log: '1.5'
 const balance = Value.formatEther(1_500_000_000_000_000_000n)
+// @log: '1.5'
 
 const gasPrice = Value.formatGwei(20_000_000_000n)
 // @log: '20'
@@ -60,8 +60,8 @@ import { Value } from 'ox'
 
 const decimals = 6 // from the token contract's `decimals()` function
 
-// @log: 100500000n
 const amount = Value.from('100.5', decimals) // [!code hl]
+// @log: 100500000n
 
 const display = Value.format(100_500_000n, decimals)
 // @log: '100.5'

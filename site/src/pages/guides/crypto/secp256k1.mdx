@@ -86,8 +86,8 @@ declare const privateKey: Hex.Hex
 const payload = '0xdeadbeef'
 const signature = Secp256k1.sign({ payload, privateKey })
 
-// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
 const address = Secp256k1.recoverAddress({ payload, signature }) // [!code hl]
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
 
 const publicKey = Secp256k1.recoverPublicKey({ payload, signature })
 // @log: { prefix: 4, x: '0xd6c2…', y: '0x9a47…' }

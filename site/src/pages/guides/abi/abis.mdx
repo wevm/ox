@@ -118,14 +118,14 @@ const abi = Abi.from([
 
 const approve = AbiItem.fromAbi(abi, 'approve')
 
-// @log: 'approve(address,uint256)'
 const signature = AbiItem.getSignature(approve)
+// @log: 'approve(address,uint256)'
 
-// @log: '0x095ea7b3'
 const selector = AbiItem.getSelector(approve)
+// @log: '0x095ea7b3'
 
-// @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 const topic = AbiItem.getSignatureHash(abi, 'Transfer')
+// @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 
 const bySelector = AbiItem.fromAbi(abi, '0x095ea7b3')
 ```

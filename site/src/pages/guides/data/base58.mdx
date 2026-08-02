@@ -22,8 +22,8 @@ Round-trip a value with [`Base58.fromString`](/api/Base58/fromString) and
 ```ts twoslash
 import { Base58 } from 'ox'
 
-// @log: '2NEpo7TZRRrLZSi2U'
 const encoded = Base58.fromString('Hello World!')
+// @log: '2NEpo7TZRRrLZSi2U'
 const decoded = Base58.toString(encoded)
 // @log: 'Hello World!'
 ```

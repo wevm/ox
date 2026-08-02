@@ -72,9 +72,9 @@ import { AbiError, Hex } from 'ox'
 declare const data: Hex.Hex
 
 if (Hex.slice(data, 0, 4) === AbiError.solidityErrorSelector) {
-  // @log: 'Not enough Ether provided.'
   const reason = AbiError.decode(AbiError.solidityError, data)
 }
+// @log: 'Not enough Ether provided.'
 
 if (Hex.slice(data, 0, 4) === AbiError.solidityPanicSelector) {
   const code = AbiError.decode(AbiError.solidityPanic, data)

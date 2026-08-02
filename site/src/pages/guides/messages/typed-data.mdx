@@ -156,13 +156,13 @@ const domain = {
   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
 } as const
 
+const types = TypedData.extractEip712DomainTypes(domain)
 // @log: [
 // @log:   { 'name': 'name', 'type': 'string' },
 // @log:   { 'name': 'version', 'type': 'string' },
 // @log:   { 'name': 'chainId', 'type': 'uint256' },
 // @log:   { 'name': 'verifyingContract', 'type': 'address' },
 // @log: ]
-const types = TypedData.extractEip712DomainTypes(domain)
 
 const separator = TypedData.domainSeparator(domain)
 // @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'

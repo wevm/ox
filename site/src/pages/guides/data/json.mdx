@@ -58,8 +58,8 @@ sorted, no whitespace — so structurally equal objects always hash to the same 
 ```ts twoslash
 import { Hash, Hex, Json } from 'ox'
 
-// @log: '{"a":1,"b":2}'
 const canonical = Json.canonicalize({ b: 2, a: 1 }) // [!code hl]
+// @log: '{"a":1,"b":2}'
 
 const digest = Hash.keccak256(Hex.fromString(canonical))
 ```

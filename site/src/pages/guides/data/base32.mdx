@@ -23,8 +23,8 @@ Round-trip hex payloads with [`Base32.fromHex`](/api/Base32/fromHex) and
 ```ts twoslash
 import { Base32 } from 'ox'
 
-// @log: 'm6kmamc'
 const encoded = Base32.fromHex('0xdeadbeef')
+// @log: 'm6kmamc'
 const decoded = Base32.toHex(encoded)
 // @log: '0xdeadbeef'
 ```

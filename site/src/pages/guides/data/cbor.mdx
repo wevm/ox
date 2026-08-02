@@ -22,8 +22,8 @@ and IPFS/IPLD blocks.
 ```ts twoslash
 import { Cbor } from 'ox'
 
-// @log: '0xa263666f6f636261726362617a83010203'
 const encoded = Cbor.encode({ foo: 'bar', baz: [1, 2, 3] })
+// @log: '0xa263666f6f636261726362617a83010203'
 const decoded = Cbor.decode(encoded)
 // @log: { foo: 'bar', baz: [1, 2, 3] }
 ```

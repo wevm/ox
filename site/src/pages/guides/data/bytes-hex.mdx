@@ -28,17 +28,17 @@ booleans, numbers, and strings with the typed constructors:
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// @log: '0xdeadbeef'
 const hex = Hex.from('0xdeadbeef')
+// @log: '0xdeadbeef'
 
-// @log: Uint8Array [0xde, 0xad, 0xbe, 0xef]
 const bytes = Bytes.from([0xde, 0xad, 0xbe, 0xef])
+// @log: Uint8Array [0xde, 0xad, 0xbe, 0xef]
 
-// @log: '0x1'
 const bool = Hex.fromBoolean(true)
+// @log: '0x1'
 
-// @log: '0x1a4'
 const bigint = Hex.fromNumber(420n)
+// @log: '0x1a4'
 
 const string = Hex.fromString('hello')
 // @log: '0x68656c6c6f'
@@ -58,14 +58,14 @@ Recover primitive JavaScript values with [`Hex.toBigInt`](/api/Hex/toBigInt) /
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// @log: true
 const bool = Bytes.toBoolean(Bytes.from([1]))
+// @log: true
 
-// @log: 420n
 const bigint = Hex.toBigInt('0x01a4')
+// @log: 420n
 
-// @log: 420
 const number = Bytes.toNumber(Bytes.from([1, 164]))
+// @log: 420
 
 const string = Hex.toString('0x68656c6c6f')
 // @log: 'hello'
@@ -86,17 +86,17 @@ Byte-manipulation helpers exist on both modules — [`Hex.concat`](/api/Hex/conc
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// @log: '0xdeadbeef'
 const concatenated = Hex.concat('0xdead', '0xbeef')
+// @log: '0xdeadbeef'
 
-// @log: '0x0000dead'
 const padded = Hex.padLeft('0xdead', 4)
+// @log: '0x0000dead'
 
-// @log: '0x234567'
 const sliced = Hex.slice('0x0123456789', 1, 4)
+// @log: '0x234567'
 
-// @log: Uint8Array [0xde, 0xad]
 const trimmed = Bytes.trimLeft(Bytes.from([0x00, 0x00, 0xde, 0xad]))
+// @log: Uint8Array [0xde, 0xad]
 
 const size = Hex.size('0xdeadbeefdeadbeefdeadbeefdeadbeef')
 // @log: 16
@@ -118,11 +118,11 @@ import { Bytes, Hex } from 'ox'
 const equal = Bytes.isEqual(
   Bytes.from([0xde, 0xad, 0xbe, 0xef]),
   Bytes.from([0xca, 0xfe, 0xba, 0xbe]),
-  // @log: false
 )
-
 // @log: false
+
 const valid = Hex.validate('0xdeadbeefz')
+// @log: false
 
 Hex.assert('abc')
 // @error: Error: Hex.InvalidHexValueError
@@ -140,8 +140,8 @@ identifiers.
 ```ts twoslash
 import { Bytes, Hex } from 'ox'
 
-// @log: '0x86d8b4…' (32 random bytes)
 const salt = Hex.random(32)
+// @log: '0x86d8b4…' (32 random bytes)
 
 const nonce = Bytes.random(16)
 // @log: Uint8Array(16) [134, 216, …]

@@ -25,8 +25,8 @@ Round-trip a single value with [`Rlp.fromHex`](/api/Rlp/fromHex) and
 ```ts twoslash
 import { Rlp } from 'ox'
 
-// @log: '0x8568656c6c6f'
 const rlp = Rlp.fromHex('0x68656c6c6f')
+// @log: '0x8568656c6c6f'
 const value = Rlp.toHex(rlp)
 // @log: '0x68656c6c6f'
 ```
