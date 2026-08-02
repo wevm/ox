@@ -29,10 +29,12 @@ then attach the signature.
 import { Authorization, Secp256k1 } from 'ox'
 
 // [!code focus:start]
+// `address` is the delegate contract; `nonce` is the authority's
+// nonce at execution time.
 const authorization = Authorization.from({
-  address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // the delegate contract [!code hl]
+  address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // [!code hl]
   chainId: 1,
-  nonce: 40n, // the authority's nonce at execution time
+  nonce: 40n,
 })
 
 const signature = Secp256k1.sign({

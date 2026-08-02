@@ -36,7 +36,7 @@ const data = Blobs.toHex(blobs)
 // [!code focus:end]
 ```
 
-A single transaction can carry up to six blobs (~761 KiB of payload after field-element
+A single transaction can carry up to six blobs (761,855 bytes of payload after field-element
 encoding); `Blobs.from` throws `Blobs.BlobSizeTooLargeError` beyond that.
 
 ### Compute Commitments & Proofs
