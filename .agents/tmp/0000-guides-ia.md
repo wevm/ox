@@ -1,6 +1,6 @@
 # Ox Guides — Proposed Information Architecture
 
-> **Status:** Draft for review
+> **Status:** Draft for review (rev 2)
 > **Scope:** Refactor of the flat guide list under `site/src/pages/guides/` into a
 > use-case-driven `Domain → Topic → Recipes` structure, modeled on the viem v3 docs
 > (`v3.viem.sh`). The Tempo section (`/tempo/guides`) already follows this model and is
@@ -148,57 +148,73 @@ Problems the refactor solves:
 5. **Stdlib altitude.** Recipes end at the primitive's boundary (a signed envelope, an
    encoded payload, a verified signature). Where a full app flow needs a client, link out to
    viem — same convention the Tempo guides use today.
-6. **Fixed page anatomy** (§4) so pages are predictable and cheap to author/generate.
+6. **Alphabetized sidebar.** Domains are sorted alphabetically, and topics are sorted
+   alphabetically within each domain. `Overview` always comes first in a group.
+7. **Fixed page anatomy** (§4) so pages are predictable and cheap to author/generate.
 
 ### 3.2 Proposed sidebar
 
 URL scheme: `/guides/<domain>/<topic>`, files at `site/src/pages/guides/<domain>/<topic>.mdx`.
+Domains and topics are alphabetized (`Overview` first in each group).
 
 ```
 Guides
 ├─ Overview                                  /guides
 │
-├─ Data & Encoding                (collapsed)
-│  ├─ Overview                               /guides/data
-│  ├─ Work with Bytes & Hex                  /guides/data/bytes-hex
-│  ├─ Encode with RLP                        /guides/data/rlp
-│  ├─ Base & Binary Encodings                /guides/data/encodings
-│  ├─ Serialize JSON Safely                  /guides/data/json
-│  └─ Format Ether & Gwei Values             /guides/data/value
-│
 ├─ ABIs & Contracts               (collapsed)
 │  ├─ Overview                               /guides/abi
-│  ├─ Work with ABIs                         /guides/abi/abis
-│  ├─ Encode & Decode Function Calls         /guides/abi/function-calls
 │  ├─ Decode Events & Logs                   /guides/abi/events
 │  ├─ Decode Reverts & Custom Errors         /guides/abi/errors
-│  └─ Deploy Contracts & Compute Addresses   /guides/abi/deployment
+│  ├─ Deploy Contracts & Compute Addresses   /guides/abi/deployment
+│  ├─ Encode & Decode Function Calls         /guides/abi/function-calls
+│  └─ Work with ABIs                         /guides/abi/abis
 │
-├─ Transactions                   (collapsed)
-│  ├─ Overview                               /guides/transactions
-│  ├─ Build, Sign & Send                     /guides/transactions/build-sign-send
-│  ├─ Choose an Envelope Type                /guides/transactions/envelope-types
-│  ├─ Parse & Inspect Transactions           /guides/transactions/parse-inspect
-│  ├─ Estimate Fees & Access Lists           /guides/transactions/fees-access-lists
-│  ├─ Send Blob Transactions (EIP-4844)      /guides/transactions/blobs
-│  └─ Delegate with EIP-7702                 /guides/transactions/eip-7702
+├─ Account Abstraction            (collapsed)
+│  ├─ Overview                               /guides/account-abstraction
+│  ├─ Attribute Calldata with ERC-8021       /guides/account-abstraction/erc-8021
+│  ├─ Batch Calls with ERC-7821              /guides/account-abstraction/erc-7821
+│  └─ Build ERC-4337 User Operations         /guides/account-abstraction/user-operations
 │
 ├─ Accounts & Keys                (collapsed)
 │  ├─ Overview                               /guides/accounts
 │  ├─ Derive & Validate Addresses            /guides/accounts/addresses
-│  ├─ Mnemonics & HD Wallets                 /guides/accounts/mnemonics-hd
-│  └─ Encrypt Keys with Keystores            /guides/accounts/keystores
+│  ├─ Encrypt Keys with Keystores            /guides/accounts/keystores
+│  └─ Mnemonics & HD Wallets                 /guides/accounts/mnemonics-hd
+│
+├─ Chain Data & State             (collapsed)
+│  ├─ Overview                               /guides/chain-data
+│  ├─ Decode Blocks & Receipts               /guides/chain-data/blocks
+│  ├─ Query Logs, Filters & Bloom            /guides/chain-data/logs-filters
+│  ├─ Resolve ENS Names                      /guides/chain-data/ens
+│  ├─ Simulate with State Overrides          /guides/chain-data/overrides
+│  └─ Verify State & Account Proofs          /guides/chain-data/proofs
 │
 ├─ Cryptography                   (collapsed)
 │  ├─ Overview                               /guides/crypto
-│  ├─ Hash Data                              /guides/crypto/hashing
-│  ├─ Sign with ECDSA (secp256k1)            /guides/crypto/ecdsa
-│  ├─ Sign with P-256 & WebCrypto            /guides/crypto/p256
-│  ├─ Ed25519 & X25519                       /guides/crypto/ed25519-x25519
 │  ├─ BLS Signatures & Aggregation           /guides/crypto/bls
-│  ├─ Post-Quantum Signatures (ML-DSA)       /guides/crypto/ml-dsa
+│  ├─ Convert Signature Formats              /guides/crypto/signatures
+│  ├─ Ed25519 & X25519                       /guides/crypto/ed25519-x25519
 │  ├─ Encrypt Data (AES-GCM)                 /guides/crypto/encryption
-│  └─ Convert Signature Formats              /guides/crypto/signatures
+│  ├─ Hash Data                              /guides/crypto/hashing
+│  ├─ Post-Quantum Signatures (ML-DSA)       /guides/crypto/ml-dsa
+│  ├─ Work with P256                         /guides/crypto/p256
+│  ├─ Work with Secp256k1                    /guides/crypto/secp256k1
+│  └─ Work with WebCryptoP256                /guides/crypto/webcrypto-p256
+│
+├─ Data & Encoding                (collapsed)
+│  ├─ Overview                               /guides/data
+│  ├─ Base & Binary Encodings                /guides/data/encodings
+│  ├─ Format Ether & Gwei Values             /guides/data/value
+│  ├─ Serialize JSON Safely                  /guides/data/json
+│  ├─ Work with Bytes & Hex                  /guides/data/bytes-hex
+│  └─ Work with RLP                          /guides/data/rlp
+│
+├─ JSON-RPC & Providers           (collapsed)
+│  ├─ Overview                               /guides/rpc
+│  ├─ Send JSON-RPC Requests                 /guides/rpc/requests
+│  ├─ Serve & Handle RPC Requests            /guides/rpc/handling
+│  ├─ Type-Safe RPC Schemas                  /guides/rpc/schemas
+│  └─ Use EIP-1193 Providers                 /guides/rpc/providers
 │
 ├─ Messages & Authentication      (collapsed)
 │  ├─ Overview                               /guides/messages
@@ -207,66 +223,42 @@ Guides
 │  ├─ Sign-In with Ethereum (SIWE)           /guides/messages/siwe
 │  └─ Smart Account Signatures (6492/8010)   /guides/messages/smart-account-signatures
 │
-├─ WebAuthn & Passkeys            (collapsed)
-│  ├─ Overview                               /guides/webauthn
-│  ├─ Register & Authenticate Credentials    /guides/webauthn/credentials
-│  ├─ Sign & Verify with Passkeys            /guides/webauthn/signing
-│  └─ Derive Secrets with PRF                /guides/webauthn/prf
-│
-├─ JSON-RPC & Providers           (collapsed)
-│  ├─ Overview                               /guides/rpc
-│  ├─ Send JSON-RPC Requests                 /guides/rpc/requests
-│  ├─ Type-Safe RPC Schemas                  /guides/rpc/schemas
-│  ├─ Use EIP-1193 Providers                 /guides/rpc/providers
-│  └─ Serve & Handle RPC Requests            /guides/rpc/handling
-│
-├─ Chain Data & State             (collapsed)
-│  ├─ Overview                               /guides/chain-data
-│  ├─ Decode Blocks & Receipts               /guides/chain-data/blocks
-│  ├─ Query Logs, Filters & Bloom            /guides/chain-data/logs-filters
-│  ├─ Verify State & Account Proofs          /guides/chain-data/proofs
-│  ├─ Simulate with State Overrides          /guides/chain-data/overrides
-│  └─ Resolve ENS Names                      /guides/chain-data/ens
-│
-├─ Account Abstraction            (collapsed)
-│  ├─ Overview                               /guides/account-abstraction
-│  ├─ Build ERC-4337 User Operations         /guides/account-abstraction/user-operations
-│  ├─ Batch Calls with ERC-7821              /guides/account-abstraction/erc-7821
-│  └─ Attribute Calldata with ERC-8021       /guides/account-abstraction/erc-8021
-│
 ├─ Runtime & Performance          (collapsed)
 │  ├─ Overview                               /guides/runtime
+│  ├─ Caching & Bundle Size                  /guides/runtime/caches-bundle
 │  ├─ WASM & Engines                         /guides/runtime/engines
-│  ├─ WASM KZG                               /guides/runtime/kzg
-│  └─ Caching & Bundle Size                  /guides/runtime/caches-bundle
+│  └─ WASM KZG                               /guides/runtime/kzg
 │
-└─ Schemas & Validation           (collapsed)
-   ├─ Overview                               /guides/schemas
-   └─ Validate with Zod                      /guides/schemas/zod
+├─ Schemas & Validation           (collapsed)
+│  ├─ Overview                               /guides/schemas
+│  └─ Validate with Zod                      /guides/schemas/zod
+│
+├─ Transactions                   (collapsed)
+│  ├─ Overview                               /guides/transactions
+│  ├─ Build, Sign & Send                     /guides/transactions/build-sign-send
+│  ├─ Choose an Envelope Type                /guides/transactions/envelope-types
+│  ├─ Delegate with EIP-7702                 /guides/transactions/eip-7702
+│  ├─ Estimate Fees & Access Lists           /guides/transactions/fees-access-lists
+│  ├─ Parse & Inspect Transactions           /guides/transactions/parse-inspect
+│  └─ Send Blob Transactions (EIP-4844)      /guides/transactions/blobs
+│
+└─ WebAuthn & Passkeys            (collapsed)
+   ├─ Overview                               /guides/webauthn
+   ├─ Derive Secrets with PRF                /guides/webauthn/prf
+   ├─ Register & Authenticate Credentials    /guides/webauthn/credentials
+   └─ Sign & Verify with Passkeys            /guides/webauthn/signing
 ```
 
-12 domains, 47 topic pages (+13 index pages). Tempo guides stay where they are
+12 domains, 48 topic pages (+13 index pages). Tempo guides stay where they are
 (`/tempo/guides`) — they already conform — and get a card on the `/guides` overview
 pointing across.
 
 ### 3.3 Domain-by-domain breakdown
 
-Each table lists topic pages with their recipe sections, the modules covered, and where
-existing content comes from. Recipes marked **(new)** have no existing prose; everything
-else is lifted/split from a current guide.
-
-#### Data & Encoding — `/guides/data`
-
-*Index framing:* "Ox's primitive types — `Hex` and `Bytes` — and the codecs that move data
-between wire formats."
-
-| Topic | Recipes | Modules | Source |
-|---|---|---|---|
-| Work with Bytes & Hex | Instantiate from primitives · Convert between types · Concatenate, pad, slice & trim · Compare & validate · Generate random bytes | `Bytes`, `Hex` | `bytes-hex.md` (whole) |
-| Encode with RLP | Encode nested data · Decode to Hex/Bytes | `Rlp` | `rlp.md` (whole) |
-| Base & Binary Encodings | Base64-encode calldata for URLs **(new)** · Base58 for interop **(new)** · Bech32m addresses **(new)** · CBOR encode/decode **(new)** · Bitcoin CompactSize varints **(new)** | `Base32`, `Base58`, `Base64`, `Bech32m`, `Cbor`, `CompactSize` | new |
-| Serialize JSON Safely | Parse responses with bigints **(new)** · Stringify without precision loss **(new)** · Canonicalize for hashing/signing **(new)** | `Json` | new (API examples exist in reference) |
-| Format Ether & Gwei Values | Parse user input to wei **(new)** · Format wei for display **(new)** · Custom decimals (tokens) **(new)** | `Value` | new |
+Domains and topic rows below follow sidebar (alphabetical) order. Each table lists topic
+pages with their recipe sections, the modules covered, and where existing content comes
+from. Recipes marked **(new)** have no existing prose; everything else is lifted/split from
+a current guide.
 
 #### ABIs & Contracts — `/guides/abi`
 
@@ -275,33 +267,39 @@ encoding calls, decoding what comes back."
 
 | Topic | Recipes | Modules | Source |
 |---|---|---|---|
-| Work with ABIs | Use human-readable ABIs · Parse a JSON ABI · Format back to human-readable · Extract items & compute selectors | `Abi`, `AbiItem`, `AbiParameter`, `Solidity` | `abi.md` §"Human-readable ABIs" |
-| Encode & Decode Function Calls | Encode a read call & decode the result · Encode a state-modifying call · Decode incoming calldata (router/inspector) **(new)** · Encode/decode standalone parameters · Packed encoding (`encodePacked`) **(new)** | `AbiFunction`, `AbiParameters` | `abi.md` §"Function Calls", §"Encoding/Decoding" |
 | Decode Events & Logs | Build an event filter · Decode a log against an event · Handle indexed vs non-indexed args **(new)** | `AbiEvent` (+ `Log`, `Filter` cross-link) | `abi.md` §"Event Filtering" |
 | Decode Reverts & Custom Errors | Decode revert data from `eth_call` **(new)** · Match an error by selector **(new)** · Encode errors for testing **(new)** | `AbiError` | new |
 | Deploy Contracts & Compute Addresses | Encode constructor arguments · Compute a CREATE address **(new)** · Compute a CREATE2 address **(new)** | `AbiConstructor`, `ContractAddress` | `abi.md` §"Deployment" |
+| Encode & Decode Function Calls | Encode a read call & decode the result · Encode a state-modifying call · Decode incoming calldata (router/inspector) **(new)** · Encode/decode standalone parameters · Packed encoding (`encodePacked`) **(new)** | `AbiFunction`, `AbiParameters` | `abi.md` §"Function Calls", §"Encoding/Decoding" |
+| Work with ABIs | Use human-readable ABIs · Parse a JSON ABI · Format back to human-readable · Extract items & compute selectors | `Abi`, `AbiItem`, `AbiParameter`, `Solidity` | `abi.md` §"Human-readable ABIs" |
 
-#### Transactions — `/guides/transactions`
-
-*Index framing:* "Construct, sign, serialize, and inspect every Ethereum transaction type —
-no client required."
+#### Account Abstraction — `/guides/account-abstraction`
 
 | Topic | Recipes | Modules | Source |
 |---|---|---|---|
-| Build, Sign & Send | Construct an EIP-1559 envelope · Compute the sign payload & sign · Attach the signature & serialize · Broadcast via `eth_sendRawTransaction` · Sign remotely (wallets & signing servers) | `TxEnvelope*`, `Secp256k1`, `RpcTransport` | `transaction-envelopes.md` (whole) |
-| Choose an Envelope Type | Legacy · EIP-2930 access lists · EIP-1559 · EIP-4844 blob · EIP-7702 — one recipe each, with a comparison table **(new)** | `TxEnvelopeLegacy`, `…Eip2930`, `…Eip1559`, `…Eip4844`, `…Eip7702`, `TxEnvelope` | split from `transaction-envelopes.md` + new |
-| Parse & Inspect Transactions | Deserialize a raw transaction **(new)** · Recover the sender address **(new)** · Convert RPC transactions/receipts to typed objects **(new)** · Prepare a `TransactionRequest` **(new)** | `TxEnvelope`, `Transaction`, `TransactionReceipt`, `TransactionRequest` | new |
-| Estimate Fees & Access Lists | Compute effective gas price **(new)** · Estimate maxFeePerGas from fee history **(new)** · Build & serialize access lists **(new)** | `Fee`, `AccessList` | new |
-| Send Blob Transactions (EIP-4844) | Turn data into blobs · Compute commitments & proofs · Build a 4844 envelope with sidecars · Verify blob cells (PeerDAS) **(new)** | `Blobs`, `BlobCells`, `Kzg`, `TxEnvelopeEip4844` | new (KZG setup from `kzg.md`) |
-| Delegate with EIP-7702 | Sign an authorization · Build a 7702 envelope · Convert authorization lists for RPC **(new)** | `Authorization`, `TxEnvelopeEip7702` | new |
+| Attribute Calldata with ERC-8021 | Append an attribution suffix **(new)** · Parse attribution codes **(new)** | `erc8021/Attribution` | new |
+| Batch Calls with ERC-7821 | Encode a batch of calls **(new)** · Encode an `execute` payload **(new)** · Decode incoming executions **(new)** | `erc7821/*` (`Calls`, `Execute`) | new |
+| Build ERC-4337 User Operations | Construct a UserOperation **(new)** · Compute the hash & sign payload **(new)** · Pack for the EntryPoint **(new)** · Convert to/from RPC **(new)** | `erc4337/*` (`UserOperation`, `EntryPoint`, `UserOperationGas`, `UserOperationReceipt`, `RpcSchema`) | new |
+
+*(EIP-7702 lives under Transactions; the domain index cross-links it.)*
 
 #### Accounts & Keys — `/guides/accounts`
 
 | Topic | Recipes | Modules | Source |
 |---|---|---|---|
 | Derive & Validate Addresses | Derive from a private key · Derive from a public key · Checksum & validate · Compare addresses **(new)** | `Address`, `PublicKey` | `mnemonics.md` §"Deriving", `ecdsa.md` |
-| Mnemonics & HD Wallets | Generate a random mnemonic · Derive a private key at a path · Derive many accounts (HD paths) · Restore an HD key from seed/extended key **(new)** | `Mnemonic`, `HdKey` | `mnemonics.md` (whole) |
 | Encrypt Keys with Keystores | Encrypt a private key (JSON keystore) **(new)** · Decrypt a keystore **(new)** · Choose scrypt vs PBKDF2 **(new)** | `Keystore` | new |
+| Mnemonics & HD Wallets | Generate a random mnemonic · Derive a private key at a path · Derive many accounts (HD paths) · Restore an HD key from seed/extended key **(new)** | `Mnemonic`, `HdKey` | `mnemonics.md` (whole) |
+
+#### Chain Data & State — `/guides/chain-data`
+
+| Topic | Recipes | Modules | Source |
+|---|---|---|---|
+| Decode Blocks & Receipts | Convert an RPC block to a typed object **(new)** · Read consensus withdrawals **(new)** · Convert receipts **(new)** | `Block`, `Withdrawal`, `TransactionReceipt` | new |
+| Query Logs, Filters & Bloom | Build log filters **(new)** · Convert RPC logs **(new)** · Pre-check membership with bloom filters **(new)** | `Filter`, `Log`, `Bloom` (+ `AbiEvent` cross-link) | new |
+| Resolve ENS Names | Normalize a name · Compute namehash/labelhash · Coin types for multichain addresses **(new)** | `Ens` | new |
+| Simulate with State Overrides | Override balances/code for `eth_call` **(new)** · Override block context **(new)** | `StateOverrides`, `BlockOverrides` | new |
+| Verify State & Account Proofs | Fetch & convert `eth_getProof` results **(new)** · Work with Binary State Trees (EIP-7864) **(new)** | `AccountProof`, `BinaryStateTree` | new |
 
 #### Cryptography — `/guides/crypto`
 
@@ -310,14 +308,37 @@ runs on — audited implementations, tree-shakable."
 
 | Topic | Recipes | Modules | Source |
 |---|---|---|---|
-| Hash Data | keccak256 for Ethereum hashing **(new)** · sha256 / ripemd160 **(new)** · HMAC & Blake3 **(new)** · Incremental hashing (`create*`) **(new)** | `Hash` | new (snippets exist across guides) |
-| Sign with ECDSA (secp256k1) | Create a key pair · Sign a payload · Verify a signature · Recover the signer | `Secp256k1`, `Signature`, `PublicKey` | `ecdsa.md` §"Signers" |
-| Sign with P-256 & WebCrypto | Sign with P256 · Verify with WebCrypto (`WebCryptoP256`) · Non-extractable browser keys **(new)** | `P256`, `WebCryptoP256` | `ecdsa.md` (P256 mentions) + new |
-| Ed25519 & X25519 | Sign & verify with Ed25519 **(new)** · Derive a shared secret with X25519 **(new)** | `Ed25519`, `X25519` | new |
 | BLS Signatures & Aggregation | Sign & verify **(new)** · Aggregate signatures & pubkeys **(new)** · Serialize BLS points **(new)** | `Bls`, `BlsPoint` | new |
-| Post-Quantum Signatures (ML-DSA) | Generate keys, sign & verify with ML-DSA-44 **(new)** | `MlDsa44` | new (module landed recently) |
-| Encrypt Data (AES-GCM) | Derive a key from a password · Encrypt data · Decrypt data | `AesGcm` | `encryption.md` (whole) |
 | Convert Signature Formats | Hex/Bytes ↔ Signature · DER & compact forms · Legacy `v` ↔ `yParity` · RPC & tuple formats | `Signature` | `ecdsa.md` §"Signatures/Serializing" |
+| Ed25519 & X25519 | Sign & verify with Ed25519 **(new)** · Derive a shared secret with X25519 **(new)** | `Ed25519`, `X25519` | new |
+| Encrypt Data (AES-GCM) | Derive a key from a password · Encrypt data · Decrypt data | `AesGcm` | `encryption.md` (whole) |
+| Hash Data | keccak256 for Ethereum hashing **(new)** · sha256 / ripemd160 **(new)** · HMAC & Blake3 **(new)** · Incremental hashing (`create*`) **(new)** | `Hash` | new (snippets exist across guides) |
+| Post-Quantum Signatures (ML-DSA) | Generate keys, sign & verify with ML-DSA-44 **(new)** | `MlDsa44` | new (module landed recently) |
+| Work with P256 | Create a key pair · Sign a payload · Verify a signature · Recover a public key **(new)** · Derive a shared secret (ECDH) **(new)** | `P256` | `ecdsa.md` (P256 mentions) + new |
+| Work with Secp256k1 | Create a key pair · Sign a payload · Verify a signature · Recover the signer | `Secp256k1`, `Signature`, `PublicKey` | `ecdsa.md` §"Signers" |
+| Work with WebCryptoP256 | Create a non-extractable key pair **(new)** · Sign & verify in the browser **(new)** · ECDH with `createKeyPairECDH` & shared secrets **(new)** | `WebCryptoP256` | new |
+
+#### Data & Encoding — `/guides/data`
+
+*Index framing:* "Ox's primitive types — `Hex` and `Bytes` — and the codecs that move data
+between wire formats."
+
+| Topic | Recipes | Modules | Source |
+|---|---|---|---|
+| Base & Binary Encodings | Base64-encode calldata for URLs **(new)** · Base58 for interop **(new)** · Bech32m addresses **(new)** · CBOR encode/decode **(new)** · Bitcoin CompactSize varints **(new)** | `Base32`, `Base58`, `Base64`, `Bech32m`, `Cbor`, `CompactSize` | new |
+| Format Ether & Gwei Values | Parse user input to wei **(new)** · Format wei for display **(new)** · Custom decimals (tokens) **(new)** | `Value` | new |
+| Serialize JSON Safely | Parse responses with bigints **(new)** · Stringify without precision loss **(new)** · Canonicalize for hashing/signing **(new)** | `Json` | new (API examples exist in reference) |
+| Work with Bytes & Hex | Instantiate from primitives · Convert between types · Concatenate, pad, slice & trim · Compare & validate · Generate random bytes | `Bytes`, `Hex` | `bytes-hex.md` (whole) |
+| Work with RLP | Encode nested data · Decode to Hex/Bytes | `Rlp` | `rlp.md` (whole) |
+
+#### JSON-RPC & Providers — `/guides/rpc`
+
+| Topic | Recipes | Modules | Source |
+|---|---|---|---|
+| Send JSON-RPC Requests | Build a request store · Send over HTTP `fetch` · Parse responses (raise on error) | `RpcRequest`, `RpcResponse`, `RpcTransport` | `json-rpc.md` §"Sending/Parsing" |
+| Serve & Handle RPC Requests | Handle requests in a server/worker · Return typed errors **(new)** | `RpcRequest`, `RpcResponse` | `json-rpc.md` §"Handling Requests" |
+| Type-Safe RPC Schemas | Type a transport with a schema · Extend with custom methods **(new)** | `RpcSchema` | `json-rpc.md` + new |
+| Use EIP-1193 Providers | Wrap an injected provider · Create a provider from a transport · Emit provider events | `Provider`, `window` entrypoint | `eip-1193.md` (whole) |
 
 #### Messages & Authentication — `/guides/messages`
 
@@ -328,56 +349,41 @@ runs on — audited implementations, tree-shakable."
 | Sign-In with Ethereum (SIWE) | Generate a nonce · Create the message · Sign it · Validate on the server | `Siwe` | `siwe.md` (whole — currently orphaned) |
 | Smart Account Signatures (6492/8010) | Wrap a signature for a counterfactual account (ERC-6492) **(new)** · Verify/unwrap **(new)** · Delegated verification with ERC-8010 **(new)** | `SignatureErc6492`, `SignatureErc8010` | new |
 
-#### WebAuthn & Passkeys — `/guides/webauthn`
-
-| Topic | Recipes | Modules | Source |
-|---|---|---|---|
-| Register & Authenticate Credentials | Register a credential · Authenticate an existing credential **(new)** · Verify registration on the server **(new)** | `webauthn/*` (`Credential`, `Registration`, `Authentication`, `Authenticator`), `CoseKey` | `webauthn.md` §"Registering" + new |
-| Sign & Verify with Passkeys | Sign a payload · Extract the public key · Verify a signature (client & server) | `WebAuthnP256`, `PublicKey` | `webauthn.md` §"Signing/Verifying" |
-| Derive Secrets with PRF | Derive a credential-bound secret **(new)** · Encrypt with a passkey-derived key (PRF + AES-GCM) **(new)** | `Prf`, `AesGcm` | new (cross-links `encryption`) |
-
-#### JSON-RPC & Providers — `/guides/rpc`
-
-| Topic | Recipes | Modules | Source |
-|---|---|---|---|
-| Send JSON-RPC Requests | Build a request store · Send over HTTP `fetch` · Parse responses (raise on error) | `RpcRequest`, `RpcResponse`, `RpcTransport` | `json-rpc.md` §"Sending/Parsing" |
-| Type-Safe RPC Schemas | Type a transport with a schema · Extend with custom methods **(new)** | `RpcSchema` | `json-rpc.md` + new |
-| Use EIP-1193 Providers | Wrap an injected provider · Create a provider from a transport · Emit provider events | `Provider`, `window` entrypoint | `eip-1193.md` (whole) |
-| Serve & Handle RPC Requests | Handle requests in a server/worker · Return typed errors **(new)** | `RpcRequest`, `RpcResponse` | `json-rpc.md` §"Handling Requests" |
-
-#### Chain Data & State — `/guides/chain-data`
-
-| Topic | Recipes | Modules | Source |
-|---|---|---|---|
-| Decode Blocks & Receipts | Convert an RPC block to a typed object **(new)** · Read consensus withdrawals **(new)** · Convert receipts **(new)** | `Block`, `Withdrawal`, `TransactionReceipt` | new |
-| Query Logs, Filters & Bloom | Build log filters **(new)** · Convert RPC logs **(new)** · Pre-check membership with bloom filters **(new)** | `Filter`, `Log`, `Bloom` (+ `AbiEvent` cross-link) | new |
-| Verify State & Account Proofs | Fetch & convert `eth_getProof` results **(new)** · Work with Binary State Trees (EIP-7864) **(new)** | `AccountProof`, `BinaryStateTree` | new |
-| Simulate with State Overrides | Override balances/code for `eth_call` **(new)** · Override block context **(new)** | `StateOverrides`, `BlockOverrides` | new |
-| Resolve ENS Names | Normalize a name · Compute namehash/labelhash · Coin types for multichain addresses **(new)** | `Ens` | new |
-
-#### Account Abstraction — `/guides/account-abstraction`
-
-| Topic | Recipes | Modules | Source |
-|---|---|---|---|
-| Build ERC-4337 User Operations | Construct a UserOperation **(new)** · Compute the hash & sign payload **(new)** · Pack for the EntryPoint **(new)** · Convert to/from RPC **(new)** | `erc4337/*` (`UserOperation`, `EntryPoint`, `UserOperationGas`, `UserOperationReceipt`, `RpcSchema`) | new |
-| Batch Calls with ERC-7821 | Encode a batch of calls **(new)** · Encode an `execute` payload **(new)** · Decode incoming executions **(new)** | `erc7821/*` (`Calls`, `Execute`) | new |
-| Attribute Calldata with ERC-8021 | Append an attribution suffix **(new)** · Parse attribution codes **(new)** | `erc8021/Attribution` | new |
-
-*(EIP-7702 lives under Transactions; the domain index cross-links it.)*
-
 #### Runtime & Performance — `/guides/runtime`
 
 | Topic | Recipes | Modules | Source |
 |---|---|---|---|
+| Caching & Bundle Size | Clear global caches **(new)** · Measure & minimize bundle impact (links `/imports`) **(new)** | `Caches` | new + existing `/imports` page |
 | WASM & Engines | Default engine · Install the WASM engine · Install the Node engine · Selective module installs · Build a custom engine | `Engine`, `node/*`, `wasm/*` | `engine.md` (whole) |
 | WASM KZG | Create an instance · Ownership & cleanup · Memory & precomputation | `wasm/Kzg`, `Kzg`, `trusted-setups` | `kzg.md` (whole) |
-| Caching & Bundle Size | Clear global caches **(new)** · Measure & minimize bundle impact (links `/imports`) **(new)** | `Caches` | new + existing `/imports` page |
 
 #### Schemas & Validation — `/guides/schemas`
 
 | Topic | Recipes | Modules | Source |
 |---|---|---|---|
 | Validate with Zod | Import schemas · Decode & encode RPC data · Validate untrusted input · Integer quantity schemas · JSON-RPC method schemas · Custom method schemas | `zod/*` | `zod.md` (whole) |
+
+#### Transactions — `/guides/transactions`
+
+*Index framing:* "Construct, sign, serialize, and inspect every Ethereum transaction type —
+no client required."
+
+| Topic | Recipes | Modules | Source |
+|---|---|---|---|
+| Build, Sign & Send | Construct an EIP-1559 envelope · Compute the sign payload & sign · Attach the signature & serialize · Broadcast via `eth_sendRawTransaction` · Sign remotely (wallets & signing servers) | `TxEnvelope*`, `Secp256k1`, `RpcTransport` | `transaction-envelopes.md` (whole) |
+| Choose an Envelope Type | Legacy · EIP-2930 access lists · EIP-1559 · EIP-4844 blob · EIP-7702 — one recipe each, with a comparison table **(new)** | `TxEnvelopeLegacy`, `…Eip2930`, `…Eip1559`, `…Eip4844`, `…Eip7702`, `TxEnvelope` | split from `transaction-envelopes.md` + new |
+| Delegate with EIP-7702 | Sign an authorization · Build a 7702 envelope · Convert authorization lists for RPC **(new)** | `Authorization`, `TxEnvelopeEip7702` | new |
+| Estimate Fees & Access Lists | Compute effective gas price **(new)** · Estimate maxFeePerGas from fee history **(new)** · Build & serialize access lists **(new)** | `Fee`, `AccessList` | new |
+| Parse & Inspect Transactions | Deserialize a raw transaction **(new)** · Recover the sender address **(new)** · Convert RPC transactions/receipts to typed objects **(new)** · Prepare a `TransactionRequest` **(new)** | `TxEnvelope`, `Transaction`, `TransactionReceipt`, `TransactionRequest` | new |
+| Send Blob Transactions (EIP-4844) | Turn data into blobs · Compute commitments & proofs · Build a 4844 envelope with sidecars · Verify blob cells (PeerDAS) **(new)** | `Blobs`, `BlobCells`, `Kzg`, `TxEnvelopeEip4844` | new (KZG setup from `kzg.md`) |
+
+#### WebAuthn & Passkeys — `/guides/webauthn`
+
+| Topic | Recipes | Modules | Source |
+|---|---|---|---|
+| Derive Secrets with PRF | Configure a PRF tag & request outputs from a credential (`Prf.tag`) **(new)** · Sign Ethereum transactions with a passkey-derived key (`Secp256k1.fromPrf`) **(new)** · Derive an Ed25519 key from a passkey (`Ed25519.fromPrf`) **(new)** · Derive a post-quantum key from a passkey (`MlDsa44.fromPrf`) **(new)** · Encrypt user data with a passkey-derived key (`AesGcm.fromPrf`) **(new)** | `Prf`, `Secp256k1`, `Ed25519`, `MlDsa44`, `AesGcm` | new (cross-links `crypto/encryption`) |
+| Register & Authenticate Credentials | Register a credential · Authenticate an existing credential **(new)** · Verify registration on the server **(new)** | `webauthn/*` (`Credential`, `Registration`, `Authentication`, `Authenticator`), `CoseKey` | `webauthn.md` §"Registering" + new |
+| Sign & Verify with Passkeys | Sign a payload · Extract the public key · Verify a signature (client & server) | `WebAuthnP256`, `PublicKey` | `webauthn.md` §"Signing/Verifying" |
 
 ---
 
@@ -398,8 +404,8 @@ Task-oriented guides for building with Ox. Each guide combines related modules i
 complete workflow and links to the API reference for deeper detail.
 
 <Cards>
-  <Card icon="lucide:binary" title="Data & Encoding" description="…" to="/guides/data" />
-  … one card per domain, plus a card for Tempo → /tempo/guides …
+  <Card icon="lucide:file-code-2" title="ABIs & Contracts" description="…" to="/guides/abi" />
+  … one card per domain (alphabetical), plus a card for Tempo → /tempo/guides …
 </Cards>
 ```
 
@@ -419,7 +425,7 @@ import { Card, Cards } from 'vocs'
 <one canonical code example (twoslash)>
 
 <Cards>
-  <Card … one per topic … />
+  <Card … one per topic (alphabetical) … />
 </Cards>
 ```
 
@@ -471,7 +477,7 @@ Every existing URL gets a redirect (vocs `redirects` config / `vercel.json`):
 |---|---|
 | `/guides/abi` | `/guides/abi/abis` (+ split into `function-calls`, `events`, `deployment`) |
 | `/guides/bytes-hex` | `/guides/data/bytes-hex` |
-| `/guides/ecdsa` | `/guides/crypto/ecdsa` (+ `signatures`) |
+| `/guides/ecdsa` | `/guides/crypto/secp256k1` (+ `signatures`) |
 | `/guides/eip-1193` | `/guides/rpc/providers` |
 | `/guides/encryption` | `/guides/crypto/encryption` |
 | `/guides/engine` | `/guides/runtime/engines` |
@@ -489,61 +495,63 @@ Every existing URL gets a redirect (vocs `redirects` config / `vercel.json`):
 
 ## 6. Coverage matrix — every module has a home
 
-Primary guide topic per public module (cross-links not listed):
+Primary guide topic per public module (cross-links not listed), in sidebar order:
 
 | Module(s) | Primary topic |
 |---|---|
+| `Abi`, `AbiItem`, `AbiParameter`, `Solidity` | abi/abis |
+| `AbiConstructor`, `ContractAddress` | abi/deployment |
+| `AbiError` | abi/errors |
+| `AbiEvent` | abi/events |
+| `AbiFunction`, `AbiParameters` | abi/function-calls |
+| `erc8021/Attribution` | account-abstraction/erc-8021 |
+| `erc7821/*` | account-abstraction/erc-7821 |
+| `erc4337/*` | account-abstraction/user-operations |
+| `Address`, `PublicKey` | accounts/addresses |
+| `Keystore` | accounts/keystores |
+| `Mnemonic`, `HdKey` | accounts/mnemonics-hd |
+| `Block`, `Withdrawal` | chain-data/blocks |
+| `Ens` | chain-data/ens |
+| `Log`, `Filter`, `Bloom` | chain-data/logs-filters |
+| `StateOverrides`, `BlockOverrides` | chain-data/overrides |
+| `AccountProof`, `BinaryStateTree` | chain-data/proofs |
+| `Bls`, `BlsPoint` | crypto/bls |
+| `Ed25519`, `X25519` | crypto/ed25519-x25519 |
+| `AesGcm` | crypto/encryption |
+| `Hash` | crypto/hashing |
+| `MlDsa44` | crypto/ml-dsa |
+| `P256` | crypto/p256 |
+| `Secp256k1` | crypto/secp256k1 |
+| `Signature` | crypto/signatures |
+| `WebCryptoP256` | crypto/webcrypto-p256 |
 | `Bytes`, `Hex` | data/bytes-hex |
-| `Rlp` | data/rlp |
 | `Base32`, `Base58`, `Base64`, `Bech32m`, `Cbor`, `CompactSize` | data/encodings |
 | `Json` | data/json |
+| `Rlp` | data/rlp |
 | `Value` | data/value |
-| `Abi`, `AbiItem`, `AbiParameter`, `Solidity` | abi/abis |
-| `AbiFunction`, `AbiParameters` | abi/function-calls |
-| `AbiEvent` | abi/events |
-| `AbiError` | abi/errors |
-| `AbiConstructor`, `ContractAddress` | abi/deployment |
-| `TxEnvelope`, `TxEnvelopeLegacy/Eip2930/Eip1559` | transactions/build-sign-send, envelope-types |
-| `Transaction`, `TransactionReceipt`, `TransactionRequest` | transactions/parse-inspect |
-| `Fee`, `AccessList` | transactions/fees-access-lists |
-| `Blobs`, `BlobCells`, `Kzg`, `TxEnvelopeEip4844` | transactions/blobs |
-| `Authorization`, `TxEnvelopeEip7702` | transactions/eip-7702 |
-| `Address`, `PublicKey` | accounts/addresses |
-| `Mnemonic`, `HdKey` | accounts/mnemonics-hd |
-| `Keystore` | accounts/keystores |
-| `Hash` | crypto/hashing |
-| `Secp256k1` | crypto/ecdsa |
-| `P256`, `WebCryptoP256` | crypto/p256 |
-| `Ed25519`, `X25519` | crypto/ed25519-x25519 |
-| `Bls`, `BlsPoint` | crypto/bls |
-| `MlDsa44` | crypto/ml-dsa |
-| `AesGcm` | crypto/encryption |
-| `Signature` | crypto/signatures |
+| `RpcRequest`, `RpcResponse`, `RpcTransport` | rpc/requests, rpc/handling |
+| `Provider`, `window` | rpc/providers |
+| `RpcSchema` | rpc/schemas |
 | `PersonalMessage`, `ValidatorData` | messages/personal-messages |
-| `TypedData` | messages/typed-data |
 | `Siwe` | messages/siwe |
 | `erc6492/SignatureErc6492`, `erc8010/SignatureErc8010` | messages/smart-account-signatures |
-| `webauthn/*`, `CoseKey` | webauthn/credentials |
-| `WebAuthnP256` | webauthn/signing |
-| `Prf` | webauthn/prf |
-| `RpcRequest`, `RpcResponse`, `RpcTransport` | rpc/requests, rpc/handling |
-| `RpcSchema` | rpc/schemas |
-| `Provider`, `window` | rpc/providers |
-| `Block`, `Withdrawal` | chain-data/blocks |
-| `Log`, `Filter`, `Bloom` | chain-data/logs-filters |
-| `AccountProof`, `BinaryStateTree` | chain-data/proofs |
-| `StateOverrides`, `BlockOverrides` | chain-data/overrides |
-| `Ens` | chain-data/ens |
-| `erc4337/*` | account-abstraction/user-operations |
-| `erc7821/*` | account-abstraction/erc-7821 |
-| `erc8021/Attribution` | account-abstraction/erc-8021 |
-| `Engine`, `node/*`, `wasm/*` | runtime/engines |
+| `TypedData` | messages/typed-data |
 | `Caches` | runtime/caches-bundle |
+| `Engine`, `node/*`, `wasm/*` | runtime/engines |
+| `Kzg` (WASM instance), `trusted-setups` | runtime/kzg |
 | `zod/*` | schemas/zod |
+| `Blobs`, `BlobCells`, `TxEnvelopeEip4844` | transactions/blobs |
+| `TxEnvelope`, `TxEnvelopeLegacy/Eip2930/Eip1559` | transactions/build-sign-send, envelope-types |
+| `Authorization`, `TxEnvelopeEip7702` | transactions/eip-7702 |
+| `Fee`, `AccessList` | transactions/fees-access-lists |
+| `Transaction`, `TransactionReceipt`, `TransactionRequest` | transactions/parse-inspect |
+| `webauthn/*`, `CoseKey` | webauthn/credentials |
+| `Prf` | webauthn/prf |
+| `WebAuthnP256` | webauthn/signing |
 | `Errors` | existing top-level `/error-handling` page (unchanged) |
 | `tempo/*` | existing `/tempo/guides` (unchanged) |
 
-Not guide-worthy: `version`, `trusted-setups` (referenced from runtime/kzg).
+Not guide-worthy: `version`.
 
 ---
 
