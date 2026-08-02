@@ -54,7 +54,7 @@ The instance implements all EIP-4844 and EIP-7594 operations in `Kzg.Kzg`:
 - `recoverCellsAndKzgProofs`
 - `verifyCellKzgProofBatch`
 
-Import `ox/wasm/Kzg` directly when only KZG is needed. The dedicated artifact
+Import `ox/wasm/crypto/Kzg` directly when only KZG is needed. The dedicated artifact
 does not load through `ox`, another WASM module, or an `Engine` slot.
 
 Import `ox/trusted-setups/Setups` directly when only setup data is needed. The
@@ -131,7 +131,7 @@ initialization. Operation inputs and outputs may grow memory further, within the
 128 MiB limit.
 
 Use the smallest window that meets the target workload. Run
-`pnpm bench src/wasm/Kzg.bench.ts --project core` on the deployment hardware to
+`pnpm bench src/wasm/crypto/Kzg.bench.ts --project core` on the deployment hardware to
 compare initialization and every supported operation.
 
 ## See More
@@ -153,6 +153,6 @@ compare initialization and every supported operation.
     icon="lucide:square-function"
     title="Kzg (WASM)"
     description="Review the WASM KZG factory, options, and errors."
-    to="/wasm/Kzg"
+    to="/wasm/crypto/Kzg"
   />
 </Cards>
