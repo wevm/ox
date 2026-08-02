@@ -100,13 +100,14 @@ const payload = TypedData.getSignPayload({
   },
 })
 
+// [!code focus:start]
 const signature = Secp256k1.sign({
-  // [!code focus]
-  payload, // [!code focus]
-  privateKey: '0x...', // [!code focus]
-}) // [!code focus]
+  payload,
+  privateKey: '0x...',
+})
 
-const signer = Secp256k1.recoverAddress({ payload, signature }) // [!code focus]
+const signer = Secp256k1.recoverAddress({ payload, signature })
+// [!code focus:end]
 ```
 
 Compare the recovered signer against the expected address with
@@ -127,15 +128,16 @@ const provider = Provider.from(window.ethereum)
 
 const [address] = await provider.request({ method: 'eth_requestAccounts' })
 
+// [!code focus:start]
 const payload = TypedData.serialize({
   /* ... */
-}) // [!code focus]
+})
 
 const signature = await provider.request({
-  // [!code focus]
-  method: 'eth_signTypedData_v4', // [!code focus]
-  params: [address, payload], // [!code focus]
-}) // [!code focus]
+  method: 'eth_signTypedData_v4',
+  params: [address, payload],
+})
+// [!code focus:end]
 ```
 
 [`TypedData.serialize`](/api/TypedData/serialize) produces the JSON string that

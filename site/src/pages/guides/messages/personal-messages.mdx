@@ -37,11 +37,12 @@ import { Hex, PersonalMessage, Secp256k1 } from 'ox'
 
 const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
+// [!code focus:start]
 const signature = Secp256k1.sign({
-  // [!code focus]
-  payload, // [!code focus]
-  privateKey: '0x...', // [!code focus]
-}) // [!code focus]
+  payload,
+  privateKey: '0x...',
+})
+// [!code focus:end]
 ```
 
 Any Ox signer works — see [Work with Secp256k1](/guides/crypto/secp256k1) for the full signer
@@ -86,11 +87,12 @@ const provider = Provider.from(window.ethereum)
 
 const [address] = await provider.request({ method: 'eth_requestAccounts' })
 
+// [!code focus:start]
 const signature = await provider.request({
-  // [!code focus]
-  method: 'personal_sign', // [!code focus]
-  params: [Hex.fromString('hello world'), address], // [!code focus]
-}) // [!code focus]
+  method: 'personal_sign',
+  params: [Hex.fromString('hello world'), address],
+})
+// [!code focus:end]
 ```
 
 ### Sign Intended-Validator Data (ERC-191 0x00)
@@ -102,11 +104,12 @@ consume it), so it cannot be replayed against another verifier. Compute the payl
 ```ts twoslash
 import { Hex, Secp256k1, ValidatorData } from 'ox'
 
+// [!code focus:start]
 const payload = ValidatorData.getSignPayload({
-  // [!code focus]
-  data: Hex.fromString('hello world'), // [!code focus]
-  validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045', // [!code focus]
-}) // [!code focus]
+  data: Hex.fromString('hello world'),
+  validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+})
+// [!code focus:end]
 
 const signature = Secp256k1.sign({
   payload,
