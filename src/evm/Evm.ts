@@ -500,6 +500,13 @@ function validateTransaction(context: TransactionContext): void {
   const { block, chainId, hardfork, state } = evm
   const gas = Hardfork.gas(hardfork)
   const requiredGas = intrinsicGas > floorGas ? intrinsicGas : floorGas
+  for (const item of context.accessList ?? []) {
+    if (!Address.validate(item.address, { strict: false }))
+      throw new InvalidTransactionError({ reason: 'access-list-address' })
+    for (const key of item.storageKeys)
+      if (!Hex.validate(key, { strict: true }) || Hex.size(key) !== 32)
+        throw new InvalidTransactionError({ reason: 'access-list-storage-key' })
+  }
   if (gasLimit < requiredGas)
     throw new InvalidTransactionError({ reason: 'intrinsic-gas-too-low' })
   if (gasLimit > block.gasLimit)
@@ -641,7 +648,11 @@ function prepareTransaction(context: TransactionContext): void {
 
   let delegatedTo: string | undefined
   if (!create) {
-    let code = journal_.getCode(journal, to) ?? new Uint8Array(0)
+    let code = journal_.getCode(journal, to)
+    if (code === undefined) {
+      journal_.seed(journal, resolveSync(state, { address: to, kind: 'code' }))
+      code = journal_.getCode(journal, to) as Uint8Array
+    }
     delegatedTo = Hardfork.atLeast(hardfork, 'prague')
       ? delegation.getAddress(code)
       : undefined

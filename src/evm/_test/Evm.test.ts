@@ -228,6 +228,39 @@ describe('transact', () => {
     expect(state.getAccount(coinbase)?.balance).toBe(42_000n)
   })
 
+  test('executes lazily loaded destination code', () => {
+    const memory = State.fromMemory({
+      accounts: {
+        [from]: { balance: 100_000n },
+        [to]: { code: '0x602a5f5260205ff3' },
+      },
+    })
+    const state = State.from({
+      ...memory,
+      getAccount(address) {
+        const account = memory.getAccount(address)
+        return account ? { ...account, code: undefined } : undefined
+      },
+    })
+    const evm = Evm.from({ state })
+
+    expect(
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        to,
+        type: 'legacy',
+      }),
+    ).toMatchObject({
+      output:
+        '0x000000000000000000000000000000000000000000000000000000000000002a',
+      status: 'success',
+    })
+  })
+
   test('includes a reverted transaction', () => {
     const state = State.fromMemory({
       accounts: {
@@ -307,6 +340,36 @@ describe('transact', () => {
         nonce: 0n,
         to,
         ...envelope,
+      } as never),
+    ).toThrowError(`Transaction is invalid: ${reason}.`)
+    expect(state.getAccount(from)?.nonce).toBe(0n)
+  })
+
+  test.each([
+    {
+      accessList: [{ address: '0x01', storageKeys: [] }],
+      reason: 'access-list-address',
+    },
+    {
+      accessList: [{ address: to, storageKeys: ['0x01'] }],
+      reason: 'access-list-storage-key',
+    },
+  ] as const)('rejects malformed $reason', ({ accessList, reason }) => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 100_000n } },
+    })
+    const evm = Evm.from({ state })
+
+    expect(() =>
+      Evm.transact(evm, {
+        accessList,
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        to,
+        type: 'eip2930',
       } as never),
     ).toThrowError(`Transaction is invalid: ${reason}.`)
     expect(state.getAccount(from)?.nonce).toBe(0n)
