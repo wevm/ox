@@ -48,7 +48,6 @@ type Entry =
     }
   | { kind: 'account'; address: string; previous: Account | null | undefined }
   | { kind: 'storage'; address: string; slot: bigint; previous: bigint }
-  | { kind: 'storage-presence'; address: string }
   | {
       kind: 'transient'
       address: string
@@ -323,11 +322,6 @@ export function setStorage(
   value: bigint,
 ): void {
   const map = storageMap(journal.storage, address)
-  const account = journal.accounts.get(address)
-  if (account && value !== 0n && !account.hasStorage) {
-    journal.undo.push({ address, kind: 'storage-presence' })
-    account.hasStorage = true
-  }
   journal.undo.push({
     address,
     kind: 'storage',
@@ -471,11 +465,6 @@ export function revert(journal: Journal, checkpoint: number): void {
           entry.previous,
         )
         break
-      case 'storage-presence': {
-        const account = journal.accounts.get(entry.address) as Account
-        account.hasStorage = false
-        break
-      }
       case 'transient': {
         // Restore absence as absence — a phantom explicit zero would read
         // identically but pollute structural comparisons.

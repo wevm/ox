@@ -23,6 +23,10 @@ export type Account = Compute<{
   nonce: bigint
 }>
 
+/** Account fields written to a source. Storage presence stays owned by the
+ * source and is updated through {@link ox#State.(Source:type)}.putStorage. */
+export type AccountUpdate = Compute<Omit<Account, 'hasStorage'>>
+
 /**
  * Root type — a pluggable state source.
  *
@@ -46,10 +50,11 @@ export type Source<asynchronous extends boolean = boolean> = {
     address: Address.Address,
     slot: bigint,
   ): Value<asynchronous, bigint>
-  /** Writes an account to the overlay, or deletes it when `account` is
-   * `undefined`. Never propagates upstream. */
-  putAccount(address: Address.Address, account: Account | undefined): void
-  /** Writes a storage slot to the overlay. Never propagates upstream. */
+  /** Writes account fields to the overlay, or deletes the account when
+   * `account` is `undefined`. Preserves storage presence metadata. */
+  putAccount(address: Address.Address, account: AccountUpdate | undefined): void
+  /** Writes a storage slot to the overlay and keeps `getAccount`'s
+   * `hasStorage` result synchronized. Never propagates upstream. */
   putStorage(address: Address.Address, slot: bigint, value: bigint): void
 }
 
@@ -151,7 +156,7 @@ export function fromMemory(options: fromMemory.Options = {}): Memory {
       accounts.set(key, {
         balance: account.balance,
         code: account.code ?? accounts.get(key)?.code ?? '0x',
-        hasStorage: account.hasStorage,
+        hasStorage: accounts.get(key)?.hasStorage ?? false,
         nonce: account.nonce,
       })
     },

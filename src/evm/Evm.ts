@@ -291,7 +291,6 @@ function commit(journal: journal_.Journal, state: State.Sync): void {
     state.putAccount(address as Address.Address, {
       balance: account.balance,
       code: code === undefined ? undefined : Hex.fromBytes(code),
-      hasStorage: account.hasStorage,
       nonce: account.nonce,
     })
   }

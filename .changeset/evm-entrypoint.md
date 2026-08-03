@@ -2,4 +2,4 @@
 "ox": minor
 ---
 
-Added the `ox/evm` entrypoint: a pure-TypeScript EVM interpreter (`Evm.run`) with nested message calls and journaled state execution over pluggable sources (`State`), plus `Opcode` and `Hardfork` modules.
+Added `ox/evm` with nested calls, `CREATE`/`CREATE2`, and pluggable state sources whose accounts report `hasStorage` while storage writes keep it synchronized.

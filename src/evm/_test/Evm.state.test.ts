@@ -352,4 +352,53 @@ describe('state commitment', () => {
     expect(result.status).toBe('reverted')
     expect(state.getStorage(self, 1n)).toBe(0x2an)
   })
+
+  test('storage writes own storage-presence metadata', () => {
+    let account: State.Account = {
+      balance: 0n,
+      code: '0x',
+      hasStorage: true,
+      nonce: 0n,
+    }
+    let slot = 1n
+    let update: State.AccountUpdate | undefined
+    const source = State.from({
+      async: false,
+      getAccount: (address) =>
+        address.toLowerCase() === self ? account : undefined,
+      getBlockHash: () => `0x${'00'.repeat(32)}` as `0x${string}`,
+      getCode: (address) =>
+        address.toLowerCase() === self ? (account.code ?? '0x') : '0x',
+      getStorage: (address, key) =>
+        address.toLowerCase() === self && key === 1n ? slot : 0n,
+      putAccount: (address, value) => {
+        if (address.toLowerCase() !== self || !value) return
+        update = value
+        account = { ...account, ...value }
+      },
+      putStorage: (address, key, value) => {
+        if (address.toLowerCase() !== self || key !== 1n) return
+        slot = value
+        account = { ...account, hasStorage: value !== 0n }
+      },
+    })
+
+    // Clear the only slot, then CREATE to dirty the creator account.
+    const result = Evm.run({
+      address: self,
+      bytecode: '0x5f6001555f5f5ff0',
+      state: source,
+    })
+    Evm.assertSuccess(result)
+
+    expect(update).toMatchInlineSnapshot(`
+      {
+        "balance": 0n,
+        "code": "0x",
+        "nonce": 1n,
+      }
+    `)
+    expect(slot).toBe(0n)
+    expect(account.hasStorage).toBe(false)
+  })
 })
