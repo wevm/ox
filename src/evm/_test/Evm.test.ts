@@ -1,15 +1,146 @@
-import { Evm } from 'ox/evm'
+import { Evm, State } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
 test('exports', () => {
   expect(Object.keys(Evm)).toMatchInlineSnapshot(`
     [
+      "from",
+      "call",
       "run",
       "assertSuccess",
       "RevertedError",
       "HaltedError",
     ]
   `)
+})
+
+describe('from', () => {
+  test('default', () => {
+    const state = State.fromMemory()
+    const evm = Evm.from({ state })
+
+    expect(evm.hardfork).toBe('osaka')
+    expect(evm.state).toBe(state)
+  })
+
+  test('error: unknown hardfork', () => {
+    expect(() =>
+      Evm.from({
+        // @ts-expect-error
+        hardfork: 'verkle',
+        state: State.fromMemory(),
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hardfork.UnknownHardforkError: Unknown hardfork \`verkle\`.
+
+      Known hardforks: cancun, prague, osaka.]
+    `)
+  })
+})
+
+describe('call', () => {
+  const from = '0x00000000000000000000000000000000000000f0'
+  const to = '0x00000000000000000000000000000000000000c0'
+
+  test('default', () => {
+    const evm = Evm.from({
+      state: State.fromMemory({
+        accounts: {
+          // CALLER, ORIGIN, CALLVALUE, and CALLDATALOAD(0), returned as words.
+          [to]: { code: '0x335f5232602052346040525f3560605260805ff3' },
+        },
+      }),
+    })
+    const result = Evm.call(evm, {
+      data: '0xdeadbeef',
+      from,
+      to,
+      value: 42n,
+    })
+
+    Evm.assertSuccess(result)
+    expect(result.output).toMatchInlineSnapshot(
+      `"0x00000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000000f0000000000000000000000000000000000000000000000000000000000000002adeadbeef00000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
+
+  test('discards state changes', () => {
+    const state = State.fromMemory({
+      accounts: {
+        // SSTORE(1, 42), then return SLOAD(1).
+        [to]: { code: '0x602a6001556001545f5260205ff3' },
+      },
+    })
+    const result = Evm.call(Evm.from({ state }), { to })
+
+    Evm.assertSuccess(result)
+    expect(result.output).toBe(
+      '0x000000000000000000000000000000000000000000000000000000000000002a',
+    )
+    expect(state.getStorage(to, 1n)).toBe(0n)
+  })
+
+  test('executes delegated code in the authority context', () => {
+    const delegate = '0x00000000000000000000000000000000000000d0'
+    const evm = Evm.from({
+      state: State.fromMemory({
+        accounts: {
+          [delegate]: { code: '0x305f5260205ff3' },
+          [to]: { code: `0xef0100${delegate.slice(2)}` },
+        },
+      }),
+    })
+    const result = Evm.call(evm, { to })
+
+    Evm.assertSuccess(result)
+    expect(result.output).toBe(
+      '0x00000000000000000000000000000000000000000000000000000000000000c0',
+    )
+  })
+
+  test('warms the delegation target', () => {
+    const delegate = '0x00000000000000000000000000000000000000d0'
+    const evm = Evm.from({
+      state: State.fromMemory({
+        accounts: {
+          // PUSH20 delegate, BALANCE, POP, STOP.
+          [delegate]: { code: `0x73${delegate.slice(2)}315000` },
+          [to]: { code: `0xef0100${delegate.slice(2)}` },
+        },
+      }),
+    })
+
+    expect(Evm.call(evm, { to })).toMatchInlineSnapshot(`
+      {
+        "gasRefund": 0n,
+        "gasUsed": 105n,
+        "logs": [],
+        "output": "0x",
+        "status": "success",
+      }
+    `)
+  })
+
+  test('does not follow delegations before Prague', () => {
+    const delegate = '0x00000000000000000000000000000000000000d0'
+    const evm = Evm.from({
+      hardfork: 'cancun',
+      state: State.fromMemory({
+        accounts: {
+          [delegate]: { code: '0x00' },
+          [to]: { code: `0xef0100${delegate.slice(2)}` },
+        },
+      }),
+    })
+
+    expect(Evm.call(evm, { gas: 100n, to })).toMatchInlineSnapshot(`
+      {
+        "gasUsed": 100n,
+        "reason": "invalid-opcode",
+        "status": "halted",
+      }
+    `)
+  })
 })
 
 describe('run', () => {

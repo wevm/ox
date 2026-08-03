@@ -5,6 +5,7 @@ import type { Compute, ExactPartial } from '../core/internal/types.js'
 import * as State from './State.js'
 import * as Hardfork from './Hardfork.js'
 import { analyzed } from './internal/analysis.js'
+import * as delegation from './internal/delegation.js'
 import { table } from './internal/instructions.js'
 import { execute } from './internal/interpreter.js'
 import * as journal_ from './internal/journal.js'
@@ -84,6 +85,146 @@ export type Result =
       gasUsed: bigint
     }>
 
+/** Root type for a configured EVM. */
+export type Evm<state extends State.Sync = State.Sync> = Compute<{
+  /** Hardfork whose rules calls execute under. */
+  hardfork: Hardfork.Hardfork
+  /** State source calls read without mutating. */
+  state: state
+}>
+
+/**
+ * Configures an EVM over a synchronous state source.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm, State } from 'ox/evm'
+ *
+ * const evm = Evm.from({
+ *   hardfork: 'osaka',
+ *   state: State.fromMemory(),
+ * })
+ * ```
+ *
+ * @param options - Options.
+ * @returns A configured EVM.
+ */
+export function from<const state extends State.Sync>(
+  options: from.Options<state>,
+): Evm<state> {
+  const hardfork = options.hardfork ?? Hardfork.latest
+  Hardfork.atLeast(hardfork, 'cancun')
+  return {
+    hardfork,
+    state: State.from(options.state),
+  }
+}
+
+export declare namespace from {
+  type Options<state extends State.Sync = State.Sync> = {
+    /** Hardfork whose rules calls execute under. @default Hardfork.latest */
+    hardfork?: Hardfork.Hardfork | undefined
+    /** State source calls read without mutating. */
+    state: state
+  }
+
+  type ErrorType =
+    | Hardfork.UnknownHardforkError
+    | State.from.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Executes an ephemeral call against configured state.
+ *
+ * State changes are visible during execution but are discarded afterward.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm, State } from 'ox/evm'
+ *
+ * const to = '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'
+ * const evm = Evm.from({
+ *   state: State.fromMemory({
+ *     accounts: { [to]: { code: '0x602a5f5260205ff3' } },
+ *   }),
+ * })
+ *
+ * const result = Evm.call(evm, { to })
+ * Evm.assertSuccess(result)
+ * result.output
+ * // @log: '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * ```
+ *
+ * @param evm - Configured EVM.
+ * @param options - Call options.
+ * @returns The execution result.
+ */
+export function call(evm: Evm, options: call.Options): Result {
+  const { hardfork, state } = evm
+  const to = options.to.toLowerCase() as Address.Address
+  const code = getCode(state, to)
+  const delegatedTo = Hardfork.atLeast(hardfork, 'prague')
+    ? delegation.getAddress(code)
+    : undefined
+  const bytecode = delegatedTo
+    ? getCode(state, delegatedTo as Address.Address)
+    : code
+
+  return executeRun(
+    {
+      address: to,
+      blobHashes: options.blobHashes,
+      block: options.block,
+      bytecode,
+      caller: options.from,
+      chainId: options.chainId,
+      data: options.data,
+      gas: options.gas,
+      gasPrice: options.gasPrice,
+      hardfork,
+      origin: options.from,
+      state,
+      value: options.value,
+    },
+    {
+      persist: false,
+      warmAddresses: delegatedTo ? [delegatedTo] : [],
+    },
+  )
+}
+
+export declare namespace call {
+  type Options = {
+    /** Versioned blob hashes for `BLOBHASH`. */
+    blobHashes?: readonly Hex.Hex[] | undefined
+    /** Block environment. Omitted fields default to zero-like values. */
+    block?: ExactPartial<BlockEnv> | undefined
+    /** `CHAINID`. @default 1n */
+    chainId?: bigint | undefined
+    /** Calldata. @default '0x' */
+    data?: Hex.Hex | Uint8Array | undefined
+    /** Sender exposed through `CALLER` and `ORIGIN`. @default zero address */
+    from?: Address.Address | undefined
+    /** Gas available to execution. @default 30_000_000n */
+    gas?: bigint | undefined
+    /** `GASPRICE`. @default 0n */
+    gasPrice?: bigint | undefined
+    /** Account whose code and storage context execute. */
+    to: Address.Address
+    /** `CALLVALUE`. @default 0n */
+    value?: bigint | undefined
+  }
+
+  type ErrorType = run.ErrorType
+}
+
+function getCode(state: State.Sync, address: Address.Address): Uint8Array {
+  const account = state.getAccount(address)
+  if (!account) return new Uint8Array(0)
+  return Hex.toBytes(account.code ?? state.getCode(address))
+}
+
 /**
  * Executes bytecode as a top-level call frame, synchronously.
  *
@@ -137,6 +278,16 @@ export type Result =
  * @returns The execution result.
  */
 export function run(options: run.Options): Result {
+  return executeRun(options, { persist: true, warmAddresses: [] })
+}
+
+function executeRun(
+  options: run.Options,
+  behavior: {
+    persist: boolean
+    warmAddresses: readonly string[]
+  },
+): Result {
   const {
     address = zeroAddress,
     blobHashes = [],
@@ -198,6 +349,8 @@ export function run(options: run.Options): Result {
   journal_.warmAddress(journal, frame.address)
   journal_.warmAddress(journal, origin.toLowerCase())
   journal_.warmAddress(journal, caller.toLowerCase())
+  for (const address of behavior.warmAddresses)
+    journal_.warmAddress(journal, address)
 
   let request = execute(machine)
   while (request !== undefined) {
@@ -210,7 +363,7 @@ export function run(options: run.Options): Result {
   const output = frame.output ? Hex.fromBytes(frame.output) : '0x'
   if (machine.reverted) return { gasUsed, output, status: 'reverted' }
 
-  if (state) commit(journal, state)
+  if (state && behavior.persist) commit(journal, state)
   return {
     gasRefund: journal.refund,
     gasUsed,
