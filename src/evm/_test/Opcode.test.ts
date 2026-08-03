@@ -11,6 +11,22 @@ test('exports', () => {
   `)
 })
 
+describe('codes', () => {
+  test('behavior: covers every PUSH, DUP, and SWAP mnemonic', () => {
+    expect(Opcode.codes.PUSH2).toBe(0x61)
+    expect(Opcode.codes.PUSH31).toBe(0x7e)
+    expect(Opcode.codes.DUP2).toBe(0x81)
+    expect(Opcode.codes.DUP15).toBe(0x8e)
+    expect(Opcode.codes.SWAP2).toBe(0x91)
+    expect(Opcode.codes.SWAP15).toBe(0x9e)
+  })
+
+  test('behavior: every entry round-trips through toName', () => {
+    for (const [name, code] of Object.entries(Opcode.codes))
+      expect(Opcode.toName(code)).toBe(name)
+  })
+})
+
 describe('toName', () => {
   test('behavior: resolves mnemonics', () => {
     expect(Opcode.toName(0x00)).toMatchInlineSnapshot(`"STOP"`)

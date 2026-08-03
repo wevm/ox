@@ -81,10 +81,70 @@ export const codes = {
   PUSH0: 0x5f,
 
   PUSH1: 0x60,
+  PUSH2: 0x61,
+  PUSH3: 0x62,
+  PUSH4: 0x63,
+  PUSH5: 0x64,
+  PUSH6: 0x65,
+  PUSH7: 0x66,
+  PUSH8: 0x67,
+  PUSH9: 0x68,
+  PUSH10: 0x69,
+  PUSH11: 0x6a,
+  PUSH12: 0x6b,
+  PUSH13: 0x6c,
+  PUSH14: 0x6d,
+  PUSH15: 0x6e,
+  PUSH16: 0x6f,
+  PUSH17: 0x70,
+  PUSH18: 0x71,
+  PUSH19: 0x72,
+  PUSH20: 0x73,
+  PUSH21: 0x74,
+  PUSH22: 0x75,
+  PUSH23: 0x76,
+  PUSH24: 0x77,
+  PUSH25: 0x78,
+  PUSH26: 0x79,
+  PUSH27: 0x7a,
+  PUSH28: 0x7b,
+  PUSH29: 0x7c,
+  PUSH30: 0x7d,
+  PUSH31: 0x7e,
   PUSH32: 0x7f,
+
   DUP1: 0x80,
+  DUP2: 0x81,
+  DUP3: 0x82,
+  DUP4: 0x83,
+  DUP5: 0x84,
+  DUP6: 0x85,
+  DUP7: 0x86,
+  DUP8: 0x87,
+  DUP9: 0x88,
+  DUP10: 0x89,
+  DUP11: 0x8a,
+  DUP12: 0x8b,
+  DUP13: 0x8c,
+  DUP14: 0x8d,
+  DUP15: 0x8e,
   DUP16: 0x8f,
+
   SWAP1: 0x90,
+  SWAP2: 0x91,
+  SWAP3: 0x92,
+  SWAP4: 0x93,
+  SWAP5: 0x94,
+  SWAP6: 0x95,
+  SWAP7: 0x96,
+  SWAP8: 0x97,
+  SWAP9: 0x98,
+  SWAP10: 0x99,
+  SWAP11: 0x9a,
+  SWAP12: 0x9b,
+  SWAP13: 0x9c,
+  SWAP14: 0x9d,
+  SWAP15: 0x9e,
   SWAP16: 0x9f,
 
   LOG0: 0xa0,
@@ -110,10 +170,8 @@ export type Name = keyof typeof codes
 
 const names = /*#__PURE__*/ (() => {
   const table = Array.from<Name | undefined>({ length: 256 })
-  for (const [name, code] of Object.entries(codes)) table[code] = name as Name
-  for (let i = 1; i <= 32; i++) table[0x5f + i] = `PUSH${i}` as Name
-  for (let i = 1; i <= 16; i++) table[0x7f + i] = `DUP${i}` as Name
-  for (let i = 1; i <= 16; i++) table[0x8f + i] = `SWAP${i}` as Name
+  for (const name of Object.keys(codes) as readonly Name[])
+    table[codes[name]] = name
   return table
 })()
 
