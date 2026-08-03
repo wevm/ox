@@ -172,6 +172,7 @@ describe('EEST adapter', () => {
         value: 0n,
       }),
     ).toBe('success')
+    expect(adapter.gasLeft()).toBe(75_294n)
     expect(adapter.readStorage().get(authority)).toMatchInlineSnapshot(`
       Map {
         1n => 42n,

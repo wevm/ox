@@ -786,6 +786,11 @@ function callOp(opcode: number, delegationEnabled: boolean): Instruction {
     if (delegatedTo) {
       // EIP-7702 follows exactly one designator, so delegated code is never
       // parsed again even when it is itself a designator.
+      const delegatedAccount = journal.getAccount(m.journal, delegatedTo)
+      if (delegatedAccount === undefined) {
+        need(m, { address: delegatedTo, kind: 'account' })
+        return
+      }
       code = journal.getCode(m.journal, delegatedTo)
       if (code === undefined) {
         need(m, { address: delegatedTo, kind: 'code' })

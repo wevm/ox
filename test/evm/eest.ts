@@ -1623,7 +1623,17 @@ export function ts(): Adapter {
       const designation = forkAtLeast((context as Context).fork, 'Prague')
         ? delegation.getAddress(accounts.get(address)?.code ?? empty)
         : undefined
-      if (designation) warmAddresses.add(designation)
+      let gas = frame.gas
+      if (designation) {
+        const cost = warmAddresses.has(designation) ? 100n : 2600n
+        if (cost > gas) {
+          gasLeft = 0n
+          output = empty
+          return 'out-of-gas'
+        }
+        gas -= cost
+        warmAddresses.add(designation)
+      }
       const { frame: top, machine } = runFrame(journal, {
         address,
         caller: frame.caller.toLowerCase(),
@@ -1631,7 +1641,7 @@ export function ts(): Adapter {
           ? (accounts.get(designation)?.code ?? empty)
           : (accounts.get(address)?.code ?? empty),
         data: frame.data,
-        gas: frame.gas,
+        gas,
         static: frame.static ?? false,
         value: frame.value,
       })
