@@ -142,3 +142,4 @@
 - **Type snapshot config** -- `@ark/attest` 0.16 does not follow root project references. Point `ATTEST_CONFIG.tsconfig` at `test/tsconfig.json`.
 - **Node local storage** -- Node 24+ needs a valid `--localstorage-file` for the `@typescript/vfs` dependency used by attest.
 - **`scripts/` is not typechecked** -- `pnpm check:types` (`tsc -b`) covers only the `src` and `test` projects. A type error in `scripts/*.ts` surfaces at runtime; typecheck script changes by exercising them (or with an ad hoc `tsc --noEmit`).
+- **EVM oracle treats precompile addresses specially** -- the WASM differential oracle (`test/evm/oracle.ts`) dispatches calls to `0x01`-`0x11` (and `0x0100` on Osaka) to its built-in precompiles, ignoring staged code. Until the TS core implements precompiles, keep fuzz peer accounts and call targets outside that range.

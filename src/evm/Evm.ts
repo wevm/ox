@@ -21,6 +21,7 @@ export type HaltReason =
   | 'memory-limit'
   | 'nonce-overflow'
   | 'out-of-gas'
+  | 'returndata-out-of-bounds'
   | 'stack-overflow'
   | 'stack-underflow'
   | 'static-violation'
@@ -84,13 +85,14 @@ export type Result =
     }>
 
 /**
- * Executes bytecode in a single frame, synchronously.
+ * Executes bytecode as a top-level call frame, synchronously.
  *
  * The frame reads and writes journaled state when a `state` source is given —
  * successful runs commit their changes to the source; reverts and halts
- * discard them — and reads empty state otherwise. Call frames (`CALL`,
- * `CREATE`, …) are not yet part of the dispatch table and halt with
- * `invalid-opcode`.
+ * discard them — and reads empty state otherwise. Message calls (`CALL`,
+ * `CALLCODE`, `DELEGATECALL`, `STATICCALL`) execute as nested frames;
+ * contract creation (`CREATE`, `CREATE2`) is not yet part of the dispatch
+ * table and halts with `invalid-opcode`.
  *
  * @example
  * ```ts twoslash
