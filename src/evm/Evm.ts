@@ -89,10 +89,8 @@ export type Result =
  *
  * The frame reads and writes journaled state when a `state` source is given —
  * successful runs commit their changes to the source; reverts and halts
- * discard them — and reads empty state otherwise. Message calls (`CALL`,
- * `CALLCODE`, `DELEGATECALL`, `STATICCALL`) execute as nested frames;
- * contract creation (`CREATE`, `CREATE2`) is not yet part of the dispatch
- * table and halts with `invalid-opcode`.
+ * discard them — and reads empty state otherwise. Message calls and contract
+ * creation execute as nested frames.
  *
  * @example
  * ```ts twoslash
@@ -245,6 +243,7 @@ function resolveSync(
                 account.code === undefined
                   ? undefined
                   : Hex.toBytes(account.code),
+              hasStorage: account.hasStorage,
               nonce: account.nonce,
             }
           : undefined,

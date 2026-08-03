@@ -18,11 +18,10 @@ import {
  * metadata, so handlers pop and push unchecked. Dynamic gas (memory expansion,
  * per-word costs, warm/cold access) is charged inside handlers.
  *
- * A call instruction pushes a child frame and returns; the loop notices the
- * deeper stack and dispatches the child next. When a frame other than the
- * bottom one completes, {@link resolve} folds its outcome into the parent —
- * journal revert, returndata, gas refund, output copy-back, success word —
- * and the parent resumes after its call instruction.
+ * A call or creation instruction pushes a child frame and returns; the loop
+ * notices the deeper stack and dispatches the child next. When a frame other
+ * than the bottom one completes, {@link resolve} folds its outcome into the
+ * parent.
  *
  * Restartability is structural: the loop snapshots `pc`, `sp`, and `gas`
  * before dispatching, and when an instruction reports a state miss it restores
@@ -95,18 +94,42 @@ export function execute(machine: Machine): StateRequest | undefined {
 function resolve(machine: Machine): void {
   const child = machine.frames.pop() as Frame
   const parent = machine.frames[machine.frames.length - 1] as Frame
-  const success = machine.halt === undefined && !machine.reverted
+  let success = machine.halt === undefined && !machine.reverted
   // A revert or halt unwinds the child's journal writes, its value transfer
   // included. REVERT carries output back (EIP-140); an exceptional halt
   // carries none and has already consumed the child's gas.
-  if (!success) journal.revert(machine.journal, child.checkpoint)
   const output =
     machine.halt === undefined ? (child.output ?? emptyBytes) : emptyBytes
-  parent.returndata = output
+
+  if (child.createdAddress !== undefined && success) {
+    const depositCost = 200n * BigInt(output.length)
+    if (
+      output.length > 24_576 ||
+      output[0] === 0xef ||
+      depositCost > child.gas
+    ) {
+      child.gas = 0n
+      success = false
+    } else {
+      child.gas -= depositCost
+      journal.setCode(machine.journal, child.createdAddress, output)
+    }
+  }
+
+  if (!success) journal.revert(machine.journal, child.checkpoint)
   parent.gas += child.gas
-  const length = Math.min(child.outLength, output.length)
-  if (length > 0) parent.memory.set(output.subarray(0, length), child.outOffset)
-  push(parent, success ? 1n : 0n)
+  if (child.createdAddress !== undefined) {
+    // CREATE exposes only REVERT data through the returndata buffer. Runtime
+    // code is deposited in state and the created address goes on the stack.
+    parent.returndata = machine.reverted ? output : emptyBytes
+    push(parent, success ? BigInt(child.createdAddress) : 0n)
+  } else {
+    parent.returndata = output
+    const length = Math.min(child.outLength, output.length)
+    if (length > 0)
+      parent.memory.set(output.subarray(0, length), child.outOffset)
+    push(parent, success ? 1n : 0n)
+  }
   machine.done = false
   machine.halt = undefined
   machine.reverted = false

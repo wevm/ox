@@ -121,7 +121,12 @@ function seedAll(state: journal.Journal): void {
     journal.seed(state, {
       account:
         i === 0
-          ? { balance: 100n, code: new Uint8Array([0x00]), nonce: 1n }
+          ? {
+              balance: 100n,
+              code: new Uint8Array([0x00]),
+              hasStorage: false,
+              nonce: 1n,
+            }
           : undefined,
       address: account,
       kind: 'account',

@@ -9,9 +9,7 @@
 // - `wasm()`: the conformance-validated C→WASM engine (63554/63556 state
 //   tests on the pinned corpus), staged through its fixed stage-buffer ABI.
 // - `ts()`: the pure-TypeScript interpreter + journal from `ox/evm`
-//   internals. Single-frame only until the call family lands, so cases that
-//   reach `CALL`/`CREATE`-in-frame halt with `invalid-opcode` and fail — an
-//   expected gap the runner reports rather than hides.
+//   internals, including nested calls and contract creation.
 //
 // The transaction layer stays out here so consensus-critical fee logic has
 // one implementation whichever engine executes frames.
@@ -1436,9 +1434,8 @@ const empty = new Uint8Array(0)
  * The `ox/evm` adapter: the pure-TypeScript interpreter and journal behind
  * the same staged-state protocol the WASM engine speaks.
  *
- * Single-frame only until the call family lands (PR 2+): a case whose code
- * reaches `CALL`/`CREATE`/`RETURNDATA*` halts with `invalid-opcode` and
- * fails its comparison — expected, and reported rather than hidden.
+ * Nested message calls, contract creation, and returndata share the same
+ * iterative frame stack as the public synchronous runner.
  */
 export function ts(): Adapter {
   type StagedAccount = { balance: bigint; code: Uint8Array; nonce: bigint }
@@ -1461,12 +1458,23 @@ export function ts(): Adapter {
     return map
   }
 
+  function account(address: string): journal_.SeedAccount | undefined {
+    const value = accounts.get(address)
+    if (!value) return undefined
+    return {
+      ...value,
+      hasStorage: Array.from(storage.get(address)?.values() ?? []).some(
+        (slot) => slot !== 0n,
+      ),
+    }
+  }
+
   /** Answers interpreter state misses from the staged maps. */
   function resolve(request: journal_.StateRequest): journal_.Seed {
     switch (request.kind) {
       case 'account':
         return {
-          account: accounts.get(request.address),
+          account: account(request.address),
           address: request.address,
           kind: 'account',
         }
@@ -1651,12 +1659,12 @@ export function ts(): Adapter {
       }
       // The value moves inside the journal so a failed create rolls it back.
       journal_.seed(journal, {
-        account: senderAccount,
+        account: account(sender),
         address: sender,
         kind: 'account',
       })
       journal_.seed(journal, {
-        account: existing,
+        account: account(created),
         address: created,
         kind: 'account',
       })

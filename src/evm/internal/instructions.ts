@@ -1,4 +1,7 @@
 import * as hash from '../../core/internal/hash.js'
+import type * as Address from '../../core/Address.js'
+import * as ContractAddress from '../../core/ContractAddress.js'
+import * as Hex from '../../core/Hex.js'
 import * as Hardfork from '../Hardfork.js'
 import { analyzed } from './analysis.js'
 import * as journal from './journal.js'
@@ -541,9 +544,11 @@ function build(hardfork: Hardfork.Hardfork): Table {
 
   // Calls
 
+  table[0xf0] = createOp(0xf0)
   table[0xf1] = callOp(0xf1)
   table[0xf2] = callOp(0xf2)
   table[0xf4] = callOp(0xf4)
+  table[0xf5] = createOp(0xf5)
   table[0xfa] = callOp(0xfa)
 
   // Stack, memory & flow
@@ -626,6 +631,117 @@ function build(hardfork: Hardfork.Hardfork): Table {
 }
 
 const callDepthLimit = 1024
+const maxInitcodeSize = 49_152n
+const maxNonce = (1n << 64n) - 1n
+
+function createOp(opcode: number): Instruction {
+  const create2 = opcode === 0xf5
+  return op(32_000n, create2 ? 4 : 3, 1, (f, m) => {
+    const value = pop(f)
+    const offset = pop(f)
+    const length = pop(f)
+    const salt = create2 ? pop(f) : 0n
+
+    if (f.static) {
+      halt(m, f, 'static-violation')
+      return
+    }
+    if (length > maxInitcodeSize) {
+      halt(m, f, 'initcode-size-exceeded')
+      return
+    }
+
+    const own = journal.getAccount(m.journal, f.address)
+    if (own === undefined) {
+      need(m, { address: f.address, kind: 'account' })
+      return
+    }
+    const initcode = readMemoryPadded(f, offset, Number(length))
+    const ownBalance = own ? own.balance : 0n
+    const ownNonce = own ? own.nonce : 0n
+    const canCreate =
+      ownBalance >= value &&
+      ownNonce < maxNonce &&
+      m.frames.length <= callDepthLimit
+
+    const address = canCreate
+      ? (create2
+          ? ContractAddress.fromCreate2({
+              bytecodeHash: hash.keccak256(initcode),
+              from: f.address as Address.Address,
+              salt: Hex.fromNumber(salt, { size: 32 }),
+            })
+          : ContractAddress.fromCreate({
+              from: f.address as Address.Address,
+              nonce: ownNonce,
+            })
+        ).toLowerCase()
+      : undefined
+
+    if (address !== undefined) {
+      const target = journal.getAccount(m.journal, address)
+      if (target === undefined) {
+        need(m, { address, kind: 'account' })
+        return
+      }
+      if (target !== null && target.hasCode === undefined) {
+        need(m, { address, kind: 'code' })
+        return
+      }
+    }
+
+    const words = wordCount(length)
+    if (!chargeDynamic(f, m, 2n * words + (create2 ? 6n * words : 0n))) return
+    if (!expandMemory(m, f, offset, length)) return
+    const childGas = f.gas - f.gas / 64n
+    f.gas -= childGas
+    f.returndata = emptyBytes
+
+    if (address === undefined) {
+      f.gas += childGas
+      push(f, 0n)
+      return
+    }
+
+    journal.setNonce(m.journal, f.address, ownNonce + 1n)
+    journal.warmAddress(m.journal, address)
+    const checkpoint = journal.checkpoint(m.journal)
+    const target = journal.getAccount(
+      m.journal,
+      address,
+    ) as journal.Account | null
+    if (
+      target !== null &&
+      (target.nonce !== 0n || target.hasCode || target.hasStorage)
+    ) {
+      push(f, 0n)
+      return
+    }
+
+    journal.setBalance(m.journal, f.address, ownBalance - value)
+    journal.setBalance(
+      m.journal,
+      address,
+      (target ? target.balance : 0n) + value,
+    )
+    journal.setNonce(m.journal, address, 1n)
+    journal.markCreated(m.journal, address)
+    m.frames.push(
+      createFrame({
+        address,
+        analysis: analyzed(initcode).analysis,
+        caller: f.addressWord,
+        checkpoint,
+        code: initcode,
+        createdAddress: address,
+        gas: childGas,
+        input: emptyBytes,
+        static: false,
+        value,
+      }),
+    )
+  })
+}
 
 // One handler for CALL (0xf1), CALLCODE (0xf2), DELEGATECALL (0xf4), and
 // STATICCALL (0xfa). Only CALL and CALLCODE take a value operand, and only
@@ -750,6 +866,21 @@ function copy(f: Frame, m: Machine, source: Uint8Array): void {
   f.gas -= cost
   if (!expandMemory(m, f, dest, length)) return
   if (length !== 0n) copyPadded(f, Number(dest), source, offset, Number(length))
+}
+
+function readMemoryPadded(
+  frame: Frame,
+  offset: bigint,
+  length: number,
+): Uint8Array {
+  const output = new Uint8Array(length)
+  const logicalLength = frame.memoryWords * 32
+  if (length === 0 || offset >= BigInt(logicalLength)) return output
+  const start = Number(offset)
+  output.set(
+    frame.memory.subarray(start, Math.min(start + length, logicalLength)),
+  )
+  return output
 }
 
 function jump(f: Frame, m: Machine, destination: bigint): void {

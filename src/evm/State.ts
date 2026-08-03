@@ -15,11 +15,17 @@ export type Value<
 export type Account = Compute<{
   /** Balance in wei. */
   balance: bigint
-  /** Nonce. */
-  nonce: bigint
   /** Deployed code. */
   code?: Hex.Hex | undefined
+  /** Whether the account has non-zero storage. */
+  hasStorage: boolean
+  /** Nonce. */
+  nonce: bigint
 }>
+
+/** Account fields written to a source. Storage presence stays owned by the
+ * source and is updated through {@link ox#State.(Source:type)}.putStorage. */
+export type AccountUpdate = Compute<Omit<Account, 'hasStorage'>>
 
 /**
  * Root type — a pluggable state source.
@@ -44,10 +50,11 @@ export type Source<asynchronous extends boolean = boolean> = {
     address: Address.Address,
     slot: bigint,
   ): Value<asynchronous, bigint>
-  /** Writes an account to the overlay, or deletes it when `account` is
-   * `undefined`. Never propagates upstream. */
-  putAccount(address: Address.Address, account: Account | undefined): void
-  /** Writes a storage slot to the overlay. Never propagates upstream. */
+  /** Writes account fields to the overlay, or deletes the account when
+   * `account` is `undefined`. Preserves storage presence metadata. */
+  putAccount(address: Address.Address, account: AccountUpdate | undefined): void
+  /** Writes a storage slot to the overlay and keeps `getAccount`'s
+   * `hasStorage` result synchronized. Never propagates upstream. */
   putStorage(address: Address.Address, slot: bigint, value: bigint): void
 }
 
@@ -91,7 +98,7 @@ const zeroHash = `0x${'00'.repeat(32)}` as const
 export function fromMemory(options: fromMemory.Options = {}): Memory {
   const accounts = new Map<
     string,
-    { balance: bigint; code: Hex.Hex; nonce: bigint }
+    { balance: bigint; code: Hex.Hex; hasStorage: boolean; nonce: bigint }
   >()
   const storage = new Map<string, Map<bigint, bigint>>()
   const blockHashes = new Map<bigint, Hex.Hex>()
@@ -101,13 +108,18 @@ export function fromMemory(options: fromMemory.Options = {}): Memory {
     accounts.set(address, {
       balance: init.balance ?? 0n,
       code: init.code ?? '0x',
+      hasStorage: false,
       nonce: init.nonce ?? 0n,
     })
     if (init.storage) {
       const slots = new Map<bigint, bigint>()
-      for (const [slot, value] of Object.entries(init.storage))
-        slots.set(Hex.toBigInt(slot as Hex.Hex), Hex.toBigInt(value))
+      for (const [slot, value] of Object.entries(init.storage)) {
+        const word = Hex.toBigInt(value)
+        if (word !== 0n) slots.set(Hex.toBigInt(slot as Hex.Hex), word)
+      }
       storage.set(address, slots)
+      const account = accounts.get(address)
+      if (account) account.hasStorage = slots.size > 0
     }
   }
   for (const [number, hash] of Object.entries(options.blockHashes ?? {}))
@@ -121,6 +133,7 @@ export function fromMemory(options: fromMemory.Options = {}): Memory {
       return {
         balance: account.balance,
         code: account.code,
+        hasStorage: account.hasStorage,
         nonce: account.nonce,
       }
     },
@@ -143,6 +156,7 @@ export function fromMemory(options: fromMemory.Options = {}): Memory {
       accounts.set(key, {
         balance: account.balance,
         code: account.code ?? accounts.get(key)?.code ?? '0x',
+        hasStorage: accounts.get(key)?.hasStorage ?? false,
         nonce: account.nonce,
       })
     },
@@ -153,7 +167,11 @@ export function fromMemory(options: fromMemory.Options = {}): Memory {
         slots = new Map()
         storage.set(key, slots)
       }
-      slots.set(slot, value)
+      if (value === 0n) slots.delete(slot)
+      else slots.set(slot, value)
+      if (slots.size === 0) storage.delete(key)
+      const account = accounts.get(key)
+      if (account) account.hasStorage = slots.size > 0
     },
   }
 }
