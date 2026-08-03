@@ -239,6 +239,7 @@ export type Status =
   | 'nonce-overflow'
   | 'out-of-gas'
   | 'out-of-memory'
+  | 'returndata-out-of-bounds'
   | 'stack-overflow'
   | 'stack-underflow'
   | 'static-violation'
