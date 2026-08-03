@@ -701,6 +701,21 @@
       "types": "./dist/erc8021/Attribution.d.ts",
       "default": "./dist/erc8021/Attribution.js"
     },
+    "./evm": {
+      "src": "./src/evm/index.ts",
+      "types": "./dist/evm/index.d.ts",
+      "default": "./dist/evm/index.js"
+    },
+    "./evm/Hardfork": {
+      "src": "./src/evm/Hardfork.ts",
+      "types": "./dist/evm/Hardfork.d.ts",
+      "default": "./dist/evm/Hardfork.js"
+    },
+    "./evm/Opcode": {
+      "src": "./src/evm/Opcode.ts",
+      "types": "./dist/evm/Opcode.d.ts",
+      "default": "./dist/evm/Opcode.js"
+    },
     "./node": {
       "src": "./src/node/index.ts",
       "types": "./dist/node/index.d.ts",
@@ -1250,10 +1265,6 @@
       "src": "./src/zod/tempo/z.ts",
       "types": "./dist/zod/tempo/z.d.ts",
       "default": "./dist/zod/tempo/z.js"
-    },
-    "./_types/*": {
-      "types": "./dist/*.d.ts",
-      "default": "./dist/*.js"
     }
   },
   "module": "./dist/index.js",

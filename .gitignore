@@ -25,6 +25,7 @@ site/.vocs
 site/src/pages.gen.ts
 site/src/pages/api
 site/src/pages/ercs
+site/src/pages/evm
 site/src/pages/node
 site/src/pages/tempo/*
 !site/src/pages/tempo/guides/
