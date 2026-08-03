@@ -1,5 +1,6 @@
 import type { HaltReason } from '../Evm.js'
 import type { Analysis } from './analysis.js'
+import type { Journal, StateRequest } from './journal.js'
 
 export const MASK256 = (1n << 256n) - 1n
 export const STACK_LIMIT = 1024
@@ -23,9 +24,27 @@ export type Instruction = {
 /** 256-entry dispatch table. `undefined` is an undefined opcode. */
 export type Table = readonly (Instruction | undefined)[]
 
+/** Block-level environment the block opcodes read. Internal representation:
+ * addresses as lowercase hex, hashes as words. */
+export type BlockEnv = {
+  baseFee: bigint
+  blobBaseFee: bigint
+  chainId: bigint
+  coinbase: bigint
+  gasLimit: bigint
+  number: bigint
+  prevRandao: bigint
+  timestamp: bigint
+}
+
 /** One execution frame. */
 export type Frame = {
+  /** Account whose storage and balance this frame operates on (lowercase hex). */
+  address: string
+  /** `address` as a stack word. */
+  addressWord: bigint
   analysis: Analysis
+  caller: bigint
   code: Uint8Array
   gas: bigint
   input: Uint8Array
@@ -36,27 +55,59 @@ export type Frame = {
   pc: number
   sp: number
   stack: bigint[]
+  static: boolean
+  value: bigint
   view: DataView
 }
 
 /** The whole machine: frame stack plus terminal state. */
 export type Machine = {
+  blobHashes: readonly bigint[]
+  block: BlockEnv
   done: boolean
   frames: Frame[]
+  gasPrice: bigint
   halt: HaltReason | undefined
+  journal: Journal
+  origin: bigint
+  /** Set by an instruction that hit unfetched state; the dispatch loop
+   * restores its snapshot and surfaces this to the driver. */
+  request: StateRequest | undefined
   reverted: boolean
   table: Table
 }
 
+/** Signals a state miss. The instruction must return without mutating. */
+export function need(machine: Machine, request: StateRequest): void {
+  machine.request = request
+}
+
+/** Renders a stack word as a lowercase 20-byte address string. */
+export function wordToAddress(value: bigint): string {
+  return `0x${(value & ((1n << 160n) - 1n)).toString(16).padStart(40, '0')}`
+}
+
+/** Parses a lowercase address string into a stack word. */
+export function addressToWord(address: string): bigint {
+  return BigInt(address)
+}
+
 export function createFrame(options: {
+  address: string
   analysis: Analysis
+  caller: bigint
   code: Uint8Array
   gas: bigint
   input: Uint8Array
+  static: boolean
+  value: bigint
 }): Frame {
   const memory = new Uint8Array(0)
   return {
+    address: options.address,
+    addressWord: addressToWord(options.address),
     analysis: options.analysis,
+    caller: options.caller,
     code: options.code,
     gas: options.gas,
     input: options.input,
@@ -68,6 +119,8 @@ export function createFrame(options: {
     // Packed with zeroes up front: the elements kind stays PACKED, and reads
     // beneath `sp` are always assigned slots.
     stack: Array.from({ length: STACK_LIMIT }, () => 0n),
+    static: options.static,
+    value: options.value,
     view: new DataView(memory.buffer),
   }
 }

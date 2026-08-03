@@ -1,5 +1,6 @@
 import * as hash from '../../core/internal/hash.js'
 import * as Hardfork from '../Hardfork.js'
+import * as journal from './journal.js'
 import {
   bitLength,
   copyPadded,
@@ -7,15 +8,43 @@ import {
   halt,
   loadWordPadded,
   MASK256,
+  need,
   pop,
   push,
   readWord,
+  wordToAddress,
   writeWord,
   type Frame,
   type Instruction,
   type Machine,
   type Table,
 } from './machine.js'
+
+/** keccak256 of empty input — `EXTCODEHASH` of a codeless, non-empty account. */
+const KECCAK_EMPTY =
+  0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470n
+
+/** Charges EIP-2929 account access (100 warm / 2600 cold) and warms. */
+function chargeAccount(f: Frame, m: Machine, address: string): boolean {
+  const warm = journal.isWarmAddress(m.journal, address)
+  const cost = warm ? 100n : 2600n
+  if (cost > f.gas) {
+    halt(m, f, 'out-of-gas')
+    return false
+  }
+  f.gas -= cost
+  if (!warm) journal.warmAddress(m.journal, address)
+  return true
+}
+
+function chargeDynamic(f: Frame, m: Machine, cost: bigint): boolean {
+  if (cost > f.gas) {
+    halt(m, f, 'out-of-gas')
+    return false
+  }
+  f.gas -= cost
+  return true
+}
 
 const signed = (value: bigint) => BigInt.asIntN(256, value)
 const wrap = (value: bigint) => BigInt.asUintN(256, value)
@@ -226,11 +255,275 @@ function build(hardfork: Hardfork.Hardfork): Table {
 
   // Frame environment
 
+  table[0x30] = op(2n, 0, 1, (f) => push(f, f.addressWord))
+  table[0x32] = op(2n, 0, 1, (f, m) => push(f, m.origin))
+  table[0x33] = op(2n, 0, 1, (f) => push(f, f.caller))
+  table[0x34] = op(2n, 0, 1, (f) => push(f, f.value))
   table[0x35] = op(3n, 1, 1, (f) => push(f, loadWordPadded(f.input, pop(f))))
   table[0x36] = op(2n, 0, 1, (f) => push(f, BigInt(f.input.length)))
   table[0x38] = op(2n, 0, 1, (f) => push(f, BigInt(f.code.length)))
   table[0x37] = op(3n, 3, 0, (f, m) => copy(f, m, f.input))
   table[0x39] = op(3n, 3, 0, (f, m) => copy(f, m, f.code))
+  table[0x3a] = op(2n, 0, 1, (f, m) => push(f, m.gasPrice))
+
+  // Account state
+
+  table[0x31] = op(0n, 1, 1, (f, m) => {
+    const address = wordToAddress(pop(f))
+    const account = journal.getAccount(m.journal, address)
+    if (account === undefined) {
+      need(m, { address, kind: 'account' })
+      return
+    }
+    if (!chargeAccount(f, m, address)) return
+    push(f, account ? account.balance : 0n)
+  })
+
+  table[0x3b] = op(0n, 1, 1, (f, m) => {
+    const address = wordToAddress(pop(f))
+    const account = journal.getAccount(m.journal, address)
+    if (account === undefined) {
+      need(m, { address, kind: 'account' })
+      return
+    }
+    const code = journal.getCode(m.journal, address)
+    if (code === undefined) {
+      need(m, { address, kind: 'code' })
+      return
+    }
+    if (!chargeAccount(f, m, address)) return
+    push(f, BigInt(code.length))
+  })
+
+  table[0x3c] = op(0n, 4, 0, (f, m) => {
+    const address = wordToAddress(pop(f))
+    const dest = pop(f)
+    const offset = pop(f)
+    const length = pop(f)
+    const account = journal.getAccount(m.journal, address)
+    if (account === undefined) {
+      need(m, { address, kind: 'account' })
+      return
+    }
+    const code = journal.getCode(m.journal, address)
+    if (code === undefined) {
+      need(m, { address, kind: 'code' })
+      return
+    }
+    if (!chargeAccount(f, m, address)) return
+    if (!chargeDynamic(f, m, 3n * wordCount(length))) return
+    if (!expandMemory(m, f, dest, length)) return
+    if (length !== 0n) copyPadded(f, Number(dest), code, offset, Number(length))
+  })
+
+  table[0x3f] = op(0n, 1, 1, (f, m) => {
+    const address = wordToAddress(pop(f))
+    const account = journal.getAccount(m.journal, address)
+    if (account === undefined) {
+      need(m, { address, kind: 'account' })
+      return
+    }
+    // Emptiness (EIP-161) needs the code dimension resolved when balance and
+    // nonce are both zero; hashing needs the code itself.
+    if (account !== null && account.hasCode === undefined) {
+      need(m, { address, kind: 'code' })
+      return
+    }
+    if (!chargeAccount(f, m, address)) return
+    if (account === null || journal.isEmpty(account)) push(f, 0n)
+    else if (!account.hasCode) push(f, KECCAK_EMPTY)
+    else push(f, journal.getCodeHash(m.journal, address))
+  })
+
+  table[0x47] = op(5n, 0, 1, (f, m) => {
+    const account = journal.getAccount(m.journal, f.address)
+    if (account === undefined) {
+      need(m, { address: f.address, kind: 'account' })
+      return
+    }
+    push(f, account ? account.balance : 0n)
+  })
+
+  // Block environment
+
+  table[0x40] = op(20n, 1, 1, (f, m) => {
+    const number = pop(f)
+    // Only the previous 256 blocks are addressable; everything else is 0.
+    if (number >= m.block.number || number + 256n < m.block.number) {
+      push(f, 0n)
+      return
+    }
+    const hash_ = journal.getBlockHash(m.journal, number)
+    if (hash_ === undefined) {
+      need(m, { kind: 'blockHash', number })
+      return
+    }
+    push(f, hash_)
+  })
+  table[0x41] = op(2n, 0, 1, (f, m) => push(f, m.block.coinbase))
+  table[0x42] = op(2n, 0, 1, (f, m) => push(f, m.block.timestamp))
+  table[0x43] = op(2n, 0, 1, (f, m) => push(f, m.block.number))
+  table[0x44] = op(2n, 0, 1, (f, m) => push(f, m.block.prevRandao))
+  table[0x45] = op(2n, 0, 1, (f, m) => push(f, m.block.gasLimit))
+  table[0x46] = op(2n, 0, 1, (f, m) => push(f, m.block.chainId))
+  table[0x48] = op(2n, 0, 1, (f, m) => push(f, m.block.baseFee))
+  table[0x49] = op(3n, 1, 1, (f, m) => {
+    const index = pop(f)
+    push(
+      f,
+      index < BigInt(m.blobHashes.length)
+        ? (m.blobHashes[Number(index)] as bigint)
+        : 0n,
+    )
+  })
+  table[0x4a] = op(2n, 0, 1, (f, m) => push(f, m.block.blobBaseFee))
+
+  // Storage
+
+  table[0x54] = op(0n, 1, 1, (f, m) => {
+    const slot = pop(f)
+    const value = journal.getStorage(m.journal, f.address, slot)
+    if (value === undefined) {
+      need(m, { address: f.address, kind: 'storage', slot })
+      return
+    }
+    const warm = journal.isWarmSlot(m.journal, f.address, slot)
+    if (!chargeDynamic(f, m, warm ? 100n : 2100n)) return
+    if (!warm) journal.warmSlot(m.journal, f.address, slot)
+    push(f, value)
+  })
+
+  table[0x55] = op(0n, 2, 0, (f, m) => {
+    if (f.static) {
+      halt(m, f, 'static-violation')
+      return
+    }
+    // EIP-2200 sentry: leave headroom for the call stipend.
+    if (f.gas <= 2300n) {
+      halt(m, f, 'out-of-gas')
+      return
+    }
+    const slot = pop(f)
+    const value = pop(f)
+    const current = journal.getStorage(m.journal, f.address, slot)
+    if (current === undefined) {
+      need(m, { address: f.address, kind: 'storage', slot })
+      return
+    }
+    const original = journal.getOriginal(m.journal, f.address, slot) as bigint
+    const warm = journal.isWarmSlot(m.journal, f.address, slot)
+
+    let cost = warm ? 0n : 2100n
+    if (value === current) cost += 100n
+    else if (current === original) cost += original === 0n ? 20_000n : 2900n
+    else cost += 100n
+    if (!chargeDynamic(f, m, cost)) return
+    if (!warm) journal.warmSlot(m.journal, f.address, slot)
+
+    if (value !== current) {
+      if (current === original) {
+        if (original !== 0n && value === 0n) journal.addRefund(m.journal, 4800n)
+      } else {
+        if (original !== 0n) {
+          if (current === 0n) journal.addRefund(m.journal, -4800n)
+          else if (value === 0n) journal.addRefund(m.journal, 4800n)
+        }
+        if (value === original)
+          journal.addRefund(m.journal, original === 0n ? 19_900n : 2800n)
+      }
+      journal.setStorage(m.journal, f.address, slot, value)
+    }
+  })
+
+  table[0x5c] = op(100n, 1, 1, (f, m) => {
+    push(f, journal.getTransient(m.journal, f.address, pop(f)))
+  })
+
+  table[0x5d] = op(100n, 2, 0, (f, m) => {
+    if (f.static) {
+      halt(m, f, 'static-violation')
+      return
+    }
+    const slot = pop(f)
+    const value = pop(f)
+    journal.setTransient(m.journal, f.address, slot, value)
+  })
+
+  // Logs
+
+  for (let topics = 0; topics <= 4; topics++)
+    table[0xa0 + topics] = op(375n, 2 + topics, 0, (f, m) => {
+      if (f.static) {
+        halt(m, f, 'static-violation')
+        return
+      }
+      const offset = pop(f)
+      const length = pop(f)
+      const list: bigint[] = []
+      for (let i = 0; i < topics; i++) list.push(pop(f))
+      if (!chargeDynamic(f, m, 375n * BigInt(topics) + 8n * length)) return
+      if (!expandMemory(m, f, offset, length)) return
+      const start = Number(offset)
+      journal.addLog(m.journal, {
+        address: f.address,
+        data: f.memory.slice(start, start + Number(length)),
+        topics: list,
+      })
+    })
+
+  // Selfdestruct (EIP-6780: destruction only when created in this transaction)
+
+  table[0xff] = op(5000n, 1, 0, (f, m) => {
+    if (f.static) {
+      halt(m, f, 'static-violation')
+      return
+    }
+    const beneficiary = wordToAddress(pop(f))
+    const own = journal.getAccount(m.journal, f.address)
+    if (own === undefined) {
+      need(m, { address: f.address, kind: 'account' })
+      return
+    }
+    const target = journal.getAccount(m.journal, beneficiary)
+    if (target === undefined) {
+      need(m, { address: beneficiary, kind: 'account' })
+      return
+    }
+    const balance = own ? own.balance : 0n
+    // Emptiness of the beneficiary decides the new-account charge; the code
+    // dimension must be resolved when balance and nonce are both zero.
+    if (
+      balance !== 0n &&
+      target !== null &&
+      target.balance === 0n &&
+      target.nonce === 0n &&
+      target.hasCode === undefined
+    ) {
+      need(m, { address: beneficiary, kind: 'code' })
+      return
+    }
+    const warm = journal.isWarmAddress(m.journal, beneficiary)
+    let cost = warm ? 0n : 2600n
+    if (balance !== 0n && (target === null || journal.isEmpty(target)))
+      cost += 25_000n
+    if (!chargeDynamic(f, m, cost)) return
+    if (!warm) journal.warmAddress(m.journal, beneficiary)
+
+    if (beneficiary !== f.address && balance !== 0n) {
+      journal.setBalance(m.journal, f.address, 0n)
+      const after = journal.getAccount(m.journal, beneficiary)
+      journal.setBalance(
+        m.journal,
+        beneficiary,
+        (after ? after.balance : 0n) + balance,
+      )
+    }
+    if (journal.isCreated(m.journal, f.address)) {
+      journal.setBalance(m.journal, f.address, 0n)
+      journal.markSelfdestructed(m.journal, f.address)
+    }
+    m.done = true
+  })
 
   // Stack, memory & flow
 
