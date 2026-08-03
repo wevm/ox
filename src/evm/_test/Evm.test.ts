@@ -47,6 +47,7 @@ describe('call', () => {
       state: State.fromMemory({
         accounts: {
           // CALLER, ORIGIN, CALLVALUE, and CALLDATALOAD(0), returned as words.
+          [from]: { balance: 100n },
           [to]: { code: '0x335f5232602052346040525f3560605260805ff3' },
         },
       }),
@@ -78,6 +79,41 @@ describe('call', () => {
       '0x000000000000000000000000000000000000000000000000000000000000002a',
     )
     expect(state.getStorage(to, 1n)).toBe(0n)
+  })
+
+  test('applies value ephemerally', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [from]: { balance: 100n },
+        // SELFBALANCE, return the word.
+        [to]: { balance: 5n, code: '0x475f5260205ff3' },
+      },
+    })
+    const result = Evm.call(Evm.from({ state }), { from, to, value: 42n })
+
+    Evm.assertSuccess(result)
+    expect(result.output).toBe(
+      '0x000000000000000000000000000000000000000000000000000000000000002f',
+    )
+    expect(state.getAccount(from)?.balance).toBe(100n)
+    expect(state.getAccount(to)?.balance).toBe(5n)
+  })
+
+  test('halts when value exceeds the sender balance', () => {
+    const evm = Evm.from({
+      state: State.fromMemory({
+        accounts: { [from]: { balance: 41n }, [to]: {} },
+      }),
+    })
+
+    expect(Evm.call(evm, { from, gas: 100n, to, value: 42n }))
+      .toMatchInlineSnapshot(`
+        {
+          "gasUsed": 100n,
+          "reason": "insufficient-balance",
+          "status": "halted",
+        }
+      `)
   })
 
   test('executes delegated code in the authority context', () => {
@@ -113,7 +149,7 @@ describe('call', () => {
     expect(Evm.call(evm, { to })).toMatchInlineSnapshot(`
       {
         "gasRefund": 0n,
-        "gasUsed": 105n,
+        "gasUsed": 2705n,
         "logs": [],
         "output": "0x",
         "status": "success",

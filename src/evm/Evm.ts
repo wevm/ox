@@ -9,7 +9,13 @@ import * as delegation from './internal/delegation.js'
 import { table } from './internal/instructions.js'
 import { execute } from './internal/interpreter.js'
 import * as journal_ from './internal/journal.js'
-import { addressToWord, createFrame, type Machine } from './internal/machine.js'
+import {
+  addressToWord,
+  createFrame,
+  halt,
+  type Frame,
+  type Machine,
+} from './internal/machine.js'
 
 /** Why execution stopped exceptionally. Exceptional halts consume all gas. */
 export type HaltReason =
@@ -17,6 +23,7 @@ export type HaltReason =
   | 'code-size-exceeded'
   | 'create-collision'
   | 'initcode-size-exceeded'
+  | 'insufficient-balance'
   | 'invalid-jump'
   | 'invalid-opcode'
   | 'memory-limit'
@@ -162,6 +169,7 @@ export declare namespace from {
  */
 export function call(evm: Evm, options: call.Options): Result {
   const { hardfork, state } = evm
+  const from = (options.from ?? zeroAddress).toLowerCase() as Address.Address
   const to = options.to.toLowerCase() as Address.Address
   const code = getCode(state, to)
   const delegatedTo = Hardfork.atLeast(hardfork, 'prague')
@@ -171,27 +179,25 @@ export function call(evm: Evm, options: call.Options): Result {
     ? getCode(state, delegatedTo as Address.Address)
     : code
 
-  return executeRun(
-    {
-      address: to,
-      blobHashes: options.blobHashes,
-      block: options.block,
-      bytecode,
-      caller: options.from,
-      chainId: options.chainId,
-      data: options.data,
-      gas: options.gas,
-      gasPrice: options.gasPrice,
-      hardfork,
-      origin: options.from,
-      state,
-      value: options.value,
-    },
-    {
-      persist: false,
-      warmAddresses: delegatedTo ? [delegatedTo] : [],
-    },
-  )
+  const execution = createExecution({
+    address: to,
+    blobHashes: options.blobHashes,
+    block: options.block,
+    bytecode,
+    caller: from,
+    chainId: options.chainId,
+    data: options.data,
+    gas: options.gas,
+    gasPrice: options.gasPrice,
+    hardfork,
+    origin: from,
+    state,
+    value: options.value,
+  })
+
+  if (delegatedTo) chargeAccount(execution, delegatedTo)
+  transferValue(execution, { from, state, to, value: options.value ?? 0n })
+  return executeRun(execution)
 }
 
 export declare namespace call {
@@ -278,16 +284,22 @@ function getCode(state: State.Sync, address: Address.Address): Uint8Array {
  * @returns The execution result.
  */
 export function run(options: run.Options): Result {
-  return executeRun(options, { persist: true, warmAddresses: [] })
+  const execution = createExecution(options)
+  const result = executeRun(execution)
+  if (options.state && result.status === 'success')
+    commit(execution.machine.journal, options.state)
+  return result
 }
 
-function executeRun(
-  options: run.Options,
-  behavior: {
-    persist: boolean
-    warmAddresses: readonly string[]
-  },
-): Result {
+type Execution = {
+  frame: Frame
+  gas: bigint
+  hardfork: Hardfork.Hardfork
+  machine: Machine
+  state: State.Sync | undefined
+}
+
+function createExecution(options: run.Options): Execution {
   const {
     address = zeroAddress,
     blobHashes = [],
@@ -349,12 +361,15 @@ function executeRun(
   journal_.warmAddress(journal, frame.address)
   journal_.warmAddress(journal, origin.toLowerCase())
   journal_.warmAddress(journal, caller.toLowerCase())
-  for (const address of behavior.warmAddresses)
-    journal_.warmAddress(journal, address)
 
+  return { frame, gas, hardfork, machine, state }
+}
+
+function executeRun(execution: Execution): Result {
+  const { frame, gas, machine, state } = execution
   let request = execute(machine)
   while (request !== undefined) {
-    journal_.seed(journal, resolveSync(state, request))
+    journal_.seed(machine.journal, resolveSync(state, request))
     request = execute(machine)
   }
 
@@ -363,11 +378,10 @@ function executeRun(
   const output = frame.output ? Hex.fromBytes(frame.output) : '0x'
   if (machine.reverted) return { gasUsed, output, status: 'reverted' }
 
-  if (state && behavior.persist) commit(journal, state)
   return {
-    gasRefund: journal.refund,
+    gasRefund: machine.journal.refund,
     gasUsed,
-    logs: journal.logs.map((log) => ({
+    logs: machine.journal.logs.map((log) => ({
       address: Address.checksum(log.address),
       data: Hex.fromBytes(log.data),
       topics: log.topics.map((topic) => Hex.fromNumber(topic, { size: 32 })),
@@ -375,6 +389,58 @@ function executeRun(
     output,
     status: 'success',
   }
+}
+
+function chargeAccount(execution: Execution, address: string): void {
+  const { frame, hardfork, machine } = execution
+  const warm = journal_.isWarmAddress(machine.journal, address)
+  const gas = Hardfork.gas(hardfork)
+  const cost = warm ? gas.warmReadGas : gas.coldAccountAccessGas
+  if (cost > frame.gas) {
+    halt(machine, frame, 'out-of-gas')
+    return
+  }
+  frame.gas -= cost
+  if (!warm) journal_.warmAddress(machine.journal, address)
+}
+
+function transferValue(
+  execution: Execution,
+  options: {
+    from: Address.Address
+    state: State.Sync
+    to: Address.Address
+    value: bigint
+  },
+): void {
+  if (options.value === 0n || execution.machine.halt) return
+  const journal = execution.machine.journal
+  seedAccount(journal, options.state, options.from)
+  seedAccount(journal, options.state, options.to)
+
+  const account = journal_.getAccount(journal, options.from)
+  const balance = account?.balance ?? 0n
+  if (balance < options.value) {
+    halt(execution.machine, execution.frame, 'insufficient-balance')
+    return
+  }
+
+  journal_.setBalance(journal, options.from, balance - options.value)
+  const recipient = journal_.getAccount(journal, options.to)
+  journal_.setBalance(
+    journal,
+    options.to,
+    (recipient?.balance ?? 0n) + options.value,
+  )
+}
+
+function seedAccount(
+  journal: journal_.Journal,
+  state: State.Sync,
+  address: Address.Address,
+): void {
+  if (journal_.getAccount(journal, address) !== undefined) return
+  journal_.seed(journal, resolveSync(state, { address, kind: 'account' }))
 }
 
 const zeroAddress = '0x0000000000000000000000000000000000000000' as const
