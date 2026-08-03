@@ -765,6 +765,10 @@ const topNav = [
         link: getPath({ entrypointCategory: 'ERCs' }),
       },
       {
+        text: 'EVM',
+        link: getPath({ entrypointCategory: 'EVM' }),
+      },
+      {
         text: 'Zod',
         link: getPath({ entrypointCategory: 'Zod' }),
       },
