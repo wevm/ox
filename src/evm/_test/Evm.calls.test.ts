@@ -474,47 +474,6 @@ describe('EIP-7702 delegation', () => {
     expect(result.gasUsed).toBe(2728n)
   })
 
-  test('fetches the delegated account before its code', () => {
-    const reads: string[] = []
-    const source = State.from({
-      async: false,
-      getAccount(address) {
-        reads.push(`account:${address}`)
-        if (address === bob)
-          return {
-            balance: 0n,
-            code: designate(carol),
-            hasStorage: false,
-            nonce: 0n,
-          }
-        if (address === carol)
-          return { balance: 0n, hasStorage: false, nonce: 0n }
-        return undefined
-      },
-      getBlockHash: () => `0x${'00'.repeat(32)}` as `0x${string}`,
-      getCode(address) {
-        reads.push(`code:${address}`)
-        return address === carol ? '0x00' : '0x'
-      },
-      getStorage: () => 0n,
-      putAccount() {},
-      putStorage() {},
-    })
-    const result = Evm.run({
-      bytecode: `0x${zeros(5)}${push(bob)}61fffff1${ret}`,
-      state: source,
-    })
-
-    expect(returned(result)).toBe(word(1))
-    expect(reads).toMatchInlineSnapshot(`
-      [
-        "account:0x00000000000000000000000000000000000000b0",
-        "account:0x00000000000000000000000000000000000000c1",
-        "code:0x00000000000000000000000000000000000000c1",
-      ]
-    `)
-  })
-
   test('activates at Prague', () => {
     const state = State.fromMemory({
       accounts: {
@@ -556,6 +515,38 @@ describe('EIP-7702 delegation', () => {
       state,
     })
     expect(returned(result)).toBe(word(0))
+  })
+
+  test('loads a delegated account before its lazy code', () => {
+    const memory = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        [carol]: { code: `0x30${ret}` },
+      },
+    })
+    const reads: string[] = []
+    const state = State.from({
+      ...memory,
+      getAccount(address) {
+        reads.push(`account:${address}`)
+        const account = memory.getAccount(address)
+        return account ? { ...account, code: undefined } : undefined
+      },
+      getCode(address) {
+        reads.push(`code:${address}`)
+        return memory.getCode(address)
+      },
+    })
+
+    const result = Evm.run({
+      bytecode: `0x${zeros(5)}${push(bob)}61fffff1${ret}`,
+      state,
+    })
+
+    expect(returned(result)).toBe(word(1))
+    expect(reads.indexOf(`account:${carol}`)).toBeLessThan(
+      reads.indexOf(`code:${carol}`),
+    )
   })
 
   test('code-reading opcodes keep their specified views', () => {

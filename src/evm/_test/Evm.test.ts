@@ -1,4 +1,5 @@
-import { Evm, State } from 'ox/evm'
+import { Address, Authorization, Secp256k1 } from 'ox'
+import { Evm, State, Transaction } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
 test('exports', () => {
@@ -6,10 +7,13 @@ test('exports', () => {
     [
       "from",
       "call",
+      "transact",
       "run",
       "assertSuccess",
       "RevertedError",
       "HaltedError",
+      "InvalidTransactionError",
+      "UnsupportedTransactionTypeError",
     ]
   `)
 })
@@ -174,6 +178,424 @@ describe('call', () => {
         "gasUsed": 100n,
         "reason": "invalid-opcode",
         "status": "halted",
+      }
+    `)
+  })
+})
+
+describe('transact', () => {
+  const from = '0x00000000000000000000000000000000000000f0'
+  const to = '0x00000000000000000000000000000000000000c0'
+  const coinbase = '0x00000000000000000000000000000000000000cb'
+
+  test('executes and settles a dynamic-fee transaction', () => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 2_000_000n }, [to]: { code: '0x00' } },
+    })
+    const evm = Evm.from({
+      block: { baseFeePerGas: 10n, coinbase },
+      state,
+    })
+
+    expect(
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        maxFeePerGas: 20n,
+        maxPriorityFeePerGas: 2n,
+        nonce: 0n,
+        to,
+        type: 'eip1559',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "effectiveGasPrice": 12n,
+        "gasUsed": 21000n,
+        "logs": [],
+        "output": "0x",
+        "status": "success",
+      }
+    `)
+    expect(state.getAccount(from)).toMatchInlineSnapshot(`
+      {
+        "balance": 1748000n,
+        "code": "0x",
+        "hasStorage": false,
+        "nonce": 1n,
+      }
+    `)
+    expect(state.getAccount(coinbase)?.balance).toBe(42_000n)
+  })
+
+  test('executes lazily loaded destination code', () => {
+    const memory = State.fromMemory({
+      accounts: {
+        [from]: { balance: 100_000n },
+        [to]: { code: '0x602a5f5260205ff3' },
+      },
+    })
+    const state = State.from({
+      ...memory,
+      getAccount(address) {
+        const account = memory.getAccount(address)
+        return account ? { ...account, code: undefined } : undefined
+      },
+    })
+    const evm = Evm.from({ state })
+
+    expect(
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        to,
+        type: 'legacy',
+      }),
+    ).toMatchObject({
+      output:
+        '0x000000000000000000000000000000000000000000000000000000000000002a',
+      status: 'success',
+    })
+  })
+
+  test('includes a reverted transaction', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [from]: { balance: 2_000_000n },
+        [to]: { code: '0x5f5ffd' },
+      },
+    })
+    const evm = Evm.from({ state })
+
+    expect(
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        to,
+        type: 'legacy',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "effectiveGasPrice": 1n,
+        "gasUsed": 21004n,
+        "output": "0x",
+        "status": "reverted",
+      }
+    `)
+    expect(state.getAccount(from)?.nonce).toBe(1n)
+  })
+
+  test('rejects invalid transactions without changing state', () => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 20_999n } },
+    })
+    const evm = Evm.from({ state })
+
+    expect(() =>
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 21_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        to,
+        type: 'legacy',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Evm.InvalidTransactionError: Transaction is invalid: insufficient-funds.]`,
+    )
+    expect(state.getAccount(from)?.nonce).toBe(0n)
+  })
+
+  test.each([
+    {
+      envelope: { gasPrice: 1n, type: 'legacy', value: -1n },
+      reason: 'negative-value',
+    },
+    {
+      envelope: {
+        maxFeePerGas: 1n,
+        maxPriorityFeePerGas: -1n,
+        type: 'eip1559',
+      },
+      reason: 'negative-priority-fee',
+    },
+  ] as const)('rejects $reason', ({ envelope, reason }) => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 100_000n } },
+    })
+    const evm = Evm.from({ state })
+
+    expect(() =>
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 21_000n,
+        nonce: 0n,
+        to,
+        ...envelope,
+      } as never),
+    ).toThrowError(`Transaction is invalid: ${reason}.`)
+    expect(state.getAccount(from)?.nonce).toBe(0n)
+  })
+
+  test.each([
+    {
+      accessList: [{ address: '0x01', storageKeys: [] }],
+      reason: 'access-list-address',
+    },
+    {
+      accessList: [{ address: to, storageKeys: ['0x01'] }],
+      reason: 'access-list-storage-key',
+    },
+  ] as const)('rejects malformed $reason', ({ accessList, reason }) => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 100_000n } },
+    })
+    const evm = Evm.from({ state })
+
+    expect(() =>
+      Evm.transact(evm, {
+        accessList,
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        to,
+        type: 'eip2930',
+      } as never),
+    ).toThrowError(`Transaction is invalid: ${reason}.`)
+    expect(state.getAccount(from)?.nonce).toBe(0n)
+  })
+
+  test('rejects high-s transaction signatures', () => {
+    const evm = Evm.from({ state: State.fromMemory() })
+
+    expect(() =>
+      Evm.transact(evm, {
+        chainId: 1,
+        gas: 21_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        r: '0x01',
+        s: '0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140',
+        to,
+        type: 'legacy',
+        v: 27,
+      }),
+    ).toThrowError('Transaction is invalid: signature-s.')
+  })
+
+  test('normalizes transaction and block addresses', () => {
+    const recipient = Address.checksum(
+      '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+    )
+    const miner = Address.checksum('0x1234567890abcdef1234567890abcdef12345678')
+    const state = State.fromMemory({
+      accounts: {
+        [from]: { balance: 100_000n },
+        [miner.toLowerCase()]: { balance: 7n },
+        [recipient.toLowerCase()]: { balance: 11n },
+      },
+    })
+    const evm = Evm.from({
+      block: { baseFeePerGas: 0n, coinbase: miner },
+      state,
+    })
+
+    Evm.transact(evm, {
+      chainId: 1,
+      from,
+      gas: 21_000n,
+      gasPrice: 1n,
+      nonce: 0n,
+      to: recipient,
+      type: 'legacy',
+      value: 5n,
+    })
+
+    expect(
+      state.getAccount(recipient.toLowerCase() as `0x${string}`)?.balance,
+    ).toBe(16n)
+    expect(
+      state.getAccount(miner.toLowerCase() as `0x${string}`)?.balance,
+    ).toBe(21_007n)
+  })
+
+  test('creates a contract', () => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 2_000_000n } },
+    })
+    const evm = Evm.from({ state })
+    const receipt = Evm.transact(evm, {
+      chainId: 1,
+      data: '0x600060005360016000f3',
+      from,
+      gas: 100_000n,
+      gasPrice: 1n,
+      nonce: 0n,
+      type: 'legacy',
+    })
+
+    expect(receipt).toMatchInlineSnapshot(`
+      {
+        "contractAddress": "0x7ad672fcaa8d6afdb547994826f5d9292894dc45",
+        "effectiveGasPrice": 1n,
+        "gasUsed": 53344n,
+        "logs": [],
+        "output": "0x00",
+        "status": "success",
+      }
+    `)
+    expect(
+      state.getAccount('0x7ad672fcaa8d6afdb547994826f5d9292894dc45')?.code,
+    ).toBe('0x00')
+  })
+
+  test('detects create collisions with lazy code', () => {
+    const created = '0x7ad672fcaa8d6afdb547994826f5d9292894dc45'
+    const memory = State.fromMemory({
+      accounts: {
+        [created]: { code: '0x00' },
+        [from]: { balance: 2_000_000n },
+      },
+    })
+    const state = State.from({
+      ...memory,
+      getAccount(address) {
+        const account = memory.getAccount(address)
+        return account ? { ...account, code: undefined } : undefined
+      },
+    })
+    const evm = Evm.from({ state })
+
+    expect(
+      Evm.transact(evm, {
+        chainId: 1,
+        data: '0x00',
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        type: 'legacy',
+      }),
+    ).toMatchObject({ reason: 'create-collision', status: 'halted' })
+    expect(state.getCode(created)).toBe('0x00')
+  })
+
+  test('runs custom transaction stages', () => {
+    const stages: string[] = []
+    const handler: Transaction.Handler<
+      'custom',
+      {
+        chainId: number
+        gas: bigint
+        gasPrice: bigint
+        nonce: bigint
+        to: `0x${string}`
+        type: 'custom'
+      }
+    > = {
+      execute(host) {
+        stages.push('execute')
+        return host.execute()
+      },
+      prepare(host) {
+        stages.push('prepare')
+        host.prepare()
+      },
+      sender: () => from,
+      settle(host, result) {
+        stages.push('settle')
+        return host.settle(result)
+      },
+      type: 'custom',
+      validate(host) {
+        stages.push('validate')
+        host.validate()
+      },
+    }
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 100_000n } },
+    })
+    const evm = Evm.from({ state, transactions: [handler] })
+
+    Evm.transact(evm, {
+      chainId: 1,
+      gas: 21_000n,
+      gasPrice: 1n,
+      nonce: 0n,
+      to,
+      type: 'custom',
+    })
+    expect(stages).toMatchInlineSnapshot(`
+      [
+        "validate",
+        "prepare",
+        "execute",
+        "settle",
+      ]
+    `)
+  })
+
+  test('applies authorizations before top-level execution', () => {
+    const privateKey = `0x${'01'.repeat(32)}` as const
+    const authority = Address.fromPublicKey(
+      Secp256k1.getPublicKey({ privateKey }),
+    ).toLowerCase() as `0x${string}`
+    const delegate = '0x00000000000000000000000000000000000000d0'
+    const authorization = {
+      address: delegate,
+      chainId: 1,
+      nonce: 0n,
+    } as const
+    const signature = Secp256k1.sign({
+      payload: Authorization.getSignPayload(authorization),
+      privateKey,
+    })
+    const state = State.fromMemory({
+      accounts: {
+        [authority]: {},
+        [delegate]: { code: '0x305f5260205ff3' },
+        [from]: { balance: 1n },
+      },
+    })
+    const evm = Evm.from({ hardfork: 'prague', state })
+
+    expect(
+      Evm.transact(evm, {
+        authorizationList: [Authorization.from(authorization, { signature })],
+        chainId: 1,
+        from,
+        gas: 100_000n,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+        nonce: 0n,
+        to: authority,
+        type: 'eip7702',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "effectiveGasPrice": 0n,
+        "gasUsed": 38892n,
+        "logs": [],
+        "output": "0x000000000000000000000000${authority.slice(2)}",
+        "status": "success",
+      }
+    `)
+    expect(state.getAccount(authority)).toMatchInlineSnapshot(`
+      {
+        "balance": 0n,
+        "code": "0xef010000000000000000000000000000000000000000d0",
+        "hasStorage": false,
+        "nonce": 1n,
       }
     `)
   })

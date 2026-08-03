@@ -9,6 +9,7 @@ test('exports', () => {
       "Hardfork",
       "Opcode",
       "State",
+      "Transaction",
     ]
   `)
 })

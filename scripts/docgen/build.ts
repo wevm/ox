@@ -306,6 +306,7 @@ renderNamespaces({
 const coreNames = new Set(Object.keys(docCommentsByPath['./index.ts'] ?? {}))
 const secondaryModels: Record<string, string> = {
   './erc4337/index.ts': './scripts/docgen/erc4337.api.json',
+  './evm/index.ts': './scripts/docgen/evm.api.json',
   './node/index.ts': './scripts/docgen/node.api.json',
   './tempo/index.ts': './scripts/docgen/tempo.api.json',
   './wasm/index.ts': './scripts/docgen/wasm.api.json',
