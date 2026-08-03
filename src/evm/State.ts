@@ -30,14 +30,24 @@ export type Account = Compute<{
 export type Source<asynchronous extends boolean = boolean> = {
   /** Type- and runtime-level discriminant for read asynchrony. */
   async: asynchronous
+  /** Reads an account, or `undefined` if it does not exist. Omitting `code`
+   * defers the (often larger) code read to `getCode`. */
   getAccount(address: Address.Address): Value<asynchronous, Account | undefined>
+  /** Reads a block hash, or the zero hash for a block outside the window the
+   * source retains. */
   getBlockHash(number: bigint): Value<asynchronous, Hex.Hex>
+  /** Reads an account's code, or `0x` when it has none. Called only when
+   * `getAccount` omitted `code`. */
   getCode(address: Address.Address): Value<asynchronous, Hex.Hex>
+  /** Reads a storage slot, or `0n` when unset. */
   getStorage(
     address: Address.Address,
     slot: bigint,
   ): Value<asynchronous, bigint>
+  /** Writes an account to the overlay, or deletes it when `account` is
+   * `undefined`. Never propagates upstream. */
   putAccount(address: Address.Address, account: Account | undefined): void
+  /** Writes a storage slot to the overlay. Never propagates upstream. */
   putStorage(address: Address.Address, slot: bigint, value: bigint): void
 }
 
