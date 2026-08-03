@@ -55,7 +55,7 @@ export type Log = Compute<{
 }>
 
 /** Execution outcome. Halts are data, not exceptions — see
- * {@link ox#evm/Evm.(assertSuccess:function)} for throwing ergonomics. */
+ * {@link ox#Evm.(assertSuccess:function)} for throwing ergonomics. */
 export type Result =
   | Compute<{
       status: 'success'
@@ -344,7 +344,7 @@ export declare namespace run {
 }
 
 /**
- * Narrows a {@link ox#evm/Evm.(Result:type)} to its success variant, throwing
+ * Narrows a {@link ox#Evm.(Result:type)} to its success variant, throwing
  * for the others.
  *
  * @example

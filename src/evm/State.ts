@@ -11,7 +11,7 @@ export type Value<
 > = asynchronous extends true ? type | Promise<type> : type
 
 /** An account, as a source reports it. `code` may be omitted and resolved
- * lazily via {@link ox#evm/State.(Source:type)}`.getCode`. */
+ * lazily via {@link ox#State.(Source:type)}`.getCode`. */
 export type Account = Compute<{
   /** Balance in wei. */
   balance: bigint
@@ -47,7 +47,7 @@ export type Sync = Source<false>
 /** An asynchronous source. */
 export type Async = Source<true>
 
-/** In-memory source returned by {@link ox#evm/State.(fromMemory:function)}. */
+/** In-memory source returned by {@link ox#State.(fromMemory:function)}. */
 export type Memory = Compute<Sync>
 
 const zeroHash = `0x${'00'.repeat(32)}` as const
@@ -171,7 +171,7 @@ export declare namespace fromMemory {
 }
 
 /**
- * Asserts that a value is a well-formed {@link ox#evm/State.(Source:type)}.
+ * Asserts that a value is a well-formed {@link ox#State.(Source:type)}.
  *
  * @example
  * ```ts twoslash
