@@ -9,6 +9,8 @@ export type Account = {
   /** Whether the account has code — with balance and nonce, drives EIP-161
    * emptiness. `undefined` until the code dimension has been fetched. */
   hasCode: boolean | undefined
+  /** Whether the account has non-zero storage. */
+  hasStorage: boolean
 }
 
 /** State the journal cannot answer from its cache — the driver fetches it. */
@@ -31,6 +33,7 @@ export type SeedAccount = {
   balance: bigint
   nonce: bigint
   code?: Uint8Array | undefined
+  hasStorage: boolean
 }
 
 type Entry =
@@ -45,6 +48,7 @@ type Entry =
     }
   | { kind: 'account'; address: string; previous: Account | null | undefined }
   | { kind: 'storage'; address: string; slot: bigint; previous: bigint }
+  | { kind: 'storage-presence'; address: string }
   | {
       kind: 'transient'
       address: string
@@ -121,6 +125,7 @@ export function seed(journal: Journal, value: Seed): void {
           codeHash: undefined,
           hasCode:
             account.code === undefined ? undefined : account.code.length > 0,
+          hasStorage: account.hasStorage,
           nonce: account.nonce,
         })
         if (account.code !== undefined)
@@ -265,6 +270,7 @@ function materialize(journal: Journal, address: string): Account {
     balance: 0n,
     codeHash: undefined,
     hasCode: false,
+    hasStorage: false,
     nonce: 0n,
   }
   journal.accounts.set(address, account)
@@ -317,6 +323,11 @@ export function setStorage(
   value: bigint,
 ): void {
   const map = storageMap(journal.storage, address)
+  const account = journal.accounts.get(address)
+  if (account && value !== 0n && !account.hasStorage) {
+    journal.undo.push({ address, kind: 'storage-presence' })
+    account.hasStorage = true
+  }
   journal.undo.push({
     address,
     kind: 'storage',
@@ -460,6 +471,11 @@ export function revert(journal: Journal, checkpoint: number): void {
           entry.previous,
         )
         break
+      case 'storage-presence': {
+        const account = journal.accounts.get(entry.address) as Account
+        account.hasStorage = false
+        break
+      }
       case 'transient': {
         // Restore absence as absence — a phantom explicit zero would read
         // identically but pollute structural comparisons.

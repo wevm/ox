@@ -7,8 +7,8 @@ import * as eest from '../../../test/evm/eest.js'
 // Curated `ethereum/execution-spec-tests` state tests (release v5.4.0 — the
 // corpus the WASM engine was validated against; see `test/evm/eest.ts` for
 // the pin and download command). The subset under `fixtures/eest/` is the
-// single-frame slice that is meaningful before the call family lands:
-// storage (stSLoadTest, the pure stSStoreTest cases), memory (stMemoryTest,
+// curated Cancun-to-Osaka slice: storage (stSLoadTest and pure stSStoreTest),
+// memory (stMemoryTest,
 // stMemoryStressTest), arithmetic (vmArithmeticTest, stShift), environment
 // (stChainId, stCodeCopyTest, stSelfBalance, stArgsZeroOneBalance), the
 // transaction validity ladder (stTransactionTest, eip7825), access lists
@@ -16,16 +16,11 @@ import * as eest from '../../../test/evm/eest.js'
 // EIP-7623 calldata floor, and CLZ (eip7939). Every checked-in case passes
 // on the TS interpreter.
 //
-// Excluded until frames land (CALL family, CREATE/CREATE2, RETURNDATA*),
-// re-enable per group as lane A lands: stCallCodes,
-// stCallCreateCallCodeTest, stCallDelegateCodes*, stDelegatecallTestHomestead,
-// stStaticCall, stReturnDataTest, stRevertTest, stCreate2, stCreateTest,
-// stInitCodeTest, stEIP150*, stMemExpandingEIP150Calls, stRecursiveCreate,
-// stPreCompiledContracts* (precompiles dispatch through CALL), stLogTests and
-// vmLogTest (the logger is called through CALL), most of vmIOandFlowOperations
-// and vmBitwiseLogicOperation (CALL-wrapped result recording), the reentrancy
-// slices of eip1153_tstore and eip5656_mcopy, and
-// prague/eip7702_set_code_tx (delegation reads land with PR 4).
+// Calls, returndata, and creation are enabled. Remaining exclusions include
+// precompile-dependent cases, stEIP150*, stMemExpandingEIP150Calls,
+// stLogTests, vmLogTest, most vmIOandFlowOperations and
+// vmBitwiseLogicOperation, the reentrant transient-storage and MCOPY slices,
+// and prague/eip7702_set_code_tx (delegation reads land with PR 4).
 //
 // Runs offline: `SKIP_GLOBAL_SETUP=1 pnpm test src/evm --project core`.
 

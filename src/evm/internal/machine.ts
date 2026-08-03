@@ -57,6 +57,8 @@ export type Frame = {
   /** Parent-memory window this frame's output is copied back into. */
   outLength: number
   outOffset: number
+  /** Address returned when this frame is contract initialization code. */
+  createdAddress: string | undefined
   output: Uint8Array | undefined
   pc: number
   /** Output of the frame's most recent completed sub-call (EIP-211). */
@@ -108,6 +110,7 @@ export function createFrame(options: {
   caller: bigint
   checkpoint?: number | undefined
   code: Uint8Array
+  createdAddress?: string | undefined
   gas: bigint
   input: Uint8Array
   outLength?: number | undefined
@@ -123,6 +126,7 @@ export function createFrame(options: {
     caller: options.caller,
     checkpoint: options.checkpoint ?? 0,
     code: options.code,
+    createdAddress: options.createdAddress,
     gas: options.gas,
     input: options.input,
     memory,

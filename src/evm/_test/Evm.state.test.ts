@@ -318,7 +318,12 @@ describe('state commitment', () => {
     const writes: string[] = []
     const source = State.from({
       async: false,
-      getAccount: () => ({ balance: 42n, code: '0x', nonce: 0n }),
+      getAccount: () => ({
+        balance: 42n,
+        code: '0x',
+        hasStorage: false,
+        nonce: 0n,
+      }),
       getBlockHash: () => `0x${'00'.repeat(32)}` as `0x${string}`,
       getCode: () => '0x',
       getStorage: () => 7n,
