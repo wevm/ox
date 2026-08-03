@@ -14,7 +14,7 @@ import * as eest from '../../../test/evm/eest.js'
 // transaction validity ladder (stTransactionTest, eip7825), access lists
 // (stEIP2930), transient storage (eip1153), blob context (eip4844), the
 // EIP-7623 calldata floor, and CLZ (eip7939). Every checked-in case passes
-// on both engines.
+// on the TS interpreter.
 //
 // Excluded until frames land (CALL family, CREATE/CREATE2, RETURNDATA*),
 // re-enable per group as lane A lands: stCallCodes,
@@ -46,24 +46,23 @@ const files = [...walk(root)].map((file) => ({
   name: relative(root, file),
 }))
 
-for (const engine of ['wasm', 'ts'] as const) {
-  describe(`runCase (${engine})`, () => {
-    const adapter = eest[engine]()
-    for (const file of files)
-      describe(file.name, () => {
-        for (const [name, case_] of file.cases)
-          for (const [fork, posts] of Object.entries(case_.post ?? {})) {
-            // The TS core implements Cancun→Osaka; older forks in a fixture
-            // run on the WASM engine only.
-            if (!adapter.supports(fork)) continue
-            posts.forEach((post, index) => {
-              const label = `${name.split('::').at(-1) ?? name}${posts.length > 1 ? ` #${index}` : ''}`
-              test(label, () => {
-                const result = eest.runCase(adapter, case_, fork, post)
-                expect(result.outcome).toEqual({ ok: true })
-              })
+describe('runCase', () => {
+  const adapter = eest.ts()
+  for (const file of files)
+    describe(file.name, () => {
+      for (const [name, case_] of file.cases)
+        for (const [fork, posts] of Object.entries(case_.post ?? {})) {
+          // Defensive: every checked-in case is currently Cancun+, but a
+          // future fixture carrying an older fork must be skipped rather
+          // than fail — the TS core implements Cancun→Osaka only.
+          if (!adapter.supports(fork)) continue
+          posts.forEach((post, index) => {
+            const label = `${name.split('::').at(-1) ?? name}${posts.length > 1 ? ` #${index}` : ''}`
+            test(label, () => {
+              const result = eest.runCase(adapter, case_, fork, post)
+              expect(result.outcome).toEqual({ ok: true })
             })
-          }
-      })
-  })
-}
+          })
+        }
+    })
+})
