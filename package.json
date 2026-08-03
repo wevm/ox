@@ -1275,6 +1275,10 @@
       "src": "./src/zod/tempo/z.ts",
       "types": "./dist/zod/tempo/z.d.ts",
       "default": "./dist/zod/tempo/z.js"
+    },
+    "./_types/*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
     }
   },
   "module": "./dist/index.js",
