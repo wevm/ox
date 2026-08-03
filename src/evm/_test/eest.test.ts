@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 import * as eest from '../../../test/evm/eest.js'
@@ -20,7 +21,7 @@ import * as eest from '../../../test/evm/eest.js'
 // precompile-dependent cases, stEIP150*, stMemExpandingEIP150Calls,
 // stLogTests, vmLogTest, most vmIOandFlowOperations and
 // vmBitwiseLogicOperation, the reentrant transient-storage and MCOPY slices,
-// and prague/eip7702_set_code_tx (delegation reads land with PR 4).
+// and most prague/eip7702_set_code_tx transaction cases.
 //
 // Runs offline: `SKIP_GLOBAL_SETUP=1 pnpm test src/evm --project core`.
 
@@ -126,5 +127,56 @@ describe('transaction validity', () => {
     }
     const result = eest.runCase(eest.ts(), case_, 'Prague', post)
     expect(result.rejected).toBe(true)
+  })
+})
+
+describe('EEST adapter', () => {
+  test('executes a top-level delegation in the authority context', () => {
+    const authority = '0x00000000000000000000000000000000000000a0'
+    const delegate = '0x00000000000000000000000000000000000000d0'
+    const adapter = eest.ts()
+    adapter.reset()
+    adapter.putAccount(authority, {
+      balance: 0n,
+      code: Hex.toBytes(`0xef0100${delegate.slice(2)}`),
+      nonce: 0n,
+    })
+    adapter.putAccount(delegate, {
+      balance: 0n,
+      code: Hex.toBytes('0x602a600155'),
+      nonce: 0n,
+    })
+    adapter.setContext({
+      baseFee: 0n,
+      blobBaseFee: 1n,
+      blobHashes: [],
+      chainHashes: [],
+      chainId: 1n,
+      coinbase: '0x0000000000000000000000000000000000000000',
+      fork: 'Prague',
+      gasLimit: 30_000_000n,
+      gasPrice: 0n,
+      number: 1n,
+      origin: authority,
+      prevRandao: 0n,
+      timestamp: 1n,
+    })
+    adapter.warmAccount(authority)
+
+    expect(
+      adapter.execute({
+        address: authority,
+        caller: authority,
+        data: new Uint8Array(0),
+        gas: 100_000n,
+        value: 0n,
+      }),
+    ).toBe('success')
+    expect(adapter.gasLeft()).toBe(75_294n)
+    expect(adapter.readStorage().get(authority)).toMatchInlineSnapshot(`
+      Map {
+        1n => 42n,
+      }
+    `)
   })
 })

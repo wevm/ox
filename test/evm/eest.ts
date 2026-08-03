@@ -34,6 +34,7 @@ import * as Rlp from '../../src/core/Rlp.js'
 import * as Secp256k1 from '../../src/core/Secp256k1.js'
 import type * as Hardfork from '../../src/evm/Hardfork.js'
 import { analyzed } from '../../src/evm/internal/analysis.js'
+import * as delegation from '../../src/evm/internal/delegation.js'
 import { table } from '../../src/evm/internal/instructions.js'
 import { execute as interpret } from '../../src/evm/internal/interpreter.js'
 import * as journal_ from '../../src/evm/internal/journal.js'
@@ -230,6 +231,7 @@ export type Status =
   | 'create-collision'
   | 'initcode-size-exceeded'
   | 'input-too-large'
+  | 'insufficient-balance'
   | 'invalid-code'
   | 'invalid-jump'
   | 'invalid-opcode'
@@ -1618,12 +1620,28 @@ export function ts(): Adapter {
       logs = []
       const journal = journal_.create()
       const address = frame.address.toLowerCase()
+      const designation = forkAtLeast((context as Context).fork, 'Prague')
+        ? delegation.getAddress(accounts.get(address)?.code ?? empty)
+        : undefined
+      let gas = frame.gas
+      if (designation) {
+        const cost = warmAddresses.has(designation) ? 100n : 2600n
+        if (cost > gas) {
+          gasLeft = 0n
+          output = empty
+          return 'out-of-gas'
+        }
+        gas -= cost
+        warmAddresses.add(designation)
+      }
       const { frame: top, machine } = runFrame(journal, {
         address,
         caller: frame.caller.toLowerCase(),
-        code: accounts.get(address)?.code ?? empty,
+        code: designation
+          ? (accounts.get(designation)?.code ?? empty)
+          : (accounts.get(address)?.code ?? empty),
         data: frame.data,
-        gas: frame.gas,
+        gas,
         static: frame.static ?? false,
         value: frame.value,
       })
