@@ -102,7 +102,7 @@ export type Evm<state extends State.Sync = State.Sync> = Compute<{
  *
  * const evm = Evm.from({
  *   hardfork: 'osaka',
- *   state: State.fromMemory(),
+ *   state: State.fromMemory()
  * })
  * ```
  *
@@ -146,8 +146,8 @@ export declare namespace from {
  * const to = '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'
  * const evm = Evm.from({
  *   state: State.fromMemory({
- *     accounts: { [to]: { code: '0x602a5f5260205ff3' } },
- *   }),
+ *     accounts: { [to]: { code: '0x602a5f5260205ff3' } }
+ *   })
  * })
  *
  * const result = Evm.call(evm, { to })
