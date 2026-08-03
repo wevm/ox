@@ -5,10 +5,17 @@ import type { Compute, ExactPartial } from '../core/internal/types.js'
 import * as State from './State.js'
 import * as Hardfork from './Hardfork.js'
 import { analyzed } from './internal/analysis.js'
+import * as delegation from './internal/delegation.js'
 import { table } from './internal/instructions.js'
 import { execute } from './internal/interpreter.js'
 import * as journal_ from './internal/journal.js'
-import { addressToWord, createFrame, type Machine } from './internal/machine.js'
+import {
+  addressToWord,
+  createFrame,
+  halt,
+  type Frame,
+  type Machine,
+} from './internal/machine.js'
 
 /** Why execution stopped exceptionally. Exceptional halts consume all gas. */
 export type HaltReason =
@@ -16,6 +23,7 @@ export type HaltReason =
   | 'code-size-exceeded'
   | 'create-collision'
   | 'initcode-size-exceeded'
+  | 'insufficient-balance'
   | 'invalid-jump'
   | 'invalid-opcode'
   | 'memory-limit'
@@ -84,6 +92,145 @@ export type Result =
       gasUsed: bigint
     }>
 
+/** Root type for a configured EVM. */
+export type Evm<state extends State.Sync = State.Sync> = Compute<{
+  /** Hardfork whose rules calls execute under. */
+  hardfork: Hardfork.Hardfork
+  /** State source calls read without mutating. */
+  state: state
+}>
+
+/**
+ * Configures an EVM over a synchronous state source.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm, State } from 'ox/evm'
+ *
+ * const evm = Evm.from({
+ *   hardfork: 'osaka',
+ *   state: State.fromMemory()
+ * })
+ * ```
+ *
+ * @param options - Options.
+ * @returns A configured EVM.
+ */
+export function from<const state extends State.Sync>(
+  options: from.Options<state>,
+): Evm<state> {
+  const hardfork = options.hardfork ?? Hardfork.latest
+  Hardfork.atLeast(hardfork, 'cancun')
+  return {
+    hardfork,
+    state: State.from(options.state),
+  }
+}
+
+export declare namespace from {
+  type Options<state extends State.Sync = State.Sync> = {
+    /** Hardfork whose rules calls execute under. @default Hardfork.latest */
+    hardfork?: Hardfork.Hardfork | undefined
+    /** State source calls read without mutating. */
+    state: state
+  }
+
+  type ErrorType =
+    | Hardfork.UnknownHardforkError
+    | State.from.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Executes an ephemeral call against configured state.
+ *
+ * State changes are visible during execution but are discarded afterward.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm, State } from 'ox/evm'
+ *
+ * const to = '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'
+ * const evm = Evm.from({
+ *   state: State.fromMemory({
+ *     accounts: { [to]: { code: '0x602a5f5260205ff3' } }
+ *   })
+ * })
+ *
+ * const result = Evm.call(evm, { to })
+ * Evm.assertSuccess(result)
+ * result.output
+ * // @log: '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * ```
+ *
+ * @param evm - Configured EVM.
+ * @param options - Call options.
+ * @returns The execution result.
+ */
+export function call(evm: Evm, options: call.Options): Result {
+  const { hardfork, state } = evm
+  const from = (options.from ?? zeroAddress).toLowerCase() as Address.Address
+  const to = options.to.toLowerCase() as Address.Address
+  const code = getCode(state, to)
+  const delegatedTo = Hardfork.atLeast(hardfork, 'prague')
+    ? delegation.getAddress(code)
+    : undefined
+  const bytecode = delegatedTo
+    ? getCode(state, delegatedTo as Address.Address)
+    : code
+
+  const execution = createExecution({
+    address: to,
+    blobHashes: options.blobHashes,
+    block: options.block,
+    bytecode,
+    caller: from,
+    chainId: options.chainId,
+    data: options.data,
+    gas: options.gas,
+    gasPrice: options.gasPrice,
+    hardfork,
+    origin: from,
+    state,
+    value: options.value,
+  })
+
+  if (delegatedTo) chargeAccount(execution, delegatedTo)
+  transferValue(execution, { from, state, to, value: options.value ?? 0n })
+  return executeRun(execution)
+}
+
+export declare namespace call {
+  type Options = {
+    /** Versioned blob hashes for `BLOBHASH`. */
+    blobHashes?: readonly Hex.Hex[] | undefined
+    /** Block environment. Omitted fields default to zero-like values. */
+    block?: ExactPartial<BlockEnv> | undefined
+    /** `CHAINID`. @default 1n */
+    chainId?: bigint | undefined
+    /** Calldata. @default '0x' */
+    data?: Hex.Hex | Uint8Array | undefined
+    /** Sender exposed through `CALLER` and `ORIGIN`. @default zero address */
+    from?: Address.Address | undefined
+    /** Gas available to execution. @default 30_000_000n */
+    gas?: bigint | undefined
+    /** `GASPRICE`. @default 0n */
+    gasPrice?: bigint | undefined
+    /** Account whose code and storage context execute. */
+    to: Address.Address
+    /** `CALLVALUE`. @default 0n */
+    value?: bigint | undefined
+  }
+
+  type ErrorType = run.ErrorType
+}
+
+function getCode(state: State.Sync, address: Address.Address): Uint8Array {
+  const account = state.getAccount(address)
+  if (!account) return new Uint8Array(0)
+  return Hex.toBytes(account.code ?? state.getCode(address))
+}
+
 /**
  * Executes bytecode as a top-level call frame, synchronously.
  *
@@ -137,6 +284,22 @@ export type Result =
  * @returns The execution result.
  */
 export function run(options: run.Options): Result {
+  const execution = createExecution(options)
+  const result = executeRun(execution)
+  if (options.state && result.status === 'success')
+    commit(execution.machine.journal, options.state)
+  return result
+}
+
+type Execution = {
+  frame: Frame
+  gas: bigint
+  hardfork: Hardfork.Hardfork
+  machine: Machine
+  state: State.Sync | undefined
+}
+
+function createExecution(options: run.Options): Execution {
   const {
     address = zeroAddress,
     blobHashes = [],
@@ -199,9 +362,14 @@ export function run(options: run.Options): Result {
   journal_.warmAddress(journal, origin.toLowerCase())
   journal_.warmAddress(journal, caller.toLowerCase())
 
+  return { frame, gas, hardfork, machine, state }
+}
+
+function executeRun(execution: Execution): Result {
+  const { frame, gas, machine, state } = execution
   let request = execute(machine)
   while (request !== undefined) {
-    journal_.seed(journal, resolveSync(state, request))
+    journal_.seed(machine.journal, resolveSync(state, request))
     request = execute(machine)
   }
 
@@ -210,11 +378,10 @@ export function run(options: run.Options): Result {
   const output = frame.output ? Hex.fromBytes(frame.output) : '0x'
   if (machine.reverted) return { gasUsed, output, status: 'reverted' }
 
-  if (state) commit(journal, state)
   return {
-    gasRefund: journal.refund,
+    gasRefund: machine.journal.refund,
     gasUsed,
-    logs: journal.logs.map((log) => ({
+    logs: machine.journal.logs.map((log) => ({
       address: Address.checksum(log.address),
       data: Hex.fromBytes(log.data),
       topics: log.topics.map((topic) => Hex.fromNumber(topic, { size: 32 })),
@@ -222,6 +389,58 @@ export function run(options: run.Options): Result {
     output,
     status: 'success',
   }
+}
+
+function chargeAccount(execution: Execution, address: string): void {
+  const { frame, hardfork, machine } = execution
+  const warm = journal_.isWarmAddress(machine.journal, address)
+  const gas = Hardfork.gas(hardfork)
+  const cost = warm ? gas.warmReadGas : gas.coldAccountAccessGas
+  if (cost > frame.gas) {
+    halt(machine, frame, 'out-of-gas')
+    return
+  }
+  frame.gas -= cost
+  if (!warm) journal_.warmAddress(machine.journal, address)
+}
+
+function transferValue(
+  execution: Execution,
+  options: {
+    from: Address.Address
+    state: State.Sync
+    to: Address.Address
+    value: bigint
+  },
+): void {
+  if (options.value === 0n || execution.machine.halt) return
+  const journal = execution.machine.journal
+  seedAccount(journal, options.state, options.from)
+  seedAccount(journal, options.state, options.to)
+
+  const account = journal_.getAccount(journal, options.from)
+  const balance = account?.balance ?? 0n
+  if (balance < options.value) {
+    halt(execution.machine, execution.frame, 'insufficient-balance')
+    return
+  }
+
+  journal_.setBalance(journal, options.from, balance - options.value)
+  const recipient = journal_.getAccount(journal, options.to)
+  journal_.setBalance(
+    journal,
+    options.to,
+    (recipient?.balance ?? 0n) + options.value,
+  )
+}
+
+function seedAccount(
+  journal: journal_.Journal,
+  state: State.Sync,
+  address: Address.Address,
+): void {
+  if (journal_.getAccount(journal, address) !== undefined) return
+  journal_.seed(journal, resolveSync(state, { address, kind: 'account' }))
 }
 
 const zeroAddress = '0x0000000000000000000000000000000000000000' as const

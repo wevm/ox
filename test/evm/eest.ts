@@ -231,6 +231,7 @@ export type Status =
   | 'create-collision'
   | 'initcode-size-exceeded'
   | 'input-too-large'
+  | 'insufficient-balance'
   | 'invalid-code'
   | 'invalid-jump'
   | 'invalid-opcode'
