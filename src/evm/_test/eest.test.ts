@@ -130,7 +130,7 @@ describe('transaction validity', () => {
   })
 })
 
-describe('ts', () => {
+describe('EEST adapter', () => {
   test('executes a top-level delegation in the authority context', () => {
     const authority = '0x00000000000000000000000000000000000000a0'
     const delegate = '0x00000000000000000000000000000000000000d0'
