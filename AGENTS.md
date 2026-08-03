@@ -141,3 +141,4 @@
 - **Docgen export comments** -- `extractNamespaceDocComments` should read the nearest JSDoc on an export declaration. ts-morph can include earlier file-level JSDoc descendants on the first export.
 - **Type snapshot config** -- `@ark/attest` 0.16 does not follow root project references. Point `ATTEST_CONFIG.tsconfig` at `test/tsconfig.json`.
 - **Node local storage** -- Node 24+ needs a valid `--localstorage-file` for the `@typescript/vfs` dependency used by attest.
+- **`scripts/` is not typechecked** -- `pnpm check:types` (`tsc -b`) covers only the `src` and `test` projects. A type error in `scripts/*.ts` surfaces at runtime; typecheck script changes by exercising them (or with an ad hoc `tsc --noEmit`).
