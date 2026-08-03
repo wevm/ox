@@ -45,14 +45,22 @@ export type Frame = {
   addressWord: bigint
   analysis: Analysis
   caller: bigint
+  /** Journal checkpoint taken when this frame was entered; the dispatch loop
+   * reverts to it when the frame reverts or halts. */
+  checkpoint: number
   code: Uint8Array
   gas: bigint
   input: Uint8Array
   memory: Uint8Array
   /** Logical memory size in 32-byte words (`MSIZE` = this × 32). */
   memoryWords: number
+  /** Parent-memory window this frame's output is copied back into. */
+  outLength: number
+  outOffset: number
   output: Uint8Array | undefined
   pc: number
+  /** Output of the frame's most recent completed sub-call (EIP-211). */
+  returndata: Uint8Array
   sp: number
   stack: bigint[]
   static: boolean
@@ -92,13 +100,18 @@ export function addressToWord(address: string): bigint {
   return BigInt(address)
 }
 
+export const emptyBytes = new Uint8Array(0)
+
 export function createFrame(options: {
   address: string
   analysis: Analysis
   caller: bigint
+  checkpoint?: number | undefined
   code: Uint8Array
   gas: bigint
   input: Uint8Array
+  outLength?: number | undefined
+  outOffset?: number | undefined
   static: boolean
   value: bigint
 }): Frame {
@@ -108,13 +121,17 @@ export function createFrame(options: {
     addressWord: addressToWord(options.address),
     analysis: options.analysis,
     caller: options.caller,
+    checkpoint: options.checkpoint ?? 0,
     code: options.code,
     gas: options.gas,
     input: options.input,
     memory,
     memoryWords: 0,
+    outLength: options.outLength ?? 0,
+    outOffset: options.outOffset ?? 0,
     output: undefined,
     pc: 0,
+    returndata: emptyBytes,
     sp: 0,
     // Packed with zeroes up front: the elements kind stays PACKED, and reads
     // beneath `sp` are always assigned slots.

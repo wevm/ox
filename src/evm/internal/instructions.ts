@@ -1,9 +1,12 @@
 import * as hash from '../../core/internal/hash.js'
 import * as Hardfork from '../Hardfork.js'
+import { analyzed } from './analysis.js'
 import * as journal from './journal.js'
 import {
   bitLength,
   copyPadded,
+  createFrame,
+  emptyBytes,
   expandMemory,
   halt,
   loadWordPadded,
@@ -266,6 +269,30 @@ function build(hardfork: Hardfork.Hardfork): Table {
   table[0x39] = op(3n, 3, 0, (f, m) => copy(f, m, f.code))
   table[0x3a] = op(2n, 0, 1, (f, m) => push(f, m.gasPrice))
 
+  // Returndata (EIP-211)
+
+  table[0x3d] = op(2n, 0, 1, (f) => push(f, BigInt(f.returndata.length)))
+  table[0x3e] = op(3n, 3, 0, (f, m) => {
+    const dest = pop(f)
+    const offset = pop(f)
+    const length = pop(f)
+    if (!chargeDynamic(f, m, 3n * wordCount(length))) return
+    if (!expandMemory(m, f, dest, length)) return
+    // Unlike the other copies, a read past the end of the returndata buffer
+    // is a halt rather than a zero-fill — a zero-length read included.
+    if (offset + length > BigInt(f.returndata.length)) {
+      halt(m, f, 'returndata-out-of-bounds')
+      return
+    }
+    if (length !== 0n) {
+      const start = Number(offset)
+      f.memory.set(
+        f.returndata.subarray(start, start + Number(length)),
+        Number(dest),
+      )
+    }
+  })
+
   // Account state
 
   table[0x31] = op(0n, 1, 1, (f, m) => {
@@ -525,6 +552,13 @@ function build(hardfork: Hardfork.Hardfork): Table {
     m.done = true
   })
 
+  // Calls
+
+  table[0xf1] = callOp(0xf1)
+  table[0xf2] = callOp(0xf2)
+  table[0xf4] = callOp(0xf4)
+  table[0xfa] = callOp(0xfa)
+
   // Stack, memory & flow
 
   table[0x50] = op(2n, 1, 0, (f) => {
@@ -602,6 +636,119 @@ function build(hardfork: Hardfork.Hardfork): Table {
     })
 
   return table
+}
+
+const callDepthLimit = 1024
+
+// One handler for CALL (0xf1), CALLCODE (0xf2), DELEGATECALL (0xf4), and
+// STATICCALL (0xfa). Only CALL and CALLCODE take a value operand, and only
+// CALL moves it — CALLCODE runs foreign code in the caller's own account, so
+// its value never leaves and is there for the stipend and CALLVALUE.
+function callOp(opcode: number): Instruction {
+  const hasValue = opcode === 0xf1 || opcode === 0xf2
+  return op(0n, hasValue ? 7 : 6, 1, (f, m) => {
+    const gasArg = pop(f)
+    const to = wordToAddress(pop(f))
+    const value = hasValue ? pop(f) : 0n
+    const inOffset = pop(f)
+    const inLength = pop(f)
+    const outOffset = pop(f)
+    const outLength = pop(f)
+
+    // A static frame may not move value — but only CALL moves any.
+    if (opcode === 0xf1 && f.static && value !== 0n) {
+      halt(m, f, 'static-violation')
+      return
+    }
+
+    // Resolve every state dimension before any mutation (restart discipline):
+    // the callee's account and code, and the caller's account when value is
+    // at stake. Fetching the code also settles `hasCode`, which the EIP-161
+    // emptiness check below reads.
+    const callee = journal.getAccount(m.journal, to)
+    if (callee === undefined) {
+      need(m, { address: to, kind: 'account' })
+      return
+    }
+    const code = journal.getCode(m.journal, to)
+    if (code === undefined) {
+      need(m, { address: to, kind: 'code' })
+      return
+    }
+    const own = value !== 0n ? journal.getAccount(m.journal, f.address) : null
+    if (own === undefined) {
+      need(m, { address: f.address, kind: 'account' })
+      return
+    }
+
+    // Gas assembly, in consensus order: memory expansion over the input and
+    // output windows, target access (EIP-2929), the value-transfer and
+    // new-account surcharges, then the 63/64 cap (EIP-150) on what remains.
+    if (!expandMemory(m, f, inOffset, inLength)) return
+    if (!expandMemory(m, f, outOffset, outLength)) return
+    if (!chargeAccount(f, m, to)) return
+    if (value !== 0n) {
+      let cost = 9000n
+      // A value-bearing CALL to a dead account (EIP-161 empty) pays to
+      // bring it into existence.
+      if (opcode === 0xf1 && (callee === null || journal.isEmpty(callee)))
+        cost += 25_000n
+      if (!chargeDynamic(f, m, cost)) return
+    }
+    const allowed = f.gas - f.gas / 64n
+    let childGas = gasArg < allowed ? gasArg : allowed
+    f.gas -= childGas
+    // The stipend rides on top of the cap and is not deducted from the
+    // caller.
+    if (value !== 0n) childGas += 2300n
+
+    // Every call replaces the returndata buffer, including one that never
+    // starts (EIP-211).
+    f.returndata = emptyBytes
+
+    // An unfunded or too-deep call fails without a child frame, refunding
+    // the full allowance — stipend included. The top frame sits at semantic
+    // depth 0 and `frames.length` is the child's would-be depth, which may
+    // reach the limit itself: only calls made from that deepest frame fail.
+    const ownBalance = own ? own.balance : 0n
+    if (ownBalance < value || m.frames.length > callDepthLimit) {
+      f.gas += childGas
+      push(f, 0n)
+      return
+    }
+
+    const checkpoint = journal.checkpoint(m.journal)
+    if (opcode === 0xf1 && value !== 0n) {
+      journal.setBalance(m.journal, f.address, ownBalance - value)
+      // Re-read after the debit so a self-call nets to zero.
+      const target = journal.getAccount(m.journal, to)
+      journal.setBalance(m.journal, to, (target ? target.balance : 0n) + value)
+    }
+
+    // DELEGATECALL and CALLCODE run the callee's code against the caller's
+    // own address and storage; DELEGATECALL also inherits caller and value.
+    m.frames.push(
+      createFrame({
+        address: opcode === 0xf1 || opcode === 0xfa ? to : f.address,
+        analysis: analyzed(code).analysis,
+        caller: opcode === 0xf4 ? f.caller : f.addressWord,
+        checkpoint,
+        code,
+        gas: childGas,
+        input:
+          inLength === 0n
+            ? emptyBytes
+            : f.memory.subarray(
+                Number(inOffset),
+                Number(inOffset) + Number(inLength),
+              ),
+        outLength: outLength === 0n ? 0 : Number(outLength),
+        outOffset: outLength === 0n ? 0 : Number(outOffset),
+        static: f.static || opcode === 0xfa,
+        value: opcode === 0xf4 ? f.value : value,
+      }),
+    )
+  })
 }
 
 function copy(f: Frame, m: Machine, source: Uint8Array): void {
