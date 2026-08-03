@@ -18,31 +18,26 @@ export function analyze(code: Uint8Array): Analysis {
 
 // Analysis is a pure function of the bytecode and costs about as much as
 // executing it once, so repeated runs of the same code — the common shape for
-// simulation and estimation — should not pay it again. `Hex` inputs cache by
-// string key (cheap to compare); `Uint8Array` inputs cache by identity.
+// simulation and estimation — should not pay it again. Only `Hex` inputs cache:
+// the string key is immutable and cheap to compare, whereas a caller can mutate
+// a `Uint8Array` between runs, so an identity cache would serve jumpdests for
+// bytes that are no longer there.
 const byHex = new Map<Hex.Hex, { bytes: Uint8Array; analysis: Analysis }>()
-const byBytes = new WeakMap<Uint8Array, Analysis>()
 const maxHexEntries = 64
 
-/** Returns the bytes and analysis for a bytecode, cached. */
+/** Returns the bytes and analysis for a bytecode, caching `Hex` inputs. */
 export function analyzed(bytecode: Hex.Hex | Uint8Array): {
   bytes: Uint8Array
   analysis: Analysis
 } {
-  if (typeof bytecode === 'string') {
-    const cached = byHex.get(bytecode)
-    if (cached) return cached
-    const bytes = Hex.toBytes(bytecode)
-    const entry = { analysis: analyze(bytes), bytes }
-    if (byHex.size >= maxHexEntries)
-      byHex.delete(byHex.keys().next().value as Hex.Hex)
-    byHex.set(bytecode, entry)
-    return entry
-  }
-  let analysis = byBytes.get(bytecode)
-  if (!analysis) {
-    analysis = analyze(bytecode)
-    byBytes.set(bytecode, analysis)
-  }
-  return { analysis, bytes: bytecode }
+  if (typeof bytecode !== 'string')
+    return { analysis: analyze(bytecode), bytes: bytecode }
+  const cached = byHex.get(bytecode)
+  if (cached) return cached
+  const bytes = Hex.toBytes(bytecode)
+  const entry = { analysis: analyze(bytes), bytes }
+  if (byHex.size >= maxHexEntries)
+    byHex.delete(byHex.keys().next().value as Hex.Hex)
+  byHex.set(bytecode, entry)
+  return entry
 }

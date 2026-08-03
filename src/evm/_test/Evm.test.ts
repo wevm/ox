@@ -128,6 +128,23 @@ describe('run', () => {
     expect(Evm.run({ bytecode: '0x5f600657fe5b00' }).status).toBe('halted')
   })
 
+  test('behavior: re-analyzes a mutated bytecode buffer', () => {
+    // PUSH1 4, JUMP, INVALID, JUMPDEST, STOP
+    const bytecode = new Uint8Array([0x60, 0x04, 0x56, 0xfe, 0x5b, 0x00])
+    expect(Evm.run({ bytecode, gas: 1000n }).status).toBe('success')
+
+    // Overwriting the JUMPDEST invalidates the jump; the jumpdests analyzed for
+    // the previous contents must not be reused for this run.
+    bytecode[4] = 0x00
+    expect(Evm.run({ bytecode, gas: 1000n })).toMatchInlineSnapshot(`
+      {
+        "gasUsed": 1000n,
+        "reason": "invalid-jump",
+        "status": "halted",
+      }
+    `)
+  })
+
   test('behavior: PC, MSIZE, GAS', () => {
     // PC at offset 0.
     const pc = Evm.run({ bytecode: '0x585f5260205ff3' })
