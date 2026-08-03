@@ -107,8 +107,13 @@ export function expandMemory(
   const words = (end + 31n) >> 5n
   const current = BigInt(frame.memoryWords)
   if (words > current) {
+    // The quadratic term floors per size, not per delta: the charge is
+    // C(w2) - C(w1) with C(w) = 3w + ⌊w²/512⌋, so growing a word at a time
+    // telescopes to exactly ⌊w²/512⌋ overall. ⌊(w2²-w1²)/512⌋ does not.
     const cost =
-      3n * (words - current) + (words * words - current * current) / 512n
+      3n * (words - current) +
+      (words * words) / 512n -
+      (current * current) / 512n
     if (cost > frame.gas) {
       halt(machine, frame, 'out-of-gas')
       return false
