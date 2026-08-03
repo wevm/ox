@@ -13,6 +13,7 @@ const nobody = '0x00000000000000000000000000000000000000dd' as const
 const ret = '5f5260205ff3'
 // PUSH20 <address>.
 const push = (address: string) => `73${address.slice(2)}`
+const designate = (address: string) => `0xef0100${address.slice(2)}` as const
 // The five zero operands shared by every plain call: out and in windows plus
 // value. STATICCALL/DELEGATECALL variants use four (no value).
 const zeros = (n: number) => '5f'.repeat(n)
@@ -398,6 +399,143 @@ describe('STATICCALL', () => {
       state,
     })
     expect(returned(result)).toBe(word(1))
+  })
+})
+
+describe('EIP-7702 delegation', () => {
+  test.each([
+    {
+      expected: bob,
+      name: 'CALL',
+      opcode: 'f1',
+      operands: `6020${zeros(4)}`,
+    },
+    {
+      expected: self,
+      name: 'CALLCODE',
+      opcode: 'f2',
+      operands: `6020${zeros(4)}`,
+    },
+    {
+      expected: self,
+      name: 'DELEGATECALL',
+      opcode: 'f4',
+      operands: `6020${zeros(3)}`,
+    },
+    {
+      expected: bob,
+      name: 'STATICCALL',
+      opcode: 'fa',
+      operands: `6020${zeros(3)}`,
+    },
+  ])('$name executes delegated code in its normal context', (options) => {
+    const state = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        [carol]: { code: `0x30${ret}` },
+      },
+    })
+    const result = Evm.run({
+      address: self,
+      bytecode: `0x${options.operands}${push(bob)}61ffff${options.opcode}60205ff3`,
+      state,
+    })
+    expect(returned(result)).toBe(word(options.expected))
+  })
+
+  test('charges and warms the delegation target separately', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        [carol]: { code: '0x00' },
+      },
+    })
+    const call = `${zeros(5)}${push(bob)}5ff1`
+    const result = Evm.run({
+      address: self,
+      bytecode: `0x${call}${call}${ret}`,
+      state,
+    })
+    expect(returned(result)).toBe(word(1))
+    // First call: 15 + two cold reads. Second: 15 + two warm reads. Tail: 13.
+    expect(result.gasUsed).toBe(5443n)
+  })
+
+  test('charges a warm read when an account delegates to itself', () => {
+    const state = State.fromMemory({
+      accounts: { [bob]: { code: designate(bob) } },
+    })
+    const result = Evm.run({
+      bytecode: `0x${zeros(5)}${push(bob)}5ff1${ret}`,
+      state,
+    })
+    expect(returned(result)).toBe(word(0))
+    // Operands 15 + cold authority 2600 + warm self-delegate 100 + tail 13.
+    expect(result.gasUsed).toBe(2728n)
+  })
+
+  test('activates at Prague', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        [carol]: { code: '0x00' },
+      },
+    })
+    const bytecode = `0x${zeros(5)}${push(bob)}61fffff1${ret}` as const
+    expect(returned(Evm.run({ bytecode, hardfork: 'cancun', state }))).toBe(
+      word(0),
+    )
+    expect(returned(Evm.run({ bytecode, hardfork: 'prague', state }))).toBe(
+      word(1),
+    )
+  })
+
+  test('requires a complete designator', () => {
+    const state = State.fromMemory({
+      accounts: { [bob]: { code: '0xef0100' } },
+    })
+    const result = Evm.run({
+      bytecode: `0x${zeros(5)}${push(bob)}5ff1${ret}`,
+      state,
+    })
+    expect(returned(result)).toBe(word(0))
+    expect(result.gasUsed).toBe(2628n)
+  })
+
+  test('follows only one delegation', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        [carol]: { code: designate(nobody) },
+        [nobody]: { code: '0x00' },
+      },
+    })
+    const result = Evm.run({
+      bytecode: `0x${zeros(5)}${push(bob)}61fffff1${ret}`,
+      state,
+    })
+    expect(returned(result)).toBe(word(0))
+  })
+
+  test('code-reading opcodes keep their specified views', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        // CODESIZE, then return it.
+        [carol]: { code: `0x38${ret}` },
+      },
+    })
+    const delegated = Evm.run({
+      bytecode: `0x60205f5f5f5f${push(bob)}61fffff160205ff3`,
+      state,
+    })
+    expect(returned(delegated)).toBe(word(7))
+
+    const external = Evm.run({
+      bytecode: `0x${push(bob)}3b${ret}`,
+      state,
+    })
+    expect(returned(external)).toBe(word(23))
   })
 })
 

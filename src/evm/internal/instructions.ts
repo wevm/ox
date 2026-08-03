@@ -4,6 +4,7 @@ import * as ContractAddress from '../../core/ContractAddress.js'
 import * as Hex from '../../core/Hex.js'
 import * as Hardfork from '../Hardfork.js'
 import { analyzed } from './analysis.js'
+import * as delegation from './delegation.js'
 import * as journal from './journal.js'
 import {
   bitLength,
@@ -79,6 +80,7 @@ export function table(hardfork: Hardfork.Hardfork): Table {
 
 function build(hardfork: Hardfork.Hardfork): Table {
   const table = Array.from<Instruction | undefined>({ length: 256 })
+  const delegationEnabled = Hardfork.atLeast(hardfork, 'prague')
 
   // Control
 
@@ -545,11 +547,11 @@ function build(hardfork: Hardfork.Hardfork): Table {
   // Calls
 
   table[0xf0] = createOp(0xf0)
-  table[0xf1] = callOp(0xf1)
-  table[0xf2] = callOp(0xf2)
-  table[0xf4] = callOp(0xf4)
+  table[0xf1] = callOp(0xf1, delegationEnabled)
+  table[0xf2] = callOp(0xf2, delegationEnabled)
+  table[0xf4] = callOp(0xf4, delegationEnabled)
   table[0xf5] = createOp(0xf5)
-  table[0xfa] = callOp(0xfa)
+  table[0xfa] = callOp(0xfa, delegationEnabled)
 
   // Stack, memory & flow
 
@@ -747,7 +749,7 @@ function createOp(opcode: number): Instruction {
 // STATICCALL (0xfa). Only CALL and CALLCODE take a value operand, and only
 // CALL moves it — CALLCODE runs foreign code in the caller's own account, so
 // its value never leaves and is there for the stipend and CALLVALUE.
-function callOp(opcode: number): Instruction {
+function callOp(opcode: number, delegationEnabled: boolean): Instruction {
   const hasValue = opcode === 0xf1 || opcode === 0xf2
   return op(0n, hasValue ? 7 : 6, 1, (f, m) => {
     const gasArg = pop(f)
@@ -773,10 +775,22 @@ function callOp(opcode: number): Instruction {
       need(m, { address: to, kind: 'account' })
       return
     }
-    const code = journal.getCode(m.journal, to)
+    let code = journal.getCode(m.journal, to)
     if (code === undefined) {
       need(m, { address: to, kind: 'code' })
       return
+    }
+    const delegatedTo = delegationEnabled
+      ? delegation.getAddress(code)
+      : undefined
+    if (delegatedTo) {
+      // EIP-7702 follows exactly one designator, so delegated code is never
+      // parsed again even when it is itself a designator.
+      code = journal.getCode(m.journal, delegatedTo)
+      if (code === undefined) {
+        need(m, { address: delegatedTo, kind: 'code' })
+        return
+      }
     }
     const own = value !== 0n ? journal.getAccount(m.journal, f.address) : null
     if (own === undefined) {
@@ -790,6 +804,7 @@ function callOp(opcode: number): Instruction {
     if (!expandMemory(m, f, inOffset, inLength)) return
     if (!expandMemory(m, f, outOffset, outLength)) return
     if (!chargeAccount(f, m, to)) return
+    if (delegatedTo && !chargeAccount(f, m, delegatedTo)) return
     if (value !== 0n) {
       let cost = 9000n
       // A value-bearing CALL to a dead account (EIP-161 empty) pays to
