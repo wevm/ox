@@ -65,7 +65,7 @@
 - **Examples should be small** -- public examples should show the minimum useful shape and avoid unrelated setup.
 - **Source docs first** -- public API documentation usually belongs in TSDoc near the exported source.
 - **Site pages** -- human guides live under `site/src/pages/`.
-- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
+- **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/evm`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
 - **Check TSDoc when touching docs** -- run `pnpm docs:gen` after changing public comments or examples.
 - **SEO descriptions are auto-derived** -- every generated docs page emits a `description` frontmatter (used for `<meta name="description">` and OG images), targeting 5-15 words. It is derived from the TSDoc summary (markdown stripped, first paragraph, clamped). Add an optional `@description` TSDoc block tag to a function/namespace/schema to override the auto-derived text with hand-written SEO copy. Hand-written site pages should set their own `description` frontmatter (or a `# Title [description]` heading).
 
@@ -129,7 +129,7 @@
 - **Source layout** -- source lives in `src/`; tests live under `src/**/_test`; docs live in `site`; shared test utilities live in `test`; vectors live in `vectors`; contracts live in `contracts`.
 - **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@11.0.8`.
 - **Generated exports** -- `scripts/exports:update.ts` derives `package.json#exports` from `src/`. It flattens `src/core/<Name>.ts` to root package subpaths and ignores test/bench/snapshot files.
-- **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
+- **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/evm`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.
 - **WASM artifacts are generated** -- C lives in `wasm/src`, targets in `wasm/targets.ts`, and the committed base64 modules (`src/wasm/internal/*.wasm.ts`, `src/tempo/internal/mine.wasm.ts`) are written by `pnpm wasm:build`. Never hand-edit them. After changing any C or target config, run `pnpm wasm:build` and commit the result; `pnpm wasm:check` fails CI otherwise. The toolchain is pinned in `wasm/toolchain.json` because compiled bytes depend on the exact compiler version. See `wasm/README.md`.
 - **Trusted setup artifacts are generated** -- `src/trusted-setups/internal/setups/mainnet.json` is canonical. Refresh it from an explicit `c-kzg-4844` release with `pnpm trusted-setups:update <tag>`; `pnpm trusted-setups:check` verifies its recorded hash and packed TypeScript artifact. See `src/trusted-setups/README.md`.
