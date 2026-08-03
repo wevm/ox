@@ -523,10 +523,11 @@ describe('returndata', () => {
 })
 
 describe('depth', () => {
-  test('the 1025th frame is refused without halting its parent', () => {
+  test('calls enter depth 1024; only calls from there are refused', () => {
     // Each frame bumps slot 0, then re-calls itself with all remaining gas.
-    // Exactly 1024 frames run: the deepest CALL fails fast with 0 and its
-    // frame still succeeds, so every increment commits.
+    // Exactly 1025 frames run (semantic depths 0 through 1024): the deepest
+    // frame's CALL fails fast with 0 and the frame itself still succeeds,
+    // so every increment commits.
     const code = `0x60015f54015f55${zeros(5)}305af100` as const
     const state = State.fromMemory({
       accounts: { [self]: { code } },
@@ -535,11 +536,11 @@ describe('depth', () => {
       address: self,
       bytecode: code,
       // The 63/64 ladder plus ~324 gas per level needs a deep budget to
-      // still hold ~100k gas at frame 1024.
+      // still hold ~90k gas at depth 1024.
       gas: 10n ** 12n,
       state,
     })
     Evm.assertSuccess(result)
-    expect(state.getStorage(self, 0n)).toBe(1024n)
+    expect(state.getStorage(self, 0n)).toBe(1025n)
   })
 })

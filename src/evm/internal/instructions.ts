@@ -707,9 +707,11 @@ function callOp(opcode: number): Instruction {
     f.returndata = emptyBytes
 
     // An unfunded or too-deep call fails without a child frame, refunding
-    // the full allowance — stipend included.
+    // the full allowance — stipend included. The top frame sits at semantic
+    // depth 0 and `frames.length` is the child's would-be depth, which may
+    // reach the limit itself: only calls made from that deepest frame fail.
     const ownBalance = own ? own.balance : 0n
-    if (ownBalance < value || m.frames.length >= callDepthLimit) {
+    if (ownBalance < value || m.frames.length > callDepthLimit) {
       f.gas += childGas
       push(f, 0n)
       return
