@@ -1,9 +1,16 @@
 import * as Address from '../core/Address.js'
+import type * as AccessList from '../core/AccessList.js'
+import * as Authorization from '../core/Authorization.js'
+import * as ContractAddress from '../core/ContractAddress.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
+import * as Secp256k1 from '../core/Secp256k1.js'
+import * as Signature from '../core/Signature.js'
+import * as TxEnvelope from '../core/TxEnvelope.js'
 import type { Compute, ExactPartial } from '../core/internal/types.js'
 import * as State from './State.js'
 import * as Hardfork from './Hardfork.js'
+import * as Transaction from './Transaction.js'
 import { analyzed } from './internal/analysis.js'
 import * as delegation from './internal/delegation.js'
 import { table } from './internal/instructions.js'
@@ -24,6 +31,7 @@ export type HaltReason =
   | 'create-collision'
   | 'initcode-size-exceeded'
   | 'insufficient-balance'
+  | 'invalid-code'
   | 'invalid-jump'
   | 'invalid-opcode'
   | 'memory-limit'
@@ -92,12 +100,55 @@ export type Result =
       gasUsed: bigint
     }>
 
+/** Included transaction outcome after gas settlement and state commitment. */
+export type Receipt =
+  | Compute<{
+      /** Created contract, for a successful create transaction. */
+      contractAddress?: Address.Address | undefined
+      /** Gas price paid after applying the fee cap. */
+      effectiveGasPrice: bigint
+      /** Gas consumed after refunds and the calldata floor. */
+      gasUsed: bigint
+      /** Logs emitted by successful execution. */
+      logs: readonly Log[]
+      /** Data returned by execution. */
+      output: Hex.Hex
+      status: 'success'
+    }>
+  | Compute<{
+      /** Gas price paid after applying the fee cap. */
+      effectiveGasPrice: bigint
+      /** Gas consumed after refunds and the calldata floor. */
+      gasUsed: bigint
+      /** Revert data. */
+      output: Hex.Hex
+      status: 'reverted'
+    }>
+  | Compute<{
+      /** Gas price paid after applying the fee cap. */
+      effectiveGasPrice: bigint
+      /** Gas consumed after refunds and the calldata floor. */
+      gasUsed: bigint
+      /** Why execution halted. */
+      reason: HaltReason
+      status: 'halted'
+    }>
+
 /** Root type for a configured EVM. */
-export type Evm<state extends State.Sync = State.Sync> = Compute<{
+export type Evm<
+  state extends State.Sync = State.Sync,
+  transactions extends readonly { type: string }[] = Transaction.Mainnet,
+> = Compute<{
+  /** Block environment transactions and block opcodes read. */
+  block: BlockEnv
+  /** Chain ID transactions and `CHAINID` read. */
+  chainId: bigint
   /** Hardfork whose rules calls execute under. */
   hardfork: Hardfork.Hardfork
   /** State source calls read without mutating. */
   state: state
+  /** Transaction-type pipelines accepted by {@link ox#Evm.(transact:function)}. */
+  transactions: transactions
 }>
 
 /**
@@ -116,29 +167,55 @@ export type Evm<state extends State.Sync = State.Sync> = Compute<{
  * @param options - Options.
  * @returns A configured EVM.
  */
-export function from<const state extends State.Sync>(
-  options: from.Options<state>,
-): Evm<state> {
+export function from<
+  const state extends State.Sync,
+  const transactions extends readonly { type: string }[] = Transaction.Mainnet,
+>(options: from.Options<state, transactions>): Evm<state, transactions> {
   const hardfork = options.hardfork ?? Hardfork.latest
   Hardfork.atLeast(hardfork, 'cancun')
   return {
+    block: blockEnv(options.block),
+    chainId: options.chainId ?? 1n,
     hardfork,
     state: State.from(options.state),
+    transactions: (options.transactions ??
+      Transaction.mainnet()) as transactions,
   }
 }
 
 export declare namespace from {
-  type Options<state extends State.Sync = State.Sync> = {
+  type Options<
+    state extends State.Sync = State.Sync,
+    transactions extends readonly { type: string }[] = Transaction.Mainnet,
+  > = {
+    /** Block environment. Omitted fields default to zero-like values. */
+    block?: ExactPartial<BlockEnv> | undefined
+    /** Chain ID. @default 1n */
+    chainId?: bigint | undefined
     /** Hardfork whose rules calls execute under. @default Hardfork.latest */
     hardfork?: Hardfork.Hardfork | undefined
     /** State source calls read without mutating. */
     state: state
+    /** Transaction-type pipelines. @default Transaction.mainnet() */
+    transactions?: transactions | undefined
   }
 
   type ErrorType =
     | Hardfork.UnknownHardforkError
     | State.from.ErrorType
     | Errors.GlobalErrorType
+}
+
+function blockEnv(block: ExactPartial<BlockEnv> | undefined): BlockEnv {
+  return {
+    baseFeePerGas: block?.baseFeePerGas ?? 0n,
+    blobBaseFee: block?.blobBaseFee ?? 1n,
+    coinbase: block?.coinbase ?? zeroAddress,
+    gasLimit: block?.gasLimit ?? 30_000_000n,
+    number: block?.number ?? 0n,
+    prevRandao: block?.prevRandao ?? Hex.fromNumber(0n, { size: 32 }),
+    timestamp: block?.timestamp ?? 0n,
+  }
 }
 
 /**
@@ -168,7 +245,7 @@ export declare namespace from {
  * @returns The execution result.
  */
 export function call(evm: Evm, options: call.Options): Result {
-  const { hardfork, state } = evm
+  const { block, chainId, hardfork, state } = evm
   const from = (options.from ?? zeroAddress).toLowerCase() as Address.Address
   const to = options.to.toLowerCase() as Address.Address
   const code = getCode(state, to)
@@ -182,10 +259,10 @@ export function call(evm: Evm, options: call.Options): Result {
   const execution = createExecution({
     address: to,
     blobHashes: options.blobHashes,
-    block: options.block,
+    block: { ...block, ...options.block },
     bytecode,
     caller: from,
-    chainId: options.chainId,
+    chainId: options.chainId ?? chainId,
     data: options.data,
     gas: options.gas,
     gasPrice: options.gasPrice,
@@ -224,6 +301,538 @@ export declare namespace call {
 
   type ErrorType = run.ErrorType
 }
+
+/**
+ * Validates, executes, and settles a transaction against configured state.
+ *
+ * Inclusion failures throw without changing state. Reverts and exceptional
+ * halts return receipts after advancing the sender nonce and settling fees.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm, State } from 'ox/evm'
+ *
+ * const sender = '0x0000000000000000000000000000000000000001'
+ * const evm = Evm.from({ state: State.fromMemory() })
+ * const receipt = Evm.transact(evm, {
+ *   chainId: 1,
+ *   from: sender,
+ *   gas: 21_000n,
+ *   gasPrice: 0n,
+ *   nonce: 0n,
+ *   to: '0x0000000000000000000000000000000000000002',
+ *   type: 'legacy'
+ * })
+ * ```
+ *
+ * @param evm - Configured EVM.
+ * @param envelope - Transaction envelope.
+ * @returns The settled transaction receipt.
+ */
+export function transact<
+  const state extends State.Sync,
+  const transactions extends readonly { type: string }[],
+>(
+  evm: Evm<state, transactions>,
+  envelope: Transaction.EnvelopeOf<transactions>,
+): Receipt {
+  const envelope_ = envelope as TxEnvelope.TxEnvelope
+  const type = TxEnvelope.getType(envelope_)
+  const handler = evm.transactions.find((handler) => handler.type === type) as
+    | Transaction.Handler<any, any>
+    | undefined
+  if (!handler) throw new UnsupportedTransactionTypeError({ type })
+  const sender = (
+    handler.sender
+      ? handler.sender(envelope as never)
+      : transactionSender(envelope_)
+  ).toLowerCase() as Address.Address
+  const context = transactionContext(evm, envelope_, sender, type)
+  const host: Transaction.Host<TxEnvelope.TxEnvelope> = {
+    envelope: envelope_,
+    evm,
+    execute: () => executeTransaction(context),
+    prepare: () => prepareTransaction(context),
+    sender,
+    settle: (result) => settleTransaction(context, result),
+    validate: () => validateTransaction(context),
+  }
+
+  if (handler.validate) handler.validate(host as never)
+  else host.validate()
+  if (handler.prepare) handler.prepare(host as never)
+  else host.prepare()
+  const result = handler.execute
+    ? handler.execute(host as never)
+    : host.execute()
+  return handler.settle
+    ? handler.settle(host as never, result)
+    : host.settle(result)
+}
+
+export declare namespace transact {
+  type ErrorType =
+    | InvalidTransactionError
+    | UnsupportedTransactionTypeError
+    | TxEnvelope.getSignPayload.ErrorType
+    | Secp256k1.recoverAddress.ErrorType
+    | Errors.GlobalErrorType
+}
+
+type TransactionContext = {
+  accessList: AccessList.AccessList | undefined
+  authorizationList: Authorization.ListSigned
+  authorizationRefund: bigint
+  blobFee: bigint
+  blobHashes: readonly Hex.Hex[]
+  createdAddress: Address.Address | undefined
+  effectiveGasPrice: bigint
+  envelope: TxEnvelope.TxEnvelope
+  evm: Evm<State.Sync, readonly { type: string }[]>
+  execution: Execution | undefined
+  floorGas: bigint
+  gasLimit: bigint
+  intrinsicGas: bigint
+  maxFeePerBlobGas: bigint
+  maxFeePerGas: bigint
+  sender: Address.Address
+  senderNonce: bigint
+  transactionCheckpoint: number | undefined
+  type: TxEnvelope.Type
+  value: bigint
+}
+
+function transactionContext(
+  evm: Evm<State.Sync, readonly { type: string }[]>,
+  envelope: TxEnvelope.TxEnvelope,
+  sender: Address.Address,
+  type: TxEnvelope.Type,
+): TransactionContext {
+  const accessList = 'accessList' in envelope ? envelope.accessList : undefined
+  const authorizationList =
+    'authorizationList' in envelope ? envelope.authorizationList : []
+  const blobHashes =
+    'blobVersionedHashes' in envelope
+      ? (envelope.blobVersionedHashes ?? [])
+      : []
+  const data = Hex.toBytes(envelope.data ?? envelope.input ?? '0x')
+  const gas = Hardfork.gas(evm.hardfork)
+  let zero = 0
+  for (const byte of data) if (byte === 0) zero++
+  const nonzero = data.length - zero
+  const create = !envelope.to
+  let intrinsicGas = gas.txGas
+  intrinsicGas +=
+    BigInt(zero) * gas.txDataZeroGas + BigInt(nonzero) * gas.txDataNonzeroGas
+  if (create) intrinsicGas += gas.txCreateGas
+  if (create)
+    intrinsicGas += BigInt(Math.ceil(data.length / 32)) * gas.initcodeWordGas
+  for (const item of accessList ?? []) {
+    intrinsicGas += gas.accessListAddressGas
+    intrinsicGas +=
+      BigInt(item.storageKeys.length) * gas.accessListStorageKeyGas
+  }
+  intrinsicGas +=
+    BigInt(authorizationList.length) * (gas.authorizationGas ?? 0n)
+  const floorGas = gas.floorTokenGas
+    ? gas.txGas + (BigInt(zero) + BigInt(nonzero) * 4n) * gas.floorTokenGas
+    : 0n
+  const legacyGasPrice = 'gasPrice' in envelope ? (envelope.gasPrice ?? 0n) : 0n
+  const maxFeePerGas =
+    'maxFeePerGas' in envelope ? (envelope.maxFeePerGas ?? 0n) : legacyGasPrice
+  const maxPriorityFeePerGas =
+    'maxPriorityFeePerGas' in envelope
+      ? (envelope.maxPriorityFeePerGas ?? 0n)
+      : legacyGasPrice
+  const availableTip = maxFeePerGas - evm.block.baseFeePerGas
+  const effectiveGasPrice =
+    type === 'legacy' || type === 'eip2930'
+      ? legacyGasPrice
+      : evm.block.baseFeePerGas +
+        (availableTip < maxPriorityFeePerGas
+          ? availableTip
+          : maxPriorityFeePerGas)
+  const maxFeePerBlobGas =
+    'maxFeePerBlobGas' in envelope ? (envelope.maxFeePerBlobGas ?? 0n) : 0n
+  const blobFee =
+    BigInt(blobHashes.length) * gas.blob.gasPerBlob * evm.block.blobBaseFee
+
+  return {
+    accessList,
+    authorizationList,
+    authorizationRefund: 0n,
+    blobFee,
+    blobHashes,
+    createdAddress: undefined,
+    effectiveGasPrice,
+    envelope,
+    evm,
+    execution: undefined,
+    floorGas,
+    gasLimit: envelope.gas ?? evm.block.gasLimit,
+    intrinsicGas,
+    maxFeePerBlobGas,
+    maxFeePerGas,
+    sender,
+    senderNonce: envelope.nonce ?? 0n,
+    transactionCheckpoint: undefined,
+    type,
+    value: envelope.value ?? 0n,
+  }
+}
+
+function validateTransaction(context: TransactionContext): void {
+  const {
+    authorizationList,
+    blobHashes,
+    envelope,
+    evm,
+    floorGas,
+    gasLimit,
+    intrinsicGas,
+    maxFeePerBlobGas,
+    maxFeePerGas,
+    sender,
+    senderNonce,
+    type,
+    value,
+  } = context
+  const { block, chainId, hardfork, state } = evm
+  const gas = Hardfork.gas(hardfork)
+  const requiredGas = intrinsicGas > floorGas ? intrinsicGas : floorGas
+  if (gasLimit < requiredGas)
+    throw new InvalidTransactionError({ reason: 'intrinsic-gas-too-low' })
+  if (gasLimit > block.gasLimit)
+    throw new InvalidTransactionError({ reason: 'block-gas-limit-exceeded' })
+  if (gas.txGasLimitCap && gasLimit > gas.txGasLimitCap)
+    throw new InvalidTransactionError({
+      reason: 'transaction-gas-limit-exceeded',
+    })
+  if (BigInt(envelope.chainId ?? chainId) !== chainId)
+    throw new InvalidTransactionError({ reason: 'chain-id-mismatch' })
+  if (maxFeePerGas < block.baseFeePerGas)
+    throw new InvalidTransactionError({ reason: 'fee-cap-below-base-fee' })
+  const maxPriorityFeePerGas =
+    'maxPriorityFeePerGas' in envelope
+      ? (envelope.maxPriorityFeePerGas ?? 0n)
+      : maxFeePerGas
+  if (maxPriorityFeePerGas > maxFeePerGas)
+    throw new InvalidTransactionError({ reason: 'tip-above-fee-cap' })
+  if (senderNonce >= (1n << 64n) - 1n)
+    throw new InvalidTransactionError({ reason: 'nonce-overflow' })
+
+  const account = state.getAccount(sender)
+  if ((account?.nonce ?? 0n) !== senderNonce)
+    throw new InvalidTransactionError({ reason: 'nonce-mismatch' })
+  const code = account?.code ?? (account ? state.getCode(sender) : '0x')
+  const delegating =
+    Hardfork.atLeast(hardfork, 'prague') &&
+    Hex.size(code) === 23 &&
+    code.toLowerCase().startsWith('0xef0100')
+  if (code !== '0x' && !delegating)
+    throw new InvalidTransactionError({ reason: 'sender-has-code' })
+
+  if (type === 'eip4844') {
+    if (!Hardfork.atLeast(hardfork, 'cancun'))
+      throw new InvalidTransactionError({ reason: 'transaction-type-disabled' })
+    if (!envelope.to)
+      throw new InvalidTransactionError({ reason: 'blob-create' })
+    if (
+      blobHashes.length === 0 ||
+      blobHashes.length > gas.blob.max ||
+      blobHashes.length > gas.blob.maxPerTransaction
+    )
+      throw new InvalidTransactionError({ reason: 'blob-count' })
+    for (const hash of blobHashes)
+      if (Hex.size(hash) !== 32 || !hash.startsWith('0x01'))
+        throw new InvalidTransactionError({ reason: 'blob-versioned-hash' })
+    if (maxFeePerBlobGas < block.blobBaseFee)
+      throw new InvalidTransactionError({ reason: 'blob-fee-cap' })
+  }
+  if (type === 'eip7702') {
+    if (!Hardfork.atLeast(hardfork, 'prague'))
+      throw new InvalidTransactionError({ reason: 'transaction-type-disabled' })
+    if (authorizationList.length === 0 || !envelope.to)
+      throw new InvalidTransactionError({ reason: 'authorization-list' })
+  }
+  if (
+    !envelope.to &&
+    Hex.size(envelope.data ?? envelope.input ?? '0x') > 49_152
+  )
+    throw new InvalidTransactionError({ reason: 'initcode-size-exceeded' })
+
+  const gasAllowance = gasLimit * maxFeePerGas
+  const blobAllowance =
+    BigInt(blobHashes.length) * gas.blob.gasPerBlob * maxFeePerBlobGas
+  if ((account?.balance ?? 0n) < gasAllowance + blobAllowance + value)
+    throw new InvalidTransactionError({ reason: 'insufficient-funds' })
+}
+
+function prepareTransaction(context: TransactionContext): void {
+  const {
+    accessList,
+    blobFee,
+    blobHashes,
+    effectiveGasPrice,
+    envelope,
+    evm,
+    gasLimit,
+    intrinsicGas,
+    sender,
+    senderNonce,
+    value,
+  } = context
+  const { block, chainId, hardfork, state } = evm
+  const create = !envelope.to
+  const to = create
+    ? ContractAddress.fromCreate({ from: sender, nonce: senderNonce })
+    : (envelope.to as Address.Address)
+  const bytecode = create
+    ? Hex.toBytes(envelope.data ?? envelope.input ?? '0x')
+    : getCode(state, to)
+  const execution = createExecution({
+    address: to,
+    blobHashes,
+    block,
+    bytecode,
+    caller: sender,
+    chainId,
+    createdAddress: create ? to : undefined,
+    data: create ? '0x' : (envelope.data ?? envelope.input),
+    gas: gasLimit - intrinsicGas,
+    gasPrice: effectiveGasPrice,
+    hardfork,
+    origin: sender,
+    state,
+    value,
+  })
+  context.execution = execution
+  if (create) context.createdAddress = to
+
+  const journal = execution.machine.journal
+  seedAccount(journal, state, sender)
+  seedAccount(journal, state, block.coinbase)
+  seedAccount(journal, state, to)
+  const senderAccount = journal_.getAccount(journal, sender)
+  journal_.setBalance(
+    journal,
+    sender,
+    (senderAccount?.balance ?? 0n) - gasLimit * effectiveGasPrice - blobFee,
+  )
+  journal_.setNonce(journal, sender, senderNonce + 1n)
+
+  for (const item of accessList ?? []) {
+    const address = item.address.toLowerCase()
+    journal_.warmAddress(journal, address)
+    for (const key of item.storageKeys)
+      journal_.warmSlot(journal, address, Hex.toBigInt(key))
+  }
+  journal_.warmAddress(journal, sender)
+  journal_.warmAddress(journal, to)
+  if (Hardfork.atLeast(hardfork, 'cancun'))
+    journal_.warmAddress(journal, block.coinbase.toLowerCase())
+  for (const address of precompileAddresses(hardfork))
+    journal_.warmAddress(journal, address)
+  context.authorizationRefund = applyAuthorizations(context)
+
+  let delegatedTo: string | undefined
+  if (!create) {
+    let code = journal_.getCode(journal, to) ?? new Uint8Array(0)
+    delegatedTo = Hardfork.atLeast(hardfork, 'prague')
+      ? delegation.getAddress(code)
+      : undefined
+    if (delegatedTo) {
+      const delegate = delegatedTo as Address.Address
+      seedAccount(journal, state, delegate)
+      const delegatedCode = journal_.getCode(journal, delegate)
+      if (delegatedCode === undefined) {
+        const seed = resolveSync(state, { address: delegate, kind: 'code' })
+        journal_.seed(journal, seed)
+        code = journal_.getCode(journal, delegate) as Uint8Array
+      } else code = delegatedCode
+    }
+    const analyzed_ = analyzed(code)
+    execution.frame.analysis = analyzed_.analysis
+    execution.frame.code = analyzed_.bytes
+  }
+
+  const checkpoint = journal_.checkpoint(journal)
+  context.transactionCheckpoint = checkpoint
+  execution.frame.checkpoint = checkpoint
+  if (create) {
+    const target = journal_.getAccount(journal, to) as journal_.Account | null
+    if (
+      target !== null &&
+      (target.nonce !== 0n || target.hasCode || target.hasStorage)
+    ) {
+      halt(execution.machine, execution.frame, 'create-collision')
+      return
+    }
+    journal_.setBalance(
+      journal,
+      sender,
+      (journal_.getAccount(journal, sender)?.balance ?? 0n) - value,
+    )
+    journal_.setBalance(journal, to, (target?.balance ?? 0n) + value)
+    journal_.setNonce(journal, to, 1n)
+    journal_.markCreated(journal, to)
+    return
+  }
+  transferValue(execution, { from: sender, state, to, value })
+  if (delegatedTo) chargeAccount(execution, delegatedTo)
+}
+
+function executeTransaction(context: TransactionContext): Result {
+  const execution = context.execution as Execution
+  const result = executeRun(execution)
+  if (result.status !== 'success')
+    journal_.revert(
+      execution.machine.journal,
+      context.transactionCheckpoint as number,
+    )
+  return result
+}
+
+function settleTransaction(
+  context: TransactionContext,
+  result: Result,
+): Receipt {
+  const {
+    authorizationRefund,
+    effectiveGasPrice,
+    evm,
+    execution,
+    floorGas,
+    gasLimit,
+    intrinsicGas,
+    sender,
+  } = context
+  const { block, hardfork, state } = evm
+  const journal = (execution as Execution).machine.journal
+  let gasUsed = intrinsicGas + result.gasUsed
+  const refund =
+    result.status === 'success'
+      ? result.gasRefund + authorizationRefund
+      : authorizationRefund
+  const refundCap = gasUsed / Hardfork.gas(hardfork).refundQuotient
+  gasUsed -= refund < refundCap ? refund : refundCap
+  if (gasUsed < floorGas) gasUsed = floorGas
+
+  const senderAccount = journal_.getAccount(journal, sender)
+  journal_.setBalance(
+    journal,
+    sender,
+    (senderAccount?.balance ?? 0n) + (gasLimit - gasUsed) * effectiveGasPrice,
+  )
+  const coinbase = block.coinbase.toLowerCase()
+  const coinbaseAccount = journal_.getAccount(journal, coinbase)
+  const tip = effectiveGasPrice - block.baseFeePerGas
+  if (coinbaseAccount || gasUsed * tip > 0n)
+    journal_.setBalance(
+      journal,
+      coinbase,
+      (coinbaseAccount?.balance ?? 0n) + gasUsed * tip,
+    )
+  commit(journal, state)
+
+  if (result.status === 'success')
+    return {
+      ...(context.createdAddress
+        ? { contractAddress: context.createdAddress }
+        : {}),
+      effectiveGasPrice,
+      gasUsed,
+      logs: result.logs,
+      output: result.output,
+      status: 'success',
+    }
+  if (result.status === 'reverted')
+    return {
+      effectiveGasPrice,
+      gasUsed,
+      output: result.output,
+      status: 'reverted',
+    }
+  return {
+    effectiveGasPrice,
+    gasUsed,
+    reason: result.reason,
+    status: 'halted',
+  }
+}
+
+function transactionSender(envelope: TxEnvelope.TxEnvelope): Address.Address {
+  if (envelope.from) return envelope.from
+  const signature = Signature.extract(envelope)
+  if (!signature)
+    throw new InvalidTransactionError({ reason: 'missing-sender' })
+  return Secp256k1.recoverAddress({
+    payload: TxEnvelope.getSignPayload(envelope),
+    signature,
+  })
+}
+
+function applyAuthorizations(context: TransactionContext): bigint {
+  const { authorizationList, evm, execution } = context
+  const journal = (execution as Execution).machine.journal
+  const gas = Hardfork.gas(evm.hardfork)
+  let refund = 0n
+  for (const authorization of authorizationList) {
+    if (
+      authorization.chainId !== 0 &&
+      BigInt(authorization.chainId) !== evm.chainId
+    )
+      continue
+    if (authorization.nonce >= (1n << 64n) - 1n) continue
+    const signature = Signature.extract(authorization)
+    if (!signature || BigInt(signature.s) > secp256k1N / 2n) continue
+    let authority: Address.Address
+    try {
+      authority = Secp256k1.recoverAddress({
+        payload: Authorization.getSignPayload(authorization),
+        signature,
+      }).toLowerCase() as Address.Address
+    } catch {
+      continue
+    }
+    journal_.warmAddress(journal, authority)
+    seedAccount(journal, evm.state, authority)
+    const account = journal_.getAccount(journal, authority)
+    if (account && account.hasCode === undefined) {
+      journal_.seed(
+        journal,
+        resolveSync(evm.state, { address: authority, kind: 'code' }),
+      )
+    }
+    const code = journal_.getCode(journal, authority) ?? new Uint8Array(0)
+    if (code.length > 0 && !delegation.getAddress(code)) continue
+    if ((account?.nonce ?? 0n) !== authorization.nonce) continue
+    if (account) refund += gas.authorizationRefund ?? 0n
+    journal_.setCode(
+      journal,
+      authority,
+      authorization.address === zeroAddress
+        ? new Uint8Array(0)
+        : Hex.toBytes(`0xef0100${authorization.address.slice(2)}`),
+    )
+    journal_.setNonce(journal, authority, authorization.nonce + 1n)
+  }
+  return refund
+}
+
+function precompileAddresses(hardfork: Hardfork.Hardfork): string[] {
+  const highest = Hardfork.atLeast(hardfork, 'prague') ? 0x11 : 0x0a
+  const addresses = Array.from(
+    { length: highest },
+    (_, index) => `0x${(index + 1).toString(16).padStart(40, '0')}`,
+  )
+  if (Hardfork.atLeast(hardfork, 'osaka'))
+    addresses.push('0x0000000000000000000000000000000000000100')
+  return addresses
+}
+
+const secp256k1N =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
 
 function getCode(state: State.Sync, address: Address.Address): Uint8Array {
   const account = state.getAccount(address)
@@ -299,7 +908,11 @@ type Execution = {
   state: State.Sync | undefined
 }
 
-function createExecution(options: run.Options): Execution {
+function createExecution(
+  options: run.Options & {
+    createdAddress?: Address.Address | undefined
+  },
+): Execution {
   const {
     address = zeroAddress,
     blobHashes = [],
@@ -307,6 +920,7 @@ function createExecution(options: run.Options): Execution {
     bytecode,
     caller = zeroAddress,
     chainId = 1n,
+    createdAddress,
     data = '0x',
     gas = 30_000_000n,
     gasPrice = 0n,
@@ -327,6 +941,7 @@ function createExecution(options: run.Options): Execution {
     analysis,
     caller: addressToWord(caller.toLowerCase()),
     code,
+    createdAddress,
     gas,
     input,
     static: static_,
@@ -371,6 +986,19 @@ function executeRun(execution: Execution): Result {
   while (request !== undefined) {
     journal_.seed(machine.journal, resolveSync(state, request))
     request = execute(machine)
+  }
+
+  if (frame.createdAddress && !machine.halt && !machine.reverted) {
+    const code = frame.output ?? new Uint8Array(0)
+    const depositGas = BigInt(code.length) * 200n
+    if (code.length > Hardfork.gas(execution.hardfork).maxCodeSize)
+      halt(machine, frame, 'code-size-exceeded')
+    else if (code[0] === 0xef) halt(machine, frame, 'invalid-code')
+    else if (depositGas > frame.gas) halt(machine, frame, 'out-of-gas')
+    else {
+      frame.gas -= depositGas
+      journal_.setCode(machine.journal, frame.createdAddress, code)
+    }
   }
 
   const gasUsed = gas - frame.gas
@@ -640,5 +1268,27 @@ export class HaltedError extends Errors.BaseError {
   constructor({ reason }: { reason: HaltReason }) {
     super(`Execution halted: ${reason}.`)
     this.reason = reason
+  }
+}
+
+/** Thrown when a transaction cannot be included. */
+export class InvalidTransactionError extends Errors.BaseError {
+  override readonly name = 'Evm.InvalidTransactionError'
+
+  /** Machine-readable validity reason. */
+  readonly reason: string
+
+  constructor({ reason }: { reason: string }) {
+    super(`Transaction is invalid: ${reason}.`)
+    this.reason = reason
+  }
+}
+
+/** Thrown when no configured handler accepts a transaction type. */
+export class UnsupportedTransactionTypeError extends Errors.BaseError {
+  override readonly name = 'Evm.UnsupportedTransactionTypeError'
+
+  constructor({ type }: { type: string }) {
+    super(`Transaction type \`${type}\` is not supported.`)
   }
 }

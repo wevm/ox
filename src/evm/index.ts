@@ -28,3 +28,10 @@ export * as Opcode from './Opcode.js'
  * @category EVM
  */
 export * as State from './State.js'
+
+/**
+ * Transaction handler pipelines for EVM execution.
+ *
+ * @category EVM
+ */
+export * as Transaction from './Transaction.js'

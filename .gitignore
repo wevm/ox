@@ -16,6 +16,7 @@ tsdoc.d.tson
 
 ox.api.json
 erc4337.api.json
+evm.api.json
 node.api.json
 tempo.api.json
 wasm.api.json

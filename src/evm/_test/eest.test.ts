@@ -1,13 +1,12 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 import * as eest from '../../../test/evm/eest.js'
 
-// Curated `ethereum/execution-spec-tests` state tests (release v5.4.0 — the
-// corpus the WASM engine was validated against; see `test/evm/eest.ts` for
-// the pin and download command). The subset under `fixtures/eest/` is the
+// Curated `ethereum/execution-spec-tests` state tests (release v5.4.0; see
+// `test/evm/eest.ts` for the pin and download command). The subset under
+// `fixtures/eest/` is the
 // curated Cancun-to-Osaka slice: storage (stSLoadTest and pure stSStoreTest),
 // memory (stMemoryTest,
 // stMemoryStressTest), arithmetic (vmArithmeticTest, stShift), environment
@@ -43,19 +42,15 @@ const files = [...walk(root)].map((file) => ({
 }))
 
 describe('runCase', () => {
-  const adapter = eest.ts()
   for (const file of files)
     describe(file.name, () => {
       for (const [name, case_] of file.cases)
         for (const [fork, posts] of Object.entries(case_.post ?? {})) {
-          // Defensive: every checked-in case is currently Cancun+, but a
-          // future fixture carrying an older fork must be skipped rather
-          // than fail — the TS core implements Cancun→Osaka only.
-          if (!adapter.supports(fork)) continue
+          if (!['Cancun', 'Prague', 'Osaka'].includes(fork)) continue
           posts.forEach((post, index) => {
             const label = `${name.split('::').at(-1) ?? name}${posts.length > 1 ? ` #${index}` : ''}`
             test(label, () => {
-              const result = eest.runCase(adapter, case_, fork, post)
+              const result = eest.runCase(case_, fork, post)
               expect(result.outcome).toEqual({ ok: true })
             })
           })
@@ -99,16 +94,10 @@ describe('transaction validity', () => {
   }
 
   test('requires a complete delegation designation', () => {
-    const malformed = eest.runCase(
-      eest.ts(),
-      fixture('0xef0100'),
-      'Prague',
-      post,
-    )
+    const malformed = eest.runCase(fixture('0xef0100'), 'Prague', post)
     expect(malformed.rejected).toBe(true)
 
     const complete = eest.runCase(
-      eest.ts(),
       fixture(`0xef0100${recipient.slice(2)}`),
       'Prague',
       post,
@@ -125,57 +114,7 @@ describe('transaction validity', () => {
       maxFeePerGas: '0x0',
       maxPriorityFeePerGas: '0x0',
     }
-    const result = eest.runCase(eest.ts(), case_, 'Prague', post)
+    const result = eest.runCase(case_, 'Prague', post)
     expect(result.rejected).toBe(true)
-  })
-})
-
-describe('EEST adapter', () => {
-  test('executes a top-level delegation in the authority context', () => {
-    const authority = '0x00000000000000000000000000000000000000a0'
-    const delegate = '0x00000000000000000000000000000000000000d0'
-    const adapter = eest.ts()
-    adapter.reset()
-    adapter.putAccount(authority, {
-      balance: 0n,
-      code: Hex.toBytes(`0xef0100${delegate.slice(2)}`),
-      nonce: 0n,
-    })
-    adapter.putAccount(delegate, {
-      balance: 0n,
-      code: Hex.toBytes('0x602a600155'),
-      nonce: 0n,
-    })
-    adapter.setContext({
-      baseFee: 0n,
-      blobBaseFee: 1n,
-      blobHashes: [],
-      chainHashes: [],
-      chainId: 1n,
-      coinbase: '0x0000000000000000000000000000000000000000',
-      fork: 'Prague',
-      gasLimit: 30_000_000n,
-      gasPrice: 0n,
-      number: 1n,
-      origin: authority,
-      prevRandao: 0n,
-      timestamp: 1n,
-    })
-    adapter.warmAccount(authority)
-
-    expect(
-      adapter.execute({
-        address: authority,
-        caller: authority,
-        data: new Uint8Array(0),
-        gas: 100_000n,
-        value: 0n,
-      }),
-    ).toBe('success')
-    expect(adapter.readStorage().get(authority)).toMatchInlineSnapshot(`
-      Map {
-        1n => 42n,
-      }
-    `)
   })
 })
