@@ -1,4 +1,4 @@
-import { Evm, EvmState } from 'ox/evm'
+import { Evm, State } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
 // The EIP-2200/2929/3529 SSTORE matrix, as exact program totals. Slot 1
@@ -14,7 +14,7 @@ function sstore(
   options: { original?: bigint; gas?: bigint } = {},
 ) {
   const { original = 0n } = options
-  const state = EvmState.fromMemory({
+  const state = State.fromMemory({
     accounts: {
       [address]: {
         storage:
@@ -118,7 +118,7 @@ describe('rules around the write', () => {
   })
 
   test('static context: SSTORE halts with static-violation', () => {
-    const state = EvmState.fromMemory()
+    const state = State.fromMemory()
     const result = Evm.run({
       address,
       bytecode: '0x5f600155',
@@ -141,7 +141,7 @@ describe('rules around the write', () => {
   })
 
   test('SLOAD: cold 2100, warm 100', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: { [address]: { storage: { '0x01': '0x2a' } } },
     })
     // PUSH1 1, SLOAD, POP — cold; PUSH1 1, SLOAD — warm.

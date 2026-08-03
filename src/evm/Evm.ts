@@ -2,7 +2,7 @@ import * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
-import * as EvmState from './EvmState.js'
+import * as State from './State.js'
 import * as Hardfork from './Hardfork.js'
 import { analyzed } from './internal/analysis.js'
 import { table } from './internal/instructions.js'
@@ -113,10 +113,10 @@ export type Result =
  * ### Journaled state
  *
  * ```ts twoslash
- * import { Evm, EvmState } from 'ox/evm'
+ * import { Evm, State } from 'ox/evm'
  *
  * const address = '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'
- * const state = EvmState.fromMemory({
+ * const state = State.fromMemory({
  *   accounts: { [address]: { storage: { '0x01': '0x2a' } } }
  * })
  *
@@ -229,7 +229,7 @@ const zeroAddress = '0x0000000000000000000000000000000000000000' as const
 // Answers a state request from a synchronous source; absent state reads as
 // empty (no accounts, zero storage, zero block hashes).
 function resolveSync(
-  state: EvmState.Sync | undefined,
+  state: State.Sync | undefined,
   request: journal_.StateRequest,
 ): journal_.Seed {
   switch (request.kind) {
@@ -277,7 +277,7 @@ function resolveSync(
 }
 
 // Applies a successful run's state changes to the source's overlay.
-function commit(journal: journal_.Journal, state: EvmState.Sync): void {
+function commit(journal: journal_.Journal, state: State.Sync): void {
   for (const [address, account] of journal.accounts) {
     if (journal.selfdestructs.has(address)) {
       state.putAccount(address as Address.Address, undefined)
@@ -325,7 +325,7 @@ export declare namespace run {
     /** State the frame reads and writes. Successful runs commit their
      * changes to the source; reverts and halts discard them. Absent state
      * reads as empty. */
-    state?: EvmState.Sync | undefined
+    state?: State.Sync | undefined
     /** Executes in a static context: `SSTORE`, `TSTORE`, `LOG*`, and
      * `SELFDESTRUCT` halt with `static-violation`. @default false */
     static?: boolean | undefined

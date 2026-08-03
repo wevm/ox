@@ -11,7 +11,7 @@ export type Value<
 > = asynchronous extends true ? type | Promise<type> : type
 
 /** An account, as a source reports it. `code` may be omitted and resolved
- * lazily via {@link ox#evm/EvmState.(Source:type)}`.getCode`. */
+ * lazily via {@link ox#evm/State.(Source:type)}`.getCode`. */
 export type Account = Compute<{
   /** Balance in wei. */
   balance: bigint
@@ -47,7 +47,7 @@ export type Sync = Source<false>
 /** An asynchronous source. */
 export type Async = Source<true>
 
-/** In-memory source returned by {@link ox#evm/EvmState.(fromMemory:function)}. */
+/** In-memory source returned by {@link ox#evm/State.(fromMemory:function)}. */
 export type Memory = Compute<Sync>
 
 const zeroHash = `0x${'00'.repeat(32)}` as const
@@ -57,9 +57,9 @@ const zeroHash = `0x${'00'.repeat(32)}` as const
  *
  * @example
  * ```ts twoslash
- * import { EvmState } from 'ox/evm'
+ * import { State } from 'ox/evm'
  *
- * const state = EvmState.fromMemory({
+ * const state = State.fromMemory({
  *   accounts: {
  *     '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357': {
  *       balance: 10n ** 18n,
@@ -171,13 +171,13 @@ export declare namespace fromMemory {
 }
 
 /**
- * Asserts that a value is a well-formed {@link ox#evm/EvmState.(Source:type)}.
+ * Asserts that a value is a well-formed {@link ox#evm/State.(Source:type)}.
  *
  * @example
  * ```ts twoslash
- * import { EvmState } from 'ox/evm'
+ * import { State } from 'ox/evm'
  *
- * const source = EvmState.from(EvmState.fromMemory())
+ * const source = State.from(State.fromMemory())
  * ```
  *
  * @param source - Source to validate.
@@ -205,7 +205,7 @@ export declare namespace from {
 
 /** Thrown when a state source is missing part of the contract. */
 export class InvalidSourceError extends Errors.BaseError {
-  override readonly name = 'EvmState.InvalidSourceError'
+  override readonly name = 'State.InvalidSourceError'
 
   constructor({ property }: { property: string }) {
     super(`\`${property}\` is missing or mistyped on the state source.`)

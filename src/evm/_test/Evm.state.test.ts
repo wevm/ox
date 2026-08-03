@@ -1,4 +1,4 @@
-import { Evm, EvmState } from 'ox/evm'
+import { Evm, State } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
 const self = '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357' as const
@@ -14,7 +14,7 @@ function returned(result: Evm.Result): `0x${string}` {
 
 describe('account opcodes', () => {
   test('BALANCE: value, and cold 2600 / warm 100', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: { [other]: { balance: 42n } },
     })
     // PUSH1 other-low-byte..: full address push is PUSH20.
@@ -34,7 +34,7 @@ describe('account opcodes', () => {
   })
 
   test('SELFBALANCE reads the executing account', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: { [self]: { balance: 7n } },
     })
     const result = Evm.run({ address: self, bytecode: `0x47${ret}`, state })
@@ -44,7 +44,7 @@ describe('account opcodes', () => {
   })
 
   test('EXTCODESIZE / EXTCODEHASH / EXTCODECOPY', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: {
         [other]: { code: '0x60016002' },
         // Non-empty (has balance) but codeless.
@@ -160,7 +160,7 @@ describe('block and transaction environment', () => {
   })
 
   test('BLOCKHASH: in-window from state, out-of-window is 0', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       blockHashes: { 41: `0x${'ab'.repeat(32)}` },
     })
     const options = { block: { number: 42n }, state }
@@ -254,7 +254,7 @@ describe('logs', () => {
 
 describe('selfdestruct (EIP-6780)', () => {
   test('moves the balance without destroying a pre-existing account', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: { [self]: { balance: 100n, code: '0x00' } },
     })
     // PUSH20 beneficiary, SELFDESTRUCT.
@@ -273,7 +273,7 @@ describe('selfdestruct (EIP-6780)', () => {
   })
 
   test('no new-account charge when the beneficiary exists', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: {
         [other]: { balance: 1n },
         [self]: { balance: 100n },
@@ -298,7 +298,7 @@ describe('selfdestruct (EIP-6780)', () => {
 
 describe('state commitment', () => {
   test('reverted runs leave the source untouched', () => {
-    const state = EvmState.fromMemory({
+    const state = State.fromMemory({
       accounts: { [self]: { storage: { '0x01': '0x2a' } } },
     })
     // SSTORE 7 at slot 1, then REVERT.

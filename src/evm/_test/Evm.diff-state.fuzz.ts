@@ -1,6 +1,6 @@
 import { fc, test } from '@fast-check/vitest'
 import { Hex } from 'ox'
-import { Evm, EvmState } from 'ox/evm'
+import { Evm, State } from 'ox/evm'
 import { describe, expect } from 'vp/test'
 
 import * as oracle from '../../../test/evm/oracle.js'
@@ -161,7 +161,7 @@ function compare(options: {
     value: 5n,
   })
 
-  const state = EvmState.fromMemory({
+  const state = State.fromMemory({
     accounts: Object.fromEntries(
       accounts.map((account) => [
         account.address,

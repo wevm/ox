@@ -2,12 +2,12 @@
 "ox": minor
 ---
 
-Added the `ox/evm` entrypoint: a pure-TypeScript EVM interpreter (`Evm.run`) with journaled state execution over pluggable sources (`EvmState`), plus `Opcode` and `Hardfork` modules.
+Added the `ox/evm` entrypoint: a pure-TypeScript EVM interpreter (`Evm.run`) with journaled state execution over pluggable sources (`State`), plus `Opcode` and `Hardfork` modules.
 
 ```ts
-import { Evm, EvmState } from 'ox/evm'
+import { Evm, State } from 'ox/evm'
 
-const state = EvmState.fromMemory({
+const state = State.fromMemory({
   accounts: { '0x…': { balance: 10n ** 18n } },
 })
 const result = Evm.run({ address: '0x…', bytecode: '0x…', state })

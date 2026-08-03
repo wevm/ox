@@ -9,13 +9,6 @@
 export * as Evm from './Evm.js'
 
 /**
- * Pluggable state sources for EVM execution.
- *
- * @category EVM
- */
-export * as EvmState from './EvmState.js'
-
-/**
  * Hardfork names, ordering, and gas schedules for EVM execution.
  *
  * @category EVM
@@ -28,3 +21,10 @@ export * as Hardfork from './Hardfork.js'
  * @category EVM
  */
 export * as Opcode from './Opcode.js'
+
+/**
+ * Pluggable state sources for EVM execution.
+ *
+ * @category EVM
+ */
+export * as State from './State.js'

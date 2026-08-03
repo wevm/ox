@@ -6,9 +6,9 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "Evm",
-      "EvmState",
       "Hardfork",
       "Opcode",
+      "State",
     ]
   `)
 })
