@@ -41,6 +41,9 @@ export default defineConfig({
       'contracts/**',
       'contracts/generated.ts',
       'test/kzg/**',
+      // Upstream execution-spec-tests fixtures stay byte-identical to their
+      // release so they remain traceable to it.
+      'src/evm/_test/fixtures/**',
       '**/tsconfig.json',
       '**/tsconfig.*.json',
       '**/package.json',

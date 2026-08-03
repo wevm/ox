@@ -41,6 +41,10 @@ tsdoc-metadata.json
 .wasm-toolchain
 wasm/.build
 
+# execution-spec-tests fixtures (see scripts/evm-conformance.ts for the
+# pinned release and download command)
+test/evm/fixtures/
+
 # Rust bench build output (`pnpm bench:engines`). `Cargo.lock` is committed: the
 # dependency ranges would otherwise re-resolve per machine, and a benchmark
 # whose point is comparison over time cannot have its baseline move underneath
