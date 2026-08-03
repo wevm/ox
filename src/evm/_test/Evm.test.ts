@@ -280,6 +280,92 @@ describe('transact', () => {
     expect(state.getAccount(from)?.nonce).toBe(0n)
   })
 
+  test.each([
+    {
+      envelope: { gasPrice: 1n, type: 'legacy', value: -1n },
+      reason: 'negative-value',
+    },
+    {
+      envelope: {
+        maxFeePerGas: 1n,
+        maxPriorityFeePerGas: -1n,
+        type: 'eip1559',
+      },
+      reason: 'negative-priority-fee',
+    },
+  ] as const)('rejects $reason', ({ envelope, reason }) => {
+    const state = State.fromMemory({
+      accounts: { [from]: { balance: 100_000n } },
+    })
+    const evm = Evm.from({ state })
+
+    expect(() =>
+      Evm.transact(evm, {
+        chainId: 1,
+        from,
+        gas: 21_000n,
+        nonce: 0n,
+        to,
+        ...envelope,
+      } as never),
+    ).toThrowError(`Transaction is invalid: ${reason}.`)
+    expect(state.getAccount(from)?.nonce).toBe(0n)
+  })
+
+  test('rejects high-s transaction signatures', () => {
+    const evm = Evm.from({ state: State.fromMemory() })
+
+    expect(() =>
+      Evm.transact(evm, {
+        chainId: 1,
+        gas: 21_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        r: '0x01',
+        s: '0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140',
+        to,
+        type: 'legacy',
+        v: 27,
+      }),
+    ).toThrowError('Transaction is invalid: signature-s.')
+  })
+
+  test('normalizes transaction and block addresses', () => {
+    const recipient = Address.checksum(
+      '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+    )
+    const miner = Address.checksum('0x1234567890abcdef1234567890abcdef12345678')
+    const state = State.fromMemory({
+      accounts: {
+        [from]: { balance: 100_000n },
+        [miner.toLowerCase()]: { balance: 7n },
+        [recipient.toLowerCase()]: { balance: 11n },
+      },
+    })
+    const evm = Evm.from({
+      block: { baseFeePerGas: 0n, coinbase: miner },
+      state,
+    })
+
+    Evm.transact(evm, {
+      chainId: 1,
+      from,
+      gas: 21_000n,
+      gasPrice: 1n,
+      nonce: 0n,
+      to: recipient,
+      type: 'legacy',
+      value: 5n,
+    })
+
+    expect(
+      state.getAccount(recipient.toLowerCase() as `0x${string}`)?.balance,
+    ).toBe(16n)
+    expect(
+      state.getAccount(miner.toLowerCase() as `0x${string}`)?.balance,
+    ).toBe(21_007n)
+  })
+
   test('creates a contract', () => {
     const state = State.fromMemory({
       accounts: { [from]: { balance: 2_000_000n } },
@@ -308,6 +394,37 @@ describe('transact', () => {
     expect(
       state.getAccount('0x7ad672fcaa8d6afdb547994826f5d9292894dc45')?.code,
     ).toBe('0x00')
+  })
+
+  test('detects create collisions with lazy code', () => {
+    const created = '0x7ad672fcaa8d6afdb547994826f5d9292894dc45'
+    const memory = State.fromMemory({
+      accounts: {
+        [created]: { code: '0x00' },
+        [from]: { balance: 2_000_000n },
+      },
+    })
+    const state = State.from({
+      ...memory,
+      getAccount(address) {
+        const account = memory.getAccount(address)
+        return account ? { ...account, code: undefined } : undefined
+      },
+    })
+    const evm = Evm.from({ state })
+
+    expect(
+      Evm.transact(evm, {
+        chainId: 1,
+        data: '0x00',
+        from,
+        gas: 100_000n,
+        gasPrice: 1n,
+        nonce: 0n,
+        type: 'legacy',
+      }),
+    ).toMatchObject({ reason: 'create-collision', status: 'halted' })
+    expect(state.getCode(created)).toBe('0x00')
   })
 
   test('runs custom transaction stages', () => {

@@ -14,4 +14,11 @@ describe('mainnet', () => {
         ]
       `)
   })
+
+  test('returns fresh handlers', () => {
+    const handlers = Transaction.mainnet()
+    handlers[0].validate = () => {}
+
+    expect(Transaction.mainnet()[0].validate).toBeUndefined()
+  })
 })

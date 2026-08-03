@@ -62,14 +62,6 @@ export type Mainnet = readonly [
   Handler<'eip7702', TxEnvelopeEip7702.TxEnvelopeEip7702>,
 ]
 
-const mainnetHandlers = [
-  { type: 'legacy' },
-  { type: 'eip2930' },
-  { type: 'eip1559' },
-  { type: 'eip4844' },
-  { type: 'eip7702' },
-] as const satisfies Mainnet
-
 /**
  * Returns the mainnet transaction handlers.
  *
@@ -81,5 +73,11 @@ const mainnetHandlers = [
  * ```
  */
 export function mainnet(): Mainnet {
-  return mainnetHandlers
+  return [
+    { type: 'legacy' },
+    { type: 'eip2930' },
+    { type: 'eip1559' },
+    { type: 'eip4844' },
+    { type: 'eip7702' },
+  ]
 }

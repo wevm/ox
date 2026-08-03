@@ -159,7 +159,7 @@ export function runCase(
     fork === 'Cancun' ? 'cancun' : fork === 'Prague' ? 'prague' : 'osaka'
   ) as Hardfork.Hardfork
   const environment = test.env
-  const state = State.fromMemory({
+  const memory = State.fromMemory({
     accounts: Object.fromEntries(
       Object.entries(test.pre).map(([address, account]) => [
         address,
@@ -171,6 +171,33 @@ export function runCase(
         },
       ]),
     ) as never,
+  })
+  const addresses = new Set(
+    Object.keys(test.pre).map((address) => address.toLowerCase()),
+  )
+  const trackedSlots = new Map<string, Set<bigint>>()
+  for (const [address, account] of Object.entries(test.pre))
+    trackedSlots.set(
+      address.toLowerCase(),
+      new Set(Object.keys(account.storage ?? {}).map(big)),
+    )
+  const state = State.from({
+    ...memory,
+    putAccount(address, account) {
+      addresses.add(address.toLowerCase())
+      memory.putAccount(address, account)
+    },
+    putStorage(address, slot, value) {
+      const key = address.toLowerCase()
+      addresses.add(key)
+      let accountSlots = trackedSlots.get(key)
+      if (!accountSlots) {
+        accountSlots = new Set()
+        trackedSlots.set(key, accountSlots)
+      }
+      accountSlots.add(slot)
+      memory.putStorage(address, slot, value)
+    },
   })
   const chainId = big(test.config?.chainid ?? '0x01')
   const evm = Evm.from({
@@ -258,8 +285,8 @@ export function runCase(
 
   const actual = new Map<string, ReadAccount>()
   const storage = new Map<string, Map<bigint, bigint>>()
-  for (const address of Object.keys(post.state ?? test.pre)) {
-    const key = address.toLowerCase() as Address.Address
+  for (const address of addresses) {
+    const key = address as Address.Address
     const account = state.getAccount(key)
     if (!account) continue
     actual.set(key, {
@@ -267,12 +294,10 @@ export function runCase(
       code: (account.code ?? state.getCode(key)) as Hex,
       nonce: account.nonce,
     })
-    const slots = new Map<bigint, bigint>()
-    for (const slot of Object.keys(
-      (post.state ?? test.pre)[address]?.storage ?? {},
-    ))
-      slots.set(big(slot), state.getStorage(key, big(slot)))
-    storage.set(key, slots)
+    const actualSlots = new Map<bigint, bigint>()
+    for (const slot of trackedSlots.get(key) ?? [])
+      actualSlots.set(slot, state.getStorage(key, slot))
+    storage.set(key, actualSlots)
   }
   const status =
     receipt?.status === 'halted'

@@ -516,6 +516,8 @@ function validateTransaction(context: TransactionContext): void {
     'maxPriorityFeePerGas' in envelope
       ? (envelope.maxPriorityFeePerGas ?? 0n)
       : maxFeePerGas
+  if (maxPriorityFeePerGas < 0n)
+    throw new InvalidTransactionError({ reason: 'negative-priority-fee' })
   if (maxPriorityFeePerGas > maxFeePerGas)
     throw new InvalidTransactionError({ reason: 'tip-above-fee-cap' })
   if (senderNonce >= (1n << 64n) - 1n)
@@ -560,6 +562,8 @@ function validateTransaction(context: TransactionContext): void {
     Hex.size(envelope.data ?? envelope.input ?? '0x') > 49_152
   )
     throw new InvalidTransactionError({ reason: 'initcode-size-exceeded' })
+  if (value < 0n)
+    throw new InvalidTransactionError({ reason: 'negative-value' })
 
   const gasAllowance = gasLimit * maxFeePerGas
   const blobAllowance =
@@ -586,7 +590,7 @@ function prepareTransaction(context: TransactionContext): void {
   const create = !envelope.to
   const to = create
     ? ContractAddress.fromCreate({ from: sender, nonce: senderNonce })
-    : (envelope.to as Address.Address)
+    : ((envelope.to as Address.Address).toLowerCase() as Address.Address)
   const bytecode = create
     ? Hex.toBytes(envelope.data ?? envelope.input ?? '0x')
     : getCode(state, to)
@@ -611,7 +615,7 @@ function prepareTransaction(context: TransactionContext): void {
 
   const journal = execution.machine.journal
   seedAccount(journal, state, sender)
-  seedAccount(journal, state, block.coinbase)
+  seedAccount(journal, state, block.coinbase.toLowerCase() as Address.Address)
   seedAccount(journal, state, to)
   const senderAccount = journal_.getAccount(journal, sender)
   journal_.setBalance(
@@ -661,6 +665,8 @@ function prepareTransaction(context: TransactionContext): void {
   execution.frame.checkpoint = checkpoint
   if (create) {
     const target = journal_.getAccount(journal, to) as journal_.Account | null
+    if (target && target.hasCode === undefined)
+      journal_.seed(journal, resolveSync(state, { address: to, kind: 'code' }))
     if (
       target !== null &&
       (target.nonce !== 0n || target.hasCode || target.hasStorage)
@@ -762,14 +768,16 @@ function settleTransaction(
 }
 
 function transactionSender(envelope: TxEnvelope.TxEnvelope): Address.Address {
-  if (envelope.from) return envelope.from
+  if (envelope.from) return envelope.from.toLowerCase() as Address.Address
   const signature = Signature.extract(envelope)
   if (!signature)
     throw new InvalidTransactionError({ reason: 'missing-sender' })
+  if (BigInt(signature.s) > secp256k1N / 2n)
+    throw new InvalidTransactionError({ reason: 'signature-s' })
   return Secp256k1.recoverAddress({
     payload: TxEnvelope.getSignPayload(envelope),
     signature,
-  })
+  }).toLowerCase() as Address.Address
 }
 
 function applyAuthorizations(context: TransactionContext): bigint {

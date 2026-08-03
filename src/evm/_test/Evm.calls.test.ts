@@ -517,6 +517,38 @@ describe('EIP-7702 delegation', () => {
     expect(returned(result)).toBe(word(0))
   })
 
+  test('loads a delegated account before its lazy code', () => {
+    const memory = State.fromMemory({
+      accounts: {
+        [bob]: { code: designate(carol) },
+        [carol]: { code: `0x30${ret}` },
+      },
+    })
+    const reads: string[] = []
+    const state = State.from({
+      ...memory,
+      getAccount(address) {
+        reads.push(`account:${address}`)
+        const account = memory.getAccount(address)
+        return account ? { ...account, code: undefined } : undefined
+      },
+      getCode(address) {
+        reads.push(`code:${address}`)
+        return memory.getCode(address)
+      },
+    })
+
+    const result = Evm.run({
+      bytecode: `0x${zeros(5)}${push(bob)}61fffff1${ret}`,
+      state,
+    })
+
+    expect(returned(result)).toBe(word(1))
+    expect(reads.indexOf(`account:${carol}`)).toBeLessThan(
+      reads.indexOf(`code:${carol}`),
+    )
+  })
+
   test('code-reading opcodes keep their specified views', () => {
     const state = State.fromMemory({
       accounts: {
