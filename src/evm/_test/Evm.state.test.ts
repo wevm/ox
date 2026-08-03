@@ -290,6 +290,23 @@ describe('selfdestruct (EIP-6780)', () => {
     expect(state.getAccount(other)?.balance).toBe(101n)
   })
 
+  test('no new-account charge when the beneficiary is empty', () => {
+    const state = State.fromMemory({
+      accounts: {
+        [other]: {},
+        [self]: { balance: 100n },
+      },
+    })
+    const result = Evm.run({
+      address: self,
+      bytecode: `0x73${other.slice(2)}ff`,
+      state,
+    })
+    Evm.assertSuccess(result)
+    expect(result.gasUsed).toBe(7603n)
+    expect(state.getAccount(other)?.balance).toBe(100n)
+  })
+
   test('static context halts', () => {
     const result = Evm.run({ bytecode: '0x5fff', static: true })
     expect(result.status).toBe('halted')
@@ -297,6 +314,26 @@ describe('selfdestruct (EIP-6780)', () => {
 })
 
 describe('state commitment', () => {
+  test('read-only runs do not write fetched state', () => {
+    const writes: string[] = []
+    const source = State.from({
+      async: false,
+      getAccount: () => ({ balance: 42n, code: '0x', nonce: 0n }),
+      getBlockHash: () => `0x${'00'.repeat(32)}` as `0x${string}`,
+      getCode: () => '0x',
+      getStorage: () => 7n,
+      putAccount: (address) => writes.push(`account:${address}`),
+      putStorage: (address, slot) => writes.push(`storage:${address}:${slot}`),
+    })
+    const push = `73${other.slice(2)}`
+    Evm.run({
+      address: self,
+      bytecode: `0x${push}31506001545000`,
+      state: source,
+    })
+    expect(writes).toMatchInlineSnapshot(`[]`)
+  })
+
   test('reverted runs leave the source untouched', () => {
     const state = State.fromMemory({
       accounts: { [self]: { storage: { '0x01': '0x2a' } } },

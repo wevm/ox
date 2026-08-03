@@ -550,6 +550,8 @@ export type CaseResult = {
   /** Effective gas price — lets `compare` express a balance mismatch in gas
    * units, which is what points a delta at a wrong constant. */
   gasPrice: bigint
+  /** Gas consumed after refunds and the calldata floor. */
+  gasUsed: bigint
   outcome: Outcome
   /**
    * Whether the runner refused the transaction instead of running it.
@@ -634,13 +636,10 @@ function compareLoaded(
   const settled = new Map(adapter.readState().map((a) => [a.address, a]))
   return {
     gasPrice,
-    outcome: compare(
-      settled,
-      post.state ?? {},
-      adapter.readStorage(),
-      'success',
-      gasPrice,
-    ),
+    gasUsed: 0n,
+    outcome: post.state
+      ? compare(settled, post.state, adapter.readStorage(), 'success', gasPrice)
+      : { ok: true },
     rejected: true,
     settled,
     status: 'success',
@@ -768,7 +767,9 @@ export function runCase(
   if (forkAtLeast(fork, 'London')) {
     const senderCodeHex = (senderPre?.code ?? '0x').toLowerCase()
     const delegating =
-      forkAtLeast(fork, 'Prague') && senderCodeHex.startsWith('0xef0100')
+      forkAtLeast(fork, 'Prague') &&
+      senderCodeHex.length === 48 &&
+      senderCodeHex.startsWith('0xef0100')
     if (senderCodeHex !== '0x' && senderCodeHex !== '' && !delegating)
       return compareLoaded(adapter, post, effectiveGasPrice)
   }
@@ -807,7 +808,7 @@ export function runCase(
     // version byte.
     if (isCreate) return compareLoaded(adapter, post, effectiveGasPrice)
     for (const h of blobHashes)
-      if (!h.startsWith('0x01'))
+      if (h.length !== 66 || !h.toLowerCase().startsWith('0x01'))
         return compareLoaded(adapter, post, effectiveGasPrice)
   }
   // EIP-1559: the fee cap has to cover the base fee. That applies to a legacy
@@ -902,14 +903,16 @@ export function runCase(
     senderBalance - gasLimit * effectiveGasPrice - blobFee - value
   const toBase =
     toAddr === tx.sender.toLowerCase() ? senderAdjusted : big(toPre?.balance)
-  adapter.putAccount(toAddr, {
-    balance: toBase + value,
-    code: toCode,
-    nonce:
-      toAddr === tx.sender.toLowerCase()
-        ? big(senderPre?.nonce) + 1n
-        : big(toPre?.nonce),
-  })
+  // A zero-value call does not create an absent recipient after EIP-161.
+  if (toPre || value > 0n || !forkAtLeast(fork, 'SpuriousDragon'))
+    adapter.putAccount(toAddr, {
+      balance: toBase + value,
+      code: toCode,
+      nonce:
+        toAddr === tx.sender.toLowerCase()
+          ? big(senderPre?.nonce) + 1n
+          : big(toPre?.nonce),
+    })
 
   // Authorizations land before execution so the delegations they write are
   // visible to the first frame, and after the sender and recipient writes
@@ -1036,13 +1039,16 @@ function settleAndCompare(
 
   return {
     gasPrice: effectiveGasPrice,
-    outcome: compare(
-      settle,
-      post.state ?? {},
-      adapter.readStorage(),
-      status,
-      effectiveGasPrice,
-    ),
+    gasUsed,
+    outcome: post.state
+      ? compare(
+          settle,
+          post.state,
+          adapter.readStorage(),
+          status,
+          effectiveGasPrice,
+        )
+      : { ok: true },
     rejected: false,
     settled: settle,
     status,
@@ -1072,6 +1078,12 @@ function compare(
           `DIFF ${addr} nonce got ${got.nonce} want ${big(want.nonce)}`,
         )
     }
+  const expectedAddresses = new Set(
+    Object.keys(expected).map((address) => address.toLowerCase()),
+  )
+  for (const address of actual.keys())
+    if (!expectedAddresses.has(address.toLowerCase()))
+      return { detail: address, ok: false, reason: 'extra-account' }
   for (const [rawAddr, want] of Object.entries(expected)) {
     const addr = rawAddr.toLowerCase() as Hex
     const got = actual.get(addr)

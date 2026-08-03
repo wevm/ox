@@ -368,6 +368,36 @@ export function isCreated(journal: Journal, address: string): boolean {
   return journal.created.has(address)
 }
 
+/** Returns accounts changed by mutations that survived frame reverts. */
+export function dirtyAccounts(journal: Journal): Set<string> {
+  const accounts = new Set<string>()
+  for (const entry of journal.undo)
+    if (
+      entry.kind === 'account' ||
+      entry.kind === 'balance' ||
+      entry.kind === 'code' ||
+      entry.kind === 'nonce' ||
+      entry.kind === 'selfdestruct'
+    )
+      accounts.add(entry.address)
+  return accounts
+}
+
+/** Returns storage slots changed by mutations that survived frame reverts. */
+export function dirtyStorage(journal: Journal): Map<string, Set<bigint>> {
+  const storage = new Map<string, Set<bigint>>()
+  for (const entry of journal.undo) {
+    if (entry.kind !== 'storage') continue
+    let slots = storage.get(entry.address)
+    if (!slots) {
+      slots = new Set()
+      storage.set(entry.address, slots)
+    }
+    slots.add(entry.slot)
+  }
+  return storage
+}
+
 // Checkpoints.
 
 export function checkpoint(journal: Journal): number {

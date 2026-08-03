@@ -1,7 +1,7 @@
 import * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import type { Compute } from '../core/internal/types.js'
+import type { Compute, ExactPartial } from '../core/internal/types.js'
 import * as State from './State.js'
 import * as Hardfork from './Hardfork.js'
 import { analyzed } from './internal/analysis.js'
@@ -280,12 +280,14 @@ function resolveSync(
 
 // Applies a successful run's state changes to the source's overlay.
 function commit(journal: journal_.Journal, state: State.Sync): void {
-  for (const [address, account] of journal.accounts) {
+  for (const address of journal_.dirtyAccounts(journal)) {
     if (journal.selfdestructs.has(address)) {
       state.putAccount(address as Address.Address, undefined)
       continue
     }
+    const account = journal.accounts.get(address)
     if (account === null) continue
+    if (account === undefined) continue
     const code = journal.codes.get(address)
     state.putAccount(address as Address.Address, {
       balance: account.balance,
@@ -293,10 +295,15 @@ function commit(journal: journal_.Journal, state: State.Sync): void {
       nonce: account.nonce,
     })
   }
-  for (const [address, slots] of journal.storage) {
+  for (const [address, dirtySlots] of journal_.dirtyStorage(journal)) {
     if (journal.selfdestructs.has(address)) continue
-    for (const [slot, value] of slots)
+    const slots = journal.storage.get(address)
+    if (!slots) continue
+    for (const slot of dirtySlots) {
+      const value = slots.get(slot)
+      if (value === undefined) continue
       state.putStorage(address as Address.Address, slot, value)
+    }
   }
 }
 
@@ -307,7 +314,7 @@ export declare namespace run {
     /** Versioned blob hashes for `BLOBHASH`. */
     blobHashes?: readonly Hex.Hex[] | undefined
     /** Block environment. Omitted fields default to zero-like values. */
-    block?: Partial<BlockEnv> | undefined
+    block?: ExactPartial<BlockEnv> | undefined
     /** Bytecode to execute. */
     bytecode: Hex.Hex | Uint8Array
     /** `CALLER`. @default zero address */

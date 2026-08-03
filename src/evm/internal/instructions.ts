@@ -517,22 +517,9 @@ function build(hardfork: Hardfork.Hardfork): Table {
       return
     }
     const balance = own ? own.balance : 0n
-    // Emptiness of the beneficiary decides the new-account charge; the code
-    // dimension must be resolved when balance and nonce are both zero.
-    if (
-      balance !== 0n &&
-      target !== null &&
-      target.balance === 0n &&
-      target.nonce === 0n &&
-      target.hasCode === undefined
-    ) {
-      need(m, { address: beneficiary, kind: 'code' })
-      return
-    }
     const warm = journal.isWarmAddress(m.journal, beneficiary)
     let cost = warm ? 0n : 2600n
-    if (balance !== 0n && (target === null || journal.isEmpty(target)))
-      cost += 25_000n
+    if (balance !== 0n && target === null) cost += 25_000n
     if (!chargeDynamic(f, m, cost)) return
     if (!warm) journal.warmAddress(m.journal, beneficiary)
 

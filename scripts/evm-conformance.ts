@@ -41,8 +41,6 @@ import * as eest from '../test/evm/eest.js'
 
 type Hex = `0x${string}`
 
-// --- blockchain tests ---
-//
 // A blockchain fixture is a chain of blocks rather than one transaction, but
 // every one of them carries an explicit `postState`, so none of this needs a
 // Merkle Patricia trie for the *state*: the state root in the header is never
@@ -252,8 +250,6 @@ function systemCall(
   }
 }
 
-// --- Merkle Patricia trie ---
-//
 // Only enough of one to compute a root over a list keyed by its index, which
 // is what the withdrawals, transactions and receipts roots all are. There is
 // no storage, no lookup and no proof: a root is a pure function of the pairs,
@@ -417,6 +413,7 @@ type ParentInfo = {
   baseFeePerGas: bigint
   blobGasUsed: bigint
   excessBlobGas: bigint
+  fork: string
   gasLimit: bigint
   gasUsed: bigint
   hasBaseFee: boolean
@@ -534,12 +531,16 @@ function runBlockchainTest(
   let chainHashes: bigint[] = t.genesisBlockHeader?.hash
     ? [big(t.genesisBlockHeader.hash)]
     : []
-  const headerOf = (x: Header | undefined): ParentInfo | undefined =>
+  const headerOf = (
+    x: Header | undefined,
+    fork: string,
+  ): ParentInfo | undefined =>
     x
       ? {
           baseFeePerGas: big(x.baseFeePerGas),
           blobGasUsed: big(x.blobGasUsed),
           excessBlobGas: big(x.excessBlobGas),
+          fork,
           gasLimit: big(x.gasLimit),
           gasUsed: big(x.gasUsed),
           hasBaseFee: x.baseFeePerGas !== undefined,
@@ -547,7 +548,10 @@ function runBlockchainTest(
       : undefined
   // The excess is defined against the previous block, so the genesis header
   // seeds it.
-  let parent = headerOf(t.genesisBlockHeader)
+  let parent = headerOf(
+    t.genesisBlockHeader,
+    forkAt(big(t.genesisBlockHeader?.timestamp)),
+  )
   let settled: Map<string, eest.ReadAccount> | undefined
   for (const b of t.blocks ?? []) {
     // A block the chain must reject. Where the reason is a transaction, the
@@ -622,15 +626,10 @@ function runBlockchainTest(
           ? 9
           : 6
     if (blobTotal > blockMaxBlobs) rejected = true
-    // A transaction is only includable while the gas already committed plus
-    // its own limit still fits the block, so the sum of the limits is the
-    // binding constraint — and no single transaction can see it. EIP-7825's
-    // 2^24 cap makes this reachable with a handful of transactions.
-    const gasCommitted = txs.reduce((n, tx) => n + big(tx.gasLimit), 0n)
-    if (gasCommitted > big(h.gasLimit)) rejected = true
     // A transition block's gas limit is allowed to jump — London doubled it —
     // so the 1/1024 band is not applied across one.
-    if (headerInvalid(h, parent, fork, b, transition !== null)) rejected = true
+    const transitionBlock = parent !== undefined && parent.fork !== fork
+    if (headerInvalid(h, parent, fork, b, transitionBlock)) rejected = true
 
     // The blob fields of the header are a pure function of the block's blobs
     // and its parent, so they can be checked without any of the rest of the
@@ -646,7 +645,12 @@ function runBlockchainTest(
         if (big(h.excessBlobGas) !== want) rejected = true
       }
     }
+    let gasUsed = 0n
     for (const tx of rejected ? [] : txs) {
+      if (big(tx.gasLimit) > big(h.gasLimit) - gasUsed) {
+        rejected = true
+        break
+      }
       const synthetic: eest.FixtureCase = {
         config: t.config,
         env,
@@ -662,11 +666,13 @@ function runBlockchainTest(
         adapter,
         synthetic,
         fork,
-        { indexes: { data: 0, gas: 0, value: 0 }, state: {} },
+        { indexes: { data: 0, gas: 0, value: 0 } },
         { chainHashes },
       )
       if (!result.outcome.ok && !expected) return result.outcome
       rejected = rejected || result.rejected
+      if (result.rejected) break
+      gasUsed += result.gasUsed
       if (forkAtLeast(fork, 'Prague') && !result.rejected)
         for (const log of adapter.readLogs()) {
           if (log.address !== DEPOSIT_CONTRACT) continue
@@ -706,12 +712,12 @@ function runBlockchainTest(
       continue
     }
     // Withdrawals are denominated in gwei, unlike everything else here.
-    for (const w of b.withdrawals ?? [])
+    for (const w of b.withdrawals ?? b.rlp_decoded?.withdrawals ?? [])
       credit(pre, w.address, big(w.amount) * 1_000_000_000n)
     const reward = blockReward(fork)
     if (reward > 0n) credit(pre, h.coinbase, reward)
     if (h.hash) chainHashes.unshift(big(h.hash))
-    parent = headerOf(h)
+    parent = headerOf(h, fork)
   }
   // Load the final state back so `compare` reads it from the engine, which is
   // the only path that also produces storage. A transaction that cannot pay
@@ -744,8 +750,6 @@ function runBlockchainTest(
   )
   return result.outcome
 }
-
-// --- driver ---
 
 function* walk(dir: string): Generator<string> {
   for (const entry of readdirSync(dir)) {
@@ -969,3 +973,4 @@ for (const [reason, count] of ranked.slice(0, show))
   console.log(
     `${String(count).padStart(7)}  ${reason}\n         e.g. ${samples.get(reason)}`,
   )
+if (fail > 0) process.exitCode = 1

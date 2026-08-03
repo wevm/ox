@@ -66,3 +66,70 @@ describe('runCase', () => {
         }
     })
 })
+
+describe('transaction validity', () => {
+  const sender = '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'
+  const recipient = '0x00000000000000000000000000000000000000c0'
+  const post = { indexes: { data: 0, gas: 0, value: 0 } }
+
+  function fixture(code: string): eest.FixtureCase {
+    return {
+      env: {
+        currentBaseFee: '0x0',
+        currentCoinbase: '0x0000000000000000000000000000000000000000',
+        currentExcessBlobGas: '0x0',
+        currentGasLimit: '0x1c9c380',
+        currentNumber: '0x1',
+        currentTimestamp: '0x1',
+      },
+      pre: {
+        [sender]: {
+          balance: '0xde0b6b3a7640000',
+          code,
+          nonce: '0x0',
+          storage: {},
+        },
+      },
+      transaction: {
+        data: ['0x'],
+        gasLimit: ['0x5208'],
+        gasPrice: '0x0',
+        nonce: '0x0',
+        sender,
+        to: recipient,
+        value: ['0x0'],
+      },
+    }
+  }
+
+  test('requires a complete delegation designation', () => {
+    const malformed = eest.runCase(
+      eest.ts(),
+      fixture('0xef0100'),
+      'Prague',
+      post,
+    )
+    expect(malformed.rejected).toBe(true)
+
+    const complete = eest.runCase(
+      eest.ts(),
+      fixture(`0xef0100${recipient.slice(2)}`),
+      'Prague',
+      post,
+    )
+    expect(complete.rejected).toBe(false)
+  })
+
+  test('rejects malformed-width blob hashes', () => {
+    const case_ = fixture('0x')
+    case_.transaction = {
+      ...case_.transaction,
+      blobVersionedHashes: ['0x01'],
+      maxFeePerBlobGas: '0x1',
+      maxFeePerGas: '0x0',
+      maxPriorityFeePerGas: '0x0',
+    }
+    const result = eest.runCase(eest.ts(), case_, 'Prague', post)
+    expect(result.rejected).toBe(true)
+  })
+})
