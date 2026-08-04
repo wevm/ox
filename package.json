@@ -13,7 +13,7 @@
     "deps:ci": "pnpx actions-up",
     "dev": "pnpm exports:update && zile dev",
     "docs:dev": "pnpm --filter site dev",
-    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.node.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
+    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.evm.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.node.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
@@ -134,6 +134,12 @@
       "path": "./dist/wasm/index.js",
       "import": "*",
       "limit": "225 kB"
+    },
+    {
+      "name": "import * from 'ox/evm'",
+      "path": "./dist/evm/index.js",
+      "import": "*",
+      "limit": "320 kB"
     },
     {
       "name": "import { Hash } from 'ox/wasm'",
@@ -705,6 +711,36 @@
       "src": "./src/erc8021/Attribution.ts",
       "types": "./dist/erc8021/Attribution.d.ts",
       "default": "./dist/erc8021/Attribution.js"
+    },
+    "./evm": {
+      "src": "./src/evm/index.ts",
+      "types": "./dist/evm/index.d.ts",
+      "default": "./dist/evm/index.js"
+    },
+    "./evm/Database": {
+      "src": "./src/evm/Database.ts",
+      "types": "./dist/evm/Database.d.ts",
+      "default": "./dist/evm/Database.js"
+    },
+    "./evm/Ethereum": {
+      "src": "./src/evm/Ethereum.ts",
+      "types": "./dist/evm/Ethereum.d.ts",
+      "default": "./dist/evm/Ethereum.js"
+    },
+    "./evm/Evm": {
+      "src": "./src/evm/Evm.ts",
+      "types": "./dist/evm/Evm.d.ts",
+      "default": "./dist/evm/Evm.js"
+    },
+    "./evm/SpecId": {
+      "src": "./src/evm/SpecId.ts",
+      "types": "./dist/evm/SpecId.d.ts",
+      "default": "./dist/evm/SpecId.js"
+    },
+    "./evm/TxResult": {
+      "src": "./src/evm/TxResult.ts",
+      "types": "./dist/evm/TxResult.d.ts",
+      "default": "./dist/evm/TxResult.js"
     },
     "./node": {
       "src": "./src/node/index.ts",

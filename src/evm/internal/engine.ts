@@ -1,3 +1,4 @@
+import type * as Address from '../../core/Address.js'
 import type * as Bytes from '../../core/Bytes.js'
 import * as Errors from '../../core/Errors.js'
 import * as bindings from './bindings.js'
@@ -25,6 +26,8 @@ export type Engine = {
   callTx(options: codec.encodeCallTx.Options): codec.TxResult
   /** Drops the engine and its accepted state. */
   destroy(): void
+  /** Reads an account through the accepted overlay and the database. */
+  readAccountInfo(address: Address.Address): codec.Account | undefined
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
 }
@@ -42,6 +45,11 @@ export async function create(options: create.Options): Promise<Engine> {
     destroy() {
       resolve(instance, codec.encodeDestroy())
       instance.reset()
+    },
+    readAccountInfo(address) {
+      return codec.decodeAccount(
+        resolve(instance, codec.encodeReadAccount(address)),
+      )
     },
     setBlock(options) {
       resolve(instance, codec.encodeSetBlock(options))

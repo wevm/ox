@@ -39,6 +39,8 @@ pub mod op {
     pub const SET_BLOCK: u16 = 3;
     /// Executes a transaction for its result and discards its state changes.
     pub const CALL_TX: u16 = 4;
+    /// Reads an account through the accepted overlay and the database.
+    pub const READ_ACCOUNT: u16 = 5;
 }
 
 /// Builds a response header with an empty payload.

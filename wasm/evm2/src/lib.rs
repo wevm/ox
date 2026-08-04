@@ -29,8 +29,10 @@ use core::{
     cell::UnsafeCell,
     sync::atomic::{AtomicBool, Ordering},
 };
+use alloy_primitives::Address;
 use evm2::{
     BaseEvmTypes, Evm, ExecutionConfig, Precompiles, SpecId, TxResult, Version,
+    registry::HandlerError,
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
     evm::Db,
@@ -216,6 +218,15 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
                 Err(error) => abi_failure(error),
             }
         }
+        op::READ_ACCOUNT => {
+            let Some(engine) = adapter.engine.as_mut() else {
+                return Writer::new().finish(status::ENGINE_MISSING);
+            };
+            match read_address(&mut reader) {
+                Ok(address) => read_account(engine, &address),
+                Err(error) => abi_failure(error),
+            }
+        }
         unknown => abi_failure(abi::Error::UnknownOp(unknown)),
     }
 }
@@ -287,6 +298,53 @@ fn call_tx(engine: &mut Evm<'static, BaseEvmTypes>, tx: &Recovered<TxEnvelope>) 
                 }
                 None => {
                     error::write_handler(&mut writer, &failure);
+                    writer.finish(status::HANDLER)
+                }
+            }
+        }
+    }
+}
+
+/// Reads a bare address operand.
+fn read_address(reader: &mut Reader<'_>) -> Result<Address, abi::Error> {
+    let address = reader.address()?;
+    reader.finish()?;
+    Ok(address)
+}
+
+/// Reads an account through the EVM, so accepted state is included.
+fn read_account(engine: &mut Evm<'static, BaseEvmTypes>, address: &Address) -> Vec<u8> {
+    match engine.read_account_info(address) {
+        Ok(account) => {
+            let mut writer = Writer::new();
+            match account {
+                Some(info) => {
+                    writer.bool(true);
+                    writer.word(info.balance);
+                    writer.u64(info.nonce);
+                    writer.hash(info.code_hash);
+                    // Code is included when the overlay already holds it, so a
+                    // caller does not need a second read to see it.
+                    writer.bytes(
+                        info.code.as_ref().map(|code| code.original_bytes()).unwrap_or_default().as_ref(),
+                    );
+                }
+                None => writer.bool(false),
+            }
+            writer.finish(status::OK)
+        }
+        Err(code) => {
+            let host = engine
+                .database_as_mut::<Db<HostDb>>()
+                .and_then(|db| db.take_result().err());
+            let mut writer = Writer::new();
+            match host {
+                Some(error) => {
+                    writer.str(&alloc::format!("{error}"));
+                    writer.finish(status::DATABASE)
+                }
+                None => {
+                    error::write_handler(&mut writer, &HandlerError::Fatal(code));
                     writer.finish(status::HANDLER)
                 }
             }

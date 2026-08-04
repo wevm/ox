@@ -19,6 +19,7 @@ ox.api.json
 erc4337.api.json
 node.api.json
 tempo.api.json
+evm.api.json
 wasm.api.json
 lookup.json
 config-generated.ts
@@ -30,6 +31,7 @@ site/src/pages/node
 site/src/pages/tempo/*
 !site/src/pages/tempo/guides/
 !site/src/pages/tempo/guides/**
+site/src/pages/evm
 site/src/pages/wasm
 site/src/pages/webauthn
 site/src/pages/zod
