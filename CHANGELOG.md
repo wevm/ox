@@ -1,5 +1,11 @@
 # ox
 
+## 1.6.1
+
+### Patch Changes
+
+- [#365](https://github.com/wevm/ox/pull/365) [`c8bcc7e`](https://github.com/wevm/ox/commit/c8bcc7e7b85bf319f8acdbf386d303314cbabbff) Thanks [@RezaRahemtola](https://github.com/RezaRahemtola)! - Fixed `Json.stringify` throwing `TypeError` when a replacer returned a `bigint` unchanged.
+
 ## 1.6.0
 
 ### Minor Changes
