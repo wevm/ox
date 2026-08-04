@@ -1,0 +1,275 @@
+import type * as Address from '../core/Address.js'
+import * as Bytes from '../core/Bytes.js'
+import * as Errors from '../core/Errors.js'
+import * as Database from './Database.js'
+import type * as Ethereum from './Ethereum.js'
+import * as SpecId from './SpecId.js'
+import * as TxResult from './TxResult.js'
+import * as engine from './internal/engine.js'
+
+import type {
+  ReentrancyError,
+  RequestTooLargeError,
+} from './internal/bindings.js'
+import type { EncodeError } from './internal/codec.js'
+import type {
+  AbiError,
+  DatabaseError,
+  HandlerError,
+} from './internal/engine.js'
+
+export {
+  AbiError,
+  DatabaseError,
+  HandlerError,
+  MissingError,
+} from './internal/engine.js'
+export { EncodeError } from './internal/codec.js'
+export { ReentrancyError, RequestTooLargeError } from './internal/bindings.js'
+
+/**
+ * An EVM.
+ *
+ * Owns its specification, block environment, and the state accepted above its
+ * database. One EVM is one isolated engine: creating a second does not share
+ * state with the first.
+ */
+export type Evm = {
+  /** @internal */
+  readonly '~engine': engine.Engine
+}
+
+/** Block values opcodes read. */
+export type Block = {
+  /** `BASEFEE`. @default 0n */
+  basefee?: bigint | undefined
+  /** `COINBASE`. @default the zero address */
+  beneficiary?: Address.Address | undefined
+  /** `BLOBBASEFEE`. @default 1n */
+  blobBasefee?: bigint | undefined
+  /** `DIFFICULTY`, pre-merge. @default 0n */
+  difficulty?: bigint | undefined
+  /** `GASLIMIT`. @default 30_000_000n */
+  gasLimit?: bigint | undefined
+  /** `NUMBER`. @default 0n */
+  number?: bigint | undefined
+  /** `PREVRANDAO`, post-merge. @default 0n */
+  prevrandao?: bigint | undefined
+  /** Beacon slot number. @default 0n */
+  slotNum?: bigint | undefined
+  /** `TIMESTAMP`. @default 0n */
+  timestamp?: bigint | undefined
+}
+
+/**
+ * Creates an EVM.
+ *
+ * Asynchronous because the engine is WebAssembly and browsers refuse to compile
+ * a module this size synchronously on the main thread. The module is compiled
+ * once per JavaScript realm; every call afterwards is synchronous.
+ *
+ * The specification selects the instruction table, gas schedule, precompiles,
+ * and transaction handlers. Choosing among compiled precompile sets or handler
+ * registries arrives with the configuration surface; until then the
+ * specification determines all of them.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm } from 'ox/evm'
+ *
+ * const evm = await Evm.create()
+ * ```
+ *
+ * @example
+ * ### Seeding state
+ *
+ * ```ts twoslash
+ * import { Database, Evm } from 'ox/evm'
+ *
+ * const evm = await Evm.create({
+ *   database: Database.fromMemory({
+ *     accounts: {
+ *       '0x0000000000000000000000000000000000000001': {
+ *         balance: 1n
+ *       }
+ *     }
+ *   })
+ * })
+ * ```
+ *
+ * @param options - Constructor components.
+ * @returns An EVM.
+ */
+export async function create(options: create.Options = {}): Promise<Evm> {
+  const {
+    block,
+    chainId,
+    database = Database.fromMemory(),
+    specId = SpecId.latest,
+  } = options
+
+  return {
+    '~engine': await engine.create({
+      block: {
+        basefee: block?.basefee ?? 0n,
+        beneficiary: block?.beneficiary ?? `0x${'00'.repeat(20)}`,
+        blobBasefee: block?.blobBasefee ?? 1n,
+        difficulty: block?.difficulty ?? 0n,
+        gasLimit: block?.gasLimit ?? 30_000_000n,
+        number: block?.number ?? 0n,
+        prevrandao: block?.prevrandao ?? 0n,
+        slotNum: block?.slotNum ?? 0n,
+        timestamp: block?.timestamp ?? 0n,
+      },
+      chainId: chainId ?? 1n,
+      database,
+      specId: SpecId.ids.indexOf(specId),
+    }),
+  }
+}
+
+export declare namespace create {
+  type Options = {
+    /** Block values opcodes read. */
+    block?: Block | undefined
+    /**
+     * Chain id `CHAINID` reports and transactions are validated against.
+     *
+     * @default 1n
+     */
+    chainId?: bigint | undefined
+    /**
+     * State the EVM reads through.
+     *
+     * An empty in-memory database by default, holding no accounts. evm2 reads a
+     * missing account as balance and nonce zero, so a transaction that costs
+     * nothing still executes; anything needing funds fails until state is
+     * seeded.
+     *
+     * @default Database.fromMemory()
+     */
+    database?: Database.Database | undefined
+    /**
+     * Specification whose rules apply.
+     *
+     * @default SpecId.latest
+     */
+    specId?: SpecId.SpecId | undefined
+  }
+
+  type ErrorType = EncodeError | Errors.GlobalErrorType
+}
+
+/**
+ * Executes a transaction and discards its state changes.
+ *
+ * This is evm2's `call_tx`: a fully validated transaction whose state changes are
+ * discarded. Nonce, chain id, balance, and intrinsic gas are all checked, so it
+ * is stricter than an `eth_call`, and it takes an encoded envelope with its
+ * signer rather than a loose message. Output, gas, and logs come back, nothing
+ * written is kept, and executing the same transaction twice gives the same
+ * result.
+ *
+ * A revert or an exceptional halt is a successful call returning
+ * `status: false`. It throws only when evm2 refused the transaction, or when the
+ * database could not supply state.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Database, Evm, TxResult } from 'ox/evm'
+ *
+ * const evm = await Evm.create({ database, specId: 'osaka' })
+ *
+ * const result = Evm.callTx(evm, { envelope, signer })
+ * TxResult.txGasUsed(result)
+ * // @log: 21000n
+ * ```
+ *
+ * @param evm - EVM to execute on.
+ * @param transaction - Transaction with its sender recovered.
+ * @returns The transaction's result.
+ */
+export function callTx(
+  evm: Evm,
+  transaction: Ethereum.RecoveredTx,
+): TxResult.TxResult {
+  const result = evm['~engine'].callTx({
+    envelope: Bytes.from(transaction.envelope),
+    signer: transaction.signer,
+  })
+  return { ...result, stop: stop(result.stop) }
+}
+
+export declare namespace callTx {
+  type ErrorType =
+    | AbiError
+    | DatabaseError
+    | HandlerError
+    | ReentrancyError
+    | RequestTooLargeError
+    | UnknownStopError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Reads an account through the EVM, including any state it has accepted.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.readAccountInfo(
+ *   evm,
+ *   '0x0000000000000000000000000000000000000001'
+ * )
+ * ```
+ *
+ * @param evm - EVM to read through.
+ * @param address - Account to read.
+ * @returns The account, or `undefined` when it does not exist.
+ */
+export function readAccountInfo(
+  evm: Evm,
+  address: Address.Address,
+): Database.Account | undefined {
+  return evm['~engine'].readAccountInfo(address)
+}
+
+export declare namespace readAccountInfo {
+  type ErrorType =
+    | AbiError
+    | DatabaseError
+    | HandlerError
+    | ReentrancyError
+    | Errors.GlobalErrorType
+}
+
+/** evm2's stop discriminants, keyed by the name they map to. */
+const names = /*#__PURE__*/ new Map(
+  Object.entries(TxResult.stops).map(([name, value]) => [
+    value as number,
+    name as TxResult.Stop,
+  ]),
+)
+
+function stop(discriminant: number): TxResult.Stop {
+  const name = names.get(discriminant)
+  if (!name) throw new UnknownStopError({ discriminant })
+  return name
+}
+
+/** Thrown when the engine reports a stop reason this version does not know. */
+export class UnknownStopError extends Errors.BaseError {
+  override readonly name = 'Evm.UnknownStopError'
+
+  constructor({ discriminant }: { discriminant: number }) {
+    super('The engine reported an unknown stop reason.', {
+      metaMessages: [
+        `Received: ${discriminant}`,
+        'The engine and this package may be out of sync.',
+      ],
+    })
+  }
+}

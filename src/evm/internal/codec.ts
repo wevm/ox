@@ -36,6 +36,7 @@ export const op = {
   destroy: 2,
   setBlock: 3,
   callTx: 4,
+  readAccount: 5,
 } as const
 
 /**
@@ -309,6 +310,41 @@ export function encodeSetBlock(options: encodeCreate.Options): Bytes.Bytes {
 /** Encodes a request dropping the engine. */
 export function encodeDestroy(): Bytes.Bytes {
   return new Writer().finish(op.destroy)
+}
+
+/** Encodes an account read. */
+export function encodeReadAccount(address: Address.Address): Bytes.Bytes {
+  const writer = new Writer()
+  writer.address(address)
+  return writer.finish(op.readAccount)
+}
+
+/** Decodes an account read response, or `undefined` when it does not exist. */
+export function decodeAccount(payload: Bytes.Bytes): Account | undefined {
+  const reader = new Reader(payload)
+  if (!reader.bool()) {
+    reader.finish()
+    return undefined
+  }
+  const balance = reader.word()
+  const nonce = reader.u64()
+  const codeHash = reader.hash()
+  const code = reader.bytes()
+  reader.finish()
+  return {
+    balance,
+    ...(code.length > 0 ? { code } : {}),
+    codeHash,
+    nonce,
+  }
+}
+
+/** An account, as the engine reports it. */
+export type Account = {
+  balance: bigint
+  code?: Bytes.Bytes | undefined
+  codeHash: Hex.Hex
+  nonce: bigint
 }
 
 /** Encodes a result-only transaction execution request. */
