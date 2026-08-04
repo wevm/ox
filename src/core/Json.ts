@@ -147,7 +147,7 @@ export function stringify(
   return JSON.stringify(
     value,
     (key, value) => {
-      if (typeof replacer === 'function') return replacer(key, value)
+      if (typeof replacer === 'function') value = replacer(key, value)
       if (typeof value === 'bigint') return value.toString() + bigIntSuffix
       return value
     },

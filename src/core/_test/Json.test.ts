@@ -177,6 +177,12 @@ describe('Json.stringify', () => {
     ).toEqual('{"foo":"bar","baz":{"value":"69!"}}')
   })
 
+  test('args: replacer with bigint returned unchanged', () => {
+    expect(
+      Json.stringify({ a: 5n }, (_key, value) => value),
+    ).toMatchInlineSnapshot(`"{"a":"5#__bigint"}"`)
+  })
+
   test('args: space', () => {
     expect(
       Json.stringify(
