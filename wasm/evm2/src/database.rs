@@ -208,9 +208,14 @@ impl Database for HostDb {
 
         // evm2 accepts code alongside the account. When a source supplies it,
         // `CacheDB` files it under its hash and `get_code_by_hash` never runs.
+        // A malformed-code failure is remapped to the account's own hash, the
+        // same way `get_code_by_hash` names the hash it was asked for.
         let code = match out[72] {
             0 => None,
-            _ => Some(self.take_code(code_length as usize)?),
+            _ => Some(self.take_code(code_length as usize).map_err(|error| match error {
+                HostError::Bytecode(_) => HostError::Bytecode(B256::from_slice(&out[40..72])),
+                other => other,
+            })?),
         };
 
         Ok(Some(AccountInfo {

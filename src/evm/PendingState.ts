@@ -1,4 +1,6 @@
 import type * as Address from '../core/Address.js'
+import type * as Bytes from '../core/Bytes.js'
+import type * as Hex from '../core/Hex.js'
 import type * as codec from './internal/codec.js'
 
 /**
@@ -57,7 +59,7 @@ export function isEmpty(state: PendingState): boolean {
  * Returns an account's present value, when the transaction touched it.
  *
  * `undefined` covers both an account the transaction never touched and one it
- * deleted, matching evm2.
+ * deleted.
  *
  * @example
  * ```ts twoslash
@@ -78,10 +80,32 @@ export function isEmpty(state: PendingState): boolean {
 export function accountInfo(
   state: PendingState,
   address: Address.Address,
-): codec.ChangeAccount | undefined {
+): AccountInfo | undefined {
   const changes = state['~changes']
   const key = address.toLowerCase()
-  for (const account of [...changes.accounts, ...changes.accountReads])
-    if (account.address.toLowerCase() === key) return account.current
+  for (const account of [...changes.accounts, ...changes.accountReads]) {
+    if (account.address.toLowerCase() !== key) continue
+    const current = account.current
+    if (!current) return undefined
+    // The stream carries code once, keyed by hash; joining it back mirrors
+    // evm2's account_info, whose AccountInfo includes code when loaded.
+    const code = changes.bytecode.find(
+      (entry) =>
+        entry.codeHash.toLowerCase() === current.codeHash.toLowerCase(),
+    )?.code
+    return { ...current, ...(code ? { code } : {}) }
+  }
   return undefined
+}
+
+/** An account's present value inside a pending state. */
+export type AccountInfo = {
+  /** Balance in wei. */
+  balance: bigint
+  /** Code, when the transaction loaded it. */
+  code?: Bytes.Bytes | undefined
+  /** Hash of the account's code. */
+  codeHash: Hex.Hex
+  /** Nonce. */
+  nonce: bigint
 }

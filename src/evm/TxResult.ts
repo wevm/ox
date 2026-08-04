@@ -1,8 +1,9 @@
 import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
+import type * as PendingState from './PendingState.js'
 
 /**
- * Reason the interpreter stopped, mirroring evm2's `InstrStop`.
+ * Reason the interpreter stopped.
  *
  * `stop`, `return`, and `selfDestruct` are successful. Everything else is a
  * revert or an exceptional halt, which differ in whether gas is refunded.
@@ -10,9 +11,9 @@ import type * as Hex from '../core/Hex.js'
 export type Stop = keyof typeof stops
 
 /**
- * Stop reasons and the discriminants evm2 assigns them.
+ * Stop reasons and the discriminants the engine assigns them.
  *
- * The values are not contiguous: evm2 groups successes from 1, reverts from
+ * The values are not contiguous: the engine groups successes from 1, reverts from
  * 0x10, and halts from 0x20, so this map has to be explicit rather than derived
  * from position.
  */
@@ -65,9 +66,9 @@ export type Log = {
 /**
  * Outcome of executing a transaction.
  *
- * Every field is evm2's, with only snake-case to camel-case adaptation. A revert
+ * Every field is the engine's, with only snake-case to camel-case adaptation. A revert
  * or an exceptional halt is a successful execution that returns `status: false`,
- * not an error: errors are reserved for transactions evm2 refused to run and for
+ * not an error: errors are reserved for transactions the engine refused to run and for
  * state the source could not supply.
  */
 export type TxResult = {
@@ -91,6 +92,18 @@ export type TxResult = {
   stop: Stop
   /** Total gas spent, regular plus state, before any refund. */
   totalGasSpent: bigint
+}
+
+/**
+ * A transaction's result paired with the state it detached into.
+ *
+ * The shape {@link ox#ExecutedTx.(detach:function)} produces.
+ */
+export type WithState = {
+  /** State the transaction left, owned by the caller. */
+  pendingState: PendingState.PendingState
+  /** Execution result. */
+  result: TxResult
 }
 
 /**

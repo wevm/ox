@@ -68,6 +68,20 @@ describe('decodeChanges', () => {
           },
         ],
         "bytecode": [],
+        "records": [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "created": true,
+            "current": {
+              "balance": 1000000000000000000n,
+              "codeHash": "0xabababababababababababababababababababababababababababababababab",
+              "nonce": 7n,
+            },
+            "kind": "account",
+            "original": undefined,
+            "selfdestructed": false,
+          },
+        ],
         "storage": [],
         "storageReads": [],
         "storageWipes": [],

@@ -45,6 +45,7 @@ type Expectation = {
 
 type Pending = {
   accounts: readonly string[]
+  bytecode: readonly string[]
   empty: boolean
   reads: readonly string[]
   storage: readonly string[]
@@ -146,6 +147,7 @@ function block(fields: Record<string, string>): codec.Block {
  */
 function encodePending(state: PendingState.PendingState): Pending {
   const accounts: string[] = []
+  const bytecode: string[] = []
   const reads: string[] = []
   const storage: string[] = []
   const wipes: string[] = []
@@ -156,6 +158,9 @@ function encodePending(state: PendingState.PendingState): Pending {
       : 'absent'
 
   StateChange.visit(state, {
+    bytecode(codeHash, code) {
+      bytecode.push(`${codeHash}|${Hex.fromBytes(code)}`)
+    },
     account(change) {
       accounts.push(
         [
@@ -197,6 +202,7 @@ function encodePending(state: PendingState.PendingState): Pending {
 
   return {
     accounts: accounts.sort(),
+    bytecode: bytecode.sort(),
     empty: PendingState.isEmpty(state),
     reads: reads.sort(),
     storage: storage.sort(),

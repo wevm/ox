@@ -12,8 +12,11 @@ import * as engine from './internal/engine.js'
 import type {
   ReentrancyError,
   RequestTooLargeError,
+  TrapError,
+  VersionError,
 } from './internal/bindings.js'
-import type { EncodeError } from './internal/codec.js'
+import { EncodeError } from './internal/codec.js'
+import type { DecodeError } from './internal/codec.js'
 import type {
   AbiError,
   BorrowedError,
@@ -29,8 +32,14 @@ export {
   MissingError,
   NotExecutedError,
 } from './internal/engine.js'
-export { EncodeError } from './internal/codec.js'
-export { ReentrancyError, RequestTooLargeError } from './internal/bindings.js'
+export { DecodeError, EncodeError } from './internal/codec.js'
+export {
+  ReentrancyError,
+  RequestTooLargeError,
+  TrapError,
+  VersionError,
+} from './internal/bindings.js'
+export { handlerKinds } from './internal/engine.js'
 
 /**
  * An EVM.
@@ -56,7 +65,7 @@ export type Block = {
   blobBasefee?: bigint | undefined
   /** `DIFFICULTY`, pre-merge. @default 0n */
   difficulty?: bigint | undefined
-  /** `GASLIMIT`. @default 30_000_000n */
+  /** `GASLIMIT`. @default 2n ** 64n - 1n, the engine's own default */
   gasLimit?: bigint | undefined
   /** `NUMBER`. @default 0n */
   number?: bigint | undefined
@@ -64,7 +73,7 @@ export type Block = {
   prevrandao?: bigint | undefined
   /** Beacon slot number. @default 0n */
   slotNum?: bigint | undefined
-  /** `TIMESTAMP`. @default 0n */
+  /** `TIMESTAMP`. @default 1n, the engine's own default */
   timestamp?: bigint | undefined
 }
 
@@ -123,11 +132,11 @@ export async function create(options: create.Options = {}): Promise<Evm> {
         beneficiary: block?.beneficiary ?? `0x${'00'.repeat(20)}`,
         blobBasefee: block?.blobBasefee ?? 1n,
         difficulty: block?.difficulty ?? 0n,
-        gasLimit: block?.gasLimit ?? 30_000_000n,
+        gasLimit: block?.gasLimit ?? 0xffffffffffffffffn,
         number: block?.number ?? 0n,
         prevrandao: block?.prevrandao ?? 0n,
         slotNum: block?.slotNum ?? 0n,
-        timestamp: block?.timestamp ?? 0n,
+        timestamp: block?.timestamp ?? 1n,
       },
       chainId: chainId ?? 1n,
       database,
@@ -143,13 +152,16 @@ export declare namespace create {
     /**
      * Chain id `CHAINID` reports and transactions are validated against.
      *
+     * The transaction-fields form serializes through envelope types whose chain
+     * id is a number, so past 2^53 only the `serialized` form executes.
+     *
      * @default 1n
      */
     chainId?: bigint | undefined
     /**
      * State the EVM reads through.
      *
-     * An empty in-memory database by default, holding no accounts. evm2 reads a
+     * An empty in-memory database by default, holding no accounts. The engine reads a
      * missing account as balance and nonce zero, so a transaction that costs
      * nothing still executes; anything needing funds fails until state is
      * seeded.
@@ -165,13 +177,13 @@ export declare namespace create {
     specId?: SpecId.SpecId | undefined
   }
 
-  type ErrorType = EncodeError | Errors.GlobalErrorType
+  type ErrorType = EncodeError | VersionError | Errors.GlobalErrorType
 }
 
 /**
  * Executes a transaction and discards its state changes.
  *
- * This is evm2's `call_tx`: a fully validated transaction whose state changes are
+ * Runs a fully validated transaction whose state changes are
  * discarded. Nonce, chain id, balance, and intrinsic gas are all checked, so it
  * is stricter than an `eth_call`, and it takes an encoded envelope with its
  * signer rather than a loose message. Output, gas, and logs come back, nothing
@@ -179,7 +191,7 @@ export declare namespace create {
  * result.
  *
  * A revert or an exceptional halt is a successful call returning
- * `status: false`. It throws only when evm2 refused the transaction, or when the
+ * `status: false`. It throws only when the engine refused the transaction, or when the
  * database could not supply state.
  *
  * @example
@@ -216,9 +228,12 @@ export declare namespace callTx {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | DecodeError
+    | EncodeError
     | HandlerError
     | ReentrancyError
     | RequestTooLargeError
+    | TrapError
     | UnknownStopError
     | Errors.GlobalErrorType
 }
@@ -284,9 +299,12 @@ export declare namespace transact {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | DecodeError
+    | EncodeError
     | HandlerError
     | ReentrancyError
     | RequestTooLargeError
+    | TrapError
     | UnknownStopError
     | Errors.GlobalErrorType
 }
@@ -329,7 +347,7 @@ export declare namespace readAccountInfo {
 /**
  * Placeholder signature for a transaction built from fields.
  *
- * EIP-2718 decoding needs a signature to parse, and evm2 strips it immediately,
+ * EIP-2718 decoding needs a signature to parse, and the engine strips it immediately,
  * so nothing reads this. Callers therefore never sign to simulate.
  */
 const placeholder = {
@@ -347,6 +365,13 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
     return Bytes.from(serialized)
 
   const { from: _, ...fields } = tx
+  // Envelope types carry `chainId` as a number, so the fields form cannot
+  // express a chain id past 2^53. The serialized form still can.
+  if (chainId > BigInt(Number.MAX_SAFE_INTEGER))
+    throw new EncodeError({
+      max: String(Number.MAX_SAFE_INTEGER),
+      value: `chainId ${chainId}`,
+    })
   // Fields with no fee fields infer EIP-1559, whose serialization needs a chain
   // id, so the EVM's own is the default rather than a required argument.
   return Bytes.from(
@@ -357,7 +382,7 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
   )
 }
 
-/** evm2's stop discriminants, keyed by the name they map to. */
+/** The engine's stop discriminants, keyed by the name they map to. */
 const names = /*#__PURE__*/ new Map(
   Object.entries(TxResult.stops).map(([name, value]) => [
     value as number,

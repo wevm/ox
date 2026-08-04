@@ -23,8 +23,8 @@ export type Account = internal.Account
  * Creates an in-memory database.
  *
  * Code is supplied inline with each account, so
- * {@link ox#Database.(Database:type)}`.getCodeByHash` is never reached: evm2
- * files inline code under its hash when it loads the account.
+ * {@link ox#Database.(Database:type)}`.getCodeByHash` is never reached: the
+ * engine files inline code under its hash when it loads the account.
  *
  * @example
  * ```ts twoslash

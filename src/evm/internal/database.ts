@@ -277,14 +277,3 @@ export class BoundsError extends Errors.BaseError {
     })
   }
 }
-
-/** Thrown when a source returns code the engine's landing buffer cannot hold. */
-export class CodeTooLargeError extends Errors.BaseError {
-  override readonly name = 'Evm.CodeTooLargeError'
-
-  constructor({ capacity, length }: { capacity: number; length: number }) {
-    super('The state source returned more code than the engine accepts.', {
-      metaMessages: [`Returned: ${length} bytes`, `Maximum: ${capacity} bytes`],
-    })
-  }
-}

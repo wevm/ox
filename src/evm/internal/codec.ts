@@ -412,6 +412,7 @@ export function decodeChanges(payload: Bytes.Bytes): Changes {
     accountReads: [],
     accounts: [],
     bytecode: [],
+    records: [],
     storage: [],
     storageReads: [],
     storageWipes: [],
@@ -419,6 +420,7 @@ export function decodeChanges(payload: Bytes.Bytes): Changes {
   while (true) {
     const record = readRecord(reader)
     if (!record) break
+    changes.records.push(record)
     collect(changes, record)
   }
   reader.finish()
@@ -430,6 +432,7 @@ type Mutable = {
   accountReads: AccountChange[]
   accounts: AccountChange[]
   bytecode: { code: Bytes.Bytes; codeHash: Hex.Hex }[]
+  records: Change[]
   storage: StorageChange[]
   storageReads: StorageChange[]
   storageWipes: Address.Address[]
@@ -549,7 +552,12 @@ export type Change =
   | { address: Address.Address; kind: 'storageWipe' }
   | { code: Bytes.Bytes; codeHash: Hex.Hex; kind: 'bytecode' }
 
-/** An account as a change stream reports it. Code arrives under its hash. */
+/**
+ * An account as a change stream reports it.
+ *
+ * Carries the code hash only; the code itself arrives once, keyed by that hash,
+ * under the stream's `bytecode` records.
+ */
 export type ChangeAccount = {
   balance: bigint
   codeHash: Hex.Hex
@@ -576,11 +584,17 @@ export type StorageChange = {
   original?: bigint | undefined
 }
 
-/** A decoded state-change stream, grouped by record kind. */
+/**
+ * A decoded state-change stream.
+ *
+ * `records` preserves the adapter's emission order, which is evm2's own visit
+ * order; the grouped views serve keyed lookups.
+ */
 export type Changes = {
   accountReads: readonly AccountChange[]
   accounts: readonly AccountChange[]
   bytecode: readonly { code: Bytes.Bytes; codeHash: Hex.Hex }[]
+  records: readonly Change[]
   storage: readonly StorageChange[]
   storageReads: readonly StorageChange[]
   storageWipes: readonly Address.Address[]
@@ -589,13 +603,21 @@ export type Changes = {
 /** Decodes a `TxResult` response payload. */
 export function decodeResult(payload: Bytes.Bytes): TxResult {
   const reader = new Reader(payload)
+  // Locals first: these are sequential reads, so an object literal's property
+  // order would be the wire order.
+  const status = reader.bool()
+  const stop = reader.u8()
+  const totalGasSpent = reader.u64()
+  const stateGasSpent = reader.u64()
+  const refunded = reader.u64()
+  const floorGas = reader.u64()
   const result = {
-    status: reader.bool(),
-    stop: reader.u8(),
-    totalGasSpent: reader.u64(),
-    stateGasSpent: reader.u64(),
-    refunded: reader.u64(),
-    floorGas: reader.u64(),
+    floorGas,
+    refunded,
+    stateGasSpent,
+    status,
+    stop,
+    totalGasSpent,
   }
   const createdAddress = reader.bool() ? reader.address() : undefined
   const errorCode = reader.bool() ? reader.u64() : undefined
