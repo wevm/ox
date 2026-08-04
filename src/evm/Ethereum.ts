@@ -9,9 +9,9 @@ import type * as TxEnvelope from '../core/TxEnvelope.js'
  * Supply the fields directly, or the encoded transaction under `serialized`
  * when replaying one off the wire.
  *
- * `from` is authoritative. evm2 takes the sender alongside a signature-stripped
- * envelope rather than recovering it, so a signature the envelope carries is
- * never read and never checked against `from`.
+ * `from` is authoritative. The engine takes the sender alongside a
+ * signature-stripped envelope rather than recovering it, so a signature the
+ * envelope carries is never read and never checked against `from`.
  */
 export type Tx = Tx.Fields | Tx.Serialized
 
@@ -25,6 +25,8 @@ export declare namespace Tx {
   type Fields = Envelope & {
     /** Account the transaction executes as. */
     from: Address.Address
+    /** Reserved for {@link ox#Ethereum.(Tx:namespace).Serialized}. */
+    serialized?: undefined
   }
 
   /** An already-encoded transaction, plus its sender. */

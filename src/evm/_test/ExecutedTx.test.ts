@@ -1,4 +1,4 @@
-import { Address, Hex, Secp256k1, TxEnvelopeLegacy } from 'ox'
+import { Address, Bytes, Hex, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { Database, Evm, ExecutedTx, PendingState, StateChange } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
@@ -414,5 +414,151 @@ describe('sink contract', () => {
         "original",
       ]
     `)
+  })
+})
+
+describe('sink record kinds', () => {
+  /** Initcode returning `PUSH1 42 PUSH0 MSTORE PUSH1 32 PUSH0 RETURN`. */
+  const initcode = '0x67602a5f5260205ff35f5260086018f3' as const
+  /** Constructor SSTOREs a slot then SELFDESTRUCTs to the caller. */
+  const destructor = '0x60015f5533ff' as const
+
+  function create(data: Hex.Hex, value = 0n) {
+    const envelope = TxEnvelopeLegacy.from({
+      chainId: 1,
+      data,
+      gas: 1_000_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      value,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeLegacy.getSignPayload(envelope),
+      privateKey,
+    })
+    return {
+      from: sender,
+      serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
+    }
+  }
+
+  async function senderOnly() {
+    return Evm.create({
+      database: Database.fromMemory({
+        accounts: { [sender.toLowerCase()]: { balance: 10n ** 18n } },
+      }),
+    })
+  }
+
+  test('behavior: a create streams bytecode and a created account', async () => {
+    const instance = await senderOnly()
+
+    const kinds: string[] = []
+    let deployed: Bytes.Bytes | undefined
+    let created = false
+    ExecutedTx.commitWith(Evm.transact(instance, create(initcode)), {
+      account(change) {
+        kinds.push('account')
+        created ||= change.created === true
+      },
+      accountRead() {
+        kinds.push('accountRead')
+      },
+      bytecode(_codeHash, code) {
+        kinds.push('bytecode')
+        deployed = code
+      },
+    })
+
+    expect(created).toBe(true)
+    expect(deployed && Hex.fromBytes(deployed)).toBe('0x602a5f5260205ff3')
+    expect(kinds).toContain('bytecode')
+  })
+
+  test('behavior: a same-transaction selfdestruct streams a storage wipe', async () => {
+    const instance = await senderOnly()
+
+    // Created and destroyed in one transaction nets to no account change, so
+    // the live stream reports only the wipe; the flag lives on detached state.
+    const wipes: string[] = []
+    ExecutedTx.discardWith(Evm.transact(instance, create(destructor, 1n)), {
+      storageWipe(address) {
+        wipes.push(address)
+      },
+    })
+    expect(wipes.length).toBe(1)
+  })
+
+  test('behavior: detached state records the selfdestruct flag', async () => {
+    const instance = await senderOnly()
+    const { pendingState } = ExecutedTx.detach(
+      Evm.transact(instance, create(destructor, 1n)),
+    )
+
+    let selfdestructed = false
+    StateChange.visit(pendingState, {
+      account(change) {
+        selfdestructed ||= change.selfdestructed === true
+      },
+    })
+    expect(selfdestructed).toBe(true)
+  })
+
+  test('behavior: streaming and visiting emit one sequence', async () => {
+    const trace = (sink: (event: string) => void): StateChange.Sink => ({
+      account: (change) => sink(`account:${change.address}`),
+      accountRead: (change) => sink(`accountRead:${change.address}`),
+      bytecode: (codeHash) => sink(`bytecode:${codeHash}`),
+      storage: (change) => sink(`storage:${change.address}:${change.key}`),
+      storageRead: (change) =>
+        sink(`storageRead:${change.address}:${change.key}`),
+      storageWipe: (address) => sink(`wipe:${address}`),
+    })
+
+    const streamed: string[] = []
+    ExecutedTx.discardWith(
+      Evm.transact(await senderOnly(), create(initcode)),
+      trace((event) => streamed.push(event)),
+    )
+
+    const visited: string[] = []
+    const { pendingState } = ExecutedTx.detach(
+      Evm.transact(await senderOnly(), create(initcode)),
+    )
+    StateChange.visit(
+      pendingState,
+      trace((event) => visited.push(event)),
+    )
+
+    // The two paths are different evm2 sources: detached state additionally
+    // reports loads the live stream elides (a fee-recipient read, net-no-op
+    // accounts). What both report must arrive in the same relative order.
+    const common = visited.filter((event) => streamed.includes(event))
+    expect(common).toEqual(streamed)
+    expect(streamed.length).toBeGreaterThan(2)
+
+    // Detached replay is deterministic: evm2 documents PendingState's visit
+    // order, and ours is its recording.
+    const again: string[] = []
+    const second = ExecutedTx.detach(
+      Evm.transact(await senderOnly(), create(initcode)),
+    )
+    StateChange.visit(
+      second.pendingState,
+      trace((event) => again.push(event)),
+    )
+    expect(again).toEqual(visited)
+  })
+})
+
+describe('isolation', () => {
+  test('behavior: a borrowed EVM does not affect a sibling instance', async () => {
+    const a = await evm()
+    const b = await evm()
+
+    const executed = Evm.transact(a, transaction())
+    // `a` is held; `b` is a separate engine and stays fully usable.
+    expect(Evm.callTx(b, transaction()).status).toBe(true)
+    ExecutedTx.discard(executed)
   })
 })

@@ -76,7 +76,7 @@ fn database(accounts: &[Value]) -> InMemoryDB {
             _non_exhaustive: (),
         };
         if !code.is_empty() {
-            info = info.with_code(Bytecode::new_legacy(code));
+            info = info.with_code(Bytecode::new_raw_checked(code).expect("fixture code"));
         }
         db.insert_account_info(&address, info);
     }
@@ -120,6 +120,7 @@ fn encode(result: &TxResult) -> Value {
 #[derive(Default)]
 struct Records {
     accounts: Vec<String>,
+    bytecode: Vec<String>,
     reads: Vec<String>,
     storage: Vec<String>,
     wipes: Vec<String>,
@@ -137,6 +138,16 @@ fn info(value: Option<AccountInfoRef<'_>>) -> String {
 
 impl StateChangeSink for Records {
     type Error = core::convert::Infallible;
+
+    fn bytecode(
+        &mut self,
+        code_hash: alloy_primitives::B256,
+        code: &Bytecode,
+    ) -> Result<(), Self::Error> {
+        self.bytecode
+            .push(format!("{code_hash:#x}|0x{}", hex::encode(code.original_bytes())));
+        Ok(())
+    }
 
     fn account(&mut self, change: AccountChangeRef<'_>) -> Result<(), Self::Error> {
         self.accounts.push(format!(
@@ -196,11 +207,13 @@ fn pending(state: &PendingState) -> Value {
     let mut records = Records::default();
     let Ok(()) = state.visit(&mut records);
     records.accounts.sort();
+    records.bytecode.sort();
     records.reads.sort();
     records.storage.sort();
     records.wipes.sort();
     json!({
         "accounts": records.accounts,
+        "bytecode": records.bytecode,
         "empty": state.is_empty(),
         "reads": records.reads,
         "storage": records.storage,

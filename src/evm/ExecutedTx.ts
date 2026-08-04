@@ -1,8 +1,11 @@
 import * as Errors from '../core/Errors.js'
 import * as PendingState from './PendingState.js'
-import type * as StateChange from './StateChange.js'
+import * as StateChange from './StateChange.js'
 import type * as TxResult from './TxResult.js'
+import type { ReentrancyError } from './internal/bindings.js'
+import type { DecodeError } from './internal/codec.js'
 import type * as engine from './internal/engine.js'
+import type { NotExecutedError, SinkError } from './internal/engine.js'
 
 /**
  * A transaction that has executed, with its state changes still pending.
@@ -14,7 +17,7 @@ import type * as engine from './internal/engine.js'
  * Resolve with {@link ox#ExecutedTx.(commit:function)},
  * {@link ox#ExecutedTx.(discard:function)}, or
  * {@link ox#ExecutedTx.(detach:function)}. A `using` declaration discards on
- * scope exit, which is what dropping does in evm2.
+ * scope exit, which is what dropping the handle does natively.
  */
 export type ExecutedTx = {
   /** @internal */
@@ -24,14 +27,25 @@ export type ExecutedTx = {
   /** @internal */
   '~resolved': boolean
   /**
-   * Identifies the transaction this handle was created for.
+   * Identifies the transaction this handle was created for. The engine holds it
+   * weakly, discarding the transaction once no handle can reach it.
    *
    * @internal
    */
-  readonly '~token': symbol
+  readonly '~token': engine.Token
   /** Discards the transaction unless it was already resolved. */
   [Symbol.dispose](): void
 }
+
+/**
+ * `Symbol.dispose`, or the registered fallback engines without it agree on.
+ *
+ * TypeScript's transpiled `using` helper looks up
+ * `Symbol.dispose ?? Symbol.for('Symbol.dispose')`, so keying the method the
+ * same way makes disposal work where the symbol has not shipped (WebKit).
+ */
+const dispose: typeof Symbol.dispose =
+  Symbol.dispose ?? (Symbol.for('Symbol.dispose') as typeof Symbol.dispose)
 
 /**
  * Creates a handle over an executed transaction.
@@ -44,7 +58,7 @@ export function from(options: from.Options): ExecutedTx {
     '~resolved': false,
     '~result': options.result,
     '~token': options.token,
-    [Symbol.dispose]() {
+    [dispose]() {
       // Idempotent: a scope exit after an explicit resolution must not discard a
       // second time, and evm2's drop is likewise a no-op once state is cleared.
       if (executed['~resolved']) return
@@ -58,7 +72,7 @@ export declare namespace from {
   type Options = {
     engine: engine.Engine
     result: TxResult.TxResult
-    token: symbol
+    token: engine.Token
   }
 }
 
@@ -106,7 +120,11 @@ export function commit(executed: ExecutedTx): TxResult.TxResult {
 }
 
 export declare namespace commit {
-  type ErrorType = ResolvedError | Errors.GlobalErrorType
+  type ErrorType =
+    | NotExecutedError
+    | ReentrancyError
+    | ResolvedError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -134,14 +152,18 @@ export function discard(executed: ExecutedTx): TxResult.TxResult {
 }
 
 export declare namespace discard {
-  type ErrorType = ResolvedError | Errors.GlobalErrorType
+  type ErrorType =
+    | NotExecutedError
+    | ReentrancyError
+    | ResolvedError
+    | Errors.GlobalErrorType
 }
 
 /**
  * Streams the transaction's changes to a sink, then accepts them.
  *
  * The sink decides: if it throws, the transaction is discarded instead of
- * committed and the throw is what surfaces. That is evm2's own rule, so a sink
+ * committed and the throw is what surfaces. That is the engine's own rule, so a sink
  * that fails cannot leave state half-applied.
  *
  * @example
@@ -176,7 +198,13 @@ export function commitWith(
 }
 
 export declare namespace commitWith {
-  type ErrorType = ResolvedError | Errors.GlobalErrorType
+  type ErrorType =
+    | AsyncSinkError
+    | NotExecutedError
+    | ReentrancyError
+    | ResolvedError
+    | SinkError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -217,7 +245,13 @@ export function discardWith(
 }
 
 export declare namespace discardWith {
-  type ErrorType = ResolvedError | Errors.GlobalErrorType
+  type ErrorType =
+    | AsyncSinkError
+    | NotExecutedError
+    | ReentrancyError
+    | ResolvedError
+    | SinkError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -239,7 +273,7 @@ export declare namespace discardWith {
  * @param executed - Executed transaction.
  * @returns The result with its detached state.
  */
-export function detach(executed: ExecutedTx): TxResultWithState {
+export function detach(executed: ExecutedTx): TxResult.WithState {
   claim(executed)
   return {
     pendingState: PendingState.from(
@@ -250,15 +284,12 @@ export function detach(executed: ExecutedTx): TxResultWithState {
 }
 
 export declare namespace detach {
-  type ErrorType = ResolvedError | Errors.GlobalErrorType
-}
-
-/** A transaction's result paired with the state it detached into. */
-export type TxResultWithState = {
-  /** State the transaction left, owned by the caller. */
-  pendingState: PendingState.PendingState
-  /** Execution result. */
-  result: TxResult.TxResult
+  type ErrorType =
+    | DecodeError
+    | NotExecutedError
+    | ReentrancyError
+    | ResolvedError
+    | Errors.GlobalErrorType
 }
 
 // Routes one streamed record to the sink method that describes it.
@@ -266,45 +297,7 @@ function dispatch(sink: StateChange.Sink) {
   return (
     record: Parameters<Parameters<engine.Engine['resolveWith']>[1]>[0],
   ) => {
-    // `kind` is the wire's routing tag, so each callback gets the record without
-    // it: the same shape a sink sees visiting a detached pending state.
-    if (record.kind === 'bytecode')
-      settled(sink.bytecode?.(record.codeHash, record.code))
-    else if (record.kind === 'account')
-      settled(
-        sink.account?.({
-          address: record.address,
-          created: record.created,
-          current: record.current,
-          original: record.original,
-          selfdestructed: record.selfdestructed,
-        }),
-      )
-    else if (record.kind === 'accountRead')
-      settled(
-        sink.accountRead?.({
-          address: record.address,
-          current: record.current,
-        }),
-      )
-    else if (record.kind === 'storage')
-      settled(
-        sink.storage?.({
-          address: record.address,
-          current: record.current,
-          key: record.key,
-          original: record.original,
-        }),
-      )
-    else if (record.kind === 'storageRead')
-      settled(
-        sink.storageRead?.({
-          address: record.address,
-          current: record.current,
-          key: record.key,
-        }),
-      )
-    else settled(sink.storageWipe?.(record.address))
+    settled(StateChange.route(sink, record))
   }
 }
 
@@ -318,7 +311,7 @@ function claim(executed: ExecutedTx) {
 // evm2 decides whether to commit the moment a sink callback returns, so a promise
 // rejecting later could not stop a commit that already happened. Failing now
 // discards instead, which is what the sink contract promises.
-function settled(returned: void) {
+function settled(returned: unknown) {
   if (typeof (returned as { then?: unknown } | undefined)?.then === 'function')
     throw new AsyncSinkError()
 }

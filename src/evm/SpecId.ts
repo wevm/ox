@@ -1,5 +1,5 @@
 /**
- * Ethereum specification identifiers, in evm2's declaration order.
+ * Ethereum specification identifiers, in the engine's declaration order.
  *
  * A specification selects the instruction table, gas schedule, precompile set,
  * and transaction handlers an EVM runs under.
@@ -7,7 +7,7 @@
 export type SpecId = (typeof ids)[number]
 
 /**
- * Every specification, in order. Index is the wire discriminant evm2 uses, so
+ * Every specification, in order. Index is the wire discriminant the engine uses, so
  * this list must track its `SpecId` enum.
  */
 export const ids = [

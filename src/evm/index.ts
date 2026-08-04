@@ -6,11 +6,11 @@
  * compiled to WebAssembly.
  *
  * Execution, gas accounting, transaction validation, precompiles, and fork
- * behavior are evm2's. Ox supplies the TypeScript representation of its API and
- * the runtime packaging.
+ * behavior come from the engine. Ox supplies the TypeScript representation of
+ * its API and the runtime packaging.
  *
  * Creation is asynchronous because WebAssembly must be compiled asynchronously.
- * Execution is synchronous, as it is in evm2.
+ * Execution is synchronous, as it is natively.
  *
  * @example
  * ```ts twoslash
@@ -69,7 +69,7 @@ export * as PendingState from './PendingState.js'
 export * as StateChange from './StateChange.js'
 
 /**
- * Ethereum transaction handlers and envelope types.
+ * Transaction input shapes.
  *
  * @category Execution
  */

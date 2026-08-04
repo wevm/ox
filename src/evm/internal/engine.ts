@@ -15,6 +15,14 @@ import type * as Database from './database.js'
  * @internal
  */
 
+/**
+ * Identifies a parked transaction.
+ *
+ * An object rather than a symbol so it can be weakly held everywhere the
+ * package runs; reachability through a handle is what keeps it alive.
+ */
+export type Token = Readonly<Record<never, never>>
+
 /** A created engine. */
 export type Engine = {
   /**
@@ -27,7 +35,7 @@ export type Engine = {
   /** Drops the engine and its accepted state. */
   destroy(): void
   /** Resolves the outstanding transaction by moving its state out. */
-  detach(token?: symbol): codec.Changes
+  detach(token?: Token): codec.Changes
   /** Reads an account through the accepted overlay and the database. */
   readAccountInfo(address: Address.Address): codec.Account | undefined
   /**
@@ -36,7 +44,7 @@ export type Engine = {
    * Every operation reaching the engine fails until this runs, which is how
    * evm2's exclusive borrow shows up across two host calls.
    */
-  resolve(resolution: 'commit' | 'discard', token?: symbol): void
+  resolve(resolution: 'commit' | 'discard', token?: Token): void
   /**
    * Resolves the outstanding transaction, streaming its changes to `sink` first.
    *
@@ -46,7 +54,7 @@ export type Engine = {
   resolveWith(
     resolution: 'commitWith' | 'discardWith',
     sink: (record: codec.Change) => void,
-    token?: symbol,
+    token?: Token,
   ): void
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
@@ -59,7 +67,7 @@ export type Engine = {
   transact(options: codec.encodeCallTx.Options): {
     result: codec.TxResult
     /** Identifies the transaction this call parked. */
-    token: symbol
+    token: Token
   }
 }
 
@@ -71,10 +79,22 @@ export async function create(options: create.Options): Promise<Engine> {
 
   // Identifies the parked transaction. A handle carries the token it was created
   // with, so a copy of a resolved handle cannot resolve a later transaction.
-  let outstanding: symbol | undefined
+  // Held weakly: the token is reachable exactly while some handle references it,
+  // so token collection means every handle (original or copy) is gone.
+  let outstanding: WeakRef<Token> | undefined
 
-  function claim(token: symbol | undefined) {
-    if (token && token !== outstanding) throw new NotExecutedError()
+  // The last-resort equivalent of the engine's `Drop`. Fires only when no
+  // handle can reach the parked transaction's token anymore, so a live copy
+  // keeps its transaction alive; dispose remains the deterministic path.
+  const reaper = new FinalizationRegistry<WeakRef<Token>>((ref) => {
+    if (outstanding !== ref) return
+    outstanding = undefined
+    resolve(instance, codec.encodeResolve('discard'))
+  })
+
+  function claim(token: Token | undefined) {
+    if (token && token !== outstanding?.deref()) throw new NotExecutedError()
+    if (outstanding) reaper.unregister(outstanding)
     outstanding = undefined
   }
 
@@ -111,11 +131,22 @@ export async function create(options: create.Options): Promise<Engine> {
       resolve(instance, codec.encodeSetBlock(options))
     },
     transact(options) {
-      const result = codec.decodeResult(
-        resolve(instance, codec.encodeTransact(options)),
-      )
-      outstanding = Symbol('ox.evm.executed')
-      return { result, token: outstanding }
+      const payload = resolve(instance, codec.encodeTransact(options))
+      const result = (() => {
+        try {
+          return codec.decodeResult(payload)
+        } catch (error) {
+          // The adapter already parked the transaction, so a decode failure has
+          // to release it or the engine stays borrowed with no handle.
+          resolve(instance, codec.encodeResolve('discard'))
+          throw error
+        }
+      })()
+      const token: Token = Object.freeze({})
+      const ref = new WeakRef(token)
+      outstanding = ref
+      reaper.register(token, ref, ref)
+      return { result, token }
     },
   }
 }
@@ -145,9 +176,53 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
   throw new codec.DecodeError(`unknown response status ${status}`)
 }
 
-/** Thrown when evm2 rejected or aborted the transaction. */
+/**
+ * Transaction-rejection variants, keyed by the discriminant the adapter
+ * assigns.
+ *
+ * Mirrors `wasm/evm2/src/error.rs`; a rejected transaction's
+ * {@link ox#Evm.(HandlerError:class)}`.code` names its variant through this map.
+ */
+export const handlerKinds = {
+  fatal: 1,
+  external: 2,
+  unsupportedTransactionType: 3,
+  wrongTransactionType: 4,
+  invalidNonce: 5,
+  invalidChainId: 6,
+  missingChainId: 7,
+  intrinsicGasTooLow: 8,
+  insufficientFunds: 9,
+  rejectCallerWithCode: 10,
+  nonceOverflow: 11,
+  gasLimitMoreThanBlock: 12,
+  txGasLimitGreaterThanCap: 13,
+  createInitCodeSizeLimit: 14,
+  outOfFunds: 15,
+  signerRecoveryFailed: 16,
+  feeCapLessThanBaseFee: 17,
+  emptyAuthorizationList: 18,
+  blobFeeCapLessThanBlobBaseFee: 19,
+  emptyBlobs: 20,
+  tooManyBlobs: 21,
+  blobVersionNotSupported: 22,
+  priorityFeeGreaterThanMaxFee: 23,
+  unsupportedCaller: 24,
+} as const
+
+/** The adapter's handler discriminants, keyed back to their variant names. */
+const kindNames = new Map(
+  Object.entries(handlerKinds).map(([name, value]) => [
+    value as number,
+    name as keyof typeof handlerKinds,
+  ]),
+)
+
+/** Thrown when the engine rejected or aborted the transaction. */
 export class HandlerError extends Errors.BaseError {
-  /** Variant discriminant, matching `wasm/evm2/src/error.rs`. */
+  /** Variant name, or `undefined` for a discriminant this version predates. */
+  readonly code: keyof typeof handlerKinds | undefined
+  /** Variant discriminant. Named by {@link ox#Evm.(handlerKinds:variable)}. */
   readonly kind: number
   override readonly name = 'Evm.HandlerError'
   /** The variant's numeric fields, in evm2's declaration order. */
@@ -155,6 +230,7 @@ export class HandlerError extends Errors.BaseError {
 
   constructor({ kind, message, words }: codec.Handler) {
     super(message, { metaMessages: [`evm2 handler error ${kind}`] })
+    this.code = kindNames.get(kind)
     this.kind = kind
     this.words = words
   }

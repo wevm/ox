@@ -98,6 +98,8 @@ export async function instantiateWith(
   const abi = exports.ox_abi_version()
   if (abi !== codec.version) throw new VersionError({ actual: abi })
 
+  let trapped: TrapError | undefined
+
   return {
     /** Runs `send` with `handler` receiving each streamed record. */
     withSink(handler, send) {
@@ -117,6 +119,7 @@ export async function instantiateWith(
       }
     },
     call(request) {
+      if (trapped) throw trapped
       if (request.length > codec.maxRequest)
         throw new RequestTooLargeError({ length: request.length })
 
@@ -124,7 +127,17 @@ export async function instantiateWith(
       if (pointer === 0) throw new ReentrancyError()
       new Uint8Array(exports.memory.buffer).set(request, pointer)
 
-      const response = exports.ox_call(request.length)
+      // A trap leaves the adapter's running flag set and its heap suspect, so
+      // the instance is remembered as dead rather than misreported as reentrant
+      // on the next call.
+      const response = (() => {
+        try {
+          return exports.ox_call(request.length)
+        } catch (error) {
+          trapped = new TrapError({ cause: error as Error })
+          throw trapped
+        }
+      })()
       const { payload, status } = read(exports.memory, response)
 
       // A recorded host failure is the real cause, so it wins over the status
@@ -191,7 +204,23 @@ export class RequestTooLargeError extends Errors.BaseError {
   }
 }
 
-/** Thrown when a host read reenters the engine that is calling it. */
+/**
+ * Thrown when the engine trapped.
+ *
+ * A trap is unrecoverable: the panic aborted mid-operation, so the instance is
+ * dead and every later call fails with the same error. Create a new EVM.
+ */
+export class TrapError extends Errors.BaseError<Error> {
+  override readonly name = 'Evm.TrapError'
+
+  constructor(options: { cause: Error }) {
+    super('The evm2 engine trapped and this EVM is no longer usable.', {
+      cause: options.cause,
+      metaMessages: ['Create a new EVM; this instance cannot recover.'],
+    })
+  }
+}
+
 /** Thrown when the adapter streamed a record with no sink registered. */
 export class UnexpectedSinkError extends Errors.BaseError {
   override readonly name = 'Evm.UnexpectedSinkError'
@@ -201,6 +230,7 @@ export class UnexpectedSinkError extends Errors.BaseError {
   }
 }
 
+/** Thrown when a host read reenters the engine that is calling it. */
 export class ReentrancyError extends Errors.BaseError {
   override readonly name = 'Evm.ReentrancyError'
 

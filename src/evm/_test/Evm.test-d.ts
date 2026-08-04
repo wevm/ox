@@ -1,4 +1,13 @@
-import { Database, Evm, SpecId, TxResult } from 'ox/evm'
+import {
+  Database,
+  Ethereum,
+  Evm,
+  ExecutedTx,
+  PendingState,
+  SpecId,
+  StateChange,
+  TxResult,
+} from 'ox/evm'
 import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('create', () => {
@@ -77,5 +86,55 @@ describe('SpecId', () => {
   test('latest is a specific specification, not the whole union', () => {
     expectTypeOf<typeof SpecId.latest>().toEqualTypeOf<'osaka'>()
     expectTypeOf(SpecId.enables).toBeCallableWith('osaka', 'cancun')
+  })
+})
+
+describe('ExecutedTx', () => {
+  test('transact returns a disposable handle', () => {
+    expectTypeOf<
+      ReturnType<typeof Evm.transact>
+    >().toEqualTypeOf<ExecutedTx.ExecutedTx>()
+    expectTypeOf<ExecutedTx.ExecutedTx[typeof Symbol.dispose]>().toEqualTypeOf<
+      () => void
+    >()
+  })
+
+  test('every resolution returns the result; detach pairs it with state', () => {
+    expectTypeOf<
+      ReturnType<typeof ExecutedTx.commit>
+    >().toEqualTypeOf<TxResult.TxResult>()
+    expectTypeOf<
+      ReturnType<typeof ExecutedTx.discard>
+    >().toEqualTypeOf<TxResult.TxResult>()
+    expectTypeOf<
+      ReturnType<typeof ExecutedTx.detach>
+    >().toEqualTypeOf<TxResult.WithState>()
+    expectTypeOf<
+      TxResult.WithState['pendingState']
+    >().toEqualTypeOf<PendingState.PendingState>()
+  })
+
+  test('sink callbacks receive tag-free records', () => {
+    expectTypeOf<
+      Parameters<NonNullable<StateChange.Sink['account']>>[0]
+    >().toEqualTypeOf<StateChange.Account>()
+    // The wire's routing tag never reaches a sink.
+    expectTypeOf<StateChange.Account>().not.toHaveProperty('kind')
+  })
+
+  test('a fields transaction rejects a stray serialized property', () => {
+    expectTypeOf<{
+      from: `0x${string}`
+      gas: bigint
+      serialized: `0x${string}`
+      to: `0x${string}`
+    }>().not.toExtend<Ethereum.Tx.Fields>()
+  })
+
+  test('handler kinds are named literals', () => {
+    expectTypeOf<(typeof Evm.handlerKinds)['invalidNonce']>().toEqualTypeOf<5>()
+    expectTypeOf<InstanceType<typeof Evm.HandlerError>['code']>().toEqualTypeOf<
+      keyof typeof Evm.handlerKinds | undefined
+    >()
   })
 })

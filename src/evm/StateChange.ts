@@ -13,9 +13,8 @@ export type Storage = codec.StorageChange
 /**
  * State a transaction changed, as a source streams it.
  *
- * Every method is optional: a sink observes only what it cares about. This
- * mirrors evm2's `StateChangeSink`, whose methods all default to ignoring the
- * change.
+ * Every method is optional: a sink observes only what it cares about, and an
+ * unobserved change is simply ignored.
  */
 export type Sink = {
   /** An account whose value changed. */
@@ -59,14 +58,50 @@ export type Source = PendingState.PendingState
  * @param sink - Sink to receive them.
  */
 export function visit(source: Source, sink: Sink): void {
-  const changes = source['~changes']
-  for (const { code, codeHash } of changes.bytecode)
-    sink.bytecode?.(codeHash, code)
-  for (const change of changes.accounts) sink.account?.(change)
-  for (const address of changes.storageWipes) sink.storageWipe?.(address)
-  for (const change of changes.storage) sink.storage?.(change)
-  for (const change of changes.accountReads) sink.accountRead?.(change)
-  for (const change of changes.storageReads) sink.storageRead?.(change)
+  // Replays the records exactly as the adapter emitted them, which is evm2's
+  // own visit order, so this and a streamed resolution observe one sequence.
+  for (const record of source['~changes'].records) route(sink, record)
+}
+
+/**
+ * Routes one decoded record to the sink method that describes it.
+ *
+ * `kind` is the wire's routing tag, so each callback receives the record
+ * without it: one shape whether the record was streamed or visited. Returns the
+ * callback's own return so a streamed resolution can refuse a thenable.
+ *
+ * @internal
+ */
+export function route(sink: Sink, record: codec.Change): unknown {
+  if (record.kind === 'bytecode')
+    return sink.bytecode?.(record.codeHash, record.code)
+  if (record.kind === 'account')
+    return sink.account?.({
+      address: record.address,
+      created: record.created,
+      current: record.current,
+      original: record.original,
+      selfdestructed: record.selfdestructed,
+    })
+  if (record.kind === 'accountRead')
+    return sink.accountRead?.({
+      address: record.address,
+      current: record.current,
+    })
+  if (record.kind === 'storage')
+    return sink.storage?.({
+      address: record.address,
+      current: record.current,
+      key: record.key,
+      original: record.original,
+    })
+  if (record.kind === 'storageRead')
+    return sink.storageRead?.({
+      address: record.address,
+      current: record.current,
+      key: record.key,
+    })
+  return sink.storageWipe?.(record.address)
 }
 
 /**
