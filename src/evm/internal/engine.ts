@@ -26,10 +26,26 @@ export type Engine = {
   callTx(options: codec.encodeCallTx.Options): codec.TxResult
   /** Drops the engine and its accepted state. */
   destroy(): void
+  /** Resolves the outstanding transaction by moving its state out. */
+  detach(): codec.Changes
   /** Reads an account through the accepted overlay and the database. */
   readAccountInfo(address: Address.Address): codec.Account | undefined
+  /**
+   * Resolves the outstanding transaction, releasing the engine.
+   *
+   * Every operation reaching the engine fails until this runs, which is how
+   * evm2's exclusive borrow shows up across two host calls.
+   */
+  resolve(resolution: 'commit' | 'discard'): void
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
+  /**
+   * Executes a transaction and leaves its state changes pending.
+   *
+   * This is evm2's `transact`: the engine stays borrowed until the transaction
+   * is committed, discarded, or detached.
+   */
+  transact(options: codec.encodeCallTx.Options): codec.TxResult
 }
 
 /** Creates an engine over `database`. */
@@ -46,13 +62,26 @@ export async function create(options: create.Options): Promise<Engine> {
       resolve(instance, codec.encodeDestroy())
       instance.reset()
     },
+    detach() {
+      return codec.decodeChanges(
+        resolve(instance, codec.encodeResolve('detach')),
+      )
+    },
     readAccountInfo(address) {
       return codec.decodeAccount(
         resolve(instance, codec.encodeReadAccount(address)),
       )
     },
+    resolve(resolution) {
+      resolve(instance, codec.encodeResolve(resolution))
+    },
     setBlock(options) {
       resolve(instance, codec.encodeSetBlock(options))
+    },
+    transact(options) {
+      return codec.decodeResult(
+        resolve(instance, codec.encodeTransact(options)),
+      )
     },
   }
 }

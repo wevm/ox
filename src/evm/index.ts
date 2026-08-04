@@ -43,6 +43,27 @@ export * as Evm from './Evm.js'
 export * as Database from './Database.js'
 
 /**
+ * Executed transactions awaiting a decision on their state.
+ *
+ * @category Execution
+ */
+export * as ExecutedTx from './ExecutedTx.js'
+
+/**
+ * A transaction's state changes, owned by the caller.
+ *
+ * @category Execution
+ */
+export * as PendingState from './PendingState.js'
+
+/**
+ * Streaming a transaction's state changes.
+ *
+ * @category Execution
+ */
+export * as StateChange from './StateChange.js'
+
+/**
  * Ethereum transaction handlers and envelope types.
  *
  * @category Execution

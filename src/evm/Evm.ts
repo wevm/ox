@@ -2,6 +2,7 @@ import type * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Database from './Database.js'
+import * as ExecutedTx from './ExecutedTx.js'
 import type * as Ethereum from './Ethereum.js'
 import * as SpecId from './SpecId.js'
 import * as TxResult from './TxResult.js'
@@ -14,15 +15,18 @@ import type {
 import type { EncodeError } from './internal/codec.js'
 import type {
   AbiError,
+  BorrowedError,
   DatabaseError,
   HandlerError,
 } from './internal/engine.js'
 
 export {
   AbiError,
+  BorrowedError,
   DatabaseError,
   HandlerError,
   MissingError,
+  NotExecutedError,
 } from './internal/engine.js'
 export { EncodeError } from './internal/codec.js'
 export { ReentrancyError, RequestTooLargeError } from './internal/bindings.js'
@@ -204,6 +208,59 @@ export function callTx(
 export declare namespace callTx {
   type ErrorType =
     | AbiError
+    | DatabaseError
+    | HandlerError
+    | ReentrancyError
+    | RequestTooLargeError
+    | UnknownStopError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Executes a transaction and leaves its state changes pending.
+ *
+ * The counterpart to {@link ox#Evm.(callTx:function)}: instead of discarding
+ * what the transaction wrote, this hands back a handle that decides. The EVM is
+ * held until that handle is committed, discarded, or detached, so only one
+ * transaction is outstanding at a time.
+ *
+ * A revert or an exceptional halt is a successful execution returning
+ * `status: false`, and still produces a handle to resolve.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx } from 'ox/evm'
+ *
+ * // `using` discards on scope exit, so an early return cannot leave the EVM held.
+ * using executed = Evm.transact(evm, { envelope, signer })
+ *
+ * if (ExecutedTx.result(executed).status)
+ *   ExecutedTx.commit(executed)
+ * ```
+ *
+ * @param evm - EVM to execute on.
+ * @param transaction - Transaction with its sender recovered.
+ * @returns A handle over the executed transaction.
+ */
+export function transact(
+  evm: Evm,
+  transaction: Ethereum.RecoveredTx,
+): ExecutedTx.ExecutedTx {
+  const result = evm['~engine'].transact({
+    envelope: Bytes.from(transaction.envelope),
+    signer: transaction.signer,
+  })
+  return ExecutedTx.from({
+    engine: evm['~engine'],
+    result: { ...result, stop: stop(result.stop) },
+  })
+}
+
+export declare namespace transact {
+  type ErrorType =
+    | AbiError
+    | BorrowedError
     | DatabaseError
     | HandlerError
     | ReentrancyError
