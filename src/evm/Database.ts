@@ -62,6 +62,7 @@ export function fromMemory(options: fromMemory.Options = {}): Database {
     const code = account.code
       ? Uint8Array.from(Bytes.from(account.code))
       : undefined
+    if (code) assertCode(address, code)
     accounts.set(address.toLowerCase(), {
       balance: account.balance ?? 0n,
       code,
@@ -141,6 +142,31 @@ export declare namespace fromMemory {
      * height inside the window but absent here fails the read.
      */
     blockHashes?: Record<string, Hex.Hex> | undefined
+  }
+}
+
+// Rejects code the engine would refuse to classify. `0xef01`-prefixed code is an
+// EIP-7702 delegation designator: exactly 23 bytes with a zero version byte.
+// Checking here fails at the account that declared it rather than as an opaque
+// read failure during execution.
+function assertCode(address: string, code: Bytes.Bytes) {
+  if (code[0] !== 0xef || code[1] !== 0x01) return
+  if (code.length === 23 && code[2] === 0x00) return
+  throw new InvalidDesignatorError({ address, length: code.length })
+}
+
+/** Thrown when an account's delegation designator is malformed. */
+export class InvalidDesignatorError extends Errors.BaseError {
+  override readonly name = 'Database.InvalidDesignatorError'
+
+  constructor({ address, length }: { address: string; length: number }) {
+    super('An account declared a malformed delegation designator.', {
+      metaMessages: [
+        `Account: ${address}`,
+        `Length: ${length} bytes, expected 23`,
+        'Code beginning `0xef01` is an EIP-7702 designator: `0xef0100` and a 20-byte address.',
+      ],
+    })
   }
 }
 

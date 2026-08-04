@@ -79,6 +79,15 @@ fn database(accounts: &[Value]) -> InMemoryDB {
             info = info.with_code(Bytecode::new_raw_checked(code).expect("fixture code"));
         }
         db.insert_account_info(&address, info);
+        if let Some(slots) = account.get("storage").and_then(Value::as_object) {
+            for (key, value) in slots {
+                db.insert_account_storage(
+                    &address,
+                    &hex_word(&Value::String(key.clone())),
+                    &hex_word(value),
+                );
+            }
+        }
     }
     db
 }
@@ -342,4 +351,234 @@ fn no_fixture_only_records_a_handler_error() {
          rather than execution: {}",
         all_failed.join(", "),
     );
+}
+
+/// Generated-corpus differential.
+///
+/// The hand-written fixtures above cover known shapes; this covers shapes nobody
+/// thought of. A seeded generator emits transactions, accounts, and code, records
+/// what native evm2 does with them, and the TypeScript suite replays the same
+/// corpus through the artifact. Regenerate with
+/// `OX_UPDATE_FIXTURES=1 cargo test --test oracle`.
+mod generated {
+    use super::*;
+    use alloy_consensus::{SignableTransaction, TxLegacy};
+    use alloy_eips::eip2718::Encodable2718;
+    use alloy_primitives::{Signature, TxKind};
+
+    /// Cases in the corpus. Large enough to reach past the curated shapes, small
+    /// enough that the recorded file stays reviewable.
+    const COUNT: usize = 96;
+
+    /// Fixed seed: the corpus is a committed regression suite, not a fresh draw
+    /// each run. Change it to explore elsewhere.
+    const SEED: u64 = 0x5eed_1eaf_c0ff_ee01;
+
+    fn path() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/fuzz.json")
+    }
+
+    /// xorshift64*, so the corpus reproduces without a dependency.
+    struct Rng(u64);
+
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 ^= self.0 >> 12;
+            self.0 ^= self.0 << 25;
+            self.0 ^= self.0 >> 27;
+            self.0.wrapping_mul(0x2545_f491_4f6c_dd1d)
+        }
+
+        fn below(&mut self, bound: u64) -> u64 {
+            self.next() % bound
+        }
+
+        fn pick<'a, T>(&mut self, items: &'a [T]) -> &'a T {
+            &items[self.below(items.len() as u64) as usize]
+        }
+    }
+
+    /// Snippets worth reaching, by opcode class.
+    ///
+    /// `BLOCKHASH` is deliberately absent: `Database.fromMemory` fails an
+    /// unseeded hash where evm2's `InMemoryDB` synthesizes one, a recorded
+    /// divergence that would show up here as a false mismatch.
+    const CODE: &[&str] = &[
+        "",                             // no code
+        "00",                           // STOP
+        "602a5f5260205ff3",             // return 42
+        "5f545f52602a5f5560205ff3",     // load slot 0, store 42, return the old value
+        "60015f5500",                   // store 1 into slot 0
+        "5f5f5500",                     // clear slot 0, an EIP-3529 refund
+        "60015f5560025f5500",           // store twice, warm on the second
+        "5f5ffd",                       // REVERT with empty data
+        "602a5f5260205ffd",             // REVERT with data
+        "fe",                           // INVALID
+        "5f5f5fa100",                   // LOG1
+        "602a5f5260205f5fa200",         // LOG2 with data
+        "33ff",                         // CALLER SELFDESTRUCT
+        "60015f5533ff",                 // store then SELFDESTRUCT
+        "5f5f20505f5260205ff3",         // KECCAK256 over empty memory
+        "5f61ffff5200",                 // expand memory
+        "5f5f5f5f5f730000000000000000000000000000000000000004", // CALL identity
+        "67602a5f5260205ff35f5260086018f3", // initcode deploying a returner
+        "5f5ff3",                       // deploy empty code
+        "5b5f56",                       // JUMPDEST, PUSH0, JUMP: a tight loop out of gas
+        "3d5f5f3e00",                   // RETURNDATACOPY with no return data
+        "5f3f5000",                     // EXTCODEHASH of address zero
+        "4700",                         // SELFBALANCE
+        "484900",                       // PREVRANDAO BLOBBASEFEE
+    ];
+
+    /// Addresses the corpus draws from. The last has no account, so reads miss.
+    const ADDRESSES: &[&str] = &[
+        "0x00000000000000000000000000000000000000c0",
+        "0x00000000000000000000000000000000000000c1",
+        "0x0000000000000000000000000000000000000004",
+        "0x000000000000000000000000000000000000dead",
+    ];
+
+    const SENDER: &str = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8";
+    const SPECS: &[&str] = &["cancun", "prague", "osaka"];
+
+    fn code(rng: &mut Rng) -> String {
+        // A quarter of the corpus is arbitrary bytes: whatever they decode to,
+        // both engines have to agree on how it halts.
+        if rng.below(4) == 0 {
+            let length = rng.below(24) as usize;
+            let mut bytes = String::new();
+            for _ in 0..length {
+                bytes.push_str(&format!("{:02x}", rng.below(256)));
+            }
+            return format!("0x{bytes}");
+        }
+        format!("0x{}", rng.pick(CODE))
+    }
+
+    fn account(rng: &mut Rng, address: &str, code: &str) -> Value {
+        let mut entry = json!({
+            "address": address,
+            "balance": format!("{:#x}", rng.pick(&[0u64, 1, 1_000, 1_000_000_000_000_000_000])),
+            "code": code,
+            "codeHash": format!("{:#x}", alloy_primitives::keccak256(hex_bytes(&json!(code)))),
+            "nonce": rng.below(3),
+        });
+        // Half the accounts carry storage, so warm reads and clears are reached.
+        if rng.below(2) == 0 {
+            let mut slots = Map::new();
+            for _ in 0..=rng.below(2) {
+                slots.insert(
+                    format!("{:#x}", rng.below(3)),
+                    json!(format!("{:#x}", rng.pick(&[0u64, 1, 42, u64::MAX]))),
+                );
+            }
+            entry["storage"] = Value::Object(slots);
+        }
+        entry
+    }
+
+    fn case(rng: &mut Rng, index: usize) -> Map<String, Value> {
+        let create = rng.below(4) == 0;
+        let target = rng.pick(ADDRESSES).to_string();
+
+        let mut accounts = vec![json!({
+            "address": SENDER,
+            "balance": format!("{:#x}", 10u128.pow(18)),
+            "code": "0x",
+            "codeHash": format!("{:#x}", alloy_primitives::keccak256([])),
+            "nonce": 0,
+        })];
+        for address in ADDRESSES.iter().take(3) {
+            if rng.below(4) == 0 {
+                continue;
+            }
+            let code = code(rng);
+            accounts.push(account(rng, address, &code));
+        }
+
+        let data = if create { code(rng) } else { code(rng) };
+        let gas_limit = *rng.pick(&[21_000u64, 30_000, 100_000, 200_000]);
+        let gas_price = *rng.pick(&[0u64, 1]);
+        let value = *rng.pick(&[0u64, 1, 1_000]);
+
+        let tx = TxLegacy {
+            chain_id: Some(1),
+            nonce: 0,
+            gas_price: gas_price as u128,
+            gas_limit,
+            to: if create {
+                TxKind::Create
+            } else {
+                TxKind::Call(target.parse().unwrap())
+            },
+            value: U256::from(value),
+            input: hex_bytes(&json!(data)),
+        };
+        // The signature is inert: evm2 strips it and takes the signer from
+        // `Recovered`, so a placeholder is enough to satisfy 2718 decoding.
+        let signed = tx.into_signed(Signature::new(U256::from(1), U256::from(1), false));
+        let mut envelope = Vec::new();
+        signed.encode_2718(&mut envelope);
+
+        let mut fixture = Map::new();
+        fixture.insert("accounts".into(), Value::Array(accounts));
+        fixture.insert(
+            "block".into(),
+            json!({
+                "basefee": "0x0",
+                "beneficiary": "0x00000000000000000000000000000000000000cb",
+                "blobBasefee": "0x1",
+                "difficulty": "0x0",
+                "gasLimit": "0x1c9c380",
+                "number": "0x1",
+                "prevrandao": "0x0",
+                "slotNum": "0x0",
+                "timestamp": "0x1",
+            }),
+        );
+        fixture.insert("chainId".into(), json!("0x1"));
+        fixture.insert("envelope".into(), json!(format!("0x{}", hex::encode(&envelope))));
+        fixture.insert("name".into(), json!(format!("case-{index:03}")));
+        fixture.insert("signer".into(), json!(SENDER));
+        fixture.insert("spec".into(), json!(*rng.pick(SPECS)));
+        fixture
+    }
+
+    #[test]
+    fn native_evm2_matches_the_generated_corpus() {
+        let mut rng = Rng(SEED);
+        let cases: Vec<Value> = (0..COUNT)
+            .map(|index| {
+                let mut fixture = case(&mut rng, index);
+                let spec = fixture["spec"].as_str().unwrap().to_string();
+                let expected = run(&fixture, &spec);
+                fixture.insert("expected".into(), expected);
+                Value::Object(fixture)
+            })
+            .collect();
+
+        let recorded = json!({
+            "$comment": "Generated by `cargo test --test oracle`. Do not edit by hand.",
+            "cases": cases,
+            "count": COUNT,
+            "seed": format!("{SEED:#x}"),
+        });
+
+        let file = path();
+        if std::env::var_os("OX_UPDATE_FIXTURES").is_some() {
+            fs::write(
+                &file,
+                format!("{}\n", serde_json::to_string_pretty(&recorded).unwrap()),
+            )
+            .unwrap();
+            return;
+        }
+
+        let previous: Value =
+            serde_json::from_str(&fs::read_to_string(&file).expect("fixtures/fuzz.json")).unwrap();
+        assert_eq!(
+            previous, recorded,
+            "the generated corpus drifted; regenerate with OX_UPDATE_FIXTURES=1"
+        );
+    }
 }

@@ -26,6 +26,7 @@ type Account = {
   code: string
   codeHash: string
   nonce: number
+  storage?: Record<string, string>
 }
 
 type Expectation = {
@@ -119,8 +120,9 @@ function database(accounts: readonly Account[]): Database.Database {
       if (code === undefined) throw new Error(`no code for ${codeHash}`)
       return Bytes.fromHex(code as Hex.Hex)
     },
-    getStorage() {
-      return 0n
+    getStorage(address, key) {
+      const slots = byAddress.get(address.toLowerCase())?.storage
+      return BigInt(slots?.[Hex.fromNumber(key)] ?? 0n)
     },
   }
 }
@@ -299,5 +301,63 @@ describe('fixtures', () => {
         fixture.signer.toLowerCase(),
       ])
     }
+  })
+})
+
+/**
+ * Generated-corpus differential.
+ *
+ * `wasm/evm2/tests/oracle.rs` emits `fixtures/fuzz.json` from a seeded generator
+ * and records what native evm2 does with each case. This replays the same corpus
+ * through the artifact, so a divergence the curated fixtures never shaped still
+ * shows up as a diff rather than as two plausible results.
+ */
+const corpus = JSON.parse(
+  fs.readFileSync(
+    path.join(import.meta.dirname, '../../../wasm/evm2/fixtures/fuzz.json'),
+    'utf8',
+  ),
+) as {
+  cases: readonly (Fixture & {
+    expected: Expectation & { pendingState?: Pending }
+    spec: string
+  })[]
+  seed: string
+}
+
+describe('generated corpus', () => {
+  for (const entry of corpus.cases)
+    test(`${entry.spec}: ${entry.name} matches native evm2`, async () => {
+      const evm = await engine.create({
+        block: block(entry.block),
+        chainId: BigInt(entry.chainId),
+        database: database(entry.accounts),
+        specId: codec.specId[entry.spec as keyof typeof codec.specId],
+      })
+
+      const transaction = {
+        envelope: Bytes.fromHex(entry.envelope as Hex.Hex),
+        signer: entry.signer as `0x${string}`,
+      }
+
+      // A case native evm2 refused must be refused here for the same reason.
+      if (entry.expected.handlerError) {
+        expect(() => evm.transact(transaction)).toThrowError(
+          entry.expected.handlerError,
+        )
+        return
+      }
+
+      const { result, token } = evm.transact(transaction)
+      const state = PendingState.from(evm.detach(token))
+
+      const { pendingState, ...rest } = entry.expected
+      expect(encode(result)).toEqual(rest)
+      expect(encodePending(state)).toEqual(pendingState)
+    })
+
+  test('the corpus is the one the recorded seed produces', () => {
+    expect(corpus.cases.length).toBeGreaterThan(0)
+    expect(corpus.seed).toMatchInlineSnapshot(`"0x5eed1eafc0ffee01"`)
   })
 })
