@@ -47,6 +47,7 @@ const allowedImports = [
   'ox_evm2.get_block_hash',
   'ox_evm2.get_code_by_hash',
   'ox_evm2.get_storage',
+  'ox_evm2.sink_record',
 ]
 
 /** The pinned evm2 revision and the Cargo features selected for it. */
@@ -339,7 +340,7 @@ function assertPortable(bytes: Uint8Array) {
   const unexpected = imports.filter((name) => !allowedImports.includes(name))
   if (unexpected.length)
     throw new Error(
-      `The artifact imports ${unexpected.join(', ')}. Only the host database reads (${allowedImports.join(', ')}) are allowed, so nothing pulls in WASI, threads, or randomness.`,
+      `The artifact imports ${unexpected.join(', ')}. Only the host callbacks (${allowedImports.join(', ')}) are allowed, so nothing pulls in WASI, threads, or randomness.`,
     )
 }
 

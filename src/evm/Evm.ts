@@ -1,7 +1,9 @@
 import type * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
+import * as TxEnvelope from '../core/TxEnvelope.js'
 import * as Database from './Database.js'
+import * as ExecutedTx from './ExecutedTx.js'
 import type * as Ethereum from './Ethereum.js'
 import * as SpecId from './SpecId.js'
 import * as TxResult from './TxResult.js'
@@ -14,15 +16,18 @@ import type {
 import type { EncodeError } from './internal/codec.js'
 import type {
   AbiError,
+  BorrowedError,
   DatabaseError,
   HandlerError,
 } from './internal/engine.js'
 
 export {
   AbiError,
+  BorrowedError,
   DatabaseError,
   HandlerError,
   MissingError,
+  NotExecutedError,
 } from './internal/engine.js'
 export { EncodeError } from './internal/codec.js'
 export { ReentrancyError, RequestTooLargeError } from './internal/bindings.js'
@@ -35,6 +40,8 @@ export { ReentrancyError, RequestTooLargeError } from './internal/bindings.js'
  * state with the first.
  */
 export type Evm = {
+  /** @internal */
+  readonly '~chainId': bigint
   /** @internal */
   readonly '~engine': engine.Engine
 }
@@ -109,6 +116,7 @@ export async function create(options: create.Options = {}): Promise<Evm> {
   } = options
 
   return {
+    '~chainId': chainId ?? 1n,
     '~engine': await engine.create({
       block: {
         basefee: block?.basefee ?? 0n,
@@ -181,22 +189,24 @@ export declare namespace create {
  *
  * const evm = await Evm.create({ database, specId: 'osaka' })
  *
- * const result = Evm.callTx(evm, { envelope, signer })
+ * const result = Evm.callTx(evm, {
+ *   from: '0x0000000000000000000000000000000000000001',
+ *   gas: 100_000n,
+ *   to: '0x0000000000000000000000000000000000000002',
+ *   value: 1n
+ * })
  * TxResult.txGasUsed(result)
  * // @log: 21000n
  * ```
  *
  * @param evm - EVM to execute on.
- * @param transaction - Transaction with its sender recovered.
+ * @param transaction - Transaction and the account it executes as.
  * @returns The transaction's result.
  */
-export function callTx(
-  evm: Evm,
-  transaction: Ethereum.RecoveredTx,
-): TxResult.TxResult {
+export function callTx(evm: Evm, transaction: Ethereum.Tx): TxResult.TxResult {
   const result = evm['~engine'].callTx({
-    envelope: Bytes.from(transaction.envelope),
-    signer: transaction.signer,
+    envelope: envelope(transaction, evm['~chainId']),
+    signer: transaction.from,
   })
   return { ...result, stop: stop(result.stop) }
 }
@@ -204,6 +214,75 @@ export function callTx(
 export declare namespace callTx {
   type ErrorType =
     | AbiError
+    | BorrowedError
+    | DatabaseError
+    | HandlerError
+    | ReentrancyError
+    | RequestTooLargeError
+    | UnknownStopError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Executes a transaction and leaves its state changes pending.
+ *
+ * The counterpart to {@link ox#Evm.(callTx:function)}: instead of discarding
+ * what the transaction wrote, this hands back a handle that decides. The EVM is
+ * held until that handle is committed, discarded, or detached, so only one
+ * transaction is outstanding at a time.
+ *
+ * A revert or an exceptional halt is a successful execution returning
+ * `status: false`, and still produces a handle to resolve.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx } from 'ox/evm'
+ *
+ * // `using` discards on scope exit, so an early return cannot leave the EVM held.
+ * using executed = Evm.transact(evm, {
+ *   from: '0x0000000000000000000000000000000000000001',
+ *   gas: 100_000n,
+ *   to: '0x0000000000000000000000000000000000000002',
+ *   value: 1n
+ * })
+ *
+ * if (ExecutedTx.result(executed).status)
+ *   ExecutedTx.commit(executed)
+ * ```
+ *
+ * @param evm - EVM to execute on.
+ * @param transaction - Transaction and the account it executes as.
+ * @returns A handle over the executed transaction.
+ */
+export function transact(
+  evm: Evm,
+  transaction: Ethereum.Tx,
+): ExecutedTx.ExecutedTx {
+  const { result, token } = evm['~engine'].transact({
+    envelope: envelope(transaction, evm['~chainId']),
+    signer: transaction.from,
+  })
+  const normalized = (() => {
+    try {
+      return { ...result, stop: stop(result.stop) }
+    } catch (error) {
+      // The engine is already borrowed, so release it before reporting.
+      evm['~engine'].resolve('discard', token)
+      throw error
+    }
+  })()
+  return ExecutedTx.from({
+    engine: evm['~engine'],
+    result: normalized,
+    token,
+  })
+}
+
+export declare namespace transact {
+  type ErrorType =
+    | AbiError
+    | BorrowedError
     | DatabaseError
     | HandlerError
     | ReentrancyError
@@ -240,10 +319,42 @@ export function readAccountInfo(
 export declare namespace readAccountInfo {
   type ErrorType =
     | AbiError
+    | BorrowedError
     | DatabaseError
     | HandlerError
     | ReentrancyError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Placeholder signature for a transaction built from fields.
+ *
+ * EIP-2718 decoding needs a signature to parse, and evm2 strips it immediately,
+ * so nothing reads this. Callers therefore never sign to simulate.
+ */
+const placeholder = {
+  r: `0x${'01'.repeat(32)}`,
+  s: `0x${'01'.repeat(32)}`,
+  yParity: 0,
+} as const
+
+// Resolves either input shape to the encoded envelope the ABI carries.
+function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
+  // Fields carry an index signature, so `in` alone cannot narrow the union; the
+  // value's own shape is what distinguishes an already-encoded transaction.
+  const serialized = (tx as Ethereum.Tx.Serialized).serialized
+  if (typeof serialized === 'string' || serialized instanceof Uint8Array)
+    return Bytes.from(serialized)
+
+  const { from: _, ...fields } = tx
+  // Fields with no fee fields infer EIP-1559, whose serialization needs a chain
+  // id, so the EVM's own is the default rather than a required argument.
+  return Bytes.from(
+    TxEnvelope.serialize(
+      TxEnvelope.from({ chainId: Number(chainId), ...fields }),
+      { signature: placeholder },
+    ),
+  )
 }
 
 /** evm2's stop discriminants, keyed by the name they map to. */

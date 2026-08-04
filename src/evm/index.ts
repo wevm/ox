@@ -27,7 +27,12 @@
  *   })
  * })
  *
- * const result = Evm.callTx(evm, { envelope, signer })
+ * const result = Evm.callTx(evm, {
+ *   from: '0x0000000000000000000000000000000000000001',
+ *   gas: 100_000n,
+ *   to: '0x0000000000000000000000000000000000000002',
+ *   value: 1n
+ * })
  * TxResult.txGasUsed(result)
  * ```
  *
@@ -41,6 +46,27 @@ export * as Evm from './Evm.js'
  * @category Execution
  */
 export * as Database from './Database.js'
+
+/**
+ * Executed transactions awaiting a decision on their state.
+ *
+ * @category Execution
+ */
+export * as ExecutedTx from './ExecutedTx.js'
+
+/**
+ * A transaction's state changes, owned by the caller.
+ *
+ * @category Execution
+ */
+export * as PendingState from './PendingState.js'
+
+/**
+ * Streaming a transaction's state changes.
+ *
+ * @category Execution
+ */
+export * as StateChange from './StateChange.js'
 
 /**
  * Ethereum transaction handlers and envelope types.

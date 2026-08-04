@@ -282,7 +282,11 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             Ok(tx) => transact(&tx),
             Err(error) => abi_failure(error),
         },
-        op::COMMIT | op::DISCARD | op::DETACH => match reader.finish() {
+        op::COMMIT
+        | op::DISCARD
+        | op::DETACH
+        | op::COMMIT_WITH
+        | op::DISCARD_WITH => match reader.finish() {
             Ok(()) => resolve(header.op),
             Err(error) => abi_failure(error),
         },
@@ -429,6 +433,20 @@ fn resolve(op: u16) -> Vec<u8> {
         }
         op::DISCARD => {
             let _ = handle.discard();
+        }
+        // A sink that refuses a record makes evm2 drop the handle, which
+        // discards. The status says so rather than reporting a false commit.
+        op::COMMIT_WITH => {
+            let mut sink = state::HostSink::new();
+            if handle.commit_with(&mut sink).is_err() {
+                return Writer::new().finish(status::SINK);
+            }
+        }
+        op::DISCARD_WITH => {
+            let mut sink = state::HostSink::new();
+            if handle.discard_with(&mut sink).is_err() {
+                return Writer::new().finish(status::SINK);
+            }
         }
         // Detaching is the only resolution whose payload differs: the state
         // leaves the engine with the caller rather than being applied or dropped.

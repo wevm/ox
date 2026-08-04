@@ -49,6 +49,10 @@ pub mod op {
     pub const DISCARD: u16 = 8;
     /// Moves the pending transaction out as owned state.
     pub const DETACH: u16 = 9;
+    /// Streams the pending changes to the host, then accepts the transaction.
+    pub const COMMIT_WITH: u16 = 10;
+    /// Streams the pending changes to the host, then drops the transaction.
+    pub const DISCARD_WITH: u16 = 11;
 }
 
 /// Builds a response header with an empty payload.

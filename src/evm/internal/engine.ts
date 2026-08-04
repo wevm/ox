@@ -26,10 +26,41 @@ export type Engine = {
   callTx(options: codec.encodeCallTx.Options): codec.TxResult
   /** Drops the engine and its accepted state. */
   destroy(): void
+  /** Resolves the outstanding transaction by moving its state out. */
+  detach(token?: symbol): codec.Changes
   /** Reads an account through the accepted overlay and the database. */
   readAccountInfo(address: Address.Address): codec.Account | undefined
+  /**
+   * Resolves the outstanding transaction, releasing the engine.
+   *
+   * Every operation reaching the engine fails until this runs, which is how
+   * evm2's exclusive borrow shows up across two host calls.
+   */
+  resolve(resolution: 'commit' | 'discard', token?: symbol): void
+  /**
+   * Resolves the outstanding transaction, streaming its changes to `sink` first.
+   *
+   * A sink that throws makes evm2 discard rather than commit, and the throw is
+   * what surfaces.
+   */
+  resolveWith(
+    resolution: 'commitWith' | 'discardWith',
+    sink: (record: codec.Change) => void,
+    token?: symbol,
+  ): void
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
+  /**
+   * Executes a transaction and leaves its state changes pending.
+   *
+   * This is evm2's `transact`: the engine stays borrowed until the transaction
+   * is committed, discarded, or detached.
+   */
+  transact(options: codec.encodeCallTx.Options): {
+    result: codec.TxResult
+    /** Identifies the transaction this call parked. */
+    token: symbol
+  }
 }
 
 /** Creates an engine over `database`. */
@@ -37,6 +68,15 @@ export async function create(options: create.Options): Promise<Engine> {
   const { database, ...config } = options
   const instance = await bindings.instantiateWith(database)
   resolve(instance, codec.encodeCreate(config))
+
+  // Identifies the parked transaction. A handle carries the token it was created
+  // with, so a copy of a resolved handle cannot resolve a later transaction.
+  let outstanding: symbol | undefined
+
+  function claim(token: symbol | undefined) {
+    if (token && token !== outstanding) throw new NotExecutedError()
+    outstanding = undefined
+  }
 
   return {
     callTx(options) {
@@ -46,13 +86,36 @@ export async function create(options: create.Options): Promise<Engine> {
       resolve(instance, codec.encodeDestroy())
       instance.reset()
     },
+    detach(token) {
+      claim(token)
+      return codec.decodeChanges(
+        resolve(instance, codec.encodeResolve('detach')),
+      )
+    },
     readAccountInfo(address) {
       return codec.decodeAccount(
         resolve(instance, codec.encodeReadAccount(address)),
       )
     },
+    resolve(resolution, token) {
+      claim(token)
+      resolve(instance, codec.encodeResolve(resolution))
+    },
+    resolveWith(resolution, sink, token) {
+      claim(token)
+      instance.withSink(sink, () =>
+        resolve(instance, codec.encodeResolve(resolution)),
+      )
+    },
     setBlock(options) {
       resolve(instance, codec.encodeSetBlock(options))
+    },
+    transact(options) {
+      const result = codec.decodeResult(
+        resolve(instance, codec.encodeTransact(options)),
+      )
+      outstanding = Symbol('ox.evm.executed')
+      return { result, token: outstanding }
     },
   }
 }
@@ -78,6 +141,7 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
   if (status === codec.status.engineBusy) throw new bindings.ReentrancyError()
   if (status === codec.status.engineBorrowed) throw new BorrowedError()
   if (status === codec.status.notExecuted) throw new NotExecutedError()
+  if (status === codec.status.sink) throw new SinkError()
   throw new codec.DecodeError(`unknown response status ${status}`)
 }
 
@@ -93,6 +157,22 @@ export class HandlerError extends Errors.BaseError {
     super(message, { metaMessages: [`evm2 handler error ${kind}`] })
     this.kind = kind
     this.words = words
+  }
+}
+
+/**
+ * Thrown when a state-change sink refused a record.
+ *
+ * evm2 discards the transaction in that case rather than committing it, so this
+ * only surfaces when the sink failed without throwing an error of its own.
+ */
+export class SinkError extends Errors.BaseError {
+  override readonly name = 'Evm.SinkError'
+
+  constructor() {
+    super('A state-change sink refused a record.', {
+      metaMessages: ['The transaction was discarded rather than committed.'],
+    })
   }
 }
 

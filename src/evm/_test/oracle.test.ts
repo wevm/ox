@@ -2,6 +2,8 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Bytes, Hex, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { describe, expect, test } from 'vp/test'
+import * as PendingState from '../PendingState.js'
+import * as StateChange from '../StateChange.js'
 import * as codec from '../internal/codec.js'
 import type * as Database from '../internal/database.js'
 import * as engine from '../internal/engine.js'
@@ -41,12 +43,20 @@ type Expectation = {
   txGasUsed: string
 }
 
+type Pending = {
+  accounts: readonly string[]
+  empty: boolean
+  reads: readonly string[]
+  storage: readonly string[]
+  wipes: readonly string[]
+}
+
 type Fixture = {
   accounts: readonly Account[]
   block: Record<string, string>
   chainId: string
   envelope: string
-  expected: Record<string, Expectation>
+  expected: Record<string, Expectation & { pendingState?: Pending }>
   name: string
   signer: string
 }
@@ -128,6 +138,100 @@ function block(fields: Record<string, string>): codec.Block {
   }
 }
 
+/**
+ * Serializes detached state the way `oracle.rs` does.
+ *
+ * Sorted, because the grouped decoding on this side does not preserve the
+ * interleaving the visit produced; the sets are what both halves agree on.
+ */
+function encodePending(state: PendingState.PendingState): Pending {
+  const accounts: string[] = []
+  const reads: string[] = []
+  const storage: string[] = []
+  const wipes: string[] = []
+
+  const info = (value?: codec.ChangeAccount) =>
+    value
+      ? `${Hex.fromNumber(value.balance)}/${value.nonce}/${value.codeHash}`
+      : 'absent'
+
+  StateChange.visit(state, {
+    account(change) {
+      accounts.push(
+        [
+          change.address.toLowerCase(),
+          info(change.original),
+          info(change.current),
+          change.created,
+          change.selfdestructed,
+        ].join('|'),
+      )
+    },
+    accountRead(change) {
+      reads.push(`${change.address.toLowerCase()}|${info(change.current)}`)
+    },
+    storage(change) {
+      storage.push(
+        [
+          change.address.toLowerCase(),
+          Hex.fromNumber(change.key),
+          Hex.fromNumber(change.original!),
+          Hex.fromNumber(change.current),
+        ].join('|'),
+      )
+    },
+    storageRead(change) {
+      storage.push(
+        [
+          change.address.toLowerCase(),
+          Hex.fromNumber(change.key),
+          'read',
+          Hex.fromNumber(change.current),
+        ].join('|'),
+      )
+    },
+    storageWipe(address) {
+      wipes.push(address.toLowerCase())
+    },
+  })
+
+  return {
+    accounts: accounts.sort(),
+    empty: PendingState.isEmpty(state),
+    reads: reads.sort(),
+    storage: storage.sort(),
+    wipes: wipes.sort(),
+  }
+}
+
+describe('transact', () => {
+  for (const spec of fixtures.specs)
+    for (const fixture of fixtures.fixtures)
+      test(`${spec}: ${fixture.name} detaches the state native evm2 records`, async () => {
+        const expected = fixture.expected[spec]!
+        if (expected.handlerError) return
+
+        const evm = await engine.create({
+          block: block(fixture.block),
+          chainId: BigInt(fixture.chainId),
+          database: database(fixture.accounts),
+          specId: codec.specId[spec as keyof typeof codec.specId],
+        })
+
+        // Same execution as `callTx`, resolved by detaching so the pending state
+        // native evm2 recorded is comparable rather than discarded.
+        const { result, token } = evm.transact({
+          envelope: Bytes.fromHex(fixture.envelope as Hex.Hex),
+          signer: fixture.signer as `0x${string}`,
+        })
+        const state = PendingState.from(evm.detach(token))
+
+        const { pendingState, ...rest } = expected
+        expect(encode(result)).toEqual(rest)
+        expect(encodePending(state)).toEqual(pendingState)
+      })
+})
+
 describe('callTx', () => {
   for (const spec of fixtures.specs)
     for (const fixture of fixtures.fixtures)
@@ -152,7 +256,10 @@ describe('callTx', () => {
           expect(call).toThrowError(expected.handlerError)
           return
         }
-        expect(encode(call())).toEqual(expected)
+        // `pendingState` belongs to the `transact` block below: `callTx` discards
+        // state before a caller can observe it.
+        const { pendingState: _, ...result } = expected
+        expect(encode(call())).toEqual(result)
       })
 })
 
