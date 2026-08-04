@@ -37,6 +37,10 @@ export const op = {
   setBlock: 3,
   callTx: 4,
   readAccount: 5,
+  transact: 6,
+  commit: 7,
+  discard: 8,
+  detach: 9,
 } as const
 
 /**
@@ -72,6 +76,8 @@ export const status = {
   engineBusy: 3,
   handler: 4,
   database: 5,
+  engineBorrowed: 6,
+  notExecuted: 7,
 } as const
 
 /** Block environment, in evm2's `BlockEnvExt` terms. */
@@ -362,6 +368,143 @@ export declare namespace encodeCallTx {
     /** Recovered sender. evm2 takes the signer rather than re-deriving it. */
     signer: Address.Address
   }
+}
+
+/** Encodes a transaction execution that leaves its state changes pending. */
+export function encodeTransact(options: encodeCallTx.Options): Bytes.Bytes {
+  const writer = new Writer()
+  writer.address(options.signer)
+  writer.bytes(options.envelope)
+  return writer.finish(op.transact)
+}
+
+/** Encodes a resolution of the outstanding executed transaction. */
+export function encodeResolve(
+  resolution: 'commit' | 'discard' | 'detach',
+): Bytes.Bytes {
+  return new Writer().finish(op[resolution])
+}
+
+/** Record tags in a serialized state-change stream. */
+export const record = {
+  end: 0,
+  bytecode: 1,
+  account: 2,
+  storageWipe: 3,
+  storage: 4,
+  accountRead: 5,
+  storageRead: 6,
+} as const
+
+/**
+ * Decodes a state-change stream.
+ *
+ * evm2 keeps `PendingState`'s fields crate-private, so the adapter sends the
+ * stream its `StateChangeSource::visit` produces. For a detached pending state
+ * that order is deterministic.
+ */
+export function decodeChanges(payload: Bytes.Bytes): Changes {
+  const reader = new Reader(payload)
+  const changes: {
+    accounts: AccountChange[]
+    accountReads: AccountChange[]
+    bytecode: { code: Bytes.Bytes; codeHash: Hex.Hex }[]
+    storage: StorageChange[]
+    storageReads: StorageChange[]
+    storageWipes: Address.Address[]
+  } = {
+    accounts: [],
+    accountReads: [],
+    bytecode: [],
+    storage: [],
+    storageReads: [],
+    storageWipes: [],
+  }
+
+  const info = (): ChangeAccount | undefined => {
+    if (!reader.bool()) return undefined
+    // Read into locals first: these are sequential reads, so writing them as
+    // object properties would make the literal's field order the wire order.
+    const balance = reader.word()
+    const nonce = reader.u64()
+    const codeHash = reader.hash()
+    return { balance, codeHash, nonce }
+  }
+
+  while (true) {
+    const tag = reader.u8()
+    if (tag === record.end) break
+    if (tag === record.bytecode)
+      changes.bytecode.push({ codeHash: reader.hash(), code: reader.bytes() })
+    else if (tag === record.account)
+      changes.accounts.push({
+        address: reader.address(),
+        original: info(),
+        current: info(),
+        created: reader.bool(),
+        selfdestructed: reader.bool(),
+      })
+    else if (tag === record.storageWipe)
+      changes.storageWipes.push(reader.address())
+    else if (tag === record.storage)
+      changes.storage.push({
+        address: reader.address(),
+        key: reader.word(),
+        original: reader.word(),
+        current: reader.word(),
+      })
+    else if (tag === record.accountRead)
+      changes.accountReads.push({
+        address: reader.address(),
+        current: info(),
+      })
+    else if (tag === record.storageRead)
+      changes.storageReads.push({
+        address: reader.address(),
+        key: reader.word(),
+        current: reader.word(),
+      })
+    else throw new DecodeError(`unknown change record ${tag}`)
+  }
+  reader.finish()
+  return changes
+}
+
+/** An account as a change stream reports it. Code arrives under its hash. */
+export type ChangeAccount = {
+  balance: bigint
+  codeHash: Hex.Hex
+  nonce: bigint
+}
+
+/** An account the transaction loaded, changed or not. */
+export type AccountChange = {
+  address: Address.Address
+  created?: boolean | undefined
+  /** Value after the change. Absent means the account does not exist. */
+  current?: ChangeAccount | undefined
+  /** Value at the transaction boundary. */
+  original?: ChangeAccount | undefined
+  selfdestructed?: boolean | undefined
+}
+
+/** A storage slot the transaction loaded, changed or not. */
+export type StorageChange = {
+  address: Address.Address
+  current: bigint
+  key: bigint
+  /** Value at the transaction boundary. Absent on a read. */
+  original?: bigint | undefined
+}
+
+/** A decoded state-change stream, grouped by record kind. */
+export type Changes = {
+  accountReads: readonly AccountChange[]
+  accounts: readonly AccountChange[]
+  bytecode: readonly { code: Bytes.Bytes; codeHash: Hex.Hex }[]
+  storage: readonly StorageChange[]
+  storageReads: readonly StorageChange[]
+  storageWipes: readonly Address.Address[]
 }
 
 /** Decodes a `TxResult` response payload. */

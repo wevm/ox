@@ -41,6 +41,14 @@ pub mod op {
     pub const CALL_TX: u16 = 4;
     /// Reads an account through the accepted overlay and the database.
     pub const READ_ACCOUNT: u16 = 5;
+    /// Executes a transaction and leaves its state changes pending.
+    pub const TRANSACT: u16 = 6;
+    /// Accepts the pending transaction into the engine's overlay.
+    pub const COMMIT: u16 = 7;
+    /// Drops the pending transaction and keeps its result.
+    pub const DISCARD: u16 = 8;
+    /// Moves the pending transaction out as owned state.
+    pub const DETACH: u16 = 9;
 }
 
 /// Builds a response header with an empty payload.

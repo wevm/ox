@@ -23,6 +23,10 @@ pub mod status {
     pub const HANDLER: u16 = 4;
     /// A host database read failed. The payload carries the host's message.
     pub const DATABASE: u16 = 5;
+    /// An executed transaction still holds the engine. Resolve it first.
+    pub const ENGINE_BORROWED: u16 = 6;
+    /// A resolution named no outstanding executed transaction.
+    pub const NOT_EXECUTED: u16 = 7;
 }
 
 /// Discriminants for [`HandlerError`] variants.
