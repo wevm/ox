@@ -360,3 +360,36 @@ describe('transaction input', () => {
     expect(result.output).toBe(Hex.fromNumber(42, { size: 32 }))
   })
 })
+
+describe('Database.fromMemory code', () => {
+  test('behavior: rejects a malformed delegation designator at the account', async () => {
+    // Found by the property suite: the engine refuses to classify `0xef01`
+    // code, which surfaced as an opaque read failure during execution rather
+    // than at the account that declared it.
+    expect(() =>
+      Database.fromMemory({ accounts: { [target]: { code: '0xef01' } } }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Database.InvalidDesignatorError: An account declared a malformed delegation designator.
+
+      Account: 0x00000000000000000000000000000000000000c0
+      Length: 2 bytes, expected 23
+      Code beginning \`0xef01\` is an EIP-7702 designator: \`0xef0100\` and a 20-byte address.]
+    `)
+  })
+
+  test('behavior: accepts a valid delegation designator', async () => {
+    const designator = `0xef0100${'11'.repeat(20)}` as const
+    const instance = await Evm.create({
+      database: Database.fromMemory({
+        accounts: {
+          [sender.toLowerCase()]: { balance: 10n ** 18n },
+          [target]: { code: designator },
+        },
+      }),
+    })
+
+    // A designator delegates to an account with no code, so the call succeeds
+    // with empty output rather than executing the designator bytes.
+    expect(Evm.callTx(instance, transaction()).status).toBe(true)
+  })
+})
