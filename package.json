@@ -121,7 +121,8 @@
     {
       "name": "import * from 'ox'",
       "path": "./dist/index.js",
-      "import": "*"
+      "import": "*",
+      "limit": "200 kB"
     },
     {
       "name": "import { Hex } from 'ox'; console.log(Hex.assert)",
@@ -131,7 +132,8 @@
     {
       "name": "import * from 'ox/wasm'",
       "path": "./dist/wasm/index.js",
-      "import": "*"
+      "import": "*",
+      "limit": "225 kB"
     },
     {
       "name": "import { Hash } from 'ox/wasm'",
@@ -201,6 +203,9 @@
     "CHANGELOG.md",
     "dist",
     "src",
+    "wasm/evm2/LICENSE-APACHE",
+    "wasm/evm2/LICENSE-MIT",
+    "wasm/evm2/NOTICE.md",
     "wasm/vendor/c-kzg-4844/LICENSE",
     "wasm/vendor/c-kzg-4844/blst/LICENSE",
     "wasm/vendor/mldsa-native/LICENSE"

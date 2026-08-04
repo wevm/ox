@@ -1,0 +1,419 @@
+import type * as Address from '../../core/Address.js'
+import * as Bytes from '../../core/Bytes.js'
+import * as Errors from '../../core/Errors.js'
+import * as Hex from '../../core/Hex.js'
+
+/**
+ * ABI v1 codec for the evm2 WASM adapter.
+ *
+ * The layouts here are the other half of `wasm/evm2/src/abi.rs`: fixed-width
+ * little-endian integers, 256-bit values as 32 big-endian bytes, addresses as
+ * 20, hashes as 32, and byte sequences behind a `u32` length.
+ *
+ * @internal
+ */
+
+/** Magic bytes prefixing every header: `EVM2` read little-endian. */
+export const magic = 0x32_4d_56_45
+
+/** ABI version. Ox's compatibility boundary over evm2's Rust API. */
+export const version = 1
+
+/** Request and response header size, in bytes. */
+export const headerSize = 16
+
+/**
+ * Largest request the adapter accepts, in bytes.
+ *
+ * Mirrors `MAX_REQUEST` in `wasm/evm2/src/abi.rs`. Consensus sets no usable
+ * ceiling, so this is an adapter bound; the two halves must move together.
+ */
+export const maxRequest = 64 * 1024 * 1024
+
+/** Adapter operations. */
+export const op = {
+  create: 1,
+  destroy: 2,
+  setBlock: 3,
+  callTx: 4,
+} as const
+
+/**
+ * evm2 `SpecId` discriminants, in its declaration order.
+ *
+ * The wire value is the discriminant, so this list must track evm2's enum. A
+ * value past the last one is rejected by the adapter rather than silently
+ * reinterpreted.
+ */
+export const specId = {
+  frontier: 0,
+  homestead: 1,
+  tangerine: 2,
+  spuriousDragon: 3,
+  byzantium: 4,
+  petersburg: 5,
+  istanbul: 6,
+  berlin: 7,
+  london: 8,
+  merge: 9,
+  shanghai: 10,
+  cancun: 11,
+  prague: 12,
+  osaka: 13,
+  amsterdam: 14,
+} as const
+
+/** Response statuses. */
+export const status = {
+  ok: 0,
+  abi: 1,
+  engineMissing: 2,
+  engineBusy: 3,
+  handler: 4,
+  database: 5,
+} as const
+
+/** Block environment, in evm2's `BlockEnvExt` terms. */
+export type Block = {
+  /** Block base fee. */
+  basefee: bigint
+  /** Block beneficiary. */
+  beneficiary: Address.Address
+  /** Blob base fee. */
+  blobBasefee: bigint
+  /** Pre-merge block difficulty. */
+  difficulty: bigint
+  /** Block gas limit. */
+  gasLimit: bigint
+  /** Block number. */
+  number: bigint
+  /** Post-merge randomness value. */
+  prevrandao: bigint
+  /** Beacon slot number. */
+  slotNum: bigint
+  /** Block timestamp. */
+  timestamp: bigint
+}
+
+/** A log emitted by a transaction. */
+export type Log = {
+  /** Emitting account. */
+  address: Address.Address
+  /** Log data. */
+  data: Hex.Hex
+  /** Indexed topics. */
+  topics: readonly Hex.Hex[]
+}
+
+/** Transaction result, preserving evm2's `TxResult` fields. */
+export type TxResult = {
+  /** Created contract address for successful create transactions. */
+  createdAddress?: Address.Address | undefined
+  /** Host error code raised during execution, if any. */
+  errorCode?: bigint | undefined
+  /** EIP-7623 floor gas. Zero when not applicable. */
+  floorGas: bigint
+  /** Logs emitted by the transaction. */
+  logs: readonly Log[]
+  /** Return or revert output. */
+  output: Hex.Hex
+  /** Gas refund, capped per EIP-3529, before the EIP-7623 floor adjustment. */
+  refunded: bigint
+  /** State gas consumed by the transaction per EIP-8037. */
+  stateGasSpent: bigint
+  /** Whether execution succeeded. */
+  status: boolean
+  /** Interpreter stop reason, as evm2's `InstrStop` discriminant. */
+  stop: number
+  /** Total gas spent, regular plus state, before refund. */
+  totalGasSpent: bigint
+}
+
+/** A handler failure, as evm2 reported it. */
+export type Handler = {
+  /** Variant discriminant, matching `wasm/evm2/src/error.rs`. */
+  kind: number
+  /** evm2's own message for the failure. */
+  message: string
+  /** The variant's numeric fields, in declaration order. */
+  words: readonly bigint[]
+}
+
+/** Builds a request payload. */
+class Writer {
+  #bytes: number[] = []
+
+  bytes(value: Bytes.Bytes) {
+    this.u32(value.length)
+    for (const byte of value) this.#bytes.push(byte)
+  }
+
+  // Every fixed-width writer rejects out-of-range input. Truncating instead
+  // would silently change which fork or chain the engine runs.
+  u32(value: number) {
+    if (!Number.isInteger(value) || value < 0 || value > 0xff_ff_ff_ff)
+      throw new EncodeError({ max: '4294967295', value: String(value) })
+    this.#bytes.push(
+      value & 0xff,
+      (value >>> 8) & 0xff,
+      (value >>> 16) & 0xff,
+      value >>> 24,
+    )
+  }
+
+  u64(value: bigint) {
+    if (value < 0n || value > 0xff_ff_ff_ff_ff_ff_ff_ffn)
+      throw new EncodeError({
+        max: '18446744073709551615',
+        value: String(value),
+      })
+    for (let index = 0; index < 8; index++)
+      this.#bytes.push(Number((value >> BigInt(index * 8)) & 0xffn))
+  }
+
+  word(value: bigint) {
+    if (value < 0n || value >> 256n !== 0n)
+      throw new EncodeError({ max: '2^256 - 1', value: String(value) })
+    this.bare(Bytes.fromNumber(value, { size: 32 }))
+  }
+
+  address(value: Address.Address) {
+    const bytes = Bytes.fromHex(value)
+    if (bytes.length !== 20)
+      throw new EncodeError({ max: '20 bytes', value: `${bytes.length} bytes` })
+    this.bare(bytes)
+  }
+
+  bare(value: Bytes.Bytes) {
+    for (const byte of value) this.#bytes.push(byte)
+  }
+
+  /** Prefixes the header for `operation` and returns the request. */
+  finish(operation: number): Bytes.Bytes {
+    const request = new Uint8Array(headerSize + this.#bytes.length)
+    const view = new DataView(request.buffer)
+    view.setUint32(0, magic, true)
+    view.setUint16(4, version, true)
+    view.setUint16(6, operation, true)
+    view.setUint32(8, 0, true)
+    view.setUint32(12, this.#bytes.length, true)
+    request.set(this.#bytes, headerSize)
+    return request
+  }
+}
+
+/** Reads a response payload. */
+class Reader {
+  #at = 0
+  #bytes: Bytes.Bytes
+
+  constructor(bytes: Bytes.Bytes) {
+    this.#bytes = bytes
+  }
+
+  #take(length: number) {
+    const end = this.#at + length
+    if (end > this.#bytes.length)
+      throw new DecodeError(
+        `response ended after ${this.#bytes.length} bytes, needed ${end}`,
+      )
+    const slice = this.#bytes.subarray(this.#at, end)
+    this.#at = end
+    return slice
+  }
+
+  u8() {
+    return this.#take(1)[0]!
+  }
+
+  bool() {
+    const value = this.u8()
+    if (value > 1)
+      throw new DecodeError(`expected a boolean byte, got ${value}`)
+    return value === 1
+  }
+
+  u16() {
+    const bytes = this.#take(2)
+    return bytes[0]! | (bytes[1]! << 8)
+  }
+
+  u32() {
+    const bytes = this.#take(4)
+    return (
+      bytes[0]! +
+      bytes[1]! * 0x100 +
+      bytes[2]! * 0x10000 +
+      bytes[3]! * 0x1000000
+    )
+  }
+
+  u64() {
+    const bytes = this.#take(8)
+    let value = 0n
+    for (let index = 7; index >= 0; index--)
+      value = (value << 8n) | BigInt(bytes[index]!)
+    return value
+  }
+
+  word() {
+    return Bytes.toBigInt(this.#take(32))
+  }
+
+  address() {
+    return Hex.fromBytes(this.#take(20)) as Address.Address
+  }
+
+  hash() {
+    return Hex.fromBytes(this.#take(32))
+  }
+
+  bytes() {
+    return this.#take(this.u32())
+  }
+
+  string() {
+    return new TextDecoder().decode(this.bytes())
+  }
+
+  /** Asserts the payload was consumed exactly. */
+  finish() {
+    if (this.#at !== this.#bytes.length)
+      throw new DecodeError(
+        `response had ${this.#bytes.length - this.#at} trailing bytes`,
+      )
+  }
+}
+
+/** Encodes an engine creation request. */
+export function encodeCreate(options: encodeCreate.Options): Bytes.Bytes {
+  return config(options).finish(op.create)
+}
+
+export declare namespace encodeCreate {
+  type Options = {
+    /** Block environment. */
+    block: Block
+    /** Chain id the `CHAINID` opcode reports and transactions validate against. */
+    chainId: bigint
+    /** evm2 `SpecId` discriminant. */
+    specId: number
+  }
+}
+
+/** Encodes a request replacing the block environment and specification. */
+export function encodeSetBlock(options: encodeCreate.Options): Bytes.Bytes {
+  return config(options).finish(op.setBlock)
+}
+
+/** Encodes a request dropping the engine. */
+export function encodeDestroy(): Bytes.Bytes {
+  return new Writer().finish(op.destroy)
+}
+
+/** Encodes a result-only transaction execution request. */
+export function encodeCallTx(options: encodeCallTx.Options): Bytes.Bytes {
+  const writer = new Writer()
+  writer.address(options.signer)
+  writer.bytes(options.envelope)
+  return writer.finish(op.callTx)
+}
+
+export declare namespace encodeCallTx {
+  type Options = {
+    /** EIP-2718 encoded transaction envelope. */
+    envelope: Bytes.Bytes
+    /** Recovered sender. evm2 takes the signer rather than re-deriving it. */
+    signer: Address.Address
+  }
+}
+
+/** Decodes a `TxResult` response payload. */
+export function decodeResult(payload: Bytes.Bytes): TxResult {
+  const reader = new Reader(payload)
+  const result = {
+    status: reader.bool(),
+    stop: reader.u8(),
+    totalGasSpent: reader.u64(),
+    stateGasSpent: reader.u64(),
+    refunded: reader.u64(),
+    floorGas: reader.u64(),
+  }
+  const createdAddress = reader.bool() ? reader.address() : undefined
+  const errorCode = reader.bool() ? reader.u64() : undefined
+  const output = Hex.fromBytes(reader.bytes())
+
+  const logs: Log[] = []
+  for (let index = reader.u32(); index > 0; index--) {
+    const address = reader.address()
+    const topics: Hex.Hex[] = []
+    for (let topic = reader.u32(); topic > 0; topic--)
+      topics.push(reader.hash())
+    logs.push({ address, data: Hex.fromBytes(reader.bytes()), topics })
+  }
+  reader.finish()
+
+  return { ...result, createdAddress, errorCode, logs, output }
+}
+
+/** Decodes a handler-failure response payload. */
+export function decodeHandler(payload: Bytes.Bytes): Handler {
+  const reader = new Reader(payload)
+  const kind = reader.u16()
+  const words: bigint[] = []
+  for (let index = reader.u8(); index > 0; index--) words.push(reader.word())
+  const message = reader.string()
+  reader.finish()
+  return { kind, message, words }
+}
+
+/** Decodes a response payload carrying only a message. */
+export function decodeMessage(payload: Bytes.Bytes): string {
+  const reader = new Reader(payload)
+  const message = reader.string()
+  reader.finish()
+  return message
+}
+
+function config(options: encodeCreate.Options) {
+  const { block } = options
+  const writer = new Writer()
+  writer.u32(options.specId)
+  writer.u64(options.chainId)
+  // Wire order follows evm2's `BlockEnvExt` declaration order.
+  writer.word(block.number)
+  writer.address(block.beneficiary)
+  writer.word(block.timestamp)
+  writer.word(block.gasLimit)
+  writer.word(block.basefee)
+  writer.word(block.difficulty)
+  writer.word(block.prevrandao)
+  writer.word(block.blobBasefee)
+  writer.word(block.slotNum)
+  return writer
+}
+
+/** Thrown when a value does not fit the wire width the ABI declares. */
+export class EncodeError extends Errors.BaseError {
+  override readonly name = 'Evm.EncodeError'
+
+  constructor({ max, value }: { max: string; value: string }) {
+    super('A value does not fit the width this ABI encodes it at.', {
+      metaMessages: [`Value:   ${value}`, `Maximum: ${max}`],
+    })
+  }
+}
+
+/** Thrown when a response does not match the ABI the codec expects. */
+export class DecodeError extends Errors.BaseError {
+  override readonly name = 'Evm.DecodeError'
+
+  constructor(reason: string) {
+    super(
+      'The evm2 adapter returned a response this ABI version cannot read.',
+      {
+        metaMessages: [reason, `Expected ABI version ${version}.`],
+      },
+    )
+  }
+}

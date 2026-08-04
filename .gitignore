@@ -1,4 +1,5 @@
 *.map
+.agents/
 .bench
 .claude/
 .DS_Store
@@ -39,6 +40,10 @@ tsdoc-metadata.json
 # WASM build
 .wasm-toolchain
 wasm/.build
+
+# Rust adapter build output. `wasm/evm2/Cargo.lock` is committed: the shipped
+# artifact must rebuild byte-for-byte, which pinning evm2 alone does not give.
+wasm/evm2/target
 
 # Rust bench build output (`pnpm bench:engines`). `Cargo.lock` is committed: the
 # dependency ranges would otherwise re-resolve per machine, and a benchmark

@@ -1,0 +1,1062 @@
+{
+  "$comment": "Generated inputs; `expected` is written by `cargo test` in wasm/evm2 with OX_UPDATE_FIXTURES=1. Both native evm2 and the WASM artifact verify it.",
+  "fixtures": [
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8628080830f42409400000000000000000000000000000000000000bb8203e88025a0698fb86e16a23a10ddfd2273ba645bc9f8d19e7b599e33018bd5f52fa0ffcc15a03d87d17c44bf5cfca6008b870e3f89bf9cde567df0a85b3476968b89f2397fcb",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0x5208",
+          "txGasUsed": "0x5208"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0x5208",
+          "txGasUsed": "0x5208"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0x5208",
+          "txGasUsed": "0x5208"
+        }
+      },
+      "name": "transfer",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000bb",
+        "value": "0x3e8"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x602a5f5260205ff3",
+          "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x000000000000000000000000000000000000000000000000000000000000002a",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5218",
+          "txGasUsed": "0x5218"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x000000000000000000000000000000000000000000000000000000000000002a",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5218",
+          "txGasUsed": "0x5218"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x000000000000000000000000000000000000000000000000000000000000002a",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5218",
+          "txGasUsed": "0x5218"
+        }
+      },
+      "name": "return-word",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x60016002015f5260205ff3",
+          "codeHash": "0x512a58a86985215712b20521edee3427286e63031c2975787b23a50caec896de",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x521e",
+          "txGasUsed": "0x521e"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x521e",
+          "txGasUsed": "0x521e"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x521e",
+          "txGasUsed": "0x521e"
+        }
+      },
+      "name": "add",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x5f5f205f5260205ff3",
+          "codeHash": "0xba18b8d4466ff070c255421488766e72564a3de46f7fdb7b1b8b2d7deab3a053",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5237",
+          "txGasUsed": "0x5237"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5237",
+          "txGasUsed": "0x5237"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5237",
+          "txGasUsed": "0x5237"
+        }
+      },
+      "name": "keccak-empty",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x60205ffd",
+          "codeHash": "0x79606664e343265cdf1ad9cc129d0b8253f5e4e956ef3a7d29d8c5b85846e6de",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": false,
+          "stop": 16,
+          "totalGasSpent": "0x5210",
+          "txGasUsed": "0x5210"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": false,
+          "stop": 16,
+          "totalGasSpent": "0x5210",
+          "txGasUsed": "0x5210"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": false,
+          "stop": 16,
+          "totalGasSpent": "0x5210",
+          "txGasUsed": "0x5210"
+        }
+      },
+      "name": "revert",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0xfe",
+          "codeHash": "0xbcc90f2d6dada5b18e155c17a1c0a55920aae94f39857d39d0d8ed07ae8f228b",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": false,
+          "stop": 40,
+          "totalGasSpent": "0xf4240",
+          "txGasUsed": "0xf4240"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": false,
+          "stop": 40,
+          "totalGasSpent": "0xf4240",
+          "txGasUsed": "0xf4240"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": false,
+          "stop": 40,
+          "totalGasSpent": "0xf4240",
+          "txGasUsed": "0xf4240"
+        }
+      },
+      "name": "invalid-opcode",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x60015f5500",
+          "codeHash": "0x0b756d92562d91f2128f5a6472f5b7a93b042c651625eb1342102d97a49fa559",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0xa861",
+          "txGasUsed": "0xa861"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0xa861",
+          "txGasUsed": "0xa861"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0xa861",
+          "txGasUsed": "0xa861"
+        }
+      },
+      "name": "sstore-cold",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x602a60205fa100",
+          "codeHash": "0xb2ca30c374a1ebcdfabf91b535a265e9f4ff348192adae908255ef6cdf1df875",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [
+            {
+              "address": "0x00000000000000000000000000000000000000c0",
+              "data": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "topics": [
+                "0x000000000000000000000000000000000000000000000000000000000000002a"
+              ]
+            }
+          ],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0x5601",
+          "txGasUsed": "0x5601"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [
+            {
+              "address": "0x00000000000000000000000000000000000000c0",
+              "data": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "topics": [
+                "0x000000000000000000000000000000000000000000000000000000000000002a"
+              ]
+            }
+          ],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0x5601",
+          "txGasUsed": "0x5601"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [
+            {
+              "address": "0x00000000000000000000000000000000000000c0",
+              "data": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "topics": [
+                "0x000000000000000000000000000000000000000000000000000000000000002a"
+              ]
+            }
+          ],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 1,
+          "totalGasSpent": "0x5601",
+          "txGasUsed": "0x5601"
+        }
+      },
+      "name": "log1",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balance": "0x0",
+          "code": "0x60015f045f5260205ff3",
+          "codeHash": "0xa547c19b045e9890a1add7a8da4e5914a0682199c0dc7ee82aa4b6931d9c3e06",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f42409400000000000000000000000000000000000000c0808026a0a6a9f8f27b3fe3cc1f6a31f34ee31293ebae19f4867d30f2b1cc8b2b93e213d7a01662550393089b38d71e581eee4e27458296cb56f37ba01bce8db7ee6dde457f",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x521f",
+          "txGasUsed": "0x521f"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x521f",
+          "txGasUsed": "0x521f"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x521f",
+          "txGasUsed": "0x521f"
+        }
+      },
+      "name": "divide-by-zero",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x00000000000000000000000000000000000000c0",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8648080830f42409400000000000000000000000000000000000000048084deadbeef26a0ec8d7131a379cf84be88a7bbf8089e960fb87c69e7edb0606c3db6fcc1cbfd46a0308758cba3df7b2617ec45b660556ff13ecea15ad1c4527d71b1e7e003a26193",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0xdeadbeef",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x525a",
+          "txGasUsed": "0x525a"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x52a8",
+          "logs": [],
+          "output": "0xdeadbeef",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x525a",
+          "txGasUsed": "0x52a8"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x52a8",
+          "logs": [],
+          "output": "0xdeadbeef",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x525a",
+          "txGasUsed": "0x52a8"
+        }
+      },
+      "name": "precompile-identity",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0xdeadbeef",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x0000000000000000000000000000000000000004",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8648080830f42409400000000000000000000000000000000000000028084deadbeef26a051301893551c9a2b342e8b0445ecba0bd0669f6130a9a3b8d7f81270e15ff58ba0679677c811be7873c6afeb96d612da73c9d7e18e31f3b331604408a5d85eb4da",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5290",
+          "txGasUsed": "0x5290"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x52a8",
+          "logs": [],
+          "output": "0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5290",
+          "txGasUsed": "0x52a8"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x52a8",
+          "logs": [],
+          "output": "0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x5290",
+          "txGasUsed": "0x52a8"
+        }
+      },
+      "name": "precompile-sha256",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0xdeadbeef",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x0000000000000000000000000000000000000002",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf8608080830f4240940000000000000000000000000000000000000008808026a0c501dae2e4d33ec278a8589933b968dd43ad188344b93569b6a41b3b67cd649aa00d4e65565d0af041bc3f46c7039ef32d9b431b041d8df4183262a759b3b824ec",
+      "expected": {
+        "cancun": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x101d0",
+          "txGasUsed": "0x101d0"
+        },
+        "osaka": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x101d0",
+          "txGasUsed": "0x101d0"
+        },
+        "prague": {
+          "createdAddress": null,
+          "errorCode": null,
+          "floorGas": "0x5208",
+          "logs": [],
+          "output": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0x101d0",
+          "txGasUsed": "0x101d0"
+        }
+      },
+      "name": "precompile-ecpairing-empty",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": "0x0000000000000000000000000000000000000008",
+        "value": "0x0"
+      }
+    },
+    {
+      "accounts": [
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balance": "0xde0b6b3a7640000",
+          "code": "0x",
+          "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+          "nonce": 0
+        }
+      ],
+      "block": {
+        "basefee": "0x0",
+        "beneficiary": "0x00000000000000000000000000000000000000cb",
+        "blobBasefee": "0x1",
+        "difficulty": "0x0",
+        "gasLimit": "0x1c9c380",
+        "number": "0x1",
+        "prevrandao": "0x0",
+        "slotNum": "0x0",
+        "timestamp": "0x1"
+      },
+      "chainId": "0x1",
+      "envelope": "0xf84f8080830f42408080835f5ff325a0442bbf7941591be7ec10c7de06c69bacbe82d3c956b4b22362655c052e5a7041a075509a86267d05d26a086dd6b15ba0fa7cc2f838894c0690b7936bbf9d6b34a0",
+      "expected": {
+        "cancun": {
+          "createdAddress": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "errorCode": null,
+          "floorGas": "0x0",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0xcf3e",
+          "txGasUsed": "0xcf3e"
+        },
+        "osaka": {
+          "createdAddress": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "errorCode": null,
+          "floorGas": "0x5280",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0xcf3e",
+          "txGasUsed": "0xcf3e"
+        },
+        "prague": {
+          "createdAddress": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "errorCode": null,
+          "floorGas": "0x5280",
+          "logs": [],
+          "output": "0x",
+          "refunded": "0x0",
+          "stateGasSpent": "0x0",
+          "status": true,
+          "stop": 2,
+          "totalGasSpent": "0xcf3e",
+          "txGasUsed": "0xcf3e"
+        }
+      },
+      "name": "create-empty",
+      "signer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "tx": {
+        "data": "0x5f5ff3",
+        "gas": "0xf4240",
+        "gasPrice": "0x0",
+        "nonce": "0x0",
+        "to": null,
+        "value": "0x0"
+      }
+    }
+  ],
+  "privateKey": "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+  "specs": ["cancun", "prague", "osaka"]
+}

@@ -198,5 +198,30 @@ jobs:
           path: .wasm-toolchain
           key: wasi-sdk-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('wasm/toolchain.json') }}
 
+      - name: Install the pinned Rust toolchain
+        # `rustup show` inside the crate installs whatever
+        # `rust-toolchain.toml` pins, including its `wasm32-unknown-unknown`
+        # target.
+        working-directory: wasm/evm2
+        run: rustup show
+
+      - name: Restore Cargo cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            wasm/evm2/target
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('wasm/evm2/Cargo.lock', 'wasm/evm2/rust-toolchain.toml') }}
+
       - name: Verify committed artifacts are reproducible
+        # Covers the C targets and the evm2 adapter; each builder pins its own
+        # toolchain.
         run: pnpm wasm:check
+
+      - name: Test the evm2 adapter and its native oracle
+        # `cargo test` covers the ABI, the failure encodings, and the fixtures
+        # native evm2 owns. The WASM half of that comparison runs in the `core`
+        # Vitest project.
+        working-directory: wasm/evm2
+        run: cargo test --locked

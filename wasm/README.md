@@ -1,10 +1,16 @@
 # WASM artifacts
 
-C sources for ox's WASM crypto engines, and the build that turns them into the
-base64 modules committed under `src/`.
+C sources for ox's WASM crypto engines, the Rust adapter for the evm2 execution
+engine, and the builds that turn them into the base64 modules committed under
+`src/`.
 
-Nothing here is published. `package.json#files` ships `dist` and `src`, so the C
-lives outside `src/` deliberately — only the generated base64 modules reach npm.
+Nothing here is published. `package.json#files` ships `dist` and `src`, so the
+sources live outside `src/` deliberately — only the generated base64 modules
+reach npm.
+
+The two builds are separate. C targets go through `pnpm wasm:build`; the Rust
+adapter goes through `cargo` inside a pinned Docker image. `pnpm wasm:build` and
+`pnpm wasm:check` drive both; `--target=` selects one. See [the evm2 adapter](#the-evm2-adapter) below.
 
 ## Layout
 
@@ -31,10 +37,14 @@ Generated artifacts, and the module that loads them:
 ## Building
 
 ```bash
-pnpm wasm:build                  # every target
-pnpm wasm:build --target=hashes  # one target
+pnpm wasm:build                  # every target, C and Rust
+pnpm wasm:build --target=hashes  # one C target
+pnpm wasm:build --target=evm2    # the Rust adapter only
 pnpm wasm:check                  # rebuild and diff against what is committed
 ```
+
+`--target=` decides which toolchains are needed: a C target never invokes
+`cargo`, and `evm2` never downloads the wasi-sdk.
 
 `wasm:build` downloads the pinned wasi-sdk into `.wasm-toolchain/` on first run
 and verifies it by SHA-256. Neither script is wired into `build` or `postinstall`:
@@ -100,6 +110,76 @@ makes a toolchain change reviewable as a diff.
 4. Add a loader under `src/wasm/`, plus a differential test against
    `@noble/*` — that is the oracle, since it is audited and it is what ox ships
    by default.
+
+## The evm2 adapter
+
+`evm2/` is an Ox-owned Rust crate that binds a pinned
+[`alloy-rs/evm2`](https://github.com/alloy-rs/evm2) revision to WebAssembly. It
+owns the boundary and nothing behind it: a versioned binary ABI, a host adapter
+for evm2's `Database` trait, failure encoding, and the runtime glue `no_std`
+needs. EVM execution, gas accounting, transaction validation, journaling,
+precompiles, and fork behavior stay evm2's.
+
+```
+evm2/Cargo.toml           the pinned evm2 revision and the features selected for it
+evm2/Cargo.lock           committed, so the artifact rebuilds byte-for-byte
+evm2/rust-toolchain.toml  pinned compiler and wasm32 target
+evm2/NOTICE.md            generated attribution for everything the artifact links
+evm2/src/abi.rs           ABI v1 header, reader, writer
+evm2/src/database.rs      host imports implementing evm2's `Database`
+evm2/src/error.rs         response statuses and handler-failure encoding
+evm2/src/lib.rs           the engine, its exports, and request dispatch
+```
+
+evm2 is a Cargo git dependency resolved from Cargo's external cache. Its source
+never enters this repository — no checkout, submodule, subtree, or vendored
+directory.
+
+```bash
+pnpm wasm:build --target=evm2   # compile, optimize, write the generated module
+pnpm wasm:check --target=evm2   # rebuild and diff against what is committed
+cd wasm/evm2 && cargo test   # host-side ABI and failure-encoding tests
+```
+
+The artifact is `src/wasm/internal/evm2.wasm.ts`, loaded by
+`src/evm/internal/bindings.ts`. `pnpm wasm:check` also verifies
+`NOTICE.md`, `LICENSE-MIT`, and `LICENSE-APACHE`, all of which the build
+generates.
+
+### Conventions
+
+- **The compile runs in a pinned Docker image.** `rustc` output is not
+  byte-identical across host platforms, unlike the wasi-sdk `clang`: the same
+  source, lockfile, and target differ by a few hundred bytes between macOS and
+  Linux, so a host build can never satisfy `wasm:check`. `wasm/toolchain.json`
+  pins the image by digest, which makes the artifact a function of the image, the
+  lockfile, and the source. `wasm-opt` is host-stable and still runs natively.
+  `OX_EVM2_NATIVE=1` builds on the host for fast local iteration; `wasm:check`
+  refuses it, the same way it refuses `OX_WASM_CLANG`.
+- **The toolchain is pinned as stable, deliberately.** evm2 selects a tail-call
+  interpreter backend when it detects a nightly compiler, which needs unstable
+  features WebAssembly cannot use. Stable resolves to `single_return`, the
+  backend evm2 intends for wasm.
+- **No `std`.** The `std` feature reaches `getrandom 0.2`, which refuses to
+  compile for `wasm32-unknown-unknown`. `no_std` leaves the allocator and panic
+  handler to the adapter, which is why it carries `dlmalloc` and a trapping
+  `#[panic_handler]`.
+- **Pure-Rust precompiles only.** No `c-kzg`, `blst`, `gmp`, `mcl`,
+  `secp256k1`, or `aws-lc-rs`. KZG point evaluation falls back to arkworks, so
+  Cancun onward is covered without a native backend.
+- **Dependency paths are remapped out of the binary.** Panic locations
+  otherwise embed the build machine's Cargo directory, which alone makes the
+  bytes unreproducible elsewhere. The build asserts the home directory does not
+  appear in the artifact.
+- **The import list is exact.** The build fails on any import beyond the four
+  host database reads, so nothing can quietly pull in WASI, threads, or
+  randomness.
+- **ABI v1 is the compatibility boundary.** evm2's Rust API is never exposed to
+  TypeScript. `src/evm/internal/codec.ts` is the other half of `abi.rs`, and the
+  two must move together.
+- **`HandlerError` is matched exhaustively.** An evm2 revision that adds a
+  variant fails to compile in `error.rs` rather than collapsing into a
+  neighbouring one.
 
 ## Security
 
