@@ -1,5 +1,6 @@
 import * as Errors from '../core/Errors.js'
 import * as PendingState from './PendingState.js'
+import type * as StateChange from './StateChange.js'
 import type * as TxResult from './TxResult.js'
 import type * as engine from './internal/engine.js'
 
@@ -129,6 +130,81 @@ export declare namespace discard {
 }
 
 /**
+ * Streams the transaction's changes to a sink, then accepts them.
+ *
+ * The sink decides: if it throws, the transaction is discarded instead of
+ * committed and the throw is what surfaces. That is evm2's own rule, so a sink
+ * that fails cannot leave state half-applied.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx } from 'ox/evm'
+ *
+ * const executed = Evm.transact(evm, transaction)
+ *
+ * ExecutedTx.commitWith(executed, {
+ *   storage(change) {
+ *     persist(change)
+ *   }
+ * })
+ * ```
+ *
+ * @param executed - Executed transaction.
+ * @param sink - Sink to receive the changes.
+ * @returns The transaction's result.
+ */
+export function commitWith(
+  executed: ExecutedTx,
+  sink: StateChange.Sink,
+): TxResult.TxResult {
+  claim(executed)
+  executed['~engine'].resolveWith('commitWith', dispatch(sink))
+  return executed['~result']
+}
+
+export declare namespace commitWith {
+  type ErrorType = ResolvedError | Errors.GlobalErrorType
+}
+
+/**
+ * Streams the transaction's changes to a sink, then drops them.
+ *
+ * Observes exactly what {@link ox#ExecutedTx.(commitWith:function)} observes
+ * without touching the EVM's accepted state.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx } from 'ox/evm'
+ *
+ * const executed = Evm.transact(evm, transaction)
+ *
+ * ExecutedTx.discardWith(executed, {
+ *   storage(change) {
+ *     audit(change)
+ *   }
+ * })
+ * ```
+ *
+ * @param executed - Executed transaction.
+ * @param sink - Sink to receive the changes.
+ * @returns The transaction's result.
+ */
+export function discardWith(
+  executed: ExecutedTx,
+  sink: StateChange.Sink,
+): TxResult.TxResult {
+  claim(executed)
+  executed['~engine'].resolveWith('discardWith', dispatch(sink))
+  return executed['~result']
+}
+
+export declare namespace discardWith {
+  type ErrorType = ResolvedError | Errors.GlobalErrorType
+}
+
+/**
  * Moves the transaction's state out of the EVM as owned state.
  *
  * The EVM does not accept the changes: the caller holds them and decides what to
@@ -165,6 +241,21 @@ export type TxResultWithState = {
   pendingState: PendingState.PendingState
   /** Execution result. */
   result: TxResult.TxResult
+}
+
+// Routes one streamed record to the sink method that describes it.
+function dispatch(sink: StateChange.Sink) {
+  return (
+    record: Parameters<Parameters<engine.Engine['resolveWith']>[1]>[0],
+  ) => {
+    if (record.kind === 'bytecode')
+      sink.bytecode?.(record.codeHash, record.code)
+    else if (record.kind === 'account') sink.account?.(record)
+    else if (record.kind === 'accountRead') sink.accountRead?.(record)
+    else if (record.kind === 'storage') sink.storage?.(record)
+    else if (record.kind === 'storageRead') sink.storageRead?.(record)
+    else sink.storageWipe?.(record.address)
+  }
 }
 
 // Refusing a second resolution here, not just in the engine, keeps a reused

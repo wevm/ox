@@ -37,6 +37,16 @@ export type Engine = {
    * evm2's exclusive borrow shows up across two host calls.
    */
   resolve(resolution: 'commit' | 'discard'): void
+  /**
+   * Resolves the outstanding transaction, streaming its changes to `sink` first.
+   *
+   * A sink that throws makes evm2 discard rather than commit, and the throw is
+   * what surfaces.
+   */
+  resolveWith(
+    resolution: 'commitWith' | 'discardWith',
+    sink: (record: codec.Change) => void,
+  ): void
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
   /**
@@ -75,6 +85,11 @@ export async function create(options: create.Options): Promise<Engine> {
     resolve(resolution) {
       resolve(instance, codec.encodeResolve(resolution))
     },
+    resolveWith(resolution, sink) {
+      instance.withSink(sink, () =>
+        resolve(instance, codec.encodeResolve(resolution)),
+      )
+    },
     setBlock(options) {
       resolve(instance, codec.encodeSetBlock(options))
     },
@@ -107,6 +122,7 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
   if (status === codec.status.engineBusy) throw new bindings.ReentrancyError()
   if (status === codec.status.engineBorrowed) throw new BorrowedError()
   if (status === codec.status.notExecuted) throw new NotExecutedError()
+  if (status === codec.status.sink) throw new SinkError()
   throw new codec.DecodeError(`unknown response status ${status}`)
 }
 
@@ -122,6 +138,22 @@ export class HandlerError extends Errors.BaseError {
     super(message, { metaMessages: [`evm2 handler error ${kind}`] })
     this.kind = kind
     this.words = words
+  }
+}
+
+/**
+ * Thrown when a state-change sink refused a record.
+ *
+ * evm2 discards the transaction in that case rather than committing it, so this
+ * only surfaces when the sink failed without throwing an error of its own.
+ */
+export class SinkError extends Errors.BaseError {
+  override readonly name = 'Evm.SinkError'
+
+  constructor() {
+    super('A state-change sink refused a record.', {
+      metaMessages: ['The transaction was discarded rather than committed.'],
+    })
   }
 }
 

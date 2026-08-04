@@ -27,6 +27,9 @@ pub mod status {
     pub const ENGINE_BORROWED: u16 = 6;
     /// A resolution named no outstanding executed transaction.
     pub const NOT_EXECUTED: u16 = 7;
+    /// A host state-change sink refused a record, so evm2 discarded the
+    /// transaction rather than committing it.
+    pub const SINK: u16 = 8;
 }
 
 /// Discriminants for [`HandlerError`] variants.

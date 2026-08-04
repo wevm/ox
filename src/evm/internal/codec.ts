@@ -41,6 +41,8 @@ export const op = {
   commit: 7,
   discard: 8,
   detach: 9,
+  commitWith: 10,
+  discardWith: 11,
 } as const
 
 /**
@@ -78,6 +80,7 @@ export const status = {
   database: 5,
   engineBorrowed: 6,
   notExecuted: 7,
+  sink: 8,
 } as const
 
 /** Block environment, in evm2's `BlockEnvExt` terms. */
@@ -380,7 +383,7 @@ export function encodeTransact(options: encodeCallTx.Options): Bytes.Bytes {
 
 /** Encodes a resolution of the outstanding executed transaction. */
 export function encodeResolve(
-  resolution: 'commit' | 'discard' | 'detach',
+  resolution: 'commit' | 'commitWith' | 'detach' | 'discard' | 'discardWith',
 ): Bytes.Bytes {
   return new Writer().finish(op[resolution])
 }
@@ -405,70 +408,146 @@ export const record = {
  */
 export function decodeChanges(payload: Bytes.Bytes): Changes {
   const reader = new Reader(payload)
-  const changes: {
-    accounts: AccountChange[]
-    accountReads: AccountChange[]
-    bytecode: { code: Bytes.Bytes; codeHash: Hex.Hex }[]
-    storage: StorageChange[]
-    storageReads: StorageChange[]
-    storageWipes: Address.Address[]
-  } = {
-    accounts: [],
+  const changes: Mutable = {
     accountReads: [],
+    accounts: [],
     bytecode: [],
     storage: [],
     storageReads: [],
     storageWipes: [],
   }
+  while (true) {
+    const record = readRecord(reader)
+    if (!record) break
+    collect(changes, record)
+  }
+  reader.finish()
+  return changes
+}
+
+/** A change stream being built. @internal */
+type Mutable = {
+  accountReads: AccountChange[]
+  accounts: AccountChange[]
+  bytecode: { code: Bytes.Bytes; codeHash: Hex.Hex }[]
+  storage: StorageChange[]
+  storageReads: StorageChange[]
+  storageWipes: Address.Address[]
+}
+
+/** Files one record into the stream it belongs to. */
+function collect(changes: Mutable, record: Change) {
+  // `kind` routes a streamed record; the grouped arrays do not repeat it.
+  if (record.kind === 'bytecode')
+    changes.bytecode.push({ code: record.code, codeHash: record.codeHash })
+  else if (record.kind === 'account')
+    changes.accounts.push({
+      address: record.address,
+      created: record.created,
+      current: record.current,
+      original: record.original,
+      selfdestructed: record.selfdestructed,
+    })
+  else if (record.kind === 'accountRead')
+    changes.accountReads.push({
+      address: record.address,
+      current: record.current,
+    })
+  else if (record.kind === 'storage')
+    changes.storage.push({
+      address: record.address,
+      current: record.current,
+      key: record.key,
+      original: record.original,
+    })
+  else if (record.kind === 'storageRead')
+    changes.storageReads.push({
+      address: record.address,
+      current: record.current,
+      key: record.key,
+    })
+  else changes.storageWipes.push(record.address)
+}
+
+/**
+ * Reads one record, or `undefined` at the end of the stream.
+ *
+ * Every field is read into a local before the object is built: these are
+ * sequential reads, so an object literal would make its field order the wire
+ * order.
+ *
+ * @internal
+ */
+function readRecord(reader: Reader): Change | undefined {
+  const tag = reader.u8()
+  if (tag === record.end) return undefined
 
   const info = (): ChangeAccount | undefined => {
     if (!reader.bool()) return undefined
-    // Read into locals first: these are sequential reads, so writing them as
-    // object properties would make the literal's field order the wire order.
     const balance = reader.word()
     const nonce = reader.u64()
     const codeHash = reader.hash()
     return { balance, codeHash, nonce }
   }
 
-  while (true) {
-    const tag = reader.u8()
-    if (tag === record.end) break
-    if (tag === record.bytecode)
-      changes.bytecode.push({ codeHash: reader.hash(), code: reader.bytes() })
-    else if (tag === record.account)
-      changes.accounts.push({
-        address: reader.address(),
-        original: info(),
-        current: info(),
-        created: reader.bool(),
-        selfdestructed: reader.bool(),
-      })
-    else if (tag === record.storageWipe)
-      changes.storageWipes.push(reader.address())
-    else if (tag === record.storage)
-      changes.storage.push({
-        address: reader.address(),
-        key: reader.word(),
-        original: reader.word(),
-        current: reader.word(),
-      })
-    else if (tag === record.accountRead)
-      changes.accountReads.push({
-        address: reader.address(),
-        current: info(),
-      })
-    else if (tag === record.storageRead)
-      changes.storageReads.push({
-        address: reader.address(),
-        key: reader.word(),
-        current: reader.word(),
-      })
-    else throw new DecodeError(`unknown change record ${tag}`)
+  if (tag === record.bytecode) {
+    const codeHash = reader.hash()
+    const code = reader.bytes()
+    return { code, codeHash, kind: 'bytecode' }
   }
-  reader.finish()
-  return changes
+  if (tag === record.account) {
+    const address = reader.address()
+    const original = info()
+    const current = info()
+    const created = reader.bool()
+    const selfdestructed = reader.bool()
+    return {
+      address,
+      created,
+      current,
+      kind: 'account',
+      original,
+      selfdestructed,
+    }
+  }
+  if (tag === record.storageWipe)
+    return { address: reader.address(), kind: 'storageWipe' }
+  if (tag === record.storage) {
+    const address = reader.address()
+    const key = reader.word()
+    const original = reader.word()
+    const current = reader.word()
+    return { address, current, key, kind: 'storage', original }
+  }
+  if (tag === record.accountRead) {
+    const address = reader.address()
+    const current = info()
+    return { address, current, kind: 'accountRead' }
+  }
+  if (tag === record.storageRead) {
+    const address = reader.address()
+    const key = reader.word()
+    const current = reader.word()
+    return { address, current, key, kind: 'storageRead' }
+  }
+  throw new DecodeError(`unknown change record ${tag}`)
 }
+
+/** Decodes a single record the adapter streamed to a sink. */
+export function decodeRecord(payload: Bytes.Bytes): Change {
+  const reader = new Reader(payload)
+  const decoded = readRecord(reader)
+  if (!decoded) throw new DecodeError('empty change record')
+  reader.finish()
+  return decoded
+}
+
+/** One record from a change stream, tagged by what it describes. */
+export type Change =
+  | (AccountChange & { kind: 'account' | 'accountRead' })
+  | (StorageChange & { kind: 'storage' | 'storageRead' })
+  | { address: Address.Address; kind: 'storageWipe' }
+  | { code: Bytes.Bytes; codeHash: Hex.Hex; kind: 'bytecode' }
 
 /** An account as a change stream reports it. Code arrives under its hash. */
 export type ChangeAccount = {

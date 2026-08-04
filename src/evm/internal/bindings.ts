@@ -40,6 +40,15 @@ export type Instance = {
   call(request: Bytes.Bytes): { payload: Bytes.Bytes; status: number }
   /** Releases the request and response buffers. */
   reset(): void
+  /**
+   * Runs `send` with `handler` receiving each record the adapter streams.
+   *
+   * @throws the failure `handler` raised, after evm2 has discarded.
+   */
+  withSink<result>(
+    handler: (record: codec.Change) => void,
+    send: () => result,
+  ): result
 }
 
 /** Compiles the adapter once per realm. */
@@ -57,7 +66,32 @@ export async function instantiateWith(
 ): Promise<Instance> {
   const host = Database.host(database)
   const compiled = await compile()
-  const instance = await WebAssembly.instantiate(compiled, host.imports)
+
+  // The sink shares the database's import namespace: both are host callbacks the
+  // adapter reaches during one operation.
+  let sink: ((record: codec.Change) => void) | undefined
+  let failure: Error | undefined
+  const imports = {
+    ...host.imports,
+    ox_evm2: {
+      ...(host.imports.ox_evm2 as WebAssembly.ModuleImports),
+      sink_record(pointer: number, length: number) {
+        try {
+          if (!sink) throw new UnexpectedSinkError()
+          const bytes = new Uint8Array(exports.memory.buffer, pointer, length)
+          sink(codec.decodeRecord(bytes.slice()))
+          return 0
+        } catch (error) {
+          // Reporting failure makes evm2 discard the transaction, and the error
+          // is rethrown afterwards so the caller sees its own throw.
+          failure ??= error as Error
+          return 1
+        }
+      },
+    },
+  }
+
+  const instance = await WebAssembly.instantiate(compiled, imports)
   const exports = instance.exports as Exports
   host.attach(exports.memory)
 
@@ -65,6 +99,23 @@ export async function instantiateWith(
   if (abi !== codec.version) throw new VersionError({ actual: abi })
 
   return {
+    /** Runs `send` with `handler` receiving each streamed record. */
+    withSink(handler, send) {
+      sink = handler
+      failure = undefined
+      try {
+        const result = send()
+        if (failure) throw failure
+        return result
+      } catch (error) {
+        // A sink that threw already made the adapter discard, so the caller's own
+        // error is the useful one; the sink status is derived from it.
+        throw failure ?? error
+      } finally {
+        sink = undefined
+        failure = undefined
+      }
+    },
     call(request) {
       if (request.length > codec.maxRequest)
         throw new RequestTooLargeError({ length: request.length })
@@ -141,6 +192,15 @@ export class RequestTooLargeError extends Errors.BaseError {
 }
 
 /** Thrown when a host read reenters the engine that is calling it. */
+/** Thrown when the adapter streamed a record with no sink registered. */
+export class UnexpectedSinkError extends Errors.BaseError {
+  override readonly name = 'Evm.UnexpectedSinkError'
+
+  constructor() {
+    super('The engine streamed a state change with no sink registered.')
+  }
+}
+
 export class ReentrancyError extends Errors.BaseError {
   override readonly name = 'Evm.ReentrancyError'
 

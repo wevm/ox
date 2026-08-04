@@ -101,6 +101,7 @@ describe('create', () => {
         'ox_evm2.get_block_hash',
         'ox_evm2.get_code_by_hash',
         'ox_evm2.get_storage',
+        'ox_evm2.sink_record',
       ])
     } finally {
       if (fromBase64)

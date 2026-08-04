@@ -112,15 +112,15 @@ describe('detach', () => {
 
     expect(storage.filter((change) => change.address.toLowerCase() === target))
       .toMatchInlineSnapshot(`
-      [
-        {
-          "address": "0x00000000000000000000000000000000000000c0",
-          "current": 42n,
-          "key": 0n,
-          "original": 0n,
-        },
-      ]
-    `)
+        [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "current": 42n,
+            "key": 0n,
+            "original": 0n,
+          },
+        ]
+      `)
   })
 
   test('behavior: reports the sender balance the transaction left', async () => {
@@ -264,5 +264,76 @@ describe('StateChange.tee', () => {
 
     expect(a).toEqual(b)
     expect(a.length).toBeGreaterThan(0)
+  })
+})
+
+describe('commitWith', () => {
+  test('behavior: streams the changes, then accepts them', async () => {
+    const instance = await evm()
+
+    const storage: StateChange.Storage[] = []
+    ExecutedTx.commitWith(Evm.transact(instance, transaction()), {
+      storage(change) {
+        storage.push(change)
+      },
+    })
+
+    expect(storage.filter((change) => change.address.toLowerCase() === target))
+      .toMatchInlineSnapshot(`
+      [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "current": 42n,
+          "key": 0n,
+          "kind": "storage",
+          "original": 0n,
+        },
+      ]
+    `)
+
+    // Committed, so the write is visible and the nonce advanced.
+    const second = Evm.transact(instance, transaction({ nonce: 1n }))
+    expect(ExecutedTx.result(second).output).toBe(answer)
+    ExecutedTx.discard(second)
+  })
+
+  test('behavior: a sink that throws discards instead of committing', async () => {
+    const instance = await evm()
+
+    // evm2's rule: a failing sink means the transaction is not committed. The
+    // sink's own error surfaces rather than the resulting status.
+    expect(() =>
+      ExecutedTx.commitWith(Evm.transact(instance, transaction()), {
+        storage() {
+          throw new Error('sink refused')
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`[Error: sink refused]`)
+
+    // Not committed: the write is gone and the nonce never advanced.
+    const second = Evm.transact(instance, transaction())
+    expect(ExecutedTx.result(second).output).toBe(zero)
+    ExecutedTx.discard(second)
+    expect(Evm.readAccountInfo(instance, sender)?.nonce).toBe(0n)
+  })
+})
+
+describe('discardWith', () => {
+  test('behavior: streams the changes without accepting them', async () => {
+    const instance = await evm()
+
+    const seen: StateChange.Storage[] = []
+    ExecutedTx.discardWith(Evm.transact(instance, transaction()), {
+      storage(change) {
+        seen.push(change)
+      },
+    })
+
+    expect(seen.some((change) => change.current === 42n)).toBe(true)
+
+    // Observed but not accepted.
+    const second = Evm.transact(instance, transaction())
+    expect(ExecutedTx.result(second).output).toBe(zero)
+    ExecutedTx.discard(second)
   })
 })
