@@ -220,11 +220,11 @@ describe('transact', () => {
 
         // Same execution as `callTx`, resolved by detaching so the pending state
         // native evm2 recorded is comparable rather than discarded.
-        const result = evm.transact({
+        const { result, token } = evm.transact({
           envelope: Bytes.fromHex(fixture.envelope as Hex.Hex),
           signer: fixture.signer as `0x${string}`,
         })
-        const state = PendingState.from(evm.detach())
+        const state = PendingState.from(evm.detach(token))
 
         const { pendingState, ...rest } = expected
         expect(encode(result)).toEqual(rest)

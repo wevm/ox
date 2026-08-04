@@ -41,6 +41,8 @@ export { ReentrancyError, RequestTooLargeError } from './internal/bindings.js'
  */
 export type Evm = {
   /** @internal */
+  readonly '~chainId': bigint
+  /** @internal */
   readonly '~engine': engine.Engine
 }
 
@@ -114,6 +116,7 @@ export async function create(options: create.Options = {}): Promise<Evm> {
   } = options
 
   return {
+    '~chainId': chainId ?? 1n,
     '~engine': await engine.create({
       block: {
         basefee: block?.basefee ?? 0n,
@@ -202,7 +205,7 @@ export declare namespace create {
  */
 export function callTx(evm: Evm, transaction: Ethereum.Tx): TxResult.TxResult {
   const result = evm['~engine'].callTx({
-    envelope: envelope(transaction),
+    envelope: envelope(transaction, evm['~chainId']),
     signer: transaction.from,
   })
   return { ...result, stop: stop(result.stop) }
@@ -211,6 +214,7 @@ export function callTx(evm: Evm, transaction: Ethereum.Tx): TxResult.TxResult {
 export declare namespace callTx {
   type ErrorType =
     | AbiError
+    | BorrowedError
     | DatabaseError
     | HandlerError
     | ReentrancyError
@@ -255,13 +259,23 @@ export function transact(
   evm: Evm,
   transaction: Ethereum.Tx,
 ): ExecutedTx.ExecutedTx {
-  const result = evm['~engine'].transact({
-    envelope: envelope(transaction),
+  const { result, token } = evm['~engine'].transact({
+    envelope: envelope(transaction, evm['~chainId']),
     signer: transaction.from,
   })
+  const normalized = (() => {
+    try {
+      return { ...result, stop: stop(result.stop) }
+    } catch (error) {
+      // The engine is already borrowed, so release it before reporting.
+      evm['~engine'].resolve('discard', token)
+      throw error
+    }
+  })()
   return ExecutedTx.from({
     engine: evm['~engine'],
-    result: { ...result, stop: stop(result.stop) },
+    result: normalized,
+    token,
   })
 }
 
@@ -305,6 +319,7 @@ export function readAccountInfo(
 export declare namespace readAccountInfo {
   type ErrorType =
     | AbiError
+    | BorrowedError
     | DatabaseError
     | HandlerError
     | ReentrancyError
@@ -324,7 +339,7 @@ const placeholder = {
 } as const
 
 // Resolves either input shape to the encoded envelope the ABI carries.
-function envelope(tx: Ethereum.Tx): Bytes.Bytes {
+function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
   // Fields carry an index signature, so `in` alone cannot narrow the union; the
   // value's own shape is what distinguishes an already-encoded transaction.
   const serialized = (tx as Ethereum.Tx.Serialized).serialized
@@ -332,8 +347,13 @@ function envelope(tx: Ethereum.Tx): Bytes.Bytes {
     return Bytes.from(serialized)
 
   const { from: _, ...fields } = tx
+  // Fields with no fee fields infer EIP-1559, whose serialization needs a chain
+  // id, so the EVM's own is the default rather than a required argument.
   return Bytes.from(
-    TxEnvelope.serialize(TxEnvelope.from(fields), { signature: placeholder }),
+    TxEnvelope.serialize(
+      TxEnvelope.from({ chainId: Number(chainId), ...fields }),
+      { signature: placeholder },
+    ),
   )
 }
 

@@ -732,10 +732,25 @@
       "types": "./dist/evm/Evm.d.ts",
       "default": "./dist/evm/Evm.js"
     },
+    "./evm/ExecutedTx": {
+      "src": "./src/evm/ExecutedTx.ts",
+      "types": "./dist/evm/ExecutedTx.d.ts",
+      "default": "./dist/evm/ExecutedTx.js"
+    },
+    "./evm/PendingState": {
+      "src": "./src/evm/PendingState.ts",
+      "types": "./dist/evm/PendingState.d.ts",
+      "default": "./dist/evm/PendingState.js"
+    },
     "./evm/SpecId": {
       "src": "./src/evm/SpecId.ts",
       "types": "./dist/evm/SpecId.d.ts",
       "default": "./dist/evm/SpecId.js"
+    },
+    "./evm/StateChange": {
+      "src": "./src/evm/StateChange.ts",
+      "types": "./dist/evm/StateChange.d.ts",
+      "default": "./dist/evm/StateChange.js"
     },
     "./evm/TxResult": {
       "src": "./src/evm/TxResult.ts",

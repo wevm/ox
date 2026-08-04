@@ -23,6 +23,12 @@ export type ExecutedTx = {
   readonly '~result': TxResult.TxResult
   /** @internal */
   '~resolved': boolean
+  /**
+   * Identifies the transaction this handle was created for.
+   *
+   * @internal
+   */
+  readonly '~token': symbol
   /** Discards the transaction unless it was already resolved. */
   [Symbol.dispose](): void
 }
@@ -37,6 +43,7 @@ export function from(options: from.Options): ExecutedTx {
     '~engine': options.engine,
     '~resolved': false,
     '~result': options.result,
+    '~token': options.token,
     [Symbol.dispose]() {
       // Idempotent: a scope exit after an explicit resolution must not discard a
       // second time, and evm2's drop is likewise a no-op once state is cleared.
@@ -51,6 +58,7 @@ export declare namespace from {
   type Options = {
     engine: engine.Engine
     result: TxResult.TxResult
+    token: symbol
   }
 }
 
@@ -93,7 +101,7 @@ export function result(executed: ExecutedTx): TxResult.TxResult {
  */
 export function commit(executed: ExecutedTx): TxResult.TxResult {
   claim(executed)
-  executed['~engine'].resolve('commit')
+  executed['~engine'].resolve('commit', executed['~token'])
   return executed['~result']
 }
 
@@ -121,7 +129,7 @@ export declare namespace commit {
  */
 export function discard(executed: ExecutedTx): TxResult.TxResult {
   claim(executed)
-  executed['~engine'].resolve('discard')
+  executed['~engine'].resolve('discard', executed['~token'])
   return executed['~result']
 }
 
@@ -159,7 +167,11 @@ export function commitWith(
   sink: StateChange.Sink,
 ): TxResult.TxResult {
   claim(executed)
-  executed['~engine'].resolveWith('commitWith', dispatch(sink))
+  executed['~engine'].resolveWith(
+    'commitWith',
+    dispatch(sink),
+    executed['~token'],
+  )
   return executed['~result']
 }
 
@@ -196,7 +208,11 @@ export function discardWith(
   sink: StateChange.Sink,
 ): TxResult.TxResult {
   claim(executed)
-  executed['~engine'].resolveWith('discardWith', dispatch(sink))
+  executed['~engine'].resolveWith(
+    'discardWith',
+    dispatch(sink),
+    executed['~token'],
+  )
   return executed['~result']
 }
 
@@ -226,7 +242,9 @@ export declare namespace discardWith {
 export function detach(executed: ExecutedTx): TxResultWithState {
   claim(executed)
   return {
-    pendingState: PendingState.from(executed['~engine'].detach()),
+    pendingState: PendingState.from(
+      executed['~engine'].detach(executed['~token']),
+    ),
     result: executed['~result'],
   }
 }
@@ -248,13 +266,45 @@ function dispatch(sink: StateChange.Sink) {
   return (
     record: Parameters<Parameters<engine.Engine['resolveWith']>[1]>[0],
   ) => {
+    // `kind` is the wire's routing tag, so each callback gets the record without
+    // it: the same shape a sink sees visiting a detached pending state.
     if (record.kind === 'bytecode')
-      sink.bytecode?.(record.codeHash, record.code)
-    else if (record.kind === 'account') sink.account?.(record)
-    else if (record.kind === 'accountRead') sink.accountRead?.(record)
-    else if (record.kind === 'storage') sink.storage?.(record)
-    else if (record.kind === 'storageRead') sink.storageRead?.(record)
-    else sink.storageWipe?.(record.address)
+      settled(sink.bytecode?.(record.codeHash, record.code))
+    else if (record.kind === 'account')
+      settled(
+        sink.account?.({
+          address: record.address,
+          created: record.created,
+          current: record.current,
+          original: record.original,
+          selfdestructed: record.selfdestructed,
+        }),
+      )
+    else if (record.kind === 'accountRead')
+      settled(
+        sink.accountRead?.({
+          address: record.address,
+          current: record.current,
+        }),
+      )
+    else if (record.kind === 'storage')
+      settled(
+        sink.storage?.({
+          address: record.address,
+          current: record.current,
+          key: record.key,
+          original: record.original,
+        }),
+      )
+    else if (record.kind === 'storageRead')
+      settled(
+        sink.storageRead?.({
+          address: record.address,
+          current: record.current,
+          key: record.key,
+        }),
+      )
+    else settled(sink.storageWipe?.(record.address))
   }
 }
 
@@ -263,6 +313,28 @@ function dispatch(sink: StateChange.Sink) {
 function claim(executed: ExecutedTx) {
   if (executed['~resolved']) throw new ResolvedError()
   executed['~resolved'] = true
+}
+
+// evm2 decides whether to commit the moment a sink callback returns, so a promise
+// rejecting later could not stop a commit that already happened. Failing now
+// discards instead, which is what the sink contract promises.
+function settled(returned: void) {
+  if (typeof (returned as { then?: unknown } | undefined)?.then === 'function')
+    throw new AsyncSinkError()
+}
+
+/** Thrown when a sink callback returned a promise. */
+export class AsyncSinkError extends Errors.BaseError {
+  override readonly name = 'ExecutedTx.AsyncSinkError'
+
+  constructor() {
+    super('A state-change sink returned a promise.', {
+      metaMessages: [
+        'Sinks are synchronous: evm2 decides whether to commit as each record returns.',
+        'The transaction was discarded.',
+      ],
+    })
+  }
 }
 
 /** Thrown when an executed transaction is resolved twice. */

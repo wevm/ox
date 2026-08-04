@@ -280,16 +280,15 @@ describe('commitWith', () => {
 
     expect(storage.filter((change) => change.address.toLowerCase() === target))
       .toMatchInlineSnapshot(`
-      [
-        {
-          "address": "0x00000000000000000000000000000000000000c0",
-          "current": 42n,
-          "key": 0n,
-          "kind": "storage",
-          "original": 0n,
-        },
-      ]
-    `)
+        [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "current": 42n,
+            "key": 0n,
+            "original": 0n,
+          },
+        ]
+      `)
 
     // Committed, so the write is visible and the nonce advanced.
     const second = Evm.transact(instance, transaction({ nonce: 1n }))
@@ -335,5 +334,85 @@ describe('discardWith', () => {
     const second = Evm.transact(instance, transaction())
     expect(ExecutedTx.result(second).output).toBe(zero)
     ExecutedTx.discard(second)
+  })
+})
+
+describe('handle identity', () => {
+  test('behavior: a copied handle cannot resolve a later transaction', async () => {
+    const instance = await evm()
+
+    const first = Evm.transact(instance, transaction())
+    const copy = { ...first }
+
+    // The copy has its own `~resolved` flag but the same token, so resolving it
+    // releases the transaction it belongs to.
+    ExecutedTx.discard(copy)
+
+    // A new transaction is now outstanding. The original handle must not resolve
+    // it, even though its own flag says unresolved.
+    const second = Evm.transact(instance, transaction())
+    expect(() => ExecutedTx.commit(first)).toThrowErrorMatchingInlineSnapshot(`
+      [Evm.NotExecutedError: There is no executed transaction to resolve.
+
+      It was already committed, discarded, or detached.]
+    `)
+
+    ExecutedTx.discard(second)
+  })
+})
+
+describe('sink contract', () => {
+  test('behavior: an async sink is refused and the transaction discarded', async () => {
+    const instance = await evm()
+
+    // evm2 decides whether to commit as each record returns, so a promise that
+    // settles later could not stop a commit that already happened.
+    expect(() =>
+      ExecutedTx.commitWith(Evm.transact(instance, transaction()), {
+        async storage() {
+          await Promise.resolve()
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ExecutedTx.AsyncSinkError: A state-change sink returned a promise.
+
+      Sinks are synchronous: evm2 decides whether to commit as each record returns.
+      The transaction was discarded.]
+    `)
+
+    const second = Evm.transact(instance, transaction())
+    expect(ExecutedTx.result(second).output).toBe(zero)
+    ExecutedTx.discard(second)
+    expect(Evm.readAccountInfo(instance, sender)?.nonce).toBe(0n)
+  })
+
+  test('behavior: streaming and visiting hand a sink the same shape', async () => {
+    const streamed: StateChange.Storage[] = []
+    ExecutedTx.discardWith(Evm.transact(await evm(), transaction()), {
+      storage(change) {
+        streamed.push(change)
+      },
+    })
+
+    const visited: StateChange.Storage[] = []
+    const { pendingState } = ExecutedTx.detach(
+      Evm.transact(await evm(), transaction()),
+    )
+    StateChange.visit(pendingState, {
+      storage(change) {
+        visited.push(change)
+      },
+    })
+
+    // Neither path may leak the wire's routing tag.
+    expect(streamed).toEqual(visited)
+    expect(Object.keys(streamed[0]!).sort()).toMatchInlineSnapshot(`
+      [
+        "address",
+        "current",
+        "key",
+        "original",
+      ]
+    `)
   })
 })

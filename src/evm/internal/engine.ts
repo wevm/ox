@@ -27,7 +27,7 @@ export type Engine = {
   /** Drops the engine and its accepted state. */
   destroy(): void
   /** Resolves the outstanding transaction by moving its state out. */
-  detach(): codec.Changes
+  detach(token?: symbol): codec.Changes
   /** Reads an account through the accepted overlay and the database. */
   readAccountInfo(address: Address.Address): codec.Account | undefined
   /**
@@ -36,7 +36,7 @@ export type Engine = {
    * Every operation reaching the engine fails until this runs, which is how
    * evm2's exclusive borrow shows up across two host calls.
    */
-  resolve(resolution: 'commit' | 'discard'): void
+  resolve(resolution: 'commit' | 'discard', token?: symbol): void
   /**
    * Resolves the outstanding transaction, streaming its changes to `sink` first.
    *
@@ -46,6 +46,7 @@ export type Engine = {
   resolveWith(
     resolution: 'commitWith' | 'discardWith',
     sink: (record: codec.Change) => void,
+    token?: symbol,
   ): void
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
@@ -55,7 +56,11 @@ export type Engine = {
    * This is evm2's `transact`: the engine stays borrowed until the transaction
    * is committed, discarded, or detached.
    */
-  transact(options: codec.encodeCallTx.Options): codec.TxResult
+  transact(options: codec.encodeCallTx.Options): {
+    result: codec.TxResult
+    /** Identifies the transaction this call parked. */
+    token: symbol
+  }
 }
 
 /** Creates an engine over `database`. */
@@ -63,6 +68,15 @@ export async function create(options: create.Options): Promise<Engine> {
   const { database, ...config } = options
   const instance = await bindings.instantiateWith(database)
   resolve(instance, codec.encodeCreate(config))
+
+  // Identifies the parked transaction. A handle carries the token it was created
+  // with, so a copy of a resolved handle cannot resolve a later transaction.
+  let outstanding: symbol | undefined
+
+  function claim(token: symbol | undefined) {
+    if (token && token !== outstanding) throw new NotExecutedError()
+    outstanding = undefined
+  }
 
   return {
     callTx(options) {
@@ -72,7 +86,8 @@ export async function create(options: create.Options): Promise<Engine> {
       resolve(instance, codec.encodeDestroy())
       instance.reset()
     },
-    detach() {
+    detach(token) {
+      claim(token)
       return codec.decodeChanges(
         resolve(instance, codec.encodeResolve('detach')),
       )
@@ -82,10 +97,12 @@ export async function create(options: create.Options): Promise<Engine> {
         resolve(instance, codec.encodeReadAccount(address)),
       )
     },
-    resolve(resolution) {
+    resolve(resolution, token) {
+      claim(token)
       resolve(instance, codec.encodeResolve(resolution))
     },
-    resolveWith(resolution, sink) {
+    resolveWith(resolution, sink, token) {
+      claim(token)
       instance.withSink(sink, () =>
         resolve(instance, codec.encodeResolve(resolution)),
       )
@@ -94,9 +111,11 @@ export async function create(options: create.Options): Promise<Engine> {
       resolve(instance, codec.encodeSetBlock(options))
     },
     transact(options) {
-      return codec.decodeResult(
+      const result = codec.decodeResult(
         resolve(instance, codec.encodeTransact(options)),
       )
+      outstanding = Symbol('ox.evm.executed')
+      return { result, token: outstanding }
     },
   }
 }
