@@ -1,6 +1,6 @@
 //! Native evm2 is the oracle for the WASM artifact.
 //!
-//! This runs the shared fixtures through `Evm::call_tx` compiled for the host
+//! This runs the shared fixtures through `Evm::transact` compiled for the host
 //! and owns the `expected` half of `fixtures/call-tx.json`. The TypeScript suite
 //! runs the same fixtures through the artifact and verifies the same file, so a
 //! disagreement between native and WASM evm2 shows up as a diff rather than as
@@ -16,7 +16,10 @@ use evm2::{
     bytecode::Bytecode,
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
-    evm::{AccountInfo, InMemoryDB},
+    evm::{
+        AccountChangeRef, AccountInfo, AccountInfoRef, InMemoryDB, PendingState, StateChangeSink,
+        StateChangeSource, StorageChange,
+    },
     interpreter::Word,
 };
 use serde_json::{Map, Value, json};
@@ -110,6 +113,101 @@ fn encode(result: &TxResult) -> Value {
     })
 }
 
+/// Collects a pending state into sorted JSON.
+///
+/// Sorted rather than visit-ordered: the TypeScript side groups records by kind,
+/// so this compares the same sets rather than an interleaving neither side keeps.
+#[derive(Default)]
+struct Records {
+    accounts: Vec<String>,
+    reads: Vec<String>,
+    storage: Vec<String>,
+    wipes: Vec<String>,
+}
+
+fn info(value: Option<AccountInfoRef<'_>>) -> String {
+    match value {
+        Some(info) => format!(
+            "{:#x}/{}/{:#x}",
+            info.balance, info.nonce, info.code_hash
+        ),
+        None => "absent".to_string(),
+    }
+}
+
+impl StateChangeSink for Records {
+    type Error = core::convert::Infallible;
+
+    fn account(&mut self, change: AccountChangeRef<'_>) -> Result<(), Self::Error> {
+        self.accounts.push(format!(
+            "{}|{}|{}|{}|{}",
+            change.address.to_string().to_lowercase(),
+            info(change.original),
+            info(change.current),
+            change.created,
+            change.selfdestructed,
+        ));
+        Ok(())
+    }
+
+    fn storage_wipe(&mut self, address: Address) -> Result<(), Self::Error> {
+        self.wipes.push(address.to_string().to_lowercase());
+        Ok(())
+    }
+
+    fn storage(&mut self, change: StorageChange) -> Result<(), Self::Error> {
+        self.storage.push(format!(
+            "{}|{:#x}|{:#x}|{:#x}",
+            change.address.to_string().to_lowercase(),
+            change.key,
+            change.original,
+            change.current,
+        ));
+        Ok(())
+    }
+
+    fn account_read(
+        &mut self,
+        address: Address,
+        value: Option<AccountInfoRef<'_>>,
+    ) -> Result<(), Self::Error> {
+        self.reads
+            .push(format!("{}|{}", address.to_string().to_lowercase(), info(value)));
+        Ok(())
+    }
+
+    fn storage_read(
+        &mut self,
+        address: Address,
+        key: Word,
+        value: Word,
+    ) -> Result<(), Self::Error> {
+        self.storage.push(format!(
+            "{}|{:#x}|read|{:#x}",
+            address.to_string().to_lowercase(),
+            key,
+            value,
+        ));
+        Ok(())
+    }
+}
+
+fn pending(state: &PendingState) -> Value {
+    let mut records = Records::default();
+    let Ok(()) = state.visit(&mut records);
+    records.accounts.sort();
+    records.reads.sort();
+    records.storage.sort();
+    records.wipes.sort();
+    json!({
+        "accounts": records.accounts,
+        "empty": state.is_empty(),
+        "reads": records.reads,
+        "storage": records.storage,
+        "wipes": records.wipes,
+    })
+}
+
 fn run(fixture: &Map<String, Value>, spec: &str) -> Value {
     let spec_id = spec_id(spec);
     let chain_id = hex_word(&fixture["chainId"]).to::<u64>();
@@ -127,8 +225,15 @@ fn run(fixture: &Map<String, Value>, spec: &str) -> Value {
         Precompiles::base(spec_id),
     );
 
-    match evm.call_tx(&recovered(fixture)) {
-        Ok(result) => encode(&result),
+    match evm.transact(&recovered(fixture)) {
+        Ok(handle) => {
+            // Detaching records what the transaction would have written, which
+            // `call_tx` discards before a caller can see it.
+            let detached = handle.detach();
+            let mut value = encode(&detached.result);
+            value["pendingState"] = pending(&detached.pending_state);
+            value
+        }
         Err(error) => json!({ "handlerError": error.to_string() }),
     }
 }
