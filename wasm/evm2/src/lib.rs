@@ -16,6 +16,7 @@ extern crate alloc;
 mod abi;
 mod database;
 mod error;
+mod state;
 
 use crate::{
     abi::{Reader, Writer, op},
@@ -35,7 +36,7 @@ use evm2::{
     registry::HandlerError,
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
-    evm::Db,
+    evm::{Db, ExecutedTx},
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -52,15 +53,59 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 
 /// Adapter state for this WebAssembly instance.
 struct Adapter {
-    engine: Option<Evm<'static, BaseEvmTypes>>,
     request: Vec<u8>,
     response: Vec<u8>,
 }
 
 impl Adapter {
     const fn new() -> Self {
-        Self { engine: None, request: Vec::new(), response: Vec::new() }
+        Self { request: Vec::new(), response: Vec::new() }
     }
+}
+
+/// The engine, held apart from [`Adapter`] so an outstanding [`ExecutedTx`] can
+/// borrow it without aliasing the adapter borrow every export takes.
+struct EngineSlot(UnsafeCell<Option<Evm<'static, BaseEvmTypes>>>);
+
+// Single-threaded, and `RUNNING` serializes every access.
+unsafe impl Sync for EngineSlot {}
+
+static ENGINE: EngineSlot = EngineSlot(UnsafeCell::new(None));
+
+/// An executed transaction awaiting resolution.
+///
+/// This holds the engine's exclusive borrow between two host calls, which is
+/// what `ExecutedTx` does in Rust within one scope. While it is `Some`, every
+/// operation reaching the engine directly is refused with
+/// [`status::ENGINE_BORROWED`], so only one path to the engine exists at a time.
+struct ExecutedSlot(UnsafeCell<Option<ExecutedTx<'static, 'static, BaseEvmTypes>>>);
+
+unsafe impl Sync for ExecutedSlot {}
+
+static EXECUTED: ExecutedSlot = ExecutedSlot(UnsafeCell::new(None));
+
+/// Borrows the engine, or reports why it is unavailable.
+///
+/// SAFETY: callers hold the [`RUNNING`] claim, and the borrow is refused while
+/// [`EXECUTED`] is `Some`, so this never aliases the handle's own borrow.
+fn engine() -> Result<&'static mut Evm<'static, BaseEvmTypes>, u16> {
+    if executed().is_some() {
+        return Err(status::ENGINE_BORROWED);
+    }
+    unsafe { (*ENGINE.0.get()).as_mut() }.ok_or(status::ENGINE_MISSING)
+}
+
+/// Replaces the engine, refusing while an executed transaction borrows it.
+fn set_engine(value: Option<Evm<'static, BaseEvmTypes>>) -> Result<(), u16> {
+    if executed().is_some() {
+        return Err(status::ENGINE_BORROWED);
+    }
+    unsafe { *ENGINE.0.get() = value };
+    Ok(())
+}
+
+fn executed() -> &'static mut Option<ExecutedTx<'static, 'static, BaseEvmTypes>> {
+    unsafe { &mut *EXECUTED.0.get() }
 }
 
 struct Slot(UnsafeCell<Adapter>);
@@ -161,8 +206,8 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
         });
     }
 
-    // The request and engine are disjoint fields, so the payload borrow can stay
-    // live across the engine mutation below.
+    // The engine lives in its own slot, so this payload borrow stays live across
+    // the engine mutation below.
     let (header, payload) = match abi::request(&adapter.request[..length]) {
         Ok(parsed) => parsed,
         Err(error) => return abi_failure(error),
@@ -172,28 +217,32 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
     match header.op {
         op::CREATE => match read_config(&mut reader) {
             Ok((spec_id, block, version)) => {
-                adapter.engine = Some(Evm::new_with_execution_config(
+                let engine = Evm::new_with_execution_config(
                     ExecutionConfig::for_spec_and_version(spec_id, version),
                     spec_id,
                     block,
                     ethereum_tx_registry(spec_id),
                     Db::new(HostDb::default()),
                     Precompiles::base(spec_id),
-                ));
-                Writer::new().finish(status::OK)
+                );
+                match set_engine(Some(engine)) {
+                    Ok(()) => Writer::new().finish(status::OK),
+                    Err(status) => Writer::new().finish(status),
+                }
             }
             Err(error) => abi_failure(error),
         },
         op::DESTROY => match reader.finish() {
-            Ok(()) => {
-                adapter.engine = None;
-                Writer::new().finish(status::OK)
-            }
+            Ok(()) => match set_engine(None) {
+                Ok(()) => Writer::new().finish(status::OK),
+                Err(status) => Writer::new().finish(status),
+            },
             Err(error) => abi_failure(error),
         },
         op::SET_BLOCK => {
-            let Some(engine) = adapter.engine.as_mut() else {
-                return Writer::new().finish(status::ENGINE_MISSING);
+            let engine = match engine() {
+                Ok(engine) => engine,
+                Err(status) => return Writer::new().finish(status),
             };
             match read_config(&mut reader) {
                 Ok((spec_id, block, version)) => {
@@ -210,8 +259,9 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             }
         }
         op::CALL_TX => {
-            let Some(engine) = adapter.engine.as_mut() else {
-                return Writer::new().finish(status::ENGINE_MISSING);
+            let engine = match engine() {
+                Ok(engine) => engine,
+                Err(status) => return Writer::new().finish(status),
             };
             match read_tx(&mut reader) {
                 Ok(tx) => call_tx(engine, &tx),
@@ -219,14 +269,23 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             }
         }
         op::READ_ACCOUNT => {
-            let Some(engine) = adapter.engine.as_mut() else {
-                return Writer::new().finish(status::ENGINE_MISSING);
+            let engine = match engine() {
+                Ok(engine) => engine,
+                Err(status) => return Writer::new().finish(status),
             };
             match read_address(&mut reader) {
                 Ok(address) => read_account(engine, &address),
                 Err(error) => abi_failure(error),
             }
         }
+        op::TRANSACT => match read_tx(&mut reader) {
+            Ok(tx) => transact(&tx),
+            Err(error) => abi_failure(error),
+        },
+        op::COMMIT | op::DISCARD | op::DETACH => match reader.finish() {
+            Ok(()) => resolve(header.op),
+            Err(error) => abi_failure(error),
+        },
         unknown => abi_failure(abi::Error::UnknownOp(unknown)),
     }
 }
@@ -303,6 +362,79 @@ fn call_tx(engine: &mut Evm<'static, BaseEvmTypes>, tx: &Recovered<TxEnvelope>) 
             }
         }
     }
+}
+
+/// Executes a transaction and parks its handle for a later resolution.
+///
+/// The result is returned now so a caller reads it without another call, which
+/// is what `ExecutedTx::result` does without consuming the handle.
+fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    // Storing the handle takes the engine's borrow for as long as it is
+    // outstanding, so this arm returns rather than falling through to a path
+    // that would need the engine again.
+    let failure = match engine.transact(tx) {
+        Ok(handle) => {
+            let mut writer = Writer::new();
+            write_result(&mut writer, handle.result());
+            *executed() = Some(handle);
+            return writer.finish(status::OK);
+        }
+        Err(failure) => failure,
+    };
+    // Nothing was stored, so the engine is free to report why it refused.
+    let host = engine_failure();
+    let mut writer = Writer::new();
+    match host {
+        Some(error) => {
+            writer.str(&alloc::format!("{error}"));
+            writer.finish(status::DATABASE)
+        }
+        None => {
+            error::write_handler(&mut writer, &failure);
+            writer.finish(status::HANDLER)
+        }
+    }
+}
+
+/// Takes a host read failure recorded on the database, if one is pending.
+///
+/// Host failures are recorded there rather than in the handler error, so they are
+/// recovered separately from transaction rejections.
+fn engine_failure() -> Option<alloc::string::String> {
+    let engine = engine().ok()?;
+    engine
+        .database_as_mut::<Db<HostDb>>()
+        .and_then(|db| db.take_result().err())
+        .map(|error| alloc::format!("{error}"))
+}
+
+/// Resolves the outstanding handle, releasing the engine borrow.
+///
+/// Taking the handle out first is what makes the engine reachable again, so a
+/// resolution is single-use: a second one finds nothing outstanding.
+fn resolve(op: u16) -> Vec<u8> {
+    let Some(handle) = executed().take() else {
+        return Writer::new().finish(status::NOT_EXECUTED);
+    };
+    let mut writer = Writer::new();
+    match op {
+        // The result was already returned when the transaction executed, so both
+        // of these resolve for their state effect and drop the repeat copy.
+        op::COMMIT => {
+            let _ = handle.commit();
+        }
+        op::DISCARD => {
+            let _ = handle.discard();
+        }
+        // Detaching is the only resolution whose payload differs: the state
+        // leaves the engine with the caller rather than being applied or dropped.
+        _ => state::write_pending(&mut writer, &handle.detach().pending_state),
+    }
+    writer.finish(status::OK)
 }
 
 /// Reads a bare address operand.

@@ -76,6 +76,8 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
     throw new AbiError(codec.decodeMessage(payload))
   if (status === codec.status.engineMissing) throw new MissingError()
   if (status === codec.status.engineBusy) throw new bindings.ReentrancyError()
+  if (status === codec.status.engineBorrowed) throw new BorrowedError()
+  if (status === codec.status.notExecuted) throw new NotExecutedError()
   throw new codec.DecodeError(`unknown response status ${status}`)
 }
 
@@ -91,6 +93,30 @@ export class HandlerError extends Errors.BaseError {
     super(message, { metaMessages: [`evm2 handler error ${kind}`] })
     this.kind = kind
     this.words = words
+  }
+}
+
+/** Thrown when an unresolved executed transaction still holds the engine. */
+export class BorrowedError extends Errors.BaseError {
+  override readonly name = 'Evm.BorrowedError'
+
+  constructor() {
+    super('An executed transaction has not been resolved.', {
+      metaMessages: [
+        'Commit, discard, or detach it before using the EVM again.',
+      ],
+    })
+  }
+}
+
+/** Thrown when a resolution named no outstanding executed transaction. */
+export class NotExecutedError extends Errors.BaseError {
+  override readonly name = 'Evm.NotExecutedError'
+
+  constructor() {
+    super('There is no executed transaction to resolve.', {
+      metaMessages: ['It was already committed, discarded, or detached.'],
+    })
   }
 }
 
