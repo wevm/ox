@@ -1,6 +1,7 @@
 import type * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
+import * as TxEnvelope from '../core/TxEnvelope.js'
 import * as Database from './Database.js'
 import * as ExecutedTx from './ExecutedTx.js'
 import type * as Ethereum from './Ethereum.js'
@@ -185,22 +186,24 @@ export declare namespace create {
  *
  * const evm = await Evm.create({ database, specId: 'osaka' })
  *
- * const result = Evm.callTx(evm, { envelope, signer })
+ * const result = Evm.callTx(evm, {
+ *   from: '0x0000000000000000000000000000000000000001',
+ *   gas: 100_000n,
+ *   to: '0x0000000000000000000000000000000000000002',
+ *   value: 1n
+ * })
  * TxResult.txGasUsed(result)
  * // @log: 21000n
  * ```
  *
  * @param evm - EVM to execute on.
- * @param transaction - Transaction with its sender recovered.
+ * @param transaction - Transaction and the account it executes as.
  * @returns The transaction's result.
  */
-export function callTx(
-  evm: Evm,
-  transaction: Ethereum.RecoveredTx,
-): TxResult.TxResult {
+export function callTx(evm: Evm, transaction: Ethereum.Tx): TxResult.TxResult {
   const result = evm['~engine'].callTx({
-    envelope: Bytes.from(transaction.envelope),
-    signer: transaction.signer,
+    envelope: envelope(transaction),
+    signer: transaction.from,
   })
   return { ...result, stop: stop(result.stop) }
 }
@@ -233,23 +236,28 @@ export declare namespace callTx {
  * import { Evm, ExecutedTx } from 'ox/evm'
  *
  * // `using` discards on scope exit, so an early return cannot leave the EVM held.
- * using executed = Evm.transact(evm, { envelope, signer })
+ * using executed = Evm.transact(evm, {
+ *   from: '0x0000000000000000000000000000000000000001',
+ *   gas: 100_000n,
+ *   to: '0x0000000000000000000000000000000000000002',
+ *   value: 1n
+ * })
  *
  * if (ExecutedTx.result(executed).status)
  *   ExecutedTx.commit(executed)
  * ```
  *
  * @param evm - EVM to execute on.
- * @param transaction - Transaction with its sender recovered.
+ * @param transaction - Transaction and the account it executes as.
  * @returns A handle over the executed transaction.
  */
 export function transact(
   evm: Evm,
-  transaction: Ethereum.RecoveredTx,
+  transaction: Ethereum.Tx,
 ): ExecutedTx.ExecutedTx {
   const result = evm['~engine'].transact({
-    envelope: Bytes.from(transaction.envelope),
-    signer: transaction.signer,
+    envelope: envelope(transaction),
+    signer: transaction.from,
   })
   return ExecutedTx.from({
     engine: evm['~engine'],
@@ -301,6 +309,32 @@ export declare namespace readAccountInfo {
     | HandlerError
     | ReentrancyError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Placeholder signature for a transaction built from fields.
+ *
+ * EIP-2718 decoding needs a signature to parse, and evm2 strips it immediately,
+ * so nothing reads this. Callers therefore never sign to simulate.
+ */
+const placeholder = {
+  r: `0x${'01'.repeat(32)}`,
+  s: `0x${'01'.repeat(32)}`,
+  yParity: 0,
+} as const
+
+// Resolves either input shape to the encoded envelope the ABI carries.
+function envelope(tx: Ethereum.Tx): Bytes.Bytes {
+  // Fields carry an index signature, so `in` alone cannot narrow the union; the
+  // value's own shape is what distinguishes an already-encoded transaction.
+  const serialized = (tx as Ethereum.Tx.Serialized).serialized
+  if (typeof serialized === 'string' || serialized instanceof Uint8Array)
+    return Bytes.from(serialized)
+
+  const { from: _, ...fields } = tx
+  return Bytes.from(
+    TxEnvelope.serialize(TxEnvelope.from(fields), { signature: placeholder }),
+  )
 }
 
 /** evm2's stop discriminants, keyed by the name they map to. */

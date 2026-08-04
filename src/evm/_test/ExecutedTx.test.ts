@@ -30,8 +30,8 @@ function transaction(options: { nonce?: bigint } = {}) {
     privateKey,
   })
   return {
-    envelope: TxEnvelopeLegacy.serialize(envelope, { signature }),
-    signer: sender,
+    from: sender,
+    serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
   }
 }
 

@@ -8,7 +8,12 @@ Added `Evm.transact`, which keeps a transaction's state changes pending so the c
 import { Evm, ExecutedTx, PendingState } from 'ox/evm'
 
 // `using` discards on scope exit, so an early return cannot leave the EVM held.
-using executed = Evm.transact(evm, { envelope, signer })
+using executed = Evm.transact(evm, {
+  from: '0x0000000000000000000000000000000000000001',
+  gas: 100_000n,
+  to: '0x0000000000000000000000000000000000000002',
+  value: 1n,
+})
 
 if (ExecutedTx.result(executed).status) ExecutedTx.commit(executed)
 

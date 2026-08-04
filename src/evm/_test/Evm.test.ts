@@ -26,8 +26,8 @@ function transaction(
     privateKey,
   })
   return {
-    envelope: TxEnvelopeLegacy.serialize(envelope, { signature }),
-    signer: sender,
+    from: sender,
+    serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
   }
 }
 
@@ -302,5 +302,61 @@ describe('Database.fromMemory reads', () => {
     const blockHash = Hex.fromNumber(7, { size: 32 })
     const instance = await blockHashEvm({ '0': blockHash })
     expect(Evm.callTx(instance, transaction()).output).toBe(blockHash)
+  })
+})
+
+describe('transaction input', () => {
+  test('behavior: executes from fields, with no signing', async () => {
+    const instance = await Evm.create({ database: database() })
+
+    // No key, no signature, no serialization: the fields and the sender are all
+    // evm2 needs, since it strips any signature the envelope carries.
+    const result = Evm.callTx(instance, {
+      from: sender,
+      gas: 100_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      to: target,
+      value: 0n,
+    })
+
+    expect(result.output).toBe(Hex.fromNumber(42, { size: 32 }))
+    expect(result.status).toBe(true)
+  })
+
+  test('behavior: fields and a serialized envelope agree', async () => {
+    const instance = await Evm.create({ database: database() })
+
+    const fields = Evm.callTx(instance, {
+      from: sender,
+      gas: 100_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      to: target,
+      value: 0n,
+    })
+    const serialized = Evm.callTx(instance, transaction())
+
+    expect(fields).toEqual(serialized)
+  })
+
+  test('behavior: infers the envelope type from the fee fields', async () => {
+    const instance = await Evm.create({ database: database() })
+
+    // `maxFeePerGas` makes this EIP-1559 rather than legacy, the same inference
+    // `TxEnvelope.from` applies.
+    const result = Evm.callTx(instance, {
+      chainId: 1,
+      from: sender,
+      gas: 100_000n,
+      maxFeePerGas: 0n,
+      maxPriorityFeePerGas: 0n,
+      nonce: 0n,
+      to: target,
+      value: 0n,
+    })
+
+    expect(result.status).toBe(true)
+    expect(result.output).toBe(Hex.fromNumber(42, { size: 32 }))
   })
 })
