@@ -1,8 +1,10 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Hex } from 'ox'
-import { Database, Evm, ExecutedTx, StateChange } from 'ox/evm'
+import { Evm, ExecutedTx, StateChange } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
+
+import { rpcDatabase } from './rpcDatabase.js'
 
 /**
  * Replaying a real mainnet transaction against forked state.
@@ -64,7 +66,7 @@ async function fork(recording: Recording, fetchFn: typeof fetch) {
     chainId: 1n,
     // Reads resolve at the parent block, which is the state the transaction
     // executed against.
-    database: Database.fromRpc('https://recorded.invalid', {
+    database: rpcDatabase('https://recorded.invalid', {
       blockNumber: BigInt(recording.block.number) - 1n,
       fetchFn,
     }),

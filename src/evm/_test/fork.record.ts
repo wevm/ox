@@ -1,7 +1,9 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Hex, RpcTransport } from 'ox'
-import { Database, Evm, ExecutedTx } from 'ox/evm'
+import { Evm, ExecutedTx } from 'ox/evm'
+
+import { rpcDatabase } from './rpcDatabase.js'
 
 /**
  * Records a mainnet transaction replay so `fork.test.ts` can run offline.
@@ -86,7 +88,7 @@ try {
       timestamp: Hex.toBigInt(block.timestamp),
     },
     chainId: 1n,
-    database: Database.fromRpc(url, { blockNumber: parent, fetchFn }),
+    database: rpcDatabase(url, { blockNumber: parent, fetchFn }),
     specId: 'cancun',
   })
 
