@@ -41,6 +41,52 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x7d0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x53de",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a83a",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -110,6 +156,7 @@
           "nonce": 1
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -168,6 +215,37 @@
           "nonce": 0
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": ["0x0"]
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -219,6 +297,47 @@
           "code": "0x",
           "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -290,6 +409,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -336,6 +456,52 @@
           "code": "0x2ecb4349a8f3f1f36ad6af9f5d654bd7f32c9dce12",
           "codeHash": "0x382e951d7c207bda4a08733a6e9710c90c6c0e839df03943c63927b78e33b3ad",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5280",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a998",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -407,6 +573,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -449,6 +616,37 @@
           "code": "0xdb68293a64c58e7b6e84a036aeb0760004460b2efe",
           "codeHash": "0x80ce3cbefcfcb0c3bd597125892591a5867665fdbc213e71fa7d246fcd181dea",
           "nonce": 1
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -511,6 +709,7 @@
           "nonce": 2
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -558,6 +757,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -611,6 +811,52 @@
           "code": "0x731133f08826f8c987dbb5a5e57a93fa",
           "codeHash": "0xda406c2a64b3b19f9e509455a5c4b4c535b77549235d75846d8e4b669b76180b",
           "nonce": 1
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -689,6 +935,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5230",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763add0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -763,6 +1050,7 @@
           "nonce": 1
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -820,6 +1108,7 @@
           "nonce": 0
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -865,6 +1154,42 @@
           "storage": {
             "0x2": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -932,6 +1257,47 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -988,6 +1354,52 @@
           "code": "0xe3da2e1a025f4ef8a2ff8bc87dbcff7b276869094d",
           "codeHash": "0x653f0093e1f9ac2c26e5f7ab3f4ab040e4d4aa17d5fc576be55c255d86f2bc96",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5348",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763acb7",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1054,6 +1466,47 @@
           "code": "0x602a5f5260205f5fa200",
           "codeHash": "0x0ddf8e8ef7c012613f616f62b20ec98dccfc71348e03e334050d72538ce7182f",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x524e",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763adb2",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1133,6 +1586,52 @@
           "nonce": 0
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x2",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": ["0x0"]
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5b28",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a4d7",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1204,6 +1703,47 @@
           "nonce": 1
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5218",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ade8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1270,6 +1810,47 @@
           "storage": {
             "0x1": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x53e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ac18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1352,6 +1933,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1408,6 +1990,47 @@
           "code": "0xef2b53",
           "codeHash": "0x1b02cbb3edb268b72774809d59dceb8d423c088c91d9be568d4da7d242dc9a04",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1479,6 +2102,37 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1544,6 +2198,52 @@
           "code": "0xd6408a71c5f718055d7930212ca71306",
           "codeHash": "0x3810589daafe107c5c8386394ea2878a5ee7184967cd16dc67a7272ea778eb95",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [
+            {
+              "changes": [
+                {
+                  "index": 1,
+                  "value": "0x1"
+                }
+              ],
+              "slot": "0x0"
+            }
+          ],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1625,6 +2325,52 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1703,6 +2449,52 @@
           "code": "0x30eace",
           "codeHash": "0xc19b7a79ea396e0ce7e0614d8026d02a2ca138f121edbcaba83606e6927d6b9b",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a76403e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x524a",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a9ce",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1787,6 +2579,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1836,6 +2629,37 @@
             "0x1": "0x1",
             "0x2": "0x1"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -1916,6 +2740,62 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x3e9",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [
+            {
+              "changes": [
+                {
+                  "index": 1,
+                  "value": "0x2"
+                }
+              ],
+              "slot": "0x0"
+            }
+          ],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0xa94a",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a76356b5",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -1986,6 +2866,47 @@
           "storage": {
             "0x1": "0x1"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -2061,6 +2982,37 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2132,6 +3084,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2187,6 +3140,52 @@
           "storage": {
             "0x0": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x3e9",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x52a8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ad57",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -2265,6 +3264,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": ["0x0"]
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x7530",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7638ad0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2336,6 +3376,60 @@
           "code": "0x60015f5560025f5500",
           "codeHash": "0x769194a4d6cc455c08b8a773c9e01e73c118e1f7ad931b8d55f99c6d5cee9aa2",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -2410,6 +3504,47 @@
           "storage": {
             "0x2": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -2494,6 +3629,37 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2570,6 +3736,47 @@
           "code": "0x602a5f5260205ff3",
           "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x186a0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7627960",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -2649,6 +3856,52 @@
           "nonce": 0
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x3e9",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x52f8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a920",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2708,6 +3961,7 @@
           "nonce": 2
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2756,6 +4010,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2804,6 +4059,7 @@
           "nonce": 1
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -2849,6 +4105,47 @@
           "storage": {
             "0x2": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -2930,6 +4227,47 @@
           "nonce": 0
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x30d40",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a760f2c0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -3009,6 +4347,42 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -3072,6 +4446,47 @@
           "code": "0x60015f5533ff",
           "codeHash": "0xf416c3516fae78047aa43997307b1892adabee86712e286220c4412ff74ab007",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3151,6 +4566,52 @@
             "0x1": "0x1",
             "0x2": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x7d0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x52b2",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a966",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3233,6 +4694,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -3278,6 +4740,47 @@
           "code": "0x5f5f5500",
           "codeHash": "0xb0b7eb204c6fadf444869accff97a1207fdea71ac2225ea1be155a84276bbe93",
           "nonce": 1
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0xcf9a",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7633066",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3347,6 +4850,47 @@
           "code": "0x5f61ffff5200",
           "codeHash": "0x8f9b98480ec1c558475db49eb8ed2e33298c4da9aa3bf3186cff610ed70f456a",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3419,6 +4963,47 @@
           "code": "0x5f5f20505f5260205ff3",
           "codeHash": "0x0ff5c68fac8b406cd2549eff31f210bf87e1e23edadbe54db36a5313519766b8",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5262",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ad9e",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3502,6 +5087,47 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x3e9",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -3561,6 +5187,52 @@
           "storage": {
             "0x2": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5550",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a6c8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3627,6 +5299,52 @@
           "code": "0x602a5f5260205f5fa200",
           "codeHash": "0x0ddf8e8ef7c012613f616f62b20ec98dccfc71348e03e334050d72538ce7182f",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x521e",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ade1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3697,6 +5415,37 @@
           "code": "0x3d1c5e79bc0821ec03cc",
           "codeHash": "0x6e8783c7fe2ae0c7628eaff5145ca54a7d7ee8e1073156af3f44277c5e5820cb",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3784,6 +5533,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -3836,6 +5586,47 @@
           "code": "0x120a038d108ae0937aa003c78b07fccfb48c",
           "codeHash": "0xaed664ba59f100aaaebe93c1d63181bffaddc7a65810210ec1e403064e29c255",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [
+            {
+              "balance": "0x3e9",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": ["0x0"]
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3906,6 +5697,42 @@
           "code": "0x602a5f5260205ff3",
           "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -3988,6 +5815,52 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x523a",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763a9de",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4055,6 +5928,37 @@
           "code": "0x484900",
           "codeHash": "0x03e9058507d616fb4656d38639da8c19394dfffb2a02480e30a11c13bd66d5af",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -4131,6 +6035,7 @@
           "nonce": 0
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4173,6 +6078,47 @@
           "code": "0x5f545f52602a5f5560205ff3",
           "codeHash": "0x8684fa4f0a6f6ab1ca576953c27e9d08ae10879e2bf5e4d34b03a3875ad72016",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x52b8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ad48",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -4254,6 +6200,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4322,6 +6309,47 @@
           "nonce": 1
         }
       ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7640001",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4380,6 +6408,7 @@
           "nonce": 2
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4433,6 +6462,42 @@
             "0x0": "0x0",
             "0x1": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -4502,6 +6567,57 @@
             "0x1": "0x0",
             "0x2": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [
+            {
+              "code": "0x602a5f5260205ff3",
+              "index": 1
+            }
+          ],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -4574,6 +6690,37 @@
           "nonce": 0
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4644,6 +6791,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a76403e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4712,6 +6900,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4747,6 +6936,52 @@
           "code": "0x40afebb0370e6b0e15b344f0de89c0025a6c65cd",
           "codeHash": "0x6ae4d841db10aeb28b8db896bb714f8e2c1d9ae49a2822887efca4259b6b4198",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x521e",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ade1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -4815,6 +7050,52 @@
           "nonce": 1
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x53c0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ac3f",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -4875,6 +7156,47 @@
           "storage": {
             "0x2": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5258",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ada8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -4945,6 +7267,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x52f8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ad08",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -5009,6 +7372,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -5069,6 +7473,47 @@
             "0x1": "0x2a",
             "0x2": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0xcf3e",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a76330c2",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5134,6 +7579,47 @@
           "code": "0x5f5f5fa100",
           "codeHash": "0x36b59beb05e390e9a8fb0033fab1301c4edbdbfe683c96b8c55a88aab1ff70b7",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [
+            {
+              "balance": "0x3e9",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5214,6 +7700,47 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x7530",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7638ad0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -5275,6 +7802,47 @@
           "storage": {
             "0x2": "0xffffffffffffffff"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x53c0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ac40",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5352,6 +7920,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -5401,6 +7970,47 @@
           "code": "0x410959",
           "codeHash": "0x37e37151642ee0fdcf65b7d0dd7e4ee7f33b268ce88137c0941ca869cddcd702",
           "nonce": 0
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x30d40",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a760f2c0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5461,6 +8071,37 @@
           "code": "0x602a5f5260205ffd",
           "codeHash": "0x6d3f3b3073da8beb2ecd53914c9331de711d7b70f0e3557f0abf4a030250f86c",
           "nonce": 1
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5535,6 +8176,47 @@
           "storage": {
             "0x2": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x30d40",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a760f2c0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5622,6 +8304,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -5671,6 +8354,37 @@
           "code": "0xa70b3f7e389e0cab9e804973ae72c303ba6e1a0297",
           "codeHash": "0x78b5feafacf99c711ee31038aef3770ae78f93b657c0942d53a8bf23a8627c4d",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c1",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5746,6 +8460,7 @@
           }
         }
       ],
+      "bal": null,
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -5804,6 +8519,47 @@
           "storage": {
             "0x1": "0x2a"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5866,6 +8622,47 @@
             "0x1": "0x1",
             "0x2": "0x0"
           }
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x3e8",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763fc18",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -5941,6 +8738,47 @@
           "code": "0x5f3f5000",
           "codeHash": "0x1efa94a1bf9a4216fcf42c7ad4573736393a498ea78ccdeec7ec5de7b013a2ac",
           "nonce": 1
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x7530",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7638ad0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -6020,6 +8858,52 @@
           }
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0xcf1d",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a76330e3",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -6077,6 +8961,52 @@
           "code": "0xfe",
           "codeHash": "0xbcc90f2d6dada5b18e155c17a1c0a55920aae94f39857d39d0d8ed07ae8f228b",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0xcfd3",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763302d",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {
@@ -6156,6 +9086,47 @@
           "nonce": 2
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x30d40",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a760f2c0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -6233,6 +9204,57 @@
           "nonce": 1
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000c0",
+          "balanceChanges": [
+            {
+              "balance": "0x0",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [
+            {
+              "changes": [
+                {
+                  "index": 1,
+                  "value": "0x1"
+                }
+              ],
+              "slot": "0x0"
+            }
+          ],
+          "storageReads": []
+        },
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a7640001",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -6305,6 +9327,47 @@
           "nonce": 0
         }
       ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [
+            {
+              "balance": "0x5352",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763acae",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
+        }
+      ],
       "block": {
         "basefee": "0x0",
         "beneficiary": "0x00000000000000000000000000000000000000cb",
@@ -6368,6 +9431,47 @@
           "code": "0x484900",
           "codeHash": "0x03e9058507d616fb4656d38639da8c19394dfffb2a02480e30a11c13bd66d5af",
           "nonce": 2
+        }
+      ],
+      "bal": [
+        {
+          "address": "0x00000000000000000000000000000000000000cb",
+          "balanceChanges": [],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x000000000000000000000000000000000000dead",
+          "balanceChanges": [
+            {
+              "balance": "0x1",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [],
+          "storageChanges": [],
+          "storageReads": []
+        },
+        {
+          "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "balanceChanges": [
+            {
+              "balance": "0xde0b6b3a763ffff",
+              "index": 1
+            }
+          ],
+          "codeChanges": [],
+          "nonceChanges": [
+            {
+              "index": 1,
+              "nonce": 1
+            }
+          ],
+          "storageChanges": [],
+          "storageReads": []
         }
       ],
       "block": {

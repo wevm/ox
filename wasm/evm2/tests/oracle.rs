@@ -230,6 +230,83 @@ fn pending(state: &PendingState) -> Value {
     })
 }
 
+/// Serializes a built list the way the TypeScript `Bal` type carries it.
+fn bal_json(bal: evm2::evm::Bal) -> Value {
+    let accounts = alloy_eip7928::BlockAccessList::from(bal);
+    Value::Array(
+        accounts
+            .iter()
+            .map(|account| {
+                json!({
+                    "address": format!("{:?}", account.address),
+                    "balanceChanges": account.balance_changes.iter().map(|change| json!({
+                        "balance": format!("{:#x}", change.post_balance),
+                        "index": change.block_access_index.0,
+                    })).collect::<Vec<_>>(),
+                    "codeChanges": account.code_changes.iter().map(|change| json!({
+                        "code": format!("0x{}", hex::encode(&change.new_code)),
+                        "index": change.block_access_index.0,
+                    })).collect::<Vec<_>>(),
+                    "nonceChanges": account.nonce_changes.iter().map(|change| json!({
+                        "index": change.block_access_index.0,
+                        "nonce": change.new_nonce,
+                    })).collect::<Vec<_>>(),
+                    "storageChanges": account.storage_changes.iter().map(|slot| json!({
+                        "changes": slot.changes.iter().map(|change| json!({
+                            "index": change.block_access_index.0,
+                            "value": format!("{:#x}", change.new_value),
+                        })).collect::<Vec<_>>(),
+                        "slot": format!("{:#x}", slot.slot),
+                    })).collect::<Vec<_>>(),
+                    "storageReads": account.storage_reads.iter()
+                        .map(|slot| format!("{slot:#x}")).collect::<Vec<_>>(),
+                })
+            })
+            .collect(),
+    )
+}
+
+/// Runs a fixture with the BAL builder on, returning the list it folded.
+///
+/// A separate run from `run`: the fold happens when a transaction commits, which
+/// the detaching path deliberately does not do.
+fn run_bal(fixture: &Map<String, Value>, spec: &str) -> Value {
+    let spec_id = spec_id(spec);
+    let chain_id = hex_word(&fixture["chainId"]).to::<u64>();
+
+    let mut evm: Evm<'_, BaseEvmTypes> = Evm::new_with_execution_config(
+        ExecutionConfig::for_spec_and_version(
+            spec_id,
+            Version { chain_id, ..Version::new(spec_id) },
+        ),
+        spec_id,
+        block_env(fixture["block"].as_object().unwrap()),
+        ethereum_tx_registry(spec_id),
+        database(fixture["accounts"].as_array().unwrap()),
+        Precompiles::base(spec_id),
+    );
+
+    evm.state_mut().enable_bal_builder();
+    // Transaction 0 records at index 1, matching the EIP-7928 layout.
+    evm.state_mut().set_bal_index(alloy_eip7928::BlockAccessIndex(1));
+
+    // The handle borrows the engine, so it is resolved and dropped before the
+    // builder is read back.
+    let committed = match evm.transact(&recovered(fixture)) {
+        Ok(handle) => {
+            handle.commit();
+            true
+        }
+        Err(_) => false,
+    };
+    // A rejected transaction folds nothing, which the replay must match.
+    if !committed {
+        return Value::Null;
+    }
+
+    bal_json(evm.state_mut().take_bal_builder().expect("builder is enabled"))
+}
+
 fn run(fixture: &Map<String, Value>, spec: &str) -> Value {
     let spec_id = spec_id(spec);
     let chain_id = hex_word(&fixture["chainId"]).to::<u64>();
@@ -553,6 +630,8 @@ mod generated {
                 let spec = fixture["spec"].as_str().unwrap().to_string();
                 let expected = run(&fixture, &spec);
                 fixture.insert("expected".into(), expected);
+                let bal = run_bal(&fixture, &spec);
+                fixture.insert("bal".into(), bal);
                 Value::Object(fixture)
             })
             .collect();
@@ -580,5 +659,96 @@ mod generated {
             previous, recorded,
             "the generated corpus drifted; regenerate with OX_UPDATE_FIXTURES=1"
         );
+    }
+}
+
+/// EIP-7928 block access lists, against native evm2.
+///
+/// The adapter's job is to carry a BAL across the ABI and report an uncovered
+/// read apart from a transaction rejection. Both halves are evm2's behavior, so
+/// they are pinned here before the artifact is asked to reproduce them.
+mod bal {
+    use super::*;
+    use alloy_primitives::TxKind;
+    use evm2::{ErrorCode, evm::Bal, registry::HandlerError};
+    use std::sync::Arc;
+
+    const SENDER: Address = Address::repeat_byte(0x11);
+    const TARGET: Address = Address::repeat_byte(0xc0);
+
+    /// An EVM over an empty database, so every read must come from the BAL.
+    fn evm(spec_id: SpecId) -> Evm<'static, BaseEvmTypes> {
+        Evm::new_with_execution_config(
+            ExecutionConfig::for_spec_and_version(spec_id, Version::new(spec_id)),
+            spec_id,
+            BlockEnvExt::default(),
+            ethereum_tx_registry(spec_id),
+            InMemoryDB::default(),
+            Precompiles::base(spec_id),
+        )
+    }
+
+    /// A zero-cost call, so nothing but the reads can make it fail.
+    fn call() -> Recovered<TxEnvelope> {
+        let envelope = alloy_consensus::TxLegacy {
+            chain_id: Some(1),
+            gas_limit: 100_000,
+            gas_price: 0,
+            to: TxKind::Call(TARGET),
+            value: U256::ZERO,
+            ..Default::default()
+        };
+        let signed = alloy_consensus::Signed::new_unchecked(
+            envelope,
+            alloy_primitives::Signature::test_signature(),
+            Default::default(),
+        );
+        let encoded = alloy_eips::eip2718::Encodable2718::encoded_2718(&signed);
+        let decoded = EthereumTxEnvelope::<TxEip4844>::decode_2718(&mut &encoded[..]).unwrap();
+        Recovered::new_unchecked(TxEnvelope::from(decoded), SENDER)
+    }
+
+    #[test]
+    fn an_uncovered_read_is_refused_rather_than_served() {
+        let mut evm = evm(SpecId::OSAKA);
+        // Attached but empty, so the sender is not covered.
+        evm.state_mut().set_bal(Arc::new(Bal::new()));
+        evm.state_mut().set_allow_bal_db_fallback(false);
+
+        let failure = evm.call_tx(&call()).unwrap_err();
+
+        // The refusal carries evm2's own sentinel, which is what lets the adapter
+        // report it apart from an ordinary rejection. Carried as `Fatal`, with the
+        // `BalError` kept on a context the public API does not reach.
+        assert!(
+            matches!(failure, HandlerError::Fatal(code) if code == ErrorCode::BAL_NOT_COVERED),
+            "{failure}"
+        );
+    }
+
+    #[test]
+    fn fallback_lets_an_uncovered_read_through() {
+        let mut evm = evm(SpecId::OSAKA);
+        evm.state_mut().set_bal(Arc::new(Bal::new()));
+        evm.state_mut().set_allow_bal_db_fallback(true);
+
+        // The empty database serves a zero account, so execution proceeds. This
+        // is the pair to the refusal above, and what an empty BAL plus fallback
+        // is relied on for as the way to detach.
+        assert!(evm.call_tx(&call()).is_ok());
+    }
+
+    #[test]
+    fn the_builder_records_what_a_transaction_touched() {
+        let mut evm = evm(SpecId::OSAKA);
+        evm.state_mut().enable_bal_builder();
+        evm.state_mut().bump_bal_index();
+
+        let handle = evm.transact(&call()).unwrap();
+        handle.commit();
+
+        let built = evm.state_mut().take_bal_builder().unwrap();
+        // The sender pays and its nonce moves, so it must appear.
+        assert!(built.accounts.contains_key(&SENDER), "{built}");
     }
 }

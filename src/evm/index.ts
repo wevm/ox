@@ -55,6 +55,13 @@ export * as Database from './Database.js'
 export * as ExecutedTx from './ExecutedTx.js'
 
 /**
+ * Block access lists.
+ *
+ * @category Execution
+ */
+export * as Bal from './Bal.js'
+
+/**
  * Recorded executions.
  *
  * @category Execution

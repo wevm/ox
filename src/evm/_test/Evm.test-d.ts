@@ -1,4 +1,5 @@
 import {
+  Bal,
   Database,
   Ethereum,
   Evm,
@@ -249,5 +250,12 @@ describe('asynchronous inference', () => {
     expectTypeOf(Evm.setInspector(evm, {})).toEqualTypeOf<Promise<void>>()
     expectTypeOf(Evm.clearInspector(evm)).toEqualTypeOf<Promise<void>>()
     expectTypeOf(Evm.setExecutionConfig(evm, {})).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.setBal(evm, { accounts: [] })).toEqualTypeOf<
+      Promise<void>
+    >()
+    expectTypeOf(Evm.clearBal(evm)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.setBalBuilder(evm, true)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.setBalIndex(evm, 1n)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.takeBal(evm)).toEqualTypeOf<Promise<Bal.Bal | undefined>>()
   })
 })
