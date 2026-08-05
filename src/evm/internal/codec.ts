@@ -708,7 +708,7 @@ function readEvent(reader: Reader, tag: number): TraceEvent {
     const gas = reader.u64()
     const memorySize = reader.u32()
     const stack: bigint[] = []
-    for (let count = reader.u8(); count > 0; count--) stack.push(reader.word())
+    for (let count = reader.u16(); count > 0; count--) stack.push(reader.word())
     return { depth, gas, kind: 'step', memorySize, opcode, pc, stack }
   }
   if (tag === events.stepEnd) {

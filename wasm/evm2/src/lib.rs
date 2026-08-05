@@ -431,6 +431,8 @@ fn read_tx(reader: &mut Reader<'_>) -> Result<Recovered<TxEnvelope>, abi::Error>
 }
 
 fn call_tx(engine: &mut Evm<'static, BaseEvmTypes>, tx: &Recovered<TxEnvelope>) -> Vec<u8> {
+    // An abandoned attempt already recorded hooks, so the retry starts from empty.
+    trace::reset();
     match engine.call_tx(tx) {
         Ok(result) => {
             let mut writer = Writer::new();
@@ -470,6 +472,8 @@ fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
         Ok(engine) => engine,
         Err(status) => return Writer::new().finish(status),
     };
+    // An abandoned attempt already recorded hooks, so the retry starts from empty.
+    trace::reset();
     // Storing the handle takes the engine's borrow for as long as it is
     // outstanding, so this arm returns rather than falling through to a path
     // that would need the engine again.

@@ -81,11 +81,27 @@ impl Collector {
         (core::mem::take(&mut self.stream), core::mem::take(&mut self.truncated))
     }
 
+    /// Clears the recording, keeping the options.
+    ///
+    /// An abandoned attempt (an asynchronous read that was not cached) records
+    /// hooks before it gives up, so each attempt starts from empty rather than
+    /// prepending a partial execution to the one that succeeds.
+    pub fn reset(&mut self) {
+        self.stream.clear();
+        self.truncated = false;
+    }
+
     /// Whether a record of `length` bytes still fits.
     ///
     /// Refusing whole records rather than trimming one keeps every record in the
     /// stream complete, so a reader never meets a half-written one.
     fn fits(&mut self, length: usize) -> bool {
+        // Latched: once a record is refused the stream stays a prefix of the
+        // execution. Admitting later, smaller records would leave holes, and a
+        // reader pairing end events with open frames would mis-nest them.
+        if self.truncated {
+            return false;
+        }
         if self.stream.len() + length <= self.options.limit as usize {
             return true;
         }
@@ -206,6 +222,13 @@ pub fn take() -> Option<(Vec<u8>, bool)> {
     collector().map(Collector::take)
 }
 
+/// Clears whatever the installed collector has recorded so far.
+pub fn reset() {
+    if let Some(collector) = collector() {
+        collector.reset();
+    }
+}
+
 /// Forwards evm2's hooks to the collector held outside the engine.
 ///
 /// Stateless, so evm2 owning it costs nothing and the trace survives being read
@@ -312,7 +335,7 @@ impl Inspector<BaseEvmTypes> for Collector {
         }
         let stack = if self.options.stack { interp.stack().len() } else { 0 };
         // Sized before anything is written, so a record is never half-appended.
-        if !self.fits(1 + 4 + 1 + 2 + 8 + 4 + 1 + stack * 32) {
+        if !self.fits(1 + 4 + 1 + 2 + 8 + 4 + 2 + stack * 32) {
             return;
         }
         self.u8(event::STEP);
@@ -321,7 +344,9 @@ impl Inspector<BaseEvmTypes> for Collector {
         self.u16(interp.message().depth);
         self.u64(interp.gas().remaining());
         self.u32(if self.options.memory { interp.memory().len() as u32 } else { 0 });
-        self.u8(stack as u8);
+        // `u16`, not `u8`: the stack holds up to 1024 words, and a wrapped count
+        // would leave the words a reader does not expect to be read as events.
+        self.u16(stack as u16);
         for index in 0..stack {
             // Top of stack first, matching how a reader thinks about operands.
             let value = interp.stack().peek(index).unwrap_or_default();
@@ -356,7 +381,7 @@ impl Inspector<BaseEvmTypes> for Collector {
         _interp: &mut Interpreter<'_, '_, BaseEvmTypes>,
         message: &mut Message<BaseEvmTypes>,
     ) -> Option<MessageResult<BaseEvmTypes>> {
-        if self.fits(1 + 71 + 4 + message.input.len()) {
+        if self.fits(1 + 1 + 2 + 8 + 60 + 32 + 4 + message.input.len()) {
             self.u8(event::CALL);
             self.message(message);
         }
@@ -383,7 +408,7 @@ impl Inspector<BaseEvmTypes> for Collector {
         _interp: &mut Interpreter<'_, '_, BaseEvmTypes>,
         message: &mut Message<BaseEvmTypes>,
     ) -> Option<MessageResult<BaseEvmTypes>> {
-        if self.fits(1 + 71 + 4 + message.input.len()) {
+        if self.fits(1 + 1 + 2 + 8 + 60 + 32 + 4 + message.input.len()) {
             self.u8(event::CREATE);
             self.message(message);
         }

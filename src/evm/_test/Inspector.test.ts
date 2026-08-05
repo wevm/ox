@@ -184,3 +184,157 @@ describe('transact', () => {
     ExecutedTx.discard(executed)
   })
 })
+
+describe('bounds', () => {
+  test('behavior: a truncated trace is a prefix, never a stream with holes', async () => {
+    const full = await evm()
+    Evm.setInspector(full, { limit: 4_000_000, steps: true })
+    const expected = Evm.callTx(full, transaction()).trace!
+
+    // Small enough to stop partway through the steps, and step-end records are
+    // smaller than step records, so an unlatched limit would admit them after
+    // refusing a step and leave a hole.
+    const partial = await evm()
+    Evm.setInspector(partial, { limit: 200, steps: true })
+    const trace = Evm.callTx(partial, transaction()).trace!
+
+    expect(trace.truncated).toBe(true)
+    expect(trace.events.length).toBeGreaterThan(0)
+    expect(trace.events.length).toBeLessThan(expected.events.length)
+    expect(trace.events).toEqual(expected.events.slice(0, trace.events.length))
+  })
+
+  test('behavior: the limit counts what a record actually writes', async () => {
+    // A message record encodes 108 bytes before its input: tag, kind, depth, gas
+    // limit, three addresses, the value word, and the input length. Under a limit
+    // between the header without the value word and the true size, the record has
+    // to be refused rather than written past the bound.
+    const instance = await evm()
+    Evm.setInspector(instance, { limit: 90 })
+
+    const trace = Evm.callTx(instance, transaction()).trace!
+
+    expect(trace.events).toEqual([])
+    expect(trace.truncated).toBe(true)
+  })
+
+  test('behavior: a deep stack is recorded whole', async () => {
+    // 300 words, past what a byte-wide count can express. A wrapped count would
+    // leave the words to be read as event tags.
+    const deep = `0x${'5f'.repeat(300)}00` as const
+    const instance = await Evm.create({
+      database: Database.fromMemory({
+        accounts: {
+          [sender.toLowerCase()]: { balance: 10n ** 18n },
+          [target]: { code: deep },
+        },
+      }),
+    })
+    Evm.setInspector(instance, { limit: 4_000_000, stack: true, steps: true })
+
+    const result = Evm.callTx(instance, transaction())
+    const depths = Inspector.steps(result.trace).map(
+      (step) => step.stack.length,
+    )
+
+    expect(result.status).toBe(true)
+    expect(Math.max(...depths)).toBe(300)
+    expect(result.trace?.truncated).toBe(false)
+  })
+})
+
+describe('selfdestruct', () => {
+  test('behavior: the destroyed account is reported, not just the beneficiary', async () => {
+    /** PUSH20 sender, SELFDESTRUCT */
+    const code_ = `0x73${sender.slice(2)}ff` as const
+    const instance = await Evm.create({
+      database: Database.fromMemory({
+        accounts: {
+          [sender.toLowerCase()]: { balance: 10n ** 18n },
+          [target]: { balance: 5n, code: code_ },
+        },
+      }),
+    })
+    Evm.setInspector(instance, {})
+
+    const [root] = Inspector.tree(Evm.callTx(instance, transaction()).trace)
+
+    expect(root?.selfdestructs).toEqual([
+      { contract: target, target: sender, value: 5n },
+    ])
+  })
+})
+
+describe('asynchronous sources', () => {
+  test('behavior: a retried execution traces once, not once per attempt', async () => {
+    // Every uncached read abandons the attempt and repeats it, so a collector
+    // that is not cleared between attempts accumulates partial executions.
+    const sync = await evm()
+    Evm.setInspector(sync, { limit: 4_000_000, stack: true, steps: true })
+    const expected = Evm.callTx(sync, transaction()).trace
+
+    const memory = Database.fromMemory({
+      accounts: {
+        [sender.toLowerCase()]: { balance: 10n ** 18n },
+        [target]: { code },
+        [inner]: { code: innerCode },
+      },
+    })
+    const fork = await Evm.create({
+      database: Database.fromAsync({
+        getAccount: async (address) => memory.getAccount(address),
+        getBlockHash: async (number) => memory.getBlockHash(number),
+        getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+        getStorage: async (address, key) => memory.getStorage(address, key),
+      }),
+    })
+
+    // Serialized like the other setters, so this is awaited rather than assumed.
+    await Evm.setInspector(fork, {
+      limit: 4_000_000,
+      stack: true,
+      steps: true,
+    })
+    const result = await Evm.callTx(fork, transaction())
+
+    expect(result.trace).toEqual(expected)
+  })
+
+  test('behavior: changing the inspector waits for a parked execution', async () => {
+    const memory = Database.fromMemory({
+      accounts: {
+        [sender.toLowerCase()]: { balance: 10n ** 18n },
+        [target]: { code },
+        [inner]: { code: innerCode },
+      },
+    })
+    const fork = await Evm.create({
+      database: Database.fromAsync({
+        getAccount: async (address) => memory.getAccount(address),
+        getBlockHash: async (number) => memory.getBlockHash(number),
+        getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+        getStorage: async (address, key) => memory.getStorage(address, key),
+      }),
+    })
+    await Evm.setInspector(fork, {})
+
+    // Started, not awaited: the execution parks on its first uncached read, so
+    // an unqueued clear would land in the middle of it and drop the recording.
+    const executing = Evm.callTx(fork, transaction())
+    const cleared = Evm.clearInspector(fork)
+
+    const result = await executing
+    await cleared
+
+    expect(result.trace?.events.map((event) => event.kind)).toEqual([
+      'call',
+      'log',
+      'call',
+      'callEnd',
+      'callEnd',
+    ])
+    // The clear took effect once the execution finished with it.
+    expect(Evm.callTx(fork, transaction({ nonce: 0n }))).toBeInstanceOf(Promise)
+    expect((await Evm.callTx(fork, transaction())).trace).toBeUndefined()
+  })
+})

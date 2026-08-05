@@ -19,8 +19,9 @@ export type Options = {
   /**
    * Largest trace to keep, in bytes.
    *
-   * Recording stops at the limit and the trace reports `truncated`. Execution is
-   * unaffected either way.
+   * Recording stops at the limit and the trace reports `truncated`, keeping what
+   * ran first: a trace is always a prefix of the execution, never a stream with
+   * gaps. Execution is unaffected either way.
    *
    * @default 1_048_576
    */
@@ -80,8 +81,12 @@ export type Frame = {
   }[]
   /** Returned data, or revert data. Absent when the frame never returned. */
   output?: Hex.Hex | undefined
-  /** Accounts this frame self-destructed. */
-  selfdestructs: readonly { target: Address.Address; value: bigint }[]
+  /** Accounts this frame self-destructed, with where their balance went. */
+  selfdestructs: readonly {
+    contract: Address.Address
+    target: Address.Address
+    value: bigint
+  }[]
   /** Why the frame stopped, as evm2's discriminant. Absent when unfinished. */
   stop?: number | undefined
   /** Value transferred. */
@@ -166,6 +171,7 @@ export function tree(trace: Trace | undefined): readonly Frame[] {
       })
     else if (event.kind === 'selfdestruct')
       (frame.selfdestructs as Frame['selfdestructs'][number][]).push({
+        contract: event.contract,
         target: event.target,
         value: event.value,
       })

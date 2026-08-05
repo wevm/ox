@@ -807,17 +807,22 @@ function snapshot(version: Version | undefined): Version | undefined {
  * @param evm - EVM to inspect.
  * @param options - What to record.
  */
-export function setInspector(
-  evm: Evm<boolean>,
+export function setInspector<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
   options: Inspector.Options = {},
-): void {
-  evm['~engine'].setInspector({
-    enabled: true,
-    limit: options.limit ?? 1_048_576,
-    memory: options.memory ?? false,
-    stack: options.stack ?? false,
-    steps: options.steps ?? false,
-  })
+): Awaitable<asynchronous, void> {
+  // Queued like the other setters: an asynchronous execution can be parked
+  // mid-retry, and changing the recording under it would trace one execution
+  // with two sets of settings.
+  return attempt(evm, () =>
+    evm['~engine'].setInspector({
+      enabled: true,
+      limit: options.limit ?? 1_048_576,
+      memory: options.memory ?? false,
+      stack: options.stack ?? false,
+      steps: options.steps ?? false,
+    }),
+  )
 }
 
 export declare namespace setInspector {
@@ -841,8 +846,12 @@ export declare namespace setInspector {
  *
  * @param evm - EVM to stop inspecting.
  */
-export function clearInspector(evm: Evm<boolean>): void {
-  evm['~engine'].setInspector({ enabled: false, limit: 0 })
+export function clearInspector<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () =>
+    evm['~engine'].setInspector({ enabled: false, limit: 0 }),
+  )
 }
 
 export declare namespace clearInspector {
