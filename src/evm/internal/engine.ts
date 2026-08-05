@@ -60,6 +60,12 @@ export type Engine = {
   /** Replaces the block environment and the selected specification. */
   setBlock(options: codec.encodeCreate.Options): void
   /**
+   * Installs or removes the execution inspector.
+   *
+   * Removing means the engine holds none, so an untraced execution pays nothing.
+   */
+  setInspector(options: codec.encodeSetInspector.Options): void
+  /**
    * Executes a transaction and leaves its state changes pending.
    *
    * This is evm2's `transact`: the engine stays borrowed until the transaction
@@ -130,6 +136,9 @@ export async function create(options: create.Options): Promise<Engine> {
     },
     setBlock(options) {
       resolve(instance, codec.encodeSetBlock(options))
+    },
+    setInspector(options) {
+      resolve(instance, codec.encodeSetInspector(options))
     },
     transact(options) {
       const payload = resolve(instance, codec.encodeTransact(options))

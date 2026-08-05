@@ -55,6 +55,13 @@ export * as Database from './Database.js'
 export * as ExecutedTx from './ExecutedTx.js'
 
 /**
+ * Recorded executions.
+ *
+ * @category Execution
+ */
+export * as Inspector from './Inspector.js'
+
+/**
  * A transaction's state changes, owned by the caller.
  *
  * @category Execution

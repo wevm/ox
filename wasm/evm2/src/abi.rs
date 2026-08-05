@@ -53,6 +53,8 @@ pub mod op {
     pub const COMMIT_WITH: u16 = 10;
     /// Streams the pending changes to the host, then drops the transaction.
     pub const DISCARD_WITH: u16 = 11;
+    /// Installs or removes the execution inspector.
+    pub const SET_INSPECTOR: u16 = 12;
 }
 
 /// Builds a response header with an empty payload.

@@ -1,5 +1,6 @@
 import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
+import type * as Inspector from './Inspector.js'
 import type * as PendingState from './PendingState.js'
 
 /**
@@ -92,6 +93,12 @@ export type TxResult = {
   stop: Stop
   /** Total gas spent, regular plus state, before any refund. */
   totalGasSpent: bigint
+  /**
+   * What the execution did, when an inspector was recording.
+   *
+   * Absent unless {@link ox#Evm.(setInspector:function)} installed one.
+   */
+  trace?: Inspector.Trace | undefined
 }
 
 /**

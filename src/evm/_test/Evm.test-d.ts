@@ -3,6 +3,7 @@ import {
   Ethereum,
   Evm,
   ExecutedTx,
+  Inspector,
   PendingState,
   SpecId,
   StateChange,
@@ -195,5 +196,38 @@ describe('version', () => {
       {} as Evm.Evm<false>,
       { specId: 'osaka' },
     )
+  })
+})
+
+describe('inspection', () => {
+  test('the inspector takes an EVM of either kind', () => {
+    expectTypeOf(Evm.setInspector).toBeCallableWith({} as Evm.Evm<true>, {})
+    expectTypeOf(Evm.setInspector).toBeCallableWith({} as Evm.Evm<false>)
+    expectTypeOf(Evm.clearInspector).toBeCallableWith({} as Evm.Evm<true>)
+  })
+
+  test('a trace is optional on the result, so untraced runs need no guard', () => {
+    expectTypeOf<TxResult.TxResult['trace']>().toEqualTypeOf<
+      Inspector.Trace | undefined
+    >()
+    // `tree` and `steps` accept the optional trace directly.
+    expectTypeOf(Inspector.tree).toBeCallableWith(undefined)
+    expectTypeOf(Inspector.steps).toBeCallableWith(undefined)
+  })
+
+  test('events discriminate on kind', () => {
+    type Step = Extract<Inspector.Event, { kind: 'step' }>
+    expectTypeOf<Step['opcode']>().toEqualTypeOf<number>()
+    expectTypeOf<Step['gas']>().toEqualTypeOf<bigint>()
+    expectTypeOf(Inspector.steps({} as Inspector.Trace)).toEqualTypeOf<
+      readonly Step[]
+    >()
+
+    // A frame's children are frames, so the tree recurses.
+    expectTypeOf<Inspector.Frame['calls']>().toEqualTypeOf<
+      readonly Inspector.Frame[]
+    >()
+    // @ts-expect-error a step carries no output
+    expectTypeOf<Step['output']>()
   })
 })

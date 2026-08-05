@@ -4,6 +4,7 @@ import * as Errors from '../core/Errors.js'
 import * as TxEnvelope from '../core/TxEnvelope.js'
 import * as Database from './Database.js'
 import * as ExecutedTx from './ExecutedTx.js'
+import type * as Inspector from './Inspector.js'
 import type * as Ethereum from './Ethereum.js'
 import * as SpecId from './SpecId.js'
 import * as TxResult from './TxResult.js'
@@ -763,6 +764,89 @@ function snapshot(version: Version | undefined): Version | undefined {
     ...(version.features ? { features: { ...version.features } } : {}),
     ...(version.gas ? { gas: { ...version.gas } } : {}),
   }
+}
+
+/**
+ * Installs an inspector, so executions record what they did.
+ *
+ * A trace comes back on the result of each execution afterwards. Recording
+ * cannot change what executes: the same transaction produces the same result
+ * traced or not.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, Inspector } from 'ox/evm'
+ *
+ * // Calls, creates, logs, and self-destructs. Cheap enough to leave on.
+ * Evm.setInspector(evm, {})
+ *
+ * const result = Evm.callTx(evm, transaction)
+ * Inspector.tree(result.trace)
+ * ```
+ *
+ * @example
+ * ### Recording instructions
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, Inspector } from 'ox/evm'
+ *
+ * // Millions of events for a busy transaction, so bound it and expect
+ * // `truncated`.
+ * Evm.setInspector(evm, {
+ *   limit: 4_000_000,
+ *   stack: true,
+ *   steps: true
+ * })
+ *
+ * const result = Evm.callTx(evm, transaction)
+ * Inspector.steps(result.trace)
+ * ```
+ *
+ * @param evm - EVM to inspect.
+ * @param options - What to record.
+ */
+export function setInspector(
+  evm: Evm<boolean>,
+  options: Inspector.Options = {},
+): void {
+  evm['~engine'].setInspector({
+    enabled: true,
+    limit: options.limit ?? 1_048_576,
+    memory: options.memory ?? false,
+    stack: options.stack ?? false,
+    steps: options.steps ?? false,
+  })
+}
+
+export declare namespace setInspector {
+  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
+}
+
+/**
+ * Removes the inspector.
+ *
+ * The engine then holds none, which is what makes an untraced execution free:
+ * an inspector that is present costs work on every instruction whatever it
+ * records.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.clearInspector(evm)
+ * ```
+ *
+ * @param evm - EVM to stop inspecting.
+ */
+export function clearInspector(evm: Evm<boolean>): void {
+  evm['~engine'].setInspector({ enabled: false, limit: 0 })
+}
+
+export declare namespace clearInspector {
+  type ErrorType = setInspector.ErrorType
 }
 
 // Merges block values over the current ones, field by field rather than with a
