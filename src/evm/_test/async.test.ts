@@ -205,3 +205,102 @@ describe('errors', () => {
     await expect(Evm.callTx(fork, costed)).rejects.toThrowError(expected)
   })
 })
+
+describe('fromAsync', () => {
+  test('behavior: a prototype-backed source keeps its reads', async () => {
+    const memory = Database.fromMemory({ accounts })
+
+    // A class puts its reads on the prototype, which a spread would not copy.
+    class Remote {
+      async getAccount(address: Address.Address) {
+        return memory.getAccount(address)
+      }
+      async getBlockHash(number: bigint) {
+        return memory.getBlockHash(number)
+      }
+      async getCodeByHash(codeHash: Hex.Hex) {
+        return memory.getCodeByHash(codeHash)
+      }
+      async getStorage(address: Address.Address, key: bigint) {
+        return memory.getStorage(address, key)
+      }
+    }
+
+    const fork = await Evm.create({
+      database: Database.fromAsync(new Remote()),
+    })
+    expect((await Evm.callTx(fork, transaction())).output).toBe(
+      Hex.fromNumber(7, { size: 32 }),
+    )
+  })
+
+  test('behavior: a source using `this` still works', async () => {
+    const memory = Database.fromMemory({ accounts })
+    const source = {
+      inner: memory,
+      async getAccount(address: Address.Address) {
+        // Delegation must preserve the receiver.
+        return this.inner.getAccount(address)
+      },
+      async getBlockHash(number: bigint) {
+        return this.inner.getBlockHash(number)
+      },
+      async getCodeByHash(codeHash: Hex.Hex) {
+        return this.inner.getCodeByHash(codeHash)
+      },
+      async getStorage(address: Address.Address, key: bigint) {
+        return this.inner.getStorage(address, key)
+      },
+    }
+
+    const fork = await Evm.create({ database: Database.fromAsync(source) })
+    expect((await Evm.callTx(fork, transaction())).status).toBe(true)
+  })
+})
+
+describe('concurrency', () => {
+  test('behavior: an execution started concurrently does not break a read', async () => {
+    const { database } = source()
+    const fork = await Evm.create({ database })
+
+    // Both start before either finishes fetching. Unserialized, whichever parks
+    // a transaction first leaves the engine borrowed, and the other's next
+    // attempt fails with `BorrowedError` mid-replay.
+    const [called, executed] = await Promise.all([
+      Evm.callTx(fork, transaction()),
+      Evm.transact(fork, transaction()),
+    ])
+
+    expect(called.status).toBe(true)
+    expect(ExecutedTx.result(executed)).toEqual(called)
+    ExecutedTx.discard(executed)
+  })
+
+  test('behavior: a queued operation survives a failing one', async () => {
+    let fail = true
+    const memory = Database.fromMemory({ accounts })
+    const fork = await Evm.create({
+      database: Database.fromAsync({
+        async getAccount(address) {
+          if (fail) {
+            fail = false
+            throw new Error('transient')
+          }
+          return memory.getAccount(address)
+        },
+        getBlockHash: async (number) => memory.getBlockHash(number),
+        getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+        getStorage: async (address, key) => memory.getStorage(address, key),
+      }),
+    })
+
+    const [failed, queued] = await Promise.allSettled([
+      Evm.callTx(fork, transaction()),
+      Evm.callTx(fork, transaction()),
+    ])
+
+    // The queue absorbs the rejection rather than poisoning what follows.
+    expect(failed.status).toBe('rejected')
+    expect(queued.status).toBe('fulfilled')
+  })
+})

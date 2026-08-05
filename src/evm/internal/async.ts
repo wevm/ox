@@ -29,6 +29,14 @@ export type Driver = {
    *   for some other reason and repeating it would not help.
    */
   settle(): Promise<boolean>
+  /**
+   * Runs `operation` after every operation queued before it.
+   *
+   * evm2 owns one EVM exclusively. Awaiting a source hands control back to the
+   * caller mid-operation, so without this a second operation could execute, park
+   * a transaction, or commit state while the first is still replaying.
+   */
+  serialize<result>(operation: () => Promise<result>): Promise<result>
 }
 
 /**
@@ -70,6 +78,10 @@ export function driver(source: Async): Driver {
     throw new Database.PendingError()
   }
 
+  // Tail of the operation queue. Rejections are absorbed so one failed
+  // operation does not fail the next.
+  let queue: Promise<unknown> = Promise.resolve()
+
   return {
     database: {
       getAccount(address) {
@@ -94,6 +106,11 @@ export function driver(source: Async): Driver {
         if (value !== undefined) return value
         return miss({ address, key, kind: 'storage' })
       },
+    },
+    serialize(operation) {
+      const next = queue.then(operation, operation)
+      queue = next.catch(() => {})
+      return next
     },
     async settle() {
       const outstanding = request

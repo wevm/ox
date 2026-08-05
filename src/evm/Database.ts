@@ -187,7 +187,13 @@ export declare namespace fromMemory {
  * @returns An asynchronous database.
  */
 export function fromAsync(source: async.Async): Async {
-  return { ...source, '~async': true }
+  return {
+    '~async': true,
+    getAccount: (address) => source.getAccount(address),
+    getBlockHash: (number) => source.getBlockHash(number),
+    getCodeByHash: (codeHash) => source.getCodeByHash(codeHash),
+    getStorage: (address, key) => source.getStorage(address, key),
+  }
 }
 
 // Rejects code the engine would refuse to classify. `0xef01`-prefixed code is an

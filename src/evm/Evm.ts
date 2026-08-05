@@ -151,7 +151,29 @@ export async function create(
  * @param options - Constructor components.
  * @returns An EVM.
  */
-export async function create(options?: create.Options): Promise<Evm<false>>
+export async function create(
+  options?: create.Options & { database?: Database.Database | undefined },
+): Promise<Evm<false>>
+
+/**
+ * Creates an EVM whose reads may or may not be synchronous.
+ *
+ * Reached when the database's own type does not say which, so the result is
+ * narrowed before reading through it: awaiting an operation covers both.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * const evm = await Evm.create(options)
+ * const result = await Evm.callTx(evm, transaction)
+ * ```
+ *
+ * @param options - Constructor components.
+ * @returns An EVM.
+ */
+export async function create(options: create.Options): Promise<Evm<boolean>>
 
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export async function create(
@@ -286,6 +308,28 @@ export function callTx(
   transaction: Ethereum.Tx,
 ): TxResult.TxResult
 
+/**
+ * Same operation against an EVM whose reads may or may not be synchronous.
+ *
+ * Awaiting the result covers both.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * const result = await Evm.callTx(evm, transaction)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param transaction - Operand.
+ * @returns The operation's result.
+ */
+export function callTx(
+  evm: Evm<boolean>,
+  transaction: Ethereum.Tx,
+): Promise<TxResult.TxResult> | TxResult.TxResult
+
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function callTx(
   evm: Evm<boolean>,
@@ -371,6 +415,28 @@ export function transact(
   evm: Evm<false>,
   transaction: Ethereum.Tx,
 ): ExecutedTx.ExecutedTx
+
+/**
+ * Same operation against an EVM whose reads may or may not be synchronous.
+ *
+ * Awaiting the result covers both.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * const result = await Evm.transact(evm, transaction)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param transaction - Operand.
+ * @returns The operation's result.
+ */
+export function transact(
+  evm: Evm<boolean>,
+  transaction: Ethereum.Tx,
+): Promise<ExecutedTx.ExecutedTx> | ExecutedTx.ExecutedTx
 
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function transact(
@@ -459,6 +525,28 @@ export function readAccountInfo(
   address: Address.Address,
 ): Database.Account | undefined
 
+/**
+ * Same operation against an EVM whose reads may or may not be synchronous.
+ *
+ * Awaiting the result covers both.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * const result = await Evm.readAccountInfo(evm, address)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param address - Operand.
+ * @returns The operation's result.
+ */
+export function readAccountInfo(
+  evm: Evm<boolean>,
+  address: Address.Address,
+): Promise<Database.Account | undefined> | Database.Account | undefined
+
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function readAccountInfo(
   evm: Evm<boolean>,
@@ -499,7 +587,8 @@ function attempt<asynchronous extends boolean, value>(
 ): Awaitable<asynchronous, value> {
   const source = evm['~driver']
   if (!source) return run() as never
-  return driver.until(source, run) as never
+  // Queued: awaiting a source yields control, and the engine is exclusive.
+  return source.serialize(() => driver.until(source, run)) as never
 }
 
 // Resolves either input shape to the encoded envelope the ABI carries.
