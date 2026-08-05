@@ -231,3 +231,23 @@ describe('inspection', () => {
     expectTypeOf<Step['output']>()
   })
 })
+
+describe('asynchronous inference', () => {
+  test('every setter is awaitable on an asynchronous EVM', async () => {
+    const memory = Database.fromMemory({})
+    const evm = await Evm.create({
+      database: Database.fromAsync({
+        getAccount: async (address) => memory.getAccount(address),
+        getBlockHash: async (number) => memory.getBlockHash(number),
+        getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+        getStorage: async (address, key) => memory.getStorage(address, key),
+      }),
+    })
+
+    expectTypeOf(evm).toEqualTypeOf<Evm.Evm<true>>()
+    expectTypeOf(Evm.setBlock(evm, {})).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.setInspector(evm, {})).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.clearInspector(evm)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.setExecutionConfig(evm, {})).toEqualTypeOf<Promise<void>>()
+  })
+})
