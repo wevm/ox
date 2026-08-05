@@ -124,6 +124,7 @@
 
 - **Conventional commits** -- use `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:` prefixes. Scope is optional (e.g. `feat(abi): add tuple formatter`).
 - **Preserve dirty work** -- do not revert, clean, or overwrite existing local changes unless explicitly asked.
+- **Never force push** -- do not force push a branch, with or without `--force-with-lease`, and do not amend a commit that is already pushed. Add a follow-up commit instead. A pushed branch is shared history: force pushing discards review context and breaks anything built on it.
 
 ## Learned Workspace Facts
 

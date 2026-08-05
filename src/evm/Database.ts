@@ -3,6 +3,7 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import type * as async from './internal/async.js'
 import type * as internal from './internal/database.js'
 
 /**
@@ -18,6 +19,15 @@ export type Database = internal.Database
 
 /** An account, as a database reports it. */
 export type Account = internal.Account
+
+/**
+ * State an EVM reads through, asynchronously.
+ *
+ * The same reads {@link ox#Database.(Database:type)} serves, returning promises.
+ * An EVM created over one of these performs its reads asynchronously, so
+ * executing through it returns a promise.
+ */
+export type Async = async.Marked
 
 /**
  * Creates an in-memory database.
@@ -142,6 +152,47 @@ export declare namespace fromMemory {
      * height inside the window but absent here fails the read.
      */
     blockHashes?: Record<string, Hex.Hex> | undefined
+  }
+}
+
+/**
+ * Marks a source as asynchronous.
+ *
+ * An EVM created over the result performs its reads asynchronously, so executing
+ * through it returns a promise. Marking is explicit because whether a read
+ * returns a promise is otherwise only knowable by performing one.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Database, Evm } from 'ox/evm'
+ *
+ * const database = Database.fromAsync({
+ *   async getAccount(address) {
+ *     return load(address)
+ *   },
+ *   async getBlockHash(number) {
+ *     return hashes[String(number)]
+ *   },
+ *   async getCodeByHash(codeHash) {
+ *     return code[codeHash]
+ *   },
+ *   async getStorage(address, key) {
+ *     return slots[`${address}:${key}`] ?? 0n
+ *   }
+ * })
+ * ```
+ *
+ * @param source - Reads to perform.
+ * @returns An asynchronous database.
+ */
+export function fromAsync(source: async.Async): Async {
+  return {
+    '~async': true,
+    getAccount: (address) => source.getAccount(address),
+    getBlockHash: (number) => source.getBlockHash(number),
+    getCodeByHash: (codeHash) => source.getCodeByHash(codeHash),
+    getStorage: (address, key) => source.getStorage(address, key),
   }
 }
 

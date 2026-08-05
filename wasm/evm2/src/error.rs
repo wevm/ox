@@ -30,6 +30,9 @@ pub mod status {
     /// A host state-change sink refused a record, so evm2 discarded the
     /// transaction rather than committing it.
     pub const SINK: u16 = 8;
+    /// A read needed a value the host has not fetched. No state was accepted;
+    /// the host supplies the value and repeats the operation.
+    pub const PENDING: u16 = 9;
 }
 
 /// Discriminants for [`HandlerError`] variants.
