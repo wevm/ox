@@ -11,7 +11,7 @@ import { Bal, Evm } from 'ox/evm'
 Evm.setBal(evm, bal)
 
 // Building: transaction `i` records at index `i + 1`.
-Evm.setBalBuilder(evm, true)
+Evm.enableBalBuilder(evm)
 Evm.setBalIndex(evm, 1n)
 Evm.transact(evm, transaction)
 const built = Evm.takeBal(evm)

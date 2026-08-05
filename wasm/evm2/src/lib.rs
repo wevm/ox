@@ -762,6 +762,11 @@ fn read_account(engine: &mut Evm<'static, BaseEvmTypes>, address: &Address) -> V
                     writer.str(&alloc::format!("{error}"));
                     writer.finish(status::DATABASE)
                 }
+                // The code is in hand here, so the BAL sentinel is recognized
+                // without a handler error to inspect.
+                None if code == ErrorCode::BAL_NOT_COVERED => {
+                    writer.finish(status::BAL_NOT_COVERED)
+                }
                 None => {
                     error::write_handler(&mut writer, &HandlerError::Fatal(code));
                     writer.finish(status::HANDLER)

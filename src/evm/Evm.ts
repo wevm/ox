@@ -397,6 +397,7 @@ export declare namespace callTx {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | NotCoveredError
     | DecodeError
     | EncodeError
     | HandlerError
@@ -520,6 +521,7 @@ export declare namespace transact {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | NotCoveredError
     | DecodeError
     | EncodeError
     | HandlerError
@@ -608,6 +610,7 @@ export declare namespace readAccountInfo {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | NotCoveredError
     | HandlerError
     | ReentrancyError
     | Errors.GlobalErrorType
@@ -906,11 +909,7 @@ export declare namespace setBal {
     fallback?: boolean | undefined
   }
 
-  type ErrorType =
-    | AbiError
-    | BorrowedError
-    | NotCoveredError
-    | Errors.GlobalErrorType
+  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
 }
 
 /**
@@ -945,14 +944,15 @@ export declare namespace clearBal {
  *
  * Each committed transaction folds its post-state in at the current index, so
  * {@link ox#Evm.(setBalIndex:function)} is advanced once per transaction. Read the
- * result with {@link ox#Evm.(takeBal:function)}.
+ * result with {@link ox#Evm.(takeBal:function)}, or abandon it with
+ * {@link ox#Evm.(clearBalBuilder:function)}.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
  * import { Evm } from 'ox/evm'
  *
- * Evm.setBalBuilder(evm, true)
+ * Evm.enableBalBuilder(evm)
  *
  * // Transaction `i` records at index `i + 1`.
  * Evm.setBalIndex(evm, 1n)
@@ -962,16 +962,40 @@ export declare namespace clearBal {
  * ```
  *
  * @param evm - EVM to build from.
- * @param enabled - Whether to build. `false` discards the list in progress.
  */
-export function setBalBuilder<asynchronous extends boolean>(
+export function enableBalBuilder<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
-  enabled: boolean,
 ): Awaitable<asynchronous, void> {
-  return attempt(evm, () => evm['~engine'].setBalBuilder(enabled))
+  return attempt(evm, () => evm['~engine'].setBalBuilder(true))
 }
 
-export declare namespace setBalBuilder {
+export declare namespace enableBalBuilder {
+  type ErrorType = setBal.ErrorType
+}
+
+/**
+ * Discards the block access list being built, without reading it.
+ *
+ * {@link ox#Evm.(takeBal:function)} also ends the build; this is for abandoning
+ * one whose result is not wanted.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.clearBalBuilder(evm)
+ * ```
+ *
+ * @param evm - EVM to stop building from.
+ */
+export function clearBalBuilder<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () => evm['~engine'].setBalBuilder(false))
+}
+
+export declare namespace clearBalBuilder {
   type ErrorType = setBal.ErrorType
 }
 
@@ -979,7 +1003,7 @@ export declare namespace setBalBuilder {
  * Takes the built block access list, resetting the index.
  *
  * `undefined` when no builder was started. Taking it ends the build, so a further
- * block starts with {@link ox#Evm.(setBalBuilder:function)} again.
+ * block starts with {@link ox#Evm.(enableBalBuilder:function)} again.
  *
  * @example
  * ```ts twoslash

@@ -90,6 +90,17 @@ describe('setBal', () => {
     )
   })
 
+  test('behavior: an uncovered account read is refused the same way', async () => {
+    const instance = await evm()
+    Evm.setBal(instance, { accounts: [] })
+
+    // Reads outside an execution go through the same coverage gate, so they
+    // report the same condition rather than a generic failure.
+    expect(() => Evm.readAccountInfo(instance, target)).toThrowError(
+      Evm.NotCoveredError,
+    )
+  })
+
   test('behavior: fallback lets an uncovered read through', async () => {
     const instance = await evm()
     Evm.setBal(instance, { accounts: [] }, { fallback: true })
@@ -102,7 +113,7 @@ describe('setBal', () => {
     // Coverage comes from a builder run rather than by hand, so the list holds
     // exactly what execution touches.
     const source = await evm()
-    Evm.setBalBuilder(source, true)
+    Evm.enableBalBuilder(source)
     Evm.setBalIndex(source, 1n)
     ExecutedTx.commit(Evm.transact(source, transaction()))
     const built = Evm.takeBal(source)!
@@ -154,7 +165,7 @@ describe('takeBal', () => {
 
   test('behavior: the builder records what a transaction touched', async () => {
     const instance = await evm()
-    Evm.setBalBuilder(instance, true)
+    Evm.enableBalBuilder(instance)
     // Transaction 0 records at index 1.
     Evm.setBalIndex(instance, 1n)
 
@@ -169,14 +180,14 @@ describe('takeBal', () => {
 
   test('behavior: taking ends the build', async () => {
     const instance = await evm()
-    Evm.setBalBuilder(instance, true)
+    Evm.enableBalBuilder(instance)
     expect(Evm.takeBal(instance)).toBeDefined()
     expect(Evm.takeBal(instance)).toBeUndefined()
   })
 
   test('behavior: a built list round-trips back as an attachable one', async () => {
     const instance = await evm()
-    Evm.setBalBuilder(instance, true)
+    Evm.enableBalBuilder(instance)
     Evm.setBalIndex(instance, 1n)
     ExecutedTx.commit(Evm.transact(instance, transaction()))
     const built = Evm.takeBal(instance)!

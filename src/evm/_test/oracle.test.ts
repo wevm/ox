@@ -526,7 +526,7 @@ describe('generated corpus, block access lists', () => {
         database: database(entry.accounts),
         specId: entry.spec as SpecId.SpecId,
       })
-      Evm.setBalBuilder(evm, true)
+      Evm.enableBalBuilder(evm)
       // Transaction 0 records at index 1, matching the EIP-7928 layout.
       Evm.setBalIndex(evm, 1n)
 

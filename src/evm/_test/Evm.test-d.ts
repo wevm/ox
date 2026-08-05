@@ -233,6 +233,17 @@ describe('inspection', () => {
   })
 })
 
+describe('block access lists', () => {
+  test('an uncovered read is in the error union of the reads that raise it', () => {
+    // Attaching a list cannot refuse a read; executing against one can.
+    expectTypeOf<Evm.NotCoveredError>().toExtend<Evm.callTx.ErrorType>()
+    expectTypeOf<Evm.NotCoveredError>().toExtend<Evm.transact.ErrorType>()
+    expectTypeOf<Evm.NotCoveredError>().toExtend<Evm.readAccountInfo.ErrorType>()
+    // @ts-expect-error installing a list performs no read
+    expectTypeOf<Evm.NotCoveredError>().toExtend<Evm.setBal.ErrorType>()
+  })
+})
+
 describe('asynchronous inference', () => {
   test('every setter is awaitable on an asynchronous EVM', async () => {
     const memory = Database.fromMemory({})
@@ -254,7 +265,8 @@ describe('asynchronous inference', () => {
       Promise<void>
     >()
     expectTypeOf(Evm.clearBal(evm)).toEqualTypeOf<Promise<void>>()
-    expectTypeOf(Evm.setBalBuilder(evm, true)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.enableBalBuilder(evm)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.clearBalBuilder(evm)).toEqualTypeOf<Promise<void>>()
     expectTypeOf(Evm.setBalIndex(evm, 1n)).toEqualTypeOf<Promise<void>>()
     expectTypeOf(Evm.takeBal(evm)).toEqualTypeOf<Promise<Bal.Bal | undefined>>()
   })
