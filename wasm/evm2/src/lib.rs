@@ -16,6 +16,7 @@ extern crate alloc;
 mod abi;
 mod database;
 mod error;
+mod features;
 mod state;
 
 use crate::{
@@ -37,6 +38,7 @@ use evm2::{
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
     evm::{Db, ExecutedTx},
+    version::GasId,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -316,8 +318,82 @@ fn read_config(
         ext: (),
         _non_exhaustive: (),
     };
+    // Overrides apply on top of the specification's own version, so evm2 stays
+    // the source of every default rather than this adapter restating its tables.
+    let mut version = Version { chain_id, ..Version::new(spec_id) };
+    read_overrides(reader, &mut version)?;
     reader.finish()?;
-    Ok((spec_id, block, Version { chain_id, ..Version::new(spec_id) }))
+    Ok((spec_id, block, version))
+}
+
+/// Scalar version fields, in the order the ABI carries their presence bits.
+mod field {
+    /// Transaction gas limit cap.
+    pub const TX_GAS_LIMIT_CAP: u32 = 1 << 0;
+    /// Hard memory limit, in bytes.
+    pub const MEMORY_LIMIT: u32 = 1 << 1;
+    /// Largest deployable bytecode.
+    pub const MAX_CODE_SIZE: u32 = 1 << 2;
+    /// Largest creation initcode.
+    pub const MAX_INITCODE_SIZE: u32 = 1 << 3;
+    /// Blobs allowed in one transaction.
+    pub const MAX_BLOBS_PER_TX: u32 = 1 << 4;
+    /// Blob base fee update fraction.
+    pub const BLOB_BASE_FEE_UPDATE_FRACTION: u32 = 1 << 5;
+    /// Every bit this ABI defines.
+    pub const KNOWN: u32 = TX_GAS_LIMIT_CAP
+        | MEMORY_LIMIT
+        | MAX_CODE_SIZE
+        | MAX_INITCODE_SIZE
+        | MAX_BLOBS_PER_TX
+        | BLOB_BASE_FEE_UPDATE_FRACTION;
+}
+
+/// Applies the caller's version overrides.
+///
+/// Each group is partial: a field, feature, or gas parameter the caller did not
+/// mention keeps the value the specification gave it.
+fn read_overrides(reader: &mut Reader<'_>, version: &mut Version) -> Result<(), abi::Error> {
+    let present = reader.u32()?;
+    if present & !field::KNOWN != 0 {
+        return Err(abi::Error::UnknownField(present & !field::KNOWN));
+    }
+    if present & field::TX_GAS_LIMIT_CAP != 0 {
+        version.tx_gas_limit_cap = reader.u64()?;
+    }
+    if present & field::MEMORY_LIMIT != 0 {
+        version.memory_limit = reader.u64()?;
+    }
+    if present & field::MAX_CODE_SIZE != 0 {
+        version.max_code_size = reader.u64()? as usize;
+    }
+    if present & field::MAX_INITCODE_SIZE != 0 {
+        version.max_initcode_size = reader.u64()? as usize;
+    }
+    if present & field::MAX_BLOBS_PER_TX != 0 {
+        version.max_blobs_per_tx = reader.u64()? as usize;
+    }
+    if present & field::BLOB_BASE_FEE_UPDATE_FRACTION != 0 {
+        version.blob_base_fee_update_fraction = reader.u64()?;
+    }
+
+    // Features arrive as (index, on) pairs against evm2's declaration order, so
+    // an unnamed flag is rejected rather than silently ignored.
+    for _ in 0..reader.u32()? {
+        let index = reader.u32()?;
+        let on = reader.u32()? != 0;
+        let flag = features::from_index(index).ok_or(abi::Error::UnknownFeature(index))?;
+        version.features.set(flag, on);
+    }
+
+    // Gas parameters are keyed by evm2's own `GasId` discriminant.
+    for _ in 0..reader.u32()? {
+        let index = reader.u32()?;
+        let cost = reader.u32()?;
+        let id = GasId::from_usize(index as usize).ok_or(abi::Error::UnknownGasId(index))?;
+        version.gas_params.set(id, cost);
+    }
+    Ok(())
 }
 
 /// Reads a recovered transaction as a signer plus its EIP-2718 envelope.
