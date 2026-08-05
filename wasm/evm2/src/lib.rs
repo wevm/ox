@@ -18,6 +18,7 @@ mod database;
 mod error;
 mod features;
 mod state;
+mod trace;
 
 use crate::{
     abi::{Reader, Writer, op},
@@ -280,6 +281,10 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
                 Err(error) => abi_failure(error),
             }
         }
+        op::SET_INSPECTOR => match read_inspector(&mut reader) {
+            Ok(options) => set_inspector(options),
+            Err(error) => abi_failure(error),
+        },
         op::TRANSACT => match read_tx(&mut reader) {
             Ok(tx) => transact(&tx),
             Err(error) => abi_failure(error),
@@ -426,10 +431,13 @@ fn read_tx(reader: &mut Reader<'_>) -> Result<Recovered<TxEnvelope>, abi::Error>
 }
 
 fn call_tx(engine: &mut Evm<'static, BaseEvmTypes>, tx: &Recovered<TxEnvelope>) -> Vec<u8> {
+    // An abandoned attempt already recorded hooks, so the retry starts from empty.
+    trace::reset();
     match engine.call_tx(tx) {
         Ok(result) => {
             let mut writer = Writer::new();
             write_result(&mut writer, &result);
+            write_trace(&mut writer);
             writer.finish(status::OK)
         }
         Err(failure) => {
@@ -464,6 +472,8 @@ fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
         Ok(engine) => engine,
         Err(status) => return Writer::new().finish(status),
     };
+    // An abandoned attempt already recorded hooks, so the retry starts from empty.
+    trace::reset();
     // Storing the handle takes the engine's borrow for as long as it is
     // outstanding, so this arm returns rather than falling through to a path
     // that would need the engine again.
@@ -472,6 +482,9 @@ fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
             let mut writer = Writer::new();
             write_result(&mut writer, handle.result());
             *executed() = Some(handle);
+            // The collector lives outside the engine, so the parked handle's
+            // borrow does not hide it: a transaction reports its own trace.
+            write_trace(&mut writer);
             return writer.finish(status::OK);
         }
         Err(failure) => failure,
@@ -546,6 +559,54 @@ fn resolve(op: u16) -> Vec<u8> {
         _ => state::write_pending(&mut writer, &handle.detach().pending_state),
     }
     writer.finish(status::OK)
+}
+
+/// Reads inspector options, or `None` to remove the inspector.
+fn read_inspector(reader: &mut Reader<'_>) -> Result<Option<trace::Options>, abi::Error> {
+    let enabled = reader.u32()? != 0;
+    let options = trace::Options {
+        steps: reader.u32()? != 0,
+        stack: reader.u32()? != 0,
+        memory: reader.u32()? != 0,
+        limit: reader.u32()?,
+    };
+    reader.finish()?;
+    Ok(enabled.then_some(options))
+}
+
+/// Installs a collector, or removes whatever is installed.
+///
+/// Removing rather than leaving an idle collector installed is what makes tracing
+/// free when off: evm2 checks one `Option` per instruction, but a collector that
+/// is present costs a virtual call on every step whatever it records.
+fn set_inspector(options: Option<trace::Options>) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    match options {
+        Some(options) => engine.set_inspector(trace::install(options)),
+        None => {
+            engine.clear_inspector();
+            trace::remove();
+        }
+    }
+    Writer::new().finish(status::OK)
+}
+
+/// Drains the installed collector, if there is one, into `writer`.
+///
+/// Reads the collector's own slot rather than reaching through the engine, so a
+/// trace is available even while a transaction handle holds the engine's borrow.
+fn write_trace(writer: &mut Writer) {
+    match trace::take() {
+        Some((stream, truncated)) => {
+            writer.bool(true);
+            writer.bool(truncated);
+            writer.bytes(&stream);
+        }
+        None => writer.bool(false),
+    }
 }
 
 /// Reads a bare address operand.

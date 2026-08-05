@@ -43,6 +43,7 @@ export const op = {
   detach: 9,
   commitWith: 10,
   discardWith: 11,
+  setInspector: 12,
 } as const
 
 /**
@@ -136,6 +137,8 @@ export type TxResult = {
   status: boolean
   /** Interpreter stop reason, as evm2's `InstrStop` discriminant. */
   stop: number
+  /** Recorded execution, when an inspector was installed. */
+  trace?: Trace | undefined
   /** Total gas spent, regular plus state, before refund. */
   totalGasSpent: bigint
 }
@@ -603,6 +606,220 @@ export type Changes = {
   storageWipes: readonly Address.Address[]
 }
 
+/** Event tags in a serialized trace stream. */
+export const events = {
+  end: 0,
+  initialize: 1,
+  step: 2,
+  stepEnd: 3,
+  log: 4,
+  call: 5,
+  callEnd: 6,
+  create: 7,
+  createEnd: 8,
+  selfdestruct: 9,
+} as const
+
+/** Message kinds, as the ABI numbers them. */
+export const messageKinds = [
+  'call',
+  'delegateCall',
+  'callCode',
+  'create',
+  'create2',
+  'staticCall',
+] as const
+
+/**
+ * Reported for a kind this ABI version does not name.
+ *
+ * evm2's `MessageKind` is `#[non_exhaustive]`, so a later revision can add one.
+ * Naming it rather than folding it into `call` keeps an addition visible instead
+ * of misreporting the message.
+ */
+export const unknownMessageKind = 'unknown'
+
+/** Encodes a request installing or removing the inspector. */
+export function encodeSetInspector(
+  options: encodeSetInspector.Options,
+): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u32(options.enabled ? 1 : 0)
+  writer.u32(options.steps ? 1 : 0)
+  writer.u32(options.stack ? 1 : 0)
+  writer.u32(options.memory ? 1 : 0)
+  writer.u32(options.limit)
+  return writer.finish(op.setInspector)
+}
+
+export declare namespace encodeSetInspector {
+  type Options = {
+    /** Whether an inspector is installed at all. */
+    enabled: boolean
+    /** Largest stream to keep, in bytes. */
+    limit: number
+    /** Records memory size on each step. */
+    memory?: boolean | undefined
+    /** Records the stack on each step. */
+    stack?: boolean | undefined
+    /** Records each instruction. */
+    steps?: boolean | undefined
+  }
+}
+
+/**
+ * Decodes a trace, when the response carries one.
+ *
+ * Events keep the order evm2 called the hooks in. Nothing is interpreted here:
+ * the shape a caller wants is built from this stream rather than encoded into it.
+ */
+export function decodeTrace(reader: Reader): Trace | undefined {
+  if (!reader.bool()) return undefined
+  const truncated = reader.bool()
+  const stream = new Reader(reader.bytes())
+  const events_: TraceEvent[] = []
+
+  while (true) {
+    const tag = stream.u8()
+    if (tag === events.end) break
+    events_.push(readEvent(stream, tag))
+  }
+  return { events: events_, truncated }
+}
+
+/**
+ * Reads one event.
+ *
+ * Fields go into locals before the object is built: these are sequential reads,
+ * so an object literal's property order would be the wire order.
+ *
+ * @internal
+ */
+function readEvent(reader: Reader, tag: number): TraceEvent {
+  if (tag === events.initialize) {
+    const depth = reader.u16()
+    const gas = reader.u64()
+    return { depth, gas, kind: 'initialize' }
+  }
+  if (tag === events.step) {
+    const pc = reader.u32()
+    const opcode = reader.u8()
+    const depth = reader.u16()
+    const gas = reader.u64()
+    const memorySize = reader.u32()
+    const stack: bigint[] = []
+    for (let count = reader.u16(); count > 0; count--) stack.push(reader.word())
+    return { depth, gas, kind: 'step', memorySize, opcode, pc, stack }
+  }
+  if (tag === events.stepEnd) {
+    const gas = reader.u64()
+    return { gas, kind: 'stepEnd' }
+  }
+  if (tag === events.log) {
+    const address = reader.address()
+    const topics: Hex.Hex[] = []
+    for (let count = reader.u8(); count > 0; count--) topics.push(reader.hash())
+    const data = Hex.fromBytes(reader.bytes())
+    return { address, data, kind: 'log', topics }
+  }
+  if (tag === events.call || tag === events.create) {
+    const messageKind = messageKinds[reader.u8()] ?? unknownMessageKind
+    const depth = reader.u16()
+    const gasLimit = reader.u64()
+    const caller = reader.address()
+    const destination = reader.address()
+    const codeAddress = reader.address()
+    const value = reader.word()
+    const input = Hex.fromBytes(reader.bytes())
+    return {
+      caller,
+      codeAddress,
+      depth,
+      destination,
+      gasLimit,
+      input,
+      kind: tag === events.call ? 'call' : 'create',
+      messageKind,
+      value,
+    }
+  }
+  if (tag === events.callEnd || tag === events.createEnd) {
+    const stop = reader.u8()
+    const gasRemaining = reader.u64()
+    const gasSpent = reader.u64()
+    const createdAddress = reader.bool() ? reader.address() : undefined
+    const output = Hex.fromBytes(reader.bytes())
+    return {
+      ...(createdAddress ? { createdAddress } : {}),
+      gasRemaining,
+      gasSpent,
+      kind: tag === events.callEnd ? 'callEnd' : 'createEnd',
+      output,
+      stop,
+    }
+  }
+  if (tag === events.selfdestruct) {
+    const contract = reader.address()
+    const target = reader.address()
+    const value = reader.word()
+    return { contract, kind: 'selfdestruct', target, value }
+  }
+  throw new DecodeError(`unknown trace event ${tag}`)
+}
+
+/** One recorded hook call. */
+export type TraceEvent =
+  | {
+      address: Address.Address
+      data: Hex.Hex
+      kind: 'log'
+      topics: readonly Hex.Hex[]
+    }
+  | {
+      caller: Address.Address
+      codeAddress: Address.Address
+      depth: number
+      destination: Address.Address
+      gasLimit: bigint
+      input: Hex.Hex
+      kind: 'call' | 'create'
+      messageKind: (typeof messageKinds)[number] | typeof unknownMessageKind
+      value: bigint
+    }
+  | {
+      contract: Address.Address
+      kind: 'selfdestruct'
+      target: Address.Address
+      value: bigint
+    }
+  | {
+      createdAddress?: Address.Address | undefined
+      gasRemaining: bigint
+      gasSpent: bigint
+      kind: 'callEnd' | 'createEnd'
+      output: Hex.Hex
+      stop: number
+    }
+  | { depth: number; gas: bigint; kind: 'initialize' }
+  | {
+      depth: number
+      gas: bigint
+      kind: 'step'
+      memorySize: number
+      opcode: number
+      pc: number
+      stack: readonly bigint[]
+    }
+  | { gas: bigint; kind: 'stepEnd' }
+
+/** A recorded execution. */
+export type Trace = {
+  /** Hook calls, in the order evm2 made them. */
+  events: readonly TraceEvent[]
+  /** Whether the byte limit stopped recording before execution finished. */
+  truncated: boolean
+}
+
 /** Decodes a `TxResult` response payload. */
 export function decodeResult(payload: Bytes.Bytes): TxResult {
   const reader = new Reader(payload)
@@ -634,9 +851,20 @@ export function decodeResult(payload: Bytes.Bytes): TxResult {
       topics.push(reader.hash())
     logs.push({ address, data: Hex.fromBytes(reader.bytes()), topics })
   }
+
+  // Always present, even as a lone `false`: an execution reports whether it was
+  // traced so this decoder consumes the whole payload either way.
+  const trace = decodeTrace(reader)
   reader.finish()
 
-  return { ...result, createdAddress, errorCode, logs, output }
+  return {
+    ...result,
+    createdAddress,
+    errorCode,
+    logs,
+    output,
+    ...(trace ? { trace } : {}),
+  }
 }
 
 /** Decodes a handler-failure response payload. */

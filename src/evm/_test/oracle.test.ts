@@ -416,3 +416,48 @@ describe('generated corpus', () => {
     expect(corpus.seed).toMatchInlineSnapshot(`"0x5eed1eafc0ffee01"`)
   })
 })
+
+/**
+ * The same corpus, traced.
+ *
+ * Recording must not change what executes. An inspector runs on every
+ * instruction, so a bug there is a bug in execution, and the curated fixtures
+ * would not shape it. The claim is checked per case against the untraced result,
+ * which is itself already pinned to native evm2 above.
+ */
+describe('generated corpus, traced', () => {
+  for (const entry of corpus.cases)
+    test(`${entry.spec}: ${entry.name} executes identically while traced`, async () => {
+      if (entry.expected.handlerError) return
+
+      const options = {
+        block: block(entry.block),
+        chainId: BigInt(entry.chainId),
+        specId: entry.spec as SpecId.SpecId,
+      }
+      const transaction = {
+        from: entry.signer as `0x${string}`,
+        serialized: entry.envelope as Hex.Hex,
+      }
+
+      const plain = await Evm.create({
+        ...options,
+        database: database(entry.accounts),
+      })
+      const untraced = Evm.callTx(plain, transaction)
+
+      // Steps included, so every hook the collector implements runs.
+      const traced = await Evm.create({
+        ...options,
+        database: database(entry.accounts),
+      })
+      Evm.setInspector(traced, { memory: true, stack: true, steps: true })
+      const { trace, ...result } = Evm.callTx(traced, transaction)
+
+      expect(untraced.trace).toBeUndefined()
+      expect(result).toEqual(untraced)
+
+      // Guards the assertion above against passing because nothing was recorded.
+      expect(trace!.events.length).toBeGreaterThan(0)
+    })
+})

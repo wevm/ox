@@ -737,6 +737,11 @@
       "types": "./dist/evm/ExecutedTx.d.ts",
       "default": "./dist/evm/ExecutedTx.js"
     },
+    "./evm/Inspector": {
+      "src": "./src/evm/Inspector.ts",
+      "types": "./dist/evm/Inspector.d.ts",
+      "default": "./dist/evm/Inspector.js"
+    },
     "./evm/PendingState": {
       "src": "./src/evm/PendingState.ts",
       "types": "./dist/evm/PendingState.d.ts",

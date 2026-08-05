@@ -128,7 +128,10 @@ evm2/NOTICE.md            generated attribution for everything the artifact link
 evm2/src/abi.rs           ABI v1 header, reader, writer
 evm2/src/database.rs      host imports implementing evm2's `Database`
 evm2/src/error.rs         response statuses and handler-failure encoding
+evm2/src/features.rs      the feature-flag table, indexed as the ABI addresses it
 evm2/src/lib.rs           the engine, its exports, and request dispatch
+evm2/src/state.rs         pending-state and change-stream serialization
+evm2/src/trace.rs         the bounded trace collector and the inspector it installs
 ```
 
 evm2 is a Cargo git dependency resolved from Cargo's external cache. Its source
@@ -145,6 +148,34 @@ The artifact is `src/wasm/internal/evm2.wasm.ts`, loaded by
 `src/evm/internal/bindings.ts`. `pnpm wasm:check` also verifies
 `NOTICE.md`, `LICENSE-MIT`, and `LICENSE-APACHE`, all of which the build
 generates.
+
+### Building a custom configuration
+
+Some of evm2 resolves at compile time and cannot cross the ABI: `Inspector` and
+`InterpreterRunner` are Rust traits, and `PrecompileProvider` is a generic
+parameter. Selecting one is a build, not a call. The adapter covers inspection
+itself, through a collector it installs and reports back
+(`Evm.setInspector`), so the remaining reason to build is a custom interpreter or
+precompile set.
+
+There is no runtime hook for this, deliberately: the artifact is compiled into
+`src/wasm/internal/evm2.wasm.ts`, and accepting foreign module bytes would make
+the ABI version, the import list, and the reproducibility check unverifiable.
+Building your own means owning the artifact:
+
+1. Copy `wasm/evm2` and keep `Cargo.lock` and `rust-toolchain.toml` as they are.
+   The pinned toolchain is load-bearing, and a nightly compiler selects an
+   interpreter backend wasm cannot use.
+2. Add the configuration where the engine is constructed in `src/lib.rs`. Keep
+   `abi.rs` and the ABI version untouched if `src/evm/internal/codec.ts` is to
+   keep reading the responses.
+3. Build with `pnpm wasm:build --target=evm2` and run `cargo test` in the crate.
+   The build fails on any import beyond the four host database reads, so a
+   configuration reaching for randomness, threads, or WASI is refused here rather
+   than at runtime.
+
+An evm2 capability that needs a core change is proposed upstream as a minimal
+general change, not maintained as a patched fork.
 
 ### Conventions
 
