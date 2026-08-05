@@ -349,6 +349,16 @@ mod field {
         | BLOB_BASE_FEE_UPDATE_FRACTION;
 }
 
+/// Reads a field evm2 stores as `usize`, refusing a value this target cannot hold.
+///
+/// `usize` is 32-bit on the shipped wasm32 build while the ABI carries these as
+/// `u64`, so an unchecked cast would truncate. A caller relaxing `maxCodeSize` to
+/// 2^32 would silently get zero.
+fn read_usize(reader: &mut Reader<'_>, field: &'static str) -> Result<usize, abi::Error> {
+    let value = reader.u64()?;
+    usize::try_from(value).map_err(|_| abi::Error::FieldTooLarge { field, value })
+}
+
 /// Applies the caller's version overrides.
 ///
 /// Each group is partial: a field, feature, or gas parameter the caller did not
@@ -365,13 +375,13 @@ fn read_overrides(reader: &mut Reader<'_>, version: &mut Version) -> Result<(), 
         version.memory_limit = reader.u64()?;
     }
     if present & field::MAX_CODE_SIZE != 0 {
-        version.max_code_size = reader.u64()? as usize;
+        version.max_code_size = read_usize(reader, "maxCodeSize")?;
     }
     if present & field::MAX_INITCODE_SIZE != 0 {
-        version.max_initcode_size = reader.u64()? as usize;
+        version.max_initcode_size = read_usize(reader, "maxInitcodeSize")?;
     }
     if present & field::MAX_BLOBS_PER_TX != 0 {
-        version.max_blobs_per_tx = reader.u64()? as usize;
+        version.max_blobs_per_tx = read_usize(reader, "maxBlobsPerTx")?;
     }
     if present & field::BLOB_BASE_FEE_UPDATE_FRACTION != 0 {
         version.blob_base_fee_update_fraction = reader.u64()?;

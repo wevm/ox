@@ -212,8 +212,12 @@ export async function create(
     chainId,
     database = Database.fromMemory(),
     specId = SpecId.latest,
-    version,
   } = options
+
+  // Copied before the first await: encoding happens after WebAssembly
+  // instantiation, so a caller reusing the options object would otherwise change
+  // what this EVM runs under.
+  const version = snapshot(options.version)
 
   // An asynchronous source is driven through synchronous reads: a miss abandons
   // the attempt and the operation repeats once the value is cached.
@@ -637,8 +641,16 @@ const placeholder = {
  * @param evm - EVM to reconfigure.
  * @param block - Block values to apply.
  */
-export function setBlock(evm: Evm<boolean>, block: Block): void {
-  apply(evm, { ...evm['~config'], block: merge(evm['~config'].block, block) })
+export function setBlock<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+  block: Block,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () =>
+    apply(evm, {
+      ...evm['~config'],
+      block: merge(evm['~config'].block, block),
+    }),
+  )
 }
 
 export declare namespace setBlock {
@@ -672,16 +684,19 @@ export declare namespace setBlock {
  * @param evm - EVM to reconfigure.
  * @param options - Specification and version to apply.
  */
-export function setExecutionConfig(
-  evm: Evm<boolean>,
+export function setExecutionConfig<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
   options: setExecutionConfig.Options,
-): void {
+): Awaitable<asynchronous, void> {
   const specId = options.specId ?? evm['~config'].specId
-  apply(evm, {
-    block: evm['~config'].block,
-    specId,
-    ...(options.version ? { version: options.version } : {}),
-  })
+  const version = snapshot(options.version)
+  return attempt(evm, () =>
+    apply(evm, {
+      block: evm['~config'].block,
+      specId,
+      ...(version ? { version } : {}),
+    }),
+  )
 }
 
 export declare namespace setExecutionConfig {
@@ -715,15 +730,18 @@ export declare namespace setExecutionConfig {
  * @param evm - EVM to reconfigure.
  * @param options - Block, specification, and version to apply.
  */
-export function setBlockAndExecutionConfig(
-  evm: Evm<boolean>,
+export function setBlockAndExecutionConfig<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
   options: setBlockAndExecutionConfig.Options,
-): void {
-  apply(evm, {
-    block: merge(evm['~config'].block, options.block),
-    specId: options.specId ?? evm['~config'].specId,
-    ...(options.version ? { version: options.version } : {}),
-  })
+): Awaitable<asynchronous, void> {
+  const version = snapshot(options.version)
+  return attempt(evm, () =>
+    apply(evm, {
+      block: merge(evm['~config'].block, options.block),
+      specId: options.specId ?? evm['~config'].specId,
+      ...(version ? { version } : {}),
+    }),
+  )
 }
 
 export declare namespace setBlockAndExecutionConfig {
@@ -733,6 +751,18 @@ export declare namespace setBlockAndExecutionConfig {
   }
 
   type ErrorType = setBlock.ErrorType
+}
+
+// Copies version overrides, so a caller mutating theirs afterwards cannot change
+// what an EVM already runs under. The groups are flat records of primitives, so
+// one level is deep enough.
+function snapshot(version: Version | undefined): Version | undefined {
+  if (!version) return undefined
+  return {
+    ...version,
+    ...(version.features ? { features: { ...version.features } } : {}),
+    ...(version.gas ? { gas: { ...version.gas } } : {}),
+  }
 }
 
 // Merges block values over the current ones, field by field rather than with a

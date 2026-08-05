@@ -275,6 +275,13 @@ pub enum Error {
     UnknownSpecId(u32),
     /// A version field this ABI does not define.
     UnknownField(u32),
+    /// A version field wider than this target can hold.
+    FieldTooLarge {
+        /// Field the caller set.
+        field: &'static str,
+        /// Value it carried.
+        value: u64,
+    },
     /// A feature index outside evm2's declared flags.
     UnknownFeature(u32),
     /// A gas parameter index outside evm2's `GasId`.
@@ -302,6 +309,9 @@ impl fmt::Display for Error {
             Self::UnknownOp(op) => write!(f, "unknown operation {op}"),
             Self::UnknownSpecId(spec_id) => write!(f, "unknown spec id {spec_id}"),
             Self::UnknownField(bits) => write!(f, "unknown version field bits {bits:#x}"),
+            Self::FieldTooLarge { field, value } => {
+                write!(f, "{field} value {value} exceeds this target's usize")
+            }
             Self::UnknownFeature(index) => write!(f, "unknown feature index {index}"),
             Self::UnknownGasId(index) => write!(f, "unknown gas parameter index {index}"),
             Self::Envelope => f.write_str("transaction envelope is not valid EIP-2718"),

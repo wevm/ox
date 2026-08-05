@@ -195,3 +195,69 @@ describe('setBlockAndExecutionConfig', () => {
     expect(result.output).toBe(Hex.fromNumber(3, { size: 32 }))
   })
 })
+
+describe('overrides are bounded and copied', () => {
+  test('behavior: a value wider than the target holds is refused', async () => {
+    // `usize` is 32-bit on the shipped wasm build, so an unchecked cast would
+    // turn this into zero and change deployment behavior instead of failing.
+    await expect(evm({ maxCodeSize: 2n ** 32n })).rejects.toThrowError()
+
+    // One below the boundary is still accepted.
+    await expect(evm({ maxCodeSize: 2n ** 32n - 1n })).resolves.toBeDefined()
+  })
+
+  test('behavior: mutating the options afterwards does not change the EVM', async () => {
+    const version = { features: { nonceCheck: false } }
+    const pending = Evm.create({
+      database: Database.fromMemory({ accounts }),
+      version,
+    })
+
+    // Encoding happens after WebAssembly instantiation, so without a snapshot
+    // this would put the check back on before the request is written.
+    version.features.nonceCheck = true
+
+    const instance = await pending
+    expect(Evm.callTx(instance, transaction({ nonce: 7n })).status).toBe(true)
+  })
+})
+
+describe('setters on an asynchronous EVM', () => {
+  /** NUMBER, PUSH0, MSTORE, PUSH1 32, PUSH0, RETURN */
+  const reportsNumber = '0x435f5260205ff3' as const
+
+  function source() {
+    const memory = Database.fromMemory({
+      accounts: {
+        [sender.toLowerCase()]: { balance: 10n ** 18n },
+        [target]: { code: reportsNumber },
+      },
+    })
+    return Database.fromAsync({
+      getAccount: async (address) => memory.getAccount(address),
+      getBlockHash: async (number) => memory.getBlockHash(number),
+      getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+      getStorage: async (address, key) => memory.getStorage(address, key),
+    })
+  }
+
+  test('behavior: a setter waits for an execution already in flight', async () => {
+    const fork = await Evm.create({
+      block: { number: 5n },
+      database: source(),
+    })
+
+    // Started before the setter, so it must complete under block 5 even though
+    // the setter is issued while it is still fetching state.
+    const executing = Evm.callTx(fork, transaction())
+    const configuring = Evm.setBlock(fork, { number: 9n })
+
+    const [result] = await Promise.all([executing, configuring])
+    expect(result.output).toBe(Hex.fromNumber(5, { size: 32 }))
+
+    // The setter did land, so the next execution sees the new block.
+    expect((await Evm.callTx(fork, transaction())).output).toBe(
+      Hex.fromNumber(9, { size: 32 }),
+    )
+  })
+})
