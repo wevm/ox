@@ -307,6 +307,8 @@ export declare namespace encodeCreate {
     block: Block
     /** Chain id the `CHAINID` opcode reports and transactions validate against. */
     chainId: bigint
+    /** Overrides applied on top of the specification's own version. */
+    version?: Version | undefined
     /** evm2 `SpecId` discriminant. */
     specId: number
   }
@@ -671,7 +673,199 @@ function config(options: encodeCreate.Options) {
   writer.word(block.prevrandao)
   writer.word(block.blobBasefee)
   writer.word(block.slotNum)
+  overrides(writer, options.version)
   return writer
+}
+
+/** Scalar version fields, paired with the presence bit the ABI gives each. */
+export const fields = {
+  txGasLimitCap: 1 << 0,
+  memoryLimit: 1 << 1,
+  maxCodeSize: 1 << 2,
+  maxInitcodeSize: 1 << 3,
+  maxBlobsPerTx: 1 << 4,
+  blobBaseFeeUpdateFraction: 1 << 5,
+} as const
+
+/**
+ * evm2's feature flags, in its declaration order.
+ *
+ * The index is the wire value, so this list tracks
+ * `wasm/evm2/src/features.rs`. A flag absent here cannot be addressed.
+ */
+export const features = [
+  'txChainIdCheck',
+  'nonceCheck',
+  'balanceCheck',
+  'balanceTopUp',
+  'blockGasLimitCheck',
+  'eip3607',
+  'priorityFeeCheck',
+  'feeCharge',
+  'eip2',
+  'eip150',
+  'eip161',
+  'codeSizeCheck',
+  'eip2028',
+  'eip2200',
+  'eip2929',
+  'eip3529',
+  'eip3541',
+  'baseFeeCheck',
+  'eip4399',
+  'eip3651',
+  'eip3860',
+  'eip6780',
+  'eip7623',
+  'eip7702',
+  'eip8037',
+  'eip7708',
+  'eip8246',
+  'eip2780',
+] as const
+
+/**
+ * evm2's gas parameters, in `GasId` declaration order.
+ *
+ * The index is the wire value, matching evm2's own discriminant.
+ */
+export const gasIds = [
+  'expByte',
+  'extcodecopyPerWord',
+  'copyPerWord',
+  'logdata',
+  'logtopic',
+  'mcopyPerWord',
+  'keccak256PerWord',
+  'memoryLinearCost',
+  'memoryQuadraticReduction',
+  'initcodePerWord',
+  'create',
+  'callStipendReduction',
+  'transferValueCost',
+  'coldAccountAdditionalCost',
+  'newAccountCost',
+  'warmStorageReadCost',
+  'sstoreStatic',
+  'sstoreSetWithoutLoadCost',
+  'sstoreResetWithoutColdLoadCost',
+  'sstoreClearingSlotRefund',
+  'selfdestructRefund',
+  'callStipend',
+  'maxRefundQuotient',
+  'coldStorageAdditionalCost',
+  'coldStorageCost',
+  'newAccountCostForSelfdestruct',
+  'codeDepositCost',
+  'txEip7702PerEmptyAccountCost',
+  'txTokenNonZeroByteMultiplier',
+  'txTokenCost',
+  'txFloorCostPerToken',
+  'txFloorCostBase',
+  'txFloorZeroByteMultiplier',
+  'txAccessListAddressCost',
+  'txAccessListStorageKeyCost',
+  'txAccessListFloorByteMultiplier',
+  'txBaseStipend',
+  'txCreateCost',
+  'txInitcodeCost',
+  'sstoreSetRefund',
+  'sstoreResetRefund',
+  'txEip7702AuthRefund',
+  'sstoreSetState',
+  'newAccountState',
+  'codeDepositState',
+  'createState',
+  'txEip7702PerAuthState',
+  'txTransferLogCost',
+  'txValueCost',
+  'txCreateAccessCost',
+  'custom0',
+  'custom1',
+  'custom2',
+  'custom3',
+  'custom4',
+  'custom5',
+  'custom6',
+  'custom7',
+] as const
+
+/**
+ * Writes the caller's version overrides.
+ *
+ * Every group is partial: what the caller does not mention keeps the value the
+ * specification gave it, so evm2 stays the source of each default.
+ */
+function overrides(writer: Writer, version: Version | undefined) {
+  let present = 0
+  for (const [name, bit] of Object.entries(fields))
+    if (version?.[name as keyof typeof fields] !== undefined) present |= bit
+  writer.u32(present)
+
+  for (const name of Object.keys(fields) as (keyof typeof fields)[]) {
+    const value = version?.[name]
+    if (value !== undefined) writer.u64(value)
+  }
+
+  const flags = Object.entries(version?.features ?? {}).filter(
+    ([, on]) => on !== undefined,
+  )
+  writer.u32(flags.length)
+  for (const [name, on] of flags) {
+    const index = features.indexOf(name as (typeof features)[number])
+    if (index < 0) throw new UnknownFeatureError({ name })
+    writer.u32(index)
+    writer.u32(on ? 1 : 0)
+  }
+
+  const gas = Object.entries(version?.gas ?? {}).filter(
+    ([, cost]) => cost !== undefined,
+  )
+  writer.u32(gas.length)
+  for (const [name, cost] of gas) {
+    const index = gasIds.indexOf(name as (typeof gasIds)[number])
+    if (index < 0) throw new UnknownGasIdError({ name })
+    writer.u32(index)
+    writer.u32(cost as number)
+  }
+}
+
+/** Version overrides applied on top of a specification's own values. */
+export type Version = {
+  /** Blob base fee update fraction. */
+  blobBaseFeeUpdateFraction?: bigint | undefined
+  /** Feature flags to turn on or off. */
+  features?: Partial<Record<(typeof features)[number], boolean>> | undefined
+  /** Gas parameters to replace. */
+  gas?: Partial<Record<(typeof gasIds)[number], number>> | undefined
+  /** Blobs allowed in one transaction. */
+  maxBlobsPerTx?: bigint | undefined
+  /** Largest deployable bytecode. */
+  maxCodeSize?: bigint | undefined
+  /** Largest creation initcode. */
+  maxInitcodeSize?: bigint | undefined
+  /** Hard memory limit, in bytes. */
+  memoryLimit?: bigint | undefined
+  /** Transaction gas limit cap. */
+  txGasLimitCap?: bigint | undefined
+}
+
+/** Thrown when a feature name is not one evm2 declares. */
+export class UnknownFeatureError extends Errors.BaseError {
+  override readonly name = 'Evm.UnknownFeatureError'
+
+  constructor({ name }: { name: string }) {
+    super(`\`${name}\` is not a feature this version knows.`)
+  }
+}
+
+/** Thrown when a gas parameter name is not one evm2 declares. */
+export class UnknownGasIdError extends Errors.BaseError {
+  override readonly name = 'Evm.UnknownGasIdError'
+
+  constructor({ name }: { name: string }) {
+    super(`\`${name}\` is not a gas parameter this version knows.`)
+  }
 }
 
 /** Thrown when a value does not fit the wire width the ABI declares. */

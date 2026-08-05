@@ -166,3 +166,34 @@ describe('ExecutedTx', () => {
     >()
   })
 })
+
+describe('version', () => {
+  test('feature and gas names are the declared unions', () => {
+    expectTypeOf<Evm.Feature>().toExtend<string>()
+    expectTypeOf<'nonceCheck'>().toExtend<Evm.Feature>()
+    expectTypeOf<'logtopic'>().toExtend<Evm.GasId>()
+    // @ts-expect-error not a flag evm2 declares
+    expectTypeOf<'notAFeature'>().toExtend<Evm.Feature>()
+  })
+
+  test('overrides are partial, and scalars are bigints', () => {
+    expectTypeOf<Evm.Version>().toExtend<{
+      features?: Partial<Record<Evm.Feature, boolean>> | undefined
+    }>()
+    expectTypeOf<Evm.Version['maxCodeSize']>().toEqualTypeOf<
+      bigint | undefined
+    >()
+    expectTypeOf<NonNullable<Evm.Version['gas']>['logtopic']>().toEqualTypeOf<
+      number | undefined
+    >()
+  })
+
+  test('the setters take an EVM of either kind', () => {
+    expectTypeOf(Evm.setBlock).toBeCallableWith({} as Evm.Evm<true>, {})
+    expectTypeOf(Evm.setBlock).toBeCallableWith({} as Evm.Evm<false>, {})
+    expectTypeOf(Evm.setExecutionConfig).toBeCallableWith(
+      {} as Evm.Evm<false>,
+      { specId: 'osaka' },
+    )
+  })
+})
