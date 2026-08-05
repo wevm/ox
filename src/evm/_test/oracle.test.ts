@@ -2,7 +2,13 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Bytes, Hex, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { describe, expect, test } from 'vp/test'
-import { Database as PublicDatabase, Evm, type SpecId } from 'ox/evm'
+import {
+  type Bal,
+  Database as PublicDatabase,
+  Evm,
+  ExecutedTx,
+  type SpecId,
+} from 'ox/evm'
 
 import * as PendingState from '../PendingState.js'
 import * as StateChange from '../StateChange.js'
@@ -44,6 +50,19 @@ type Expectation = {
   stop: number
   totalGasSpent: string
   txGasUsed: string
+}
+
+/** The shape `oracle.rs` records a folded list in. */
+type BalEntry = {
+  address: string
+  balanceChanges: readonly { balance: string; index: number }[]
+  codeChanges: readonly { code: string; index: number }[]
+  nonceChanges: readonly { index: number; nonce: number }[]
+  storageChanges: readonly {
+    changes: readonly { index: number; value: string }[]
+    slot: string
+  }[]
+  storageReads: readonly string[]
 }
 
 type Pending = {
@@ -321,6 +340,7 @@ const corpus = JSON.parse(
   ),
 ) as {
   cases: readonly (Fixture & {
+    bal: readonly BalEntry[] | null
     expected: Expectation & { pendingState?: Pending }
     spec: string
   })[]
@@ -459,5 +479,70 @@ describe('generated corpus, traced', () => {
 
       // Guards the assertion above against passing because nothing was recorded.
       expect(trace!.events.length).toBeGreaterThan(0)
+    })
+})
+
+/**
+ * The same corpus, folded into block access lists.
+ *
+ * `oracle.rs` records what native evm2's builder folds for each case, on the
+ * committing path. This replays each through the artifact's public surface, so a
+ * divergence in the fold, the canonical ordering, or the wire format is a diff
+ * rather than two plausible lists.
+ */
+function encodeBal(bal: Bal.Bal | undefined): readonly BalEntry[] | null {
+  if (!bal) return null
+  return bal.accounts.map((account) => ({
+    address: account.address.toLowerCase(),
+    balanceChanges: account.balanceChanges.map((change) => ({
+      balance: Hex.fromNumber(change.balance),
+      index: Number(change.index),
+    })),
+    codeChanges: account.codeChanges.map((change) => ({
+      code: change.code,
+      index: Number(change.index),
+    })),
+    nonceChanges: account.nonceChanges.map((change) => ({
+      index: Number(change.index),
+      nonce: Number(change.nonce),
+    })),
+    storageChanges: account.storageChanges.map((slot) => ({
+      changes: slot.changes.map((change) => ({
+        index: Number(change.index),
+        value: Hex.fromNumber(change.value),
+      })),
+      slot: Hex.fromNumber(slot.slot),
+    })),
+    storageReads: account.storageReads.map((slot) => Hex.fromNumber(slot)),
+  }))
+}
+
+describe('generated corpus, block access lists', () => {
+  for (const entry of corpus.cases)
+    test(`${entry.spec}: ${entry.name} folds the list native evm2 folds`, async () => {
+      const evm = await Evm.create({
+        block: block(entry.block),
+        chainId: BigInt(entry.chainId),
+        database: database(entry.accounts),
+        specId: entry.spec as SpecId.SpecId,
+      })
+      Evm.enableBalBuilder(evm)
+      // Transaction 0 records at index 1, matching the EIP-7928 layout.
+      Evm.setBalIndex(evm, 1n)
+
+      const transaction = {
+        from: entry.signer as `0x${string}`,
+        serialized: entry.envelope as Hex.Hex,
+      }
+
+      if (entry.expected.handlerError) {
+        expect(() => Evm.transact(evm, transaction)).toThrowError()
+        // A rejected transaction folds nothing.
+        expect(entry.bal).toBeNull()
+        return
+      }
+
+      ExecutedTx.commit(Evm.transact(evm, transaction))
+      expect(encodeBal(Evm.takeBal(evm))).toEqual(entry.bal)
     })
 })

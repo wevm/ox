@@ -14,6 +14,7 @@
 extern crate alloc;
 
 mod abi;
+mod bal;
 mod database;
 mod error;
 mod features;
@@ -25,7 +26,7 @@ use crate::{
     database::{HostDb, HostError},
     error::status,
 };
-use alloc::vec::Vec;
+use alloc::{sync::Arc, vec::Vec};
 use alloy_consensus::{EthereumTxEnvelope, TxEip4844, transaction::Recovered};
 use alloy_eips::eip2718::Decodable2718;
 use core::{
@@ -34,11 +35,12 @@ use core::{
 };
 use alloy_primitives::Address;
 use evm2::{
-    AnyError, BaseEvmTypes, Evm, ExecutionConfig, Precompiles, SpecId, TxResult, Version,
+    AnyError, BaseEvmTypes, ErrorCode, Evm, ExecutionConfig, Precompiles, SpecId, TxResult,
+    Version,
     registry::HandlerError,
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
-    evm::{Db, ExecutedTx},
+    evm::{Bal, BalError, BlockAccessIndex, Db, ExecutedTx},
     version::GasId,
 };
 
@@ -285,6 +287,22 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             Ok(options) => set_inspector(options),
             Err(error) => abi_failure(error),
         },
+        op::SET_BAL => match read_bal(&mut reader) {
+            Ok((fallback, bal)) => set_bal(fallback, bal),
+            Err(error) => abi_failure(error),
+        },
+        op::SET_BAL_BUILDER => match read_flag(&mut reader) {
+            Ok(enabled) => set_bal_builder(enabled),
+            Err(error) => abi_failure(error),
+        },
+        op::TAKE_BAL => match reader.finish() {
+            Ok(()) => take_bal(),
+            Err(error) => abi_failure(error),
+        },
+        op::SET_BAL_INDEX => match read_index(&mut reader) {
+            Ok(index) => set_bal_index(index),
+            Err(error) => abi_failure(error),
+        },
         op::TRANSACT => match read_tx(&mut reader) {
             Ok(tx) => transact(&tx),
             Err(error) => abi_failure(error),
@@ -454,6 +472,7 @@ fn call_tx(engine: &mut Evm<'static, BaseEvmTypes>, tx: &Recovered<TxEnvelope>) 
                     writer.str(&alloc::format!("{error}"));
                     writer.finish(status::DATABASE)
                 }
+                None if is_bal_uncovered(&failure) => writer.finish(status::BAL_NOT_COVERED),
                 None => {
                     error::write_handler(&mut writer, &failure);
                     writer.finish(status::HANDLER)
@@ -498,6 +517,7 @@ fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
             writer.str(&alloc::format!("{error}"));
             writer.finish(status::DATABASE)
         }
+        None if is_bal_uncovered(&failure) => writer.finish(status::BAL_NOT_COVERED),
         None => {
             error::write_handler(&mut writer, &failure);
             writer.finish(status::HANDLER)
@@ -520,6 +540,19 @@ fn engine_failure() -> Option<AnyError> {
 /// the host repeats the operation once the value is available.
 fn is_pending(error: &AnyError) -> bool {
     matches!(error.downcast_ref::<HostError>(), Some(HostError::Pending))
+}
+
+/// Whether a failure is a read refused for falling outside the attached BAL.
+///
+/// evm2 reports this as `Fatal(BAL_NOT_COVERED)`, keeping the `BalError` itself on
+/// a context the public API does not reach, so which address was missing is not
+/// recoverable here. `External` is matched too, for the revision that surfaces it.
+fn is_bal_uncovered(failure: &HandlerError) -> bool {
+    match failure {
+        HandlerError::Fatal(code) => *code == ErrorCode::BAL_NOT_COVERED,
+        HandlerError::External(error) => error.downcast_ref::<BalError>().is_some(),
+        _ => false,
+    }
 }
 
 /// Resolves the outstanding handle, releasing the engine borrow.
@@ -594,6 +627,87 @@ fn set_inspector(options: Option<trace::Options>) -> Vec<u8> {
     Writer::new().finish(status::OK)
 }
 
+/// Reads the fallback switch and the block access list that follows it.
+fn read_bal(reader: &mut Reader<'_>) -> Result<(bool, Bal), abi::Error> {
+    let fallback = reader.u32()? != 0;
+    let bal = bal::read(reader)?;
+    reader.finish()?;
+    Ok((fallback, bal))
+}
+
+/// Reads a lone boolean operand.
+fn read_flag(reader: &mut Reader<'_>) -> Result<bool, abi::Error> {
+    let value = reader.u32()? != 0;
+    reader.finish()?;
+    Ok(value)
+}
+
+/// Reads a lone block access index operand.
+fn read_index(reader: &mut Reader<'_>) -> Result<BlockAccessIndex, abi::Error> {
+    let index = reader.u64()?;
+    reader.finish()?;
+    Ok(BlockAccessIndex(index))
+}
+
+/// Attaches a block access list and sets whether uncovered reads may fall back.
+///
+/// evm2 has no way to detach one, so an empty list with fallback enabled is how a
+/// caller returns to unrestricted reads: every lookup misses and falls through,
+/// which is what an unattached BAL does.
+fn set_bal(fallback: bool, bal: Bal) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    let state = engine.state_mut();
+    state.set_bal(Arc::new(bal));
+    state.set_allow_bal_db_fallback(fallback);
+    Writer::new().finish(status::OK)
+}
+
+/// Enables the block access list builder, or discards the one in progress.
+fn set_bal_builder(enabled: bool) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    let state = engine.state_mut();
+    if enabled {
+        state.enable_bal_builder();
+    } else {
+        // evm2 disables by removing the builder, which is what taking it does.
+        state.take_bal_builder();
+    }
+    Writer::new().finish(status::OK)
+}
+
+/// Drains the built block access list, resetting the block access index.
+fn take_bal() -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    let mut writer = Writer::new();
+    match engine.state_mut().take_bal_builder() {
+        Some(built) => {
+            writer.bool(true);
+            bal::write(&mut writer, built);
+        }
+        None => writer.bool(false),
+    }
+    writer.finish(status::OK)
+}
+
+/// Sets the block access index reads are served at and writes recorded under.
+fn set_bal_index(index: BlockAccessIndex) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    engine.state_mut().set_bal_index(index);
+    Writer::new().finish(status::OK)
+}
+
 /// Drains the installed collector, if there is one, into `writer`.
 ///
 /// Reads the collector's own slot rather than reaching through the engine, so a
@@ -647,6 +761,11 @@ fn read_account(engine: &mut Evm<'static, BaseEvmTypes>, address: &Address) -> V
                 Some(error) => {
                     writer.str(&alloc::format!("{error}"));
                     writer.finish(status::DATABASE)
+                }
+                // The code is in hand here, so the BAL sentinel is recognized
+                // without a handler error to inspect.
+                None if code == ErrorCode::BAL_NOT_COVERED => {
+                    writer.finish(status::BAL_NOT_COVERED)
                 }
                 None => {
                     error::write_handler(&mut writer, &HandlerError::Fatal(code));

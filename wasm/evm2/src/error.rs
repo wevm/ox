@@ -33,6 +33,10 @@ pub mod status {
     /// A read needed a value the host has not fetched. No state was accepted;
     /// the host supplies the value and repeats the operation.
     pub const PENDING: u16 = 9;
+
+    /// A read fell outside the attached block access list while fallback was
+    /// disabled, so it was refused rather than served from the database.
+    pub const BAL_NOT_COVERED: u16 = 10;
 }
 
 /// Discriminants for [`HandlerError`] variants.

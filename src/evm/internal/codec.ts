@@ -44,6 +44,10 @@ export const op = {
   commitWith: 10,
   discardWith: 11,
   setInspector: 12,
+  setBal: 13,
+  setBalBuilder: 14,
+  takeBal: 15,
+  setBalIndex: 16,
 } as const
 
 /**
@@ -83,6 +87,7 @@ export const status = {
   notExecuted: 7,
   sink: 8,
   pending: 9,
+  balNotCovered: 10,
 } as const
 
 /** Block environment, in evm2's `BlockEnvExt` terms. */
@@ -638,6 +643,171 @@ export const messageKinds = [
  * of misreporting the message.
  */
 export const unknownMessageKind = 'unknown'
+
+/**
+ * A block access list, as EIP-7928 orders it.
+ *
+ * Accounts are sorted by address and each account's entries by key, which evm2
+ * applies on the way out, so a list read back is canonical whatever order it was
+ * written in.
+ */
+export type Bal = {
+  accounts: readonly BalAccount[]
+}
+
+/** One account's entries in a block access list. */
+export type BalAccount = {
+  address: Address.Address
+  balanceChanges: readonly { balance: bigint; index: bigint }[]
+  codeChanges: readonly { code: Hex.Hex; index: bigint }[]
+  nonceChanges: readonly { index: bigint; nonce: bigint }[]
+  storageChanges: readonly {
+    changes: readonly { index: bigint; value: bigint }[]
+    slot: bigint
+  }[]
+  storageReads: readonly bigint[]
+}
+
+/** Writes a block access list. */
+function writeBal(writer: Writer, bal: Bal): void {
+  writer.u32(bal.accounts.length)
+  for (const account of bal.accounts) {
+    writer.address(account.address)
+
+    writer.u32(account.storageChanges.length)
+    for (const slot of account.storageChanges) {
+      writer.word(slot.slot)
+      writer.u32(slot.changes.length)
+      for (const change of slot.changes) {
+        writer.u64(change.index)
+        writer.word(change.value)
+      }
+    }
+    writer.u32(account.storageReads.length)
+    for (const slot of account.storageReads) writer.word(slot)
+    writer.u32(account.balanceChanges.length)
+    for (const change of account.balanceChanges) {
+      writer.u64(change.index)
+      writer.word(change.balance)
+    }
+    writer.u32(account.nonceChanges.length)
+    for (const change of account.nonceChanges) {
+      writer.u64(change.index)
+      writer.u64(change.nonce)
+    }
+    writer.u32(account.codeChanges.length)
+    for (const change of account.codeChanges) {
+      writer.u64(change.index)
+      writer.bytes(Bytes.fromHex(change.code))
+    }
+  }
+}
+
+/**
+ * Decodes a block access list.
+ *
+ * Fields go into locals before the object is built: these are sequential reads,
+ * so an object literal's property order would be the wire order.
+ */
+function readBal(reader: Reader): Bal {
+  const accounts: BalAccount[] = []
+
+  for (let count = reader.u32(); count > 0; count--) {
+    const address = reader.address()
+
+    const storageChanges: BalAccount['storageChanges'][number][] = []
+    for (let slots = reader.u32(); slots > 0; slots--) {
+      const slot = reader.word()
+      const changes: { index: bigint; value: bigint }[] = []
+      for (let entries = reader.u32(); entries > 0; entries--) {
+        const index = reader.u64()
+        const value = reader.word()
+        changes.push({ index, value })
+      }
+      storageChanges.push({ changes, slot })
+    }
+
+    const storageReads: bigint[] = []
+    for (let reads = reader.u32(); reads > 0; reads--)
+      storageReads.push(reader.word())
+
+    const balanceChanges: BalAccount['balanceChanges'][number][] = []
+    for (let entries = reader.u32(); entries > 0; entries--) {
+      const index = reader.u64()
+      const balance = reader.word()
+      balanceChanges.push({ balance, index })
+    }
+
+    const nonceChanges: BalAccount['nonceChanges'][number][] = []
+    for (let entries = reader.u32(); entries > 0; entries--) {
+      const index = reader.u64()
+      const nonce = reader.u64()
+      nonceChanges.push({ index, nonce })
+    }
+
+    const codeChanges: BalAccount['codeChanges'][number][] = []
+    for (let entries = reader.u32(); entries > 0; entries--) {
+      const index = reader.u64()
+      const code = Hex.fromBytes(reader.bytes())
+      codeChanges.push({ code, index })
+    }
+
+    accounts.push({
+      address,
+      balanceChanges,
+      codeChanges,
+      nonceChanges,
+      storageChanges,
+      storageReads,
+    })
+  }
+
+  return { accounts }
+}
+
+/** Encodes a request attaching a block access list. */
+export function encodeSetBal(options: encodeSetBal.Options): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u32(options.fallback ? 1 : 0)
+  writeBal(writer, options.bal)
+  return writer.finish(op.setBal)
+}
+
+export declare namespace encodeSetBal {
+  type Options = {
+    /** List consulted on reads. */
+    bal: Bal
+    /** Whether a read the list does not cover may fall back to the database. */
+    fallback: boolean
+  }
+}
+
+/** Encodes a request enabling or discarding the block access list builder. */
+export function encodeSetBalBuilder(enabled: boolean): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u32(enabled ? 1 : 0)
+  return writer.finish(op.setBalBuilder)
+}
+
+/** Encodes a request draining the built block access list. */
+export function encodeTakeBal(): Bytes.Bytes {
+  return new Writer().finish(op.takeBal)
+}
+
+/** Encodes a request setting the block access index. */
+export function encodeSetBalIndex(index: bigint): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u64(index)
+  return writer.finish(op.setBalIndex)
+}
+
+/** Decodes a drained block access list, absent when no builder was enabled. */
+export function decodeBal(bytes: Bytes.Bytes): Bal | undefined {
+  const reader = new Reader(bytes)
+  const built = reader.bool() ? readBal(reader) : undefined
+  reader.finish()
+  return built
+}
 
 /** Encodes a request installing or removing the inspector. */
 export function encodeSetInspector(

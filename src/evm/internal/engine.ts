@@ -65,6 +65,14 @@ export type Engine = {
    * Removing means the engine holds none, so an untraced execution pays nothing.
    */
   setInspector(options: codec.encodeSetInspector.Options): void
+  /** Attaches a block access list and sets the database-fallback switch. */
+  setBal(options: codec.encodeSetBal.Options): void
+  /** Enables the block access list builder, or discards the one in progress. */
+  setBalBuilder(enabled: boolean): void
+  /** Drains the built list, or `undefined` when no builder was enabled. */
+  takeBal(): codec.Bal | undefined
+  /** Sets the block access index reads are served at and writes recorded under. */
+  setBalIndex(index: bigint): void
   /**
    * Executes a transaction and leaves its state changes pending.
    *
@@ -137,8 +145,20 @@ export async function create(options: create.Options): Promise<Engine> {
     setBlock(options) {
       resolve(instance, codec.encodeSetBlock(options))
     },
+    setBal(options) {
+      resolve(instance, codec.encodeSetBal(options))
+    },
+    setBalBuilder(enabled) {
+      resolve(instance, codec.encodeSetBalBuilder(enabled))
+    },
+    setBalIndex(index) {
+      resolve(instance, codec.encodeSetBalIndex(index))
+    },
     setInspector(options) {
       resolve(instance, codec.encodeSetInspector(options))
+    },
+    takeBal() {
+      return codec.decodeBal(resolve(instance, codec.encodeTakeBal()))
     },
     transact(options) {
       const payload = resolve(instance, codec.encodeTransact(options))
@@ -183,6 +203,7 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
   if (status === codec.status.engineBorrowed) throw new BorrowedError()
   if (status === codec.status.notExecuted) throw new NotExecutedError()
   if (status === codec.status.sink) throw new SinkError()
+  if (status === codec.status.balNotCovered) throw new NotCoveredError()
   // Not a failure: the attempt was abandoned before any state was accepted. The
   // asynchronous driver catches this, awaits the source, and repeats.
   if (status === codec.status.pending) throw new async.PendingError()
@@ -255,6 +276,20 @@ export class HandlerError extends Errors.BaseError {
  * evm2 discards the transaction in that case rather than committing it, so this
  * only surfaces when the sink failed without throwing an error of its own.
  */
+export class NotCoveredError extends Errors.BaseError {
+  override readonly name = 'Evm.NotCoveredError'
+
+  constructor() {
+    super('A read fell outside the attached block access list.', {
+      metaMessages: [
+        'The list is consulted instead of the database, so a read it does not cover is refused rather than served.',
+      ],
+      details:
+        'Add the account or slot to the list, or allow fallback when executing transactions that are not part of the block.',
+    })
+  }
+}
+
 export class SinkError extends Errors.BaseError {
   override readonly name = 'Evm.SinkError'
 

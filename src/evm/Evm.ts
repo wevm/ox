@@ -3,6 +3,7 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as TxEnvelope from '../core/TxEnvelope.js'
 import * as Database from './Database.js'
+import type * as Bal from './Bal.js'
 import * as ExecutedTx from './ExecutedTx.js'
 import type * as Inspector from './Inspector.js'
 import type * as Ethereum from './Ethereum.js'
@@ -25,6 +26,7 @@ import type {
   BorrowedError,
   DatabaseError,
   HandlerError,
+  NotCoveredError,
 } from './internal/engine.js'
 
 export {
@@ -33,6 +35,7 @@ export {
   DatabaseError,
   HandlerError,
   MissingError,
+  NotCoveredError,
   NotExecutedError,
 } from './internal/engine.js'
 export { DecodeError, EncodeError } from './internal/codec.js'
@@ -394,6 +397,7 @@ export declare namespace callTx {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | NotCoveredError
     | DecodeError
     | EncodeError
     | HandlerError
@@ -517,6 +521,7 @@ export declare namespace transact {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | NotCoveredError
     | DecodeError
     | EncodeError
     | HandlerError
@@ -605,6 +610,7 @@ export declare namespace readAccountInfo {
     | AbiError
     | BorrowedError
     | DatabaseError
+    | NotCoveredError
     | HandlerError
     | ReentrancyError
     | Errors.GlobalErrorType
@@ -856,6 +862,195 @@ export function clearInspector<asynchronous extends boolean>(
 
 export declare namespace clearInspector {
   type ErrorType = setInspector.ErrorType
+}
+
+/**
+ * Attaches a block access list, which covered reads are served from.
+ *
+ * The list is a coverage gate and an overlay, not a replacement: a read it does
+ * not cover is refused unless `fallback` is set, because during block validation
+ * an access outside the list means the list is wrong. A covered read is served
+ * from the list only where the list holds a write for it, and otherwise reads
+ * through to the database.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * // Validating a block: an uncovered read is a failure, not a database lookup.
+ * Evm.setBal(evm, bal)
+ *
+ * // Executing something the block does not contain, positioned on its state.
+ * Evm.setBal(evm, bal, { fallback: true })
+ * ```
+ *
+ * @param evm - EVM to attach to.
+ * @param bal - List to consult on reads.
+ * @param options - Whether uncovered reads may fall back to the database.
+ */
+export function setBal<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+  bal: Bal.Bal,
+  options: setBal.Options = {},
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () =>
+    evm['~engine'].setBal({ bal, fallback: options.fallback ?? false }),
+  )
+}
+
+export declare namespace setBal {
+  type Options = {
+    /**
+     * Whether a read the list does not cover falls back to the database.
+     *
+     * @default false
+     */
+    fallback?: boolean | undefined
+  }
+
+  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
+}
+
+/**
+ * Removes the attached block access list, so reads go to the database again.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.clearBal(evm)
+ * ```
+ *
+ * @param evm - EVM to detach from.
+ */
+export function clearBal<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, void> {
+  // evm2 has no way to detach one, so this attaches an empty list with fallback
+  // on: every lookup misses and reads through, which is what no list does.
+  return attempt(evm, () =>
+    evm['~engine'].setBal({ bal: { accounts: [] }, fallback: true }),
+  )
+}
+
+export declare namespace clearBal {
+  type ErrorType = setBal.ErrorType
+}
+
+/**
+ * Starts building a block access list from what executions touch.
+ *
+ * Each committed transaction folds its post-state in at the current index, so
+ * {@link ox#Evm.(setBalIndex:function)} is advanced once per transaction. Read the
+ * result with {@link ox#Evm.(takeBal:function)}, or abandon it with
+ * {@link ox#Evm.(clearBalBuilder:function)}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.enableBalBuilder(evm)
+ *
+ * // Transaction `i` records at index `i + 1`.
+ * Evm.setBalIndex(evm, 1n)
+ * Evm.transact(evm, transaction)
+ *
+ * const bal = Evm.takeBal(evm)
+ * ```
+ *
+ * @param evm - EVM to build from.
+ */
+export function enableBalBuilder<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () => evm['~engine'].setBalBuilder(true))
+}
+
+export declare namespace enableBalBuilder {
+  type ErrorType = setBal.ErrorType
+}
+
+/**
+ * Discards the block access list being built, without reading it.
+ *
+ * {@link ox#Evm.(takeBal:function)} also ends the build; this is for abandoning
+ * one whose result is not wanted.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.clearBalBuilder(evm)
+ * ```
+ *
+ * @param evm - EVM to stop building from.
+ */
+export function clearBalBuilder<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () => evm['~engine'].setBalBuilder(false))
+}
+
+export declare namespace clearBalBuilder {
+  type ErrorType = setBal.ErrorType
+}
+
+/**
+ * Takes the built block access list, resetting the index.
+ *
+ * `undefined` when no builder was started. Taking it ends the build, so a further
+ * block starts with {@link ox#Evm.(enableBalBuilder:function)} again.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * const bal = Evm.takeBal(evm)
+ * ```
+ *
+ * @param evm - EVM to take from.
+ * @returns The list, or `undefined` when none was being built.
+ */
+export function takeBal<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, Bal.Bal | undefined> {
+  return attempt(evm, () => evm['~engine'].takeBal())
+}
+
+export declare namespace takeBal {
+  type ErrorType = setBal.ErrorType
+}
+
+/**
+ * Sets the block access index reads resolve at and writes record under.
+ *
+ * Index `0` is the pre-execution state, and transaction `i` uses index `i + 1`.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.setBalIndex(evm, 1n)
+ * ```
+ *
+ * @param evm - EVM to position.
+ * @param index - Index to use.
+ */
+export function setBalIndex<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+  index: bigint,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () => evm['~engine'].setBalIndex(index))
+}
+
+export declare namespace setBalIndex {
+  type ErrorType = setBal.ErrorType
 }
 
 // Merges block values over the current ones, field by field rather than with a

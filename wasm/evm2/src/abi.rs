@@ -55,6 +55,14 @@ pub mod op {
     pub const DISCARD_WITH: u16 = 11;
     /// Installs or removes the execution inspector.
     pub const SET_INSPECTOR: u16 = 12;
+    /// Attaches a block access list and sets the database-fallback switch.
+    pub const SET_BAL: u16 = 13;
+    /// Enables or discards the block access list builder.
+    pub const SET_BAL_BUILDER: u16 = 14;
+    /// Drains the built block access list.
+    pub const TAKE_BAL: u16 = 15;
+    /// Sets the block access index reads and writes are keyed at.
+    pub const SET_BAL_INDEX: u16 = 16;
 }
 
 /// Builds a response header with an empty payload.
@@ -289,6 +297,8 @@ pub enum Error {
     /// A gas parameter index outside evm2's `GasId`.
     UnknownGasId(u32),
     /// Transaction envelope failed EIP-2718 decoding.
+    /// A block access list carried bytecode evm2 refuses to decode.
+    Bytecode,
     Envelope,
 }
 
@@ -316,6 +326,7 @@ impl fmt::Display for Error {
             }
             Self::UnknownFeature(index) => write!(f, "unknown feature index {index}"),
             Self::UnknownGasId(index) => write!(f, "unknown gas parameter index {index}"),
+            Self::Bytecode => f.write_str("block access list carries undecodable bytecode"),
             Self::Envelope => f.write_str("transaction envelope is not valid EIP-2718"),
         }
     }
