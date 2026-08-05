@@ -8,6 +8,7 @@ import type * as Ethereum from './Ethereum.js'
 import * as SpecId from './SpecId.js'
 import * as TxResult from './TxResult.js'
 import * as driver from './internal/async.js'
+import * as codec from './internal/codec.js'
 import * as engine from './internal/engine.js'
 
 import type {
@@ -52,6 +53,19 @@ export { handlerKinds } from './internal/engine.js'
 export type Evm<asynchronous extends boolean = false> = {
   /** @internal */
   readonly '~async': asynchronous
+  /**
+   * The engine's current execution config.
+   *
+   * Held so a setter can replace one half without discarding the other, since
+   * the adapter's operation carries both.
+   *
+   * @internal
+   */
+  '~config': {
+    block: codec.Block
+    specId: SpecId.SpecId
+    version?: Version | undefined
+  }
   /** @internal */
   readonly '~chainId': bigint
   /**
@@ -72,6 +86,20 @@ export type Awaitable<
   asynchronous extends boolean,
   value,
 > = asynchronous extends true ? Promise<value> : value
+
+/**
+ * Version values an execution runs under.
+ *
+ * Mirrors evm2's `Version`, minus the chain id, which `chainId` carries. Every
+ * field is optional: what is omitted keeps the value the specification gives it.
+ */
+export type Version = codec.Version
+
+/** Feature flags a version can turn on or off. */
+export type Feature = (typeof codec.features)[number]
+
+/** Gas parameters a version can replace. */
+export type GasId = (typeof codec.gasIds)[number]
 
 /** Block values opcodes read. */
 export type Block = {
@@ -184,31 +212,36 @@ export async function create(
     chainId,
     database = Database.fromMemory(),
     specId = SpecId.latest,
+    version,
   } = options
 
   // An asynchronous source is driven through synchronous reads: a miss abandons
   // the attempt and the operation repeats once the value is cached.
   const source = driver.isAsync(database) ? driver.driver(database) : undefined
 
+  const resolved = {
+    basefee: block?.basefee ?? 0n,
+    beneficiary: block?.beneficiary ?? `0x${'00'.repeat(20)}`,
+    blobBasefee: block?.blobBasefee ?? 1n,
+    difficulty: block?.difficulty ?? 0n,
+    gasLimit: block?.gasLimit ?? 0xffffffffffffffffn,
+    number: block?.number ?? 0n,
+    prevrandao: block?.prevrandao ?? 0n,
+    slotNum: block?.slotNum ?? 0n,
+    timestamp: block?.timestamp ?? 1n,
+  } satisfies Block
+
   return {
     '~async': (source !== undefined) as never,
     '~chainId': chainId ?? 1n,
+    '~config': { block: resolved, specId, ...(version ? { version } : {}) },
     '~driver': source as never,
     '~engine': await engine.create({
-      block: {
-        basefee: block?.basefee ?? 0n,
-        beneficiary: block?.beneficiary ?? `0x${'00'.repeat(20)}`,
-        blobBasefee: block?.blobBasefee ?? 1n,
-        difficulty: block?.difficulty ?? 0n,
-        gasLimit: block?.gasLimit ?? 0xffffffffffffffffn,
-        number: block?.number ?? 0n,
-        prevrandao: block?.prevrandao ?? 0n,
-        slotNum: block?.slotNum ?? 0n,
-        timestamp: block?.timestamp ?? 1n,
-      },
+      block: resolved,
       chainId: chainId ?? 1n,
       database: source ? source.database : (database as Database.Database),
       specId: SpecId.ids.indexOf(specId),
+      ...(version ? { version } : {}),
     }),
   }
 }
@@ -243,6 +276,13 @@ export declare namespace create {
      * @default SpecId.latest
      */
     specId?: SpecId.SpecId | undefined
+    /**
+     * Overrides applied on top of the specification's own version.
+     *
+     * Anything omitted keeps the value the specification gives it, so the
+     * engine remains the source of every default.
+     */
+    version?: Version | undefined
   }
 
   type ErrorType = EncodeError | VersionError | Errors.GlobalErrorType
@@ -576,6 +616,152 @@ const placeholder = {
   s: `0x${'01'.repeat(32)}`,
   yParity: 0,
 } as const
+
+/**
+ * Replaces the block environment.
+ *
+ * Accepted state is untouched: this changes what block opcodes report, not what
+ * the EVM has executed. The specification and version stay as they were.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.setBlock(evm, {
+ *   number: 21_000_000n,
+ *   timestamp: 1_700_000_000n
+ * })
+ * ```
+ *
+ * @param evm - EVM to reconfigure.
+ * @param block - Block values to apply.
+ */
+export function setBlock(evm: Evm<boolean>, block: Block): void {
+  apply(evm, { ...evm['~config'], block: merge(evm['~config'].block, block) })
+}
+
+export declare namespace setBlock {
+  type ErrorType =
+    | AbiError
+    | BorrowedError
+    | EncodeError
+    | ReentrancyError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Replaces the specification and its version overrides.
+ *
+ * The block environment stays as it was. Overrides are applied whole rather than
+ * merged, so what the new set omits returns to the specification's own value.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * // Simulate without charging fees or checking balances.
+ * Evm.setExecutionConfig(evm, {
+ *   version: {
+ *     features: { balanceCheck: false, feeCharge: false }
+ *   }
+ * })
+ * ```
+ *
+ * @param evm - EVM to reconfigure.
+ * @param options - Specification and version to apply.
+ */
+export function setExecutionConfig(
+  evm: Evm<boolean>,
+  options: setExecutionConfig.Options,
+): void {
+  const specId = options.specId ?? evm['~config'].specId
+  apply(evm, {
+    block: evm['~config'].block,
+    specId,
+    ...(options.version ? { version: options.version } : {}),
+  })
+}
+
+export declare namespace setExecutionConfig {
+  type Options = {
+    /** Specification whose rules apply. Unchanged when omitted. */
+    specId?: SpecId.SpecId | undefined
+    /** Overrides applied on top of that specification. */
+    version?: Version | undefined
+  }
+
+  type ErrorType = setBlock.ErrorType
+}
+
+/**
+ * Replaces the block environment, the specification, and its version together.
+ *
+ * The one call for a caller advancing to a block that also changes the rules, so
+ * neither half is briefly applied without the other.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.setBlockAndExecutionConfig(evm, {
+ *   block: { number: 21_000_000n },
+ *   specId: 'osaka'
+ * })
+ * ```
+ *
+ * @param evm - EVM to reconfigure.
+ * @param options - Block, specification, and version to apply.
+ */
+export function setBlockAndExecutionConfig(
+  evm: Evm<boolean>,
+  options: setBlockAndExecutionConfig.Options,
+): void {
+  apply(evm, {
+    block: merge(evm['~config'].block, options.block),
+    specId: options.specId ?? evm['~config'].specId,
+    ...(options.version ? { version: options.version } : {}),
+  })
+}
+
+export declare namespace setBlockAndExecutionConfig {
+  type Options = setExecutionConfig.Options & {
+    /** Block values to apply. */
+    block?: Block | undefined
+  }
+
+  type ErrorType = setBlock.ErrorType
+}
+
+// Merges block values over the current ones, field by field rather than with a
+// spread: an omitted field is `undefined` in the partial, and spreading it would
+// erase the value it should keep.
+function merge(current: codec.Block, block: Block | undefined): codec.Block {
+  return {
+    basefee: block?.basefee ?? current.basefee,
+    beneficiary: block?.beneficiary ?? current.beneficiary,
+    blobBasefee: block?.blobBasefee ?? current.blobBasefee,
+    difficulty: block?.difficulty ?? current.difficulty,
+    gasLimit: block?.gasLimit ?? current.gasLimit,
+    number: block?.number ?? current.number,
+    prevrandao: block?.prevrandao ?? current.prevrandao,
+    slotNum: block?.slotNum ?? current.slotNum,
+    timestamp: block?.timestamp ?? current.timestamp,
+  }
+}
+
+// Sends a resolved config and records it as the EVM's current one.
+function apply(evm: Evm<boolean>, config: Evm<boolean>['~config']) {
+  evm['~engine'].setBlock({
+    block: config.block,
+    chainId: evm['~chainId'],
+    specId: SpecId.ids.indexOf(config.specId),
+    ...(config.version ? { version: config.version } : {}),
+  })
+  evm['~config'] = config
+}
 
 // Runs an engine operation, repeating it while reads are outstanding. A
 // synchronous database returns the value directly. An asynchronous one cannot

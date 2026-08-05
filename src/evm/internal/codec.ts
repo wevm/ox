@@ -308,7 +308,7 @@ export declare namespace encodeCreate {
     /** Chain id the `CHAINID` opcode reports and transactions validate against. */
     chainId: bigint
     /** Overrides applied on top of the specification's own version. */
-    config?: Config | undefined
+    version?: Version | undefined
     /** evm2 `SpecId` discriminant. */
     specId: number
   }
@@ -673,7 +673,7 @@ function config(options: encodeCreate.Options) {
   writer.word(block.prevrandao)
   writer.word(block.blobBasefee)
   writer.word(block.slotNum)
-  overrides(writer, options.config)
+  overrides(writer, options.version)
   return writer
 }
 
@@ -796,18 +796,18 @@ export const gasIds = [
  * Every group is partial: what the caller does not mention keeps the value the
  * specification gave it, so evm2 stays the source of each default.
  */
-function overrides(writer: Writer, config: Config | undefined) {
+function overrides(writer: Writer, version: Version | undefined) {
   let present = 0
   for (const [name, bit] of Object.entries(fields))
-    if (config?.[name as keyof typeof fields] !== undefined) present |= bit
+    if (version?.[name as keyof typeof fields] !== undefined) present |= bit
   writer.u32(present)
 
   for (const name of Object.keys(fields) as (keyof typeof fields)[]) {
-    const value = config?.[name]
+    const value = version?.[name]
     if (value !== undefined) writer.u64(value)
   }
 
-  const flags = Object.entries(config?.features ?? {}).filter(
+  const flags = Object.entries(version?.features ?? {}).filter(
     ([, on]) => on !== undefined,
   )
   writer.u32(flags.length)
@@ -818,7 +818,7 @@ function overrides(writer: Writer, config: Config | undefined) {
     writer.u32(on ? 1 : 0)
   }
 
-  const gas = Object.entries(config?.gas ?? {}).filter(
+  const gas = Object.entries(version?.gas ?? {}).filter(
     ([, cost]) => cost !== undefined,
   )
   writer.u32(gas.length)
@@ -831,7 +831,7 @@ function overrides(writer: Writer, config: Config | undefined) {
 }
 
 /** Version overrides applied on top of a specification's own values. */
-export type Config = {
+export type Version = {
   /** Blob base fee update fraction. */
   blobBaseFeeUpdateFraction?: bigint | undefined
   /** Feature flags to turn on or off. */
