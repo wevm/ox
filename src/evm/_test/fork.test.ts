@@ -23,7 +23,7 @@ type Recording = {
     prevrandao: string
     timestamp: string
   }
-  calls: readonly { params: string; result: unknown }[]
+  calls: readonly { body: string; result: unknown }[]
   receipt: {
     gasUsed: string
     logs: readonly {
@@ -38,20 +38,20 @@ type Recording = {
 
 const file = path.join(import.meta.dirname, 'fork.json')
 
-/** Serves recorded responses, so nothing reaches the network. */
-function replay(calls: Recording['calls']) {
-  const byParams = new Map(calls.map((call) => [call.params, call.result]))
-  return {
-    async request(args: { method: string; params?: readonly unknown[] }) {
-      const key = JSON.stringify(args)
-      if (!byParams.has(key)) throw new Error(`no recorded response for ${key}`)
-      return byParams.get(key)
-    },
+/** Serves recorded exchanges, so nothing reaches the network. */
+function replay(calls: Recording['calls']): typeof fetch {
+  const byBody = new Map(calls.map((call) => [call.body, call.result]))
+  return async (_input, init) => {
+    const body = String(init?.body)
+    if (!byBody.has(body)) throw new Error(`no recorded response for ${body}`)
+    return new Response(JSON.stringify(byBody.get(body)), {
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 }
 
 /** Rebuilds the EVM the recording describes. */
-async function fork(recording: Recording, provider: { request: never }) {
+async function fork(recording: Recording, fetchFn: typeof fetch) {
   return Evm.create({
     block: {
       basefee: BigInt(recording.block.basefee),
@@ -64,9 +64,9 @@ async function fork(recording: Recording, provider: { request: never }) {
     chainId: 1n,
     // Reads resolve at the parent block, which is the state the transaction
     // executed against.
-    database: Database.fromProvider({
+    database: Database.fromRpc('https://recorded.invalid', {
       blockNumber: BigInt(recording.block.number) - 1n,
-      provider: provider as never,
+      fetchFn,
     }),
     specId: 'cancun',
   })
@@ -76,7 +76,7 @@ describe('replay', () => {
   test('behavior: a mainnet transaction matches its own receipt', async () => {
     const recording = JSON.parse(fs.readFileSync(file, 'utf8')) as Recording
 
-    const evm = await fork(recording, replay(recording.calls) as never)
+    const evm = await fork(recording, replay(recording.calls))
     const executed = await Evm.transact(evm, {
       from: recording.transaction.from as `0x${string}`,
       serialized: recording.transaction.serialized as `0x${string}`,

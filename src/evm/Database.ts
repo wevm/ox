@@ -191,10 +191,14 @@ export function fromAsync(source: async.Async): Async {
 }
 
 /**
- * Creates an asynchronous database over an EIP-1193 provider.
+ * Creates an asynchronous database over a JSON-RPC endpoint.
  *
- * Reads resolve against whatever block the provider serves, so pin it to a
- * block for a reproducible fork.
+ * Reads resolve at `blockNumber`, so pin it for a reproducible fork. An account
+ * read needs balance, nonce, and code, which go out as one batched request
+ * rather than three round trips.
+ *
+ * For a source that is not an HTTP endpoint, implement the reads and mark them
+ * with {@link ox#Database.(fromAsync:function)}.
  *
  * @example
  * ```ts twoslash
@@ -202,35 +206,65 @@ export function fromAsync(source: async.Async): Async {
  * import { Database, Evm } from 'ox/evm'
  *
  * const fork = await Evm.create({
- *   database: Database.fromProvider({ provider })
+ *   database: Database.fromRpc('https://eth.example.com', {
+ *     blockNumber: 19868020n
+ *   })
  * })
  *
  * // Reads are asynchronous, so execution is too.
  * const result = await Evm.callTx(fork, transaction)
  * ```
  *
- * @param options - Provider to read through.
+ * @param url - JSON-RPC endpoint.
+ * @param options - Read options.
  * @returns An asynchronous database.
  */
-export function fromProvider(options: fromProvider.Options): Async {
-  const { blockNumber, provider } = options
+export function fromRpc(url: string, options: fromRpc.Options = {}): Async {
+  const { blockNumber, fetchFn = fetch, timeout = 10_000 } = options
   const block =
     blockNumber === undefined ? 'latest' : Hex.fromNumber(blockNumber)
 
-  async function request<result>(method: string, params: readonly unknown[]) {
-    return provider.request({ method, params }) as Promise<result>
+  let id = 0
+
+  // Sends one JSON-RPC request, or a batch, and returns results in order.
+  async function send(
+    calls: readonly { method: string; params: readonly unknown[] }[],
+  ) {
+    const body = calls.map((call) => ({ ...call, id: id++, jsonrpc: '2.0' }))
+    const response = await fetchFn(url, {
+      body: JSON.stringify(body.length === 1 ? body[0] : body),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      signal: AbortSignal.timeout(timeout),
+    })
+    if (!response.ok) throw new RpcError({ status: response.status, url })
+
+    const parsed = await response.json()
+    // A single-element batch is sent unwrapped, so the reply is too.
+    const results = Array.isArray(parsed) ? parsed : [parsed]
+
+    // A batch may answer out of order, so replies are matched by id.
+    const byId = new Map(results.map((entry) => [entry.id, entry]))
+    return body.map(({ id: sent, method }) => {
+      const entry = byId.get(sent)
+      if (!entry) throw new RpcError({ method, url })
+      if (entry.error)
+        throw new RpcError({ message: entry.error.message, method, url })
+      return entry.result
+    })
   }
 
   return fromAsync({
     async getAccount(address) {
-      const [balance, nonce, code] = await Promise.all([
-        request<Hex.Hex>('eth_getBalance', [address, block]),
-        request<Hex.Hex>('eth_getTransactionCount', [address, block]),
-        request<Hex.Hex>('eth_getCode', [address, block]),
-      ])
+      const [balance, nonce, code] = (await send([
+        { method: 'eth_getBalance', params: [address, block] },
+        { method: 'eth_getTransactionCount', params: [address, block] },
+        { method: 'eth_getCode', params: [address, block] },
+      ])) as [Hex.Hex, Hex.Hex, Hex.Hex]
 
-      // A node reports zeroes for an account that does not exist, which is the
-      // same answer as an empty account, so an empty one is reported as absent.
+      // A node answers zero for an account that does not exist and for an empty
+      // one that does, so both are reported absent. evm2 reads an absent account
+      // as balance and nonce zero, which is the same state.
       const bytes = Bytes.fromHex(code)
       if (
         Hex.toBigInt(balance) === 0n &&
@@ -242,45 +276,45 @@ export function fromProvider(options: fromProvider.Options): Async {
       return {
         balance: Hex.toBigInt(balance),
         ...(bytes.length ? { code: bytes } : {}),
-        codeHash: bytes.length ? Hash.keccak256(code) : Hash.keccak256('0x'),
+        codeHash: Hash.keccak256(code),
         nonce: Hex.toBigInt(nonce),
       }
     },
     async getBlockHash(number) {
-      const header = await request<{ hash: Hex.Hex } | null>(
-        'eth_getBlockByNumber',
-        [Hex.fromNumber(number), false],
-      )
+      const [header] = (await send([
+        {
+          method: 'eth_getBlockByNumber',
+          params: [Hex.fromNumber(number), false],
+        },
+      ])) as [{ hash: Hex.Hex } | null]
       if (!header) throw new MissingBlockHashError({ number })
       return header.hash
     },
     async getCodeByHash() {
-      // Nodes key code by address, not by hash, and `getAccount` already
-      // supplies it inline, so the engine never reaches this.
+      // Nodes key code by address, not by hash, and `getAccount` supplies it
+      // inline, so the engine never reaches this.
       throw new UnsupportedReadError()
     },
     async getStorage(address, key) {
-      const value = await request<Hex.Hex>('eth_getStorageAt', [
-        address,
-        Hex.fromNumber(key),
-        block,
-      ])
+      const [value] = (await send([
+        {
+          method: 'eth_getStorageAt',
+          params: [address, Hex.fromNumber(key), block],
+        },
+      ])) as [Hex.Hex]
       return Hex.toBigInt(value)
     },
   })
 }
 
-export declare namespace fromProvider {
+export declare namespace fromRpc {
   type Options = {
     /** Block to read at. Latest when omitted, which is not reproducible. */
     blockNumber?: bigint | undefined
-    /** EIP-1193 provider. */
-    provider: {
-      request(args: {
-        method: string
-        params?: readonly unknown[] | undefined
-      }): Promise<unknown>
-    }
+    /** Replaces the request implementation. Recording and replay use this. */
+    fetchFn?: typeof fetch | undefined
+    /** Milliseconds before a request aborts. @default 10_000 */
+    timeout?: number | undefined
   }
 }
 
@@ -292,6 +326,27 @@ function assertCode(address: string, code: Bytes.Bytes) {
   if (code[0] !== 0xef || code[1] !== 0x01) return
   if (code.length === 23 && code[2] === 0x00) return
   throw new InvalidDesignatorError({ address, length: code.length })
+}
+
+/** Thrown when a JSON-RPC endpoint did not answer a read. */
+export class RpcError extends Errors.BaseError {
+  override readonly name = 'Database.RpcError'
+
+  constructor(options: {
+    message?: string | undefined
+    method?: string | undefined
+    status?: number | undefined
+    url: string
+  }) {
+    super('A JSON-RPC read failed.', {
+      metaMessages: [
+        `Endpoint: ${options.url}`,
+        ...(options.method ? [`Method: ${options.method}`] : []),
+        ...(options.status ? [`Status: ${options.status}`] : []),
+        ...(options.message ? [options.message] : []),
+      ],
+    })
+  }
 }
 
 /** Thrown when a source cannot serve a read the engine performed. */

@@ -20,26 +20,7 @@ const parent = number - 1n
 
 const url = process.env.VITE_ANVIL_FORK_URL ?? 'https://1.rpc.thirdweb.com'
 const transport = RpcTransport.fromHttp(url, { timeout: 60_000 })
-/**
- * Retries a rate-limited read.
- *
- * The retry protocol asks for one value per attempt, so replaying a transaction
- * is tens of sequential requests, which a public endpoint throttles. Recording
- * happens rarely, so waiting is cheaper than requiring a paid endpoint.
- */
-const node = {
-  async request(args: never) {
-    for (let attempt = 0; ; attempt++) {
-      try {
-        return await transport.request(args)
-      } catch (error) {
-        const rateLimited = String(error).includes('429')
-        if (!rateLimited || attempt >= 12) throw error
-        await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 250))
-      }
-    }
-  },
-}
+const node = { request: transport.request }
 
 const shutdown = async () => {}
 
@@ -72,13 +53,27 @@ try {
     status: Hex.Hex
   }
 
-  const calls: { params: string; result: unknown }[] = []
-  const provider = {
-    async request(args: { method: string; params?: readonly unknown[] }) {
-      const result = await node.request(args as never)
-      calls.push({ params: JSON.stringify(args), result })
-      return result
-    },
+  const calls: { body: string; result: unknown }[] = []
+
+  /**
+   * Records each successful exchange, retrying a throttled one.
+   *
+   * The retry protocol asks for one value per attempt, so replaying a
+   * transaction is tens of sequential requests, which a public endpoint
+   * throttles. Recording happens rarely, so waiting is cheaper than requiring a
+   * paid endpoint.
+   */
+  const fetchFn: typeof fetch = async (input, init) => {
+    const body = String(init?.body)
+    for (let attempt = 0; ; attempt++) {
+      const response = await fetch(input, init)
+      if (response.ok) {
+        calls.push({ body, result: await response.clone().json() })
+        return response
+      }
+      if (response.status !== 429 || attempt >= 12) return response
+      await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 250))
+    }
   }
 
   const evm = await Evm.create({
@@ -91,7 +86,7 @@ try {
       timestamp: Hex.toBigInt(block.timestamp),
     },
     chainId: 1n,
-    database: Database.fromProvider({ blockNumber: parent, provider }),
+    database: Database.fromRpc(url, { blockNumber: parent, fetchFn }),
     specId: 'cancun',
   })
 
