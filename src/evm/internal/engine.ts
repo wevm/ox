@@ -45,7 +45,7 @@ export type Engine = {
    * Every operation reaching the engine fails until this runs, which is how
    * evm2's exclusive borrow shows up across two host calls.
    */
-  resolve(resolution: 'commit' | 'discard', token?: Token): void
+  resolve(resolution: 'commit' | 'commitTo' | 'discard', token?: Token): void
   /**
    * Resolves the outstanding transaction, streaming its changes to `sink` first.
    *
@@ -67,6 +67,24 @@ export type Engine = {
   setInspector(options: codec.encodeSetInspector.Options): void
   /** Attaches a block access list and sets the database-fallback switch. */
   setBal(options: codec.encodeSetBal.Options): void
+  /** Installs an empty block accumulator, or removes the one in progress. */
+  setBlockState(enabled: boolean): void
+  /** Drains the accumulated block state, or `undefined` when none was gathered. */
+  takeBlockState(): codec.BlockState | undefined
+  /** Prewarms the precompile addresses. */
+  warmPrecompiles(): void
+  /** Applies caller-supplied changes to the accepted state overlay. */
+  commitSource(changes: codec.Changes): void
+  /**
+   * Executes a system call and leaves its state changes pending.
+   *
+   * Parks a handle the same way `transact` does, so a system call resolves
+   * through the same paths.
+   */
+  systemCall(options: codec.encodeSystemCall.Options): {
+    result: codec.TxResult
+    token: Token
+  }
   /** Enables the block access list builder, or discards the one in progress. */
   setBalBuilder(enabled: boolean): void
   /** Drains the built list, or `undefined` when no builder was enabled. */
@@ -113,6 +131,49 @@ export async function create(options: create.Options): Promise<Engine> {
     outstanding = undefined
   }
 
+  /**
+   * Takes ownership of a parked handle, returning its result and a claim token.
+   *
+   * Shared by every operation that leaves a transaction outstanding, so the
+   * decode-failure release below cannot be forgotten by one of them.
+   */
+  function park(payload: Bytes.Bytes) {
+    const result = (() => {
+      try {
+        return codec.decodeResult(payload)
+      } catch (error) {
+        // The adapter already parked the transaction, so a decode failure has
+        // to release it or the engine stays borrowed with no handle.
+        resolve(instance, codec.encodeResolve('discard'))
+        throw error
+      }
+    })()
+    const token: Token = Object.freeze({})
+    const ref = new WeakRef(token)
+    outstanding = ref
+    reaper.register(token, ref, ref)
+    return { result, token }
+  }
+
+  /**
+   * Runs a resolution, restoring the claim when the adapter refuses.
+   *
+   * Not every resolution succeeds: `commitTo` is refused when no block state is
+   * being gathered, and it refuses before the transaction leaves the engine. So
+   * the handle is still outstanding and has to be resolvable again.
+   */
+  function resolving(token: Token | undefined, run: () => void) {
+    const previous = outstanding
+    claim(token)
+    try {
+      run()
+    } catch (error) {
+      outstanding = previous
+      if (previous) reaper.register(previous.deref() ?? {}, previous, previous)
+      throw error
+    }
+  }
+
   return {
     callTx(options) {
       return codec.decodeResult(resolve(instance, codec.encodeCallTx(options)))
@@ -133,8 +194,7 @@ export async function create(options: create.Options): Promise<Engine> {
       )
     },
     resolve(resolution, token) {
-      claim(token)
-      resolve(instance, codec.encodeResolve(resolution))
+      resolving(token, () => resolve(instance, codec.encodeResolve(resolution)))
     },
     resolveWith(resolution, sink, token) {
       claim(token)
@@ -148,6 +208,20 @@ export async function create(options: create.Options): Promise<Engine> {
     setBal(options) {
       resolve(instance, codec.encodeSetBal(options))
     },
+    setBlockState(enabled) {
+      resolve(instance, codec.encodeSetBlockState(enabled))
+    },
+    takeBlockState() {
+      return codec.decodeBlockState(
+        resolve(instance, codec.encodeTakeBlockState()),
+      )
+    },
+    commitSource(changes) {
+      resolve(instance, codec.encodeCommitSource(changes))
+    },
+    warmPrecompiles() {
+      resolve(instance, codec.encodeWarmPrecompiles())
+    },
     setBalBuilder(enabled) {
       resolve(instance, codec.encodeSetBalBuilder(enabled))
     },
@@ -160,23 +234,11 @@ export async function create(options: create.Options): Promise<Engine> {
     takeBal() {
       return codec.decodeBal(resolve(instance, codec.encodeTakeBal()))
     },
+    systemCall(options) {
+      return park(resolve(instance, codec.encodeSystemCall(options)))
+    },
     transact(options) {
-      const payload = resolve(instance, codec.encodeTransact(options))
-      const result = (() => {
-        try {
-          return codec.decodeResult(payload)
-        } catch (error) {
-          // The adapter already parked the transaction, so a decode failure has
-          // to release it or the engine stays borrowed with no handle.
-          resolve(instance, codec.encodeResolve('discard'))
-          throw error
-        }
-      })()
-      const token: Token = Object.freeze({})
-      const ref = new WeakRef(token)
-      outstanding = ref
-      reaper.register(token, ref, ref)
-      return { result, token }
+      return park(resolve(instance, codec.encodeTransact(options)))
     },
   }
 }
@@ -204,6 +266,7 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
   if (status === codec.status.notExecuted) throw new NotExecutedError()
   if (status === codec.status.sink) throw new SinkError()
   if (status === codec.status.balNotCovered) throw new NotCoveredError()
+  if (status === codec.status.noBlockState) throw new NoBlockStateError()
   // Not a failure: the attempt was abandoned before any state was accepted. The
   // asynchronous driver catches this, awaits the source, and repeats.
   if (status === codec.status.pending) throw new async.PendingError()
@@ -276,6 +339,19 @@ export class HandlerError extends Errors.BaseError {
  * evm2 discards the transaction in that case rather than committing it, so this
  * only surfaces when the sink failed without throwing an error of its own.
  */
+export class NoBlockStateError extends Errors.BaseError {
+  override readonly name = 'Evm.NoBlockStateError'
+
+  constructor() {
+    super('No block state is being accumulated.', {
+      metaMessages: [
+        'A transaction was resolved into a block accumulator while none was installed, so nothing was committed.',
+      ],
+      details: 'Start one with `Evm.setBlockState` before resolving into it.',
+    })
+  }
+}
+
 export class NotCoveredError extends Errors.BaseError {
   override readonly name = 'Evm.NotCoveredError'
 

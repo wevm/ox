@@ -15,6 +15,7 @@ extern crate alloc;
 
 mod abi;
 mod bal;
+mod block;
 mod database;
 mod error;
 mod features;
@@ -40,7 +41,7 @@ use evm2::{
     registry::HandlerError,
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
-    evm::{Bal, BalError, BlockAccessIndex, Db, ExecutedTx},
+    evm::{Bal, BalError, BlockAccessIndex, Db, ExecutedTx, SystemTx},
     version::GasId,
 };
 
@@ -303,11 +304,32 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             Ok(index) => set_bal_index(index),
             Err(error) => abi_failure(error),
         },
+        op::SET_BLOCK_STATE => match read_flag(&mut reader) {
+            Ok(enabled) => set_block_state(enabled),
+            Err(error) => abi_failure(error),
+        },
+        op::TAKE_BLOCK_STATE => match reader.finish() {
+            Ok(()) => take_block_state(),
+            Err(error) => abi_failure(error),
+        },
+        op::WARM_PRECOMPILES => match reader.finish() {
+            Ok(()) => warm_precompiles(),
+            Err(error) => abi_failure(error),
+        },
+        op::COMMIT_SOURCE => match state::read_pending(&mut reader) {
+            Ok(pending) => commit_source(&pending),
+            Err(error) => abi_failure(error),
+        },
+        op::SYSTEM_CALL => match read_system_tx(&mut reader) {
+            Ok(tx) => system_call(tx),
+            Err(error) => abi_failure(error),
+        },
         op::TRANSACT => match read_tx(&mut reader) {
             Ok(tx) => transact(&tx),
             Err(error) => abi_failure(error),
         },
         op::COMMIT
+        | op::COMMIT_TO
         | op::DISCARD
         | op::DETACH
         | op::COMMIT_WITH
@@ -560,6 +582,11 @@ fn is_bal_uncovered(failure: &HandlerError) -> bool {
 /// Taking the handle out first is what makes the engine reachable again, so a
 /// resolution is single-use: a second one finds nothing outstanding.
 fn resolve(op: u16) -> Vec<u8> {
+    // Checked before the handle is taken: taking it and returning early would
+    // drop it, which discards the transaction the caller asked to commit.
+    if op == op::COMMIT_TO && block::accumulator().is_none() {
+        return Writer::new().finish(status::NO_BLOCK_STATE);
+    }
     let Some(handle) = executed().take() else {
         return Writer::new().finish(status::NOT_EXECUTED);
     };
@@ -572,6 +599,13 @@ fn resolve(op: u16) -> Vec<u8> {
         }
         op::DISCARD => {
             let _ = handle.discard();
+        }
+        // Records into the block accumulator and commits. The accumulator is
+        // known present: the absent case returned above.
+        op::COMMIT_TO => {
+            if let Some(accumulator) = block::accumulator() {
+                let _ = handle.commit_to(accumulator);
+            }
         }
         // A sink that refuses a record makes evm2 drop the handle, which
         // discards. The status says so rather than reporting a false commit.
@@ -705,6 +739,101 @@ fn set_bal_index(index: BlockAccessIndex) -> Vec<u8> {
         Err(status) => return Writer::new().finish(status),
     };
     engine.state_mut().set_bal_index(index);
+    Writer::new().finish(status::OK)
+}
+
+/// Installs an empty block accumulator, or removes the one in progress.
+fn set_block_state(enabled: bool) -> Vec<u8> {
+    if enabled {
+        block::install();
+    } else {
+        block::remove();
+    }
+    Writer::new().finish(status::OK)
+}
+
+/// Drains the accumulated block state.
+fn take_block_state() -> Vec<u8> {
+    let mut writer = Writer::new();
+    match block::take() {
+        Some(accumulated) => {
+            writer.bool(true);
+            block::write(&mut writer, &accumulated);
+        }
+        None => writer.bool(false),
+    }
+    writer.finish(status::OK)
+}
+
+/// Reads a system call's caller, target, and calldata.
+fn read_system_tx(reader: &mut Reader<'_>) -> Result<SystemTx, abi::Error> {
+    let caller = reader.address()?;
+    let system_contract_address = reader.address()?;
+    let data = reader.bytes(abi::MAX_REQUEST)?.to_vec().into();
+    reader.finish()?;
+    Ok(SystemTx { caller, system_contract_address, data, _non_exhaustive: () })
+}
+
+/// Executes a system call and parks its handle for a later resolution.
+///
+/// Mirrors [`transact`]: the result comes back now and the handle stays
+/// outstanding, so a system call resolves through the same paths a transaction
+/// does. A system call is not inspected, so no trace section follows.
+fn system_call(tx: SystemTx) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    // An abandoned attempt already recorded hooks, so the retry starts from empty.
+    trace::reset();
+    let failure = match engine.system_call(tx) {
+        Ok(handle) => {
+            let mut writer = Writer::new();
+            write_result(&mut writer, handle.result());
+            *executed() = Some(handle);
+            write_trace(&mut writer);
+            return writer.finish(status::OK);
+        }
+        Err(failure) => failure,
+    };
+
+    let host = engine_failure();
+    let mut writer = Writer::new();
+    match host {
+        Some(error) if is_pending(&error) => writer.finish(status::PENDING),
+        Some(error) => {
+            writer.str(&alloc::format!("{error}"));
+            writer.finish(status::DATABASE)
+        }
+        None if is_bal_uncovered(&failure) => writer.finish(status::BAL_NOT_COVERED),
+        None => {
+            error::write_handler(&mut writer, &failure);
+            writer.finish(status::HANDLER)
+        }
+    }
+}
+
+/// Applies caller-supplied changes to the accepted state overlay.
+///
+/// The counterpart to detaching: state a caller took out, edited, and is putting
+/// back. evm2 derives whether code changed from the values, so nothing beyond
+/// accounts and storage crosses.
+fn commit_source(pending: &evm2::evm::PendingState) -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    engine.commit_source(pending);
+    Writer::new().finish(status::OK)
+}
+
+/// Prewarms the precompile addresses, so a block pays their cold cost once.
+fn warm_precompiles() -> Vec<u8> {
+    let engine = match engine() {
+        Ok(engine) => engine,
+        Err(status) => return Writer::new().finish(status),
+    };
+    engine.warm_precompiles();
     Writer::new().finish(status::OK)
 }
 

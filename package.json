@@ -762,6 +762,11 @@
       "types": "./dist/evm/StateChange.d.ts",
       "default": "./dist/evm/StateChange.js"
     },
+    "./evm/System": {
+      "src": "./src/evm/System.ts",
+      "types": "./dist/evm/System.d.ts",
+      "default": "./dist/evm/System.js"
+    },
     "./evm/TxResult": {
       "src": "./src/evm/TxResult.ts",
       "types": "./dist/evm/TxResult.d.ts",

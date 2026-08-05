@@ -69,6 +69,13 @@ export * as Bal from './Bal.js'
 export * as Inspector from './Inspector.js'
 
 /**
+ * Protocol system-call addresses and limits.
+ *
+ * @category Execution
+ */
+export * as System from './System.js'
+
+/**
  * A transaction's state changes, owned by the caller.
  *
  * @category Execution

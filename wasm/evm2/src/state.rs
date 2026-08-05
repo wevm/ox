@@ -8,12 +8,12 @@
 use alloc::vec::Vec;
 use alloy_primitives::Address;
 use evm2::evm::{
-    AccountChangeRef, AccountInfoRef, PendingState, StateChangeSink, StateChangeSource,
-    StorageChange,
+    AccountChangeRef, AccountInfo, AccountInfoRef, PendingState, StateChangeSink,
+    StateChangeSource, StorageChange,
 };
 use evm2::interpreter::Word;
 
-use crate::abi::Writer;
+use crate::abi::{self, Reader, Writer};
 
 /// Record tags in a serialized change stream.
 pub mod record {
@@ -273,5 +273,206 @@ impl StateChangeSink for HostSink {
         self.word(key);
         self.word(value);
         self.send()
+    }
+}
+
+/// Rebuilds a [`PendingState`] from a serialized change stream.
+///
+/// The reverse of the stream [`write_pending`] produces, so state a caller
+/// detached and edited can be applied back. Each record is read in the shape the
+/// sink wrote it; a tag's fields are consumed whether or not they are used.
+pub fn read_pending(reader: &mut Reader<'_>) -> Result<PendingState, abi::Error> {
+    let mut pending = PendingState::default();
+
+    loop {
+        match reader.u8()? {
+            record::END => break,
+            record::ACCOUNT => {
+                let address = reader.address()?;
+                let original = read_info(reader)?;
+                let current = read_info(reader)?;
+                // The created and selfdestructed flags are read and dropped:
+                // `insert_account` takes neither, and re-inserting state must not
+                // carry a lifecycle marker from the transaction that produced it.
+                let _created = reader.bool()?;
+                let _selfdestructed = reader.bool()?;
+                pending.insert_account(address, original, current);
+            }
+            record::ACCOUNT_READ => {
+                let address = reader.address()?;
+                // A read carries one value, so it goes back as unchanged.
+                let info = read_info(reader)?;
+                pending.insert_account(address, info.clone(), info);
+            }
+            record::STORAGE => {
+                let address = reader.address()?;
+                let key = reader.word()?;
+                let original = reader.word()?;
+                let current = reader.word()?;
+                pending.insert_storage(address, key, original, current);
+            }
+            record::STORAGE_READ => {
+                let address = reader.address()?;
+                let key = reader.word()?;
+                let value = reader.word()?;
+                pending.insert_storage(address, key, value, value);
+            }
+            // A wipe is the storage half of a selfdestruct, which is dropped for
+            // the same reason the marker is.
+            record::STORAGE_WIPE => {
+                let _address = reader.address()?;
+            }
+            // Code is derived: `insert_account` carries the hash, and evm2 reads
+            // the bytes from the database when it needs them.
+            record::BYTECODE => {
+                let _code_hash = reader.hash()?;
+                let _code = reader.bytes(abi::MAX_REQUEST)?;
+            }
+            unknown => return Err(abi::Error::UnknownRecord(unknown)),
+        }
+    }
+    reader.finish()?;
+    Ok(pending)
+}
+
+/// Reads an account's fields, or nothing when the flag says it is absent.
+fn read_info(reader: &mut Reader<'_>) -> Result<Option<AccountInfo>, abi::Error> {
+    if !reader.bool()? {
+        return Ok(None);
+    }
+    let balance = reader.word()?;
+    let nonce = reader.u64()?;
+    let code_hash = reader.hash()?;
+    Ok(Some(AccountInfo { balance, nonce, code_hash, code: None, _non_exhaustive: () }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::abi::HEADER_SIZE;
+    use alloy_primitives::{B256, U256};
+
+    /// Strips the response header the writer reserves.
+    fn payload(bytes: &[u8]) -> &[u8] {
+        &bytes[HEADER_SIZE..]
+    }
+
+    fn info(balance: u64, nonce: u64) -> AccountInfo {
+        AccountInfo {
+            balance: U256::from(balance),
+            nonce,
+            code_hash: B256::repeat_byte(0xcd),
+            code: None,
+            _non_exhaustive: (),
+        }
+    }
+
+    /// A stream carrying every record the sink can emit.
+    fn stream() -> Vec<u8> {
+        let mut writer = Writer::new();
+        writer.u8(record::BYTECODE);
+        writer.hash(B256::repeat_byte(0xcd));
+        writer.bytes(&[0x60, 0x00]);
+
+        writer.u8(record::ACCOUNT);
+        writer.address(Address::repeat_byte(0x11));
+        writer.bool(true);
+        writer.word(U256::from(1));
+        writer.u64(2);
+        writer.hash(B256::repeat_byte(0xcd));
+        writer.bool(true);
+        writer.word(U256::from(3));
+        writer.u64(4);
+        writer.hash(B256::repeat_byte(0xcd));
+        writer.bool(true);
+        writer.bool(true);
+
+        writer.u8(record::ACCOUNT_READ);
+        writer.address(Address::repeat_byte(0x22));
+        writer.bool(false);
+
+        writer.u8(record::STORAGE);
+        writer.address(Address::repeat_byte(0x11));
+        writer.word(U256::from(7));
+        writer.word(U256::from(8));
+        writer.word(U256::from(9));
+
+        writer.u8(record::STORAGE_READ);
+        writer.address(Address::repeat_byte(0x22));
+        writer.word(U256::from(10));
+        writer.word(U256::from(11));
+
+        writer.u8(record::STORAGE_WIPE);
+        writer.address(Address::repeat_byte(0x33));
+
+        writer.u8(record::END);
+        writer.finish(0)
+    }
+
+    #[test]
+    fn reads_every_record_the_sink_writes() {
+        // Consuming the stream exactly is the property: a record read in the wrong
+        // shape leaves the cursor mid-record and the next tag is garbage.
+        let encoded = stream();
+        let pending = read_pending(&mut Reader::new(payload(&encoded))).unwrap();
+
+        assert_eq!(pending.account_info(&Address::repeat_byte(0x11)), Some(&info(3, 4)));
+        assert_eq!(pending.account_info(&Address::repeat_byte(0x22)), None);
+    }
+
+    #[test]
+    fn re_inserted_state_carries_no_selfdestruct_marker() {
+        let encoded = stream();
+        let pending = read_pending(&mut Reader::new(payload(&encoded))).unwrap();
+
+        // The stream said the account was created and selfdestructed. Visiting the
+        // rebuilt state must not repeat either, or committing it would wipe
+        // storage the caller meant to keep.
+        let mut writer = Writer::new();
+        write_pending(&mut writer, &pending);
+        let out = writer.finish(0);
+        let body = payload(&out);
+
+        let mut wipes = 0;
+        let mut flags = 0;
+        let mut reader = Reader::new(body);
+        while let Ok(tag) = reader.u8() {
+            match tag {
+                record::END => break,
+                record::STORAGE_WIPE => {
+                    wipes += 1;
+                    let _ = reader.address();
+                }
+                record::ACCOUNT => {
+                    let _ = reader.address();
+                    let _ = read_info(&mut reader);
+                    let _ = read_info(&mut reader);
+                    if reader.bool().unwrap() {
+                        flags += 1;
+                    }
+                    if reader.bool().unwrap() {
+                        flags += 1;
+                    }
+                }
+                record::ACCOUNT_READ => {
+                    let _ = reader.address();
+                    let _ = read_info(&mut reader);
+                }
+                record::STORAGE => {
+                    let _ = reader.address();
+                    for _ in 0..3 {
+                        let _ = reader.word();
+                    }
+                }
+                record::STORAGE_READ => {
+                    let _ = reader.address();
+                    for _ in 0..2 {
+                        let _ = reader.word();
+                    }
+                }
+                _ => break,
+            }
+        }
+        assert_eq!((wipes, flags), (0, 0));
     }
 }

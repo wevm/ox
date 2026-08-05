@@ -37,6 +37,10 @@ pub mod status {
     /// A read fell outside the attached block access list while fallback was
     /// disabled, so it was refused rather than served from the database.
     pub const BAL_NOT_COVERED: u16 = 10;
+
+    /// A transaction was resolved into a block accumulator while none was
+    /// installed. Nothing was committed.
+    pub const NO_BLOCK_STATE: u16 = 11;
 }
 
 /// Discriminants for [`HandlerError`] variants.

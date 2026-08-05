@@ -63,6 +63,18 @@ pub mod op {
     pub const TAKE_BAL: u16 = 15;
     /// Sets the block access index reads and writes are keyed at.
     pub const SET_BAL_INDEX: u16 = 16;
+    /// Streams the pending changes into the block accumulator, then commits.
+    pub const COMMIT_TO: u16 = 17;
+    /// Installs an empty block accumulator, or removes the one in progress.
+    pub const SET_BLOCK_STATE: u16 = 18;
+    /// Drains the accumulated block state.
+    pub const TAKE_BLOCK_STATE: u16 = 19;
+    /// Prewarms the precompile addresses.
+    pub const WARM_PRECOMPILES: u16 = 20;
+    /// Applies caller-supplied changes to the accepted state overlay.
+    pub const COMMIT_SOURCE: u16 = 21;
+    /// Executes a system call and parks its handle.
+    pub const SYSTEM_CALL: u16 = 22;
 }
 
 /// Builds a response header with an empty payload.
@@ -137,6 +149,21 @@ impl<'a> Reader<'a> {
         let (head, tail) = self.bytes.split_at(length);
         self.bytes = tail;
         Ok(head)
+    }
+
+    /// Reads a single byte.
+    pub fn u8(&mut self) -> Result<u8, Error> {
+        Ok(self.take(1)?[0])
+    }
+
+    /// Reads a byte as a boolean, where any non-zero value is true.
+    pub fn bool(&mut self) -> Result<bool, Error> {
+        Ok(self.u8()? != 0)
+    }
+
+    /// Reads a 32-byte hash.
+    pub fn hash(&mut self) -> Result<B256, Error> {
+        Ok(B256::from_slice(self.take(32)?))
     }
 
     /// Reads a little-endian `u32`.
@@ -297,6 +324,8 @@ pub enum Error {
     /// A gas parameter index outside evm2's `GasId`.
     UnknownGasId(u32),
     /// Transaction envelope failed EIP-2718 decoding.
+    /// A change stream carried a record tag this ABI version does not define.
+    UnknownRecord(u8),
     /// A block access list carried bytecode evm2 refuses to decode.
     Bytecode,
     Envelope,
@@ -326,6 +355,7 @@ impl fmt::Display for Error {
             }
             Self::UnknownFeature(index) => write!(f, "unknown feature index {index}"),
             Self::UnknownGasId(index) => write!(f, "unknown gas parameter index {index}"),
+            Self::UnknownRecord(tag) => write!(f, "unknown change record {tag}"),
             Self::Bytecode => f.write_str("block access list carries undecodable bytecode"),
             Self::Envelope => f.write_str("transaction envelope is not valid EIP-2718"),
         }

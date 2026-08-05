@@ -1,10 +1,13 @@
 import type * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
+import type * as Hex from '../core/Hex.js'
 import * as Errors from '../core/Errors.js'
 import * as TxEnvelope from '../core/TxEnvelope.js'
 import * as Database from './Database.js'
 import type * as Bal from './Bal.js'
 import * as ExecutedTx from './ExecutedTx.js'
+import * as PendingState from './PendingState.js'
+import * as System from './System.js'
 import type * as Inspector from './Inspector.js'
 import type * as Ethereum from './Ethereum.js'
 import * as SpecId from './SpecId.js'
@@ -35,6 +38,7 @@ export {
   DatabaseError,
   HandlerError,
   MissingError,
+  NoBlockStateError,
   NotCoveredError,
   NotExecutedError,
 } from './internal/engine.js'
@@ -90,6 +94,13 @@ export type Awaitable<
   asynchronous extends boolean,
   value,
 > = asynchronous extends true ? Promise<value> : value
+
+/**
+ * State a block's transactions changed, gathered across all of them.
+ *
+ * The shape {@link ox#Evm.(takeBlockState:function)} returns.
+ */
+export type BlockState = codec.BlockState
 
 /**
  * Version values an execution runs under.
@@ -1051,6 +1062,262 @@ export function setBalIndex<asynchronous extends boolean>(
 
 export declare namespace setBalIndex {
   type ErrorType = setBal.ErrorType
+}
+
+/**
+ * Starts gathering what a block's transactions change, or stops.
+ *
+ * Transactions resolved with {@link ox#ExecutedTx.(commitTo:function)} record into
+ * it. Read the result with {@link ox#Evm.(takeBlockState:function)}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx } from 'ox/evm'
+ *
+ * Evm.setBlockState(evm, true)
+ *
+ * for (const transaction of transactions)
+ *   ExecutedTx.commitTo(Evm.transact(evm, transaction))
+ *
+ * const block = Evm.takeBlockState(evm)
+ * block.accounts.length
+ * ```
+ *
+ * @param evm - EVM to gather from.
+ * @param enabled - Whether to gather. `false` discards what was gathered.
+ */
+export function setBlockState<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+  enabled: boolean,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () => evm['~engine'].setBlockState(enabled))
+}
+
+export declare namespace setBlockState {
+  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
+}
+
+/**
+ * Takes what the block changed, and stops gathering.
+ *
+ * `undefined` when nothing was being gathered. Each entry spans the block: its
+ * `original` is the value before the block, not before the last transaction.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * const block = Evm.takeBlockState(evm)
+ * block?.storage.length
+ * ```
+ *
+ * @param evm - EVM to take from.
+ * @returns What the block changed, or `undefined` when none was gathered.
+ */
+export function takeBlockState<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, BlockState | undefined> {
+  return attempt(evm, () => evm['~engine'].takeBlockState())
+}
+
+export declare namespace takeBlockState {
+  type ErrorType = setBlockState.ErrorType
+}
+
+/**
+ * Marks the precompile addresses warm.
+ *
+ * A block pays their cold-access cost once rather than per transaction, which is
+ * what a node does before executing one.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.warmPrecompiles(evm)
+ * ```
+ *
+ * @param evm - EVM to warm.
+ */
+export function warmPrecompiles<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () => evm['~engine'].warmPrecompiles())
+}
+
+export declare namespace warmPrecompiles {
+  type ErrorType = setBlockState.ErrorType
+}
+
+/**
+ * Applies state a caller holds to the EVM.
+ *
+ * The counterpart to {@link ox#ExecutedTx.(detach:function)}: state taken out of
+ * an EVM, optionally edited through
+ * {@link ox#PendingState.(insertAccount:function)}, and put back. Later
+ * transactions see it.
+ *
+ * A transaction's lifecycle markers do not survive the trip. State that was
+ * created or self-destructed goes back as plain values, so re-applying it cannot
+ * wipe storage the caller meant to keep.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx, PendingState } from 'ox/evm'
+ *
+ * const { pendingState } = ExecutedTx.detach(Evm.transact(evm, transaction))
+ * Evm.commitSource(evm, pendingState)
+ * ```
+ *
+ * @param evm - EVM to apply to.
+ * @param state - State to apply.
+ */
+export function commitSource<asynchronous extends boolean>(
+  evm: Evm<asynchronous>,
+  state: PendingState.PendingState,
+): Awaitable<asynchronous, void> {
+  return attempt(evm, () =>
+    evm['~engine'].commitSource(PendingState.changes(state)),
+  )
+}
+
+export declare namespace commitSource {
+  type ErrorType =
+    | AbiError
+    | BorrowedError
+    | EncodeError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Executes a protocol system call.
+ *
+ * Runs a top-level call against a system contract, bypassing transaction
+ * validation, nonce updates, fees, refunds, and beneficiary rewards. The
+ * contract's code must already be in state: this does not deploy it. The handle
+ * resolves the same way a transaction's does.
+ *
+ * A system call is not inspected, so it produces no trace even with an inspector
+ * installed.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx, System } from 'ox/evm'
+ *
+ * // EIP-4788: record the beacon block root at the start of a block.
+ * const executed = Evm.systemCall(evm, {
+ *   address: System.beaconRoots,
+ *   data: root,
+ * })
+ * ExecutedTx.commit(executed)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param options - Contract, calldata, and optionally the caller.
+ * @returns The executed system call.
+ */
+export function systemCall(
+  evm: Evm<true>,
+  options: systemCall.Options,
+): Promise<ExecutedTx.ExecutedTx>
+
+/**
+ * Same operation against an EVM whose reads are synchronous.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, System } from 'ox/evm'
+ *
+ * Evm.systemCall(evm, { address: System.historyStorage, data })
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param options - Contract, calldata, and optionally the caller.
+ * @returns The executed system call.
+ */
+export function systemCall(
+  evm: Evm<false>,
+  options: systemCall.Options,
+): ExecutedTx.ExecutedTx
+
+/**
+ * Same operation against an EVM whose reads may or may not be synchronous.
+ *
+ * Awaiting the result covers both.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, System } from 'ox/evm'
+ *
+ * const executed = await Evm.systemCall(evm, {
+ *   address: System.beaconRoots,
+ *   data,
+ * })
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param options - Contract, calldata, and optionally the caller.
+ * @returns The executed system call.
+ */
+export function systemCall(
+  evm: Evm<boolean>,
+  options: systemCall.Options,
+): Promise<ExecutedTx.ExecutedTx> | ExecutedTx.ExecutedTx
+
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function systemCall(
+  evm: Evm<boolean>,
+  options: systemCall.Options,
+): Awaitable<boolean, ExecutedTx.ExecutedTx> {
+  return attempt(evm, () => {
+    const { result, token } = evm['~engine'].systemCall({
+      address: options.address,
+      caller: options.caller ?? System.address,
+      data: Bytes.fromHex(options.data ?? '0x'),
+    })
+    const normalized = (() => {
+      try {
+        return { ...result, stop: stop(result.stop) }
+      } catch (error) {
+        // The engine is already borrowed, so release it before reporting.
+        evm['~engine'].resolve('discard', token)
+        throw error
+      }
+    })()
+    return ExecutedTx.from({
+      engine: evm['~engine'],
+      result: normalized,
+      token,
+    })
+  })
+}
+
+export declare namespace systemCall {
+  type Options = {
+    /** System contract to call. */
+    address: Address.Address
+    /**
+     * Account the call originates from.
+     *
+     * @default System.address
+     */
+    caller?: Address.Address | undefined
+    /**
+     * Calldata.
+     *
+     * @default '0x'
+     */
+    data?: Hex.Hex | undefined
+  }
+
+  type ErrorType = transact.ErrorType
 }
 
 // Merges block values over the current ones, field by field rather than with a

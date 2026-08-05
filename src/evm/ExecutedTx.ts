@@ -5,7 +5,11 @@ import type * as TxResult from './TxResult.js'
 import type { ReentrancyError } from './internal/bindings.js'
 import type { DecodeError } from './internal/codec.js'
 import type * as engine from './internal/engine.js'
-import type { NotExecutedError, SinkError } from './internal/engine.js'
+import type {
+  NoBlockStateError,
+  NotExecutedError,
+  SinkError,
+} from './internal/engine.js'
 
 /**
  * A transaction that has executed, with its state changes still pending.
@@ -125,6 +129,47 @@ export declare namespace commit {
     | ReentrancyError
     | ResolvedError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Accepts the transaction's state changes and records them in the block.
+ *
+ * The same acceptance {@link ox#ExecutedTx.(commit:function)} performs, plus the
+ * changes are gathered into the block accumulator started by
+ * {@link ox#Evm.(setBlockState:function)}. Resolving this way without one is a
+ * failure rather than a silent plain commit.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm, ExecutedTx } from 'ox/evm'
+ *
+ * Evm.setBlockState(evm, true)
+ *
+ * for (const transaction of transactions)
+ *   ExecutedTx.commitTo(Evm.transact(evm, transaction))
+ *
+ * const block = Evm.takeBlockState(evm)
+ * ```
+ *
+ * @param executed - Executed transaction.
+ * @returns The transaction's result.
+ */
+export function commitTo(executed: ExecutedTx): TxResult.TxResult {
+  claim(executed)
+  try {
+    executed['~engine'].resolve('commitTo', executed['~token'])
+  } catch (error) {
+    // The adapter refuses before the transaction leaves the engine, so the handle
+    // is still outstanding and has to stay resolvable.
+    executed['~resolved'] = false
+    throw error
+  }
+  return executed['~result']
+}
+
+export declare namespace commitTo {
+  type ErrorType = commit.ErrorType | NoBlockStateError
 }
 
 /**

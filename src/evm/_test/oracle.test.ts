@@ -52,6 +52,23 @@ type Expectation = {
   txGasUsed: string
 }
 
+/** The shape `oracle.rs` records an accumulator in. */
+type BlockEntry = {
+  accounts: readonly {
+    address: string
+    current: { balance: string; codeHash: string; nonce: number } | null
+    original: { balance: string; codeHash: string; nonce: number } | null
+  }[]
+  code: readonly { code: string; codeHash: string }[]
+  storage: readonly {
+    address: string
+    current: string
+    key: string
+    original: string
+  }[]
+  storageWipes: readonly string[]
+}
+
 /** The shape `oracle.rs` records a folded list in. */
 type BalEntry = {
   address: string
@@ -341,6 +358,7 @@ const corpus = JSON.parse(
 ) as {
   cases: readonly (Fixture & {
     bal: readonly BalEntry[] | null
+    blockState: BlockEntry | null
     expected: Expectation & { pendingState?: Pending }
     spec: string
   })[]
@@ -544,5 +562,74 @@ describe('generated corpus, block access lists', () => {
 
       ExecutedTx.commit(Evm.transact(evm, transaction))
       expect(encodeBal(Evm.takeBal(evm))).toEqual(entry.bal)
+    })
+})
+
+/**
+ * The same corpus, accumulated into block state.
+ *
+ * `oracle.rs` records what native evm2 gathers for each case on the committing
+ * path. This replays each through the artifact, so a divergence in the fold, the
+ * deterministic ordering, or the wire format is a diff rather than two plausible
+ * accumulators.
+ */
+function encodeBlockState(
+  block: Evm.BlockState | undefined,
+): BlockEntry | null {
+  if (!block) return null
+  const account = (value: codec.ChangeAccount | undefined) =>
+    value
+      ? {
+          balance: Hex.fromNumber(value.balance),
+          codeHash: value.codeHash,
+          nonce: Number(value.nonce),
+        }
+      : null
+  return {
+    accounts: block.accounts.map((entry) => ({
+      address: entry.address.toLowerCase(),
+      current: account(entry.current),
+      original: account(entry.original),
+    })),
+    code: block.code.map((entry) => ({
+      code: Hex.fromBytes(entry.code),
+      codeHash: entry.codeHash,
+    })),
+    storage: block.storage.map((entry) => ({
+      address: entry.address.toLowerCase(),
+      current: Hex.fromNumber(entry.current),
+      key: Hex.fromNumber(entry.key),
+      original: Hex.fromNumber(entry.original),
+    })),
+    storageWipes: block.storageWipes.map((address) => address.toLowerCase()),
+  }
+}
+
+describe('generated corpus, block state', () => {
+  for (const entry of corpus.cases)
+    test(`${entry.spec}: ${entry.name} accumulates what native evm2 accumulates`, async () => {
+      const evm = await Evm.create({
+        block: block(entry.block),
+        chainId: BigInt(entry.chainId),
+        database: database(entry.accounts),
+        specId: entry.spec as SpecId.SpecId,
+      })
+      Evm.setBlockState(evm, true)
+
+      const transaction = {
+        from: entry.signer as `0x${string}`,
+        serialized: entry.envelope as Hex.Hex,
+      }
+
+      if (entry.expected.handlerError) {
+        expect(() => Evm.transact(evm, transaction)).toThrowError()
+        expect(entry.blockState).toBeNull()
+        return
+      }
+
+      ExecutedTx.commitTo(Evm.transact(evm, transaction))
+      expect(encodeBlockState(Evm.takeBlockState(evm))).toEqual(
+        entry.blockState,
+      )
     })
 })
