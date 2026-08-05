@@ -20,7 +20,7 @@ mod state;
 
 use crate::{
     abi::{Reader, Writer, op},
-    database::HostDb,
+    database::{HostDb, HostError},
     error::status,
 };
 use alloc::vec::Vec;
@@ -32,7 +32,7 @@ use core::{
 };
 use alloy_primitives::Address;
 use evm2::{
-    BaseEvmTypes, Evm, ExecutionConfig, Precompiles, SpecId, TxResult, Version,
+    AnyError, BaseEvmTypes, Evm, ExecutionConfig, Precompiles, SpecId, TxResult, Version,
     registry::HandlerError,
     env::BlockEnvExt,
     ethereum::{TxEnvelope, ethereum_tx_registry},
@@ -355,6 +355,7 @@ fn call_tx(engine: &mut Evm<'static, BaseEvmTypes>, tx: &Recovered<TxEnvelope>) 
                 .and_then(|db| db.take_result().err());
             let mut writer = Writer::new();
             match host {
+                Some(error) if is_pending(&error) => writer.finish(status::PENDING),
                 Some(error) => {
                     writer.str(&alloc::format!("{error}"));
                     writer.finish(status::DATABASE)
@@ -393,6 +394,7 @@ fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
     let host = engine_failure();
     let mut writer = Writer::new();
     match host {
+        Some(error) if is_pending(&error) => writer.finish(status::PENDING),
         Some(error) => {
             writer.str(&alloc::format!("{error}"));
             writer.finish(status::DATABASE)
@@ -408,12 +410,17 @@ fn transact(tx: &Recovered<TxEnvelope>) -> Vec<u8> {
 ///
 /// Host failures are recorded there rather than in the handler error, so they are
 /// recovered separately from transaction rejections.
-fn engine_failure() -> Option<alloc::string::String> {
+fn engine_failure() -> Option<AnyError> {
     let engine = engine().ok()?;
-    engine
-        .database_as_mut::<Db<HostDb>>()
-        .and_then(|db| db.take_result().err())
-        .map(|error| alloc::format!("{error}"))
+    engine.database_as_mut::<Db<HostDb>>().and_then(|db| db.take_result().err())
+}
+
+/// Whether a recorded host failure is a read the host has not fetched.
+///
+/// Not a failure: the attempt was abandoned before any state was accepted, and
+/// the host repeats the operation once the value is available.
+fn is_pending(error: &AnyError) -> bool {
+    matches!(error.downcast_ref::<HostError>(), Some(HostError::Pending))
 }
 
 /// Resolves the outstanding handle, releasing the engine borrow.
@@ -489,6 +496,7 @@ fn read_account(engine: &mut Evm<'static, BaseEvmTypes>, address: &Address) -> V
                 .and_then(|db| db.take_result().err());
             let mut writer = Writer::new();
             match host {
+                Some(error) if is_pending(&error) => writer.finish(status::PENDING),
                 Some(error) => {
                     writer.str(&alloc::format!("{error}"));
                     writer.finish(status::DATABASE)

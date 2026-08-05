@@ -53,7 +53,7 @@ describe('commit', () => {
   test('behavior: a later transaction sees the committed state', async () => {
     const instance = await evm()
 
-    const first = Evm.transact(instance, transaction())
+    const first: ExecutedTx.ExecutedTx = Evm.transact(instance, transaction())
     expect(ExecutedTx.result(first).output).toBe(zero)
     ExecutedTx.commit(first)
 
@@ -341,7 +341,7 @@ describe('handle identity', () => {
   test('behavior: a copied handle cannot resolve a later transaction', async () => {
     const instance = await evm()
 
-    const first = Evm.transact(instance, transaction())
+    const first: ExecutedTx.ExecutedTx = Evm.transact(instance, transaction())
     const copy = { ...first }
 
     // The copy has its own `~resolved` flag but the same token, so resolving it

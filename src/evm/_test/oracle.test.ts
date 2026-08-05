@@ -2,6 +2,8 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Bytes, Hex, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { describe, expect, test } from 'vp/test'
+import { Database as PublicDatabase, Evm, type SpecId } from 'ox/evm'
+
 import * as PendingState from '../PendingState.js'
 import * as StateChange from '../StateChange.js'
 import * as codec from '../internal/codec.js'
@@ -324,6 +326,59 @@ const corpus = JSON.parse(
   })[]
   seed: string
 }
+
+/**
+ * The same corpus, read asynchronously.
+ *
+ * An asynchronous source is served by abandoning the attempt on an unfetched read
+ * and repeating it, so every case executes many times rather than once. This is
+ * the gate that says the two paths reach identical answers.
+ */
+describe('generated corpus, asynchronously', () => {
+  for (const entry of corpus.cases)
+    test(`${entry.spec}: ${entry.name} matches the synchronous path`, async () => {
+      const options = {
+        block: block(entry.block),
+        chainId: BigInt(entry.chainId),
+        specId: entry.spec as SpecId.SpecId,
+      }
+      const transaction = {
+        from: entry.signer as `0x${string}`,
+        serialized: entry.envelope as Hex.Hex,
+      }
+
+      const sync = await Evm.create({
+        ...options,
+        database: database(entry.accounts),
+      })
+      const memory = database(entry.accounts)
+      const fork = await Evm.create({
+        ...options,
+        database: PublicDatabase.fromAsync({
+          getAccount: async (address) => memory.getAccount(address),
+          getBlockHash: async (number) => memory.getBlockHash(number),
+          getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+          getStorage: async (address, key) => memory.getStorage(address, key),
+        }),
+      })
+
+      const expected = (() => {
+        try {
+          return { value: Evm.callTx(sync, transaction) }
+        } catch (error) {
+          return { message: (error as Error).message }
+        }
+      })()
+
+      if ('message' in expected) {
+        await expect(Evm.callTx(fork, transaction)).rejects.toThrowError(
+          expected.message,
+        )
+        return
+      }
+      expect(await Evm.callTx(fork, transaction)).toEqual(expected.value)
+    })
+})
 
 describe('generated corpus', () => {
   for (const entry of corpus.cases)

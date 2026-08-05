@@ -92,6 +92,15 @@ const missing = 1
 const failed = 2
 /** Code did not fit; the length written back tells the engine what to grow to. */
 const tooLarge = 3
+/**
+ * The source has not fetched the value yet.
+ *
+ * An asynchronous source cannot answer inside a synchronous import, so it throws
+ * {@link ox#Database.(PendingError:class)} and the engine abandons the attempt
+ * without accepting state. Not recorded as a failure: the caller fetches the
+ * value and repeats the operation.
+ */
+const pending = 4
 
 /** Host import table, bound to one engine instance. */
 export type Host = {
@@ -135,6 +144,9 @@ export function host(database: Database): Host {
     try {
       return read()
     } catch (error) {
+      // A read the source has not fetched is not a failure, so it is not
+      // recorded as one: the engine unwinds and the caller repeats the call.
+      if (error instanceof PendingError) return pending
       failure ??= error as Error
       return failed
     }
@@ -244,6 +256,22 @@ export function host(database: Database): Host {
       failure = undefined
       return recorded
     },
+  }
+}
+
+/**
+ * Thrown by a synchronous read standing in for an asynchronous source.
+ *
+ * The engine abandons the attempt without accepting state, so the caller can
+ * fetch the value and repeat the operation. Never surfaces to a caller.
+ *
+ * @internal
+ */
+export class PendingError extends Errors.BaseError {
+  override readonly name = 'Database.PendingError'
+
+  constructor() {
+    super('A state read needs a value the source has not fetched.')
   }
 }
 

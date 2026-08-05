@@ -7,6 +7,7 @@ import * as ExecutedTx from './ExecutedTx.js'
 import type * as Ethereum from './Ethereum.js'
 import * as SpecId from './SpecId.js'
 import * as TxResult from './TxResult.js'
+import * as driver from './internal/async.js'
 import * as engine from './internal/engine.js'
 
 import type {
@@ -48,12 +49,29 @@ export { handlerKinds } from './internal/engine.js'
  * database. One EVM is one isolated engine: creating a second does not share
  * state with the first.
  */
-export type Evm = {
+export type Evm<asynchronous extends boolean = false> = {
+  /** @internal */
+  readonly '~async': asynchronous
   /** @internal */
   readonly '~chainId': bigint
+  /**
+   * Drives the asynchronous source, when there is one.
+   *
+   * @internal
+   */
+  readonly '~driver': asynchronous extends true ? driver.Driver : undefined
   /** @internal */
   readonly '~engine': engine.Engine
 }
+
+/**
+ * A value an operation returns, wrapped in a promise when reads are
+ * asynchronous.
+ */
+export type Awaitable<
+  asynchronous extends boolean,
+  value,
+> = asynchronous extends true ? Promise<value> : value
 
 /** Block values opcodes read. */
 export type Block = {
@@ -116,7 +134,29 @@ export type Block = {
  * @param options - Constructor components.
  * @returns An EVM.
  */
-export async function create(options: create.Options = {}): Promise<Evm> {
+export async function create(
+  options: create.Options & { database: Database.Async },
+): Promise<Evm<true>>
+
+/**
+ * Creates an EVM whose reads are synchronous.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Evm } from 'ox/evm'
+ *
+ * const evm = await Evm.create()
+ * ```
+ *
+ * @param options - Constructor components.
+ * @returns An EVM.
+ */
+export async function create(options?: create.Options): Promise<Evm<false>>
+
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export async function create(
+  options: create.Options = {},
+): Promise<Evm<never>> {
   const {
     block,
     chainId,
@@ -124,8 +164,14 @@ export async function create(options: create.Options = {}): Promise<Evm> {
     specId = SpecId.latest,
   } = options
 
+  // An asynchronous source is driven through synchronous reads: a miss abandons
+  // the attempt and the operation repeats once the value is cached.
+  const source = driver.isAsync(database) ? driver.driver(database) : undefined
+
   return {
+    '~async': (source !== undefined) as never,
     '~chainId': chainId ?? 1n,
+    '~driver': source as never,
     '~engine': await engine.create({
       block: {
         basefee: block?.basefee ?? 0n,
@@ -139,7 +185,7 @@ export async function create(options: create.Options = {}): Promise<Evm> {
         timestamp: block?.timestamp ?? 1n,
       },
       chainId: chainId ?? 1n,
-      database,
+      database: source ? source.database : (database as Database.Database),
       specId: SpecId.ids.indexOf(specId),
     }),
   }
@@ -168,7 +214,7 @@ export declare namespace create {
      *
      * @default Database.fromMemory()
      */
-    database?: Database.Database | undefined
+    database?: Database.Async | Database.Database | undefined
     /**
      * Specification whose rules apply.
      *
@@ -215,12 +261,43 @@ export declare namespace create {
  * @param transaction - Transaction and the account it executes as.
  * @returns The transaction's result.
  */
-export function callTx(evm: Evm, transaction: Ethereum.Tx): TxResult.TxResult {
-  const result = evm['~engine'].callTx({
-    envelope: envelope(transaction, evm['~chainId']),
-    signer: transaction.from,
+export function callTx(
+  evm: Evm<true>,
+  transaction: Ethereum.Tx,
+): Promise<TxResult.TxResult>
+
+/**
+ * Same operation against an EVM whose reads are synchronous.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.callTx(evm, transaction)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param transaction - Operand.
+ * @returns The operation's result.
+ */
+export function callTx(
+  evm: Evm<false>,
+  transaction: Ethereum.Tx,
+): TxResult.TxResult
+
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function callTx(
+  evm: Evm<boolean>,
+  transaction: Ethereum.Tx,
+): Awaitable<boolean, TxResult.TxResult> {
+  return attempt(evm, () => {
+    const result = evm['~engine'].callTx({
+      envelope: envelope(transaction, evm['~chainId']),
+      signer: transaction.from,
+    })
+    return { ...result, stop: stop(result.stop) }
   })
-  return { ...result, stop: stop(result.stop) }
 }
 
 export declare namespace callTx {
@@ -271,26 +348,56 @@ export declare namespace callTx {
  * @returns A handle over the executed transaction.
  */
 export function transact(
-  evm: Evm,
+  evm: Evm<true>,
   transaction: Ethereum.Tx,
-): ExecutedTx.ExecutedTx {
-  const { result, token } = evm['~engine'].transact({
-    envelope: envelope(transaction, evm['~chainId']),
-    signer: transaction.from,
-  })
-  const normalized = (() => {
-    try {
-      return { ...result, stop: stop(result.stop) }
-    } catch (error) {
-      // The engine is already borrowed, so release it before reporting.
-      evm['~engine'].resolve('discard', token)
-      throw error
-    }
-  })()
-  return ExecutedTx.from({
-    engine: evm['~engine'],
-    result: normalized,
-    token,
+): Promise<ExecutedTx.ExecutedTx>
+
+/**
+ * Same operation against an EVM whose reads are synchronous.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.transact(evm, transaction)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param transaction - Operand.
+ * @returns The operation's result.
+ */
+export function transact(
+  evm: Evm<false>,
+  transaction: Ethereum.Tx,
+): ExecutedTx.ExecutedTx
+
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function transact(
+  evm: Evm<boolean>,
+  transaction: Ethereum.Tx,
+): Awaitable<boolean, ExecutedTx.ExecutedTx> {
+  return attempt(evm, () => {
+    // An attempt that stops on an unfetched read parks no handle, so a repeat
+    // finds the engine free.
+    const { result, token } = evm['~engine'].transact({
+      envelope: envelope(transaction, evm['~chainId']),
+      signer: transaction.from,
+    })
+    const normalized = (() => {
+      try {
+        return { ...result, stop: stop(result.stop) }
+      } catch (error) {
+        // The engine is already borrowed, so release it before reporting.
+        evm['~engine'].resolve('discard', token)
+        throw error
+      }
+    })()
+    return ExecutedTx.from({
+      engine: evm['~engine'],
+      result: normalized,
+      token,
+    })
   })
 }
 
@@ -328,10 +435,36 @@ export declare namespace transact {
  * @returns The account, or `undefined` when it does not exist.
  */
 export function readAccountInfo(
-  evm: Evm,
+  evm: Evm<true>,
   address: Address.Address,
-): Database.Account | undefined {
-  return evm['~engine'].readAccountInfo(address)
+): Promise<Database.Account | undefined>
+
+/**
+ * Same operation against an EVM whose reads are synchronous.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Evm } from 'ox/evm'
+ *
+ * Evm.readAccountInfo(evm, address)
+ * ```
+ *
+ * @param evm - EVM to use.
+ * @param address - Operand.
+ * @returns The operation's result.
+ */
+export function readAccountInfo(
+  evm: Evm<false>,
+  address: Address.Address,
+): Database.Account | undefined
+
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function readAccountInfo(
+  evm: Evm<boolean>,
+  address: Address.Address,
+): Awaitable<boolean, Database.Account | undefined> {
+  return attempt(evm, () => evm['~engine'].readAccountInfo(address))
 }
 
 export declare namespace readAccountInfo {
@@ -355,6 +488,19 @@ const placeholder = {
   s: `0x${'01'.repeat(32)}`,
   yParity: 0,
 } as const
+
+// Runs an engine operation, repeating it while reads are outstanding. A
+// synchronous database returns the value directly. An asynchronous one cannot
+// answer inside the engine's synchronous read, so the attempt is abandoned, the
+// source is awaited, and the operation repeats until nothing is outstanding.
+function attempt<asynchronous extends boolean, value>(
+  evm: Evm<asynchronous>,
+  run: () => value,
+): Awaitable<asynchronous, value> {
+  const source = evm['~driver']
+  if (!source) return run() as never
+  return driver.until(source, run) as never
+}
 
 // Resolves either input shape to the encoded envelope the ABI carries.
 function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {

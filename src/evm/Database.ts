@@ -3,6 +3,7 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import type * as async from './internal/async.js'
 import type * as internal from './internal/database.js'
 
 /**
@@ -18,6 +19,15 @@ export type Database = internal.Database
 
 /** An account, as a database reports it. */
 export type Account = internal.Account
+
+/**
+ * State an EVM reads through, asynchronously.
+ *
+ * The same reads {@link ox#Database.(Database:type)} serves, returning promises.
+ * An EVM created over one of these performs its reads asynchronously, so
+ * executing through it returns a promise.
+ */
+export type Async = async.Marked
 
 /**
  * Creates an in-memory database.
@@ -145,6 +155,135 @@ export declare namespace fromMemory {
   }
 }
 
+/**
+ * Marks a source as asynchronous.
+ *
+ * An EVM created over the result performs its reads asynchronously, so executing
+ * through it returns a promise. Marking is explicit because whether a read
+ * returns a promise is otherwise only knowable by performing one.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Database, Evm } from 'ox/evm'
+ *
+ * const database = Database.fromAsync({
+ *   async getAccount(address) {
+ *     return load(address)
+ *   },
+ *   async getBlockHash(number) {
+ *     return hashes[String(number)]
+ *   },
+ *   async getCodeByHash(codeHash) {
+ *     return code[codeHash]
+ *   },
+ *   async getStorage(address, key) {
+ *     return slots[`${address}:${key}`] ?? 0n
+ *   }
+ * })
+ * ```
+ *
+ * @param source - Reads to perform.
+ * @returns An asynchronous database.
+ */
+export function fromAsync(source: async.Async): Async {
+  return { ...source, '~async': true }
+}
+
+/**
+ * Creates an asynchronous database over an EIP-1193 provider.
+ *
+ * Reads resolve against whatever block the provider serves, so pin it to a
+ * block for a reproducible fork.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Database, Evm } from 'ox/evm'
+ *
+ * const fork = await Evm.create({
+ *   database: Database.fromProvider({ provider })
+ * })
+ *
+ * // Reads are asynchronous, so execution is too.
+ * const result = await Evm.callTx(fork, transaction)
+ * ```
+ *
+ * @param options - Provider to read through.
+ * @returns An asynchronous database.
+ */
+export function fromProvider(options: fromProvider.Options): Async {
+  const { blockNumber, provider } = options
+  const block =
+    blockNumber === undefined ? 'latest' : Hex.fromNumber(blockNumber)
+
+  async function request<result>(method: string, params: readonly unknown[]) {
+    return provider.request({ method, params }) as Promise<result>
+  }
+
+  return fromAsync({
+    async getAccount(address) {
+      const [balance, nonce, code] = await Promise.all([
+        request<Hex.Hex>('eth_getBalance', [address, block]),
+        request<Hex.Hex>('eth_getTransactionCount', [address, block]),
+        request<Hex.Hex>('eth_getCode', [address, block]),
+      ])
+
+      // A node reports zeroes for an account that does not exist, which is the
+      // same answer as an empty account, so an empty one is reported as absent.
+      const bytes = Bytes.fromHex(code)
+      if (
+        Hex.toBigInt(balance) === 0n &&
+        Hex.toBigInt(nonce) === 0n &&
+        bytes.length === 0
+      )
+        return undefined
+
+      return {
+        balance: Hex.toBigInt(balance),
+        ...(bytes.length ? { code: bytes } : {}),
+        codeHash: bytes.length ? Hash.keccak256(code) : Hash.keccak256('0x'),
+        nonce: Hex.toBigInt(nonce),
+      }
+    },
+    async getBlockHash(number) {
+      const header = await request<{ hash: Hex.Hex } | null>(
+        'eth_getBlockByNumber',
+        [Hex.fromNumber(number), false],
+      )
+      if (!header) throw new MissingBlockHashError({ number })
+      return header.hash
+    },
+    async getCodeByHash() {
+      // Nodes key code by address, not by hash, and `getAccount` already
+      // supplies it inline, so the engine never reaches this.
+      throw new UnsupportedReadError()
+    },
+    async getStorage(address, key) {
+      const value = await request<Hex.Hex>('eth_getStorageAt', [
+        address,
+        Hex.fromNumber(key),
+        block,
+      ])
+      return Hex.toBigInt(value)
+    },
+  })
+}
+
+export declare namespace fromProvider {
+  type Options = {
+    /** Block to read at. Latest when omitted, which is not reproducible. */
+    blockNumber?: bigint | undefined
+    /** EIP-1193 provider. */
+    provider: {
+      request(args: {
+        method: string
+        params?: readonly unknown[] | undefined
+      }): Promise<unknown>
+    }
+  }
+}
+
 // Rejects code the engine would refuse to classify. `0xef01`-prefixed code is an
 // EIP-7702 delegation designator: exactly 23 bytes with a zero version byte.
 // Checking here fails at the account that declared it rather than as an opaque
@@ -153,6 +292,19 @@ function assertCode(address: string, code: Bytes.Bytes) {
   if (code[0] !== 0xef || code[1] !== 0x01) return
   if (code.length === 23 && code[2] === 0x00) return
   throw new InvalidDesignatorError({ address, length: code.length })
+}
+
+/** Thrown when a source cannot serve a read the engine performed. */
+export class UnsupportedReadError extends Errors.BaseError {
+  override readonly name = 'Database.UnsupportedReadError'
+
+  constructor() {
+    super('This source cannot look code up by its hash.', {
+      metaMessages: [
+        'Nodes key code by address, so the account read supplies it inline.',
+      ],
+    })
+  }
 }
 
 /** Thrown when an account's delegation designator is malformed. */

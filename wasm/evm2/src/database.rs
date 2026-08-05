@@ -25,6 +25,13 @@ const MISSING: u32 = 1;
 /// Code did not fit the landing buffer. The host wrote the length it needs.
 const TOO_LARGE: u32 = 3;
 
+/// The host does not have the value yet and will supply it out of band.
+///
+/// An asynchronous source cannot answer inside a synchronous import, so it
+/// reports this instead. The read fails, evm2 unwinds the attempt without
+/// accepting any state, and the host retries once it has fetched the value.
+const PENDING: u32 = 4;
+
 /// Absolute ceiling on code the adapter will accept from the host.
 ///
 /// The landing buffer starts at the largest size any fork lets a contract deploy
@@ -203,6 +210,7 @@ impl Database for HostDb {
         match status {
             FOUND => {}
             MISSING => return Ok(None),
+            PENDING => return Err(HostError::Pending),
             _ => return Err(HostError::Account(*address)),
         }
 
@@ -237,6 +245,9 @@ impl Database for HostDb {
             self.grow_code(length as usize)?;
             status = self.read_code(code_hash, &mut length);
         }
+        if status == PENDING {
+            return Err(HostError::Pending);
+        }
         if status != FOUND {
             return Err(HostError::Code(*code_hash));
         }
@@ -252,6 +263,9 @@ impl Database for HostDb {
         let status = unsafe {
             host_get_storage(address.as_ptr(), key.to_be_bytes::<32>().as_ptr(), out.as_mut_ptr())
         };
+        if status == PENDING {
+            return Err(HostError::Pending);
+        }
         if status != FOUND {
             return Err(HostError::Storage { address: *address, key: *key });
         }
@@ -262,6 +276,9 @@ impl Database for HostDb {
         let mut out = [0u8; 32];
         let status =
             unsafe { host_get_block_hash(number.to_be_bytes::<32>().as_ptr(), out.as_mut_ptr()) };
+        if status == PENDING {
+            return Err(HostError::Pending);
+        }
         if status != FOUND {
             return Err(HostError::BlockHash(*number));
         }
@@ -274,6 +291,8 @@ impl Database for HostDb {
 pub enum HostError {
     /// `get_account` failed.
     Account(Address),
+    /// A read the host has not fetched yet. The attempt is abandoned, not failed.
+    Pending,
     /// `get_block_hash` failed.
     BlockHash(Word),
     /// The host returned code that is not valid evm2 bytecode.
@@ -300,6 +319,7 @@ impl fmt::Display for HostError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Account(address) => write!(f, "host could not read account {address}"),
+            Self::Pending => write!(f, "host has not fetched a value this read needs"),
             Self::BlockHash(number) => write!(f, "host could not read block hash {number}"),
             Self::Bytecode(code_hash) => {
                 write!(f, "host returned malformed bytecode for {code_hash}")

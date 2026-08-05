@@ -1,6 +1,7 @@
 import type * as Address from '../../core/Address.js'
 import type * as Bytes from '../../core/Bytes.js'
 import * as Errors from '../../core/Errors.js'
+import * as async from './async.js'
 import * as bindings from './bindings.js'
 import * as codec from './codec.js'
 import type * as Database from './database.js'
@@ -173,6 +174,9 @@ function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
   if (status === codec.status.engineBorrowed) throw new BorrowedError()
   if (status === codec.status.notExecuted) throw new NotExecutedError()
   if (status === codec.status.sink) throw new SinkError()
+  // Not a failure: the attempt was abandoned before any state was accepted. The
+  // asynchronous driver catches this, awaits the source, and repeats.
+  if (status === codec.status.pending) throw new async.PendingError()
   throw new codec.DecodeError(`unknown response status ${status}`)
 }
 

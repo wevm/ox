@@ -60,7 +60,7 @@ describe('create', () => {
 
 describe('callTx', () => {
   test('default', async () => {
-    const result = Evm.callTx(await evm(), transaction())
+    const result: TxResult.TxResult = Evm.callTx(await evm(), transaction())
     expect({ ...result, logs: result.logs.length }).toMatchInlineSnapshot(`
       {
         "createdAddress": undefined,
@@ -171,7 +171,7 @@ describe('readAccountInfo', () => {
 
 describe('TxResult', () => {
   test('gas helpers', async () => {
-    const result = Evm.callTx(await evm(), transaction())
+    const result: TxResult.TxResult = Evm.callTx(await evm(), transaction())
     expect([
       TxResult.txGasUsed(result),
       TxResult.regularGasSpent(result),

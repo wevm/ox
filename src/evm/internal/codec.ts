@@ -81,6 +81,7 @@ export const status = {
   engineBorrowed: 6,
   notExecuted: 7,
   sink: 8,
+  pending: 9,
 } as const
 
 /** Block environment, in evm2's `BlockEnvExt` terms. */

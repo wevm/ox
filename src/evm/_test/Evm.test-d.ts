@@ -11,32 +11,57 @@ import {
 import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('create', () => {
-  test('every option is optional', () => {
-    expectTypeOf(Evm.create).toBeCallableWith()
-    expectTypeOf(Evm.create).toBeCallableWith({
-      database: Database.fromMemory(),
-    })
+  test('every option is optional', async () => {
+    expectTypeOf(await Evm.create()).toEqualTypeOf<Evm.Evm<false>>()
+    expectTypeOf(
+      await Evm.create({ database: Database.fromMemory() }),
+    ).toEqualTypeOf<Evm.Evm<false>>()
   })
 
   test('specId narrows to the specification union', () => {
     expectTypeOf<Evm.create.Options['specId']>().toEqualTypeOf<
       SpecId.SpecId | undefined
     >()
-    expectTypeOf(Evm.create).toBeCallableWith({
+    void Evm.create({
       // @ts-expect-error a specification that does not exist
       specId: 'verkle',
     })
   })
 
   test('chainId is a bigint, not a number', () => {
-    expectTypeOf(Evm.create).toBeCallableWith({
+    void Evm.create({
       // @ts-expect-error chain ids are bigints, never numbers
       chainId: 1,
     })
   })
 
-  test('returns an EVM, not a promise of unknown', async () => {
-    expectTypeOf(Evm.create).returns.resolves.toEqualTypeOf<Evm.Evm>()
+  test('an asynchronous database makes every read asynchronous', async () => {
+    const fork = await Evm.create({
+      database: Database.fromAsync({
+        getAccount: async () => undefined,
+        getBlockHash: async () => `0x${'00'.repeat(32)}`,
+        getCodeByHash: async () => new Uint8Array(),
+        getStorage: async () => 0n,
+      }),
+    })
+
+    expectTypeOf(fork).toEqualTypeOf<Evm.Evm<true>>()
+
+    // One name, and the type says whether to await it.
+    expectTypeOf(Evm.callTx(fork, {} as never)).toEqualTypeOf<
+      Promise<TxResult.TxResult>
+    >()
+    expectTypeOf(Evm.readAccountInfo(fork, '0x')).toEqualTypeOf<
+      Promise<Database.Account | undefined>
+    >()
+
+    const evm = await Evm.create()
+    expectTypeOf(
+      Evm.callTx(evm, {} as never),
+    ).toEqualTypeOf<TxResult.TxResult>()
+    expectTypeOf(Evm.readAccountInfo(evm, '0x')).toEqualTypeOf<
+      Database.Account | undefined
+    >()
   })
 })
 
@@ -91,9 +116,12 @@ describe('SpecId', () => {
 
 describe('ExecutedTx', () => {
   test('transact returns a disposable handle', () => {
-    expectTypeOf<
-      ReturnType<typeof Evm.transact>
-    >().toEqualTypeOf<ExecutedTx.ExecutedTx>()
+    expectTypeOf(
+      Evm.transact({} as Evm.Evm<false>, {} as never),
+    ).toEqualTypeOf<ExecutedTx.ExecutedTx>()
+    expectTypeOf(Evm.transact({} as Evm.Evm<true>, {} as never)).toEqualTypeOf<
+      Promise<ExecutedTx.ExecutedTx>
+    >()
     expectTypeOf<ExecutedTx.ExecutedTx[typeof Symbol.dispose]>().toEqualTypeOf<
       () => void
     >()
