@@ -286,6 +286,12 @@ function linked(raw: string) {
   return packages
 }
 
+/** Standard licenses whose text ships beside the notice. */
+const standardLicenses = new Map([
+  ['Apache-2.0', 'LICENSE-APACHE'],
+  ['MIT', 'LICENSE-MIT'],
+])
+
 /** Collects license texts from the host Cargo cache, for the native build. */
 function hostTexts(home: string): Map<string, string> {
   const texts = new Map<string, string>()
@@ -357,10 +363,18 @@ function thirdPartyLicenses(
           texts.get(`git-${revision.slice(0, 7)}`))
         : undefined)
     const heading = `## \`${entry.name}\` ${entry.version}\n\nDeclared license: ${entry.license ?? 'see upstream'}.`
-    // A crate shipping no license file is named anyway, so a gap is visible
-    // rather than silently absent.
-    return text
-      ? `${heading}\n\n${text}`
+    if (text) return `${heading}\n\n${text}`
+
+    // A crate publishing no file of its own still declares a license, and every
+    // one that does here is a standard text. Naming it and pointing at the copy
+    // beside this file distributes the terms without inventing a copyright line
+    // the crate never stated.
+    const standard = (entry.license ?? '')
+      .split(/\s+OR\s+/)
+      .map((name) => name.trim())
+      .filter((name) => standardLicenses.has(name))
+    return standard.length
+      ? `${heading}\n\nThis crate publishes no license file. Its declared terms are the standard ${standard.join(' or ')} text, reproduced in ${standard.map((name) => `\`${standardLicenses.get(name)}\``).join(' and ')} beside this file. Copyright remains the crate authors'.`
       : `${heading}\n\nNo license file ships with this crate; see its repository.`
   })
 

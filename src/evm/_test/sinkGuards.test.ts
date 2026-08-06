@@ -124,3 +124,41 @@ describe('insertStorage', () => {
     expect(streamed).toContain(42n)
   })
 })
+
+describe('insertAccount', () => {
+  test('behavior: an edit keeps its place in the stream', async () => {
+    const instance = await evm()
+    const { pendingState } = ExecutedTx.detach(
+      Evm.transact(instance, transaction()),
+    )
+
+    const before: string[] = []
+    StateChange.visit(pendingState, {
+      ...StateChange.noop(),
+      account: (change) => before.push(`account:${change.address}`),
+      accountRead: (change) => before.push(`accountRead:${change.address}`),
+      storage: (change) => before.push(`storage:${change.address}`),
+      storageRead: (change) => before.push(`storageRead:${change.address}`),
+    })
+
+    const account = PendingState.accountInfo(pendingState, sender)!
+    const edited = PendingState.insertAccount(pendingState, {
+      address: sender,
+      current: { ...account, nonce: 9n },
+      original: account,
+    })
+
+    const after: string[] = []
+    StateChange.visit(edited, {
+      ...StateChange.noop(),
+      account: (change) => after.push(`account:${change.address}`),
+      accountRead: (change) => after.push(`accountRead:${change.address}`),
+      storage: (change) => after.push(`storage:${change.address}`),
+      storageRead: (change) => after.push(`storageRead:${change.address}`),
+    })
+
+    // Same sequence: an edit replaces a record where it sat, rather than moving
+    // it past whatever evm2 emitted afterwards.
+    expect(after).toEqual(before)
+  })
+})

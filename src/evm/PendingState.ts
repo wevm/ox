@@ -175,16 +175,13 @@ export function insertAccount(
     // Kept in step with the grouped view: `visit` reads the record stream while
     // `commitSource` reads the groups, so an edit has to reach both or the same
     // state streams differently than it applies.
-    records: [
-      ...changes.records.filter(
-        (record) =>
-          !(
-            (record.kind === 'account' || record.kind === 'accountRead') &&
-            record.address.toLowerCase() === address
-          ),
-      ),
+    records: replace(
+      changes.records,
+      (record) =>
+        (record.kind === 'account' || record.kind === 'accountRead') &&
+        record.address.toLowerCase() === address,
       { ...entry, kind: 'account' as const },
-    ],
+    ),
   })
 }
 
@@ -239,16 +236,13 @@ export function insertStorage(
 
   return from({
     ...changes,
-    records: [
-      ...changes.records.filter(
-        (record) =>
-          !(
-            (record.kind === 'storage' || record.kind === 'storageRead') &&
-            matches(record)
-          ),
-      ),
+    records: replace(
+      changes.records,
+      (record) =>
+        (record.kind === 'storage' || record.kind === 'storageRead') &&
+        matches(record),
       { ...slot, kind: 'storage' as const },
-    ],
+    ),
     storage: [...changes.storage.filter((change) => !matches(change)), slot],
     // Dropped for the same reason as an account's read.
     storageReads: changes.storageReads.filter((change) => !matches(change)),
@@ -266,4 +260,19 @@ export declare namespace insertStorage {
     /** Value at the transaction boundary. */
     original: bigint
   }
+}
+
+// Replaces the first record `matches` selects, keeping the stream in evm2's own
+// emission order. Appending instead would move the replacement past any trailing
+// read records, an order evm2's visitor never produces.
+function replace(
+  records: readonly codec.Change[],
+  matches: (record: codec.Change) => boolean,
+  replacement: codec.Change,
+): readonly codec.Change[] {
+  const index = records.findIndex(matches)
+  if (index === -1) return [...records, replacement]
+  return records
+    .map((record, at) => (at === index ? replacement : record))
+    .filter((record, at) => at === index || !matches(record))
 }

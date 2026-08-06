@@ -362,19 +362,13 @@ describe('transaction input', () => {
 })
 
 describe('Database.fromMemory code', () => {
-  test('behavior: rejects a malformed delegation designator at the account', async () => {
-    // Found by the property suite: the engine refuses to classify `0xef01`
-    // code, which surfaced as an opaque read failure during execution rather
-    // than at the account that declared it.
+  test('behavior: accepts code that merely starts like a designator', async () => {
+    // `0xef01` without the rest of a designator is ordinary legacy code, which
+    // genesis and pre-EIP-3541 state can hold. Every database source runs it as
+    // legacy, so swapping one for another cannot change whether state executes.
     expect(() =>
       Database.fromMemory({ accounts: { [target]: { code: '0xef01' } } }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Database.InvalidDesignatorError: An account declared a malformed delegation designator.
-
-      Account: 0x00000000000000000000000000000000000000c0
-      Length: 2 bytes, expected 23
-      Code beginning \`0xef01\` is an EIP-7702 designator: \`0xef0100\` and a 20-byte address.]
-    `)
+    ).not.toThrow()
   })
 
   test('behavior: accepts a valid delegation designator', async () => {

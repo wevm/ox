@@ -17,7 +17,7 @@ export const wasmBase64 =
 export const wasmBytes = 802678
 
 /** Gzipped size of the decoded binary, in bytes. */
-export const wasmGzipBytes = 305793
+export const wasmGzipBytes = 303684
 
 /** The evm2 commit this artifact was compiled against. */
 export const evm2Revision = '8ff36b5359aa1ccc5bdd7eb1c98d0a7f3daac469'

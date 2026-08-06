@@ -454,49 +454,49 @@ DEALINGS IN THE SOFTWARE.
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-eip2124` 0.2.0
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-eip2930` 0.2.3
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-eip7702` 0.6.3
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-eip7928` 0.4.5
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-eips` 2.3.0
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-primitives` 1.6.1
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-rlp` 0.3.16
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `alloy-trie` 0.9.5
 
@@ -5459,7 +5459,7 @@ SOFTWARE.
 
 Declared license: MIT OR Apache-2.0.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT or Apache-2.0 text, reproduced in `LICENSE-MIT` and `LICENSE-APACHE` beside this file. Copyright remains the crate authors'.
 
 ## `crypto-bigint` 0.5.5
 
@@ -18877,7 +18877,7 @@ DEALINGS IN THE SOFTWARE.
 
 Declared license: MIT.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT text, reproduced in `LICENSE-MIT` beside this file. Copyright remains the crate authors'.
 
 ## `sec1` 0.7.3
 
@@ -22017,7 +22017,7 @@ SOFTWARE.
 
 Declared license: MIT.
 
-No license file ships with this crate; see its repository.
+This crate publishes no license file. Its declared terms are the standard MIT text, reproduced in `LICENSE-MIT` beside this file. Copyright remains the crate authors'.
 
 ## `wnaf` 0.14.0
 
