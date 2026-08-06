@@ -122,7 +122,9 @@ export function driver(source: Async): Driver {
       if (outstanding.kind === 'account')
         accounts.set(
           outstanding.address.toLowerCase(),
-          await source.getAccount(outstanding.address),
+          // Copied, not held: the engine has already yielded, so a source reusing
+          // its buffer could change what the replay reads.
+          account(await source.getAccount(outstanding.address)),
         )
       else if (outstanding.kind === 'blockHash')
         blockHashes.set(
@@ -132,7 +134,7 @@ export function driver(source: Async): Driver {
       else if (outstanding.kind === 'code')
         code.set(
           outstanding.codeHash.toLowerCase(),
-          await source.getCodeByHash(outstanding.codeHash),
+          Uint8Array.from(await source.getCodeByHash(outstanding.codeHash)),
         )
       else
         storage.set(
@@ -141,6 +143,17 @@ export function driver(source: Async): Driver {
         )
       return true
     },
+  }
+}
+
+/** Copies an account, so a source reusing its objects cannot change a cached read. */
+function account(
+  value: Database.Account | undefined,
+): Database.Account | undefined {
+  if (!value) return undefined
+  return {
+    ...value,
+    ...(value.code ? { code: Uint8Array.from(value.code) } : {}),
   }
 }
 

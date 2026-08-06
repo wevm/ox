@@ -389,11 +389,14 @@ export function callTx(
   evm: Evm<boolean>,
   transaction: Ethereum.Tx,
 ): Awaitable<boolean, TxResult.TxResult> {
+  // Encoded once: a retry replays the submitted transaction, not whatever the
+  // caller's object became while an uncached read was fetched.
+  const request = {
+    envelope: envelope(transaction, evm['~chainId']),
+    signer: transaction.from,
+  }
   return attempt(evm, () => {
-    const result = evm['~engine'].callTx({
-      envelope: envelope(transaction, evm['~chainId']),
-      signer: transaction.from,
-    })
+    const result = evm['~engine'].callTx(request)
     return { ...result, stop: stop(result.stop) }
   })
 }
@@ -498,13 +501,16 @@ export function transact(
   evm: Evm<boolean>,
   transaction: Ethereum.Tx,
 ): Awaitable<boolean, ExecutedTx.ExecutedTx> {
+  // Encoded once: a retry replays the submitted transaction, not whatever the
+  // caller's object became while an uncached read was fetched.
+  const request = {
+    envelope: envelope(transaction, evm['~chainId']),
+    signer: transaction.from,
+  }
   return attempt(evm, () => {
     // An attempt that stops on an unfetched read parks no handle, so a repeat
     // finds the engine free.
-    const { result, token } = evm['~engine'].transact({
-      envelope: envelope(transaction, evm['~chainId']),
-      signer: transaction.from,
-    })
+    const { result, token } = evm['~engine'].transact(request)
     const normalized = (() => {
       try {
         return { ...result, stop: stop(result.stop) }
@@ -658,12 +664,8 @@ export function setBlock<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   block: Block,
 ): Awaitable<asynchronous, void> {
-  return attempt(evm, () =>
-    apply(evm, {
-      ...evm['~config'],
-      block: merge(evm['~config'].block, block),
-    }),
-  )
+  const merged = merge(evm['~config'].block, block)
+  return attempt(evm, () => apply(evm, { ...evm['~config'], block: merged }))
 }
 
 export declare namespace setBlock {
@@ -701,12 +703,15 @@ export function setExecutionConfig<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   options: setExecutionConfig.Options,
 ): Awaitable<asynchronous, void> {
-  const specId = options.specId ?? evm['~config'].specId
+  // The explicit value is read now; the fallback resolves when the operation
+  // runs, so omitting it leaves whatever an earlier queued setter chose rather
+  // than reverting to the specification held at submission.
+  const specId = options.specId
   const version = snapshot(options.version)
   return attempt(evm, () =>
     apply(evm, {
       block: evm['~config'].block,
-      specId,
+      specId: specId ?? evm['~config'].specId,
       ...(version ? { version } : {}),
     }),
   )
@@ -748,10 +753,14 @@ export function setBlockAndExecutionConfig<asynchronous extends boolean>(
   options: setBlockAndExecutionConfig.Options,
 ): Awaitable<asynchronous, void> {
   const version = snapshot(options.version)
+  const block = merge(evm['~config'].block, options.block)
+  // The specification falls back inside, so a setter queued earlier in the same
+  // tick is not undone by one that omits it.
+  const specId = options.specId
   return attempt(evm, () =>
     apply(evm, {
-      block: merge(evm['~config'].block, options.block),
-      specId: options.specId ?? evm['~config'].specId,
+      block,
+      specId: specId ?? evm['~config'].specId,
       ...(version ? { version } : {}),
     }),
   )
@@ -769,6 +778,22 @@ export declare namespace setBlockAndExecutionConfig {
 // Copies version overrides, so a caller mutating theirs afterwards cannot change
 // what an EVM already runs under. The groups are flat records of primitives, so
 // one level is deep enough.
+function snapshotBal(bal: Bal.Bal): Bal.Bal {
+  return {
+    accounts: bal.accounts.map((account) => ({
+      ...account,
+      balanceChanges: [...account.balanceChanges],
+      codeChanges: [...account.codeChanges],
+      nonceChanges: [...account.nonceChanges],
+      storageChanges: account.storageChanges.map((slot) => ({
+        ...slot,
+        changes: [...slot.changes],
+      })),
+      storageReads: [...account.storageReads],
+    })),
+  }
+}
+
 function snapshot(version: Version | undefined): Version | undefined {
   if (!version) return undefined
   return {
@@ -826,15 +851,16 @@ export function setInspector<asynchronous extends boolean>(
   // Queued like the other setters: an asynchronous execution can be parked
   // mid-retry, and changing the recording under it would trace one execution
   // with two sets of settings.
-  return attempt(evm, () =>
-    evm['~engine'].setInspector({
-      enabled: true,
-      limit: options.limit ?? 1_048_576,
-      memory: options.memory ?? false,
-      stack: options.stack ?? false,
-      steps: options.steps ?? false,
-    }),
-  )
+  // Read now, not when the operation runs: an asynchronous EVM queues this, and
+  // evm2 takes values rather than a reference to the caller's object.
+  const request = {
+    enabled: true,
+    limit: options.limit ?? 1_048_576,
+    memory: options.memory ?? false,
+    stack: options.stack ?? false,
+    steps: options.steps ?? false,
+  }
+  return attempt(evm, () => evm['~engine'].setInspector(request))
 }
 
 export declare namespace setInspector {
@@ -905,9 +931,8 @@ export function setBal<asynchronous extends boolean>(
   bal: Bal.Bal,
   options: setBal.Options = {},
 ): Awaitable<asynchronous, void> {
-  return attempt(evm, () =>
-    evm['~engine'].setBal({ bal, fallback: options.fallback ?? false }),
-  )
+  const request = { bal: snapshotBal(bal), fallback: options.fallback ?? false }
+  return attempt(evm, () => evm['~engine'].setBal(request))
 }
 
 export declare namespace setBal {
@@ -1297,12 +1322,13 @@ export function systemCall(
   evm: Evm<boolean>,
   options: systemCall.Options,
 ): Awaitable<boolean, ExecutedTx.ExecutedTx> {
+  const request = {
+    address: options.address,
+    caller: options.caller ?? System.address,
+    data: Bytes.fromHex(options.data ?? '0x'),
+  }
   return attempt(evm, () => {
-    const { result, token } = evm['~engine'].systemCall({
-      address: options.address,
-      caller: options.caller ?? System.address,
-      data: Bytes.fromHex(options.data ?? '0x'),
-    })
+    const { result, token } = evm['~engine'].systemCall(request)
     const normalized = (() => {
       try {
         return { ...result, stop: stop(result.stop) }

@@ -383,3 +383,51 @@ describe('across EVMs', () => {
     expect(result.output).toBe(Hex.fromNumber(0, { size: 32 }))
   })
 })
+
+describe('self-destruct', () => {
+  test('behavior: a destroyed account is destroyed by applying its state', async () => {
+    /** PUSH20 sender, SELFDESTRUCT. Before Cancun this deletes the account. */
+    const destroying = `0x73${sender.slice(2)}ff` as const
+    const victim = '0x00000000000000000000000000000000000000c5' as const
+    const accounts = {
+      [sender.toLowerCase()]: { balance: 10n ** 18n },
+      [victim]: { balance: 1n, code: destroying, storage: { '0x0': 5n } },
+    }
+    const specId = 'shanghai' as const
+
+    const source = await Evm.create({
+      database: Database.fromMemory({ accounts }),
+      specId,
+    })
+    const envelope = TxEnvelopeLegacy.from({
+      chainId: 1,
+      gas: 200_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      to: victim,
+      value: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeLegacy.getSignPayload(envelope),
+      privateKey,
+    })
+    const { pendingState } = ExecutedTx.detach(
+      Evm.transact(source, {
+        from: sender,
+        serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
+      }),
+    )
+
+    // A target where the victim still exists with its storage.
+    const target_ = await Evm.create({
+      database: Database.fromMemory({ accounts }),
+      specId,
+    })
+    Evm.commitSource(target_, pendingState)
+
+    // Gone. The destruction rides on the account's absent current value, which
+    // wipes its storage at the sink, so dropping the separate wipe record does
+    // not leave state behind.
+    expect(Evm.readAccountInfo(target_, victim)).toBeUndefined()
+  })
+})
