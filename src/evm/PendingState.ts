@@ -159,6 +159,11 @@ export function insertAccount(
   }
   return from({
     ...changes,
+    // The read is dropped as well: reads are applied after changes, so leaving
+    // one would overwrite the replacement with the value it replaced.
+    accountReads: changes.accountReads.filter(
+      (change) => change.address.toLowerCase() !== address,
+    ),
     accounts: [
       ...changes.accounts.filter(
         (change) => change.address.toLowerCase() !== address,
@@ -208,14 +213,13 @@ export function insertStorage(
 ): PendingState {
   const changes = state['~changes']
   const address = options.address.toLowerCase()
+  const matches = (change: { address: Address.Address; key: bigint }) =>
+    change.address.toLowerCase() === address && change.key === options.key
+
   return from({
     ...changes,
     storage: [
-      ...changes.storage.filter(
-        (change) =>
-          change.address.toLowerCase() !== address ||
-          change.key !== options.key,
-      ),
+      ...changes.storage.filter((change) => !matches(change)),
       {
         address: options.address,
         current: options.current,
@@ -223,6 +227,8 @@ export function insertStorage(
         original: options.original,
       },
     ],
+    // Dropped for the same reason as an account's read.
+    storageReads: changes.storageReads.filter((change) => !matches(change)),
   })
 }
 

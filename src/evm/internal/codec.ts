@@ -477,8 +477,11 @@ export declare namespace encodeSystemCall {
 /**
  * Encodes a request applying changes to the accepted state overlay.
  *
- * Writes the same record stream the adapter emits when it streams changes out, so
- * state that came from a detach goes back in the shape it left.
+ * Only changes are written. A read has the same original and current value, which
+ * is not a change, so applying one is a no-op; emitting it would only risk
+ * overwriting a real change for the same key, since the adapter rebuilds a map.
+ * Bytecode travels with it, or an account applied to another EVM would carry a
+ * hash for bytes that EVM never saw.
  */
 export function encodeCommitSource(changes: Changes): Bytes.Bytes {
   const writer = new Writer()
@@ -491,29 +494,22 @@ export function encodeCommitSource(changes: Changes): Bytes.Bytes {
     writer.bool(change.created ?? false)
     writer.bool(change.selfdestructed ?? false)
   }
-  for (const change of changes.accountReads) {
-    writer.u8(record.accountRead)
-    writer.address(change.address)
-    writeChangeAccount(writer, change.current)
-  }
   for (const change of changes.storage) {
-    // A read carries no original, and its tag has one word fewer.
-    if (change.original === undefined) {
-      writer.u8(record.storageRead)
-      writer.address(change.address)
-      writer.word(change.key)
-      writer.word(change.current)
-      continue
-    }
     writer.u8(record.storage)
     writer.address(change.address)
     writer.word(change.key)
-    writer.word(change.original)
+    writer.word(change.original ?? change.current)
     writer.word(change.current)
   }
   for (const address of changes.storageWipes) {
     writer.u8(record.storageWipe)
     writer.address(address)
+  }
+
+  for (const entry of changes.bytecode) {
+    writer.u8(record.bytecode)
+    writer.hash(entry.codeHash)
+    writer.bytes(entry.code)
   }
 
   writer.u8(record.end)

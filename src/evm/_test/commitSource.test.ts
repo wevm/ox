@@ -257,3 +257,129 @@ describe('detach, edit, commit', () => {
     expect(result.output).toBe(Hex.fromNumber(9, { size: 32 }))
   })
 })
+
+describe('across EVMs', () => {
+  test('behavior: deployed code travels with the state', async () => {
+    /** Initcode returning PUSH1 42 PUSH0 MSTORE PUSH1 32 PUSH0 RETURN. */
+    const initcode = '0x67602a5f5260205ff35f5260086018f3' as const
+
+    const source = await Evm.create({
+      database: Database.fromMemory({
+        accounts: { [sender.toLowerCase()]: { balance: 10n ** 18n } },
+      }),
+    })
+    const envelope = TxEnvelopeLegacy.from({
+      chainId: 1,
+      data: initcode,
+      gas: 200_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      value: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeLegacy.getSignPayload(envelope),
+      privateKey,
+    })
+    const executed = Evm.transact(source, {
+      from: sender,
+      serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
+    })
+    const deployed = ExecutedTx.result(executed).createdAddress!
+    const { pendingState } = ExecutedTx.detach(executed)
+
+    // A second EVM that never saw the deployment. Without the code travelling
+    // with the state, the account carries a hash for bytes this EVM does not
+    // have, and the call returns nothing.
+    const target_ = await Evm.create({
+      database: Database.fromMemory({
+        accounts: { [sender.toLowerCase()]: { balance: 10n ** 18n } },
+      }),
+    })
+    Evm.commitSource(target_, pendingState)
+
+    // The applied state moved the sender's nonce, so the call follows it.
+    const call = TxEnvelopeLegacy.from({
+      chainId: 1,
+      gas: 200_000n,
+      gasPrice: 0n,
+      nonce: 1n,
+      to: deployed,
+      value: 0n,
+    })
+    const result = Evm.callTx(target_, {
+      from: sender,
+      serialized: TxEnvelopeLegacy.serialize(call, {
+        signature: Secp256k1.sign({
+          payload: TxEnvelopeLegacy.getSignPayload(call),
+          privateKey,
+        }),
+      }),
+    })
+
+    expect(result.output).toBe(Hex.fromNumber(42, { size: 32 }))
+  })
+
+  test('behavior: a read-only slot does not travel, and cannot', async () => {
+    const reader = '0x00000000000000000000000000000000000000c4' as const
+    const accounts = {
+      [sender.toLowerCase()]: { balance: 10n ** 18n },
+      // Returns slot 0, and holds 5 in the source EVM only.
+      [reader]: { code: '0x5f545f5260205ff3' as const },
+    }
+
+    const source = await Evm.create({
+      database: Database.fromMemory({
+        accounts: {
+          ...accounts,
+          [reader]: { ...accounts[reader], storage: { '0x0': 5n } },
+        },
+      }),
+    })
+    const envelope = TxEnvelopeLegacy.from({
+      chainId: 1,
+      gas: 200_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      to: reader,
+      value: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeLegacy.getSignPayload(envelope),
+      privateKey,
+    })
+    const { pendingState } = ExecutedTx.detach(
+      Evm.transact(source, {
+        from: sender,
+        serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
+      }),
+    )
+
+    const target_ = await Evm.create({
+      database: Database.fromMemory({ accounts }),
+    })
+    Evm.commitSource(target_, pendingState)
+
+    const after = TxEnvelopeLegacy.from({
+      chainId: 1,
+      gas: 200_000n,
+      gasPrice: 0n,
+      nonce: 1n,
+      to: reader,
+      value: 0n,
+    })
+    const result = Evm.callTx(target_, {
+      from: sender,
+      serialized: TxEnvelopeLegacy.serialize(after, {
+        signature: Secp256k1.sign({
+          payload: TxEnvelopeLegacy.getSignPayload(after),
+          privateKey,
+        }),
+      }),
+    })
+
+    // Zero, not five. A read has the same original and current value, so it is
+    // not a change and applying it cannot move a value between EVMs. Only what a
+    // transaction wrote crosses.
+    expect(result.output).toBe(Hex.fromNumber(0, { size: 32 }))
+  })
+})
