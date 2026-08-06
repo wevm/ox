@@ -304,12 +304,12 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             Ok(index) => set_bal_index(index),
             Err(error) => abi_failure(error),
         },
-        op::SET_BLOCK_STATE => match read_flag(&mut reader) {
-            Ok(enabled) => set_block_state(enabled),
+        op::START_BLOCK_STATE => match reader.finish() {
+            Ok(()) => start_block_state(),
             Err(error) => abi_failure(error),
         },
-        op::TAKE_BLOCK_STATE => match reader.finish() {
-            Ok(()) => take_block_state(),
+        op::TAKE_BLOCK_STATE => match read_token(&mut reader) {
+            Ok(token) => take_block_state(token),
             Err(error) => abi_failure(error),
         },
         op::WARM_PRECOMPILES => match reader.finish() {
@@ -328,8 +328,11 @@ fn dispatch(adapter: &mut Adapter, length: usize) -> Vec<u8> {
             Ok(tx) => transact(&tx),
             Err(error) => abi_failure(error),
         },
+        op::COMMIT_TO => match read_token(&mut reader) {
+            Ok(token) => resolve_to(token),
+            Err(error) => abi_failure(error),
+        },
         op::COMMIT
-        | op::COMMIT_TO
         | op::DISCARD
         | op::DETACH
         | op::COMMIT_WITH
@@ -577,16 +580,29 @@ fn is_bal_uncovered(failure: &HandlerError) -> bool {
     }
 }
 
+/// Resolves the outstanding handle into the block accumulator `token` identifies.
+///
+/// The token is checked before the handle is taken: taking it and returning early
+/// would drop it, and dropping an executed transaction discards it, silently
+/// losing the one the caller asked to commit.
+fn resolve_to(token: u64) -> Vec<u8> {
+    if block::accumulator(token).is_none() {
+        return Writer::new().finish(status::NO_BLOCK_STATE);
+    }
+    let Some(handle) = executed().take() else {
+        return Writer::new().finish(status::NOT_EXECUTED);
+    };
+    if let Some(accumulator) = block::accumulator(token) {
+        let _ = handle.commit_to(accumulator);
+    }
+    Writer::new().finish(status::OK)
+}
+
 /// Resolves the outstanding handle, releasing the engine borrow.
 ///
 /// Taking the handle out first is what makes the engine reachable again, so a
 /// resolution is single-use: a second one finds nothing outstanding.
 fn resolve(op: u16) -> Vec<u8> {
-    // Checked before the handle is taken: taking it and returning early would
-    // drop it, which discards the transaction the caller asked to commit.
-    if op == op::COMMIT_TO && block::accumulator().is_none() {
-        return Writer::new().finish(status::NO_BLOCK_STATE);
-    }
     let Some(handle) = executed().take() else {
         return Writer::new().finish(status::NOT_EXECUTED);
     };
@@ -600,13 +616,7 @@ fn resolve(op: u16) -> Vec<u8> {
         op::DISCARD => {
             let _ = handle.discard();
         }
-        // Records into the block accumulator and commits. The accumulator is
-        // known present: the absent case returned above.
-        op::COMMIT_TO => {
-            if let Some(accumulator) = block::accumulator() {
-                let _ = handle.commit_to(accumulator);
-            }
-        }
+
         // A sink that refuses a record makes evm2 drop the handle, which
         // discards. The status says so rather than reporting a false commit.
         op::COMMIT_WITH => {
@@ -742,25 +752,29 @@ fn set_bal_index(index: BlockAccessIndex) -> Vec<u8> {
     Writer::new().finish(status::OK)
 }
 
-/// Installs an empty block accumulator, or removes the one in progress.
-fn set_block_state(enabled: bool) -> Vec<u8> {
-    if enabled {
-        block::install();
-    } else {
-        block::remove();
-    }
-    Writer::new().finish(status::OK)
+/// Reads a lone block-accumulator token.
+fn read_token(reader: &mut Reader<'_>) -> Result<u64, abi::Error> {
+    let token = reader.u64()?;
+    reader.finish()?;
+    Ok(token)
 }
 
-/// Drains the accumulated block state.
-fn take_block_state() -> Vec<u8> {
+/// Starts a block accumulator, returning the token identifying it.
+fn start_block_state() -> Vec<u8> {
     let mut writer = Writer::new();
-    match block::take() {
-        Some(accumulated) => {
-            writer.bool(true);
-            block::write(&mut writer, &accumulated);
-        }
-        None => writer.bool(false),
+    writer.u64(block::start());
+    writer.finish(status::OK)
+}
+
+/// Drains the block state `token` identifies.
+///
+/// A token that is not the one in progress is refused rather than serving another
+/// block's state.
+fn take_block_state(token: u64) -> Vec<u8> {
+    let mut writer = Writer::new();
+    match block::take(token) {
+        Some(accumulated) => block::write(&mut writer, &accumulated),
+        None => return writer.finish(status::NO_BLOCK_STATE),
     }
     writer.finish(status::OK)
 }

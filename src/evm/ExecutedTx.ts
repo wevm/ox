@@ -1,6 +1,7 @@
 import * as Errors from '../core/Errors.js'
 import * as PendingState from './PendingState.js'
 import * as StateChange from './StateChange.js'
+import type * as BlockState from './BlockState.js'
 import type * as TxResult from './TxResult.js'
 import type { ReentrancyError } from './internal/bindings.js'
 import type { DecodeError } from './internal/codec.js'
@@ -132,33 +133,37 @@ export declare namespace commit {
 }
 
 /**
- * Accepts the transaction's state changes and records them in the block.
+ * Accepts the transaction's state changes and records them in a block.
  *
  * The same acceptance {@link ox#ExecutedTx.(commit:function)} performs, plus the
- * changes are gathered into the block accumulator started by
- * {@link ox#Evm.(setBlockState:function)}. Resolving this way without one is a
- * failure rather than a silent plain commit.
+ * changes are gathered into the accumulator `block` identifies. A token that is
+ * not the accumulator in progress is refused, and the transaction stays
+ * outstanding rather than committing plainly.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
  * import { Evm, ExecutedTx } from 'ox/evm'
  *
- * Evm.setBlockState(evm, true)
+ * const block = Evm.startBlockState(evm)
  *
  * for (const transaction of transactions)
- *   ExecutedTx.commitTo(Evm.transact(evm, transaction))
+ *   ExecutedTx.commitTo(Evm.transact(evm, transaction), block)
  *
- * const block = Evm.takeBlockState(evm)
+ * const state = Evm.takeBlockState(evm, block)
  * ```
  *
  * @param executed - Executed transaction.
+ * @param block - Accumulator to record into.
  * @returns The transaction's result.
  */
-export function commitTo(executed: ExecutedTx): TxResult.TxResult {
+export function commitTo(
+  executed: ExecutedTx,
+  block: BlockState.Token,
+): TxResult.TxResult {
   claim(executed)
   try {
-    executed['~engine'].resolve('commitTo', executed['~token'])
+    executed['~engine'].resolveTo(block, executed['~token'])
   } catch (error) {
     // The adapter refuses before the transaction leaves the engine, so the handle
     // is still outstanding and has to stay resolvable.

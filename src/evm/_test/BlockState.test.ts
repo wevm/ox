@@ -49,40 +49,58 @@ function evm() {
   })
 }
 
-describe('setBlockState', () => {
-  test('behavior: nothing is gathered until it is started', async () => {
-    expect(Evm.takeBlockState(await evm())).toBeUndefined()
-  })
-
-  test('behavior: resolving into an absent accumulator fails', async () => {
+describe('startBlockState', () => {
+  test('behavior: recording without a token is refused', async () => {
     const instance = await evm()
     const executed = Evm.transact(instance, transaction())
 
+    // A token from no accumulator cannot identify one.
     expect(() =>
-      ExecutedTx.commitTo(executed),
+      ExecutedTx.commitTo(executed, 0n),
     ).toThrowErrorMatchingInlineSnapshot(
       `
       [Evm.NoBlockStateError: No block state is being accumulated.
 
       A transaction was resolved into a block accumulator while none was installed, so nothing was committed.
 
-      Details: Start one with \`Evm.setBlockState\` before resolving into it.]
+      Details: Start one with \`Evm.startBlockState\` before resolving into it.]
     `,
     )
 
-    // The handle is still outstanding, so the engine is released before the next test.
+    // The handle survived the refusal, so it is still resolvable.
     ExecutedTx.discard(executed)
+  })
+
+  test('behavior: a stale token is refused', async () => {
+    const instance = await evm()
+    const first = Evm.startBlockState(instance)
+    // Starting again abandons the first accumulator.
+    Evm.startBlockState(instance)
+
+    expect(() => Evm.takeBlockState(instance, first)).toThrowError(
+      Evm.NoBlockStateError,
+    )
+  })
+
+  test('behavior: a token cannot be taken twice', async () => {
+    const instance = await evm()
+    const block = Evm.startBlockState(instance)
+
+    expect(Evm.takeBlockState(instance, block)).toBeDefined()
+    expect(() => Evm.takeBlockState(instance, block)).toThrowError(
+      Evm.NoBlockStateError,
+    )
   })
 
   test('behavior: entries span the block, not the last transaction', async () => {
     const instance = await evm()
-    Evm.setBlockState(instance, true)
+    const block = Evm.startBlockState(instance)
 
     for (const nonce of [0n, 1n, 2n])
-      ExecutedTx.commitTo(Evm.transact(instance, transaction({ nonce })))
+      ExecutedTx.commitTo(Evm.transact(instance, transaction({ nonce })), block)
 
-    const block = Evm.takeBlockState(instance)!
-    const account = block.accounts.find(
+    const state = Evm.takeBlockState(instance, block)
+    const account = state.accounts.find(
       (entry) => entry.address.toLowerCase() === sender.toLowerCase(),
     )
 
@@ -94,16 +112,18 @@ describe('setBlockState', () => {
   test('behavior: every collection enumerates in a stable order', async () => {
     const build = async () => {
       const instance = await evm()
-      Evm.setBlockState(instance, true)
+      const block = Evm.startBlockState(instance)
       // Touches `other` before `target`, so an unsorted enumeration would keep
       // insertion order rather than address order.
       ExecutedTx.commitTo(
         Evm.transact(instance, transaction({ nonce: 0n, to: other })),
+        block,
       )
       ExecutedTx.commitTo(
         Evm.transact(instance, transaction({ nonce: 1n, to: target })),
+        block,
       )
-      return Evm.takeBlockState(instance)!
+      return Evm.takeBlockState(instance, block)
     }
 
     const first = await build()
@@ -119,11 +139,11 @@ describe('setBlockState', () => {
 
   test('behavior: storage carries the value from before the block', async () => {
     const instance = await evm()
-    Evm.setBlockState(instance, true)
-    ExecutedTx.commitTo(Evm.transact(instance, transaction()))
+    const block = Evm.startBlockState(instance)
+    ExecutedTx.commitTo(Evm.transact(instance, transaction()), block)
 
-    const block = Evm.takeBlockState(instance)!
-    const slot = block.storage.find(
+    const state = Evm.takeBlockState(instance, block)
+    const slot = state.storage.find(
       (entry) => entry.address.toLowerCase() === target,
     )
 
@@ -131,31 +151,15 @@ describe('setBlockState', () => {
     expect(slot?.current).toBe(1n)
   })
 
-  test('behavior: taking ends the gathering', async () => {
-    const instance = await evm()
-    Evm.setBlockState(instance, true)
-    expect(Evm.takeBlockState(instance)).toBeDefined()
-    expect(Evm.takeBlockState(instance)).toBeUndefined()
-  })
-
-  test('behavior: stopping discards what was gathered', async () => {
-    const instance = await evm()
-    Evm.setBlockState(instance, true)
-    ExecutedTx.commitTo(Evm.transact(instance, transaction()))
-
-    Evm.setBlockState(instance, false)
-    expect(Evm.takeBlockState(instance)).toBeUndefined()
-  })
-
   test('behavior: a plain commit records nothing in the block', async () => {
     const instance = await evm()
-    Evm.setBlockState(instance, true)
+    const block = Evm.startBlockState(instance)
 
     // `commit` accepts the state without recording it, which is the difference
     // from `commitTo`.
     ExecutedTx.commit(Evm.transact(instance, transaction()))
 
-    expect(Evm.takeBlockState(instance)?.accounts).toEqual([])
+    expect(Evm.takeBlockState(instance, block).accounts).toEqual([])
   })
 })
 

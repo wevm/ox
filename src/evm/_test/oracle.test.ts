@@ -4,6 +4,7 @@ import { Bytes, Hex, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import {
   type Bal,
+  type BlockState,
   Database as PublicDatabase,
   Evm,
   ExecutedTx,
@@ -573,10 +574,7 @@ describe('generated corpus, block access lists', () => {
  * deterministic ordering, or the wire format is a diff rather than two plausible
  * accumulators.
  */
-function encodeBlockState(
-  block: Evm.BlockState | undefined,
-): BlockEntry | null {
-  if (!block) return null
+function encodeBlockState(block: BlockState.BlockState): BlockEntry | null {
   const account = (value: codec.ChangeAccount | undefined) =>
     value
       ? {
@@ -614,7 +612,7 @@ describe('generated corpus, block state', () => {
         database: database(entry.accounts),
         specId: entry.spec as SpecId.SpecId,
       })
-      Evm.setBlockState(evm, true)
+      const token = Evm.startBlockState(evm)
 
       const transaction = {
         from: entry.signer as `0x${string}`,
@@ -627,8 +625,8 @@ describe('generated corpus, block state', () => {
         return
       }
 
-      ExecutedTx.commitTo(Evm.transact(evm, transaction))
-      expect(encodeBlockState(Evm.takeBlockState(evm))).toEqual(
+      ExecutedTx.commitTo(Evm.transact(evm, transaction), token)
+      expect(encodeBlockState(Evm.takeBlockState(evm, token))).toEqual(
         entry.blockState,
       )
     })

@@ -944,3 +944,90 @@ mod block {
         assert_eq!(slot.1.current, U256::from(1));
     }
 }
+
+/// The block-execution flow, written against evm2 directly.
+///
+/// The counterpart to the binding's `setBlockState`/`commitTo`/`takeBlockState`.
+/// Kept as a test so the documented equivalence is compiled rather than claimed.
+mod flow {
+    use super::*;
+    use alloy_primitives::TxKind;
+    use evm2::evm::{BEACON_ROOTS_ADDRESS, BlockStateAccumulator, SystemTx};
+
+    const SENDER: Address = Address::repeat_byte(0x11);
+    const TARGET: Address = Address::repeat_byte(0xc0);
+
+    #[test]
+    fn a_block_accumulates_a_system_call_and_its_transactions() {
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            &SENDER,
+            AccountInfo {
+                balance: U256::from(10u64).pow(U256::from(18)),
+                ..Default::default()
+            },
+        );
+        // CALLDATALOAD(0), PUSH0, SSTORE.
+        db.insert_account_info(
+            &BEACON_ROOTS_ADDRESS,
+            AccountInfo::default().with_code(
+                Bytecode::new_raw_checked(Bytes::from_static(&[0x5f, 0x35, 0x5f, 0x55])).unwrap(),
+            ),
+        );
+        db.insert_account_info(
+            &TARGET,
+            AccountInfo::default()
+                .with_code(Bytecode::new_raw_checked(Bytes::from_static(&[0x00])).unwrap()),
+        );
+
+        let mut evm: Evm<'_, BaseEvmTypes> = Evm::new_with_execution_config(
+            ExecutionConfig::for_spec_and_version(SpecId::OSAKA, Version::new(SpecId::OSAKA)),
+            SpecId::OSAKA,
+            BlockEnvExt::default(),
+            ethereum_tx_registry(SpecId::OSAKA),
+            db,
+            Precompiles::base(SpecId::OSAKA),
+        );
+
+        // The accumulator is a local here. Across the ABI it cannot be, which is
+        // why the binding installs one in the engine instead.
+        let mut block = BlockStateAccumulator::new();
+
+        let root = Bytes::from(vec![1u8; 32]);
+        let executed = evm.system_call(SystemTx::new(BEACON_ROOTS_ADDRESS, root)).unwrap();
+        let _ = executed.commit_to(&mut block);
+
+        for tx in &transactions() {
+            let executed = evm.transact(tx).unwrap();
+            let _ = executed.commit_to(&mut block);
+        }
+
+        assert!(
+            block.storage_sorted().iter().any(|(key, _)| key.address() == BEACON_ROOTS_ADDRESS),
+            "the system call's write is in the block"
+        );
+        assert!(
+            block.accounts_sorted().iter().any(|(address, _)| *address == SENDER),
+            "the transaction's sender is in the block"
+        );
+    }
+
+    fn transactions() -> Vec<Recovered<TxEnvelope>> {
+        let envelope = alloy_consensus::TxLegacy {
+            chain_id: Some(1),
+            gas_limit: 200_000,
+            gas_price: 0,
+            to: TxKind::Call(TARGET),
+            value: U256::ZERO,
+            ..Default::default()
+        };
+        let signed = alloy_consensus::Signed::new_unchecked(
+            envelope,
+            alloy_primitives::Signature::test_signature(),
+            Default::default(),
+        );
+        let encoded = alloy_eips::eip2718::Encodable2718::encoded_2718(&signed);
+        let decoded = EthereumTxEnvelope::<TxEip4844>::decode_2718(&mut &encoded[..]).unwrap();
+        vec![Recovered::new_unchecked(TxEnvelope::from(decoded), SENDER)]
+    }
+}

@@ -21,23 +21,43 @@ unsafe impl Sync for Slot {}
 
 static BLOCK: Slot = Slot(core::cell::UnsafeCell::new(None));
 
-/// Returns the accumulator, when one is being built.
-pub fn accumulator() -> Option<&'static mut BlockStateAccumulator> {
+/// Identifies the accumulator in progress.
+///
+/// The caller holds this rather than the accumulator itself, which cannot cross
+/// the ABI. Bumped on every start, so a token outlives its accumulator only as a
+/// value that no longer matches.
+struct Generation(core::cell::UnsafeCell<u64>);
+
+unsafe impl Sync for Generation {}
+
+static GENERATION: Generation = Generation(core::cell::UnsafeCell::new(0));
+
+fn generation() -> u64 {
+    unsafe { *GENERATION.0.get() }
+}
+
+/// Installs an empty accumulator, discarding any in progress, and identifies it.
+pub fn start() -> u64 {
+    unsafe {
+        *GENERATION.0.get() += 1;
+        *BLOCK.0.get() = Some(BlockStateAccumulator::new());
+        *GENERATION.0.get()
+    }
+}
+
+/// Returns the accumulator `token` identifies, if it is the one in progress.
+pub fn accumulator(token: u64) -> Option<&'static mut BlockStateAccumulator> {
+    if token != generation() {
+        return None;
+    }
     unsafe { (*BLOCK.0.get()).as_mut() }
 }
 
-/// Installs an empty accumulator, discarding any in progress.
-pub fn install() {
-    unsafe { *BLOCK.0.get() = Some(BlockStateAccumulator::new()) };
-}
-
-/// Removes the accumulator.
-pub fn remove() {
-    unsafe { *BLOCK.0.get() = None };
-}
-
-/// Takes the accumulator, leaving none behind.
-pub fn take() -> Option<BlockStateAccumulator> {
+/// Takes the accumulator `token` identifies, leaving none behind.
+pub fn take(token: u64) -> Option<BlockStateAccumulator> {
+    if token != generation() {
+        return None;
+    }
     unsafe { (*BLOCK.0.get()).take() }
 }
 

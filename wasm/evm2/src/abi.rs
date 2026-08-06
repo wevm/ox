@@ -65,9 +65,9 @@ pub mod op {
     pub const SET_BAL_INDEX: u16 = 16;
     /// Streams the pending changes into the block accumulator, then commits.
     pub const COMMIT_TO: u16 = 17;
-    /// Installs an empty block accumulator, or removes the one in progress.
-    pub const SET_BLOCK_STATE: u16 = 18;
-    /// Drains the accumulated block state.
+    /// Starts a block accumulator, returning the token identifying it.
+    pub const START_BLOCK_STATE: u16 = 18;
+    /// Drains the block state a token identifies.
     pub const TAKE_BLOCK_STATE: u16 = 19;
     /// Prewarms the precompile addresses.
     pub const WARM_PRECOMPILES: u16 = 20;

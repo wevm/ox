@@ -49,7 +49,7 @@ export const op = {
   takeBal: 15,
   setBalIndex: 16,
   commitTo: 17,
-  setBlockState: 18,
+  startBlockState: 18,
   takeBlockState: 19,
   warmPrecompiles: 20,
   commitSource: 21,
@@ -418,13 +418,7 @@ export function encodeTransact(options: encodeCallTx.Options): Bytes.Bytes {
 
 /** Encodes a resolution of the outstanding executed transaction. */
 export function encodeResolve(
-  resolution:
-    | 'commit'
-    | 'commitTo'
-    | 'commitWith'
-    | 'detach'
-    | 'discard'
-    | 'discardWith',
+  resolution: 'commit' | 'commitWith' | 'detach' | 'discard' | 'discardWith',
 ): Bytes.Bytes {
   return new Writer().finish(op[resolution])
 }
@@ -541,16 +535,31 @@ function writeChangeAccount(
   writer.hash(value.codeHash)
 }
 
-/** Encodes a request installing or removing the block accumulator. */
-export function encodeSetBlockState(enabled: boolean): Bytes.Bytes {
-  const writer = new Writer()
-  writer.u32(enabled ? 1 : 0)
-  return writer.finish(op.setBlockState)
+/** Encodes a request starting a block accumulator. */
+export function encodeStartBlockState(): Bytes.Bytes {
+  return new Writer().finish(op.startBlockState)
 }
 
-/** Encodes a request draining the accumulated block state. */
-export function encodeTakeBlockState(): Bytes.Bytes {
-  return new Writer().finish(op.takeBlockState)
+/** Encodes a request draining the block state a token identifies. */
+export function encodeTakeBlockState(token: bigint): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u64(token)
+  return writer.finish(op.takeBlockState)
+}
+
+/** Encodes a resolution recording into the block accumulator a token identifies. */
+export function encodeCommitTo(token: bigint): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u64(token)
+  return writer.finish(op.commitTo)
+}
+
+/** Decodes a started accumulator's token. */
+export function decodeBlockToken(bytes: Bytes.Bytes): bigint {
+  const reader = new Reader(bytes)
+  const token = reader.u64()
+  reader.finish()
+  return token
 }
 
 /** Encodes a request prewarming the precompile addresses. */
@@ -559,17 +568,13 @@ export function encodeWarmPrecompiles(): Bytes.Bytes {
 }
 
 /**
- * Decodes accumulated block state, absent when none was being gathered.
+ * Decodes accumulated block state.
  *
  * Fields go into locals before each object is built: these are sequential reads,
  * so an object literal's property order would be the wire order.
  */
-export function decodeBlockState(bytes: Bytes.Bytes): BlockState | undefined {
+export function decodeBlockState(bytes: Bytes.Bytes): BlockState {
   const reader = new Reader(bytes)
-  if (!reader.bool()) {
-    reader.finish()
-    return undefined
-  }
 
   const accounts: BlockState['accounts'][number][] = []
   for (let count = reader.u32(); count > 0; count--) {

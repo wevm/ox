@@ -6,6 +6,7 @@ import * as TxEnvelope from '../core/TxEnvelope.js'
 import * as Database from './Database.js'
 import type * as Bal from './Bal.js'
 import * as ExecutedTx from './ExecutedTx.js'
+import type * as BlockState from './BlockState.js'
 import * as PendingState from './PendingState.js'
 import * as System from './System.js'
 import type * as Inspector from './Inspector.js'
@@ -29,6 +30,7 @@ import type {
   BorrowedError,
   DatabaseError,
   HandlerError,
+  NoBlockStateError,
   NotCoveredError,
 } from './internal/engine.js'
 
@@ -94,13 +96,6 @@ export type Awaitable<
   asynchronous extends boolean,
   value,
 > = asynchronous extends true ? Promise<value> : value
-
-/**
- * State a block's transactions changed, gathered across all of them.
- *
- * The shape {@link ox#Evm.(takeBlockState:function)} returns.
- */
-export type BlockState = codec.BlockState
 
 /**
  * Version values an execution runs under.
@@ -1065,65 +1060,69 @@ export declare namespace setBalIndex {
 }
 
 /**
- * Starts gathering what a block's transactions change, or stops.
+ * Starts gathering what a block's transactions change.
  *
- * Transactions resolved with {@link ox#ExecutedTx.(commitTo:function)} record into
- * it. Read the result with {@link ox#Evm.(takeBlockState:function)}.
+ * Returns a token identifying the accumulator. Pass it to
+ * {@link ox#ExecutedTx.(commitTo:function)} to record a transaction into it, and
+ * to {@link ox#Evm.(takeBlockState:function)} to read it back. Starting again
+ * abandons whatever the previous token identified.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
  * import { Evm, ExecutedTx } from 'ox/evm'
  *
- * Evm.setBlockState(evm, true)
+ * const block = Evm.startBlockState(evm)
  *
  * for (const transaction of transactions)
- *   ExecutedTx.commitTo(Evm.transact(evm, transaction))
+ *   ExecutedTx.commitTo(Evm.transact(evm, transaction), block)
  *
- * const block = Evm.takeBlockState(evm)
- * block.accounts.length
+ * const state = Evm.takeBlockState(evm, block)
+ * state.accounts.length
  * ```
  *
  * @param evm - EVM to gather from.
- * @param enabled - Whether to gather. `false` discards what was gathered.
+ * @returns A token identifying the accumulator.
  */
-export function setBlockState<asynchronous extends boolean>(
+export function startBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
-  enabled: boolean,
-): Awaitable<asynchronous, void> {
-  return attempt(evm, () => evm['~engine'].setBlockState(enabled))
+): Awaitable<asynchronous, BlockState.Token> {
+  return attempt(evm, () => evm['~engine'].startBlockState())
 }
 
-export declare namespace setBlockState {
+export declare namespace startBlockState {
   type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
 }
 
 /**
- * Takes what the block changed, and stops gathering.
+ * Takes what the block changed, consuming the token.
  *
- * `undefined` when nothing was being gathered. Each entry spans the block: its
- * `original` is the value before the block, not before the last transaction.
+ * Each entry spans the block: its `original` is the value before the block, not
+ * before the last transaction. A token already taken, or from an accumulator that
+ * was superseded, is refused.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
  * import { Evm } from 'ox/evm'
  *
- * const block = Evm.takeBlockState(evm)
- * block?.storage.length
+ * const state = Evm.takeBlockState(evm, block)
+ * state.storage.length
  * ```
  *
  * @param evm - EVM to take from.
- * @returns What the block changed, or `undefined` when none was gathered.
+ * @param block - Token identifying the accumulator.
+ * @returns What the block changed.
  */
 export function takeBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
-): Awaitable<asynchronous, BlockState | undefined> {
-  return attempt(evm, () => evm['~engine'].takeBlockState())
+  block: BlockState.Token,
+): Awaitable<asynchronous, BlockState.BlockState> {
+  return attempt(evm, () => evm['~engine'].takeBlockState(block))
 }
 
 export declare namespace takeBlockState {
-  type ErrorType = setBlockState.ErrorType
+  type ErrorType = startBlockState.ErrorType | NoBlockStateError
 }
 
 /**
@@ -1149,7 +1148,7 @@ export function warmPrecompiles<asynchronous extends boolean>(
 }
 
 export declare namespace warmPrecompiles {
-  type ErrorType = setBlockState.ErrorType
+  type ErrorType = startBlockState.ErrorType
 }
 
 /**
@@ -1232,9 +1231,11 @@ export function systemCall(
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Evm, System } from 'ox/evm'
+ * import { Evm, ExecutedTx, System } from 'ox/evm'
  *
- * Evm.systemCall(evm, { address: System.historyStorage, data })
+ * ExecutedTx.commit(
+ *   Evm.systemCall(evm, { address: System.historyStorage, data }),
+ * )
  * ```
  *
  * @param evm - EVM to use.

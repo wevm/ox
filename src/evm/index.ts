@@ -69,6 +69,13 @@ export * as Bal from './Bal.js'
 export * as Inspector from './Inspector.js'
 
 /**
+ * State a block's transactions changed.
+ *
+ * @category Execution
+ */
+export * as BlockState from './BlockState.js'
+
+/**
  * Protocol system-call addresses and limits.
  *
  * @category Execution

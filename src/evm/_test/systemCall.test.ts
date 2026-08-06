@@ -91,16 +91,17 @@ describe('systemCall', () => {
 
   test('behavior: the handle resolves through the block accumulator', async () => {
     const instance = await evm()
-    Evm.setBlockState(instance, true)
+    const block = Evm.startBlockState(instance)
 
     ExecutedTx.commitTo(
       Evm.systemCall(instance, { address: System.historyStorage, data }),
+      block,
     )
 
-    const block = Evm.takeBlockState(instance)!
+    const state = Evm.takeBlockState(instance, block)
     // A block records its system calls alongside its transactions.
     expect(
-      block.storage.some(
+      state.storage.some(
         (entry) =>
           entry.address.toLowerCase() === System.historyStorage &&
           entry.current === 7n,

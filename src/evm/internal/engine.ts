@@ -45,7 +45,7 @@ export type Engine = {
    * Every operation reaching the engine fails until this runs, which is how
    * evm2's exclusive borrow shows up across two host calls.
    */
-  resolve(resolution: 'commit' | 'commitTo' | 'discard', token?: Token): void
+  resolve(resolution: 'commit' | 'discard', token?: Token): void
   /**
    * Resolves the outstanding transaction, streaming its changes to `sink` first.
    *
@@ -67,10 +67,18 @@ export type Engine = {
   setInspector(options: codec.encodeSetInspector.Options): void
   /** Attaches a block access list and sets the database-fallback switch. */
   setBal(options: codec.encodeSetBal.Options): void
-  /** Installs an empty block accumulator, or removes the one in progress. */
-  setBlockState(enabled: boolean): void
-  /** Drains the accumulated block state, or `undefined` when none was gathered. */
-  takeBlockState(): codec.BlockState | undefined
+  /** Starts a block accumulator, returning the token identifying it. */
+  startBlockState(): bigint
+  /** Drains the block state `block` identifies. */
+  takeBlockState(block: bigint): codec.BlockState
+  /**
+   * Resolves the outstanding transaction into the block accumulator `block`
+   * identifies.
+   *
+   * Refused when the token is not the accumulator in progress, which leaves the
+   * transaction outstanding rather than committing it plainly.
+   */
+  resolveTo(block: bigint, token?: Token): void
   /** Prewarms the precompile addresses. */
   warmPrecompiles(): void
   /** Applies caller-supplied changes to the accepted state overlay. */
@@ -208,12 +216,17 @@ export async function create(options: create.Options): Promise<Engine> {
     setBal(options) {
       resolve(instance, codec.encodeSetBal(options))
     },
-    setBlockState(enabled) {
-      resolve(instance, codec.encodeSetBlockState(enabled))
+    resolveTo(block, token) {
+      resolving(token, () => resolve(instance, codec.encodeCommitTo(block)))
     },
-    takeBlockState() {
+    startBlockState() {
+      return codec.decodeBlockToken(
+        resolve(instance, codec.encodeStartBlockState()),
+      )
+    },
+    takeBlockState(block) {
       return codec.decodeBlockState(
-        resolve(instance, codec.encodeTakeBlockState()),
+        resolve(instance, codec.encodeTakeBlockState(block)),
       )
     },
     commitSource(changes) {
@@ -347,7 +360,7 @@ export class NoBlockStateError extends Errors.BaseError {
       metaMessages: [
         'A transaction was resolved into a block accumulator while none was installed, so nothing was committed.',
       ],
-      details: 'Start one with `Evm.setBlockState` before resolving into it.',
+      details: 'Start one with `Evm.startBlockState` before resolving into it.',
     })
   }
 }

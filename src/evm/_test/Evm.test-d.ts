@@ -1,5 +1,6 @@
 import {
   Bal,
+  BlockState,
   Database,
   Ethereum,
   Evm,
@@ -284,10 +285,12 @@ describe('block execution', () => {
       }),
     })
 
-    expectTypeOf(Evm.setBlockState(evm, true)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.startBlockState(evm)).toEqualTypeOf<
+      Promise<BlockState.Token>
+    >()
     expectTypeOf(Evm.warmPrecompiles(evm)).toEqualTypeOf<Promise<void>>()
-    expectTypeOf(Evm.takeBlockState(evm)).toEqualTypeOf<
-      Promise<Evm.BlockState | undefined>
+    expectTypeOf(Evm.takeBlockState(evm, 1n)).toEqualTypeOf<
+      Promise<BlockState.BlockState>
     >()
     expectTypeOf(Evm.systemCall(evm, { address: '0x' })).toEqualTypeOf<
       Promise<ExecutedTx.ExecutedTx>
@@ -301,6 +304,7 @@ describe('block execution', () => {
     ).toEqualTypeOf<ExecutedTx.ExecutedTx>()
     expectTypeOf(ExecutedTx.commitTo).toBeCallableWith(
       {} as ExecutedTx.ExecutedTx,
+      1n,
     )
   })
 })
