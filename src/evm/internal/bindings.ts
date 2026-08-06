@@ -123,21 +123,23 @@ export async function instantiateWith(
       if (request.length > codec.maxRequest)
         throw new RequestTooLargeError({ length: request.length })
 
-      const pointer = exports.ox_alloc(request.length)
-      if (pointer === 0) throw new ReentrancyError()
-      new Uint8Array(exports.memory.buffer).set(request, pointer)
-
-      // A trap leaves the adapter's running flag set and its heap suspect, so
-      // the instance is remembered as dead rather than misreported as reentrant
-      // on the next call.
-      const response = (() => {
+      // A trap leaves the adapter's running flag set and its heap suspect, so the
+      // instance is remembered as dead rather than misreported as reentrant on
+      // the next call. Allocation traps the same way, so it takes the same path.
+      const fatal = <value>(run: () => value): value => {
         try {
-          return exports.ox_call(request.length)
+          return run()
         } catch (error) {
           trapped = new TrapError({ cause: error as Error })
           throw trapped
         }
-      })()
+      }
+
+      const pointer = fatal(() => exports.ox_alloc(request.length))
+      if (pointer === 0) throw new ReentrancyError()
+      new Uint8Array(exports.memory.buffer).set(request, pointer)
+
+      const response = fatal(() => exports.ox_call(request.length))
       const { payload, status } = read(exports.memory, response)
 
       // A recorded host failure is the real cause, so it wins over the status

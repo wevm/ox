@@ -123,30 +123,30 @@ export function route(sink: Sink, record: codec.Change): unknown {
  * @returns A sink feeding both.
  */
 export function tee(a: Sink, b: Sink): Sink {
+  // Both branches run, and whatever either returns is forwarded. A sink that
+  // returns a thenable is refused by `ExecutedTx`, so swallowing it here would
+  // let an asynchronous sink through the guard by hiding behind a tee.
+  const both = (first: unknown, second: unknown) =>
+    isThenable(first) ? first : second
+
   return {
     account(change) {
-      a.account?.(change)
-      b.account?.(change)
+      return both(a.account?.(change), b.account?.(change))
     },
     accountRead(change) {
-      a.accountRead?.(change)
-      b.accountRead?.(change)
+      return both(a.accountRead?.(change), b.accountRead?.(change))
     },
     bytecode(codeHash, code) {
-      a.bytecode?.(codeHash, code)
-      b.bytecode?.(codeHash, code)
+      return both(a.bytecode?.(codeHash, code), b.bytecode?.(codeHash, code))
     },
     storage(change) {
-      a.storage?.(change)
-      b.storage?.(change)
+      return both(a.storage?.(change), b.storage?.(change))
     },
     storageRead(change) {
-      a.storageRead?.(change)
-      b.storageRead?.(change)
+      return both(a.storageRead?.(change), b.storageRead?.(change))
     },
     storageWipe(address) {
-      a.storageWipe?.(address)
-      b.storageWipe?.(address)
+      return both(a.storageWipe?.(address), b.storageWipe?.(address))
     },
   }
 }
@@ -165,4 +165,9 @@ export function tee(a: Sink, b: Sink): Sink {
  */
 export function noop(): Sink {
   return {}
+}
+
+// Whether a sink's return value is a promise, which the contract refuses.
+function isThenable(value: unknown): boolean {
+  return typeof (value as { then?: unknown } | undefined)?.then === 'function'
 }
