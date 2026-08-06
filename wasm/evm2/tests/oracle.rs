@@ -518,7 +518,7 @@ mod generated {
 
     /// Cases in the corpus. Large enough to reach past the curated shapes, small
     /// enough that the recorded file stays reviewable.
-    const COUNT: usize = 96;
+    const COUNT: usize = 512;
 
     /// Fixed seed: the corpus is a committed regression suite, not a fresh draw
     /// each run. Change it to explore elsewhere.
@@ -1118,5 +1118,50 @@ mod bal_flow {
         lenient.state_mut().set_bal(Arc::new(Bal::new()));
         lenient.state_mut().set_allow_bal_db_fallback(true);
         assert!(lenient.call_tx(&call()).is_ok());
+    }
+}
+
+/// The system addresses and limits the binding publishes.
+///
+/// `src/evm/System.ts` carries these as literals, because a constant is a value
+/// rather than something the ABI can carry. That makes them a hand-copy, so they
+/// are pinned here: an upstream change fails this rather than silently shipping a
+/// wrong address.
+mod system_constants {
+    use evm2::evm::{
+        BEACON_ROOTS_ADDRESS, BUILDER_DEPOSIT_REQUEST_ADDRESS, BUILDER_EXIT_REQUEST_ADDRESS,
+        CONSOLIDATION_REQUEST_ADDRESS, HISTORY_STORAGE_ADDRESS, SYSTEM_ADDRESS,
+        SYSTEM_CALL_GAS_LIMIT, SYSTEM_MAX_SSTORES_PER_CALL, WITHDRAWAL_REQUEST_ADDRESS,
+    };
+
+    /// Lowercased, matching how the binding publishes an address.
+    fn address(value: alloy_primitives::Address) -> String {
+        format!("{value:?}").to_lowercase()
+    }
+
+    #[test]
+    fn match_what_the_binding_publishes() {
+        // Update `src/evm/System.ts` when one of these fails.
+        assert_eq!(address(SYSTEM_ADDRESS), "0xfffffffffffffffffffffffffffffffffffffffe");
+        assert_eq!(address(BEACON_ROOTS_ADDRESS), "0x000f3df6d732807ef1319fb7b8bb8522d0beac02");
+        assert_eq!(address(HISTORY_STORAGE_ADDRESS), "0x0000f90827f1c53a10cb7a02335b175320002935");
+        assert_eq!(
+            address(WITHDRAWAL_REQUEST_ADDRESS),
+            "0x00000961ef480eb55e80d19ad83579a64c007002"
+        );
+        assert_eq!(
+            address(CONSOLIDATION_REQUEST_ADDRESS),
+            "0x0000bbddc7ce488642fb579f8b00f3a590007251"
+        );
+        assert_eq!(
+            address(BUILDER_DEPOSIT_REQUEST_ADDRESS),
+            "0x0000bff46984e3725691fa540a8c7589300d8282"
+        );
+        assert_eq!(
+            address(BUILDER_EXIT_REQUEST_ADDRESS),
+            "0x000064d678505ad48f8ccb093bc65613800e8282"
+        );
+        assert_eq!(SYSTEM_CALL_GAS_LIMIT, 30_000_000);
+        assert_eq!(SYSTEM_MAX_SSTORES_PER_CALL, 16);
     }
 }
