@@ -98,6 +98,48 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x7d0",
+              "codeHash": "0x356ec8afcd1b8d66a55d55e0e93766636858bf7edda9f5988158b0aade0f57a8",
+              "nonce": 0
+            },
+            "original": {
+              "balance": "0x3e8",
+              "codeHash": "0x356ec8afcd1b8d66a55d55e0e93766636858bf7edda9f5988158b0aade0f57a8",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x53de",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a83a",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xf83c800183030d409400000000000000000000000000000000000000048203e89a5f5f5f5f5f730000000000000000000000000000000000000004250101",
       "expected": {
@@ -168,6 +210,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe7800182520894000000000000000000000000000000000000dead0188602a5f5260205ff3250101",
       "expected": {
@@ -256,6 +299,26 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": ["0x8464135c8f25da09e49bc8782676a84730c318bc"]
       },
       "chainId": "0x1",
       "envelope": "0xd2808083030d4080018660015f5533ff250101",
@@ -351,6 +414,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xef808083030d409400000000000000000000000000000000000000c1018fdec156f3e786d20a84f13bdff4904a250101",
       "expected": {
@@ -421,6 +513,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe3808082520894000000000000000000000000000000000000dead01845f3f5000250101",
       "expected": {
@@ -515,6 +608,44 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5280",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a998",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe5800183030d409400000000000000000000000000000000000000c18203e8835f5ff3250101",
       "expected": {
@@ -585,6 +716,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd98080825208808203e88c5f545f52602a5f5560205ff3250101",
       "expected": {
@@ -660,6 +792,26 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe5808083030d4094000000000000000000000000000000000000dead808511b36a705b250101",
       "expected": {
@@ -721,6 +873,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xeb8001825208940000000000000000000000000000000000000004808c5f545f52602a5f5560205ff3250101",
       "expected": {
@@ -769,6 +922,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xed80808252089400000000000000000000000000000000000000c18203e88c5f545f52602a5f5560205ff3250101",
       "expected": {
@@ -869,6 +1023,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xd1808083030d408001855f5f5fa100250101",
@@ -987,6 +1170,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5230",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763add0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe080018275309400000000000000000000000000000000000000c08081fe250101",
       "expected": {
@@ -1062,6 +1274,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe380808252089400000000000000000000000000000000000000c08203e88233ff250101",
       "expected": {
@@ -1120,6 +1333,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd5800182520880018a602a5f5260205f5fa200250101",
       "expected": {
@@ -1202,6 +1416,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xcf8080830186a08080835f5ff3250101",
@@ -1309,6 +1552,39 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xbcc90f2d6dada5b18e155c17a1c0a55920aae94f39857d39d0d8ed07ae8f228b",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0x0",
+              "codeHash": "0xbcc90f2d6dada5b18e155c17a1c0a55920aae94f39857d39d0d8ed07ae8f228b",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xec8080830186a09400000000000000000000000000000000000000048203e88a602a5f5260205f5fa200250101",
       "expected": {
@@ -1412,6 +1688,44 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5348",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763acb7",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe7800182753094000000000000000000000000000000000000dead0188602a5f5260205ffd250101",
@@ -1519,6 +1833,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x524e",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763adb2",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe4800183030d4094000000000000000000000000000000000000000480845f3f5000250101",
@@ -1643,6 +1986,48 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x2",
+              "codeHash": "0xb0b7eb204c6fadf444869accff97a1207fdea71ac2225ea1be155a84276bbe93",
+              "nonce": 0
+            },
+            "original": {
+              "balance": "0x1",
+              "codeHash": "0xb0b7eb204c6fadf444869accff97a1207fdea71ac2225ea1be155a84276bbe93",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5b28",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a4d7",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe9800183030d409400000000000000000000000000000000000000c1018960015f5560025f5500250101",
       "expected": {
@@ -1755,6 +2140,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5218",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ade8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe1800183030d4094000000000000000000000000000000000000dead8081fe250101",
       "expected": {
@@ -1864,6 +2278,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x53e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ac18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xeb800182753094000000000000000000000000000000000000dead808c1a064042fd26628864b9f516250101",
       "expected": {
@@ -1945,6 +2388,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xce8080827530800183484900250101",
       "expected": {
@@ -2043,6 +2487,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe7808083030d4094000000000000000000000000000000000000dead8203e88560015f5500250101",
@@ -2143,6 +2616,26 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe18080830186a094000000000000000000000000000000000000dead8081fe250101",
@@ -2256,6 +2749,42 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": "0x1",
+            "key": "0x0",
+            "original": "0x0"
+          }
+        ],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xd1808083030d4080808560015f5500250101",
@@ -2381,6 +2910,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xd18080830186a08001855f5f5fa100250101",
@@ -2508,6 +3066,48 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0xde0b6b3a76403e8",
+              "codeHash": "0xc19b7a79ea396e0ce7e0614d8026d02a2ca138f121edbcaba83606e6927d6b9b",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc19b7a79ea396e0ce7e0614d8026d02a2ca138f121edbcaba83606e6927d6b9b",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x524a",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a9ce",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe58001830186a09400000000000000000000000000000000000000048203e8832915a1250101",
       "expected": {
@@ -2591,6 +3191,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd78001827530808203e88a602a5f5260205f5fa200250101",
       "expected": {
@@ -2672,6 +3273,26 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe38080830186a09400000000000000000000000000000000000000c080835f5ff3250101",
@@ -2807,6 +3428,55 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x3e9",
+              "codeHash": "0x769194a4d6cc455c08b8a773c9e01e73c118e1f7ad931b8d55f99c6d5cee9aa2",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0x3e8",
+              "codeHash": "0x769194a4d6cc455c08b8a773c9e01e73c118e1f7ad931b8d55f99c6d5cee9aa2",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0xa94a",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a76356b5",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": "0x2",
+            "key": "0x0",
+            "original": "0x0"
+          }
+        ],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe8800183030d409400000000000000000000000000000000000000c10188602a5f5260205ff3250101",
       "expected": {
@@ -2920,6 +3590,39 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0x36b59beb05e390e9a8fb0033fab1301c4edbdbfe683c96b8c55a88aab1ff70b7",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0x0",
+              "codeHash": "0x36b59beb05e390e9a8fb0033fab1301c4edbdbfe683c96b8c55a88aab1ff70b7",
+              "nonce": 1
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe58080830186a09400000000000000000000000000000000000000c101855f5f5fa100250101",
       "expected": {
@@ -3024,6 +3727,26 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xf68080830186a094000000000000000000000000000000000000dead80966cf2ce3f0c61f623af7d6bc0fe9b08faa9d738efc4c7250101",
       "expected": {
@@ -3096,6 +3819,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe5800182520894000000000000000000000000000000000000000401863da14c599034250101",
       "expected": {
@@ -3198,6 +3922,48 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x3e9",
+              "codeHash": "0xf42829ff2b8e007d5d7d0018345c7f2baa5859d49c563b1377b749eaf8238daf",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0x3e8",
+              "codeHash": "0xf42829ff2b8e007d5d7d0018345c7f2baa5859d49c563b1377b749eaf8238daf",
+              "nonce": 1
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x52a8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ad57",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe4800183030d409400000000000000000000000000000000000000c10184d547bd5b250101",
@@ -3315,6 +4081,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x7530",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7638ad0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe980018275309400000000000000000000000000000000000000c1018a5f5f20505f5260205ff3250101",
@@ -3443,6 +4238,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xd0808083030d408001845f3f5000250101",
       "expected": {
@@ -3558,6 +4382,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xee8080830186a09400000000000000000000000000000000000000048203e88c09f64b4cdebf51bea6c4c261250101",
       "expected": {
@@ -3670,6 +4523,26 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe180808252089400000000000000000000000000000000000000c08203e880250101",
@@ -3789,6 +4662,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x186a0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7627960",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe68001830186a09400000000000000000000000000000000000000c080865f61ffff5200250101",
@@ -3913,6 +4815,48 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x3e9",
+              "codeHash": "0xcbf2af69ec25b3b405353a90438369c2edda4d1cdb0dc0fd3d881865ab944385",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0x1",
+              "codeHash": "0xcbf2af69ec25b3b405353a90438369c2edda4d1cdb0dc0fd3d881865ab944385",
+              "nonce": 1
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x52f8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a920",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe780018275309400000000000000000000000000000000000000c18203e88660015f5533ff250101",
       "expected": {
@@ -3973,6 +4917,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe580808252089400000000000000000000000000000000000000c101865f61ffff5200250101",
       "expected": {
@@ -4022,6 +4967,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe780018252089400000000000000000000000000000000000000048088602a5f5260205ff3250101",
       "expected": {
@@ -4071,6 +5017,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe7808082520894000000000000000000000000000000000000dead8088602a5f5260205ffd250101",
       "expected": {
@@ -4158,6 +5105,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xf2808083030d4094000000000000000000000000000000000000dead8203e89067602a5f5260205ff35f5260086018f3250101",
@@ -4279,6 +5255,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x30d40",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a760f2c0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xd8800183030d4080018c1a8326c63351d49adb7d4727250101",
       "expected": {
@@ -4394,6 +5399,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xcf8080830186a0808083484900250101",
       "expected": {
@@ -4499,6 +5533,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe180808252089400000000000000000000000000000000000000c18203e880250101",
@@ -4625,6 +5688,48 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x7d0",
+              "codeHash": "0x1efa94a1bf9a4216fcf42c7ad4573736393a498ea78ccdeec7ec5de7b013a2ac",
+              "nonce": 0
+            },
+            "original": {
+              "balance": "0x3e8",
+              "codeHash": "0x1efa94a1bf9a4216fcf42c7ad4573736393a498ea78ccdeec7ec5de7b013a2ac",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x52b2",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a966",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe680018275309400000000000000000000000000000000000000048203e8853d5f5f3e00250101",
       "expected": {
@@ -4706,6 +5811,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd08080827530800185eed302b0f2250101",
       "expected": {
@@ -4793,6 +5899,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0xcf9a",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7633066",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xd48001830186a0800188602a5f5260205ffd250101",
@@ -4903,6 +6038,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xee808083030d409400000000000000000000000000000000000000c1018e657e85e6772ac9358abc7d3988a5250101",
@@ -5016,6 +6180,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5262",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ad9e",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe280018275309400000000000000000000000000000000000000c08083484900250101",
@@ -5139,6 +6332,39 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x3e9",
+              "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0x3e8",
+              "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe68080830186a094000000000000000000000000000000000000000401865f61ffff5200250101",
       "expected": {
@@ -5245,6 +6471,44 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5550",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a6c8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xf6800182753094000000000000000000000000000000000000dead8203e895b0317e67575e527553f9a2fe2b54e5c50fe15b336f250101",
@@ -5358,6 +6622,44 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x521e",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ade1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe08001830186a09400000000000000000000000000000000000000040100250101",
       "expected": {
@@ -5459,6 +6761,26 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xf83980808275309400000000000000000000000000000000000000c1809a5f5f5f5f5f730000000000000000000000000000000000000004250101",
       "expected": {
@@ -5545,6 +6867,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd9808082520880808e60c6de63bc12e731aefd5cad5867250101",
       "expected": {
@@ -5639,6 +6962,39 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "current": {
+              "balance": "0x3e9",
+              "codeHash": "0xb0b7eb204c6fadf444869accff97a1207fdea71ac2225ea1be155a84276bbe93",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0x1",
+              "codeHash": "0xb0b7eb204c6fadf444869accff97a1207fdea71ac2225ea1be155a84276bbe93",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe5808083030d409400000000000000000000000000000000000000c08203e8835f5ff3250101",
@@ -5745,6 +7101,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xcc8080830186a0808080250101",
@@ -5872,6 +7257,48 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0x17c3092b6f26b342c59b9f80e8d3d8f3ae124106cbd6c0c7f36e6f7951ee0c12",
+              "nonce": 0
+            },
+            "original": {
+              "balance": "0x0",
+              "codeHash": "0x17c3092b6f26b342c59b9f80e8d3d8f3ae124106cbd6c0c7f36e6f7951ee0c12",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x523a",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763a9de",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe4800183030d409400000000000000000000000000000000000000c08203e8824700250101",
       "expected": {
@@ -5972,6 +7399,26 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xf0808083030d409400000000000000000000000000000000000000c0809067602a5f5260205ff35f5260086018f3250101",
       "expected": {
@@ -6047,6 +7494,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xe480018252089400000000000000000000000000000000000000c180855f5f5fa100250101",
       "expected": {
@@ -6131,6 +7579,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x52b8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ad48",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xeb8001830186a094000000000000000000000000000000000000dead808bff4f60d0a14d54e89b217d250101",
@@ -6252,6 +7729,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xf4808083030d4094000000000000000000000000000000000000dead8203e8920902d87c6b75b610a7bcc42eef25872c8d04250101",
       "expected": {
@@ -6361,6 +7867,39 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0xde0b6b3a7640001",
+              "codeHash": "0x90b6abbb825fe169c15c3760bd1d56f7918cfd7671619804c64c89ec01bbfef6",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0x90b6abbb825fe169c15c3760bd1d56f7918cfd7671619804c64c89ec01bbfef6",
+              "nonce": 1
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe88080827530940000000000000000000000000000000000000004018960015f5560025f5500250101",
       "expected": {
@@ -6420,6 +7959,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xce8080825208800183484900250101",
       "expected": {
@@ -6510,6 +8050,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xd18080830186a08080853d5f5f3e00250101",
@@ -6631,6 +8200,40 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [
+          {
+            "code": "0x602a5f5260205ff3",
+            "codeHash": "0x30962a84ef989ca0f724a5b2ec94f9cbf6a731752ce2c0be5333bf96e460c9fd"
+          }
+        ],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xde8080830186a0808203e89067602a5f5260205ff35f5260086018f3250101",
       "expected": {
@@ -6731,6 +8334,26 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xf83980808275309400000000000000000000000000000000000000c0019a5f5f5f5f5f730000000000000000000000000000000000000004250101",
@@ -6843,6 +8466,39 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0xde0b6b3a76403e8",
+              "codeHash": "0x8684fa4f0a6f6ab1ca576953c27e9d08ae10879e2bf5e4d34b03a3875ad72016",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0x8684fa4f0a6f6ab1ca576953c27e9d08ae10879e2bf5e4d34b03a3875ad72016",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xea8080830186a09400000000000000000000000000000000000000048203e888602a5f5260205ffd250101",
       "expected": {
@@ -6912,6 +8568,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd5808082520880018a5f5f20505f5260205ff3250101",
       "expected": {
@@ -6994,6 +8651,44 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x521e",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ade1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe08001830186a09400000000000000000000000000000000000000040100250101",
@@ -7107,6 +8802,44 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c1",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x53c0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ac3f",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xeb8001830186a09400000000000000000000000000000000000000c1018be367cb651ae7cb779cdf71250101",
       "expected": {
@@ -7209,6 +8942,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5258",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ada8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe2800183030d40940000000000000000000000000000000000000004808233ff250101",
@@ -7319,6 +9081,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x52f8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ad08",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe580018275309400000000000000000000000000000000000000c1018660015f5533ff250101",
       "expected": {
@@ -7424,6 +9215,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xf2808083030d4094000000000000000000000000000000000000dead8203e89067602a5f5260205ff35f5260086018f3250101",
       "expected": {
@@ -7526,6 +9346,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0xcf3e",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a76330c2",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xcf8001830186a08080835f5ffd250101",
@@ -7632,6 +9481,39 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x0000000000000000000000000000000000000004",
+            "current": {
+              "balance": "0x3e9",
+              "codeHash": "0x36b59beb05e390e9a8fb0033fab1301c4edbdbfe683c96b8c55a88aab1ff70b7",
+              "nonce": 2
+            },
+            "original": {
+              "balance": "0x3e8",
+              "codeHash": "0x36b59beb05e390e9a8fb0033fab1301c4edbdbfe683c96b8c55a88aab1ff70b7",
+              "nonce": 2
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xeb8080827530940000000000000000000000000000000000000004018cf83cdf916ef873a931af5641250101",
@@ -7752,6 +9634,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x7530",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7638ad0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe180018275309400000000000000000000000000000000000000c08203e880250101",
       "expected": {
@@ -7856,6 +9767,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x53c0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ac40",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xeb800183030d40940000000000000000000000000000000000000004808b9cf76f05fcb3dd97412146250101",
       "expected": {
@@ -7932,6 +9872,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xce80808252088080835f5ff3250101",
       "expected": {
@@ -8024,6 +9965,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x30d40",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a760f2c0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe5800183030d409400000000000000000000000000000000000000c18203e8835f5ffd250101",
       "expected": {
@@ -8114,6 +10084,26 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xeb80808275309400000000000000000000000000000000000000c0808c5f545f52602a5f5560205ff3250101",
@@ -8230,6 +10220,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x30d40",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a760f2c0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe4800183030d409400000000000000000000000000000000000000c18203e8822d15250101",
       "expected": {
@@ -8316,6 +10335,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd080018275308001853d5f5f3e00250101",
       "expected": {
@@ -8398,6 +10418,26 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe380808275309400000000000000000000000000000000000000c180845f3f5000250101",
       "expected": {
@@ -8472,6 +10512,7 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": null,
       "chainId": "0x1",
       "envelope": "0xd98080827530808203e88c22dbdb2306f9295740672ed6250101",
       "expected": {
@@ -8572,6 +10613,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xec808083030d4094000000000000000000000000000000000000dead8203e88a5f5f20505f5260205ff3250101",
@@ -8675,6 +10745,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x3e8",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763fc18",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe7808082753094000000000000000000000000000000000000dead8203e88609920812ce26250101",
@@ -8791,6 +10890,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x7530",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7638ad0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe480018275309400000000000000000000000000000000000000c001853d5f5f3e00250101",
@@ -8915,6 +11043,44 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0xcf1d",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a76330e3",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xcc8001830186a080807d250101",
       "expected": {
@@ -9019,6 +11185,44 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0xcfd3",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763302d",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          },
+          {
+            "address": "0x8464135c8f25da09e49bc8782676a84730c318bc",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": null
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe6800183030d4080809a5f5f5f5f5f730000000000000000000000000000000000000004250101",
@@ -9137,6 +11341,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x30d40",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a760f2c0",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe5800183030d409400000000000000000000000000000000000000c001853d5f5f3e00250101",
@@ -9266,6 +11499,46 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "current": {
+              "balance": "0x0",
+              "codeHash": "0xf416c3516fae78047aa43997307b1892adabee86712e286220c4412ff74ab007",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0x1",
+              "codeHash": "0xf416c3516fae78047aa43997307b1892adabee86712e286220c4412ff74ab007",
+              "nonce": 1
+            }
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a7640001",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [
+          {
+            "address": "0x00000000000000000000000000000000000000c0",
+            "current": "0x1",
+            "key": "0x0",
+            "original": "0x0"
+          }
+        ],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xec808083030d409400000000000000000000000000000000000000c0018c8e7a65baa9c16be52ed48ede250101",
       "expected": {
@@ -9379,6 +11652,35 @@
         "slotNum": "0x0",
         "timestamp": "0x1"
       },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x00000000000000000000000000000000000000cb",
+            "current": {
+              "balance": "0x5352",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763acae",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
+      },
       "chainId": "0x1",
       "envelope": "0xe98001830186a094000000000000000000000000000000000000dead808960015f5560025f5500250101",
       "expected": {
@@ -9484,6 +11786,35 @@
         "prevrandao": "0x0",
         "slotNum": "0x0",
         "timestamp": "0x1"
+      },
+      "blockState": {
+        "accounts": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "current": {
+              "balance": "0x1",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            },
+            "original": null
+          },
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "current": {
+              "balance": "0xde0b6b3a763ffff",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 1
+            },
+            "original": {
+              "balance": "0xde0b6b3a7640000",
+              "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+              "nonce": 0
+            }
+          }
+        ],
+        "code": [],
+        "storage": [],
+        "storageWipes": []
       },
       "chainId": "0x1",
       "envelope": "0xe4808083030d4094000000000000000000000000000000000000dead01845f5f5500250101",

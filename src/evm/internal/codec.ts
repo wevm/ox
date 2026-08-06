@@ -48,6 +48,12 @@ export const op = {
   setBalBuilder: 14,
   takeBal: 15,
   setBalIndex: 16,
+  commitTo: 17,
+  startBlockState: 18,
+  takeBlockState: 19,
+  warmPrecompiles: 20,
+  commitSource: 21,
+  systemCall: 22,
 } as const
 
 /**
@@ -88,6 +94,7 @@ export const status = {
   sink: 8,
   pending: 9,
   balNotCovered: 10,
+  noBlockState: 11,
 } as const
 
 /** Block environment, in evm2's `BlockEnvExt` terms. */
@@ -165,6 +172,23 @@ class Writer {
   bytes(value: Bytes.Bytes) {
     this.u32(value.length)
     for (const byte of value) this.#bytes.push(byte)
+  }
+
+  u8(value: number) {
+    if (!Number.isInteger(value) || value < 0 || value > 0xff)
+      throw new EncodeError({ max: '255', value: String(value) })
+    this.#bytes.push(value)
+  }
+
+  bool(value: boolean) {
+    this.#bytes.push(value ? 1 : 0)
+  }
+
+  hash(value: Hex.Hex) {
+    const bytes = Bytes.fromHex(value)
+    if (bytes.length !== 32)
+      throw new EncodeError({ max: '32 bytes', value: `${bytes.length} bytes` })
+    this.bare(bytes)
   }
 
   // Every fixed-width writer rejects out-of-range input. Truncating instead
@@ -397,6 +421,200 @@ export function encodeResolve(
   resolution: 'commit' | 'commitWith' | 'detach' | 'discard' | 'discardWith',
 ): Bytes.Bytes {
   return new Writer().finish(op[resolution])
+}
+
+/**
+ * State a block's transactions changed, gathered across all of them.
+ *
+ * Each entry spans the block rather than a transaction: `original` is the value
+ * before the block, `current` the value after its last transaction touched it.
+ * Every collection enumerates deterministically.
+ */
+export type BlockState = {
+  /** Accounts the block touched, sorted by address. */
+  accounts: readonly {
+    address: Address.Address
+    /** Value after the block. Absent means the account does not exist. */
+    current?: ChangeAccount | undefined
+    /** Value before the block. Absent means it did not exist. */
+    original?: ChangeAccount | undefined
+  }[]
+  /** Code the block deployed, sorted by hash. */
+  code: readonly { code: Bytes.Bytes; codeHash: Hex.Hex }[]
+  /** Slots the block changed, sorted by account then slot. */
+  storage: readonly {
+    address: Address.Address
+    current: bigint
+    key: bigint
+    original: bigint
+  }[]
+  /** Accounts whose storage the block cleared, sorted by address. */
+  storageWipes: readonly Address.Address[]
+}
+
+/** Encodes a system call. */
+export function encodeSystemCall(
+  options: encodeSystemCall.Options,
+): Bytes.Bytes {
+  const writer = new Writer()
+  writer.address(options.caller)
+  writer.address(options.address)
+  writer.bytes(options.data)
+  return writer.finish(op.systemCall)
+}
+
+export declare namespace encodeSystemCall {
+  type Options = {
+    /** Target system contract. */
+    address: Address.Address
+    /** Account the call originates from. */
+    caller: Address.Address
+    /** Calldata. */
+    data: Bytes.Bytes
+  }
+}
+
+/**
+ * Encodes a request applying changes to the accepted state overlay.
+ *
+ * Only changes are written. A read has the same original and current value, which
+ * is not a change, so applying one is a no-op; emitting it would only risk
+ * overwriting a real change for the same key, since the adapter rebuilds a map.
+ * Bytecode travels with it, or an account applied to another EVM would carry a
+ * hash for bytes that EVM never saw.
+ */
+export function encodeCommitSource(changes: Changes): Bytes.Bytes {
+  const writer = new Writer()
+
+  for (const change of changes.accounts) {
+    writer.u8(record.account)
+    writer.address(change.address)
+    writeChangeAccount(writer, change.original)
+    writeChangeAccount(writer, change.current)
+    writer.bool(change.created ?? false)
+    writer.bool(change.selfdestructed ?? false)
+  }
+  for (const change of changes.storage) {
+    writer.u8(record.storage)
+    writer.address(change.address)
+    writer.word(change.key)
+    writer.word(change.original ?? change.current)
+    writer.word(change.current)
+  }
+  for (const address of changes.storageWipes) {
+    writer.u8(record.storageWipe)
+    writer.address(address)
+  }
+
+  for (const entry of changes.bytecode) {
+    writer.u8(record.bytecode)
+    writer.hash(entry.codeHash)
+    writer.bytes(entry.code)
+  }
+
+  writer.u8(record.end)
+  return writer.finish(op.commitSource)
+}
+
+/** Writes an account's fields, or a flag saying it is absent. */
+function writeChangeAccount(
+  writer: Writer,
+  value: ChangeAccount | undefined,
+): void {
+  if (!value) {
+    writer.bool(false)
+    return
+  }
+  writer.bool(true)
+  writer.word(value.balance)
+  writer.u64(value.nonce)
+  writer.hash(value.codeHash)
+}
+
+/** Encodes a request starting a block accumulator. */
+export function encodeStartBlockState(): Bytes.Bytes {
+  return new Writer().finish(op.startBlockState)
+}
+
+/** Encodes a request draining the block state a token identifies. */
+export function encodeTakeBlockState(token: bigint): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u64(token)
+  return writer.finish(op.takeBlockState)
+}
+
+/** Encodes a resolution recording into the block accumulator a token identifies. */
+export function encodeCommitTo(token: bigint): Bytes.Bytes {
+  const writer = new Writer()
+  writer.u64(token)
+  return writer.finish(op.commitTo)
+}
+
+/** Decodes a started accumulator's token. */
+export function decodeBlockToken(bytes: Bytes.Bytes): bigint {
+  const reader = new Reader(bytes)
+  const token = reader.u64()
+  reader.finish()
+  return token
+}
+
+/** Encodes a request prewarming the precompile addresses. */
+export function encodeWarmPrecompiles(): Bytes.Bytes {
+  return new Writer().finish(op.warmPrecompiles)
+}
+
+/**
+ * Decodes accumulated block state.
+ *
+ * Fields go into locals before each object is built: these are sequential reads,
+ * so an object literal's property order would be the wire order.
+ */
+export function decodeBlockState(bytes: Bytes.Bytes): BlockState {
+  const reader = new Reader(bytes)
+
+  const accounts: BlockState['accounts'][number][] = []
+  for (let count = reader.u32(); count > 0; count--) {
+    const address = reader.address()
+    const original = readChangeAccount(reader)
+    const current = readChangeAccount(reader)
+    accounts.push({
+      address,
+      ...(current ? { current } : {}),
+      ...(original ? { original } : {}),
+    })
+  }
+
+  const storageWipes: Address.Address[] = []
+  for (let count = reader.u32(); count > 0; count--)
+    storageWipes.push(reader.address())
+
+  const storage: BlockState['storage'][number][] = []
+  for (let count = reader.u32(); count > 0; count--) {
+    const address = reader.address()
+    const key = reader.word()
+    const original = reader.word()
+    const current = reader.word()
+    storage.push({ address, current, key, original })
+  }
+
+  const code: BlockState['code'][number][] = []
+  for (let count = reader.u32(); count > 0; count--) {
+    const codeHash = reader.hash()
+    const value = reader.bytes()
+    code.push({ code: value, codeHash })
+  }
+
+  reader.finish()
+  return { accounts, code, storage, storageWipes }
+}
+
+/** Reads an account's fields, or nothing when the flag says it is absent. */
+function readChangeAccount(reader: Reader): ChangeAccount | undefined {
+  if (!reader.bool()) return undefined
+  const balance = reader.word()
+  const nonce = reader.u64()
+  const codeHash = reader.hash()
+  return { balance, codeHash, nonce }
 }
 
 /** Record tags in a serialized state-change stream. */

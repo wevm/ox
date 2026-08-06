@@ -1,5 +1,6 @@
 import {
   Bal,
+  BlockState,
   Database,
   Ethereum,
   Evm,
@@ -269,5 +270,41 @@ describe('asynchronous inference', () => {
     expectTypeOf(Evm.clearBalBuilder(evm)).toEqualTypeOf<Promise<void>>()
     expectTypeOf(Evm.setBalIndex(evm, 1n)).toEqualTypeOf<Promise<void>>()
     expectTypeOf(Evm.takeBal(evm)).toEqualTypeOf<Promise<Bal.Bal | undefined>>()
+  })
+})
+
+describe('block execution', () => {
+  test('every block setter is awaitable on an asynchronous EVM', async () => {
+    const memory = Database.fromMemory({})
+    const evm = await Evm.create({
+      database: Database.fromAsync({
+        getAccount: async (address) => memory.getAccount(address),
+        getBlockHash: async (number) => memory.getBlockHash(number),
+        getCodeByHash: async (codeHash) => memory.getCodeByHash(codeHash),
+        getStorage: async (address, key) => memory.getStorage(address, key),
+      }),
+    })
+
+    expectTypeOf(Evm.startBlockState(evm)).toEqualTypeOf<
+      Promise<BlockState.Token>
+    >()
+    expectTypeOf(Evm.warmPrecompiles(evm)).toEqualTypeOf<Promise<void>>()
+    expectTypeOf(Evm.takeBlockState(evm, 1n)).toEqualTypeOf<
+      Promise<BlockState.BlockState>
+    >()
+    expectTypeOf(Evm.systemCall(evm, { address: '0x' })).toEqualTypeOf<
+      Promise<ExecutedTx.ExecutedTx>
+    >()
+  })
+
+  test('a system call resolves like a transaction', () => {
+    // Same handle type, so every resolution applies to it.
+    expectTypeOf(
+      Evm.systemCall({} as Evm.Evm<false>, { address: '0x' }),
+    ).toEqualTypeOf<ExecutedTx.ExecutedTx>()
+    expectTypeOf(ExecutedTx.commitTo).toBeCallableWith(
+      {} as ExecutedTx.ExecutedTx,
+      1n,
+    )
   })
 })

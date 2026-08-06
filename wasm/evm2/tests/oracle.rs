@@ -266,6 +266,79 @@ fn bal_json(bal: evm2::evm::Bal) -> Value {
     )
 }
 
+/// Serializes an accumulator the way the TypeScript `BlockState` type carries it.
+fn block_json(block: &evm2::evm::BlockStateAccumulator) -> Value {
+    let info = |value: &Option<AccountInfo>| match value {
+        Some(info) => json!({
+            "balance": format!("{:#x}", info.balance),
+            "codeHash": format!("{:?}", info.code_hash),
+            "nonce": info.nonce,
+        }),
+        None => Value::Null,
+    };
+    // Code has no sorted accessor upstream, so it is sorted by hash here, the
+    // same way the adapter writes it.
+    let mut code: Vec<_> = block.code().collect();
+    code.sort_unstable_by_key(|(hash, _)| **hash);
+
+    json!({
+        "accounts": block.accounts_sorted().iter().map(|(address, tracked)| json!({
+            "address": format!("{address:?}"),
+            "current": info(&tracked.current),
+            "original": info(&tracked.original),
+        })).collect::<Vec<_>>(),
+        "code": code.iter().map(|(hash, bytecode)| json!({
+            "code": format!("0x{}", hex::encode(bytecode.original_bytes())),
+            "codeHash": format!("{hash:?}"),
+        })).collect::<Vec<_>>(),
+        "storage": block.storage_sorted().iter().map(|(key, tracked)| json!({
+            "address": format!("{:?}", key.address()),
+            "current": format!("{:#x}", tracked.current),
+            "key": format!("{:#x}", key.key()),
+            "original": format!("{:#x}", tracked.original),
+        })).collect::<Vec<_>>(),
+        "storageWipes": block.storage_wipes_sorted().iter()
+            .map(|address| format!("{address:?}")).collect::<Vec<_>>(),
+    })
+}
+
+/// Runs a fixture into a block accumulator, returning what it gathered.
+///
+/// A separate run from `run`: accumulation happens on the committing path, which
+/// the detaching path deliberately does not take.
+fn run_block(fixture: &Map<String, Value>, spec: &str) -> Value {
+    let spec_id = spec_id(spec);
+    let chain_id = hex_word(&fixture["chainId"]).to::<u64>();
+
+    let mut evm: Evm<'_, BaseEvmTypes> = Evm::new_with_execution_config(
+        ExecutionConfig::for_spec_and_version(
+            spec_id,
+            Version { chain_id, ..Version::new(spec_id) },
+        ),
+        spec_id,
+        block_env(fixture["block"].as_object().unwrap()),
+        ethereum_tx_registry(spec_id),
+        database(fixture["accounts"].as_array().unwrap()),
+        Precompiles::base(spec_id),
+    );
+
+    let mut block = evm2::evm::BlockStateAccumulator::new();
+    // The handle borrows the engine, so it is resolved inside its own scope.
+    let committed = match evm.transact(&recovered(fixture)) {
+        Ok(handle) => {
+            let _ = handle.commit_to(&mut block);
+            true
+        }
+        Err(_) => false,
+    };
+    // A rejected transaction accumulates nothing, which the replay must match.
+    if !committed {
+        return Value::Null;
+    }
+
+    block_json(&block)
+}
+
 /// Runs a fixture with the BAL builder on, returning the list it folded.
 ///
 /// A separate run from `run`: the fold happens when a transaction commits, which
@@ -294,7 +367,7 @@ fn run_bal(fixture: &Map<String, Value>, spec: &str) -> Value {
     // builder is read back.
     let committed = match evm.transact(&recovered(fixture)) {
         Ok(handle) => {
-            handle.commit();
+            let _ = handle.commit();
             true
         }
         Err(_) => false,
@@ -632,6 +705,8 @@ mod generated {
                 fixture.insert("expected".into(), expected);
                 let bal = run_bal(&fixture, &spec);
                 fixture.insert("bal".into(), bal);
+                let block = run_block(&fixture, &spec);
+                fixture.insert("blockState".into(), block);
                 Value::Object(fixture)
             })
             .collect();
@@ -745,10 +820,214 @@ mod bal {
         evm.state_mut().bump_bal_index();
 
         let handle = evm.transact(&call()).unwrap();
-        handle.commit();
+        let _ = handle.commit();
 
         let built = evm.state_mut().take_bal_builder().unwrap();
         // The sender pays and its nonce moves, so it must appear.
         assert!(built.accounts.contains_key(&SENDER), "{built}");
+    }
+}
+
+/// Block state accumulation, against native evm2.
+///
+/// The accumulator gathers what a block changed across transactions, so the
+/// behavior worth pinning is what survives several of them and in what order it
+/// enumerates.
+mod block {
+    use super::*;
+    use alloy_primitives::TxKind;
+    use evm2::evm::BlockStateAccumulator;
+
+    const SENDER: Address = Address::repeat_byte(0x11);
+    const TARGET: Address = Address::repeat_byte(0xc0);
+
+    /// PUSH1 1, PUSH0, SSTORE: writes slot 0, so a block has storage to gather.
+    const CODE: &[u8] = &[0x60, 0x01, 0x5f, 0x55];
+
+    fn evm() -> Evm<'static, BaseEvmTypes> {
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            &SENDER,
+            AccountInfo {
+                balance: U256::from(10u64).pow(U256::from(18)),
+                ..Default::default()
+            },
+        );
+        db.insert_account_info(
+            &TARGET,
+            AccountInfo::default()
+                .with_code(Bytecode::new_raw_checked(Bytes::from_static(CODE)).unwrap()),
+        );
+        Evm::new_with_execution_config(
+            ExecutionConfig::for_spec_and_version(SpecId::OSAKA, Version::new(SpecId::OSAKA)),
+            SpecId::OSAKA,
+            BlockEnvExt::default(),
+            ethereum_tx_registry(SpecId::OSAKA),
+            db,
+            Precompiles::base(SpecId::OSAKA),
+        )
+    }
+
+    fn call(nonce: u64) -> Recovered<TxEnvelope> {
+        let envelope = alloy_consensus::TxLegacy {
+            chain_id: Some(1),
+            gas_limit: 200_000,
+            gas_price: 0,
+            nonce,
+            to: TxKind::Call(TARGET),
+            value: U256::ZERO,
+            ..Default::default()
+        };
+        let signed = alloy_consensus::Signed::new_unchecked(
+            envelope,
+            alloy_primitives::Signature::test_signature(),
+            Default::default(),
+        );
+        let encoded = alloy_eips::eip2718::Encodable2718::encoded_2718(&signed);
+        let decoded = EthereumTxEnvelope::<TxEip4844>::decode_2718(&mut &encoded[..]).unwrap();
+        Recovered::new_unchecked(TxEnvelope::from(decoded), SENDER)
+    }
+
+    #[test]
+    fn accumulates_across_transactions() {
+        let mut evm = evm();
+        let mut block = BlockStateAccumulator::new();
+        assert!(block.is_empty());
+
+        for nonce in 0..3 {
+            let handle = evm.transact(&call(nonce)).unwrap();
+            let _ = handle.commit_to(&mut block);
+        }
+
+        // One entry per account whatever the transaction count, carrying the
+        // block's original and its latest value.
+        let accounts = block.accounts_sorted();
+        assert!(!block.is_empty());
+        let sender = accounts.iter().find(|(a, _)| *a == SENDER).expect("sender");
+        assert_eq!(sender.1.original.as_ref().map(|i| i.nonce), Some(0));
+        assert_eq!(sender.1.current.as_ref().map(|i| i.nonce), Some(3));
+    }
+
+    #[test]
+    fn enumerates_deterministically() {
+        let build = || {
+            let mut evm = evm();
+            let mut block = BlockStateAccumulator::new();
+            for nonce in 0..3 {
+                let _ = evm.transact(&call(nonce)).unwrap().commit_to(&mut block);
+            }
+            let accounts: Vec<_> = block.accounts_sorted().iter().map(|(a, _)| *a).collect();
+            let storage: Vec<_> = block.storage_sorted().iter().map(|(k, _)| *k).collect();
+            let wipes = block.storage_wipes_sorted();
+            // Code has no sorted accessor upstream, so it is sorted by hash here.
+            let mut code: Vec<_> = block.code().map(|(hash, _)| *hash).collect();
+            code.sort_unstable();
+            (accounts, storage, wipes, code)
+        };
+
+        // Two independent builds agree, which is what the adapter relies on when
+        // it writes the accumulator out.
+        assert_eq!(build(), build());
+    }
+
+    #[test]
+    fn storage_carries_the_blocks_original_value() {
+        let mut evm = evm();
+        let mut block = BlockStateAccumulator::new();
+        let _ = evm.transact(&call(0)).unwrap().commit_to(&mut block);
+
+        let storage = block.storage_sorted();
+        let slot = storage.iter().find(|(key, _)| key.address() == TARGET).expect("slot");
+        // Zero before the block, one after, so the pair spans the block rather
+        // than the transaction.
+        assert_eq!(slot.1.original, U256::ZERO);
+        assert_eq!(slot.1.current, U256::from(1));
+    }
+}
+
+/// The block-execution flow, written against evm2 directly.
+///
+/// The counterpart to the binding's `setBlockState`/`commitTo`/`takeBlockState`.
+/// Kept as a test so the documented equivalence is compiled rather than claimed.
+mod flow {
+    use super::*;
+    use alloy_primitives::TxKind;
+    use evm2::evm::{BEACON_ROOTS_ADDRESS, BlockStateAccumulator, SystemTx};
+
+    const SENDER: Address = Address::repeat_byte(0x11);
+    const TARGET: Address = Address::repeat_byte(0xc0);
+
+    #[test]
+    fn a_block_accumulates_a_system_call_and_its_transactions() {
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            &SENDER,
+            AccountInfo {
+                balance: U256::from(10u64).pow(U256::from(18)),
+                ..Default::default()
+            },
+        );
+        // CALLDATALOAD(0), PUSH0, SSTORE.
+        db.insert_account_info(
+            &BEACON_ROOTS_ADDRESS,
+            AccountInfo::default().with_code(
+                Bytecode::new_raw_checked(Bytes::from_static(&[0x5f, 0x35, 0x5f, 0x55])).unwrap(),
+            ),
+        );
+        db.insert_account_info(
+            &TARGET,
+            AccountInfo::default()
+                .with_code(Bytecode::new_raw_checked(Bytes::from_static(&[0x00])).unwrap()),
+        );
+
+        let mut evm: Evm<'_, BaseEvmTypes> = Evm::new_with_execution_config(
+            ExecutionConfig::for_spec_and_version(SpecId::OSAKA, Version::new(SpecId::OSAKA)),
+            SpecId::OSAKA,
+            BlockEnvExt::default(),
+            ethereum_tx_registry(SpecId::OSAKA),
+            db,
+            Precompiles::base(SpecId::OSAKA),
+        );
+
+        // The accumulator is a local here. Across the ABI it cannot be, which is
+        // why the binding installs one in the engine instead.
+        let mut block = BlockStateAccumulator::new();
+
+        let root = Bytes::from(vec![1u8; 32]);
+        let executed = evm.system_call(SystemTx::new(BEACON_ROOTS_ADDRESS, root)).unwrap();
+        let _ = executed.commit_to(&mut block);
+
+        for tx in &transactions() {
+            let executed = evm.transact(tx).unwrap();
+            let _ = executed.commit_to(&mut block);
+        }
+
+        assert!(
+            block.storage_sorted().iter().any(|(key, _)| key.address() == BEACON_ROOTS_ADDRESS),
+            "the system call's write is in the block"
+        );
+        assert!(
+            block.accounts_sorted().iter().any(|(address, _)| *address == SENDER),
+            "the transaction's sender is in the block"
+        );
+    }
+
+    fn transactions() -> Vec<Recovered<TxEnvelope>> {
+        let envelope = alloy_consensus::TxLegacy {
+            chain_id: Some(1),
+            gas_limit: 200_000,
+            gas_price: 0,
+            to: TxKind::Call(TARGET),
+            value: U256::ZERO,
+            ..Default::default()
+        };
+        let signed = alloy_consensus::Signed::new_unchecked(
+            envelope,
+            alloy_primitives::Signature::test_signature(),
+            Default::default(),
+        );
+        let encoded = alloy_eips::eip2718::Encodable2718::encoded_2718(&signed);
+        let decoded = EthereumTxEnvelope::<TxEip4844>::decode_2718(&mut &encoded[..]).unwrap();
+        vec![Recovered::new_unchecked(TxEnvelope::from(decoded), SENDER)]
     }
 }

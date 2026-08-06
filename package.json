@@ -722,6 +722,11 @@
       "types": "./dist/evm/Bal.d.ts",
       "default": "./dist/evm/Bal.js"
     },
+    "./evm/BlockState": {
+      "src": "./src/evm/BlockState.ts",
+      "types": "./dist/evm/BlockState.d.ts",
+      "default": "./dist/evm/BlockState.js"
+    },
     "./evm/Database": {
       "src": "./src/evm/Database.ts",
       "types": "./dist/evm/Database.d.ts",
@@ -761,6 +766,11 @@
       "src": "./src/evm/StateChange.ts",
       "types": "./dist/evm/StateChange.d.ts",
       "default": "./dist/evm/StateChange.js"
+    },
+    "./evm/System": {
+      "src": "./src/evm/System.ts",
+      "types": "./dist/evm/System.d.ts",
+      "default": "./dist/evm/System.js"
     },
     "./evm/TxResult": {
       "src": "./src/evm/TxResult.ts",
