@@ -6,11 +6,8 @@ import type * as TxResult from './TxResult.js'
 import type { ReentrancyError } from './internal/bindings.js'
 import type { DecodeError } from './internal/codec.js'
 import type * as engine from './internal/engine.js'
-import type {
-  NoBlockStateError,
-  NotExecutedError,
-  SinkError,
-} from './internal/engine.js'
+import { NoBlockStateError } from './internal/engine.js'
+import type { NotExecutedError, SinkError } from './internal/engine.js'
 
 /**
  * A transaction that has executed, with its state changes still pending.
@@ -163,7 +160,8 @@ export function commitTo(
 ): TxResult.TxResult {
   claim(executed)
   try {
-    executed['~engine'].resolveTo(block, executed['~token'])
+    if (block['~engine'] !== executed['~engine']) throw new NoBlockStateError()
+    executed['~engine'].resolveTo(block['~id'], executed['~token'])
   } catch (error) {
     // The adapter refuses before the transaction leaves the engine, so the handle
     // is still outstanding and has to stay resolvable.

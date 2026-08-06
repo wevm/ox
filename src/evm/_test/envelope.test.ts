@@ -1,4 +1,4 @@
-import { Address, Secp256k1 } from 'ox'
+import { Address, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { Database, Evm } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
@@ -87,5 +87,56 @@ describe('blob transactions', () => {
     } as never)
 
     expect(result.status).toBe(true)
+  })
+})
+
+describe('legacy bytecode', () => {
+  test('behavior: code starting with the delegation prefix still executes', async () => {
+    // `0xef01` without the rest of a designator is ordinary legacy code, which
+    // genesis and pre-EIP-3541 state can hold. It has to run as legacy — hitting
+    // an invalid opcode — rather than failing the account read.
+    const odd = '0x00000000000000000000000000000000000000c7' as const
+    const instance = await Evm.create({
+      database: {
+        getAccount: (address) =>
+          address.toLowerCase() === odd
+            ? {
+                balance: 0n,
+                code: new Uint8Array([0xef, 0x01]),
+                codeHash: `0x${'ab'.repeat(32)}`,
+                nonce: 0n,
+              }
+            : address.toLowerCase() === sender.toLowerCase()
+              ? {
+                  balance: 10n ** 18n,
+                  codeHash: `0x${'00'.repeat(32)}`,
+                  nonce: 0n,
+                }
+              : undefined,
+        getBlockHash: () => `0x${'00'.repeat(32)}`,
+        getCodeByHash: () => new Uint8Array([0xef, 0x01]),
+        getStorage: () => 0n,
+      },
+    })
+
+    const envelope = TxEnvelopeLegacy.from({
+      chainId: 1,
+      gas: 200_000n,
+      gasPrice: 0n,
+      nonce: 0n,
+      to: odd,
+      value: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeLegacy.getSignPayload(envelope),
+      privateKey,
+    })
+    const result = Evm.callTx(instance, {
+      from: sender,
+      serialized: TxEnvelopeLegacy.serialize(envelope, { signature }),
+    })
+
+    // Executed and reverted on the invalid opcode, rather than a database error.
+    expect(result.status).toBe(false)
   })
 })

@@ -167,21 +167,41 @@ export type Handler = {
 
 /** Builds a request payload. */
 class Writer {
-  #bytes: number[] = []
+  // A growable byte buffer rather than a number array: an envelope near the
+  // request ceiling would otherwise cost element storage and growth for every
+  // byte before `finish` allocates the payload as well.
+  #bytes = new Uint8Array(256)
+  #length = 0
+
+  #reserve(count: number) {
+    if (this.#length + count <= this.#bytes.length) return
+    let capacity = this.#bytes.length * 2
+    while (capacity < this.#length + count) capacity *= 2
+    const grown = new Uint8Array(capacity)
+    grown.set(this.#bytes.subarray(0, this.#length))
+    this.#bytes = grown
+  }
+
+  #push(...values: readonly number[]) {
+    this.#reserve(values.length)
+    for (const value of values) this.#bytes[this.#length++] = value
+  }
 
   bytes(value: Bytes.Bytes) {
     this.u32(value.length)
-    for (const byte of value) this.#bytes.push(byte)
+    this.#reserve(value.length)
+    this.#bytes.set(value, this.#length)
+    this.#length += value.length
   }
 
   u8(value: number) {
     if (!Number.isInteger(value) || value < 0 || value > 0xff)
       throw new EncodeError({ max: '255', value: String(value) })
-    this.#bytes.push(value)
+    this.#push(value)
   }
 
   bool(value: boolean) {
-    this.#bytes.push(value ? 1 : 0)
+    this.#push(value ? 1 : 0)
   }
 
   hash(value: Hex.Hex) {
@@ -196,7 +216,7 @@ class Writer {
   u32(value: number) {
     if (!Number.isInteger(value) || value < 0 || value > 0xff_ff_ff_ff)
       throw new EncodeError({ max: '4294967295', value: String(value) })
-    this.#bytes.push(
+    this.#push(
       value & 0xff,
       (value >>> 8) & 0xff,
       (value >>> 16) & 0xff,
@@ -211,7 +231,7 @@ class Writer {
         value: String(value),
       })
     for (let index = 0; index < 8; index++)
-      this.#bytes.push(Number((value >> BigInt(index * 8)) & 0xffn))
+      this.#push(Number((value >> BigInt(index * 8)) & 0xffn))
   }
 
   word(value: bigint) {
@@ -228,19 +248,21 @@ class Writer {
   }
 
   bare(value: Bytes.Bytes) {
-    for (const byte of value) this.#bytes.push(byte)
+    this.#reserve(value.length)
+    this.#bytes.set(value, this.#length)
+    this.#length += value.length
   }
 
   /** Prefixes the header for `operation` and returns the request. */
   finish(operation: number): Bytes.Bytes {
-    const request = new Uint8Array(headerSize + this.#bytes.length)
+    const request = new Uint8Array(headerSize + this.#length)
     const view = new DataView(request.buffer)
     view.setUint32(0, magic, true)
     view.setUint16(4, version, true)
     view.setUint16(6, operation, true)
     view.setUint32(8, 0, true)
-    view.setUint32(12, this.#bytes.length, true)
-    request.set(this.#bytes, headerSize)
+    view.setUint32(12, this.#length, true)
+    request.set(this.#bytes.subarray(0, this.#length), headerSize)
     return request
   }
 }

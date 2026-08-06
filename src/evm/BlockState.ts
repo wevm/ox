@@ -17,4 +17,9 @@ export type BlockState = codec.BlockState
  * {@link ox#Evm.(startBlockState:function)} until
  * {@link ox#Evm.(takeBlockState:function)}, which consumes it.
  */
-export type Token = bigint & { readonly '~block'?: true }
+export type Token = {
+  /** @internal */
+  readonly '~engine': unknown
+  /** @internal */
+  readonly '~id': bigint
+}

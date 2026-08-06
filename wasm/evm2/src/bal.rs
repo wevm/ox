@@ -9,15 +9,15 @@ use alloy_eip7928::{
     AccountChanges, BalanceChange, BlockAccessIndex, BlockAccessList, CodeChange, NonceChange,
     SlotChanges, StorageChange,
 };
-use evm2::evm::Bal;
+use evm2::{constants::MAX_CODE_SIZE_AMSTERDAM as MAX_CODE, evm::Bal};
 
 use crate::abi::{self, Reader, Writer};
 
 /// Largest code a single change may carry.
 ///
-/// EIP-3860 caps deployed code at 24576 bytes; this leaves room for the initcode
-/// limit above it rather than tracking the active specification here.
-const MAX_CODE: usize = 49152;
+/// The same ceiling the account-code landing buffer uses, so a list built from an
+/// execution under the highest configured limit round-trips rather than being
+/// refused on the way back in.
 
 /// Reads a block access list, validating it through evm2.
 ///

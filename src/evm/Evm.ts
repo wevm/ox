@@ -25,12 +25,12 @@ import type {
 } from './internal/bindings.js'
 import { EncodeError } from './internal/codec.js'
 import type { DecodeError } from './internal/codec.js'
+import { NoBlockStateError } from './internal/engine.js'
 import type {
   AbiError,
   BorrowedError,
   DatabaseError,
   HandlerError,
-  NoBlockStateError,
   NotCoveredError,
 } from './internal/engine.js'
 
@@ -991,13 +991,13 @@ export declare namespace clearBal {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Evm } from 'ox/evm'
+ * import { Evm, ExecutedTx } from 'ox/evm'
  *
  * Evm.enableBalBuilder(evm)
  *
  * // Transaction `i` records at index `i + 1`.
  * Evm.setBalIndex(evm, 1n)
- * Evm.transact(evm, transaction)
+ * ExecutedTx.commit(Evm.transact(evm, transaction))
  *
  * const bal = Evm.takeBal(evm)
  * ```
@@ -1122,7 +1122,10 @@ export declare namespace setBalIndex {
 export function startBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
 ): Awaitable<asynchronous, BlockState.Token> {
-  return attempt(evm, () => evm['~engine'].startBlockState())
+  return attempt(evm, () => ({
+    '~engine': evm['~engine'],
+    '~id': evm['~engine'].startBlockState(),
+  }))
 }
 
 export declare namespace startBlockState {
@@ -1158,7 +1161,12 @@ export function takeBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   block: BlockState.Token,
 ): Awaitable<asynchronous, BlockState.BlockState> {
-  return attempt(evm, () => evm['~engine'].takeBlockState(block))
+  return attempt(evm, () => {
+    // Two EVMs both start at generation one, so the number alone would match the
+    // other's accumulator instead of being refused.
+    if (block['~engine'] !== evm['~engine']) throw new NoBlockStateError()
+    return evm['~engine'].takeBlockState(block['~id'])
+  })
 }
 
 export declare namespace takeBlockState {
