@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 # evm2 is resolved from Cargo's external git cache at an exact revision. Its
 # source never enters this repository or the npm package.
-evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "c49e4aa3c84733702d0ce0397d7e90c21b46ae8d", default-features = false, features = [
+evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "8ff36b5359aa1ccc5bdd7eb1c98d0a7f3daac469", default-features = false, features = [
   "map-foldhash",
   "parse",
 ] }

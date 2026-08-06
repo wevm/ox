@@ -838,7 +838,12 @@ export function setInspector<asynchronous extends boolean>(
 }
 
 export declare namespace setInspector {
-  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
+  type ErrorType =
+    | AbiError
+    | BorrowedError
+    | EncodeError
+    | ReentrancyError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -915,7 +920,12 @@ export declare namespace setBal {
     fallback?: boolean | undefined
   }
 
-  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
+  type ErrorType =
+    | AbiError
+    | BorrowedError
+    | EncodeError
+    | ReentrancyError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -1029,7 +1039,7 @@ export function takeBal<asynchronous extends boolean>(
 }
 
 export declare namespace takeBal {
-  type ErrorType = setBal.ErrorType
+  type ErrorType = setBal.ErrorType | DecodeError
 }
 
 /**
@@ -1091,7 +1101,12 @@ export function startBlockState<asynchronous extends boolean>(
 }
 
 export declare namespace startBlockState {
-  type ErrorType = AbiError | BorrowedError | Errors.GlobalErrorType
+  type ErrorType =
+    | AbiError
+    | BorrowedError
+    | DecodeError
+    | ReentrancyError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -1122,7 +1137,7 @@ export function takeBlockState<asynchronous extends boolean>(
 }
 
 export declare namespace takeBlockState {
-  type ErrorType = startBlockState.ErrorType | NoBlockStateError
+  type ErrorType = startBlockState.ErrorType | EncodeError | NoBlockStateError
 }
 
 /**
@@ -1148,7 +1163,11 @@ export function warmPrecompiles<asynchronous extends boolean>(
 }
 
 export declare namespace warmPrecompiles {
-  type ErrorType = startBlockState.ErrorType
+  type ErrorType =
+    | AbiError
+    | BorrowedError
+    | ReentrancyError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -1189,6 +1208,7 @@ export declare namespace commitSource {
     | AbiError
     | BorrowedError
     | EncodeError
+    | ReentrancyError
     | Errors.GlobalErrorType
 }
 

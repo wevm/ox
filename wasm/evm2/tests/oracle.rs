@@ -1032,6 +1032,95 @@ mod flow {
     }
 }
 
+/// The block-access-list flow, written against evm2 directly.
+///
+/// The counterpart to the binding's builder and attach paths. Kept as a test so
+/// the documented equivalence is compiled rather than claimed.
+mod bal_flow {
+    use super::*;
+    use alloy_primitives::TxKind;
+    use evm2::evm::{Bal, BlockAccessIndex};
+    use std::sync::Arc;
+
+    const SENDER: Address = Address::repeat_byte(0x11);
+    const TARGET: Address = Address::repeat_byte(0xc0);
+
+    /// PUSH1 1, PUSH0, SSTORE.
+    const CODE: &[u8] = &[0x60, 0x01, 0x5f, 0x55];
+
+    fn evm() -> Evm<'static, BaseEvmTypes> {
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            &SENDER,
+            AccountInfo {
+                balance: U256::from(10u64).pow(U256::from(18)),
+                ..Default::default()
+            },
+        );
+        db.insert_account_info(
+            &TARGET,
+            AccountInfo::default()
+                .with_code(Bytecode::new_raw_checked(Bytes::from_static(CODE)).unwrap()),
+        );
+        Evm::new_with_execution_config(
+            ExecutionConfig::for_spec_and_version(SpecId::OSAKA, Version::new(SpecId::OSAKA)),
+            SpecId::OSAKA,
+            BlockEnvExt::default(),
+            ethereum_tx_registry(SpecId::OSAKA),
+            db,
+            Precompiles::base(SpecId::OSAKA),
+        )
+    }
+
+    fn call() -> Recovered<TxEnvelope> {
+        let envelope = alloy_consensus::TxLegacy {
+            chain_id: Some(1),
+            gas_limit: 200_000,
+            gas_price: 0,
+            to: TxKind::Call(TARGET),
+            value: U256::ZERO,
+            ..Default::default()
+        };
+        let signed = alloy_consensus::Signed::new_unchecked(
+            envelope,
+            alloy_primitives::Signature::test_signature(),
+            Default::default(),
+        );
+        let encoded = alloy_eips::eip2718::Encodable2718::encoded_2718(&signed);
+        let decoded = EthereumTxEnvelope::<TxEip4844>::decode_2718(&mut &encoded[..]).unwrap();
+        Recovered::new_unchecked(TxEnvelope::from(decoded), SENDER)
+    }
+
+    #[test]
+    fn builds_then_attaches() {
+        // BUILD
+        let mut proposer = evm();
+        proposer.state_mut().enable_bal_builder();
+        proposer.state_mut().set_bal_index(BlockAccessIndex(1));
+        let _ = proposer.transact(&call()).unwrap().commit();
+        let bal = proposer.state_mut().take_bal_builder().unwrap();
+        assert!(bal.accounts.contains_key(&TARGET), "{bal}");
+
+        // VALIDATE
+        let mut validator = evm();
+        validator.state_mut().set_bal(Arc::new(bal));
+        validator.state_mut().set_bal_index(BlockAccessIndex(1));
+        assert!(validator.call_tx(&call()).is_ok());
+
+        // An uncovered read is refused rather than served.
+        let mut strict = evm();
+        strict.state_mut().set_bal(Arc::new(Bal::new()));
+        strict.state_mut().set_allow_bal_db_fallback(false);
+        assert!(strict.call_tx(&call()).is_err());
+
+        // Fallback lets it through.
+        let mut lenient = evm();
+        lenient.state_mut().set_bal(Arc::new(Bal::new()));
+        lenient.state_mut().set_allow_bal_db_fallback(true);
+        assert!(lenient.call_tx(&call()).is_ok());
+    }
+}
+
 /// The system addresses and limits the binding publishes.
 ///
 /// `src/evm/System.ts` carries these as literals, because a constant is a value

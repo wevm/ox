@@ -308,3 +308,55 @@ describe('block execution', () => {
     )
   })
 })
+
+describe('error unions', () => {
+  /** The union's member with `name`, or `never` when it has none. */
+  type Named<union, name> = Extract<union, { name: name }>
+
+  test('every operation reaching the engine can report a busy one', () => {
+    // Each goes through the engine, which raises `ReentrancyError` when an
+    // operation is already running, so each union has to carry it. Matched by
+    // name: these error types are otherwise structurally alike, so assignability
+    // alone would pass whatever the union listed.
+    expectTypeOf<
+      Named<Evm.setBlock.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.setInspector.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.setBal.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.takeBal.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.startBlockState.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.takeBlockState.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.warmPrecompiles.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.commitSource.ErrorType, 'Evm.ReentrancyError'>
+    >().not.toBeNever()
+  })
+
+  test('an operation reports the failures its own payload can cause', () => {
+    // Encoding a payload can overflow a field; decoding can meet a shape this
+    // ABI version cannot read.
+    expectTypeOf<
+      Named<Evm.commitSource.ErrorType, 'Evm.EncodeError'>
+    >().not.toBeNever()
+    expectTypeOf<
+      Named<Evm.takeBal.ErrorType, 'Evm.DecodeError'>
+    >().not.toBeNever()
+
+    // `warmPrecompiles` carries no payload, so it cannot fail encoding one.
+    expectTypeOf<
+      Named<Evm.warmPrecompiles.ErrorType, 'Evm.EncodeError'>
+    >().toBeNever()
+  })
+})
