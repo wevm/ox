@@ -85,16 +85,6 @@ describe('startBlockState', () => {
     )
   })
 
-  test('behavior: a token cannot be taken twice', async () => {
-    const instance = await evm()
-    const block = Evm.startBlockState(instance)
-
-    expect(Evm.takeBlockState(instance, block)).toBeDefined()
-    expect(() => Evm.takeBlockState(instance, block)).toThrowError(
-      Evm.NoBlockStateError,
-    )
-  })
-
   test('behavior: entries span the block, not the last transaction', async () => {
     const instance = await evm()
     const block = Evm.startBlockState(instance)
@@ -188,6 +178,18 @@ describe('warmPrecompiles', () => {
     Evm.warmPrecompiles(twice)
 
     expect(Evm.callTx(twice, transaction())).toEqual(expected)
+  })
+})
+
+describe('takeBlockState', () => {
+  test('behavior: a token cannot be taken twice', async () => {
+    const instance = await evm()
+    const block = Evm.startBlockState(instance)
+
+    expect(Evm.takeBlockState(instance, block)).toBeDefined()
+    expect(() => Evm.takeBlockState(instance, block)).toThrowError(
+      Evm.NoBlockStateError,
+    )
   })
 
   test('behavior: a token from another EVM is refused', async () => {
