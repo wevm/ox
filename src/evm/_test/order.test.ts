@@ -1,6 +1,6 @@
 import { Address, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { Database, Evm, ExecutedTx, StateChange } from 'ox/evm'
-import { expect, test } from 'vp/test'
+import { describe, expect, test } from 'vp/test'
 
 const privateKey =
   '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
@@ -48,24 +48,26 @@ function recorder(into: string[]) {
   }
 }
 
-test('visit replays the order a streamed resolution observes', async () => {
-  const streamed: string[] = []
-  const a = await evm()
-  ExecutedTx.commitWith(Evm.transact(a, transaction()), recorder(streamed))
+describe('visit', () => {
+  test('replays the order a streamed resolution observes', async () => {
+    const streamed: string[] = []
+    const a = await evm()
+    ExecutedTx.commitWith(Evm.transact(a, transaction()), recorder(streamed))
 
-  const visited: string[] = []
-  const b = await evm()
-  const { pendingState } = ExecutedTx.detach(Evm.transact(b, transaction()))
-  StateChange.visit(pendingState, recorder(visited))
+    const visited: string[] = []
+    const b = await evm()
+    const { pendingState } = ExecutedTx.detach(Evm.transact(b, transaction()))
+    StateChange.visit(pendingState, recorder(visited))
 
-  // The detached state keeps loaded-but-unchanged accounts that the live stream
-  // elides, which is evm2's own behavior on the two paths. Order is what has to
-  // agree: a sink applying storage before finalizing accounts sees one sequence.
-  expect(visited.slice(0, streamed.length)).toEqual(streamed)
-  expect(
-    visited.every(
-      (record, index) =>
-        index < streamed.length || record.startsWith('accountRead:'),
-    ),
-  ).toBe(true)
+    // The detached state keeps loaded-but-unchanged accounts that the live stream
+    // elides, which is evm2's own behavior on the two paths. Order is what has to
+    // agree: a sink applying storage before finalizing accounts sees one sequence.
+    expect(visited.slice(0, streamed.length)).toEqual(streamed)
+    expect(
+      visited.every(
+        (record, index) =>
+          index < streamed.length || record.startsWith('accountRead:'),
+      ),
+    ).toBe(true)
+  })
 })

@@ -791,6 +791,29 @@ export declare namespace setBlockAndExecutionConfig {
 // Copies version overrides, so a caller mutating theirs afterwards cannot change
 // what an EVM already runs under. The groups are flat records of primitives, so
 // one level is deep enough.
+function snapshotChanges(changes: codec.Changes): codec.Changes {
+  const account = <entry extends { current?: unknown; original?: unknown }>(
+    value: entry,
+  ) => ({
+    ...value,
+    ...(value.current ? { current: { ...(value.current as object) } } : {}),
+    ...(value.original ? { original: { ...(value.original as object) } } : {}),
+  })
+  return {
+    ...changes,
+    accountReads: changes.accountReads.map(account),
+    accounts: changes.accounts.map(account),
+    bytecode: changes.bytecode.map((entry) => ({
+      ...entry,
+      code: Uint8Array.from(entry.code),
+    })),
+    records: changes.records.map((record) => ({ ...record })),
+    storage: changes.storage.map((entry) => ({ ...entry })),
+    storageReads: changes.storageReads.map((entry) => ({ ...entry })),
+    storageWipes: [...changes.storageWipes],
+  }
+}
+
 function snapshotBal(bal: Bal.Bal): Bal.Bal {
   return {
     accounts: bal.accounts.map((account) => ({
@@ -1250,9 +1273,10 @@ export function commitSource<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   state: PendingState.PendingState,
 ): Awaitable<asynchronous, void> {
-  return attempt(evm, () =>
-    evm['~engine'].commitSource(PendingState.changes(state)),
-  )
+  // Read now, like every other operation: the state's entries are the caller's
+  // objects, so mutating one before the queue drains would change what is applied.
+  const changes = snapshotChanges(PendingState.changes(state))
+  return attempt(evm, () => evm['~engine'].commitSource(changes))
 }
 
 export declare namespace commitSource {

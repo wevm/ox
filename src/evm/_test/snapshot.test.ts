@@ -1,6 +1,6 @@
 import { Address, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { Bytes } from 'ox'
-import { Database, Evm, ExecutedTx, StateChange } from 'ox/evm'
+import { Database, Evm, ExecutedTx, PendingState, StateChange } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
 /**
@@ -147,5 +147,30 @@ describe('callTx', () => {
     await expect(
       Evm.callTx(evm, { from: sender, gas: -1n } as never),
     ).rejects.toThrowError()
+  })
+})
+
+describe('commitSource', () => {
+  test('behavior: state is applied as submitted', async () => {
+    const evm = await asyncEvm()
+    const executed = await Evm.transact(evm, transaction())
+    const { pendingState } = ExecutedTx.detach(executed)
+
+    const account = PendingState.accountInfo(pendingState, sender)!
+    const edited = PendingState.insertAccount(pendingState, {
+      address: sender,
+      current: { ...account, nonce: 9n },
+      original: account,
+    })
+
+    const queued = Evm.commitSource(evm, edited)
+    // Mutated after submitting: the entry objects are the caller's.
+    const held = PendingState.changes(edited).accounts.find(
+      (change) => change.address.toLowerCase() === sender.toLowerCase(),
+    )
+    if (held?.current) (held.current as { nonce: bigint }).nonce = 99n
+    await queued
+
+    expect((await Evm.readAccountInfo(evm, sender))?.nonce).toBe(9n)
   })
 })
