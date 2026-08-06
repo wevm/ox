@@ -164,8 +164,7 @@ the ABI version, the import list, and the reproducibility check unverifiable.
 Building your own means owning the artifact:
 
 1. Copy `wasm/evm2` and keep `Cargo.lock` and `rust-toolchain.toml` as they are.
-   The pinned toolchain is load-bearing, and a nightly compiler selects an
-   interpreter backend wasm cannot use.
+   The pinned toolchain is what makes the artifact reproducible.
 2. Add the configuration where the engine is constructed in `src/lib.rs`. Keep
    `abi.rs` and the ABI version untouched if `src/evm/internal/codec.ts` is to
    keep reading the responses.
@@ -187,10 +186,13 @@ general change, not maintained as a patched fork.
   lockfile, and the source. `wasm-opt` is host-stable and still runs natively.
   `OX_EVM2_NATIVE=1` builds on the host for fast local iteration; `wasm:check`
   refuses it, the same way it refuses `OX_WASM_CLANG`.
-- **The toolchain is pinned as stable, deliberately.** evm2 selects a tail-call
-  interpreter backend when it detects a nightly compiler, which needs unstable
-  features WebAssembly cannot use. Stable resolves to `single_return`, the
-  backend evm2 intends for wasm.
+- **The toolchain is pinned for reproducibility.** The artifact is a function of
+  the image, the lockfile, and the source, so the compiler version is part of the
+  contract. It was also once a correctness requirement: evm2 selected its
+  tail-call interpreter backend from the toolchain before the target, so a
+  nightly wasm build picked a backend needing unstable features. Fixed upstream
+  in [#345](https://github.com/alloy-rs/evm2/pull/345), which the pinned revision
+  now carries, so the pin is about reproducibility alone.
 - **No `std`.** The `std` feature reaches `getrandom 0.2`, which refuses to
   compile for `wasm32-unknown-unknown`. `no_std` leaves the allocator and panic
   handler to the adapter, which is why it carries `dlmalloc` and a trapping
