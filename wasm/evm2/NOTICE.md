@@ -4,7 +4,7 @@
 
 The artifact is compiled from `wasm/evm2` against
 [`alloy-rs/evm2`](https://github.com/alloy-rs/evm2) at commit
-`c49e4aa3c84733702d0ce0397d7e90c21b46ae8d`, which is licensed under MIT OR Apache-2.0. Its license texts are
+`8ff36b5359aa1ccc5bdd7eb1c98d0a7f3daac469`, which is licensed under MIT OR Apache-2.0. Its license texts are
 committed beside this file as `LICENSE-MIT` and `LICENSE-APACHE`.
 
 Everything compiled into the artifact is listed below, with the license each
@@ -64,7 +64,7 @@ crate declares.
 | `either` | 1.17.0 | MIT OR Apache-2.0 | crates.io |
 | `elliptic-curve` | 0.13.8 | Apache-2.0 OR MIT | crates.io |
 | `elliptic-curve` | 0.14.1 | Apache-2.0 OR MIT | crates.io |
-| `evm2` | 0.1.0 | MIT OR Apache-2.0 | https://github.com/alloy-rs/evm2 @ c49e4aa3c84733702d0ce0397d7e90c21b46ae8d |
+| `evm2` | 0.1.0 | MIT OR Apache-2.0 | https://github.com/alloy-rs/evm2 @ 8ff36b5359aa1ccc5bdd7eb1c98d0a7f3daac469 |
 | `ff` | 0.13.1 | MIT/Apache-2.0 | crates.io |
 | `ff` | 0.14.0 | MIT/Apache-2.0 | crates.io |
 | `foldhash` | 0.2.0 | Zlib | crates.io |
