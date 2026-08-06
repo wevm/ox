@@ -138,6 +138,7 @@ function compile(revision: string): Compiled {
       artifact: path.join(crate, `target/${target}/release/ox_evm2.wasm`),
       licenses: hostLicenses(revision),
       metadata: cargo(metadata),
+      texts: hostTexts(home),
       rustc: child_process
         .execFileSync('rustc', ['--version'], { cwd: crate, encoding: 'utf8' })
         .trim(),
@@ -179,9 +180,10 @@ function compile(revision: string): Compiled {
         // satisfy the BSD, Zlib, and MIT terms it links. Copied wholesale here
         // and filtered to what actually links when the notice is generated.
         'mkdir -p /out/licenses',
-        'for dir in "$CARGO_HOME"/registry/src/*/*/ "$CARGO_HOME"/git/checkouts/*/*/; do' +
+        'for dir in "$CARGO_HOME"/registry/src/*/*/ "$CARGO_HOME"/git/checkouts/*/*/ "$CARGO_HOME"/git/checkouts/*/*/*/; do' +
           ' [ -d "$dir" ] || continue;' +
-          ' name=$(basename "$dir");' +
+          ' case "$dir" in *"/git/checkouts/"*) name="git-$(basename "$dir")";;' +
+          ' *) name=$(basename "$dir");; esac;' +
           ' for file in "$dir"LICENSE* "$dir"COPYING* "$dir"UNLICENSE* "$dir"NOTICE*; do' +
           ' [ -f "$file" ] || continue;' +
           ' mkdir -p "/out/licenses/$name";' +
@@ -284,6 +286,37 @@ function linked(raw: string) {
   return packages
 }
 
+/** Collects license texts from the host Cargo cache, for the native build. */
+function hostTexts(home: string): Map<string, string> {
+  const texts = new Map<string, string>()
+  const roots = [
+    { git: false, path: path.join(home, 'registry', 'src') },
+    { git: true, path: path.join(home, 'git', 'checkouts') },
+  ]
+  for (const root of roots) {
+    if (!fs.existsSync(root.path)) continue
+    for (const outer of fs.readdirSync(root.path)) {
+      const directory = path.join(root.path, outer)
+      if (!fs.statSync(directory).isDirectory()) continue
+      for (const crate of fs.readdirSync(directory)) {
+        const source = path.join(directory, crate)
+        if (!fs.statSync(source).isDirectory()) continue
+        const files = fs
+          .readdirSync(source)
+          .filter((file) => /^(LICENSE|COPYING|UNLICENSE|NOTICE)/.test(file))
+          .sort()
+          .map(
+            (file) =>
+              `<!-- ${file} -->\n\n${fs.readFileSync(path.join(source, file), 'utf8').trim()}`,
+          )
+        if (files.length)
+          texts.set(root.git ? `git-${crate}` : crate, files.join('\n\n'))
+      }
+    }
+  }
+  return texts
+}
+
 /** Reads every collected license text, keyed by `name-version` directory. */
 function licenseTexts(directory: string): Map<string, string> {
   const texts = new Map<string, string>()
@@ -314,7 +347,15 @@ function thirdPartyLicenses(
 ): string {
   const packages = linked(metadata)
   const sections = packages.map((entry) => {
-    const text = texts.get(`${entry.name}-${entry.version}`)
+    // A git dependency is stored under its revision rather than its version, so
+    // it is looked up by the revision its source records.
+    const revision = entry.source?.match(/[?#]rev=([0-9a-f]+)/)?.[1]
+    const text =
+      texts.get(`${entry.name}-${entry.version}`) ??
+      (revision
+        ? (texts.get(`git-${revision}`) ??
+          texts.get(`git-${revision.slice(0, 7)}`))
+        : undefined)
     const heading = `## \`${entry.name}\` ${entry.version}\n\nDeclared license: ${entry.license ?? 'see upstream'}.`
     // A crate shipping no license file is named anyway, so a gap is visible
     // rather than silently absent.

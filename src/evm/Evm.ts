@@ -669,8 +669,16 @@ export function setBlock<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   block: Block,
 ): Awaitable<asynchronous, void> {
-  const merged = merge(evm['~config'].block, block)
-  return attempt(evm, () => apply(evm, { ...evm['~config'], block: merged }))
+  // Only the caller's fields are captured; the merge happens when the operation
+  // runs, so a setter queued earlier in the same tick is not undone by a later
+  // one that omits what it changed.
+  const fields = { ...block }
+  return attempt(evm, () =>
+    apply(evm, {
+      ...evm['~config'],
+      block: merge(evm['~config'].block, fields),
+    }),
+  )
 }
 
 export declare namespace setBlock {
@@ -758,13 +766,13 @@ export function setBlockAndExecutionConfig<asynchronous extends boolean>(
   options: setBlockAndExecutionConfig.Options,
 ): Awaitable<asynchronous, void> {
   const version = snapshot(options.version)
-  const block = merge(evm['~config'].block, options.block)
+  const fields = options.block ? { ...options.block } : undefined
   // The specification falls back inside, so a setter queued earlier in the same
   // tick is not undone by one that omits it.
   const specId = options.specId
   return attempt(evm, () =>
     apply(evm, {
-      block,
+      block: merge(evm['~config'].block, fields),
       specId: specId ?? evm['~config'].specId,
       ...(version ? { version } : {}),
     }),
@@ -1168,11 +1176,15 @@ export function takeBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   block: BlockState.Token,
 ): Awaitable<asynchronous, BlockState.BlockState> {
+  // Read now: the token is an object, so a caller mutating it after this returns
+  // would otherwise retarget or reject the operation already submitted.
+  const engine = block['~engine']
+  const id = block['~id']
   return attempt(evm, () => {
     // Two EVMs both start at generation one, so the number alone would match the
     // other's accumulator instead of being refused.
-    if (block['~engine'] !== evm['~engine']) throw new NoBlockStateError()
-    return evm['~engine'].takeBlockState(block['~id'])
+    if (engine !== evm['~engine']) throw new NoBlockStateError()
+    return evm['~engine'].takeBlockState(id)
   })
 }
 
@@ -1497,7 +1509,12 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
     TxEnvelope.serialize(
       TxEnvelope.from({
         ...rest,
-        chainId: (rest as { chainId?: number }).chainId ?? Number(chainId),
+        // Only an omitted field falls back. A `null` the loose input type permits
+        // is malformed rather than absent, so it still reaches validation.
+        chainId:
+          (rest as { chainId?: number }).chainId === undefined
+            ? Number(chainId)
+            : (rest as { chainId?: number }).chainId,
       }),
       { signature: placeholder },
     ),
