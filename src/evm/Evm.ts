@@ -1427,9 +1427,22 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
     })
   // Fields with no fee fields infer EIP-1559, whose serialization needs a chain
   // id, so the EVM's own is the default rather than a required argument.
+  // Nullish rather than a spread default: a caller spreading a request object can
+  // carry an explicit `chainId: undefined`, which would otherwise shadow this and
+  // leave a modern envelope without the chain id its serializer needs.
+  //
+  // Sidecars are dropped: they are irrelevant to execution, and the EIP-4844
+  // serializer emits the pooled-transaction wrapper when they are present, which
+  // is not the EIP-2718 envelope the adapter decodes.
+  const { sidecars: _sidecars, ...rest } = fields as typeof fields & {
+    sidecars?: unknown
+  }
   return Bytes.from(
     TxEnvelope.serialize(
-      TxEnvelope.from({ chainId: Number(chainId), ...fields }),
+      TxEnvelope.from({
+        ...rest,
+        chainId: (rest as { chainId?: number }).chainId ?? Number(chainId),
+      }),
       { signature: placeholder },
     ),
   )
