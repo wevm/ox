@@ -102,7 +102,9 @@ export function accountInfo(
       (entry) =>
         entry.codeHash.toLowerCase() === current.codeHash.toLowerCase(),
     )?.code
-    return { ...current, ...(code ? { code } : {}) }
+    // Copied: the caller owns what it gets, and mutating it must not change the
+    // state this was read from.
+    return { ...current, ...(code ? { code: Uint8Array.from(code) } : {}) }
   }
   return undefined
 }
@@ -170,6 +172,16 @@ export function insertAccount(
       ),
       entry,
     ],
+    // Kept in step with the grouped view: `visit` reads the record stream while
+    // `commitSource` reads the groups, so an edit has to reach both or the same
+    // state streams differently than it applies.
+    records: replace(
+      changes.records,
+      (record) =>
+        (record.kind === 'account' || record.kind === 'accountRead') &&
+        record.address.toLowerCase() === address,
+      { ...entry, kind: 'account' as const },
+    ),
   })
 }
 
@@ -215,18 +227,23 @@ export function insertStorage(
   const address = options.address.toLowerCase()
   const matches = (change: { address: Address.Address; key: bigint }) =>
     change.address.toLowerCase() === address && change.key === options.key
+  const slot = {
+    address: options.address,
+    current: options.current,
+    key: options.key,
+    original: options.original,
+  }
 
   return from({
     ...changes,
-    storage: [
-      ...changes.storage.filter((change) => !matches(change)),
-      {
-        address: options.address,
-        current: options.current,
-        key: options.key,
-        original: options.original,
-      },
-    ],
+    records: replace(
+      changes.records,
+      (record) =>
+        (record.kind === 'storage' || record.kind === 'storageRead') &&
+        matches(record),
+      { ...slot, kind: 'storage' as const },
+    ),
+    storage: [...changes.storage.filter((change) => !matches(change)), slot],
     // Dropped for the same reason as an account's read.
     storageReads: changes.storageReads.filter((change) => !matches(change)),
   })
@@ -243,4 +260,19 @@ export declare namespace insertStorage {
     /** Value at the transaction boundary. */
     original: bigint
   }
+}
+
+// Replaces the first record `matches` selects, keeping the stream in evm2's own
+// emission order. Appending instead would move the replacement past any trailing
+// read records, an order evm2's visitor never produces.
+function replace(
+  records: readonly codec.Change[],
+  matches: (record: codec.Change) => boolean,
+  replacement: codec.Change,
+): readonly codec.Change[] {
+  const index = records.findIndex(matches)
+  if (index === -1) return [...records, replacement]
+  return records
+    .map((record, at) => (at === index ? replacement : record))
+    .filter((record, at) => at === index || !matches(record))
 }

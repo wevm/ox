@@ -25,12 +25,11 @@ import type {
 } from './internal/bindings.js'
 import { EncodeError } from './internal/codec.js'
 import type { DecodeError } from './internal/codec.js'
+import { BorrowedError, NoBlockStateError } from './internal/engine.js'
 import type {
   AbiError,
-  BorrowedError,
   DatabaseError,
   HandlerError,
-  NoBlockStateError,
   NotCoveredError,
 } from './internal/engine.js'
 
@@ -389,13 +388,19 @@ export function callTx(
   evm: Evm<boolean>,
   transaction: Ethereum.Tx,
 ): Awaitable<boolean, TxResult.TxResult> {
-  return attempt(evm, () => {
-    const result = evm['~engine'].callTx({
+  // Encoded once: a retry replays the submitted transaction, not whatever the
+  // caller's object became while an uncached read was fetched.
+  return submit(
+    evm,
+    () => ({
       envelope: envelope(transaction, evm['~chainId']),
       signer: transaction.from,
-    })
-    return { ...result, stop: stop(result.stop) }
-  })
+    }),
+    (request) => {
+      const result = evm['~engine'].callTx(request)
+      return { ...result, stop: stop(result.stop) }
+    },
+  )
 }
 
 export declare namespace callTx {
@@ -498,28 +503,34 @@ export function transact(
   evm: Evm<boolean>,
   transaction: Ethereum.Tx,
 ): Awaitable<boolean, ExecutedTx.ExecutedTx> {
-  return attempt(evm, () => {
-    // An attempt that stops on an unfetched read parks no handle, so a repeat
-    // finds the engine free.
-    const { result, token } = evm['~engine'].transact({
+  // Encoded once: a retry replays the submitted transaction, not whatever the
+  // caller's object became while an uncached read was fetched.
+  return submit(
+    evm,
+    () => ({
       envelope: envelope(transaction, evm['~chainId']),
       signer: transaction.from,
-    })
-    const normalized = (() => {
-      try {
-        return { ...result, stop: stop(result.stop) }
-      } catch (error) {
-        // The engine is already borrowed, so release it before reporting.
-        evm['~engine'].resolve('discard', token)
-        throw error
-      }
-    })()
-    return ExecutedTx.from({
-      engine: evm['~engine'],
-      result: normalized,
-      token,
-    })
-  })
+    }),
+    (request) => {
+      // An attempt that stops on an unfetched read parks no handle, so a repeat
+      // finds the engine free.
+      const { result, token } = evm['~engine'].transact(request)
+      const normalized = (() => {
+        try {
+          return { ...result, stop: stop(result.stop) }
+        } catch (error) {
+          // The engine is already borrowed, so release it before reporting.
+          evm['~engine'].resolve('discard', token)
+          throw error
+        }
+      })()
+      return ExecutedTx.from({
+        engine: evm['~engine'],
+        result: normalized,
+        token,
+      })
+    },
+  )
 }
 
 export declare namespace transact {
@@ -658,10 +669,14 @@ export function setBlock<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   block: Block,
 ): Awaitable<asynchronous, void> {
+  // Only the caller's fields are captured; the merge happens when the operation
+  // runs, so a setter queued earlier in the same tick is not undone by a later
+  // one that omits what it changed.
+  const fields = { ...block }
   return attempt(evm, () =>
     apply(evm, {
       ...evm['~config'],
-      block: merge(evm['~config'].block, block),
+      block: merge(evm['~config'].block, fields),
     }),
   )
 }
@@ -701,12 +716,15 @@ export function setExecutionConfig<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   options: setExecutionConfig.Options,
 ): Awaitable<asynchronous, void> {
-  const specId = options.specId ?? evm['~config'].specId
+  // The explicit value is read now; the fallback resolves when the operation
+  // runs, so omitting it leaves whatever an earlier queued setter chose rather
+  // than reverting to the specification held at submission.
+  const specId = options.specId
   const version = snapshot(options.version)
   return attempt(evm, () =>
     apply(evm, {
       block: evm['~config'].block,
-      specId,
+      specId: specId ?? evm['~config'].specId,
       ...(version ? { version } : {}),
     }),
   )
@@ -748,10 +766,14 @@ export function setBlockAndExecutionConfig<asynchronous extends boolean>(
   options: setBlockAndExecutionConfig.Options,
 ): Awaitable<asynchronous, void> {
   const version = snapshot(options.version)
+  const fields = options.block ? { ...options.block } : undefined
+  // The specification falls back inside, so a setter queued earlier in the same
+  // tick is not undone by one that omits it.
+  const specId = options.specId
   return attempt(evm, () =>
     apply(evm, {
-      block: merge(evm['~config'].block, options.block),
-      specId: options.specId ?? evm['~config'].specId,
+      block: merge(evm['~config'].block, fields),
+      specId: specId ?? evm['~config'].specId,
       ...(version ? { version } : {}),
     }),
   )
@@ -769,6 +791,47 @@ export declare namespace setBlockAndExecutionConfig {
 // Copies version overrides, so a caller mutating theirs afterwards cannot change
 // what an EVM already runs under. The groups are flat records of primitives, so
 // one level is deep enough.
+function snapshotChanges(changes: codec.Changes): codec.Changes {
+  const account = <entry extends { current?: unknown; original?: unknown }>(
+    value: entry,
+  ) => ({
+    ...value,
+    ...(value.current ? { current: { ...(value.current as object) } } : {}),
+    ...(value.original ? { original: { ...(value.original as object) } } : {}),
+  })
+  return {
+    ...changes,
+    accountReads: changes.accountReads.map(account),
+    accounts: changes.accounts.map(account),
+    bytecode: changes.bytecode.map((entry) => ({
+      ...entry,
+      code: Uint8Array.from(entry.code),
+    })),
+    records: changes.records.map((record) => ({ ...record })),
+    storage: changes.storage.map((entry) => ({ ...entry })),
+    storageReads: changes.storageReads.map((entry) => ({ ...entry })),
+    storageWipes: [...changes.storageWipes],
+  }
+}
+
+function snapshotBal(bal: Bal.Bal): Bal.Bal {
+  return {
+    accounts: bal.accounts.map((account) => ({
+      ...account,
+      // Each entry is copied, not just the array holding it: a caller mutating
+      // `balanceChanges[0].balance` would otherwise reach the encoding.
+      balanceChanges: account.balanceChanges.map((change) => ({ ...change })),
+      codeChanges: account.codeChanges.map((change) => ({ ...change })),
+      nonceChanges: account.nonceChanges.map((change) => ({ ...change })),
+      storageChanges: account.storageChanges.map((slot) => ({
+        ...slot,
+        changes: slot.changes.map((change) => ({ ...change })),
+      })),
+      storageReads: [...account.storageReads],
+    })),
+  }
+}
+
 function snapshot(version: Version | undefined): Version | undefined {
   if (!version) return undefined
   return {
@@ -826,15 +889,16 @@ export function setInspector<asynchronous extends boolean>(
   // Queued like the other setters: an asynchronous execution can be parked
   // mid-retry, and changing the recording under it would trace one execution
   // with two sets of settings.
-  return attempt(evm, () =>
-    evm['~engine'].setInspector({
-      enabled: true,
-      limit: options.limit ?? 1_048_576,
-      memory: options.memory ?? false,
-      stack: options.stack ?? false,
-      steps: options.steps ?? false,
-    }),
-  )
+  // Read now, not when the operation runs: an asynchronous EVM queues this, and
+  // evm2 takes values rather than a reference to the caller's object.
+  const request = {
+    enabled: true,
+    limit: options.limit ?? 1_048_576,
+    memory: options.memory ?? false,
+    stack: options.stack ?? false,
+    steps: options.steps ?? false,
+  }
+  return attempt(evm, () => evm['~engine'].setInspector(request))
 }
 
 export declare namespace setInspector {
@@ -905,9 +969,8 @@ export function setBal<asynchronous extends boolean>(
   bal: Bal.Bal,
   options: setBal.Options = {},
 ): Awaitable<asynchronous, void> {
-  return attempt(evm, () =>
-    evm['~engine'].setBal({ bal, fallback: options.fallback ?? false }),
-  )
+  const request = { bal: snapshotBal(bal), fallback: options.fallback ?? false }
+  return attempt(evm, () => evm['~engine'].setBal(request))
 }
 
 export declare namespace setBal {
@@ -966,13 +1029,13 @@ export declare namespace clearBal {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Evm } from 'ox/evm'
+ * import { Evm, ExecutedTx } from 'ox/evm'
  *
  * Evm.enableBalBuilder(evm)
  *
  * // Transaction `i` records at index `i + 1`.
  * Evm.setBalIndex(evm, 1n)
- * Evm.transact(evm, transaction)
+ * ExecutedTx.commit(Evm.transact(evm, transaction))
  *
  * const bal = Evm.takeBal(evm)
  * ```
@@ -1097,7 +1160,10 @@ export declare namespace setBalIndex {
 export function startBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
 ): Awaitable<asynchronous, BlockState.Token> {
-  return attempt(evm, () => evm['~engine'].startBlockState())
+  return attempt(evm, () => ({
+    '~engine': evm['~engine'],
+    '~id': evm['~engine'].startBlockState(),
+  }))
 }
 
 export declare namespace startBlockState {
@@ -1133,7 +1199,16 @@ export function takeBlockState<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   block: BlockState.Token,
 ): Awaitable<asynchronous, BlockState.BlockState> {
-  return attempt(evm, () => evm['~engine'].takeBlockState(block))
+  // Read now: the token is an object, so a caller mutating it after this returns
+  // would otherwise retarget or reject the operation already submitted.
+  const engine = block['~engine']
+  const id = block['~id']
+  return attempt(evm, () => {
+    // Two EVMs both start at generation one, so the number alone would match the
+    // other's accumulator instead of being refused.
+    if (engine !== evm['~engine']) throw new NoBlockStateError()
+    return evm['~engine'].takeBlockState(id)
+  })
 }
 
 export declare namespace takeBlockState {
@@ -1198,9 +1273,10 @@ export function commitSource<asynchronous extends boolean>(
   evm: Evm<asynchronous>,
   state: PendingState.PendingState,
 ): Awaitable<asynchronous, void> {
-  return attempt(evm, () =>
-    evm['~engine'].commitSource(PendingState.changes(state)),
-  )
+  // Read now, like every other operation: the state's entries are the caller's
+  // objects, so mutating one before the queue drains would change what is applied.
+  const changes = snapshotChanges(PendingState.changes(state))
+  return attempt(evm, () => evm['~engine'].commitSource(changes))
 }
 
 export declare namespace commitSource {
@@ -1297,27 +1373,31 @@ export function systemCall(
   evm: Evm<boolean>,
   options: systemCall.Options,
 ): Awaitable<boolean, ExecutedTx.ExecutedTx> {
-  return attempt(evm, () => {
-    const { result, token } = evm['~engine'].systemCall({
+  return submit(
+    evm,
+    () => ({
       address: options.address,
       caller: options.caller ?? System.address,
       data: Bytes.fromHex(options.data ?? '0x'),
-    })
-    const normalized = (() => {
-      try {
-        return { ...result, stop: stop(result.stop) }
-      } catch (error) {
-        // The engine is already borrowed, so release it before reporting.
-        evm['~engine'].resolve('discard', token)
-        throw error
-      }
-    })()
-    return ExecutedTx.from({
-      engine: evm['~engine'],
-      result: normalized,
-      token,
-    })
-  })
+    }),
+    (request) => {
+      const { result, token } = evm['~engine'].systemCall(request)
+      const normalized = (() => {
+        try {
+          return { ...result, stop: stop(result.stop) }
+        } catch (error) {
+          // The engine is already borrowed, so release it before reporting.
+          evm['~engine'].resolve('discard', token)
+          throw error
+        }
+      })()
+      return ExecutedTx.from({
+        engine: evm['~engine'],
+        result: normalized,
+        token,
+      })
+    },
+  )
 }
 
 export declare namespace systemCall {
@@ -1373,12 +1453,43 @@ function apply(evm: Evm<boolean>, config: Evm<boolean>['~config']) {
 // synchronous database returns the value directly. An asynchronous one cannot
 // answer inside the engine's synchronous read, so the attempt is abandoned, the
 // source is awaited, and the operation repeats until nothing is outstanding.
+// Runs `build` before an operation is queued, routing its failures like the
+// operation's own. Reading inputs eagerly keeps a queued operation faithful to
+// what was submitted, but an asynchronous EVM promises a rejection, so an
+// encoding failure cannot escape synchronously.
+function submit<asynchronous extends boolean, request, value>(
+  evm: Evm<asynchronous>,
+  build: () => request,
+  run: (request: request) => value,
+): Awaitable<asynchronous, value> {
+  const built = (() => {
+    try {
+      return { value: build() }
+    } catch (error) {
+      return { error: error as Error }
+    }
+  })()
+  if ('error' in built) {
+    if (evm['~driver']) return Promise.reject(built.error) as never
+    throw built.error
+  }
+  return attempt(evm, () => run(built.value))
+}
+
 function attempt<asynchronous extends boolean, value>(
   evm: Evm<asynchronous>,
   run: () => value,
 ): Awaitable<asynchronous, value> {
   const source = evm['~driver']
   if (!source) return run() as never
+  // Refused at submission, not when the queue reaches it: evm2 owns the EVM
+  // exclusively, so an operation submitted while a transaction is outstanding
+  // has to fail the way the synchronous path fails rather than succeed later
+  // against state the handle has since resolved.
+  // Rejected rather than thrown: an asynchronous operation returns a promise, so
+  // a caller catching one has to see this too.
+  if (evm['~engine'].borrowed())
+    return Promise.reject(new BorrowedError()) as never
   // Queued: awaiting a source yields control, and the engine is exclusive.
   return source.serialize(() => driver.until(source, run)) as never
 }
@@ -1389,7 +1500,9 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
   // value's own shape is what distinguishes an already-encoded transaction.
   const serialized = (tx as Ethereum.Tx.Serialized).serialized
   if (typeof serialized === 'string' || serialized instanceof Uint8Array)
-    return Bytes.from(serialized)
+    // Copied: `Bytes.from` hands back the same array, and a caller mutating its
+    // buffer afterwards would change a transaction already submitted.
+    return Uint8Array.from(Bytes.from(serialized))
 
   const { from: _, ...fields } = tx
   // Envelope types carry `chainId` as a number, so the fields form cannot
@@ -1401,9 +1514,32 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
     })
   // Fields with no fee fields infer EIP-1559, whose serialization needs a chain
   // id, so the EVM's own is the default rather than a required argument.
+  // Nullish rather than a spread default: a caller spreading a request object can
+  // carry an explicit `chainId: undefined`, which would otherwise shadow this and
+  // leave a modern envelope without the chain id its serializer needs.
+  //
+  // Sidecars are dropped: they are irrelevant to execution, and the EIP-4844
+  // serializer emits the pooled-transaction wrapper when they are present, which
+  // is not the EIP-2718 envelope the adapter decodes.
+  const { sidecars, ...rest } = fields as typeof fields & {
+    sidecars?: unknown
+    type?: string
+  }
+  // The type is pinned before the wrapper goes: sidecars can be the only EIP-4844
+  // discriminator, and dropping them would infer EIP-1559 and execute the input
+  // as an unrelated transaction instead of rejecting it.
+  if (sidecars !== undefined && rest.type === undefined) rest.type = 'eip4844'
   return Bytes.from(
     TxEnvelope.serialize(
-      TxEnvelope.from({ chainId: Number(chainId), ...fields }),
+      TxEnvelope.from({
+        ...rest,
+        // Only an omitted field falls back. A `null` the loose input type permits
+        // is malformed rather than absent, so it still reaches validation.
+        chainId:
+          (rest as { chainId?: number }).chainId === undefined
+            ? Number(chainId)
+            : (rest as { chainId?: number }).chainId,
+      }),
       { signature: placeholder },
     ),
   )

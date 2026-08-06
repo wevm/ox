@@ -8,7 +8,9 @@ The artifact is compiled from `wasm/evm2` against
 committed beside this file as `LICENSE-MIT` and `LICENSE-APACHE`.
 
 Everything compiled into the artifact is listed below, with the license each
-crate declares.
+crate declares. Each crate's own license text is reproduced in
+`THIRD-PARTY-LICENSES.md` beside this file, which distributing compiled code
+requires.
 
 | Crate | Version | License | Source |
 | --- | --- | --- | --- |

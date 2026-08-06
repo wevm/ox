@@ -289,7 +289,7 @@ describe('block execution', () => {
       Promise<BlockState.Token>
     >()
     expectTypeOf(Evm.warmPrecompiles(evm)).toEqualTypeOf<Promise<void>>()
-    expectTypeOf(Evm.takeBlockState(evm, 1n)).toEqualTypeOf<
+    expectTypeOf(Evm.takeBlockState(evm, {} as BlockState.Token)).toEqualTypeOf<
       Promise<BlockState.BlockState>
     >()
     expectTypeOf(Evm.systemCall(evm, { address: '0x' })).toEqualTypeOf<
@@ -304,7 +304,7 @@ describe('block execution', () => {
     ).toEqualTypeOf<ExecutedTx.ExecutedTx>()
     expectTypeOf(ExecutedTx.commitTo).toBeCallableWith(
       {} as ExecutedTx.ExecutedTx,
-      1n,
+      {} as BlockState.Token,
     )
   })
 })

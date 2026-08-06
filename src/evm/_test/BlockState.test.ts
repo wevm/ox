@@ -56,7 +56,10 @@ describe('startBlockState', () => {
 
     // A token from no accumulator cannot identify one.
     expect(() =>
-      ExecutedTx.commitTo(executed, 0n),
+      ExecutedTx.commitTo(executed, {
+        '~engine': instance['~engine'],
+        '~id': 0n,
+      }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
       [Evm.NoBlockStateError: No block state is being accumulated.
@@ -185,5 +188,18 @@ describe('warmPrecompiles', () => {
     Evm.warmPrecompiles(twice)
 
     expect(Evm.callTx(twice, transaction())).toEqual(expected)
+  })
+
+  test('behavior: a token from another EVM is refused', async () => {
+    const first = await evm()
+    const second = await evm()
+    const block = Evm.startBlockState(first)
+    // Both start at generation one, so a bare number would match the other's
+    // accumulator instead of being refused.
+    Evm.startBlockState(second)
+
+    expect(() => Evm.takeBlockState(second, block)).toThrowError(
+      Evm.NoBlockStateError,
+    )
   })
 })

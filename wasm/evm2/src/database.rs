@@ -190,8 +190,13 @@ impl HostDb {
         }
         // `new_raw_checked` classifies an EIP-7702 delegation designator; forcing
         // legacy would make Prague execute the `0xef` prefix as invalid code.
-        Bytecode::new_raw_checked(Vec::from(&self.code[..length]).into())
-            .map_err(|_| HostError::Bytecode(B256::ZERO))
+        //
+        // Bytes that merely start with the prefix without being a designator are
+        // ordinary legacy code, which genesis and pre-EIP-3541 state can hold, so
+        // they run as legacy rather than failing the read.
+        let bytes: alloy_primitives::Bytes = Vec::from(&self.code[..length]).into();
+        Ok(Bytecode::new_raw_checked(bytes.clone())
+            .unwrap_or_else(|_| Bytecode::new_legacy(bytes)))
     }
 }
 
@@ -216,14 +221,9 @@ impl Database for HostDb {
 
         // evm2 accepts code alongside the account. When a source supplies it,
         // `CacheDB` files it under its hash and `get_code_by_hash` never runs.
-        // A malformed-code failure is remapped to the account's own hash, the
-        // same way `get_code_by_hash` names the hash it was asked for.
         let code = match out[72] {
             0 => None,
-            _ => Some(self.take_code(code_length as usize).map_err(|error| match error {
-                HostError::Bytecode(_) => HostError::Bytecode(B256::from_slice(&out[40..72])),
-                other => other,
-            })?),
+            _ => Some(self.take_code(code_length as usize)?),
         };
 
         Ok(Some(AccountInfo {
@@ -252,10 +252,6 @@ impl Database for HostDb {
             return Err(HostError::Code(*code_hash));
         }
         self.take_code(length as usize)
-            .map_err(|error| match error {
-                HostError::Bytecode(_) => HostError::Bytecode(*code_hash),
-                other => other,
-            })
     }
 
     fn get_storage(&mut self, address: &Address, key: &Word) -> Result<Word, Self::Error> {
@@ -295,8 +291,6 @@ pub enum HostError {
     Pending,
     /// `get_block_hash` failed.
     BlockHash(Word),
-    /// The host returned code that is not valid evm2 bytecode.
-    Bytecode(B256),
     /// `get_code_by_hash` failed.
     Code(B256),
     /// The host reported more code than the landing buffer holds.
@@ -321,9 +315,6 @@ impl fmt::Display for HostError {
             Self::Account(address) => write!(f, "host could not read account {address}"),
             Self::Pending => write!(f, "host has not fetched a value this read needs"),
             Self::BlockHash(number) => write!(f, "host could not read block hash {number}"),
-            Self::Bytecode(code_hash) => {
-                write!(f, "host returned malformed bytecode for {code_hash}")
-            }
             Self::Code(code_hash) => write!(f, "host could not read code {code_hash}"),
             Self::CodeTooLarge { length, max } => {
                 write!(f, "host reported {length} code bytes, over the {max} byte maximum")

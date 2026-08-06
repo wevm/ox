@@ -122,7 +122,9 @@ export function driver(source: Async): Driver {
       if (outstanding.kind === 'account')
         accounts.set(
           outstanding.address.toLowerCase(),
-          await source.getAccount(outstanding.address),
+          // Copied, not held: the engine has already yielded, so a source reusing
+          // its buffer could change what the replay reads.
+          account(await source.getAccount(outstanding.address)),
         )
       else if (outstanding.kind === 'blockHash')
         blockHashes.set(
@@ -132,7 +134,7 @@ export function driver(source: Async): Driver {
       else if (outstanding.kind === 'code')
         code.set(
           outstanding.codeHash.toLowerCase(),
-          await source.getCodeByHash(outstanding.codeHash),
+          Uint8Array.from(await source.getCodeByHash(outstanding.codeHash)),
         )
       else
         storage.set(
@@ -141,6 +143,17 @@ export function driver(source: Async): Driver {
         )
       return true
     },
+  }
+}
+
+/** Copies an account, so a source reusing its objects cannot change a cached read. */
+function account(
+  value: Database.Account | undefined,
+): Database.Account | undefined {
+  if (!value) return undefined
+  return {
+    ...value,
+    ...(value.code ? { code: Uint8Array.from(value.code) } : {}),
   }
 }
 
@@ -176,11 +189,13 @@ export async function until<result>(
   driver: Driver,
   attempt: () => result,
 ): Promise<result> {
-  // Bounded so a source that keeps reporting the same read as unfetched fails
-  // loudly rather than spinning. Real transactions read far fewer values.
+  // Unbounded by count: `settle` reports whether a read was outstanding, so a
+  // source that answers nothing trips on the next pass. A counter would only add
+  // a ceiling on how much valid work an execution may do, which the synchronous
+  // path and native evm2 do not have.
   type Outcome = { kind: 'pending' } | { kind: 'value'; value: result }
 
-  for (let reads = 0; reads < maxReads; reads++) {
+  for (let reads = 0; ; reads++) {
     const outcome: Outcome = (() => {
       try {
         return { kind: 'value', value: attempt() }
@@ -192,11 +207,7 @@ export async function until<result>(
     if (outcome.kind === 'value') return outcome.value
     if (!(await driver.settle())) throw new StalledError({ reads })
   }
-  throw new StalledError({ reads: maxReads })
 }
-
-/** Reads one operation may make before the driver gives up. */
-const maxReads = 100_000
 
 /**
  * Thrown when an engine operation reports a read the driver cannot resolve.
