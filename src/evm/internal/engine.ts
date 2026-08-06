@@ -67,6 +67,8 @@ export type Engine = {
   setInspector(options: codec.encodeSetInspector.Options): void
   /** Attaches a block access list and sets the database-fallback switch. */
   setBal(options: codec.encodeSetBal.Options): void
+  /** Whether a transaction is outstanding, so the engine is borrowed. */
+  borrowed(): boolean
   /** Starts a block accumulator, returning the token identifying it. */
   startBlockState(): bigint
   /** Drains the block state `block` identifies. */
@@ -215,6 +217,9 @@ export async function create(options: create.Options): Promise<Engine> {
     },
     setBal(options) {
       resolve(instance, codec.encodeSetBal(options))
+    },
+    borrowed() {
+      return outstanding?.deref() !== undefined
     },
     resolveTo(block, token) {
       resolving(token, () => resolve(instance, codec.encodeCommitTo(block)))

@@ -189,11 +189,13 @@ export async function until<result>(
   driver: Driver,
   attempt: () => result,
 ): Promise<result> {
-  // Bounded so a source that keeps reporting the same read as unfetched fails
-  // loudly rather than spinning. Real transactions read far fewer values.
+  // Unbounded by count: `settle` reports whether a read was outstanding, so a
+  // source that answers nothing trips on the next pass. A counter would only add
+  // a ceiling on how much valid work an execution may do, which the synchronous
+  // path and native evm2 do not have.
   type Outcome = { kind: 'pending' } | { kind: 'value'; value: result }
 
-  for (let reads = 0; reads < maxReads; reads++) {
+  for (let reads = 0; ; reads++) {
     const outcome: Outcome = (() => {
       try {
         return { kind: 'value', value: attempt() }
@@ -205,11 +207,7 @@ export async function until<result>(
     if (outcome.kind === 'value') return outcome.value
     if (!(await driver.settle())) throw new StalledError({ reads })
   }
-  throw new StalledError({ reads: maxReads })
 }
-
-/** Reads one operation may make before the driver gives up. */
-const maxReads = 100_000
 
 /**
  * Thrown when an engine operation reports a read the driver cannot resolve.

@@ -25,10 +25,9 @@ import type {
 } from './internal/bindings.js'
 import { EncodeError } from './internal/codec.js'
 import type { DecodeError } from './internal/codec.js'
-import { NoBlockStateError } from './internal/engine.js'
+import { BorrowedError, NoBlockStateError } from './internal/engine.js'
 import type {
   AbiError,
-  BorrowedError,
   DatabaseError,
   HandlerError,
   NotCoveredError,
@@ -1413,6 +1412,14 @@ function attempt<asynchronous extends boolean, value>(
 ): Awaitable<asynchronous, value> {
   const source = evm['~driver']
   if (!source) return run() as never
+  // Refused at submission, not when the queue reaches it: evm2 owns the EVM
+  // exclusively, so an operation submitted while a transaction is outstanding
+  // has to fail the way the synchronous path fails rather than succeed later
+  // against state the handle has since resolved.
+  // Rejected rather than thrown: an asynchronous operation returns a promise, so
+  // a caller catching one has to see this too.
+  if (evm['~engine'].borrowed())
+    return Promise.reject(new BorrowedError()) as never
   // Queued: awaiting a source yields control, and the engine is exclusive.
   return source.serialize(() => driver.until(source, run)) as never
 }

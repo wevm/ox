@@ -212,6 +212,7 @@
     "wasm/evm2/LICENSE-APACHE",
     "wasm/evm2/LICENSE-MIT",
     "wasm/evm2/NOTICE.md",
+    "wasm/evm2/THIRD-PARTY-LICENSES.md",
     "wasm/vendor/c-kzg-4844/LICENSE",
     "wasm/vendor/c-kzg-4844/blst/LICENSE",
     "wasm/vendor/mldsa-native/LICENSE"
