@@ -140,3 +140,25 @@ describe('legacy bytecode', () => {
     expect(result.status).toBe(false)
   })
 })
+
+describe('blob inference', () => {
+  test('behavior: sidecars alone still infer a blob transaction', async () => {
+    const instance = await evm()
+
+    // Sidecars are the only EIP-4844 discriminator here. Dropping them without
+    // pinning the type would infer EIP-1559 and execute an unrelated
+    // transaction instead of rejecting the missing blob hashes.
+    expect(() =>
+      Evm.callTx(instance, {
+        from: sender,
+        gas: 200_000n,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+        nonce: 0n,
+        sidecars: [],
+        to: target,
+        value: 0n,
+      } as never),
+    ).toThrowError()
+  })
+})

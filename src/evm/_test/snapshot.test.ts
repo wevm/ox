@@ -1,4 +1,5 @@
 import { Address, Secp256k1, TxEnvelopeLegacy } from 'ox'
+import { Bytes } from 'ox'
 import { Database, Evm, ExecutedTx } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
@@ -108,5 +109,27 @@ describe('queued operations', () => {
     // Targeted the original address, not the mutated one.
     expect(ExecutedTx.result(executed).status).toBe(true)
     ExecutedTx.discard(executed)
+  })
+  test('behavior: a serialized envelope is copied, not held', async () => {
+    const evm = await asyncEvm()
+    const submitted = transaction()
+    const bytes = Bytes.fromHex(submitted.serialized)
+
+    const queued = Evm.callTx(evm, { from: submitted.from, serialized: bytes })
+    // Zeroed after submitting: `Bytes.from` hands back the same array, so
+    // without a copy this would change the transaction that runs.
+    bytes.fill(0)
+
+    expect((await queued).status).toBe(true)
+  })
+
+  test('behavior: an encoding failure rejects rather than throwing', async () => {
+    const evm = await asyncEvm()
+
+    // Encoding happens before the queue now, but an asynchronous operation
+    // promises a rejection, so a caller catching one has to see this.
+    await expect(
+      Evm.callTx(evm, { from: sender, gas: -1n } as never),
+    ).rejects.toThrowError()
   })
 })

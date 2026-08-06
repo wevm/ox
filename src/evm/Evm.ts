@@ -390,14 +390,17 @@ export function callTx(
 ): Awaitable<boolean, TxResult.TxResult> {
   // Encoded once: a retry replays the submitted transaction, not whatever the
   // caller's object became while an uncached read was fetched.
-  const request = {
-    envelope: envelope(transaction, evm['~chainId']),
-    signer: transaction.from,
-  }
-  return attempt(evm, () => {
-    const result = evm['~engine'].callTx(request)
-    return { ...result, stop: stop(result.stop) }
-  })
+  return submit(
+    evm,
+    () => ({
+      envelope: envelope(transaction, evm['~chainId']),
+      signer: transaction.from,
+    }),
+    (request) => {
+      const result = evm['~engine'].callTx(request)
+      return { ...result, stop: stop(result.stop) }
+    },
+  )
 }
 
 export declare namespace callTx {
@@ -502,29 +505,32 @@ export function transact(
 ): Awaitable<boolean, ExecutedTx.ExecutedTx> {
   // Encoded once: a retry replays the submitted transaction, not whatever the
   // caller's object became while an uncached read was fetched.
-  const request = {
-    envelope: envelope(transaction, evm['~chainId']),
-    signer: transaction.from,
-  }
-  return attempt(evm, () => {
-    // An attempt that stops on an unfetched read parks no handle, so a repeat
-    // finds the engine free.
-    const { result, token } = evm['~engine'].transact(request)
-    const normalized = (() => {
-      try {
-        return { ...result, stop: stop(result.stop) }
-      } catch (error) {
-        // The engine is already borrowed, so release it before reporting.
-        evm['~engine'].resolve('discard', token)
-        throw error
-      }
-    })()
-    return ExecutedTx.from({
-      engine: evm['~engine'],
-      result: normalized,
-      token,
-    })
-  })
+  return submit(
+    evm,
+    () => ({
+      envelope: envelope(transaction, evm['~chainId']),
+      signer: transaction.from,
+    }),
+    (request) => {
+      // An attempt that stops on an unfetched read parks no handle, so a repeat
+      // finds the engine free.
+      const { result, token } = evm['~engine'].transact(request)
+      const normalized = (() => {
+        try {
+          return { ...result, stop: stop(result.stop) }
+        } catch (error) {
+          // The engine is already borrowed, so release it before reporting.
+          evm['~engine'].resolve('discard', token)
+          throw error
+        }
+      })()
+      return ExecutedTx.from({
+        engine: evm['~engine'],
+        result: normalized,
+        token,
+      })
+    },
+  )
 }
 
 export declare namespace transact {
@@ -781,12 +787,14 @@ function snapshotBal(bal: Bal.Bal): Bal.Bal {
   return {
     accounts: bal.accounts.map((account) => ({
       ...account,
-      balanceChanges: [...account.balanceChanges],
-      codeChanges: [...account.codeChanges],
-      nonceChanges: [...account.nonceChanges],
+      // Each entry is copied, not just the array holding it: a caller mutating
+      // `balanceChanges[0].balance` would otherwise reach the encoding.
+      balanceChanges: account.balanceChanges.map((change) => ({ ...change })),
+      codeChanges: account.codeChanges.map((change) => ({ ...change })),
+      nonceChanges: account.nonceChanges.map((change) => ({ ...change })),
       storageChanges: account.storageChanges.map((slot) => ({
         ...slot,
-        changes: [...slot.changes],
+        changes: slot.changes.map((change) => ({ ...change })),
       })),
       storageReads: [...account.storageReads],
     })),
@@ -1329,28 +1337,31 @@ export function systemCall(
   evm: Evm<boolean>,
   options: systemCall.Options,
 ): Awaitable<boolean, ExecutedTx.ExecutedTx> {
-  const request = {
-    address: options.address,
-    caller: options.caller ?? System.address,
-    data: Bytes.fromHex(options.data ?? '0x'),
-  }
-  return attempt(evm, () => {
-    const { result, token } = evm['~engine'].systemCall(request)
-    const normalized = (() => {
-      try {
-        return { ...result, stop: stop(result.stop) }
-      } catch (error) {
-        // The engine is already borrowed, so release it before reporting.
-        evm['~engine'].resolve('discard', token)
-        throw error
-      }
-    })()
-    return ExecutedTx.from({
-      engine: evm['~engine'],
-      result: normalized,
-      token,
-    })
-  })
+  return submit(
+    evm,
+    () => ({
+      address: options.address,
+      caller: options.caller ?? System.address,
+      data: Bytes.fromHex(options.data ?? '0x'),
+    }),
+    (request) => {
+      const { result, token } = evm['~engine'].systemCall(request)
+      const normalized = (() => {
+        try {
+          return { ...result, stop: stop(result.stop) }
+        } catch (error) {
+          // The engine is already borrowed, so release it before reporting.
+          evm['~engine'].resolve('discard', token)
+          throw error
+        }
+      })()
+      return ExecutedTx.from({
+        engine: evm['~engine'],
+        result: normalized,
+        token,
+      })
+    },
+  )
 }
 
 export declare namespace systemCall {
@@ -1406,6 +1417,29 @@ function apply(evm: Evm<boolean>, config: Evm<boolean>['~config']) {
 // synchronous database returns the value directly. An asynchronous one cannot
 // answer inside the engine's synchronous read, so the attempt is abandoned, the
 // source is awaited, and the operation repeats until nothing is outstanding.
+// Runs `build` before an operation is queued, routing its failures like the
+// operation's own. Reading inputs eagerly keeps a queued operation faithful to
+// what was submitted, but an asynchronous EVM promises a rejection, so an
+// encoding failure cannot escape synchronously.
+function submit<asynchronous extends boolean, request, value>(
+  evm: Evm<asynchronous>,
+  build: () => request,
+  run: (request: request) => value,
+): Awaitable<asynchronous, value> {
+  const built = (() => {
+    try {
+      return { value: build() }
+    } catch (error) {
+      return { error: error as Error }
+    }
+  })()
+  if ('error' in built) {
+    if (evm['~driver']) return Promise.reject(built.error) as never
+    throw built.error
+  }
+  return attempt(evm, () => run(built.value))
+}
+
 function attempt<asynchronous extends boolean, value>(
   evm: Evm<asynchronous>,
   run: () => value,
@@ -1430,7 +1464,9 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
   // value's own shape is what distinguishes an already-encoded transaction.
   const serialized = (tx as Ethereum.Tx.Serialized).serialized
   if (typeof serialized === 'string' || serialized instanceof Uint8Array)
-    return Bytes.from(serialized)
+    // Copied: `Bytes.from` hands back the same array, and a caller mutating its
+    // buffer afterwards would change a transaction already submitted.
+    return Uint8Array.from(Bytes.from(serialized))
 
   const { from: _, ...fields } = tx
   // Envelope types carry `chainId` as a number, so the fields form cannot
@@ -1449,9 +1485,14 @@ function envelope(tx: Ethereum.Tx, chainId: bigint): Bytes.Bytes {
   // Sidecars are dropped: they are irrelevant to execution, and the EIP-4844
   // serializer emits the pooled-transaction wrapper when they are present, which
   // is not the EIP-2718 envelope the adapter decodes.
-  const { sidecars: _sidecars, ...rest } = fields as typeof fields & {
+  const { sidecars, ...rest } = fields as typeof fields & {
     sidecars?: unknown
+    type?: string
   }
+  // The type is pinned before the wrapper goes: sidecars can be the only EIP-4844
+  // discriminator, and dropping them would infer EIP-1559 and execute the input
+  // as an unrelated transaction instead of rejecting it.
+  if (sidecars !== undefined && rest.type === undefined) rest.type = 'eip4844'
   return Bytes.from(
     TxEnvelope.serialize(
       TxEnvelope.from({
