@@ -1,6 +1,6 @@
 import { Address, Secp256k1, TxEnvelopeLegacy } from 'ox'
 import { Bytes } from 'ox'
-import { Database, Evm, ExecutedTx } from 'ox/evm'
+import { Database, Evm, ExecutedTx, StateChange } from 'ox/evm'
 import { describe, expect, test } from 'vp/test'
 
 /**
@@ -52,7 +52,7 @@ function transaction() {
   }
 }
 
-describe('queued operations', () => {
+describe('setInspector', () => {
   test('behavior: an inspector records what was submitted, not what the object became', async () => {
     const evm = await asyncEvm()
 
@@ -68,7 +68,9 @@ describe('queued operations', () => {
       false,
     )
   })
+})
 
+describe('setBlock', () => {
   test('behavior: a block is applied as submitted', async () => {
     const evm = await asyncEvm()
 
@@ -81,6 +83,9 @@ describe('queued operations', () => {
     // EVM holds is the direct one.
     expect(evm['~config'].block.number).toBe(5n)
   })
+})
+
+describe('setExecutionConfig', () => {
   test('behavior: a queued spec is not undone by a later setter omitting it', async () => {
     const evm = await asyncEvm()
 
@@ -94,7 +99,9 @@ describe('queued operations', () => {
 
     expect(evm['~config'].specId).toBe('cancun')
   })
+})
 
+describe('systemCall', () => {
   test('behavior: a system call executes what was submitted', async () => {
     const evm = await asyncEvm()
 
@@ -106,10 +113,19 @@ describe('queued operations', () => {
     options.address = '0x00000000000000000000000000000000000000ff'
     const executed = await queued
 
-    // Targeted the original address, not the mutated one.
-    expect(ExecutedTx.result(executed).status).toBe(true)
-    ExecutedTx.discard(executed)
+    // Where the write landed is the observable: a call to the mutated, codeless
+    // address also succeeds, so success alone proves nothing.
+    const { pendingState } = ExecutedTx.detach(executed)
+    const wrote: string[] = []
+    StateChange.visit(pendingState, {
+      ...StateChange.noop(),
+      storage: (change) => wrote.push(change.address.toLowerCase()),
+    })
+    expect(wrote).toContain(target)
   })
+})
+
+describe('callTx', () => {
   test('behavior: a serialized envelope is copied, not held', async () => {
     const evm = await asyncEvm()
     const submitted = transaction()

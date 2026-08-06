@@ -62,7 +62,7 @@ describe('tee', () => {
   })
 })
 
-describe('caller-held state', () => {
+describe('accountInfo', () => {
   test('behavior: bytecode handed out is not the state’s own', async () => {
     /** Initcode returning PUSH1 42 PUSH0 MSTORE PUSH1 32 PUSH0 RETURN. */
     const initcode = '0x67602a5f5260205ff35f5260086018f3' as const
@@ -95,7 +95,9 @@ describe('caller-held state', () => {
       first?.code,
     )
   })
+})
 
+describe('insertStorage', () => {
   test('behavior: an edit is visible to both views of the state', async () => {
     const instance = await evm()
     const { pendingState } = ExecutedTx.detach(

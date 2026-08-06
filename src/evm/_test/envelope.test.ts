@@ -26,7 +26,7 @@ function evm(chainId?: bigint) {
   })
 }
 
-describe('fields', () => {
+describe('callTx', () => {
   test('behavior: an explicit undefined chain id falls back to the EVM default', async () => {
     // Chain 7, so a shadowed undefined would not match and evm2 would reject.
     const instance = await evm(7n)
@@ -66,7 +66,7 @@ describe('fields', () => {
   })
 })
 
-describe('blob transactions', () => {
+describe('callTx (blob transactions)', () => {
   test('behavior: sidecars are dropped rather than rejected', async () => {
     const instance = await evm()
 
@@ -90,7 +90,7 @@ describe('blob transactions', () => {
   })
 })
 
-describe('legacy bytecode', () => {
+describe('callTx (legacy bytecode)', () => {
   test('behavior: code starting with the delegation prefix still executes', async () => {
     // `0xef01` without the rest of a designator is ordinary legacy code, which
     // genesis and pre-EIP-3541 state can hold. It has to run as legacy — hitting
@@ -141,7 +141,7 @@ describe('legacy bytecode', () => {
   })
 })
 
-describe('blob inference', () => {
+describe('callTx (blob inference)', () => {
   test('behavior: sidecars alone still infer a blob transaction', async () => {
     const instance = await evm()
 

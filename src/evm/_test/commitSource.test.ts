@@ -157,7 +157,7 @@ describe('commitSource', () => {
   })
 })
 
-describe('detach, edit, commit', () => {
+describe('commitSource (detach, edit, apply)', () => {
   test('behavior: a detached selfdestruct carries a marker and a wipe', async () => {
     /**
      * PUSH1 1, PUSH0, SSTORE, PUSH20 sender, SELFDESTRUCT.
@@ -258,7 +258,7 @@ describe('detach, edit, commit', () => {
   })
 })
 
-describe('across EVMs', () => {
+describe('commitSource (across EVMs)', () => {
   test('behavior: deployed code travels with the state', async () => {
     /** Initcode returning PUSH1 42 PUSH0 MSTORE PUSH1 32 PUSH0 RETURN. */
     const initcode = '0x67602a5f5260205ff35f5260086018f3' as const
@@ -384,7 +384,7 @@ describe('across EVMs', () => {
   })
 })
 
-describe('self-destruct', () => {
+describe('commitSource (self-destruct)', () => {
   test('behavior: a destroyed account is destroyed by applying its state', async () => {
     /** PUSH20 sender, SELFDESTRUCT. Before Cancun this deletes the account. */
     const destroying = `0x73${sender.slice(2)}ff` as const
