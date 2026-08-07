@@ -1,5 +1,11 @@
 # ox
 
+## 1.6.2
+
+### Patch Changes
+
+- [#385](https://github.com/wevm/ox/pull/385) [`8100dbf`](https://github.com/wevm/ox/commit/8100dbf8d4835d27b241d0078616e8852b2a77f2) Thanks [@struong](https://github.com/struong)! - Fixed `WithdrawalSenderTag.from` to include the Zone withdrawal fallback nonce.
+
 ## 1.6.1
 
 ### Patch Changes
