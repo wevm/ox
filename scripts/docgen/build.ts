@@ -47,7 +47,7 @@ console.log('Generating API docs.')
 /// Clean previously generated pages
 ////////////////////////////////////////////////////////////
 
-for (const dir of ['api', 'ercs', 'node', 'wasm', 'webauthn', 'zod']) {
+for (const dir of ['api', 'ercs', 'evm', 'node', 'wasm', 'webauthn', 'zod']) {
   fs.removeSync(`./site/src/pages/${dir}`)
 }
 // Preserve hand-authored Tempo guides while replacing generated pages.

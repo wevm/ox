@@ -1,0 +1,450 @@
+import type * as Address from '../../core/Address.js'
+import type * as Bytes from '../../core/Bytes.js'
+import * as Errors from '../../core/Errors.js'
+import * as async from './async.js'
+import * as bindings from './bindings.js'
+import * as codec from './codec.js'
+import type * as Database from './database.js'
+
+/**
+ * evm2 engine handle.
+ *
+ * One handle owns one evm2 `Evm`: its specification, block environment,
+ * accepted state overlay, and database. Creation is asynchronous because
+ * WebAssembly compilation is; execution is synchronous, as it is in evm2.
+ *
+ * @internal
+ */
+
+/**
+ * Identifies a parked transaction.
+ *
+ * An object rather than a symbol so it can be weakly held everywhere the
+ * package runs; reachability through a handle is what keeps it alive.
+ */
+export type Token = Readonly<Record<never, never>>
+
+/** A created engine. */
+export type Engine = {
+  /**
+   * Executes a transaction for its result and discards its state changes.
+   *
+   * This is evm2's `call_tx`: the result-only path, with no pending state to
+   * resolve.
+   */
+  callTx(options: codec.encodeCallTx.Options): codec.TxResult
+  /** Drops the engine and its accepted state. */
+  destroy(): void
+  /** Resolves the outstanding transaction by moving its state out. */
+  detach(token?: Token): codec.Changes
+  /** Reads an account through the accepted overlay and the database. */
+  readAccountInfo(address: Address.Address): codec.Account | undefined
+  /**
+   * Resolves the outstanding transaction, releasing the engine.
+   *
+   * Every operation reaching the engine fails until this runs, which is how
+   * evm2's exclusive borrow shows up across two host calls.
+   */
+  resolve(resolution: 'commit' | 'discard', token?: Token): void
+  /**
+   * Resolves the outstanding transaction, streaming its changes to `sink` first.
+   *
+   * A sink that throws makes evm2 discard rather than commit, and the throw is
+   * what surfaces.
+   */
+  resolveWith(
+    resolution: 'commitWith' | 'discardWith',
+    sink: (record: codec.Change) => void,
+    token?: Token,
+  ): void
+  /** Replaces the block environment and the selected specification. */
+  setBlock(options: codec.encodeCreate.Options): void
+  /**
+   * Installs or removes the execution inspector.
+   *
+   * Removing means the engine holds none, so an untraced execution pays nothing.
+   */
+  setInspector(options: codec.encodeSetInspector.Options): void
+  /** Attaches a block access list and sets the database-fallback switch. */
+  setBal(options: codec.encodeSetBal.Options): void
+  /** Whether a transaction is outstanding, so the engine is borrowed. */
+  borrowed(): boolean
+  /** Starts a block accumulator, returning the token identifying it. */
+  startBlockState(): bigint
+  /** Drains the block state `block` identifies. */
+  takeBlockState(block: bigint): codec.BlockState
+  /**
+   * Resolves the outstanding transaction into the block accumulator `block`
+   * identifies.
+   *
+   * Refused when the token is not the accumulator in progress, which leaves the
+   * transaction outstanding rather than committing it plainly.
+   */
+  resolveTo(block: bigint, token?: Token): void
+  /** Prewarms the precompile addresses. */
+  warmPrecompiles(): void
+  /** Applies caller-supplied changes to the accepted state overlay. */
+  commitSource(changes: codec.Changes): void
+  /**
+   * Executes a system call and leaves its state changes pending.
+   *
+   * Parks a handle the same way `transact` does, so a system call resolves
+   * through the same paths.
+   */
+  systemCall(options: codec.encodeSystemCall.Options): {
+    result: codec.TxResult
+    token: Token
+  }
+  /** Enables the block access list builder, or discards the one in progress. */
+  setBalBuilder(enabled: boolean): void
+  /** Drains the built list, or `undefined` when no builder was enabled. */
+  takeBal(): codec.Bal | undefined
+  /** Sets the block access index reads are served at and writes recorded under. */
+  setBalIndex(index: bigint): void
+  /**
+   * Executes a transaction and leaves its state changes pending.
+   *
+   * This is evm2's `transact`: the engine stays borrowed until the transaction
+   * is committed, discarded, or detached.
+   */
+  transact(options: codec.encodeCallTx.Options): {
+    result: codec.TxResult
+    /** Identifies the transaction this call parked. */
+    token: Token
+  }
+}
+
+/** Creates an engine over `database`. */
+export async function create(options: create.Options): Promise<Engine> {
+  const { database, ...config } = options
+  const instance = await bindings.instantiateWith(database)
+  resolve(instance, codec.encodeCreate(config))
+
+  // Identifies the parked transaction. A handle carries the token it was created
+  // with, so a copy of a resolved handle cannot resolve a later transaction.
+  // Held weakly: the token is reachable exactly while some handle references it,
+  // so token collection means every handle (original or copy) is gone.
+  let outstanding: WeakRef<Token> | undefined
+
+  // The last-resort equivalent of the engine's `Drop`. Fires only when no
+  // handle can reach the parked transaction's token anymore, so a live copy
+  // keeps its transaction alive; dispose remains the deterministic path.
+  const reaper = new FinalizationRegistry<WeakRef<Token>>((ref) => {
+    if (outstanding !== ref) return
+    outstanding = undefined
+    resolve(instance, codec.encodeResolve('discard'))
+  })
+
+  function claim(token: Token | undefined) {
+    if (token && token !== outstanding?.deref()) throw new NotExecutedError()
+    if (outstanding) reaper.unregister(outstanding)
+    outstanding = undefined
+  }
+
+  /**
+   * Takes ownership of a parked handle, returning its result and a claim token.
+   *
+   * Shared by every operation that leaves a transaction outstanding, so the
+   * decode-failure release below cannot be forgotten by one of them.
+   */
+  function park(payload: Bytes.Bytes) {
+    const result = (() => {
+      try {
+        return codec.decodeResult(payload)
+      } catch (error) {
+        // The adapter already parked the transaction, so a decode failure has
+        // to release it or the engine stays borrowed with no handle.
+        resolve(instance, codec.encodeResolve('discard'))
+        throw error
+      }
+    })()
+    const token: Token = Object.freeze({})
+    const ref = new WeakRef(token)
+    outstanding = ref
+    reaper.register(token, ref, ref)
+    return { result, token }
+  }
+
+  /**
+   * Runs a resolution, restoring the claim when the adapter refuses.
+   *
+   * Not every resolution succeeds: `commitTo` is refused when no block state is
+   * being gathered, and it refuses before the transaction leaves the engine. So
+   * the handle is still outstanding and has to be resolvable again.
+   */
+  function resolving(token: Token | undefined, run: () => void) {
+    const previous = outstanding
+    claim(token)
+    try {
+      run()
+    } catch (error) {
+      outstanding = previous
+      if (previous) reaper.register(previous.deref() ?? {}, previous, previous)
+      throw error
+    }
+  }
+
+  return {
+    callTx(options) {
+      return codec.decodeResult(resolve(instance, codec.encodeCallTx(options)))
+    },
+    destroy() {
+      resolve(instance, codec.encodeDestroy())
+      instance.reset()
+    },
+    detach(token) {
+      claim(token)
+      return codec.decodeChanges(
+        resolve(instance, codec.encodeResolve('detach')),
+      )
+    },
+    readAccountInfo(address) {
+      return codec.decodeAccount(
+        resolve(instance, codec.encodeReadAccount(address)),
+      )
+    },
+    resolve(resolution, token) {
+      resolving(token, () => resolve(instance, codec.encodeResolve(resolution)))
+    },
+    resolveWith(resolution, sink, token) {
+      claim(token)
+      instance.withSink(sink, () =>
+        resolve(instance, codec.encodeResolve(resolution)),
+      )
+    },
+    setBlock(options) {
+      resolve(instance, codec.encodeSetBlock(options))
+    },
+    setBal(options) {
+      resolve(instance, codec.encodeSetBal(options))
+    },
+    borrowed() {
+      return outstanding?.deref() !== undefined
+    },
+    resolveTo(block, token) {
+      resolving(token, () => resolve(instance, codec.encodeCommitTo(block)))
+    },
+    startBlockState() {
+      return codec.decodeBlockToken(
+        resolve(instance, codec.encodeStartBlockState()),
+      )
+    },
+    takeBlockState(block) {
+      return codec.decodeBlockState(
+        resolve(instance, codec.encodeTakeBlockState(block)),
+      )
+    },
+    commitSource(changes) {
+      resolve(instance, codec.encodeCommitSource(changes))
+    },
+    warmPrecompiles() {
+      resolve(instance, codec.encodeWarmPrecompiles())
+    },
+    setBalBuilder(enabled) {
+      resolve(instance, codec.encodeSetBalBuilder(enabled))
+    },
+    setBalIndex(index) {
+      resolve(instance, codec.encodeSetBalIndex(index))
+    },
+    setInspector(options) {
+      resolve(instance, codec.encodeSetInspector(options))
+    },
+    takeBal() {
+      return codec.decodeBal(resolve(instance, codec.encodeTakeBal()))
+    },
+    systemCall(options) {
+      return park(resolve(instance, codec.encodeSystemCall(options)))
+    },
+    transact(options) {
+      return park(resolve(instance, codec.encodeTransact(options)))
+    },
+  }
+}
+
+export declare namespace create {
+  type Options = codec.encodeCreate.Options & {
+    /** Synchronous state reads the engine calls back into. */
+    database: Database.Database
+  }
+}
+
+/** Sends a request and returns its payload, throwing on any failure status. */
+function resolve(instance: bindings.Instance, request: Bytes.Bytes) {
+  const { payload, status } = instance.call(request)
+  if (status === codec.status.ok) return payload
+  if (status === codec.status.handler)
+    throw new HandlerError(codec.decodeHandler(payload))
+  if (status === codec.status.database)
+    throw new DatabaseError(codec.decodeMessage(payload))
+  if (status === codec.status.abi)
+    throw new AbiError(codec.decodeMessage(payload))
+  if (status === codec.status.engineMissing) throw new MissingError()
+  if (status === codec.status.engineBusy) throw new bindings.ReentrancyError()
+  if (status === codec.status.engineBorrowed) throw new BorrowedError()
+  if (status === codec.status.notExecuted) throw new NotExecutedError()
+  if (status === codec.status.sink) throw new SinkError()
+  if (status === codec.status.balNotCovered) throw new NotCoveredError()
+  if (status === codec.status.noBlockState) throw new NoBlockStateError()
+  // Not a failure: the attempt was abandoned before any state was accepted. The
+  // asynchronous driver catches this, awaits the source, and repeats.
+  if (status === codec.status.pending) throw new async.PendingError()
+  throw new codec.DecodeError(`unknown response status ${status}`)
+}
+
+/**
+ * Transaction-rejection variants, keyed by the discriminant the adapter
+ * assigns.
+ *
+ * Mirrors `wasm/evm2/src/error.rs`; a rejected transaction's
+ * {@link ox#Evm.(HandlerError:class)}`.code` names its variant through this map.
+ */
+export const handlerKinds = {
+  fatal: 1,
+  external: 2,
+  unsupportedTransactionType: 3,
+  wrongTransactionType: 4,
+  invalidNonce: 5,
+  invalidChainId: 6,
+  missingChainId: 7,
+  intrinsicGasTooLow: 8,
+  insufficientFunds: 9,
+  rejectCallerWithCode: 10,
+  nonceOverflow: 11,
+  gasLimitMoreThanBlock: 12,
+  txGasLimitGreaterThanCap: 13,
+  createInitCodeSizeLimit: 14,
+  outOfFunds: 15,
+  signerRecoveryFailed: 16,
+  feeCapLessThanBaseFee: 17,
+  emptyAuthorizationList: 18,
+  blobFeeCapLessThanBlobBaseFee: 19,
+  emptyBlobs: 20,
+  tooManyBlobs: 21,
+  blobVersionNotSupported: 22,
+  priorityFeeGreaterThanMaxFee: 23,
+  unsupportedCaller: 24,
+} as const
+
+/** The adapter's handler discriminants, keyed back to their variant names. */
+const kindNames = new Map(
+  Object.entries(handlerKinds).map(([name, value]) => [
+    value as number,
+    name as keyof typeof handlerKinds,
+  ]),
+)
+
+/** Thrown when the engine rejected or aborted the transaction. */
+export class HandlerError extends Errors.BaseError {
+  /** Variant name, or `undefined` for a discriminant this version predates. */
+  readonly code: keyof typeof handlerKinds | undefined
+  /** Variant discriminant. Named by {@link ox#Evm.(handlerKinds:variable)}. */
+  readonly kind: number
+  override readonly name = 'Evm.HandlerError'
+  /** The variant's numeric fields, in evm2's declaration order. */
+  readonly words: readonly bigint[]
+
+  constructor({ kind, message, words }: codec.Handler) {
+    super(message, { metaMessages: [`evm2 handler error ${kind}`] })
+    this.code = kindNames.get(kind)
+    this.kind = kind
+    this.words = words
+  }
+}
+
+/**
+ * Thrown when a state-change sink refused a record.
+ *
+ * evm2 discards the transaction in that case rather than committing it, so this
+ * only surfaces when the sink failed without throwing an error of its own.
+ */
+export class NoBlockStateError extends Errors.BaseError {
+  override readonly name = 'Evm.NoBlockStateError'
+
+  constructor() {
+    super('No block state is being accumulated.', {
+      metaMessages: [
+        'A transaction was resolved into a block accumulator while none was installed, so nothing was committed.',
+      ],
+      details: 'Start one with `Evm.startBlockState` before resolving into it.',
+    })
+  }
+}
+
+export class NotCoveredError extends Errors.BaseError {
+  override readonly name = 'Evm.NotCoveredError'
+
+  constructor() {
+    super('A read fell outside the attached block access list.', {
+      metaMessages: [
+        'The list is consulted instead of the database, so a read it does not cover is refused rather than served.',
+      ],
+      details:
+        'Add the account or slot to the list, or allow fallback when executing transactions that are not part of the block.',
+    })
+  }
+}
+
+export class SinkError extends Errors.BaseError {
+  override readonly name = 'Evm.SinkError'
+
+  constructor() {
+    super('A state-change sink refused a record.', {
+      metaMessages: ['The transaction was discarded rather than committed.'],
+    })
+  }
+}
+
+/** Thrown when an unresolved executed transaction still holds the engine. */
+export class BorrowedError extends Errors.BaseError {
+  override readonly name = 'Evm.BorrowedError'
+
+  constructor() {
+    super('An executed transaction has not been resolved.', {
+      metaMessages: [
+        'Commit, discard, or detach it before using the EVM again.',
+      ],
+    })
+  }
+}
+
+/** Thrown when a resolution named no outstanding executed transaction. */
+export class NotExecutedError extends Errors.BaseError {
+  override readonly name = 'Evm.NotExecutedError'
+
+  constructor() {
+    super('There is no executed transaction to resolve.', {
+      metaMessages: ['It was already committed, discarded, or detached.'],
+    })
+  }
+}
+
+/** Thrown when a state read failed. Carries the source's own message. */
+export class DatabaseError extends Errors.BaseError {
+  override readonly name = 'Evm.DatabaseError'
+
+  constructor(message: string) {
+    super('A state read the engine needed could not be served.', {
+      metaMessages: [message],
+    })
+  }
+}
+
+/** Thrown when the adapter rejected a request this codec produced. */
+export class AbiError extends Errors.BaseError {
+  override readonly name = 'Evm.AbiError'
+
+  constructor(reason: string) {
+    super('The evm2 adapter rejected the request.', { metaMessages: [reason] })
+  }
+}
+
+/** Thrown when an operation runs against a destroyed engine. */
+export class MissingError extends Errors.BaseError {
+  override readonly name = 'Evm.MissingError'
+
+  constructor() {
+    super('The evm2 engine was destroyed.', {
+      metaMessages: ['Create a new engine to execute another transaction.'],
+    })
+  }
+}

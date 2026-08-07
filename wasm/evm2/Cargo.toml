@@ -1,0 +1,60 @@
+[package]
+name = "ox-evm2"
+description = "Ox's WebAssembly ABI and host bridge over alloy-rs/evm2"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.96"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+# `rlib` exists so `cargo test` can cover the ABI and failure encodings on the
+# host; only the `cdylib` is shipped.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# evm2 is resolved from Cargo's external git cache at an exact revision. Its
+# source never enters this repository or the npm package.
+evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "8ff36b5359aa1ccc5bdd7eb1c98d0a7f3daac469", default-features = false, features = [
+  "map-foldhash",
+  "parse",
+] }
+
+alloy-consensus = { version = "2.0.4", default-features = false }
+alloy-eip7928 = { version = "0.4.5", default-features = false }
+alloy-eips = { version = "2.0.4", default-features = false }
+alloy-primitives = { version = "1.5.7", default-features = false }
+# `no_std` leaves the allocator to the adapter. This is the allocator Rust's own
+# `std` uses on wasm32.
+dlmalloc = { version = "0.2", default-features = false, features = ["global"] }
+
+# evm2's own workspace redirects every `ark-*` crate here, but Cargo patches do
+# not apply through a git dependency. Replicating the redirect keeps our bn254,
+# BLS12-381, and KZG precompiles bit-identical to the ones evm2's execution-spec
+# tests verify upstream. Without it we would ship arkworks that nothing has run
+# consensus fixtures against.
+[patch.crates-io]
+ark-bls12-381 = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-bn254 = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-ec = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-ff = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-ff-asm = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-ff-macros = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-poly = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-serialize = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+ark-serialize-derive = { git = "https://github.com/DaniPopes/algebra", rev = "a71d9795e2e527cd0c80e6831bd957134de30d22" }
+
+[dev-dependencies]
+# Host-only: the oracle reads the shared fixture file. Never reaches the artifact.
+serde_json = "1.0"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = "z"
+panic = "abort"
+strip = true
+
+[lints.rust]
+missing-docs = "warn"
+unsafe-op-in-unsafe-fn = "warn"

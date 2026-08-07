@@ -23,6 +23,11 @@ const cacheDir = path.join(root, '.wasm-toolchain')
 
 type Toolchain = {
   binaryen: string
+  rust: {
+    digest: string
+    image: string
+    platform: string
+  }
   wasiSdk: {
     assets: Record<string, { file: string; sha256: string }>
     release: string
@@ -117,7 +122,13 @@ function findClangRt(sdkDir: string) {
   )
 }
 
-function resolveWasmOpt() {
+/**
+ * Resolves the pinned `wasm-opt`.
+ *
+ * Exported because the Rust adapter needs the same optimizer without the
+ * wasi-sdk `resolve` installs for the C targets.
+ */
+export function resolveWasmOpt() {
   // The `binaryen` npm package ships a prebuilt `wasm-opt` for every platform,
   // and pnpm pins its version -- which is what makes `-O4` output reproducible.
   const wasmOpt = path.join(root, 'node_modules/binaryen/bin/wasm-opt')

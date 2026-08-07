@@ -13,7 +13,7 @@
     "deps:ci": "pnpx actions-up",
     "dev": "pnpm exports:update && zile dev",
     "docs:dev": "pnpm --filter site dev",
-    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.node.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
+    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.evm.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.node.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
@@ -121,7 +121,8 @@
     {
       "name": "import * from 'ox'",
       "path": "./dist/index.js",
-      "import": "*"
+      "import": "*",
+      "limit": "200 kB"
     },
     {
       "name": "import { Hex } from 'ox'; console.log(Hex.assert)",
@@ -131,7 +132,14 @@
     {
       "name": "import * from 'ox/wasm'",
       "path": "./dist/wasm/index.js",
-      "import": "*"
+      "import": "*",
+      "limit": "225 kB"
+    },
+    {
+      "name": "import * from 'ox/evm'",
+      "path": "./dist/evm/index.js",
+      "import": "*",
+      "limit": "320 kB"
     },
     {
       "name": "import { Hash } from 'ox/wasm'",
@@ -201,6 +209,10 @@
     "CHANGELOG.md",
     "dist",
     "src",
+    "wasm/evm2/LICENSE-APACHE",
+    "wasm/evm2/LICENSE-MIT",
+    "wasm/evm2/NOTICE.md",
+    "wasm/evm2/THIRD-PARTY-LICENSES.md",
     "wasm/vendor/c-kzg-4844/LICENSE",
     "wasm/vendor/c-kzg-4844/blst/LICENSE",
     "wasm/vendor/mldsa-native/LICENSE"
@@ -700,6 +712,71 @@
       "src": "./src/erc8021/Attribution.ts",
       "types": "./dist/erc8021/Attribution.d.ts",
       "default": "./dist/erc8021/Attribution.js"
+    },
+    "./evm": {
+      "src": "./src/evm/index.ts",
+      "types": "./dist/evm/index.d.ts",
+      "default": "./dist/evm/index.js"
+    },
+    "./evm/Bal": {
+      "src": "./src/evm/Bal.ts",
+      "types": "./dist/evm/Bal.d.ts",
+      "default": "./dist/evm/Bal.js"
+    },
+    "./evm/BlockState": {
+      "src": "./src/evm/BlockState.ts",
+      "types": "./dist/evm/BlockState.d.ts",
+      "default": "./dist/evm/BlockState.js"
+    },
+    "./evm/Database": {
+      "src": "./src/evm/Database.ts",
+      "types": "./dist/evm/Database.d.ts",
+      "default": "./dist/evm/Database.js"
+    },
+    "./evm/Ethereum": {
+      "src": "./src/evm/Ethereum.ts",
+      "types": "./dist/evm/Ethereum.d.ts",
+      "default": "./dist/evm/Ethereum.js"
+    },
+    "./evm/Evm": {
+      "src": "./src/evm/Evm.ts",
+      "types": "./dist/evm/Evm.d.ts",
+      "default": "./dist/evm/Evm.js"
+    },
+    "./evm/ExecutedTx": {
+      "src": "./src/evm/ExecutedTx.ts",
+      "types": "./dist/evm/ExecutedTx.d.ts",
+      "default": "./dist/evm/ExecutedTx.js"
+    },
+    "./evm/Inspector": {
+      "src": "./src/evm/Inspector.ts",
+      "types": "./dist/evm/Inspector.d.ts",
+      "default": "./dist/evm/Inspector.js"
+    },
+    "./evm/PendingState": {
+      "src": "./src/evm/PendingState.ts",
+      "types": "./dist/evm/PendingState.d.ts",
+      "default": "./dist/evm/PendingState.js"
+    },
+    "./evm/SpecId": {
+      "src": "./src/evm/SpecId.ts",
+      "types": "./dist/evm/SpecId.d.ts",
+      "default": "./dist/evm/SpecId.js"
+    },
+    "./evm/StateChange": {
+      "src": "./src/evm/StateChange.ts",
+      "types": "./dist/evm/StateChange.d.ts",
+      "default": "./dist/evm/StateChange.js"
+    },
+    "./evm/System": {
+      "src": "./src/evm/System.ts",
+      "types": "./dist/evm/System.d.ts",
+      "default": "./dist/evm/System.js"
+    },
+    "./evm/TxResult": {
+      "src": "./src/evm/TxResult.ts",
+      "types": "./dist/evm/TxResult.d.ts",
+      "default": "./dist/evm/TxResult.js"
     },
     "./node": {
       "src": "./src/node/index.ts",

@@ -1,0 +1,8 @@
+# Pinned because the compiled bytes depend on the exact compiler version, and
+# because evm2 selects its tail-call interpreter backend on nightly -- which
+# needs unstable features WASM cannot use. Stable resolves to `single_return`.
+[toolchain]
+channel = "1.97.0"
+components = ["rust-std"]
+profile = "minimal"
+targets = ["wasm32-unknown-unknown"]

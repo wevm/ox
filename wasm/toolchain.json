@@ -22,5 +22,11 @@
       }
     }
   },
-  "binaryen": "123"
+  "binaryen": "123",
+  "rust": {
+    "$comment": "rustc output is not byte-identical across host platforms, unlike the wasi-sdk clang. The evm2 adapter therefore compiles inside this exact image so the artifact is a function of the image, the lockfile, and the source. `rust-toolchain.toml` pins the channel inside it.",
+    "image": "rust:1.97.0",
+    "digest": "sha256:b92b8c8574f8f3b207fcb0912fb3e2de4041580b5934d90312d53938c9a038a9",
+    "platform": "linux/amd64"
+  }
 }

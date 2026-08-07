@@ -1,4 +1,5 @@
 *.map
+.agents/
 .bench
 .claude/
 .DS_Store
@@ -18,6 +19,7 @@ ox.api.json
 erc4337.api.json
 node.api.json
 tempo.api.json
+evm.api.json
 wasm.api.json
 lookup.json
 config-generated.ts
@@ -29,6 +31,7 @@ site/src/pages/node
 site/src/pages/tempo/*
 !site/src/pages/tempo/guides/
 !site/src/pages/tempo/guides/**
+site/src/pages/evm
 site/src/pages/wasm
 site/src/pages/webauthn
 site/src/pages/zod
@@ -39,6 +42,10 @@ tsdoc-metadata.json
 # WASM build
 .wasm-toolchain
 wasm/.build
+
+# Rust adapter build output. `wasm/evm2/Cargo.lock` is committed: the shipped
+# artifact must rebuild byte-for-byte, which pinning evm2 alone does not give.
+wasm/evm2/target
 
 # Rust bench build output (`pnpm bench:engines`). `Cargo.lock` is committed: the
 # dependency ranges would otherwise re-resolve per machine, and a benchmark
