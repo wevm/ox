@@ -18,6 +18,19 @@ outputs from a credential, and [`Secp256k1`](/api/Secp256k1), [`Ed25519`](/api/E
 [`MlDsa44`](/api/MlDsa44), and [`AesGcm`](/api/AesGcm) each expose a `fromPrf` function that
 derives an independent key from the same output using a fixed derivation domain.
 
+```ts twoslash
+import { AesGcm, Ed25519, Secp256k1, WebAuthn } from 'ox'
+
+const credential = await WebAuthn.createCredential({
+  name: 'Example',
+  prf: true,
+})
+
+const secp256k1PrivateKey = Secp256k1.fromPrf(credential.prf)
+const ed25519PrivateKey = Ed25519.fromPrf(credential.prf)
+const encryptionKey = await AesGcm.fromPrf(credential.prf)
+```
+
 :::warning
 Treat PRF outputs and derived keys as secrets. Do not serialize or send the raw WebAuthn
 credential or response.
