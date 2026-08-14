@@ -2,6 +2,11 @@ name: Snapshot
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # npm publishing spans multiple packages, so cancellation can leave a partial snapshot release.
+  cancel-in-progress: false
+
 jobs:
   canary:
     name: Release snapshot version

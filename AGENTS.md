@@ -100,6 +100,7 @@
 ## Workflow Conventions
 
 - **Use targeted commands** -- prefer the smallest command that covers the touched behavior.
+- **Reusable workflow concurrency identity** -- use a literal identity instead of `github.workflow` in a called workflow's concurrency group. GitHub resolves `github.workflow` to the caller, which can self-cancel when the groups match.
 - **Types** -- run `pnpm check:types` after TypeScript changes.
 - **Repo checks** -- run `pnpm check:repo` when package metadata or workspace shape changes.
 - **Docs dev server** -- use `pnpm docs:dev` for documentation UI work.
