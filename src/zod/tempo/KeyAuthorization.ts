@@ -9,6 +9,16 @@ import {
 import * as z from 'zod/mini'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
+const SignatureRpc = z.union([
+  z_SignatureEnvelope.PrimitiveRpc,
+  z_SignatureEnvelope.MultisigRpc,
+])
+
+const Signature = z.union([
+  z_SignatureEnvelope.Primitive,
+  z_SignatureEnvelope.Multisig,
+])
+
 /** RPC token spending limit schema. */
 export const RpcTokenLimit = z.object({
   limit: z_Hex.Hex,
@@ -38,7 +48,7 @@ export const Rpc = z.object({
   keyId: z_Address.Address,
   keyType: z_SignatureEnvelope.Type,
   limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
-  signature: z_SignatureEnvelope.PrimitiveRpc,
+  signature: SignatureRpc,
   witness: z.optional(z.nullable(z_Hex.Hex)),
 })
 
@@ -69,7 +79,7 @@ const domainShape = {
   expiry: z.optional(z.number()),
   limits: z.optional(z.readonly(z.array(TokenLimit))),
   scopes: z.optional(z.readonly(z.array(Scope))),
-  signature: z_SignatureEnvelope.Primitive,
+  signature: Signature,
   type: z_SignatureEnvelope.Type,
   witness: z.optional(z_Hex.Hex),
 }

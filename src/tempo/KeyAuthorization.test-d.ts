@@ -23,6 +23,12 @@ const multisig = {
   type: 'multisig',
 } as const satisfies SignatureEnvelope.Multisig
 
+const keychain = {
+  inner: signature,
+  type: 'keychain',
+  userAddress: authorization.address,
+} as const satisfies SignatureEnvelope.Keychain
+
 test('accepts primitive signatures', () => {
   const signed = KeyAuthorization.from(authorization, { signature })
 
@@ -31,11 +37,12 @@ test('accepts primitive signatures', () => {
   >()
 })
 
-test('rejects multisig signatures', () => {
-  KeyAuthorization.from(authorization, {
-    // @ts-expect-error Key authorizations accept only primitive signatures.
-    signature: multisig,
-  })
+test('accepts multisig signatures', () => {
+  const signed = KeyAuthorization.from(authorization, { signature: multisig })
+
+  expectTypeOf(signed.signature).toMatchTypeOf<
+    KeyAuthorization.Signed['signature']
+  >()
 
   const multisigRpc = {
     account: multisig.account,
@@ -54,8 +61,36 @@ test('rejects multisig signatures', () => {
     expiry: null,
     keyId: authorization.address,
     keyType: authorization.type,
-    // @ts-expect-error Key authorizations accept only primitive RPC signatures.
     signature: multisigRpc,
+  }
+
+  expectTypeOf(rpc).toEqualTypeOf<KeyAuthorization.Rpc>()
+})
+
+test('rejects keychain signatures', () => {
+  KeyAuthorization.from(authorization, {
+    // @ts-expect-error Key authorizations do not accept keychain signatures.
+    signature: keychain,
+  })
+
+  const keychainRpc = {
+    signature: {
+      r: '0x01',
+      s: '0x02',
+      type: 'secp256k1',
+      yParity: '0x0',
+    },
+    type: 'keychain',
+    userAddress: authorization.address,
+  } as const satisfies SignatureEnvelope.KeychainRpc
+
+  const rpc: KeyAuthorization.Rpc = {
+    chainId: '0x1',
+    expiry: null,
+    keyId: authorization.address,
+    keyType: authorization.type,
+    // @ts-expect-error Key authorizations do not accept keychain RPC signatures.
+    signature: keychainRpc,
   }
 
   expectTypeOf(rpc).toEqualTypeOf<KeyAuthorization.Rpc>()

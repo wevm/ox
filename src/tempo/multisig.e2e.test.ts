@@ -13,22 +13,34 @@ const updateConfig = AbiFunction.from(
 )
 
 describe('behavior: multisig (TIP-1061)', () => {
-  function setup(parameters: { count: number; threshold: number }) {
-    const { count, threshold } = parameters
+  function createKey() {
+    const privateKey = Secp256k1.randomPrivateKey()
+    const address = Address.fromPublicKey(
+      Secp256k1.getPublicKey({ privateKey }),
+    )
+    return { address, privateKey } as const
+  }
+
+  function setup(parameters: {
+    count: number
+    threshold: number
+    weights?: readonly number[] | undefined
+  }) {
+    const { count, threshold, weights = Array(count).fill(1) } = parameters
     const ownerKeys = Array.from({ length: count }, () => {
       const privateKey = Secp256k1.randomPrivateKey()
       const address = Address.fromPublicKey(
         Secp256k1.getPublicKey({ privateKey }),
       )
       return { address, privateKey } as const
-    })
+    }).sort((a, b) => a.address.localeCompare(b.address))
 
     const initialConfig = MultisigConfig.from({
       salt: Hex.random(32),
       threshold,
-      owners: ownerKeys.map((key) => ({
+      owners: ownerKeys.map((key, index) => ({
         owner: key.address,
-        weight: 1,
+        weight: weights[index]!,
       })),
     })
     const account = MultisigConfig.getAddress(initialConfig)
@@ -62,10 +74,84 @@ describe('behavior: multisig (TIP-1061)', () => {
     })
   }
 
-  test('behavior: bootstrap, update config, and spend (2-of-3 secp256k1)', async () => {
+  function multisigSignature(parameters: {
+    initialConfig: MultisigConfig.Config
+    payload: Hex.Hex
+    signers: readonly { privateKey: Hex.Hex }[]
+    init?: boolean | undefined
+    version?: bigint | undefined
+  }) {
+    const { init = false, ...approval } = parameters
+    return SignatureEnvelope.from({
+      initialConfig: parameters.initialConfig,
+      ...(init ? { init: true } : {}),
+      signatures: approve(approval),
+    })
+  }
+
+  async function send(serialized: Hex.Hex) {
+    return (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized],
+      })
+      .then((transaction) => TransactionReceipt.fromRpc(transaction as any)))!
+  }
+
+  async function bootstrap(multisig: ReturnType<typeof setup>) {
+    await fundAddress(client, { address: multisig.account })
+    const transaction = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 0n,
+      gas: 5_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+    const receipt = await send(
+      TxEnvelopeTempo.serialize(transaction, {
+        signature: multisigSignature({
+          initialConfig: multisig.initialConfig,
+          init: true,
+          payload: TxEnvelopeTempo.getSignPayload(transaction),
+          signers: multisig.ownerKeys,
+        }),
+      }),
+    )
+    expect(receipt.status).toBe('success')
+  }
+
+  function accessKeySignature(parameters: {
+    accessKey: { privateKey: Hex.Hex }
+    account: Address.Address
+    transaction: TxEnvelopeTempo.TxEnvelopeTempo
+  }) {
+    const { accessKey, account, transaction } = parameters
+    return SignatureEnvelope.from({
+      inner: SignatureEnvelope.from(
+        Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: account,
+          }),
+          privateKey: accessKey.privateKey,
+        }),
+      ),
+      type: 'keychain',
+      userAddress: account,
+    })
+  }
+
+  test('examples: bootstrap, initialized, and configuration rotation', async () => {
     const { account, initialConfig, ownerKeys } = setup({
       count: 3,
       threshold: 2,
+    })
+    const replacement = createKey()
+    const rotatedConfig = MultisigConfig.from({
+      salt: initialConfig.salt,
+      threshold: 1,
+      owners: [{ owner: replacement.address, weight: 1 }],
     })
 
     await fundAddress(client, { address: account })
@@ -126,8 +212,8 @@ describe('behavior: multisig (TIP-1061)', () => {
         {
           to: '0xaacc000000000000000000000000000000000000',
           data: AbiFunction.encodeData(updateConfig, [
-            initialConfig.threshold,
-            initialConfig.owners,
+            rotatedConfig.threshold,
+            rotatedConfig.owners,
           ]),
         },
       ],
@@ -177,7 +263,7 @@ describe('behavior: multisig (TIP-1061)', () => {
         signatures: approve({
           initialConfig,
           payload: TxEnvelopeTempo.getSignPayload(spend),
-          signers: [ownerKeys[1]!, ownerKeys[2]!],
+          signers: [replacement],
           version: 1n,
         }),
       }),
@@ -194,7 +280,7 @@ describe('behavior: multisig (TIP-1061)', () => {
     expect(spend_receipt.from).toBe(account)
   })
 
-  test('behavior: nested multisig owner', async () => {
+  test('example: nested ownership', async () => {
     const child = setup({ count: 1, threshold: 1 })
     await fundAddress(client, { address: child.account })
 
@@ -271,42 +357,185 @@ describe('behavior: multisig (TIP-1061)', () => {
       .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
     expect(receipt.status).toBe('success')
     expect(receipt.from).toBe(account)
-  })
 
-  test('behavior: rejects below-threshold approvals', async () => {
-    const { account, initialConfig, ownerKeys } = setup({
-      count: 3,
-      threshold: 2,
-    })
-
-    await fundAddress(client, { address: account })
-
-    const bootstrap = TxEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       calls: [{ to: '0x0000000000000000000000000000000000000000' }],
       chainId,
       feeToken: '0x20c0000000000000000000000000000000000001',
-      nonce: 0n,
+      nonce: 1n,
       gas: 5_000_000n,
       maxFeePerGas: Value.fromGwei('20'),
       maxPriorityFeePerGas: Value.fromGwei('10'),
     })
-
-    const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
+    const parentDigest = MultisigConfig.getSignPayload({
+      initialConfig,
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+    })
+    const childSignature = multisigSignature({
+      initialConfig: child.initialConfig,
+      payload: parentDigest,
+      signers: child.ownerKeys,
+    })
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
       signature: SignatureEnvelope.from({
         initialConfig,
-        init: true,
-        signatures: approve({
-          initialConfig,
-          payload: TxEnvelopeTempo.getSignPayload(bootstrap),
-          signers: [ownerKeys[0]!],
-        }),
+        signatures: [childSignature],
       }),
     })
+    const nestedReceipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(nestedReceipt.status).toBe('success')
+    expect(nestedReceipt.from).toBe(account)
+  })
+
+  test('example: fee sponsorship (owners sign first)', async () => {
+    const multisig = setup({ count: 2, threshold: 2 })
+    const feePayer = createKey()
+    await Promise.all([
+      bootstrap(multisig),
+      fundAddress(client, { address: feePayer.address }),
+    ])
+
+    const transaction = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feePayerSignature: null,
+      nonce: 1n,
+      gas: 5_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+    const signedByOwners = TxEnvelopeTempo.from(transaction, {
+      signature: multisigSignature({
+        initialConfig: multisig.initialConfig,
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
+        signers: multisig.ownerKeys,
+      }),
+    })
+    const sponsored = TxEnvelopeTempo.from({
+      ...signedByOwners,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+    })
+    const feePayerSignature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getFeePayerSignPayload(sponsored, {
+        sender: multisig.account,
+      }),
+      privateKey: feePayer.privateKey,
+    })
+    const receipt = await send(
+      TxEnvelopeTempo.serialize(sponsored, { feePayerSignature }),
+    )
+    expect(receipt.status).toBe('success')
+    expect(receipt.from).toBe(multisig.account)
+    expect(receipt.feePayer).toBe(feePayer.address)
+  })
+
+  test('example: fee sponsorship (fee payer signs first)', async () => {
+    const multisig = setup({ count: 2, threshold: 2 })
+    const feePayer = createKey()
+    await Promise.all([
+      bootstrap(multisig),
+      fundAddress(client, { address: feePayer.address }),
+    ])
+
+    const transaction = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feePayerSignature: null,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 1n,
+      gas: 5_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+    const feePayerSignature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
+        sender: multisig.account,
+      }),
+      privateKey: feePayer.privateKey,
+    })
+    const sponsored = TxEnvelopeTempo.from(transaction, { feePayerSignature })
+    const receipt = await send(
+      TxEnvelopeTempo.serialize(sponsored, {
+        signature: multisigSignature({
+          initialConfig: multisig.initialConfig,
+          payload: TxEnvelopeTempo.getSignPayload(sponsored),
+          signers: multisig.ownerKeys,
+        }),
+      }),
+    )
+    expect(receipt.status).toBe('success')
+    expect(receipt.from).toBe(multisig.account)
+    expect(receipt.feePayer).toBe(feePayer.address)
+  })
+
+  test('example: weighted quorum', async () => {
+    const { account, initialConfig, ownerKeys } = setup({
+      count: 3,
+      threshold: 3,
+      weights: [2, 1, 1],
+    })
+
+    await fundAddress(client, { address: account })
+
+    const transaction = (nonce: bigint) =>
+      TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        nonce,
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+    const serialize = (
+      value: ReturnType<typeof transaction>,
+      signers: readonly { privateKey: Hex.Hex }[],
+      init = false,
+    ) =>
+      TxEnvelopeTempo.serialize(value, {
+        signature: multisigSignature({
+          initialConfig,
+          init,
+          payload: TxEnvelopeTempo.getSignPayload(value),
+          signers,
+        }),
+      })
+
+    const bootstrap = transaction(0n)
+    const bootstrapReceipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialize(bootstrap, [ownerKeys[0]!, ownerKeys[1]!], true)],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(bootstrapReceipt.status).toBe('success')
+
+    const valid = transaction(1n)
+    const validReceipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialize(valid, [ownerKeys[0]!, ownerKeys[2]!])],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(validReceipt.status).toBe('success')
+
+    const belowThreshold = transaction(2n)
+    await expect(
+      client.request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialize(belowThreshold, [ownerKeys[1]!, ownerKeys[2]!])],
+      }),
+    ).rejects.toThrow()
 
     await expect(
       client.request({
         method: 'eth_sendRawTransactionSync',
-        params: [serialized_signed],
+        params: [serialize(belowThreshold, ownerKeys)],
       }),
     ).rejects.toThrow()
   })
@@ -502,127 +731,109 @@ describe('behavior: multisig (TIP-1061)', () => {
     expect(updateReceipt.status).toBe('reverted')
   })
 
-  test('behavior: rejects owner-signed `keyAuthorization` executed by multisig during bootstrap', async () => {
-    const { account, initialConfig, ownerKeys } = setup({
-      count: 1,
-      threshold: 1,
-    })
+  test('example: bootstrap and immediate access key use', async () => {
+    const multisig = setup({ count: 2, threshold: 2 })
+    const accessKey = createKey()
+    await fundAddress(client, { address: multisig.account })
 
-    await fundAddress(client, { address: account })
-
-    const access = (() => {
-      const privateKey = Secp256k1.randomPrivateKey()
-      const address = Address.fromPublicKey(
-        Secp256k1.getPublicKey({ privateKey }),
-      )
-      return { address, privateKey } as const
-    })()
-
-    const keyAuth = KeyAuthorization.from({
-      address: access.address,
+    const keyAuthorization = KeyAuthorization.from({
+      account: multisig.account,
+      address: accessKey.address,
       chainId: BigInt(chainId),
+      isAdmin: false,
       type: 'secp256k1',
     })
-    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
-      signature: SignatureEnvelope.from(
-        Secp256k1.sign({
-          payload: KeyAuthorization.getSignPayload(keyAuth),
-          privateKey: ownerKeys[0]!.privateKey,
-        }),
-      ),
+    const keyAuthorizationSigned = KeyAuthorization.from(keyAuthorization, {
+      signature: multisigSignature({
+        initialConfig: multisig.initialConfig,
+        init: true,
+        payload: KeyAuthorization.getSignPayload(keyAuthorization),
+        signers: multisig.ownerKeys,
+      }),
     })
-
-    const bootstrap = TxEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       calls: [{ to: '0x0000000000000000000000000000000000000000' }],
       chainId,
       feeToken: '0x20c0000000000000000000000000000000000001',
-      keyAuthorization: keyAuth_signed,
+      keyAuthorization: keyAuthorizationSigned,
       nonce: 0n,
       gas: 5_000_000n,
       maxFeePerGas: Value.fromGwei('20'),
       maxPriorityFeePerGas: Value.fromGwei('10'),
     })
-
-    const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
-      signature: SignatureEnvelope.from({
-        initialConfig,
-        init: true,
-        signatures: approve({
-          initialConfig,
-          payload: TxEnvelopeTempo.getSignPayload(bootstrap),
-          signers: ownerKeys,
+    const receipt = await send(
+      TxEnvelopeTempo.serialize(transaction, {
+        signature: accessKeySignature({
+          accessKey,
+          account: multisig.account,
+          transaction,
         }),
       }),
-    })
-
-    await expect(
-      client.request({
-        method: 'eth_sendRawTransactionSync',
-        params: [serialized_signed],
-      }),
-    ).rejects.toThrow(
-      'keychain validation failed: admin-signed key authorization account mismatch',
     )
+    expect(receipt.status).toBe('success')
+    expect(receipt.from).toBe(multisig.account)
   })
 
-  test('behavior: rejects owner-signed `keyAuthorization` executed by access key before bootstrap', async () => {
-    const { account, ownerKeys } = setup({
-      count: 1,
-      threshold: 1,
-    })
+  test('example: bootstrap and subsequent access key use', async () => {
+    const multisig = setup({ count: 2, threshold: 2 })
+    const accessKey = createKey()
+    await fundAddress(client, { address: multisig.account })
 
-    await fundAddress(client, { address: account })
-
-    const access = (() => {
-      const privateKey = Secp256k1.randomPrivateKey()
-      const address = Address.fromPublicKey(
-        Secp256k1.getPublicKey({ privateKey }),
-      )
-      return { address, privateKey } as const
-    })()
-
-    const keyAuth = KeyAuthorization.from({
-      address: access.address,
+    const keyAuthorization = KeyAuthorization.from({
+      account: multisig.account,
+      address: accessKey.address,
       chainId: BigInt(chainId),
+      isAdmin: false,
       type: 'secp256k1',
     })
-    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
-      signature: SignatureEnvelope.from(
-        Secp256k1.sign({
-          payload: KeyAuthorization.getSignPayload(keyAuth),
-          privateKey: ownerKeys[0]!.privateKey,
-        }),
-      ),
+    const keyAuthorizationSigned = KeyAuthorization.from(keyAuthorization, {
+      signature: multisigSignature({
+        initialConfig: multisig.initialConfig,
+        payload: KeyAuthorization.getSignPayload(keyAuthorization),
+        signers: multisig.ownerKeys,
+      }),
     })
-
-    const bootstrap = TxEnvelopeTempo.from({
+    const bootstrapTransaction = TxEnvelopeTempo.from({
       calls: [{ to: '0x0000000000000000000000000000000000000000' }],
       chainId,
       feeToken: '0x20c0000000000000000000000000000000000001',
-      keyAuthorization: keyAuth_signed,
+      keyAuthorization: keyAuthorizationSigned,
       nonce: 0n,
       gas: 5_000_000n,
       maxFeePerGas: Value.fromGwei('20'),
       maxPriorityFeePerGas: Value.fromGwei('10'),
     })
-
-    const signature = Secp256k1.sign({
-      payload: TxEnvelopeTempo.getSignPayload(bootstrap, { from: account }),
-      privateKey: access.privateKey,
-    })
-    const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
-      signature: SignatureEnvelope.from({
-        userAddress: account,
-        inner: SignatureEnvelope.from(signature),
-        type: 'keychain',
+    const bootstrapReceipt = await send(
+      TxEnvelopeTempo.serialize(bootstrapTransaction, {
+        signature: multisigSignature({
+          initialConfig: multisig.initialConfig,
+          init: true,
+          payload: TxEnvelopeTempo.getSignPayload(bootstrapTransaction),
+          signers: multisig.ownerKeys,
+        }),
       }),
-    })
+    )
+    expect(bootstrapReceipt.status).toBe('success')
 
-    await expect(
-      client.request({
-        method: 'eth_sendRawTransactionSync',
-        params: [serialized_signed],
+    const transaction = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 1n,
+      gas: 5_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+    const receipt = await send(
+      TxEnvelopeTempo.serialize(transaction, {
+        signature: accessKeySignature({
+          accessKey,
+          account: multisig.account,
+          transaction,
+        }),
       }),
-    ).rejects.toThrow('admin-signed key authorization account mismatch')
+    )
+    expect(receipt.status).toBe('success')
+    expect(receipt.from).toBe(multisig.account)
   })
 })
