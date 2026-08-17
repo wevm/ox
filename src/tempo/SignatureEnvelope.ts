@@ -424,12 +424,13 @@ function assertMultisig(envelope: Multisig, depth: number): void {
           reason: 'nested multisig owner approvals cannot carry `init`',
         })
       assertMultisig(multisig, depth + 1)
-    } else assert(inner)
-
-    if (Hex.size(serialize(inner)) > MultisigConfig.maxOwnerSignatureBytes)
-      throw new InvalidMultisigApprovalError({
-        reason: `multisig owner signature exceeds ${MultisigConfig.maxOwnerSignatureBytes} bytes`,
-      })
+    } else {
+      assert(inner)
+      if (Hex.size(serialize(inner)) > MultisigConfig.maxOwnerSignatureBytes)
+        throw new InvalidMultisigApprovalError({
+          reason: `multisig owner signature exceeds ${MultisigConfig.maxOwnerSignatureBytes} bytes`,
+        })
+    }
   }
 }
 
@@ -740,7 +741,10 @@ function deserialize_(
       })
     for (const signature of signatures)
       if (
-        Hex.size(signature as Hex.Hex) > MultisigConfig.maxOwnerSignatureBytes
+        Hex.size(signature as Hex.Hex) >
+          MultisigConfig.maxOwnerSignatureBytes &&
+        Hex.slice(signature as Hex.Hex, 0, 1) !==
+          MultisigConfig.signatureTypeByte
       )
         throw new InvalidSerializedError({
           reason: `multisig owner signature exceeds ${MultisigConfig.maxOwnerSignatureBytes} bytes`,
@@ -912,17 +916,17 @@ function deserialize_(
  * ```
  *
  * @example
- * ### Multisig (from genesis config)
+ * ### Multisig (from initial config)
  *
- * Pass `genesisConfig` to derive `account` automatically. Set `init: true` to
- * opt into bootstrap (uses `genesisConfig` as the bootstrap `init`); omit
+ * Pass `initialConfig` to derive `account` automatically. Set `init: true` to
+ * opt into bootstrap (uses `initialConfig` as the bootstrap `init`); omit
  * `init` for subsequent (non-bootstrap) transactions.
  *
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  * import { MultisigConfig, SignatureEnvelope } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -936,14 +940,14 @@ function deserialize_(
  *
  * // Bootstrap transaction
  * const bootstrap = SignatureEnvelope.from({
- *   genesisConfig,
+ *   initialConfig,
  *   signatures: [signature],
  *   init: true,
  * })
  *
  * // Subsequent (non-bootstrap) transactions
  * const subsequent = SignatureEnvelope.from({
- *   genesisConfig,
+ *   initialConfig,
  *   signatures: [signature],
  * })
  * ```
@@ -970,20 +974,20 @@ export function from<const value extends from.Value>(
 
   if (type === 'multisig') {
     const multisig = value as Multisig & {
-      genesisConfig?: MultisigConfig.Config | undefined
+      initialConfig?: MultisigConfig.Config | undefined
       init?: MultisigConfig.Config | boolean | undefined
     }
-    const { genesisConfig, init, ...rest } = multisig
-    // Derive `account` from `genesisConfig` when not provided explicitly.
+    const { initialConfig, init, ...rest } = multisig
+    // Derive `account` from `initialConfig` when not provided explicitly.
     const account = (() => {
       if (rest.account) return rest.account
-      if (genesisConfig) return MultisigConfig.getAddress(genesisConfig)
+      if (initialConfig) return MultisigConfig.getAddress(initialConfig)
       return rest.account
     })()
-    // `init: true` opts into bootstrap using the supplied `genesisConfig`.
+    // `init: true` opts into bootstrap using the supplied `initialConfig`.
     // Otherwise, `init` is treated as the explicit bootstrap config (or
     // omitted).
-    const initSource = init === true ? genesisConfig : init || undefined
+    const initSource = init === true ? initialConfig : init || undefined
     return {
       ...rest,
       account,
@@ -1039,13 +1043,13 @@ export declare namespace from {
 
   /**
    * Multisig envelope input variant where `account` is derived from the
-   * supplied `genesisConfig`. Pass `init: true` to opt into bootstrap (uses
-   * `genesisConfig` as the bootstrap `init`); omit `init` for subsequent
+   * supplied `initialConfig`. Pass `init: true` to opt into bootstrap (uses
+   * `initialConfig` as the bootstrap `init`); omit `init` for subsequent
    * (non-bootstrap) transactions.
    */
-  type MultisigFromGenesisConfig = {
+  type MultisigFromInitialConfig = {
     type?: 'multisig' | undefined
-    genesisConfig: MultisigConfig.Config
+    initialConfig: MultisigConfig.Config
     signatures: readonly SignatureEnvelope[]
     init?: MultisigConfig.Config | boolean | undefined
   }
@@ -1054,7 +1058,7 @@ export declare namespace from {
     | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
     | Serialized
-    | MultisigFromGenesisConfig
+    | MultisigFromInitialConfig
 
   type ReturnValue<value extends Value> = Compute<
     OneOf<
@@ -1062,7 +1066,7 @@ export declare namespace from {
         ? SignatureEnvelope
         : value extends Secp256k1Flat
           ? Secp256k1
-          : value extends MultisigFromGenesisConfig
+          : value extends MultisigFromInitialConfig
             ? Multisig
             : IsNarrowable<value, SignatureEnvelope> extends true
               ? SignatureEnvelope
@@ -1285,7 +1289,7 @@ export function getType<
   // Detect Multisig signature
   if (
     ('account' in envelope ||
-      'genesisConfig' in envelope ||
+      'initialConfig' in envelope ||
       'init' in envelope) &&
     'signatures' in envelope
   )
@@ -1436,7 +1440,7 @@ export declare namespace serialize {
  * recovered owner address. Works for any owner key type (secp256k1, p256,
  * webAuthn).
  *
- * Config updates never change `account`, so the genesis config is the correct
+ * Config updates never change `account`, so the initial config is the correct
  * input even for post-update transactions.
  *
  * @example
@@ -1444,7 +1448,7 @@ export declare namespace serialize {
  * import { Secp256k1 } from 'ox'
  * import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -1455,14 +1459,20 @@ export declare namespace serialize {
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
  *
- * const privateKeys = [Secp256k1.randomPrivateKey(), Secp256k1.randomPrivateKey()]
- * const digest = MultisigConfig.getSignPayload({ payload, genesisConfig })
+ * const privateKeys = [
+ *   Secp256k1.randomPrivateKey(),
+ *   Secp256k1.randomPrivateKey(),
+ * ]
+ * const digest = MultisigConfig.getSignPayload({
+ *   payload,
+ *   initialConfig,
+ * })
  * const signatures = privateKeys.map((privateKey) =>
  *   SignatureEnvelope.from(Secp256k1.sign({ payload: digest, privateKey })),
  * )
  *
  * const ordered = SignatureEnvelope.sortMultisigApprovals({ // [!code focus]
- *   genesisConfig, // [!code focus]
+ *   initialConfig, // [!code focus]
  *   payload, // [!code focus]
  *   signatures, // [!code focus]
  * }) // [!code focus]
@@ -1474,11 +1484,15 @@ export declare namespace serialize {
 export function sortMultisigApprovals(
   value: sortMultisigApprovals.Value,
 ): readonly SignatureEnvelope[] {
-  const { payload, signatures } = value
+  const { payload, signatures, version = 0n } = value
   const digest = MultisigConfig.getSignPayload(
-    'genesisConfig' in value && value.genesisConfig
-      ? { payload, genesisConfig: value.genesisConfig }
-      : { payload, account: (value as { account: Address.Address }).account },
+    'initialConfig' in value && value.initialConfig
+      ? { payload, initialConfig: value.initialConfig, version }
+      : {
+          payload,
+          account: (value as { account: Address.Address }).account,
+          version,
+        },
   )
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
   // comparator.
@@ -1497,6 +1511,8 @@ export declare namespace sortMultisigApprovals {
     payload: Hex.Hex | Bytes.Bytes
     /** The owner approvals to order. */
     signatures: readonly SignatureEnvelope[]
+    /** Current multisig config version. Defaults to `0n`. */
+    version?: bigint | undefined
   } & OneOf<
     | {
         /** The native multisig account address. */
@@ -1507,7 +1523,7 @@ export declare namespace sortMultisigApprovals {
          * The initial multisig config (the bootstrap config that derived the
          * permanent `account`). Used to derive the account automatically.
          */
-        genesisConfig: MultisigConfig.Config
+        initialConfig: MultisigConfig.Config
       }
   >
 

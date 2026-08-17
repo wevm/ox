@@ -81,12 +81,21 @@ export type KeyAuthorization<
   | {}
 > &
   (signed extends true
-    ? { signature: SignatureEnvelope.Primitive<bigintType, numberType> }
+    ? { signature: Signature<bigintType, numberType> }
     : {
-        signature?:
-          | SignatureEnvelope.Primitive<bigintType, numberType>
-          | undefined
+        signature?: Signature<bigintType, numberType> | undefined
       })
+
+/** Signature that can authorize an access key. */
+export type Signature<bigintType = bigint, numberType = number> = OneOf<
+  | SignatureEnvelope.Primitive<bigintType, numberType>
+  | SignatureEnvelope.Multisig<bigintType, numberType>
+>
+
+/** RPC-formatted signature that can authorize an access key. */
+export type SignatureRpc = OneOf<
+  SignatureEnvelope.PrimitiveRpc | SignatureEnvelope.MultisigRpc
+>
 
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<
@@ -114,8 +123,8 @@ export type Rpc = {
   keyType: SignatureEnvelope.Type
   /** Token spending limits. */
   limits?: readonly RpcTokenLimit[] | undefined
-  /** Primitive signature authorizing this key. */
-  signature: SignatureEnvelope.PrimitiveRpc
+  /** Signature authorizing this key. */
+  signature: SignatureRpc
   /** Optional 32-byte witness (hex). */
   witness?: Hex.Hex | null | undefined
 }
@@ -146,10 +155,11 @@ export type Signed<
   addressType = Address.Address,
 > = KeyAuthorization<true, bigintType, numberType, addressType>
 
-type PrimitiveSignatureValue =
-  | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
+type SignatureValue =
+  | UnionPartialBy<Signature, 'prehash' | 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
+  | SignatureEnvelope.from.MultisigFromInitialConfig
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
@@ -408,7 +418,7 @@ export type TokenLimit<
  */
 export function from<
   const authorization extends Input | Rpc,
-  const signature extends PrimitiveSignatureValue | undefined = undefined,
+  const signature extends SignatureValue | undefined = undefined,
 >(
   authorization: authorization | KeyAuthorization,
   options: from.Options<signature> = {},
@@ -467,29 +477,25 @@ export function from<
 
 export declare namespace from {
   type Options<
-    signature extends PrimitiveSignatureValue | undefined =
-      | PrimitiveSignatureValue
-      | undefined,
+    signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = {
-    /** The primitive signature to attach to the Key Authorization. */
-    signature?: signature | SignatureEnvelope.Primitive | undefined
+    /** The signature to attach to the Key Authorization. */
+    signature?: signature | Signature | undefined
   }
 
   type ReturnType<
     authorization extends KeyAuthorization | Input | Rpc = KeyAuthorization,
-    signature extends PrimitiveSignatureValue | undefined =
-      | PrimitiveSignatureValue
-      | undefined,
+    signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = Compute<
     authorization extends Rpc
       ? Signed
       : TempoAddress.ResolveAddresses<
           authorization &
-            (signature extends PrimitiveSignatureValue
+            (signature extends SignatureValue
               ? {
                   signature: Extract<
                     SignatureEnvelope.from.ReturnValue<signature>,
-                    SignatureEnvelope.Primitive
+                    Signature
                   >
                 }
               : {})
@@ -551,11 +557,8 @@ export function fromRpc(authorization: Rpc): Signed {
       })
     : undefined
 
-  // TIP-1049 admin fields are paired: emit both or neither; orphan wire
-  // fields are dropped. Separate conditional spreads break `Signed`
-  // assignability without `exactOptionalPropertyTypes` (#290).
-  const adminPair =
-    account !== undefined && isAdmin ? { account, isAdmin: true as const } : {}
+  const accountBinding =
+    account !== undefined ? { account, isAdmin: isAdmin ?? false } : {}
 
   return {
     address: keyId,
@@ -572,7 +575,7 @@ export function fromRpc(authorization: Rpc): Signed {
     signature,
     type: keyType,
     ...(witness !== undefined ? { witness } : {}),
-    ...adminPair,
+    ...accountBinding,
   }
 }
 
@@ -694,11 +697,8 @@ export function fromTuple<const tuple extends Tuple>(
   const account = isAbsent(rawAccount)
     ? undefined
     : (rawAccount as Address.Address)
-  // TIP-1049 admin fields are paired: only emit both when both are present on
-  // the wire. Wire shapes carrying only one are tolerated for forward-compat
-  // but the orphan field is dropped (since the public API requires both).
-  const adminPair =
-    account !== undefined && isAdmin ? { account, isAdmin: true as const } : {}
+  const accountBinding =
+    account !== undefined ? { account, isAdmin: isAdmin ?? false } : {}
   const args: KeyAuthorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -707,7 +707,7 @@ export function fromTuple<const tuple extends Tuple>(
     ...(limits !== undefined ? { limits } : {}),
     ...(scopes !== undefined ? { scopes } : {}),
     ...(witness !== undefined ? { witness } : {}),
-    ...adminPair,
+    ...accountBinding,
   }
   if (signatureSerialized) {
     const signature = SignatureEnvelope.deserialize(signatureSerialized)
@@ -963,9 +963,7 @@ export function toRpc(authorization: Signed): Rpc {
       limit: Hex.fromNumber(limit),
       ...(period ? { period: numberToHex(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(
-      signature,
-    ) as SignatureEnvelope.PrimitiveRpc,
+    signature: SignatureEnvelope.toRpc(signature) as SignatureRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -1162,8 +1160,8 @@ function assertWitness(witness: Hex.Hex): void {
 
 function assertSignature<bigintType, numberType>(
   signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>,
-): asserts signature is SignatureEnvelope.Primitive<bigintType, numberType> {
-  if (signature.type === 'keychain' || signature.type === 'multisig')
+): asserts signature is Signature<bigintType, numberType> {
+  if (signature.type === 'keychain')
     throw new InvalidSignatureTypeError(signature.type)
 }
 
@@ -1191,12 +1189,12 @@ export class InvalidAdminMarkerError extends Error {
   }
 }
 
-/** Thrown when a key authorization contains a non-primitive signature. */
+/** Thrown when a key authorization contains a keychain signature. */
 export class InvalidSignatureTypeError extends Error {
   override readonly name = 'KeyAuthorization.InvalidSignatureTypeError'
   constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
     super(
-      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, or \`webAuthn\`.`,
+      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.`,
     )
   }
 }
