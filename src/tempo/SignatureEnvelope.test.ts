@@ -1116,7 +1116,7 @@ describe('from', () => {
   })
 
   describe('multisig', () => {
-    const genesisConfig = MultisigConfig.from({
+    const initialConfig = MultisigConfig.from({
       threshold: 1,
       owners: [
         {
@@ -1126,29 +1126,29 @@ describe('from', () => {
       ],
     })
 
-    test('behavior: derives `account` from `genesisConfig`', () => {
+    test('behavior: derives `account` from `initialConfig`', () => {
       const envelope = SignatureEnvelope.from({
-        genesisConfig,
+        initialConfig,
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
       })
 
       expect(envelope).toMatchObject({
         type: 'multisig',
-        account: MultisigConfig.getAddress(genesisConfig),
+        account: MultisigConfig.getAddress(initialConfig),
       })
-      expect('genesisConfig' in envelope).toBe(false)
+      expect('initialConfig' in envelope).toBe(false)
       expect((envelope as SignatureEnvelope.Multisig).init).toBeUndefined()
     })
 
-    test('behavior: `init: true` opts into bootstrap (uses `genesisConfig` as `init`)', () => {
+    test('behavior: `init: true` opts into bootstrap (uses `initialConfig` as `init`)', () => {
       const envelope = SignatureEnvelope.from({
-        genesisConfig,
+        initialConfig,
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
         init: true,
       })
 
       expect((envelope as SignatureEnvelope.Multisig).init).toEqual(
-        genesisConfig,
+        initialConfig,
       )
     })
 
@@ -1163,7 +1163,7 @@ describe('from', () => {
         ],
       })
       const envelope = SignatureEnvelope.from({
-        genesisConfig,
+        initialConfig,
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
         init: otherConfig,
       })
@@ -1172,7 +1172,7 @@ describe('from', () => {
     })
 
     test('behavior: `{ account }` form still works', () => {
-      const account = MultisigConfig.getAddress(genesisConfig)
+      const account = MultisigConfig.getAddress(initialConfig)
       const envelope = SignatureEnvelope.from({
         account,
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
@@ -1793,7 +1793,7 @@ describe('serialize', () => {
 })
 
 describe('sortMultisigApprovals', () => {
-  // Build owner key pairs first so we can construct a real genesis config
+  // Build owner key pairs first so we can construct a real initial config
   // whose owner set matches the keys that produce the approvals below.
   const ownerKeys = Array.from({ length: 3 }, () => {
     const privateKey = Secp256k1.randomPrivateKey()
@@ -1806,12 +1806,15 @@ describe('sortMultisigApprovals', () => {
     Hex.toBigInt(a.address) < Hex.toBigInt(b.address) ? -1 : 1,
   )
 
-  const genesisConfig = MultisigConfig.from({
+  const initialConfig = MultisigConfig.from({
     threshold: 2,
     owners: ascendingOwners.map((o) => ({ owner: o.address, weight: 1 })),
   })
   const payload = `0x${'42'.repeat(32)}` as const
-  const digest = MultisigConfig.getSignPayload({ payload, genesisConfig })
+  const digest = MultisigConfig.getSignPayload({
+    payload,
+    initialConfig,
+  })
 
   const owners = ownerKeys.map((owner) => ({
     address: owner.address,
@@ -1826,7 +1829,7 @@ describe('sortMultisigApprovals', () => {
 
   test('behavior: orders approvals ascending by recovered owner address', () => {
     const ordered = SignatureEnvelope.sortMultisigApprovals({
-      genesisConfig,
+      initialConfig,
       payload,
       // Provide approvals in reverse of the canonical order.
       signatures: [...ascending].reverse().map((owner) => owner.signature),
@@ -1838,7 +1841,7 @@ describe('sortMultisigApprovals', () => {
     const signatures = ascending.map((owner) => owner.signature)
     expect(
       SignatureEnvelope.sortMultisigApprovals({
-        genesisConfig,
+        initialConfig,
         payload,
         signatures,
       }),
@@ -1847,7 +1850,7 @@ describe('sortMultisigApprovals', () => {
 
   test('behavior: recovered order matches the config owner order', () => {
     const ordered = SignatureEnvelope.sortMultisigApprovals({
-      genesisConfig,
+      initialConfig,
       payload,
       signatures: owners.map((owner) => owner.signature),
     })
@@ -1857,12 +1860,12 @@ describe('sortMultisigApprovals', () => {
     expect(recovered).toEqual(ascending.map((owner) => owner.address))
   })
 
-  test('behavior: `genesisConfig` and `{ account }` produce identical ordering', () => {
-    const account = MultisigConfig.getAddress(genesisConfig)
+  test('behavior: `initialConfig` and `{ account }` produce identical ordering', () => {
+    const account = MultisigConfig.getAddress(initialConfig)
     const signatures = owners.map((owner) => owner.signature)
 
     const fromConfig = SignatureEnvelope.sortMultisigApprovals({
-      genesisConfig,
+      initialConfig,
       payload,
       signatures,
     })
@@ -3041,6 +3044,14 @@ describe('multisig', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig owner signature exceeds 2049 bytes.]`,
     )
+
+    const serialized = Hex.concat(
+      '0x05',
+      Rlp.fromHex([account, [SignatureEnvelope.serialize(oversized)]]),
+    )
+    expect(() => SignatureEnvelope.deserialize(serialized)).toThrowError(
+      SignatureEnvelope.InvalidSerializedError,
+    )
   })
 
   test('assert: rejects keychain owner approvals', () => {
@@ -3080,6 +3091,40 @@ describe('multisig', () => {
         signatures: [nested],
       })
       expect(() => SignatureEnvelope.assert(depth2)).not.toThrowError()
+    })
+
+    test('accepts a nested approval above the primitive byte limit', () => {
+      const primitive = SignatureEnvelope.from({
+        ...signature_webauthn,
+        metadata: {
+          ...signature_webauthn.metadata,
+          clientDataJSON: JSON.stringify({ value: 'x'.repeat(1_050) }),
+        },
+        signature: {
+          r: signature_webauthn.signature.r,
+          s: signature_webauthn.signature.s,
+        },
+      })
+      const largeNested = SignatureEnvelope.from({
+        type: 'multisig',
+        account: nestedAccount,
+        signatures: [primitive, primitive],
+      })
+      expect(Hex.size(SignatureEnvelope.serialize(primitive))).toBeLessThan(
+        MultisigConfig.maxOwnerSignatureBytes,
+      )
+      expect(
+        Hex.size(SignatureEnvelope.serialize(largeNested)),
+      ).toBeGreaterThan(MultisigConfig.maxOwnerSignatureBytes)
+
+      const parent = SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        signatures: [largeNested],
+      })
+      expect(
+        SignatureEnvelope.deserialize(SignatureEnvelope.serialize(parent)),
+      ).toEqual(parent)
     })
 
     test('assert: rejects nesting deeper than the maximum', () => {
