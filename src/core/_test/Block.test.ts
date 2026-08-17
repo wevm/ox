@@ -436,7 +436,7 @@ describe('fromRpc', () => {
         method: 'eth_getBlockByNumber',
         params: ['latest', true],
       })
-      .then(Block.fromRpc)
+      .then((block) => Block.fromRpc(block, { includeTransactions: true }))
 
     const transactions = block?.transactions.map((transaction) => {
       const { blockTimestamp: _, ...transaction_ } = {
