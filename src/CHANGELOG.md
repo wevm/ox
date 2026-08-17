@@ -1,5 +1,17 @@
 # ox
 
+## 0.14.34
+
+### Patch Changes
+
+- [#391](https://github.com/wevm/ox/pull/391) [`b949452`](https://github.com/wevm/ox/commit/b949452c4e7edc13b975cdb8476ba22567280528) Thanks [@jxom](https://github.com/jxom)! - Updated native multisig signing for configuration versions, access-key authorization, current protocol limits, and the `initialConfig` naming.
+
+  ```ts
+  import { MultisigConfig } from "ox/tempo";
+
+  const digest = MultisigConfig.getSignPayload({ initialConfig, payload });
+  ```
+
 ## 0.14.33
 
 ### Patch Changes
