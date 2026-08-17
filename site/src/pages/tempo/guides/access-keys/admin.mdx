@@ -138,10 +138,11 @@ rpc.isAdmin === true // [!code hl]
 Do not use an admin key as an application's everyday signing key. Store it separately, prefer
 non-exportable key material, and provision as few admin keys as possible.
 
-### Require Both Admin Fields
+### Use Account Bindings Deliberately
 
-Always set `account` and `isAdmin: true` together. Ox drops orphan admin fields when decoding wire
-values, and the account binding is part of the security model.
+Set `account` with `isAdmin: true` for an admin key or `isAdmin: false` for an account-bound
+non-admin key. When decoding a wire value that contains `account` without `isAdmin`, Ox preserves
+the binding and defaults `isAdmin` to `false`. An `isAdmin` value without `account` is discarded.
 
 ### Confirm Network Support
 

@@ -142,6 +142,7 @@ const payload = MultisigConfig.getSignPayload({ // [!code --]
 const payload = MultisigConfig.getSignPayload({ // [!code ++]
   payload: transactionPayload, // [!code ++]
   account, // [!code ++]
+  version, // [!code ++]
 }) // [!code ++]
 
 const envelope = SignatureEnvelope.from({ // [!code --]
@@ -152,7 +153,7 @@ const envelope = SignatureEnvelope.from({ // [!code --]
 const envelope = SignatureEnvelope.from({ account, signatures }) // [!code ++]
 ```
 
-Owner approval digests now bind only the account. The signature wire format is `0x05 || rlp([account, signatures, init?])`, `MultisigConfig.maxOwners` is 255 with `u8` weights, and owner approvals may contain nested multisig signatures.
+Owner approval digests now bind the account and current config version. The signature wire format is `0x05 || rlp([account, signatures, init?])`, `MultisigConfig.maxOwners` is 50 with `u8` weights, and owner approvals may contain nested multisig signatures.
 
 ## RPC schema codecs return native quantities
 

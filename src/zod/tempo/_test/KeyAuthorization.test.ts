@@ -141,15 +141,29 @@ describe('KeyAuthorization', () => {
     ).toBe(false)
   })
 
-  test('rejects multisig signatures', () => {
+  test('round-trips multisig signatures', () => {
     const multisigRpc = {
       account: '0x1111111111111111111111111111111111111111',
       signatures: [rpc.signature],
     } as const
+    const withMultisig = { ...rpc, signature: multisigRpc }
+    const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, withMultisig)
+    expect(decoded).toEqual(core_KeyAuthorization.fromRpc(withMultisig))
+    expect(z.encode(z_KeyAuthorization.KeyAuthorization, decoded)).toEqual(
+      core_KeyAuthorization.toRpc(decoded),
+    )
+  })
+
+  test('rejects keychain signatures', () => {
+    const keychainRpc = {
+      signature: rpc.signature,
+      type: 'keychain',
+      userAddress: '0x1111111111111111111111111111111111111111',
+    } as const
     expect(
       z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
         ...rpc,
-        signature: multisigRpc,
+        signature: keychainRpc,
       } as never).success,
     ).toBe(false)
 
@@ -158,9 +172,9 @@ describe('KeyAuthorization', () => {
       z.safeEncode(z_KeyAuthorization.KeyAuthorization, {
         ...authorization,
         signature: {
-          account: multisigRpc.account,
-          signatures: [authorization.signature],
-          type: 'multisig',
+          inner: authorization.signature,
+          type: 'keychain',
+          userAddress: keychainRpc.userAddress,
         },
       } as never).success,
     ).toBe(false)

@@ -86,23 +86,43 @@ describe('getSignPayload', () => {
   test('matches independent ground truth', () => {
     expect(
       MultisigConfig.getSignPayload({
-        payload: `0x${'de'.repeat(32)}`,
-        genesisConfig: singleOwnerConfig,
+        payload: `0x${'42'.repeat(32)}`,
+        initialConfig: singleOwnerConfig,
       }),
     ).toMatchInlineSnapshot(
-      `"0x7df8cb9fef4fc2aeb271b617d1a4c6178b720ae1d7564f48a363069b7d77a079"`,
+      `"0xbf944a7a752b2cfab0418d5fb4591c5a7ff62976488edce11794d7f35fb34f41"`,
     )
   })
 
-  test('behavior: `genesisConfig` and `{ account }` produce identical digests', () => {
+  test('behavior: `initialConfig` and `{ account }` produce identical digests', () => {
     const account = MultisigConfig.getAddress(singleOwnerConfig)
     const payload = `0x${'42'.repeat(32)}` as const
     expect(
       MultisigConfig.getSignPayload({
         payload,
-        genesisConfig: singleOwnerConfig,
+        initialConfig: singleOwnerConfig,
       }),
     ).toBe(MultisigConfig.getSignPayload({ payload, account }))
+  })
+
+  test('differs for a different config version', () => {
+    const value = {
+      payload: `0x${'42'.repeat(32)}` as const,
+      initialConfig: singleOwnerConfig,
+    }
+    expect(MultisigConfig.getSignPayload(value)).not.toBe(
+      MultisigConfig.getSignPayload({ ...value, version: 1n }),
+    )
+  })
+
+  test('defaults the config version to zero', () => {
+    const value = {
+      payload: `0x${'42'.repeat(32)}` as const,
+      initialConfig: singleOwnerConfig,
+    }
+    expect(MultisigConfig.getSignPayload(value)).toBe(
+      MultisigConfig.getSignPayload({ ...value, version: 0n }),
+    )
   })
 })
 
@@ -149,8 +169,8 @@ describe('assert / validate', () => {
     expect(MultisigConfig.validate({ threshold: 1, owners: [] })).toBe(false)
   })
 
-  test('accepts 255 owners', () => {
-    const owners = Array.from({ length: 255 }, (_, i) => ({
+  test('accepts 50 owners', () => {
+    const owners = Array.from({ length: 50 }, (_, i) => ({
       owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
       weight: 1,
     }))
@@ -163,7 +183,7 @@ describe('assert / validate', () => {
   })
 
   test('too many owners', () => {
-    const owners = Array.from({ length: 256 }, (_, i) => ({
+    const owners = Array.from({ length: 51 }, (_, i) => ({
       owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
       weight: 1,
     }))
