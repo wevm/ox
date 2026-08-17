@@ -136,7 +136,7 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  * ```ts twoslash
  * import { MultisigConfig } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -144,7 +144,7 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  *   ],
  * })
  *
- * const account = MultisigConfig.getAddress(genesisConfig)
+ * const account = MultisigConfig.getAddress(initialConfig)
  * ```
  *
  * @category Reference

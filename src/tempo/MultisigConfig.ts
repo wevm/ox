@@ -6,7 +6,7 @@ import * as Hex from '../core/Hex.js'
 import type { Compute, OneOf } from '../core/internal/types.js'
 
 /** Maximum number of owners allowed in a native multisig config. */
-export const maxOwners = 255
+export const maxOwners = 50
 
 /** Maximum threshold accepted by a native multisig config. */
 export const maxThreshold = 8
@@ -20,7 +20,7 @@ export const maxSignatures = maxThreshold
  */
 export const maxNestingDepth = 2
 
-/** Maximum encoded byte length for one owner approval. */
+/** Maximum encoded byte length for one primitive owner approval. */
 export const maxOwnerSignatureBytes = 2049
 
 /** Tempo signature type byte for native multisig signatures. */
@@ -224,14 +224,14 @@ export function fromTuple(tuple: Tuple): Config {
  * ```ts twoslash
  * import { MultisigConfig } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
  *
- * const address = MultisigConfig.getAddress(genesisConfig)
+ * const address = MultisigConfig.getAddress(initialConfig)
  * ```
  *
  * @param config - The initial (bootstrap) multisig config.
@@ -272,13 +272,13 @@ export declare namespace getAddress {
 /**
  * Computes the digest a native multisig owner approves (signs).
  *
- * `keccak256("tempo:multisig:signature" || inner_digest || account)`,
+ * `keccak256("tempo:multisig:signature" || inner_digest || account || uint64be(version))`,
  * where `inner_digest` is the transaction sign payload
  * ({@link ox#TxEnvelopeTempo.(getSignPayload:function)}).
  *
- * The digest is keyed on the permanent `account` derived from the genesis
- * (bootstrap) config — config updates never change it, so the genesis config
- * is the correct input even for post-update transactions.
+ * The digest is keyed on the permanent `account` derived from the initial
+ * (bootstrap) config and the current config `version`. Bootstrap approvals use
+ * version `0n`, which is also the default; each config update increments it.
  *
  * For a nested multisig owner approval, the parent digest becomes the nested
  * approval's `payload`, with the nested multisig `account`.
@@ -287,7 +287,7 @@ export declare namespace getAddress {
  * ```ts twoslash
  * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -301,7 +301,7 @@ export declare namespace getAddress {
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   genesisConfig,
+ *   initialConfig,
  * })
  * ```
  *
@@ -314,19 +314,20 @@ export declare namespace getAddress {
  * ```ts twoslash
  * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
- * const account = MultisigConfig.getAddress(genesisConfig)
+ * const account = MultisigConfig.getAddress(initialConfig)
  *
  * const envelope = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   account
+ *   account,
+ *   version: 1n
  * })
  * ```
  *
@@ -334,13 +335,18 @@ export declare namespace getAddress {
  * @returns The owner approval digest.
  */
 export function getSignPayload(value: getSignPayload.Value): Hex.Hex {
-  const { payload } = value
+  const { payload, version = 0n } = value
   const account =
     'account' in value && value.account
       ? value.account
-      : getAddress((value as { genesisConfig: Config }).genesisConfig)
+      : getAddress((value as { initialConfig: Config }).initialConfig)
   return Hash.keccak256(
-    Hex.concat(Hex.fromString(signatureDomain), Hex.from(payload), account),
+    Hex.concat(
+      Hex.fromString(signatureDomain),
+      Hex.from(payload),
+      account,
+      Hex.fromNumber(version, { size: 8 }),
+    ),
   )
 }
 
@@ -348,6 +354,8 @@ export declare namespace getSignPayload {
   type Value = {
     /** The inner transaction sign payload (`tx.signature_hash()`). */
     payload: Hex.Hex | Bytes.Bytes
+    /** Current multisig config version. Defaults to `0n`. */
+    version?: bigint | undefined
   } & OneOf<
     | {
         /** The native multisig account address. */
@@ -357,10 +365,10 @@ export declare namespace getSignPayload {
         /**
          * The initial multisig config (the bootstrap config that derived the
          * permanent `account`). Used to derive the account automatically.
-         * Config updates never change `account`, so the genesis config is
-         * also the correct input for post-update transactions.
+         * Config updates never change `account`, so the initial config can
+         * continue deriving the account for post-update transactions.
          */
-        genesisConfig: Config
+        initialConfig: Config
       }
   >
 
@@ -369,6 +377,7 @@ export declare namespace getSignPayload {
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
     | Hex.from.ErrorType
+    | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
