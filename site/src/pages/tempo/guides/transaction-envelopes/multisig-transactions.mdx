@@ -53,12 +53,12 @@ const owners = ownerPrivateKeys.map((privateKey) => ({
 }))
 
 // [!code focus:start]
-const genesisConfig = MultisigConfig.from({
+const initialConfig = MultisigConfig.from({
   owners,
   salt: Hex.random(32),
   threshold: 2, // [!code hl]
 })
-const account = MultisigConfig.getAddress(genesisConfig)
+const account = MultisigConfig.getAddress(initialConfig)
 // @log: '0x...'
 // [!code focus:end]
 ```
@@ -76,19 +76,19 @@ to put approvals in the order required by Tempo.
 
 Set `init: true` when calling
 [`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Ox derives `account` from
-`genesisConfig` and places the normalized config in `init`.
+`initialConfig` and places the normalized config in `init`.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
 import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
-// 1. Set up the owner keys and genesis config.
+// 1. Set up the owner keys and initial config.
 const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
 ]
-const genesisConfig = MultisigConfig.from({
+const initialConfig = MultisigConfig.from({
   owners: ownerPrivateKeys.map((privateKey) => ({
     owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
     weight: 1,
@@ -111,7 +111,7 @@ const transaction = TxEnvelopeTempo.from({
 // 3. Derive the multisig approval payload.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
-  genesisConfig,
+  initialConfig,
   payload,
 })
 
@@ -125,14 +125,14 @@ const approvals = ownerPrivateKeys.slice(0, 2).map((privateKey) =>
   ),
 )
 const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
-  genesisConfig,
+  initialConfig,
   payload,
   signatures: approvals,
 })
 
-// 5. Attach the genesis config and serialize the transaction.
+// 5. Attach the initial config and serialize the transaction.
 const bootstrapSignature = SignatureEnvelope.from({
-  genesisConfig,
+  initialConfig,
   init: true, // [!code hl]
   signatures: orderedApprovals,
 })
@@ -148,20 +148,21 @@ accepted transaction from the derived account.
 
 ### Sign a Later Transaction
 
-Reuse the original `genesisConfig` to derive the permanent account and approval digest, even if
-the onchain owner config has since been updated. Omit `init` from every post-bootstrap signature.
+Reuse the original `initialConfig` to derive the permanent account, even if the onchain owner
+config has since been updated. Read the current config version before deriving the approval digest,
+and omit `init` from every post-bootstrap signature.
 
 ```ts twoslash
-import { Address, Hex, Secp256k1 } from 'ox'
+import { AbiFunction, Address, Hex, RpcTransport, Secp256k1 } from 'ox'
 import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
-// 1. Set up the owner keys and genesis config.
+// 1. Set up the owner keys and initial config.
 const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
 ]
-const genesisConfig = MultisigConfig.from({
+const initialConfig = MultisigConfig.from({
   owners: ownerPrivateKeys.map((privateKey) => ({
     owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
     weight: 1,
@@ -169,8 +170,25 @@ const genesisConfig = MultisigConfig.from({
   salt: Hex.random(32),
   threshold: 2,
 })
+const account = MultisigConfig.getAddress(initialConfig)
 
-// 2. Build a later transaction.
+// 2. Read the current config version from the native multisig precompile.
+const getConfig = AbiFunction.from(
+  'function getConfig(address account) view returns ((uint64 version, uint8 threshold, (address owner, uint8 weight)[] owners) config)',
+)
+const transport = RpcTransport.fromHttp('https://rpc.example.com')
+const result = await transport.request({
+  method: 'eth_call',
+  params: [
+    {
+      data: AbiFunction.encodeData(getConfig, [account]),
+      to: '0xaacc000000000000000000000000000000000000',
+    },
+  ],
+})
+const { version } = AbiFunction.decodeResult(getConfig, result)
+
+// 3. Build a later transaction.
 const transaction = TxEnvelopeTempo.from({
   calls: [
     {
@@ -182,14 +200,15 @@ const transaction = TxEnvelopeTempo.from({
   nonce: 1n,
 })
 // [!code focus:start]
-// 3. Derive the multisig approval payload.
+// 4. Derive the multisig approval payload with the current config version.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
-  genesisConfig,
+  initialConfig,
   payload,
+  version, // [!code hl]
 })
 
-// 4. Collect sufficient approval weight and sort the approvals.
+// 5. Collect sufficient approval weight and sort the approvals.
 const approvals = ownerPrivateKeys.slice(1, 3).map((privateKey) =>
   SignatureEnvelope.from(
     Secp256k1.sign({
@@ -199,14 +218,15 @@ const approvals = ownerPrivateKeys.slice(1, 3).map((privateKey) =>
   ),
 )
 const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
-  genesisConfig,
+  initialConfig,
   payload,
   signatures: approvals,
+  version, // [!code hl]
 })
 
-// 5. Attach the approvals and serialize without reinitializing.
+// 6. Attach the approvals and serialize without reinitializing.
 const signature = SignatureEnvelope.from({
-  genesisConfig,
+  initialConfig,
   signatures: orderedApprovals, // [!code hl]
 })
 const serialized = TxEnvelopeTempo.serialize(transaction, {
@@ -220,10 +240,11 @@ Without `init`, the signature contains the derived account and ordered approvals
 
 ## Best Practices
 
-### Persist the Genesis Config
+### Persist the Initial Config
 
-Store the normalized initial config with the account. The account address and owner-approval
-digest continue to use that genesis identity after later config updates.
+Store the normalized initial config with the account. It remains the source for deriving the
+permanent account address after later config updates. Before signing, read the current version and
+owner weights from the onchain config.
 
 ### Sort Both Config Owners and Approvals
 
@@ -236,11 +257,17 @@ Ox validates the config, but the network decides whether the supplied approvals 
 threshold. Count weights from the current onchain config before collecting and broadcasting a
 signature.
 
-### Keep Access Keys Separate
+### Authorize Access Keys with Owner Approvals
 
-Do not include `keyAuthorization` in a native multisig transaction. TIP-1061 also excludes
-AccountKeychain mutation for native multisig accounts, so authorize each transaction with owner
-approvals.
+A native multisig can provision an account-bound non-admin access key. Set the authorization's
+`account` to the multisig address and `isAdmin` to `false`, then sign
+`KeyAuthorization.getSignPayload` with a multisig envelope whose owner approvals use the current
+config version. Attach the signed authorization as `keyAuthorization` when provisioning the key;
+later transactions omit it and use the account-bound keychain signature flow.
+
+When provisioning the key during bootstrap, include `init` on either the transaction's multisig
+signature or the authorization's multisig signature. Put `init` on the authorization signature when
+the new access key signs and submits that first transaction.
 
 ### Include `init` Exactly Once
 
