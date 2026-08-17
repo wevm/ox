@@ -438,7 +438,14 @@ describe('fromRpc', () => {
       })
       .then(Block.fromRpc)
 
-    expect(block).toMatchSnapshot()
+    const transactions = block?.transactions.map((transaction) => {
+      const { blockTimestamp: _, ...transaction_ } = {
+        blockTimestamp: undefined,
+        ...transaction,
+      }
+      return transaction_
+    })
+    expect({ ...block, transactions }).toMatchSnapshot()
   })
 })
 
