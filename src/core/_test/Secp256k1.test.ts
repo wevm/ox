@@ -211,6 +211,78 @@ describe('fromPrf', () => {
   })
 })
 
+describe('fromSeed', () => {
+  const seed =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  test('vector', () => {
+    expect(Secp256k1.fromSeed(seed)).toMatchInlineSnapshot(
+      `"0x5f7dcbba41adaafa378861d78b144f7b2827e79fa994a341628f5470d5bfbdd4"`,
+    )
+  })
+
+  test('value: Bytes', () => {
+    expect(Secp256k1.fromSeed(Bytes.fromHex(seed))).toMatchInlineSnapshot(
+      `"0x5f7dcbba41adaafa378861d78b144f7b2827e79fa994a341628f5470d5bfbdd4"`,
+    )
+  })
+
+  test('options: as', () => {
+    expect(Secp256k1.fromSeed(seed, { as: 'Bytes' })).toEqual(
+      Bytes.fromHex(
+        '0x5f7dcbba41adaafa378861d78b144f7b2827e79fa994a341628f5470d5bfbdd4',
+      ),
+    )
+  })
+
+  test('behavior: accepts seeds longer than 32 bytes', () => {
+    const privateKey = Secp256k1.fromSeed(new Uint8Array(64), { as: 'Bytes' })
+
+    expect(Secp256k1.noble.utils.isValidSecretKey(privateKey)).toBe(true)
+  })
+
+  test('behavior: domain is distinct from fromPrf', () => {
+    expect(Secp256k1.fromSeed(seed)).not.toBe(Secp256k1.fromPrf(seed))
+  })
+
+  test('behavior: skips invalid scalar candidates', () => {
+    const invalid = new Uint8Array(32).fill(0xff)
+    const messages: Hex.Hex[] = []
+    const privateKey = Engine.with(
+      {
+        Hash: {
+          hmacSha256: (_key, message) => {
+            messages.push(Hex.fromBytes(message))
+            if (messages.length === 1) return invalid
+            return Bytes.fromHex(
+              '0xef3f982137910a4c362017e69ba173fbb342325802ec827767aa6942027af35b',
+            )
+          },
+        },
+      },
+      () => Secp256k1.fromSeed(new Uint8Array(32)),
+    )
+
+    expect(privateKey).toBe(
+      '0xef3f982137910a4c362017e69ba173fbb342325802ec827767aa6942027af35b',
+    )
+    expect(invalid).toEqual(new Uint8Array(32))
+    expect(messages).toMatchInlineSnapshot(`
+      [
+        "0x6f782e736563703235366b312e66726f6d536565642e763100000000",
+        "0x6f782e736563703235366b312e66726f6d536565642e763100000001",
+      ]
+    `)
+  })
+
+  test('error: seed is too short', () => {
+    expect(() => Secp256k1.fromSeed(new Uint8Array(31)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [Secp256k1.InvalidSeedSizeError: Seed must contain at least 32 bytes. Received 31 bytes.]
+      `)
+  })
+})
+
 describe('getSharedSecret', () => {
   test('default', () => {
     const privateKeyA = accounts[0].privateKey
@@ -572,6 +644,7 @@ test('exports', () => {
       "noble",
       "createKeyPair",
       "fromPrf",
+      "fromSeed",
       "getPublicKey",
       "getSharedSecret",
       "randomPrivateKey",
@@ -580,6 +653,7 @@ test('exports', () => {
       "sign",
       "verify",
       "InvalidPrfSizeError",
+      "InvalidSeedSizeError",
     ]
   `)
 })

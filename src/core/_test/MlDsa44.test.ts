@@ -139,6 +139,46 @@ describe('fromPrf', () => {
   })
 })
 
+describe('fromSeed', () => {
+  const seed =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  test('vector', () => {
+    expect(MlDsa44.fromSeed(seed)).toMatchInlineSnapshot(
+      `"0xbee74160aef452ec0e90a4c347bbb0ac37e93fb94855f7a98dfe9afabebbdad6"`,
+    )
+  })
+
+  test('value: Bytes', () => {
+    expect(MlDsa44.fromSeed(Bytes.fromHex(seed))).toMatchInlineSnapshot(
+      `"0xbee74160aef452ec0e90a4c347bbb0ac37e93fb94855f7a98dfe9afabebbdad6"`,
+    )
+  })
+
+  test('options: as', () => {
+    expect(MlDsa44.fromSeed(seed, { as: 'Bytes' })).toEqual(
+      Bytes.fromHex(
+        '0xbee74160aef452ec0e90a4c347bbb0ac37e93fb94855f7a98dfe9afabebbdad6',
+      ),
+    )
+  })
+
+  test('behavior: output signs and verifies', () => {
+    const privateKey = MlDsa44.fromSeed(new Uint8Array(64))
+    const publicKey = MlDsa44.getPublicKey({ privateKey })
+    const signature = MlDsa44.sign({ payload, privateKey })
+
+    expect(MlDsa44.verify({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('error: seed is too short', () => {
+    expect(() => MlDsa44.fromSeed(new Uint8Array(31)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [MlDsa44.InvalidSeedSizeError: Seed must contain at least 32 bytes. Received 31 bytes.]
+      `)
+  })
+})
+
 describe('getPublicKey', () => {
   test('default', () => {
     const publicKey = MlDsa44.getPublicKey({ privateKey })

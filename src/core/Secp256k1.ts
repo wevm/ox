@@ -10,6 +10,7 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
+import * as keyDerivation from './internal/keyDerivation.js'
 import * as engine from './internal/secp256k1.js'
 import * as Entropy from './internal/entropy.js'
 import {
@@ -76,7 +77,7 @@ export declare namespace createKeyPair {
  * Derives a valid secp256k1 private key from a 32-byte WebAuthn PRF output.
  *
  * The permanent derivation contract uses the PRF output as the HMAC-SHA256
- * key. Its message is the UTF-8 bytes of `ox.secp256k1.fromPrf.v1` followed by
+ * key. The HMAC message uses the `ox.secp256k1.fromPrf.v1` domain followed by
  * a 32-bit big-endian counter starting at zero. Invalid scalars are skipped.
  *
  * @example
@@ -103,7 +104,7 @@ export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
   for (let counter = 0; ; counter++) {
     const candidate = Hash.hmac256(
       bytes,
-      Bytes.concat(fromPrfLabel, Bytes.fromNumber(counter, { size: 4 })),
+      Bytes.concat(fromPrfDomain, Bytes.fromNumber(counter, { size: 4 })),
       { as: 'Bytes' },
     )
     if (noble.utils.isValidSecretKey(candidate)) {
@@ -138,6 +139,69 @@ export declare namespace fromPrf {
     | Hash.hmac256.ErrorType
     | Hex.fromBytes.ErrorType
     | InvalidPrfSizeError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives a valid secp256k1 private key from a seed.
+ *
+ * The seed must contain at least 32 bytes of cryptographically strong key
+ * material. Do not pass a password directly; use a password KDF first.
+ *
+ * The permanent derivation contract uses the seed as the HMAC-SHA256
+ * key. The HMAC message uses the `ox.secp256k1.fromSeed.v1` domain followed by
+ * a 32-bit big-endian counter starting at zero. Invalid scalars are skipped.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.fromSeed(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param seed - Seed containing at least 32 bytes of cryptographically strong key material.
+ * @param options - Options.
+ * @returns A valid secp256k1 private key.
+ */
+export function fromSeed<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  seed: Hex.Hex | Bytes.Bytes,
+  options: fromSeed.Options<as> = {},
+): fromSeed.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const bytes = Bytes.from(seed)
+  if (bytes.length < 32) throw new InvalidSeedSizeError({ size: bytes.length })
+
+  const privateKey = keyDerivation.derive(bytes, fromSeedDomain, {
+    validate: noble.utils.isValidSecretKey,
+  })
+  if (as === 'Hex') {
+    const value = Hex.fromBytes(privateKey)
+    privateKey.fill(0)
+    return value as never
+  }
+  return privateKey as never
+}
+
+export declare namespace fromSeed {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | keyDerivation.derive.ErrorType
+    | InvalidSeedSizeError
     | Errors.GlobalErrorType
 }
 
@@ -593,4 +657,24 @@ export declare namespace InvalidPrfSizeError {
   }
 }
 
-const fromPrfLabel = Bytes.fromString('ox.secp256k1.fromPrf.v1')
+/** Thrown when a seed contains fewer than 32 bytes. */
+export class InvalidSeedSizeError extends Errors.BaseError {
+  override readonly name = 'Secp256k1.InvalidSeedSizeError'
+
+  constructor(options: InvalidSeedSizeError.Options) {
+    super(
+      `Seed must contain at least 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidSeedSizeError {
+  /** Options for {@link ox#Secp256k1.InvalidSeedSizeError}. */
+  type Options = {
+    /** Received seed size. */
+    size: number
+  }
+}
+
+const fromPrfDomain = Bytes.fromString('ox.secp256k1.fromPrf.v1')
+const fromSeedDomain = Bytes.fromString('ox.secp256k1.fromSeed.v1')

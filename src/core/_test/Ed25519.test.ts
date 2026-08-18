@@ -146,6 +146,61 @@ describe('fromPrf', () => {
   })
 })
 
+describe('fromSeed', () => {
+  const seed =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  test('vector', () => {
+    expect(Ed25519.fromSeed(seed)).toMatchInlineSnapshot(
+      `"0xfd09c7b2acda46034df7e428377fdc37200094c9b51690fa1b733ee3c16a2d07"`,
+    )
+  })
+
+  test('value: Bytes', () => {
+    expect(Ed25519.fromSeed(Bytes.fromHex(seed))).toMatchInlineSnapshot(
+      `"0xfd09c7b2acda46034df7e428377fdc37200094c9b51690fa1b733ee3c16a2d07"`,
+    )
+  })
+
+  test('options: as', () => {
+    expect(Ed25519.fromSeed(seed, { as: 'Bytes' })).toEqual(
+      Bytes.fromHex(
+        '0xfd09c7b2acda46034df7e428377fdc37200094c9b51690fa1b733ee3c16a2d07',
+      ),
+    )
+  })
+
+  test('behavior: output signs and verifies', () => {
+    const privateKey = Ed25519.fromSeed(new Uint8Array(64))
+    const publicKey = Ed25519.getPublicKey({ privateKey })
+    const payload = '0xdeadbeef'
+    const signature = Ed25519.sign({ payload, privateKey })
+
+    expect(Ed25519.verify({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('behavior: zeroes intermediate key for Hex output', () => {
+    const candidate = new Uint8Array(32).fill(1)
+    Engine.with(
+      {
+        Hash: {
+          hmacSha256: () => candidate,
+        },
+      },
+      () => Ed25519.fromSeed(new Uint8Array(32)),
+    )
+
+    expect(candidate).toEqual(new Uint8Array(32))
+  })
+
+  test('error: seed is too short', () => {
+    expect(() => Ed25519.fromSeed(new Uint8Array(31)))
+      .toThrowErrorMatchingInlineSnapshot(`
+        [Ed25519.InvalidSeedSizeError: Seed must contain at least 32 bytes. Received 31 bytes.]
+      `)
+  })
+})
+
 describe('getPublicKey', () => {
   const privateKey =
     '0x9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'
@@ -545,6 +600,7 @@ test('exports', () => {
       "noble",
       "createKeyPair",
       "fromPrf",
+      "fromSeed",
       "getPublicKey",
       "randomPrivateKey",
       "sign",
@@ -552,6 +608,7 @@ test('exports', () => {
       "toX25519PublicKey",
       "toX25519PrivateKey",
       "InvalidPrfSizeError",
+      "InvalidSeedSizeError",
     ]
   `)
 })

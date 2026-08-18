@@ -4,6 +4,7 @@ import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as engine from './internal/ed25519.js'
+import * as keyDerivation from './internal/keyDerivation.js'
 
 /** Re-export of noble/curves Ed25519 utilities. */
 export const noble = ed25519
@@ -63,8 +64,8 @@ export declare namespace createKeyPair {
  * Derives an Ed25519 private key from a 32-byte WebAuthn PRF output.
  *
  * The permanent derivation contract uses the PRF output as the HMAC-SHA256
- * key. Its message is the UTF-8 bytes of `ox.ed25519.fromPrf.v1` followed by
- * a 32-bit big-endian counter set to zero.
+ * key. The HMAC message uses the `ox.ed25519.fromPrf.v1` domain followed by a
+ * 32-bit big-endian counter set to zero.
  *
  * @example
  * ```ts twoslash
@@ -89,7 +90,7 @@ export function fromPrf<as extends 'Hex' | 'Bytes' = 'Hex'>(
 
   const privateKey = Hash.hmac256(
     bytes,
-    Bytes.concat(fromPrfLabel, Bytes.fromNumber(0, { size: 4 })),
+    Bytes.concat(fromPrfDomain, Bytes.fromNumber(0, { size: 4 })),
     { as: 'Bytes' },
   )
   if (as === 'Hex') {
@@ -120,6 +121,67 @@ export declare namespace fromPrf {
     | Hash.hmac256.ErrorType
     | Hex.fromBytes.ErrorType
     | InvalidPrfSizeError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an Ed25519 private key from a seed.
+ *
+ * The seed must contain at least 32 bytes of cryptographically strong key
+ * material. Do not pass a password directly; use a password KDF first.
+ *
+ * The permanent derivation contract uses the seed as the HMAC-SHA256
+ * key. The HMAC message uses the `ox.ed25519.fromSeed.v1` domain followed by a
+ * 32-bit big-endian counter set to zero.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Ed25519 } from 'ox'
+ *
+ * const privateKey = Ed25519.fromSeed(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param seed - Seed containing at least 32 bytes of cryptographically strong key material.
+ * @param options - Options.
+ * @returns An Ed25519 private key.
+ */
+export function fromSeed<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  seed: Hex.Hex | Bytes.Bytes,
+  options: fromSeed.Options<as> = {},
+): fromSeed.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const bytes = Bytes.from(seed)
+  if (bytes.length < 32) throw new InvalidSeedSizeError({ size: bytes.length })
+
+  const privateKey = keyDerivation.derive(bytes, fromSeedDomain)
+  if (as === 'Hex') {
+    const value = Hex.fromBytes(privateKey)
+    privateKey.fill(0)
+    return value as never
+  }
+  return privateKey as never
+}
+
+export declare namespace fromSeed {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | keyDerivation.derive.ErrorType
+    | InvalidSeedSizeError
     | Errors.GlobalErrorType
 }
 
@@ -430,4 +492,24 @@ export declare namespace InvalidPrfSizeError {
   }
 }
 
-const fromPrfLabel = Bytes.fromString('ox.ed25519.fromPrf.v1')
+/** Thrown when a seed contains fewer than 32 bytes. */
+export class InvalidSeedSizeError extends Errors.BaseError {
+  override readonly name = 'Ed25519.InvalidSeedSizeError'
+
+  constructor(options: InvalidSeedSizeError.Options) {
+    super(
+      `Seed must contain at least 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidSeedSizeError {
+  /** Options for {@link ox#Ed25519.InvalidSeedSizeError}. */
+  type Options = {
+    /** Received seed size. */
+    size: number
+  }
+}
+
+const fromPrfDomain = Bytes.fromString('ox.ed25519.fromPrf.v1')
+const fromSeedDomain = Bytes.fromString('ox.ed25519.fromSeed.v1')

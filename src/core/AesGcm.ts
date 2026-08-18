@@ -138,8 +138,8 @@ export declare namespace encrypt {
  * Derives an AES-256-GCM key from a 32-byte WebAuthn PRF output.
  *
  * The permanent derivation contract uses the PRF output as the HMAC-SHA256
- * key. Its message is the UTF-8 bytes of `ox.aesGcm.fromPrf.v1` followed by
- * a 32-bit big-endian counter set to zero.
+ * key. The HMAC message uses the `ox.aesGcm.fromPrf.v1` domain followed by a
+ * 32-bit big-endian counter set to zero.
  *
  * @example
  * ```ts twoslash
@@ -158,35 +158,7 @@ export async function fromPrf(
 ): Promise<CryptoKey> {
   const bytes = Bytes.from(value)
   if (bytes.length !== 32) throw new InvalidPrfSizeError({ size: bytes.length })
-
-  const prfKey = await globalThis.crypto.subtle.importKey(
-    'raw',
-    bytes,
-    {
-      name: 'HMAC',
-      hash: 'SHA-256',
-    },
-    false,
-    ['sign'],
-  )
-  const key = new Uint8Array(
-    await globalThis.crypto.subtle.sign(
-      'HMAC',
-      prfKey,
-      Bytes.concat(fromPrfLabel, Bytes.fromNumber(0, { size: 4 })),
-    ),
-  )
-  try {
-    return await globalThis.crypto.subtle.importKey(
-      'raw',
-      key,
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt', 'decrypt'],
-    )
-  } finally {
-    key.fill(0)
-  }
+  return deriveKey(bytes, fromPrfDomain)
 }
 
 export declare namespace fromPrf {
@@ -195,6 +167,45 @@ export declare namespace fromPrf {
     | Bytes.from.ErrorType
     | Bytes.fromNumber.ErrorType
     | InvalidPrfSizeError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an AES-256-GCM key from a seed.
+ *
+ * The seed must contain at least 32 bytes of cryptographically strong key
+ * material. Do not pass a password directly; use a password KDF first.
+ *
+ * The permanent derivation contract uses the seed as the HMAC-SHA256
+ * key. The HMAC message uses the `ox.aesGcm.fromSeed.v1` domain followed by a
+ * 32-bit big-endian counter set to zero.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AesGcm } from 'ox'
+ *
+ * const key = await AesGcm.fromSeed(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param seed - Seed containing at least 32 bytes of cryptographically strong key material.
+ * @returns A nonextractable AES-256-GCM key for encryption and decryption.
+ */
+export async function fromSeed(
+  seed: Hex.Hex | Bytes.Bytes,
+): Promise<CryptoKey> {
+  const bytes = Bytes.from(seed)
+  if (bytes.length < 32) throw new InvalidSeedSizeError({ size: bytes.length })
+  return deriveKey(bytes, fromSeedDomain)
+}
+
+export declare namespace fromSeed {
+  type ErrorType =
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.fromNumber.ErrorType
+    | InvalidSeedSizeError
     | Errors.GlobalErrorType
 }
 
@@ -290,4 +301,58 @@ export declare namespace InvalidPrfSizeError {
   }
 }
 
-const fromPrfLabel = Bytes.fromString('ox.aesGcm.fromPrf.v1')
+/** Thrown when a seed contains fewer than 32 bytes. */
+export class InvalidSeedSizeError extends Errors.BaseError {
+  override readonly name = 'AesGcm.InvalidSeedSizeError'
+
+  constructor(options: InvalidSeedSizeError.Options) {
+    super(
+      `Seed must contain at least 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidSeedSizeError {
+  /** Options for {@link ox#AesGcm.InvalidSeedSizeError}. */
+  type Options = {
+    /** Received seed size. */
+    size: number
+  }
+}
+
+async function deriveKey(
+  seed: Bytes.Bytes,
+  domain: Bytes.Bytes,
+): Promise<CryptoKey> {
+  const baseKey = await globalThis.crypto.subtle.importKey(
+    'raw',
+    seed,
+    {
+      name: 'HMAC',
+      hash: 'SHA-256',
+    },
+    false,
+    ['sign'],
+  )
+  const key = new Uint8Array(
+    await globalThis.crypto.subtle.sign(
+      'HMAC',
+      baseKey,
+      Bytes.concat(domain, Bytes.fromNumber(0, { size: 4 })),
+    ),
+  )
+  try {
+    return await globalThis.crypto.subtle.importKey(
+      'raw',
+      key,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt'],
+    )
+  } finally {
+    key.fill(0)
+  }
+}
+
+const fromPrfDomain = Bytes.fromString('ox.aesGcm.fromPrf.v1')
+const fromSeedDomain = Bytes.fromString('ox.aesGcm.fromSeed.v1')
