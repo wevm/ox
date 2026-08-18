@@ -1,4 +1,4 @@
-import { Bytes, Hex, P256 } from 'ox'
+import { Bytes, Hex, Mnemonic, P256 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -142,6 +142,73 @@ describe('createKeyPair', () => {
     const recoveredPublicKey = P256.recoverPublicKey({ payload, signature })
 
     expect(recoveredPublicKey).toEqual(keyPair.publicKey)
+  })
+})
+
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', () => {
+    const privateKey = P256.fromMnemonic(mnemonic)
+
+    expect(privateKey).toBe(P256.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toMatchInlineSnapshot(
+      `"0x882f5b02a84c96bceeebf9c868bec73041d51b041ae05380e66a41508648ebc3"`,
+    )
+  })
+
+  test('options: passphrase', () => {
+    expect(
+      P256.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+    ).toMatchInlineSnapshot(
+      `"0x364ff539f37ce477d49a35476c9ad32a2a3fed1d1237eaee7abdfd07655ad9f5"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = P256.fromMnemonic(mnemonic, { as: 'Bytes' })
+
+    expect(privateKey).toBeInstanceOf(Uint8Array)
+    expect(privateKey).toHaveLength(32)
+  })
+})
+
+describe('fromSeed', () => {
+  const seed =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  test('vector', () => {
+    expect(P256.fromSeed(seed)).toMatchInlineSnapshot(
+      `"0x724009e76eb27e34eb77b93db354b9015ecd4296deb57561f5214bab68b94a6f"`,
+    )
+  })
+
+  test('value: Bytes', () => {
+    expect(P256.fromSeed(Bytes.fromHex(seed))).toMatchInlineSnapshot(
+      `"0x724009e76eb27e34eb77b93db354b9015ecd4296deb57561f5214bab68b94a6f"`,
+    )
+  })
+
+  test('options: as', () => {
+    expect(P256.fromSeed(seed, { as: 'Bytes' })).toEqual(
+      Bytes.fromHex(
+        '0x724009e76eb27e34eb77b93db354b9015ecd4296deb57561f5214bab68b94a6f',
+      ),
+    )
+  })
+
+  test('behavior: output is a valid P256 private key', () => {
+    const privateKey = P256.fromSeed(new Uint8Array(64), { as: 'Bytes' })
+
+    expect(P256.noble.utils.isValidPrivateKey(privateKey)).toBe(true)
+  })
+
+  test('error: seed is too short', () => {
+    expect(() =>
+      P256.fromSeed(new Uint8Array(31)),
+    ).toThrowErrorMatchingInlineSnapshot(`
+        [P256.InvalidSeedSizeError: Seed must contain at least 32 bytes. Received 31 bytes.]
+      `)
   })
 })
 
@@ -541,7 +608,10 @@ test('exports', () => {
   expect(Object.keys(P256)).toMatchInlineSnapshot(`
     [
       "noble",
+      "InvalidSeedSizeError",
       "createKeyPair",
+      "fromMnemonic",
+      "fromSeed",
       "getPublicKey",
       "getSharedSecret",
       "randomPrivateKey",

@@ -1,6 +1,30 @@
 import { attest } from '@ark/attest'
-import { Ed25519 } from 'ox'
+import { type Bytes, Ed25519, type Hex } from 'ox'
 import { expectTypeOf, test } from 'vitest'
+
+test('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  expectTypeOf(Ed25519.fromMnemonic(mnemonic)).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    Ed25519.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+  ).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    Ed25519.fromMnemonic(mnemonic, { as: 'Bytes' }),
+  ).toEqualTypeOf<Bytes.Bytes>()
+})
+
+test('fromSeed', () => {
+  const seed =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  expectTypeOf(Ed25519.fromSeed(seed)).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(Ed25519.fromSeed(new Uint8Array(32))).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(Ed25519.fromSeed(seed, { as: 'Hex' })).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    Ed25519.fromSeed(seed, { as: 'Bytes' }),
+  ).toEqualTypeOf<Bytes.Bytes>()
+})
 
 test('createKeyPair', () => {
   // Default behavior (Hex)
