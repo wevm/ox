@@ -1,5 +1,11 @@
 # ox
 
+## 1.7.0
+
+### Minor Changes
+
+- [#394](https://github.com/wevm/ox/pull/394) [`06021e1`](https://github.com/wevm/ox/commit/06021e18ade1d85163d8bfcc0ae6e848256da30d) Thanks [@jxom](https://github.com/jxom)! - Added seed and BIP-39 mnemonic key derivation for P256, Secp256k1, Ed25519, ML-DSA-44, and AES-GCM, with domain separation for non-HD derivations.
+
 ## 1.6.3
 
 ### Patch Changes
