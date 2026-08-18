@@ -5,6 +5,7 @@ import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as engine from './internal/ed25519.js'
 import * as keyDerivation from './internal/keyDerivation.js'
+import * as mnemonic_ from './internal/mnemonic.js'
 
 /** Re-export of noble/curves Ed25519 utilities. */
 export const noble = ed25519
@@ -122,6 +123,54 @@ export declare namespace fromPrf {
     | Hex.fromBytes.ErrorType
     | InvalidPrfSizeError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an Ed25519 private key from a BIP-39 mnemonic.
+ *
+ * This is equivalent to passing `Mnemonic.toSeed(mnemonic, { passphrase })`
+ * to {@link ox#Ed25519.fromSeed}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Ed25519 } from 'ox'
+ *
+ * const privateKey = Ed25519.fromMnemonic(
+ *   'test test test test test test test test test test test junk'
+ * )
+ * ```
+ *
+ * @param mnemonic - BIP-39 mnemonic phrase.
+ * @param options - Options.
+ * @returns An Ed25519 private key.
+ */
+export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  mnemonic: string,
+  options: fromMnemonic.Options<as> = {},
+): fromMnemonic.ReturnType<as> {
+  const { passphrase } = options
+  const seed = mnemonic_.toSeed(mnemonic, passphrase)
+  try {
+    return fromSeed(seed, options)
+  } finally {
+    seed.fill(0)
+  }
+}
+
+export declare namespace fromMnemonic {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /** Optional BIP-39 passphrase. */
+    passphrase?: string | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> = fromSeed.ReturnType<as>
+
+  type ErrorType = fromSeed.ErrorType
 }
 
 /**

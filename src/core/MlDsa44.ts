@@ -6,6 +6,7 @@ import * as Hex from './Hex.js'
 import * as Entropy from './internal/entropy.js'
 import * as keyDerivation from './internal/keyDerivation.js'
 import * as engine from './internal/mlDsa44.js'
+import * as mnemonic_ from './internal/mnemonic.js'
 
 /** Re-export of noble/post-quantum ML-DSA-44 utilities. */
 export const noble = ml_dsa44
@@ -136,6 +137,54 @@ export declare namespace fromPrf {
     | Hex.fromBytes.ErrorType
     | InvalidPrfSizeError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an ML-DSA-44 private key from a BIP-39 mnemonic.
+ *
+ * This is equivalent to passing `Mnemonic.toSeed(mnemonic, { passphrase })`
+ * to {@link ox#MlDsa44.fromSeed}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { MlDsa44 } from 'ox'
+ *
+ * const privateKey = MlDsa44.fromMnemonic(
+ *   'test test test test test test test test test test test junk'
+ * )
+ * ```
+ *
+ * @param mnemonic - BIP-39 mnemonic phrase.
+ * @param options - Options.
+ * @returns An ML-DSA-44 private key (32-byte seed).
+ */
+export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  mnemonic: string,
+  options: fromMnemonic.Options<as> = {},
+): fromMnemonic.ReturnType<as> {
+  const { passphrase } = options
+  const seed = mnemonic_.toSeed(mnemonic, passphrase)
+  try {
+    return fromSeed(seed, options)
+  } finally {
+    seed.fill(0)
+  }
+}
+
+export declare namespace fromMnemonic {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /** Optional BIP-39 passphrase. */
+    passphrase?: string | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> = fromSeed.ReturnType<as>
+
+  type ErrorType = fromSeed.ErrorType
 }
 
 /**

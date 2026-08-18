@@ -1,4 +1,4 @@
-import { Bytes, Engine, Hex, P256 } from 'ox'
+import { Bytes, Engine, Hex, Mnemonic, P256 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -142,6 +142,34 @@ describe('createKeyPair', () => {
     const recoveredPublicKey = P256.recoverPublicKey({ payload, signature })
 
     expect(recoveredPublicKey).toEqual(keyPair.publicKey)
+  })
+})
+
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', () => {
+    const privateKey = P256.fromMnemonic(mnemonic)
+
+    expect(privateKey).toBe(P256.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toMatchInlineSnapshot(
+      `"0x882f5b02a84c96bceeebf9c868bec73041d51b041ae05380e66a41508648ebc3"`,
+    )
+  })
+
+  test('options: passphrase', () => {
+    expect(
+      P256.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+    ).toMatchInlineSnapshot(
+      `"0x364ff539f37ce477d49a35476c9ad32a2a3fed1d1237eaee7abdfd07655ad9f5"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = P256.fromMnemonic(mnemonic, { as: 'Bytes' })
+
+    expect(privateKey).toBeInstanceOf(Uint8Array)
+    expect(privateKey).toHaveLength(32)
   })
 })
 
@@ -612,6 +640,7 @@ test('exports', () => {
     [
       "noble",
       "createKeyPair",
+      "fromMnemonic",
       "fromSeed",
       "getPublicKey",
       "getSharedSecret",

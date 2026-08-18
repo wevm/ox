@@ -24,6 +24,18 @@ test('fromPrf', () => {
   ).toEqualTypeOf<Bytes.Bytes>()
 })
 
+test('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  expectTypeOf(MlDsa44.fromMnemonic(mnemonic)).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    MlDsa44.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+  ).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    MlDsa44.fromMnemonic(mnemonic, { as: 'Bytes' }),
+  ).toEqualTypeOf<Bytes.Bytes>()
+})
+
 test('fromSeed', () => {
   const seed =
     '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'

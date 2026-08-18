@@ -11,7 +11,7 @@ import { Card, Cards } from 'vocs'
 Use a cryptographically strong root seed to deterministically derive keys for multiple
 algorithms. [`Secp256k1`](/api/Secp256k1), [`P256`](/api/P256),
 [`Ed25519`](/api/Ed25519), [`MlDsa44`](/api/MlDsa44), and [`AesGcm`](/api/AesGcm) each expose
-a `fromSeed` function that accepts at least 32 bytes of key material.
+`fromSeed` and `fromMnemonic` functions.
 
 Each function applies its own fixed, versioned HMAC-SHA256 derivation domain. The same seed
 therefore reproduces the same key for a given module without reusing raw key material across
@@ -60,23 +60,28 @@ appropriate.
 
 ### Restore Keys from a Recovery Phrase
 
-[`Mnemonic.toSeed`](/api/Mnemonic/toSeed) converts a valid BIP-39 recovery phrase into 64 bytes
-of seed material. Passing that seed to the same `fromSeed` functions restores the same keys.
+Pass a BIP-39 recovery phrase directly to each module's `fromMnemonic` function. An optional
+`passphrase` is forwarded to the BIP-39 seed derivation.
 
 ```ts twoslash
-import { Ed25519, MlDsa44, Mnemonic, P256, Secp256k1 } from 'ox'
+import { AesGcm, Ed25519, MlDsa44, Mnemonic, P256, Secp256k1 } from 'ox'
 
 const phrase = Mnemonic.random(Mnemonic.english)
-const seed = Mnemonic.toSeed(phrase) // [!code hl]
 
-const secp256k1PrivateKey = Secp256k1.fromSeed(seed)
-const p256PrivateKey = P256.fromSeed(seed)
-const ed25519PrivateKey = Ed25519.fromSeed(seed)
-const mlDsa44PrivateKey = MlDsa44.fromSeed(seed)
+const secp256k1PrivateKey = Secp256k1.fromMnemonic(phrase)
+const p256PrivateKey = P256.fromMnemonic(phrase)
+const ed25519PrivateKey = Ed25519.fromMnemonic(phrase)
+const mlDsa44PrivateKey = MlDsa44.fromMnemonic(phrase)
+const encryptionKey = await AesGcm.fromMnemonic(phrase)
 ```
 
-These keys use Ox's `fromSeed` derivation domains. They are not BIP-32 child keys and will not
-match wallet keys derived from paths such as `m/44'/60'/0'/0/0`.
+Each `fromMnemonic` function is equivalent to
+`fromSeed(Mnemonic.toSeed(phrase, { passphrase }))`.
+
+:::warning
+Mnemonic-derived keys use Ox's `fromSeed` derivation domains. They are not BIP-32 child keys and
+will not match wallet keys derived from paths such as `m/44'/60'/0'/0/0`.
+:::
 
 ## Best Practices
 
@@ -92,8 +97,8 @@ with the same Ox API and seed instead of implementing the HMAC construction sepa
 
 ### Use HD Paths for Multiple Ethereum Accounts
 
-`Secp256k1.fromSeed` produces one deterministic secp256k1 key for a seed. Use
-[`HdKey`](/api/HdKey) or [`Mnemonic`](/api/Mnemonic) when you need multiple interoperable
+`Secp256k1.fromSeed` and `Secp256k1.fromMnemonic` each produce one deterministic secp256k1 key.
+Use [`HdKey`](/api/HdKey) or [`Mnemonic`](/api/Mnemonic) when you need multiple interoperable
 Ethereum accounts with BIP-32 derivation paths.
 
 ## See More

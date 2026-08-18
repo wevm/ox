@@ -1,4 +1,4 @@
-import { Bytes, Ed25519, Engine, Hex, X25519 } from 'ox'
+import { Bytes, Ed25519, Engine, Hex, Mnemonic, X25519 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 describe('createKeyPair', () => {
@@ -143,6 +143,34 @@ describe('fromPrf', () => {
       .toThrowErrorMatchingInlineSnapshot(`
         [Ed25519.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 33 bytes.]
       `)
+  })
+})
+
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', () => {
+    const privateKey = Ed25519.fromMnemonic(mnemonic)
+
+    expect(privateKey).toBe(Ed25519.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toMatchInlineSnapshot(
+      `"0x23fb07a427d2bc36141d1e6c7e56c72679739eff374a8e8def282f1048674567"`,
+    )
+  })
+
+  test('options: passphrase', () => {
+    expect(
+      Ed25519.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+    ).toMatchInlineSnapshot(
+      `"0xe888791c9d783e772d92b0bf2aa326b1cda8214a03c3c07933615b1a98fc8651"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = Ed25519.fromMnemonic(mnemonic, { as: 'Bytes' })
+
+    expect(privateKey).toBeInstanceOf(Uint8Array)
+    expect(privateKey).toHaveLength(32)
   })
 })
 
@@ -600,6 +628,7 @@ test('exports', () => {
       "noble",
       "createKeyPair",
       "fromPrf",
+      "fromMnemonic",
       "fromSeed",
       "getPublicKey",
       "randomPrivateKey",

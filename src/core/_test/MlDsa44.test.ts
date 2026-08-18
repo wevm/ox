@@ -1,4 +1,4 @@
-import { Bytes, Engine, Hash, Hex, MlDsa44 } from 'ox'
+import { Bytes, Engine, Hash, Hex, MlDsa44, Mnemonic } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 const privateKey = Hex.fromBytes(new Uint8Array(32).fill(7))
@@ -136,6 +136,34 @@ describe('fromPrf', () => {
       .toThrowErrorMatchingInlineSnapshot(`
         [MlDsa44.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 33 bytes.]
       `)
+  })
+})
+
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', () => {
+    const privateKey = MlDsa44.fromMnemonic(mnemonic)
+
+    expect(privateKey).toBe(MlDsa44.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toMatchInlineSnapshot(
+      `"0x787f747b571a3511deac4d045a7876ae2349f45b9f9f4e3a6ee40342313a963f"`,
+    )
+  })
+
+  test('options: passphrase', () => {
+    expect(
+      MlDsa44.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+    ).toMatchInlineSnapshot(
+      `"0x51202c4aaf8b4090f94c43ae43234b133a2646642fbc4ca39d8883a0b39d2b44"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = MlDsa44.fromMnemonic(mnemonic, { as: 'Bytes' })
+
+    expect(privateKey).toBeInstanceOf(Uint8Array)
+    expect(privateKey).toHaveLength(32)
   })
 })
 

@@ -1,4 +1,4 @@
-import { AesGcm, Bytes, Hex } from 'ox'
+import { AesGcm, Bytes, Hex, Mnemonic } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 describe('decrypt', () => {
@@ -159,6 +159,29 @@ describe('fromPrf', () => {
   })
 })
 
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', async () => {
+    const key = await AesGcm.fromMnemonic(mnemonic)
+    const expectedKey = await AesGcm.fromSeed(Mnemonic.toSeed(mnemonic))
+    const value = Bytes.fromString('i am a secret message')
+    const encrypted = await AesGcm.encrypt(value, key)
+
+    await expect(AesGcm.decrypt(encrypted, expectedKey)).resolves.toEqual(value)
+  })
+
+  test('options: passphrase', async () => {
+    const key = await AesGcm.fromMnemonic(mnemonic, {
+      passphrase: 'qwerty',
+    })
+    const defaultKey = await AesGcm.fromMnemonic(mnemonic)
+    const encrypted = await AesGcm.encrypt('0xdeadbeef', key)
+
+    await expect(AesGcm.decrypt(encrypted, defaultKey)).rejects.toThrowError()
+  })
+})
+
 describe('fromSeed', () => {
   const seed =
     '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
@@ -243,6 +266,7 @@ test('exports', () => {
       "decrypt",
       "encrypt",
       "fromPrf",
+      "fromMnemonic",
       "fromSeed",
       "getKey",
       "randomSalt",

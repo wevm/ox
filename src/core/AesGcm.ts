@@ -1,6 +1,7 @@
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as mnemonic_ from './internal/mnemonic.js'
 
 export const ivLength = 16
 
@@ -168,6 +169,47 @@ export declare namespace fromPrf {
     | Bytes.fromNumber.ErrorType
     | InvalidPrfSizeError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Derives an AES-256-GCM key from a BIP-39 mnemonic.
+ *
+ * This is equivalent to passing `Mnemonic.toSeed(mnemonic, { passphrase })`
+ * to {@link ox#AesGcm.fromSeed}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AesGcm } from 'ox'
+ *
+ * const key = await AesGcm.fromMnemonic(
+ *   'test test test test test test test test test test test junk'
+ * )
+ * ```
+ *
+ * @param mnemonic - BIP-39 mnemonic phrase.
+ * @param options - Options.
+ * @returns A nonextractable AES-256-GCM key for encryption and decryption.
+ */
+export async function fromMnemonic(
+  mnemonic: string,
+  options: fromMnemonic.Options = {},
+): Promise<CryptoKey> {
+  const { passphrase } = options
+  const seed = mnemonic_.toSeed(mnemonic, passphrase)
+  try {
+    return await fromSeed(seed)
+  } finally {
+    seed.fill(0)
+  }
+}
+
+export declare namespace fromMnemonic {
+  type Options = {
+    /** Optional BIP-39 passphrase. */
+    passphrase?: string | undefined
+  }
+
+  type ErrorType = fromSeed.ErrorType
 }
 
 /**

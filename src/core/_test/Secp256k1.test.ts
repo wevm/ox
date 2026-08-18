@@ -1,4 +1,4 @@
-import { Address, Bytes, Engine, Hex, PublicKey, Secp256k1 } from 'ox'
+import { Address, Bytes, Engine, Hex, Mnemonic, PublicKey, Secp256k1 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -208,6 +208,34 @@ describe('fromPrf', () => {
       .toThrowErrorMatchingInlineSnapshot(`
         [Secp256k1.InvalidPrfSizeError: PRF output must be exactly 32 bytes. Received 33 bytes.]
       `)
+  })
+})
+
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', () => {
+    const privateKey = Secp256k1.fromMnemonic(mnemonic)
+
+    expect(privateKey).toBe(Secp256k1.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toMatchInlineSnapshot(
+      `"0x1ccb5b6b0469535f8a21f52d998605e4b7318374bc0cefea30492b6af2ba5dfe"`,
+    )
+  })
+
+  test('options: passphrase', () => {
+    expect(
+      Secp256k1.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+    ).toMatchInlineSnapshot(
+      `"0x40495df06f9a3e745611074d590b9bb6a181d799a6c60961fb7771818a706389"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = Secp256k1.fromMnemonic(mnemonic, { as: 'Bytes' })
+
+    expect(privateKey).toBeInstanceOf(Uint8Array)
+    expect(privateKey).toHaveLength(32)
   })
 })
 
@@ -644,6 +672,7 @@ test('exports', () => {
       "noble",
       "createKeyPair",
       "fromPrf",
+      "fromMnemonic",
       "fromSeed",
       "getPublicKey",
       "getSharedSecret",

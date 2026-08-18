@@ -11,6 +11,7 @@ import {
   normalizeSignature,
 } from './internal/cryptoIo.js'
 import * as keyDerivation from './internal/keyDerivation.js'
+import * as mnemonic_ from './internal/mnemonic.js'
 import * as engine from './internal/secp256k1.js'
 import * as Entropy from './internal/entropy.js'
 import {
@@ -140,6 +141,54 @@ export declare namespace fromPrf {
     | Hex.fromBytes.ErrorType
     | InvalidPrfSizeError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Derives a valid secp256k1 private key from a BIP-39 mnemonic.
+ *
+ * This is equivalent to passing `Mnemonic.toSeed(mnemonic, { passphrase })`
+ * to {@link ox#Secp256k1.fromSeed}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.fromMnemonic(
+ *   'test test test test test test test test test test test junk'
+ * )
+ * ```
+ *
+ * @param mnemonic - BIP-39 mnemonic phrase.
+ * @param options - Options.
+ * @returns A valid secp256k1 private key.
+ */
+export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  mnemonic: string,
+  options: fromMnemonic.Options<as> = {},
+): fromMnemonic.ReturnType<as> {
+  const { passphrase } = options
+  const seed = mnemonic_.toSeed(mnemonic, passphrase)
+  try {
+    return fromSeed(seed, options)
+  } finally {
+    seed.fill(0)
+  }
+}
+
+export declare namespace fromMnemonic {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /** Optional BIP-39 passphrase. */
+    passphrase?: string | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> = fromSeed.ReturnType<as>
+
+  type ErrorType = fromSeed.ErrorType
 }
 
 /**
