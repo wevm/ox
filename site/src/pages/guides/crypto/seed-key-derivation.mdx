@@ -13,9 +13,9 @@ algorithms. [`Secp256k1`](/api/Secp256k1), [`P256`](/api/P256),
 [`Ed25519`](/api/Ed25519), [`MlDsa44`](/api/MlDsa44), and [`AesGcm`](/api/AesGcm) each expose
 `fromSeed` and `fromMnemonic` functions.
 
-Each function applies its own fixed, versioned HMAC-SHA256 derivation domain. The same seed
-therefore reproduces the same key for a given module without reusing raw key material across
-algorithms.
+Each `fromSeed` function applies its own fixed, versioned HMAC-SHA256 derivation domain. The same
+seed therefore reproduces the same key for a given module without reusing raw key material
+across algorithms.
 
 ```ts twoslash
 import { AesGcm, Ed25519, Hex, MlDsa44, P256, Secp256k1 } from 'ox'
@@ -57,6 +57,36 @@ const encryptionKey = await AesGcm.fromSeed(seed)
 `AesGcm.fromSeed` is async and returns a non-extractable AES-256-GCM `CryptoKey`. The signing
 modules return a hex private key by default; pass `{ as: 'Bytes' }` when mutable bytes are more
 appropriate.
+
+### Derive a Seed from a Password
+
+Use [`Keystore.scryptAsync`](/api/Keystore/scryptAsync) when the root secret is a strong password
+instead of random bytes. Scrypt derives a 32-byte seed and makes each password guess more
+expensive, but it does not increase the password's entropy.
+
+```ts twoslash
+import { AesGcm, Bytes, Keystore, P256, Secp256k1 } from 'ox'
+
+const salt = Bytes.random(32)
+const [getSeed] = await Keystore.scryptAsync({
+  password: 'your-long-unique-password',
+  salt,
+})
+const seed = getSeed()
+
+const secp256k1PrivateKey = Secp256k1.fromSeed(seed)
+const p256PrivateKey = P256.fromSeed(seed)
+const encryptionKey = await AesGcm.fromSeed(seed)
+```
+
+Store the salt and scrypt parameters with your account metadata or backup. They are not secret,
+but the same values are required to reproduce the seed. `getSeed` returns the already-derived
+key; calling it does not run scrypt again.
+
+:::warning
+Scrypt does not prevent brute-force attacks. Never use short or common text such as `lolcats`.
+Prefer a long, unique password, a recovery phrase, or a randomly generated root seed.
+:::
 
 ### Restore Keys from a Recovery Phrase
 
