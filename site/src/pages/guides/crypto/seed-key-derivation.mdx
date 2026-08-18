@@ -1,0 +1,120 @@
+---
+description: Derive independent signing and encryption keys from one root seed.
+---
+
+import { Card, Cards } from 'vocs'
+
+# Derive Keys from a Seed
+
+## Overview
+
+Use a cryptographically strong root seed to deterministically derive keys for multiple
+algorithms. [`Secp256k1`](/api/Secp256k1), [`P256`](/api/P256),
+[`Ed25519`](/api/Ed25519), [`MlDsa44`](/api/MlDsa44), and [`AesGcm`](/api/AesGcm) each expose
+a `fromSeed` function that accepts at least 32 bytes of key material.
+
+Each function applies its own fixed, versioned HMAC-SHA256 derivation domain. The same seed
+therefore reproduces the same key for a given module without reusing raw key material across
+algorithms.
+
+```ts twoslash
+import { AesGcm, Ed25519, Hex, MlDsa44, P256, Secp256k1 } from 'ox'
+
+const seed = Hex.random(32)
+
+const secp256k1PrivateKey = Secp256k1.fromSeed(seed)
+const p256PrivateKey = P256.fromSeed(seed)
+const ed25519PrivateKey = Ed25519.fromSeed(seed)
+const mlDsa44PrivateKey = MlDsa44.fromSeed(seed)
+const encryptionKey = await AesGcm.fromSeed(seed)
+```
+
+:::warning
+Do not pass a password or other human-readable text directly to `fromSeed`. Passwords do not
+contain enough entropy, and `fromSeed` does not perform password stretching. Use a password KDF
+first, or generate at least 32 random bytes.
+:::
+
+## Recipes
+
+### Generate a Root Seed
+
+[`Bytes.random`](/api/Bytes/random) uses the platform's cryptographically secure random number
+generator. Store the root seed as the single secret needed to reproduce every derived key.
+
+```ts twoslash
+import { AesGcm, Bytes, Ed25519, MlDsa44, P256, Secp256k1 } from 'ox'
+
+const seed = Bytes.random(32) // [!code hl]
+
+const secp256k1PrivateKey = Secp256k1.fromSeed(seed)
+const p256PrivateKey = P256.fromSeed(seed)
+const ed25519PrivateKey = Ed25519.fromSeed(seed)
+const mlDsa44PrivateKey = MlDsa44.fromSeed(seed)
+const encryptionKey = await AesGcm.fromSeed(seed)
+```
+
+`AesGcm.fromSeed` is async and returns a non-extractable AES-256-GCM `CryptoKey`. The signing
+modules return a hex private key by default; pass `{ as: 'Bytes' }` when mutable bytes are more
+appropriate.
+
+### Restore Keys from a Recovery Phrase
+
+[`Mnemonic.toSeed`](/api/Mnemonic/toSeed) converts a valid BIP-39 recovery phrase into 64 bytes
+of seed material. Passing that seed to the same `fromSeed` functions restores the same keys.
+
+```ts twoslash
+import { Ed25519, MlDsa44, Mnemonic, P256, Secp256k1 } from 'ox'
+
+const phrase = Mnemonic.random(Mnemonic.english)
+const seed = Mnemonic.toSeed(phrase) // [!code hl]
+
+const secp256k1PrivateKey = Secp256k1.fromSeed(seed)
+const p256PrivateKey = P256.fromSeed(seed)
+const ed25519PrivateKey = Ed25519.fromSeed(seed)
+const mlDsa44PrivateKey = MlDsa44.fromSeed(seed)
+```
+
+These keys use Ox's `fromSeed` derivation domains. They are not BIP-32 child keys and will not
+match wallet keys derived from paths such as `m/44'/60'/0'/0/0`.
+
+## Best Practices
+
+### Protect the Root Seed
+
+Anyone with the root seed can reproduce every derived key. Keep it out of logs, analytics, URLs,
+and plaintext storage. Back it up with the same protections as a wallet recovery phrase.
+
+### Keep the Derivation Contract Stable
+
+Each module's versioned domain is part of its deterministic derivation contract. Re-derive keys
+with the same Ox API and seed instead of implementing the HMAC construction separately.
+
+### Use HD Paths for Multiple Ethereum Accounts
+
+`Secp256k1.fromSeed` produces one deterministic secp256k1 key for a seed. Use
+[`HdKey`](/api/HdKey) or [`Mnemonic`](/api/Mnemonic) when you need multiple interoperable
+Ethereum accounts with BIP-32 derivation paths.
+
+## See More
+
+<Cards>
+  <Card
+    icon="lucide:list-tree"
+    title="Mnemonics & HD Wallets"
+    description="Derive interoperable Ethereum accounts with BIP-32 paths."
+    to="/guides/accounts/mnemonics-hd"
+  />
+  <Card
+    icon="lucide:fingerprint"
+    title="Derive Secrets with PRF"
+    description="Derive keys from a WebAuthn passkey instead of a stored seed."
+    to="/guides/webauthn/prf"
+  />
+  <Card
+    icon="lucide:lock"
+    title="Work with AES-GCM"
+    description="Encrypt and decrypt data with the derived encryption key."
+    to="/guides/crypto/encryption"
+  />
+</Cards>
