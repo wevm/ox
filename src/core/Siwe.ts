@@ -23,6 +23,19 @@ export const prefixRegex =
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.+))?/
 
+const siweDateTimeRegex =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+
+function isValidSiweDateTime(value: string): boolean {
+  if (!siweDateTimeRegex.test(value)) return false
+  return !Number.isNaN(new Date(value).getTime())
+}
+
+function parseSiweDateTime(value: string): Date {
+  if (!isValidSiweDateTime(value)) return new Date(Number.NaN)
+  return new Date(value)
+}
+
 /** [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields. */
 export type Message = {
   /**
@@ -388,9 +401,11 @@ export function parseMessage(message: string): ExactPartial<Message> {
     ...prefix,
     ...suffix,
     ...(chainId ? { chainId: Number(chainId) } : {}),
-    ...(expirationTime ? { expirationTime: new Date(expirationTime) } : {}),
-    ...(issuedAt ? { issuedAt: new Date(issuedAt) } : {}),
-    ...(notBefore ? { notBefore: new Date(notBefore) } : {}),
+    ...(expirationTime
+      ? { expirationTime: parseSiweDateTime(expirationTime) }
+      : {}),
+    ...(issuedAt ? { issuedAt: parseSiweDateTime(issuedAt) } : {}),
+    ...(notBefore ? { notBefore: parseSiweDateTime(notBefore) } : {}),
     ...(requestId ? { requestId } : {}),
     ...(resources ? { resources } : {}),
     ...(scheme ? { scheme } : {}),
@@ -431,8 +446,16 @@ export function validateMessage(value: validateMessage.Value): boolean {
   if (nonce && message.nonce !== nonce) return false
   if (scheme && message.scheme !== scheme) return false
 
-  if (message.expirationTime && time >= message.expirationTime) return false
-  if (message.notBefore && time < message.notBefore) return false
+  if (Number.isNaN(time.getTime())) return false
+
+  if (message.expirationTime) {
+    if (Number.isNaN(message.expirationTime.getTime())) return false
+    if (time >= message.expirationTime) return false
+  }
+  if (message.notBefore) {
+    if (Number.isNaN(message.notBefore.getTime())) return false
+    if (time < message.notBefore) return false
+  }
 
   try {
     if (!message.address) return false
