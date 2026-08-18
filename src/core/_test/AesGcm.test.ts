@@ -189,13 +189,13 @@ test('exports', () => {
   expect(Object.keys(AesGcm)).toMatchInlineSnapshot(`
     [
       "ivLength",
-      "InvalidSeedSizeError",
       "decrypt",
       "encrypt",
       "fromMnemonic",
       "fromSeed",
       "getKey",
       "randomSalt",
+      "InvalidSeedSizeError",
     ]
   `)
 })

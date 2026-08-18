@@ -557,7 +557,6 @@ test('exports', () => {
   expect(Object.keys(Secp256k1)).toMatchInlineSnapshot(`
     [
       "noble",
-      "InvalidSeedSizeError",
       "createKeyPair",
       "fromMnemonic",
       "fromSeed",
@@ -568,6 +567,7 @@ test('exports', () => {
       "recoverPublicKey",
       "sign",
       "verify",
+      "InvalidSeedSizeError",
     ]
   `)
 })
