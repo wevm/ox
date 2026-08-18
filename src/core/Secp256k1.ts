@@ -11,7 +11,6 @@ import {
   normalizeSignature,
 } from './internal/cryptoIo.js'
 import * as keyDerivation from './internal/keyDerivation.js'
-import * as mnemonic_ from './internal/mnemonic.js'
 import * as engine from './internal/secp256k1.js'
 import * as Entropy from './internal/entropy.js'
 import {
@@ -20,6 +19,7 @@ import {
   toRecoveredBytes,
 } from './internal/signature.js'
 import type { OneOf } from './internal/types.js'
+import * as Mnemonic from './Mnemonic.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
@@ -146,8 +146,8 @@ export declare namespace fromPrf {
 /**
  * Derives a valid secp256k1 private key from a BIP-39 mnemonic.
  *
- * This is equivalent to passing `Mnemonic.toSeed(mnemonic, { passphrase })`
- * to {@link ox#Secp256k1.fromSeed}.
+ * This is equivalent to {@link ox#Mnemonic.toPrivateKey}, and derives the
+ * private key at `m/44'/60'/0'/0/0` by default.
  *
  * @example
  * ```ts twoslash
@@ -166,13 +166,8 @@ export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
   mnemonic: string,
   options: fromMnemonic.Options<as> = {},
 ): fromMnemonic.ReturnType<as> {
-  const { passphrase } = options
-  const seed = mnemonic_.toSeed(mnemonic, passphrase)
-  try {
-    return fromSeed(seed, options)
-  } finally {
-    seed.fill(0)
-  }
+  const { as = 'Hex', passphrase, path } = options
+  return Mnemonic.toPrivateKey(mnemonic, { as, passphrase, path }) as never
 }
 
 export declare namespace fromMnemonic {
@@ -182,13 +177,16 @@ export declare namespace fromMnemonic {
      * @default 'Hex'
      */
     as?: as | 'Hex' | 'Bytes' | undefined
+    /** Derivation path. @default `m/44'/60'/0'/0/0` */
+    path?: string | undefined
     /** Optional BIP-39 passphrase. */
     passphrase?: string | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> = fromSeed.ReturnType<as>
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    Mnemonic.toPrivateKey.ReturnType<as>
 
-  type ErrorType = fromSeed.ErrorType
+  type ErrorType = Mnemonic.toPrivateKey.ErrorType
 }
 
 /**

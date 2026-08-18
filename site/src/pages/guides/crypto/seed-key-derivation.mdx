@@ -75,12 +75,15 @@ const mlDsa44PrivateKey = MlDsa44.fromMnemonic(phrase)
 const encryptionKey = await AesGcm.fromMnemonic(phrase)
 ```
 
-Each `fromMnemonic` function is equivalent to
+`Secp256k1.fromMnemonic` is equivalent to `Mnemonic.toPrivateKey` and uses the standard
+`m/44'/60'/0'/0/0` path by default. Pass a `path` option to derive another account.
+
+The other `fromMnemonic` functions are equivalent to
 `fromSeed(Mnemonic.toSeed(phrase, { passphrase }))`.
 
 :::warning
-Mnemonic-derived keys use Ox's `fromSeed` derivation domains. They are not BIP-32 child keys and
-will not match wallet keys derived from paths such as `m/44'/60'/0'/0/0`.
+P256, Ed25519, ML-DSA-44, and AES-GCM mnemonic-derived keys use Ox's `fromSeed` derivation domains.
+They are not BIP-32 child keys. Only `Secp256k1.fromMnemonic` follows a BIP-32 derivation path.
 :::
 
 ## Best Practices
@@ -97,9 +100,9 @@ with the same Ox API and seed instead of implementing the HMAC construction sepa
 
 ### Use HD Paths for Multiple Ethereum Accounts
 
-`Secp256k1.fromSeed` and `Secp256k1.fromMnemonic` each produce one deterministic secp256k1 key.
-Use [`HdKey`](/api/HdKey) or [`Mnemonic`](/api/Mnemonic) when you need multiple interoperable
-Ethereum accounts with BIP-32 derivation paths.
+`Secp256k1.fromMnemonic` derives an interoperable Ethereum account at its default path. Pass a
+different `path`, or use [`HdKey`](/api/HdKey) or [`Mnemonic`](/api/Mnemonic), when you need
+multiple accounts.
 
 ## See More
 

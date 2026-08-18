@@ -217,9 +217,9 @@ describe('fromMnemonic', () => {
   test('default', () => {
     const privateKey = Secp256k1.fromMnemonic(mnemonic)
 
-    expect(privateKey).toBe(Secp256k1.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toBe(Mnemonic.toPrivateKey(mnemonic, { as: 'Hex' }))
     expect(privateKey).toMatchInlineSnapshot(
-      `"0x1ccb5b6b0469535f8a21f52d998605e4b7318374bc0cefea30492b6af2ba5dfe"`,
+      `"0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"`,
     )
   })
 
@@ -227,7 +227,7 @@ describe('fromMnemonic', () => {
     expect(
       Secp256k1.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
     ).toMatchInlineSnapshot(
-      `"0x40495df06f9a3e745611074d590b9bb6a181d799a6c60961fb7771818a706389"`,
+      `"0x0bef893b1cc27e9ce726d5f12f75d61a07d4df87c02106083463cd712ac5c478"`,
     )
   })
 
@@ -236,6 +236,14 @@ describe('fromMnemonic', () => {
 
     expect(privateKey).toBeInstanceOf(Uint8Array)
     expect(privateKey).toHaveLength(32)
+  })
+
+  test('options: path', () => {
+    const path = "m/44'/60'/0'/0/1"
+
+    expect(Secp256k1.fromMnemonic(mnemonic, { path })).toBe(
+      Mnemonic.toPrivateKey(mnemonic, { as: 'Hex', path }),
+    )
   })
 })
 

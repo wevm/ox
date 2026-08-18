@@ -23,6 +23,9 @@ test('fromMnemonic', () => {
   expectTypeOf(
     Secp256k1.fromMnemonic(mnemonic, { as: 'Bytes' }),
   ).toEqualTypeOf<Bytes.Bytes>()
+  expectTypeOf(
+    Secp256k1.fromMnemonic(mnemonic, { path: "m/44'/60'/0'/0/1" }),
+  ).toEqualTypeOf<Hex.Hex>()
 })
 
 test('fromSeed', () => {
