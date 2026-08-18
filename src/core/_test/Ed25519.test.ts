@@ -1,4 +1,4 @@
-import { Bytes, Ed25519, Hex, X25519 } from 'ox'
+import { Bytes, Ed25519, Hex, Mnemonic, X25519 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('createKeyPair', () => {
@@ -41,6 +41,76 @@ describe('createKeyPair', () => {
 
     expect(keyPair1.privateKey).not.toBe(keyPair2.privateKey)
     expect(keyPair1.publicKey).not.toBe(keyPair2.publicKey)
+  })
+})
+
+describe('fromMnemonic', () => {
+  const mnemonic = 'test test test test test test test test test test test junk'
+
+  test('default', () => {
+    const privateKey = Ed25519.fromMnemonic(mnemonic)
+
+    expect(privateKey).toBe(Ed25519.fromSeed(Mnemonic.toSeed(mnemonic)))
+    expect(privateKey).toMatchInlineSnapshot(
+      `"0x23fb07a427d2bc36141d1e6c7e56c72679739eff374a8e8def282f1048674567"`,
+    )
+  })
+
+  test('options: passphrase', () => {
+    expect(
+      Ed25519.fromMnemonic(mnemonic, { passphrase: 'qwerty' }),
+    ).toMatchInlineSnapshot(
+      `"0xe888791c9d783e772d92b0bf2aa326b1cda8214a03c3c07933615b1a98fc8651"`,
+    )
+  })
+
+  test('options: as', () => {
+    const privateKey = Ed25519.fromMnemonic(mnemonic, { as: 'Bytes' })
+
+    expect(privateKey).toBeInstanceOf(Uint8Array)
+    expect(privateKey).toHaveLength(32)
+  })
+})
+
+describe('fromSeed', () => {
+  const seed =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+
+  test('vector', () => {
+    expect(Ed25519.fromSeed(seed)).toMatchInlineSnapshot(
+      `"0xfd09c7b2acda46034df7e428377fdc37200094c9b51690fa1b733ee3c16a2d07"`,
+    )
+  })
+
+  test('value: Bytes', () => {
+    expect(Ed25519.fromSeed(Bytes.fromHex(seed))).toMatchInlineSnapshot(
+      `"0xfd09c7b2acda46034df7e428377fdc37200094c9b51690fa1b733ee3c16a2d07"`,
+    )
+  })
+
+  test('options: as', () => {
+    expect(Ed25519.fromSeed(seed, { as: 'Bytes' })).toEqual(
+      Bytes.fromHex(
+        '0xfd09c7b2acda46034df7e428377fdc37200094c9b51690fa1b733ee3c16a2d07',
+      ),
+    )
+  })
+
+  test('behavior: output signs and verifies', () => {
+    const privateKey = Ed25519.fromSeed(new Uint8Array(64))
+    const publicKey = Ed25519.getPublicKey({ privateKey })
+    const payload = '0xdeadbeef'
+    const signature = Ed25519.sign({ payload, privateKey })
+
+    expect(Ed25519.verify({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('error: seed is too short', () => {
+    expect(() =>
+      Ed25519.fromSeed(new Uint8Array(31)),
+    ).toThrowErrorMatchingInlineSnapshot(`
+        [Ed25519.InvalidSeedSizeError: Seed must contain at least 32 bytes. Received 31 bytes.]
+      `)
   })
 })
 
