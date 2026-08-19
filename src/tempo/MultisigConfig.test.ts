@@ -169,21 +169,21 @@ describe('assert / validate', () => {
     expect(MultisigConfig.validate({ threshold: 1, owners: [] })).toBe(false)
   })
 
-  test('accepts 50 owners', () => {
-    const owners = Array.from({ length: 50 }, (_, i) => ({
+  test('accepts 48 owners', () => {
+    const owners = Array.from({ length: 48 }, (_, i) => ({
       owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
       weight: 1,
     }))
     expect(
       MultisigConfig.validate({
-        threshold: MultisigConfig.maxThreshold,
+        threshold: MultisigConfig.maxSignatures,
         owners,
       }),
     ).toBe(true)
   })
 
   test('too many owners', () => {
-    const owners = Array.from({ length: 51 }, (_, i) => ({
+    const owners = Array.from({ length: 49 }, (_, i) => ({
       owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
       weight: 1,
     }))
@@ -199,11 +199,29 @@ describe('assert / validate', () => {
     ).toBe(false)
   })
 
-  test('threshold exceeds protocol maximum', () => {
+  test('accepts a uint8 threshold above the signature limit', () => {
+    expect(
+      MultisigConfig.validate({
+        threshold: 9,
+        owners: [{ owner: owner1, weight: 9 }],
+      }),
+    ).toBe(true)
+  })
+
+  test('accepts the maximum uint8 threshold', () => {
+    expect(
+      MultisigConfig.validate({
+        threshold: MultisigConfig.maxThreshold,
+        owners: [{ owner: owner1, weight: MultisigConfig.maxThreshold }],
+      }),
+    ).toBe(true)
+  })
+
+  test('threshold exceeds uint8 maximum', () => {
     expect(
       MultisigConfig.validate({
         threshold: MultisigConfig.maxThreshold + 1,
-        owners: [{ owner: owner1, weight: MultisigConfig.maxThreshold + 1 }],
+        owners: [{ owner: owner1, weight: MultisigConfig.maxThreshold }],
       }),
     ).toBe(false)
   })
@@ -224,6 +242,22 @@ describe('assert / validate', () => {
         owners: singleOwnerConfig.owners,
       }),
     ).toBe(false)
+  })
+
+  test('threshold cannot require more than eight owners', () => {
+    const owners = Array.from({ length: 9 }, (_, i) => ({
+      owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
+      weight: 1,
+    }))
+    expect(MultisigConfig.validate({ threshold: 9, owners })).toBe(false)
+  })
+
+  test('threshold can be reached by eight of more than eight owners', () => {
+    const owners = Array.from({ length: 9 }, (_, i) => ({
+      owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
+      weight: i === 0 ? 2 : 1,
+    }))
+    expect(MultisigConfig.validate({ threshold: 9, owners })).toBe(true)
   })
 
   test('total weight exceeds u8 max', () => {
