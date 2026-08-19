@@ -6,13 +6,13 @@ import * as Hex from '../core/Hex.js'
 import type { Compute, OneOf } from '../core/internal/types.js'
 
 /** Maximum number of owners allowed in a native multisig config. */
-export const maxOwners = 50
+export const maxOwners = 48
 
 /** Maximum threshold accepted by a native multisig config. */
-export const maxThreshold = 8
+export const maxThreshold = 0xff
 
 /** Maximum number of owner approvals in a native multisig signature. */
-export const maxSignatures = maxThreshold
+export const maxSignatures = 8
 
 /**
  * Maximum number of native multisig signatures in one nested authorization
@@ -72,7 +72,8 @@ export type Tuple = readonly [
  * Mirrors the Tempo `InitMultisig::validate` rules: owners non-empty and
  * `<= maxOwners`, strictly ascending unique nonzero owner addresses, nonzero
  * integer owner weights, integer `threshold` between `1` and `maxThreshold`,
- * total weight `<= 255` (u8 max), and `threshold <= total weight`.
+ * total weight `<= 255` (u8 max), and a threshold reachable by at most
+ * `maxSignatures` owners.
  *
  * @example
  * ```ts twoslash
@@ -105,6 +106,7 @@ export function assert<numberType = number>(config: Config<numberType>): void {
     throw new InvalidConfigError({ reason: 'threshold exceeds max threshold' })
 
   let totalWeight = 0
+  const weights: number[] = []
   let previous: bigint | undefined
   for (const owner of owners) {
     if (!Address.validate(owner.owner) || Hex.toBigInt(owner.owner) === 0n)
@@ -123,7 +125,9 @@ export function assert<numberType = number>(config: Config<numberType>): void {
       })
     previous = current
 
-    totalWeight += Number(owner.weight)
+    const weight = Number(owner.weight)
+    totalWeight += weight
+    weights.push(weight)
   }
 
   if (totalWeight > 0xff)
@@ -133,6 +137,15 @@ export function assert<numberType = number>(config: Config<numberType>): void {
   if (Number(threshold) > totalWeight)
     throw new InvalidConfigError({
       reason: 'threshold exceeds total owner weight',
+    })
+
+  const reachableWeight = weights
+    .sort((a, b) => b - a)
+    .slice(0, maxSignatures)
+    .reduce((sum, weight) => sum + weight, 0)
+  if (Number(threshold) > reachableWeight)
+    throw new InvalidConfigError({
+      reason: `threshold exceeds weight reachable by ${maxSignatures} owner signatures`,
     })
 }
 
