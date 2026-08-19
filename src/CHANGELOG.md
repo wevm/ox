@@ -1,5 +1,13 @@
 # ox
 
+## 0.14.35
+
+### Patch Changes
+
+- [#396](https://github.com/wevm/ox/pull/396) [`f2d4427`](https://github.com/wevm/ox/commit/f2d4427b68b8d6b193315891f6fc0aec23aa4ee2) Thanks [@jxom](https://github.com/jxom)! - Added seed and mnemonic derivation for P256, Secp256k1, Ed25519, and AES-GCM keys.
+
+- [#401](https://github.com/wevm/ox/pull/401) [`efc1d67`](https://github.com/wevm/ox/commit/efc1d6710518c9c26c65d1928f3d8bde944c09f1) Thanks [@jxom](https://github.com/jxom)! - Aligned configurable account owner and threshold validation with TIP-1061.
+
 ## 0.14.34
 
 ### Patch Changes
