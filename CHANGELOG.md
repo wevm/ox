@@ -1,5 +1,11 @@
 # ox
 
+## 1.7.1
+
+### Patch Changes
+
+- [#398](https://github.com/wevm/ox/pull/398) [`a63116b`](https://github.com/wevm/ox/commit/a63116ba88ecc8e2378e8770d21a6111574e4028) Thanks [@tmm](https://github.com/tmm)! - Rejected invalid RFC 3339 SIWE lifetime fields and invalid validation times.
+
 ## 1.7.0
 
 ### Minor Changes
