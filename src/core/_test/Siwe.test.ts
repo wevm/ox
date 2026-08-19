@@ -546,6 +546,81 @@ Expiration Time: 2022-02-04T00:00:00.000Z`
     )
   })
 
+  test.each([
+    ['never', '2023-02-01T00:00:00Z'],
+    ['2023-02-29T00:00:00Z', '2023-02-28T12:00:00Z'],
+    ['2023-04-31T00:00:00Z', '2023-04-30T12:00:00Z'],
+    ['2023-02-01T24:00:00Z', '2023-02-01T12:00:00Z'],
+  ])(
+    'behavior: invalid RFC 3339 expirationTime `%s`',
+    (expirationTime, time) => {
+      const message = `https://example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Expiration Time: ${expirationTime}`
+      const parsed = Siwe.parseMessage(message)
+      expect({
+        invalid: Number.isNaN(parsed.expirationTime?.getTime()),
+        valid: Siwe.validateMessage({
+          message: parsed,
+          time: new Date(time),
+        }),
+      }).toMatchInlineSnapshot(`
+        {
+          "invalid": true,
+          "valid": false,
+        }
+      `)
+    },
+  )
+
+  test.each([
+    '2030-02-04t00:00:00Z',
+    '2030-02-04T00:00:00z',
+    '2030-02-04t00:00:00z',
+  ])('behavior: lowercase RFC 3339 expirationTime `%s`', (expirationTime) => {
+    const message = `https://example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Expiration Time: ${expirationTime}`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.expirationTime).toMatchInlineSnapshot(
+      '2030-02-04T00:00:00.000Z',
+    )
+    expect(
+      Siwe.validateMessage({
+        message: parsed,
+        time: new Date('2029-02-04T00:00:00Z'),
+      }),
+    ).toBeTruthy()
+  })
+
+  test('behavior: leap-year expirationTime', () => {
+    const message = `https://example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Expiration Time: 2032-02-29T00:00:00Z`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.expirationTime).toMatchInlineSnapshot(
+      '2032-02-29T00:00:00.000Z',
+    )
+  })
+
   test('behavior: with notBefore', () => {
     const message = `https://example.com wants you to sign in with your Ethereum account:
 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
@@ -726,6 +801,29 @@ describe('validateMessage', () => {
           expirationTime: new Date(Date.UTC(2024, 1, 1)),
         },
         time: new Date(Date.UTC(2025, 1, 1)),
+      }),
+    ).toBeFalsy()
+  })
+
+  test.each(['expirationTime', 'notBefore'] as const)(
+    'behavior: invalid %s',
+    (field) => {
+      expect(
+        Siwe.validateMessage({
+          message: {
+            ...message,
+            [field]: new Date('never'),
+          },
+        }),
+      ).toBeFalsy()
+    },
+  )
+
+  test('behavior: invalid time', () => {
+    expect(
+      Siwe.validateMessage({
+        message,
+        time: new Date('never'),
       }),
     ).toBeFalsy()
   })
