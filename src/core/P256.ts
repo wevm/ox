@@ -4,7 +4,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Entropy from './internal/entropy.js'
 import * as keyDerivation from './internal/keyDerivation.js'
-import * as Mnemonic from './Mnemonic.js'
+import * as internal from './internal/mnemonic.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
@@ -83,7 +83,7 @@ export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: fromMnemonic.Options<as> = {},
 ): fromMnemonic.ReturnType<as> {
   const { passphrase } = options
-  const seed = Mnemonic.toSeed(mnemonic, { passphrase })
+  const seed = internal.toSeed(mnemonic, { passphrase })
   try {
     return fromSeed(seed, options)
   } finally {
