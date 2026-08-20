@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.36
+
+### Patch Changes
+
+- [#402](https://github.com/wevm/ox/pull/402) [`8675963`](https://github.com/wevm/ox/commit/86759630ac8541dbc9b886bde08e8db8b1e14b3d) Thanks [@jxom](https://github.com/jxom)! - Reduced CommonJS bundles that import `P256` or `Secp256k1`.
+
 ## 0.14.35
 
 ### Patch Changes
