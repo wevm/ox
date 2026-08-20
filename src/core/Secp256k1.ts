@@ -5,8 +5,9 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Entropy from './internal/entropy.js'
 import * as keyDerivation from './internal/keyDerivation.js'
+import * as internal from './internal/mnemonic.js'
 import type { OneOf } from './internal/types.js'
-import * as Mnemonic from './Mnemonic.js'
+import type * as Mnemonic from './Mnemonic.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
@@ -85,7 +86,7 @@ export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: fromMnemonic.Options<as> = {},
 ): fromMnemonic.ReturnType<as> {
   const { as = 'Hex', passphrase, path } = options
-  return Mnemonic.toPrivateKey(mnemonic, { as, passphrase, path }) as never
+  return internal.toPrivateKey(mnemonic, { as, passphrase, path }) as never
 }
 
 export declare namespace fromMnemonic {

@@ -605,19 +605,19 @@ describe('verify', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(P256)).toMatchInlineSnapshot(`
+  expect(Object.keys(P256).sort()).toMatchInlineSnapshot(`
     [
-      "noble",
+      "InvalidSeedSizeError",
       "createKeyPair",
       "fromMnemonic",
       "fromSeed",
       "getPublicKey",
       "getSharedSecret",
+      "noble",
       "randomPrivateKey",
       "recoverPublicKey",
       "sign",
       "verify",
-      "InvalidSeedSizeError",
     ]
   `)
 })
