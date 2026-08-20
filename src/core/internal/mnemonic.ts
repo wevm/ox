@@ -3,6 +3,7 @@ import { mnemonicToSeedSync } from '@scure/bip39'
 import type * as Bytes from '../Bytes.js'
 import * as Hex from '../Hex.js'
 
+/** @internal */
 export function toPrivateKey<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   mnemonic: string,
   options: {
@@ -21,6 +22,7 @@ export function toPrivateKey<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   return Hex.fromBytes(privateKey) as never
 }
 
+/** @internal */
 export function toSeed(
   mnemonic: string,
   options: { passphrase?: string | undefined } = {},

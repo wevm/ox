@@ -554,15 +554,15 @@ describe('verify', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(Secp256k1)).toMatchInlineSnapshot(`
+  expect(Object.keys(Secp256k1).sort()).toMatchInlineSnapshot(`
     [
-      "noble",
       "InvalidSeedSizeError",
       "createKeyPair",
       "fromMnemonic",
       "fromSeed",
       "getPublicKey",
       "getSharedSecret",
+      "noble",
       "randomPrivateKey",
       "recoverAddress",
       "recoverPublicKey",
