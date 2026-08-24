@@ -1,3 +1,4 @@
+import { Address } from 'ox'
 import {
   KeyAuthorization,
   MultisigConfig,
@@ -696,6 +697,23 @@ describe('validation', () => {
       operation: { ...transactionPending, weight: 0 },
     },
     {
+      name: 'string config threshold',
+      operation: {
+        ...transactionPending,
+        config: { ...config, threshold: '2' },
+      },
+    },
+    {
+      name: 'bigint config owner weight',
+      operation: {
+        ...transactionPending,
+        config: {
+          ...config,
+          owners: config.owners.map((owner) => ({ ...owner, weight: 1n })),
+        },
+      },
+    },
+    {
       name: 'weight unreachable by the selected signature count',
       operation: { ...transactionPending, weight: 2 },
     },
@@ -840,5 +858,147 @@ describe('validation', () => {
     expect(() => MultisigOperation.from(operation)).toThrowError(
       'Invalid multisig operation: key authorization approvals are not canonically ordered.',
     )
+  })
+
+  test('rejects duplicate key authorization approvals', () => {
+    const authorization = KeyAuthorization.deserialize(keyAuthorization)
+    const operation = {
+      ...keyAuthorizationPending,
+      approvals: [approval_1, approval_1],
+      keyAuthorization: KeyAuthorization.serialize(
+        KeyAuthorization.from(authorization, {
+          signature: {
+            account,
+            signatures: [
+              SignatureEnvelope.deserialize(approval_1),
+              SignatureEnvelope.deserialize(approval_1),
+            ],
+            type: 'multisig',
+          },
+        }),
+      ),
+      signatureCount: 2,
+      status: 'success',
+      weight: 2,
+    } as const
+
+    expect(() => MultisigOperation.from(operation)).toThrowError(
+      'Invalid multisig operation: key authorization contains duplicate owner approvals.',
+    )
+  })
+
+  test('rejects reordered nested key authorization approvals', () => {
+    const authorization = KeyAuthorization.deserialize(keyAuthorization)
+    const childSignatures = SignatureEnvelope.sortMultisigApprovals({
+      account: owner_1,
+      payload: keyAuthorizationHash,
+      signatures: [
+        SignatureEnvelope.deserialize(approval_1),
+        SignatureEnvelope.deserialize(approval_2),
+      ],
+      version: 1n,
+    })
+    const retainedNested = SignatureEnvelope.from({
+      account: owner_1,
+      signatures: childSignatures,
+      type: 'multisig',
+    })
+    const selectedNested = SignatureEnvelope.from({
+      account: owner_1,
+      signatures: [...childSignatures].reverse(),
+      type: 'multisig',
+    })
+    const selected = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      payload: KeyAuthorization.getSignPayload(authorization),
+      signatures: [selectedNested, SignatureEnvelope.deserialize(approval_2)],
+      version: 1n,
+    })
+    const operation = {
+      ...keyAuthorizationPending,
+      approvals: [SignatureEnvelope.serialize(retainedNested), approval_2],
+      keyAuthorization: KeyAuthorization.serialize(
+        KeyAuthorization.from(authorization, {
+          signature: { account, signatures: selected, type: 'multisig' },
+        }),
+      ),
+      signatureCount: 2,
+      status: 'success',
+      weight: 2,
+    } as const
+
+    expect(() => MultisigOperation.from(operation)).toThrowError(
+      'Invalid multisig operation: key authorization signature is not a retained approval.',
+    )
+  })
+
+  test('accepts case-insensitive bootstrap configs', () => {
+    const config = MultisigConfig.from({
+      owners: [
+        {
+          owner: Address.checksum('0x11111111111111111111111111111111111111aa'),
+          weight: 1,
+        },
+        {
+          owner: Address.checksum('0x22222222222222222222222222222222222222bb'),
+          weight: 1,
+        },
+      ],
+      salt: `0x${'AB'.repeat(32)}`,
+      threshold: 2,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const authorization = KeyAuthorization.from({
+      account,
+      address: '0x3333333333333333333333333333333333333333',
+      chainId: 4217n,
+      expiry: 1_800_000_000,
+      isAdmin: false,
+      type: 'secp256k1',
+    })
+    const signatures = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      payload: KeyAuthorization.getSignPayload(authorization),
+      signatures: [
+        SignatureEnvelope.deserialize(approval_1),
+        SignatureEnvelope.deserialize(approval_2),
+      ],
+      version: 0n,
+    })
+    const approvals = signatures.map((signature) =>
+      SignatureEnvelope.serialize(signature),
+    )
+
+    const operation = MultisigOperation.from({
+      account,
+      approvals,
+      config,
+      configVersion: 0n,
+      createdAt: 1,
+      hash: MultisigConfig.getSignPayload({
+        account,
+        payload: KeyAuthorization.getSignPayload(authorization),
+        version: 0n,
+      }),
+      init: true,
+      keyAuthorization: KeyAuthorization.serialize(
+        KeyAuthorization.from(authorization, {
+          signature: {
+            account,
+            init: config,
+            signatures,
+            type: 'multisig',
+          },
+        }),
+      ),
+      signatureCount: 2,
+      status: 'success',
+      threshold: 2,
+      type: 'keyAuthorization',
+      updatedAt: 2,
+      weight: 2,
+    })
+
+    expect(operation.config).toStrictEqual(config)
   })
 })

@@ -95,6 +95,13 @@ export function from<const operation extends Operation>(
 ): from.ReturnValue<operation> {
   try {
     const config = MultisigConfig.from(operation.config)
+    if (
+      typeof config.threshold !== 'number' ||
+      config.owners.some((owner) => typeof owner.weight !== 'number')
+    )
+      throw new InvalidOperationError({
+        reason: 'config threshold and owner weights must be numbers',
+      })
     assertBase(operation, config)
     if (operation.type === 'transaction') assertTransaction(operation)
     else if (operation.type === 'keyAuthorization')
@@ -506,22 +513,26 @@ function assertSelectedApprovals(
     retained.splice(index, 1)
   }
 
-  const sorted = SignatureEnvelope.sortMultisigApprovals({
+  const digest = MultisigConfig.getSignPayload({
     account: operation.account,
     payload: KeyAuthorization_.getSignPayload(authorization),
-    signatures: selected,
     version: operation.configVersion,
   })
-  if (
-    sorted.some(
-      (approval, index) =>
-        SignatureEnvelope.serialize(approval).toLowerCase() !==
-        SignatureEnvelope.serialize(selected[index]!).toLowerCase(),
-    )
+  const addresses = selected.map((signature) =>
+    SignatureEnvelope.extractAddress({ payload: digest, signature }),
   )
-    throw new InvalidOperationError({
-      reason: 'key authorization approvals are not canonically ordered',
-    })
+  for (let index = 1; index < addresses.length; index++) {
+    const previous = Hex.toBigInt(addresses[index - 1]!)
+    const current = Hex.toBigInt(addresses[index]!)
+    if (previous === current)
+      throw new InvalidOperationError({
+        reason: 'key authorization contains duplicate owner approvals',
+      })
+    if (previous > current)
+      throw new InvalidOperationError({
+        reason: 'key authorization approvals are not canonically ordered',
+      })
+  }
 }
 
 /**
@@ -540,13 +551,16 @@ function includesApproval(
     )
   if (retained.account.toLowerCase() !== selected.account.toLowerCase())
     return false
-  const approvals = [...retained.signatures]
+  // Nested versions are not serialized, so selected child approvals must preserve the validated retained order.
+  let index = 0
   for (const approval of selected.signatures) {
-    const index = approvals.findIndex((candidate) =>
-      includesApproval(candidate, approval),
+    while (
+      index < retained.signatures.length &&
+      !includesApproval(retained.signatures[index]!, approval)
     )
-    if (index === -1) return false
-    approvals.splice(index, 1)
+      index++
+    if (index === retained.signatures.length) return false
+    index++
   }
   return true
 }
@@ -611,9 +625,22 @@ function sameConfig(
   a: MultisigConfig.Config,
   b: MultisigConfig.Config,
 ): boolean {
+  const configA = MultisigConfig.from(a)
+  const configB = MultisigConfig.from(b)
   return (
-    JSON.stringify(MultisigConfig.toTuple(MultisigConfig.from(a))) ===
-    JSON.stringify(MultisigConfig.toTuple(MultisigConfig.from(b)))
+    Hex.isEqual(
+      configA.salt ?? MultisigConfig.zeroSalt,
+      configB.salt ?? MultisigConfig.zeroSalt,
+    ) &&
+    configA.threshold === configB.threshold &&
+    configA.owners.length === configB.owners.length &&
+    configA.owners.every((owner, index) => {
+      const other = configB.owners[index]!
+      return (
+        Address.isEqual(owner.owner, other.owner) &&
+        owner.weight === other.weight
+      )
+    })
   )
 }
 
