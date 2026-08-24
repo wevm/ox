@@ -115,13 +115,13 @@ export function from<const operation extends Operation>(
 }
 
 export declare namespace from {
-  /** Return type for {@link from}. */
+  /** Return type for `from`. */
   export type ReturnValue<operation extends Operation> =
     operation extends TransactionOperation
       ? TransactionOperation
       : KeyAuthorizationOperation
 
-  /** Error type for {@link from}. */
+  /** Error type for `from`. */
   export type ErrorType = InvalidOperationError | Errors.GlobalErrorType
 }
 
@@ -163,13 +163,13 @@ export function fromRpc<const operation extends Rpc>(
 }
 
 export declare namespace fromRpc {
-  /** Return type for {@link fromRpc}. */
+  /** Return type for `fromRpc`. */
   export type ReturnValue<operation extends Rpc> =
     operation extends TransactionRpc
       ? TransactionOperation
       : KeyAuthorizationOperation
 
-  /** Error type for {@link fromRpc}. */
+  /** Error type for `fromRpc`. */
   export type ErrorType = InvalidOperationError | Errors.GlobalErrorType
 }
 
@@ -198,13 +198,13 @@ export function toRpc<const operation extends Operation>(
 }
 
 export declare namespace toRpc {
-  /** Return type for {@link toRpc}. */
+  /** Return type for `toRpc`. */
   export type ReturnValue<operation extends Operation> =
     operation extends TransactionOperation
       ? TransactionRpc
       : KeyAuthorizationRpc
 
-  /** Error type for {@link toRpc}. */
+  /** Error type for `toRpc`. */
   export type ErrorType = from.ErrorType | Hex.fromNumber.ErrorType
 }
 
