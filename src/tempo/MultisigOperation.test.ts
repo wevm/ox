@@ -1,4 +1,4 @@
-import { Address, Hex, P256 } from 'ox'
+import { Address, Hash, Hex, P256 } from 'ox'
 import {
   KeyAuthorization,
   MultisigConfig,
@@ -10,11 +10,14 @@ import { describe, expect, test } from 'vp/test'
 
 const owners = [1n, 2n, 3n]
   .map((value, index) => {
+    const privateKey = `0x${value.toString(16).padStart(64, '0')}` as const
     const publicKey = P256.getPublicKey({
-      privateKey: `0x${value.toString(16).padStart(64, '0')}`,
+      privateKey,
     })
     return {
       address: Address.fromPublicKey(publicKey),
+      privateKey,
+      publicKey,
       signature: {
         prehash: false,
         publicKey,
@@ -103,6 +106,698 @@ const keyAuthorizationPending = {
   status: 'pending',
   type: 'keyAuthorization',
 } as const
+
+function signApproval(
+  owner: (typeof owners)[number],
+  hash: `0x${string}`,
+  extraEntropy: false | `0x${string}` = false,
+) {
+  return SignatureEnvelope.serialize({
+    prehash: false,
+    publicKey: owner.publicKey,
+    signature: P256.sign({
+      extraEntropy,
+      payload: hash,
+      privateKey: owner.privateKey,
+    }),
+    type: 'p256',
+  })
+}
+
+function approvalAddresses(
+  approvals: readonly `0x${string}`[],
+  hash: `0x${string}`,
+) {
+  return approvals.map((approval) =>
+    SignatureEnvelope.extractAddress({
+      payload: hash,
+      signature: SignatureEnvelope.deserialize(approval),
+    }),
+  )
+}
+
+describe('getHash', () => {
+  test('transaction and key authorization', () => {
+    expect({
+      keyAuthorization: MultisigOperation.getHash({
+        account,
+        configVersion: 1n,
+        keyAuthorization,
+        type: 'keyAuthorization',
+      }),
+      transaction: MultisigOperation.getHash({
+        account,
+        configVersion: 1n,
+        transaction,
+        type: 'transaction',
+      }),
+    }).toMatchInlineSnapshot(`
+      {
+        "keyAuthorization": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
+        "transaction": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
+      }
+    `)
+  })
+})
+
+describe('selectApprovals', () => {
+  test('selects a deterministic weighted quorum', async () => {
+    const config = MultisigConfig.from({
+      owners: [
+        { owner: owners[0]!.address, weight: 2 },
+        { owner: owners[1]!.address, weight: 1 },
+        { owner: owners[2]!.address, weight: 1 },
+      ],
+      threshold: 3,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const approvals = owners.map((owner) => signApproval(owner, hash))
+    const alternate = signApproval(owners[0]!, hash, `0x${'01'.repeat(32)}`)
+    const selection = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [
+        approvals[2]!,
+        approvals[0]!,
+        approvals[1]!,
+        alternate,
+        approvals[0]!,
+      ],
+      config,
+      hash,
+    })
+    const reversed = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [
+        approvals[0]!,
+        alternate,
+        approvals[1]!,
+        approvals[0]!,
+        approvals[2]!,
+      ],
+      config,
+      hash,
+    })
+
+    expect(reversed).toStrictEqual(selection)
+    expect({
+      ...selection,
+      approvals: approvalAddresses(selection.approvals, hash),
+      selectedApprovals: approvalAddresses(selection.selectedApprovals, hash),
+    }).toMatchInlineSnapshot(`
+      {
+        "approvals": [
+          "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
+          "0x288f0cd85005f34168f731a468aef268c2f9456f",
+          "0xd3a9f047ad43d7e2e4e7e491f1fe2e657a2651b6",
+        ],
+        "selectedApprovals": [
+          "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
+          "0x288f0cd85005f34168f731a468aef268c2f9456f",
+        ],
+        "signatureCount": 2,
+        "threshold": 3,
+        "weight": 3,
+      }
+    `)
+  })
+
+  test('counts a nested owner only after its quorum', async () => {
+    const childConfig = MultisigConfig.from({
+      owners: [
+        { owner: owners[1]!.address, weight: 1 },
+        { owner: owners[2]!.address, weight: 1 },
+      ],
+      threshold: 2,
+    })
+    const child = MultisigConfig.getAddress(childConfig)
+    const config = MultisigConfig.from({
+      owners: [
+        { owner: owners[0]!.address, weight: 1 },
+        { owner: child, weight: 2 },
+      ],
+      threshold: 2,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const childHash = MultisigConfig.getSignPayload({
+      account: child,
+      payload: hash,
+      version: 2n,
+    })
+    const childApprovals = [
+      signApproval(owners[1]!, childHash),
+      signApproval(owners[2]!, childHash),
+    ]
+    const rootApproval = signApproval(owners[0]!, hash)
+    const resolveConfig: MultisigOperation.selectApprovals.ResolveConfig = ({
+      account,
+    }) => {
+      if (!Address.isEqual(account, child)) throw new Error('unknown account')
+      return { config: childConfig, version: 2n }
+    }
+    const partial = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [
+        rootApproval,
+        SignatureEnvelope.serialize({
+          account: child,
+          signatures: [SignatureEnvelope.deserialize(childApprovals[0]!)],
+          type: 'multisig',
+        }),
+      ],
+      config,
+      hash,
+      resolveConfig,
+    })
+    const complete = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [
+        rootApproval,
+        SignatureEnvelope.serialize({
+          account: child,
+          signatures: childApprovals.map((approval) =>
+            SignatureEnvelope.deserialize(approval),
+          ),
+          type: 'multisig',
+        }),
+      ],
+      config,
+      hash,
+      resolveConfig,
+    })
+
+    expect({
+      complete: {
+        ...complete,
+        approvals: approvalAddresses(complete.approvals, hash),
+        selectedApprovals: approvalAddresses(complete.selectedApprovals, hash),
+      },
+      partial: {
+        ...partial,
+        approvals: approvalAddresses(partial.approvals, hash),
+        selectedApprovals: approvalAddresses(partial.selectedApprovals, hash),
+      },
+    }).toMatchInlineSnapshot(`
+      {
+        "complete": {
+          "approvals": [
+            "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
+            "0xe2d2c3c2fc4b17af341cc5c1a459af9606167e8a",
+          ],
+          "selectedApprovals": [
+            "0xe2d2c3c2fc4b17af341cc5c1a459af9606167e8a",
+          ],
+          "signatureCount": 1,
+          "threshold": 2,
+          "weight": 2,
+        },
+        "partial": {
+          "approvals": [
+            "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
+            "0xe2d2c3c2fc4b17af341cc5c1a459af9606167e8a",
+          ],
+          "selectedApprovals": [
+            "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
+          ],
+          "signatureCount": 1,
+          "threshold": 2,
+          "weight": 1,
+        },
+      }
+    `)
+  })
+
+  test('rejects invalid and non-owner approvals', async () => {
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const invalid = signApproval(
+      owners[0]!,
+      `0x${'ff'.repeat(32)}` as `0x${string}`,
+    )
+    const nonOwner = signApproval(owners[2]!, hash)
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [invalid],
+        config,
+        hash,
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: signature from owner 0x07e1ed8ea0e9601e5546b0a03aed683df3601407 is invalid.]`,
+    )
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [nonOwner],
+        config,
+        hash,
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: signature is from non-owner 0xd3a9f047ad43d7e2e4e7e491f1fe2e657a2651b6.]`,
+    )
+  })
+
+  test('requires a resolver for nested owners', async () => {
+    const childConfig = MultisigConfig.from({
+      owners: [{ owner: owners[1]!.address, weight: 1 }],
+      threshold: 1,
+    })
+    const child = MultisigConfig.getAddress(childConfig)
+    const config = MultisigConfig.from({
+      owners: [{ owner: child, weight: 1 }],
+      threshold: 1,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const childHash = MultisigConfig.getSignPayload({
+      account: child,
+      payload: hash,
+      version: 1n,
+    })
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account: child,
+            signatures: [
+              SignatureEnvelope.deserialize(
+                signApproval(owners[1]!, childHash),
+              ),
+            ],
+            type: 'multisig',
+          }),
+        ],
+        config,
+        hash,
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b requires a config resolver.]`,
+    )
+  })
+
+  test('rejects keychain and bootstrap nested approvals', async () => {
+    const childConfig = MultisigConfig.from({
+      owners: [{ owner: owners[1]!.address, weight: 1 }],
+      threshold: 1,
+    })
+    const child = MultisigConfig.getAddress(childConfig)
+    const config = MultisigConfig.from({
+      owners: [
+        { owner: owners[0]!.address, weight: 1 },
+        { owner: child, weight: 1 },
+      ],
+      threshold: 1,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const childHash = MultisigConfig.getSignPayload({
+      account: child,
+      payload: hash,
+      version: 0n,
+    })
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            inner: SignatureEnvelope.deserialize(
+              signApproval(owners[0]!, hash),
+            ),
+            type: 'keychain',
+            userAddress: owners[0]!.address,
+          }),
+        ],
+        config,
+        hash,
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: keychain signatures cannot approve a multisig operation.]`,
+    )
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account: child,
+            init: childConfig,
+            signatures: [
+              SignatureEnvelope.deserialize(
+                signApproval(owners[1]!, childHash),
+              ),
+            ],
+            type: 'multisig',
+          }),
+        ],
+        config,
+        hash,
+        resolveConfig: () => ({ config: childConfig, version: 0n }),
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b cannot carry init.]`,
+    )
+  })
+
+  test('rejects nested account cycles', async () => {
+    const config = MultisigConfig.from({
+      owners: [{ owner: account, weight: 1 }],
+      threshold: 1,
+    })
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 2n,
+      transaction,
+      type: 'transaction',
+    })
+    const nestedHash = MultisigConfig.getSignPayload({
+      account,
+      payload: hash,
+      version: 2n,
+    })
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account,
+            signatures: [
+              SignatureEnvelope.deserialize(
+                signApproval(owners[0]!, nestedHash),
+              ),
+            ],
+            type: 'multisig',
+          }),
+        ],
+        config,
+        hash,
+        resolveConfig: () => ({ config, version: 2n }),
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0xf81b7763d3a6876195d780865bd783dbd97dd36e is invalid.]`,
+    )
+  })
+
+  test('rejects excess nesting depth', async () => {
+    const grandchildConfig = MultisigConfig.from({
+      owners: [{ owner: owners[2]!.address, weight: 1 }],
+      threshold: 1,
+    })
+    const grandchild = MultisigConfig.getAddress(grandchildConfig)
+    const childConfig = MultisigConfig.from({
+      owners: [{ owner: grandchild, weight: 1 }],
+      threshold: 1,
+    })
+    const child = MultisigConfig.getAddress(childConfig)
+    const config = MultisigConfig.from({
+      owners: [{ owner: child, weight: 1 }],
+      threshold: 1,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const childHash = MultisigConfig.getSignPayload({
+      account: child,
+      payload: hash,
+      version: 1n,
+    })
+    const grandchildHash = MultisigConfig.getSignPayload({
+      account: grandchild,
+      payload: childHash,
+      version: 1n,
+    })
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account: child,
+            signatures: [
+              {
+                account: grandchild,
+                signatures: [
+                  SignatureEnvelope.deserialize(
+                    signApproval(owners[2]!, grandchildHash),
+                  ),
+                ],
+                type: 'multisig',
+              },
+            ],
+            type: 'multisig',
+          }),
+        ],
+        config,
+        hash,
+        resolveConfig: ({ account }) => {
+          if (Address.isEqual(account, child))
+            return { config: childConfig, version: 1n }
+          return { config: grandchildConfig, version: 1n }
+        },
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0xf529c8f6b2b4c72102af4cfe5eeb55b7d45dede2 is invalid.]`,
+    )
+  })
+})
+
+describe('serializeTransaction', () => {
+  test('initialized and bootstrap transactions', async () => {
+    const results = []
+    for (const init of [false, true]) {
+      const configVersion = init ? 0n : 1n
+      const hash = MultisigOperation.getHash({
+        account,
+        configVersion,
+        transaction,
+        type: 'transaction',
+      })
+      const selection = await MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          signApproval(owners[1]!, hash),
+          signApproval(owners[0]!, hash),
+        ],
+        config,
+        hash,
+      })
+      const operation = MultisigOperation.from({
+        account,
+        approvals: selection.approvals,
+        config,
+        configVersion,
+        createdAt: 1,
+        hash,
+        init,
+        signatureCount: selection.signatureCount,
+        status: 'pending',
+        threshold: selection.threshold,
+        transaction,
+        type: 'transaction',
+        updatedAt: 1,
+        weight: selection.weight,
+      })
+      const serialized = MultisigOperation.serializeTransaction(operation, {
+        approvals: selection.selectedApprovals,
+      })
+      const value = TxEnvelopeTempo.deserialize(serialized)
+      results.push({
+        account: value.signature?.account,
+        hash: Hash.keccak256(serialized),
+        init: value.signature?.type === 'multisig' && !!value.signature.init,
+        signatureCount:
+          value.signature?.type === 'multisig'
+            ? value.signature.signatures.length
+            : 0,
+        type: serialized.slice(0, 4),
+      })
+    }
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        {
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "hash": "0x704768725a4e798e2656f0f355f99507522c97b2947f551a5ee696216a2ba6fe",
+          "init": false,
+          "signatureCount": 2,
+          "type": "0x76",
+        },
+        {
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "hash": "0x08131922349c385f9112fefc617fa6f6258a71df1125ec243bb3ee7cff59b700",
+          "init": true,
+          "signatureCount": 2,
+          "type": "0x76",
+        },
+      ]
+    `)
+  })
+
+  test('fee-payer transactions', async () => {
+    const envelope = TxEnvelopeTempo.from({
+      calls: [{ data: '0x1234', to: owner_1 }],
+      chainId: 4217,
+    })
+    const transactions = [
+      TxEnvelopeTempo.serialize(envelope, {
+        format: 'feePayer',
+        sender: account,
+      }),
+      TxEnvelopeTempo.serialize(
+        {
+          ...envelope,
+          feePayerSignature: {
+            r: `0x${'05'.padStart(64, '0')}`,
+            s: `0x${'06'.padStart(64, '0')}`,
+            yParity: 0,
+          },
+        },
+        { format: 'feePayer' },
+      ),
+    ] as const
+    const results = []
+    for (const transaction of transactions) {
+      const hash = MultisigOperation.getHash({
+        account,
+        configVersion: 1n,
+        transaction,
+        type: 'transaction',
+      })
+      const selection = await MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          signApproval(owners[0]!, hash),
+          signApproval(owners[1]!, hash),
+        ],
+        config,
+        hash,
+      })
+      const serialized = MultisigOperation.serializeTransaction(
+        MultisigOperation.from({
+          account,
+          approvals: selection.approvals,
+          config,
+          configVersion: 1n,
+          createdAt: 1,
+          hash,
+          init: false,
+          signatureCount: selection.signatureCount,
+          status: 'pending',
+          threshold: selection.threshold,
+          transaction,
+          type: 'transaction',
+          updatedAt: 1,
+          weight: selection.weight,
+        }),
+        { approvals: selection.selectedApprovals },
+      )
+      const value = TxEnvelopeTempo.deserialize(serialized)
+      results.push({
+        feePayerSignature: value.feePayerSignature,
+        from: value.from,
+        signatureCount:
+          value.signature?.type === 'multisig'
+            ? value.signature.signatures.length
+            : 0,
+        type: serialized.slice(0, 4),
+      })
+    }
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        {
+          "feePayerSignature": null,
+          "from": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "signatureCount": 2,
+          "type": "0x78",
+        },
+        {
+          "feePayerSignature": {
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000005",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000006",
+            "yParity": 0,
+          },
+          "from": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "signatureCount": 2,
+          "type": "0x78",
+        },
+      ]
+    `)
+  })
+
+  test('rejects an approval not retained by the operation', async () => {
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const approval_1 = signApproval(owners[0]!, hash)
+    const approval_2 = signApproval(owners[1]!, hash)
+    const selection = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [approval_1],
+      config,
+      hash,
+    })
+    const operation = MultisigOperation.from({
+      account,
+      approvals: selection.approvals,
+      config,
+      configVersion: 1n,
+      createdAt: 1,
+      hash,
+      init: false,
+      signatureCount: selection.signatureCount,
+      status: 'pending',
+      threshold: selection.threshold,
+      transaction,
+      type: 'transaction',
+      updatedAt: 1,
+      weight: selection.weight,
+    })
+
+    expect(() =>
+      MultisigOperation.serializeTransaction(operation, {
+        approvals: [approval_2],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: transaction signature is not a retained approval.]`,
+    )
+  })
+})
 
 describe('from', () => {
   test('transaction states', () => {

@@ -77,6 +77,253 @@ export type Rpc = Operation<Hex.Hex>
 const maxConfigVersion = 2n ** 64n - 1n
 
 /**
+ * Derives the deterministic hash for a multisig operation.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { MultisigOperation } from 'ox/tempo'
+ *
+ * const hash = MultisigOperation.getHash({
+ *   account,
+ *   configVersion: 1n,
+ *   transaction,
+ *   type: 'transaction',
+ * })
+ * ```
+ *
+ * @param options - Operation payload and multisig identity.
+ * @returns The operation hash signed by each owner.
+ */
+export function getHash(options: getHash.Options): Hex.Hex {
+  const { account, configVersion } = options
+  const payload =
+    options.type === 'transaction'
+      ? TxEnvelopeTempo.getSignPayload(
+          TxEnvelopeTempo.deserialize(options.transaction),
+        )
+      : KeyAuthorization_.getSignPayload(
+          KeyAuthorization_.deserialize(options.keyAuthorization),
+        )
+  return MultisigConfig.getSignPayload({
+    account,
+    payload,
+    version: configVersion,
+  })
+}
+
+export declare namespace getHash {
+  /** Parameters for `getHash`. */
+  export type Options = {
+    /** Root multisig account. */
+    account: Address.Address
+    /** Root configuration version. */
+    configVersion: bigint
+  } & (
+    | {
+        /** Canonical serialized key authorization. */
+        keyAuthorization: Hex.Hex
+        /** Operation kind. */
+        type: 'keyAuthorization'
+      }
+    | {
+        /** Canonical serialized Tempo envelope without its outer sender signature. */
+        transaction: TxEnvelopeTempo.Serialized
+        /** Operation kind. */
+        type: 'transaction'
+      }
+  )
+
+  /** Error type for `getHash`. */
+  export type ErrorType =
+    | KeyAuthorization_.deserialize.ErrorType
+    | KeyAuthorization_.getSignPayload.ErrorType
+    | MultisigConfig.getSignPayload.ErrorType
+    | TxEnvelopeTempo.deserialize.ErrorType
+    | TxEnvelopeTempo.getSignPayload.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Validates, deduplicates, and selects owner approvals for an operation.
+ *
+ * The function retains one canonical approval per owner. It selects the
+ * smallest deterministic quorum by owner weight, then orders the selected
+ * approvals by owner address for serialization.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { MultisigOperation } from 'ox/tempo'
+ *
+ * const selection = await MultisigOperation.selectApprovals({
+ *   account,
+ *   approvals,
+ *   config,
+ *   hash,
+ *   resolveConfig,
+ * })
+ * ```
+ *
+ * @param options - Approval selection parameters.
+ * @returns The retained approvals and deterministic quorum selection.
+ */
+export async function selectApprovals(
+  options: selectApprovals.Options,
+): Promise<selectApprovals.ReturnValue> {
+  const { account, approvals, hash, resolveConfig } = options
+  if (!Address.validate(account) || Hex.toBigInt(account) === 0n)
+    throw new InvalidApprovalError({ reason: 'account is invalid' })
+  if (!Hash.validate(hash))
+    throw new InvalidApprovalError({ reason: 'hash is invalid' })
+  return selectApprovals_internal(
+    {
+      account,
+      approvals,
+      config: MultisigConfig.from(options.config),
+      hash,
+      resolveConfig,
+    },
+    [account.toLowerCase()],
+  )
+}
+
+export declare namespace selectApprovals {
+  /** Parameters for `selectApprovals`. */
+  export type Options = {
+    /** Root multisig account. */
+    account: Address.Address
+    /** Serialized primitive or nested owner approvals. */
+    approvals: readonly SignatureEnvelope.Serialized[]
+    /** Current root multisig configuration. */
+    config: MultisigConfig.Config
+    /** Deterministic operation hash approved by root owners. */
+    hash: Hex.Hex
+    /** Resolves the current configuration of a nested multisig owner. */
+    resolveConfig?: ResolveConfig | undefined
+  }
+
+  /** Resolves an initialized nested multisig configuration. */
+  export type ResolveConfig = (
+    options: ResolveConfigOptions,
+  ) => ResolvedConfig | Promise<ResolvedConfig>
+
+  /** Nested multisig configuration lookup parameters. */
+  export type ResolveConfigOptions = {
+    /** Nested multisig account. */
+    account: Address.Address
+  }
+
+  /** Resolved nested multisig configuration. */
+  export type ResolvedConfig = {
+    /** Current nested multisig configuration. */
+    config: MultisigConfig.Config
+    /** Current nested multisig configuration version. */
+    version: bigint
+  }
+
+  /** Result of validating and selecting approvals. */
+  export type ReturnValue = {
+    /** Every retained approval, ordered by owner address. */
+    approvals: readonly SignatureEnvelope.Serialized[]
+    /** Number of approvals selected for quorum evaluation. */
+    signatureCount: number
+    /** Approvals selected for serialization, ordered by owner address. */
+    selectedApprovals: readonly SignatureEnvelope.Serialized[]
+    /** Required owner weight. */
+    threshold: number
+    /** Owner weight reached by the selected approvals. */
+    weight: number
+  }
+
+  /** Error type for `selectApprovals`. */
+  export type ErrorType =
+    | InvalidApprovalError
+    | MultisigConfig.assert.ErrorType
+    | MultisigConfig.getSignPayload.ErrorType
+    | SignatureEnvelope.CoercionError
+    | SignatureEnvelope.extractAddress.ErrorType
+    | SignatureEnvelope.serialize.ErrorType
+    | SignatureEnvelope.VerificationError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Serializes a multisig transaction operation with selected owner approvals.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { MultisigOperation } from 'ox/tempo'
+ *
+ * const transaction = MultisigOperation.serializeTransaction(operation, {
+ *   approvals: selection.selectedApprovals,
+ * })
+ * ```
+ *
+ * @param operation - Multisig transaction operation.
+ * @param options - Transaction serialization options.
+ * @returns The signed serialized Tempo transaction.
+ */
+export function serializeTransaction(
+  operation: TransactionOperation,
+  options: serializeTransaction.Options,
+): TxEnvelopeTempo.Serialized {
+  const value = from(operation)
+  const envelope = TxEnvelopeTempo.deserialize(
+    value.transaction as TxEnvelopeTempo.Serialized,
+  )
+  const approvals = options.approvals.map((approval) =>
+    SignatureEnvelope.from(approval),
+  )
+  assertRetainedApprovals(value, approvals)
+  const signatures = SignatureEnvelope.sortMultisigApprovals({
+    account: value.account,
+    payload: TxEnvelopeTempo.getSignPayload(envelope),
+    signatures: approvals,
+    version: value.configVersion,
+  })
+  const signature = value.init
+    ? SignatureEnvelope.from({
+        init: true,
+        initialConfig: value.config,
+        signatures,
+      })
+    : SignatureEnvelope.from({
+        account: value.account,
+        signatures,
+      })
+  return TxEnvelopeTempo.serialize(
+    envelope,
+    value.transaction.startsWith(TxEnvelopeTempo.feePayerMagic)
+      ? {
+          format: 'feePayer',
+          sender: envelope.from,
+          signature,
+        }
+      : { signature },
+  )
+}
+
+export declare namespace serializeTransaction {
+  /** Options for `serializeTransaction`. */
+  export type Options = {
+    /** Selected retained approvals to attach to the transaction. */
+    approvals: readonly SignatureEnvelope.Serialized[]
+  }
+
+  /** Error type for `serializeTransaction`. */
+  export type ErrorType =
+    | from.ErrorType
+    | InvalidOperationError
+    | SignatureEnvelope.sortMultisigApprovals.ErrorType
+    | TxEnvelopeTempo.deserialize.ErrorType
+    | TxEnvelopeTempo.getSignPayload.ErrorType
+    | TxEnvelopeTempo.serialize.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Validates and normalizes a multisig operation.
  *
  * @example
@@ -206,6 +453,220 @@ export declare namespace toRpc {
 
   /** Error type for `toRpc`. */
   export type ErrorType = from.ErrorType | Hex.fromNumber.ErrorType
+}
+
+/**
+ * Validates and selects approvals recursively.
+ *
+ * @internal
+ */
+async function selectApprovals_internal(
+  options: selectApprovals.Options,
+  path: readonly string[],
+): Promise<selectApprovals.ReturnValue> {
+  const owners = new Map(
+    options.config.owners.map((owner) => [
+      owner.owner.toLowerCase(),
+      { address: owner.owner, weight: Number(owner.weight) },
+    ]),
+  )
+  const groups = new Map<string, ApprovalGroup>()
+  for (const serialized of options.approvals) {
+    const signature = SignatureEnvelope.from(serialized)
+    if (signature.type === 'keychain')
+      throw new InvalidApprovalError({
+        reason: 'keychain signatures cannot approve a multisig operation',
+      })
+    const address =
+      signature.type === 'multisig'
+        ? signature.account
+        : SignatureEnvelope.extractAddress({
+            payload: options.hash,
+            signature,
+          })
+    const owner = owners.get(address.toLowerCase())
+    if (!owner)
+      throw new InvalidApprovalError({
+        reason: `signature is from non-owner ${address}`,
+      })
+    const key = address.toLowerCase()
+    const group = groups.get(key)
+    if (group) group.signatures.push(signature)
+    else
+      groups.set(key, {
+        address: owner.address,
+        signatures: [signature],
+        weight: owner.weight,
+      })
+  }
+
+  const valid: SelectedApproval[] = []
+  const retained: RetainedApproval[] = []
+  for (const group of groups.values()) {
+    const nested = group.signatures.filter(
+      (signature) => signature.type === 'multisig',
+    )
+    if (nested.length > 0) {
+      if (nested.length !== group.signatures.length)
+        throw new InvalidApprovalError({
+          reason: `owner ${group.address} has conflicting signature types`,
+        })
+      if (nested.some((signature) => signature.init))
+        throw new InvalidApprovalError({
+          reason: `nested multisig owner ${group.address} cannot carry init`,
+        })
+      if (
+        path.length >= MultisigConfig.maxNestingDepth ||
+        path.includes(group.address.toLowerCase())
+      )
+        throw new InvalidApprovalError({
+          reason: `nested multisig owner ${group.address} is invalid`,
+        })
+      if (!options.resolveConfig)
+        throw new InvalidApprovalError({
+          reason: `nested multisig owner ${group.address} requires a config resolver`,
+        })
+      const resolved = await options.resolveConfig({ account: group.address })
+      const selected = await selectApprovals_internal(
+        {
+          account: group.address,
+          approvals: nested.flatMap((signature) =>
+            signature.signatures.map((approval) =>
+              SignatureEnvelope.serialize(approval),
+            ),
+          ),
+          config: MultisigConfig.from(resolved.config),
+          hash: MultisigConfig.getSignPayload({
+            account: group.address,
+            payload: options.hash,
+            version: resolved.version,
+          }),
+          resolveConfig: options.resolveConfig,
+        },
+        [...path, group.address.toLowerCase()],
+      )
+      retained.push({
+        address: group.address,
+        signature: SignatureEnvelope.serialize(
+          SignatureEnvelope.from({
+            account: group.address,
+            signatures: selected.approvals.map((approval) =>
+              SignatureEnvelope.from(approval),
+            ),
+          }),
+        ),
+      })
+      if (selected.weight >= selected.threshold)
+        valid.push({
+          address: group.address,
+          signature: SignatureEnvelope.serialize(
+            SignatureEnvelope.from({
+              account: group.address,
+              signatures: selected.selectedApprovals.map((approval) =>
+                SignatureEnvelope.from(approval),
+              ),
+            }),
+          ),
+          weight: group.weight,
+        })
+      continue
+    }
+
+    const signatures = group.signatures.map((signature) => {
+      if (
+        !SignatureEnvelope.verify(signature, {
+          address: group.address,
+          payload: options.hash,
+        })
+      )
+        throw new InvalidApprovalError({
+          reason: `signature from owner ${group.address} is invalid`,
+        })
+      return SignatureEnvelope.serialize(signature)
+    })
+    const signature = signatures.sort(compareHex)[0]!
+    valid.push({
+      address: group.address,
+      signature,
+      weight: group.weight,
+    })
+    retained.push({ address: group.address, signature })
+  }
+
+  const ranked = valid.sort(
+    (a, b) => b.weight - a.weight || compareApprovalAddress(a, b),
+  )
+  const selected: typeof ranked = []
+  let weight = 0
+  for (const approval of ranked.slice(0, MultisigConfig.maxSignatures)) {
+    if (weight >= Number(options.config.threshold)) break
+    selected.push(approval)
+    weight += approval.weight
+  }
+  selected.sort(compareApprovalAddress)
+
+  return {
+    approvals: retained
+      .sort(compareApprovalAddress)
+      .map((approval) => approval.signature),
+    selectedApprovals: selected.map((approval) => approval.signature),
+    signatureCount: selected.length,
+    threshold: Number(options.config.threshold),
+    weight,
+  }
+}
+
+/** Approval selected for quorum evaluation. @internal */
+type SelectedApproval = {
+  /** Configured owner address. */
+  address: Address.Address
+  /** Serialized owner signature. */
+  signature: SignatureEnvelope.Serialized
+  /** Configured owner weight. */
+  weight: number
+}
+
+/** Approvals submitted for one configured owner. @internal */
+type ApprovalGroup = {
+  /** Configured owner address. */
+  address: Address.Address
+  /** Submitted signatures that resolve to the owner. */
+  signatures: SignatureEnvelope.SignatureEnvelope[]
+  /** Configured owner weight. */
+  weight: number
+}
+
+/** Approval retained in operation storage. @internal */
+type RetainedApproval = {
+  /** Configured owner address. */
+  address: Address.Address
+  /** Serialized primitive or normalized nested approval. */
+  signature: SignatureEnvelope.Serialized
+}
+
+/**
+ * Orders approval records by owner address.
+ *
+ * @internal
+ */
+function compareApprovalAddress(
+  a: SelectedApproval | RetainedApproval,
+  b: SelectedApproval | RetainedApproval,
+) {
+  const addressA = Hex.toBigInt(a.address)
+  const addressB = Hex.toBigInt(b.address)
+  return addressA < addressB ? -1 : addressA > addressB ? 1 : 0
+}
+
+/**
+ * Orders hexadecimal data bytewise.
+ *
+ * @internal
+ */
+function compareHex(a: Hex.Hex, b: Hex.Hex) {
+  const hexA = a.toLowerCase()
+  const hexB = b.toLowerCase()
+  return hexA < hexB ? -1 : hexA > hexB ? 1 : 0
 }
 
 /**
@@ -382,14 +843,8 @@ function assertTransaction(operation: TransactionOperation): void {
   const feePayer = operation.transaction.startsWith(
     TxEnvelopeTempo.feePayerMagic,
   )
-  const serialized = feePayer
-    ? Hex.concat(
-        TxEnvelopeTempo.serializedType,
-        Hex.slice(operation.transaction, 1),
-      )
-    : operation.transaction
   const transaction = TxEnvelopeTempo.deserialize(
-    serialized as TxEnvelopeTempo.Serialized,
+    operation.transaction as TxEnvelopeTempo.Serialized,
   )
   if (transaction.signature)
     throw new InvalidOperationError({
@@ -530,6 +985,30 @@ function assertApproval(
   )
     throw new InvalidOperationError({ reason: 'approval is not canonical' })
   return approval
+}
+
+/**
+ * Checks that selected transaction approvals are retained by the operation.
+ *
+ * @internal
+ */
+function assertRetainedApprovals(
+  operation: TransactionOperation,
+  selected: readonly SignatureEnvelope.SignatureEnvelope[],
+): void {
+  const retained = operation.approvals.map((approval) =>
+    SignatureEnvelope.deserialize(approval),
+  )
+  for (const approval of selected) {
+    const index = retained.findIndex((candidate) =>
+      includesApproval(candidate, approval),
+    )
+    if (index === -1)
+      throw new InvalidOperationError({
+        reason: 'transaction signature is not a retained approval',
+      })
+    retained.splice(index, 1)
+  }
 }
 
 /**
@@ -685,6 +1164,44 @@ function sameConfig(
       )
     })
   )
+}
+
+/** Thrown when a multisig owner approval is invalid. */
+export class InvalidApprovalError extends Errors.BaseError<Error | undefined> {
+  override readonly name = 'MultisigOperation.InvalidApprovalError'
+
+  /**
+   * Creates an invalid multisig approval error.
+   *
+   * @example
+   * ```ts twoslash
+   * import { MultisigOperation } from 'ox/tempo'
+   *
+   * throw new MultisigOperation.InvalidApprovalError({
+   *   reason: 'signature is from a non-owner',
+   * })
+   * ```
+   *
+   * @param options - Error options.
+   */
+  constructor(options: InvalidApprovalError.Options = {}) {
+    super(
+      options.reason
+        ? `Invalid multisig approval: ${options.reason}.`
+        : 'Invalid multisig approval.',
+      { cause: options.cause as Error | undefined },
+    )
+  }
+}
+
+export declare namespace InvalidApprovalError {
+  /** Error construction options. */
+  export type Options = {
+    /** Underlying error. */
+    cause?: unknown | undefined
+    /** Validation failure. */
+    reason?: string | undefined
+  }
 }
 
 /** Thrown when a multisig operation is malformed or internally inconsistent. */
