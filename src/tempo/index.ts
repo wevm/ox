@@ -233,7 +233,7 @@ export * as PoolId from './PoolId.js'
  */
 export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
 /**
- * Union of all JSON-RPC Methods for the `tempo_` namespace.
+ * JSON-RPC schemas for the `tempo_` and `multisig_` namespaces.
  *
  * @example
  * ```ts twoslash
@@ -243,6 +243,7 @@ export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
  *
  * const schema = RpcSchema.from<
  *   | RpcSchema.Default
+ *   | RpcSchemaTempo.Multisig
  *   | RpcSchemaTempo.Tempo
  * >()
  *
