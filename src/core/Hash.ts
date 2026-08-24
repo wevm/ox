@@ -493,7 +493,7 @@ export declare namespace sha256 {
  * @returns Whether the value is a valid hash.
  */
 export function validate(value: string): value is Hex.Hex {
-  return Hex.validate(value) && Hex.size(value) === 32
+  return value.length === 66 && Hex.validate(value, { strict: true })
 }
 
 export declare namespace validate {

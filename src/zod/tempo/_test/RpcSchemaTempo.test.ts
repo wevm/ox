@@ -54,3 +54,44 @@ describe('tempo_simulateV1', () => {
     ).toBe(true)
   })
 })
+
+describe('multisig methods', () => {
+  test('decodes raw transaction params', () => {
+    expect(
+      z_RpcSchema.decodeParams(
+        z_RpcSchemaTempo.Multisig,
+        'multisig_approveRawTransactionSync',
+        ['0x76', 30_000],
+      ),
+    ).toEqual(['0x76', 30_000])
+  })
+
+  test('decodes key authorization approval params', () => {
+    expect(
+      z_RpcSchema.decodeParams(
+        z_RpcSchemaTempo.Multisig,
+        'multisig_approveKeyAuthorization',
+        [{ hash: '0x01', signature: '0x02' }],
+      ),
+    ).toEqual([{ hash: '0x01', signature: '0x02' }])
+  })
+
+  test('accepts a missing operation result', () => {
+    expect(
+      z_RpcSchema.decodeReturns(
+        z_RpcSchemaTempo.Multisig,
+        'multisig_getOperation',
+        null,
+      ),
+    ).toBeNull()
+  })
+
+  test('exposes method and request schemas', () => {
+    expect(
+      z.safeDecode(z_RpcSchemaTempo.multisig_getOperation.request, {
+        method: 'multisig_getOperation',
+        params: ['0x01'],
+      }).success,
+    ).toBe(true)
+  })
+})

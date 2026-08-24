@@ -21,8 +21,8 @@ describe('Config', () => {
     expect(
       z.safeDecode(z_MultisigConfig.Config, {
         ...config,
-        owners: [{ ...config.owners[0], weight: 9 }],
-        threshold: 9,
+        owners: [{ ...config.owners[0], weight: 255 }],
+        threshold: 256,
       }).success,
     ).toMatchInlineSnapshot(`false`)
   })

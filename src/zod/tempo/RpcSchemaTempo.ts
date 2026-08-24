@@ -6,6 +6,8 @@ import * as z_Log from '../Log.js'
 import * as z_StateOverrides from '../StateOverrides.js'
 import { from } from '../internal/rpcSchemas/from.js'
 import * as z from 'zod/mini'
+import * as z_KeyAuthorization from './KeyAuthorization.js'
+import * as z_MultisigOperation from './MultisigOperation.js'
 import * as z_TransactionRequest from './TransactionRequest.js'
 
 const BlockNumberOrTagOrIdentifier = z.union([
@@ -85,3 +87,44 @@ export const tempo_simulateV1 = from({
 
 /** JSON-RPC method schemas for the `tempo_` namespace. */
 export const Tempo = { tempo_simulateV1 }
+
+/** Schema for the `multisig_approveRawTransaction` JSON-RPC method. */
+export const multisig_approveRawTransaction = from({
+  method: 'multisig_approveRawTransaction',
+  params: z.tuple([z_Hex.Hex]),
+  returns: z_Hex.Hex,
+})
+
+/** Schema for the `multisig_approveRawTransactionSync` JSON-RPC method. */
+export const multisig_approveRawTransactionSync = from({
+  method: 'multisig_approveRawTransactionSync',
+  params: z.tuple([z_Hex.Hex, z.optional(z.number())]),
+  returns: z_MultisigOperation.TransactionOperation,
+})
+
+/** Schema for the `multisig_approveKeyAuthorization` JSON-RPC method. */
+export const multisig_approveKeyAuthorization = from({
+  method: 'multisig_approveKeyAuthorization',
+  params: z.tuple([
+    z.union([
+      z.object({ keyAuthorization: z_KeyAuthorization.Rpc }),
+      z.object({ hash: z_Hex.Hex, signature: z_Hex.Hex }),
+    ]),
+  ]),
+  returns: z_MultisigOperation.KeyAuthorizationOperation,
+})
+
+/** Schema for the `multisig_getOperation` JSON-RPC method. */
+export const multisig_getOperation = from({
+  method: 'multisig_getOperation',
+  params: z.tuple([z_Hex.Hex]),
+  returns: z.nullable(z_MultisigOperation.Operation),
+})
+
+/** JSON-RPC method schemas for the `multisig_` namespace. */
+export const Multisig = {
+  multisig_approveKeyAuthorization,
+  multisig_approveRawTransaction,
+  multisig_approveRawTransactionSync,
+  multisig_getOperation,
+}

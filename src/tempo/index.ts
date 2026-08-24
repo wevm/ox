@@ -174,6 +174,15 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  */
 export * as MultisigConfig from './MultisigConfig.js'
 /**
+ * Offchain multisig transaction and key authorization operation utilities.
+ *
+ * Validates operation state, serialized payloads, and deterministic operation
+ * hashes, and converts between domain and JSON-RPC representations.
+ *
+ * @category Reference
+ */
+export * as MultisigOperation from './MultisigOperation.js'
+/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
@@ -251,7 +260,7 @@ export * as PoolId from './PoolId.js'
  */
 export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
 /**
- * Union of all JSON-RPC Methods for the `tempo_` namespace.
+ * JSON-RPC schemas for the `tempo_` and `multisig_` namespaces.
  *
  * @example
  * ```ts twoslash
@@ -260,7 +269,9 @@ export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
  * import { RpcSchemaTempo } from 'ox/tempo'
  *
  * const schema = RpcSchema.from<
- *   RpcSchema.Default | RpcSchemaTempo.Tempo
+ *   | RpcSchema.Default
+ *   | RpcSchemaTempo.Multisig
+ *   | RpcSchemaTempo.Tempo
  * >()
  *
  * const provider = Provider.from(window.ethereum!, { schema })
