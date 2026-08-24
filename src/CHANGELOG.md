@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.37
+
+### Patch Changes
+
+- [#404](https://github.com/wevm/ox/pull/404) [`2398cf2`](https://github.com/wevm/ox/commit/2398cf2832363dcf240ed3ed32df47940d8bf276) Thanks [@jxom](https://github.com/jxom)! - Added `MultisigOperation` types, validation, and JSON-RPC conversion utilities.
+
 ## 0.14.36
 
 ### Patch Changes
