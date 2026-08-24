@@ -1,5 +1,20 @@
 # ox
 
+## 0.14.38
+
+### Patch Changes
+
+- [#409](https://github.com/wevm/ox/pull/409) [`8f25490`](https://github.com/wevm/ox/commit/8f254906699e008e3d70ca172f27afda1a8e269a) Thanks [@jxom](https://github.com/jxom)! - Added multisig operation hashing, approval selection, and transaction serialization helpers.
+
+  ```ts
+  import { MultisigOperation } from "ox/tempo";
+
+  const selection = await MultisigOperation.selectApprovals(options);
+  const transaction = MultisigOperation.serializeTransaction(operation, {
+    approvals: selection.selectedApprovals,
+  });
+  ```
+
 ## 0.14.37
 
 ### Patch Changes
