@@ -1,4 +1,4 @@
-import { Address } from 'ox'
+import { Address, P256 } from 'ox'
 import {
   KeyAuthorization,
   MultisigConfig,
@@ -8,8 +8,24 @@ import {
 } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
-const owner_1 = '0x1111111111111111111111111111111111111111'
-const owner_2 = '0x2222222222222222222222222222222222222222'
+const owners = [1n, 2n, 3n]
+  .map((value, index) => {
+    const publicKey = P256.getPublicKey({
+      privateKey: `0x${value.toString(16).padStart(64, '0')}`,
+    })
+    return {
+      address: Address.fromPublicKey(publicKey),
+      signature: {
+        prehash: false,
+        publicKey,
+        signature: { r: BigInt(index * 2 + 1), s: BigInt(index * 2 + 2) },
+        type: 'p256',
+      },
+    } as const
+  })
+  .sort((a, b) => a.address.localeCompare(b.address))
+const owner_1 = owners[0]!.address
+const owner_2 = owners[1]!.address
 const config = MultisigConfig.from({
   owners: [
     { owner: owner_1, weight: 1 },
@@ -18,19 +34,10 @@ const config = MultisigConfig.from({
   threshold: 2,
 })
 const account = MultisigConfig.getAddress(config)
-const ownerSignature_1 = {
-  signature: { r: 1n, s: 2n, yParity: 0 },
-  type: 'secp256k1',
-} as const
+const ownerSignature_1 = owners[0]!.signature
 const approval_1 = SignatureEnvelope.serialize(ownerSignature_1)
-const approval_2 = SignatureEnvelope.serialize({
-  signature: { r: 3n, s: 4n, yParity: 1 },
-  type: 'secp256k1',
-})
-const approval_3 = SignatureEnvelope.serialize({
-  signature: { r: 5n, s: 6n, yParity: 0 },
-  type: 'secp256k1',
-})
+const approval_2 = SignatureEnvelope.serialize(owners[1]!.signature)
+const approval_3 = SignatureEnvelope.serialize(owners[2]!.signature)
 const transaction = TxEnvelopeTempo.serialize(
   TxEnvelopeTempo.from({
     calls: [{ data: '0x1234', to: owner_1 }],
@@ -118,18 +125,18 @@ describe('from', () => {
     expect({ pending, submitting, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -138,30 +145,30 @@ describe('from', () => {
           },
           "configVersion": 1n,
           "createdAt": 1,
-          "hash": "0x4494fb4eefa967db6ab4fc4b303c1b9cc4e4200642da3f0990f2d023beb2c6e9",
+          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
           "init": false,
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
-          "transaction": "0x76e9821079808080dad994111111111111111111111111111111111111111180821234c0808080808080c0",
+          "transaction": "0x76e9821079808080dad99407e1ed8ea0e9601e5546b0a03aed683df360140780821234c0808080808080c0",
           "type": "transaction",
           "updatedAt": 2,
           "weight": 1,
         },
         "submitting": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
-            "0x000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000041c",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
+            "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -171,31 +178,31 @@ describe('from', () => {
           "configVersion": 1n,
           "createdAt": 1,
           "expiresAt": 10,
-          "hash": "0x4494fb4eefa967db6ab4fc4b303c1b9cc4e4200642da3f0990f2d023beb2c6e9",
+          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
           "init": false,
           "signatureCount": 2,
           "status": "submitting",
           "submissionId": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
           "threshold": 2,
-          "transaction": "0x76e9821079808080dad994111111111111111111111111111111111111111180821234c0808080808080c0",
+          "transaction": "0x76e9821079808080dad99407e1ed8ea0e9601e5546b0a03aed683df360140780821234c0808080808080c0",
           "type": "transaction",
           "updatedAt": 2,
           "weight": 2,
         },
         "success": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
-            "0x000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000041c",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
+            "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -204,12 +211,12 @@ describe('from', () => {
           },
           "configVersion": 1n,
           "createdAt": 1,
-          "hash": "0x4494fb4eefa967db6ab4fc4b303c1b9cc4e4200642da3f0990f2d023beb2c6e9",
+          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
           "init": false,
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
-          "transaction": "0x76e9821079808080dad994111111111111111111111111111111111111111180821234c0808080808080c0",
+          "transaction": "0x76e9821079808080dad99407e1ed8ea0e9601e5546b0a03aed683df360140780821234c0808080808080c0",
           "transactionHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "type": "transaction",
           "updatedAt": 2,
@@ -246,18 +253,18 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+        "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
         "approvals": [
-          "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
+          "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
         "config": {
           "owners": [
             {
-              "owner": "0x1111111111111111111111111111111111111111",
+              "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
               "weight": 1,
             },
             {
-              "owner": "0x2222222222222222222222222222222222222222",
+              "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
               "weight": 1,
             },
           ],
@@ -325,18 +332,18 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+        "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
         "approvals": [
-          "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
+          "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
         "config": {
           "owners": [
             {
-              "owner": "0x1111111111111111111111111111111111111111",
+              "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
               "weight": 1,
             },
             {
-              "owner": "0x2222222222222222222222222222222222222222",
+              "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
               "weight": 1,
             },
           ],
@@ -409,18 +416,18 @@ describe('from', () => {
     expect({ pending, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -429,9 +436,9 @@ describe('from', () => {
           },
           "configVersion": 1n,
           "createdAt": 1,
-          "hash": "0x274c7ba0c5deab0d531ee0eac2f2b8833b831cf70a63a16aae42d29e8d266bc2",
+          "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
           "init": false,
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d20080808080949bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36e",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -440,19 +447,19 @@ describe('from', () => {
           "weight": 1,
         },
         "success": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
-            "0x000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000041c",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
+            "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -461,9 +468,9 @@ describe('from', () => {
           },
           "configVersion": 1n,
           "createdAt": 1,
-          "hash": "0x274c7ba0c5deab0d531ee0eac2f2b8833b831cf70a63a16aae42d29e8d266bc2",
+          "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
           "init": false,
-          "keyAuthorization": "0xf8daf782107980943333333333333333333333333333333333333333846b49d20080808080949bd9653fca540baad0c9c7e84d90f8e4c4f7b33ab8a005f89d949bd9653fca540baad0c9c7e84d90f8e4c4f7b33af886b841000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021bb841000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000041c",
+          "keyAuthorization": "0xf9015ff782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36eb9012405f9012094f81b7763d3a6876195d780865bd783dbd97dd36ef90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -513,19 +520,19 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+        "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
         "approvals": [
-          "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
-          "0x000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000041c",
+          "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
+          "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
         ],
         "config": {
           "owners": [
             {
-              "owner": "0x1111111111111111111111111111111111111111",
+              "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
               "weight": 1,
             },
             {
-              "owner": "0x2222222222222222222222222222222222222222",
+              "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
               "weight": 1,
             },
           ],
@@ -557,18 +564,18 @@ describe('RPC conversion', () => {
     expect({ keyAuthorizationRpc, transactionRpc }).toMatchInlineSnapshot(`
       {
         "keyAuthorizationRpc": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -577,9 +584,9 @@ describe('RPC conversion', () => {
           },
           "configVersion": "0x1",
           "createdAt": 1,
-          "hash": "0x274c7ba0c5deab0d531ee0eac2f2b8833b831cf70a63a16aae42d29e8d266bc2",
+          "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
           "init": false,
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d20080808080949bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36e",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -588,18 +595,18 @@ describe('RPC conversion', () => {
           "weight": 1,
         },
         "transactionRpc": {
-          "account": "0x9bd9653fca540baad0c9c7e84d90f8e4c4f7b33a",
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
           "approvals": [
-            "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000021b",
+            "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
           "config": {
             "owners": [
               {
-                "owner": "0x1111111111111111111111111111111111111111",
+                "owner": "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
                 "weight": 1,
               },
               {
-                "owner": "0x2222222222222222222222222222222222222222",
+                "owner": "0x288f0cd85005f34168f731a468aef268c2f9456f",
                 "weight": 1,
               },
             ],
@@ -608,12 +615,12 @@ describe('RPC conversion', () => {
           },
           "configVersion": "0x1",
           "createdAt": 1,
-          "hash": "0x4494fb4eefa967db6ab4fc4b303c1b9cc4e4200642da3f0990f2d023beb2c6e9",
+          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
           "init": false,
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
-          "transaction": "0x76e9821079808080dad994111111111111111111111111111111111111111180821234c0808080808080c0",
+          "transaction": "0x76e9821079808080dad99407e1ed8ea0e9601e5546b0a03aed683df360140780821234c0808080808080c0",
           "type": "transaction",
           "updatedAt": 2,
           "weight": 1,
@@ -718,6 +725,24 @@ describe('validation', () => {
       operation: { ...transactionPending, weight: 2 },
     },
     {
+      name: 'weight unreachable by the retained owner approvals',
+      operation: {
+        ...transactionPending,
+        config: MultisigConfig.from({
+          owners: [
+            { owner: owner_1, weight: 1 },
+            { owner: owner_2, weight: 2 },
+          ],
+          threshold: 2,
+        }),
+        weight: 2,
+      },
+    },
+    {
+      name: 'non-owner approval',
+      operation: { ...transactionPending, approvals: [approval_3] },
+    },
+    {
       name: 'zero account',
       operation: {
         ...transactionPending,
@@ -751,6 +776,29 @@ describe('validation', () => {
         signatureCount: 2,
         status: 'submitting',
         submissionId: `0x${'gg'.repeat(32)}`,
+        weight: 2,
+      },
+    },
+    {
+      name: 'odd-length transaction hash',
+      operation: {
+        ...transactionPending,
+        approvals: [approval_1, approval_2],
+        signatureCount: 2,
+        status: 'success',
+        transactionHash: `0x${'a'.repeat(63)}`,
+        weight: 2,
+      },
+    },
+    {
+      name: 'odd-length submission ID',
+      operation: {
+        ...transactionPending,
+        approvals: [approval_1, approval_2],
+        expiresAt: 10,
+        signatureCount: 2,
+        status: 'submitting',
+        submissionId: `0x${'b'.repeat(63)}`,
         weight: 2,
       },
     },
@@ -936,11 +984,11 @@ describe('validation', () => {
     const config = MultisigConfig.from({
       owners: [
         {
-          owner: Address.checksum('0x11111111111111111111111111111111111111aa'),
+          owner: Address.checksum(owner_1),
           weight: 1,
         },
         {
-          owner: Address.checksum('0x22222222222222222222222222222222222222bb'),
+          owner: Address.checksum(owner_2),
           weight: 1,
         },
       ],

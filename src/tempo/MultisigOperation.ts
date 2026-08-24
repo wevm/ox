@@ -259,19 +259,55 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
     throw new InvalidOperationError({
       reason: 'signatureCount and weight must both be zero or nonzero',
     })
-  if (!isWeightReachable(config, operation.signatureCount, operation.weight))
-    throw new InvalidOperationError({
-      reason:
-        'weight is not reachable by signatureCount configured owner weights',
-    })
+  const owners = new Map(
+    config.owners.map((owner) => [
+      owner.owner.toLowerCase(),
+      Number(owner.weight),
+    ]),
+  )
+  const approvalWeights: number[] = []
+  const seen = new Set<string>()
   for (const approval of operation.approvals) {
     if (
       typeof approval !== 'string' ||
       !Hex.validate(approval, { strict: true })
     )
       throw new InvalidOperationError({ reason: 'approval is invalid' })
-    assertApproval(operation.account, approval as SignatureEnvelope.Serialized)
+    const signature = assertApproval(
+      operation.account,
+      approval as SignatureEnvelope.Serialized,
+    )
+    const address = SignatureEnvelope.extractAddress({
+      payload: operation.hash,
+      signature,
+    })
+    const key = address.toLowerCase()
+    const weight = owners.get(key)
+    if (weight === undefined)
+      throw new InvalidOperationError({
+        reason: 'approval is from a non-owner',
+      })
+    if (seen.has(key))
+      throw new InvalidOperationError({
+        reason:
+          operation.type === 'keyAuthorization'
+            ? 'key authorization contains duplicate owner approvals'
+            : 'duplicate owner approval',
+      })
+    seen.add(key)
+    approvalWeights.push(weight)
   }
+  if (
+    !isWeightReachable(
+      approvalWeights,
+      operation.signatureCount,
+      operation.weight,
+    )
+  )
+    throw new InvalidOperationError({
+      reason:
+        'weight is not reachable by signatureCount retained owner approvals',
+    })
   if (operation.init) {
     if (operation.configVersion !== 0n)
       throw new InvalidOperationError({
@@ -475,7 +511,7 @@ function assertKeyAuthorization(
 function assertApproval(
   account: Address.Address,
   serialized: SignatureEnvelope.Serialized,
-): void {
+): SignatureEnvelope.SignatureEnvelope {
   const approval = SignatureEnvelope.deserialize(serialized)
   SignatureEnvelope.assert({
     account,
@@ -487,6 +523,7 @@ function assertApproval(
     serialized.toLowerCase()
   )
     throw new InvalidOperationError({ reason: 'approval is not canonical' })
+  return approval
 }
 
 /**
@@ -566,12 +603,12 @@ function includesApproval(
 }
 
 /**
- * Checks whether exactly `signatureCount` configured owners can produce `weight`.
+ * Checks whether exactly `signatureCount` retained owners can produce `weight`.
  *
  * @internal
  */
 function isWeightReachable(
-  config: MultisigConfig.Config,
+  weights: readonly number[],
   signatureCount: number,
   weight: number,
 ): boolean {
@@ -580,10 +617,10 @@ function isWeightReachable(
     () => new Set<number>(),
   )
   reachable[0]!.add(0)
-  for (const owner of config.owners)
+  for (const ownerWeight of weights)
     for (let count = signatureCount; count > 0; count--)
       for (const current of reachable[count - 1]!)
-        reachable[count]!.add(current + Number(owner.weight))
+        reachable[count]!.add(current + ownerWeight)
   return reachable[signatureCount]!.has(weight)
 }
 
