@@ -26,6 +26,10 @@ const approval_2 = SignatureEnvelope.serialize({
   signature: { r: 3n, s: 4n, yParity: 1 },
   type: 'secp256k1',
 })
+const approval_3 = SignatureEnvelope.serialize({
+  signature: { r: 5n, s: 6n, yParity: 0 },
+  type: 'secp256k1',
+})
 const transaction = TxEnvelopeTempo.serialize(
   TxEnvelopeTempo.from({
     calls: [{ data: '0x1234', to: owner_1 }],
@@ -692,6 +696,74 @@ describe('validation', () => {
       operation: { ...transactionPending, weight: 0 },
     },
     {
+      name: 'weight unreachable by the selected signature count',
+      operation: { ...transactionPending, weight: 2 },
+    },
+    {
+      name: 'zero account',
+      operation: {
+        ...transactionPending,
+        account: '0x0000000000000000000000000000000000000000',
+        hash: MultisigConfig.getSignPayload({
+          account: '0x0000000000000000000000000000000000000000',
+          payload: TxEnvelopeTempo.getSignPayload(
+            TxEnvelopeTempo.deserialize(transaction),
+          ),
+          version: 1n,
+        }),
+      },
+    },
+    {
+      name: 'non-hex transaction hash',
+      operation: {
+        ...transactionPending,
+        approvals: [approval_1, approval_2],
+        signatureCount: 2,
+        status: 'success',
+        transactionHash: `0x${'gg'.repeat(32)}`,
+        weight: 2,
+      },
+    },
+    {
+      name: 'non-hex submission ID',
+      operation: {
+        ...transactionPending,
+        approvals: [approval_1, approval_2],
+        expiresAt: 10,
+        signatureCount: 2,
+        status: 'submitting',
+        submissionId: `0x${'gg'.repeat(32)}`,
+        weight: 2,
+      },
+    },
+    {
+      name: 'keychain owner approval',
+      operation: {
+        ...transactionPending,
+        approvals: [
+          SignatureEnvelope.serialize({
+            inner: ownerSignature_1,
+            type: 'keychain',
+            userAddress: owner_1,
+          }),
+        ],
+      },
+    },
+    {
+      name: 'nested bootstrap owner approval',
+      operation: {
+        ...transactionPending,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account,
+            init: config,
+            signatures: [ownerSignature_1],
+            type: 'multisig',
+          }),
+        ],
+      },
+    },
+    {
       name: 'bootstrap with initialized version',
       operation: { ...transactionPending, init: true },
     },
@@ -709,6 +781,64 @@ describe('validation', () => {
       }),
     ).toThrowError(
       'Invalid multisig operation: configVersion must use canonical quantity encoding.',
+    )
+  })
+
+  test('rejects key authorization signatures absent from retained approvals', () => {
+    const authorization = KeyAuthorization.deserialize(keyAuthorization)
+    const operation = {
+      ...keyAuthorizationPending,
+      approvals: [approval_1, approval_2],
+      keyAuthorization: KeyAuthorization.serialize(
+        KeyAuthorization.from(authorization, {
+          signature: {
+            account,
+            signatures: [
+              SignatureEnvelope.deserialize(approval_1),
+              SignatureEnvelope.deserialize(approval_3),
+            ],
+            type: 'multisig',
+          },
+        }),
+      ),
+      signatureCount: 2,
+      status: 'success',
+      weight: 2,
+    } as const
+
+    expect(() => MultisigOperation.from(operation)).toThrowError(
+      'Invalid multisig operation: key authorization signature is not a retained approval.',
+    )
+  })
+
+  test('rejects unordered key authorization approvals', () => {
+    const authorization = KeyAuthorization.deserialize(keyAuthorization)
+    const signatures = [
+      ...SignatureEnvelope.sortMultisigApprovals({
+        account,
+        payload: KeyAuthorization.getSignPayload(authorization),
+        signatures: [
+          SignatureEnvelope.deserialize(approval_1),
+          SignatureEnvelope.deserialize(approval_2),
+        ],
+        version: 1n,
+      }),
+    ].reverse()
+    const operation = {
+      ...keyAuthorizationPending,
+      approvals: [approval_1, approval_2],
+      keyAuthorization: KeyAuthorization.serialize(
+        KeyAuthorization.from(authorization, {
+          signature: { account, signatures, type: 'multisig' },
+        }),
+      ),
+      signatureCount: 2,
+      status: 'success',
+      weight: 2,
+    } as const
+
+    expect(() => MultisigOperation.from(operation)).toThrowError(
+      'Invalid multisig operation: key authorization approvals are not canonically ordered.',
     )
   })
 })

@@ -522,6 +522,11 @@ describe('validate', () => {
     ).toBeFalsy()
     expect(
       Hash.validate(
+        '0xgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg',
+      ),
+    ).toBeFalsy()
+    expect(
+      Hash.validate(
         '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
       ),
     ).toBeTruthy()

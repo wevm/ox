@@ -209,6 +209,8 @@ export declare namespace toRpc {
 function assertBase(operation: Operation, config: MultisigConfig.Config): void {
   if (!Address.validate(operation.account))
     throw new InvalidOperationError({ reason: 'account is invalid' })
+  if (Hex.toBigInt(operation.account) === 0n)
+    throw new InvalidOperationError({ reason: 'account cannot be zero' })
   if (!Hash.validate(operation.hash))
     throw new InvalidOperationError({ reason: 'hash is invalid' })
   if (typeof operation.init !== 'boolean')
@@ -250,10 +252,18 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
     throw new InvalidOperationError({
       reason: 'signatureCount and weight must both be zero or nonzero',
     })
+  if (!isWeightReachable(config, operation.signatureCount, operation.weight))
+    throw new InvalidOperationError({
+      reason:
+        'weight is not reachable by signatureCount configured owner weights',
+    })
   for (const approval of operation.approvals) {
-    if (typeof approval !== 'string' || !Hex.validate(approval))
+    if (
+      typeof approval !== 'string' ||
+      !Hex.validate(approval, { strict: true })
+    )
       throw new InvalidOperationError({ reason: 'approval is invalid' })
-    SignatureEnvelope.deserialize(approval as SignatureEnvelope.Serialized)
+    assertApproval(operation.account, approval as SignatureEnvelope.Serialized)
   }
   if (operation.init) {
     if (operation.configVersion !== 0n)
@@ -427,6 +437,7 @@ function assertKeyAuthorization(
       throw new InvalidOperationError({
         reason: 'key authorization signatureCount does not match its signature',
       })
+    assertSelectedApprovals(operation, signature.signatures, authorization)
     if (!!signature.init !== operation.init)
       throw new InvalidOperationError({
         reason: 'key authorization bootstrap state does not match',
@@ -447,6 +458,119 @@ function assertKeyAuthorization(
     throw new InvalidOperationError({
       reason: 'keyAuthorization is not canonically serialized',
     })
+}
+
+/**
+ * Validates a retained signature in the root owner's approval context.
+ *
+ * @internal
+ */
+function assertApproval(
+  account: Address.Address,
+  serialized: SignatureEnvelope.Serialized,
+): void {
+  const approval = SignatureEnvelope.deserialize(serialized)
+  SignatureEnvelope.assert({
+    account,
+    signatures: [approval],
+    type: 'multisig',
+  })
+  if (
+    SignatureEnvelope.serialize(approval).toLowerCase() !==
+    serialized.toLowerCase()
+  )
+    throw new InvalidOperationError({ reason: 'approval is not canonical' })
+}
+
+/**
+ * Checks that a successful key authorization uses retained approvals in canonical order.
+ *
+ * @internal
+ */
+function assertSelectedApprovals(
+  operation: KeyAuthorizationOperation,
+  selected: readonly SignatureEnvelope.SignatureEnvelope[],
+  authorization: KeyAuthorization_.KeyAuthorization,
+): void {
+  const retained = operation.approvals.map((approval) =>
+    SignatureEnvelope.deserialize(approval),
+  )
+  for (const approval of selected) {
+    const index = retained.findIndex((candidate) =>
+      includesApproval(candidate, approval),
+    )
+    if (index === -1)
+      throw new InvalidOperationError({
+        reason: 'key authorization signature is not a retained approval',
+      })
+    retained.splice(index, 1)
+  }
+
+  const sorted = SignatureEnvelope.sortMultisigApprovals({
+    account: operation.account,
+    payload: KeyAuthorization_.getSignPayload(authorization),
+    signatures: selected,
+    version: operation.configVersion,
+  })
+  if (
+    sorted.some(
+      (approval, index) =>
+        SignatureEnvelope.serialize(approval).toLowerCase() !==
+        SignatureEnvelope.serialize(selected[index]!).toLowerCase(),
+    )
+  )
+    throw new InvalidOperationError({
+      reason: 'key authorization approvals are not canonically ordered',
+    })
+}
+
+/**
+ * Checks whether a selected approval is contained in a retained approval tree.
+ *
+ * @internal
+ */
+function includesApproval(
+  retained: SignatureEnvelope.SignatureEnvelope,
+  selected: SignatureEnvelope.SignatureEnvelope,
+): boolean {
+  if (retained.type !== 'multisig' || selected.type !== 'multisig')
+    return (
+      SignatureEnvelope.serialize(retained).toLowerCase() ===
+      SignatureEnvelope.serialize(selected).toLowerCase()
+    )
+  if (retained.account.toLowerCase() !== selected.account.toLowerCase())
+    return false
+  const approvals = [...retained.signatures]
+  for (const approval of selected.signatures) {
+    const index = approvals.findIndex((candidate) =>
+      includesApproval(candidate, approval),
+    )
+    if (index === -1) return false
+    approvals.splice(index, 1)
+  }
+  return true
+}
+
+/**
+ * Checks whether exactly `signatureCount` configured owners can produce `weight`.
+ *
+ * @internal
+ */
+function isWeightReachable(
+  config: MultisigConfig.Config,
+  signatureCount: number,
+  weight: number,
+): boolean {
+  const reachable = Array.from(
+    { length: signatureCount + 1 },
+    () => new Set<number>(),
+  )
+  reachable[0]!.add(0)
+  for (const owner of config.owners)
+    for (let count = signatureCount; count > 0; count--)
+      for (const current of reachable[count - 1]!)
+        reachable[count]!.add(current + Number(owner.weight))
+  return reachable[signatureCount]!.has(weight)
 }
 
 /**
