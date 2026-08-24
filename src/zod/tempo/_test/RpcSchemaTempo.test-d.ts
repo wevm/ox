@@ -1,3 +1,4 @@
+import type * as core_MultisigOperation from '../../../tempo/MultisigOperation.js'
 import type * as z from 'zod/mini'
 import { expectTypeOf, test } from 'vp/test'
 import * as z_RpcSchemaTempo from '../RpcSchemaTempo.js'
@@ -19,4 +20,34 @@ test('Tempo namespace exposes tempo_simulateV1', () => {
   expectTypeOf<typeof z_RpcSchemaTempo.Tempo.tempo_simulateV1>().toEqualTypeOf<
     typeof z_RpcSchemaTempo.tempo_simulateV1
   >()
+})
+
+test('multisig methods have the expected method names', () => {
+  expectTypeOf<
+    typeof z_RpcSchemaTempo.multisig_approveRawTransaction.method
+  >().toEqualTypeOf<'multisig_approveRawTransaction'>()
+  expectTypeOf<
+    typeof z_RpcSchemaTempo.multisig_approveRawTransactionSync.method
+  >().toEqualTypeOf<'multisig_approveRawTransactionSync'>()
+  expectTypeOf<
+    typeof z_RpcSchemaTempo.multisig_approveKeyAuthorization.method
+  >().toEqualTypeOf<'multisig_approveKeyAuthorization'>()
+  expectTypeOf<
+    typeof z_RpcSchemaTempo.multisig_getOperation.method
+  >().toEqualTypeOf<'multisig_getOperation'>()
+})
+
+test('multisig return schemas decode RPC operations', () => {
+  expectTypeOf<
+    z.output<typeof z_RpcSchemaTempo.multisig_approveRawTransactionSync.returns>
+  >().toMatchTypeOf<core_MultisigOperation.TransactionOperation>()
+  expectTypeOf<
+    z.output<typeof z_RpcSchemaTempo.multisig_getOperation.returns>
+  >().toMatchTypeOf<core_MultisigOperation.Operation | null>()
+})
+
+test('Multisig namespace exposes multisig methods', () => {
+  expectTypeOf<
+    typeof z_RpcSchemaTempo.Multisig.multisig_getOperation
+  >().toEqualTypeOf<typeof z_RpcSchemaTempo.multisig_getOperation>()
 })
