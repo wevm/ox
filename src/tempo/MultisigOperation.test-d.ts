@@ -1,6 +1,7 @@
 import { expectTypeOf, test } from 'vitest'
 import type * as Hex from '../core/Hex.js'
 import * as MultisigOperation from './MultisigOperation.js'
+import type * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 declare const transaction: MultisigOperation.TransactionOperation
 declare const transactionRpc: MultisigOperation.TransactionRpc
@@ -8,6 +9,9 @@ declare const keyAuthorization: MultisigOperation.KeyAuthorizationOperation
 declare const keyAuthorizationRpc: MultisigOperation.KeyAuthorizationRpc
 declare const operation: MultisigOperation.Operation
 declare const operationRpc: MultisigOperation.Rpc
+declare const getHashOptions: MultisigOperation.getHash.Options
+declare const selectApprovalsOptions: MultisigOperation.selectApprovals.Options
+declare const serializeTransactionOptions: MultisigOperation.serializeTransaction.Options
 
 test('preserves operation kinds during validation', () => {
   expectTypeOf(
@@ -49,4 +53,19 @@ test('uses JSON-RPC quantities only in RPC operations', () => {
   expectTypeOf<
     MultisigOperation.Rpc['configVersion']
   >().toEqualTypeOf<Hex.Hex>()
+})
+
+test('operation helpers return narrow types', async () => {
+  expectTypeOf(
+    MultisigOperation.getHash(getHashOptions),
+  ).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf(
+    await MultisigOperation.selectApprovals(selectApprovalsOptions),
+  ).toEqualTypeOf<MultisigOperation.selectApprovals.ReturnValue>()
+  expectTypeOf(
+    MultisigOperation.serializeTransaction(
+      transaction,
+      serializeTransactionOptions,
+    ),
+  ).toEqualTypeOf<TxEnvelopeTempo.Serialized>()
 })

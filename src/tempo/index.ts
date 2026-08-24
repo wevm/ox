@@ -153,8 +153,8 @@ export * as MultisigConfig from './MultisigConfig.js'
 /**
  * Offchain multisig transaction and key authorization operation utilities.
  *
- * Validates operation state, serialized payloads, and deterministic operation
- * hashes, and converts between domain and JSON-RPC representations.
+ * Derives operation hashes, selects owner approvals, serializes transactions,
+ * validates operation state, and converts JSON-RPC representations.
  *
  * @category Reference
  */
