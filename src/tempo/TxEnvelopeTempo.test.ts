@@ -138,6 +138,31 @@ describe('deserialize', () => {
     expect(deserialized).toEqual(transaction)
   })
 
+  test('fee payer', () => {
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
+      format: 'feePayer',
+      sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    })
+
+    expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          },
+        ],
+        "chainId": 1,
+        "feePayerSignature": null,
+        "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "maxFeePerGas": 2000000000n,
+        "maxPriorityFeePerGas": 2000000000n,
+        "nonce": 785n,
+        "nonceKey": 0n,
+        "type": "tempo",
+      }
+    `)
+  })
+
   test('minimal', () => {
     const transaction = TxEnvelopeTempo.from({
       chainId: 1,
