@@ -699,7 +699,7 @@ export class InvalidOperationError extends Errors.BaseError<Error | undefined> {
    * import { MultisigOperation } from 'ox/tempo'
    *
    * throw new MultisigOperation.InvalidOperationError({
-   *   reason: 'hash does not match the operation payload',
+   *   reason: 'hash does not match the operation payload'
    * })
    * ```
    *
