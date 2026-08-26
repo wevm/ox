@@ -35,9 +35,7 @@ type NonMultisig<numberType = number> = OneOf<
   | Keychain<numberType>
 >
 
-type NonMultisigRpc = OneOf<
-  Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc
->
+type NonMultisigRpc = OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc>
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -124,8 +122,7 @@ export type GetType<
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<numberType = number> =
-  | (NonMultisig<numberType> &
-      Undefined<Omit<Multisig<numberType>, 'type'>>)
+  | (NonMultisig<numberType> & Undefined<Omit<Multisig<numberType>, 'type'>>)
   | MultisigOneOf<numberType>
 
 /** RPC-formatted signature envelope. */
@@ -195,7 +192,8 @@ export type Multisig<numberType = number> = {
 }
 
 interface MultisigOneOf<numberType = number>
-  extends Multisig<numberType>,
+  extends
+    Multisig<numberType>,
     Undefined<Omit<NonMultisig<numberType>, 'type'>> {}
 
 /** RPC-formatted native multisig signature. */
@@ -211,8 +209,7 @@ export type MultisigRpc = {
 }
 
 interface MultisigRpcOneOf
-  extends MultisigRpc,
-    Undefined<Omit<NonMultisigRpc, 'type'>> {}
+  extends MultisigRpc, Undefined<Omit<NonMultisigRpc, 'type'>> {}
 
 export type P256<numberType = number> = {
   prehash: boolean
