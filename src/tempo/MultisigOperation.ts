@@ -336,10 +336,11 @@ export function from<const operation extends Operation>(
   operation: operation,
 ): from.ReturnValue<operation> {
   try {
-    const config = MultisigConfig.from({
-      ...operation.config,
-      version: operation.configVersion,
-    })
+    const config = MultisigConfig.from(operation.config)
+    if (config.version !== operation.configVersion)
+      throw new InvalidOperationError({
+        reason: 'config.version must equal configVersion',
+      })
     if (
       typeof config.threshold !== 'number' ||
       config.owners.some((owner) => typeof owner.weight !== 'number')

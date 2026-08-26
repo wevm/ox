@@ -603,6 +603,7 @@ describe('serializeTransaction', () => {
     const results = []
     for (const init of [false, true]) {
       const configVersion = init ? 0n : 1n
+      const applicableConfig = init ? config : initializedConfig
       const hash = MultisigOperation.getHash({
         account,
         configVersion,
@@ -615,13 +616,13 @@ describe('serializeTransaction', () => {
           signApproval(owners[1]!, hash),
           signApproval(owners[0]!, hash),
         ],
-        config,
+        config: applicableConfig,
         hash,
       })
       const operation = MultisigOperation.from({
         account,
         approvals: selection.approvals,
-        config,
+        config: applicableConfig,
         configVersion,
         createdAt: 1,
         hash,
@@ -709,14 +710,14 @@ describe('serializeTransaction', () => {
           signApproval(owners[0]!, hash),
           signApproval(owners[1]!, hash),
         ],
-        config,
+        config: initializedConfig,
         hash,
       })
       const serialized = MultisigOperation.serializeTransaction(
         MultisigOperation.from({
           account,
           approvals: selection.approvals,
-          config,
+          config: initializedConfig,
           configVersion: 1n,
           createdAt: 1,
           hash,
@@ -777,13 +778,13 @@ describe('serializeTransaction', () => {
     const selection = await MultisigOperation.selectApprovals({
       account,
       approvals: [approval_1],
-      config,
+      config: initializedConfig,
       hash,
     })
     const operation = MultisigOperation.from({
       account,
       approvals: selection.approvals,
-      config,
+      config: initializedConfig,
       configVersion: 1n,
       createdAt: 1,
       hash,
@@ -1038,6 +1039,7 @@ describe('from', () => {
   test('bootstrap transaction', () => {
     const operation = MultisigOperation.from({
       ...transactionPending,
+      config,
       configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
@@ -1094,6 +1096,7 @@ describe('from', () => {
   test('initialized transaction at config version zero', () => {
     const operation = MultisigOperation.from({
       ...transactionPending,
+      config,
       configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
@@ -1228,6 +1231,7 @@ describe('from', () => {
     const operation = MultisigOperation.from({
       ...keyAuthorizationPending,
       approvals: [approval_1, approval_2],
+      config,
       configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
@@ -1571,6 +1575,17 @@ describe('validation', () => {
     expect(() =>
       MultisigOperation.from(operation as MultisigOperation.Operation),
     ).toThrowError(MultisigOperation.InvalidOperationError)
+  })
+
+  test('rejects mismatched config versions', () => {
+    expect(() =>
+      MultisigOperation.from({
+        ...transactionPending,
+        config: { ...initializedConfig, version: 2n },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: config.version must equal configVersion.]`,
+    )
   })
 
   test('rejects noncanonical RPC quantities', () => {

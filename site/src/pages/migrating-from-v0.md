@@ -125,36 +125,6 @@ const envelope = TxEnvelopeTempo.from({
 
 `Channel.Resolved` has also been removed. Use `Channel.Channel` with address-valued token fields.
 
-## Tempo multisig no longer uses `config_id`
-
-TIP-1061 multisig account addresses now derive directly from the initial configuration. `MultisigConfig.toId` and the `genesisConfigId` fields have been removed.
-
-```ts
-const id = MultisigConfig.toId(genesisConfig) // [!code --]
-const account = MultisigConfig.getAddress({ genesisConfigId: id }) // [!code --]
-const account = MultisigConfig.getAddress(genesisConfig) // [!code ++]
-
-const payload = MultisigConfig.getSignPayload({ // [!code --]
-  payload: transactionPayload, // [!code --]
-  account, // [!code --]
-  genesisConfigId: id, // [!code --]
-}) // [!code --]
-const payload = MultisigConfig.getSignPayload({ // [!code ++]
-  payload: transactionPayload, // [!code ++]
-  account, // [!code ++]
-  version, // [!code ++]
-}) // [!code ++]
-
-const envelope = SignatureEnvelope.from({ // [!code --]
-  account, // [!code --]
-  genesisConfigId: id, // [!code --]
-  signatures, // [!code --]
-}) // [!code --]
-const envelope = SignatureEnvelope.from({ account, signatures }) // [!code ++]
-```
-
-Owner approval digests now bind the account and current config version. The signature wire format is `0x05 || rlp([account, signatures, init?])`, `MultisigConfig.maxOwners` is 50 with `u8` weights, and owner approvals may contain nested multisig signatures.
-
 ## RPC schema codecs return native quantities
 
 The `ox/zod` RPC schema codecs now decode scalar quantity results to native values. Balance, gas, fee, and block-number quantities decode to `bigint`; chain IDs, transaction counts, and block transaction counts decode to `number`.
