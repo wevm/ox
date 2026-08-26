@@ -255,11 +255,14 @@ export function from<numberType = number>(
  *
  * const config = MultisigConfig.fromRpc({
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
  *   ],
  *   salt: `0x${'00'.repeat(32)}`,
  *   threshold: 1,
- *   version: '0x0',
+ *   version: '0x0'
  * })
  * ```
  *
@@ -396,10 +399,13 @@ export declare namespace getAddress {
  *
  * const commitment = MultisigConfig.getCommitment({
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
  *   ],
  *   threshold: 1,
- *   version: 1n,
+ *   version: 1n
  * })
  * ```
  *
@@ -517,9 +523,12 @@ export declare namespace getSignPayload {
  *
  * const config = MultisigConfig.toRpc({
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
  *   ],
- *   threshold: 1,
+ *   threshold: 1
  * })
  * ```
  *

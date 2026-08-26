@@ -265,7 +265,10 @@ describe('selectApprovals', () => {
       account,
     }) => {
       if (!Address.isEqual(account, child)) throw new Error('unknown account')
-      return { config: childConfig, version: 2n }
+      return {
+        config: MultisigConfig.from({ ...childConfig, version: 2n }),
+        version: 2n,
+      }
     }
     const partial = await MultisigOperation.selectApprovals({
       account,
@@ -339,6 +342,57 @@ describe('selectApprovals', () => {
         },
       }
     `)
+  })
+
+  test('rejects mismatched nested config versions', async () => {
+    const childConfig = MultisigConfig.from({
+      owners: [{ owner: owners[1]!.address, weight: 1 }],
+      threshold: 1,
+    })
+    const child = MultisigConfig.getAddress(childConfig)
+    const config = MultisigConfig.from({
+      owners: [{ owner: child, weight: 1 }],
+      threshold: 1,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const resolvedConfig = MultisigConfig.from({
+      ...childConfig,
+      version: 2n,
+    })
+    const childHash = MultisigConfig.getSignPayload({
+      account: child,
+      config: resolvedConfig,
+      payload: hash,
+    })
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account: child,
+            config: resolvedConfig,
+            signatures: [
+              SignatureEnvelope.deserialize(
+                signApproval(owners[1]!, childHash),
+              ),
+            ],
+            type: 'multisig',
+          }),
+        ],
+        config,
+        hash,
+        resolveConfig: () => ({ config: childConfig, version: 2n }),
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: resolved config.version must equal version for nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b.]`,
+    )
   })
 
   test('rejects invalid and non-owner approvals', async () => {
@@ -588,8 +642,17 @@ describe('selectApprovals', () => {
         hash,
         resolveConfig: ({ account }) => {
           if (Address.isEqual(account, child))
-            return { config: childConfig, version: 1n }
-          return { config: grandchildConfig, version: 1n }
+            return {
+              config: MultisigConfig.from({ ...childConfig, version: 1n }),
+              version: 1n,
+            }
+          return {
+            config: MultisigConfig.from({
+              ...grandchildConfig,
+              version: 1n,
+            }),
+            version: 1n,
+          }
         },
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(

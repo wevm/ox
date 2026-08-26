@@ -88,7 +88,7 @@ const maxConfigVersion = 2n ** 64n - 1n
  *   account,
  *   configVersion: 1n,
  *   transaction,
- *   type: 'transaction',
+ *   type: 'transaction'
  * })
  * ```
  *
@@ -161,7 +161,7 @@ export declare namespace getHash {
  *   approvals,
  *   config,
  *   hash,
- *   resolveConfig,
+ *   resolveConfig
  * })
  * ```
  *
@@ -256,9 +256,12 @@ export declare namespace selectApprovals {
  * // @noErrors
  * import { MultisigOperation } from 'ox/tempo'
  *
- * const transaction = MultisigOperation.serializeTransaction(operation, {
- *   approvals: selection.selectedApprovals,
- * })
+ * const transaction = MultisigOperation.serializeTransaction(
+ *   operation,
+ *   {
+ *     approvals: selection.selectedApprovals
+ *   }
+ * )
  * ```
  *
  * @param operation - Multisig transaction operation.
@@ -528,10 +531,11 @@ async function selectApprovals_internal(
           reason: `nested multisig owner ${group.address} requires a config resolver`,
         })
       const resolved = await options.resolveConfig({ account: group.address })
-      const config = MultisigConfig.from({
-        ...resolved.config,
-        version: resolved.version,
-      })
+      const config = MultisigConfig.from(resolved.config)
+      if (config.version !== resolved.version)
+        throw new InvalidApprovalError({
+          reason: `resolved config.version must equal version for nested multisig owner ${group.address}`,
+        })
       const selected = await selectApprovals_internal(
         {
           account: group.address,
@@ -1185,7 +1189,7 @@ export class InvalidApprovalError extends Errors.BaseError<Error | undefined> {
    * import { MultisigOperation } from 'ox/tempo'
    *
    * throw new MultisigOperation.InvalidApprovalError({
-   *   reason: 'signature is from a non-owner',
+   *   reason: 'signature is from a non-owner'
    * })
    * ```
    *

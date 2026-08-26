@@ -1474,7 +1474,8 @@ export declare namespace serialize {
  *   )
  * )
  *
- * const ordered = SignatureEnvelope.sortMultisigApprovals({ // [!code focus]
+ * const ordered = SignatureEnvelope.sortMultisigApprovals({
+ *   // [!code focus]
  *   account, // [!code focus]
  *   config, // [!code focus]
  *   payload, // [!code focus]

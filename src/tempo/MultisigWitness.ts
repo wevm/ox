@@ -1,5 +1,5 @@
 import type * as Address from '../core/Address.js'
-import type * as Errors from '../core/Errors.js'
+import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as MultisigConfig from './MultisigConfig.js'
@@ -79,10 +79,12 @@ export type Rpc = MultisigWitness<number>
  */
 export function fromRpc(witness: Rpc): MultisigWitness {
   const { account, approvals, config } = witness
+  assertApprovalCount(approvals)
   return {
     account,
     approvals: approvals.map((approval) => {
       if (approval.type === 'primitive') return approval
+      assertApprovalCount(approval.witness.approvals)
       return {
         type: 'multisig',
         witness: {
@@ -99,6 +101,7 @@ export function fromRpc(witness: Rpc): MultisigWitness {
 export declare namespace fromRpc {
   /** Error type for `fromRpc`. */
   export type ErrorType =
+    | InvalidWitnessError
     | MultisigConfig.assert.ErrorType
     | Errors.GlobalErrorType
 }
@@ -119,15 +122,28 @@ export declare namespace fromRpc {
  */
 export function toRpc(witness: MultisigWitness): Rpc {
   const { account, approvals, config } = witness
+  assertApprovalCount(approvals)
   return {
     account,
     approvals: approvals.map((approval) => {
-      if (approval.type === 'primitive') return approval
+      if (approval.type === 'primitive')
+        return {
+          ...approval,
+          ...(typeof approval.keyData !== 'undefined'
+            ? { keyData: shimKeyData(approval.keyData) }
+            : {}),
+        }
+      assertApprovalCount(approval.witness.approvals)
       return {
         type: 'multisig',
         witness: {
           account: approval.witness.account,
-          approvals: approval.witness.approvals,
+          approvals: approval.witness.approvals.map((approval) => ({
+            ...approval,
+            ...(typeof approval.keyData !== 'undefined'
+              ? { keyData: shimKeyData(approval.keyData) }
+              : {}),
+          })),
           config: configToRpc(approval.witness.config),
         },
       }
@@ -141,8 +157,17 @@ export declare namespace toRpc {
   export type ErrorType =
     | Hex.fromNumber.ErrorType
     | Hex.toNumber.ErrorType
+    | InvalidWitnessError
     | MultisigConfig.assert.ErrorType
     | Errors.GlobalErrorType
+}
+
+/** @internal */
+function assertApprovalCount(approvals: readonly unknown[]) {
+  if (approvals.length > MultisigConfig.maxSignatures)
+    throw new InvalidWitnessError({
+      reason: `approval count exceeds ${MultisigConfig.maxSignatures}`,
+    })
 }
 
 /** @internal */
@@ -153,5 +178,33 @@ function configToRpc(
   return {
     ...value,
     version: Hex.toNumber(Hex.fromNumber(value.version)),
+  }
+}
+
+/**
+ * Shims key data longer than 4 bytes into a 2-byte big-endian length hint.
+ * The node's gas estimator only accepts 1, 2, or 4-byte key data as a
+ * signature-size hint; anything else silently falls back to the default.
+ * @internal
+ */
+function shimKeyData(data: Hex.Hex): Hex.Hex {
+  const size = Hex.size(data)
+  if (size <= 4) return data
+  return Hex.fromNumber(size, { size: 2 })
+}
+
+/** Thrown when a native multisig witness is invalid. */
+export class InvalidWitnessError extends Errors.BaseError {
+  override readonly name = 'MultisigWitness.InvalidWitnessError'
+  constructor(options: InvalidWitnessError.Options) {
+    super(`Invalid multisig witness: ${options.reason}.`)
+  }
+}
+
+export declare namespace InvalidWitnessError {
+  /** Error construction options. */
+  export type Options = {
+    /** Validation failure. */
+    reason: string
   }
 }
