@@ -44,27 +44,12 @@ describe('TransactionRequest', () => {
     )
   })
 
-  test('gas-model hints and capabilities round-trip', () => {
+  test('capabilities and key hints round-trip', () => {
     const hints = {
       capabilities: { balanceDiffs: true },
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigInit: {
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 2,
-        owners: [
-          {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
-          },
-        ],
-      },
-      multisigSignatureCount: 2,
     } as const
 
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
@@ -75,6 +60,189 @@ describe('TransactionRequest', () => {
 
     const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
     expect(encoded).toMatchObject(hints)
+    expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
+  })
+
+  test('multisig witness round-trips', () => {
+    const witness = {
+      account: '0xcccccccccccccccccccccccccccccccccccccccc',
+      approvals: [
+        {
+          keyData: '0x0578',
+          keyType: 'webAuthn',
+          owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          type: 'primitive',
+        },
+        {
+          type: 'multisig',
+          witness: {
+            account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            approvals: [
+              {
+                keyType: 'secp256k1',
+                owner: '0xdddddddddddddddddddddddddddddddddddddddd',
+              },
+              {
+                owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+              },
+            ],
+            config: {
+              owners: [
+                {
+                  owner: '0xdddddddddddddddddddddddddddddddddddddddd',
+                  weight: 1,
+                },
+                {
+                  owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                  weight: 1,
+                },
+              ],
+              salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
+              threshold: 2,
+              version: '0x2',
+            },
+          },
+        },
+      ],
+      config: {
+        owners: [
+          {
+            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            weight: 1,
+          },
+          {
+            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            weight: 1,
+          },
+        ],
+        salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
+        threshold: 2,
+        version: '0x1',
+      },
+    } as const
+
+    const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
+      ...rpc,
+      multisigWitness: witness,
+    })
+    expect(decoded.multisigWitness).toMatchInlineSnapshot(`
+      {
+        "account": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "approvals": [
+          {
+            "keyData": "0x0578",
+            "keyType": "webAuthn",
+            "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "primitive",
+          },
+          {
+            "type": "multisig",
+            "witness": {
+              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "approvals": [
+                {
+                  "keyType": "secp256k1",
+                  "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                },
+                {
+                  "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                },
+              ],
+              "config": {
+                "owners": [
+                  {
+                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                    "weight": 1,
+                  },
+                  {
+                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                    "weight": 1,
+                  },
+                ],
+                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+                "threshold": 2,
+                "version": 2n,
+              },
+            },
+          },
+        ],
+        "config": {
+          "owners": [
+            {
+              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "weight": 1,
+            },
+            {
+              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "threshold": 2,
+          "version": 1n,
+        },
+      }
+    `)
+
+    const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+    expect(encoded.multisigWitness).toMatchInlineSnapshot(`
+      {
+        "account": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "approvals": [
+          {
+            "keyData": "0x0578",
+            "keyType": "webAuthn",
+            "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "primitive",
+          },
+          {
+            "type": "multisig",
+            "witness": {
+              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "approvals": [
+                {
+                  "keyType": "secp256k1",
+                  "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                },
+                {
+                  "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                },
+              ],
+              "config": {
+                "owners": [
+                  {
+                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                    "weight": 1,
+                  },
+                  {
+                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                    "weight": 1,
+                  },
+                ],
+                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+                "threshold": 2,
+                "version": "0x2",
+              },
+            },
+          },
+        ],
+        "config": {
+          "owners": [
+            {
+              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "weight": 1,
+            },
+            {
+              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "threshold": 2,
+          "version": "0x1",
+        },
+      }
+    `)
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 
@@ -94,6 +262,52 @@ describe('TransactionRequest', () => {
         chainId: 1,
       } as never).success,
     ).toBe(false)
+  })
+})
+
+describe('MultisigWitnessRpc', () => {
+  test('rejects more than eight root or nested approvals', () => {
+    const config = {
+      owners: [
+        {
+          owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          weight: 8,
+        },
+      ],
+      salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
+      threshold: 8,
+      version: '0x1',
+    } as const
+    const primitive = {
+      owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      type: 'primitive',
+    } as const
+
+    expect(
+      z.safeDecode(z_TransactionRequest.MultisigWitnessRpc, {
+        account: '0xcccccccccccccccccccccccccccccccccccccccc',
+        approvals: Array.from({ length: 9 }, () => primitive),
+        config,
+      }).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeDecode(z_TransactionRequest.MultisigWitnessRpc, {
+        account: '0xcccccccccccccccccccccccccccccccccccccccc',
+        approvals: [
+          {
+            type: 'multisig',
+            witness: {
+              account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+              approvals: Array.from({ length: 9 }, () => ({
+                owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const,
+              })),
+              config,
+            },
+          },
+        ],
+        config,
+      }).success,
+    ).toMatchInlineSnapshot(`false`)
   })
 })
 

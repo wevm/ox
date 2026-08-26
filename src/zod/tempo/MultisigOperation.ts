@@ -11,7 +11,7 @@ function baseFields() {
   return {
     account: z_Address.Address,
     approvals: z.readonly(z.array(z_Hex.Hex)),
-    config: z_MultisigConfig.Config,
+    config: z_MultisigConfig.MultisigConfig,
     configVersion: z_Uint.Uint64,
     createdAt: z.number(),
     hash: z_Hash.Hash,

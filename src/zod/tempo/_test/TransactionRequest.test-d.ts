@@ -11,3 +11,12 @@ test('TransactionRequest decodes RPC into a tempo transaction request', () => {
     z.output<typeof z_TransactionRequest.TransactionRequest>
   >().toMatchTypeOf<core_TransactionRequest.TransactionRequest>()
 })
+
+test('MultisigWitness schemas match core types', () => {
+  expectTypeOf<core_TransactionRequest.MultisigWitness.Rpc>().toMatchTypeOf<
+    z.input<typeof z_TransactionRequest.MultisigWitnessRpc>
+  >()
+  expectTypeOf<
+    z.output<typeof z_TransactionRequest.MultisigWitness>
+  >().toMatchTypeOf<core_TransactionRequest.MultisigWitness>()
+})

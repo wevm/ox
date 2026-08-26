@@ -9,6 +9,7 @@ import {
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as MultisigConfig from './MultisigConfig.js'
 import * as Period from './Period.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -55,6 +56,16 @@ const signature_webauthn = SignatureEnvelope.from({
 
 const signature_multisig = {
   account: address,
+  config: MultisigConfig.from({
+    owners: [
+      {
+        owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        weight: 1,
+      },
+    ],
+    threshold: 1,
+    version: 1n,
+  }),
   signatures: [SignatureEnvelope.from(signature_secp256k1)],
   type: 'multisig',
 } as const satisfies SignatureEnvelope.Multisig
@@ -1071,6 +1082,60 @@ describe('getSignPayload', () => {
 })
 
 describe('deserialize', () => {
+  test('example: matches the frozen multisig witness vector', () => {
+    const serialized =
+      '0xf8f1f85382107980941eff47bc3a10a45d4b230b5d10e37751fe6aa718808080a0535353535353535353535353535353535353535353535353535353535353535380949dba7f426b711d4893c11611eacf7cc334e7146bb89a05f897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b8412cfed9350faf80e4115e3c4c967356b80a8e6ee42e4a49ab953c8c8a3537d8d8359bf035a9bea18f32b0da7129cdce3ce701abc09ad8919b93da21a0d57e21451b' as const
+    const authorization = KeyAuthorization.deserialize(serialized)
+
+    expect(authorization).toMatchInlineSnapshot(`
+      {
+        "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+        "address": "0x1eff47bc3a10a45d4b230b5d10e37751fe6aa718",
+        "chainId": 4217n,
+        "isAdmin": false,
+        "signature": {
+          "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+          "config": {
+            "owners": [
+              {
+                "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+                "weight": 1,
+              },
+            ],
+            "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "threshold": 1,
+            "version": 0n,
+          },
+          "signatures": [
+            {
+              "signature": {
+                "r": "0x2cfed9350faf80e4115e3c4c967356b80a8e6ee42e4a49ab953c8c8a3537d8d8",
+                "s": "0x359bf035a9bea18f32b0da7129cdce3ce701abc09ad8919b93da21a0d57e2145",
+                "yParity": 0,
+              },
+              "type": "secp256k1",
+            },
+          ],
+          "type": "multisig",
+        },
+        "type": "secp256k1",
+        "witness": "0x5353535353535353535353535353535353535353535353535353535353535353",
+      }
+    `)
+    expect(KeyAuthorization.serialize(authorization)).toBe(serialized)
+  })
+
+  test('multisig', () => {
+    const serialized = Rlp.fromHex([
+      ['0x1', '0x', address],
+      SignatureEnvelope.serialize(signature_multisig),
+    ])
+
+    expect(KeyAuthorization.deserialize(serialized).signature).toEqual(
+      signature_multisig,
+    )
+  })
+
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,

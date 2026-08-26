@@ -47,6 +47,15 @@ describe('TransactionRequest type', () => {
       Signature.Rpc | null | undefined
     >()
   })
+
+  test('carries domain and RPC multisig witnesses', () => {
+    expectTypeOf<
+      TransactionRequest.TransactionRequest['multisigWitness']
+    >().toEqualTypeOf<TransactionRequest.MultisigWitness | undefined>()
+    expectTypeOf<TransactionRequest.Rpc['multisigWitness']>().toEqualTypeOf<
+      TransactionRequest.MultisigWitness.Rpc | undefined
+    >()
+  })
 })
 
 describe('toEnvelope', () => {
@@ -77,6 +86,7 @@ describe('toEnvelope', () => {
       keyType: 'secp256k1',
       maxFeePerGas: 1n,
       maxPriorityFeePerGas: 1n,
+      multisigWitness: undefined,
       nonce: 0n,
       nonceKey: 'random',
       signature: undefined,

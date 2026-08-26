@@ -86,42 +86,24 @@ export const KeychainRpc = z.object({
 
 /** RPC native multisig signature envelope schema. */
 export const MultisigRpc = z
-  .union([
-    z.strictObject({
-      account: z_Address.Address,
-      signatures: z.lazy(
-        (): z.ZodMiniType<
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
-        > =>
-          z.readonly(
-            z
-              .array(Rpc)
-              .check(
-                z.minLength(1),
-                z.maxLength(core_MultisigConfig.maxSignatures),
-              ),
-          ) as never,
-      ),
-    }),
-    z.strictObject({
-      init: z_MultisigConfig.Config,
-      signatures: z.lazy(
-        (): z.ZodMiniType<
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
-        > =>
-          z.readonly(
-            z
-              .array(Rpc)
-              .check(
-                z.minLength(1),
-                z.maxLength(core_MultisigConfig.maxSignatures),
-              ),
-          ) as never,
-      ),
-    }),
-  ])
+  .strictObject({
+    account: z_Address.Address,
+    config: z_MultisigConfig.Rpc,
+    signatures: z.lazy(
+      (): z.ZodMiniType<
+        readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
+        readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
+      > =>
+        z.readonly(
+          z
+            .array(Rpc)
+            .check(
+              z.minLength(1),
+              z.maxLength(core_MultisigConfig.maxSignatures),
+            ),
+        ) as never,
+    ),
+  })
   // Keep invalid recursive approvals inside Zod's issue path.
   .check(
     z.refine((value) => {
@@ -188,7 +170,7 @@ export const Keychain = z.object({
 export const Multisig = z
   .object({
     account: z_Address.Address,
-    init: z.optional(z_MultisigConfig.Config),
+    config: z_MultisigConfig.Config,
     // `signatures` is recursive; type the getter concretely to break the cycle.
     signatures: z.lazy(
       (): z.ZodMiniType<readonly core_SignatureEnvelope.SignatureEnvelope[]> =>
@@ -273,7 +255,7 @@ function fromRpc(
     }
   }
 
-  if ('signatures' in value && ('account' in value || 'init' in value))
+  if ('config' in value && 'signatures' in value)
     return core_SignatureEnvelope.fromRpc(
       value as core_SignatureEnvelope.MultisigRpc,
     )

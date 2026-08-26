@@ -21,6 +21,7 @@ const rpc = {
     ],
     salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
     threshold: 2,
+    version: '0x1',
   },
   configVersion: '0x1',
   createdAt: 1,

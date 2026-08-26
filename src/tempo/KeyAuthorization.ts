@@ -151,7 +151,7 @@ type SignatureValue =
   | UnionPartialBy<Signature, 'prehash' | 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
-  | SignatureEnvelope.from.MultisigFromInitialConfig
+  | SignatureEnvelope.from.MultisigFromConfig
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
