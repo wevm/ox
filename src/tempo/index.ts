@@ -160,6 +160,15 @@ export * as MultisigConfig from './MultisigConfig.js'
  */
 export * as MultisigOperation from './MultisigOperation.js'
 /**
+ * Native multisig RPC simulation witness utilities.
+ *
+ * Converts complete root and nested owner witnesses between their domain and
+ * Tempo JSON-RPC representations.
+ *
+ * @category Reference
+ */
+export * as MultisigWitness from './MultisigWitness.js'
+/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
