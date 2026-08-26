@@ -1,5 +1,20 @@
 # ox
 
+## 1.7.2
+
+### Patch Changes
+
+- [#407](https://github.com/wevm/ox/pull/407) [`e01d0bb`](https://github.com/wevm/ox/commit/e01d0bbff65bed755b9125a4461fa9feb6b214db) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig operations, configuration witnesses, RPC types, approval selection, transaction serialization, fee-payer envelope handling, and TIP-1061 validation.
+
+  ```ts
+  import { MultisigOperation } from "ox/tempo";
+
+  const selection = await MultisigOperation.selectApprovals(options);
+  const transaction = MultisigOperation.serializeTransaction(operation, {
+    approvals: selection.selectedApprovals,
+  });
+  ```
+
 ## 1.7.1
 
 ### Patch Changes
