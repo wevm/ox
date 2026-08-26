@@ -1269,6 +1269,9 @@ describe('RPC conversion', () => {
     const transactionRpc = MultisigOperation.toRpc(transactionPending)
     const keyAuthorizationRpc = MultisigOperation.toRpc(keyAuthorizationPending)
 
+    expect(() =>
+      JSON.stringify({ keyAuthorizationRpc, transactionRpc }),
+    ).not.toThrow()
     expect({ keyAuthorizationRpc, transactionRpc }).toMatchInlineSnapshot(`
       {
         "keyAuthorizationRpc": {
@@ -1289,7 +1292,7 @@ describe('RPC conversion', () => {
             ],
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "threshold": 2,
-            "version": 1n,
+            "version": "0x1",
           },
           "configVersion": "0x1",
           "createdAt": 1,
@@ -1321,7 +1324,7 @@ describe('RPC conversion', () => {
             ],
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "threshold": 2,
-            "version": 1n,
+            "version": "0x1",
           },
           "configVersion": "0x1",
           "createdAt": 1,

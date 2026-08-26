@@ -9,7 +9,7 @@ import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 const chainId = chain.id
 const updateConfig = AbiFunction.from(
-  'function updateConfig(uint8 threshold, (address owner, uint8 weight)[] owners)',
+  'function updateConfig((bytes32 salt, uint64 version, uint8 threshold, (address owner, uint8 weight)[] owners) current, uint8 threshold, (address owner, uint8 weight)[] owners)',
 )
 
 describe('behavior: multisig (TIP-1061)', () => {
@@ -206,6 +206,7 @@ describe('behavior: multisig (TIP-1061)', () => {
         {
           to: '0xaacc000000000000000000000000000000000000',
           data: AbiFunction.encodeData(updateConfig, [
+            initialConfig,
             rotatedConfig.threshold,
             rotatedConfig.owners,
           ]),
@@ -713,6 +714,7 @@ describe('behavior: multisig (TIP-1061)', () => {
         {
           to: '0xaacc000000000000000000000000000000000000',
           data: AbiFunction.encodeData(updateConfig, [
+            initialConfig,
             initialConfig.threshold,
             initialConfig.owners,
           ]),

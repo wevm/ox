@@ -3322,10 +3322,28 @@ describe('multisig', () => {
       ],
     },
     {
-      field: 'version',
+      field: 'oversized version',
       value: [
         ('0x' + '00'.repeat(32)) as Hex.Hex,
         ('0x' + '01'.repeat(9)) as Hex.Hex,
+        '0x01',
+        [['0x7e5f4552091a69125d5dfcb7b8c2659029395bdf', '0x01']],
+      ],
+    },
+    {
+      field: 'zero version',
+      value: [
+        ('0x' + '00'.repeat(32)) as Hex.Hex,
+        '0x00',
+        '0x01',
+        [['0x7e5f4552091a69125d5dfcb7b8c2659029395bdf', '0x01']],
+      ],
+    },
+    {
+      field: 'zero-prefixed version',
+      value: [
+        ('0x' + '00'.repeat(32)) as Hex.Hex,
+        '0x0001',
         '0x01',
         [['0x7e5f4552091a69125d5dfcb7b8c2659029395bdf', '0x01']],
       ],
@@ -3348,7 +3366,7 @@ describe('multisig', () => {
         [['0x7e5f4552091a69125d5dfcb7b8c2659029395bdf', '0x0001']],
       ],
     },
-  ])('error: rejects a noncanonical $field width', ({ value }) => {
+  ])('error: rejects a noncanonical $field', ({ value }) => {
     const malformed = Hex.concat(
       '0x05',
       Rlp.fromHex([

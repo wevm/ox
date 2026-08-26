@@ -14,7 +14,7 @@ export type Base<quantity = bigint> = {
   /** Every retained serialized owner approval. */
   approvals: readonly Hex.Hex[]
   /** Root configuration used to verify approvals. */
-  config: MultisigConfig.Config
+  config: MultisigConfig.Config<quantity>
   /** Root configuration version. */
   configVersion: quantity
   /** Unix creation time in milliseconds. */
@@ -403,7 +403,11 @@ export function fromRpc<const operation extends Rpc>(
       throw new InvalidOperationError({
         reason: 'configVersion must use canonical quantity encoding',
       })
-    return from({ ...operation, configVersion } as Operation) as never
+    return from({
+      ...operation,
+      config: MultisigConfig.fromRpc(operation.config),
+      configVersion,
+    } as Operation) as never
   } catch (cause) {
     if (cause instanceof InvalidOperationError) throw cause
     throw new InvalidOperationError({ cause })
@@ -441,6 +445,7 @@ export function toRpc<const operation extends Operation>(
   const value = from(operation)
   return {
     ...value,
+    config: MultisigConfig.toRpc(value.config),
     configVersion: Hex.fromNumber(value.configVersion),
   } as never
 }

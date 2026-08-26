@@ -218,6 +218,7 @@ export function from<numberType = number>(
 export function from<numberType = number>(
   config: Input<bigint | number, numberType>,
 ): Config<bigint, numberType>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function from<numberType = number>(
   config: Input<bigint | number, numberType>,
 ): Config<bigint, numberType> {
@@ -606,7 +607,7 @@ export class InvalidConfigError extends Errors.BaseError {
   }
 }
 
-/** Asserts that a configuration version fits the protocol's `uint64`. */
+/** @internal */
 function assertVersion(version: unknown): asserts version is bigint | number {
   if (
     (typeof version !== 'bigint' && typeof version !== 'number') ||

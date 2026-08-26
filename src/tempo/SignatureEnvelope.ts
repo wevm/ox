@@ -799,6 +799,7 @@ function deserialize_(
       Hex.size(salt) !== 32 ||
       Array.isArray(version) ||
       Hex.size(version) > 8 ||
+      (version !== '0x' && Hex.slice(version, 0, 1) === '0x00') ||
       Array.isArray(threshold) ||
       Hex.size(threshold) > 1 ||
       !Array.isArray(owners) ||
