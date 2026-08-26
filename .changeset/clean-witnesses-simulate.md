@@ -2,4 +2,4 @@
 'ox': patch
 ---
 
-Added TIP-1061 configuration witnesses and standalone RPC conversion utilities to Tempo transaction simulation requests.
+Updated Tempo multisig configuration witnesses, simulation requests, RPC conversion, approval limits, key-data hints, and version validation for TIP-1061.
