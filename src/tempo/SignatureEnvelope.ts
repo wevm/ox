@@ -8,6 +8,7 @@ import type {
   IsNarrowable,
   OneOf,
   PartialBy,
+  Undefined,
   UnionPartialBy,
 } from '../core/internal/types.js'
 import * as Json from '../core/Json.js'
@@ -27,49 +28,16 @@ const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
 const serializedMultisigType = '0x05'
 
-type EnvelopeOneOf<
-  union extends object,
-  keys extends PropertyKey,
-> = union extends union
-  ? Compute<
-      union & {
-        [key in Exclude<keys, keyof union>]?: undefined
-      }
-    >
-  : never
+type NonMultisig<numberType = number> = OneOf<
+  | Secp256k1<numberType>
+  | P256<numberType>
+  | WebAuthn<numberType>
+  | Keychain<numberType>
+>
 
-type SignatureEnvelopeKey =
-  | 'account'
-  | 'config'
-  | 'inner'
-  | 'keyId'
-  | 'metadata'
-  | 'prehash'
-  | 'publicKey'
-  | 'signature'
-  | 'signatures'
-  | 'type'
-  | 'userAddress'
-  | 'version'
-
-type SignatureEnvelopeRpcKey =
-  | 'account'
-  | 'config'
-  | 'keyId'
-  | 'metadata'
-  | 'preHash'
-  | 'pubKeyX'
-  | 'pubKeyY'
-  | 'r'
-  | 's'
-  | 'signature'
-  | 'signatures'
-  | 'type'
-  | 'userAddress'
-  | 'v'
-  | 'version'
-  | 'webauthnData'
-  | 'yParity'
+type NonMultisigRpc = OneOf<
+  Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc
+>
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -156,23 +124,13 @@ export type GetType<
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<numberType = number> =
-  | EnvelopeOneOf<
-      | Secp256k1<numberType>
-      | P256<numberType>
-      | WebAuthn<numberType>
-      | Keychain<numberType>,
-      SignatureEnvelopeKey
-    >
+  | (NonMultisig<numberType> &
+      Undefined<Omit<Multisig<numberType>, 'type'>>)
   | MultisigOneOf<numberType>
 
-/**
- * RPC-formatted signature envelope.
- */
+/** RPC-formatted signature envelope. */
 export type SignatureEnvelopeRpc =
-  | EnvelopeOneOf<
-      Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc,
-      SignatureEnvelopeRpcKey
-    >
+  | (NonMultisigRpc & Undefined<Omit<MultisigRpc, 'type'>>)
   | MultisigRpcOneOf
 
 /** Primitive signature envelope accepted by protocol sidecars. */
@@ -236,16 +194,9 @@ export type Multisig<numberType = number> = {
   type: 'multisig'
 }
 
-type MultisigOneOf<numberType = number> = Multisig<numberType> & {
-  inner?: undefined
-  keyId?: undefined
-  metadata?: undefined
-  prehash?: undefined
-  publicKey?: undefined
-  signature?: undefined
-  userAddress?: undefined
-  version?: undefined
-}
+interface MultisigOneOf<numberType = number>
+  extends Multisig<numberType>,
+    Undefined<Omit<NonMultisig<numberType>, 'type'>> {}
 
 /** RPC-formatted native multisig signature. */
 export type MultisigRpc = {
@@ -259,21 +210,9 @@ export type MultisigRpc = {
   type?: undefined
 }
 
-type MultisigRpcOneOf = MultisigRpc & {
-  keyId?: undefined
-  metadata?: undefined
-  preHash?: undefined
-  pubKeyX?: undefined
-  pubKeyY?: undefined
-  r?: undefined
-  s?: undefined
-  signature?: undefined
-  userAddress?: undefined
-  v?: undefined
-  version?: undefined
-  webauthnData?: undefined
-  yParity?: undefined
-}
+interface MultisigRpcOneOf
+  extends MultisigRpc,
+    Undefined<Omit<NonMultisigRpc, 'type'>> {}
 
 export type P256<numberType = number> = {
   prehash: boolean
@@ -1126,22 +1065,26 @@ export declare namespace from {
     | Serialized
     | MultisigFromConfig
 
-  type ReturnValue<value extends Value> = value extends Serialized
-    ? SignatureEnvelope
-    : value extends Secp256k1Flat
-      ? Secp256k1
-      : value extends MultisigFromConfig
-        ? MultisigOneOf
-        : IsNarrowable<value, SignatureEnvelope> extends true
-          ? SignatureEnvelope
-          : Assign<
-              value,
-              {
-                readonly type: GetType<value>
-              } & (GetType<value> extends 'keychain'
-                ? { keyId?: Address.Address | undefined }
-                : {})
-            >
+  type ReturnValue<value extends Value> = Compute<
+    OneOf<
+      value extends Serialized
+        ? SignatureEnvelope
+        : value extends Secp256k1Flat
+          ? Secp256k1
+          : value extends MultisigFromConfig
+            ? Multisig
+            : IsNarrowable<value, SignatureEnvelope> extends true
+              ? SignatureEnvelope
+              : Assign<
+                  value,
+                  {
+                    readonly type: GetType<value>
+                  } & (GetType<value> extends 'keychain'
+                    ? { keyId?: Address.Address | undefined }
+                    : {})
+                >
+    >
+  >
 }
 
 /**
