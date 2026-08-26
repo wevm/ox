@@ -14,7 +14,7 @@ export type Base<quantity = bigint> = {
   /** Every retained serialized owner approval. */
   approvals: readonly Hex.Hex[]
   /** Root configuration used to verify approvals. */
-  config: MultisigConfig.Config
+  config: MultisigConfig.Config<quantity>
   /** Root configuration version. */
   configVersion: quantity
   /** Unix creation time in milliseconds. */
@@ -88,7 +88,7 @@ const maxConfigVersion = 2n ** 64n - 1n
  *   account,
  *   configVersion: 1n,
  *   transaction,
- *   type: 'transaction',
+ *   type: 'transaction'
  * })
  * ```
  *
@@ -107,8 +107,8 @@ export function getHash(options: getHash.Options): Hex.Hex {
         )
   return MultisigConfig.getSignPayload({
     account,
+    config: { version: configVersion },
     payload,
-    version: configVersion,
   })
 }
 
@@ -161,7 +161,7 @@ export declare namespace getHash {
  *   approvals,
  *   config,
  *   hash,
- *   resolveConfig,
+ *   resolveConfig
  * })
  * ```
  *
@@ -256,9 +256,12 @@ export declare namespace selectApprovals {
  * // @noErrors
  * import { MultisigOperation } from 'ox/tempo'
  *
- * const transaction = MultisigOperation.serializeTransaction(operation, {
- *   approvals: selection.selectedApprovals,
- * })
+ * const transaction = MultisigOperation.serializeTransaction(
+ *   operation,
+ *   {
+ *     approvals: selection.selectedApprovals
+ *   }
+ * )
  * ```
  *
  * @param operation - Multisig transaction operation.
@@ -279,20 +282,15 @@ export function serializeTransaction(
   assertRetainedApprovals(value, approvals)
   const signatures = SignatureEnvelope.sortMultisigApprovals({
     account: value.account,
+    config: value.config,
     payload: TxEnvelopeTempo.getSignPayload(envelope),
     signatures: approvals,
-    version: value.configVersion,
   })
-  const signature = value.init
-    ? SignatureEnvelope.from({
-        init: true,
-        initialConfig: value.config,
-        signatures,
-      })
-    : SignatureEnvelope.from({
-        account: value.account,
-        signatures,
-      })
+  const signature = SignatureEnvelope.from({
+    account: value.account,
+    config: value.config,
+    signatures,
+  })
   return TxEnvelopeTempo.serialize(
     envelope,
     value.transaction.startsWith(TxEnvelopeTempo.feePayerMagic)
@@ -342,6 +340,10 @@ export function from<const operation extends Operation>(
 ): from.ReturnValue<operation> {
   try {
     const config = MultisigConfig.from(operation.config)
+    if (config.version !== operation.configVersion)
+      throw new InvalidOperationError({
+        reason: 'config.version must equal configVersion',
+      })
     if (
       typeof config.threshold !== 'number' ||
       config.owners.some((owner) => typeof owner.weight !== 'number')
@@ -349,12 +351,13 @@ export function from<const operation extends Operation>(
       throw new InvalidOperationError({
         reason: 'config threshold and owner weights must be numbers',
       })
-    assertBase(operation, config)
-    if (operation.type === 'transaction') assertTransaction(operation)
-    else if (operation.type === 'keyAuthorization')
-      assertKeyAuthorization(operation, config)
+    const value = { ...operation, config } as Operation
+    assertBase(value, config)
+    if (value.type === 'transaction') assertTransaction(value)
+    else if (value.type === 'keyAuthorization')
+      assertKeyAuthorization(value, config)
     else throw new InvalidOperationError({ reason: 'unknown operation type' })
-    return { ...operation, config } as never
+    return value as never
   } catch (cause) {
     if (cause instanceof InvalidOperationError) throw cause
     throw new InvalidOperationError({ cause })
@@ -402,7 +405,11 @@ export function fromRpc<const operation extends Rpc>(
       throw new InvalidOperationError({
         reason: 'configVersion must use canonical quantity encoding',
       })
-    return from({ ...operation, configVersion } as Operation) as never
+    return from({
+      ...operation,
+      config: MultisigConfig.fromRpc(operation.config),
+      configVersion,
+    } as Operation) as never
   } catch (cause) {
     if (cause instanceof InvalidOperationError) throw cause
     throw new InvalidOperationError({ cause })
@@ -440,6 +447,7 @@ export function toRpc<const operation extends Operation>(
   const value = from(operation)
   return {
     ...value,
+    config: MultisigConfig.toRpc(value.config),
     configVersion: Hex.fromNumber(value.configVersion),
   } as never
 }
@@ -511,10 +519,6 @@ async function selectApprovals_internal(
         throw new InvalidApprovalError({
           reason: `owner ${group.address} has conflicting signature types`,
         })
-      if (nested.some((signature) => signature.init))
-        throw new InvalidApprovalError({
-          reason: `nested multisig owner ${group.address} cannot carry init`,
-        })
       if (
         path.length >= MultisigConfig.maxNestingDepth ||
         path.includes(group.address.toLowerCase())
@@ -527,6 +531,11 @@ async function selectApprovals_internal(
           reason: `nested multisig owner ${group.address} requires a config resolver`,
         })
       const resolved = await options.resolveConfig({ account: group.address })
+      const config = MultisigConfig.from(resolved.config)
+      if (config.version !== resolved.version)
+        throw new InvalidApprovalError({
+          reason: `resolved config.version must equal version for nested multisig owner ${group.address}`,
+        })
       const selected = await selectApprovals_internal(
         {
           account: group.address,
@@ -535,11 +544,11 @@ async function selectApprovals_internal(
               SignatureEnvelope.serialize(approval),
             ),
           ),
-          config: MultisigConfig.from(resolved.config),
+          config,
           hash: MultisigConfig.getSignPayload({
             account: group.address,
+            config,
             payload: options.hash,
-            version: resolved.version,
           }),
           resolveConfig: options.resolveConfig,
         },
@@ -550,6 +559,7 @@ async function selectApprovals_internal(
         signature: SignatureEnvelope.serialize(
           SignatureEnvelope.from({
             account: group.address,
+            config,
             signatures: selected.approvals.map((approval) =>
               SignatureEnvelope.from(approval),
             ),
@@ -562,6 +572,7 @@ async function selectApprovals_internal(
           signature: SignatureEnvelope.serialize(
             SignatureEnvelope.from({
               account: group.address,
+              config,
               signatures: selected.selectedApprovals.map((approval) =>
                 SignatureEnvelope.from(approval),
               ),
@@ -737,6 +748,7 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
     const signature = assertApproval(
       operation.account,
       approval as SignatureEnvelope.Serialized,
+      config,
     )
     const address = SignatureEnvelope.extractAddress({
       payload: operation.hash,
@@ -942,13 +954,9 @@ function assertKeyAuthorization(
         reason: 'key authorization signatureCount does not match its signature',
       })
     assertSelectedApprovals(operation, signature.signatures, authorization)
-    if (!!signature.init !== operation.init)
+    if (!sameConfig(signature.config, config))
       throw new InvalidOperationError({
-        reason: 'key authorization bootstrap state does not match',
-      })
-    if (signature.init && !sameConfig(signature.init, config))
-      throw new InvalidOperationError({
-        reason: 'key authorization bootstrap config does not match',
+        reason: 'key authorization config does not match',
       })
   }
   assertOperationHash(
@@ -972,10 +980,12 @@ function assertKeyAuthorization(
 function assertApproval(
   account: Address.Address,
   serialized: SignatureEnvelope.Serialized,
+  config: MultisigConfig.Config,
 ): SignatureEnvelope.SignatureEnvelope {
   const approval = SignatureEnvelope.deserialize(serialized)
   SignatureEnvelope.assert({
     account,
+    config,
     signatures: [approval],
     type: 'multisig',
   })
@@ -1037,8 +1047,8 @@ function assertSelectedApprovals(
 
   const digest = MultisigConfig.getSignPayload({
     account: operation.account,
+    config: operation.config,
     payload: KeyAuthorization_.getSignPayload(authorization),
-    version: operation.configVersion,
   })
   const addresses = selected.map((signature) =>
     SignatureEnvelope.extractAddress({ payload: digest, signature }),
@@ -1073,7 +1083,7 @@ function includesApproval(
     )
   if (retained.account.toLowerCase() !== selected.account.toLowerCase())
     return false
-  // Nested versions are not serialized, so selected child approvals must preserve the validated retained order.
+  if (!sameConfig(retained.config, selected.config)) return false
   let index = 0
   for (const approval of selected.signatures) {
     while (
@@ -1117,8 +1127,8 @@ function isWeightReachable(
 function assertOperationHash(operation: Operation, payload: Hex.Hex): void {
   const hash = MultisigConfig.getSignPayload({
     account: operation.account,
+    config: operation.config,
     payload,
-    version: operation.configVersion,
   })
   if (hash.toLowerCase() !== operation.hash.toLowerCase())
     throw new InvalidOperationError({
@@ -1155,6 +1165,7 @@ function sameConfig(
       configB.salt ?? MultisigConfig.zeroSalt,
     ) &&
     configA.threshold === configB.threshold &&
+    configA.version === configB.version &&
     configA.owners.length === configB.owners.length &&
     configA.owners.every((owner, index) => {
       const other = configB.owners[index]!
@@ -1178,7 +1189,7 @@ export class InvalidApprovalError extends Errors.BaseError<Error | undefined> {
    * import { MultisigOperation } from 'ox/tempo'
    *
    * throw new MultisigOperation.InvalidApprovalError({
-   *   reason: 'signature is from a non-owner',
+   *   reason: 'signature is from a non-owner'
    * })
    * ```
    *

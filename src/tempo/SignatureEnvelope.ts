@@ -8,6 +8,7 @@ import type {
   IsNarrowable,
   OneOf,
   PartialBy,
+  Undefined,
   UnionPartialBy,
 } from '../core/internal/types.js'
 import * as Json from '../core/Json.js'
@@ -26,6 +27,15 @@ const serializedWebAuthnType = '0x02'
 const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
 const serializedMultisigType = '0x05'
+
+type NonMultisig<numberType = number> = OneOf<
+  | Secp256k1<numberType>
+  | P256<numberType>
+  | WebAuthn<numberType>
+  | Keychain<numberType>
+>
+
+type NonMultisigRpc = OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc>
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -84,15 +94,7 @@ export type GetType<
                   userAddress: Address.Address
                 }
               ? 'keychain'
-              : envelope extends
-                    | {
-                        account: Address.Address
-                        signatures: any
-                      }
-                    | {
-                        init: MultisigConfig.Config
-                        signatures: any
-                      }
+              : envelope extends { config: unknown; signatures: any }
                 ? 'multisig'
                 : never
 
@@ -119,20 +121,14 @@ export type GetType<
  *
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
-export type SignatureEnvelope<numberType = number> = OneOf<
-  | Secp256k1<numberType>
-  | P256<numberType>
-  | WebAuthn<numberType>
-  | Keychain<numberType>
-  | Multisig<numberType>
->
+export type SignatureEnvelope<numberType = number> =
+  | (NonMultisig<numberType> & Undefined<Omit<Multisig<numberType>, 'type'>>)
+  | MultisigOneOf<numberType>
 
-/**
- * RPC-formatted signature envelope.
- */
-export type SignatureEnvelopeRpc = OneOf<
-  Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc | MultisigRpc
->
+/** RPC-formatted signature envelope. */
+export type SignatureEnvelopeRpc =
+  | (NonMultisigRpc & Undefined<Omit<MultisigRpc, 'type'>>)
+  | MultisigRpcOneOf
 
 /** Primitive signature envelope accepted by protocol sidecars. */
 export type Primitive<numberType = number> = OneOf<
@@ -182,42 +178,38 @@ export type KeychainRpc = {
  * [TIP-1061](https://tips.sh/1061)
  */
 export type Multisig<numberType = number> = {
-  type: 'multisig'
   /** Native multisig account address. */
   account: Address.Address
+  /** Complete applicable multisig configuration witness. */
+  config: MultisigConfig.Config<bigint, numberType>
   /**
    * Owner approvals over the multisig owner approval digest. Each approval is
    * either a primitive signature or a nested multisig signature (keychain
    * approvals are invalid).
    */
   signatures: readonly SignatureEnvelope<numberType>[]
-  /**
-   * Initial native multisig config for bootstrapping this account. Present only on
-   * the first (bootstrap) transaction from the derived account; absent on every
-   * subsequent transaction.
-   */
-  init?: MultisigConfig.Config<numberType> | undefined
+  type: 'multisig'
 }
 
+interface MultisigOneOf<numberType = number>
+  extends
+    Multisig<numberType>,
+    Undefined<Omit<NonMultisig<numberType>, 'type'>> {}
+
 /** RPC-formatted native multisig signature. */
-export type MultisigRpc = OneOf<
-  | {
-      /** Existing native multisig account. */
-      account: Address.Address
-      /** Structured owner approvals. */
-      signatures: readonly SignatureEnvelopeRpc[]
-      /** Multisig RPC signatures are untagged. */
-      type?: undefined
-    }
-  | {
-      /** Initial config for bootstrapping a native multisig account. */
-      init: MultisigConfig.Config
-      /** Structured owner approvals. */
-      signatures: readonly SignatureEnvelopeRpc[]
-      /** Multisig RPC signatures are untagged. */
-      type?: undefined
-    }
->
+export type MultisigRpc = {
+  /** Native multisig account address. */
+  account: Address.Address
+  /** Complete applicable multisig configuration witness. */
+  config: MultisigConfig.Rpc
+  /** Structured owner approvals. */
+  signatures: readonly SignatureEnvelopeRpc[]
+  /** Multisig RPC signatures are untagged. */
+  type?: undefined
+}
+
+interface MultisigRpcOneOf
+  extends MultisigRpc, Undefined<Omit<NonMultisigRpc, 'type'>> {}
 
 export type P256<numberType = number> = {
   prehash: boolean
@@ -380,6 +372,7 @@ export declare namespace assert {
 function assertMultisig(envelope: Multisig, depth: number): void {
   const missing: string[] = []
   if (!envelope.account) missing.push('account')
+  if (!envelope.config) missing.push('config')
   if (!Array.isArray(envelope.signatures)) missing.push('signatures')
   if (missing.length > 0)
     throw new MissingPropertiesError({
@@ -399,6 +392,25 @@ function assertMultisig(envelope: Multisig, depth: number): void {
     throw new InvalidMultisigApprovalError({
       reason: 'multisig account cannot be zero',
     })
+  MultisigConfig.assert(envelope.config)
+  if (
+    envelope.config.owners.some((owner) =>
+      Address.isEqual(owner.owner, envelope.account),
+    )
+  )
+    throw new InvalidMultisigApprovalError({
+      reason: 'multisig account cannot be an owner',
+    })
+  if (
+    envelope.config.version === 0n &&
+    !Address.isEqual(
+      MultisigConfig.getAddress(envelope.config),
+      envelope.account,
+    )
+  )
+    throw new InvalidMultisigApprovalError({
+      reason: 'initial multisig config does not derive account',
+    })
   if (envelope.signatures.length === 0)
     throw new InvalidMultisigApprovalError({
       reason: 'multisig signatures cannot be empty',
@@ -408,33 +420,14 @@ function assertMultisig(envelope: Multisig, depth: number): void {
       reason: `multisig signatures exceed ${MultisigConfig.maxSignatures}`,
     })
 
-  if (envelope.init) {
-    MultisigConfig.assert(envelope.init)
-    if (
-      !Address.isEqual(
-        MultisigConfig.getAddress(envelope.init),
-        envelope.account,
-      )
-    )
-      throw new InvalidMultisigApprovalError({
-        reason: 'multisig init does not derive account',
-      })
-  }
-
   for (const inner of envelope.signatures) {
     const type = getType(inner)
     if (type === 'keychain')
       throw new InvalidMultisigApprovalError({
         reason: 'keychain owner approvals are not allowed',
       })
-    if (type === 'multisig') {
-      const multisig = inner as Multisig
-      if (multisig.init)
-        throw new InvalidMultisigApprovalError({
-          reason: 'nested multisig owner approvals cannot carry `init`',
-        })
-      assertMultisig(multisig, depth + 1)
-    } else {
+    if (type === 'multisig') assertMultisig(inner as Multisig, depth + 1)
+    else {
       assert(inner)
       if (Hex.size(serialize(inner)) > MultisigConfig.maxOwnerSignatureBytes)
         throw new InvalidMultisigApprovalError({
@@ -724,16 +717,48 @@ function deserialize_(
         serialized,
       })
 
-    // The first field distinguishes the static wire shapes: a bootstrap init
-    // config is an RLP list, while an initialized account is a 20-byte string.
     const decoded = Rlp.toHex(data)
-    if (!Array.isArray(decoded) || decoded.length !== 2)
+    if (!Array.isArray(decoded) || decoded.length !== 3)
       throw new InvalidSerializedError({
-        reason: 'invalid multisig wire shape: expected exactly two fields',
+        reason: 'invalid multisig wire shape: expected exactly three fields',
         serialized,
       })
 
-    const [address, signatures] = decoded
+    const [account, config, signatures] = decoded
+    if (!Address.validate(account))
+      throw new InvalidSerializedError({
+        reason: 'invalid multisig account',
+        serialized,
+      })
+    if (!Array.isArray(config))
+      throw new InvalidSerializedError({
+        reason: 'invalid multisig config',
+        serialized,
+      })
+    const [salt, version, threshold, owners] = config
+    if (
+      config.length !== 4 ||
+      Array.isArray(salt) ||
+      Hex.size(salt) !== 32 ||
+      Array.isArray(version) ||
+      Hex.size(version) > 8 ||
+      (version !== '0x' && Hex.slice(version, 0, 1) === '0x00') ||
+      Array.isArray(threshold) ||
+      Hex.size(threshold) > 1 ||
+      !Array.isArray(owners) ||
+      owners.some(
+        (owner) =>
+          !Array.isArray(owner) ||
+          owner.length !== 2 ||
+          owner.some(Array.isArray) ||
+          !Address.validate(owner[0]) ||
+          Hex.size(owner[1] as Hex.Hex) > 1,
+      )
+    )
+      throw new InvalidSerializedError({
+        reason: 'invalid multisig config',
+        serialized,
+      })
     if (!Array.isArray(signatures) || signatures.some(Array.isArray))
       throw new InvalidSerializedError({
         reason: 'invalid multisig signatures list',
@@ -761,47 +786,15 @@ function deserialize_(
           serialized,
         })
 
-    if (!Array.isArray(address) && !Address.validate(address))
-      throw new InvalidSerializedError({
-        reason: 'invalid multisig account',
-        serialized,
-      })
-    if (Array.isArray(address)) {
-      const [salt, threshold, owners] = address
-      if (
-        address.length !== 3 ||
-        Array.isArray(salt) ||
-        Hex.size(salt) !== 32 ||
-        Array.isArray(threshold) ||
-        Hex.size(threshold) > 1 ||
-        !Array.isArray(owners) ||
-        owners.some(
-          (owner) =>
-            !Array.isArray(owner) ||
-            owner.length !== 2 ||
-            owner.some(Array.isArray) ||
-            Hex.size(owner[1] as Hex.Hex) > 1,
-        )
-      )
-        throw new InvalidSerializedError({
-          reason: 'invalid multisig init config',
-          serialized,
-        })
-    }
-
-    const init = Array.isArray(address)
-      ? MultisigConfig.fromTuple(address as unknown as MultisigConfig.Tuple)
-      : undefined
-    const account = init
-      ? MultisigConfig.getAddress(init)
-      : (address as Address.Address)
     const envelope = {
-      type: 'multisig',
-      account,
+      account: account as Address.Address,
+      config: MultisigConfig.fromTuple(
+        config as unknown as MultisigConfig.Tuple,
+      ),
       signatures: signatures.map((signature) =>
         deserialize_(signature as Hex.Hex, depth),
       ),
-      ...(init ? { init } : {}),
+      type: 'multisig',
     } satisfies Multisig
     assertMultisig(envelope, depth)
     return envelope
@@ -939,24 +932,20 @@ function deserialize_(
  * ```
  *
  * @example
- * ### Multisig (from initial config)
- *
- * Pass `initialConfig` to derive `account` automatically. Set `init: true` to
- * opt into bootstrap (uses `initialConfig` as the bootstrap `init`); omit
- * `init` for subsequent (non-bootstrap) transactions.
+ * ### Multisig
  *
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  * import { MultisigConfig, SignatureEnvelope } from 'ox/tempo'
  *
- * const initialConfig = MultisigConfig.from({
- *   threshold: 1,
+ * const config = MultisigConfig.from({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
  *       weight: 1
  *     }
- *   ]
+ *   ],
+ *   threshold: 1
  * })
  *
  * const privateKey = Secp256k1.randomPrivateKey()
@@ -964,16 +953,8 @@ function deserialize_(
  *   Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
  * )
  *
- * // Bootstrap transaction
- * const bootstrap = SignatureEnvelope.from({
- *   initialConfig,
- *   signatures: [signature],
- *   init: true
- * })
- *
- * // Subsequent (non-bootstrap) transactions
- * const subsequent = SignatureEnvelope.from({
- *   initialConfig,
+ * const multisig = SignatureEnvelope.from({
+ *   config,
  *   signatures: [signature]
  * })
  * ```
@@ -999,30 +980,17 @@ export function from<const value extends from.Value>(
   const type = getType(value)
 
   if (type === 'multisig') {
-    const multisig = value as Multisig & {
-      initialConfig?: MultisigConfig.Config | undefined
-      init?: MultisigConfig.Config | boolean | undefined
-    }
-    const { initialConfig, init, ...rest } = multisig
-    // Derive `account` from `initialConfig` when not provided explicitly.
-    const account = (() => {
-      if (rest.account) return rest.account
-      if (initialConfig) return MultisigConfig.getAddress(initialConfig)
-      return rest.account
-    })()
-    // `init: true` opts into bootstrap using the supplied `initialConfig`.
-    // Otherwise, `init` is treated as the explicit bootstrap config (or
-    // omitted).
-    const initSource = init === true ? initialConfig : init || undefined
-    return {
-      ...rest,
+    const multisig = value as from.MultisigFromConfig
+    const config = MultisigConfig.from(multisig.config)
+    const account = multisig.account ?? MultisigConfig.getAddress(config)
+    const envelope = {
       account,
-      signatures: rest.signatures.map((signature) => from(signature)),
-      // Normalize the bootstrap config (sorts owners, defaults the salt) so the
-      // in-memory envelope matches what `deserialize` reconstructs.
-      ...(initSource ? { init: MultisigConfig.from(initSource) } : {}),
+      config,
+      signatures: multisig.signatures.map((signature) => from(signature)),
       type,
-    } as never
+    } satisfies Multisig
+    assert(envelope)
+    return envelope as never
   }
 
   return {
@@ -1067,24 +1035,32 @@ export declare namespace from {
     payload?: Hex.Hex | Bytes.Bytes | undefined
   }
 
-  /**
-   * Multisig envelope input variant where `account` is derived from the
-   * supplied `initialConfig`. Pass `init: true` to opt into bootstrap (uses
-   * `initialConfig` as the bootstrap `init`); omit `init` for subsequent
-   * (non-bootstrap) transactions.
-   */
-  type MultisigFromInitialConfig = {
-    type?: 'multisig' | undefined
-    initialConfig: MultisigConfig.Config
-    signatures: readonly SignatureEnvelope[]
-    init?: MultisigConfig.Config | boolean | undefined
-  }
+  /** Multisig signature input with an optional derived initial account. */
+  type MultisigFromConfig =
+    | {
+        /** Initial native multisig account, derived from config when omitted. */
+        account?: Address.Address | undefined
+        /** Initial version-0 multisig configuration witness. */
+        config: MultisigConfig.Input<0 | 0n>
+        /** Primitive or nested owner approvals. */
+        signatures: readonly SignatureEnvelope[]
+        type?: 'multisig' | undefined
+      }
+    | {
+        /** Native multisig account. */
+        account: Address.Address
+        /** Complete applicable multisig configuration witness. */
+        config: MultisigConfig.Input
+        /** Primitive or nested owner approvals. */
+        signatures: readonly SignatureEnvelope[]
+        type?: 'multisig' | undefined
+      }
 
   type Value =
     | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
     | Serialized
-    | MultisigFromInitialConfig
+    | MultisigFromConfig
 
   type ReturnValue<value extends Value> = Compute<
     OneOf<
@@ -1092,7 +1068,7 @@ export declare namespace from {
         ? SignatureEnvelope
         : value extends Secp256k1Flat
           ? Secp256k1
-          : value extends MultisigFromInitialConfig
+          : value extends MultisigFromConfig
             ? Multisig
             : IsNarrowable<value, SignatureEnvelope> extends true
               ? SignatureEnvelope
@@ -1211,24 +1187,14 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
 
   if (
     (envelope as { type?: string | undefined }).type === 'multisig' ||
-    ('signatures' in envelope && ('account' in envelope || 'init' in envelope))
+    ('config' in envelope && 'signatures' in envelope)
   ) {
     const multisig = envelope as MultisigRpc
-    const hasAccount = typeof multisig.account !== 'undefined'
-    const hasInit = typeof multisig.init !== 'undefined'
-    if (hasAccount === hasInit)
-      throw new InvalidMultisigApprovalError({
-        reason: 'RPC multisig must contain exactly one of `account` or `init`',
-      })
-    const init = hasInit
-      ? MultisigConfig.from(multisig.init as MultisigConfig.Config)
-      : undefined
-    const account = init ? MultisigConfig.getAddress(init) : multisig.account
     const result = {
-      type: 'multisig',
-      account: account as Address.Address,
+      account: multisig.account,
+      config: MultisigConfig.fromRpc(multisig.config),
       signatures: multisig.signatures.map((signature) => fromRpc(signature)),
-      ...(init ? { init } : {}),
+      type: 'multisig',
     } satisfies Multisig
     assert(result)
     return result
@@ -1242,7 +1208,7 @@ export declare namespace fromRpc {
     | assert.ErrorType
     | CoercionError
     | InvalidSerializedError
-    | MultisigConfig.getAddress.ErrorType
+    | MultisigConfig.fromRpc.ErrorType
     | Signature.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
@@ -1317,12 +1283,7 @@ export function getType<
     return 'keychain' as never
 
   // Detect Multisig signature
-  if (
-    ('account' in envelope ||
-      'initialConfig' in envelope ||
-      'init' in envelope) &&
-    'signatures' in envelope
-  )
+  if ('config' in envelope && 'signatures' in envelope)
     return 'multisig' as never
 
   throw new CoercionError({
@@ -1339,7 +1300,7 @@ export function getType<
  * - WebAuthn: `0x02` + webauthnData (variable) + r (32) + s (32) + pubKeyX (32) + pubKeyY (32)
  * - Keychain V1: `0x03` + userAddress (20) + inner signature (recursive)
  * - Keychain V2: `0x04` + userAddress (20) + inner signature (recursive)
- * - Multisig: `0x05` + RLP `[account | init, signatures]`
+ * - Multisig: `0x05` + RLP `[account, config, signatures]`
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -1426,14 +1387,11 @@ export function serialize(
   if (type === 'multisig') {
     const multisig = envelope as Multisig
     assert(multisig)
-    // The first field is either the initialized account or the bootstrap init
-    // config. Each owner approval is an encoded signature.
     return Hex.concat(
       serializedMultisigType,
       Rlp.fromHex([
-        multisig.init
-          ? MultisigConfig.toTuple(multisig.init)
-          : multisig.account,
+        multisig.account,
+        MultisigConfig.toTuple(multisig.config),
         multisig.signatures.map((signature) => serialize(signature)),
       ]),
       options.magic ? magicBytes : '0x',
@@ -1474,9 +1432,6 @@ export declare namespace serialize {
  * recovered owner address. Works for any owner key type (secp256k1, p256,
  * webAuthn).
  *
- * Config updates never change `account`, so the initial config is the correct
- * input even for post-update transactions.
- *
  * @example
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
@@ -1486,8 +1441,7 @@ export declare namespace serialize {
  *   TxEnvelopeTempo
  * } from 'ox/tempo'
  *
- * const initialConfig = MultisigConfig.from({
- *   threshold: 2,
+ * const config = MultisigConfig.from({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -1497,8 +1451,10 @@ export declare namespace serialize {
  *       owner: '0x2222222222222222222222222222222222222222',
  *       weight: 1
  *     }
- *   ]
+ *   ],
+ *   threshold: 2
  * })
+ * const account = MultisigConfig.getAddress(config)
  *
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
@@ -1508,8 +1464,9 @@ export declare namespace serialize {
  *   Secp256k1.randomPrivateKey()
  * ]
  * const digest = MultisigConfig.getSignPayload({
- *   payload,
- *   initialConfig
+ *   account,
+ *   config,
+ *   payload
  * })
  * const signatures = privateKeys.map((privateKey) =>
  *   SignatureEnvelope.from(
@@ -1519,7 +1476,8 @@ export declare namespace serialize {
  *
  * const ordered = SignatureEnvelope.sortMultisigApprovals({
  *   // [!code focus]
- *   initialConfig, // [!code focus]
+ *   account, // [!code focus]
+ *   config, // [!code focus]
  *   payload, // [!code focus]
  *   signatures // [!code focus]
  * }) // [!code focus]
@@ -1531,16 +1489,12 @@ export declare namespace serialize {
 export function sortMultisigApprovals(
   value: sortMultisigApprovals.Value,
 ): readonly SignatureEnvelope[] {
-  const { payload, signatures, version = 0n } = value
-  const digest = MultisigConfig.getSignPayload(
-    'initialConfig' in value && value.initialConfig
-      ? { payload, initialConfig: value.initialConfig, version }
-      : {
-          payload,
-          account: (value as { account: Address.Address }).account,
-          version,
-        },
-  )
+  const { account, config, payload, signatures } = value
+  const digest = MultisigConfig.getSignPayload({
+    account,
+    config: MultisigConfig.from(config),
+    payload,
+  })
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
   // comparator.
   return signatures
@@ -1554,25 +1508,15 @@ export function sortMultisigApprovals(
 
 export declare namespace sortMultisigApprovals {
   type Value = {
+    /** The native multisig account address. */
+    account: Address.Address
+    /** Complete applicable multisig configuration witness. */
+    config: MultisigConfig.Input
     /** The inner transaction sign payload (`tx.signature_hash()`). */
     payload: Hex.Hex | Bytes.Bytes
     /** The owner approvals to order. */
     signatures: readonly SignatureEnvelope[]
-    /** Current multisig config version. Defaults to `0n`. */
-    version?: bigint | undefined
-  } & OneOf<
-    | {
-        /** The native multisig account address. */
-        account: Address.Address
-      }
-    | {
-        /**
-         * The initial multisig config (the bootstrap config that derived the
-         * permanent `account`). Used to derive the account automatically.
-         */
-        initialConfig: MultisigConfig.Config
-      }
-  >
+  }
 
   type ErrorType =
     | MultisigConfig.getSignPayload.ErrorType
@@ -1656,25 +1600,10 @@ export function toRpc<const envelope extends toRpc.Input>(
   if (type === 'multisig') {
     const multisig = envelope as Multisig
     assert(multisig)
-    const signatures = multisig.signatures.map((signature) => toRpc(signature))
-    if (multisig.init) {
-      const init = {
-        ...multisig.init,
-        salt: multisig.init.salt ?? MultisigConfig.zeroSalt,
-        threshold: Number(multisig.init.threshold),
-        owners: multisig.init.owners.map((owner) => ({
-          ...owner,
-          weight: Number(owner.weight),
-        })),
-      }
-      return {
-        init,
-        signatures,
-      } as never
-    }
     return {
       account: multisig.account,
-      signatures,
+      config: MultisigConfig.toRpc(multisig.config),
+      signatures: multisig.signatures.map((signature) => toRpc(signature)),
     } as never
   }
 
@@ -1702,6 +1631,7 @@ export declare namespace toRpc {
   type ErrorType =
     | assert.ErrorType
     | CoercionError
+    | MultisigConfig.toRpc.ErrorType
     | Signature.toRpc.ErrorType
     | Errors.GlobalErrorType
 }

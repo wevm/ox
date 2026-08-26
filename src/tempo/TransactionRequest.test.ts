@@ -69,7 +69,7 @@ describe('fromRpc', () => {
     expect(request.nonceKey).toBe(255n)
   })
 
-  test('behavior: gas-model hints and capabilities pass through', () => {
+  test('behavior: capabilities and key hints pass through', () => {
     const request = TransactionRequest.fromRpc({
       calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       capabilities: { balanceDiffs: true },
@@ -77,30 +77,156 @@ describe('fromRpc', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigInit: {
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 2,
-        owners: [
-          {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
-          },
-        ],
-      },
-      multisigSignatureCount: 2,
       type: '0x76',
     })
-    expect(request.capabilities).toEqual({ balanceDiffs: true })
-    expect(request.feePayer).toBe(true)
-    expect(request.keyData).toBe('0x0578')
-    expect(request.keyId).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
-    expect(request.keyType).toBe('webAuthn')
-    expect(request.multisigInit).toMatchObject({ threshold: 2 })
-    expect(request.multisigSignatureCount).toBe(2)
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "data": undefined,
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+          },
+        ],
+        "capabilities": {
+          "balanceDiffs": true,
+        },
+        "feePayer": true,
+        "keyData": "0x0578",
+        "keyId": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "keyType": "webAuthn",
+        "type": "tempo",
+      }
+    `)
+  })
+
+  test('behavior: multisig witness configs decode from RPC numbers', () => {
+    const request = TransactionRequest.fromRpc({
+      calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+      multisigWitness: {
+        account: '0xcccccccccccccccccccccccccccccccccccccccc',
+        approvals: [
+          {
+            keyData: '0x0578',
+            keyType: 'webAuthn',
+            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            type: 'primitive',
+          },
+          {
+            type: 'multisig',
+            witness: {
+              account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+              approvals: [
+                {
+                  keyType: 'secp256k1',
+                  owner: '0xdddddddddddddddddddddddddddddddddddddddd',
+                },
+                {
+                  owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                },
+              ],
+              config: {
+                owners: [
+                  {
+                    owner: '0xdddddddddddddddddddddddddddddddddddddddd',
+                    weight: 1,
+                  },
+                  {
+                    owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                    weight: 1,
+                  },
+                ],
+                salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
+                threshold: 2,
+                version: 2,
+              },
+            },
+          },
+        ],
+        config: {
+          owners: [
+            {
+              owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+              weight: 1,
+            },
+            {
+              owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+              weight: 1,
+            },
+          ],
+          salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
+          threshold: 2,
+          version: 1,
+        },
+      },
+      type: '0x76',
+    })
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "data": undefined,
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+          },
+        ],
+        "multisigWitness": {
+          "account": "0xcccccccccccccccccccccccccccccccccccccccc",
+          "approvals": [
+            {
+              "keyData": "0x0578",
+              "keyType": "webAuthn",
+              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "type": "primitive",
+            },
+            {
+              "type": "multisig",
+              "witness": {
+                "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "approvals": [
+                  {
+                    "keyType": "secp256k1",
+                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                  },
+                  {
+                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                  },
+                ],
+                "config": {
+                  "owners": [
+                    {
+                      "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                      "weight": 1,
+                    },
+                    {
+                      "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                      "weight": 1,
+                    },
+                  ],
+                  "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+                  "threshold": 2,
+                  "version": 2n,
+                },
+              },
+            },
+          ],
+          "config": {
+            "owners": [
+              {
+                "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "weight": 1,
+              },
+              {
+                "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "weight": 1,
+              },
+            ],
+            "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "threshold": 2,
+            "version": 1n,
+          },
+        },
+        "type": "tempo",
+      }
+    `)
   })
 
   test('behavior: empty', () => {
@@ -157,7 +283,7 @@ describe('toRpc', () => {
     `)
   })
 
-  test('behavior: gas-model hints and capabilities are carried', () => {
+  test('behavior: capabilities and key hints are carried', () => {
     const request = TransactionRequest.toRpc({
       calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       capabilities: { balanceDiffs: true },
@@ -165,30 +291,156 @@ describe('toRpc', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigInit: {
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 2,
-        owners: [
+    })
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
           {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
+            "data": "0x",
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+            "value": "0x",
           },
         ],
+        "capabilities": {
+          "balanceDiffs": true,
+        },
+        "feePayer": false,
+        "keyData": "0x0578",
+        "keyId": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "keyType": "webAuthn",
+        "type": "0x76",
+      }
+    `)
+  })
+
+  test('behavior: multisig witness configs encode as RPC numbers', () => {
+    const request = TransactionRequest.toRpc({
+      calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
+      multisigWitness: {
+        account: '0xcccccccccccccccccccccccccccccccccccccccc',
+        approvals: [
+          {
+            keyData: '0x0578',
+            keyType: 'webAuthn',
+            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            type: 'primitive',
+          },
+          {
+            type: 'multisig',
+            witness: {
+              account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+              approvals: [
+                {
+                  keyType: 'secp256k1',
+                  owner: '0xdddddddddddddddddddddddddddddddddddddddd',
+                },
+                {
+                  owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                },
+              ],
+              config: {
+                owners: [
+                  {
+                    owner: '0xdddddddddddddddddddddddddddddddddddddddd',
+                    weight: 1,
+                  },
+                  {
+                    owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                    weight: 1,
+                  },
+                ],
+                salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
+                threshold: 2,
+                version: 2n,
+              },
+            },
+          },
+        ],
+        config: {
+          owners: [
+            {
+              owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+              weight: 1,
+            },
+            {
+              owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+              weight: 1,
+            },
+          ],
+          salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
+          threshold: 2,
+          version: 1n,
+        },
       },
-      multisigSignatureCount: 2,
     })
-    expect(request.capabilities).toEqual({ balanceDiffs: true })
-    expect(request.feePayer).toBe(false)
-    expect(request.keyData).toBe('0x0578')
-    expect(request.keyId).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
-    expect(request.keyType).toBe('webAuthn')
-    expect(request.multisigInit).toMatchObject({ threshold: 2 })
-    expect(request.multisigSignatureCount).toBe(2)
-    expect(request.type).toBe('0x76')
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "data": "0x",
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+            "value": "0x",
+          },
+        ],
+        "multisigWitness": {
+          "account": "0xcccccccccccccccccccccccccccccccccccccccc",
+          "approvals": [
+            {
+              "keyData": "0x0578",
+              "keyType": "webAuthn",
+              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "type": "primitive",
+            },
+            {
+              "type": "multisig",
+              "witness": {
+                "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "approvals": [
+                  {
+                    "keyType": "secp256k1",
+                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                  },
+                  {
+                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                  },
+                ],
+                "config": {
+                  "owners": [
+                    {
+                      "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
+                      "weight": 1,
+                    },
+                    {
+                      "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                      "weight": 1,
+                    },
+                  ],
+                  "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+                  "threshold": 2,
+                  "version": 2,
+                },
+              },
+            },
+          ],
+          "config": {
+            "owners": [
+              {
+                "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "weight": 1,
+              },
+              {
+                "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "weight": 1,
+              },
+            ],
+            "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "threshold": 2,
+            "version": 1,
+          },
+        },
+        "type": "0x76",
+      }
+    `)
   })
 
   test('behavior: key data longer than 4 bytes shims into a length hint', () => {

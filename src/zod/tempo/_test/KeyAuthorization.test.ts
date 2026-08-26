@@ -144,6 +144,17 @@ describe('KeyAuthorization', () => {
   test('round-trips multisig signatures', () => {
     const multisigRpc = {
       account: '0x1111111111111111111111111111111111111111',
+      config: {
+        owners: [
+          {
+            owner: '0x2222222222222222222222222222222222222222',
+            weight: 1,
+          },
+        ],
+        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        threshold: 1,
+        version: '0x1',
+      },
       signatures: [rpc.signature],
     } as const
     const withMultisig = { ...rpc, signature: multisigRpc }

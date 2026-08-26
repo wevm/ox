@@ -15,12 +15,13 @@ This guide is intended to be low-level. If you are looking for a high-level abst
 
 Ox models a native Tempo multisig with a weighted
 [`MultisigConfig`](/tempo/reference/MultisigConfig) and a top-level
-[`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) of type `multisig`. The initial config
-derives a stable account address. Owners approve a multisig-specific digest, and their combined
-weight must meet the configured threshold.
+[`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) of type `multisig`. The initial,
+version-0 config derives a stable account address. Owners approve a multisig-specific digest, and
+their combined weight must meet the configured threshold.
 
-The first transaction bootstraps the account by carrying the initial config in the signature's
-`init` field. Every later transaction omits `init` and relies on the config stored by the network.
+Every multisig signature carries the complete applicable config. A version-0 config authorizes the
+counterfactual account while its onchain config commitment is zero. After an owner update, the
+signature carries the current nonzero version whose commitment is stored by the network.
 
 :::warning
 Native multisig support is experimental. These examples describe Ox's current API. TIP-1061 is a
@@ -63,10 +64,10 @@ const account = MultisigConfig.getAddress(initialConfig)
 // [!code focus:end]
 ```
 
-`MultisigConfig.from` sorts owners by ascending address, applies the zero salt when none is
-provided, and rejects invalid thresholds, weights, salts, or owner lists.
+`MultisigConfig.from` sorts owners by ascending address, applies the zero salt and version when
+omitted, and rejects invalid thresholds, weights, versions, salts, or owner lists.
 
-### Sign the Bootstrap Transaction
+### Sign an Initial Transaction
 
 Build a nonempty transaction, derive its owner-approval digest with
 [`MultisigConfig.getSignPayload`](/tempo/reference/MultisigConfig/getSignPayload), and collect
@@ -74,9 +75,9 @@ enough owner signatures to meet the threshold. Use
 [`SignatureEnvelope.sortMultisigApprovals`](/tempo/reference/SignatureEnvelope/sortMultisigApprovals)
 to put approvals in the order required by Tempo.
 
-Set `init: true` when calling
-[`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Ox derives `account` from
-`initialConfig` and places the normalized config in `init`.
+Pass the complete initial config to
+[`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Ox derives `account` from a
+version-0 config when you omit the account.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
@@ -96,8 +97,9 @@ const initialConfig = MultisigConfig.from({
   salt: Hex.random(32),
   threshold: 2,
 })
+const account = MultisigConfig.getAddress(initialConfig)
 
-// 2. Build the bootstrap transaction.
+// 2. Build the initial transaction.
 const transaction = TxEnvelopeTempo.from({
   calls: [
     {
@@ -111,7 +113,8 @@ const transaction = TxEnvelopeTempo.from({
 // 3. Derive the multisig approval payload.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
-  initialConfig,
+  account,
+  config: initialConfig,
   payload,
 })
 
@@ -125,15 +128,15 @@ const approvals = ownerPrivateKeys.slice(0, 2).map((privateKey) =>
   ),
 )
 const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
-  initialConfig,
+  account,
+  config: initialConfig,
   payload,
   signatures: approvals,
 })
 
-// 5. Attach the initial config and serialize the transaction.
+// 5. Attach the complete config and serialize the transaction.
 const bootstrapSignature = SignatureEnvelope.from({
-  initialConfig,
-  init: true, // [!code hl]
+  config: initialConfig, // [!code hl]
   signatures: orderedApprovals,
 })
 const serialized = TxEnvelopeTempo.serialize(transaction, {
@@ -143,17 +146,18 @@ const serialized = TxEnvelopeTempo.serialize(transaction, {
 // [!code focus:end]
 ```
 
-The bootstrap config lives in the signature, not in `transaction.calls`. Submit this as the first
-accepted transaction from the derived account.
+The version-0 config lives in the signature, not in `transaction.calls`. An initial transaction does
+not persist multisig state, so the same config remains valid until an owner update stores a nonzero
+config commitment.
 
 ### Sign a Later Transaction
 
-Reuse the original `initialConfig` to derive the permanent account, even if the onchain owner
-config has since been updated. Read the current config version before deriving the approval digest,
-and omit `init` from every post-bootstrap signature.
+Reuse the original `initialConfig` to derive the permanent account, even if the owners have changed.
+Track the complete current config offchain because the network stores only its commitment. Use that
+config for the approval digest and signature witness.
 
 ```ts twoslash
-import { AbiFunction, Address, Hex, RpcTransport, Secp256k1 } from 'ox'
+import { Address, Hex, Secp256k1 } from 'ox'
 import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
 // 1. Set up the owner keys and initial config.
@@ -172,21 +176,11 @@ const initialConfig = MultisigConfig.from({
 })
 const account = MultisigConfig.getAddress(initialConfig)
 
-// 2. Read the current config version from the native multisig precompile.
-const getConfig = AbiFunction.from(
-  'function getConfig(address account) view returns ((uint64 version, uint8 threshold, (address owner, uint8 weight)[] owners) config)',
-)
-const transport = RpcTransport.fromHttp('https://rpc.example.com')
-const result = await transport.request({
-  method: 'eth_call',
-  params: [
-    {
-      data: AbiFunction.encodeData(getConfig, [account]),
-      to: '0xaacc000000000000000000000000000000000000',
-    },
-  ],
+// 2. Load the complete config committed by the latest owner update.
+const currentConfig = MultisigConfig.from({
+  ...initialConfig,
+  version: 1,
 })
-const { version } = AbiFunction.decodeResult(getConfig, result)
 
 // 3. Build a later transaction.
 const transaction = TxEnvelopeTempo.from({
@@ -203,9 +197,9 @@ const transaction = TxEnvelopeTempo.from({
 // 4. Derive the multisig approval payload with the current config version.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
 const approvalPayload = MultisigConfig.getSignPayload({
-  initialConfig,
+  account,
+  config: currentConfig,
   payload,
-  version, // [!code hl]
 })
 
 // 5. Collect sufficient approval weight and sort the approvals.
@@ -218,15 +212,16 @@ const approvals = ownerPrivateKeys.slice(1, 3).map((privateKey) =>
   ),
 )
 const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
-  initialConfig,
+  account,
+  config: currentConfig,
   payload,
   signatures: approvals,
-  version, // [!code hl]
 })
 
-// 6. Attach the approvals and serialize without reinitializing.
+// 6. Attach the current config and approvals.
 const signature = SignatureEnvelope.from({
-  initialConfig,
+  account,
+  config: currentConfig, // [!code hl]
   signatures: orderedApprovals, // [!code hl]
 })
 const serialized = TxEnvelopeTempo.serialize(transaction, {
@@ -236,15 +231,16 @@ const serialized = TxEnvelopeTempo.serialize(transaction, {
 // [!code focus:end]
 ```
 
-Without `init`, the signature contains the derived account and ordered approvals only.
+The network hashes `currentConfig` and checks that its commitment matches the value stored for
+`account` before validating the approvals.
 
 ## Best Practices
 
-### Persist the Initial Config
+### Persist Config Witnesses
 
-Store the normalized initial config with the account. It remains the source for deriving the
-permanent account address after later config updates. Before signing, read the current version and
-owner weights from the onchain config.
+Store the normalized initial config with the account because it remains the source for deriving the
+permanent address. After each owner update, store or index the complete new config. The precompile
+stores only the config commitment, not the owner list.
 
 ### Sort Both Config Owners and Approvals
 
@@ -254,7 +250,7 @@ Construct configs with `MultisigConfig.from` and order every approval set with
 ### Check Approval Weight
 
 Ox validates the config, but the network decides whether the supplied approvals meet the active
-threshold. Count weights from the current onchain config before collecting and broadcasting a
+threshold. Count weights from the current config witness before collecting and broadcasting a
 signature.
 
 ### Authorize Access Keys with Owner Approvals
@@ -262,17 +258,16 @@ signature.
 A native multisig can provision an account-bound non-admin access key. Set the authorization's
 `account` to the multisig address and `isAdmin` to `false`, then sign
 `KeyAuthorization.getSignPayload` with a multisig envelope whose owner approvals use the current
-config version. Attach the signed authorization as `keyAuthorization` when provisioning the key;
-later transactions omit it and use the account-bound keychain signature flow.
+config. Attach the signed authorization as `keyAuthorization` when provisioning the key; later
+transactions omit it and use the account-bound keychain signature flow.
 
-When provisioning the key during bootstrap, include `init` on either the transaction's multisig
-signature or the authorization's multisig signature. Put `init` on the authorization signature when
-the new access key signs and submits that first transaction.
+When both the outer transaction and the key authorization use multisig signatures, each signature
+carries and validates its own complete applicable config witness.
 
-### Include `init` Exactly Once
+### Use the Applicable Config
 
-Use `init: true` only on the bootstrap transaction. A later transaction with `init`, or a first
-transaction without it, cannot follow the intended initialization flow.
+Use the version-0 config only while the account's stored commitment is zero. After an owner update,
+use the complete config whose commitment is currently stored for the account.
 
 ## See More
 

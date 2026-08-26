@@ -19,22 +19,21 @@ const p256 = {
   type: 'p256',
 } as const
 
-const multisig = {
-  account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
-  signatures: [secp256k1],
+const config = {
+  owners: [
+    {
+      owner: '0x7e5f4552091a69125d5dfcb7b8c2659029395bdf',
+      weight: 1,
+    },
+  ],
+  salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  threshold: 1,
+  version: '0x0',
 } as const
 
-const multisigBootstrap = {
-  init: {
-    owners: [
-      {
-        owner: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
-        weight: 1,
-      },
-    ],
-    salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    threshold: 1,
-  },
+const multisig = {
+  account: '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+  config,
   signatures: [secp256k1],
 } as const
 
@@ -62,16 +61,10 @@ describe('SignatureEnvelope', () => {
     )
   })
 
-  test('decodes an initialized multisig envelope', () => {
+  test('decodes a multisig envelope', () => {
     expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)).toEqual(
       core_SignatureEnvelope.fromRpc(multisig),
     )
-  })
-
-  test('decodes a bootstrap multisig envelope', () => {
-    expect(
-      z.decode(z_SignatureEnvelope.SignatureEnvelope, multisigBootstrap),
-    ).toEqual(core_SignatureEnvelope.fromRpc(multisigBootstrap))
   })
 
   test('decodes recursive multisig approvals', () => {
@@ -80,6 +73,10 @@ describe('SignatureEnvelope', () => {
       signatures: [
         {
           account: '0x1111111111111111111111111111111111111111',
+          config: {
+            ...config,
+            version: '0x1',
+          },
           signatures: [secp256k1],
         },
       ],
@@ -96,26 +93,17 @@ describe('SignatureEnvelope', () => {
     )
   })
 
-  test('round-trips initialized multisig via encode', () => {
+  test('round-trips multisig via encode', () => {
     const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)
     expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
       core_SignatureEnvelope.toRpc(decoded),
     )
   })
 
-  test('round-trips bootstrap multisig via encode', () => {
-    const decoded = z.decode(
-      z_SignatureEnvelope.SignatureEnvelope,
-      multisigBootstrap,
-    )
-    expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
-      multisigBootstrap,
-    )
-  })
-
   test('rejects invalid recursive multisig domains before encode', () => {
     const invalid = {
       account: multisig.account,
+      config: { ...config, version: 0n },
       signatures: [
         {
           inner: core_SignatureEnvelope.fromRpc(secp256k1),
@@ -168,10 +156,12 @@ describe('SignatureEnvelope', () => {
     } as const
     const depth2 = {
       account: '0x1111111111111111111111111111111111111111',
+      config: { ...config, version: '0x1' },
       signatures: [secp256k1],
     } as const
     const depth3 = {
       account: '0x2222222222222222222222222222222222222222',
+      config: { ...config, version: '0x1' },
       signatures: [depth2],
     } as const
 
@@ -189,11 +179,12 @@ describe('SignatureEnvelope', () => {
     ).toMatchInlineSnapshot(`false`)
   })
 
-  test('rejects mixed multisig initialization fields', () => {
+  test('rejects old multisig witness shapes', () => {
     expect(
       z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisigBootstrap,
+        init: config,
         account: multisig.account,
+        signatures: [secp256k1],
       } as never).success,
     ).toMatchInlineSnapshot(`false`)
   })

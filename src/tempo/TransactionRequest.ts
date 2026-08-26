@@ -7,20 +7,13 @@ import * as Signature from '../core/Signature.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import type * as MultisigConfig from './MultisigConfig.js'
+import * as MultisigWitness from './MultisigWitness.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as Transaction from './Transaction.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
 type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
-
-/**
- * Bootstrap multisig config hint for node-side gas modeling (TIP-1061).
- * The node prices multisig gas from it during simulation, and ignores it
- * for registered senders.
- */
-export type MultisigInit = Compute<MultisigConfig.Config & { salt: Hex.Hex }>
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -44,19 +37,18 @@ export type TransactionRequest<
       | undefined
     calls?: readonly Call<bigintType>[] | undefined
     capabilities?: Record<string, unknown> | undefined
+    feePayer?: boolean | undefined
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
+    feeToken?: Address.Address | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyId?: Address.Address | undefined
     keyType?: KeyType | undefined
-    feePayer?: boolean | undefined
-    feeToken?: Address.Address | undefined
-    multisigInit?: MultisigInit | undefined
-    multisigSignatureCount?: number | undefined
+    multisigWitness?: MultisigWitness.MultisigWitness | undefined
     nonceKey?: 'random' | bigintType | undefined
     signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
-    validBefore?: numberType | undefined
     validAfter?: numberType | undefined
+    validBefore?: numberType | undefined
   }
 >
 
@@ -67,12 +59,14 @@ export type Rpc = Omit<
   | 'feePayerSignature'
   | 'feeToken'
   | 'keyAuthorization'
+  | 'multisigWitness'
   | 'signature'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feePayerSignature?: Signature.Rpc | null | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
+  multisigWitness?: MultisigWitness.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
   signature?: SignatureEnvelope.SignatureEnvelopeRpc | undefined
 }
@@ -100,7 +94,7 @@ export type Rpc = Omit<
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const { authorizationList: _, ...rest } = request
+  const { authorizationList: _, multisigWitness: __, ...rest } = request
   const request_ = ox_TransactionRequest.fromRpc(
     rest as any,
   ) as TransactionRequest
@@ -135,6 +129,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
     )
+  if (request.multisigWitness)
+    request_.multisigWitness = MultisigWitness.fromRpc(request.multisigWitness)
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = Hex.toNumber(request.validBefore as Hex.Hex)
   if (typeof request.validAfter !== 'undefined')
@@ -150,6 +146,7 @@ export declare namespace fromRpc {
     | AuthorizationTempo.fromRpcList.ErrorType
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
+    | MultisigWitness.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -223,8 +220,7 @@ export function toRpc(request: toRpc.Input): Rpc {
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
     typeof request.keyType !== 'undefined' ||
-    typeof request.multisigInit !== 'undefined' ||
-    typeof request.multisigSignatureCount !== 'undefined' ||
+    typeof request.multisigWitness !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -274,10 +270,8 @@ export function toRpc(request: toRpc.Input): Rpc {
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
-  if (typeof request.multisigInit !== 'undefined')
-    request_rpc.multisigInit = request.multisigInit
-  if (typeof request.multisigSignatureCount !== 'undefined')
-    request_rpc.multisigSignatureCount = request.multisigSignatureCount
+  if (typeof request.multisigWitness !== 'undefined')
+    request_rpc.multisigWitness = MultisigWitness.toRpc(request.multisigWitness)
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = Quantity.fromNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -312,6 +306,7 @@ export declare namespace toRpc {
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
+    | MultisigWitness.toRpc.ErrorType
     | Errors.GlobalErrorType
 }
 

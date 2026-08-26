@@ -9,12 +9,23 @@ const config = {
       weight: 1,
     },
   ],
+  salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
   threshold: 1,
+  version: 0n,
 } as const
+
+const rpc = { ...config, version: '0x0' } as const
 
 describe('Config', () => {
   test('accepts valid native multisig configurations', () => {
     expect(z.safeDecode(z_MultisigConfig.Config, config).success).toBe(true)
+  })
+
+  test('round-trips RPC configurations', () => {
+    const decoded = z.decode(z_MultisigConfig.MultisigConfig, rpc)
+
+    expect(decoded).toEqual(config)
+    expect(z.encode(z_MultisigConfig.MultisigConfig, decoded)).toEqual(rpc)
   })
 
   test('rejects configurations outside protocol limits', () => {

@@ -9,7 +9,7 @@ import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 const chainId = chain.id
 const updateConfig = AbiFunction.from(
-  'function updateConfig(uint8 threshold, (address owner, uint8 weight)[] owners)',
+  'function updateConfig((bytes32 salt, uint64 version, uint8 threshold, (address owner, uint8 weight)[] owners) current, uint8 threshold, (address owner, uint8 weight)[] owners)',
 )
 
 describe('behavior: multisig (TIP-1061)', () => {
@@ -49,16 +49,21 @@ describe('behavior: multisig (TIP-1061)', () => {
   }
 
   function approve(parameters: {
-    initialConfig: MultisigConfig.Config
+    address?: Address.Address | undefined
+    config: MultisigConfig.Config
     payload: Hex.Hex
     signers: readonly { privateKey: Hex.Hex }[]
-    version?: bigint | undefined
   }) {
-    const { initialConfig, payload, signers, version = 0n } = parameters
-    const digest = MultisigConfig.getSignPayload({
+    const {
+      address = MultisigConfig.getAddress(parameters.config),
+      config,
       payload,
-      initialConfig,
-      version,
+      signers,
+    } = parameters
+    const digest = MultisigConfig.getSignPayload({
+      account: address,
+      config,
+      payload,
     })
     const signatures = signers.map((signer) =>
       SignatureEnvelope.from(
@@ -67,25 +72,10 @@ describe('behavior: multisig (TIP-1061)', () => {
     )
     // The node requires approvals ordered by recovered owner address.
     return SignatureEnvelope.sortMultisigApprovals({
-      initialConfig,
+      account: address,
+      config,
       payload,
       signatures,
-      version,
-    })
-  }
-
-  function multisigSignature(parameters: {
-    initialConfig: MultisigConfig.Config
-    payload: Hex.Hex
-    signers: readonly { privateKey: Hex.Hex }[]
-    init?: boolean | undefined
-    version?: bigint | undefined
-  }) {
-    const { init = false, ...approval } = parameters
-    return SignatureEnvelope.from({
-      initialConfig: parameters.initialConfig,
-      ...(init ? { init: true } : {}),
-      signatures: approve(approval),
     })
   }
 
@@ -111,11 +101,14 @@ describe('behavior: multisig (TIP-1061)', () => {
     })
     const receipt = await send(
       TxEnvelopeTempo.serialize(transaction, {
-        signature: multisigSignature({
-          initialConfig: multisig.initialConfig,
-          init: true,
-          payload: TxEnvelopeTempo.getSignPayload(transaction),
-          signers: multisig.ownerKeys,
+        signature: SignatureEnvelope.from({
+          account: multisig.account,
+          config: multisig.initialConfig,
+          signatures: approve({
+            config: multisig.initialConfig,
+            payload: TxEnvelopeTempo.getSignPayload(transaction),
+            signers: multisig.ownerKeys,
+          }),
         }),
       }),
     )
@@ -149,9 +142,10 @@ describe('behavior: multisig (TIP-1061)', () => {
     })
     const replacement = createKey()
     const rotatedConfig = MultisigConfig.from({
+      owners: [{ owner: replacement.address, weight: 1 }],
       salt: initialConfig.salt,
       threshold: 1,
-      owners: [{ owner: replacement.address, weight: 1 }],
+      version: 1,
     })
 
     await fundAddress(client, { address: account })
@@ -168,10 +162,10 @@ describe('behavior: multisig (TIP-1061)', () => {
 
     const bootstrap_signed = TxEnvelopeTempo.serialize(bootstrap, {
       signature: SignatureEnvelope.from({
-        initialConfig,
-        init: true,
+        account,
+        config: initialConfig,
         signatures: approve({
-          initialConfig,
+          config: initialConfig,
           payload: TxEnvelopeTempo.getSignPayload(bootstrap),
           signers: [ownerKeys[0]!, ownerKeys[1]!],
         }),
@@ -199,7 +193,7 @@ describe('behavior: multisig (TIP-1061)', () => {
       expect(response.from).toBe(account)
       expect(response.signature?.type).toBe('multisig')
       expect(
-        (response.signature as SignatureEnvelope.Multisig | undefined)?.init,
+        (response.signature as SignatureEnvelope.Multisig | undefined)?.config,
       ).toEqual(initialConfig)
     }
 
@@ -212,6 +206,7 @@ describe('behavior: multisig (TIP-1061)', () => {
         {
           to: '0xaacc000000000000000000000000000000000000',
           data: AbiFunction.encodeData(updateConfig, [
+            initialConfig,
             rotatedConfig.threshold,
             rotatedConfig.owners,
           ]),
@@ -226,9 +221,10 @@ describe('behavior: multisig (TIP-1061)', () => {
     })
     const updateSigned = TxEnvelopeTempo.serialize(update, {
       signature: SignatureEnvelope.from({
-        initialConfig,
+        account,
+        config: initialConfig,
         signatures: approve({
-          initialConfig,
+          config: initialConfig,
           payload: TxEnvelopeTempo.getSignPayload(update),
           signers: [ownerKeys[0]!, ownerKeys[1]!],
         }),
@@ -259,12 +255,13 @@ describe('behavior: multisig (TIP-1061)', () => {
 
     const spend_signed = TxEnvelopeTempo.serialize(spend, {
       signature: SignatureEnvelope.from({
-        initialConfig,
+        account,
+        config: rotatedConfig,
         signatures: approve({
-          initialConfig,
+          address: account,
+          config: rotatedConfig,
           payload: TxEnvelopeTempo.getSignPayload(spend),
           signers: [replacement],
-          version: 1n,
         }),
       }),
     })
@@ -295,10 +292,10 @@ describe('behavior: multisig (TIP-1061)', () => {
     })
     const childBootstrapSigned = TxEnvelopeTempo.serialize(childBootstrap, {
       signature: SignatureEnvelope.from({
-        initialConfig: child.initialConfig,
-        init: true,
+        account: child.account,
+        config: child.initialConfig,
         signatures: approve({
-          initialConfig: child.initialConfig,
+          config: child.initialConfig,
           payload: TxEnvelopeTempo.getSignPayload(childBootstrap),
           signers: child.ownerKeys,
         }),
@@ -330,21 +327,23 @@ describe('behavior: multisig (TIP-1061)', () => {
       maxPriorityFeePerGas: Value.fromGwei('10'),
     })
     const digest = MultisigConfig.getSignPayload({
-      initialConfig,
+      account,
+      config: initialConfig,
       payload: TxEnvelopeTempo.getSignPayload(bootstrap),
     })
     const nested = SignatureEnvelope.from({
-      initialConfig: child.initialConfig,
+      account: child.account,
+      config: child.initialConfig,
       signatures: approve({
-        initialConfig: child.initialConfig,
+        config: child.initialConfig,
         payload: digest,
         signers: child.ownerKeys,
       }),
     })
     const bootstrapSigned = TxEnvelopeTempo.serialize(bootstrap, {
       signature: SignatureEnvelope.from({
-        initialConfig,
-        init: true,
+        account,
+        config: initialConfig,
         signatures: [nested],
       }),
     })
@@ -368,17 +367,23 @@ describe('behavior: multisig (TIP-1061)', () => {
       maxPriorityFeePerGas: Value.fromGwei('10'),
     })
     const parentDigest = MultisigConfig.getSignPayload({
-      initialConfig,
+      account,
+      config: initialConfig,
       payload: TxEnvelopeTempo.getSignPayload(transaction),
     })
-    const childSignature = multisigSignature({
-      initialConfig: child.initialConfig,
-      payload: parentDigest,
-      signers: child.ownerKeys,
+    const childSignature = SignatureEnvelope.from({
+      account: child.account,
+      config: child.initialConfig,
+      signatures: approve({
+        config: child.initialConfig,
+        payload: parentDigest,
+        signers: child.ownerKeys,
+      }),
     })
     const serialized = TxEnvelopeTempo.serialize(transaction, {
       signature: SignatureEnvelope.from({
-        initialConfig,
+        account,
+        config: initialConfig,
         signatures: [childSignature],
       }),
     })
@@ -410,10 +415,14 @@ describe('behavior: multisig (TIP-1061)', () => {
       maxPriorityFeePerGas: Value.fromGwei('10'),
     })
     const signedByOwners = TxEnvelopeTempo.from(transaction, {
-      signature: multisigSignature({
-        initialConfig: multisig.initialConfig,
-        payload: TxEnvelopeTempo.getSignPayload(transaction),
-        signers: multisig.ownerKeys,
+      signature: SignatureEnvelope.from({
+        account: multisig.account,
+        config: multisig.initialConfig,
+        signatures: approve({
+          config: multisig.initialConfig,
+          payload: TxEnvelopeTempo.getSignPayload(transaction),
+          signers: multisig.ownerKeys,
+        }),
       }),
     })
     const sponsored = TxEnvelopeTempo.from({
@@ -461,10 +470,14 @@ describe('behavior: multisig (TIP-1061)', () => {
     const sponsored = TxEnvelopeTempo.from(transaction, { feePayerSignature })
     const receipt = await send(
       TxEnvelopeTempo.serialize(sponsored, {
-        signature: multisigSignature({
-          initialConfig: multisig.initialConfig,
-          payload: TxEnvelopeTempo.getSignPayload(sponsored),
-          signers: multisig.ownerKeys,
+        signature: SignatureEnvelope.from({
+          account: multisig.account,
+          config: multisig.initialConfig,
+          signatures: approve({
+            config: multisig.initialConfig,
+            payload: TxEnvelopeTempo.getSignPayload(sponsored),
+            signers: multisig.ownerKeys,
+          }),
         }),
       }),
     )
@@ -495,14 +508,16 @@ describe('behavior: multisig (TIP-1061)', () => {
     const serialize = (
       value: ReturnType<typeof transaction>,
       signers: readonly { privateKey: Hex.Hex }[],
-      init = false,
     ) =>
       TxEnvelopeTempo.serialize(value, {
-        signature: multisigSignature({
-          initialConfig,
-          init,
-          payload: TxEnvelopeTempo.getSignPayload(value),
-          signers,
+        signature: SignatureEnvelope.from({
+          account,
+          config: initialConfig,
+          signatures: approve({
+            config: initialConfig,
+            payload: TxEnvelopeTempo.getSignPayload(value),
+            signers,
+          }),
         }),
       })
 
@@ -510,7 +525,7 @@ describe('behavior: multisig (TIP-1061)', () => {
     const bootstrapReceipt = (await client
       .request({
         method: 'eth_sendRawTransactionSync',
-        params: [serialize(bootstrap, [ownerKeys[0]!, ownerKeys[1]!], true)],
+        params: [serialize(bootstrap, [ownerKeys[0]!, ownerKeys[1]!])],
       })
       .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
     expect(bootstrapReceipt.status).toBe('success')
@@ -568,10 +583,10 @@ describe('behavior: multisig (TIP-1061)', () => {
 
     const bootstrap_signed = TxEnvelopeTempo.serialize(bootstrap, {
       signature: SignatureEnvelope.from({
-        initialConfig,
-        init: true,
+        account,
+        config: initialConfig,
         signatures: approve({
-          initialConfig,
+          config: initialConfig,
           payload: TxEnvelopeTempo.getSignPayload(bootstrap),
           signers: ownerKeys,
         }),
@@ -618,9 +633,10 @@ describe('behavior: multisig (TIP-1061)', () => {
 
     const authorize_signed = TxEnvelopeTempo.serialize(authorize, {
       signature: SignatureEnvelope.from({
-        initialConfig,
+        account,
+        config: initialConfig,
         signatures: approve({
-          initialConfig,
+          config: initialConfig,
           payload: TxEnvelopeTempo.getSignPayload(authorize),
           signers: ownerKeys,
         }),
@@ -698,6 +714,7 @@ describe('behavior: multisig (TIP-1061)', () => {
         {
           to: '0xaacc000000000000000000000000000000000000',
           data: AbiFunction.encodeData(updateConfig, [
+            initialConfig,
             initialConfig.threshold,
             initialConfig.owners,
           ]),
@@ -744,11 +761,14 @@ describe('behavior: multisig (TIP-1061)', () => {
       type: 'secp256k1',
     })
     const keyAuthorizationSigned = KeyAuthorization.from(keyAuthorization, {
-      signature: multisigSignature({
-        initialConfig: multisig.initialConfig,
-        init: true,
-        payload: KeyAuthorization.getSignPayload(keyAuthorization),
-        signers: multisig.ownerKeys,
+      signature: SignatureEnvelope.from({
+        account: multisig.account,
+        config: multisig.initialConfig,
+        signatures: approve({
+          config: multisig.initialConfig,
+          payload: KeyAuthorization.getSignPayload(keyAuthorization),
+          signers: multisig.ownerKeys,
+        }),
       }),
     })
     const transaction = TxEnvelopeTempo.from({
@@ -787,10 +807,14 @@ describe('behavior: multisig (TIP-1061)', () => {
       type: 'secp256k1',
     })
     const keyAuthorizationSigned = KeyAuthorization.from(keyAuthorization, {
-      signature: multisigSignature({
-        initialConfig: multisig.initialConfig,
-        payload: KeyAuthorization.getSignPayload(keyAuthorization),
-        signers: multisig.ownerKeys,
+      signature: SignatureEnvelope.from({
+        account: multisig.account,
+        config: multisig.initialConfig,
+        signatures: approve({
+          config: multisig.initialConfig,
+          payload: KeyAuthorization.getSignPayload(keyAuthorization),
+          signers: multisig.ownerKeys,
+        }),
       }),
     })
     const bootstrapTransaction = TxEnvelopeTempo.from({
@@ -805,11 +829,14 @@ describe('behavior: multisig (TIP-1061)', () => {
     })
     const bootstrapReceipt = await send(
       TxEnvelopeTempo.serialize(bootstrapTransaction, {
-        signature: multisigSignature({
-          initialConfig: multisig.initialConfig,
-          init: true,
-          payload: TxEnvelopeTempo.getSignPayload(bootstrapTransaction),
-          signers: multisig.ownerKeys,
+        signature: SignatureEnvelope.from({
+          account: multisig.account,
+          config: multisig.initialConfig,
+          signatures: approve({
+            config: multisig.initialConfig,
+            payload: TxEnvelopeTempo.getSignPayload(bootstrapTransaction),
+            signers: multisig.ownerKeys,
+          }),
         }),
       }),
     )
