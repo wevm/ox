@@ -262,7 +262,10 @@ describe('selectApprovals', () => {
       account,
     }) => {
       if (!Address.isEqual(account, child)) throw new Error('unknown account')
-      return { config: childConfig, version: 2n }
+      return {
+        config: MultisigConfig.from({ ...childConfig, version: 2n }),
+        version: 2n,
+      }
     }
     const partial = await MultisigOperation.selectApprovals({
       account,
@@ -336,6 +339,57 @@ describe('selectApprovals', () => {
         },
       }
     `)
+  })
+
+  test('rejects mismatched nested config versions', async () => {
+    const childConfig = MultisigConfig.from({
+      owners: [{ owner: owners[1]!.address, weight: 1 }],
+      threshold: 1,
+    })
+    const child = MultisigConfig.getAddress(childConfig)
+    const config = MultisigConfig.from({
+      owners: [{ owner: child, weight: 1 }],
+      threshold: 1,
+    })
+    const account = MultisigConfig.getAddress(config)
+    const hash = MultisigOperation.getHash({
+      account,
+      configVersion: 1n,
+      transaction,
+      type: 'transaction',
+    })
+    const resolvedConfig = MultisigConfig.from({
+      ...childConfig,
+      version: 2n,
+    })
+    const childHash = MultisigConfig.getSignPayload({
+      account: child,
+      config: resolvedConfig,
+      payload: hash,
+    })
+
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          SignatureEnvelope.serialize({
+            account: child,
+            config: resolvedConfig,
+            signatures: [
+              SignatureEnvelope.deserialize(
+                signApproval(owners[1]!, childHash),
+              ),
+            ],
+            type: 'multisig',
+          }),
+        ],
+        config,
+        hash,
+        resolveConfig: () => ({ config: childConfig, version: 2n }),
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: resolved config.version must equal version for nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b.]`,
+    )
   })
 
   test('rejects invalid and non-owner approvals', async () => {
@@ -585,8 +639,17 @@ describe('selectApprovals', () => {
         hash,
         resolveConfig: ({ account }) => {
           if (Address.isEqual(account, child))
-            return { config: childConfig, version: 1n }
-          return { config: grandchildConfig, version: 1n }
+            return {
+              config: MultisigConfig.from({ ...childConfig, version: 1n }),
+              version: 1n,
+            }
+          return {
+            config: MultisigConfig.from({
+              ...grandchildConfig,
+              version: 1n,
+            }),
+            version: 1n,
+          }
         },
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
@@ -600,6 +663,7 @@ describe('serializeTransaction', () => {
     const results = []
     for (const init of [false, true]) {
       const configVersion = init ? 0n : 1n
+      const applicableConfig = init ? config : initializedConfig
       const hash = MultisigOperation.getHash({
         account,
         configVersion,
@@ -612,13 +676,13 @@ describe('serializeTransaction', () => {
           signApproval(owners[1]!, hash),
           signApproval(owners[0]!, hash),
         ],
-        config,
+        config: applicableConfig,
         hash,
       })
       const operation = MultisigOperation.from({
         account,
         approvals: selection.approvals,
-        config,
+        config: applicableConfig,
         configVersion,
         createdAt: 1,
         hash,
@@ -702,14 +766,14 @@ describe('serializeTransaction', () => {
           signApproval(owners[0]!, hash),
           signApproval(owners[1]!, hash),
         ],
-        config,
+        config: initializedConfig,
         hash,
       })
       const serialized = MultisigOperation.serializeTransaction(
         MultisigOperation.from({
           account,
           approvals: selection.approvals,
-          config,
+          config: initializedConfig,
           configVersion: 1n,
           createdAt: 1,
           hash,
@@ -770,13 +834,13 @@ describe('serializeTransaction', () => {
     const selection = await MultisigOperation.selectApprovals({
       account,
       approvals: [approval_1],
-      config,
+      config: initializedConfig,
       hash,
     })
     const operation = MultisigOperation.from({
       account,
       approvals: selection.approvals,
-      config,
+      config: initializedConfig,
       configVersion: 1n,
       createdAt: 1,
       hash,
@@ -1017,6 +1081,7 @@ describe('from', () => {
   test('bootstrap transaction', () => {
     const operation = MultisigOperation.from({
       ...transactionPending,
+      config,
       configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
@@ -1073,6 +1138,7 @@ describe('from', () => {
   test('initialized transaction at config version zero', () => {
     const operation = MultisigOperation.from({
       ...transactionPending,
+      config,
       configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
@@ -1207,6 +1273,7 @@ describe('from', () => {
     const operation = MultisigOperation.from({
       ...keyAuthorizationPending,
       approvals: [approval_1, approval_2],
+      config,
       configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
@@ -1550,6 +1617,17 @@ describe('validation', () => {
     expect(() =>
       MultisigOperation.from(operation as MultisigOperation.Operation),
     ).toThrowError(MultisigOperation.InvalidOperationError)
+  })
+
+  test('rejects mismatched config versions', () => {
+    expect(() =>
+      MultisigOperation.from({
+        ...transactionPending,
+        config: { ...initializedConfig, version: 2n },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: config.version must equal configVersion.]`,
+    )
   })
 
   test('rejects noncanonical RPC quantities', () => {

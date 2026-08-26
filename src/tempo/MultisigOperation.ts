@@ -338,10 +338,11 @@ export function from<const operation extends Operation>(
   operation: operation,
 ): from.ReturnValue<operation> {
   try {
-    const config = MultisigConfig.from({
-      ...operation.config,
-      version: operation.configVersion,
-    })
+    const config = MultisigConfig.from(operation.config)
+    if (config.version !== operation.configVersion)
+      throw new InvalidOperationError({
+        reason: 'config.version must equal configVersion',
+      })
     if (
       typeof config.threshold !== 'number' ||
       config.owners.some((owner) => typeof owner.weight !== 'number')
@@ -529,10 +530,11 @@ async function selectApprovals_internal(
           reason: `nested multisig owner ${group.address} requires a config resolver`,
         })
       const resolved = await options.resolveConfig({ account: group.address })
-      const config = MultisigConfig.from({
-        ...resolved.config,
-        version: resolved.version,
-      })
+      const config = MultisigConfig.from(resolved.config)
+      if (config.version !== resolved.version)
+        throw new InvalidApprovalError({
+          reason: `resolved config.version must equal version for nested multisig owner ${group.address}`,
+        })
       const selected = await selectApprovals_internal(
         {
           account: group.address,
