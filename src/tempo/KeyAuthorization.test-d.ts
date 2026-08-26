@@ -1,5 +1,6 @@
 import { expectTypeOf, test } from 'vitest'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as MultisigConfig from './MultisigConfig.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const authorization = {
@@ -19,6 +20,16 @@ const signature = {
 
 const multisig = {
   account: '0x2222222222222222222222222222222222222222',
+  config: MultisigConfig.from({
+    owners: [
+      {
+        owner: '0x1111111111111111111111111111111111111111',
+        weight: 1,
+      },
+    ],
+    threshold: 1,
+    version: 1n,
+  }),
   signatures: [signature],
   type: 'multisig',
 } as const satisfies SignatureEnvelope.Multisig
@@ -46,6 +57,7 @@ test('accepts multisig signatures', () => {
 
   const multisigRpc = {
     account: multisig.account,
+    config: MultisigConfig.toRpc(multisig.config),
     signatures: [
       {
         r: '0x01',
