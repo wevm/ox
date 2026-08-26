@@ -56,7 +56,10 @@ export type Config<bigintType = bigint, numberType = number> = Compute<{
 }>
 
 /** Input accepted when constructing a native multisig configuration. */
-export type Input<bigintType = bigint, numberType = number> = Compute<{
+export type Input<
+  versionType extends bigint | number = bigint | number,
+  numberType = number,
+> = Compute<{
   /** Weighted owner list (strictly ascending by `owner` address). */
   owners: readonly Owner<numberType>[]
   /**
@@ -66,8 +69,8 @@ export type Input<bigintType = bigint, numberType = number> = Compute<{
   salt?: Hex.Hex | undefined
   /** Minimum total owner weight required to authorize a transaction. */
   threshold: numberType
-  /** Configuration version. Defaults to `0n` for an initial configuration. */
-  version?: bigintType | undefined
+  /** Configuration version as a safe integer or bigint. Defaults to `0n`. */
+  version?: versionType | undefined
 }>
 
 /** Native multisig owner entry. */
@@ -112,9 +115,10 @@ export type Tuple = readonly [
  *
  * @param config - The multisig config.
  */
-export function assert<bigintType = bigint, numberType = number>(
-  config: Input<bigintType, numberType>,
-): void {
+export function assert<
+  versionType extends bigint | number = bigint | number,
+  numberType = number,
+>(config: Input<versionType, numberType>): void {
   const { owners, salt, threshold, version = 0n } = config
 
   if (typeof salt !== 'undefined' && Hex.size(salt) !== 32)
@@ -203,17 +207,22 @@ export declare namespace assert {
  * @returns The normalized multisig config.
  */
 export function from<numberType = number>(
-  config: Input<0n, numberType>,
+  config: Input<0 | 0n, numberType> & { version?: 0 | 0n | undefined },
 ): Config<0n, numberType>
 export function from<bigintType extends bigint, numberType = number>(
   config: Input<bigintType, numberType> & { version: bigintType },
 ): Config<bigintType, numberType>
-export function from<bigintType extends bigint = bigint, numberType = number>(
-  config: Input<bigintType, numberType>,
-): Config<bigintType, numberType>
-export function from<bigintType extends bigint = bigint, numberType = number>(
-  config: Input<bigintType, numberType>,
-): Config<bigintType, numberType> {
+export function from<numberType = number>(
+  config: Input<number, numberType> & { version: number },
+): Config<bigint, numberType>
+export function from<numberType = number>(
+  config: Input<bigint | number, numberType>,
+): Config<bigint, numberType>
+export function from<numberType = number>(
+  config: Input<bigint | number, numberType>,
+): Config<bigint, numberType> {
+  const version = config.version ?? 0n
+  assertVersion(version)
   const owners = [...config.owners].sort((a, b) =>
     Hex.toBigInt(a.owner) < Hex.toBigInt(b.owner) ? -1 : 1,
   )
@@ -221,8 +230,8 @@ export function from<bigintType extends bigint = bigint, numberType = number>(
     owners,
     salt: config.salt ? Hex.padLeft(config.salt, 32) : zeroSalt,
     threshold: config.threshold,
-    version: (config.version ?? 0n) as bigintType,
-  } as Config<bigintType, numberType>
+    version: BigInt(version),
+  } as Config<bigint, numberType>
   assert(normalized)
   return normalized
 }
@@ -324,7 +333,7 @@ export function fromTuple(tuple: Tuple): Config {
  */
 export function getAddress(config: Input): Address.Address {
   assert(config)
-  if ((config.version ?? 0n) !== 0n)
+  if (BigInt(config.version ?? 0) !== 0n)
     throw new InvalidConfigError({
       reason: 'account address requires version zero',
     })
@@ -469,7 +478,7 @@ export declare namespace getSignPayload {
     /** The native multisig account address. */
     account: Address.Address
     /** Configuration whose version applies to the approval. */
-    config: Pick<Config, 'version'>
+    config: Pick<Config<bigint | number>, 'version'>
     /** The inner transaction sign payload (`tx.signature_hash()`). */
     payload: Hex.Hex | Bytes.Bytes
   }
@@ -551,9 +560,10 @@ export function toTuple(config: Input): Tuple {
   // `salt` is a fixed 32-byte value: it RLP-encodes as a full 32-byte string
   // (including the zero salt), never trimmed like an integer.
   const salt = config.salt ? Hex.padLeft(config.salt, 32) : zeroSalt
+  const version = BigInt(config.version ?? 0)
   return [
     salt,
-    (config.version ?? 0n) === 0n ? '0x' : Hex.fromNumber(config.version ?? 0n),
+    version === 0n ? '0x' : Hex.fromNumber(version),
     Hex.fromNumber(config.threshold),
     owners,
   ] as const
@@ -597,8 +607,13 @@ export class InvalidConfigError extends Errors.BaseError {
 }
 
 /** Asserts that a configuration version fits the protocol's `uint64`. */
-function assertVersion(version: unknown): asserts version is bigint {
-  if (typeof version !== 'bigint' || version < 0n || version > maxVersion)
+function assertVersion(version: unknown): asserts version is bigint | number {
+  if (
+    (typeof version !== 'bigint' && typeof version !== 'number') ||
+    (typeof version === 'number' && !Number.isSafeInteger(version)) ||
+    BigInt(version) < 0n ||
+    BigInt(version) > maxVersion
+  )
     throw new InvalidConfigError({
       reason: 'version must be an unsigned 64-bit integer',
     })

@@ -40,9 +40,9 @@ describe('from', () => {
     `)
   })
 
-  test('behavior: preserves a current configuration version', () => {
+  test('behavior: normalizes a numeric configuration version', () => {
     expect(
-      MultisigConfig.from({ ...config, version: 1n }),
+      MultisigConfig.from({ ...config, version: 1 }),
     ).toMatchInlineSnapshot(`
       {
         "owners": [
@@ -63,6 +63,14 @@ describe('from', () => {
       MultisigConfig.from({ owners: [], threshold: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[MultisigConfig.InvalidConfigError: Invalid native multisig config: owners cannot be empty.]`,
+    )
+  })
+
+  test('error: rejects an invalid numeric version', () => {
+    expect(() =>
+      MultisigConfig.from({ ...config, version: 1.5 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[MultisigConfig.InvalidConfigError: Invalid native multisig config: version must be an unsigned 64-bit integer.]`,
     )
   })
 })
@@ -117,16 +125,22 @@ describe('getAddress', () => {
       `[MultisigConfig.InvalidConfigError: Invalid native multisig config: account address requires version zero.]`,
     )
   })
+
+  test('behavior: accepts numeric zero for an initial configuration', () => {
+    expect(MultisigConfig.getAddress({ ...config, version: 0 })).toBe(account)
+  })
 })
 
 describe('getCommitment', () => {
   test('example: matches the frozen initial and current vectors', () => {
     expect({
       current: MultisigConfig.getCommitment({ ...config, version: 1n }),
+      currentNumber: MultisigConfig.getCommitment({ ...config, version: 1 }),
       initial: MultisigConfig.getCommitment(config),
     }).toMatchInlineSnapshot(`
       {
         "current": "0x6237ca5930f2265d4fb70a0305dd6ceea4df227053b4a62c304489ede946a2f8",
+        "currentNumber": "0x6237ca5930f2265d4fb70a0305dd6ceea4df227053b4a62c304489ede946a2f8",
         "initial": "0xa9e7d1e2ad25e227a4de5f38f3bba31d854ffc8efec46aaa8649097a516bb4ee",
       }
     `)
@@ -146,7 +160,7 @@ describe('getSignPayload', () => {
     expect(
       MultisigConfig.getSignPayload({
         account,
-        config: { version: 1n },
+        config: { version: 1 },
         payload,
       }),
     ).not.toBe(MultisigConfig.getSignPayload({ account, config, payload }))
@@ -306,8 +320,20 @@ describe('assert/validate', () => {
       name: 'negative version',
     },
     {
+      config: { ...config, version: -1 },
+      name: 'negative numeric version',
+    },
+    {
       config: { ...config, version: MultisigConfig.maxVersion + 1n },
       name: 'version overflow',
+    },
+    {
+      config: { ...config, version: 1.5 },
+      name: 'fractional numeric version',
+    },
+    {
+      config: { ...config, version: Number.MAX_SAFE_INTEGER + 1 },
+      name: 'unsafe numeric version',
     },
   ])('error: rejects $name', ({ config }) => {
     expect(MultisigConfig.validate(config as MultisigConfig.Input)).toBe(false)

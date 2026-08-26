@@ -1081,7 +1081,7 @@ export declare namespace from {
         /** Initial native multisig account, derived from config when omitted. */
         account?: Address.Address | undefined
         /** Initial version-0 multisig configuration witness. */
-        config: MultisigConfig.Input<0n>
+        config: MultisigConfig.Input<0 | 0n>
         /** Primitive or nested owner approvals. */
         signatures: readonly SignatureEnvelope[]
         type?: 'multisig' | undefined

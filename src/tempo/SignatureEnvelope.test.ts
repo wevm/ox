@@ -1162,7 +1162,7 @@ describe('from', () => {
     test('behavior: accepts an explicit account for a current config', () => {
       const envelope = SignatureEnvelope.from({
         account: '0x2222222222222222222222222222222222222222',
-        config: { ...config, version: 1n },
+        config: { ...config, version: 1 },
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
       })
 

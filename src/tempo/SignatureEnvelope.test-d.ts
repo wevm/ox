@@ -63,13 +63,13 @@ test('from derives an initial account', () => {
 test('from requires an account for a current config', () => {
   // @ts-expect-error Current configurations require an explicit account.
   SignatureEnvelope.from({
-    config: { ...config, version: 1n },
+    config: { ...config, version: 1 },
     signatures: [signature],
   })
 
   const multisig = SignatureEnvelope.from({
     account: '0x2222222222222222222222222222222222222222',
-    config: { ...config, version: 1n },
+    config: { ...config, version: 1 },
     signatures: [signature],
   })
   expectTypeOf(multisig).toMatchTypeOf<SignatureEnvelope.Multisig>()

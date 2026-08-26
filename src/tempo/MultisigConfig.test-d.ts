@@ -13,9 +13,13 @@ const input = {
 
 test('from returns a complete configuration', () => {
   const config = MultisigConfig.from(input)
+  const numeric = MultisigConfig.from({ ...input, version: 1 })
+  const zero = MultisigConfig.from({ ...input, version: 0 })
 
   expectTypeOf(config).toMatchTypeOf<MultisigConfig.Config>()
   expectTypeOf(config.version).toEqualTypeOf<0n>()
+  expectTypeOf(numeric.version).toEqualTypeOf<bigint>()
+  expectTypeOf(zero.version).toEqualTypeOf<0n>()
 })
 
 test('RPC configurations use hexadecimal versions', () => {
@@ -35,7 +39,7 @@ test('complete configurations require a version', () => {
 test('sign payloads take the version from config', () => {
   MultisigConfig.getSignPayload({
     account: '0x2222222222222222222222222222222222222222',
-    config: { version: 1n },
+    config: { version: 1 },
     payload: '0x1234',
   })
 

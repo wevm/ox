@@ -8,6 +8,6 @@ Updated native multisig configurations and signatures to use TIP-1061 configurat
 const config = MultisigConfig.from({
   owners,
   threshold: 2,
-  version: 1n,
+  version: 1,
 })
 ```
