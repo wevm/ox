@@ -1,6 +1,5 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as core_Hex from '../../core/Hex.js'
-import * as core_MultisigConfig from '../../tempo/MultisigConfig.js'
 import type * as core_TransactionRequest from '../../tempo/TransactionRequest.js'
 import * as z_AccessList from '../AccessList.js'
 import * as z_Address from '../Address.js'
@@ -14,7 +13,7 @@ import {
 import * as z from 'zod/mini'
 import * as z_AuthorizationTempo from './AuthorizationTempo.js'
 import * as z_KeyAuthorization from './KeyAuthorization.js'
-import * as z_MultisigConfig from './MultisigConfig.js'
+import * as z_MultisigWitness from './MultisigWitness.js'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
 const fromRpcType = { '0x76': 'tempo' } as const
@@ -60,77 +59,6 @@ const CallToRpc = z.object({
 
 const Capabilities = z.record(z.string(), z.unknown())
 
-const MultisigNestedPrimitiveApproval = z.object({
-  keyData: z.optional(z_Hex.Hex),
-  keyType: z.optional(KeyType),
-  owner: z_Address.Address,
-})
-
-const MultisigPrimitiveApproval = z.object({
-  keyData: z.optional(z_Hex.Hex),
-  keyType: z.optional(KeyType),
-  owner: z_Address.Address,
-  type: z.literal('primitive'),
-})
-
-const MultisigNestedWitness = z.object({
-  account: z_Address.Address,
-  approvals: z.readonly(
-    z
-      .array(MultisigNestedPrimitiveApproval)
-      .check(z.maxLength(core_MultisigConfig.maxSignatures)),
-  ),
-  config: z_MultisigConfig.Config,
-})
-
-const MultisigNestedWitnessRpc = z.object({
-  account: z_Address.Address,
-  approvals: z.readonly(
-    z
-      .array(MultisigNestedPrimitiveApproval)
-      .check(z.maxLength(core_MultisigConfig.maxSignatures)),
-  ),
-  config: z_MultisigConfig.Rpc,
-})
-
-/** Native multisig simulation witness schema. */
-export const MultisigWitness = z.object({
-  account: z_Address.Address,
-  approvals: z.readonly(
-    z
-      .array(
-        z.union([
-          MultisigPrimitiveApproval,
-          z.object({
-            type: z.literal('multisig'),
-            witness: MultisigNestedWitness,
-          }),
-        ]),
-      )
-      .check(z.maxLength(core_MultisigConfig.maxSignatures)),
-  ),
-  config: z_MultisigConfig.Config,
-})
-
-/** RPC native multisig simulation witness schema. */
-export const MultisigWitnessRpc = z.object({
-  account: z_Address.Address,
-  approvals: z.readonly(
-    z
-      .array(
-        z.union([
-          MultisigPrimitiveApproval,
-          z.object({
-            type: z.literal('multisig'),
-            witness: MultisigNestedWitnessRpc,
-          }),
-        ]),
-      )
-      .check(z.maxLength(core_MultisigConfig.maxSignatures)),
-  ),
-  config: z_MultisigConfig.Rpc,
-})
-
 /** RPC tempo transaction request schema. */
 export const Rpc = z.object({
   accessList: z.optional(z_AccessList.AccessList),
@@ -155,7 +83,7 @@ export const Rpc = z.object({
   maxFeePerBlobGas: z.optional(z_Hex.Hex),
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
-  multisigWitness: z.optional(MultisigWitnessRpc),
+  multisigWitness: z.optional(z_MultisigWitness.Rpc),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
   r: z.optional(z_Hex.Hex),
@@ -208,7 +136,7 @@ export const Domain = z.object({
   maxFeePerBlobGas: z.optional(z.bigint()),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),
-  multisigWitness: z.optional(MultisigWitness),
+  multisigWitness: z.optional(z_MultisigWitness.Domain),
   nonce: z.optional(z.bigint()),
   nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -247,7 +175,7 @@ export const DomainToRpc = z.object({
   maxFeePerBlobGas: z.optional(uintBigintNumberish()),
   maxFeePerGas: z.optional(uintBigintNumberish()),
   maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
-  multisigWitness: z.optional(MultisigWitness),
+  multisigWitness: z.optional(z_MultisigWitness.Domain),
   nonce: z.optional(uintBigintNumberish()),
   nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -323,7 +251,10 @@ function fromRpc(
   if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
   if (typeof request.keyType !== 'undefined') request_.keyType = request.keyType
   if (typeof request.multisigWitness !== 'undefined')
-    request_.multisigWitness = multisigWitnessFromRpc(request.multisigWitness)
+    request_.multisigWitness = z.decode(
+      z_MultisigWitness.MultisigWitness,
+      request.multisigWitness,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = core_Hex.toNumber(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -408,7 +339,10 @@ function toRpc(
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
   if (typeof request.multisigWitness !== 'undefined')
-    request_rpc.multisigWitness = multisigWitnessToRpc(request.multisigWitness)
+    request_rpc.multisigWitness = z.encode(
+      z_MultisigWitness.MultisigWitness,
+      request.multisigWitness,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = encodeNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -431,54 +365,6 @@ function toRpc(
   }
 
   return request_rpc
-}
-
-/** Converts an RPC multisig simulation witness to its domain representation. */
-function multisigWitnessFromRpc(
-  witness: core_TransactionRequest.MultisigWitness.Rpc,
-): core_TransactionRequest.MultisigWitness {
-  return {
-    account: witness.account,
-    approvals: witness.approvals.map((approval) => {
-      if (approval.type === 'primitive') return approval
-      return {
-        type: 'multisig',
-        witness: {
-          account: approval.witness.account,
-          approvals: approval.witness.approvals,
-          config: z.decode(
-            z_MultisigConfig.MultisigConfig,
-            approval.witness.config,
-          ),
-        },
-      }
-    }),
-    config: z.decode(z_MultisigConfig.MultisigConfig, witness.config),
-  }
-}
-
-/** Converts a multisig simulation witness to its RPC representation. */
-function multisigWitnessToRpc(
-  witness: core_TransactionRequest.MultisigWitness,
-): core_TransactionRequest.MultisigWitness.Rpc {
-  return {
-    account: witness.account,
-    approvals: witness.approvals.map((approval) => {
-      if (approval.type === 'primitive') return approval
-      return {
-        type: 'multisig',
-        witness: {
-          account: approval.witness.account,
-          approvals: approval.witness.approvals,
-          config: z.encode(
-            z_MultisigConfig.MultisigConfig,
-            approval.witness.config,
-          ),
-        },
-      }
-    }),
-    config: z.encode(z_MultisigConfig.MultisigConfig, witness.config),
-  }
 }
 
 /**

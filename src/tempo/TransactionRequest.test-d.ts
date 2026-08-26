@@ -1,6 +1,7 @@
 import type * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as Signature from '../core/Signature.js'
 import { describe, expectTypeOf, test } from 'vp/test'
+import * as MultisigWitness from './MultisigWitness.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TransactionRequest from './TransactionRequest.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
@@ -51,9 +52,9 @@ describe('TransactionRequest type', () => {
   test('carries domain and RPC multisig witnesses', () => {
     expectTypeOf<
       TransactionRequest.TransactionRequest['multisigWitness']
-    >().toEqualTypeOf<TransactionRequest.MultisigWitness | undefined>()
+    >().toEqualTypeOf<MultisigWitness.MultisigWitness | undefined>()
     expectTypeOf<TransactionRequest.Rpc['multisigWitness']>().toEqualTypeOf<
-      TransactionRequest.MultisigWitness.Rpc | undefined
+      MultisigWitness.Rpc | undefined
     >()
   })
 })

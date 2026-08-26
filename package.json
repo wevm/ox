@@ -776,6 +776,11 @@
       "types": "./dist/tempo/MultisigOperation.d.ts",
       "default": "./dist/tempo/MultisigOperation.js"
     },
+    "./tempo/MultisigWitness": {
+      "src": "./src/tempo/MultisigWitness.ts",
+      "types": "./dist/tempo/MultisigWitness.d.ts",
+      "default": "./dist/tempo/MultisigWitness.js"
+    },
     "./tempo/Period": {
       "src": "./src/tempo/Period.ts",
       "types": "./dist/tempo/Period.d.ts",
@@ -1195,6 +1200,11 @@
       "src": "./src/zod/tempo/MultisigOperation.ts",
       "types": "./dist/zod/tempo/MultisigOperation.d.ts",
       "default": "./dist/zod/tempo/MultisigOperation.js"
+    },
+    "./zod/tempo/MultisigWitness": {
+      "src": "./src/zod/tempo/MultisigWitness.ts",
+      "types": "./dist/zod/tempo/MultisigWitness.d.ts",
+      "default": "./dist/zod/tempo/MultisigWitness.js"
     },
     "./zod/tempo/PoolId": {
       "src": "./src/zod/tempo/PoolId.ts",

@@ -99,7 +99,7 @@ describe('fromRpc', () => {
     `)
   })
 
-  test('behavior: multisig witness configs decode from RPC quantities', () => {
+  test('behavior: multisig witness configs decode from RPC numbers', () => {
     const request = TransactionRequest.fromRpc({
       calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       multisigWitness: {
@@ -137,7 +137,7 @@ describe('fromRpc', () => {
                 ],
                 salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
                 threshold: 2,
-                version: '0x2',
+                version: 2,
               },
             },
           },
@@ -155,7 +155,7 @@ describe('fromRpc', () => {
           ],
           salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
           threshold: 2,
-          version: '0x1',
+          version: 1,
         },
       },
       type: '0x76',
@@ -313,7 +313,7 @@ describe('toRpc', () => {
     `)
   })
 
-  test('behavior: multisig witness configs encode as RPC quantities', () => {
+  test('behavior: multisig witness configs encode as RPC numbers', () => {
     const request = TransactionRequest.toRpc({
       calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       multisigWitness: {
@@ -417,7 +417,7 @@ describe('toRpc', () => {
                   ],
                   "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
                   "threshold": 2,
-                  "version": "0x2",
+                  "version": 2,
                 },
               },
             },
@@ -435,7 +435,7 @@ describe('toRpc', () => {
             ],
             "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
             "threshold": 2,
-            "version": "0x1",
+            "version": 1,
           },
         },
         "type": "0x76",

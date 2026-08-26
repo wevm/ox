@@ -99,7 +99,7 @@ describe('TransactionRequest', () => {
               ],
               salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
               threshold: 2,
-              version: '0x2',
+              version: 2,
             },
           },
         },
@@ -117,7 +117,7 @@ describe('TransactionRequest', () => {
         ],
         salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
         threshold: 2,
-        version: '0x1',
+        version: 1,
       },
     } as const
 
@@ -221,7 +221,7 @@ describe('TransactionRequest', () => {
                 ],
                 "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
                 "threshold": 2,
-                "version": "0x2",
+                "version": 2,
               },
             },
           },
@@ -239,7 +239,7 @@ describe('TransactionRequest', () => {
           ],
           "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
           "threshold": 2,
-          "version": "0x1",
+          "version": 1,
         },
       }
     `)
@@ -262,52 +262,6 @@ describe('TransactionRequest', () => {
         chainId: 1,
       } as never).success,
     ).toBe(false)
-  })
-})
-
-describe('MultisigWitnessRpc', () => {
-  test('rejects more than eight root or nested approvals', () => {
-    const config = {
-      owners: [
-        {
-          owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          weight: 8,
-        },
-      ],
-      salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
-      threshold: 8,
-      version: '0x1',
-    } as const
-    const primitive = {
-      owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      type: 'primitive',
-    } as const
-
-    expect(
-      z.safeDecode(z_TransactionRequest.MultisigWitnessRpc, {
-        account: '0xcccccccccccccccccccccccccccccccccccccccc',
-        approvals: Array.from({ length: 9 }, () => primitive),
-        config,
-      }).success,
-    ).toMatchInlineSnapshot(`false`)
-    expect(
-      z.safeDecode(z_TransactionRequest.MultisigWitnessRpc, {
-        account: '0xcccccccccccccccccccccccccccccccccccccccc',
-        approvals: [
-          {
-            type: 'multisig',
-            witness: {
-              account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-              approvals: Array.from({ length: 9 }, () => ({
-                owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const,
-              })),
-              config,
-            },
-          },
-        ],
-        config,
-      }).success,
-    ).toMatchInlineSnapshot(`false`)
   })
 })
 
