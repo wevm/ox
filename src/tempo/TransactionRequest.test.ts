@@ -1,4 +1,4 @@
-import { TransactionRequest } from 'ox/tempo'
+import { type MultisigWitness, TransactionRequest } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
 const multisigWitnessRpc = {
@@ -49,7 +49,7 @@ const multisigWitnessRpc = {
     threshold: 2,
     version: 0,
   },
-} as const satisfies TransactionRequest.MultisigWitnessRpc
+} as const satisfies MultisigWitness.Rpc
 
 const multisigWitness = {
   ...multisigWitnessRpc,
@@ -67,7 +67,7 @@ const multisigWitness = {
     },
   ],
   config: { ...multisigWitnessRpc.config, version: 0n },
-} as const satisfies TransactionRequest.MultisigWitness
+} as const satisfies MultisigWitness.MultisigWitness
 
 describe('fromRpc', () => {
   test('default', () => {

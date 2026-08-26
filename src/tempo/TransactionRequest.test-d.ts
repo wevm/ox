@@ -1,4 +1,5 @@
 import { expectTypeOf, test } from 'vitest'
+import type * as MultisigWitness from './MultisigWitness.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
 declare const request: TransactionRequest.TransactionRequest
@@ -12,7 +13,7 @@ test('transaction requests use domain multisig witnesses', () => {
   const approval = request.multisigWitness?.approvals[0]
   if (approval?.type === 'multisig')
     expectTypeOf(approval.witness.approvals[0]?.keyType).toEqualTypeOf<
-      TransactionRequest.SignatureType | undefined
+      MultisigWitness.NestedPrimitiveApproval['keyType']
     >()
 })
 

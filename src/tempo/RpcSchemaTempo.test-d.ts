@@ -2,8 +2,8 @@ import type { Provider } from 'ox'
 import type {
   KeyAuthorization,
   MultisigOperation,
+  MultisigWitness,
   RpcSchemaTempo,
-  TransactionRequest,
 } from 'ox/tempo'
 import { expectTypeOf, test } from 'vitest'
 import type * as Hex from '../core/Hex.js'
@@ -14,7 +14,7 @@ declare const tempoProvider: Provider.Provider<{
 }>
 declare const hash: Hex.Hex
 declare const keyAuthorization: KeyAuthorization.Rpc
-declare const multisigWitness: TransactionRequest.MultisigWitnessRpc
+declare const multisigWitness: MultisigWitness.Rpc
 declare const serializedTransaction: Hex.Hex
 declare const signature: Hex.Hex
 
