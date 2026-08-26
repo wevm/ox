@@ -1,5 +1,19 @@
 # ox
 
+## 0.14.39
+
+### Patch Changes
+
+- [#412](https://github.com/wevm/ox/pull/412) [`200d9a7`](https://github.com/wevm/ox/commit/200d9a7832b676880d296b5b03fe1dde548b9f37) Thanks [@jxom](https://github.com/jxom)! - Changed native multisig configuration and signature APIs to require complete TIP-1061 witnesses with a `version`.
+
+  ```ts
+  const config = MultisigConfig.from({
+    owners,
+    threshold: 2,
+    version: 1,
+  });
+  ```
+
 ## 0.14.38
 
 ### Patch Changes
