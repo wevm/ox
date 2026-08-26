@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.40
+
+### Patch Changes
+
+- [#415](https://github.com/wevm/ox/pull/415) [`e4ce887`](https://github.com/wevm/ox/commit/e4ce8877bb73349a057024238a2dd6beff26e2c1) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig configuration witnesses, simulation requests, RPC conversion, approval limits, key-data hints, and version validation for TIP-1061.
+
 ## 0.14.39
 
 ### Patch Changes
