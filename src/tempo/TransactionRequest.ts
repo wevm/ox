@@ -1,15 +1,67 @@
+import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as MultisigConfig from './MultisigConfig.js'
 import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
-type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
+/** Primitive signature type modeled during transaction simulation. */
+export type SignatureType = 'secp256k1' | 'p256' | 'webAuthn'
+
+/** Primitive owner approval modeled during native multisig simulation. */
+export type MultisigPrimitiveApproval = {
+  /** Optional signature-specific gas-estimation data. */
+  keyData?: Hex.Hex | undefined
+  /** Signature type to model. Omission models a maximum-size WebAuthn signature. */
+  keyType?: SignatureType | undefined
+  /** Configured owner address. */
+  owner: Address.Address
+}
+
+/** Depth-2 native multisig witness used during transaction simulation. */
+export type MultisigNestedWitness<bigintType = bigint> = {
+  /** Nested multisig account. */
+  account: Address.Address
+  /** Primitive owner approvals to model. */
+  approvals: readonly MultisigPrimitiveApproval[]
+  /** Complete applicable configuration. */
+  config: MultisigConfig.Config<bigintType>
+}
+
+/** Native multisig owner approval modeled during transaction simulation. */
+export type MultisigApproval<bigintType = bigint> =
+  | (MultisigPrimitiveApproval & { type: 'primitive' })
+  | {
+      /** Approval type. */
+      type: 'multisig'
+      /** Nested multisig witness. */
+      witness: MultisigNestedWitness<bigintType>
+    }
+
+/** Native multisig witness used during transaction simulation. */
+export type MultisigWitness<bigintType = bigint> = {
+  /** Account authorized by this witness. */
+  account: Address.Address
+  /** Owner approvals to model. */
+  approvals: readonly MultisigApproval<bigintType>[]
+  /** Complete applicable configuration. */
+  config: MultisigConfig.Config<bigintType>
+}
+
+/** JSON-RPC representation of a {@link ox#TransactionRequest.MultisigNestedWitness}. */
+export type MultisigNestedWitnessRpc = MultisigNestedWitness<number>
+
+/** JSON-RPC representation of a {@link ox#TransactionRequest.MultisigApproval}. */
+export type MultisigApprovalRpc = MultisigApproval<number>
+
+/** JSON-RPC representation of a {@link ox#TransactionRequest.MultisigWitness}. */
+export type MultisigWitnessRpc = MultisigWitness<number>
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -35,9 +87,10 @@ export type TransactionRequest<
     calls?: readonly Call<bigintType, addressType>[] | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
-    keyType?: KeyType | undefined
+    keyType?: SignatureType | undefined
     feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
+    multisigWitness?: MultisigWitness<bigintType> | undefined
     nonceKey?: 'random' | bigintType | undefined
     validBefore?: numberType | undefined
     validAfter?: numberType | undefined
@@ -47,11 +100,12 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
-  'authorizationList' | 'feeToken' | 'keyAuthorization'
+  'authorizationList' | 'feeToken' | 'keyAuthorization' | 'multisigWitness'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
+  multisigWitness?: MultisigWitnessRpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
 
@@ -76,7 +130,7 @@ export type Rpc = Omit<
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const { authorizationList: _, ...rest } = request
+  const { authorizationList: _, multisigWitness: __, ...rest } = request
   const request_ = ox_TransactionRequest.fromRpc(
     rest as any,
   ) as TransactionRequest
@@ -107,6 +161,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
     )
+  if (request.multisigWitness)
+    request_.multisigWitness = multisigWitnessFromRpc(request.multisigWitness)
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = Hex.toNumber(request.validBefore as Hex.Hex)
   if (typeof request.validAfter !== 'undefined')
@@ -120,6 +176,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
 export declare namespace fromRpc {
   export type ErrorType =
     | AuthorizationTempo.fromRpcList.ErrorType
+    | MultisigConfig.fromRpc.ErrorType
+    | Hex.fromNumber.ErrorType
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
     | Errors.GlobalErrorType
@@ -204,6 +262,8 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
     )
+  if (request.multisigWitness)
+    request_rpc.multisigWitness = multisigWitnessToRpc(request.multisigWitness)
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = Hex.fromNumber(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -222,6 +282,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
     typeof request.keyAuthorization !== 'undefined' ||
+    typeof request.multisigWitness !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -240,6 +301,65 @@ export function toRpc(request: TransactionRequest): Rpc {
 export declare namespace toRpc {
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
+    | MultisigConfig.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
+    | Hex.toNumber.ErrorType
     | Errors.GlobalErrorType
+}
+
+/** @internal */
+function multisigWitnessFromRpc(witness: MultisigWitnessRpc): MultisigWitness {
+  return {
+    account: witness.account,
+    approvals: witness.approvals.map((approval) => {
+      if (approval.type === 'primitive') return approval
+      return {
+        type: 'multisig',
+        witness: {
+          ...approval.witness,
+          config: multisigConfigFromRpc(approval.witness.config),
+        },
+      }
+    }),
+    config: multisigConfigFromRpc(witness.config),
+  }
+}
+
+/** @internal */
+function multisigWitnessToRpc(witness: MultisigWitness): MultisigWitnessRpc {
+  return {
+    account: witness.account,
+    approvals: witness.approvals.map((approval) => {
+      if (approval.type === 'primitive') return approval
+      return {
+        type: 'multisig',
+        witness: {
+          ...approval.witness,
+          config: multisigConfigToRpc(approval.witness.config),
+        },
+      }
+    }),
+    config: multisigConfigToRpc(witness.config),
+  }
+}
+
+/** @internal */
+function multisigConfigFromRpc(
+  config: MultisigConfig.Config<number>,
+): MultisigConfig.Config {
+  return MultisigConfig.fromRpc({
+    ...config,
+    version: Hex.fromNumber(config.version),
+  })
+}
+
+/** @internal */
+function multisigConfigToRpc(
+  config: MultisigConfig.Config,
+): MultisigConfig.Config<number> {
+  const { version, ...rpc } = MultisigConfig.toRpc(config)
+  return {
+    ...rpc,
+    version: Hex.toNumber(version),
+  }
 }
