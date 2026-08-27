@@ -1,17 +1,20 @@
 import type { Provider } from 'ox'
 import type {
   KeyAuthorization,
+  MultisigConfig,
   MultisigOperation,
   MultisigWitness,
   RpcSchemaTempo,
 } from 'ox/tempo'
 import { expectTypeOf, test } from 'vitest'
+import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
 
 declare const provider: Provider.Provider<{ schema: RpcSchemaTempo.Multisig }>
 declare const tempoProvider: Provider.Provider<{
   schema: RpcSchemaTempo.Tempo
 }>
+declare const address: Address.Address
 declare const hash: Hex.Hex
 declare const keyAuthorization: KeyAuthorization.Rpc
 declare const multisigWitness: MultisigWitness.Rpc
@@ -51,6 +54,13 @@ test('multisig provider methods', () => {
       params: [{ hash, signature }],
     }),
   ).resolves.toEqualTypeOf<MultisigOperation.KeyAuthorizationRpc>()
+
+  expectTypeOf(
+    provider.request({
+      method: 'multisig_getConfig',
+      params: [{ address }],
+    }),
+  ).resolves.toEqualTypeOf<MultisigConfig.Rpc | null>()
 
   expectTypeOf(
     provider.request({
