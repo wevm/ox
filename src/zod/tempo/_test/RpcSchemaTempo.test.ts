@@ -56,6 +56,16 @@ describe('tempo_simulateV1', () => {
 })
 
 describe('multisig methods', () => {
+  test('decodes key authorization approval params', () => {
+    expect(
+      z_RpcSchema.decodeParams(
+        z_RpcSchemaTempo.Multisig,
+        'multisig_approveKeyAuthorization',
+        [{ hash: '0x01', signature: '0x02' }],
+      ),
+    ).toEqual([{ hash: '0x01', signature: '0x02' }])
+  })
+
   test('decodes raw transaction params', () => {
     expect(
       z_RpcSchema.decodeParams(
@@ -66,14 +76,46 @@ describe('multisig methods', () => {
     ).toEqual(['0x76', 30_000])
   })
 
-  test('decodes key authorization approval params', () => {
+  test('decodes config params', () => {
     expect(
       z_RpcSchema.decodeParams(
         z_RpcSchemaTempo.Multisig,
-        'multisig_approveKeyAuthorization',
-        [{ hash: '0x01', signature: '0x02' }],
+        'multisig_getConfig',
+        [{ address: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       ),
-    ).toEqual([{ hash: '0x01', signature: '0x02' }])
+    ).toEqual([{ address: '0xcafebabecafebabecafebabecafebabecafebabe' }])
+  })
+
+  test('decodes config result', () => {
+    const config = {
+      owners: [
+        {
+          owner: '0x1111111111111111111111111111111111111111',
+          weight: 1,
+        },
+      ],
+      salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      threshold: 1,
+      version: '0x0',
+    } as const
+
+    expect(
+      z_RpcSchema.decodeReturns(
+        z_RpcSchemaTempo.Multisig,
+        'multisig_getConfig',
+        config,
+      ),
+    ).toEqual(config)
+  })
+
+  test('accepts a missing config result', () => {
+    expect(
+      z_RpcSchema.decodeReturns(
+        z_RpcSchemaTempo.Multisig,
+        'multisig_getConfig',
+        null,
+      ),
+    ).toBeNull()
   })
 
   test('accepts a missing operation result', () => {

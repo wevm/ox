@@ -1,3 +1,4 @@
+import type * as Address from '../core/Address.js'
 import type * as Block from '../core/Block.js'
 import type * as BlockOverrides from '../core/BlockOverrides.js'
 import type * as Hex from '../core/Hex.js'
@@ -5,6 +6,7 @@ import type * as Log from '../core/Log.js'
 import type * as RpcSchema from '../core/RpcSchema.js'
 import type * as StateOverrides from '../core/StateOverrides.js'
 import type * as KeyAuthorization from './KeyAuthorization.js'
+import type * as MultisigConfig from './MultisigConfig.js'
 import type * as MultisigOperation from './MultisigOperation.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
@@ -60,6 +62,16 @@ export type Tempo = RpcSchema.From<{
 export type Multisig = RpcSchema.From<
   | {
       Request: {
+        method: 'multisig_approveKeyAuthorization'
+        params: [
+          | { keyAuthorization: KeyAuthorization.Rpc }
+          | { hash: Hex.Hex; signature: Hex.Hex },
+        ]
+      }
+      ReturnType: MultisigOperation.KeyAuthorizationRpc
+    }
+  | {
+      Request: {
         method: 'multisig_approveRawTransaction'
         params: [serializedTransaction: Hex.Hex]
       }
@@ -74,13 +86,10 @@ export type Multisig = RpcSchema.From<
     }
   | {
       Request: {
-        method: 'multisig_approveKeyAuthorization'
-        params: [
-          | { keyAuthorization: KeyAuthorization.Rpc }
-          | { hash: Hex.Hex; signature: Hex.Hex },
-        ]
+        method: 'multisig_getConfig'
+        params: [{ address: Address.Address }]
       }
-      ReturnType: MultisigOperation.KeyAuthorizationRpc
+      ReturnType: MultisigConfig.Rpc | null
     }
   | {
       Request: {
