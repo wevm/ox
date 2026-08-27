@@ -51,13 +51,7 @@ test('uses JSON-RPC quantities only in RPC operations', () => {
     MultisigOperation.Operation['config']['version']
   >().toEqualTypeOf<bigint>()
   expectTypeOf<
-    MultisigOperation.Operation['configVersion']
-  >().toEqualTypeOf<bigint>()
-  expectTypeOf<
     MultisigOperation.Rpc['config']['version']
-  >().toEqualTypeOf<Hex.Hex>()
-  expectTypeOf<
-    MultisigOperation.Rpc['configVersion']
   >().toEqualTypeOf<Hex.Hex>()
 })
 
