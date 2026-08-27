@@ -3035,7 +3035,7 @@ describe('multisig', () => {
             ],
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "threshold": 1,
-            "version": "0x1",
+            "version": 1,
           },
           "signatures": [
             {
@@ -3057,7 +3057,7 @@ describe('multisig', () => {
             ],
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "threshold": 1,
-            "version": "0x0",
+            "version": 0,
           },
           "signatures": [
             {

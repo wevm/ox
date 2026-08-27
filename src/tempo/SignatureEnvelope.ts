@@ -245,7 +245,7 @@ export type MultisigRpc = {
   /** Native multisig account address. */
   account: Address.Address
   /** Complete applicable multisig configuration witness. */
-  config: MultisigConfig.Rpc
+  config: MultisigConfig.Config<number>
   /** Structured owner approvals. */
   signatures: readonly SignatureEnvelopeRpc[]
   /** Multisig RPC signatures are untagged. */
@@ -1229,7 +1229,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     const multisig = envelope as MultisigRpc
     const result = {
       account: multisig.account,
-      config: MultisigConfig.fromRpc(multisig.config),
+      config: MultisigConfig.from(multisig.config),
       signatures: multisig.signatures.map((signature) => fromRpc(signature)),
       type: 'multisig',
     } satisfies Multisig
@@ -1245,7 +1245,7 @@ export declare namespace fromRpc {
     | assert.ErrorType
     | CoercionError
     | InvalidSerializedError
-    | MultisigConfig.fromRpc.ErrorType
+    | MultisigConfig.assert.ErrorType
     | Signature.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
@@ -1614,7 +1614,10 @@ export function toRpc<const envelope extends toRpc.Input>(
     assert(multisig)
     return {
       account: multisig.account,
-      config: MultisigConfig.toRpc(multisig.config),
+      config: {
+        ...multisig.config,
+        version: Hex.toNumber(Hex.fromNumber(multisig.config.version)),
+      },
       signatures: multisig.signatures.map((signature) => toRpc(signature)),
     } as never
   }
@@ -1643,7 +1646,8 @@ export declare namespace toRpc {
   type ErrorType =
     | assert.ErrorType
     | CoercionError
-    | MultisigConfig.toRpc.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.toNumber.ErrorType
     | Signature.toRpc.ErrorType
     | Errors.GlobalErrorType
 }

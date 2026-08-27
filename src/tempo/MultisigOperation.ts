@@ -15,14 +15,10 @@ export type Base<quantity = bigint> = {
   approvals: readonly Hex.Hex[]
   /** Root configuration used to verify approvals. */
   config: MultisigConfig.Config<quantity>
-  /** Root configuration version. */
-  configVersion: quantity
   /** Unix creation time in milliseconds. */
   createdAt: number
   /** Deterministic multisig operation hash. */
   hash: Hex.Hex
-  /** Whether the operation initializes the root multisig account. */
-  init: boolean
   /** Number of approvals selected for quorum evaluation. */
   signatureCount: number
   /** Required root owner weight. */
@@ -73,9 +69,6 @@ export type KeyAuthorizationRpc = KeyAuthorizationOperation<Hex.Hex>
 /** JSON-RPC multisig operation. */
 export type Rpc = Operation<Hex.Hex>
 
-/** Maximum supported multisig configuration version. */
-const maxConfigVersion = 2n ** 64n - 1n
-
 /**
  * Derives the deterministic hash for a multisig operation.
  *
@@ -86,7 +79,7 @@ const maxConfigVersion = 2n ** 64n - 1n
  *
  * const hash = MultisigOperation.getHash({
  *   account,
- *   configVersion: 1n,
+ *   config,
  *   transaction,
  *   type: 'transaction',
  * })
@@ -96,7 +89,7 @@ const maxConfigVersion = 2n ** 64n - 1n
  * @returns The operation hash signed by each owner.
  */
 export function getHash(options: getHash.Options): Hex.Hex {
-  const { account, configVersion } = options
+  const { account, config } = options
   const payload =
     options.type === 'transaction'
       ? TxEnvelopeTempo.getSignPayload(
@@ -109,7 +102,7 @@ export function getHash(options: getHash.Options): Hex.Hex {
         )
   return MultisigConfig.getSignPayload({
     account,
-    config: { version: configVersion },
+    config,
     payload,
   })
 }
@@ -119,8 +112,8 @@ export declare namespace getHash {
   export type Options = {
     /** Root multisig account. */
     account: Address.Address
-    /** Root configuration version. */
-    configVersion: bigint
+    /** Complete root multisig configuration witness. */
+    config: MultisigConfig.Config
   } & (
     | {
         /** Canonical serialized key authorization. */
@@ -163,7 +156,6 @@ export declare namespace getHash {
  *   approvals,
  *   config,
  *   hash,
- *   resolveConfig,
  * })
  * ```
  *
@@ -173,18 +165,25 @@ export declare namespace getHash {
 export async function selectApprovals(
   options: selectApprovals.Options,
 ): Promise<selectApprovals.ReturnValue> {
-  const { account, approvals, hash, resolveConfig } = options
+  const { account, approvals, hash } = options
   if (!Address.validate(account) || Hex.toBigInt(account) === 0n)
     throw new InvalidApprovalError({ reason: 'account is invalid' })
   if (!Hash.validate(hash))
     throw new InvalidApprovalError({ reason: 'hash is invalid' })
+  const config = MultisigConfig.from(options.config)
+  if (
+    config.version === 0n &&
+    !Address.isEqual(MultisigConfig.getAddress(config), account)
+  )
+    throw new InvalidApprovalError({
+      reason: 'initial config does not derive the root multisig account',
+    })
   return selectApprovals_internal(
     {
       account,
       approvals,
-      config: MultisigConfig.from(options.config),
+      config,
       hash,
-      resolveConfig,
     },
     [account.toLowerCase()],
   )
@@ -201,27 +200,6 @@ export declare namespace selectApprovals {
     config: MultisigConfig.Config
     /** Deterministic operation hash approved by root owners. */
     hash: Hex.Hex
-    /** Resolves the current configuration of a nested multisig owner. */
-    resolveConfig?: ResolveConfig | undefined
-  }
-
-  /** Resolves an initialized nested multisig configuration. */
-  export type ResolveConfig = (
-    options: ResolveConfigOptions,
-  ) => ResolvedConfig | Promise<ResolvedConfig>
-
-  /** Nested multisig configuration lookup parameters. */
-  export type ResolveConfigOptions = {
-    /** Nested multisig account. */
-    account: Address.Address
-  }
-
-  /** Resolved nested multisig configuration. */
-  export type ResolvedConfig = {
-    /** Current nested multisig configuration. */
-    config: MultisigConfig.Config
-    /** Current nested multisig configuration version. */
-    version: bigint
   }
 
   /** Result of validating and selecting approvals. */
@@ -339,10 +317,6 @@ export function from<const operation extends Operation>(
 ): from.ReturnValue<operation> {
   try {
     const config = MultisigConfig.from(operation.config)
-    if (config.version !== operation.configVersion)
-      throw new InvalidOperationError({
-        reason: 'config.version must equal configVersion',
-      })
     if (
       typeof config.threshold !== 'number' ||
       config.owners.some((owner) => typeof owner.weight !== 'number')
@@ -392,22 +366,19 @@ export function fromRpc<const operation extends Rpc>(
   operation: operation,
 ): fromRpc.ReturnValue<operation> {
   try {
-    if (
-      typeof operation.configVersion !== 'string' ||
-      !Hex.validate(operation.configVersion)
-    )
+    const version = operation.config?.version
+    if (typeof version !== 'string' || !Hex.validate(version))
       throw new InvalidOperationError({
-        reason: 'configVersion must be a hexadecimal quantity',
+        reason: 'config.version must be a hexadecimal quantity',
       })
-    const configVersion = Hex.toBigInt(operation.configVersion)
-    if (Hex.fromNumber(configVersion) !== operation.configVersion)
+    const version_ = Hex.toBigInt(version)
+    if (Hex.fromNumber(version_) !== version)
       throw new InvalidOperationError({
-        reason: 'configVersion must use canonical quantity encoding',
+        reason: 'config.version must use canonical quantity encoding',
       })
     return from({
       ...operation,
       config: MultisigConfig.fromRpc(operation.config),
-      configVersion,
     } as Operation) as never
   } catch (cause) {
     if (cause instanceof InvalidOperationError) throw cause
@@ -447,7 +418,6 @@ export function toRpc<const operation extends Operation>(
   return {
     ...value,
     config: MultisigConfig.toRpc(value.config),
-    configVersion: Hex.fromNumber(value.configVersion),
   } as never
 }
 
@@ -459,7 +429,7 @@ export declare namespace toRpc {
       : KeyAuthorizationRpc
 
   /** Error type for `toRpc`. */
-  export type ErrorType = from.ErrorType | Hex.fromNumber.ErrorType
+  export type ErrorType = from.ErrorType | MultisigConfig.toRpc.ErrorType
 }
 
 /**
@@ -525,15 +495,17 @@ async function selectApprovals_internal(
         throw new InvalidApprovalError({
           reason: `nested multisig owner ${group.address} is invalid`,
         })
-      if (!options.resolveConfig)
+      const config = MultisigConfig.from(nested[0]!.config)
+      if (nested.some((signature) => !sameConfig(signature.config, config)))
         throw new InvalidApprovalError({
-          reason: `nested multisig owner ${group.address} requires a config resolver`,
+          reason: `nested multisig owner ${group.address} has conflicting config witnesses`,
         })
-      const resolved = await options.resolveConfig({ account: group.address })
-      const config = MultisigConfig.from(resolved.config)
-      if (config.version !== resolved.version)
+      if (
+        config.version === 0n &&
+        !Address.isEqual(MultisigConfig.getAddress(config), group.address)
+      )
         throw new InvalidApprovalError({
-          reason: `resolved config.version must equal version for nested multisig owner ${group.address}`,
+          reason: `initial config does not derive nested multisig owner ${group.address}`,
         })
       const selected = await selectApprovals_internal(
         {
@@ -549,7 +521,6 @@ async function selectApprovals_internal(
             config,
             payload: options.hash,
           }),
-          resolveConfig: options.resolveConfig,
         },
         [...path, group.address.toLowerCase()],
       )
@@ -691,16 +662,6 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
     throw new InvalidOperationError({ reason: 'account cannot be zero' })
   if (!Hash.validate(operation.hash))
     throw new InvalidOperationError({ reason: 'hash is invalid' })
-  if (typeof operation.init !== 'boolean')
-    throw new InvalidOperationError({ reason: 'init must be a boolean' })
-  if (
-    typeof operation.configVersion !== 'bigint' ||
-    operation.configVersion < 0n ||
-    operation.configVersion > maxConfigVersion
-  )
-    throw new InvalidOperationError({
-      reason: 'configVersion must be an unsigned 64-bit integer',
-    })
   assertInteger(operation.createdAt, 'createdAt')
   assertInteger(operation.updatedAt, 'updatedAt')
   if (operation.updatedAt < operation.createdAt)
@@ -780,19 +741,13 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
       reason:
         'weight is not reachable by signatureCount retained owner approvals',
     })
-  if (operation.init) {
-    if (operation.configVersion !== 0n)
-      throw new InvalidOperationError({
-        reason: 'bootstrap operations must use config version zero',
-      })
-    if (
-      MultisigConfig.getAddress(config).toLowerCase() !==
-      operation.account.toLowerCase()
-    )
-      throw new InvalidOperationError({
-        reason: 'bootstrap config does not derive the operation account',
-      })
-  }
+  if (
+    config.version === 0n &&
+    !Address.isEqual(MultisigConfig.getAddress(config), operation.account)
+  )
+    throw new InvalidOperationError({
+      reason: 'initial config does not derive the operation account',
+    })
 }
 
 /**
