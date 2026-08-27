@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.41
+
+### Patch Changes
+
+- [#417](https://github.com/wevm/ox/pull/417) [`1335956`](https://github.com/wevm/ox/commit/1335956957d7ada0af3d0b19c558caa54c6956f6) Thanks [@jxom](https://github.com/jxom)! - Migrated multisig operations to configuration witnesses.
+
 ## 0.14.40
 
 ### Patch Changes
