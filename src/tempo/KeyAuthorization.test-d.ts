@@ -57,7 +57,7 @@ test('accepts multisig signatures', () => {
 
   const multisigRpc = {
     account: multisig.account,
-    config: MultisigConfig.toRpc(multisig.config),
+    config: { ...multisig.config, version: 0 },
     signatures: [
       {
         r: '0x01',

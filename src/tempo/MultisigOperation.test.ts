@@ -39,7 +39,7 @@ const config = MultisigConfig.from({
   ],
   threshold: 2,
 })
-const initializedConfig = MultisigConfig.from({ ...config, version: 1n })
+const currentConfig = MultisigConfig.from({ ...config, version: 1n })
 const account = MultisigConfig.getAddress(config)
 const ownerSignature_1 = owners[0]!.signature
 const approval_1 = SignatureEnvelope.serialize(ownerSignature_1)
@@ -66,14 +66,14 @@ const keyAuthorization = KeyAuthorization.serialize(
 
 const transactionHash_ = MultisigConfig.getSignPayload({
   account,
-  config: initializedConfig,
+  config: currentConfig,
   payload: TxEnvelopeTempo.getSignPayload(
     TxEnvelopeTempo.deserialize(transaction),
   ),
 })
 const keyAuthorizationHash = MultisigConfig.getSignPayload({
   account,
-  config: initializedConfig,
+  config: currentConfig,
   payload: KeyAuthorization.getSignPayload(
     KeyAuthorization.deserialize(keyAuthorization),
   ),
@@ -82,10 +82,8 @@ const keyAuthorizationHash = MultisigConfig.getSignPayload({
 const base = {
   account,
   approvals: [approval_1],
-  config: initializedConfig,
-  configVersion: 1n,
+  config: currentConfig,
   createdAt: 1,
-  init: false,
   signatureCount: 1,
   threshold: 2,
   updatedAt: 2,
@@ -142,13 +140,13 @@ describe('getHash', () => {
     expect({
       keyAuthorization: MultisigOperation.getHash({
         account,
-        configVersion: 1n,
+        config: currentConfig,
         keyAuthorization,
         type: 'keyAuthorization',
       }),
       transaction: MultisigOperation.getHash({
         account,
-        configVersion: 1n,
+        config: currentConfig,
         transaction,
         type: 'transaction',
       }),
@@ -174,7 +172,7 @@ describe('selectApprovals', () => {
     const account = MultisigConfig.getAddress(config)
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: { ...config, version: 1n },
       transaction,
       type: 'transaction',
     })
@@ -247,13 +245,13 @@ describe('selectApprovals', () => {
     const account = MultisigConfig.getAddress(config)
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: { ...config, version: 1n },
       transaction,
       type: 'transaction',
     })
     const childHash = MultisigConfig.getSignPayload({
       account: child,
-      config: { version: 2n },
+      config: { ...childConfig, version: 2n },
       payload: hash,
     })
     const childApprovals = [
@@ -261,15 +259,6 @@ describe('selectApprovals', () => {
       signApproval(owners[2]!, childHash),
     ]
     const rootApproval = signApproval(owners[0]!, hash)
-    const resolveConfig: MultisigOperation.selectApprovals.ResolveConfig = ({
-      account,
-    }) => {
-      if (!Address.isEqual(account, child)) throw new Error('unknown account')
-      return {
-        config: MultisigConfig.from({ ...childConfig, version: 2n }),
-        version: 2n,
-      }
-    }
     const partial = await MultisigOperation.selectApprovals({
       account,
       approvals: [
@@ -283,7 +272,6 @@ describe('selectApprovals', () => {
       ],
       config,
       hash,
-      resolveConfig,
     })
     const complete = await MultisigOperation.selectApprovals({
       account,
@@ -300,7 +288,6 @@ describe('selectApprovals', () => {
       ],
       config,
       hash,
-      resolveConfig,
     })
 
     expect({
@@ -344,7 +331,7 @@ describe('selectApprovals', () => {
     `)
   })
 
-  test('rejects mismatched nested config versions', async () => {
+  test('rejects conflicting nested config witnesses', async () => {
     const childConfig = MultisigConfig.from({
       owners: [{ owner: owners[1]!.address, weight: 1 }],
       threshold: 1,
@@ -357,17 +344,26 @@ describe('selectApprovals', () => {
     const account = MultisigConfig.getAddress(config)
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: { ...config, version: 1n },
       transaction,
       type: 'transaction',
     })
-    const resolvedConfig = MultisigConfig.from({
+    const config_2 = MultisigConfig.from({
       ...childConfig,
       version: 2n,
     })
-    const childHash = MultisigConfig.getSignPayload({
+    const config_3 = MultisigConfig.from({
+      ...childConfig,
+      version: 3n,
+    })
+    const childHash_2 = MultisigConfig.getSignPayload({
       account: child,
-      config: resolvedConfig,
+      config: config_2,
+      payload: hash,
+    })
+    const childHash_3 = MultisigConfig.getSignPayload({
+      account: child,
+      config: config_3,
       payload: hash,
     })
 
@@ -377,10 +373,20 @@ describe('selectApprovals', () => {
         approvals: [
           SignatureEnvelope.serialize({
             account: child,
-            config: resolvedConfig,
+            config: config_2,
             signatures: [
               SignatureEnvelope.deserialize(
-                signApproval(owners[1]!, childHash),
+                signApproval(owners[1]!, childHash_2),
+              ),
+            ],
+            type: 'multisig',
+          }),
+          SignatureEnvelope.serialize({
+            account: child,
+            config: config_3,
+            signatures: [
+              SignatureEnvelope.deserialize(
+                signApproval(owners[1]!, childHash_3),
               ),
             ],
             type: 'multisig',
@@ -388,17 +394,32 @@ describe('selectApprovals', () => {
         ],
         config,
         hash,
-        resolveConfig: () => ({ config: childConfig, version: 2n }),
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: resolved config.version must equal version for nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b.]`,
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b has conflicting config witnesses.]`,
+    )
+  })
+
+  test('rejects an initial root config for another account', async () => {
+    await expect(
+      MultisigOperation.selectApprovals({
+        account,
+        approvals: [],
+        config: MultisigConfig.from({
+          ...config,
+          salt: `0x${'ff'.repeat(32)}`,
+        }),
+        hash: transactionHash_,
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: initial config does not derive the root multisig account.]`,
     )
   })
 
   test('rejects invalid and non-owner approvals', async () => {
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: currentConfig,
       transaction,
       type: 'transaction',
     })
@@ -430,7 +451,7 @@ describe('selectApprovals', () => {
     )
   })
 
-  test('requires a resolver for nested owners', async () => {
+  test('reads current nested config witnesses from approvals', async () => {
     const childConfig = MultisigConfig.from({
       owners: [{ owner: owners[1]!.address, weight: 1 }],
       threshold: 1,
@@ -443,36 +464,49 @@ describe('selectApprovals', () => {
     const account = MultisigConfig.getAddress(config)
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: { ...config, version: 1n },
       transaction,
       type: 'transaction',
     })
     const childHash = MultisigConfig.getSignPayload({
       account: child,
-      config: { version: 1n },
+      config: { ...childConfig, version: 1n },
       payload: hash,
     })
 
-    await expect(
-      MultisigOperation.selectApprovals({
-        account,
-        approvals: [
-          SignatureEnvelope.serialize({
-            account: child,
-            config: MultisigConfig.from({ ...childConfig, version: 1n }),
-            signatures: [
-              SignatureEnvelope.deserialize(
-                signApproval(owners[1]!, childHash),
-              ),
-            ],
-            type: 'multisig',
-          }),
+    const selection = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [
+        SignatureEnvelope.serialize({
+          account: child,
+          config: MultisigConfig.from({ ...childConfig, version: 1n }),
+          signatures: [
+            SignatureEnvelope.deserialize(signApproval(owners[1]!, childHash)),
+          ],
+          type: 'multisig',
+        }),
+      ],
+      config,
+      hash,
+    })
+    expect(selection).toMatchInlineSnapshot(
+      {
+        approvals: [expect.any(String)],
+        selectedApprovals: [expect.any(String)],
+      },
+      `
+      {
+        "approvals": [
+          Any<String>,
         ],
-        config,
-        hash,
-      }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b requires a config resolver.]`,
+        "selectedApprovals": [
+          Any<String>,
+        ],
+        "signatureCount": 1,
+        "threshold": 1,
+        "weight": 1,
+      }
+    `,
     )
   })
 
@@ -492,7 +526,7 @@ describe('selectApprovals', () => {
     const account = MultisigConfig.getAddress(config)
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: { ...config, version: 1n },
       transaction,
       type: 'transaction',
     })
@@ -534,7 +568,6 @@ describe('selectApprovals', () => {
       ],
       config,
       hash,
-      resolveConfig: () => ({ config: childConfig, version: 0n }),
     })
     expect({
       signatureCount: selection.signatureCount,
@@ -556,7 +589,7 @@ describe('selectApprovals', () => {
     })
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 2n,
+      config: { ...config, version: 2n },
       transaction,
       type: 'transaction',
     })
@@ -598,18 +631,18 @@ describe('selectApprovals', () => {
     const account = MultisigConfig.getAddress(config)
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: { ...config, version: 1n },
       transaction,
       type: 'transaction',
     })
     const childHash = MultisigConfig.getSignPayload({
       account: child,
-      config: { version: 1n },
+      config: { ...childConfig, version: 1n },
       payload: hash,
     })
     const grandchildHash = MultisigConfig.getSignPayload({
       account: grandchild,
-      config: { version: 1n },
+      config: { ...grandchildConfig, version: 1n },
       payload: childHash,
     })
 
@@ -640,20 +673,6 @@ describe('selectApprovals', () => {
         ],
         config,
         hash,
-        resolveConfig: ({ account }) => {
-          if (Address.isEqual(account, child))
-            return {
-              config: MultisigConfig.from({ ...childConfig, version: 1n }),
-              version: 1n,
-            }
-          return {
-            config: MultisigConfig.from({
-              ...grandchildConfig,
-              version: 1n,
-            }),
-            version: 1n,
-          }
-        },
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0xf529c8f6b2b4c72102af4cfe5eeb55b7d45dede2 is invalid.]`,
@@ -662,14 +681,12 @@ describe('selectApprovals', () => {
 })
 
 describe('serializeTransaction', () => {
-  test('initialized and bootstrap transactions', async () => {
+  test('current and initial transactions', async () => {
     const results = []
-    for (const init of [false, true]) {
-      const configVersion = init ? 0n : 1n
-      const applicableConfig = init ? config : initializedConfig
+    for (const applicableConfig of [currentConfig, config]) {
       const hash = MultisigOperation.getHash({
         account,
-        configVersion,
+        config: applicableConfig,
         transaction,
         type: 'transaction',
       })
@@ -686,10 +703,8 @@ describe('serializeTransaction', () => {
         account,
         approvals: selection.approvals,
         config: applicableConfig,
-        configVersion,
         createdAt: 1,
         hash,
-        init,
         signatureCount: selection.signatureCount,
         status: 'pending',
         threshold: selection.threshold,
@@ -704,7 +719,7 @@ describe('serializeTransaction', () => {
       const value = TxEnvelopeTempo.deserialize(serialized)
       results.push({
         account: value.signature?.account,
-        configVersion:
+        version:
           value.signature?.type === 'multisig'
             ? value.signature.config.version
             : undefined,
@@ -721,17 +736,17 @@ describe('serializeTransaction', () => {
       [
         {
           "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
-          "configVersion": 1n,
           "hash": "0x8309740edaf304284186f7bcfe4527745cd4eb48e7441795ebdd970798091f8f",
           "signatureCount": 2,
           "type": "0x76",
+          "version": 1n,
         },
         {
           "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
-          "configVersion": 0n,
           "hash": "0x636af84d8445d87cbcd33039d5a3a2274a5911036b1b7ceb740ac41e2f638611",
           "signatureCount": 2,
           "type": "0x76",
+          "version": 0n,
         },
       ]
     `)
@@ -763,7 +778,7 @@ describe('serializeTransaction', () => {
     for (const transaction of transactions) {
       const hash = MultisigOperation.getHash({
         account,
-        configVersion: 1n,
+        config: currentConfig,
         transaction,
         type: 'transaction',
       })
@@ -773,18 +788,16 @@ describe('serializeTransaction', () => {
           signApproval(owners[0]!, hash),
           signApproval(owners[1]!, hash),
         ],
-        config: initializedConfig,
+        config: currentConfig,
         hash,
       })
       const serialized = MultisigOperation.serializeTransaction(
         MultisigOperation.from({
           account,
           approvals: selection.approvals,
-          config: initializedConfig,
-          configVersion: 1n,
+          config: currentConfig,
           createdAt: 1,
           hash,
-          init: false,
           signatureCount: selection.signatureCount,
           status: 'pending',
           threshold: selection.threshold,
@@ -832,7 +845,7 @@ describe('serializeTransaction', () => {
   test('rejects an approval not retained by the operation', async () => {
     const hash = MultisigOperation.getHash({
       account,
-      configVersion: 1n,
+      config: currentConfig,
       transaction,
       type: 'transaction',
     })
@@ -841,17 +854,15 @@ describe('serializeTransaction', () => {
     const selection = await MultisigOperation.selectApprovals({
       account,
       approvals: [approval_1],
-      config: initializedConfig,
+      config: currentConfig,
       hash,
     })
     const operation = MultisigOperation.from({
       account,
       approvals: selection.approvals,
-      config: initializedConfig,
-      configVersion: 1n,
+      config: currentConfig,
       createdAt: 1,
       hash,
-      init: false,
       signatureCount: selection.signatureCount,
       status: 'pending',
       threshold: selection.threshold,
@@ -914,10 +925,8 @@ describe('from', () => {
             "threshold": 2,
             "version": 1n,
           },
-          "configVersion": 1n,
           "createdAt": 1,
           "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
-          "init": false,
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -947,11 +956,9 @@ describe('from', () => {
             "threshold": 2,
             "version": 1n,
           },
-          "configVersion": 1n,
           "createdAt": 1,
           "expiresAt": 10,
           "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
-          "init": false,
           "signatureCount": 2,
           "status": "submitting",
           "submissionId": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -982,10 +989,8 @@ describe('from', () => {
             "threshold": 2,
             "version": 1n,
           },
-          "configVersion": 1n,
           "createdAt": 1,
           "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
-          "init": false,
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -1011,7 +1016,7 @@ describe('from', () => {
       ...transactionPending,
       hash: MultisigConfig.getSignPayload({
         account,
-        config: initializedConfig,
+        config: currentConfig,
         payload: TxEnvelopeTempo.getSignPayload(
           TxEnvelopeTempo.deserialize(
             Hex.concat(
@@ -1050,10 +1055,8 @@ describe('from', () => {
           "threshold": 2,
           "version": 1n,
         },
-        "configVersion": 1n,
         "createdAt": 1,
         "hash": Any<String>,
-        "init": false,
         "signatureCount": 1,
         "status": "pending",
         "threshold": 2,
@@ -1083,7 +1086,7 @@ describe('from', () => {
       ...transactionPending,
       hash: MultisigConfig.getSignPayload({
         account,
-        config: initializedConfig,
+        config: currentConfig,
         payload: TxEnvelopeTempo.getSignPayload(
           TxEnvelopeTempo.deserialize(
             Hex.concat(
@@ -1099,11 +1102,10 @@ describe('from', () => {
     expect(operation.transaction).toBe(transaction)
   })
 
-  test('bootstrap transaction', () => {
+  test('initial transaction', () => {
     const operation = MultisigOperation.from({
       ...transactionPending,
       config,
-      configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
         config,
@@ -1111,7 +1113,6 @@ describe('from', () => {
           TxEnvelopeTempo.deserialize(transaction),
         ),
       }),
-      init: true,
     })
 
     expect(operation).toMatchInlineSnapshot(
@@ -1140,10 +1141,8 @@ describe('from', () => {
           "threshold": 2,
           "version": 0n,
         },
-        "configVersion": 0n,
         "createdAt": 1,
         "hash": Any<String>,
-        "init": true,
         "signatureCount": 1,
         "status": "pending",
         "threshold": 2,
@@ -1156,31 +1155,6 @@ describe('from', () => {
     )
   })
 
-  test('initialized transaction at config version zero', () => {
-    const operation = MultisigOperation.from({
-      ...transactionPending,
-      config,
-      configVersion: 0n,
-      hash: MultisigConfig.getSignPayload({
-        account,
-        config,
-        payload: TxEnvelopeTempo.getSignPayload(
-          TxEnvelopeTempo.deserialize(transaction),
-        ),
-      }),
-    })
-
-    expect({
-      configVersion: operation.configVersion,
-      init: operation.init,
-    }).toMatchInlineSnapshot(`
-      {
-        "configVersion": 0n,
-        "init": false,
-      }
-    `)
-  })
-
   test('key authorization states', () => {
     const pending = MultisigOperation.from(keyAuthorizationPending)
     const authorization = KeyAuthorization.deserialize(keyAuthorization)
@@ -1191,7 +1165,7 @@ describe('from', () => {
         KeyAuthorization.from(authorization, {
           signature: {
             account,
-            config: initializedConfig,
+            config: currentConfig,
             signatures: [
               SignatureEnvelope.deserialize(approval_1),
               SignatureEnvelope.deserialize(approval_2),
@@ -1227,10 +1201,8 @@ describe('from', () => {
             "threshold": 2,
             "version": 1n,
           },
-          "configVersion": 1n,
           "createdAt": 1,
           "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-          "init": false,
           "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36e",
           "signatureCount": 1,
           "status": "pending",
@@ -1260,10 +1232,8 @@ describe('from', () => {
             "threshold": 2,
             "version": 1n,
           },
-          "configVersion": 1n,
           "createdAt": 1,
           "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-          "init": false,
           "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36eb9017805f9017494f81b7763d3a6876195d780865bd783dbd97dd36ef852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           "signatureCount": 2,
           "status": "success",
@@ -1276,7 +1246,7 @@ describe('from', () => {
     `)
   })
 
-  test('bootstrap key authorization', () => {
+  test('initial key authorization', () => {
     const authorization = KeyAuthorization.deserialize(keyAuthorization)
     const keyAuthorization_ = KeyAuthorization.serialize(
       KeyAuthorization.from(authorization, {
@@ -1295,13 +1265,11 @@ describe('from', () => {
       ...keyAuthorizationPending,
       approvals: [approval_1, approval_2],
       config,
-      configVersion: 0n,
       hash: MultisigConfig.getSignPayload({
         account,
         config,
         payload: KeyAuthorization.getSignPayload(authorization),
       }),
-      init: true,
       keyAuthorization: keyAuthorization_,
       signatureCount: 2,
       status: 'success',
@@ -1335,10 +1303,8 @@ describe('from', () => {
           "threshold": 2,
           "version": 0n,
         },
-        "configVersion": 0n,
         "createdAt": 1,
         "hash": Any<String>,
-        "init": true,
         "keyAuthorization": Any<String>,
         "signatureCount": 2,
         "status": "success",
@@ -1382,10 +1348,8 @@ describe('RPC conversion', () => {
             "threshold": 2,
             "version": "0x1",
           },
-          "configVersion": "0x1",
           "createdAt": 1,
           "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-          "init": false,
           "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36e",
           "signatureCount": 1,
           "status": "pending",
@@ -1414,10 +1378,8 @@ describe('RPC conversion', () => {
             "threshold": 2,
             "version": "0x1",
           },
-          "configVersion": "0x1",
           "createdAt": 1,
           "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
-          "init": false,
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1550,7 +1512,7 @@ describe('validation', () => {
         account: '0x0000000000000000000000000000000000000000',
         hash: MultisigConfig.getSignPayload({
           account: '0x0000000000000000000000000000000000000000',
-          config: initializedConfig,
+          config: currentConfig,
           payload: TxEnvelopeTempo.getSignPayload(
             TxEnvelopeTempo.deserialize(transaction),
           ),
@@ -1617,7 +1579,7 @@ describe('validation', () => {
       },
     },
     {
-      name: 'nested bootstrap owner approval',
+      name: 'nested non-owner approval',
       operation: {
         ...transactionPending,
         approvals: [
@@ -1630,35 +1592,48 @@ describe('validation', () => {
         ],
       },
     },
-    {
-      name: 'bootstrap with initialized version',
-      operation: { ...transactionPending, init: true },
-    },
   ])('rejects $name', ({ operation }) => {
     expect(() =>
       MultisigOperation.from(operation as MultisigOperation.Operation),
     ).toThrowError(MultisigOperation.InvalidOperationError)
   })
 
-  test('rejects mismatched config versions', () => {
+  test('rejects an initial config for another account', () => {
+    const config = MultisigConfig.from({
+      ...transactionPending.config,
+      salt: `0x${'ff'.repeat(32)}`,
+      version: 0n,
+    })
     expect(() =>
       MultisigOperation.from({
         ...transactionPending,
-        config: { ...initializedConfig, version: 2n },
+        config,
+        hash: MultisigConfig.getSignPayload({
+          account,
+          config,
+          payload: TxEnvelopeTempo.getSignPayload(
+            TxEnvelopeTempo.deserialize(transaction),
+          ),
+        }),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: config.version must equal configVersion.]`,
+      `
+      [MultisigOperation.InvalidOperationError: Invalid multisig operation.
+
+      Details: Invalid native multisig owner approval: initial multisig config does not derive account.]
+    `,
     )
   })
 
   test('rejects noncanonical RPC quantities', () => {
+    const operation = MultisigOperation.toRpc(transactionPending)
     expect(() =>
       MultisigOperation.fromRpc({
-        ...MultisigOperation.toRpc(transactionPending),
-        configVersion: '0x01',
+        ...operation,
+        config: { ...operation.config, version: '0x01' },
       }),
     ).toThrowError(
-      'Invalid multisig operation: configVersion must use canonical quantity encoding.',
+      'Invalid multisig operation: config.version must use canonical quantity encoding.',
     )
   })
 
@@ -1671,7 +1646,7 @@ describe('validation', () => {
         KeyAuthorization.from(authorization, {
           signature: {
             account,
-            config: initializedConfig,
+            config: currentConfig,
             signatures: [
               SignatureEnvelope.deserialize(approval_1),
               SignatureEnvelope.deserialize(approval_3),
@@ -1695,7 +1670,7 @@ describe('validation', () => {
     const signatures = [
       ...SignatureEnvelope.sortMultisigApprovals({
         account,
-        config: initializedConfig,
+        config: currentConfig,
         payload: KeyAuthorization.getSignPayload(authorization),
         signatures: [
           SignatureEnvelope.deserialize(approval_1),
@@ -1710,7 +1685,7 @@ describe('validation', () => {
         KeyAuthorization.from(authorization, {
           signature: {
             account,
-            config: initializedConfig,
+            config: currentConfig,
             signatures,
             type: 'multisig',
           },
@@ -1735,7 +1710,7 @@ describe('validation', () => {
         KeyAuthorization.from(authorization, {
           signature: {
             account,
-            config: initializedConfig,
+            config: currentConfig,
             signatures: [
               SignatureEnvelope.deserialize(approval_1),
               SignatureEnvelope.deserialize(approval_1),
@@ -1784,7 +1759,7 @@ describe('validation', () => {
     })
     const selected = SignatureEnvelope.sortMultisigApprovals({
       account,
-      config: initializedConfig,
+      config: currentConfig,
       payload: KeyAuthorization.getSignPayload(authorization),
       signatures: [selectedNested, SignatureEnvelope.deserialize(approval_2)],
     })
@@ -1795,7 +1770,7 @@ describe('validation', () => {
         KeyAuthorization.from(authorization, {
           signature: {
             account,
-            config: initializedConfig,
+            config: currentConfig,
             signatures: selected,
             type: 'multisig',
           },
@@ -1811,7 +1786,7 @@ describe('validation', () => {
     )
   })
 
-  test('accepts case-insensitive bootstrap configs', () => {
+  test('accepts case-insensitive initial configs', () => {
     const config = MultisigConfig.from({
       owners: [
         {
@@ -1852,14 +1827,12 @@ describe('validation', () => {
       account,
       approvals,
       config,
-      configVersion: 0n,
       createdAt: 1,
       hash: MultisigConfig.getSignPayload({
         account,
         config,
         payload: KeyAuthorization.getSignPayload(authorization),
       }),
-      init: true,
       keyAuthorization: KeyAuthorization.serialize(
         KeyAuthorization.from(authorization, {
           signature: {

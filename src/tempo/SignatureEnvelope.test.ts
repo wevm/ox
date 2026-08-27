@@ -2644,6 +2644,41 @@ describe('toRpc', () => {
       expect(rpc.keyId).toBeUndefined()
     })
   })
+
+  describe('multisig', () => {
+    test('behavior: converts numberish config values to RPC numbers', () => {
+      const rpc = SignatureEnvelope.toRpc({
+        account: '0x1111111111111111111111111111111111111111',
+        config: {
+          owners: [
+            {
+              owner: '0x2222222222222222222222222222222222222222',
+              weight: '0x1',
+            },
+          ],
+          salt: MultisigConfig.zeroSalt,
+          threshold: '0x1',
+          version: 1n,
+        },
+        signatures: [SignatureEnvelope.from(signature_secp256k1)],
+        type: 'multisig',
+      })
+
+      expect(rpc.config).toMatchInlineSnapshot(`
+        {
+          "owners": [
+            {
+              "owner": "0x2222222222222222222222222222222222222222",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "threshold": 1,
+          "version": 1,
+        }
+      `)
+    })
+  })
 })
 
 describe('roundtrip: toRpc <-> fromRpc', () => {
@@ -3063,7 +3098,7 @@ describe('multisig', () => {
             ],
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "threshold": 1,
-            "version": "0x1",
+            "version": 1,
           },
           "signatures": [
             {
@@ -3085,7 +3120,7 @@ describe('multisig', () => {
             ],
             "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "threshold": 1,
-            "version": "0x0",
+            "version": 0,
           },
           "signatures": [
             {

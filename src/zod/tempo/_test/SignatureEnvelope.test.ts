@@ -28,7 +28,7 @@ const config = {
   ],
   salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
   threshold: 1,
-  version: '0x0',
+  version: 0,
 } as const
 
 const multisig = {
@@ -75,7 +75,7 @@ describe('SignatureEnvelope', () => {
           account: '0x1111111111111111111111111111111111111111',
           config: {
             ...config,
-            version: '0x1',
+            version: 1,
           },
           signatures: [secp256k1],
         },
@@ -156,12 +156,12 @@ describe('SignatureEnvelope', () => {
     } as const
     const depth2 = {
       account: '0x1111111111111111111111111111111111111111',
-      config: { ...config, version: '0x1' },
+      config: { ...config, version: 1 },
       signatures: [secp256k1],
     } as const
     const depth3 = {
       account: '0x2222222222222222222222222222222222222222',
-      config: { ...config, version: '0x1' },
+      config: { ...config, version: 1 },
       signatures: [depth2],
     } as const
 
