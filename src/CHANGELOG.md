@@ -1,5 +1,24 @@
 # ox
 
+## 0.14.42
+
+### Patch Changes
+
+- [#424](https://github.com/wevm/ox/pull/424) [`c26d366`](https://github.com/wevm/ox/commit/c26d3660691d452931b8eb06b938d37cbb738a35) Thanks [@jxom](https://github.com/jxom)! - Added `MultisigOperation.serializeKeyAuthorization` for attaching selected owner approvals to a key authorization.
+
+  ```ts
+  const authorization = MultisigOperation.serializeKeyAuthorization(
+    keyAuthorization,
+    {
+      account,
+      approvals: selection.selectedApprovals,
+      config,
+    },
+  );
+  ```
+
+- [#421](https://github.com/wevm/ox/pull/421) [`50bf1fe`](https://github.com/wevm/ox/commit/50bf1fe7b444249cb6c5839dd894aa4828aa1638) Thanks [@jxom](https://github.com/jxom)! - Added multisig configuration lookup to the Tempo RPC schema.
+
 ## 0.14.41
 
 ### Patch Changes
