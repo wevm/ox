@@ -3,7 +3,6 @@ import * as core_MultisigOperation from '../../tempo/MultisigOperation.js'
 import * as z_Address from '../Address.js'
 import * as z_Hash from '../Hash.js'
 import * as z_Hex from '../Hex.js'
-import * as z_Uint from '../Uint.js'
 import * as z from 'zod/mini'
 import * as z_MultisigConfig from './MultisigConfig.js'
 
@@ -12,10 +11,8 @@ function baseFields() {
     account: z_Address.Address,
     approvals: z.readonly(z.array(z_Hex.Hex)),
     config: z_MultisigConfig.MultisigConfig,
-    configVersion: z_Uint.Uint64,
     createdAt: z.number(),
     hash: z_Hash.Hash,
-    init: z.boolean(),
     signatureCount: z.number(),
     threshold: z.number(),
     updatedAt: z.number(),

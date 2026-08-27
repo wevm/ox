@@ -153,7 +153,7 @@ describe('KeyAuthorization', () => {
         ],
         salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
         threshold: 1,
-        version: '0x1',
+        version: 1,
       },
       signatures: [rpc.signature],
     } as const

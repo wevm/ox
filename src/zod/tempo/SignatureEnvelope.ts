@@ -39,6 +39,20 @@ const Signature = z.object({
   s: z_Hex.Hex32,
 })
 
+const MultisigConfigRpc = z
+  .object({
+    owners: z.readonly(z.array(z_MultisigConfig.Owner)),
+    salt: z_Hex.Hex,
+    threshold: z.number(),
+    version: z.number(),
+  })
+  .check(
+    z.refine(
+      (value) => core_MultisigConfig.validate(value),
+      'expected valid native multisig configuration',
+    ),
+  )
+
 /** RPC secp256k1 signature envelope schema. */
 export const Secp256k1Rpc = z.object({
   r: z_Hex.Hex,
@@ -88,7 +102,7 @@ export const KeychainRpc = z.object({
 export const MultisigRpc = z
   .strictObject({
     account: z_Address.Address,
-    config: z_MultisigConfig.Rpc,
+    config: MultisigConfigRpc,
     signatures: z.lazy(
       (): z.ZodMiniType<
         readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],

@@ -37,11 +37,13 @@ test('toRpc preserves the signature type', () => {
 test('MultisigRpc carries one complete witness shape', () => {
   const rpc = {
     account: '0x1111111111111111111111111111111111111111',
-    config: MultisigConfig.toRpc(config),
+    config: { ...config, version: 0 },
     signatures: [signatureRpc],
   } as const satisfies SignatureEnvelope.MultisigRpc
 
-  expectTypeOf(rpc.config).toMatchTypeOf<MultisigConfig.Rpc>()
+  expectTypeOf(rpc.config).toMatchTypeOf<
+    MultisigConfig.Config<number, number>
+  >()
   expectTypeOf(rpc.signatures).toMatchTypeOf<
     readonly SignatureEnvelope.SignatureEnvelopeRpc[]
   >()
@@ -92,7 +94,7 @@ test('MultisigRpc rejects old witness shapes', () => {
 
   const serialized = {
     account: '0x1111111111111111111111111111111111111111',
-    config: MultisigConfig.toRpc(config),
+    config: { ...config, version: 0 },
     signatures: ['0x1234'],
   } as const
   // @ts-expect-error Owner approvals use structured RPC envelopes.
@@ -100,7 +102,7 @@ test('MultisigRpc rejects old witness shapes', () => {
 
   const tagged = {
     account: '0x1111111111111111111111111111111111111111',
-    config: MultisigConfig.toRpc(config),
+    config: { ...config, version: 0 },
     signatures: [signatureRpc],
     type: 'multisig',
   } as const
