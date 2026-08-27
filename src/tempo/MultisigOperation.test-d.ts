@@ -11,6 +11,8 @@ declare const operation: MultisigOperation.Operation
 declare const operationRpc: MultisigOperation.Rpc
 declare const getHashOptions: MultisigOperation.getHash.Options
 declare const selectApprovalsOptions: MultisigOperation.selectApprovals.Options
+declare const serializedKeyAuthorization: Hex.Hex
+declare const serializeKeyAuthorizationOptions: MultisigOperation.serializeKeyAuthorization.Options
 declare const serializeTransactionOptions: MultisigOperation.serializeTransaction.Options
 
 test('preserves operation kinds during validation', () => {
@@ -62,6 +64,12 @@ test('operation helpers return narrow types', async () => {
   expectTypeOf(
     await MultisigOperation.selectApprovals(selectApprovalsOptions),
   ).toEqualTypeOf<MultisigOperation.selectApprovals.ReturnValue>()
+  expectTypeOf(
+    MultisigOperation.serializeKeyAuthorization(
+      serializedKeyAuthorization,
+      serializeKeyAuthorizationOptions,
+    ),
+  ).toEqualTypeOf<Hex.Hex>()
   expectTypeOf(
     MultisigOperation.serializeTransaction(
       transaction,

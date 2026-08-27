@@ -680,6 +680,100 @@ describe('selectApprovals', () => {
   })
 })
 
+describe('serializeKeyAuthorization', () => {
+  test('current and initial authorizations', async () => {
+    const results = []
+    for (const applicableConfig of [currentConfig, config]) {
+      const hash = MultisigOperation.getHash({
+        account,
+        config: applicableConfig,
+        keyAuthorization,
+        type: 'keyAuthorization',
+      })
+      const selection = await MultisigOperation.selectApprovals({
+        account,
+        approvals: [
+          signApproval(owners[1]!, hash),
+          signApproval(owners[0]!, hash),
+        ],
+        config: applicableConfig,
+        hash,
+      })
+      const serialized = MultisigOperation.serializeKeyAuthorization(
+        keyAuthorization,
+        {
+          account,
+          approvals: selection.selectedApprovals,
+          config: applicableConfig,
+        },
+      )
+      const value = KeyAuthorization.deserialize(serialized)
+      results.push({
+        account:
+          value.signature?.type === 'multisig'
+            ? value.signature.account
+            : undefined,
+        hash: Hash.keccak256(serialized),
+        signatureCount:
+          value.signature?.type === 'multisig'
+            ? value.signature.signatures.length
+            : 0,
+        version:
+          value.signature?.type === 'multisig'
+            ? value.signature.config.version
+            : undefined,
+      })
+    }
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        {
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "hash": "0x14b3a60f7c3120e3983b1f6e085ab5b234e71f58f0a4f39d19a5ff64b89a2afe",
+          "signatureCount": 2,
+          "version": 1n,
+        },
+        {
+          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "hash": "0xbfdc90810a0634f413e627bdefea88ae8c42ed41d6670a70fd1d7574aedda2a4",
+          "signatureCount": 2,
+          "version": 0n,
+        },
+      ]
+    `)
+  })
+
+  test('rejects a signed authorization', async () => {
+    const selection = await MultisigOperation.selectApprovals({
+      account,
+      approvals: [
+        signApproval(owners[0]!, keyAuthorizationHash),
+        signApproval(owners[1]!, keyAuthorizationHash),
+      ],
+      config: currentConfig,
+      hash: keyAuthorizationHash,
+    })
+    const signed = MultisigOperation.serializeKeyAuthorization(
+      keyAuthorization,
+      {
+        account,
+        approvals: selection.selectedApprovals,
+        config: currentConfig,
+      },
+    )
+
+    expect(() =>
+      MultisigOperation.serializeKeyAuthorization(signed, {
+        account,
+        approvals: selection.selectedApprovals,
+        config: currentConfig,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: keyAuthorization must not contain a signature.]`,
+    )
+  })
+})
+
 describe('serializeTransaction', () => {
   test('current and initial transactions', async () => {
     const results = []

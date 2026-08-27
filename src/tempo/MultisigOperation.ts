@@ -227,6 +227,89 @@ export declare namespace selectApprovals {
 }
 
 /**
+ * Serializes a key authorization with selected multisig owner approvals.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { MultisigOperation } from 'ox/tempo'
+ *
+ * const authorization = MultisigOperation.serializeKeyAuthorization(
+ *   keyAuthorization,
+ *   {
+ *     account,
+ *     approvals: selection.selectedApprovals,
+ *     config,
+ *   },
+ * )
+ * ```
+ *
+ * @param keyAuthorization - Canonical serialized unsigned key authorization.
+ * @param options - Multisig account, config, and selected approvals.
+ * @returns The signed serialized key authorization.
+ */
+export function serializeKeyAuthorization(
+  keyAuthorization: Hex.Hex,
+  options: serializeKeyAuthorization.Options,
+): Hex.Hex {
+  const authorization = KeyAuthorization_.deserialize(keyAuthorization)
+  if (authorization.signature)
+    throw new InvalidOperationError({
+      reason: 'keyAuthorization must not contain a signature',
+    })
+  if (
+    KeyAuthorization_.serialize(authorization).toLowerCase() !==
+    keyAuthorization.toLowerCase()
+  )
+    throw new InvalidOperationError({
+      reason: 'keyAuthorization is not canonically serialized',
+    })
+  const config = MultisigConfig.from(options.config)
+  const signatures = SignatureEnvelope.sortMultisigApprovals({
+    account: options.account,
+    config,
+    payload: KeyAuthorization_.getSignPayload(authorization),
+    signatures: options.approvals.map((approval) =>
+      SignatureEnvelope.deserialize(approval),
+    ),
+  })
+  return KeyAuthorization_.serialize(
+    KeyAuthorization_.from(authorization, {
+      signature: SignatureEnvelope.from({
+        account: options.account,
+        config,
+        signatures,
+      }),
+    }),
+  )
+}
+
+export declare namespace serializeKeyAuthorization {
+  /** Options for `serializeKeyAuthorization`. */
+  export type Options = {
+    /** Root multisig account. */
+    account: Address.Address
+    /** Selected serialized owner approvals. */
+    approvals: readonly SignatureEnvelope.Serialized[]
+    /** Complete applicable root multisig config. */
+    config: MultisigConfig.Config
+  }
+
+  /** Error type for `serializeKeyAuthorization`. */
+  export type ErrorType =
+    | InvalidOperationError
+    | KeyAuthorization_.deserialize.ErrorType
+    | KeyAuthorization_.from.ErrorType
+    | KeyAuthorization_.getSignPayload.ErrorType
+    | KeyAuthorization_.serialize.ErrorType
+    | MultisigConfig.assert.ErrorType
+    | SignatureEnvelope.assert.ErrorType
+    | SignatureEnvelope.InvalidSerializedError
+    | SignatureEnvelope.sortMultisigApprovals.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Serializes a multisig transaction operation with selected owner approvals.
  *
  * @example
