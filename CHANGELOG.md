@@ -1,5 +1,13 @@
 # ox
 
+## 1.7.3
+
+### Patch Changes
+
+- [#423](https://github.com/wevm/ox/pull/423) [`9b407b5`](https://github.com/wevm/ox/commit/9b407b5a31a0858be53dd61d87adbcd1181534ef) Thanks [@jxom](https://github.com/jxom)! - Added `multisig_getConfig` to the Tempo RPC schemas.
+
+- [#419](https://github.com/wevm/ox/pull/419) [`3ceaa25`](https://github.com/wevm/ox/commit/3ceaa25e92e24deee38020a84a7f9865d5f73a9a) Thanks [@jxom](https://github.com/jxom)! - Migrated multisig operations to configuration witnesses.
+
 ## 1.7.2
 
 ### Patch Changes
