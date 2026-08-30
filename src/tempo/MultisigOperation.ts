@@ -234,14 +234,15 @@ export declare namespace selectApprovals {
  * // @noErrors
  * import { MultisigOperation } from 'ox/tempo'
  *
- * const authorization = MultisigOperation.serializeKeyAuthorization(
- *   keyAuthorization,
- *   {
- *     account,
- *     approvals: selection.selectedApprovals,
- *     config,
- *   },
- * )
+ * const authorization =
+ *   MultisigOperation.serializeKeyAuthorization(
+ *     keyAuthorization,
+ *     {
+ *       account,
+ *       approvals: selection.selectedApprovals,
+ *       config
+ *     }
+ *   )
  * ```
  *
  * @param keyAuthorization - Canonical serialized unsigned key authorization.
