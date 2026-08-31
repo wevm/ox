@@ -55,18 +55,7 @@ test('accepts multisig signatures', () => {
     KeyAuthorization.Signed['signature']
   >()
 
-  const multisigRpc = {
-    account: multisig.account,
-    config: { ...multisig.config, version: 0 },
-    signatures: [
-      {
-        r: '0x01',
-        s: '0x02',
-        type: 'secp256k1',
-        yParity: '0x0',
-      },
-    ],
-  } as const satisfies SignatureEnvelope.MultisigRpc
+  const multisigRpc = '0xf8' as const satisfies SignatureEnvelope.MultisigRpc
 
   const rpc: KeyAuthorization.Rpc = {
     chainId: '0x1',
