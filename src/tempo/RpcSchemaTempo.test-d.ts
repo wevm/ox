@@ -3,6 +3,7 @@ import type {
   KeyAuthorization,
   MultisigConfig,
   MultisigOperation,
+  MultisigSimulation,
   RpcSchemaTempo,
 } from 'ox/tempo'
 import { expectTypeOf, test } from 'vp/test'
@@ -10,9 +11,13 @@ import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
 
 declare const provider: Provider.Provider<{ schema: RpcSchemaTempo.Multisig }>
+declare const tempoProvider: Provider.Provider<{
+  schema: RpcSchemaTempo.Tempo
+}>
 declare const address: Address.Address
 declare const hash: Hex.Hex
 declare const keyAuthorization: KeyAuthorization.Rpc
+declare const multisigSimulation: MultisigSimulation.Rpc
 declare const serializedTransaction: Hex.Hex
 declare const signature: Hex.Hex
 
@@ -63,4 +68,24 @@ test('multisig provider methods', () => {
       params: [hash],
     }),
   ).resolves.toEqualTypeOf<MultisigOperation.Rpc | null>()
+})
+
+test('tempo simulation accepts multisig specs', () => {
+  void tempoProvider.request({
+    method: 'tempo_simulateV1',
+    params: [
+      {
+        blockStateCalls: [
+          {
+            calls: [
+              {
+                multisigSimulation,
+              },
+            ],
+          },
+        ],
+      },
+      'latest',
+    ],
+  })
 })

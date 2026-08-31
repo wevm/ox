@@ -68,6 +68,9 @@ const signature_keychain_webauthn = SignatureEnvelope.from({
   version: 'v2',
 })
 
+const signature_multisig_rpc =
+  '0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
+
 describe('assert', () => {
   describe('secp256k1', () => {
     test('behavior: validates valid signature', () => {
@@ -2492,6 +2495,41 @@ describe('fromRpc', () => {
       expect(envelope.keyId).toBe('0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c')
     })
   })
+  describe('multisig', () => {
+    test('behavior: converts an untagged serialized multisig signature', () => {
+      expect(
+        SignatureEnvelope.serialize(
+          SignatureEnvelope.fromRpc(signature_multisig_rpc),
+        ),
+      ).toMatchInlineSnapshot(`"0x05${signature_multisig_rpc.slice(2)}"`)
+    })
+
+    test('error: rejects a payload with the transaction type byte', () => {
+      expect(() =>
+        SignatureEnvelope.fromRpc(`0x05${signature_multisig_rpc.slice(2)}`),
+      ).toThrowError()
+    })
+
+    test('error: rejects trailing bytes', () => {
+      expect(() =>
+        SignatureEnvelope.fromRpc(`${signature_multisig_rpc}00`),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
+      )
+    })
+
+    test('error: rejects a structured multisig signature', () => {
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          account: '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+          config: {},
+          signatures: [],
+        } as never),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"account":"0x9dba7f426b711d4893c11611eacf7cc334e7146b","config":{},"signatures":[]}\`) to a valid signature envelope.]`,
+      )
+    })
+  })
 })
 
 describe('toRpc', () => {
@@ -2589,6 +2627,7 @@ describe('toRpc', () => {
       const rpc = SignatureEnvelope.toRpc(
         signature_keychain_p256,
       ) as SignatureEnvelope.KeychainRpc
+      if (typeof rpc.signature === 'string') throw new Error('unreachable')
 
       expect(rpc.type).toBe('keychain')
       expect(rpc.userAddress).toBe(signature_keychain_p256.userAddress)
@@ -2601,6 +2640,7 @@ describe('toRpc', () => {
       const rpc = SignatureEnvelope.toRpc(
         signature_keychain_webauthn,
       ) as SignatureEnvelope.KeychainRpc
+      if (typeof rpc.signature === 'string') throw new Error('unreachable')
 
       expect(rpc.type).toBe('keychain')
       expect(rpc.userAddress).toBe(signature_keychain_webauthn.userAddress)
@@ -2646,37 +2686,14 @@ describe('toRpc', () => {
   })
 
   describe('multisig', () => {
-    test('behavior: converts numberish config values to RPC numbers', () => {
-      const rpc = SignatureEnvelope.toRpc({
-        account: '0x1111111111111111111111111111111111111111',
-        config: {
-          owners: [
-            {
-              owner: '0x2222222222222222222222222222222222222222',
-              weight: '0x1',
-            },
-          ],
-          salt: MultisigConfig.zeroSalt,
-          threshold: '0x1',
-          version: 1n,
-        },
-        signatures: [SignatureEnvelope.from(signature_secp256k1)],
-        type: 'multisig',
-      })
+    test('behavior: removes the transaction type byte', () => {
+      const envelope = SignatureEnvelope.deserialize(
+        `0x05${signature_multisig_rpc.slice(2)}`,
+      )
 
-      expect(rpc.config).toMatchInlineSnapshot(`
-        {
-          "owners": [
-            {
-              "owner": "0x2222222222222222222222222222222222222222",
-              "weight": 1,
-            },
-          ],
-          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "threshold": 1,
-          "version": 1,
-        }
-      `)
+      expect(SignatureEnvelope.toRpc(envelope)).toMatchInlineSnapshot(
+        `"${signature_multisig_rpc}"`,
+      )
     })
   })
 })
@@ -2923,7 +2940,7 @@ describe('multisig', () => {
   const nested =
     '0x05f8f0949969e2243075b27a8eab61009c59b77ab13b83f6f83ba033333333333333333333333333333333333333333333333333333333333333338001d7d6944f9f5b162a7464bcc260ce44d7ae0d935f9c583701f89cb89a05f897944f9f5b162a7464bcc260ce44d7ae0d935f9c5837f83ba022222222222222222222222222222222222222222222222222222222222222228001d7d6946813eb9362372eef6200f3b1dbc3f819671cba6901f843b841032aa6f3ea7b0b7069720d0f3891983c493d149326c5c957d864ed7371b8475e3e95325079b24491f4b6d68920e4b3bacd7c6094df6ed88b8674864ab559c8fb1b' as const
 
-  test('example: decodes and re-encodes the frozen initial witness', () => {
+  test('example: decodes and re-encodes the frozen initial signature', () => {
     const envelope = SignatureEnvelope.deserialize(initial)
 
     expect(envelope).toMatchInlineSnapshot(`
@@ -2956,7 +2973,7 @@ describe('multisig', () => {
     expect(SignatureEnvelope.serialize(envelope)).toBe(initial)
   })
 
-  test('example: decodes and re-encodes the frozen current witness', () => {
+  test('example: decodes and re-encodes the frozen current signature', () => {
     const envelope = SignatureEnvelope.deserialize(current)
 
     expect(envelope).toMatchInlineSnapshot(`
@@ -2989,7 +3006,7 @@ describe('multisig', () => {
     expect(SignatureEnvelope.serialize(envelope)).toBe(current)
   })
 
-  test('example: decodes and re-encodes the frozen nested witness', () => {
+  test('example: decodes and re-encodes the frozen nested signature', () => {
     const envelope = SignatureEnvelope.deserialize(nested)
 
     expect(envelope).toMatchInlineSnapshot(`
@@ -3077,7 +3094,7 @@ describe('multisig', () => {
     `)
   })
 
-  test('behavior: round trips initial and current RPC witnesses', () => {
+  test('behavior: round trips initial and current RPC signatures', () => {
     const initialEnvelope = SignatureEnvelope.deserialize(initial)
     const currentEnvelope = SignatureEnvelope.deserialize(current)
     const rpc = {
@@ -3087,50 +3104,8 @@ describe('multisig', () => {
 
     expect(rpc).toMatchInlineSnapshot(`
       {
-        "current": {
-          "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
-          "config": {
-            "owners": [
-              {
-                "owner": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
-                "weight": 1,
-              },
-            ],
-            "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "threshold": 1,
-            "version": 1,
-          },
-          "signatures": [
-            {
-              "r": "0x4a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e050",
-              "s": "0x4a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf5",
-              "type": "secp256k1",
-              "yParity": "0x0",
-            },
-          ],
-        },
-        "initial": {
-          "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
-          "config": {
-            "owners": [
-              {
-                "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
-                "weight": 1,
-              },
-            ],
-            "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "threshold": 1,
-            "version": 0,
-          },
-          "signatures": [
-            {
-              "r": "0x869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f985",
-              "s": "0x35dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f4",
-              "type": "secp256k1",
-              "yParity": "0x0",
-            },
-          ],
-        },
+        "current": "0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d6942b5ad5c4795c026514f8317c7a215e218dccd6cf01f843b8414a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e0504a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf51b",
+        "initial": "0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b",
       }
     `)
     expect(SignatureEnvelope.fromRpc(rpc.initial)).toStrictEqual(
@@ -3141,7 +3116,7 @@ describe('multisig', () => {
     )
   })
 
-  test('behavior: derives the account only for an initial witness', () => {
+  test('behavior: derives the account only for an initial config', () => {
     const initialEnvelope = SignatureEnvelope.deserialize(initial)
     if (initialEnvelope.type !== 'multisig') throw new Error('unreachable')
     if (initialEnvelope.config.version !== 0n) throw new Error('unreachable')
@@ -3212,7 +3187,7 @@ describe('multisig', () => {
     `)
   })
 
-  test('behavior: accepts initial and current nested witnesses', () => {
+  test('behavior: accepts initial and current nested signatures', () => {
     const initialEnvelope = SignatureEnvelope.deserialize(initial)
     const currentEnvelope = SignatureEnvelope.deserialize(current)
     if (
@@ -3254,7 +3229,7 @@ describe('multisig', () => {
     )
   })
 
-  test('error: rejects a self-owned current witness', () => {
+  test('error: rejects a self-owned current signature', () => {
     const envelope = SignatureEnvelope.deserialize(current)
     if (envelope.type !== 'multisig') throw new Error('unreachable')
     const account = envelope.config.owners[0]!.owner

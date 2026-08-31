@@ -13,7 +13,7 @@ import {
 import * as z from 'zod/mini'
 import * as z_AuthorizationTempo from './AuthorizationTempo.js'
 import * as z_KeyAuthorization from './KeyAuthorization.js'
-import * as z_MultisigWitness from './MultisigWitness.js'
+import * as z_MultisigSimulation from './MultisigSimulation.js'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
 const fromRpcType = { '0x76': 'tempo' } as const
@@ -83,7 +83,7 @@ export const Rpc = z.object({
   maxFeePerBlobGas: z.optional(z_Hex.Hex),
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
-  multisigWitness: z.optional(z_MultisigWitness.Rpc),
+  multisigSimulation: z.optional(z_MultisigSimulation.Rpc),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
   r: z.optional(z_Hex.Hex),
@@ -136,7 +136,7 @@ export const Domain = z.object({
   maxFeePerBlobGas: z.optional(z.bigint()),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),
-  multisigWitness: z.optional(z_MultisigWitness.Domain),
+  multisigSimulation: z.optional(z_MultisigSimulation.Domain),
   nonce: z.optional(z.bigint()),
   nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -175,7 +175,7 @@ export const DomainToRpc = z.object({
   maxFeePerBlobGas: z.optional(uintBigintNumberish()),
   maxFeePerGas: z.optional(uintBigintNumberish()),
   maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
-  multisigWitness: z.optional(z_MultisigWitness.Domain),
+  multisigSimulation: z.optional(z_MultisigSimulation.Domain),
   nonce: z.optional(uintBigintNumberish()),
   nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -206,7 +206,7 @@ export const TransactionRequestToRpc = z.codec(Rpc, DomainToRpc, {
 function fromRpc(
   request: core_TransactionRequest.Rpc,
 ): core_TransactionRequest.TransactionRequest {
-  const { authorizationList: _, multisigWitness: __, ...rest } = request
+  const { authorizationList: _, multisigSimulation: __, ...rest } = request
   const request_ = z.decode(
     z_TransactionRequest.TransactionRequest,
     rest as never,
@@ -250,10 +250,10 @@ function fromRpc(
   if (typeof request.keyData !== 'undefined') request_.keyData = request.keyData
   if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
   if (typeof request.keyType !== 'undefined') request_.keyType = request.keyType
-  if (typeof request.multisigWitness !== 'undefined')
-    request_.multisigWitness = z.decode(
-      z_MultisigWitness.MultisigWitness,
-      request.multisigWitness,
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_.multisigSimulation = z.decode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.multisigSimulation,
     )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = core_Hex.toNumber(request.validBefore)
@@ -283,7 +283,7 @@ function toRpc(
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
     typeof request.keyType !== 'undefined' ||
-    typeof request.multisigWitness !== 'undefined' ||
+    typeof request.multisigSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -338,10 +338,10 @@ function toRpc(
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
-  if (typeof request.multisigWitness !== 'undefined')
-    request_rpc.multisigWitness = z.encode(
-      z_MultisigWitness.MultisigWitness,
-      request.multisigWitness,
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_rpc.multisigSimulation = z.encode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.multisigSimulation,
     )
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = encodeNumberish(request.validBefore)

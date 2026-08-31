@@ -63,186 +63,45 @@ describe('TransactionRequest', () => {
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 
-  test('multisig witness round-trips', () => {
-    const witness = {
-      account: '0xcccccccccccccccccccccccccccccccccccccccc',
+  test('multisig simulation round-trips', () => {
+    const multisigSimulation = {
+      account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       approvals: [
         {
-          keyData: '0x0578',
-          keyType: 'webAuthn',
-          owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          keyType: 'secp256k1',
+          owner: '0x1111111111111111111111111111111111111111',
           type: 'primitive',
         },
         {
-          type: 'multisig',
-          witness: {
+          spec: {
             account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
             approvals: [
               {
-                keyType: 'secp256k1',
-                owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-              },
-              {
-                owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                keyData: '0x0578',
+                keyType: 'webAuthn',
+                owner: '0x2222222222222222222222222222222222222222',
               },
             ],
-            config: {
-              owners: [
-                {
-                  owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-                  weight: 1,
-                },
-                {
-                  owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-                  weight: 1,
-                },
-              ],
-              salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
-              threshold: 2,
-              version: 2,
-            },
+            config:
+              '0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201',
           },
+          type: 'multisig',
         },
       ],
-      config: {
-        owners: [
-          {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
-          },
-        ],
-        salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
-        threshold: 2,
-        version: 1,
-      },
+      config:
+        '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01',
     } as const
 
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
       ...rpc,
-      multisigWitness: witness,
+      multisigSimulation,
     })
-    expect(decoded.multisigWitness).toMatchInlineSnapshot(`
-      {
-        "account": "0xcccccccccccccccccccccccccccccccccccccccc",
-        "approvals": [
-          {
-            "keyData": "0x0578",
-            "keyType": "webAuthn",
-            "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "type": "primitive",
-          },
-          {
-            "type": "multisig",
-            "witness": {
-              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "approvals": [
-                {
-                  "keyType": "secp256k1",
-                  "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                },
-                {
-                  "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                },
-              ],
-              "config": {
-                "owners": [
-                  {
-                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                    "weight": 1,
-                  },
-                  {
-                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                    "weight": 1,
-                  },
-                ],
-                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
-                "threshold": 2,
-                "version": 2n,
-              },
-            },
-          },
-        ],
-        "config": {
-          "owners": [
-            {
-              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              "weight": 1,
-            },
-            {
-              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "weight": 1,
-            },
-          ],
-          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
-          "threshold": 2,
-          "version": 1n,
-        },
-      }
-    `)
+    expect(decoded).toEqual(
+      core_TransactionRequest.fromRpc({ ...rpc, multisigSimulation }),
+    )
 
     const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
-    expect(encoded.multisigWitness).toMatchInlineSnapshot(`
-      {
-        "account": "0xcccccccccccccccccccccccccccccccccccccccc",
-        "approvals": [
-          {
-            "keyData": "0x0578",
-            "keyType": "webAuthn",
-            "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "type": "primitive",
-          },
-          {
-            "type": "multisig",
-            "witness": {
-              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "approvals": [
-                {
-                  "keyType": "secp256k1",
-                  "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                },
-                {
-                  "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                },
-              ],
-              "config": {
-                "owners": [
-                  {
-                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                    "weight": 1,
-                  },
-                  {
-                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                    "weight": 1,
-                  },
-                ],
-                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
-                "threshold": 2,
-                "version": 2,
-              },
-            },
-          },
-        ],
-        "config": {
-          "owners": [
-            {
-              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              "weight": 1,
-            },
-            {
-              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "weight": 1,
-            },
-          ],
-          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
-          "threshold": 2,
-          "version": 1,
-        },
-      }
-    `)
+    expect(encoded.multisigSimulation).toStrictEqual(multisigSimulation)
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 

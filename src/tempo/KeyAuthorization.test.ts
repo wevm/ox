@@ -69,6 +69,8 @@ const signature_multisig = {
   signatures: [SignatureEnvelope.from(signature_secp256k1)],
   type: 'multisig',
 } as const satisfies SignatureEnvelope.Multisig
+const signature_multisig_rpc =
+  '0xf89794be95c3f554e9fc85ec51be69a3d807a0d55bcf2cf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694f39fd6e51aad88f6f4ce6ab8827279cfffb9226601f843b841fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c' as const
 
 const signature_keychain = {
   inner: SignatureEnvelope.from(signature_secp256k1),
@@ -502,16 +504,42 @@ describe('from', () => {
 })
 
 describe('fromRpc', () => {
-  test('multisig', () => {
+  test('behavior: multisig', () => {
     const authorization = KeyAuthorization.fromRpc({
       chainId: '0x1',
       expiry: null,
       keyId: address,
       keyType: 'secp256k1',
-      signature: SignatureEnvelope.toRpc(signature_multisig),
+      signature: signature_multisig_rpc,
     })
 
-    expect(authorization.signature).toEqual(signature_multisig)
+    expect(authorization.signature).toMatchInlineSnapshot(`
+      {
+        "account": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "config": {
+          "owners": [
+            {
+              "owner": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "threshold": 1,
+          "version": 1n,
+        },
+        "signatures": [
+          {
+            "signature": {
+              "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+              "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+        ],
+        "type": "multisig",
+      }
+    `)
   })
 
   test('rejects a keychain signature', () => {
@@ -1306,6 +1334,19 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
+  test('behavior: multisig', () => {
+    const authorization = KeyAuthorization.toRpc({
+      address,
+      chainId: 1n,
+      signature: signature_multisig,
+      type: 'secp256k1',
+    })
+
+    expect(authorization.signature).toMatchInlineSnapshot(
+      `"${signature_multisig_rpc}"`,
+    )
+  })
+
   test('secp256k1', () => {
     const authorization = KeyAuthorization.from({
       address,

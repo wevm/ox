@@ -1,7 +1,7 @@
 import type * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as Signature from '../core/Signature.js'
 import { describe, expectTypeOf, test } from 'vp/test'
-import * as MultisigWitness from './MultisigWitness.js'
+import * as MultisigSimulation from './MultisigSimulation.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TransactionRequest from './TransactionRequest.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
@@ -49,12 +49,12 @@ describe('TransactionRequest type', () => {
     >()
   })
 
-  test('carries domain and RPC multisig witnesses', () => {
+  test('carries domain and RPC multisig simulations', () => {
     expectTypeOf<
-      TransactionRequest.TransactionRequest['multisigWitness']
-    >().toEqualTypeOf<MultisigWitness.MultisigWitness | undefined>()
-    expectTypeOf<TransactionRequest.Rpc['multisigWitness']>().toEqualTypeOf<
-      MultisigWitness.Rpc | undefined
+      TransactionRequest.TransactionRequest['multisigSimulation']
+    >().toEqualTypeOf<MultisigSimulation.Spec | undefined>()
+    expectTypeOf<TransactionRequest.Rpc['multisigSimulation']>().toEqualTypeOf<
+      MultisigSimulation.Rpc | undefined
     >()
   })
 })
@@ -87,7 +87,7 @@ describe('toEnvelope', () => {
       keyType: 'secp256k1',
       maxFeePerGas: 1n,
       maxPriorityFeePerGas: 1n,
-      multisigWitness: undefined,
+      multisigSimulation: undefined,
       nonce: 0n,
       nonceKey: 'random',
       signature: undefined,

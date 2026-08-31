@@ -1,5 +1,76 @@
-import { TransactionRequest } from 'ox/tempo'
+import {
+  MultisigConfig,
+  type MultisigSimulation,
+  TransactionRequest,
+} from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
+
+const multisigSimulationRpc = {
+  account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  approvals: [
+    {
+      keyType: 'secp256k1',
+      owner: '0x1111111111111111111111111111111111111111',
+      type: 'primitive',
+    },
+    {
+      spec: {
+        account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        approvals: [
+          {
+            keyData: '0x0578',
+            keyType: 'webAuthn',
+            owner: '0x2222222222222222222222222222222222222222',
+          },
+        ],
+        config:
+          '0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201',
+      },
+      type: 'multisig',
+    },
+  ],
+  config:
+    '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01',
+} as const satisfies MultisigSimulation.Rpc
+
+const multisigSimulation = {
+  account: multisigSimulationRpc.account,
+  approvals: [
+    multisigSimulationRpc.approvals[0],
+    {
+      spec: {
+        account: multisigSimulationRpc.approvals[1].spec.account,
+        approvals: multisigSimulationRpc.approvals[1].spec.approvals,
+        config: MultisigConfig.from({
+          owners: [
+            {
+              owner: '0x2222222222222222222222222222222222222222',
+              weight: 1,
+            },
+          ],
+          salt: `0x${'22'.repeat(32)}`,
+          threshold: 1,
+          version: 1n,
+        }),
+      },
+      type: 'multisig',
+    },
+  ],
+  config: MultisigConfig.from({
+    owners: [
+      {
+        owner: '0x1111111111111111111111111111111111111111',
+        weight: 1,
+      },
+      {
+        owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        weight: 1,
+      },
+    ],
+    salt: `0x${'11'.repeat(32)}`,
+    threshold: 2,
+  }),
+} as const satisfies MultisigSimulation.Spec
 
 describe('fromRpc', () => {
   test('default', () => {
@@ -99,132 +170,62 @@ describe('fromRpc', () => {
     `)
   })
 
-  test('behavior: multisig witness configs decode from RPC numbers', () => {
+  test('behavior: multisig simulation', () => {
     const request = TransactionRequest.fromRpc({
-      calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
-      multisigWitness: {
-        account: '0xcccccccccccccccccccccccccccccccccccccccc',
-        approvals: [
-          {
-            keyData: '0x0578',
-            keyType: 'webAuthn',
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            type: 'primitive',
-          },
-          {
-            type: 'multisig',
-            witness: {
-              account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-              approvals: [
-                {
-                  keyType: 'secp256k1',
-                  owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-                },
-                {
-                  owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-                },
-              ],
-              config: {
-                owners: [
-                  {
-                    owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-                    weight: 1,
-                  },
-                  {
-                    owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-                    weight: 1,
-                  },
-                ],
-                salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
-                threshold: 2,
-                version: 2,
-              },
-            },
-          },
-        ],
-        config: {
-          owners: [
-            {
-              owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-              weight: 1,
-            },
-            {
-              owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-              weight: 1,
-            },
-          ],
-          salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
-          threshold: 2,
-          version: 1,
-        },
-      },
+      from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      multisigSimulation: multisigSimulationRpc,
       type: '0x76',
     })
-    expect(request).toMatchInlineSnapshot(`
+
+    expect(request.multisigSimulation).toMatchInlineSnapshot(`
       {
-        "calls": [
+        "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "approvals": [
           {
-            "data": undefined,
-            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+            "keyType": "secp256k1",
+            "owner": "0x1111111111111111111111111111111111111111",
+            "type": "primitive",
           },
-        ],
-        "multisigWitness": {
-          "account": "0xcccccccccccccccccccccccccccccccccccccccc",
-          "approvals": [
-            {
-              "keyData": "0x0578",
-              "keyType": "webAuthn",
-              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              "type": "primitive",
-            },
-            {
-              "type": "multisig",
-              "witness": {
-                "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-                "approvals": [
+          {
+            "spec": {
+              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "approvals": [
+                {
+                  "keyData": "0x0578",
+                  "keyType": "webAuthn",
+                  "owner": "0x2222222222222222222222222222222222222222",
+                },
+              ],
+              "config": {
+                "owners": [
                   {
-                    "keyType": "secp256k1",
-                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                  },
-                  {
-                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                    "owner": "0x2222222222222222222222222222222222222222",
+                    "weight": 1,
                   },
                 ],
-                "config": {
-                  "owners": [
-                    {
-                      "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                      "weight": 1,
-                    },
-                    {
-                      "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                      "weight": 1,
-                    },
-                  ],
-                  "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
-                  "threshold": 2,
-                  "version": 2n,
-                },
+                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+                "threshold": 1,
+                "version": 1n,
               },
             },
-          ],
-          "config": {
-            "owners": [
-              {
-                "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "weight": 1,
-              },
-              {
-                "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-                "weight": 1,
-              },
-            ],
-            "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
-            "threshold": 2,
-            "version": 1n,
+            "type": "multisig",
           },
+        ],
+        "config": {
+          "owners": [
+            {
+              "owner": "0x1111111111111111111111111111111111111111",
+              "weight": 1,
+            },
+            {
+              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "threshold": 2,
+          "version": 0n,
         },
-        "type": "tempo",
       }
     `)
   })
@@ -313,130 +314,46 @@ describe('toRpc', () => {
     `)
   })
 
-  test('behavior: multisig witness configs encode as RPC numbers', () => {
+  test('behavior: multisig simulation', () => {
     const request = TransactionRequest.toRpc({
-      calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
-      multisigWitness: {
-        account: '0xcccccccccccccccccccccccccccccccccccccccc',
-        approvals: [
-          {
-            keyData: '0x0578',
-            keyType: 'webAuthn',
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            type: 'primitive',
-          },
-          {
-            type: 'multisig',
-            witness: {
-              account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-              approvals: [
-                {
-                  keyType: 'secp256k1',
-                  owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-                },
-                {
-                  owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-                },
-              ],
-              config: {
-                owners: [
-                  {
-                    owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-                    weight: 1,
-                  },
-                  {
-                    owner: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-                    weight: 1,
-                  },
-                ],
-                salt: '0x2222222222222222222222222222222222222222222222222222222222222222',
-                threshold: 2,
-                version: 2n,
-              },
-            },
-          },
-        ],
-        config: {
-          owners: [
-            {
-              owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-              weight: 1,
-            },
-            {
-              owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-              weight: 1,
-            },
-          ],
-          salt: '0x1111111111111111111111111111111111111111111111111111111111111111',
-          threshold: 2,
-          version: 1n,
-        },
-      },
+      from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      multisigSimulation,
     })
+
     expect(request).toMatchInlineSnapshot(`
       {
         "calls": [
           {
             "data": "0x",
-            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+            "to": "0x0000000000000000000000000000000000000000",
             "value": "0x",
           },
         ],
-        "multisigWitness": {
-          "account": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "multisigSimulation": {
+          "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "approvals": [
             {
-              "keyData": "0x0578",
-              "keyType": "webAuthn",
-              "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "keyType": "secp256k1",
+              "owner": "0x1111111111111111111111111111111111111111",
               "type": "primitive",
             },
             {
-              "type": "multisig",
-              "witness": {
+              "spec": {
                 "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                 "approvals": [
                   {
-                    "keyType": "secp256k1",
-                    "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                  },
-                  {
-                    "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                    "keyData": "0x0578",
+                    "keyType": "webAuthn",
+                    "owner": "0x2222222222222222222222222222222222222222",
                   },
                 ],
-                "config": {
-                  "owners": [
-                    {
-                      "owner": "0xdddddddddddddddddddddddddddddddddddddddd",
-                      "weight": 1,
-                    },
-                    {
-                      "owner": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                      "weight": 1,
-                    },
-                  ],
-                  "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
-                  "threshold": 2,
-                  "version": 2,
-                },
+                "config": "0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201",
               },
+              "type": "multisig",
             },
           ],
-          "config": {
-            "owners": [
-              {
-                "owner": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "weight": 1,
-              },
-              {
-                "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-                "weight": 1,
-              },
-            ],
-            "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
-            "threshold": 2,
-            "version": 1,
-          },
+          "config": "0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01",
         },
         "type": "0x76",
       }
@@ -540,6 +457,7 @@ describe('roundtrip', () => {
       nonceKey: 255n,
       gas: 100000n,
       maxFeePerGas: 1000000000n,
+      multisigSimulation,
     }
 
     const rpc = TransactionRequest.toRpc(original)
@@ -560,6 +478,7 @@ describe('roundtrip', () => {
     expect(converted.nonceKey).toBe(original.nonceKey)
     expect(converted.gas).toBe(original.gas)
     expect(converted.maxFeePerGas).toBe(original.maxFeePerGas)
+    expect(converted.multisigSimulation).toEqual(original.multisigSimulation)
     expect(converted.type).toBe('tempo')
   })
 
@@ -577,6 +496,7 @@ describe('roundtrip', () => {
       validAfter: '0x32',
       nonceKey: '0xff',
       gas: '0x186a0',
+      multisigSimulation: multisigSimulationRpc,
       type: '0x76',
     }
 
@@ -589,6 +509,7 @@ describe('roundtrip', () => {
     expect(rpc.validAfter).toBe(original.validAfter)
     expect(rpc.nonceKey).toBe(original.nonceKey)
     expect(rpc.gas).toBe(original.gas)
+    expect(rpc.multisigSimulation).toEqual(original.multisigSimulation)
     expect(rpc.type).toBe('0x76')
   })
 })

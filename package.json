@@ -776,10 +776,10 @@
       "types": "./dist/tempo/MultisigOperation.d.ts",
       "default": "./dist/tempo/MultisigOperation.js"
     },
-    "./tempo/MultisigWitness": {
-      "src": "./src/tempo/MultisigWitness.ts",
-      "types": "./dist/tempo/MultisigWitness.d.ts",
-      "default": "./dist/tempo/MultisigWitness.js"
+    "./tempo/MultisigSimulation": {
+      "src": "./src/tempo/MultisigSimulation.ts",
+      "types": "./dist/tempo/MultisigSimulation.d.ts",
+      "default": "./dist/tempo/MultisigSimulation.js"
     },
     "./tempo/Period": {
       "src": "./src/tempo/Period.ts",
@@ -1201,10 +1201,10 @@
       "types": "./dist/zod/tempo/MultisigOperation.d.ts",
       "default": "./dist/zod/tempo/MultisigOperation.js"
     },
-    "./zod/tempo/MultisigWitness": {
-      "src": "./src/zod/tempo/MultisigWitness.ts",
-      "types": "./dist/zod/tempo/MultisigWitness.d.ts",
-      "default": "./dist/zod/tempo/MultisigWitness.js"
+    "./zod/tempo/MultisigSimulation": {
+      "src": "./src/zod/tempo/MultisigSimulation.ts",
+      "types": "./dist/zod/tempo/MultisigSimulation.d.ts",
+      "default": "./dist/zod/tempo/MultisigSimulation.js"
     },
     "./zod/tempo/PoolId": {
       "src": "./src/zod/tempo/PoolId.ts",
