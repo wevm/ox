@@ -1,3 +1,3 @@
 export const port = 3001
 
-export const tag = 'sha-5190cf5'
+export const tag = 'sha-2bd9fa3'
