@@ -152,8 +152,8 @@ describe('getHash', () => {
       }),
     }).toMatchInlineSnapshot(`
       {
-        "keyAuthorization": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-        "transaction": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
+        "keyAuthorization": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
+        "transaction": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
       }
     `)
   })
@@ -306,10 +306,10 @@ describe('selectApprovals', () => {
         "complete": {
           "approvals": [
             "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
-            "0xe2d2c3c2fc4b17af341cc5c1a459af9606167e8a",
+            "0xf75618474e5f7fd9ef17dd85167a5b1e1f19b84b",
           ],
           "selectedApprovals": [
-            "0xe2d2c3c2fc4b17af341cc5c1a459af9606167e8a",
+            "0xf75618474e5f7fd9ef17dd85167a5b1e1f19b84b",
           ],
           "signatureCount": 1,
           "threshold": 2,
@@ -318,7 +318,7 @@ describe('selectApprovals', () => {
         "partial": {
           "approvals": [
             "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
-            "0xe2d2c3c2fc4b17af341cc5c1a459af9606167e8a",
+            "0xf75618474e5f7fd9ef17dd85167a5b1e1f19b84b",
           ],
           "selectedApprovals": [
             "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
@@ -396,7 +396,7 @@ describe('selectApprovals', () => {
         hash,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x7888d60e9cc26c8569d394fce435c248f1e49c3b has conflicting config witnesses.]`,
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x5b7c564e95bde16197e73f9eaa9c7413f11f49ad has conflicting config witnesses.]`,
     )
   })
 
@@ -675,7 +675,7 @@ describe('selectApprovals', () => {
         hash,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0xf529c8f6b2b4c72102af4cfe5eeb55b7d45dede2 is invalid.]`,
+      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x4e51c0503aab130b1a358e8eab4c6302618fb3a6 is invalid.]`,
     )
   })
 })
@@ -728,14 +728,14 @@ describe('serializeKeyAuthorization', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
-          "hash": "0x14b3a60f7c3120e3983b1f6e085ab5b234e71f58f0a4f39d19a5ff64b89a2afe",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "hash": "0x52562f8b8042498f83189316f0aacda4d5b80468f0001300829c4d353db5f101",
           "signatureCount": 2,
           "version": 1n,
         },
         {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
-          "hash": "0xbfdc90810a0634f413e627bdefea88ae8c42ed41d6670a70fd1d7574aedda2a4",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "hash": "0x948de4ae52c7cd35151c2ddcd31c97ea89662e83bd18a3cbc323894a1fd8ca06",
           "signatureCount": 2,
           "version": 0n,
         },
@@ -829,15 +829,15 @@ describe('serializeTransaction', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
-          "hash": "0x8309740edaf304284186f7bcfe4527745cd4eb48e7441795ebdd970798091f8f",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "hash": "0x2d4748a76d91da5fd3d762cb0f925de32347fdbd89d23356d481b526e3d3ab10",
           "signatureCount": 2,
           "type": "0x76",
           "version": 1n,
         },
         {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
-          "hash": "0x636af84d8445d87cbcd33039d5a3a2274a5911036b1b7ceb740ac41e2f638611",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "hash": "0x2bf7e539779104921d32758dc184ece6aa8872bfb3b86e2f4d8e0ba1d85ee821",
           "signatureCount": 2,
           "type": "0x76",
           "version": 0n,
@@ -918,7 +918,7 @@ describe('serializeTransaction', () => {
       [
         {
           "feePayerSignature": null,
-          "from": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "from": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "signatureCount": 2,
           "type": "0x78",
         },
@@ -928,7 +928,7 @@ describe('serializeTransaction', () => {
             "s": "0x0000000000000000000000000000000000000000000000000000000000000006",
             "yParity": 0,
           },
-          "from": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "from": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "signatureCount": 2,
           "type": "0x78",
         },
@@ -1000,7 +1000,7 @@ describe('from', () => {
     expect({ pending, submitting, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1020,7 +1020,7 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
+          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1030,7 +1030,7 @@ describe('from', () => {
           "weight": 1,
         },
         "submitting": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1052,7 +1052,7 @@ describe('from', () => {
           },
           "createdAt": 1,
           "expiresAt": 10,
-          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
+          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
           "signatureCount": 2,
           "status": "submitting",
           "submissionId": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1063,7 +1063,7 @@ describe('from', () => {
           "weight": 2,
         },
         "success": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1084,7 +1084,7 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
+          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -1130,7 +1130,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+        "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
@@ -1216,7 +1216,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+        "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
@@ -1276,7 +1276,7 @@ describe('from', () => {
     expect({ pending, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1296,8 +1296,8 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36e",
+          "hash": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d200808080809417e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1306,7 +1306,7 @@ describe('from', () => {
           "weight": 1,
         },
         "success": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1327,8 +1327,8 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-          "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36eb9017805f9017494f81b7763d3a6876195d780865bd783dbd97dd36ef852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
+          "hash": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
+          "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d200808080809417e90f73f4c7c75dc01b00b262e7b95ed3086bd0b9017805f901749417e90f73f4c7c75dc01b00b262e7b95ed3086bd0f852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -1377,7 +1377,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+        "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1423,7 +1423,7 @@ describe('RPC conversion', () => {
     expect({ keyAuthorizationRpc, transactionRpc }).toMatchInlineSnapshot(`
       {
         "keyAuthorizationRpc": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1443,8 +1443,8 @@ describe('RPC conversion', () => {
             "version": "0x1",
           },
           "createdAt": 1,
-          "hash": "0xf6995eb69c12c03d3d13b357abf7cac22b4effe52fba8ff02e5aef26161f77a0",
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094f81b7763d3a6876195d780865bd783dbd97dd36e",
+          "hash": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d200808080809417e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1453,7 +1453,7 @@ describe('RPC conversion', () => {
           "weight": 1,
         },
         "transactionRpc": {
-          "account": "0xf81b7763d3a6876195d780865bd783dbd97dd36e",
+          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1473,7 +1473,7 @@ describe('RPC conversion', () => {
             "version": "0x1",
           },
           "createdAt": 1,
-          "hash": "0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02",
+          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
