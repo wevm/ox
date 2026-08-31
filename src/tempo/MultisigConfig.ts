@@ -1,5 +1,6 @@
 import * as Address from '../core/Address.js'
 import type * as Bytes from '../core/Bytes.js'
+import * as ContractAddress from '../core/ContractAddress.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -37,6 +38,13 @@ const accountDomain = 'tempo:multisig:account'
 
 /** Domain prefix for native multisig configuration commitments. */
 const configDomain = 'tempo:multisig:config'
+
+/** Canonical CREATE2 factory for multisig recovery wallets. */
+const recoveryFactory = '0x8a196A227C48Ae8A3E36EebD4E106675CC0f6E64'
+
+/** Keccak-256 of the canonical recovery wallet creation code. */
+const recoveryWalletInitCodeHash =
+  '0x4b5ff53c5328a10a6ec5224adf16de5e204a47057c98af037ee30b7de660a8a6'
 
 /** Domain prefix for native multisig owner approvals. */
 const signatureDomain = 'tempo:multisig:signature'
@@ -309,8 +317,9 @@ export function fromTuple(tuple: Tuple): Config {
 /**
  * Derives the stable native multisig account address.
  *
- * Preimage (fixed-width big-endian, **not** RLP):
- * `keccak256("tempo:multisig:account" || salt || u8(threshold) || u8(owners.length) || (owner || u8(weight)) for each owner)[12:32]`.
+ * The initial config is hashed into a CREATE2 salt using fixed-width
+ * big-endian fields, not RLP. The account uses the canonical recovery factory
+ * and wallet init-code hash.
  *
  * The address is derived once from the initial version-0 config. Config
  * updates do not change it.
@@ -338,7 +347,7 @@ export function getAddress(config: Input): Address.Address {
     throw new InvalidConfigError({
       reason: 'account address requires version zero',
     })
-  const hash = Hash.keccak256(
+  const accountSalt = Hash.keccak256(
     Hex.concat(
       Hex.fromString(accountDomain),
       Hex.padLeft(config.salt ?? zeroSalt, 32),
@@ -350,7 +359,11 @@ export function getAddress(config: Input): Address.Address {
       ]),
     ),
   )
-  const account = Address.from(Hex.slice(hash, 12, 32))
+  const account = ContractAddress.fromCreate2({
+    bytecodeHash: recoveryWalletInitCodeHash,
+    from: recoveryFactory,
+    salt: accountSalt,
+  })
   if (Hex.toBigInt(account) === 0n)
     throw new InvalidConfigError({ reason: 'derived account cannot be zero' })
   if (config.owners.some((owner) => Address.isEqual(owner.owner, account)))
@@ -363,12 +376,11 @@ export function getAddress(config: Input): Address.Address {
 export declare namespace getAddress {
   type ErrorType =
     | assert.ErrorType
-    | Address.from.ErrorType
+    | ContractAddress.fromCreate2.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.fromString.ErrorType
-    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
 

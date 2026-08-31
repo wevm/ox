@@ -651,30 +651,30 @@ describe('behavior: multisig (TIP-1061)', () => {
       .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
     expect(bootstrap_receipt.status).toBe('success')
 
-    // Multisig accounts authorize access keys through AccountKeychain.
-    const authorizeKey = AbiFunction.from(
-      'function authorizeKey(address keyId, uint8 signatureType, (uint64 expiry, bool enforceLimits, (address token, uint256 amount, uint64 period)[] limits, bool allowAnyCalls, (address target, (bytes4 selector, address[] recipients)[] selectorRules)[] allowedCalls) config)',
-    )
+    const keyAuthorization = KeyAuthorization.from({
+      account,
+      address: access.address,
+      chainId: BigInt(chainId),
+      isAdmin: false,
+      type: 'secp256k1',
+    })
+    const keyAuthorizationSigned = KeyAuthorization.from(keyAuthorization, {
+      signature: SignatureEnvelope.from({
+        account,
+        config: initialConfig,
+        signatures: approve({
+          config: initialConfig,
+          payload: KeyAuthorization.getSignPayload(keyAuthorization),
+          signers: ownerKeys,
+        }),
+      }),
+    })
 
     const authorize = TxEnvelopeTempo.from({
-      calls: [
-        {
-          to: '0xaaaaaaaa00000000000000000000000000000000',
-          data: AbiFunction.encodeData(authorizeKey, [
-            access.address,
-            0, // secp256k1
-            {
-              expiry: 18446744073709551615n, // u64 max (never expires)
-              enforceLimits: false,
-              limits: [],
-              allowAnyCalls: true,
-              allowedCalls: [],
-            },
-          ]),
-        },
-      ],
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
       chainId,
       feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuthorizationSigned,
       nonce: 1n,
       gas: 5_000_000n,
       maxFeePerGas: Value.fromGwei('20'),

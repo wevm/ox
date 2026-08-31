@@ -99,10 +99,11 @@ describe('fromRpc/toRpc', () => {
 })
 
 describe('getAddress', () => {
-  test('example: matches the frozen version-0 vector', () => {
+  test('example: matches the frozen CREATE2 vector', () => {
     expect(account).toMatchInlineSnapshot(
-      `"0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da"`,
+      `"0xf4b916c5aea0fb199bd942389be00db0690c961f"`,
     )
+    expect(account).not.toBe('0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da')
   })
 
   test('behavior: includes salt, threshold, and owners', () => {
@@ -115,7 +116,22 @@ describe('getAddress', () => {
         salt: `0x${'42'.repeat(32)}`,
         threshold: 2,
       }),
-    ).toMatchInlineSnapshot(`"0x0773e28146400643e42cb28f6659b74e7c0b451d"`)
+    ).toMatchInlineSnapshot(`"0x94040edd3d7b542e0a96e01141bc250d709b4469"`)
+  })
+
+  test('behavior: is stable and binds the salt', () => {
+    expect({
+      repeated: MultisigConfig.getAddress(config),
+      salted: MultisigConfig.getAddress({
+        ...config,
+        salt: `0x${'42'.repeat(32)}`,
+      }),
+    }).toMatchInlineSnapshot(`
+      {
+        "repeated": "0xf4b916c5aea0fb199bd942389be00db0690c961f",
+        "salted": "0x95e771f514fd6ac5b8bbd62a9b37db86eeed7e38",
+      }
+    `)
   })
 
   test('error: rejects a current configuration', () => {
@@ -152,7 +168,7 @@ describe('getSignPayload', () => {
     expect(
       MultisigConfig.getSignPayload({ account, config, payload }),
     ).toMatchInlineSnapshot(
-      `"0xbf944a7a752b2cfab0418d5fb4591c5a7ff62976488edce11794d7f35fb34f41"`,
+      `"0xdba6b49849aaef399fbc1de73fe26d520f21846c80c3e5d2486ad56e8df3cee3"`,
     )
   })
 
@@ -214,7 +230,7 @@ describe('assert/validate', () => {
       valid: MultisigConfig.validate(boundary),
     }).toMatchInlineSnapshot(`
       {
-        "account": "0x6c67c57e0eed05341137dbf88e4e7a90dc46ef50",
+        "account": "0xa832c9a61d254a157c05edcd856b2cbe4dea8c77",
         "commitment": "0x0dc47a7ab45ffa21a01bfd115427e26617b5a57d7ccbea57db2fd4537ba96f56",
         "rlpHash": "0xbaf0d030add91caaa10815d2e99c942f1e39b0d199216973781adb4fc1af6955",
         "rlpLength": 1145,

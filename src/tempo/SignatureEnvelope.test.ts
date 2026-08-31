@@ -69,7 +69,7 @@ const signature_keychain_webauthn = SignatureEnvelope.from({
 })
 
 const signature_multisig_rpc =
-  '0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
+  '0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
 
 describe('assert', () => {
   describe('secp256k1', () => {
@@ -1134,7 +1134,7 @@ describe('from', () => {
         },
         `
         {
-          "account": "0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da",
+          "account": "0xf4b916c5aea0fb199bd942389be00db0690c961f",
           "config": {
             "owners": [
               {
@@ -2478,7 +2478,7 @@ describe('fromRpc', () => {
         SignatureEnvelope.fromRpc(signature_multisig_rpc),
       ).toMatchInlineSnapshot(`
         {
-          "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+          "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
           "config": {
             "owners": [
               {
@@ -2511,7 +2511,7 @@ describe('fromRpc', () => {
       ).toThrowErrorMatchingInlineSnapshot(`
         [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: invalid multisig wire shape: expected exactly three fields
 
-        Serialized: 0x0505f897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b]
+        Serialized: 0x0505f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b]
       `)
     })
 
@@ -2521,19 +2521,19 @@ describe('fromRpc', () => {
       ).toThrowErrorMatchingInlineSnapshot(`
         [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: invalid multisig RPC signature
 
-        Serialized: 0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b00]
+        Serialized: 0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b00]
       `)
     })
 
     test('error: rejects a structured multisig signature', () => {
       expect(() =>
         SignatureEnvelope.fromRpc({
-          account: '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+          account: '0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b',
           config: {},
           signatures: [],
         } as never),
       ).toThrowErrorMatchingInlineSnapshot(
-        `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"account":"0x9dba7f426b711d4893c11611eacf7cc334e7146b","config":{},"signatures":[]}\`) to a valid signature envelope.]`,
+        `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"account":"0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b","config":{},"signatures":[]}\`) to a valid signature envelope.]`,
       )
     })
   })
@@ -2937,18 +2937,18 @@ describe('CoercionError', () => {
 
 describe('multisig', () => {
   const initial =
-    '0x05f897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
+    '0x05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
   const current =
-    '0x05f897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d6942b5ad5c4795c026514f8317c7a215e218dccd6cf01f843b8414a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e0504a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf51b' as const
+    '0x05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d6942b5ad5c4795c026514f8317c7a215e218dccd6cf01f843b8414a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e0504a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf51b' as const
   const nested =
-    '0x05f8f0949969e2243075b27a8eab61009c59b77ab13b83f6f83ba033333333333333333333333333333333333333333333333333333333333333338001d7d6944f9f5b162a7464bcc260ce44d7ae0d935f9c583701f89cb89a05f897944f9f5b162a7464bcc260ce44d7ae0d935f9c5837f83ba022222222222222222222222222222222222222222222222222222222222222228001d7d6946813eb9362372eef6200f3b1dbc3f819671cba6901f843b841032aa6f3ea7b0b7069720d0f3891983c493d149326c5c957d864ed7371b8475e3e95325079b24491f4b6d68920e4b3bacd7c6094df6ed88b8674864ab559c8fb1b' as const
+    '0x05f8f0945f0287385ec182f906c238bec5f87692d48b23f2f83ba033333333333333333333333333333333333333333333333333333333333333338001d7d69470845f2897b639686cb383799d605c52315d785501f89cb89a05f8979470845f2897b639686cb383799d605c52315d7855f83ba022222222222222222222222222222222222222222222222222222222222222228001d7d6946813eb9362372eef6200f3b1dbc3f819671cba6901f843b841032aa6f3ea7b0b7069720d0f3891983c493d149326c5c957d864ed7371b8475e3e95325079b24491f4b6d68920e4b3bacd7c6094df6ed88b8674864ab559c8fb1b' as const
 
   test('example: decodes and re-encodes the frozen initial signature', () => {
     const envelope = SignatureEnvelope.deserialize(initial)
 
     expect(envelope).toMatchInlineSnapshot(`
       {
-        "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+        "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
         "config": {
           "owners": [
             {
@@ -2981,7 +2981,7 @@ describe('multisig', () => {
 
     expect(envelope).toMatchInlineSnapshot(`
       {
-        "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+        "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
         "config": {
           "owners": [
             {
@@ -3014,11 +3014,11 @@ describe('multisig', () => {
 
     expect(envelope).toMatchInlineSnapshot(`
       {
-        "account": "0x9969e2243075b27a8eab61009c59b77ab13b83f6",
+        "account": "0x5f0287385ec182f906c238bec5f87692d48b23f2",
         "config": {
           "owners": [
             {
-              "owner": "0x4f9f5b162a7464bcc260ce44d7ae0d935f9c5837",
+              "owner": "0x70845f2897b639686cb383799d605c52315d7855",
               "weight": 1,
             },
           ],
@@ -3028,7 +3028,7 @@ describe('multisig', () => {
         },
         "signatures": [
           {
-            "account": "0x4f9f5b162a7464bcc260ce44d7ae0d935f9c5837",
+            "account": "0x70845f2897b639686cb383799d605c52315d7855",
             "config": {
               "owners": [
                 {
@@ -3078,7 +3078,7 @@ describe('multisig', () => {
 
     expect(decoded).toMatchInlineSnapshot(`
       [
-        "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+        "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
         [
           "0x0000000000000000000000000000000000000000000000000000000000000000",
           "0x",
@@ -3107,8 +3107,8 @@ describe('multisig', () => {
 
     expect(rpc).toMatchInlineSnapshot(`
       {
-        "current": "0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d6942b5ad5c4795c026514f8317c7a215e218dccd6cf01f843b8414a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e0504a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf51b",
-        "initial": "0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b",
+        "current": "0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d6942b5ad5c4795c026514f8317c7a215e218dccd6cf01f843b8414a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e0504a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf51b",
+        "initial": "0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b",
       }
     `)
     expect(SignatureEnvelope.fromRpc(rpc.initial)).toStrictEqual(
@@ -3183,7 +3183,7 @@ describe('multisig', () => {
       signatureCount: envelope.signatures.length,
     }).toMatchInlineSnapshot(`
       {
-        "hash": "0x1cb47fcf31fb1ebb3177ec1744eeda195e4d789920d1214af32baaa6150ad5e2",
+        "hash": "0x507fa2d2bc6cf5e7753d4d7cb92fe3d199f64c6eaa9a0bd1d14bfb366028a379",
         "length": 787,
         "signatureCount": 8,
       }
@@ -3323,14 +3323,14 @@ describe('multisig', () => {
     {
       name: 'two fields',
       value: Rlp.fromHex([
-        '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+        '0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b',
         [Hex.slice(initial, -65)],
       ]),
     },
     {
       name: 'trailing field',
       value: Rlp.fromHex([
-        '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+        '0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b',
         MultisigConfig.toTuple(
           MultisigConfig.from({
             owners: [
@@ -3411,7 +3411,7 @@ describe('multisig', () => {
     const malformed = Hex.concat(
       '0x05',
       Rlp.fromHex([
-        '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+        '0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b',
         value as never,
         [Hex.slice(initial, -65)],
       ]),
