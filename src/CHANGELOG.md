@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.44
+
+### Patch Changes
+
+- [#430](https://github.com/wevm/ox/pull/430) [`1c78a92`](https://github.com/wevm/ox/commit/1c78a9228392544cf8fabbfe2d5e46f252bb0679) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig account derivation to use the canonical CREATE2 recovery address.
+
 ## 0.14.43
 
 ### Patch Changes
