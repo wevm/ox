@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.43
+
+### Patch Changes
+
+- [#427](https://github.com/wevm/ox/pull/427) [`7cc9524`](https://github.com/wevm/ox/commit/7cc952451549861398e1b9fd686f3dfba3389063) Thanks [@jxom](https://github.com/jxom)! - Aligned Tempo multisig simulation requests and RPC signatures with T12's encoded wire formats.
+
 ## 0.14.42
 
 ### Patch Changes
