@@ -34,20 +34,10 @@ test('toRpc preserves the signature type', () => {
   ).toEqualTypeOf<SignatureEnvelope.Secp256k1Rpc>()
 })
 
-test('MultisigRpc carries one complete witness shape', () => {
-  const rpc = {
-    account: '0x1111111111111111111111111111111111111111',
-    config: { ...config, version: 0 },
-    signatures: [signatureRpc],
-  } as const satisfies SignatureEnvelope.MultisigRpc
+test('MultisigRpc contains an untagged serialized multisig signature', () => {
+  const rpc = '0xf8' as const satisfies SignatureEnvelope.MultisigRpc
 
-  expectTypeOf(rpc.config).toMatchTypeOf<MultisigConfig.Config<number>>()
-  expectTypeOf(rpc.signatures).toMatchTypeOf<
-    readonly SignatureEnvelope.SignatureEnvelopeRpc[]
-  >()
-  expectTypeOf<
-    SignatureEnvelope.GetType<typeof rpc>
-  >().toEqualTypeOf<'multisig'>()
+  expectTypeOf(rpc).toMatchTypeOf<`0x${string}`>()
 })
 
 test('from derives an initial account', () => {
@@ -75,40 +65,14 @@ test('from requires an account for a current config', () => {
   expectTypeOf(multisig).toMatchTypeOf<SignatureEnvelope.Multisig>()
 })
 
-test('MultisigRpc rejects old witness shapes', () => {
-  const accountOnly = {
-    account: '0x1111111111111111111111111111111111111111',
-    signatures: [signatureRpc],
-  } as const
-  // @ts-expect-error Multisig RPC signatures require config.
-  const accountOnlyRpc: SignatureEnvelope.MultisigRpc = accountOnly
-
-  const init = {
-    init: config,
-    signatures: [signatureRpc],
-  } as const
-  // @ts-expect-error Multisig RPC signatures no longer accept init.
-  const initRpc: SignatureEnvelope.MultisigRpc = init
-
-  const serialized = {
-    account: '0x1111111111111111111111111111111111111111',
-    config: { ...config, version: 0 },
-    signatures: ['0x1234'],
-  } as const
-  // @ts-expect-error Owner approvals use structured RPC envelopes.
-  const serializedRpc: SignatureEnvelope.MultisigRpc = serialized
-
-  const tagged = {
+test('MultisigRpc rejects structured signatures', () => {
+  const structured = {
     account: '0x1111111111111111111111111111111111111111',
     config: { ...config, version: 0 },
     signatures: [signatureRpc],
-    type: 'multisig',
   } as const
-  // @ts-expect-error Multisig RPC signatures are untagged.
-  const taggedRpc: SignatureEnvelope.MultisigRpc = tagged
+  // @ts-expect-error Multisig RPC signatures are serialized hex.
+  const rpc: SignatureEnvelope.MultisigRpc = structured
 
-  expectTypeOf(accountOnlyRpc).toEqualTypeOf<SignatureEnvelope.MultisigRpc>()
-  expectTypeOf(initRpc).toEqualTypeOf<SignatureEnvelope.MultisigRpc>()
-  expectTypeOf(serializedRpc).toEqualTypeOf<SignatureEnvelope.MultisigRpc>()
-  expectTypeOf(taggedRpc).toEqualTypeOf<SignatureEnvelope.MultisigRpc>()
+  expectTypeOf(rpc).toEqualTypeOf<SignatureEnvelope.MultisigRpc>()
 })

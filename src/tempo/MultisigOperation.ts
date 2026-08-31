@@ -287,7 +287,7 @@ export function serializeKeyAuthorization(
 }
 
 export declare namespace serializeKeyAuthorization {
-  /** Options for {@link serializeKeyAuthorization}. */
+  /** Options for `serializeKeyAuthorization`. */
   export type Options = {
     /** Root multisig account. */
     account: Address.Address
@@ -297,7 +297,7 @@ export declare namespace serializeKeyAuthorization {
     config: MultisigConfig.Config
   }
 
-  /** Error type for {@link serializeKeyAuthorization}. */
+  /** Error type for `serializeKeyAuthorization`. */
   export type ErrorType =
     | InvalidOperationError
     | KeyAuthorization_.deserialize.ErrorType

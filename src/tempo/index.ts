@@ -160,14 +160,14 @@ export * as MultisigConfig from './MultisigConfig.js'
  */
 export * as MultisigOperation from './MultisigOperation.js'
 /**
- * Native multisig RPC simulation witness utilities.
+ * Native multisig RPC simulation utilities.
  *
- * Converts complete root and nested owner witnesses between their domain and
- * Tempo JSON-RPC representations.
+ * Converts complete root and nested owner specs between their domain and Tempo
+ * JSON-RPC representations.
  *
  * @category Reference
  */
-export * as MultisigWitness from './MultisigWitness.js'
+export * as MultisigSimulation from './MultisigSimulation.js'
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *

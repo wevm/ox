@@ -93,9 +93,9 @@ export type Signature<bigintType = bigint, numberType = number> = OneOf<
 >
 
 /** RPC-formatted signature that can authorize an access key. */
-export type SignatureRpc = OneOf<
-  SignatureEnvelope.PrimitiveRpc | SignatureEnvelope.MultisigRpc
->
+export type SignatureRpc =
+  | SignatureEnvelope.MultisigRpc
+  | SignatureEnvelope.PrimitiveRpc
 
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<

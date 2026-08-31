@@ -1,24 +1,24 @@
 import { expectTypeOf, test } from 'vitest'
-import type * as MultisigWitness from './MultisigWitness.js'
+import type * as MultisigSimulation from './MultisigSimulation.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
 declare const request: TransactionRequest.TransactionRequest
 declare const rpc: TransactionRequest.Rpc
 
-test('transaction requests use domain multisig witnesses', () => {
-  expectTypeOf(request.multisigWitness?.config.version).toEqualTypeOf<
+test('transaction requests use domain multisig simulation specs', () => {
+  expectTypeOf(request.multisigSimulation?.config.version).toEqualTypeOf<
     bigint | undefined
   >()
 
-  const approval = request.multisigWitness?.approvals[0]
+  const approval = request.multisigSimulation?.approvals[0]
   if (approval?.type === 'multisig')
-    expectTypeOf(approval.witness.approvals[0]?.keyType).toEqualTypeOf<
-      MultisigWitness.NestedPrimitiveApproval['keyType']
+    expectTypeOf(approval.spec.approvals[0]?.keyType).toEqualTypeOf<
+      MultisigSimulation.NestedPrimitiveApproval['keyType']
     >()
 })
 
-test('RPC requests use numeric multisig config versions', () => {
-  expectTypeOf(rpc.multisigWitness?.config.version).toEqualTypeOf<
-    number | undefined
+test('RPC requests use encoded multisig configurations', () => {
+  expectTypeOf(rpc.multisigSimulation?.config).toEqualTypeOf<
+    `0x${string}` | undefined
   >()
 })

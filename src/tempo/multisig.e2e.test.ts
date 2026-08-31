@@ -2,7 +2,12 @@ import { AbiFunction, Address, Hex, Secp256k1, Value } from 'ox'
 import { getTransactionCount } from 'viem/actions'
 import { describe, expect, test } from 'vitest'
 import { chain, client, fundAddress } from '../../test/tempo/config.js'
-import { KeyAuthorization, MultisigConfig, SignatureEnvelope } from './index.js'
+import {
+  KeyAuthorization,
+  MultisigConfig,
+  SignatureEnvelope,
+  TransactionRequest,
+} from './index.js'
 import * as Transaction from './Transaction.js'
 import * as TransactionReceipt from './TransactionReceipt.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
@@ -134,6 +139,51 @@ describe('behavior: multisig (TIP-1061)', () => {
       userAddress: account,
     })
   }
+
+  test('behavior: fills a multisig simulation', async () => {
+    const { account, initialConfig, ownerKeys } = setup({
+      count: 2,
+      threshold: 2,
+    })
+    await fundAddress(client, { address: account })
+
+    const request = TransactionRequest.toRpc({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      from: account,
+      multisigSimulation: {
+        account,
+        approvals: ownerKeys.map((owner) => ({
+          keyType: 'secp256k1',
+          owner: owner.address,
+          type: 'primitive',
+        })),
+        config: initialConfig,
+      },
+    })
+    expect(request.multisigSimulation?.config).toBeTypeOf('string')
+
+    const response = await client.request({
+      method: 'eth_fillTransaction',
+      params: [request as never],
+    })
+    const transaction = TransactionRequest.fromRpc(
+      response.tx as TransactionRequest.Rpc,
+    )
+
+    expect(Hex.validate(response.raw)).toBe(true)
+    expect(transaction.calls).toHaveLength(1)
+    expect(transaction.calls?.[0]?.to).toBe(
+      '0x0000000000000000000000000000000000000000',
+    )
+    expect(transaction.chainId).toBe(chainId)
+    expect(transaction.feeToken).toBeNull()
+    expect(transaction.gas).toBeGreaterThan(0n)
+    expect(transaction.maxFeePerGas).toBeTypeOf('bigint')
+    expect(transaction.maxPriorityFeePerGas).toBeTypeOf('bigint')
+    expect(transaction.nonce ?? 0n).toBe(0n)
+    expect(transaction.nonceKey ?? 0n).toBe(0n)
+    expect(transaction.type).toBe('tempo')
+  })
 
   test('examples: bootstrap, initialized, and configuration rotation', async () => {
     const { account, initialConfig, ownerKeys } = setup({

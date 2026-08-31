@@ -4,7 +4,7 @@ import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as MultisigWitness from './MultisigWitness.js'
+import * as MultisigSimulation from './MultisigSimulation.js'
 import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
@@ -34,27 +34,27 @@ export type TransactionRequest<
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
     calls?: readonly Call<bigintType, addressType>[] | undefined
+    feePayer?: boolean | undefined
+    feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
-    feePayer?: boolean | undefined
-    feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
-    multisigWitness?: MultisigWitness.MultisigWitness<bigintType> | undefined
+    multisigSimulation?: MultisigSimulation.Spec | undefined
     nonceKey?: 'random' | bigintType | undefined
-    validBefore?: numberType | undefined
     validAfter?: numberType | undefined
+    validBefore?: numberType | undefined
   }
 >
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
-  'authorizationList' | 'feeToken' | 'keyAuthorization' | 'multisigWitness'
+  'authorizationList' | 'feeToken' | 'keyAuthorization' | 'multisigSimulation'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
-  multisigWitness?: MultisigWitness.Rpc | undefined
+  multisigSimulation?: MultisigSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
 
@@ -79,7 +79,7 @@ export type Rpc = Omit<
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const { authorizationList: _, multisigWitness: __, ...rest } = request
+  const { authorizationList: _, multisigSimulation: __, ...rest } = request
   const request_ = ox_TransactionRequest.fromRpc(
     rest as any,
   ) as TransactionRequest
@@ -110,8 +110,10 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
     )
-  if (request.multisigWitness)
-    request_.multisigWitness = MultisigWitness.fromRpc(request.multisigWitness)
+  if (request.multisigSimulation)
+    request_.multisigSimulation = MultisigSimulation.fromRpc(
+      request.multisigSimulation,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = Hex.toNumber(request.validBefore as Hex.Hex)
   if (typeof request.validAfter !== 'undefined')
@@ -125,9 +127,9 @@ export function fromRpc(request: Rpc): TransactionRequest {
 export declare namespace fromRpc {
   export type ErrorType =
     | AuthorizationTempo.fromRpcList.ErrorType
-    | MultisigWitness.fromRpc.ErrorType
-    | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
+    | Hex.toNumber.ErrorType
+    | MultisigSimulation.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -210,8 +212,10 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
     )
-  if (request.multisigWitness)
-    request_rpc.multisigWitness = MultisigWitness.toRpc(request.multisigWitness)
+  if (request.multisigSimulation)
+    request_rpc.multisigSimulation = MultisigSimulation.toRpc(
+      request.multisigSimulation,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = Hex.fromNumber(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -230,7 +234,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
     typeof request.keyAuthorization !== 'undefined' ||
-    typeof request.multisigWitness !== 'undefined' ||
+    typeof request.multisigSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -249,7 +253,7 @@ export function toRpc(request: TransactionRequest): Rpc {
 export declare namespace toRpc {
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
-    | MultisigWitness.toRpc.ErrorType
+    | MultisigSimulation.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }

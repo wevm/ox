@@ -1,7 +1,11 @@
-import { type MultisigWitness, TransactionRequest } from 'ox/tempo'
+import {
+  MultisigConfig,
+  type MultisigSimulation,
+  TransactionRequest,
+} from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
-const multisigWitnessRpc = {
+const multisigSimulationRpc = {
   account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   approvals: [
     {
@@ -10,8 +14,7 @@ const multisigWitnessRpc = {
       type: 'primitive',
     },
     {
-      type: 'multisig',
-      witness: {
+      spec: {
         account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
         approvals: [
           {
@@ -20,7 +23,25 @@ const multisigWitnessRpc = {
             owner: '0x2222222222222222222222222222222222222222',
           },
         ],
-        config: {
+        config:
+          '0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201',
+      },
+      type: 'multisig',
+    },
+  ],
+  config:
+    '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01',
+} as const satisfies MultisigSimulation.Rpc
+
+const multisigSimulation = {
+  account: multisigSimulationRpc.account,
+  approvals: [
+    multisigSimulationRpc.approvals[0],
+    {
+      spec: {
+        account: multisigSimulationRpc.approvals[1].spec.account,
+        approvals: multisigSimulationRpc.approvals[1].spec.approvals,
+        config: MultisigConfig.from({
           owners: [
             {
               owner: '0x2222222222222222222222222222222222222222',
@@ -29,12 +50,13 @@ const multisigWitnessRpc = {
           ],
           salt: `0x${'22'.repeat(32)}`,
           threshold: 1,
-          version: 1,
-        },
+          version: 1n,
+        }),
       },
+      type: 'multisig',
     },
   ],
-  config: {
+  config: MultisigConfig.from({
     owners: [
       {
         owner: '0x1111111111111111111111111111111111111111',
@@ -47,27 +69,8 @@ const multisigWitnessRpc = {
     ],
     salt: `0x${'11'.repeat(32)}`,
     threshold: 2,
-    version: 0,
-  },
-} as const satisfies MultisigWitness.Rpc
-
-const multisigWitness = {
-  ...multisigWitnessRpc,
-  approvals: [
-    multisigWitnessRpc.approvals[0],
-    {
-      ...multisigWitnessRpc.approvals[1],
-      witness: {
-        ...multisigWitnessRpc.approvals[1].witness,
-        config: {
-          ...multisigWitnessRpc.approvals[1].witness.config,
-          version: 1n,
-        },
-      },
-    },
-  ],
-  config: { ...multisigWitnessRpc.config, version: 0n },
-} as const satisfies MultisigWitness.MultisigWitness
+  }),
+} as const satisfies MultisigSimulation.Spec
 
 describe('fromRpc', () => {
   test('default', () => {
@@ -137,19 +140,64 @@ describe('fromRpc', () => {
     expect(request.nonceKey).toBe(255n)
   })
 
-  test('behavior: multisig witness', () => {
+  test('behavior: multisig simulation', () => {
     const request = TransactionRequest.fromRpc({
       from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      multisigWitness: multisigWitnessRpc,
+      multisigSimulation: multisigSimulationRpc,
       type: '0x76',
     })
 
-    expect(request.multisigWitness?.config.version).toBe(0n)
-    const nested = request.multisigWitness?.approvals[1]
-    expect(nested?.type).toBe('multisig')
-    if (nested?.type !== 'multisig') throw new Error('expected multisig')
-    expect(nested.witness.config.version).toBe(1n)
-    expect(nested.witness.approvals[0]?.keyType).toBe('webAuthn')
+    expect(request.multisigSimulation).toMatchInlineSnapshot(`
+      {
+        "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "approvals": [
+          {
+            "keyType": "secp256k1",
+            "owner": "0x1111111111111111111111111111111111111111",
+            "type": "primitive",
+          },
+          {
+            "spec": {
+              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "approvals": [
+                {
+                  "keyData": "0x0578",
+                  "keyType": "webAuthn",
+                  "owner": "0x2222222222222222222222222222222222222222",
+                },
+              ],
+              "config": {
+                "owners": [
+                  {
+                    "owner": "0x2222222222222222222222222222222222222222",
+                    "weight": 1,
+                  },
+                ],
+                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+                "threshold": 1,
+                "version": 1n,
+              },
+            },
+            "type": "multisig",
+          },
+        ],
+        "config": {
+          "owners": [
+            {
+              "owner": "0x1111111111111111111111111111111111111111",
+              "weight": 1,
+            },
+            {
+              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "threshold": 2,
+          "version": 0n,
+        },
+      }
+    `)
   })
 
   test('behavior: empty', () => {
@@ -206,18 +254,43 @@ describe('toRpc', () => {
     `)
   })
 
-  test('behavior: multisig witness', () => {
+  test('behavior: multisig simulation', () => {
     const request = TransactionRequest.toRpc({
       from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      multisigWitness,
+      multisigSimulation,
     })
 
-    expect(request.multisigWitness?.config.version).toBe(0)
-    const nested = request.multisigWitness?.approvals[1]
-    expect(nested?.type).toBe('multisig')
-    if (nested?.type !== 'multisig') throw new Error('expected multisig')
-    expect(nested.witness.config.version).toBe(1)
-    expect(request.type).toBe('0x76')
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "multisigSimulation": {
+          "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "approvals": [
+            {
+              "keyType": "secp256k1",
+              "owner": "0x1111111111111111111111111111111111111111",
+              "type": "primitive",
+            },
+            {
+              "spec": {
+                "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "approvals": [
+                  {
+                    "keyData": "0x0578",
+                    "keyType": "webAuthn",
+                    "owner": "0x2222222222222222222222222222222222222222",
+                  },
+                ],
+                "config": "0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201",
+              },
+              "type": "multisig",
+            },
+          ],
+          "config": "0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01",
+        },
+        "type": "0x76",
+      }
+      `)
   })
 })
 
@@ -241,7 +314,7 @@ describe('roundtrip', () => {
       nonceKey: 255n,
       gas: 100000n,
       maxFeePerGas: 1000000000n,
-      multisigWitness,
+      multisigSimulation,
     }
 
     const rpc = TransactionRequest.toRpc(original)
@@ -262,7 +335,7 @@ describe('roundtrip', () => {
     expect(converted.nonceKey).toBe(original.nonceKey)
     expect(converted.gas).toBe(original.gas)
     expect(converted.maxFeePerGas).toBe(original.maxFeePerGas)
-    expect(converted.multisigWitness).toEqual(original.multisigWitness)
+    expect(converted.multisigSimulation).toEqual(original.multisigSimulation)
     expect(converted.type).toBe('tempo')
   })
 
@@ -280,7 +353,7 @@ describe('roundtrip', () => {
       validAfter: '0x32',
       nonceKey: '0xff',
       gas: '0x186a0',
-      multisigWitness: multisigWitnessRpc,
+      multisigSimulation: multisigSimulationRpc,
       type: '0x76',
     }
 
@@ -293,7 +366,7 @@ describe('roundtrip', () => {
     expect(rpc.validAfter).toBe(original.validAfter)
     expect(rpc.nonceKey).toBe(original.nonceKey)
     expect(rpc.gas).toBe(original.gas)
-    expect(rpc.multisigWitness).toEqual(original.multisigWitness)
+    expect(rpc.multisigSimulation).toEqual(original.multisigSimulation)
     expect(rpc.type).toBe('0x76')
   })
 })
