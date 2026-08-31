@@ -1,5 +1,24 @@
 # ox
 
+## 1.7.4
+
+### Patch Changes
+
+- [#425](https://github.com/wevm/ox/pull/425) [`5e3c201`](https://github.com/wevm/ox/commit/5e3c20125dc4216f48d78928ed1ecd810f122289) Thanks [@jxom](https://github.com/jxom)! - Added `MultisigOperation.serializeKeyAuthorization` for attaching selected owner approvals to a key authorization.
+
+  ```ts
+  const authorization = MultisigOperation.serializeKeyAuthorization(
+    keyAuthorization,
+    {
+      account,
+      approvals: selection.selectedApprovals,
+      config,
+    },
+  );
+  ```
+
+- [#428](https://github.com/wevm/ox/pull/428) [`a4e84db`](https://github.com/wevm/ox/commit/a4e84db03d10f8c3818dcd9610cd071f95e6c3d4) Thanks [@jxom](https://github.com/jxom)! - Aligned Tempo multisig simulation requests and RPC signatures with T12's encoded wire formats.
+
 ## 1.7.3
 
 ### Patch Changes
