@@ -126,9 +126,7 @@ export type SignatureEnvelope<numberType = number> =
   | MultisigOneOf<numberType>
 
 /** RPC-formatted signature envelope. */
-export type SignatureEnvelopeRpc =
-  | (NonMultisigRpc & Undefined<Omit<MultisigRpc, 'type'>>)
-  | MultisigRpcOneOf
+export type SignatureEnvelopeRpc = NonMultisigRpc | MultisigRpc
 
 /** Primitive signature envelope accepted by protocol sidecars. */
 export type Primitive<numberType = number> = OneOf<
@@ -180,7 +178,7 @@ export type KeychainRpc = {
 export type Multisig<numberType = number> = {
   /** Native multisig account address. */
   account: Address.Address
-  /** Complete applicable multisig configuration witness. */
+  /** Complete applicable multisig configuration. */
   config: MultisigConfig.Config<bigint, numberType>
   /**
    * Owner approvals over the multisig owner approval digest. Each approval is
@@ -196,20 +194,8 @@ interface MultisigOneOf<numberType = number>
     Multisig<numberType>,
     Undefined<Omit<NonMultisig<numberType>, 'type'>> {}
 
-/** RPC-formatted native multisig signature. */
-export type MultisigRpc = {
-  /** Native multisig account address. */
-  account: Address.Address
-  /** Complete applicable multisig configuration witness. */
-  config: MultisigConfig.Config<number, number>
-  /** Structured owner approvals. */
-  signatures: readonly SignatureEnvelopeRpc[]
-  /** Multisig RPC signatures are untagged. */
-  type?: undefined
-}
-
-interface MultisigRpcOneOf
-  extends MultisigRpc, Undefined<Omit<NonMultisigRpc, 'type'>> {}
+/** RPC-formatted native multisig signature without the `0x05` type byte. */
+export type MultisigRpc = Hex.Hex
 
 export type P256<numberType = number> = {
   prehash: boolean
@@ -1040,7 +1026,7 @@ export declare namespace from {
     | {
         /** Initial native multisig account, derived from config when omitted. */
         account?: Address.Address | undefined
-        /** Initial version-0 multisig configuration witness. */
+        /** Initial version-0 multisig configuration. */
         config: MultisigConfig.Input<0 | 0n>
         /** Primitive or nested owner approvals. */
         signatures: readonly SignatureEnvelope[]
@@ -1049,7 +1035,7 @@ export declare namespace from {
     | {
         /** Native multisig account. */
         account: Address.Address
-        /** Complete applicable multisig configuration witness. */
+        /** Complete applicable multisig configuration. */
         config: MultisigConfig.Input
         /** Primitive or nested owner approvals. */
         signatures: readonly SignatureEnvelope[]
@@ -1103,6 +1089,20 @@ export declare namespace from {
  * @returns The signature envelope with bigint values.
  */
 export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
+  if (typeof envelope === 'string') {
+    const serialized = Hex.concat(serializedMultisigType, envelope)
+    const result = deserialize(serialized)
+    if (
+      result.type !== 'multisig' ||
+      !Hex.isEqual(serialize(result), serialized)
+    )
+      throw new InvalidSerializedError({
+        reason: 'invalid multisig RPC signature',
+        serialized: envelope,
+      })
+    return result
+  }
+
   if (envelope.type === 'secp256k1')
     return {
       signature: Signature.fromRpc(envelope),
@@ -1185,21 +1185,6 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     }
   }
 
-  if (
-    (envelope as { type?: string | undefined }).type === 'multisig' ||
-    ('config' in envelope && 'signatures' in envelope)
-  ) {
-    const multisig = envelope as MultisigRpc
-    const result = {
-      account: multisig.account,
-      config: MultisigConfig.from(multisig.config),
-      signatures: multisig.signatures.map((signature) => fromRpc(signature)),
-      type: 'multisig',
-    } satisfies Multisig
-    assert(result)
-    return result
-  }
-
   throw new CoercionError({ envelope })
 }
 
@@ -1207,8 +1192,10 @@ export declare namespace fromRpc {
   type ErrorType =
     | assert.ErrorType
     | CoercionError
+    | Hex.concat.ErrorType
+    | Hex.isEqual.ErrorType
     | InvalidSerializedError
-    | MultisigConfig.assert.ErrorType
+    | serialize.ErrorType
     | Signature.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
@@ -1510,7 +1497,7 @@ export declare namespace sortMultisigApprovals {
   type Value = {
     /** The native multisig account address. */
     account: Address.Address
-    /** Complete applicable multisig configuration witness. */
+    /** Complete applicable multisig configuration. */
     config: MultisigConfig.Input
     /** The inner transaction sign payload (`tx.signature_hash()`). */
     payload: Hex.Hex | Bytes.Bytes
@@ -1599,16 +1586,7 @@ export function toRpc<const envelope extends toRpc.Input>(
 
   if (type === 'multisig') {
     const multisig = envelope as Multisig
-    assert(multisig)
-    const config = MultisigConfig.toRpc(multisig.config)
-    return {
-      account: multisig.account,
-      config: {
-        ...config,
-        version: Hex.toNumber(config.version),
-      },
-      signatures: multisig.signatures.map((signature) => toRpc(signature)),
-    } as never
+    return Hex.slice(serialize(multisig), 1) as never
   }
 
   throw new CoercionError({ envelope })
@@ -1635,8 +1613,8 @@ export declare namespace toRpc {
   type ErrorType =
     | assert.ErrorType
     | CoercionError
-    | Hex.toNumber.ErrorType
-    | MultisigConfig.toRpc.ErrorType
+    | Hex.slice.ErrorType
+    | serialize.ErrorType
     | Signature.toRpc.ErrorType
     | Errors.GlobalErrorType
 }

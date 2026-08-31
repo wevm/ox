@@ -1,6 +1,9 @@
 import { Transaction } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
 
+const multisigRpcSignature =
+  '0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
+
 describe('fromRpc', () => {
   test('default', () => {
     const transaction = Transaction.fromRpc({
@@ -508,6 +511,64 @@ describe('toRpc', () => {
         },
         "transactionIndex": "0x2",
         "type": "0x76",
+      }
+    `)
+  })
+})
+
+describe('roundtrip', () => {
+  test('behavior: multisig RPC signature', () => {
+    const rpc = {
+      accessList: [],
+      blockHash:
+        '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+      blockNumber: '0x12f296f',
+      calls: [],
+      chainId: '0x1',
+      feeToken: '0x20c0000000000000000000000000000000000000',
+      from: '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
+      gas: '0x43f5d',
+      hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      maxFeePerGas: '0x2',
+      maxPriorityFeePerGas: '0x1',
+      nonce: '0x357',
+      signature: multisigRpcSignature,
+      transactionIndex: '0x2',
+      type: '0x76',
+    } as const satisfies Transaction.TempoRpc
+    const transaction = Transaction.fromRpc(rpc)
+
+    expect({
+      rpc: Transaction.toRpc(transaction).signature,
+      signature: transaction.signature,
+    }).toMatchInlineSnapshot(`
+      {
+        "rpc": "0xf897949dba7f426b711d4893c11611eacf7cc334e7146bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b",
+        "signature": {
+          "account": "0x9dba7f426b711d4893c11611eacf7cc334e7146b",
+          "config": {
+            "owners": [
+              {
+                "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+                "weight": 1,
+              },
+            ],
+            "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "threshold": 1,
+            "version": 0n,
+          },
+          "signatures": [
+            {
+              "signature": {
+                "r": "0x869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f985",
+                "s": "0x35dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f4",
+                "yParity": 0,
+              },
+              "type": "secp256k1",
+            },
+          ],
+          "type": "multisig",
+        },
       }
     `)
   })

@@ -348,6 +348,7 @@ describe('fromRpc', () => {
         type: 'p256',
       },
     })
+    if (typeof result.signature === 'string') throw new Error('unreachable')
     expect(result.signature.type).toBe('p256')
     expect(result.signature).toHaveProperty('prehash', true)
     expect(result.signature).toHaveProperty('publicKey')
@@ -370,6 +371,7 @@ describe('fromRpc', () => {
           '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976305000000007b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22222c226f726967696e223a2268747470733a2f2f6578616d706c652e636f6d222c2263726f73734f726967696e223a66616c73657d',
       },
     })
+    if (typeof result.signature === 'string') throw new Error('unreachable')
     expect(result.signature.type).toBe('webAuthn')
     expect(result.signature).toHaveProperty('metadata')
     expect(result.signature).toHaveProperty('publicKey')
@@ -994,6 +996,7 @@ describe('toRpc', () => {
         type: 'p256',
       },
     })
+    if (typeof result.signature === 'string') throw new Error('unreachable')
     expect(result.signature.type).toBe('p256')
   })
 
@@ -1019,6 +1022,7 @@ describe('toRpc', () => {
         type: 'webAuthn',
       },
     })
+    if (typeof result.signature === 'string') throw new Error('unreachable')
     expect(result.signature.type).toBe('webAuthn')
   })
 })

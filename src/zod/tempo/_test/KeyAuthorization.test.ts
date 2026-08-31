@@ -142,21 +142,8 @@ describe('KeyAuthorization', () => {
   })
 
   test('round-trips multisig signatures', () => {
-    const multisigRpc = {
-      account: '0x1111111111111111111111111111111111111111',
-      config: {
-        owners: [
-          {
-            owner: '0x2222222222222222222222222222222222222222',
-            weight: 1,
-          },
-        ],
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 1,
-        version: 1,
-      },
-      signatures: [rpc.signature],
-    } as const
+    const multisigRpc =
+      '0xf89794be95c3f554e9fc85ec51be69a3d807a0d55bcf2cf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694f39fd6e51aad88f6f4ce6ab8827279cfffb9226601f843b841fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c' as const
     const withMultisig = { ...rpc, signature: multisigRpc }
     const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, withMultisig)
     expect(decoded).toEqual(core_KeyAuthorization.fromRpc(withMultisig))

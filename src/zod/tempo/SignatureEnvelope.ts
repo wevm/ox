@@ -39,20 +39,6 @@ const Signature = z.object({
   s: z_Hex.Hex32,
 })
 
-const MultisigConfigRpc = z
-  .object({
-    owners: z.readonly(z.array(z_MultisigConfig.Owner)),
-    salt: z_Hex.Hex,
-    threshold: z.number(),
-    version: z.number(),
-  })
-  .check(
-    z.refine(
-      (value) => core_MultisigConfig.validate(value),
-      'expected valid native multisig configuration',
-    ),
-  )
-
 /** RPC secp256k1 signature envelope schema. */
 export const Secp256k1Rpc = z.object({
   r: z_Hex.Hex,
@@ -99,36 +85,15 @@ export const KeychainRpc = z.object({
 })
 
 /** RPC native multisig signature envelope schema. */
-export const MultisigRpc = z
-  .strictObject({
-    account: z_Address.Address,
-    config: MultisigConfigRpc,
-    signatures: z.lazy(
-      (): z.ZodMiniType<
-        readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
-        readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
-      > =>
-        z.readonly(
-          z
-            .array(Rpc)
-            .check(
-              z.minLength(1),
-              z.maxLength(core_MultisigConfig.maxSignatures),
-            ),
-        ) as never,
-    ),
-  })
-  // Keep invalid recursive approvals inside Zod's issue path.
-  .check(
-    z.refine((value) => {
-      try {
-        core_SignatureEnvelope.fromRpc(value)
-        return true
-      } catch {
-        return false
-      }
-    }, 'expected valid native multisig signature'),
-  )
+export const MultisigRpc = z_Hex.Hex.check(
+  z.refine((value) => {
+    try {
+      return core_SignatureEnvelope.fromRpc(value).type === 'multisig'
+    } catch {
+      return false
+    }
+  }, 'expected valid native multisig signature'),
+)
 
 /** RPC signature envelope schema. */
 export const Rpc = z.union([
@@ -223,6 +188,8 @@ export const Serialized = z_Hex.Hex
 function fromRpc(
   value: core_SignatureEnvelope.SignatureEnvelopeRpc,
 ): core_SignatureEnvelope.SignatureEnvelope {
+  if (typeof value === 'string') return core_SignatureEnvelope.fromRpc(value)
+
   if (value.type === 'secp256k1') {
     const secp256k1 = value as core_SignatureEnvelope.Secp256k1Rpc
     return {
@@ -268,11 +235,6 @@ function fromRpc(
       type: 'webAuthn',
     }
   }
-
-  if ('config' in value && 'signatures' in value)
-    return core_SignatureEnvelope.fromRpc(
-      value as core_SignatureEnvelope.MultisigRpc,
-    )
 
   const keychain = value as core_SignatureEnvelope.KeychainRpc
   return {
