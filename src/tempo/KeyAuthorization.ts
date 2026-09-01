@@ -443,6 +443,7 @@ export function from<
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
   if (auth.signature) assertSignature(auth.signature)
+  assertAdminBinding(auth.isAdmin, auth.account)
   const resolved = {
     ...auth,
     ...(auth.scopes
@@ -947,6 +948,7 @@ export function toRpc(authorization: toRpc.Input): Rpc {
   } = authorization
   assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
+  assertAdminBinding(isAdmin, account)
 
   // Group flat scopes by address into nested allowedCalls wire format
   const allowedCalls = (() => {
@@ -1046,6 +1048,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
     account,
   } = authorization
   if (witness !== undefined) assertWitness(witness)
+  assertAdminBinding(isAdmin, account)
   const signature = (() => {
     if (!authorization.signature) return undefined
     assertSignature(authorization.signature)
@@ -1195,6 +1198,24 @@ function isAbsent(value: unknown): boolean {
   return value === undefined || value === '0x'
 }
 
+// TIP-1049: an admin marker with no `account` binding is unscoped and has no
+// well-defined meaning on-chain (the admin grant is defined relative to the
+// bound account). Only this direction is rejected — `account` alone (no
+// `isAdmin`) is a normal account-scoped, non-admin key and round-trips fine
+// (`isAdmin` defaults to `false`), so it is intentionally left permitted.
+// Wire-decoded shapes (`fromTuple`/`fromRpc`) are NOT checked here: a
+// wire-carried orphan marker is deliberately tolerated for forward-compat
+// and normalized (the orphan field is dropped) rather than rejected — this
+// assertion only guards the encode boundary, so ox itself can never
+// *produce* wire bytes that fail to round-trip.
+function assertAdminBinding(
+  isAdmin: boolean | null | undefined,
+  account: Address.Address | null | undefined,
+): void {
+  if (isAdmin && (account === undefined || account === null))
+    throw new MissingAdminAccountError()
+}
+
 /** Thrown when a `witness` field is not exactly 32 bytes. */
 export class InvalidWitnessSizeError extends Error {
   override readonly name = 'KeyAuthorization.InvalidWitnessSizeError'
@@ -1211,6 +1232,20 @@ export class InvalidAdminMarkerError extends Error {
   constructor(marker: Hex.Hex) {
     super(
       `Admin marker \`${marker}\` is invalid; expected \`0x01\` (TIP-1049).`,
+    )
+  }
+}
+
+/**
+ * Thrown when `isAdmin: true` is set with no `account` binding (TIP-1049).
+ * An admin grant is only meaningful scoped to an account; an unscoped
+ * marker cannot be represented stably on the wire.
+ */
+export class MissingAdminAccountError extends Error {
+  override readonly name = 'KeyAuthorization.MissingAdminAccountError'
+  constructor() {
+    super(
+      '`isAdmin: true` requires an `account` binding (TIP-1049); the admin grant must be scoped to an account.',
     )
   }
 }

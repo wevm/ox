@@ -2680,4 +2680,95 @@ describe('admin keys (TIP-1049)', () => {
     })
     expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
   })
+
+  // These compose the encoder and decoder on the exact same object, unlike
+  // the tests above, which only ever exercise one side (a `from()`-built
+  // paired fixture through `toTuple`, or a hand-written orphan tuple/RPC
+  // literal that never came out of the real encoder). An orphan built via
+  // `from()` and then encoded is what actually happened before this fix:
+  // `toTuple`/`toRpc` silently emitted `isAdmin: true` with no `account`
+  // on the wire, and `fromTuple`/`fromRpc` silently dropped it back off on
+  // decode -- so `hash()` before and after a round trip disagreed.
+  test('toTuple: throws on orphan isAdmin with no account', () => {
+    // Bypasses `from()` (which now also rejects this shape -- see below)
+    // to independently confirm `toTuple` itself enforces the invariant,
+    // exactly as it must for any caller that skips `from()` entirely --
+    // raw wire input reconstructed by hand, or a non-TypeScript caller.
+    const orphan = {
+      address,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    } as any
+    expect(() =>
+      KeyAuthorization.toTuple(orphan),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.MissingAdminAccountError: \`isAdmin: true\` requires an \`account\` binding (TIP-1049); the admin grant must be scoped to an account.]`,
+    )
+  })
+
+  test('toRpc: throws on orphan isAdmin with no account', () => {
+    const orphan = {
+      address,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+      signature: SignatureEnvelope.from(signature_secp256k1),
+    } as any
+    expect(() =>
+      KeyAuthorization.toRpc(orphan),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.MissingAdminAccountError: \`isAdmin: true\` requires an \`account\` binding (TIP-1049); the admin grant must be scoped to an account.]`,
+    )
+  })
+
+  test('from: throws on orphan isAdmin with no account', () => {
+    expect(() =>
+      KeyAuthorization.from({
+        address,
+        chainId: 1n,
+        isAdmin: true,
+        type: 'secp256k1',
+      } as any),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.MissingAdminAccountError: \`isAdmin: true\` requires an \`account\` binding (TIP-1049); the admin grant must be scoped to an account.]`,
+    )
+  })
+
+  test('toTuple/fromTuple: composed round trip is stable for a legitimate admin pair', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const hashBefore = KeyAuthorization.hash(authorization)
+    const decoded = KeyAuthorization.fromTuple(
+      KeyAuthorization.toTuple(authorization),
+    )
+    expect(KeyAuthorization.hash(decoded)).toBe(hashBefore)
+  })
+
+  test('account-only (isAdmin: false) is unaffected by the admin-binding guard', () => {
+    // The reverse direction -- `account` set, `isAdmin: false` -- is a
+    // normal account-scoped, non-admin key. It round-trips stably; only an
+    // unscoped `isAdmin: true` is rejected. (The `OneOf` type requires both
+    // keys together on this branch -- `account` with `isAdmin` omitted
+    // entirely doesn't type-check, so `isAdmin: false` is the legal way to
+    // express "account-scoped, not admin".)
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: false,
+      type: 'secp256k1',
+    })
+    const hashBefore = KeyAuthorization.hash(authorization)
+    const decoded = KeyAuthorization.fromTuple(
+      KeyAuthorization.toTuple(authorization),
+    )
+    expect(decoded.isAdmin).toBe(false)
+    expect(KeyAuthorization.hash(decoded)).toBe(hashBefore)
+  })
 })
