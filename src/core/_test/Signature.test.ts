@@ -642,12 +642,12 @@ describe('fromCompactBytes', () => {
   })
 
   test('behavior: throws on a byte length other than 64', () => {
-    expect(() => Signature.fromCompactBytes(new Uint8Array(20)))
+    expect(() => Signature.fromCompactBytes(new Uint8Array(65)))
       .toThrowErrorMatchingInlineSnapshot(`
-      [Signature.InvalidSerializedSizeError: Value \`0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\` is an invalid signature size.
+      [Signature.InvalidSerializedSizeError: Value \`0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\` is an invalid signature size.
 
-      Expected: 64 bytes or 65 bytes.
-      Received 20 bytes.]
+      Expected: 64 bytes.
+      Received 65 bytes.]
     `)
   })
 })
@@ -679,6 +679,18 @@ describe('toRecoveredBytes', () => {
       '0x0000000000000000000000000000000000000000000000000000000000000002',
     )
   })
+
+  test('behavior: throws before coercing an out-of-range yParity', () => {
+    expect(() =>
+      Signature.toRecoveredBytes({
+        r: '0x01',
+        s: '0x02',
+        yParity: 256,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`256\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
 })
 
 describe('fromRecoveredBytes', () => {
@@ -706,9 +718,13 @@ describe('fromRecoveredBytes', () => {
   })
 
   test('behavior: throws on a byte length other than 65', () => {
-    expect(() => Signature.fromRecoveredBytes(new Uint8Array(64))).toThrowError(
-      'is an invalid signature size',
-    )
+    expect(() => Signature.fromRecoveredBytes(new Uint8Array(64)))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Signature.InvalidSerializedSizeError: Value \`0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\` is an invalid signature size.
+
+      Expected: 65 bytes.
+      Received 64 bytes.]
+    `)
   })
 
   test('behavior: throws on an out-of-range yParity byte', () => {
