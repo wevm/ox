@@ -564,13 +564,16 @@ export declare namespace toBytes {
  */
 export function toCompactBytes(signature: Signature<boolean>): Bytes.Bytes {
   const bytes = new Uint8Array(64)
-  bytes.set(Bytes.fromHex(signature.r, { size: 32 }), 0)
-  bytes.set(Bytes.fromHex(signature.s, { size: 32 }), 32)
+  bytes.set(Bytes.fromHex(Hex.padLeft(signature.r, 32)), 0)
+  bytes.set(Bytes.fromHex(Hex.padLeft(signature.s, 32)), 32)
   return bytes
 }
 
 export declare namespace toCompactBytes {
-  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | Hex.padLeft.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -591,6 +594,8 @@ export declare namespace toCompactBytes {
  * @returns The decoded {@link ox#Signature.Signature}.
  */
 export function fromCompactBytes(bytes: Bytes.Bytes): Signature<false> {
+  if (bytes.length !== 64)
+    throw new InvalidSerializedSizeError({ expectedSize: 64, signature: bytes })
   return {
     r: Hex.fromBytes(bytes.subarray(0, 32)),
     s: Hex.fromBytes(bytes.subarray(32, 64)),
@@ -598,7 +603,10 @@ export function fromCompactBytes(bytes: Bytes.Bytes): Signature<false> {
 }
 
 export declare namespace fromCompactBytes {
-  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
+    | InvalidSerializedSizeError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -621,15 +629,20 @@ export declare namespace fromCompactBytes {
  * @returns The 65-byte recovered representation.
  */
 export function toRecoveredBytes(signature: Signature): Bytes.Bytes {
+  assert(signature, { recovered: true })
   const bytes = new Uint8Array(65)
   bytes[0] = signature.yParity
-  bytes.set(Bytes.fromHex(signature.r, { size: 32 }), 1)
-  bytes.set(Bytes.fromHex(signature.s, { size: 32 }), 33)
+  bytes.set(Bytes.fromHex(Hex.padLeft(signature.r, 32)), 1)
+  bytes.set(Bytes.fromHex(Hex.padLeft(signature.s, 32)), 33)
   return bytes
 }
 
 export declare namespace toRecoveredBytes {
-  type ErrorType = Bytes.fromNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | assert.ErrorType
+    | Hex.padLeft.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -650,15 +663,24 @@ export declare namespace toRecoveredBytes {
  * @returns The decoded {@link ox#Signature.Signature}.
  */
 export function fromRecoveredBytes(bytes: Bytes.Bytes): Signature {
+  if (bytes.length !== 65)
+    throw new InvalidSerializedSizeError({ expectedSize: 65, signature: bytes })
+  const yParity = bytes[0]!
+  if (yParity !== 0 && yParity !== 1)
+    throw new InvalidYParityError({ value: yParity })
   return {
     r: Hex.fromBytes(bytes.subarray(1, 33)),
     s: Hex.fromBytes(bytes.subarray(33, 65)),
-    yParity: bytes[0]!,
+    yParity,
   }
 }
 
 export declare namespace fromRecoveredBytes {
-  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
+    | InvalidSerializedSizeError
+    | InvalidYParityError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -945,10 +967,18 @@ export declare namespace yParityToV {
 export class InvalidSerializedSizeError extends Errors.BaseError {
   override readonly name = 'Signature.InvalidSerializedSizeError'
 
-  constructor({ signature }: { signature: Hex.Hex | Bytes.Bytes }) {
+  constructor({
+    expectedSize,
+    signature,
+  }: {
+    expectedSize?: number | undefined
+    signature: Hex.Hex | Bytes.Bytes
+  }) {
     super(`Value \`${signature}\` is an invalid signature size.`, {
       metaMessages: [
-        'Expected: 64 bytes or 65 bytes.',
+        typeof expectedSize === 'number'
+          ? `Expected: ${expectedSize} bytes.`
+          : 'Expected: 64 bytes or 65 bytes.',
         `Received ${Hex.size(Hex.from(signature))} bytes.`,
       ],
     })
