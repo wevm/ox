@@ -496,12 +496,15 @@ export function decode(
   // don't have to call `inputs.indexOf(...)` per non-indexed entry below
   // (which is O(n^2) on event width).
   const indexedInputs: abitype.AbiEventParameter[] = []
+  const indexedOriginalIndex: number[] = []
   const nonIndexedInputs: abitype.AbiEventParameter[] = []
   const nonIndexedOriginalIndex: number[] = []
   for (let i = 0; i < inputs.length; i++) {
     const input = inputs[i]!
-    if ('indexed' in input && input.indexed) indexedInputs.push(input)
-    else {
+    if ('indexed' in input && input.indexed) {
+      indexedInputs.push(input)
+      indexedOriginalIndex.push(i)
+    } else {
       nonIndexedInputs.push(input)
       nonIndexedOriginalIndex.push(i)
     }
@@ -510,13 +513,14 @@ export function decode(
   // Decode topics (indexed args).
   for (let i = 0; i < indexedInputs.length; i++) {
     const param = indexedInputs[i]!
+    const index = indexedOriginalIndex[i]!
     const topic = argTopics[i]
     if (!topic)
       throw new TopicsMismatchError({
         abiEvent,
         param: param as abitype.AbiParameter & { indexed: boolean },
       })
-    args[isUnnamed ? i : param.name || i] = (() => {
+    args[isUnnamed ? index : param.name || index] = (() => {
       const t = param.type
       if (
         t === 'string' ||
@@ -545,12 +549,10 @@ export function decode(
           options,
         )
         if (decodedData) {
-          if (isUnnamed) args = [...args, ...decodedData]
-          else {
-            for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const index = nonIndexedOriginalIndex[i]!
-              args[nonIndexedInputs[i]!.name! || index] = decodedData[i]
-            }
+          for (let i = 0; i < nonIndexedInputs.length; i++) {
+            const index = nonIndexedOriginalIndex[i]!
+            args[isUnnamed ? index : nonIndexedInputs[i]!.name || index] =
+              decodedData[i]
           }
         }
       } catch (err) {
