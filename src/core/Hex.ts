@@ -281,7 +281,8 @@ export function fromNumber(
   // so it must be rejected here — matching how the `bigint` overload already
   // rejects a sizeless negative value (its `maxValue` stays `undefined`,
   // leaving `minValue` at `0`).
-  const minValue = size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
+  const minValue =
+    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''

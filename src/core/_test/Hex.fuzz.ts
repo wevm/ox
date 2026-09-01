@@ -74,30 +74,33 @@ describe('Hex round-trip', () => {
       nibbles: fc.integer({ min: 0, max: 30 }).map((n) => n * 2 + 1), // odd values in [1, 61]
     },
     { numRuns },
-  )('toBigInt(oddLengthHex, { signed: true }) matches an independent two’s-complement decode', ({ nibbles }) => {
-    fc.assert(
-      fc.property(
-        fc.bigInt({
-          min: nibbles === 1 ? 0n : 16n ** BigInt(nibbles - 1),
-          max: 16n ** BigInt(nibbles) - 1n,
-        }),
-        (magnitude) => {
-          const hexDigits = magnitude.toString(16)
-          expect(hexDigits.length).toBe(nibbles) // sanity: guards the fuzz generator itself
-          const hex = `0x${hexDigits}` as Hex.Hex
+  )(
+    'toBigInt(oddLengthHex, { signed: true }) matches an independent two’s-complement decode',
+    ({ nibbles }) => {
+      fc.assert(
+        fc.property(
+          fc.bigInt({
+            min: nibbles === 1 ? 0n : 16n ** BigInt(nibbles - 1),
+            max: 16n ** BigInt(nibbles) - 1n,
+          }),
+          (magnitude) => {
+            const hexDigits = magnitude.toString(16)
+            expect(hexDigits.length).toBe(nibbles) // sanity: guards the fuzz generator itself
+            const hex = `0x${hexDigits}` as Hex.Hex
 
-          const byteWidth = Math.ceil(nibbles / 2)
-          const maxUnsigned = (1n << (BigInt(byteWidth) * 8n)) - 1n
-          const maxSigned = maxUnsigned >> 1n
-          const expected =
-            magnitude <= maxSigned ? magnitude : magnitude - maxUnsigned - 1n
+            const byteWidth = Math.ceil(nibbles / 2)
+            const maxUnsigned = (1n << (BigInt(byteWidth) * 8n)) - 1n
+            const maxSigned = maxUnsigned >> 1n
+            const expected =
+              magnitude <= maxSigned ? magnitude : magnitude - maxUnsigned - 1n
 
-          expect(Hex.toBigInt(hex, { signed: true })).toEqual(expected)
-        },
-      ),
-      { numRuns: 20 },
-    )
-  })
+            expect(Hex.toBigInt(hex, { signed: true })).toEqual(expected)
+          },
+        ),
+        { numRuns: 20 },
+      )
+    },
+  )
 
   test.prop(
     {
