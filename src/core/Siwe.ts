@@ -330,7 +330,7 @@ export function isUri(value: string): false | string {
   const fragment = splitted[5]
 
   // scheme and path are required, though the path can be empty
-  if (!(scheme?.length && path && path.length >= 0)) return false
+  if (!(scheme?.length && path.length >= 0)) return false
 
   // if authority is present, the path must be empty or begin with a /
   if (authority?.length) {

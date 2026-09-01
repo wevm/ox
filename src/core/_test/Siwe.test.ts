@@ -324,6 +324,53 @@ describe('createMessage', () => {
   `)
   })
 
+  test('behavior: uri with no path (authority only)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
+
+    expect(Siwe.createMessage({ ...message, uri: 'https://example.com' }))
+      .toMatchInlineSnapshot(`
+      "example.com wants you to sign in with your Ethereum account:
+      0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+      URI: https://example.com
+      Version: 1
+      Chain ID: 1
+      Nonce: foobarbaz
+      Issued At: 2023-02-01T00:00:00.000Z"
+    `)
+
+    vi.useRealTimers()
+  })
+
+  test('behavior: resources entry with no path (authority only)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
+
+    expect(
+      Siwe.createMessage({
+        ...message,
+        resources: ['https://example.com', 'https://example.com/foo'],
+      }),
+    ).toMatchInlineSnapshot(`
+      "example.com wants you to sign in with your Ethereum account:
+      0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+      URI: https://example.com/path
+      Version: 1
+      Chain ID: 1
+      Nonce: foobarbaz
+      Issued At: 2023-02-01T00:00:00.000Z
+      Resources:
+      - https://example.com
+      - https://example.com/foo"
+    `)
+
+    vi.useRealTimers()
+  })
+
   test('behavior: invalid version', () => {
     expect(() =>
       // @ts-expect-error
@@ -373,7 +420,7 @@ describe('createMessage', () => {
     - Every resource must be a RFC 3986 URI.
     - See https://www.rfc-editor.org/rfc/rfc3986
 
-    Provided value: https://example.com]
+    Provided value: foo]
   `)
   })
 
@@ -423,6 +470,36 @@ describe('isUri', () => {
   test('default', () => {
     expect(Siwe.isUri('https://example.com/foo')).toMatchInlineSnapshot(
       `"https://example.com/foo"`,
+    )
+  })
+
+  test('behavior: authority with empty path (bare origin)', () => {
+    expect(Siwe.isUri('https://example.com')).toMatchInlineSnapshot(
+      `"https://example.com"`,
+    )
+  })
+
+  test('behavior: authority with empty path and port', () => {
+    expect(Siwe.isUri('https://example.com:8080')).toMatchInlineSnapshot(
+      `"https://example.com:8080"`,
+    )
+  })
+
+  test('behavior: authority with empty path and query', () => {
+    expect(Siwe.isUri('https://example.com?a=1')).toMatchInlineSnapshot(
+      `"https://example.com?a=1"`,
+    )
+  })
+
+  test('behavior: authority with empty path and fragment', () => {
+    expect(Siwe.isUri('https://example.com#top')).toMatchInlineSnapshot(
+      `"https://example.com#top"`,
+    )
+  })
+
+  test('behavior: authority with empty path (non-http scheme)', () => {
+    expect(Siwe.isUri('ipfs://bafybeiabc')).toMatchInlineSnapshot(
+      `"ipfs://bafybeiabc"`,
     )
   })
 
