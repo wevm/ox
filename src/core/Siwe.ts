@@ -33,6 +33,10 @@ const uriIncompleteEscapeRegex = /%[0-9a-f](:?[^0-9a-f]|$)/i
 const uriSchemeRegex = /^[a-z][a-z0-9+\-.]*$/
 const uriPartsRegex =
   /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
+const authorityHostRegex = /^(?:[a-z0-9._~!$&'()*+,;=:%-]*@)?(.*)$/i
+const authorityIpLiteralRegex = /^\[([^\]]+)\](?::\d*)?$/
+const authorityIpFutureRegex = /^v[0-9a-f]+\.[a-z0-9._~!$&'()*+,;=:-]+$/i
+const authorityRegNameRegex = /^(?:[a-z0-9._~!$&'()*+,;=%-]*)(?::\d*)?$/i
 
 /** [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields. */
 export type Message = {
@@ -321,11 +325,12 @@ export function isUri(value: string): false | string {
   const fragment = splitted[5]
 
   // scheme and path are required, though the path can be empty
-  if (!(scheme?.length && path && path.length >= 0)) return false
+  if (!(scheme?.length && path !== undefined)) return false
 
   // if authority is present, the path must be empty or begin with a /
   if (authority?.length) {
     if (!(path.length === 0 || /^\//.test(path))) return false
+    if (path.length === 0 && !isAuthority(authority)) return false
   } else {
     // if authority is not present, the path must not start with //
     if (/^\/\//.test(path)) return false
@@ -345,6 +350,24 @@ export function isUri(value: string): false | string {
   if (fragment?.length) out += `#${fragment}`
 
   return out
+}
+
+function isAuthority(value: string) {
+  const host = value.match(authorityHostRegex)?.[1]
+  if (host === undefined) return false
+
+  const ipLiteral = host.match(authorityIpLiteralRegex)?.[1]
+  if (ipLiteral) {
+    if (authorityIpFutureRegex.test(ipLiteral)) return true
+    try {
+      new URL(`http://[${ipLiteral}]`)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  return authorityRegNameRegex.test(host)
 }
 
 function splitUri(value: string) {
