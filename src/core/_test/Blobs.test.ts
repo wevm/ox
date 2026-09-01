@@ -415,6 +415,35 @@ describe('to', () => {
     const blobs = Blobs.from(data)
     expect(Blobs.to(blobs, 'Bytes')).toEqual(data)
   })
+
+  test('0x80 byte in a non-final blob is not mistaken for the terminator', () => {
+    // A payload large enough to span multiple blobs, containing a 0x80 byte
+    // well before the end. Only the terminator in the LAST blob should end
+    // decoding — a 0x80 byte in an earlier blob is just data.
+    const size = 200_000
+    const data = new Uint8Array(size).fill(0x41)
+    data[1_000] = 0x80
+    data[100_000] = 0x80
+
+    const blobs = Blobs.from(data)
+    expect(blobs.length).toBeGreaterThan(1)
+    expect(Blobs.to(blobs, 'Bytes')).toEqual(data)
+  })
+
+  test('all-0x80 data exactly filling the first blob leaves a terminator-only final blob', () => {
+    // Usable data bytes per blob: one 0x00 padding byte precedes every 31
+    // data bytes, `fieldElementsPerBlob` times. Filling exactly this many
+    // bytes leaves no room for a terminator in the first blob, so `from`
+    // must place it alone in a second, terminator-only blob. Every data
+    // byte here is 0x80 — covers all-0x80 payloads, a 0x80 at the very last
+    // position of a non-final blob, and a terminator-only last blob at once.
+    const size = 31 * Blobs.fieldElementsPerBlob
+    const data = new Uint8Array(size).fill(0x80)
+
+    const blobs = Blobs.from(data)
+    expect(blobs.length).toBe(2)
+    expect(Blobs.to(blobs, 'Bytes')).toEqual(data)
+  })
 })
 
 describe('toCommitments', () => {
