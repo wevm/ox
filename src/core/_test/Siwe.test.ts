@@ -503,6 +503,28 @@ describe('isUri', () => {
     )
   })
 
+  test('behavior: authority variants with empty path', () => {
+    expect([
+      Siwe.isUri('https://[2001:db8::1]'),
+      Siwe.isUri('https://user:pass@example.com:8080'),
+      Siwe.isUri('foo://[v1.fe]'),
+    ]).toMatchInlineSnapshot(`
+      [
+        "https://[2001:db8::1]",
+        "https://user:pass@example.com:8080",
+        "foo://[v1.fe]",
+      ]
+    `)
+  })
+
+  test.each([
+    'https://example.com:bad',
+    'https://[:::]',
+    'https://user@@example.com',
+  ])('behavior: invalid authority with empty path `%s`', (uri) => {
+    expect(Siwe.isUri(uri)).toMatchInlineSnapshot(`false`)
+  })
+
   test('behavior: check for illegal characters', () => {
     expect(Siwe.isUri('^')).toBeFalsy()
   })
