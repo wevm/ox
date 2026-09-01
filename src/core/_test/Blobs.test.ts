@@ -415,6 +415,28 @@ describe('to', () => {
     const blobs = Blobs.from(data)
     expect(Blobs.to(blobs, 'Bytes')).toEqual(data)
   })
+
+  test('0x80 byte in a non-final blob is not mistaken for the terminator', () => {
+    // This payload spans multiple blobs and places terminator-shaped data in the first blob.
+    const size = 200_000
+    const data = new Uint8Array(size).fill(0x41)
+    data[1_000] = 0x80
+    data[100_000] = 0x80
+
+    const blobs = Blobs.from(data)
+    expect(blobs.length).toBeGreaterThan(1)
+    expect(Blobs.to(blobs, 'Bytes')).toEqual(data)
+  })
+
+  test('all-0x80 data exactly filling the first blob leaves a terminator-only final blob', () => {
+    // Exact first-blob capacity forces `Blobs.from` to place the terminator in a second blob.
+    const size = 31 * Blobs.fieldElementsPerBlob
+    const data = new Uint8Array(size).fill(0x80)
+
+    const blobs = Blobs.from(data)
+    expect(blobs.length).toBe(2)
+    expect(Blobs.to(blobs, 'Bytes')).toEqual(data)
+  })
 })
 
 describe('toCommitments', () => {
