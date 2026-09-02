@@ -796,6 +796,42 @@ describe('deserialize', () => {
         `[Hex.SliceOffsetOutOfBoundsError: Slice starting at offset \`20\` is out-of-bounds (size: \`10\`).]`,
       )
     })
+
+    test('behavior: version defaults to v1 (matching the documented @default) when omitted', () => {
+      // Regression: `serialize` previously selected the v2 type id whenever
+      // `version` was anything other than the literal string 'v1' -- which
+      // includes `undefined` (version omitted). `Keychain['version']` is
+      // documented `@default 'v1'`, so an omitted version must serialize
+      // identically to an explicit 'v1', not silently fall through to v2.
+      const withoutVersion = SignatureEnvelope.from({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+      })
+      const explicitV1 = SignatureEnvelope.from({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+        version: 'v1',
+      })
+      const explicitV2 = SignatureEnvelope.from({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+        version: 'v2',
+      })
+
+      const serializedWithoutVersion =
+        SignatureEnvelope.serialize(withoutVersion)
+      expect(serializedWithoutVersion).toBe(
+        SignatureEnvelope.serialize(explicitV1),
+      )
+      expect(serializedWithoutVersion).not.toBe(
+        SignatureEnvelope.serialize(explicitV2),
+      )
+
+      // The deserialized round trip must report 'v1', not 'v2'.
+      expect(
+        SignatureEnvelope.deserialize(serializedWithoutVersion),
+      ).toMatchObject({ version: 'v1' })
+    })
   })
 })
 

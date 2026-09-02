@@ -984,13 +984,14 @@ export function from<const value extends from.Value>(
     ...(type === 'p256' ? { prehash: (value as P256).prehash } : {}),
     ...(type === 'keychain'
       ? {
+          // `Keychain['version']` is documented `@default 'v1'`.
           ...(!(
             typeof value === 'object' &&
             value !== null &&
             'version' in value &&
             value.version
           )
-            ? { version: 'v2' }
+            ? { version: 'v1' }
             : {}),
           ...(!(typeof value === 'object' && 'keyId' in value && value.keyId)
             ? (() => {
@@ -1359,10 +1360,12 @@ export function serialize(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
+    // `version` defaults to 'v1' (see `Keychain['version']`'s doc comment),
+    // so only an explicit 'v2' should select the v2 type id.
     const keychainTypeId =
-      keychain.version === 'v1'
-        ? serializedKeychainType
-        : serializedKeychainV2Type
+      keychain.version === 'v2'
+        ? serializedKeychainV2Type
+        : serializedKeychainType
     return Hex.concat(
       keychainTypeId,
       keychain.userAddress,
