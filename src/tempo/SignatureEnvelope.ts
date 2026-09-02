@@ -153,7 +153,7 @@ export type Keychain<numberType = number> = {
   /** The access key address (recovered address of the access key signer). */
   keyId?: Address.Address | undefined
   type: 'keychain'
-  /** Keychain signature version. @default 'v1' */
+  /** Keychain signature version. @default 'v2' */
   version?: KeychainVersion | undefined
 }
 
@@ -984,14 +984,14 @@ export function from<const value extends from.Value>(
     ...(type === 'p256' ? { prehash: (value as P256).prehash } : {}),
     ...(type === 'keychain'
       ? {
-          // `Keychain['version']` is documented `@default 'v1'`.
+          // `Keychain['version']` is documented `@default 'v2'`.
           ...(!(
             typeof value === 'object' &&
             value !== null &&
             'version' in value &&
             value.version
           )
-            ? { version: 'v1' }
+            ? { version: 'v2' }
             : {}),
           ...(!(typeof value === 'object' && 'keyId' in value && value.keyId)
             ? (() => {
@@ -1360,12 +1360,12 @@ export function serialize(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    // `version` defaults to 'v1' (see `Keychain['version']`'s doc comment),
-    // so only an explicit 'v2' should select the v2 type id.
+    // `version` defaults to 'v2' (see `Keychain['version']`'s doc comment),
+    // so only an explicit 'v1' should select the legacy v1 type id.
     const keychainTypeId =
-      keychain.version === 'v2'
-        ? serializedKeychainV2Type
-        : serializedKeychainType
+      keychain.version === 'v1'
+        ? serializedKeychainType
+        : serializedKeychainV2Type
     return Hex.concat(
       keychainTypeId,
       keychain.userAddress,
