@@ -163,7 +163,7 @@ describe('fromRpc', () => {
     expect(() =>
       MultisigSimulation.fromRpc({ ...rpc, config: noncanonical }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: invalid config encoding.]`,
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: single byte \`0x00\` is wrapped in an explicit length prefix instead of being encoded as itself.]`,
     )
   })
 })
