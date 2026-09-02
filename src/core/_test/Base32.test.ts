@@ -44,6 +44,27 @@ describe('toBytes', () => {
       `[Base32.InvalidCharacterError: Invalid bech32 base32 character: "b".]`,
     )
   })
+
+  test('error: non-zero trailing bits', () => {
+    // `qrlsq` is the canonical encoding of [0x00, 0xff, 0x00]; flipping the
+    // final symbol only touches bits below the byte boundary. A canonical
+    // decoder must reject this rather than silently decode to the same
+    // bytes as `qrlsq` -- two distinct strings must not collide to one value.
+    const canonical = Base32.fromBytes(new Uint8Array([0x00, 0xff, 0x00]))
+    expect(canonical).toEqual('qrlsq')
+    expect(() => Base32.toBytes('qrlsp')).toThrowErrorMatchingInlineSnapshot(
+      `[Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.]`,
+    )
+  })
+
+  test('accepts canonical zero-padded trailing bits', () => {
+    expect(Base32.toBytes('qq')).toEqual(new Uint8Array([0x00]))
+    for (let n = 1; n <= 8; n++) {
+      const bytes = new Uint8Array(n).map((_, i) => (i * 37 + 11) & 0xff)
+      const encoded = Base32.fromBytes(bytes)
+      expect(Base32.toBytes(encoded)).toEqual(bytes)
+    }
+  })
 })
 
 describe('toHex', () => {
