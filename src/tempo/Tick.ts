@@ -100,15 +100,21 @@ export function fromPrice(price: fromPrice.Price): fromPrice.ReturnType {
   if (!/^-?\d+(\.\d+)?$/.test(priceStr))
     throw new InvalidPriceFormatError({ price })
 
-  // Parse price using string manipulation to avoid float precision issues
-  const [w, d = '0'] = priceStr.split('.')
+  // Parse price using string manipulation to avoid float precision issues.
+  // Sign is tracked separately: `BigInt('-0')` is `0n`, so a negative
+  // fractional price (e.g. "-0.999") would otherwise lose its sign and
+  // silently collide with the equivalent positive price (e.g. "0.999").
+  const negative = priceStr.startsWith('-')
+  const unsigned = negative ? priceStr.slice(1) : priceStr
+  const [w, d = '0'] = unsigned.split('.')
   const whole = BigInt(w!)
 
   // Pad or truncate decimal to exactly 5 digits
   const decimal = BigInt(d.padEnd(5, '0').slice(0, 5))
 
   // Calculate price
-  const priceInt = whole * BigInt(priceScale) + decimal
+  let priceInt = whole * BigInt(priceScale) + decimal
+  if (negative) priceInt = -priceInt
 
   // Calculate tick
   const tick = Number(priceInt - BigInt(priceScale))
