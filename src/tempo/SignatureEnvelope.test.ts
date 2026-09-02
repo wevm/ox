@@ -796,6 +796,42 @@ describe('deserialize', () => {
         `[Hex.SliceOffsetOutOfBoundsError: Slice starting at offset \`20\` is out-of-bounds (size: \`10\`).]`,
       )
     })
+
+    test('behavior: version defaults to v2 (matching the documented @default) when omitted', () => {
+      // `Keychain['version']` is documented `@default 'v2'` -- an omitted
+      // version must serialize identically to an explicit 'v2', not fall
+      // through to the legacy v1 type id. (The live Tempo network rejects
+      // v1 keychain signatures outright: "legacy V1 keychain signature is
+      // no longer accepted, use V2" -- confirmed against tempo CI.)
+      const withoutVersion = SignatureEnvelope.from({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+      })
+      const explicitV1 = SignatureEnvelope.from({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+        version: 'v1',
+      })
+      const explicitV2 = SignatureEnvelope.from({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+        version: 'v2',
+      })
+
+      const serializedWithoutVersion =
+        SignatureEnvelope.serialize(withoutVersion)
+      expect(serializedWithoutVersion).toBe(
+        SignatureEnvelope.serialize(explicitV2),
+      )
+      expect(serializedWithoutVersion).not.toBe(
+        SignatureEnvelope.serialize(explicitV1),
+      )
+
+      // The deserialized round trip must report 'v2', not 'v1'.
+      expect(
+        SignatureEnvelope.deserialize(serializedWithoutVersion),
+      ).toMatchObject({ version: 'v2' })
+    })
   })
 })
 
