@@ -114,16 +114,14 @@ describe('decodeData', () => {
     const dataWithArgs = AbiFunction.encodeData(withArgs, [123n])
     // Resolving by name alone (no args) must still disambiguate the
     // zero-input overload from the one actually encoded in `data`.
-    expect(AbiFunction.decodeData(abi, 'deposit', dataWithArgs)).toEqual([
-      123n,
-    ])
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithArgs)).toEqual([123n])
     expect(AbiFunction.decodeData(abi, dataWithArgs)).toEqual([123n])
 
     const withoutArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [] })
     const dataWithoutArgs = AbiFunction.encodeData(withoutArgs)
-    expect(
-      AbiFunction.decodeData(abi, 'deposit', dataWithoutArgs),
-    ).toEqual(undefined)
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithoutArgs)).toEqual(
+      undefined,
+    )
     expect(AbiFunction.decodeData(abi, dataWithoutArgs)).toEqual(undefined)
   })
 })

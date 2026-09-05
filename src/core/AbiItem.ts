@@ -322,10 +322,7 @@ export function fromAbi<
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
-      if (
-        !zeroArgAbiItem &&
-        (!abiItem.inputs || abiItem.inputs.length === 0)
-      )
+      if (!zeroArgAbiItem && (!abiItem.inputs || abiItem.inputs.length === 0))
         zeroArgAbiItem = abiItem
       continue
     }
