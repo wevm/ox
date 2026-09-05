@@ -488,6 +488,23 @@ describe('serialize', () => {
       `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"`,
     )
   })
+
+  test('behavior: r/s shorter than 32 bytes are left-padded, not right-padded', () => {
+    const hex = Signature.toHex({
+      r: '0x01',
+      s: '0x02',
+      yParity: 0,
+    })
+    // `r` occupies the first 32 bytes and must be the big-endian integer `1`
+    // (left-padded), not `1` shifted into the top byte (right-padded).
+    expect(Hex.slice(hex, 0, 32)).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000001',
+    )
+    expect(Hex.slice(hex, 32, 64)).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000002',
+    )
+    expect(Hex.size(hex)).toBe(65)
+  })
 })
 
 describe('toBytes', () => {
