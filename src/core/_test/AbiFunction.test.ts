@@ -91,6 +91,41 @@ describe('decodeData', () => {
       ),
     ).toEqual(['0xdeadbeef'])
   })
+
+  test('behavior: with overloads, resolved by name (one overload has zero inputs)', () => {
+    const abi = Abi.from([
+      {
+        inputs: [],
+        name: 'deposit',
+        outputs: [],
+        stateMutability: 'payable',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: 'assets', type: 'uint256' }],
+        name: 'deposit',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ])
+
+    const withArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [123n] })
+    const dataWithArgs = AbiFunction.encodeData(withArgs, [123n])
+    // Resolving by name alone (no args) must still disambiguate the
+    // zero-input overload from the one actually encoded in `data`.
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithArgs)).toEqual([
+      123n,
+    ])
+    expect(AbiFunction.decodeData(abi, dataWithArgs)).toEqual([123n])
+
+    const withoutArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [] })
+    const dataWithoutArgs = AbiFunction.encodeData(withoutArgs)
+    expect(
+      AbiFunction.decodeData(abi, 'deposit', dataWithoutArgs),
+    ).toEqual(undefined)
+    expect(AbiFunction.decodeData(abi, dataWithoutArgs)).toEqual(undefined)
+  })
 })
 
 describe('decodeResult', () => {
@@ -838,6 +873,30 @@ describe('fromAbi', () => {
       "inputs": [],
       "name": "mint",
       "outputs": [],
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "mint",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+        },
+        {
+          "inputs": [
+            {
+              "type": "string",
+            },
+          ],
+          "name": "mint",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+        },
+      ],
       "stateMutability": "nonpayable",
       "type": "function",
     }
