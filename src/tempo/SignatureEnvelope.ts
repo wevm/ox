@@ -984,7 +984,6 @@ export function from<const value extends from.Value>(
     ...(type === 'p256' ? { prehash: (value as P256).prehash } : {}),
     ...(type === 'keychain'
       ? {
-          // `Keychain['version']` is documented `@default 'v2'`.
           ...(!(
             typeof value === 'object' &&
             value !== null &&
