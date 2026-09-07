@@ -276,11 +276,7 @@ export function fromNumber(
     maxValue = BigInt(Number.MAX_SAFE_INTEGER)
   }
 
-  // A negative `number` value without an explicit `size` has no defined
-  // two's-complement width to encode into (`size * 8` below would be `NaN`),
-  // so it must be rejected here — matching how the `bigint` overload already
-  // rejects a sizeless negative value (its `maxValue` stays `undefined`,
-  // leaving `minValue` at `0`).
+  // A negative value has no two's-complement width without `size`; reject it.
   const minValue =
     size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
 
@@ -607,9 +603,7 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
   const value = BigInt(hex)
   if (!signed) return value
 
-  // `Math.ceil` handles odd-length hex (e.g. `0x1a4`, ox's own `fromNumber`
-  // output for many values) — a plain `/ 2` yields a fractional byte count,
-  // which then throws when fed into `BigInt.asUintN`/shifted below.
+  // Odd-length hex (e.g. `fromNumber` output) has an implicit leading zero nibble.
   const size = Math.ceil((hex.length - 2) / 2)
 
   const max_unsigned = (1n << (BigInt(size) * 8n)) - 1n

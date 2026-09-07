@@ -54,51 +54,35 @@ describe('Hex round-trip', () => {
 
   test.prop(
     {
-      // Signed decode, fuzzed directly over odd-length hex strings rather
-      // than round-tripped through `fromNumber` — a round trip through
-      // `fromNumber` (unsigned-minimal-width encoding) is ambiguous
-      // whenever a positive value's own top bit lands on its own byte
-      // boundary (e.g. `2^47`), independent of and unrelated to hex-length
-      // parity, so it isn't a suitable oracle here.
-      //
-      // Generates a magnitude in `[16^(n-1), 16^n - 1]` (n = odd nibble
-      // count) so `magnitude.toString(16)` always renders as EXACTLY n
-      // digits — `toString(16)` doesn't zero-pad, so a magnitude below that
-      // floor would silently render shorter (and possibly even-length),
-      // defeating the odd-length case entirely. The expected value is
-      // computed by an independent two's-complement implementation against
-      // the hex string's own actual length (matching what the real
-      // implementation is meant to do), not assumed from `n` — a fractional
-      // `(hex.length - 2) / 2` byte-width computation previously threw a
-      // `RangeError` on every one of these odd-length inputs.
-      nibbles: fc.integer({ min: 0, max: 30 }).map((n) => n * 2 + 1), // odd values in [1, 61]
-    },
-    { numRuns },
-  )(
-    'toBigInt(oddLengthHex, { signed: true }) matches an independent two’s-complement decode',
-    ({ nibbles }) => {
-      fc.assert(
-        fc.property(
+      // Odd nibble counts, fuzzed directly rather than round-tripped through
+      // `fromNumber`: its minimal-width output makes a positive value with a
+      // set top bit signed-decode as negative, so it is not an oracle here.
+      // The magnitude floor keeps `toString(16)` at exactly `nibbles` digits.
+      magnitude: fc
+        .integer({ min: 0, max: 30 })
+        .map((n) => n * 2 + 1)
+        .chain((nibbles) =>
           fc.bigInt({
             min: nibbles === 1 ? 0n : 16n ** BigInt(nibbles - 1),
             max: 16n ** BigInt(nibbles) - 1n,
           }),
-          (magnitude) => {
-            const hexDigits = magnitude.toString(16)
-            expect(hexDigits.length).toBe(nibbles) // sanity: guards the fuzz generator itself
-            const hex = `0x${hexDigits}` as Hex.Hex
-
-            const byteWidth = Math.ceil(nibbles / 2)
-            const maxUnsigned = (1n << (BigInt(byteWidth) * 8n)) - 1n
-            const maxSigned = maxUnsigned >> 1n
-            const expected =
-              magnitude <= maxSigned ? magnitude : magnitude - maxUnsigned - 1n
-
-            expect(Hex.toBigInt(hex, { signed: true })).toEqual(expected)
-          },
         ),
-        { numRuns: 20 },
-      )
+    },
+    { numRuns },
+  )(
+    'toBigInt(oddLengthHex, { signed: true }) ≡ two’s-complement',
+    ({ magnitude }) => {
+      const hexDigits = magnitude.toString(16)
+      expect(hexDigits.length % 2).toBe(1)
+      const hex = `0x${hexDigits}` as Hex.Hex
+
+      const maxUnsigned =
+        (1n << (BigInt(Math.ceil(hexDigits.length / 2)) * 8n)) - 1n
+      const maxSigned = maxUnsigned >> 1n
+      const expected =
+        magnitude <= maxSigned ? magnitude : magnitude - maxUnsigned - 1n
+
+      expect(Hex.toBigInt(hex, { signed: true })).toEqual(expected)
     },
   )
 
