@@ -80,14 +80,15 @@ export function toBytes(value: string): Bytes.Bytes {
   }
 
   // `pad: false` enforces that leftover bits below a byte boundary are zero
-  // (canonical form); a non-zero remainder means the string re-encodes to a
-  // different Base32 string than it decoded from, so it is rejected here
-  // rather than silently accepted.
+  // (canonical form) and that there are fewer than five of them; a non-zero
+  // remainder, or a string length no encoder can produce, means the string
+  // re-encodes to a different Base32 string than it decoded from, so it is
+  // rejected here rather than silently accepted.
   try {
     return Uint8Array.from(convertBits(values, 5, 8, false))
   } catch (error) {
     if (error instanceof SharedInvalidPaddingError)
-      throw new InvalidPaddingError()
+      throw new InvalidPaddingError({ cause: error })
     throw error
   }
 }
@@ -133,7 +134,7 @@ export class InvalidCharacterError extends Errors.BaseError {
 export class InvalidPaddingError extends Errors.BaseError {
   override readonly name = 'Base32.InvalidPaddingError'
 
-  constructor() {
-    super('Non-canonical trailing bits in Base32 input.')
+  constructor({ cause }: { cause?: Error | undefined } = {}) {
+    super('Non-canonical trailing bits in Base32 input.', { cause })
   }
 }

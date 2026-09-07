@@ -1,4 +1,4 @@
-import { Base32 } from 'ox'
+import { Base32, Bech32m } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 describe('fromBytes', () => {
@@ -18,7 +18,7 @@ describe('fromBytes', () => {
     const bytes = new Uint8Array(20).fill(0xab)
     const encoded = Base32.fromBytes(bytes)
     const decoded = Base32.toBytes(encoded)
-    expect(decoded.slice(0, 20)).toEqual(bytes)
+    expect(decoded).toEqual(bytes)
   })
 })
 
@@ -36,7 +36,7 @@ describe('toBytes', () => {
     ])
     const encoded = Base32.fromBytes(original)
     const decoded = Base32.toBytes(encoded)
-    expect(decoded.slice(0, original.length)).toEqual(original)
+    expect(decoded).toEqual(original)
   })
 
   test('error: invalid character', () => {
@@ -52,9 +52,32 @@ describe('toBytes', () => {
     // bytes as `qrlsq` -- two distinct strings must not collide to one value.
     const canonical = Base32.fromBytes(new Uint8Array([0x00, 0xff, 0x00]))
     expect(canonical).toEqual('qrlsq')
-    expect(() => Base32.toBytes('qrlsp')).toThrowErrorMatchingInlineSnapshot(
-      `[Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.]`,
-    )
+    expect(() => Base32.toBytes('qrlsp')).toThrowErrorMatchingInlineSnapshot(`
+      [Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.
+
+      Details: Invalid padding in base32 data.]
+    `)
+  })
+
+  test('error: impossible length', () => {
+    // Three symbols carry 15 bits: one byte plus 7 leftover, more than the
+    // encoder ever emits, so the string is rejected even though every
+    // leftover bit is zero.
+    expect(() => Base32.toBytes('qqq')).toThrowErrorMatchingInlineSnapshot(`
+      [Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.
+
+      Details: Invalid padding in base32 data.]
+    `)
+  })
+
+  test('error: preserves shared padding error as cause', () => {
+    try {
+      Base32.toBytes('qrlsp')
+      expect.unreachable()
+    } catch (error) {
+      expect(error).toBeInstanceOf(Base32.InvalidPaddingError)
+      expect((error as Error).cause).toBeInstanceOf(Bech32m.InvalidPaddingError)
+    }
   })
 
   test('accepts canonical zero-padded trailing bits', () => {
