@@ -489,14 +489,14 @@ describe('serialize', () => {
     )
   })
 
-  test('behavior: r/s shorter than 32 bytes are left-padded, not right-padded', () => {
+  test('behavior: r/s shorter than 32 bytes are left-padded to 32 bytes', () => {
     const hex = Signature.toHex({
       r: '0x01',
       s: '0x02',
       yParity: 0,
     })
     // `r` occupies the first 32 bytes and must be the big-endian integer `1`
-    // (left-padded), not `1` shifted into the top byte (right-padded).
+    // (left-padded), not concatenated as-is into a truncated `0x01021b`.
     expect(Hex.slice(hex, 0, 32)).toBe(
       '0x0000000000000000000000000000000000000000000000000000000000000001',
     )
