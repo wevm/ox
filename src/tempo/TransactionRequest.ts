@@ -16,17 +16,17 @@ type KeyType = SignatureEnvelope.Type | 'multisig'
 
 /** Quorum used to model a configurable account during RPC simulation. */
 export type MultisigSimulation = {
-  /** Complete current configuration encoded as RLP bytes. */
-  config: Hex.Hex
   /** Primitive owners in ascending signing order, with optional cost hints. */
   approvals: readonly {
-    /** Configured owner address. */
-    owner: Address.Address
-    /** Primitive key type. Omission models a maximum-size WebAuthn approval. */
-    keyType?: SignatureEnvelope.Type | undefined
     /** WebAuthn data-length hint. */
     keyData?: Hex.Hex | undefined
+    /** Primitive key type. Omission models a maximum-size WebAuthn approval. */
+    keyType?: SignatureEnvelope.Type | undefined
+    /** Configured owner address. */
+    owner: Address.Address
   }[]
+  /** Complete current configuration encoded as RLP bytes. */
+  config: Hex.Hex
 }
 
 /**
@@ -51,21 +51,21 @@ export type TransactionRequest<
       | undefined
     calls?: readonly Call<bigintType>[] | undefined
     capabilities?: Record<string, unknown> | undefined
+    feePayer?: boolean | undefined
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
+    feeToken?: Address.Address | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
+    /** Independent parent quorum authorizing the attached key grant. */
+    keyAuthorizationSimulation?: MultisigSimulation | undefined
     keyData?: Hex.Hex | undefined
     keyId?: Address.Address | undefined
     keyType?: KeyType | undefined
-    feePayer?: boolean | undefined
-    feeToken?: Address.Address | undefined
     /** Sender quorum, or delegate quorum when using an access key. */
     multisigSimulation?: MultisigSimulation | undefined
-    /** Independent parent quorum authorizing the attached key grant. */
-    keyAuthorizationSimulation?: MultisigSimulation | undefined
     nonceKey?: 'random' | bigintType | undefined
     signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
-    validBefore?: numberType | undefined
     validAfter?: numberType | undefined
+    validBefore?: numberType | undefined
   }
 >
 

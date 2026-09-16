@@ -38,12 +38,16 @@ export type KeyAuthorization<
   bigintType = bigint,
   numberType = number,
 > = {
+  /** Account address this authorization is bound to. Required for multisig grants. */
+  account?: Address.Address | undefined
   /** Address derived from the public key of the key type. */
   address: Address.Address
   /** Chain ID for replay protection. */
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
+  /** Whether this authorization provisions an admin access key. */
+  isAdmin?: boolean | undefined
   /** TIP20 spending limits for this key. */
   limits?: readonly TokenLimit<bigintType, numberType>[] | undefined
   /**
@@ -66,10 +70,6 @@ export type KeyAuthorization<
    * [TIP-1053 Specification](https://tips.sh/1053)
    */
   witness?: Hex.Hex | undefined
-  /** Account address this authorization is bound to. Required for multisig grants. */
-  account?: Address.Address | undefined
-  /** Whether this authorization provisions an admin access key. */
-  isAdmin?: boolean | undefined
 } & (signed extends true
   ? {
       signature:
@@ -112,21 +112,21 @@ export type Rpc = {
 
 /** RPC representation of a token limit (matches node's `TokenLimit` serde). */
 export type RpcTokenLimit = {
-  token: Address.Address
   limit: Hex.Hex
   period?: Hex.Hex | null | undefined
+  token: Address.Address
 }
 
 /** RPC representation of a call scope (matches node's `CallScope` serde). */
 export type RpcCallScope = {
-  target: Address.Address
   selectorRules?: readonly RpcSelectorRule[] | null | undefined
+  target: Address.Address
 }
 
 /** RPC representation of a selector rule (matches node's `SelectorRule` serde). */
 export type RpcSelectorRule = {
-  selector: Hex.Hex
   recipients?: readonly Address.Address[] | null | undefined
+  selector: Hex.Hex
 }
 
 /** Signed representation of a Key Authorization. */
@@ -217,14 +217,6 @@ export type Scope = {
   /** Target contract address. */
   address: Address.Address
   /**
-   * 4-byte function selector, or a human-readable ABI signature
-   * (e.g. `'transfer(address,uint256)'` or `'function transfer(address,uint256)'`).
-   *
-   * Signatures are encoded into a 4-byte selector automatically.
-   * Omit to allow any selector on this contract.
-   */
-  selector?: Hex.Hex | string | undefined
-  /**
    * Recipient allowlist for this selector (first ABI `address` argument).
    *
    * - `undefined` or `[]` = any recipient allowed
@@ -233,6 +225,14 @@ export type Scope = {
    * Only valid for constrained selectors: `transfer`, `approve`, `transferWithMemo`.
    */
   recipients?: readonly Address.Address[] | undefined
+  /**
+   * 4-byte function selector, or a human-readable ABI signature
+   * (e.g. `'transfer(address,uint256)'` or `'function transfer(address,uint256)'`).
+   *
+   * Signatures are encoded into a 4-byte selector automatically.
+   * Omit to allow any selector on this contract.
+   */
+  selector?: Hex.Hex | string | undefined
 }
 
 /**
@@ -244,8 +244,6 @@ export type Scope = {
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
 export type TokenLimit<bigintType = bigint, numberType = number> = {
-  /** Address of the TIP-20 token. */
-  token: Address.Address
   /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` \> 0). */
   limit: bigintType
   /**
@@ -255,6 +253,8 @@ export type TokenLimit<bigintType = bigint, numberType = number> = {
    * - `\> 0` = periodic limit that resets every `period` seconds
    */
   period?: numberType | undefined
+  /** Address of the TIP-20 token. */
+  token: Address.Address
 }
 
 /**
@@ -423,11 +423,11 @@ export function from<
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
   const auth = authorization as KeyAuthorization & {
-    limits?: readonly { token: Address.Address; limit: bigint }[]
+    limits?: readonly { limit: bigint; token: Address.Address }[]
     scopes?: readonly {
       address: Address.Address
-      selector?: Hex.Hex | string
       recipients?: readonly Address.Address[]
+      selector?: Hex.Hex | string
     }[]
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
@@ -1105,7 +1105,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // single entry to this list with `placeholder: '0x'`.
   const hasTip1053Plus =
     witness !== undefined || isAdmin || account !== undefined
-  const optionals: readonly { value: unknown; placeholder: unknown }[] = [
+  const optionals: readonly { placeholder: unknown; value: unknown }[] = [
     {
       value:
         expiry !== null && expiry !== undefined && expiry !== 0

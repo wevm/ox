@@ -383,10 +383,10 @@ export function getSignPayload(value: getSignPayload.Value): Hex.Hex {
 
 export declare namespace getSignPayload {
   type Value = {
-    /** The 32-byte transaction sign payload. */
-    payload: Hex.Hex | Bytes.Bytes
     /** Permanent native multisig account address. */
     account: Address.Address
+    /** The 32-byte transaction sign payload. */
+    payload: Hex.Hex | Bytes.Bytes
     /** Current configuration version. */
     version: bigint
   }

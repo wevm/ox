@@ -55,15 +55,15 @@ export type GetType<
   : envelope extends { type: infer T extends Type }
     ? T
     : envelope extends {
-          signature: { r: `0x${string}`; s: `0x${string}` }
           prehash: boolean
           publicKey: PublicKey.PublicKey
+          signature: { r: `0x${string}`; s: `0x${string}` }
         }
       ? 'p256'
       : envelope extends {
-            signature: { r: `0x${string}`; s: `0x${string}` }
             metadata: any
             publicKey: PublicKey.PublicKey
+            signature: { r: `0x${string}`; s: `0x${string}` }
           }
         ? 'webAuthn'
         : envelope extends {
@@ -148,22 +148,22 @@ export type PrimitiveRpc = OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc>
 export type KeychainVersion = 'v1' | 'v2'
 
 export type Keychain<numberType = number> = {
-  /** Root account address that this transaction is being executed for */
-  userAddress: Address.Address
   /** The actual signature from the access key (can be Secp256k1, P256, or WebAuthn) */
   inner: SignatureEnvelope<numberType>
   /** The access key address (recovered address of the access key signer). */
   keyId?: Address.Address | undefined
   type: 'keychain'
+  /** Root account address that this transaction is being executed for */
+  userAddress: Address.Address
   /** Keychain signature version. @default 'v1' */
   version?: KeychainVersion | undefined
 }
 
 export type KeychainRpc = {
-  type: 'keychain'
-  userAddress: Address.Address
   keyId?: Address.Address | undefined
   signature: SignatureEnvelopeRpc
+  type: 'keychain'
+  userAddress: Address.Address
   version?: KeychainVersion | undefined
 }
 
@@ -175,13 +175,13 @@ export type KeychainRpc = {
  * identity or stored commitment and the owner quorum against chain state.
  */
 export type Multisig<numberType = number> = {
-  type: 'multisig'
   /** Permanent native multisig account address. */
   account: Address.Address
   /** Complete current configuration, included in every signature. */
   config: MultisigConfig.Config<numberType>
   /** Primitive owner approvals in ascending recovered-address order. */
   signatures: readonly Primitive<numberType>[]
+  type: 'multisig'
 }
 
 /** RLP-encoded `[account, config, signatures]`, without the `0x05` type byte. */
@@ -210,8 +210,8 @@ export type Secp256k1<numberType = number> = {
 
 export type Secp256k1Rpc = Compute<
   Signature.Rpc<true> & {
-    v?: Hex.Hex | undefined
     type: 'secp256k1'
+    v?: Hex.Hex | undefined
   }
 >
 
@@ -227,8 +227,8 @@ export type WebAuthn<numberType = number> = {
     WebAuthnP256.SignMetadata,
     'authenticatorData' | 'clientDataJSON'
   >
-  signature: Signature.Signature<false, numberType>
   publicKey: PublicKey.PublicKey
+  signature: Signature.Signature<false, numberType>
   type: 'webAuthn'
 }
 
@@ -450,10 +450,10 @@ export declare namespace extractAddress {
   type Options = {
     /** The sign payload that was signed (only required for secp256k1 signatures). */
     payload: Hex.Hex | Bytes.Bytes
-    /** The signature envelope. */
-    signature: SignatureEnvelope
     /** Whether to return the root `userAddress` for keychain signatures instead of extracting from the inner signature. */
     root?: boolean | undefined
+    /** The signature envelope. */
+    signature: SignatureEnvelope
   }
 
   type ReturnType = Address.Address
