@@ -72,67 +72,36 @@ export const WebAuthnRpc = z.object({
 export const PrimitiveRpc = z.union([Secp256k1Rpc, P256Rpc, WebAuthnRpc])
 
 /** RPC keychain signature envelope schema. */
-export const KeychainRpc = z.object({
-  keyId: z.optional(z_Address.Address),
-  // `signature` is recursive; type the getter concretely to break the cycle.
-  signature: z.lazy(
-    (): z.ZodMiniType<core_SignatureEnvelope.SignatureEnvelopeRpc> =>
-      Rpc as never,
-  ),
-  type: z.literal('keychain'),
-  userAddress: z_Address.Address,
-  version: z.optional(KeychainVersion),
-})
+export const KeychainRpc = z
+  .object({
+    keyId: z.optional(z_Address.Address),
+    // `signature` is recursive; type the getter concretely to break the cycle.
+    signature: z.lazy(
+      (): z.ZodMiniType<core_SignatureEnvelope.SignatureEnvelopeRpc> =>
+        Rpc as never,
+    ),
+    type: z.literal('keychain'),
+    userAddress: z_Address.Address,
+    version: z.optional(KeychainVersion),
+  })
+  .check(
+    z.refine(
+      (value) => value.version !== 'v1' || typeof value.signature !== 'string',
+      'multisig access keys require keychain V2',
+    ),
+  )
 
 /** RPC native multisig signature envelope schema. */
-export const MultisigRpc = z
-  .union([
-    z.strictObject({
-      account: z_Address.Address,
-      signatures: z.lazy(
-        (): z.ZodMiniType<
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
-        > =>
-          z.readonly(
-            z
-              .array(Rpc)
-              .check(
-                z.minLength(1),
-                z.maxLength(core_MultisigConfig.maxSignatures),
-              ),
-          ) as never,
-      ),
-    }),
-    z.strictObject({
-      init: z_MultisigConfig.Config,
-      signatures: z.lazy(
-        (): z.ZodMiniType<
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[],
-          readonly core_SignatureEnvelope.SignatureEnvelopeRpc[]
-        > =>
-          z.readonly(
-            z
-              .array(Rpc)
-              .check(
-                z.minLength(1),
-                z.maxLength(core_MultisigConfig.maxSignatures),
-              ),
-          ) as never,
-      ),
-    }),
-  ])
-  // Keep invalid recursive approvals inside Zod's issue path.
-  .check(
-    z.refine((value) => {
-      try {
-        core_SignatureEnvelope.fromRpc(value)
-        return true
-      } catch {
-        return false
-      }
-    }, 'expected valid native multisig signature'),
-  )
+export const MultisigRpc = z_Hex.Hex.check(
+  z.refine((value) => {
+    try {
+      core_SignatureEnvelope.fromRpc(value)
+      return true
+    } catch {
+      return false
+    }
+  }, 'expected valid native multisig signature'),
+)
 
 /** RPC signature envelope schema. */
 export const Rpc = z.union([
@@ -172,34 +141,34 @@ export const WebAuthn = z.object({
 export const Primitive = z.union([Secp256k1, P256, WebAuthn])
 
 /** Keychain signature envelope schema. */
-export const Keychain = z.object({
-  // `inner` is recursive; type the getter concretely to break the cycle.
-  inner: z.lazy(
-    (): z.ZodMiniType<core_SignatureEnvelope.SignatureEnvelope> =>
-      Domain as never,
-  ),
-  keyId: z.optional(z_Address.Address),
-  type: z.literal('keychain'),
-  userAddress: z_Address.Address,
-  version: z.optional(KeychainVersion),
-})
+export const Keychain = z
+  .object({
+    // `inner` is recursive; type the getter concretely to break the cycle.
+    inner: z.lazy(
+      (): z.ZodMiniType<core_SignatureEnvelope.SignatureEnvelope> =>
+        Domain as never,
+    ),
+    keyId: z.optional(z_Address.Address),
+    type: z.literal('keychain'),
+    userAddress: z_Address.Address,
+    version: z.optional(KeychainVersion),
+  })
+  .check(
+    z.refine(
+      (value) => value.version !== 'v1' || value.inner.type !== 'multisig',
+      'multisig access keys require keychain V2',
+    ),
+  )
 
 /** Native multisig signature envelope schema. */
 export const Multisig = z
   .object({
     account: z_Address.Address,
-    init: z.optional(z_MultisigConfig.Config),
-    // `signatures` is recursive; type the getter concretely to break the cycle.
-    signatures: z.lazy(
-      (): z.ZodMiniType<readonly core_SignatureEnvelope.SignatureEnvelope[]> =>
-        z.readonly(
-          z
-            .array(Domain)
-            .check(
-              z.minLength(1),
-              z.maxLength(core_MultisigConfig.maxSignatures),
-            ),
-        ) as never,
+    config: z_MultisigConfig.Config,
+    signatures: z.readonly(
+      z
+        .array(Primitive)
+        .check(z.minLength(1), z.maxLength(core_MultisigConfig.maxSignatures)),
     ),
     type: z.literal('multisig'),
   })
@@ -227,6 +196,7 @@ export const Serialized = z_Hex.Hex
 function fromRpc(
   value: core_SignatureEnvelope.SignatureEnvelopeRpc,
 ): core_SignatureEnvelope.SignatureEnvelope {
+  if (typeof value === 'string') return core_SignatureEnvelope.fromRpc(value)
   if (value.type === 'secp256k1') {
     const secp256k1 = value as core_SignatureEnvelope.Secp256k1Rpc
     return {
@@ -272,11 +242,6 @@ function fromRpc(
       type: 'webAuthn',
     }
   }
-
-  if ('signatures' in value && ('account' in value || 'init' in value))
-    return core_SignatureEnvelope.fromRpc(
-      value as core_SignatureEnvelope.MultisigRpc,
-    )
 
   const keychain = value as core_SignatureEnvelope.KeychainRpc
   return {

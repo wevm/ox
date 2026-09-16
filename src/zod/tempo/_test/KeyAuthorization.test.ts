@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vp/test'
+import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as core_KeyAuthorization from '../../../tempo/KeyAuthorization.js'
 import * as z_KeyAuthorization from '../KeyAuthorization.js'
 import * as z from 'zod/mini'
@@ -141,7 +142,7 @@ describe('KeyAuthorization', () => {
     ).toBe(false)
   })
 
-  test('rejects multisig signatures', () => {
+  test('rejects legacy multisig signatures', () => {
     const multisigRpc = {
       account: '0x1111111111111111111111111111111111111111',
       signatures: [rpc.signature],
@@ -164,5 +165,36 @@ describe('KeyAuthorization', () => {
         },
       } as never).success,
     ).toBe(false)
+  })
+  test('round-trips account-bound multisig grants', () => {
+    const signature = core_SignatureEnvelope.from({
+      account: '0x2222222222222222222222222222222222222222',
+      config: {
+        threshold: 1,
+        owners: [
+          { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+        ],
+      },
+      signatures: [
+        core_SignatureEnvelope.fromRpc(
+          rpc.signature,
+        ) as core_SignatureEnvelope.Primitive,
+      ],
+    })
+    const signed = core_KeyAuthorization.from(
+      {
+        account: signature.account,
+        address: '0x3333333333333333333333333333333333333333',
+        chainId: 1n,
+        type: 'multisig',
+      },
+      { signature },
+    )
+    const encoded = z.encode(z_KeyAuthorization.KeyAuthorization, signed)
+    const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, encoded)
+    expect(decoded).toEqual(
+      core_KeyAuthorization.fromRpc(core_KeyAuthorization.toRpc(signed)),
+    )
+    expect(decoded.account).toBe(signature.account)
   })
 })

@@ -167,7 +167,9 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  *   ]
  * })
  *
- * const account = MultisigConfig.getAddress(genesisConfig)
+ * const account = MultisigConfig.getAddress(genesisConfig, {
+ *   factory: '0x7171717171717171717171717171717171717171'
+ * })
  * ```
  *
  * @category Reference

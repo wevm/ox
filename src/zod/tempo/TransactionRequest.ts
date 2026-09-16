@@ -22,6 +22,7 @@ const KeyType = z.union([
   z.literal('secp256k1'),
   z.literal('p256'),
   z.literal('webAuthn'),
+  z.literal('multisig'),
 ])
 
 const SignatureRpc = z.object({
@@ -58,11 +59,16 @@ const CallToRpc = z.object({
 
 const Capabilities = z.record(z.string(), z.unknown())
 
-const MultisigInit = z.object({
-  salt: z_Hex.Hex,
-  threshold: z.number(),
-  owners: z.readonly(
-    z.array(z.object({ owner: z_Address.Address, weight: z.number() })),
+const MultisigSimulation = z.object({
+  config: z_Hex.Hex,
+  approvals: z.readonly(
+    z.array(
+      z.object({
+        owner: z_Address.Address,
+        keyType: z.optional(z_SignatureEnvelope.Type),
+        keyData: z.optional(z_Hex.Hex),
+      }),
+    ),
   ),
 })
 
@@ -90,8 +96,8 @@ export const Rpc = z.object({
   maxFeePerBlobGas: z.optional(z_Hex.Hex),
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
-  multisigInit: z.optional(MultisigInit),
-  multisigSignatureCount: z.optional(z.number()),
+  multisigSimulation: z.optional(MultisigSimulation),
+  keyAuthorizationSimulation: z.optional(MultisigSimulation),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
   r: z.optional(z_Hex.Hex),
@@ -144,8 +150,8 @@ export const Domain = z.object({
   maxFeePerBlobGas: z.optional(z.bigint()),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),
-  multisigInit: z.optional(MultisigInit),
-  multisigSignatureCount: z.optional(z.number()),
+  multisigSimulation: z.optional(MultisigSimulation),
+  keyAuthorizationSimulation: z.optional(MultisigSimulation),
   nonce: z.optional(z.bigint()),
   nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -184,8 +190,8 @@ export const DomainToRpc = z.object({
   maxFeePerBlobGas: z.optional(uintBigintNumberish()),
   maxFeePerGas: z.optional(uintBigintNumberish()),
   maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
-  multisigInit: z.optional(MultisigInit),
-  multisigSignatureCount: z.optional(z.number()),
+  multisigSimulation: z.optional(MultisigSimulation),
+  keyAuthorizationSimulation: z.optional(MultisigSimulation),
   nonce: z.optional(uintBigintNumberish()),
   nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -260,10 +266,10 @@ function fromRpc(
   if (typeof request.keyData !== 'undefined') request_.keyData = request.keyData
   if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
   if (typeof request.keyType !== 'undefined') request_.keyType = request.keyType
-  if (typeof request.multisigInit !== 'undefined')
-    request_.multisigInit = request.multisigInit
-  if (typeof request.multisigSignatureCount !== 'undefined')
-    request_.multisigSignatureCount = request.multisigSignatureCount
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_.multisigSimulation = request.multisigSimulation
+  if (typeof request.keyAuthorizationSimulation !== 'undefined')
+    request_.keyAuthorizationSimulation = request.keyAuthorizationSimulation
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = core_Hex.toNumber(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -292,8 +298,8 @@ function toRpc(
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
     typeof request.keyType !== 'undefined' ||
-    typeof request.multisigInit !== 'undefined' ||
-    typeof request.multisigSignatureCount !== 'undefined' ||
+    typeof request.multisigSimulation !== 'undefined' ||
+    typeof request.keyAuthorizationSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -348,10 +354,10 @@ function toRpc(
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
-  if (typeof request.multisigInit !== 'undefined')
-    request_rpc.multisigInit = request.multisigInit
-  if (typeof request.multisigSignatureCount !== 'undefined')
-    request_rpc.multisigSignatureCount = request.multisigSignatureCount
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_rpc.multisigSimulation = request.multisigSimulation
+  if (typeof request.keyAuthorizationSimulation !== 'undefined')
+    request_rpc.keyAuthorizationSimulation = request.keyAuthorizationSimulation
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = encodeNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')

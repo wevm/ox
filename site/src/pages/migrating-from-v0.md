@@ -127,6 +127,8 @@ const envelope = TxEnvelopeTempo.from({
 
 ## Tempo multisig no longer uses `config_id`
 
+The section below describes the v1 migration. For the newer configurable-account protocol, see [Migrating Tempo multisig accounts](/migrating-tempo-multisig).
+
 TIP-1061 multisig account addresses now derive directly from the initial configuration. `MultisigConfig.toId` and the `genesisConfigId` fields have been removed.
 
 ```ts

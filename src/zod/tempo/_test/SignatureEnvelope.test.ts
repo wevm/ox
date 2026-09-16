@@ -19,24 +19,22 @@ const p256 = {
   type: 'p256',
 } as const
 
-const multisig = {
-  account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
-  signatures: [secp256k1],
-} as const
-
-const multisigBootstrap = {
-  init: {
-    owners: [
-      {
-        owner: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
-        weight: 1,
-      },
-    ],
-    salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
+const envelope = core_SignatureEnvelope.from({
+  account: '0x2222222222222222222222222222222222222222',
+  config: {
+    version: 2n,
     threshold: 1,
+    owners: [
+      { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+    ],
   },
-  signatures: [secp256k1],
-} as const
+  signatures: [
+    core_SignatureEnvelope.fromRpc(
+      secp256k1,
+    ) as core_SignatureEnvelope.Primitive,
+  ],
+})
+const multisig = core_SignatureEnvelope.toRpc(envelope)
 
 describe('SignatureEnvelope', () => {
   test('decodes a secp256k1 envelope', () => {
@@ -62,156 +60,81 @@ describe('SignatureEnvelope', () => {
     )
   })
 
-  test('decodes an initialized multisig envelope', () => {
-    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)).toEqual(
-      core_SignatureEnvelope.fromRpc(multisig),
-    )
-  })
-
-  test('decodes a bootstrap multisig envelope', () => {
-    expect(
-      z.decode(z_SignatureEnvelope.SignatureEnvelope, multisigBootstrap),
-    ).toEqual(core_SignatureEnvelope.fromRpc(multisigBootstrap))
-  })
-
-  test('decodes recursive multisig approvals', () => {
-    const nested = {
-      ...multisig,
-      signatures: [
-        {
-          account: '0x1111111111111111111111111111111111111111',
-          signatures: [secp256k1],
-        },
-      ],
-    } as const
-    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, nested)).toEqual(
-      core_SignatureEnvelope.fromRpc(nested),
-    )
-  })
-
-  test('round-trips secp256k1 via encode', () => {
-    const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, secp256k1)
-    expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
-      core_SignatureEnvelope.toRpc(decoded),
-    )
-  })
-
-  test('round-trips initialized multisig via encode', () => {
+  test('round-trips versioned multisig RPC bytes', () => {
     const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)
+    expect(decoded).toEqual(envelope)
     expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
-      core_SignatureEnvelope.toRpc(decoded),
+      multisig,
     )
   })
 
-  test('round-trips bootstrap multisig via encode', () => {
-    const decoded = z.decode(
-      z_SignatureEnvelope.SignatureEnvelope,
-      multisigBootstrap,
-    )
-    expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
-      multisigBootstrap,
-    )
-  })
-
-  test('rejects invalid recursive multisig domains before encode', () => {
-    const invalid = {
-      account: multisig.account,
-      signatures: [
-        {
-          inner: core_SignatureEnvelope.fromRpc(secp256k1),
-          type: 'keychain',
-          userAddress: multisig.account,
-        },
-      ],
-      type: 'multisig',
-    } as const
-
-    expect(
-      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, invalid as never)
-        .success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('rejects legacy multisig approval encoding', () => {
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisig,
-        signatures: [
-          core_SignatureEnvelope.serialize(
-            core_SignatureEnvelope.fromRpc(secp256k1),
-          ),
-        ],
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('rejects multisig approval counts outside protocol limits', () => {
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisig,
-        signatures: [],
-      }).success,
-    ).toMatchInlineSnapshot(`false`)
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisig,
-        signatures: Array.from({ length: 9 }, () => secp256k1),
-      }).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('rejects invalid recursive multisig approvals', () => {
-    const keychain = {
-      signature: secp256k1,
+  test('round-trips a multisig delegate in a keychain', () => {
+    const rpc = {
       type: 'keychain',
-      userAddress: multisig.account,
+      version: 'v2',
+      userAddress: '0x3333333333333333333333333333333333333333',
+      signature: multisig,
     } as const
-    const depth2 = {
-      account: '0x1111111111111111111111111111111111111111',
-      signatures: [secp256k1],
-    } as const
-    const depth3 = {
-      account: '0x2222222222222222222222222222222222222222',
-      signatures: [depth2],
-    } as const
-
     expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisig,
-        signatures: [keychain],
+      z.encode(
+        z_SignatureEnvelope.SignatureEnvelope,
+        z.decode(z_SignatureEnvelope.SignatureEnvelope, rpc),
+      ),
+    ).toEqual(rpc)
+  })
+
+  test('rejects legacy RPC shapes and malformed bytes', () => {
+    for (const rpc of [
+      { account: envelope.account, signatures: [secp256k1] },
+      '0xc0',
+      '0x',
+    ])
+      expect(
+        z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc as never)
+          .success,
+      ).toMatchInlineSnapshot('false')
+  })
+
+  test('rejects recursive and empty owner approvals', () => {
+    for (const signatures of [
+      [],
+      [envelope],
+      [{ type: 'keychain', userAddress: envelope.account, inner: envelope }],
+    ])
+      expect(
+        z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+          ...envelope,
+          signatures,
+        } as never).success,
+      ).toMatchInlineSnapshot('false')
+  })
+  test('rejects keychain V1 multisig delegates', () => {
+    const rpc = {
+      type: 'keychain',
+      version: 'v1',
+      userAddress: envelope.account,
+      signature: multisig,
+    } as const
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc).success,
+    ).toMatchInlineSnapshot('false')
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+        type: 'keychain',
+        version: 'v1',
+        userAddress: envelope.account,
+        inner: envelope,
       }).success,
-    ).toMatchInlineSnapshot(`false`)
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisig,
-        signatures: [depth3],
-      }).success,
-    ).toMatchInlineSnapshot(`false`)
+    ).toMatchInlineSnapshot('false')
   })
 
-  test('rejects mixed multisig initialization fields', () => {
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisigBootstrap,
-        account: multisig.account,
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('rejects tagged multisig RPC envelopes', () => {
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...multisig,
-        type: 'multisig',
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('rejects an invalid envelope', () => {
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        type: 'secp256k1',
-      } as never).success,
-    ).toBe(false)
+  test('round-trips primitive RPC envelopes', () => {
+    for (const rpc of [secp256k1, p256])
+      expect(
+        z.encode(
+          z_SignatureEnvelope.SignatureEnvelope,
+          z.decode(z_SignatureEnvelope.SignatureEnvelope, rpc),
+        ),
+      ).toEqual(rpc)
   })
 })

@@ -36,9 +36,12 @@ export const Rpc = z.object({
   expiry: z.optional(z.nullable(z_Hex.Hex)),
   isAdmin: z.optional(z.nullable(z.boolean())),
   keyId: z_Address.Address,
-  keyType: z_SignatureEnvelope.Type,
+  keyType: z.union([z_SignatureEnvelope.Type, z.literal('multisig')]),
   limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
-  signature: z_SignatureEnvelope.PrimitiveRpc,
+  signature: z.union([
+    z_SignatureEnvelope.PrimitiveRpc,
+    z_SignatureEnvelope.MultisigRpc,
+  ]),
   witness: z.optional(z.nullable(z_Hex.Hex)),
 })
 
@@ -69,20 +72,20 @@ const domainShape = {
   expiry: z.optional(z.number()),
   limits: z.optional(z.readonly(z.array(TokenLimit))),
   scopes: z.optional(z.readonly(z.array(Scope))),
-  signature: z_SignatureEnvelope.Primitive,
-  type: z_SignatureEnvelope.Type,
+  signature: z.union([
+    z_SignatureEnvelope.Primitive,
+    z_SignatureEnvelope.Multisig,
+  ]),
+  type: z.union([z_SignatureEnvelope.Type, z.literal('multisig')]),
   witness: z.optional(z_Hex.Hex),
 }
 
-/** Decoded key authorization schema (TIP-1049 admin fields are paired: both or neither). */
-export const Domain = z.union([
-  z.object({
-    ...domainShape,
-    account: z_Address.Address,
-    isAdmin: z.boolean(),
-  }),
-  z.object(domainShape),
-])
+/** Decoded key authorization schema. */
+export const Domain = z.object({
+  ...domainShape,
+  account: z.optional(z_Address.Address),
+  isAdmin: z.optional(z.boolean()),
+})
 
 const domainToRpcShape = {
   ...domainShape,
@@ -92,14 +95,11 @@ const domainToRpcShape = {
 }
 
 /** Encode-only decoded key authorization schema accepting numberish `toRpc` inputs. */
-export const DomainToRpc = z.union([
-  z.object({
-    ...domainToRpcShape,
-    account: z_Address.Address,
-    isAdmin: z.boolean(),
-  }),
-  z.object(domainToRpcShape),
-])
+export const DomainToRpc = z.object({
+  ...domainToRpcShape,
+  account: z.optional(z_Address.Address),
+  isAdmin: z.optional(z.boolean()),
+})
 
 /** Codec decoding an RPC key authorization into a signed key authorization. */
 export const KeyAuthorization = z.codec(Rpc, Domain, {

@@ -38,6 +38,7 @@ export async function createServer(options: createServer.Options = {}) {
 
   const args = {
     blockTime: '2ms',
+    chain: options.chain,
     log: import.meta.env.VITE_TEMPO_LOG,
     port: serverPort,
   } satisfies Instance.tempo.Parameters
@@ -55,6 +56,7 @@ export async function createServer(options: createServer.Options = {}) {
 
 export declare namespace createServer {
   export type Options = {
+    chain?: string | undefined
     port?: number | undefined
     tag?: string | undefined
   }

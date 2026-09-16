@@ -77,21 +77,19 @@ describe('fromRpc', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigInit: {
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 2,
-        owners: [
+      multisigSimulation: {
+        config: '0xc0',
+        approvals: [
           {
             owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
+            keyType: 'secp256k1',
           },
         ],
       },
-      multisigSignatureCount: 2,
+      keyAuthorizationSimulation: {
+        config: '0xc0',
+        approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
+      },
       type: '0x76',
     })
     expect(request.capabilities).toEqual({ balanceDiffs: true })
@@ -99,8 +97,14 @@ describe('fromRpc', () => {
     expect(request.keyData).toBe('0x0578')
     expect(request.keyId).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
     expect(request.keyType).toBe('webAuthn')
-    expect(request.multisigInit).toMatchObject({ threshold: 2 })
-    expect(request.multisigSignatureCount).toBe(2)
+    expect(request.multisigSimulation).toMatchObject({
+      config: '0xc0',
+      approvals: [{ keyType: 'secp256k1' }],
+    })
+    expect(request.keyAuthorizationSimulation).toMatchObject({
+      config: '0xc0',
+      approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
+    })
   })
 
   test('behavior: empty', () => {
@@ -165,29 +169,33 @@ describe('toRpc', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigInit: {
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 2,
-        owners: [
+      multisigSimulation: {
+        config: '0xc0',
+        approvals: [
           {
             owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
+            keyType: 'secp256k1',
           },
         ],
       },
-      multisigSignatureCount: 2,
+      keyAuthorizationSimulation: {
+        config: '0xc0',
+        approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
+      },
     })
     expect(request.capabilities).toEqual({ balanceDiffs: true })
     expect(request.feePayer).toBe(false)
     expect(request.keyData).toBe('0x0578')
     expect(request.keyId).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
     expect(request.keyType).toBe('webAuthn')
-    expect(request.multisigInit).toMatchObject({ threshold: 2 })
-    expect(request.multisigSignatureCount).toBe(2)
+    expect(request.multisigSimulation).toMatchObject({
+      config: '0xc0',
+      approvals: [{ keyType: 'secp256k1' }],
+    })
+    expect(request.keyAuthorizationSimulation).toMatchObject({
+      config: '0xc0',
+      approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
+    })
     expect(request.type).toBe('0x76')
   })
 

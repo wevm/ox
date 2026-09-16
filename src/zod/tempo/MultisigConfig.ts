@@ -14,6 +14,7 @@ export const Owner = z.object({
 export const Config = z
   .object({
     salt: z.optional(z_Hex.Hex),
+    version: z.optional(z.bigint()),
     threshold: z.number(),
     owners: z.readonly(z.array(Owner)),
   })

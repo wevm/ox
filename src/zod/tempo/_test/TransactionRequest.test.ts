@@ -50,21 +50,19 @@ describe('TransactionRequest', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigInit: {
-        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        threshold: 2,
-        owners: [
+      multisigSimulation: {
+        config: '0xc0',
+        approvals: [
           {
             owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            weight: 1,
-          },
-          {
-            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            weight: 1,
+            keyType: 'secp256k1',
           },
         ],
       },
-      multisigSignatureCount: 2,
+      keyAuthorizationSimulation: {
+        config: '0xc0',
+        approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
+      },
     } as const
 
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
