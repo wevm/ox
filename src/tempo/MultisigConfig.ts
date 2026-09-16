@@ -34,17 +34,17 @@ const signatureDomain = 'tempo:multisig:signature'
  * address.
  */
 export type Config<numberType = number> = Compute<{
+  /** Weighted owner list (strictly ascending by `owner` address). */
+  owners: readonly Owner<numberType>[]
   /**
    * Caller-chosen 32-byte salt mixed into the derived account address.
    * Defaults to the zero salt (`MultisigConfig.zeroSalt`) when omitted.
    */
   salt?: Hex.Hex | undefined
-  /** Configuration version. Defaults to zero for the initial configuration. */
-  version?: bigint | undefined
   /** Minimum total owner weight required to authorize a transaction. */
   threshold: numberType
-  /** Weighted owner list (strictly ascending by `owner` address). */
-  owners: readonly Owner<numberType>[]
+  /** Configuration version. Defaults to zero for the initial configuration. */
+  version?: bigint | undefined
 }>
 
 /** Native multisig owner entry. */
