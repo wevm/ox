@@ -1,8 +1,6 @@
 import { MultisigConfig } from 'ox/tempo'
 import { describe, expect, test } from 'vite-plus/test'
 
-// Ground-truth vectors independently computed with ethers over the exact
-// preimages defined by TIP-1061 / the Tempo reference implementation.
 const factory = '0x7171717171717171717171717171717171717171'
 const owner1 = '0x1111111111111111111111111111111111111111'
 const owner2 = '0x2222222222222222222222222222222222222222'
