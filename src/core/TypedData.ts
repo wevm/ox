@@ -179,6 +179,30 @@ export function assert<
     }
   }
 
+  // `int`/`uint` (without an explicit bit-width) are not valid EIP-712 atomic
+  // types – only explicit widths (e.g. `uint256`) are. Reject them outright
+  // rather than falling through, since silently assuming a width would still
+  // hash a non-canonical type string that a strict verifier (expecting e.g.
+  // `uint256`) would never reproduce.
+  //
+  // This is checked against every type *reachable* from `EIP712Domain` and
+  // `primaryType` (the same set `encodeType` would include in the hash) up
+  // front, rather than only against fields the runtime `message`/`domain`
+  // data happens to populate – a bare `uint` inside a struct only reached
+  // through an empty array (e.g. `people: []` for `type: 'Person[]'`) would
+  // otherwise never be visited, since nothing recurses into a struct with no
+  // array elements to walk.
+  const reachableTypes = new Set<string>()
+  if (types.EIP712Domain)
+    findTypeDependencies({ primaryType: 'EIP712Domain', types }, reachableTypes)
+  findTypeDependencies({ primaryType, types }, reachableTypes)
+  for (const typeName of reachableTypes)
+    for (const field of types[typeName] ?? []) {
+      const baseType = field.type.replace(/(\[[0-9]*\])+$/, '')
+      if (baseType === 'int' || baseType === 'uint')
+        throw new InvalidTypedDataTypeError({ type: field.type })
+    }
+
   // Validate domain types.
   if (types.EIP712Domain && domain) {
     if (typeof domain !== 'object') throw new InvalidDomainError({ domain })
@@ -204,8 +228,10 @@ export declare namespace assert {
     | InvalidArrayError
     | InvalidArrayLengthError
     | InvalidPrimaryTypeError
+    | InvalidTypedDataTypeError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
+    | findTypeDependencies.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -799,6 +825,18 @@ export class InvalidPrimaryTypeError extends Errors.BaseError {
         metaMessages: ['Check that the primary type is a key in `types`.'],
       },
     )
+  }
+}
+
+/** Thrown when a field's declared type is not a valid EIP-712 type. */
+export class InvalidTypedDataTypeError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidTypedDataTypeError'
+
+  constructor({ type }: { type: string }) {
+    const canonicalType = type.replace(/^(u?int)/, '$&256')
+    super(`Type \`${type}\` is not a valid EIP-712 type.`, {
+      metaMessages: [`Use \`${canonicalType}\` instead.`],
+    })
   }
 }
 
