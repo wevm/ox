@@ -704,8 +704,8 @@ export declare namespace fromRecoveredBytes {
 export function toHex(signature: Signature<boolean>): Hex.Hex {
   assert(signature)
 
-  const r = signature.r
-  const s = signature.s
+  const r = Hex.padLeft(signature.r, 32)
+  const s = Hex.padLeft(signature.s, 32)
 
   const signature_ = Hex.concat(
     r,
@@ -721,6 +721,8 @@ export function toHex(signature: Signature<boolean>): Hex.Hex {
 
 export declare namespace toHex {
   type ErrorType =
+    | assert.ErrorType
+    | Hex.padLeft.ErrorType
     | Hex.concat.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
