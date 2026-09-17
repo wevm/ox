@@ -78,7 +78,89 @@ const signature_keychain = {
   userAddress: address,
 } as const satisfies SignatureEnvelope.Keychain
 
+describe('multisig account binding', () => {
+  test('resolves Tempo account bindings before encoding', () => {
+    const signed = KeyAuthorization.from(
+      { account: `tempox${address}`, address, chainId: 1n, type: 'multisig' },
+      { signature: signature_secp256k1 },
+    )
+    expect(signed.account).toMatchInlineSnapshot(
+      `"0xBE95c3f554e9Fc85ec51bE69a3D807A0D55BCF2C"`,
+    )
+    expect(KeyAuthorization.toRpc(signed).account).toMatchInlineSnapshot(
+      `"0xBE95c3f554e9Fc85ec51bE69a3D807A0D55BCF2C"`,
+    )
+    expect(
+      KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)).account,
+    ).toMatchInlineSnapshot(`"0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c"`)
+  })
+
+  test('rejects unbound grants before signing or encoding', () => {
+    const authorization = { address, chainId: 1n, type: 'multisig' } as const
+    const signed = {
+      ...authorization,
+      signature: SignatureEnvelope.from(signature_secp256k1),
+    }
+    for (const encode of [
+      // @ts-expect-error Deliberately unbound multisig grant.
+      () => KeyAuthorization.from(authorization),
+      // @ts-expect-error Deliberately unbound multisig grant.
+      () => KeyAuthorization.toTuple(authorization),
+      // @ts-expect-error Deliberately unbound multisig grant.
+      () => KeyAuthorization.getSignPayload(authorization),
+      // @ts-expect-error Deliberately unbound multisig grant.
+      () => KeyAuthorization.serialize(authorization),
+      // @ts-expect-error Deliberately unbound multisig grant.
+      () => KeyAuthorization.toRpc(signed),
+    ])
+      expect(encode).toThrowErrorMatchingInlineSnapshot(
+        `[KeyAuthorization.MissingAccountError: Multisig key grants require a parent account binding.]`,
+      )
+  })
+
+  test('rejects unbound RPC and RLP grants', () => {
+    const signed = KeyAuthorization.from(
+      { account: address, address, chainId: 1n, type: 'multisig' },
+      { signature: signature_secp256k1 },
+    )
+    const rpc = KeyAuthorization.toRpc(signed)
+    for (const account of [undefined, null]) {
+      // @ts-expect-error Deliberately unbound multisig grant.
+      expect(() => KeyAuthorization.fromRpc({ ...rpc, account })).toThrowError(
+        KeyAuthorization.MissingAccountError,
+      )
+    }
+    expect(() =>
+      KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
+    ).toThrowError(KeyAuthorization.MissingAccountError)
+    expect(KeyAuthorization.fromRpc(rpc).account).toBe(address)
+    expect(
+      KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)).account,
+    ).toBe(address)
+  })
+})
+
 describe('from', () => {
+  test('accepts multisig grants and delegates', () => {
+    const signed = KeyAuthorization.from(
+      {
+        address,
+        chainId: 1n,
+        type: 'multisig',
+        account: signature_multisig.account,
+      },
+      { signature: signature_multisig },
+    )
+    expect(
+      KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
+    ).toEqual(signed)
+    expect(KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed))).toEqual(
+      signed,
+    )
+  })
+})
+
+describe('fromRpc', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
@@ -1154,7 +1236,6 @@ describe('deserialize', () => {
         "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
         "address": "0x1eff47bc3a10a45d4b230b5d10e37751fe6aa718",
         "chainId": 4217n,
-        "isAdmin": false,
         "signature": {
           "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
           "config": {
@@ -2589,11 +2670,11 @@ describe('admin keys (TIP-1049)', () => {
     expect((authTuple as unknown as unknown[]).length).toBe(3)
   })
 
-  test('fromTuple: drops orphan isAdmin without account', () => {
+  test('fromTuple: preserves isAdmin without account', () => {
     const restored = KeyAuthorization.fromTuple([
       ['0x01', '0x', address, '0x', [], [], '0x', '0x01'],
     ])
-    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.isAdmin).toBe(true)
     expect(restored.account).toBeUndefined()
   })
 
@@ -2601,7 +2682,7 @@ describe('admin keys (TIP-1049)', () => {
     const restored = KeyAuthorization.fromTuple([
       ['0x01', '0x', address, '0x', [], [], '0x', '0x', account],
     ])
-    expect(restored.isAdmin).toBe(false)
+    expect(restored.isAdmin).toBeUndefined()
     expect(restored.account).toBe(account)
   })
 
@@ -2647,7 +2728,7 @@ describe('admin keys (TIP-1049)', () => {
     })
     const serialized = KeyAuthorization.serialize(authorization)
     const restored = KeyAuthorization.deserialize(serialized)
-    expect(restored.isAdmin).toBe(false)
+    expect(restored.isAdmin).toBeUndefined()
     expect(restored.account).toBe(account)
   })
 
@@ -2670,14 +2751,14 @@ describe('admin keys (TIP-1049)', () => {
     expect(restored.account).toBe(account)
   })
 
-  test('fromRpc: drops orphan isAdmin without account', () => {
+  test('fromRpc: preserves isAdmin without account', () => {
     const authorization = KeyAuthorization.from(
       { address, chainId: 1n, type: 'secp256k1' },
       { signature: SignatureEnvelope.from(signature_secp256k1) },
     )
     const rpc = KeyAuthorization.toRpc(authorization)
     const restored = KeyAuthorization.fromRpc({ ...rpc, isAdmin: true })
-    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.isAdmin).toBe(true)
     expect(restored.account).toBeUndefined()
   })
 
@@ -2688,7 +2769,7 @@ describe('admin keys (TIP-1049)', () => {
     )
     const rpc = KeyAuthorization.toRpc(authorization)
     const restored = KeyAuthorization.fromRpc({ ...rpc, account })
-    expect(restored.isAdmin).toBe(false)
+    expect(restored.isAdmin).toBeUndefined()
     expect(restored.account).toBe(account)
   })
 

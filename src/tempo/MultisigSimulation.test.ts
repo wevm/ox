@@ -3,70 +3,26 @@ import { describe, expect, test } from 'vitest'
 
 const config =
   '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01' as const
-const nestedConfig =
-  '0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201' as const
 const rpc = {
-  account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   approvals: [
     {
-      keyData: '0x0102030405',
       keyType: 'webAuthn',
+      keyData: '0x0102030405',
       owner: '0x1111111111111111111111111111111111111111',
-      type: 'primitive',
-    },
-    {
-      spec: {
-        account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        approvals: [
-          {
-            keyData: '0x010203040506',
-            keyType: 'secp256k1',
-            owner: '0x2222222222222222222222222222222222222222',
-          },
-        ],
-        config: nestedConfig,
-      },
-      type: 'multisig',
     },
   ],
   config,
 } as const satisfies MultisigSimulation.Rpc
 
 describe('fromRpc', () => {
-  test('behavior: decodes root and nested configurations', () => {
+  test('behavior: decodes the configuration', () => {
     expect(MultisigSimulation.fromRpc(rpc)).toMatchInlineSnapshot(`
       {
-        "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "approvals": [
           {
             "keyData": "0x0102030405",
             "keyType": "webAuthn",
             "owner": "0x1111111111111111111111111111111111111111",
-            "type": "primitive",
-          },
-          {
-            "spec": {
-              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "approvals": [
-                {
-                  "keyData": "0x010203040506",
-                  "keyType": "secp256k1",
-                  "owner": "0x2222222222222222222222222222222222222222",
-                },
-              ],
-              "config": {
-                "owners": [
-                  {
-                    "owner": "0x2222222222222222222222222222222222222222",
-                    "weight": 1,
-                  },
-                ],
-                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
-                "threshold": 1,
-                "version": 1n,
-              },
-            },
-            "type": "multisig",
           },
         ],
         "config": {
@@ -108,26 +64,14 @@ describe('fromRpc', () => {
       `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: approval count exceeds 8.]`,
     )
   })
-
-  test('error: rejects excess nested approvals', () => {
+  test('error: rejects nested approvals', () => {
     expect(() =>
       MultisigSimulation.fromRpc({
         ...rpc,
-        approvals: [
-          {
-            ...rpc.approvals[1],
-            spec: {
-              ...rpc.approvals[1].spec,
-              approvals: Array.from(
-                { length: 9 },
-                () => rpc.approvals[1].spec.approvals[0],
-              ),
-            },
-          },
-        ],
-      }),
+        approvals: [{ type: 'multisig', spec: rpc }],
+      } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: approval count exceeds 8.]`,
+      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: only untagged primitive owner approvals are allowed.]`,
     )
   })
 
@@ -173,33 +117,17 @@ describe('toRpc', () => {
     expect(
       MultisigSimulation.toRpc(MultisigSimulation.fromRpc(rpc)),
     ).toMatchInlineSnapshot(`
-      {
-        "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "approvals": [
-          {
-            "keyData": "0x0005",
-            "keyType": "webAuthn",
-            "owner": "0x1111111111111111111111111111111111111111",
-            "type": "primitive",
-          },
-          {
-            "spec": {
-              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "approvals": [
-                {
-                  "keyData": "0x0006",
-                  "keyType": "secp256k1",
-                  "owner": "0x2222222222222222222222222222222222222222",
-                },
-              ],
-              "config": "${nestedConfig}",
+        {
+          "approvals": [
+            {
+              "keyData": "0x0005",
+              "keyType": "webAuthn",
+              "owner": "0x1111111111111111111111111111111111111111",
             },
-            "type": "multisig",
-          },
-        ],
-        "config": "${config}",
-      }
-    `)
+          ],
+          "config": "0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01",
+        }
+      `)
   })
 
   test('behavior: preserves short key data', () => {
@@ -214,7 +142,6 @@ describe('toRpc', () => {
           "keyData": "0x0102",
           "keyType": "webAuthn",
           "owner": "0x1111111111111111111111111111111111111111",
-          "type": "primitive",
         },
       ]
     `)
@@ -255,30 +182,14 @@ describe('toRpc', () => {
       `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: approval count exceeds 8.]`,
     )
   })
-
-  test('error: rejects excess nested approvals', () => {
-    const spec = MultisigSimulation.fromRpc(rpc)
-    const nested = spec.approvals[1]!
-    if (nested.type !== 'multisig') throw new Error('unreachable')
-
+  test('error: rejects nested approvals', () => {
     expect(() =>
       MultisigSimulation.toRpc({
-        ...spec,
-        approvals: [
-          {
-            ...nested,
-            spec: {
-              ...nested.spec,
-              approvals: Array.from(
-                { length: 9 },
-                () => nested.spec.approvals[0]!,
-              ),
-            },
-          },
-        ],
-      }),
+        ...rpc,
+        approvals: [{ type: 'multisig', spec: rpc }],
+      } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: approval count exceeds 8.]`,
+      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: only untagged primitive owner approvals are allowed.]`,
     )
   })
 })

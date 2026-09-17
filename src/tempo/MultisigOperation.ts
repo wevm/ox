@@ -144,7 +144,8 @@ export declare namespace getHash {
  *
  * The function retains one canonical approval per owner. It selects the
  * smallest deterministic quorum by owner weight, then orders the selected
- * approvals by owner address for serialization.
+ * approvals by owner address for serialization. The caller supplies the
+ * account and config; the chain validates their factory-derived identity.
  *
  * @example
  * ```ts twoslash
@@ -171,22 +172,12 @@ export async function selectApprovals(
   if (!Hash.validate(hash))
     throw new InvalidApprovalError({ reason: 'hash is invalid' })
   const config = MultisigConfig.from(options.config)
-  if (
-    config.version === 0n &&
-    !Address.isEqual(MultisigConfig.getAddress(config), account)
-  )
-    throw new InvalidApprovalError({
-      reason: 'initial config does not derive the root multisig account',
-    })
-  return selectApprovals_internal(
-    {
-      account,
-      approvals,
-      config,
-      hash,
-    },
-    [account.toLowerCase()],
-  )
+  return selectApprovals_internal({
+    account,
+    approvals,
+    config,
+    hash,
+  })
 }
 
 export declare namespace selectApprovals {
@@ -194,7 +185,7 @@ export declare namespace selectApprovals {
   export type Options = {
     /** Root multisig account. */
     account: Address.Address
-    /** Serialized primitive or nested owner approvals. */
+    /** Serialized primitive owner approvals. */
     approvals: readonly SignatureEnvelope.Serialized[]
     /** Current root multisig configuration. */
     config: MultisigConfig.Config
@@ -272,7 +263,7 @@ export function serializeKeyAuthorization(
     config,
     payload: KeyAuthorization_.getSignPayload(authorization),
     signatures: options.approvals.map((approval) =>
-      SignatureEnvelope.deserialize(approval),
+      assertApproval(options.account, approval, config),
     ),
   })
   return KeyAuthorization_.serialize(
@@ -337,7 +328,7 @@ export function serializeTransaction(
     value.transaction as TxEnvelopeTempo.Serialized,
   )
   const approvals = options.approvals.map((approval) =>
-    SignatureEnvelope.from(approval),
+    assertApproval(value.account, approval, value.config),
   )
   assertRetainedApprovals(value, approvals)
   const signatures = SignatureEnvelope.sortMultisigApprovals({
@@ -522,7 +513,6 @@ export declare namespace toRpc {
  */
 async function selectApprovals_internal(
   options: selectApprovals.Options,
-  path: readonly string[],
 ): Promise<selectApprovals.ReturnValue> {
   const owners = new Map(
     options.config.owners.map((owner) => [
@@ -533,17 +523,14 @@ async function selectApprovals_internal(
   const groups = new Map<string, ApprovalGroup>()
   for (const serialized of options.approvals) {
     const signature = SignatureEnvelope.from(serialized)
-    if (signature.type === 'keychain')
+    if (signature.type === 'keychain' || signature.type === 'multisig')
       throw new InvalidApprovalError({
-        reason: 'keychain signatures cannot approve a multisig operation',
+        reason: 'only primitive signatures can approve a multisig operation',
       })
-    const address =
-      signature.type === 'multisig'
-        ? signature.account
-        : SignatureEnvelope.extractAddress({
-            payload: options.hash,
-            signature,
-          })
+    const address = SignatureEnvelope.extractAddress({
+      payload: options.hash,
+      signature,
+    })
     const owner = owners.get(address.toLowerCase())
     if (!owner)
       throw new InvalidApprovalError({
@@ -563,79 +550,6 @@ async function selectApprovals_internal(
   const valid: SelectedApproval[] = []
   const retained: RetainedApproval[] = []
   for (const group of groups.values()) {
-    const nested = group.signatures.filter(
-      (signature) => signature.type === 'multisig',
-    )
-    if (nested.length > 0) {
-      if (nested.length !== group.signatures.length)
-        throw new InvalidApprovalError({
-          reason: `owner ${group.address} has conflicting signature types`,
-        })
-      if (
-        path.length >= MultisigConfig.maxNestingDepth ||
-        path.includes(group.address.toLowerCase())
-      )
-        throw new InvalidApprovalError({
-          reason: `nested multisig owner ${group.address} is invalid`,
-        })
-      const config = MultisigConfig.from(nested[0]!.config)
-      if (nested.some((signature) => !sameConfig(signature.config, config)))
-        throw new InvalidApprovalError({
-          reason: `nested multisig owner ${group.address} has conflicting config witnesses`,
-        })
-      if (
-        config.version === 0n &&
-        !Address.isEqual(MultisigConfig.getAddress(config), group.address)
-      )
-        throw new InvalidApprovalError({
-          reason: `initial config does not derive nested multisig owner ${group.address}`,
-        })
-      const selected = await selectApprovals_internal(
-        {
-          account: group.address,
-          approvals: nested.flatMap((signature) =>
-            signature.signatures.map((approval) =>
-              SignatureEnvelope.serialize(approval),
-            ),
-          ),
-          config,
-          hash: MultisigConfig.getSignPayload({
-            account: group.address,
-            config,
-            payload: options.hash,
-          }),
-        },
-        [...path, group.address.toLowerCase()],
-      )
-      retained.push({
-        address: group.address,
-        signature: SignatureEnvelope.serialize(
-          SignatureEnvelope.from({
-            account: group.address,
-            config,
-            signatures: selected.approvals.map((approval) =>
-              SignatureEnvelope.from(approval),
-            ),
-          }),
-        ),
-      })
-      if (selected.weight >= selected.threshold)
-        valid.push({
-          address: group.address,
-          signature: SignatureEnvelope.serialize(
-            SignatureEnvelope.from({
-              account: group.address,
-              config,
-              signatures: selected.selectedApprovals.map((approval) =>
-                SignatureEnvelope.from(approval),
-              ),
-            }),
-          ),
-          weight: group.weight,
-        })
-      continue
-    }
-
     const signatures = group.signatures.map((signature) => {
       if (
         !SignatureEnvelope.verify(signature, {
@@ -704,7 +618,7 @@ type ApprovalGroup = {
 type RetainedApproval = {
   /** Configured owner address. */
   address: Address.Address
-  /** Serialized primitive or normalized nested approval. */
+  /** Serialized primitive approval. */
   signature: SignatureEnvelope.Serialized
 }
 
@@ -823,13 +737,6 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
     throw new InvalidOperationError({
       reason:
         'weight is not reachable by signatureCount retained owner approvals',
-    })
-  if (
-    config.version === 0n &&
-    !Address.isEqual(MultisigConfig.getAddress(config), operation.account)
-  )
-    throw new InvalidOperationError({
-      reason: 'initial config does not derive the operation account',
     })
 }
 
@@ -1018,8 +925,12 @@ function assertApproval(
   account: Address.Address,
   serialized: SignatureEnvelope.Serialized,
   config: MultisigConfig.Config,
-): SignatureEnvelope.SignatureEnvelope {
+): SignatureEnvelope.Primitive {
   const approval = SignatureEnvelope.deserialize(serialized)
+  if (approval.type === 'keychain' || approval.type === 'multisig')
+    throw new InvalidOperationError({
+      reason: 'only primitive owner approvals are allowed',
+    })
   SignatureEnvelope.assert({
     account,
     config,
@@ -1047,8 +958,10 @@ function assertRetainedApprovals(
     SignatureEnvelope.deserialize(approval),
   )
   for (const approval of selected) {
-    const index = retained.findIndex((candidate) =>
-      includesApproval(candidate, approval),
+    const index = retained.findIndex(
+      (candidate) =>
+        SignatureEnvelope.serialize(candidate).toLowerCase() ===
+        SignatureEnvelope.serialize(approval).toLowerCase(),
     )
     if (index === -1)
       throw new InvalidOperationError({
@@ -1072,8 +985,10 @@ function assertSelectedApprovals(
     SignatureEnvelope.deserialize(approval),
   )
   for (const approval of selected) {
-    const index = retained.findIndex((candidate) =>
-      includesApproval(candidate, approval),
+    const index = retained.findIndex(
+      (candidate) =>
+        SignatureEnvelope.serialize(candidate).toLowerCase() ===
+        SignatureEnvelope.serialize(approval).toLowerCase(),
     )
     if (index === -1)
       throw new InvalidOperationError({
@@ -1102,36 +1017,6 @@ function assertSelectedApprovals(
         reason: 'key authorization approvals are not canonically ordered',
       })
   }
-}
-
-/**
- * Checks whether a selected approval is contained in a retained approval tree.
- *
- * @internal
- */
-function includesApproval(
-  retained: SignatureEnvelope.SignatureEnvelope,
-  selected: SignatureEnvelope.SignatureEnvelope,
-): boolean {
-  if (retained.type !== 'multisig' || selected.type !== 'multisig')
-    return (
-      SignatureEnvelope.serialize(retained).toLowerCase() ===
-      SignatureEnvelope.serialize(selected).toLowerCase()
-    )
-  if (retained.account.toLowerCase() !== selected.account.toLowerCase())
-    return false
-  if (!sameConfig(retained.config, selected.config)) return false
-  let index = 0
-  for (const approval of selected.signatures) {
-    while (
-      index < retained.signatures.length &&
-      !includesApproval(retained.signatures[index]!, approval)
-    )
-      index++
-    if (index === retained.signatures.length) return false
-    index++
-  }
-  return true
 }
 
 /**

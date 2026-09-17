@@ -10,11 +10,12 @@ test('transaction requests use domain multisig simulation specs', () => {
     bigint | undefined
   >()
 
-  const approval = request.multisigSimulation?.approvals[0]
-  if (approval?.type === 'multisig')
-    expectTypeOf(approval.spec.approvals[0]?.keyType).toEqualTypeOf<
-      MultisigSimulation.NestedPrimitiveApproval['keyType']
-    >()
+  expectTypeOf(request.multisigSimulation?.approvals[0]?.keyType).toEqualTypeOf<
+    MultisigSimulation.PrimitiveApproval['keyType']
+  >()
+  expectTypeOf(request.keyAuthorizationSimulation).toEqualTypeOf<
+    MultisigSimulation.Spec | undefined
+  >()
 })
 
 test('RPC requests use encoded multisig configurations', () => {

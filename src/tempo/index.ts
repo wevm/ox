@@ -144,7 +144,9 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  *   ],
  * })
  *
- * const account = MultisigConfig.getAddress(initialConfig)
+ * const account = MultisigConfig.getAddress(initialConfig, {
+ *   factory: '0x7171717171717171717171717171717171717171'
+ * })
  * ```
  *
  * @category Reference

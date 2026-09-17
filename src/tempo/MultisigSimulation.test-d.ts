@@ -2,11 +2,11 @@ import { expectTypeOf, test } from 'vitest'
 import * as MultisigSimulation from './MultisigSimulation.js'
 
 const rpc = {
-  account: '0x2222222222222222222222222222222222222222',
   approvals: [
     {
+      keyType: 'webAuthn',
+      keyData: '0x0102030405',
       owner: '0x1111111111111111111111111111111111111111',
-      type: 'primitive',
     },
   ],
   config:
