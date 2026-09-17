@@ -1,7 +1,7 @@
 import { expectTypeOf, test } from 'vitest'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as MultisigConfig from './MultisigConfig.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as TempoAddress from './TempoAddress.js'
 
 const authorization = {
   address: '0x1111111111111111111111111111111111111111',
@@ -20,25 +20,17 @@ const signature = {
 
 const multisig = {
   account: '0x2222222222222222222222222222222222222222',
-  config: MultisigConfig.from({
-    owners: [
-      {
-        owner: '0x1111111111111111111111111111111111111111',
-        weight: 1,
-      },
-    ],
+  config: {
+    salt: `0x${'00'.repeat(32)}`,
+    version: 0n,
     threshold: 1,
-    version: 1n,
-  }),
+    owners: [
+      { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+    ],
+  },
   signatures: [signature],
   type: 'multisig',
 } as const satisfies SignatureEnvelope.Multisig
-
-const keychain = {
-  inner: signature,
-  type: 'keychain',
-  userAddress: authorization.address,
-} as const satisfies SignatureEnvelope.Keychain
 
 test('accepts primitive signatures', () => {
   const signed = KeyAuthorization.from(authorization, { signature })
@@ -48,27 +40,56 @@ test('accepts primitive signatures', () => {
   >()
 })
 
-test('accepts multisig signatures', () => {
-  const signed = KeyAuthorization.from(authorization, { signature: multisig })
+test('accepts multisig signatures and account-bound grants', () => {
+  const signed = KeyAuthorization.from(
+    { ...authorization, account: multisig.account, type: 'multisig' },
+    { signature: multisig },
+  )
+  expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
+  expectTypeOf(
+    KeyAuthorization.toRpc(signed),
+  ).toMatchTypeOf<KeyAuthorization.Rpc>()
+})
 
-  expectTypeOf(signed.signature).toMatchTypeOf<
-    KeyAuthorization.Signed['signature']
-  >()
-
-  const multisigRpc = '0xf8' as const satisfies SignatureEnvelope.MultisigRpc
-
-  const rpc: KeyAuthorization.Rpc = {
-    chainId: '0x1',
-    expiry: null,
-    keyId: authorization.address,
-    keyType: authorization.type,
-    signature: multisigRpc,
-  }
-
-  expectTypeOf(rpc).toEqualTypeOf<KeyAuthorization.Rpc>()
+test('requires an account for multisig grants', () => {
+  type Multisig = Extract<KeyAuthorization.Input, { type: 'multisig' }>
+  expectTypeOf<Multisig['account']>().toEqualTypeOf<TempoAddress.Address>()
+  expectTypeOf<
+    Extract<KeyAuthorization.Signed, { type: 'multisig' }>['account']
+  >().toEqualTypeOf<`0x${string}`>()
+  expectTypeOf<
+    Omit<Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>, 'account'>
+  >().not.toExtend<KeyAuthorization.Rpc>()
+  expectTypeOf<{
+    address: `0x${string}`
+    chainId: bigint
+    type: 'multisig'
+  }>().not.toExtend<KeyAuthorization.Input>()
+  expectTypeOf<{
+    account: undefined
+    address: `0x${string}`
+    chainId: bigint
+    type: 'multisig'
+  }>().not.toExtend<KeyAuthorization.Input>()
+  expectTypeOf<{
+    account: null
+    chainId: '0x1'
+    expiry: null
+    keyId: `0x${string}`
+    keyType: 'multisig'
+    signature: KeyAuthorization.SignatureRpc
+  }>().not.toExtend<KeyAuthorization.Rpc>()
+  expectTypeOf<
+    Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>['account']
+  >().toEqualTypeOf<`0x${string}`>()
 })
 
 test('rejects keychain signatures', () => {
+  const keychain = {
+    inner: signature,
+    type: 'keychain',
+    userAddress: authorization.address,
+  } as const
   KeyAuthorization.from(authorization, {
     // @ts-expect-error Key authorizations do not accept keychain signatures.
     signature: keychain,
@@ -94,5 +115,19 @@ test('rejects keychain signatures', () => {
     signature: keychainRpc,
   }
 
-  expectTypeOf(rpc).toEqualTypeOf<KeyAuthorization.Rpc>()
+  expectTypeOf(rpc).toMatchTypeOf<KeyAuthorization.Rpc>()
+})
+
+test('resolves Tempo address bindings for multisig grants', () => {
+  const signed = KeyAuthorization.from(
+    {
+      account: TempoAddress.format(authorization.address),
+      address: TempoAddress.format(authorization.address),
+      chainId: 1n,
+      type: 'multisig',
+    },
+    { signature },
+  )
+  expectTypeOf(signed.account).toMatchTypeOf<`0x${string}`>()
+  expectTypeOf(signed.address).toMatchTypeOf<`0x${string}`>()
 })

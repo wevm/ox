@@ -6,12 +6,6 @@ import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 
-/**
- * Maximum number of native multisig signatures in one nested authorization
- * path, including the top-level transaction signature.
- */
-export const maxNestingDepth = 2
-
 /** Maximum encoded byte length for one primitive owner approval. */
 export const maxOwnerSignatureBytes = 2049
 
@@ -22,7 +16,7 @@ export const maxOwners = 48
 export const maxSignatures = 8
 
 /** Maximum threshold accepted by a native multisig config. */
-export const maxThreshold = 0xff
+export const maxThreshold = 8
 
 /** Maximum version accepted by a native multisig config. */
 export const maxVersion = 2n ** 64n - 1n
@@ -39,12 +33,9 @@ const accountDomain = 'tempo:multisig:account'
 /** Domain prefix for native multisig configuration commitments. */
 const configDomain = 'tempo:multisig:config'
 
-/** Canonical CREATE2 factory for multisig recovery wallets. */
-const recoveryFactory = '0x8a196A227C48Ae8A3E36EebD4E106675CC0f6E64'
-
 /** Keccak-256 of the canonical recovery wallet creation code. */
 const recoveryWalletInitCodeHash =
-  '0x4b5ff53c5328a10a6ec5224adf16de5e204a47057c98af037ee30b7de660a8a6'
+  '0x583cc63a2e37f645b43eac911b1a6d6de08b83abdc308c61364edda8cfc3bd37'
 
 /** Domain prefix for native multisig owner approvals. */
 const signatureDomain = 'tempo:multisig:signature'
@@ -300,7 +291,33 @@ export declare namespace fromRpc {
  */
 export function fromTuple(tuple: Tuple): Config {
   const [salt, version, threshold, owners] = tuple
-  return {
+  if (
+    tuple.length !== 4 ||
+    typeof salt !== 'string' ||
+    Hex.size(salt) !== 32 ||
+    typeof version !== 'string' ||
+    Hex.size(version) > 8 ||
+    version.startsWith('0x00') ||
+    typeof threshold !== 'string' ||
+    Hex.size(threshold) > 1 ||
+    threshold.startsWith('0x00') ||
+    !Array.isArray(owners) ||
+    owners.some(
+      (owner) =>
+        !Array.isArray(owner) ||
+        owner.length !== 2 ||
+        typeof owner[0] !== 'string' ||
+        !Address.validate(owner[0]) ||
+        typeof owner[1] !== 'string' ||
+        Hex.size(owner[1] as Hex.Hex) > 1 ||
+        owner[1].startsWith('0x00'),
+    )
+  )
+    throw new InvalidConfigError({ reason: 'invalid config RLP tuple' })
+  const config = {
+    salt: salt && salt !== '0x' ? Hex.padLeft(salt, 32) : zeroSalt,
+    version: version === '0x' ? 0n : Hex.toBigInt(version),
+    threshold: threshold === '0x' ? 0 : Hex.toNumber(threshold),
     owners: owners.map((owner) => {
       const [ownerAddress, weight] = owner as readonly Hex.Hex[]
       return {
@@ -308,18 +325,17 @@ export function fromTuple(tuple: Tuple): Config {
         weight: !weight || weight === '0x' ? 0 : Hex.toNumber(weight),
       }
     }),
-    salt: salt && salt !== '0x' ? Hex.padLeft(salt, 32) : zeroSalt,
-    threshold: threshold === '0x' ? 0 : Hex.toNumber(threshold),
-    version: version === '0x' ? 0n : Hex.toBigInt(version),
   }
+  assert(config)
+  return config
 }
 
 /**
  * Derives the stable native multisig account address.
  *
  * The initial config is hashed into a CREATE2 salt using fixed-width
- * big-endian fields, not RLP. The account uses the canonical recovery factory
- * and wallet init-code hash.
+ * big-endian fields, not RLP. The account uses the chain-configured recovery
+ * factory and wallet init-code hash.
  *
  * The address is derived once from the initial version-0 config. Config
  * updates do not change it.
@@ -335,13 +351,20 @@ export function fromTuple(tuple: Tuple): Config {
  *   threshold: 1,
  * })
  *
- * const address = MultisigConfig.getAddress(initialConfig)
+ * const address = MultisigConfig.getAddress(initialConfig, {
+ *   factory: '0x7171717171717171717171717171717171717171'
+ * })
  * ```
  *
  * @param config - The initial multisig config.
+ * @param options - The recovery factory configured by the chain.
  * @returns The multisig account address.
  */
-export function getAddress(config: Input): Address.Address {
+export function getAddress(
+  config: Input,
+  options: getAddress.Options,
+): Address.Address {
+  Address.assert(options.factory)
   assert(config)
   if (BigInt(config.version ?? 0) !== 0n)
     throw new InvalidConfigError({
@@ -361,7 +384,7 @@ export function getAddress(config: Input): Address.Address {
   )
   const account = ContractAddress.fromCreate2({
     bytecodeHash: recoveryWalletInitCodeHash,
-    from: recoveryFactory,
+    from: options.factory,
     salt: accountSalt,
   })
   if (Hex.toBigInt(account) === 0n)
@@ -374,6 +397,11 @@ export function getAddress(config: Input): Address.Address {
 }
 
 export declare namespace getAddress {
+  type Options = {
+    /** Recovery factory configured by the chain. */
+    factory: Address.Address
+  }
+
   type ErrorType =
     | assert.ErrorType
     | ContractAddress.fromCreate2.ErrorType
@@ -444,9 +472,6 @@ export declare namespace getCommitment {
  * version. Initial approvals use version `0n`; each config update increments
  * it.
  *
- * For a nested multisig owner approval, the parent digest becomes the nested
- * approval's `payload`, with the nested multisig `account`.
- *
  * @example
  * ```ts twoslash
  * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
@@ -464,7 +489,9 @@ export declare namespace getCommitment {
  * })
  *
  * const digest = MultisigConfig.getSignPayload({
- *   account: MultisigConfig.getAddress(config),
+ *   account: MultisigConfig.getAddress(config, {
+ *     factory: '0x7171717171717171717171717171717171717171'
+ *   }),
  *   config,
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  * })
@@ -476,6 +503,9 @@ export declare namespace getCommitment {
 export function getSignPayload(value: getSignPayload.Value): Hex.Hex {
   const { account, config, payload } = value
   assertVersion(config.version)
+  Address.assert(account)
+  if (Hex.size(Hex.from(payload)) !== 32)
+    throw new InvalidConfigError({ reason: 'payload must be 32 bytes' })
   return Hash.keccak256(
     Hex.concat(
       Hex.fromString(signatureDomain),

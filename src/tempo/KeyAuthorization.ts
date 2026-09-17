@@ -3,7 +3,11 @@ import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type { Compute, OneOf, UnionPartialBy } from '../core/internal/types.js'
+import type {
+  Compute,
+  PartialBy,
+  UnionPartialBy,
+} from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
@@ -25,7 +29,7 @@ import * as TempoAddress from './TempoAddress.js'
  * - `chainId`: Chain ID for replay protection (0 = valid on any chain)
  * - `expiry`: Unix timestamp when the key expires (undefined = never expires)
  * - `limits`: Per-TIP-20 token spending limits (only applies to `transfer()` and `approve()` calls)
- * - `type`: Key type (`secp256k1`, `p256`, or `webAuthn`)
+ * - `type`: Key type (`secp256k1`, `p256`, `webAuthn`, or `multisig`)
  *
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
@@ -41,6 +45,8 @@ export type KeyAuthorization<
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
+  /** Whether this authorization provisions an admin access key. */
+  isAdmin?: boolean | undefined
   /** TIP20 spending limits for this key. */
   limits?:
     | readonly TokenLimit<bigintType, numberType, addressType>[]
@@ -53,8 +59,6 @@ export type KeyAuthorization<
    * - `[...]` = only listed contract+selector combinations allowed
    */
   scopes?: readonly Scope<addressType>[] | undefined
-  /** Key type. (secp256k1, P256, WebAuthn). */
-  type: SignatureEnvelope.Type
   /**
    * Optional 32-byte witness bound into the signing hash.
    *
@@ -65,32 +69,37 @@ export type KeyAuthorization<
    * [TIP-1053 Specification](https://tips.sh/1053)
    */
   witness?: Hex.Hex | undefined
-} & OneOf<
-  // TIP-1049 admin access keys: `account` and `isAdmin` are paired — either
-  // both are specified or neither. The `account` binding scopes the signing
-  // hash to a specific account, and `isAdmin: true` provisions an admin
-  // access key with unrestricted keychain mutator privileges.
-  //
-  // [TIP-1049 Specification](https://tips.sh/1049)
+} & (
   | {
-      /** Account address this authorization is bound to. */
-      account: addressType
-      /** Whether this authorization provisions an admin access key. */
-      isAdmin: boolean
+      /** Optional account address binding. */
+      account?: addressType | undefined
+      /** Primitive key type. */
+      type: SignatureEnvelope.Type
     }
-  | {}
-> &
+  | {
+      /** Required parent account binding for a multisig grant. */
+      account: addressType
+      /** Multisig key type. */
+      type: 'multisig'
+    }
+) &
   (signed extends true
-    ? { signature: Signature<bigintType, numberType> }
+    ? {
+        signature:
+          | SignatureEnvelope.Primitive<bigintType, numberType>
+          | SignatureEnvelope.Multisig<bigintType, numberType>
+      }
     : {
-        signature?: Signature<bigintType, numberType> | undefined
+        signature?:
+          | SignatureEnvelope.Primitive<bigintType, numberType>
+          | SignatureEnvelope.Multisig<bigintType, numberType>
+          | undefined
       })
 
 /** Signature that can authorize an access key. */
-export type Signature<bigintType = bigint, numberType = number> = OneOf<
+export type Signature<bigintType = bigint, numberType = number> =
   | SignatureEnvelope.Primitive<bigintType, numberType>
   | SignatureEnvelope.Multisig<bigintType, numberType>
->
 
 /** RPC-formatted signature that can authorize an access key. */
 export type SignatureRpc =
@@ -107,8 +116,6 @@ export type Input = KeyAuthorization<
 
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
-  /** Optional account address binding (TIP-1049). */
-  account?: Address.Address | null | undefined
   /** Allowed call scopes (node field: `allowedCalls`). */
   allowedCalls?: readonly RpcCallScope[] | undefined
   /** Chain ID (hex quantity). */
@@ -119,33 +126,44 @@ export type Rpc = {
   isAdmin?: boolean | null | undefined
   /** Key identifier. */
   keyId: Address.Address
-  /** Key type. */
-  keyType: SignatureEnvelope.Type
   /** Token spending limits. */
   limits?: readonly RpcTokenLimit[] | undefined
   /** Signature authorizing this key. */
   signature: SignatureRpc
   /** Optional 32-byte witness (hex). */
   witness?: Hex.Hex | null | undefined
-}
+} & (
+  | {
+      /** Optional account address binding (TIP-1049). */
+      account?: Address.Address | null | undefined
+      /** Primitive key type. */
+      keyType: SignatureEnvelope.Type
+    }
+  | {
+      /** Required parent account binding for a multisig grant. */
+      account: Address.Address
+      /** Multisig key type. */
+      keyType: 'multisig'
+    }
+)
 
 /** RPC representation of a token limit (matches node's `TokenLimit` serde). */
 export type RpcTokenLimit = {
-  token: Address.Address
   limit: Hex.Hex
   period?: Hex.Hex | undefined
+  token: Address.Address
 }
 
 /** RPC representation of a call scope (matches node's `CallScope` serde). */
 export type RpcCallScope = {
+  selectorRules?: readonly RpcSelectorRule[] | undefined
   target: Address.Address
-  selectorRules?: readonly RpcSelectorRule[]
 }
 
 /** RPC representation of a selector rule (matches node's `SelectorRule` serde). */
 export type RpcSelectorRule = {
+  recipients?: readonly Address.Address[] | undefined
   selector: Hex.Hex
-  recipients?: readonly Address.Address[]
 }
 
 /** Signed representation of a Key Authorization. */
@@ -156,10 +174,11 @@ export type Signed<
 > = KeyAuthorization<true, bigintType, numberType, addressType>
 
 type SignatureValue =
-  | UnionPartialBy<Signature, 'prehash' | 'type'>
+  | SignatureEnvelope.from.MultisigFromConfig
+  | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
+  | PartialBy<SignatureEnvelope.Multisig, 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
-  | SignatureEnvelope.from.MultisigFromConfig
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
@@ -236,14 +255,6 @@ export type Scope<addressType = Address.Address> = {
   /** Target contract address. */
   address: addressType
   /**
-   * 4-byte function selector, or a human-readable ABI signature
-   * (e.g. `'transfer(address,uint256)'` or `'function transfer(address,uint256)'`).
-   *
-   * Signatures are encoded into a 4-byte selector automatically.
-   * Omit to allow any selector on this contract.
-   */
-  selector?: Hex.Hex | string | undefined
-  /**
    * Recipient allowlist for this selector (first ABI `address` argument).
    *
    * - `undefined` or `[]` = any recipient allowed
@@ -252,6 +263,8 @@ export type Scope<addressType = Address.Address> = {
    * Only valid for constrained selectors: `transfer`, `approve`, `transferWithMemo`.
    */
   recipients?: readonly addressType[] | undefined
+  /** Function selector or human-readable ABI signature. */
+  selector?: Hex.Hex | string | undefined
 }
 
 /**
@@ -267,8 +280,6 @@ export type TokenLimit<
   numberType = number,
   addressType = Address.Address,
 > = {
-  /** Address of the TIP-20 token. */
-  token: addressType
   /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` \> 0). */
   limit: bigintType
   /**
@@ -278,6 +289,8 @@ export type TokenLimit<
    * - `\> 0` = periodic limit that resets every `period` seconds
    */
   period?: numberType | undefined
+  /** Address of the TIP-20 token. */
+  token: addressType
 }
 
 /**
@@ -424,6 +437,7 @@ export function from<
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
+  assertAccountBinding(authorization.type, authorization.account)
   const auth = authorization as KeyAuthorization & {
     limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
     scopes?: readonly {
@@ -436,6 +450,9 @@ export function from<
   if (auth.signature) assertSignature(auth.signature)
   const resolved = {
     ...auth,
+    ...(auth.account !== undefined
+      ? { account: TempoAddress.resolve(auth.account) }
+      : {}),
     address: TempoAddress.resolve(auth.address as TempoAddress.Address),
     ...(auth.limits
       ? {
@@ -479,8 +496,12 @@ export declare namespace from {
   type Options<
     signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = {
-    /** The signature to attach to the Key Authorization. */
-    signature?: signature | Signature | undefined
+    /** The primitive or multisig signature to attach to the Key Authorization. */
+    signature?:
+      | signature
+      | SignatureEnvelope.Primitive
+      | SignatureEnvelope.Multisig
+      | undefined
   }
 
   type ReturnType<
@@ -502,7 +523,10 @@ export declare namespace from {
         >
   >
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -536,6 +560,7 @@ export function fromRpc(authorization: Rpc): Signed {
   const witness = authorization.witness ?? undefined
   const isAdmin = authorization.isAdmin ?? undefined
   const account = authorization.account ?? undefined
+  assertAccountBinding(keyType, account)
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
@@ -557,9 +582,6 @@ export function fromRpc(authorization: Rpc): Signed {
       })
     : undefined
 
-  const accountBinding =
-    account !== undefined ? { account, isAdmin: isAdmin ?? false } : {}
-
   return {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -573,14 +595,20 @@ export function fromRpc(authorization: Rpc): Signed {
     })),
     ...(scopes ? { scopes } : {}),
     signature,
-    type: keyType,
+    ...(keyType === 'multisig'
+      ? { account: account!, type: keyType }
+      : { type: keyType }),
     ...(witness !== undefined ? { witness } : {}),
-    ...accountBinding,
+    ...(account !== undefined ? { account } : {}),
+    ...(isAdmin ? { isAdmin: true as const } : {}),
   }
 }
 
 export declare namespace fromRpc {
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -642,6 +670,8 @@ export function fromTuple<const tuple extends Tuple>(
         return 'p256'
       case '0x02':
         return 'webAuthn'
+      case '0x03':
+        return 'multisig'
       default:
         throw new Error(`Invalid key type: ${keyType_hex}`)
     }
@@ -697,17 +727,19 @@ export function fromTuple<const tuple extends Tuple>(
   const account = isAbsent(rawAccount)
     ? undefined
     : (rawAccount as Address.Address)
-  const accountBinding =
-    account !== undefined ? { account, isAdmin: isAdmin ?? false } : {}
+  assertAccountBinding(keyType, account)
   const args: KeyAuthorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
-    type: keyType,
+    ...(keyType === 'multisig'
+      ? { account: account!, type: keyType }
+      : { type: keyType }),
     ...(expiry !== undefined ? { expiry } : {}),
     ...(limits !== undefined ? { limits } : {}),
     ...(scopes !== undefined ? { scopes } : {}),
     ...(witness !== undefined ? { witness } : {}),
-    ...accountBinding,
+    ...(account !== undefined ? { account } : {}),
+    ...(isAdmin ? { isAdmin: true as const } : {}),
   }
   if (signatureSerialized) {
     const signature = SignatureEnvelope.deserialize(signatureSerialized)
@@ -722,7 +754,10 @@ export declare namespace fromTuple {
     KeyAuthorization<authorization extends Tuple<true> ? true : false>
   >
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -914,6 +949,7 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: Signed): Rpc {
+  assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
     scopes,
@@ -957,13 +993,15 @@ export function toRpc(authorization: Signed): Rpc {
     chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
     expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : null,
     keyId: TempoAddress.resolve(address),
-    keyType: type,
+    ...(type === 'multisig' ? { account, keyType: type } : { keyType: type }),
     limits: limits?.map(({ token, limit, period }) => ({
       token,
       limit: Hex.fromNumber(limit),
       ...(period ? { period: numberToHex(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(signature) as SignatureRpc,
+    signature: SignatureEnvelope.toRpc(signature) as
+      | SignatureEnvelope.PrimitiveRpc
+      | SignatureEnvelope.MultisigRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -972,7 +1010,10 @@ export function toRpc(authorization: Signed): Rpc {
 }
 
 export declare namespace toRpc {
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -1009,6 +1050,7 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
+  assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
     chainId,
@@ -1025,16 +1067,19 @@ export function toTuple<const authorization extends KeyAuthorization>(
     assertSignature(authorization.signature)
     return SignatureEnvelope.serialize(authorization.signature)
   })()
+  const keyType = authorization.type
   const type = (() => {
-    switch (authorization.type) {
+    switch (keyType) {
       case 'secp256k1':
         return '0x'
       case 'p256':
         return '0x01'
       case 'webAuthn':
         return '0x02'
+      case 'multisig':
+        return '0x03'
       default:
-        throw new Error(`Invalid key type: ${authorization.type}`)
+        throw new Error(`Invalid key type: ${keyType}`)
     }
   })()
   const limitsValue = limits?.map((limit) => {
@@ -1083,7 +1128,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // single entry to this list with `placeholder: '0x'`.
   const hasTip1053Plus =
     witness !== undefined || isAdmin || account !== undefined
-  const optionals: readonly { value: unknown; placeholder: unknown }[] = [
+  const optionals: readonly { placeholder: unknown; value: unknown }[] = [
     {
       value:
         expiry !== null && expiry !== undefined && expiry !== 0
@@ -1120,7 +1165,10 @@ export declare namespace toTuple {
   type ReturnType<authorization extends KeyAuthorization = KeyAuthorization> =
     Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 function bigintToHex(value: bigint): Hex.Hex {
@@ -1152,6 +1200,13 @@ function resolveSelector(
   if (!selector) return undefined
   if (selector.startsWith('0x')) return selector as Hex.Hex
   return AbiItem.getSelector(selector)
+}
+
+function assertAccountBinding(
+  type: KeyAuthorization['type'],
+  account: TempoAddress.Address | null | undefined,
+): void {
+  if (type === 'multisig' && account == null) throw new MissingAccountError()
 }
 
 function assertWitness(witness: Hex.Hex): void {
@@ -1196,5 +1251,13 @@ export class InvalidSignatureTypeError extends Error {
     super(
       `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.`,
     )
+  }
+}
+
+/** Thrown when a multisig key grant omits its parent account binding. */
+export class MissingAccountError extends Error {
+  override readonly name = 'KeyAuthorization.MissingAccountError'
+  constructor() {
+    super('Multisig key grants require a parent account binding.')
   }
 }

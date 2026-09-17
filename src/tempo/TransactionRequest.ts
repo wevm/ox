@@ -5,12 +5,13 @@ import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as MultisigSimulation from './MultisigSimulation.js'
+import type * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
-type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
+type KeyType = SignatureEnvelope.Type | 'multisig'
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -37,6 +38,7 @@ export type TransactionRequest<
     feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
+    keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
     multisigSimulation?: MultisigSimulation.Spec | undefined
@@ -49,11 +51,16 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
-  'authorizationList' | 'feeToken' | 'keyAuthorization' | 'multisigSimulation'
+  | 'authorizationList'
+  | 'feeToken'
+  | 'keyAuthorization'
+  | 'multisigSimulation'
+  | 'keyAuthorizationSimulation'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
+  keyAuthorizationSimulation?: MultisigSimulation.Rpc | undefined
   multisigSimulation?: MultisigSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
@@ -79,7 +86,12 @@ export type Rpc = Omit<
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const { authorizationList: _, multisigSimulation: __, ...rest } = request
+  const {
+    authorizationList: _,
+    multisigSimulation: __,
+    keyAuthorizationSimulation: ___,
+    ...rest
+  } = request
   const request_ = ox_TransactionRequest.fromRpc(
     rest as any,
   ) as TransactionRequest
@@ -109,6 +121,10 @@ export function fromRpc(request: Rpc): TransactionRequest {
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
+    )
+  if (request.keyAuthorizationSimulation)
+    request_.keyAuthorizationSimulation = MultisigSimulation.fromRpc(
+      request.keyAuthorizationSimulation,
     )
   if (request.multisigSimulation)
     request_.multisigSimulation = MultisigSimulation.fromRpc(
@@ -211,6 +227,10 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
+    )
+  if (request.keyAuthorizationSimulation)
+    request_rpc.keyAuthorizationSimulation = MultisigSimulation.toRpc(
+      request.keyAuthorizationSimulation,
     )
   if (request.multisigSimulation)
     request_rpc.multisigSimulation = MultisigSimulation.toRpc(
