@@ -354,6 +354,11 @@ function decodeCodesTail(
 
   const codesEnd = codesLengthStart
   const codesStart = codesEnd - codesLength
+  // `codesStart` is an offset counted back from the end of `data`. `Hex.slice`
+  // doesn't bounds-check a negative start, so a `codesLength` byte that lies
+  // about how much data precedes it would otherwise silently clamp to the
+  // start of `data` instead of being rejected.
+  if (Hex.size(data) + codesStart < 0) return undefined
   const codesHex = Hex.slice(data, codesStart, codesEnd)
   const codesString = Hex.toString(codesHex)
   const codes = codesString.length > 0 ? codesString.split(',') : []
@@ -472,16 +477,18 @@ function schema2ToDataSuffix(attribution: AttributionSchemaId2): Hex.Hex {
 
 function schema2FromData(data: Hex.Hex): AttributionSchemaId2 | undefined {
   // cborLength is 2 bytes before schema ID
-  const cborLengthHex = Hex.slice(
-    data,
-    -ercSuffixSize - 1 - 2,
-    -ercSuffixSize - 1,
-  )
+  const cborLengthStart = -ercSuffixSize - 1 - 2
+  const cborLengthEnd = -ercSuffixSize - 1
+  if (Hex.size(data) + cborLengthStart < 0) return undefined
+  const cborLengthHex = Hex.slice(data, cborLengthStart, cborLengthEnd)
   const cborLength = Hex.toNumber(cborLengthHex)
 
-  // Extract CBOR data
-  const cborStart = -ercSuffixSize - 1 - 2 - cborLength
-  const cborEnd = -ercSuffixSize - 1 - 2
+  // Extract CBOR data. As with `decodeCodesTail`, `cborStart` must be
+  // bounds-checked since `Hex.slice` doesn't reject a negative start that
+  // runs past the beginning of `data`.
+  const cborStart = cborLengthStart - cborLength
+  if (Hex.size(data) + cborStart < 0) return undefined
+  const cborEnd = cborLengthStart
   const cborHex = Hex.slice(data, cborStart, cborEnd)
 
   // Decode CBOR
