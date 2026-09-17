@@ -44,25 +44,12 @@ describe('TransactionRequest', () => {
     )
   })
 
-  test('gas-model hints and capabilities round-trip', () => {
+  test('capabilities and key hints round-trip', () => {
     const hints = {
       capabilities: { balanceDiffs: true },
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigSimulation: {
-        config: '0xc0',
-        approvals: [
-          {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            keyType: 'secp256k1',
-          },
-        ],
-      },
-      keyAuthorizationSimulation: {
-        config: '0xc0',
-        approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
-      },
     } as const
 
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
@@ -73,6 +60,38 @@ describe('TransactionRequest', () => {
 
     const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
     expect(encoded).toMatchObject(hints)
+    expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
+  })
+
+  test('multisig simulation round-trips', () => {
+    const multisigSimulation = {
+      approvals: [
+        {
+          keyType: 'webAuthn',
+          keyData: '0x0005',
+          owner: '0x1111111111111111111111111111111111111111',
+        },
+      ],
+      config:
+        '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01',
+    } as const
+
+    const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
+      ...rpc,
+      keyAuthorizationSimulation: multisigSimulation,
+      multisigSimulation,
+    })
+    expect(decoded).toEqual(
+      core_TransactionRequest.fromRpc({
+        ...rpc,
+        keyAuthorizationSimulation: multisigSimulation,
+        multisigSimulation,
+      }),
+    )
+
+    const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+    expect(encoded.keyAuthorizationSimulation).toStrictEqual(multisigSimulation)
+    expect(encoded.multisigSimulation).toStrictEqual(multisigSimulation)
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 

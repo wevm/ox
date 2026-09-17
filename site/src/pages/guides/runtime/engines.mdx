@@ -119,6 +119,19 @@ independently owned factory described in the
   bundle.
 - Uses pinned portable C implementations that Ox must keep reviewed and
   updated.
+- Requires a Content Security Policy that permits WebAssembly compilation; WASM
+  is disabled by default in browser extensions.
+
+:::info
+**Content Security Policy.** Compiling WebAssembly requires a CSP that allows
+it: add `'wasm-unsafe-eval'` to your `script-src` directive. Browser extensions
+disable WASM under the default Manifest V3 CSP, and pages that ship a strict CSP
+must opt in explicitly, otherwise `Engine.install()` throws and Ox's default
+JavaScript engine should be used instead. See the
+[MDN extension CSP](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_Security_Policy)
+and [Chrome extension CSP](https://developer.chrome.com/docs/extensions/reference/manifest/content-security-policy)
+references.
+:::
 
 ### Install the Node Engine
 

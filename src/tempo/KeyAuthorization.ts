@@ -83,6 +83,16 @@ export type KeyAuthorization<
         | undefined
     })
 
+/** Signature that can authorize an access key. */
+export type Signature<numberType = number> =
+  | SignatureEnvelope.Primitive<numberType>
+  | SignatureEnvelope.Multisig<numberType>
+
+/** RPC-formatted signature that can authorize an access key. */
+export type SignatureRpc =
+  | SignatureEnvelope.MultisigRpc
+  | SignatureEnvelope.PrimitiveRpc
+
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<false, bigint, number>
 
@@ -137,6 +147,7 @@ export type Signed<bigintType = bigint, numberType = number> = KeyAuthorization<
 >
 
 type SignatureValue =
+  | SignatureEnvelope.from.MultisigFromConfig
   | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
   | PartialBy<SignatureEnvelope.Multisig, 'type'>
   | SignatureEnvelope.Secp256k1Flat

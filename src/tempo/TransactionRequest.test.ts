@@ -1,5 +1,45 @@
-import { TransactionRequest } from 'ox/tempo'
+import {
+  MultisigConfig,
+  type MultisigSimulation,
+  TransactionRequest,
+} from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
+
+const multisigSimulationRpc = {
+  approvals: [
+    {
+      keyType: 'webAuthn',
+      keyData: '0x0005',
+      owner: '0x1111111111111111111111111111111111111111',
+    },
+  ],
+  config:
+    '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01',
+} as const satisfies MultisigSimulation.Rpc
+
+const multisigSimulation = {
+  approvals: [
+    {
+      keyType: 'webAuthn',
+      keyData: '0x0005',
+      owner: '0x1111111111111111111111111111111111111111',
+    },
+  ],
+  config: MultisigConfig.from({
+    owners: [
+      {
+        owner: '0x1111111111111111111111111111111111111111',
+        weight: 1,
+      },
+      {
+        owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        weight: 1,
+      },
+    ],
+    salt: `0x${'11'.repeat(32)}`,
+    threshold: 2,
+  }),
+} as const satisfies MultisigSimulation.Spec
 
 describe('fromRpc', () => {
   test('default', () => {
@@ -69,7 +109,7 @@ describe('fromRpc', () => {
     expect(request.nonceKey).toBe(255n)
   })
 
-  test('behavior: gas-model hints and capabilities pass through', () => {
+  test('behavior: capabilities and key hints pass through', () => {
     const request = TransactionRequest.fromRpc({
       calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       capabilities: { balanceDiffs: true },
@@ -77,34 +117,61 @@ describe('fromRpc', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigSimulation: {
-        config: '0xc0',
-        approvals: [
-          {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            keyType: 'secp256k1',
-          },
-        ],
-      },
-      keyAuthorizationSimulation: {
-        config: '0xc0',
-        approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
-      },
       type: '0x76',
     })
-    expect(request.capabilities).toEqual({ balanceDiffs: true })
-    expect(request.feePayer).toBe(true)
-    expect(request.keyData).toBe('0x0578')
-    expect(request.keyId).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
-    expect(request.keyType).toBe('webAuthn')
-    expect(request.multisigSimulation).toMatchObject({
-      config: '0xc0',
-      approvals: [{ keyType: 'secp256k1' }],
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "data": undefined,
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+          },
+        ],
+        "capabilities": {
+          "balanceDiffs": true,
+        },
+        "feePayer": true,
+        "keyData": "0x0578",
+        "keyId": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "keyType": "webAuthn",
+        "type": "tempo",
+      }
+    `)
+  })
+
+  test('behavior: multisig simulation', () => {
+    const request = TransactionRequest.fromRpc({
+      from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      multisigSimulation: multisigSimulationRpc,
+      type: '0x76',
     })
-    expect(request.keyAuthorizationSimulation).toMatchObject({
-      config: '0xc0',
-      approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
-    })
+
+    expect(request.multisigSimulation).toMatchInlineSnapshot(`
+      {
+        "approvals": [
+          {
+            "keyData": "0x0005",
+            "keyType": "webAuthn",
+            "owner": "0x1111111111111111111111111111111111111111",
+          },
+        ],
+        "config": {
+          "owners": [
+            {
+              "owner": "0x1111111111111111111111111111111111111111",
+              "weight": 1,
+            },
+            {
+              "owner": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "threshold": 2,
+          "version": 0n,
+        },
+      }
+    `)
   })
 
   test('behavior: empty', () => {
@@ -161,7 +228,7 @@ describe('toRpc', () => {
     `)
   })
 
-  test('behavior: gas-model hints and capabilities are carried', () => {
+  test('behavior: capabilities and key hints are carried', () => {
     const request = TransactionRequest.toRpc({
       calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe' }],
       capabilities: { balanceDiffs: true },
@@ -169,34 +236,57 @@ describe('toRpc', () => {
       keyData: '0x0578',
       keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
       keyType: 'webAuthn',
-      multisigSimulation: {
-        config: '0xc0',
-        approvals: [
+    })
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
           {
-            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            keyType: 'secp256k1',
+            "data": "0x",
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+            "value": "0x",
           },
         ],
-      },
-      keyAuthorizationSimulation: {
-        config: '0xc0',
-        approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
-      },
+        "capabilities": {
+          "balanceDiffs": true,
+        },
+        "feePayer": false,
+        "keyData": "0x0578",
+        "keyId": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "keyType": "webAuthn",
+        "type": "0x76",
+      }
+    `)
+  })
+
+  test('behavior: multisig simulation', () => {
+    const request = TransactionRequest.toRpc({
+      from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      multisigSimulation,
     })
-    expect(request.capabilities).toEqual({ balanceDiffs: true })
-    expect(request.feePayer).toBe(false)
-    expect(request.keyData).toBe('0x0578')
-    expect(request.keyId).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
-    expect(request.keyType).toBe('webAuthn')
-    expect(request.multisigSimulation).toMatchObject({
-      config: '0xc0',
-      approvals: [{ keyType: 'secp256k1' }],
-    })
-    expect(request.keyAuthorizationSimulation).toMatchObject({
-      config: '0xc0',
-      approvals: [{ owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }],
-    })
-    expect(request.type).toBe('0x76')
+
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "data": "0x",
+            "to": "0x0000000000000000000000000000000000000000",
+            "value": "0x",
+          },
+        ],
+        "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "multisigSimulation": {
+          "approvals": [
+            {
+              "keyData": "0x0005",
+              "keyType": "webAuthn",
+              "owner": "0x1111111111111111111111111111111111111111",
+            },
+          ],
+          "config": "0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01",
+        },
+        "type": "0x76",
+      }
+    `)
   })
 
   test('behavior: key data longer than 4 bytes shims into a length hint', () => {
@@ -296,6 +386,8 @@ describe('roundtrip', () => {
       nonceKey: 255n,
       gas: 100000n,
       maxFeePerGas: 1000000000n,
+      keyAuthorizationSimulation: multisigSimulation,
+      multisigSimulation,
     }
 
     const rpc = TransactionRequest.toRpc(original)
@@ -316,6 +408,10 @@ describe('roundtrip', () => {
     expect(converted.nonceKey).toBe(original.nonceKey)
     expect(converted.gas).toBe(original.gas)
     expect(converted.maxFeePerGas).toBe(original.maxFeePerGas)
+    expect(converted.keyAuthorizationSimulation).toEqual(
+      original.keyAuthorizationSimulation,
+    )
+    expect(converted.multisigSimulation).toEqual(original.multisigSimulation)
     expect(converted.type).toBe('tempo')
   })
 
@@ -333,6 +429,8 @@ describe('roundtrip', () => {
       validAfter: '0x32',
       nonceKey: '0xff',
       gas: '0x186a0',
+      keyAuthorizationSimulation: multisigSimulationRpc,
+      multisigSimulation: multisigSimulationRpc,
       type: '0x76',
     }
 
@@ -345,6 +443,10 @@ describe('roundtrip', () => {
     expect(rpc.validAfter).toBe(original.validAfter)
     expect(rpc.nonceKey).toBe(original.nonceKey)
     expect(rpc.gas).toBe(original.gas)
+    expect(rpc.keyAuthorizationSimulation).toEqual(
+      original.keyAuthorizationSimulation,
+    )
+    expect(rpc.multisigSimulation).toEqual(original.multisigSimulation)
     expect(rpc.type).toBe('0x76')
   })
 })

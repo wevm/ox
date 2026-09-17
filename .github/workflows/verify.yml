@@ -3,6 +3,11 @@ on:
   workflow_call:
   workflow_dispatch:
 
+concurrency:
+  group: >-
+    verify-${{ github.event_name == 'pull_request' && github.event.pull_request.head.label || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   checks:
     name: Checks

@@ -1,5 +1,71 @@
 # ox
 
+## 1.7.4
+
+### Patch Changes
+
+- [#425](https://github.com/wevm/ox/pull/425) [`5e3c201`](https://github.com/wevm/ox/commit/5e3c20125dc4216f48d78928ed1ecd810f122289) Thanks [@jxom](https://github.com/jxom)! - Added `MultisigOperation.serializeKeyAuthorization` for attaching selected owner approvals to a key authorization.
+
+  ```ts
+  const authorization = MultisigOperation.serializeKeyAuthorization(
+    keyAuthorization,
+    {
+      account,
+      approvals: selection.selectedApprovals,
+      config,
+    },
+  );
+  ```
+
+- [#428](https://github.com/wevm/ox/pull/428) [`a4e84db`](https://github.com/wevm/ox/commit/a4e84db03d10f8c3818dcd9610cd071f95e6c3d4) Thanks [@jxom](https://github.com/jxom)! - Aligned Tempo multisig simulation requests and RPC signatures with T12's encoded wire formats.
+
+## 1.7.3
+
+### Patch Changes
+
+- [#423](https://github.com/wevm/ox/pull/423) [`9b407b5`](https://github.com/wevm/ox/commit/9b407b5a31a0858be53dd61d87adbcd1181534ef) Thanks [@jxom](https://github.com/jxom)! - Added `multisig_getConfig` to the Tempo RPC schemas.
+
+- [#419](https://github.com/wevm/ox/pull/419) [`3ceaa25`](https://github.com/wevm/ox/commit/3ceaa25e92e24deee38020a84a7f9865d5f73a9a) Thanks [@jxom](https://github.com/jxom)! - Migrated multisig operations to configuration witnesses.
+
+## 1.7.2
+
+### Patch Changes
+
+- [#407](https://github.com/wevm/ox/pull/407) [`e01d0bb`](https://github.com/wevm/ox/commit/e01d0bbff65bed755b9125a4461fa9feb6b214db) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig operations, configuration witnesses, RPC types, approval selection, transaction serialization, fee-payer envelope handling, and TIP-1061 validation.
+
+  ```ts
+  import { MultisigOperation } from "ox/tempo";
+
+  const selection = await MultisigOperation.selectApprovals(options);
+  const transaction = MultisigOperation.serializeTransaction(operation, {
+    approvals: selection.selectedApprovals,
+  });
+  ```
+
+## 1.7.1
+
+### Patch Changes
+
+- [#398](https://github.com/wevm/ox/pull/398) [`a63116b`](https://github.com/wevm/ox/commit/a63116ba88ecc8e2378e8770d21a6111574e4028) Thanks [@tmm](https://github.com/tmm)! - Rejected invalid RFC 3339 SIWE lifetime fields and invalid validation times.
+
+## 1.7.0
+
+### Minor Changes
+
+- [#394](https://github.com/wevm/ox/pull/394) [`06021e1`](https://github.com/wevm/ox/commit/06021e18ade1d85163d8bfcc0ae6e848256da30d) Thanks [@jxom](https://github.com/jxom)! - Added seed and BIP-39 mnemonic key derivation for P256, Secp256k1, Ed25519, ML-DSA-44, and AES-GCM, with domain separation for non-HD derivations.
+
+## 1.6.3
+
+### Patch Changes
+
+- [#389](https://github.com/wevm/ox/pull/389) [`8d66309`](https://github.com/wevm/ox/commit/8d66309cb43884f1eb40cd0bca6e9b78be269690) Thanks [@jxom](https://github.com/jxom)! - Updated native multisig signing for configuration versions, access-key authorization, current protocol limits, and the `initialConfig` naming.
+
+  ```ts
+  import { MultisigConfig } from "ox/tempo";
+
+  const digest = MultisigConfig.getSignPayload({ initialConfig, payload });
+  ```
+
 ## 1.6.2
 
 ### Patch Changes

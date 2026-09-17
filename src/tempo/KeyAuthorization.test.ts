@@ -9,6 +9,7 @@ import {
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as MultisigConfig from './MultisigConfig.js'
 import * as Period from './Period.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -53,19 +54,51 @@ const signature_webauthn = SignatureEnvelope.from({
   },
 })
 
-const signature_multisig = SignatureEnvelope.from({
-  config: {
-    threshold: 1,
-    owners: [
-      { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
-    ],
-  },
+const signature_multisig = {
   account: address,
+  config: MultisigConfig.from({
+    owners: [
+      {
+        owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        weight: 1,
+      },
+    ],
+    threshold: 1,
+    version: 1n,
+  }),
   signatures: [SignatureEnvelope.from(signature_secp256k1)],
   type: 'multisig',
-})
+} as const satisfies SignatureEnvelope.Multisig
+const signature_multisig_rpc =
+  '0xf89794be95c3f554e9fc85ec51be69a3d807a0d55bcf2cf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694f39fd6e51aad88f6f4ce6ab8827279cfffb9226601f843b841fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c' as const
+
+const signature_keychain = {
+  inner: SignatureEnvelope.from(signature_secp256k1),
+  type: 'keychain',
+  userAddress: address,
+} as const satisfies SignatureEnvelope.Keychain
 
 describe('from', () => {
+  test('accepts multisig grants and delegates', () => {
+    const signed = KeyAuthorization.from(
+      {
+        address,
+        chainId: 1n,
+        type: 'multisig',
+        account: signature_multisig.account,
+      },
+      { signature: signature_multisig },
+    )
+    expect(
+      KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
+    ).toEqual(signed)
+    expect(KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed))).toEqual(
+      signed,
+    )
+  })
+})
+
+describe('fromRpc', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
@@ -429,26 +462,120 @@ describe('from', () => {
     `)
   })
 
-  test('accepts multisig grants and delegates', () => {
-    const signed = KeyAuthorization.from(
-      {
-        address,
-        chainId: 1n,
-        type: 'multisig',
-        account: signature_multisig.account,
-      },
-      { signature: signature_multisig },
-    )
+  test('with signature (multisig)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+
+    const signed = KeyAuthorization.from(authorization, {
+      signature: signature_multisig,
+    })
+    expect(signed.signature).toEqual(signature_multisig)
+    expect(
+      KeyAuthorization.from(authorization, {
+        signature: SignatureEnvelope.serialize(signature_multisig),
+      }).signature,
+    ).toEqual(signature_multisig)
+    expect(
+      KeyAuthorization.from({
+        ...authorization,
+        signature: signature_multisig,
+      }).signature,
+    ).toEqual(signature_multisig)
     expect(
       KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
     ).toEqual(signed)
-    expect(KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed))).toEqual(
-      signed,
+  })
+
+  test('rejects a keychain signature', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+
+    expect(() =>
+      KeyAuthorization.from(authorization, {
+        signature: signature_keychain as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+    )
+
+    expect(() =>
+      KeyAuthorization.from(authorization, {
+        signature: SignatureEnvelope.serialize(signature_keychain),
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+    )
+
+    expect(() =>
+      KeyAuthorization.from({
+        ...authorization,
+        signature: signature_keychain,
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
     )
   })
 })
 
 describe('fromRpc', () => {
+  test('behavior: multisig', () => {
+    const authorization = KeyAuthorization.fromRpc({
+      chainId: '0x1',
+      expiry: null,
+      keyId: address,
+      keyType: 'secp256k1',
+      signature: signature_multisig_rpc,
+    })
+
+    expect(authorization.signature).toMatchInlineSnapshot(`
+      {
+        "account": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "config": {
+          "owners": [
+            {
+              "owner": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "threshold": 1,
+          "version": 1n,
+        },
+        "signatures": [
+          {
+            "signature": {
+              "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+              "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+        ],
+        "type": "multisig",
+      }
+    `)
+  })
+
+  test('rejects a keychain signature', () => {
+    expect(() =>
+      KeyAuthorization.fromRpc({
+        chainId: '0x1',
+        expiry: null,
+        keyId: address,
+        keyType: 'secp256k1',
+        signature: SignatureEnvelope.toRpc(signature_keychain),
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+    )
+  })
+
   test('secp256k1', () => {
     const authorization = KeyAuthorization.fromRpc({
       chainId: '0x1',
@@ -1003,6 +1130,59 @@ describe('getSignPayload', () => {
 })
 
 describe('deserialize', () => {
+  test('example: matches the frozen multisig witness vector', () => {
+    const serialized =
+      '0xf8f1f85382107980941eff47bc3a10a45d4b230b5d10e37751fe6aa718808080a053535353535353535353535353535353535353535353535353535353535353538094c4a590afa7337e5cd5eb3aa60cacf91c5400044bb89a05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b8412cfed9350faf80e4115e3c4c967356b80a8e6ee42e4a49ab953c8c8a3537d8d8359bf035a9bea18f32b0da7129cdce3ce701abc09ad8919b93da21a0d57e21451b' as const
+    const authorization = KeyAuthorization.deserialize(serialized)
+
+    expect(authorization).toMatchInlineSnapshot(`
+      {
+        "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
+        "address": "0x1eff47bc3a10a45d4b230b5d10e37751fe6aa718",
+        "chainId": 4217n,
+        "signature": {
+          "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
+          "config": {
+            "owners": [
+              {
+                "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+                "weight": 1,
+              },
+            ],
+            "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "threshold": 1,
+            "version": 0n,
+          },
+          "signatures": [
+            {
+              "signature": {
+                "r": "0x2cfed9350faf80e4115e3c4c967356b80a8e6ee42e4a49ab953c8c8a3537d8d8",
+                "s": "0x359bf035a9bea18f32b0da7129cdce3ce701abc09ad8919b93da21a0d57e2145",
+                "yParity": 0,
+              },
+              "type": "secp256k1",
+            },
+          ],
+          "type": "multisig",
+        },
+        "type": "secp256k1",
+        "witness": "0x5353535353535353535353535353535353535353535353535353535353535353",
+      }
+    `)
+    expect(KeyAuthorization.serialize(authorization)).toBe(serialized)
+  })
+
+  test('multisig', () => {
+    const serialized = Rlp.fromHex([
+      ['0x1', '0x', address],
+      SignatureEnvelope.serialize(signature_multisig),
+    ])
+
+    expect(KeyAuthorization.deserialize(serialized).signature).toEqual(
+      signature_multisig,
+    )
+  })
+
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
@@ -1173,6 +1353,19 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
+  test('behavior: multisig', () => {
+    const authorization = KeyAuthorization.toRpc({
+      address,
+      chainId: 1n,
+      signature: signature_multisig,
+      type: 'secp256k1',
+    })
+
+    expect(authorization.signature).toMatchInlineSnapshot(
+      `"${signature_multisig_rpc}"`,
+    )
+  })
+
   test('secp256k1', () => {
     const authorization = KeyAuthorization.from({
       address,
@@ -2378,7 +2571,7 @@ describe('admin keys (TIP-1049)', () => {
     expect(restored.account).toBeUndefined()
   })
 
-  test('fromTuple: preserves account without isAdmin', () => {
+  test('fromTuple: preserves a non-admin account binding', () => {
     const restored = KeyAuthorization.fromTuple([
       ['0x01', '0x', address, '0x', [], [], '0x', '0x', account],
     ])
@@ -2418,6 +2611,20 @@ describe('admin keys (TIP-1049)', () => {
     expect(restored.account).toBe(account)
   })
 
+  test('serialize/deserialize: roundtrip with non-admin account binding', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: false,
+      type: 'secp256k1',
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBe(account)
+  })
+
   test('toRpc/fromRpc: roundtrip with isAdmin + account', () => {
     const authorization = KeyAuthorization.from(
       {
@@ -2448,7 +2655,7 @@ describe('admin keys (TIP-1049)', () => {
     expect(restored.account).toBeUndefined()
   })
 
-  test('fromRpc: preserves account without isAdmin', () => {
+  test('fromRpc: preserves a non-admin account binding', () => {
     const authorization = KeyAuthorization.from(
       { address, chainId: 1n, type: 'secp256k1' },
       { signature: SignatureEnvelope.from(signature_secp256k1) },

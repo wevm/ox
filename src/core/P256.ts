@@ -1,6 +1,6 @@
 import { p256 as noble_p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import {
   formatPublicKey,
@@ -8,6 +8,8 @@ import {
   normalizePublicKey,
   normalizeSignature,
 } from './internal/cryptoIo.js'
+import * as keyDerivation from './internal/keyDerivation.js'
+import * as mnemonic_ from './internal/mnemonic.js'
 import * as engine from './internal/p256.js'
 import * as Entropy from './internal/entropy.js'
 import {
@@ -66,6 +68,117 @@ export declare namespace createKeyPair {
   type ErrorType =
     | Hex.fromBytes.ErrorType
     | PublicKey.from.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Derives a valid P256 private key from a BIP-39 mnemonic.
+ *
+ * This is equivalent to passing `Mnemonic.toSeed(mnemonic, { passphrase })`
+ * to {@link ox#P256.fromSeed}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.fromMnemonic(
+ *   'test test test test test test test test test test test junk'
+ * )
+ * ```
+ *
+ * @param mnemonic - BIP-39 mnemonic phrase.
+ * @param options - Options.
+ * @returns A valid P256 private key.
+ */
+export function fromMnemonic<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  mnemonic: string,
+  options: fromMnemonic.Options<as> = {},
+): fromMnemonic.ReturnType<as> {
+  const { passphrase } = options
+  const seed = mnemonic_.toSeed(mnemonic, passphrase)
+  try {
+    return fromSeed(seed, options)
+  } finally {
+    seed.fill(0)
+  }
+}
+
+export declare namespace fromMnemonic {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /** Optional BIP-39 passphrase. */
+    passphrase?: string | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> = fromSeed.ReturnType<as>
+
+  type ErrorType = fromSeed.ErrorType
+}
+
+/**
+ * Derives a valid P256 private key from a seed.
+ *
+ * The seed must contain at least 32 bytes of cryptographically strong key
+ * material. Do not pass a password directly; use a password KDF first.
+ *
+ * The permanent derivation contract uses the seed as the HMAC-SHA256
+ * key. The HMAC message uses the `ox.p256.fromSeed.v1` domain followed by a
+ * 32-bit big-endian counter starting at zero. Invalid scalars are skipped.
+ *
+ * @example
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.fromSeed(
+ *   '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+ * )
+ * ```
+ *
+ * @param seed - Seed containing at least 32 bytes of cryptographically strong key material.
+ * @param options - Options.
+ * @returns A valid P256 private key.
+ */
+export function fromSeed<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  seed: Hex.Hex | Bytes.Bytes,
+  options: fromSeed.Options<as> = {},
+): fromSeed.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const bytes = Bytes.from(seed)
+  if (bytes.length < 32) throw new InvalidSeedSizeError({ size: bytes.length })
+
+  const privateKey = keyDerivation.derive(bytes, fromSeedDomain, {
+    validate: noble.utils.isValidSecretKey,
+  })
+  if (as === 'Hex') {
+    const value = Hex.fromBytes(privateKey)
+    privateKey.fill(0)
+    return value as never
+  }
+  return privateKey as never
+}
+
+export declare namespace fromSeed {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | keyDerivation.derive.ErrorType
+    | InvalidSeedSizeError
     | Errors.GlobalErrorType
 }
 
@@ -404,3 +517,24 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
+
+/** Thrown when a seed contains fewer than 32 bytes. */
+export class InvalidSeedSizeError extends Errors.BaseError {
+  override readonly name = 'P256.InvalidSeedSizeError'
+
+  constructor(options: InvalidSeedSizeError.Options) {
+    super(
+      `Seed must contain at least 32 bytes. Received ${options.size} bytes.`,
+    )
+  }
+}
+
+export declare namespace InvalidSeedSizeError {
+  /** Options for {@link ox#P256.InvalidSeedSizeError}. */
+  type Options = {
+    /** Received seed size. */
+    size: number
+  }
+}
+
+const fromSeedDomain = Bytes.fromString('ox.p256.fromSeed.v1')

@@ -1773,7 +1773,11 @@ describe('sortMultisigApprovals', () => {
     factory: '0x7171717171717171717171717171717171717171',
   })
   const version = 3n
-  const digest = MultisigConfig.getSignPayload({ payload, account, version })
+  const digest = MultisigConfig.getSignPayload({
+    payload,
+    account,
+    config: { version },
+  })
 
   const owners = ownerKeys.map((owner) => ({
     address: owner.address,
@@ -1789,7 +1793,7 @@ describe('sortMultisigApprovals', () => {
   test('behavior: orders approvals ascending by recovered owner address', () => {
     const ordered = SignatureEnvelope.sortMultisigApprovals({
       account,
-      version,
+      config: { version },
       payload,
       // Provide approvals in reverse of the canonical order.
       signatures: [...ascending].reverse().map((owner) => owner.signature),
@@ -1802,7 +1806,7 @@ describe('sortMultisigApprovals', () => {
     expect(
       SignatureEnvelope.sortMultisigApprovals({
         account,
-        version,
+        config: { version },
         payload,
         signatures,
       }),
@@ -1812,7 +1816,7 @@ describe('sortMultisigApprovals', () => {
   test('behavior: recovered order matches the config owner order', () => {
     const ordered = SignatureEnvelope.sortMultisigApprovals({
       account,
-      version,
+      config: { version },
       payload,
       signatures: owners.map((owner) => owner.signature),
     })
@@ -2869,7 +2873,7 @@ describe('multisig', () => {
     for (const version of [1n, 0xffffffffffffffffn]) {
       const updated = SignatureEnvelope.from({
         ...envelope,
-        config: { ...config, version },
+        config: { ...config, config: { version } },
       })
       expect(
         SignatureEnvelope.deserialize(SignatureEnvelope.serialize(updated)),
@@ -3066,5 +3070,89 @@ describe('multisig', () => {
     expect(SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(mixed))).toEqual(
       mixed,
     )
+  })
+})
+
+describe('multisig vectors', () => {
+  const initial =
+    '0x05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
+  const current =
+    '0x05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d6942b5ad5c4795c026514f8317c7a215e218dccd6cf01f843b8414a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e0504a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf51b' as const
+
+  test('example: decodes and re-encodes the frozen initial signature', () => {
+    const envelope = SignatureEnvelope.deserialize(initial)
+
+    expect(envelope).toMatchInlineSnapshot(`
+      {
+        "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
+        "config": {
+          "owners": [
+            {
+              "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "threshold": 1,
+          "version": 0n,
+        },
+        "signatures": [
+          {
+            "signature": {
+              "r": "0x869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f985",
+              "s": "0x35dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f4",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
+          },
+        ],
+        "type": "multisig",
+      }
+    `)
+    expect(SignatureEnvelope.serialize(envelope)).toBe(initial)
+  })
+
+  test('example: decodes and re-encodes the frozen current signature', () => {
+    const envelope = SignatureEnvelope.deserialize(current)
+
+    expect(envelope).toMatchInlineSnapshot(`
+      {
+        "account": "0xc4a590afa7337e5cd5eb3aa60cacf91c5400044b",
+        "config": {
+          "owners": [
+            {
+              "owner": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "threshold": 1,
+          "version": 1n,
+        },
+        "signatures": [
+          {
+            "signature": {
+              "r": "0x4a0e5b5b4a90f08e6e8d676a73a22dc2cf022ffdcc9299512b5d9a6daf66e050",
+              "s": "0x4a395a2ef6f6c0f173910b875c45d01aa66d928e56ba6f49bbc8186f80268bf5",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
+          },
+        ],
+        "type": "multisig",
+      }
+    `)
+    expect(SignatureEnvelope.serialize(envelope)).toBe(current)
+  })
+
+  test('behavior: preserves exact 65-byte secp256k1 precedence', () => {
+    const serialized = ('0x05' +
+      '00'.repeat(31) +
+      '00'.repeat(31) +
+      '01' +
+      '00') as Hex.Hex
+
+    expect(Hex.size(serialized)).toBe(65)
+    expect(SignatureEnvelope.deserialize(serialized).type).toBe('secp256k1')
   })
 })

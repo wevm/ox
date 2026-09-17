@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
-import type * as core_TransactionRequest from '../../tempo/TransactionRequest.js'
 import * as core_Hex from '../../core/Hex.js'
+import type * as core_TransactionRequest from '../../tempo/TransactionRequest.js'
 import * as z_AccessList from '../AccessList.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
@@ -13,6 +13,7 @@ import {
 import * as z from 'zod/mini'
 import * as z_AuthorizationTempo from './AuthorizationTempo.js'
 import * as z_KeyAuthorization from './KeyAuthorization.js'
+import * as z_MultisigSimulation from './MultisigSimulation.js'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
 const fromRpcType = { '0x76': 'tempo' } as const
@@ -59,19 +60,6 @@ const CallToRpc = z.object({
 
 const Capabilities = z.record(z.string(), z.unknown())
 
-const MultisigSimulation = z.object({
-  config: z_Hex.Hex,
-  approvals: z.readonly(
-    z.array(
-      z.object({
-        owner: z_Address.Address,
-        keyType: z.optional(z_SignatureEnvelope.Type),
-        keyData: z.optional(z_Hex.Hex),
-      }),
-    ),
-  ),
-})
-
 /** RPC tempo transaction request schema. */
 export const Rpc = z.object({
   accessList: z.optional(z_AccessList.AccessList),
@@ -96,8 +84,8 @@ export const Rpc = z.object({
   maxFeePerBlobGas: z.optional(z_Hex.Hex),
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
-  multisigSimulation: z.optional(MultisigSimulation),
-  keyAuthorizationSimulation: z.optional(MultisigSimulation),
+  keyAuthorizationSimulation: z.optional(z_MultisigSimulation.Rpc),
+  multisigSimulation: z.optional(z_MultisigSimulation.Rpc),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
   r: z.optional(z_Hex.Hex),
@@ -150,8 +138,8 @@ export const Domain = z.object({
   maxFeePerBlobGas: z.optional(z.bigint()),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),
-  multisigSimulation: z.optional(MultisigSimulation),
-  keyAuthorizationSimulation: z.optional(MultisigSimulation),
+  keyAuthorizationSimulation: z.optional(z_MultisigSimulation.Domain),
+  multisigSimulation: z.optional(z_MultisigSimulation.Domain),
   nonce: z.optional(z.bigint()),
   nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -190,8 +178,8 @@ export const DomainToRpc = z.object({
   maxFeePerBlobGas: z.optional(uintBigintNumberish()),
   maxFeePerGas: z.optional(uintBigintNumberish()),
   maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
-  multisigSimulation: z.optional(MultisigSimulation),
-  keyAuthorizationSimulation: z.optional(MultisigSimulation),
+  keyAuthorizationSimulation: z.optional(z_MultisigSimulation.Domain),
+  multisigSimulation: z.optional(z_MultisigSimulation.Domain),
   nonce: z.optional(uintBigintNumberish()),
   nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -222,7 +210,7 @@ export const TransactionRequestToRpc = z.codec(Rpc, DomainToRpc, {
 function fromRpc(
   request: core_TransactionRequest.Rpc,
 ): core_TransactionRequest.TransactionRequest {
-  const { authorizationList: _, ...rest } = request
+  const { authorizationList: _, multisigSimulation: __, ...rest } = request
   const request_ = z.decode(
     z_TransactionRequest.TransactionRequest,
     rest as never,
@@ -266,10 +254,16 @@ function fromRpc(
   if (typeof request.keyData !== 'undefined') request_.keyData = request.keyData
   if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
   if (typeof request.keyType !== 'undefined') request_.keyType = request.keyType
-  if (typeof request.multisigSimulation !== 'undefined')
-    request_.multisigSimulation = request.multisigSimulation
   if (typeof request.keyAuthorizationSimulation !== 'undefined')
-    request_.keyAuthorizationSimulation = request.keyAuthorizationSimulation
+    request_.keyAuthorizationSimulation = z.decode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.keyAuthorizationSimulation,
+    )
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_.multisigSimulation = z.decode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.multisigSimulation,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = core_Hex.toNumber(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -299,7 +293,6 @@ function toRpc(
     typeof request.keyId !== 'undefined' ||
     typeof request.keyType !== 'undefined' ||
     typeof request.multisigSimulation !== 'undefined' ||
-    typeof request.keyAuthorizationSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -354,10 +347,16 @@ function toRpc(
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
-  if (typeof request.multisigSimulation !== 'undefined')
-    request_rpc.multisigSimulation = request.multisigSimulation
   if (typeof request.keyAuthorizationSimulation !== 'undefined')
-    request_rpc.keyAuthorizationSimulation = request.keyAuthorizationSimulation
+    request_rpc.keyAuthorizationSimulation = z.encode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.keyAuthorizationSimulation,
+    )
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_rpc.multisigSimulation = z.encode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.multisigSimulation,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = encodeNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')

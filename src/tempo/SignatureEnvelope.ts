@@ -86,7 +86,7 @@ export type GetType<
               ? 'keychain'
               : envelope extends {
                     account: Address.Address
-                    config: MultisigConfig.Config
+                    config: MultisigConfig.Input
                     signatures: any
                   }
                 ? 'multisig'
@@ -178,7 +178,7 @@ export type Multisig<numberType = number> = {
   /** Permanent native multisig account address. */
   account: Address.Address
   /** Complete current configuration, included in every signature. */
-  config: MultisigConfig.Config<numberType>
+  config: MultisigConfig.Config<bigint, numberType>
   /** Primitive owner approvals in ascending recovered-address order. */
   signatures: readonly Primitive<numberType>[]
   type: 'multisig'
@@ -876,9 +876,20 @@ function deserialize_(value: Serialized): SignatureEnvelope {
  *   config: {
  *     version: 0n,
  *     threshold: 1,
- *     owners: [{ owner: '0x1111111111111111111111111111111111111111', weight: 1 }]
+ *     owners: [
+ *       {
+ *         owner: '0x1111111111111111111111111111111111111111',
+ *         weight: 1
+ *       }
+ *     ]
  *   },
- *   signatures: [SignatureEnvelope.from({ r: '0x01', s: '0x02', yParity: 0 })]
+ *   signatures: [
+ *     SignatureEnvelope.from({
+ *       r: '0x01',
+ *       s: '0x02',
+ *       yParity: 0
+ *     })
+ *   ]
  * })
  * ```
  *
@@ -954,7 +965,14 @@ export declare namespace from {
     payload?: Hex.Hex | Bytes.Bytes | undefined
   }
 
+  /** Multisig input with an explicit account and a normalizable configuration. */
+  type MultisigFromConfig = Omit<Multisig, 'config' | 'type'> & {
+    config: MultisigConfig.Input
+    type?: 'multisig' | undefined
+  }
+
   type Value =
+    | MultisigFromConfig
     | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
     | Serialized
@@ -965,7 +983,7 @@ export declare namespace from {
         ? SignatureEnvelope
         : value extends Secp256k1Flat
           ? Secp256k1
-          : value extends PartialBy<Multisig, 'type'>
+          : value extends MultisigFromConfig
             ? Extract<SignatureEnvelope, { type: 'multisig' }>
             : IsNarrowable<value, SignatureEnvelope> extends true
               ? SignatureEnvelope
@@ -1323,7 +1341,7 @@ export declare namespace serialize {
  *
  * const ordered = SignatureEnvelope.sortMultisigApprovals({
  *   account: '0x2222222222222222222222222222222222222222',
- *   version: 0n,
+ *   config: { version: 0n },
  *   payload: `0x${'ab'.repeat(32)}`,
  *   signatures: []
  * })
@@ -1492,6 +1510,8 @@ export declare namespace toRpc {
   type ErrorType =
     | assert.ErrorType
     | CoercionError
+    | Hex.slice.ErrorType
+    | serialize.ErrorType
     | Signature.toRpc.ErrorType
     | Errors.GlobalErrorType
 }

@@ -7,27 +7,13 @@ import * as Signature from '../core/Signature.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as MultisigSimulation from './MultisigSimulation.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as Transaction from './Transaction.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
 type KeyType = SignatureEnvelope.Type | 'multisig'
-
-/** Quorum used to model a configurable account during RPC simulation. */
-export type MultisigSimulation = {
-  /** Primitive owners in ascending signing order, with optional cost hints. */
-  approvals: readonly {
-    /** WebAuthn data-length hint. */
-    keyData?: Hex.Hex | undefined
-    /** Primitive key type. Omission models a maximum-size WebAuthn approval. */
-    keyType?: SignatureEnvelope.Type | undefined
-    /** Configured owner address. */
-    owner: Address.Address
-  }[]
-  /** Complete current configuration encoded as RLP bytes. */
-  config: Hex.Hex
-}
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -55,13 +41,11 @@ export type TransactionRequest<
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     feeToken?: Address.Address | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
-    /** Independent parent quorum authorizing the attached key grant. */
-    keyAuthorizationSimulation?: MultisigSimulation | undefined
+    keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
     keyData?: Hex.Hex | undefined
     keyId?: Address.Address | undefined
     keyType?: KeyType | undefined
-    /** Sender quorum, or delegate quorum when using an access key. */
-    multisigSimulation?: MultisigSimulation | undefined
+    multisigSimulation?: MultisigSimulation.Spec | undefined
     nonceKey?: 'random' | bigintType | undefined
     signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
     validAfter?: numberType | undefined
@@ -76,12 +60,16 @@ export type Rpc = Omit<
   | 'feePayerSignature'
   | 'feeToken'
   | 'keyAuthorization'
+  | 'multisigSimulation'
+  | 'keyAuthorizationSimulation'
   | 'signature'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feePayerSignature?: Signature.Rpc | null | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
+  keyAuthorizationSimulation?: MultisigSimulation.Rpc | undefined
+  multisigSimulation?: MultisigSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
   signature?: SignatureEnvelope.SignatureEnvelopeRpc | undefined
 }
@@ -109,7 +97,12 @@ export type Rpc = Omit<
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const { authorizationList: _, ...rest } = request
+  const {
+    authorizationList: _,
+    multisigSimulation: __,
+    keyAuthorizationSimulation: ___,
+    ...rest
+  } = request
   const request_ = ox_TransactionRequest.fromRpc(
     rest as any,
   ) as TransactionRequest
@@ -144,6 +137,14 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
     )
+  if (request.keyAuthorizationSimulation)
+    request_.keyAuthorizationSimulation = MultisigSimulation.fromRpc(
+      request.keyAuthorizationSimulation,
+    )
+  if (request.multisigSimulation)
+    request_.multisigSimulation = MultisigSimulation.fromRpc(
+      request.multisigSimulation,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = Hex.toNumber(request.validBefore as Hex.Hex)
   if (typeof request.validAfter !== 'undefined')
@@ -159,6 +160,7 @@ export declare namespace fromRpc {
     | AuthorizationTempo.fromRpcList.ErrorType
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
+    | MultisigSimulation.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -232,8 +234,8 @@ export function toRpc(request: toRpc.Input): Rpc {
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
     typeof request.keyType !== 'undefined' ||
-    typeof request.multisigSimulation !== 'undefined' ||
     typeof request.keyAuthorizationSimulation !== 'undefined' ||
+    typeof request.multisigSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -283,10 +285,14 @@ export function toRpc(request: toRpc.Input): Rpc {
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
-  if (typeof request.multisigSimulation !== 'undefined')
-    request_rpc.multisigSimulation = request.multisigSimulation
   if (typeof request.keyAuthorizationSimulation !== 'undefined')
-    request_rpc.keyAuthorizationSimulation = request.keyAuthorizationSimulation
+    request_rpc.keyAuthorizationSimulation = MultisigSimulation.toRpc(
+      request.keyAuthorizationSimulation,
+    )
+  if (typeof request.multisigSimulation !== 'undefined')
+    request_rpc.multisigSimulation = MultisigSimulation.toRpc(
+      request.multisigSimulation,
+    )
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = Quantity.fromNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -321,6 +327,7 @@ export declare namespace toRpc {
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
+    | MultisigSimulation.toRpc.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -2,11 +2,15 @@ import { AbiFunction, Address, Hex, Secp256k1, Value } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { chain, client, fundAddress } from '../../test/tempo/config.js'
 import { factory } from '../../test/tempo/multisig.js'
-import { KeyAuthorization, MultisigConfig, SignatureEnvelope } from './index.js'
+import {
+  KeyAuthorization,
+  MultisigConfig,
+  MultisigOperation,
+  SignatureEnvelope,
+} from './index.js'
 import * as Transaction from './Transaction.js'
 import * as TransactionReceipt from './TransactionReceipt.js'
 import * as TransactionRequest from './TransactionRequest.js'
-import * as Rlp from '../core/Rlp.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 const precompile = '0xaacc000000000000000000000000000000000000'
@@ -22,7 +26,7 @@ async function setup() {
       address: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
     }
   })
-  const config = MultisigConfig.from({
+  const config: MultisigConfig.Config = MultisigConfig.from({
     salt: Hex.random(32),
     threshold: 2,
     owners: keys.map((key) => ({ owner: key.address, weight: 1 })),
@@ -52,7 +56,7 @@ function transaction(
 function sign(account: Awaited<ReturnType<typeof setup>>, payload: Hex.Hex) {
   const value = {
     account: account.account,
-    version: account.config.version ?? 0n,
+    config: account.config,
     payload,
   }
   const digest = MultisigConfig.getSignPayload(value)
@@ -101,6 +105,54 @@ describe('behavior: configurable accounts', () => {
     }
   })
 
+  test('selects operation approvals and submits the serialized transaction', async () => {
+    const account = await setup()
+    const tx = transaction(0n)
+    const serialized = TxEnvelopeTempo.serialize(tx)
+    const hash = MultisigOperation.getHash({
+      account: account.account,
+      config: account.config,
+      transaction: serialized,
+      type: 'transaction',
+    })
+    const selected = await MultisigOperation.selectApprovals({
+      account: account.account,
+      approvals: account.keys.map(({ privateKey }) =>
+        SignatureEnvelope.serialize(
+          SignatureEnvelope.from(Secp256k1.sign({ payload: hash, privateKey })),
+        ),
+      ),
+      config: account.config,
+      hash,
+    })
+    const operation = MultisigOperation.from({
+      account: account.account,
+      approvals: selected.approvals,
+      config: account.config,
+      createdAt: 1,
+      hash,
+      signatureCount: selected.signatureCount,
+      status: 'pending',
+      threshold: selected.threshold,
+      transaction: serialized,
+      type: 'transaction',
+      updatedAt: 1,
+      weight: selected.weight,
+    })
+    const signed = MultisigOperation.serializeTransaction(operation, {
+      approvals: selected.selectedApprovals,
+    })
+    const result = await client.request({
+      method: 'eth_sendRawTransactionSync',
+      params: [signed],
+    })
+    const receipt = TransactionReceipt.fromRpc(
+      result as unknown as TransactionReceipt.Rpc,
+    )
+    expect(receipt.status).toMatchInlineSnapshot('"success"')
+    expect(receipt.from).toBe(account.account)
+  })
+
   test('simulates registration with the full config without persisting it', async () => {
     const account = await setup()
     const data = AbiFunction.encodeData(
@@ -116,7 +168,7 @@ describe('behavior: configurable accounts', () => {
       gas: 5_000_000n,
       feeToken: '0x20c0000000000000000000000000000000000001',
       multisigSimulation: {
-        config: Rlp.fromHex(MultisigConfig.toTuple(account.config)),
+        config: account.config,
         approvals: account.config.owners
           .slice(0, 2)
           .map(({ owner }) => ({ owner, keyType: 'secp256k1' })),

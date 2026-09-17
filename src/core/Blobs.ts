@@ -398,8 +398,10 @@ export function to<
   const data = Cursor.create(new Uint8Array(length))
   let active = true
 
-  for (const blob of blobs_) {
+  for (const [index, blob] of blobs_.entries()) {
     const cursor = Cursor.create(blob)
+    // Only the final blob contains a terminator; preceding blobs contain only data.
+    const isLastBlob = index === blobs_.length - 1
     while (active && cursor.position < blob.length) {
       // First byte will be a zero 0x00 byte – we can skip.
       cursor.incrementPosition(1)
@@ -411,7 +413,9 @@ export function to<
       for (let i = 0; i < consume; i++) {
         const byte = cursor.readByte()
         const isTerminator =
-          byte === 0x80 && !cursor.inspectBytes(cursor.remaining).includes(0x80)
+          isLastBlob &&
+          byte === 0x80 &&
+          !cursor.inspectBytes(cursor.remaining).includes(0x80)
         if (isTerminator) {
           active = false
           break

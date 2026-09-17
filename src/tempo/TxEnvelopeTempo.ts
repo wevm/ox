@@ -134,7 +134,8 @@ export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
 export const feePayerMagic = '0x78' as const
 export type FeePayerMagic = typeof feePayerMagic
 
-export type Serialized = `${SerializedType}${string}`
+/** Serialized standard or fee-payer Tempo transaction. */
+export type Serialized = `${SerializedType | FeePayerMagic}${string}`
 
 export type Signed = TxEnvelopeTempo<true>
 
@@ -232,7 +233,7 @@ export declare namespace assert {
 }
 
 /**
- * Deserializes a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} from its serialized form.
+ * Deserializes a standard or fee-payer {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
  *
  * @example
  * ```ts twoslash
@@ -254,7 +255,8 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
-  if (Hex.slice(serialized, 0, 1) !== serializedType)
+  const prefix = Hex.slice(serialized, 0, 1)
+  if (prefix !== serializedType && prefix !== feePayerMagic)
     throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {},
       serialized,

@@ -330,6 +330,51 @@ describe('decode', () => {
   `)
   })
 
+  test('behavior: unnamed, non-indexed input before indexed input (array mode)', () => {
+    // Declaration order (uint256, bool indexed) differs from indexed-subset
+    // order (bool is the only indexed input). Args must still come back in
+    // declaration order, not indexed-subset order.
+    const foo = AbiEvent.from('event Foo(uint256, bool indexed)')
+    const decoded = AbiEvent.decode(foo, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000111',
+      topics: [
+        '0x79c52e97493a8f32348c3cf1ebfe4a8dfaeb083ca12cddd87b5d9f7c00d3ccaa',
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      ],
+    })
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        273n,
+        true,
+      ]
+    `)
+  })
+
+  test('behavior: named + unnamed, indexed input interleaved with non-indexed (mixed mode)', () => {
+    // `a` (indexed) and the trailing unnamed `address` (indexed) are not a
+    // contiguous prefix of declaration order — a non-indexed `bool` sits
+    // between them. All three values must be present and at the correct
+    // declaration-order keys; none may be silently dropped or overwritten.
+    const foo = AbiEvent.from(
+      'event Foo(uint256 indexed a, bool, address indexed)',
+    )
+    const decoded = AbiEvent.decode(foo, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        '0xbf5963a29fe665781e91d832989689110056ee09e32656ea57265dbb1084006e',
+        '0x0000000000000000000000000000000000000000000000000000000000000aaa',
+        '0x00000000000000000000000000cccccccccccccccccccccccccccccccccccccc',
+      ],
+    })
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "1": true,
+        "2": "0x00CCCCCCccCcCccCCcccCCcccCcCcCccCcCcCCcc",
+        "a": 2730n,
+      }
+    `)
+  })
+
   test('error: topics mismatch, named', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address to, uint256 indexed value)',

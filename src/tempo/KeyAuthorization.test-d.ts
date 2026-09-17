@@ -20,6 +20,8 @@ const signature = {
 const multisig = {
   account: '0x2222222222222222222222222222222222222222',
   config: {
+    salt: `0x${'00'.repeat(32)}`,
+    version: 0n,
     threshold: 1,
     owners: [
       { owner: '0x1111111111111111111111111111111111111111', weight: 1 },

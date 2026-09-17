@@ -23,6 +23,36 @@ export const prefixRegex =
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.+))?/
 
+const siweDateTimeRegex =
+  /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/
+
+function parseSiweDateTime(value: string): Date {
+  const match = value.match(siweDateTimeRegex)
+  if (!match) return new Date(Number.NaN)
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const days = [
+    31,
+    year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ]
+  const daysInMonth = days[month - 1]
+  if (!daysInMonth || day > daysInMonth) return new Date(Number.NaN)
+
+  return new Date(value.toUpperCase())
+}
+
 /** [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields. */
 export type Message = {
   /**
@@ -300,11 +330,12 @@ export function isUri(value: string): false | string {
   const fragment = splitted[5]
 
   // scheme and path are required, though the path can be empty
-  if (!(scheme?.length && path && path.length >= 0)) return false
+  if (!(scheme?.length && path !== undefined)) return false
 
   // if authority is present, the path must be empty or begin with a /
   if (authority?.length) {
     if (!(path.length === 0 || path.startsWith('/'))) return false
+    if (path.length === 0 && !isAuthority(authority)) return false
   } else {
     // if authority is not present, the path must not start with //
     if (path.startsWith('//')) return false
@@ -324,6 +355,24 @@ export function isUri(value: string): false | string {
   if (fragment?.length) out += `#${fragment}`
 
   return out
+}
+
+function isAuthority(value: string) {
+  const host = value.match(/^(?:[a-z0-9._~!$&'()*+,;=:%-]*@)?(.*)$/i)?.[1]
+  if (host === undefined) return false
+
+  const ipLiteral = host.match(/^\[([^\]]+)\](?::\d*)?$/)?.[1]
+  if (ipLiteral) {
+    if (/^v[0-9a-f]+\.[a-z0-9._~!$&'()*+,;=:-]+$/i.test(ipLiteral)) return true
+    try {
+      new URL(`http://[${ipLiteral}]`)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  return /^(?:[a-z0-9._~!$&'()*+,;=%-]*)(?::\d*)?$/i.test(host)
 }
 
 function splitUri(value: string) {
@@ -388,9 +437,11 @@ export function parseMessage(message: string): ExactPartial<Message> {
     ...prefix,
     ...suffix,
     ...(chainId ? { chainId: Number(chainId) } : {}),
-    ...(expirationTime ? { expirationTime: new Date(expirationTime) } : {}),
-    ...(issuedAt ? { issuedAt: new Date(issuedAt) } : {}),
-    ...(notBefore ? { notBefore: new Date(notBefore) } : {}),
+    ...(expirationTime
+      ? { expirationTime: parseSiweDateTime(expirationTime) }
+      : {}),
+    ...(issuedAt ? { issuedAt: parseSiweDateTime(issuedAt) } : {}),
+    ...(notBefore ? { notBefore: parseSiweDateTime(notBefore) } : {}),
     ...(requestId ? { requestId } : {}),
     ...(resources ? { resources } : {}),
     ...(scheme ? { scheme } : {}),
@@ -431,8 +482,16 @@ export function validateMessage(value: validateMessage.Value): boolean {
   if (nonce && message.nonce !== nonce) return false
   if (scheme && message.scheme !== scheme) return false
 
-  if (message.expirationTime && time >= message.expirationTime) return false
-  if (message.notBefore && time < message.notBefore) return false
+  if (Number.isNaN(time.getTime())) return false
+
+  if (message.expirationTime) {
+    if (Number.isNaN(message.expirationTime.getTime())) return false
+    if (time >= message.expirationTime) return false
+  }
+  if (message.notBefore) {
+    if (Number.isNaN(message.notBefore.getTime())) return false
+    if (time < message.notBefore) return false
+  }
 
   try {
     if (!message.address) return false

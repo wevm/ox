@@ -5,6 +5,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
+  # The beta job's version push starts another v1 run before publishing finishes, so cancellation would stop its own release.
   cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:

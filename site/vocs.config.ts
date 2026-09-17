@@ -225,6 +225,10 @@ export default defineConfig({
                 link: '/guides/crypto/signatures',
               },
               {
+                text: 'Derive Keys from a Seed',
+                link: '/guides/crypto/seed-key-derivation',
+              },
+              {
                 text: 'Ed25519 & X25519',
                 link: '/guides/crypto/ed25519-x25519',
               },

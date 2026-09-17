@@ -153,7 +153,7 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  * ```ts twoslash
  * import { MultisigConfig } from 'ox/tempo'
  *
- * const genesisConfig = MultisigConfig.from({
+ * const initialConfig = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
  *     {
@@ -167,7 +167,7 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  *   ]
  * })
  *
- * const account = MultisigConfig.getAddress(genesisConfig, {
+ * const account = MultisigConfig.getAddress(initialConfig, {
  *   factory: '0x7171717171717171717171717171717171717171'
  * })
  * ```
@@ -175,6 +175,24 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  * @category Reference
  */
 export * as MultisigConfig from './MultisigConfig.js'
+/**
+ * Offchain multisig transaction and key authorization operation utilities.
+ *
+ * Derives operation hashes, selects owner approvals, serializes transactions,
+ * validates operation state, and converts JSON-RPC representations.
+ *
+ * @category Reference
+ */
+export * as MultisigOperation from './MultisigOperation.js'
+/**
+ * Native multisig RPC simulation utilities.
+ *
+ * Converts complete root and nested owner specs between their domain and Tempo
+ * JSON-RPC representations.
+ *
+ * @category Reference
+ */
+export * as MultisigSimulation from './MultisigSimulation.js'
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
@@ -253,7 +271,7 @@ export * as PoolId from './PoolId.js'
  */
 export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
 /**
- * Union of all JSON-RPC Methods for the `tempo_` namespace.
+ * JSON-RPC schemas for the `tempo_` and `multisig_` namespaces.
  *
  * @example
  * ```ts twoslash
@@ -262,7 +280,9 @@ export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
  * import { RpcSchemaTempo } from 'ox/tempo'
  *
  * const schema = RpcSchema.from<
- *   RpcSchema.Default | RpcSchemaTempo.Tempo
+ *   | RpcSchema.Default
+ *   | RpcSchemaTempo.Multisig
+ *   | RpcSchemaTempo.Tempo
  * >()
  *
  * const provider = Provider.from(window.ethereum!, { schema })

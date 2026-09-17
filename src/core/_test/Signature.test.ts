@@ -572,6 +572,172 @@ describe('toBytes', () => {
   })
 })
 
+describe('toCompactBytes', () => {
+  test('default', () => {
+    const bytes = Signature.toCompactBytes({
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+      yParity: 1,
+    })
+    expect(bytes.length).toBe(64)
+    expect(Hex.fromBytes(bytes)).toBe(
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+    )
+  })
+
+  test('behavior: r/s shorter than 32 bytes are left-padded, not right-padded', () => {
+    const bytes = Signature.toCompactBytes({
+      r: '0x01',
+      s: '0x02',
+      yParity: 0,
+    })
+    // `r` occupies the first 32 bytes and must be the big-endian integer `1`
+    // (left-padded), not `1` shifted into the top byte (right-padded).
+    expect(Hex.fromBytes(bytes.subarray(0, 32))).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000001',
+    )
+    expect(Hex.fromBytes(bytes.subarray(32, 64))).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000002',
+    )
+  })
+
+  test('behavior: round-trips through recoverPublicKey for a signature whose r has a leading zero byte', async () => {
+    const { Secp256k1 } = await import('ox')
+    const payload = `0x${'11'.repeat(32)}` as const
+    const privateKey = Hex.fromNumber(4n * 123456789013n + 7n, { size: 32 })
+    const signature = Secp256k1.sign({ payload, privateKey })
+    // sanity: this fixture's `r` genuinely has a leading zero byte
+    expect(signature.r.startsWith('0x00')).toBe(true)
+    const expectedPublicKey = Secp256k1.recoverPublicKey({ payload, signature })
+
+    // simulate an external source (RPC/subgraph/DB) that stores `r` in
+    // minimal (non-zero-padded) form, as the `Hex.Hex` type permits
+    const minimalR = `0x${signature.r.slice(4)}` as const
+    const recoveredBytes = Signature.toRecoveredBytes({
+      r: minimalR,
+      s: signature.s,
+      yParity: signature.yParity,
+    })
+    const roundTripped = Signature.fromRecoveredBytes(recoveredBytes)
+    const recoveredPublicKey = Secp256k1.recoverPublicKey({
+      payload,
+      signature: roundTripped,
+    })
+    expect(recoveredPublicKey.x).toBe(expectedPublicKey.x)
+    expect(recoveredPublicKey.y).toBe(expectedPublicKey.y)
+  })
+})
+
+describe('fromCompactBytes', () => {
+  test('default', () => {
+    const signature = Signature.fromCompactBytes(
+      Bytes.fromHex(
+        '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+      ),
+    )
+    expect(signature).toStrictEqual({
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+    })
+  })
+
+  test('behavior: throws on a byte length other than 64', () => {
+    expect(() => Signature.fromCompactBytes(new Uint8Array(65)))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Signature.InvalidSerializedSizeError: Value \`0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\` is an invalid signature size.
+
+      Expected: 64 bytes.
+      Received 65 bytes.]
+    `)
+  })
+})
+
+describe('toRecoveredBytes', () => {
+  test('default', () => {
+    const bytes = Signature.toRecoveredBytes({
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+      yParity: 1,
+    })
+    expect(bytes.length).toBe(65)
+    expect(bytes[0]).toBe(1)
+    expect(Hex.fromBytes(bytes.subarray(1))).toBe(
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+    )
+  })
+
+  test('behavior: r/s shorter than 32 bytes are left-padded, not right-padded', () => {
+    const bytes = Signature.toRecoveredBytes({
+      r: '0x01',
+      s: '0x02',
+      yParity: 0,
+    })
+    expect(Hex.fromBytes(bytes.subarray(1, 33))).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000001',
+    )
+    expect(Hex.fromBytes(bytes.subarray(33, 65))).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000002',
+    )
+  })
+
+  test('behavior: throws before coercing an out-of-range yParity', () => {
+    expect(() =>
+      Signature.toRecoveredBytes({
+        r: '0x01',
+        s: '0x02',
+        yParity: 256,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`256\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
+})
+
+describe('fromRecoveredBytes', () => {
+  test('default', () => {
+    const bytes = new Uint8Array(65)
+    bytes[0] = 1
+    bytes.set(
+      Bytes.fromHex(
+        '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      ),
+      1,
+    )
+    bytes.set(
+      Bytes.fromHex(
+        '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+      ),
+      33,
+    )
+    const signature = Signature.fromRecoveredBytes(bytes)
+    expect(signature).toStrictEqual({
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+      yParity: 1,
+    })
+  })
+
+  test('behavior: throws on a byte length other than 65', () => {
+    expect(() => Signature.fromRecoveredBytes(new Uint8Array(64)))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Signature.InvalidSerializedSizeError: Value \`0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\` is an invalid signature size.
+
+      Expected: 65 bytes.
+      Received 64 bytes.]
+    `)
+  })
+
+  test('behavior: throws on an out-of-range yParity byte', () => {
+    const bytes = new Uint8Array(65)
+    bytes[0] = 7
+    expect(() =>
+      Signature.fromRecoveredBytes(bytes),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`7\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
+})
+
 describe('toDerHex', () => {
   test('default', () => {
     const signature = Signature.from({
