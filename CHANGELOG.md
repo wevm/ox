@@ -1,5 +1,21 @@
 # ox
 
+## 1.7.5
+
+### Patch Changes
+
+- [#434](https://github.com/wevm/ox/pull/434) [`633388e`](https://github.com/wevm/ox/commit/633388ecb79c2ee57b645b140fb7ef088d63dbc2) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Accepted SIWE URIs with an authority and empty path.
+
+- [#436](https://github.com/wevm/ox/pull/436) [`3f894f8`](https://github.com/wevm/ox/commit/3f894f84b97f5b5f71f7fed3cdead159d6bc0afb) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed `AbiEvent.decode` argument ordering for interleaved indexed event inputs.
+
+- [#435](https://github.com/wevm/ox/pull/435) [`d953424`](https://github.com/wevm/ox/commit/d953424232802b35c9a72d8c7c106a6451e218f9) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed signature byte codecs to left-pad short scalars and reject invalid lengths and recovery values.
+
+- [#449](https://github.com/wevm/ox/pull/449) [`60ad526`](https://github.com/wevm/ox/commit/60ad526c4b08b1b2d58463aecbe2dd4754cd3ee2) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig accounts to versioned configurations, factory-derived addresses, primitive approvals, and configurable-account delegation.
+
+- [#438](https://github.com/wevm/ox/pull/438) [`ef20386`](https://github.com/wevm/ox/commit/ef203862dc792d2e460313e7af33b6a5016f3acb) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed `Blobs.to` truncating multi-blob payloads when a non-final blob contained a `0x80` byte.
+
+- [#431](https://github.com/wevm/ox/pull/431) [`bb35f6e`](https://github.com/wevm/ox/commit/bb35f6e34b9bbf390536ef0d432d13e73f7ec585) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig account derivation to use the canonical CREATE2 recovery address.
+
 ## 1.7.4
 
 ### Patch Changes
