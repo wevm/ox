@@ -85,10 +85,14 @@ export const KeychainRpc = z
     version: z.optional(KeychainVersion),
   })
   .check(
-    z.refine(
-      (value) => value.version !== 'v1' || typeof value.signature !== 'string',
-      'multisig access keys require keychain V2',
-    ),
+    z.refine((value) => {
+      try {
+        core_SignatureEnvelope.fromRpc(value)
+        return true
+      } catch {
+        return false
+      }
+    }, 'multisig access keys require keychain V2'),
   )
 
 /** RPC native multisig signature envelope schema. */
@@ -155,7 +159,7 @@ export const Keychain = z
   })
   .check(
     z.refine(
-      (value) => value.version !== 'v1' || value.inner.type !== 'multisig',
+      (value) => core_SignatureEnvelope.validate(value),
       'multisig access keys require keychain V2',
     ),
   )

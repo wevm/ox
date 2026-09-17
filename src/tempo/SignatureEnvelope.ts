@@ -323,10 +323,7 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    if (keychain.version === 'v1' && getType(keychain.inner) === 'multisig')
-      throw new InvalidMultisigApprovalError({
-        reason: 'multisig access keys require keychain V2',
-      })
+    assertKeychainVersion(keychain)
     assert(keychain.inner)
     return
   }
@@ -347,6 +344,16 @@ export declare namespace assert {
     | MultisigConfig.getAddress.ErrorType
     | Signature.assert.ErrorType
     | Errors.GlobalErrorType
+}
+
+function assertKeychainVersion(keychain: Keychain): void {
+  if (keychain.version !== 'v1') return
+  let inner = keychain.inner
+  while (getType(inner) === 'keychain') inner = (inner as Keychain).inner
+  if (getType(inner) === 'multisig')
+    throw new InvalidMultisigApprovalError({
+      reason: 'multisig access keys require keychain V2',
+    })
 }
 
 function assertMultisig(envelope: Multisig): void {
@@ -1442,6 +1449,7 @@ export function toRpc<const envelope extends toRpc.Input>(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
+    assertKeychainVersion(keychain)
     return {
       type: 'keychain',
       userAddress: keychain.userAddress,

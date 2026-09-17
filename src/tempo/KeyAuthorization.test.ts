@@ -78,6 +78,45 @@ const signature_keychain = {
   userAddress: address,
 } as const satisfies SignatureEnvelope.Keychain
 
+describe('multisig account binding', () => {
+  test('rejects unbound grants before signing or encoding', () => {
+    const authorization = { address, chainId: 1n, type: 'multisig' } as const
+    const signed = {
+      ...authorization,
+      signature: SignatureEnvelope.from(signature_secp256k1),
+    }
+    for (const encode of [
+      () => KeyAuthorization.from(authorization),
+      () => KeyAuthorization.toTuple(authorization),
+      () => KeyAuthorization.getSignPayload(authorization),
+      () => KeyAuthorization.serialize(authorization),
+      () => KeyAuthorization.toRpc(signed),
+    ])
+      expect(encode).toThrowErrorMatchingInlineSnapshot(
+        `[KeyAuthorization.MissingAccountError: Multisig key grants require a parent account binding.]`,
+      )
+  })
+
+  test('rejects unbound RPC and RLP grants', () => {
+    const signed = KeyAuthorization.from(
+      { account: address, address, chainId: 1n, type: 'multisig' },
+      { signature: signature_secp256k1 },
+    )
+    const rpc = KeyAuthorization.toRpc(signed)
+    for (const account of [undefined, null])
+      expect(() => KeyAuthorization.fromRpc({ ...rpc, account })).toThrowError(
+        KeyAuthorization.MissingAccountError,
+      )
+    expect(() =>
+      KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
+    ).toThrowError(KeyAuthorization.MissingAccountError)
+    expect(KeyAuthorization.fromRpc(rpc).account).toBe(address)
+    expect(
+      KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)).account,
+    ).toBe(address)
+  })
+})
+
 describe('from', () => {
   test('accepts multisig grants and delegates', () => {
     const signed = KeyAuthorization.from(

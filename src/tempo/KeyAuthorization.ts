@@ -433,6 +433,7 @@ export function from<
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
+  assertAccountBinding(authorization.type, authorization.account)
   const auth = authorization as KeyAuthorization & {
     limits?: readonly { limit: bigint; token: Address.Address }[]
     scopes?: readonly {
@@ -496,7 +497,10 @@ export declare namespace from {
             : {})
   >
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -535,6 +539,7 @@ export function fromRpc(authorization: Rpc): Signed {
   const witness = authorization.witness ?? undefined
   const isAdmin = authorization.isAdmin ?? undefined
   const account = authorization.account ?? undefined
+  assertAccountBinding(keyType, account)
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
@@ -577,7 +582,10 @@ export function fromRpc(authorization: Rpc): Signed {
 }
 
 export declare namespace fromRpc {
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -706,6 +714,7 @@ export function fromTuple<const tuple extends Tuple>(
   const account = isAbsent(rawAccount)
     ? undefined
     : (rawAccount as Address.Address)
+  assertAccountBinding(keyType, account)
   const args: KeyAuthorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -730,7 +739,10 @@ export declare namespace fromTuple {
     KeyAuthorization<authorization extends Tuple<true> ? true : false>
   >
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -936,6 +948,7 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: toRpc.Input): Rpc {
+  assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
     scopes,
@@ -1001,7 +1014,10 @@ export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#KeyAuthorization.(toRpc:function)}. */
   type Input = Signed<Hex.Hex | bigint | number, Hex.Hex | number>
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -1040,6 +1056,7 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
+  assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
     chainId,
@@ -1153,7 +1170,10 @@ export declare namespace toTuple {
   type ReturnType<authorization extends KeyAuthorization = KeyAuthorization> =
     Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSignatureTypeError
+    | MissingAccountError
+    | Errors.GlobalErrorType
 }
 
 function bigintToHex(value: bigint): Hex.Hex {
@@ -1185,6 +1205,13 @@ function resolveSelector(
   if (!selector) return undefined
   if (selector.startsWith('0x')) return selector as Hex.Hex
   return AbiItem.getSelector(selector)
+}
+
+function assertAccountBinding(
+  type: KeyAuthorization['type'],
+  account: Address.Address | null | undefined,
+): void {
+  if (type === 'multisig' && account == null) throw new MissingAccountError()
 }
 
 function assertWitness(witness: Hex.Hex): void {
@@ -1231,5 +1258,13 @@ export class InvalidSignatureTypeError extends Error {
     super(
       `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.`,
     )
+  }
+}
+
+/** Thrown when a multisig key grant omits its parent account binding. */
+export class MissingAccountError extends Error {
+  override readonly name = 'KeyAuthorization.MissingAccountError'
+  constructor() {
+    super('Multisig key grants require a parent account binding.')
   }
 }

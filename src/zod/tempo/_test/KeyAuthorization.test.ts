@@ -21,6 +21,35 @@ const rpc = {
 } as const
 
 describe('KeyAuthorization', () => {
+  test('rejects unbound multisig grants through every schema', () => {
+    const domain = {
+      ...z.decode(z_KeyAuthorization.KeyAuthorization, rpc),
+      type: 'multisig',
+    } as const
+    for (const account of [undefined, null])
+      expect(
+        z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
+          ...rpc,
+          keyType: 'multisig',
+          account,
+        }).success,
+      ).toMatchInlineSnapshot(`false`)
+    for (const schema of [
+      z_KeyAuthorization.Domain,
+      z_KeyAuthorization.DomainToRpc,
+    ]) {
+      expect(z.safeParse(schema, domain).success).toMatchInlineSnapshot(`false`)
+      expect(
+        z.safeParse(schema, { ...domain, account: rpc.keyId }).success,
+      ).toMatchInlineSnapshot(`true`)
+    }
+    for (const codec of [
+      z_KeyAuthorization.KeyAuthorization,
+      z_KeyAuthorization.KeyAuthorizationToRpc,
+    ])
+      expect(z.safeEncode(codec, domain).success).toMatchInlineSnapshot(`false`)
+  })
+
   test('decodes an RPC key authorization', () => {
     expect(z.decode(z_KeyAuthorization.KeyAuthorization, rpc)).toEqual(
       core_KeyAuthorization.fromRpc(rpc),

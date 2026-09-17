@@ -138,3 +138,50 @@ describe('SignatureEnvelope', () => {
       ).toEqual(rpc)
   })
 })
+
+describe('Keychain', () => {
+  test('rejects V1 wrappers with nested multisig delegates', () => {
+    const inner = {
+      inner: envelope,
+      type: 'keychain',
+      userAddress: envelope.account,
+      version: 'v2',
+    } as const
+    const value = {
+      inner,
+      type: 'keychain',
+      userAddress: envelope.account,
+      version: 'v1',
+    } as const
+    const rpc = {
+      signature: core_SignatureEnvelope.toRpc(inner),
+      type: 'keychain',
+      userAddress: envelope.account,
+      version: 'v1',
+    } as const
+    expect(
+      z.safeParse(z_SignatureEnvelope.Keychain, value).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeParse(z_SignatureEnvelope.KeychainRpc, rpc).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, value).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...value,
+        version: 'v2',
+      }).success,
+    ).toMatchInlineSnapshot(`true`)
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...rpc,
+        version: 'v2',
+      }).success,
+    ).toMatchInlineSnapshot(`true`)
+  })
+})

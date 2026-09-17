@@ -3024,6 +3024,56 @@ describe('multisig', () => {
       }),
     ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
   })
+  test('rejects V1 wrappers around recursively nested multisig delegates', () => {
+    let inner: SignatureEnvelope.SignatureEnvelope = envelope
+    for (let depth = 0; depth < 3; depth++) {
+      inner = { inner, type: 'keychain', userAddress: account, version: 'v2' }
+      const valid: SignatureEnvelope.Keychain = {
+        inner,
+        type: 'keychain',
+        userAddress: account,
+        version: 'v2',
+      }
+      const invalid = { ...valid, version: 'v1' } as const
+      expect(SignatureEnvelope.validate(valid)).toBe(true)
+      expect(SignatureEnvelope.validate(invalid)).toBe(false)
+      expect(() => SignatureEnvelope.serialize(invalid)).toThrowError(
+        SignatureEnvelope.InvalidMultisigApprovalError,
+      )
+      expect(() => SignatureEnvelope.toRpc(invalid)).toThrowError(
+        SignatureEnvelope.InvalidMultisigApprovalError,
+      )
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          type: 'keychain',
+          userAddress: account,
+          version: 'v1',
+          signature: SignatureEnvelope.toRpc(inner),
+        }),
+      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          Hex.concat('0x03', account, SignatureEnvelope.serialize(inner)),
+        ),
+      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+      expect(() =>
+        SignatureEnvelope.serialize({ ...valid, inner: invalid }),
+      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+    }
+    expect(
+      SignatureEnvelope.validate({
+        inner: {
+          inner: primitive,
+          type: 'keychain',
+          userAddress: account,
+          version: 'v2',
+        },
+        type: 'keychain',
+        userAddress: account,
+        version: 'v1',
+      }),
+    ).toBe(true)
+  })
   test('RPC rejects 64-byte values that resemble primitive signatures', () => {
     expect(() =>
       SignatureEnvelope.fromRpc(
