@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.45
+
+### Patch Changes
+
+- [#450](https://github.com/wevm/ox/pull/450) [`a1b636c`](https://github.com/wevm/ox/commit/a1b636c629b9503cfc3e2f3d602e5593868f0e58) Thanks [@jxom](https://github.com/jxom)! - Updated Tempo multisig accounts to versioned configurations, factory-derived addresses, primitive approvals, and configurable-account delegation.
+
 ## 0.14.44
 
 ### Patch Changes
