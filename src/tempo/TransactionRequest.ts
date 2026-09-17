@@ -13,7 +13,7 @@ import * as Transaction from './Transaction.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
-type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
+type KeyType = SignatureEnvelope.Type | 'multisig'
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -41,6 +41,7 @@ export type TransactionRequest<
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     feeToken?: Address.Address | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
+    keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
     keyData?: Hex.Hex | undefined
     keyId?: Address.Address | undefined
     keyType?: KeyType | undefined
@@ -60,12 +61,14 @@ export type Rpc = Omit<
   | 'feeToken'
   | 'keyAuthorization'
   | 'multisigSimulation'
+  | 'keyAuthorizationSimulation'
   | 'signature'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feePayerSignature?: Signature.Rpc | null | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
+  keyAuthorizationSimulation?: MultisigSimulation.Rpc | undefined
   multisigSimulation?: MultisigSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
   signature?: SignatureEnvelope.SignatureEnvelopeRpc | undefined
@@ -94,7 +97,12 @@ export type Rpc = Omit<
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const { authorizationList: _, multisigSimulation: __, ...rest } = request
+  const {
+    authorizationList: _,
+    multisigSimulation: __,
+    keyAuthorizationSimulation: ___,
+    ...rest
+  } = request
   const request_ = ox_TransactionRequest.fromRpc(
     rest as any,
   ) as TransactionRequest
@@ -128,6 +136,10 @@ export function fromRpc(request: Rpc): TransactionRequest {
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
+    )
+  if (request.keyAuthorizationSimulation)
+    request_.keyAuthorizationSimulation = MultisigSimulation.fromRpc(
+      request.keyAuthorizationSimulation,
     )
   if (request.multisigSimulation)
     request_.multisigSimulation = MultisigSimulation.fromRpc(
@@ -222,6 +234,7 @@ export function toRpc(request: toRpc.Input): Rpc {
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
     typeof request.keyType !== 'undefined' ||
+    typeof request.keyAuthorizationSimulation !== 'undefined' ||
     typeof request.multisigSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
@@ -272,6 +285,10 @@ export function toRpc(request: toRpc.Input): Rpc {
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
+  if (typeof request.keyAuthorizationSimulation !== 'undefined')
+    request_rpc.keyAuthorizationSimulation = MultisigSimulation.toRpc(
+      request.keyAuthorizationSimulation,
+    )
   if (typeof request.multisigSimulation !== 'undefined')
     request_rpc.multisigSimulation = MultisigSimulation.toRpc(
       request.multisigSimulation,

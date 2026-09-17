@@ -1,7 +1,6 @@
 import { expectTypeOf, test } from 'vp/test'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as MultisigConfig from './MultisigConfig.js'
-import type * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const authorization = {
   address: '0x1111111111111111111111111111111111111111',
@@ -20,25 +19,17 @@ const signature = {
 
 const multisig = {
   account: '0x2222222222222222222222222222222222222222',
-  config: MultisigConfig.from({
-    owners: [
-      {
-        owner: '0x1111111111111111111111111111111111111111',
-        weight: 1,
-      },
-    ],
+  config: {
+    salt: `0x${'00'.repeat(32)}`,
+    version: 0n,
     threshold: 1,
-    version: 1n,
-  }),
+    owners: [
+      { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+    ],
+  },
   signatures: [signature],
   type: 'multisig',
 } as const satisfies SignatureEnvelope.Multisig
-
-const keychain = {
-  inner: signature,
-  type: 'keychain',
-  userAddress: authorization.address,
-} as const satisfies SignatureEnvelope.Keychain
 
 test('accepts primitive signatures', () => {
   const signed = KeyAuthorization.from(authorization, { signature })
@@ -48,51 +39,13 @@ test('accepts primitive signatures', () => {
   >()
 })
 
-test('accepts multisig signatures', () => {
-  const signed = KeyAuthorization.from(authorization, { signature: multisig })
-
-  expectTypeOf(signed.signature).toMatchTypeOf<
-    KeyAuthorization.Signed['signature']
-  >()
-
-  const multisigRpc = '0xf8' as const satisfies SignatureEnvelope.MultisigRpc
-
-  const rpc: KeyAuthorization.Rpc = {
-    chainId: '0x1',
-    expiry: null,
-    keyId: authorization.address,
-    keyType: authorization.type,
-    signature: multisigRpc,
-  }
-
-  expectTypeOf(rpc).toEqualTypeOf<KeyAuthorization.Rpc>()
-})
-
-test('rejects keychain signatures', () => {
-  KeyAuthorization.from(authorization, {
-    // @ts-expect-error Key authorizations do not accept keychain signatures.
-    signature: keychain,
-  })
-
-  const keychainRpc = {
-    signature: {
-      r: '0x01',
-      s: '0x02',
-      type: 'secp256k1',
-      yParity: '0x0',
-    },
-    type: 'keychain',
-    userAddress: authorization.address,
-  } as const satisfies SignatureEnvelope.KeychainRpc
-
-  const rpc: KeyAuthorization.Rpc = {
-    chainId: '0x1',
-    expiry: null,
-    keyId: authorization.address,
-    keyType: authorization.type,
-    // @ts-expect-error Key authorizations do not accept keychain RPC signatures.
-    signature: keychainRpc,
-  }
-
-  expectTypeOf(rpc).toEqualTypeOf<KeyAuthorization.Rpc>()
+test('accepts multisig signatures and account-bound grants', () => {
+  const signed = KeyAuthorization.from(
+    { ...authorization, account: multisig.account, type: 'multisig' },
+    { signature: multisig },
+  )
+  expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
+  expectTypeOf(
+    KeyAuthorization.toRpc(signed),
+  ).toMatchTypeOf<KeyAuthorization.Rpc>()
 })

@@ -7,56 +7,10 @@ import * as MultisigConfig from './MultisigConfig.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
 
 /** Native multisig owner approval used for RPC simulation. */
-export type Approval = NestedApproval | PrimitiveApproval
+export type Approval = PrimitiveApproval
 
 /** JSON-RPC native multisig owner approval used for RPC simulation. */
-export type ApprovalRpc = NestedApprovalRpc | PrimitiveApproval
-
-/** Nested native multisig owner approval used for RPC simulation. */
-export type NestedApproval = {
-  /** Depth-2 multisig simulation spec. */
-  spec: NestedSpec
-  /** Approval type. */
-  type: 'multisig'
-}
-
-/** JSON-RPC nested native multisig owner approval used for RPC simulation. */
-export type NestedApprovalRpc = {
-  /** Depth-2 multisig simulation spec. */
-  spec: NestedSpecRpc
-  /** Approval type. */
-  type: 'multisig'
-}
-
-/** Primitive approval in a depth-2 multisig simulation spec. */
-export type NestedPrimitiveApproval = {
-  /** Optional signature-specific gas-estimation data. */
-  keyData?: Hex.Hex | undefined
-  /** Signature type to model. Omission uses a maximum-size WebAuthn signature. */
-  keyType?: SignatureEnvelope.Type | undefined
-  /** Configured owner address. */
-  owner: Address.Address
-}
-
-/** Depth-2 native multisig spec used for RPC simulation. */
-export type NestedSpec = {
-  /** Nested multisig account. */
-  account: Address.Address
-  /** Primitive owner approvals to model. */
-  approvals: readonly NestedPrimitiveApproval[]
-  /** Complete applicable configuration. */
-  config: MultisigConfig.Config
-}
-
-/** JSON-RPC depth-2 native multisig spec used for RPC simulation. */
-export type NestedSpecRpc = {
-  /** Nested multisig account. */
-  account: Address.Address
-  /** Primitive owner approvals to model. */
-  approvals: readonly NestedPrimitiveApproval[]
-  /** Canonical RLP-encoded applicable configuration. */
-  config: Hex.Hex
-}
+export type ApprovalRpc = PrimitiveApproval
 
 /** Primitive owner approval used for RPC simulation. */
 export type PrimitiveApproval = {
@@ -66,14 +20,10 @@ export type PrimitiveApproval = {
   keyType?: SignatureEnvelope.Type | undefined
   /** Configured owner address. */
   owner: Address.Address
-  /** Approval type. */
-  type: 'primitive'
 }
 
 /** JSON-RPC representation of a native multisig simulation spec. */
 export type Rpc = Compute<{
-  /** Account authorized by this spec. */
-  account: Address.Address
   /** Owner approvals to model. */
   approvals: readonly ApprovalRpc[]
   /** Canonical RLP-encoded applicable configuration. */
@@ -82,8 +32,6 @@ export type Rpc = Compute<{
 
 /** Native multisig spec used to construct an RPC simulation signature. */
 export type Spec = Compute<{
-  /** Account authorized by this spec. */
-  account: Address.Address
   /** Owner approvals to model. */
   approvals: readonly Approval[]
   /** Complete applicable configuration. */
@@ -105,24 +53,9 @@ export type Spec = Compute<{
  * @returns The multisig simulation spec with decoded configurations.
  */
 export function fromRpc(spec: Rpc): Spec {
-  const { account, approvals, config } = spec
-  assertApprovalCount(approvals)
-  return {
-    account,
-    approvals: approvals.map((approval) => {
-      if (approval.type === 'primitive') return approval
-      assertApprovalCount(approval.spec.approvals)
-      return {
-        spec: {
-          account: approval.spec.account,
-          approvals: approval.spec.approvals,
-          config: deserializeConfig(approval.spec.config),
-        },
-        type: 'multisig',
-      }
-    }),
-    config: deserializeConfig(config),
-  }
+  const { approvals, config } = spec
+  assertApprovals(approvals)
+  return { approvals, config: deserializeConfig(config) }
 }
 
 export declare namespace fromRpc {
@@ -151,33 +84,14 @@ export declare namespace fromRpc {
  * @returns The JSON-RPC multisig simulation spec with encoded configurations.
  */
 export function toRpc(spec: Spec): Rpc {
-  const { account, approvals, config } = spec
-  assertApprovalCount(approvals)
+  const { approvals, config } = spec
+  assertApprovals(approvals)
   return {
-    account,
-    approvals: approvals.map((approval) => {
-      if (approval.type === 'primitive')
-        return {
-          ...approval,
-          ...(typeof approval.keyData !== 'undefined'
-            ? { keyData: shimKeyData(approval.keyData) }
-            : {}),
-        }
-      assertApprovalCount(approval.spec.approvals)
-      return {
-        spec: {
-          account: approval.spec.account,
-          approvals: approval.spec.approvals.map((approval) => ({
-            ...approval,
-            ...(typeof approval.keyData !== 'undefined'
-              ? { keyData: shimKeyData(approval.keyData) }
-              : {}),
-          })),
-          config: serializeConfig(approval.spec.config),
-        },
-        type: 'multisig',
-      }
-    }),
+    approvals: approvals.map(({ keyData, keyType, owner }) => ({
+      ...(keyData !== undefined ? { keyData: shimKeyData(keyData) } : {}),
+      ...(keyType !== undefined ? { keyType } : {}),
+      owner,
+    })),
     config: serializeConfig(config),
   }
 }
@@ -193,7 +107,19 @@ export declare namespace toRpc {
 }
 
 /** @internal */
-function assertApprovalCount(approvals: readonly unknown[]) {
+function assertApprovals(approvals: readonly unknown[]) {
+  if (
+    approvals.some(
+      (approval) =>
+        typeof approval !== 'object' ||
+        approval === null ||
+        'spec' in approval ||
+        'type' in approval,
+    )
+  )
+    throw new InvalidSimulationError({
+      reason: 'only untagged primitive owner approvals are allowed',
+    })
   if (approvals.length > MultisigConfig.maxSignatures)
     throw new InvalidSimulationError({
       reason: `approval count exceeds ${MultisigConfig.maxSignatures}`,

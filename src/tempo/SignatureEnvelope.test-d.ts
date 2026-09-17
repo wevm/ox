@@ -1,58 +1,40 @@
 import { expectTypeOf, test } from 'vp/test'
-import * as MultisigConfig from './MultisigConfig.js'
+import type * as Hex from '../core/Hex.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
-const signature = {
-  signature: {
-    r: '0x01',
-    s: '0x02',
-    yParity: 0,
+const primitive = SignatureEnvelope.from({ r: '0x01', s: '0x02', yParity: 0 })
+const envelope = SignatureEnvelope.from({
+  account: '0x2222222222222222222222222222222222222222',
+  config: {
+    threshold: 1,
+    version: 0n,
+    owners: [
+      { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+    ],
   },
-  type: 'secp256k1',
-} as const satisfies SignatureEnvelope.Secp256k1
-
-const config = MultisigConfig.from({
-  owners: [
-    {
-      owner: '0x1111111111111111111111111111111111111111',
-      weight: 1,
-    },
-  ],
-  threshold: 1,
+  signatures: [primitive],
 })
 
-test('toRpc preserves the signature type', () => {
+test('preserves primitive and multisig RPC types', () => {
   expectTypeOf(
-    SignatureEnvelope.toRpc(signature),
+    SignatureEnvelope.toRpc(primitive),
   ).toEqualTypeOf<SignatureEnvelope.Secp256k1Rpc>()
+  expectTypeOf(SignatureEnvelope.toRpc(envelope)).toEqualTypeOf<Hex.Hex>()
+  expectTypeOf<
+    SignatureEnvelope.GetType<typeof envelope>
+  >().toEqualTypeOf<'multisig'>()
+  expectTypeOf(envelope).toMatchTypeOf<SignatureEnvelope.Multisig>()
 })
 
-test('MultisigRpc contains an untagged serialized multisig signature', () => {
-  const rpc = '0xf8' as const satisfies SignatureEnvelope.MultisigRpc
-  expectTypeOf(rpc).toMatchTypeOf<`0x${string}`>()
-})
-
-test('from derives an initial account', () => {
-  const multisig = SignatureEnvelope.from({
-    config,
-    signatures: [signature],
-  })
-
-  expectTypeOf(multisig).toMatchTypeOf<SignatureEnvelope.Multisig>()
-  expectTypeOf(multisig.config.version).toEqualTypeOf<bigint>()
-})
-
-test('from requires an account for a current config', () => {
-  // @ts-expect-error Current configurations require an explicit account.
-  SignatureEnvelope.from({
-    config: { ...config, version: 1 },
-    signatures: [signature],
-  })
-
-  const multisig = SignatureEnvelope.from({
-    account: '0x2222222222222222222222222222222222222222',
-    config: { ...config, version: 1 },
-    signatures: [signature],
-  })
-  expectTypeOf(multisig).toMatchTypeOf<SignatureEnvelope.Multisig>()
+test('requires config and primitive approvals', () => {
+  // @ts-expect-error Every multisig signature carries its current config.
+  SignatureEnvelope.from({ account: envelope.account, signatures: [primitive] })
+  // @ts-expect-error Multisig owners cannot recursively approve with multisigs.
+  SignatureEnvelope.from({ ...envelope, signatures: [envelope] })
+  // @ts-expect-error Multisig RPC signatures are hex-encoded RLP.
+  const rpc: SignatureEnvelope.MultisigRpc = {
+    account: envelope.account,
+    signatures: [],
+  }
+  expectTypeOf(rpc).toEqualTypeOf<Hex.Hex>()
 })

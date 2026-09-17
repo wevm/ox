@@ -65,27 +65,11 @@ describe('TransactionRequest', () => {
 
   test('multisig simulation round-trips', () => {
     const multisigSimulation = {
-      account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       approvals: [
         {
-          keyType: 'secp256k1',
+          keyType: 'webAuthn',
+          keyData: '0x0005',
           owner: '0x1111111111111111111111111111111111111111',
-          type: 'primitive',
-        },
-        {
-          spec: {
-            account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-            approvals: [
-              {
-                keyData: '0x0578',
-                keyType: 'webAuthn',
-                owner: '0x2222222222222222222222222222222222222222',
-              },
-            ],
-            config:
-              '0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201',
-          },
-          type: 'multisig',
         },
       ],
       config:
@@ -94,13 +78,19 @@ describe('TransactionRequest', () => {
 
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
       ...rpc,
+      keyAuthorizationSimulation: multisigSimulation,
       multisigSimulation,
     })
     expect(decoded).toEqual(
-      core_TransactionRequest.fromRpc({ ...rpc, multisigSimulation }),
+      core_TransactionRequest.fromRpc({
+        ...rpc,
+        keyAuthorizationSimulation: multisigSimulation,
+        multisigSimulation,
+      }),
     )
 
     const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+    expect(encoded.keyAuthorizationSimulation).toStrictEqual(multisigSimulation)
     expect(encoded.multisigSimulation).toStrictEqual(multisigSimulation)
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })

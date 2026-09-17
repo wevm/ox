@@ -7,53 +7,17 @@ import * as z from 'zod/mini'
 import * as z_MultisigConfig from './MultisigConfig.js'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
-const NestedPrimitiveApproval = z.object({
+const PrimitiveApproval = z.strictObject({
   keyData: z.optional(z_Hex.Hex),
   keyType: z.optional(z_SignatureEnvelope.Type),
   owner: z_Address.Address,
-})
-
-const PrimitiveApproval = z.object({
-  keyData: z.optional(z_Hex.Hex),
-  keyType: z.optional(z_SignatureEnvelope.Type),
-  owner: z_Address.Address,
-  type: z.literal('primitive'),
-})
-
-const NestedSpec = z.object({
-  account: z_Address.Address,
-  approvals: z.readonly(
-    z
-      .array(NestedPrimitiveApproval)
-      .check(z.maxLength(core_MultisigConfig.maxSignatures)),
-  ),
-  config: z_MultisigConfig.Config,
-})
-
-const NestedSpecRpc = z.object({
-  account: z_Address.Address,
-  approvals: z.readonly(
-    z
-      .array(NestedPrimitiveApproval)
-      .check(z.maxLength(core_MultisigConfig.maxSignatures)),
-  ),
-  config: z_Hex.Hex,
 })
 
 /** Native multisig simulation spec schema. */
 export const Domain = z.object({
-  account: z_Address.Address,
   approvals: z.readonly(
     z
-      .array(
-        z.union([
-          PrimitiveApproval,
-          z.object({
-            spec: NestedSpec,
-            type: z.literal('multisig'),
-          }),
-        ]),
-      )
+      .array(PrimitiveApproval)
       .check(z.maxLength(core_MultisigConfig.maxSignatures)),
   ),
   config: z_MultisigConfig.Config,
@@ -61,18 +25,9 @@ export const Domain = z.object({
 
 const Rpc_ = z
   .object({
-    account: z_Address.Address,
     approvals: z.readonly(
       z
-        .array(
-          z.union([
-            PrimitiveApproval,
-            z.object({
-              spec: NestedSpecRpc,
-              type: z.literal('multisig'),
-            }),
-          ]),
-        )
+        .array(PrimitiveApproval)
         .check(z.maxLength(core_MultisigConfig.maxSignatures)),
     ),
     config: z_Hex.Hex,

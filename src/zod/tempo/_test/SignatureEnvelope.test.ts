@@ -19,25 +19,37 @@ const p256 = {
   type: 'p256',
 } as const
 
-const multisig =
-  '0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
-const nestedMultisig =
-  '0xf8f0945f0287385ec182f906c238bec5f87692d48b23f2f83ba033333333333333333333333333333333333333333333333333333333333333338001d7d69470845f2897b639686cb383799d605c52315d785501f89cb89a05f8979470845f2897b639686cb383799d605c52315d7855f83ba022222222222222222222222222222222222222222222222222222222222222228001d7d6946813eb9362372eef6200f3b1dbc3f819671cba6901f843b841032aa6f3ea7b0b7069720d0f3891983c493d149326c5c957d864ed7371b8475e3e95325079b24491f4b6d68920e4b3bacd7c6094df6ed88b8674864ab559c8fb1b' as const
+const envelope = core_SignatureEnvelope.from({
+  account: '0x2222222222222222222222222222222222222222',
+  config: {
+    version: 2n,
+    threshold: 1,
+    owners: [
+      { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+    ],
+  },
+  signatures: [
+    core_SignatureEnvelope.fromRpc(
+      secp256k1,
+    ) as core_SignatureEnvelope.Primitive,
+  ],
+})
+const multisig = core_SignatureEnvelope.toRpc(envelope)
 
 describe('SignatureEnvelope', () => {
-  test('behavior: decodes a secp256k1 envelope', () => {
+  test('decodes a secp256k1 envelope', () => {
     expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, secp256k1)).toEqual(
       core_SignatureEnvelope.fromRpc(secp256k1),
     )
   })
 
-  test('behavior: decodes a p256 envelope', () => {
+  test('decodes a p256 envelope', () => {
     expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, p256)).toEqual(
       core_SignatureEnvelope.fromRpc(p256),
     )
   })
 
-  test('behavior: decodes a recursive keychain envelope', () => {
+  test('decodes a recursive keychain envelope', () => {
     const keychain = {
       signature: secp256k1,
       type: 'keychain',
@@ -48,107 +60,128 @@ describe('SignatureEnvelope', () => {
     )
   })
 
-  test('behavior: decodes a multisig envelope', () => {
-    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)).toEqual(
-      core_SignatureEnvelope.fromRpc(multisig),
-    )
-  })
-
-  test('behavior: decodes recursive multisig approvals', () => {
-    expect(
-      z.decode(z_SignatureEnvelope.SignatureEnvelope, nestedMultisig),
-    ).toEqual(core_SignatureEnvelope.fromRpc(nestedMultisig))
-  })
-
-  test('behavior: round-trips secp256k1 via encode', () => {
-    const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, secp256k1)
-    expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
-      core_SignatureEnvelope.toRpc(decoded),
-    )
-  })
-
-  test('behavior: round-trips multisig via encode', () => {
+  test('round-trips versioned multisig RPC bytes', () => {
     const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)
+    expect(decoded).toEqual(envelope)
     expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
       multisig,
     )
   })
 
-  test('error: rejects invalid recursive multisig domains before encode', () => {
-    const decoded = core_SignatureEnvelope.fromRpc(multisig)
-    if (decoded.type !== 'multisig') throw new Error('unreachable')
+  test('round-trips a multisig delegate in a keychain', () => {
+    const rpc = {
+      type: 'keychain',
+      version: 'v2',
+      userAddress: '0x3333333333333333333333333333333333333333',
+      signature: multisig,
+    } as const
     expect(
-      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...decoded,
-        signatures: [
-          {
-            inner: core_SignatureEnvelope.fromRpc(secp256k1),
-            type: 'keychain',
-            userAddress: decoded.account,
-          },
-        ],
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('error: rejects multisig approval counts outside protocol limits', () => {
-    const decoded = core_SignatureEnvelope.fromRpc(multisig)
-    if (decoded.type !== 'multisig') throw new Error('unreachable')
-    expect(
-      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...decoded,
-        signatures: [],
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-    expect(
-      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
-        ...decoded,
-        signatures: Array.from({ length: 9 }, () => decoded.signatures[0]),
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('error: rejects excess multisig nesting', () => {
-    const nested = core_SignatureEnvelope.fromRpc(nestedMultisig)
-    if (nested.type !== 'multisig') throw new Error('unreachable')
-    expect(
-      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
-        account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        config: {
-          ...nested.config,
-          owners: [{ owner: nested.account, weight: 1 }],
-          version: 1n,
-        },
-        signatures: [nested],
-        type: 'multisig',
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('error: rejects structured multisig RPC envelopes', () => {
-    expect(
-      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        account: '0x9dba7f426b711d4893c11611eacf7cc334e7146b',
-        config: {},
-        signatures: [],
-      } as never).success,
-    ).toMatchInlineSnapshot(`false`)
-  })
-
-  test('error: rejects tagged multisig RPC envelopes', () => {
-    expect(
-      z.safeDecode(
+      z.encode(
         z_SignatureEnvelope.SignatureEnvelope,
-        `0x05${multisig.slice(2)}`,
-      ).success,
-    ).toMatchInlineSnapshot(`false`)
+        z.decode(z_SignatureEnvelope.SignatureEnvelope, rpc),
+      ),
+    ).toEqual(rpc)
   })
 
-  test('error: rejects an invalid envelope', () => {
+  test('rejects legacy RPC shapes and malformed bytes', () => {
+    for (const rpc of [
+      { account: envelope.account, signatures: [secp256k1] },
+      '0xc0',
+      '0x',
+    ])
+      expect(
+        z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc as never)
+          .success,
+      ).toMatchInlineSnapshot('false')
+  })
+
+  test('rejects recursive and empty owner approvals', () => {
+    for (const signatures of [
+      [],
+      [envelope],
+      [{ type: 'keychain', userAddress: envelope.account, inner: envelope }],
+    ])
+      expect(
+        z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+          ...envelope,
+          signatures,
+        } as never).success,
+      ).toMatchInlineSnapshot('false')
+  })
+  test('rejects keychain V1 multisig delegates', () => {
+    const rpc = {
+      type: 'keychain',
+      version: 'v1',
+      userAddress: envelope.account,
+      signature: multisig,
+    } as const
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc).success,
+    ).toMatchInlineSnapshot('false')
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+        type: 'keychain',
+        version: 'v1',
+        userAddress: envelope.account,
+        inner: envelope,
+      }).success,
+    ).toMatchInlineSnapshot('false')
+  })
+
+  test('round-trips primitive RPC envelopes', () => {
+    for (const rpc of [secp256k1, p256])
+      expect(
+        z.encode(
+          z_SignatureEnvelope.SignatureEnvelope,
+          z.decode(z_SignatureEnvelope.SignatureEnvelope, rpc),
+        ),
+      ).toEqual(rpc)
+  })
+})
+
+describe('Keychain', () => {
+  test('rejects V1 wrappers with nested multisig delegates', () => {
+    const inner = {
+      inner: envelope,
+      type: 'keychain',
+      userAddress: envelope.account,
+      version: 'v2',
+    } as const
+    const value = {
+      inner,
+      type: 'keychain',
+      userAddress: envelope.account,
+      version: 'v1',
+    } as const
+    const rpc = {
+      signature: core_SignatureEnvelope.toRpc(inner),
+      type: 'keychain',
+      userAddress: envelope.account,
+      version: 'v1',
+    } as const
+    expect(
+      z.safeParse(z_SignatureEnvelope.Keychain, value).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeParse(z_SignatureEnvelope.KeychainRpc, rpc).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, value).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...value,
+        version: 'v2',
+      }).success,
+    ).toMatchInlineSnapshot(`true`)
     expect(
       z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
-        type: 'secp256k1',
-      } as never).success,
-    ).toBe(false)
+        ...rpc,
+        version: 'v2',
+      }).success,
+    ).toMatchInlineSnapshot(`true`)
   })
 })

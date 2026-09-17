@@ -136,7 +136,7 @@
 - **Trusted setup artifacts are generated** -- `src/trusted-setups/internal/setups/mainnet.json` is canonical. Refresh it from an explicit `c-kzg-4844` release with `pnpm trusted-setups:update <tag>`; `pnpm trusted-setups:check` verifies its recorded hash and packed TypeScript artifact. See `src/trusted-setups/README.md`.
 - **KZG WASM disables LTO** -- full LTO makes valid c-kzg trusted-setup initialization trap. Preserve `-fno-lto` and the KZG conformance tests.
 - **Secrets are local** -- `.env` is local. Do not print, rewrite, or commit secrets.
-- **Tempo multisig RPC shape** -- TIP-1061 multisig signatures are untagged and use `{ account, config, signatures }`, with a complete configuration witness and structured owner approvals.
+- **Tempo configurable accounts** -- Every multisig signature carries `[account, config, primitive approvals]`; config includes a uint64 version. RPC uses the RLP bytes without the `0x05` prefix. Account derivation requires an explicit recovery factory; multisig delegates require keychain V2.
 - **Zone chain IDs** -- Presto and Moderato use separate fixed bases and ranges. Derive chain IDs as `base + (zoneId % range)`.
 - **Offline core tests** -- Set `SKIP_GLOBAL_SETUP=1` for focused core tests that do not need Anvil.
 - **Docgen export comments** -- `extractNamespaceDocComments` should read the nearest JSDoc on an export declaration. ts-morph can include earlier file-level JSDoc descendants on the first export.

@@ -4,24 +4,11 @@ import * as z_MultisigSimulation from '../MultisigSimulation.js'
 import * as z from 'zod/mini'
 
 const rpc = {
-  account: '0xcccccccccccccccccccccccccccccccccccccccc',
   approvals: [
     {
-      owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      type: 'primitive',
-    },
-    {
-      spec: {
-        account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        approvals: [
-          {
-            owner: '0xdddddddddddddddddddddddddddddddddddddddd',
-          },
-        ],
-        config:
-          '0xf83ba022222222222222222222222222222222222222222222222222222222222222220201d7d694dddddddddddddddddddddddddddddddddddddddd01',
-      },
-      type: 'multisig',
+      keyType: 'webAuthn',
+      keyData: '0x0005',
+      owner: '0x1111111111111111111111111111111111111111',
     },
   ],
   config:
@@ -46,24 +33,12 @@ describe('MultisigSimulation', () => {
       }).success,
     ).toMatchInlineSnapshot(`false`)
   })
-
-  test('error: rejects more than eight nested approvals', () => {
+  test('error: rejects nested approvals', () => {
     expect(
       z.safeDecode(z_MultisigSimulation.Rpc, {
         ...rpc,
-        approvals: [
-          {
-            ...rpc.approvals[1],
-            spec: {
-              ...rpc.approvals[1].spec,
-              approvals: Array.from(
-                { length: 9 },
-                () => rpc.approvals[1].spec.approvals[0],
-              ),
-            },
-          },
-        ],
-      }).success,
+        approvals: [{ type: 'multisig', spec: rpc }],
+      } as never).success,
     ).toMatchInlineSnapshot(`false`)
   })
 

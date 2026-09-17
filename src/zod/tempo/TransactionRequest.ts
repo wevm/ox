@@ -23,6 +23,7 @@ const KeyType = z.union([
   z.literal('secp256k1'),
   z.literal('p256'),
   z.literal('webAuthn'),
+  z.literal('multisig'),
 ])
 
 const SignatureRpc = z.object({
@@ -83,6 +84,7 @@ export const Rpc = z.object({
   maxFeePerBlobGas: z.optional(z_Hex.Hex),
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
+  keyAuthorizationSimulation: z.optional(z_MultisigSimulation.Rpc),
   multisigSimulation: z.optional(z_MultisigSimulation.Rpc),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
@@ -136,6 +138,7 @@ export const Domain = z.object({
   maxFeePerBlobGas: z.optional(z.bigint()),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),
+  keyAuthorizationSimulation: z.optional(z_MultisigSimulation.Domain),
   multisigSimulation: z.optional(z_MultisigSimulation.Domain),
   nonce: z.optional(z.bigint()),
   nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
@@ -175,6 +178,7 @@ export const DomainToRpc = z.object({
   maxFeePerBlobGas: z.optional(uintBigintNumberish()),
   maxFeePerGas: z.optional(uintBigintNumberish()),
   maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
+  keyAuthorizationSimulation: z.optional(z_MultisigSimulation.Domain),
   multisigSimulation: z.optional(z_MultisigSimulation.Domain),
   nonce: z.optional(uintBigintNumberish()),
   nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
@@ -250,6 +254,11 @@ function fromRpc(
   if (typeof request.keyData !== 'undefined') request_.keyData = request.keyData
   if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
   if (typeof request.keyType !== 'undefined') request_.keyType = request.keyType
+  if (typeof request.keyAuthorizationSimulation !== 'undefined')
+    request_.keyAuthorizationSimulation = z.decode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.keyAuthorizationSimulation,
+    )
   if (typeof request.multisigSimulation !== 'undefined')
     request_.multisigSimulation = z.decode(
       z_MultisigSimulation.MultisigSimulation,
@@ -338,6 +347,11 @@ function toRpc(
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType = request.keyType
+  if (typeof request.keyAuthorizationSimulation !== 'undefined')
+    request_rpc.keyAuthorizationSimulation = z.encode(
+      z_MultisigSimulation.MultisigSimulation,
+      request.keyAuthorizationSimulation,
+    )
   if (typeof request.multisigSimulation !== 'undefined')
     request_rpc.multisigSimulation = z.encode(
       z_MultisigSimulation.MultisigSimulation,

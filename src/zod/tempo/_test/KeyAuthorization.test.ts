@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vp/test'
+import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as core_KeyAuthorization from '../../../tempo/KeyAuthorization.js'
 import * as z_KeyAuthorization from '../KeyAuthorization.js'
 import * as z from 'zod/mini'
@@ -20,6 +21,35 @@ const rpc = {
 } as const
 
 describe('KeyAuthorization', () => {
+  test('rejects unbound multisig grants through every schema', () => {
+    const domain = {
+      ...z.decode(z_KeyAuthorization.KeyAuthorization, rpc),
+      type: 'multisig',
+    } as const
+    for (const account of [undefined, null])
+      expect(
+        z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
+          ...rpc,
+          keyType: 'multisig',
+          account,
+        }).success,
+      ).toMatchInlineSnapshot(`false`)
+    for (const schema of [
+      z_KeyAuthorization.Domain,
+      z_KeyAuthorization.DomainToRpc,
+    ]) {
+      expect(z.safeParse(schema, domain).success).toMatchInlineSnapshot(`false`)
+      expect(
+        z.safeParse(schema, { ...domain, account: rpc.keyId }).success,
+      ).toMatchInlineSnapshot(`true`)
+    }
+    for (const codec of [
+      z_KeyAuthorization.KeyAuthorization,
+      z_KeyAuthorization.KeyAuthorizationToRpc,
+    ])
+      expect(z.safeEncode(codec, domain).success).toMatchInlineSnapshot(`false`)
+  })
+
   test('decodes an RPC key authorization', () => {
     expect(z.decode(z_KeyAuthorization.KeyAuthorization, rpc)).toEqual(
       core_KeyAuthorization.fromRpc(rpc),
@@ -141,27 +171,15 @@ describe('KeyAuthorization', () => {
     ).toBe(false)
   })
 
-  test('round-trips multisig signatures', () => {
-    const multisigRpc =
-      '0xf89794be95c3f554e9fc85ec51be69a3d807a0d55bcf2cf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694f39fd6e51aad88f6f4ce6ab8827279cfffb9226601f843b841fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c' as const
-    const withMultisig = { ...rpc, signature: multisigRpc }
-    const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, withMultisig)
-    expect(decoded).toEqual(core_KeyAuthorization.fromRpc(withMultisig))
-    expect(z.encode(z_KeyAuthorization.KeyAuthorization, decoded)).toEqual(
-      core_KeyAuthorization.toRpc(decoded),
-    )
-  })
-
-  test('rejects keychain signatures', () => {
-    const keychainRpc = {
-      signature: rpc.signature,
-      type: 'keychain',
-      userAddress: '0x1111111111111111111111111111111111111111',
+  test('rejects legacy multisig signatures', () => {
+    const multisigRpc = {
+      account: '0x1111111111111111111111111111111111111111',
+      signatures: [rpc.signature],
     } as const
     expect(
       z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
         ...rpc,
-        signature: keychainRpc,
+        signature: multisigRpc,
       } as never).success,
     ).toBe(false)
 
@@ -170,11 +188,42 @@ describe('KeyAuthorization', () => {
       z.safeEncode(z_KeyAuthorization.KeyAuthorization, {
         ...authorization,
         signature: {
-          inner: authorization.signature,
-          type: 'keychain',
-          userAddress: keychainRpc.userAddress,
+          account: multisigRpc.account,
+          signatures: [authorization.signature],
+          type: 'multisig',
         },
       } as never).success,
     ).toBe(false)
+  })
+  test('round-trips account-bound multisig grants', () => {
+    const signature = core_SignatureEnvelope.from({
+      account: '0x2222222222222222222222222222222222222222',
+      config: {
+        threshold: 1,
+        owners: [
+          { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+        ],
+      },
+      signatures: [
+        core_SignatureEnvelope.fromRpc(
+          rpc.signature,
+        ) as core_SignatureEnvelope.Primitive,
+      ],
+    })
+    const signed = core_KeyAuthorization.from(
+      {
+        account: signature.account,
+        address: '0x3333333333333333333333333333333333333333',
+        chainId: 1n,
+        type: 'multisig',
+      },
+      { signature },
+    )
+    const encoded = z.encode(z_KeyAuthorization.KeyAuthorization, signed)
+    const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, encoded)
+    expect(decoded).toEqual(
+      core_KeyAuthorization.fromRpc(core_KeyAuthorization.toRpc(signed)),
+    )
+    expect(decoded.account).toBe(signature.account)
   })
 })

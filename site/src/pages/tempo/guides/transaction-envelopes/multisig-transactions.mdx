@@ -37,7 +37,8 @@ before producing signatures.
 
 Normalize the initial config with
 [`MultisigConfig.from`](/tempo/reference/MultisigConfig/from), then derive its permanent account
-with [`MultisigConfig.getAddress`](/tempo/reference/MultisigConfig/getAddress).
+with [`MultisigConfig.getAddress`](/tempo/reference/MultisigConfig/getAddress). Supply the recovery
+factory configured by your chain. The pinned experimental node has no public-network default.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
@@ -59,7 +60,9 @@ const initialConfig = MultisigConfig.from({
   salt: Hex.random(32),
   threshold: 2, // [!code hl]
 })
-const account = MultisigConfig.getAddress(initialConfig)
+// Replace this development factory with your chain's configured factory.
+const factory = '0x7171717171717171717171717171717171717171'
+const account = MultisigConfig.getAddress(initialConfig, { factory })
 // @log: '0x...'
 // [!code focus:end]
 ```
@@ -76,8 +79,8 @@ enough owner signatures to meet the threshold. Use
 to put approvals in the order required by Tempo.
 
 Pass the complete initial config to
-[`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Ox derives `account` from a
-version-0 config when you omit the account.
+[`SignatureEnvelope.from`](/tempo/reference/SignatureEnvelope/from). Supply both the explicit `account` and the
+version-0 configuration.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
@@ -97,7 +100,9 @@ const initialConfig = MultisigConfig.from({
   salt: Hex.random(32),
   threshold: 2,
 })
-const account = MultisigConfig.getAddress(initialConfig)
+// Replace this development factory with your chain's configured factory.
+const factory = '0x7171717171717171717171717171717171717171'
+const account = MultisigConfig.getAddress(initialConfig, { factory })
 
 // 2. Build the initial transaction.
 const transaction = TxEnvelopeTempo.from({
@@ -136,6 +141,7 @@ const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
 
 // 5. Attach the complete config and serialize the transaction.
 const bootstrapSignature = SignatureEnvelope.from({
+  account,
   config: initialConfig, // [!code hl]
   signatures: orderedApprovals,
 })
@@ -146,9 +152,8 @@ const serialized = TxEnvelopeTempo.serialize(transaction, {
 // [!code focus:end]
 ```
 
-The version-0 config lives in the signature, not in `transaction.calls`. An initial transaction does
-not persist multisig state, so the same config remains valid until an owner update stores a nonzero
-config commitment.
+The version-0 config lives in the signature. The first accepted transaction registers its config
+commitment. Use that configuration until an owner update stores a new commitment.
 
 ### Sign a Later Transaction
 
@@ -174,7 +179,9 @@ const initialConfig = MultisigConfig.from({
   salt: Hex.random(32),
   threshold: 2,
 })
-const account = MultisigConfig.getAddress(initialConfig)
+// Replace this development factory with your chain's configured factory.
+const factory = '0x7171717171717171717171717171717171717171'
+const account = MultisigConfig.getAddress(initialConfig, { factory })
 
 // 2. Load the complete config committed by the latest owner update.
 const currentConfig = MultisigConfig.from({
@@ -266,7 +273,7 @@ carries and validates its own complete applicable config witness.
 
 ### Use the Applicable Config
 
-Use the version-0 config only while the account's stored commitment is zero. After an owner update,
+Use the version-0 config to register the account and until its first owner update. After an update,
 use the complete config whose commitment is currently stored for the account.
 
 ## See More

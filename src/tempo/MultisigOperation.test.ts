@@ -1,3 +1,4 @@
+import { factory } from '../../test/tempo/multisig.js'
 import { Address, Hash, Hex, P256 } from 'ox'
 import {
   KeyAuthorization,
@@ -40,7 +41,7 @@ const config = MultisigConfig.from({
   threshold: 2,
 })
 const currentConfig = MultisigConfig.from({ ...config, version: 1n })
-const account = MultisigConfig.getAddress(config)
+const account = MultisigConfig.getAddress(config, { factory })
 const ownerSignature_1 = owners[0]!.signature
 const approval_1 = SignatureEnvelope.serialize(ownerSignature_1)
 const approval_2 = SignatureEnvelope.serialize(owners[1]!.signature)
@@ -152,8 +153,8 @@ describe('getHash', () => {
       }),
     }).toMatchInlineSnapshot(`
       {
-        "keyAuthorization": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
-        "transaction": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
+        "keyAuthorization": "0xa83016f0e94c4a6125483ffeba3abb0a8df1bc0f5a503f63639e806b793520bb",
+        "transaction": "0x2d7e3c7c38a9acf85f0a9d70a39b0e9e5a05d92c7a73b633a47a45be4a112b3b",
       }
     `)
   })
@@ -169,7 +170,7 @@ describe('selectApprovals', () => {
       ],
       threshold: 3,
     })
-    const account = MultisigConfig.getAddress(config)
+    const account = MultisigConfig.getAddress(config, { factory })
     const hash = MultisigOperation.getHash({
       account,
       config: { ...config, version: 1n },
@@ -225,195 +226,39 @@ describe('selectApprovals', () => {
       }
     `)
   })
-
-  test('counts a nested owner only after its quorum', async () => {
-    const childConfig = MultisigConfig.from({
-      owners: [
-        { owner: owners[1]!.address, weight: 1 },
-        { owner: owners[2]!.address, weight: 1 },
-      ],
-      threshold: 2,
-    })
-    const child = MultisigConfig.getAddress(childConfig)
-    const config = MultisigConfig.from({
-      owners: [
-        { owner: owners[0]!.address, weight: 1 },
-        { owner: child, weight: 2 },
-      ],
-      threshold: 2,
-    })
-    const account = MultisigConfig.getAddress(config)
-    const hash = MultisigOperation.getHash({
+  test('accepts an explicit account from a chain-configured factory', async () => {
+    const selected = await MultisigOperation.selectApprovals({
       account,
-      config: { ...config, version: 1n },
-      transaction,
-      type: 'transaction',
-    })
-    const childHash = MultisigConfig.getSignPayload({
-      account: child,
-      config: { ...childConfig, version: 2n },
-      payload: hash,
-    })
-    const childApprovals = [
-      signApproval(owners[1]!, childHash),
-      signApproval(owners[2]!, childHash),
-    ]
-    const rootApproval = signApproval(owners[0]!, hash)
-    const partial = await MultisigOperation.selectApprovals({
-      account,
-      approvals: [
-        rootApproval,
-        SignatureEnvelope.serialize({
-          account: child,
-          config: MultisigConfig.from({ ...childConfig, version: 2n }),
-          signatures: [SignatureEnvelope.deserialize(childApprovals[0]!)],
-          type: 'multisig',
-        }),
-      ],
+      approvals: [],
       config,
-      hash,
+      hash: transactionHash_,
     })
-    const complete = await MultisigOperation.selectApprovals({
-      account,
-      approvals: [
-        rootApproval,
-        SignatureEnvelope.serialize({
-          account: child,
-          config: MultisigConfig.from({ ...childConfig, version: 2n }),
-          signatures: childApprovals.map((approval) =>
-            SignatureEnvelope.deserialize(approval),
-          ),
-          type: 'multisig',
-        }),
-      ],
-      config,
-      hash,
-    })
-
-    expect({
-      complete: {
-        ...complete,
-        approvals: approvalAddresses(complete.approvals, hash),
-        selectedApprovals: approvalAddresses(complete.selectedApprovals, hash),
-      },
-      partial: {
-        ...partial,
-        approvals: approvalAddresses(partial.approvals, hash),
-        selectedApprovals: approvalAddresses(partial.selectedApprovals, hash),
-      },
-    }).toMatchInlineSnapshot(`
-      {
-        "complete": {
-          "approvals": [
-            "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
-            "0xf75618474e5f7fd9ef17dd85167a5b1e1f19b84b",
-          ],
-          "selectedApprovals": [
-            "0xf75618474e5f7fd9ef17dd85167a5b1e1f19b84b",
-          ],
-          "signatureCount": 1,
-          "threshold": 2,
-          "weight": 2,
-        },
-        "partial": {
-          "approvals": [
-            "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
-            "0xf75618474e5f7fd9ef17dd85167a5b1e1f19b84b",
-          ],
-          "selectedApprovals": [
-            "0x07e1ed8ea0e9601e5546b0a03aed683df3601407",
-          ],
-          "signatureCount": 1,
-          "threshold": 2,
-          "weight": 1,
-        },
-      }
-    `)
+    expect(selected.weight).toMatchInlineSnapshot(`0`)
   })
-
-  test('rejects conflicting nested config witnesses', async () => {
-    const childConfig = MultisigConfig.from({
-      owners: [{ owner: owners[1]!.address, weight: 1 }],
-      threshold: 1,
-    })
-    const child = MultisigConfig.getAddress(childConfig)
-    const config = MultisigConfig.from({
-      owners: [{ owner: child, weight: 1 }],
-      threshold: 1,
-    })
-    const account = MultisigConfig.getAddress(config)
-    const hash = MultisigOperation.getHash({
-      account,
-      config: { ...config, version: 1n },
-      transaction,
-      type: 'transaction',
-    })
-    const config_2 = MultisigConfig.from({
-      ...childConfig,
-      version: 2n,
-    })
-    const config_3 = MultisigConfig.from({
-      ...childConfig,
-      version: 3n,
-    })
-    const childHash_2 = MultisigConfig.getSignPayload({
-      account: child,
-      config: config_2,
-      payload: hash,
-    })
-    const childHash_3 = MultisigConfig.getSignPayload({
-      account: child,
-      config: config_3,
-      payload: hash,
-    })
-
-    await expect(
-      MultisigOperation.selectApprovals({
+  test('rejects keychain and multisig owner approvals', async () => {
+    for (const signature of [
+      SignatureEnvelope.from({
+        inner: ownerSignature_1,
+        type: 'keychain',
+        userAddress: account,
+        version: 'v2',
+      }),
+      SignatureEnvelope.from({
         account,
-        approvals: [
-          SignatureEnvelope.serialize({
-            account: child,
-            config: config_2,
-            signatures: [
-              SignatureEnvelope.deserialize(
-                signApproval(owners[1]!, childHash_2),
-              ),
-            ],
-            type: 'multisig',
-          }),
-          SignatureEnvelope.serialize({
-            account: child,
-            config: config_3,
-            signatures: [
-              SignatureEnvelope.deserialize(
-                signApproval(owners[1]!, childHash_3),
-              ),
-            ],
-            type: 'multisig',
-          }),
-        ],
         config,
-        hash,
+        signatures: [ownerSignature_1],
       }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x5b7c564e95bde16197e73f9eaa9c7413f11f49ad has conflicting config witnesses.]`,
-    )
-  })
-
-  test('rejects an initial root config for another account', async () => {
-    await expect(
-      MultisigOperation.selectApprovals({
-        account,
-        approvals: [],
-        config: MultisigConfig.from({
-          ...config,
-          salt: `0x${'ff'.repeat(32)}`,
+    ])
+      await expect(
+        MultisigOperation.selectApprovals({
+          account,
+          approvals: [SignatureEnvelope.serialize(signature)],
+          config,
+          hash: transactionHash_,
         }),
-        hash: transactionHash_,
-      }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: initial config does not derive the root multisig account.]`,
-    )
+      ).rejects.toThrowErrorMatchingInlineSnapshot(
+        `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: only primitive signatures can approve a multisig operation.]`,
+      )
   })
 
   test('rejects invalid and non-owner approvals', async () => {
@@ -448,234 +293,6 @@ describe('selectApprovals', () => {
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: signature is from non-owner 0xd3a9f047ad43d7e2e4e7e491f1fe2e657a2651b6.]`,
-    )
-  })
-
-  test('reads current nested config witnesses from approvals', async () => {
-    const childConfig = MultisigConfig.from({
-      owners: [{ owner: owners[1]!.address, weight: 1 }],
-      threshold: 1,
-    })
-    const child = MultisigConfig.getAddress(childConfig)
-    const config = MultisigConfig.from({
-      owners: [{ owner: child, weight: 1 }],
-      threshold: 1,
-    })
-    const account = MultisigConfig.getAddress(config)
-    const hash = MultisigOperation.getHash({
-      account,
-      config: { ...config, version: 1n },
-      transaction,
-      type: 'transaction',
-    })
-    const childHash = MultisigConfig.getSignPayload({
-      account: child,
-      config: { ...childConfig, version: 1n },
-      payload: hash,
-    })
-
-    const selection = await MultisigOperation.selectApprovals({
-      account,
-      approvals: [
-        SignatureEnvelope.serialize({
-          account: child,
-          config: MultisigConfig.from({ ...childConfig, version: 1n }),
-          signatures: [
-            SignatureEnvelope.deserialize(signApproval(owners[1]!, childHash)),
-          ],
-          type: 'multisig',
-        }),
-      ],
-      config,
-      hash,
-    })
-    expect(selection).toMatchInlineSnapshot(
-      {
-        approvals: [expect.any(String)],
-        selectedApprovals: [expect.any(String)],
-      },
-      `
-      {
-        "approvals": [
-          Any<String>,
-        ],
-        "selectedApprovals": [
-          Any<String>,
-        ],
-        "signatureCount": 1,
-        "threshold": 1,
-        "weight": 1,
-      }
-    `,
-    )
-  })
-
-  test('rejects keychain and accepts initial nested approvals', async () => {
-    const childConfig = MultisigConfig.from({
-      owners: [{ owner: owners[1]!.address, weight: 1 }],
-      threshold: 1,
-    })
-    const child = MultisigConfig.getAddress(childConfig)
-    const config = MultisigConfig.from({
-      owners: [
-        { owner: owners[0]!.address, weight: 1 },
-        { owner: child, weight: 1 },
-      ],
-      threshold: 1,
-    })
-    const account = MultisigConfig.getAddress(config)
-    const hash = MultisigOperation.getHash({
-      account,
-      config: { ...config, version: 1n },
-      transaction,
-      type: 'transaction',
-    })
-    const childHash = MultisigConfig.getSignPayload({
-      account: child,
-      config: childConfig,
-      payload: hash,
-    })
-
-    await expect(
-      MultisigOperation.selectApprovals({
-        account,
-        approvals: [
-          SignatureEnvelope.serialize({
-            inner: SignatureEnvelope.deserialize(
-              signApproval(owners[0]!, hash),
-            ),
-            type: 'keychain',
-            userAddress: owners[0]!.address,
-          }),
-        ],
-        config,
-        hash,
-      }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: keychain signatures cannot approve a multisig operation.]`,
-    )
-    const selection = await MultisigOperation.selectApprovals({
-      account,
-      approvals: [
-        SignatureEnvelope.serialize({
-          account: child,
-          config: childConfig,
-          signatures: [
-            SignatureEnvelope.deserialize(signApproval(owners[1]!, childHash)),
-          ],
-          type: 'multisig',
-        }),
-      ],
-      config,
-      hash,
-    })
-    expect({
-      signatureCount: selection.signatureCount,
-      threshold: selection.threshold,
-      weight: selection.weight,
-    }).toMatchInlineSnapshot(`
-      {
-        "signatureCount": 1,
-        "threshold": 1,
-        "weight": 1,
-      }
-    `)
-  })
-
-  test('rejects nested account cycles while serializing', () => {
-    const config = MultisigConfig.from({
-      owners: [{ owner: account, weight: 1 }],
-      threshold: 1,
-    })
-    const hash = MultisigOperation.getHash({
-      account,
-      config: { ...config, version: 2n },
-      transaction,
-      type: 'transaction',
-    })
-    const nestedHash = MultisigConfig.getSignPayload({
-      account,
-      config: { version: 2n },
-      payload: hash,
-    })
-
-    expect(() =>
-      SignatureEnvelope.serialize({
-        account,
-        config: MultisigConfig.from({ ...config, version: 2n }),
-        signatures: [
-          SignatureEnvelope.deserialize(signApproval(owners[0]!, nestedHash)),
-        ],
-        type: 'multisig',
-      }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig account cannot be an owner.]`,
-    )
-  })
-
-  test('rejects excess nesting depth', async () => {
-    const grandchildConfig = MultisigConfig.from({
-      owners: [{ owner: owners[2]!.address, weight: 1 }],
-      threshold: 1,
-    })
-    const grandchild = MultisigConfig.getAddress(grandchildConfig)
-    const childConfig = MultisigConfig.from({
-      owners: [{ owner: grandchild, weight: 1 }],
-      threshold: 1,
-    })
-    const child = MultisigConfig.getAddress(childConfig)
-    const config = MultisigConfig.from({
-      owners: [{ owner: child, weight: 1 }],
-      threshold: 1,
-    })
-    const account = MultisigConfig.getAddress(config)
-    const hash = MultisigOperation.getHash({
-      account,
-      config: { ...config, version: 1n },
-      transaction,
-      type: 'transaction',
-    })
-    const childHash = MultisigConfig.getSignPayload({
-      account: child,
-      config: { ...childConfig, version: 1n },
-      payload: hash,
-    })
-    const grandchildHash = MultisigConfig.getSignPayload({
-      account: grandchild,
-      config: { ...grandchildConfig, version: 1n },
-      payload: childHash,
-    })
-
-    await expect(
-      MultisigOperation.selectApprovals({
-        account,
-        approvals: [
-          SignatureEnvelope.serialize({
-            account: child,
-            config: MultisigConfig.from({ ...childConfig, version: 1n }),
-            signatures: [
-              {
-                account: grandchild,
-                config: MultisigConfig.from({
-                  ...grandchildConfig,
-                  version: 1n,
-                }),
-                signatures: [
-                  SignatureEnvelope.deserialize(
-                    signApproval(owners[2]!, grandchildHash),
-                  ),
-                ],
-                type: 'multisig',
-              },
-            ],
-            type: 'multisig',
-          }),
-        ],
-        config,
-        hash,
-      }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: nested multisig owner 0x4e51c0503aab130b1a358e8eab4c6302618fb3a6 is invalid.]`,
     )
   })
 })
@@ -728,14 +345,14 @@ describe('serializeKeyAuthorization', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
-          "hash": "0x52562f8b8042498f83189316f0aacda4d5b80468f0001300829c4d353db5f101",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
+          "hash": "0xcd4283709cc1853dc8ed9cc4dd8c3b6a22e1b01f19ad3f6348f4bebe79590408",
           "signatureCount": 2,
           "version": 1n,
         },
         {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
-          "hash": "0x948de4ae52c7cd35151c2ddcd31c97ea89662e83bd18a3cbc323894a1fd8ca06",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
+          "hash": "0x1f66e6adc4ddf8ac9d4575f518be11509ca616ac13d4e0a286b4eef7b96959f2",
           "signatureCount": 2,
           "version": 0n,
         },
@@ -829,15 +446,15 @@ describe('serializeTransaction', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
-          "hash": "0x2d4748a76d91da5fd3d762cb0f925de32347fdbd89d23356d481b526e3d3ab10",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
+          "hash": "0x6a034f208339f7eaa4a42b3fa03aad5df77ebe83659dac2e4d2b11226d221928",
           "signatureCount": 2,
           "type": "0x76",
           "version": 1n,
         },
         {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
-          "hash": "0x2bf7e539779104921d32758dc184ece6aa8872bfb3b86e2f4d8e0ba1d85ee821",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
+          "hash": "0x04d36e54d7a816b080dfa03370da6fbeb3523ce3eff5211d7f22a3c7e87476ee",
           "signatureCount": 2,
           "type": "0x76",
           "version": 0n,
@@ -918,7 +535,7 @@ describe('serializeTransaction', () => {
       [
         {
           "feePayerSignature": null,
-          "from": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "from": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "signatureCount": 2,
           "type": "0x78",
         },
@@ -928,7 +545,7 @@ describe('serializeTransaction', () => {
             "s": "0x0000000000000000000000000000000000000000000000000000000000000006",
             "yParity": 0,
           },
-          "from": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "from": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "signatureCount": 2,
           "type": "0x78",
         },
@@ -1000,7 +617,7 @@ describe('from', () => {
     expect({ pending, submitting, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1020,7 +637,7 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
+          "hash": "0x2d7e3c7c38a9acf85f0a9d70a39b0e9e5a05d92c7a73b633a47a45be4a112b3b",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1030,7 +647,7 @@ describe('from', () => {
           "weight": 1,
         },
         "submitting": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1052,7 +669,7 @@ describe('from', () => {
           },
           "createdAt": 1,
           "expiresAt": 10,
-          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
+          "hash": "0x2d7e3c7c38a9acf85f0a9d70a39b0e9e5a05d92c7a73b633a47a45be4a112b3b",
           "signatureCount": 2,
           "status": "submitting",
           "submissionId": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1063,7 +680,7 @@ describe('from', () => {
           "weight": 2,
         },
         "success": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1084,7 +701,7 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
+          "hash": "0x2d7e3c7c38a9acf85f0a9d70a39b0e9e5a05d92c7a73b633a47a45be4a112b3b",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -1130,7 +747,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+        "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
@@ -1216,7 +833,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+        "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
@@ -1260,10 +877,7 @@ describe('from', () => {
           signature: {
             account,
             config: currentConfig,
-            signatures: [
-              SignatureEnvelope.deserialize(approval_1),
-              SignatureEnvelope.deserialize(approval_2),
-            ],
+            signatures: [ownerSignature_1, owners[1]!.signature],
             type: 'multisig',
           },
         }),
@@ -1276,7 +890,7 @@ describe('from', () => {
     expect({ pending, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1296,8 +910,8 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d200808080809417e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "hash": "0xa83016f0e94c4a6125483ffeba3abb0a8df1bc0f5a503f63639e806b793520bb",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094ef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1306,7 +920,7 @@ describe('from', () => {
           "weight": 1,
         },
         "success": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1327,8 +941,8 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
-          "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d200808080809417e90f73f4c7c75dc01b00b262e7b95ed3086bd0b9017805f901749417e90f73f4c7c75dc01b00b262e7b95ed3086bd0f852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
+          "hash": "0xa83016f0e94c4a6125483ffeba3abb0a8df1bc0f5a503f63639e806b793520bb",
+          "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d2008080808094ef6b17836e1b3647105c3084124485e3e1b0ab7fb9017805f9017494ef6b17836e1b3647105c3084124485e3e1b0ab7ff852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -1347,10 +961,7 @@ describe('from', () => {
         signature: {
           account,
           config,
-          signatures: [
-            SignatureEnvelope.deserialize(approval_1),
-            SignatureEnvelope.deserialize(approval_2),
-          ],
+          signatures: [ownerSignature_1, owners[1]!.signature],
           type: 'multisig',
         },
       }),
@@ -1377,7 +988,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+        "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1423,7 +1034,7 @@ describe('RPC conversion', () => {
     expect({ keyAuthorizationRpc, transactionRpc }).toMatchInlineSnapshot(`
       {
         "keyAuthorizationRpc": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1443,8 +1054,8 @@ describe('RPC conversion', () => {
             "version": "0x1",
           },
           "createdAt": 1,
-          "hash": "0xd903cd2c94f6a1526a6f79da6f87087c10b26e06d4d4bc1624ce4498961a3b04",
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d200808080809417e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "hash": "0xa83016f0e94c4a6125483ffeba3abb0a8df1bc0f5a503f63639e806b793520bb",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094ef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1453,7 +1064,7 @@ describe('RPC conversion', () => {
           "weight": 1,
         },
         "transactionRpc": {
-          "account": "0x17e90f73f4c7c75dc01b00b262e7b95ed3086bd0",
+          "account": "0xef6b17836e1b3647105c3084124485e3e1b0ab7f",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1473,7 +1084,7 @@ describe('RPC conversion', () => {
             "version": "0x1",
           },
           "createdAt": 1,
-          "hash": "0xc93c1dc27cc9fb7616d61f97962e4fab8b39af0d1dace8f8b8730cb6922bd096",
+          "hash": "0x2d7e3c7c38a9acf85f0a9d70a39b0e9e5a05d92c7a73b633a47a45be4a112b3b",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1505,7 +1116,7 @@ describe('validation', () => {
         ...transactionPending,
         transaction: TxEnvelopeTempo.serialize(
           TxEnvelopeTempo.deserialize(transaction),
-          { signature: SignatureEnvelope.deserialize(approval_1) },
+          { signature: ownerSignature_1 },
         ),
       },
     },
@@ -1691,32 +1302,19 @@ describe('validation', () => {
       MultisigOperation.from(operation as MultisigOperation.Operation),
     ).toThrowError(MultisigOperation.InvalidOperationError)
   })
-
-  test('rejects an initial config for another account', () => {
-    const config = MultisigConfig.from({
-      ...transactionPending.config,
-      salt: `0x${'ff'.repeat(32)}`,
-      version: 0n,
-    })
-    expect(() =>
-      MultisigOperation.from({
-        ...transactionPending,
+  test('accepts initial accounts validated by the chain', () => {
+    const value = MultisigOperation.from({
+      ...transactionPending,
+      config,
+      hash: MultisigOperation.getHash({
+        account,
         config,
-        hash: MultisigConfig.getSignPayload({
-          account,
-          config,
-          payload: TxEnvelopeTempo.getSignPayload(
-            TxEnvelopeTempo.deserialize(transaction),
-          ),
-        }),
+        transaction,
+        type: 'transaction',
       }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [MultisigOperation.InvalidOperationError: Invalid multisig operation.
-
-      Details: Invalid native multisig owner approval: initial multisig config does not derive account.]
-    `,
-    )
+    })
+    expect(value.account).toBe(account)
+    expect(value.config).toEqual(config)
   })
 
   test('rejects noncanonical RPC quantities', () => {
@@ -1741,10 +1339,7 @@ describe('validation', () => {
           signature: {
             account,
             config: currentConfig,
-            signatures: [
-              SignatureEnvelope.deserialize(approval_1),
-              SignatureEnvelope.deserialize(approval_3),
-            ],
+            signatures: [ownerSignature_1, owners[2]!.signature],
             type: 'multisig',
           },
         }),
@@ -1766,10 +1361,7 @@ describe('validation', () => {
         account,
         config: currentConfig,
         payload: KeyAuthorization.getSignPayload(authorization),
-        signatures: [
-          SignatureEnvelope.deserialize(approval_1),
-          SignatureEnvelope.deserialize(approval_2),
-        ],
+        signatures: [ownerSignature_1, owners[1]!.signature],
       }),
     ].reverse()
     const operation = {
@@ -1805,10 +1397,7 @@ describe('validation', () => {
           signature: {
             account,
             config: currentConfig,
-            signatures: [
-              SignatureEnvelope.deserialize(approval_1),
-              SignatureEnvelope.deserialize(approval_1),
-            ],
+            signatures: [ownerSignature_1, ownerSignature_1],
             type: 'multisig',
           },
         }),
@@ -1820,63 +1409,6 @@ describe('validation', () => {
 
     expect(() => MultisigOperation.from(operation)).toThrowError(
       'Invalid multisig operation: key authorization contains duplicate owner approvals.',
-    )
-  })
-
-  test('rejects reordered nested key authorization approvals', () => {
-    const authorization = KeyAuthorization.deserialize(keyAuthorization)
-    const nestedConfig = MultisigConfig.from({
-      owners: [{ owner: owner_2, weight: 1 }],
-      threshold: 1,
-      version: 1n,
-    })
-    const childSignatures = SignatureEnvelope.sortMultisigApprovals({
-      account: owner_1,
-      config: nestedConfig,
-      payload: keyAuthorizationHash,
-      signatures: [
-        SignatureEnvelope.deserialize(approval_1),
-        SignatureEnvelope.deserialize(approval_2),
-      ],
-    })
-    const retainedNested = SignatureEnvelope.from({
-      account: owner_1,
-      config: nestedConfig,
-      signatures: childSignatures,
-      type: 'multisig',
-    })
-    const selectedNested = SignatureEnvelope.from({
-      account: owner_1,
-      config: nestedConfig,
-      signatures: [...childSignatures].reverse(),
-      type: 'multisig',
-    })
-    const selected = SignatureEnvelope.sortMultisigApprovals({
-      account,
-      config: currentConfig,
-      payload: KeyAuthorization.getSignPayload(authorization),
-      signatures: [selectedNested, SignatureEnvelope.deserialize(approval_2)],
-    })
-    const operation = {
-      ...keyAuthorizationPending,
-      approvals: [SignatureEnvelope.serialize(retainedNested), approval_2],
-      keyAuthorization: KeyAuthorization.serialize(
-        KeyAuthorization.from(authorization, {
-          signature: {
-            account,
-            config: currentConfig,
-            signatures: selected,
-            type: 'multisig',
-          },
-        }),
-      ),
-      signatureCount: 2,
-      status: 'success',
-      weight: 2,
-    } as const
-
-    expect(() => MultisigOperation.from(operation)).toThrowError(
-      'Invalid multisig operation: key authorization signature is not a retained approval.',
     )
   })
 
@@ -1895,7 +1427,7 @@ describe('validation', () => {
       salt: `0x${'AB'.repeat(32)}`,
       threshold: 2,
     })
-    const account = MultisigConfig.getAddress(config)
+    const account = MultisigConfig.getAddress(config, { factory })
     const authorization = KeyAuthorization.from({
       account,
       address: '0x3333333333333333333333333333333333333333',
@@ -1908,10 +1440,7 @@ describe('validation', () => {
       account,
       config,
       payload: KeyAuthorization.getSignPayload(authorization),
-      signatures: [
-        SignatureEnvelope.deserialize(approval_1),
-        SignatureEnvelope.deserialize(approval_2),
-      ],
+      signatures: [ownerSignature_1, owners[1]!.signature],
     })
     const approvals = signatures.map((signature) =>
       SignatureEnvelope.serialize(signature),

@@ -1,3 +1,4 @@
+import { factory } from '../../test/tempo/multisig.js'
 import { Hash, Hex, Rlp } from 'ox'
 import { MultisigConfig } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
@@ -9,7 +10,7 @@ const config = MultisigConfig.from({
   owners: [{ owner: owner_1, weight: 1 }],
   threshold: 1,
 })
-const account = MultisigConfig.getAddress(config)
+const account = MultisigConfig.getAddress(config, { factory })
 
 describe('from', () => {
   test('behavior: normalizes an initial configuration', () => {
@@ -100,49 +101,57 @@ describe('fromRpc/toRpc', () => {
 describe('getAddress', () => {
   test('example: matches the frozen CREATE2 vector', () => {
     expect(account).toMatchInlineSnapshot(
-      `"0xf4b916c5aea0fb199bd942389be00db0690c961f"`,
+      `"0x90ba71cb7534da990a1182cf28c9bf415055e03d"`,
     )
     expect(account).not.toBe('0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da')
   })
 
   test('behavior: includes salt, threshold, and owners', () => {
     expect(
-      MultisigConfig.getAddress({
-        owners: [
-          { owner: owner_1, weight: 1 },
-          { owner: owner_2, weight: 2 },
-        ],
-        salt: `0x${'42'.repeat(32)}`,
-        threshold: 2,
-      }),
-    ).toMatchInlineSnapshot(`"0x94040edd3d7b542e0a96e01141bc250d709b4469"`)
+      MultisigConfig.getAddress(
+        {
+          owners: [
+            { owner: owner_1, weight: 1 },
+            { owner: owner_2, weight: 2 },
+          ],
+          salt: `0x${'42'.repeat(32)}`,
+          threshold: 2,
+        },
+        { factory },
+      ),
+    ).toMatchInlineSnapshot(`"0x7898a7d1dd96946d2a968de1540ca884a244320c"`)
   })
 
   test('behavior: is stable and binds the salt', () => {
     expect({
-      repeated: MultisigConfig.getAddress(config),
-      salted: MultisigConfig.getAddress({
-        ...config,
-        salt: `0x${'42'.repeat(32)}`,
-      }),
+      repeated: MultisigConfig.getAddress(config, { factory }),
+      salted: MultisigConfig.getAddress(
+        {
+          ...config,
+          salt: `0x${'42'.repeat(32)}`,
+        },
+        { factory },
+      ),
     }).toMatchInlineSnapshot(`
       {
-        "repeated": "0xf4b916c5aea0fb199bd942389be00db0690c961f",
-        "salted": "0x95e771f514fd6ac5b8bbd62a9b37db86eeed7e38",
+        "repeated": "0x90ba71cb7534da990a1182cf28c9bf415055e03d",
+        "salted": "0xa1a8472f4a01772db729d8ebc73fe46120750b83",
       }
     `)
   })
 
   test('error: rejects a current configuration', () => {
     expect(() =>
-      MultisigConfig.getAddress({ ...config, version: 1n }),
+      MultisigConfig.getAddress({ ...config, version: 1n }, { factory }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[MultisigConfig.InvalidConfigError: Invalid native multisig config: account address requires version zero.]`,
     )
   })
 
   test('behavior: accepts numeric zero for an initial configuration', () => {
-    expect(MultisigConfig.getAddress({ ...config, version: 0 })).toBe(account)
+    expect(
+      MultisigConfig.getAddress({ ...config, version: 0 }, { factory }),
+    ).toBe(account)
   })
 })
 
@@ -167,7 +176,7 @@ describe('getSignPayload', () => {
     expect(
       MultisigConfig.getSignPayload({ account, config, payload }),
     ).toMatchInlineSnapshot(
-      `"0xdba6b49849aaef399fbc1de73fe26d520f21846c80c3e5d2486ad56e8df3cee3"`,
+      `"0x728efe90611b01c91c2be0da56e7eb8e0d2c274c84f97182e274187dde0b8a20"`,
     )
   })
 
@@ -222,14 +231,14 @@ describe('assert/validate', () => {
     })
     const rlp = Rlp.fromHex(MultisigConfig.toTuple(boundary))
     expect({
-      account: MultisigConfig.getAddress(boundary),
+      account: MultisigConfig.getAddress(boundary, { factory }),
       commitment: MultisigConfig.getCommitment(boundary),
       rlpHash: Hash.keccak256(rlp),
       rlpLength: Hex.size(rlp),
       valid: MultisigConfig.validate(boundary),
     }).toMatchInlineSnapshot(`
       {
-        "account": "0xa832c9a61d254a157c05edcd856b2cbe4dea8c77",
+        "account": "0x6acb25715a2b0cf05c098f753a87d9b38471e99f",
         "commitment": "0x0dc47a7ab45ffa21a01bfd115427e26617b5a57d7ccbea57db2fd4537ba96f56",
         "rlpHash": "0xbaf0d030add91caaa10815d2e99c942f1e39b0d199216973781adb4fc1af6955",
         "rlpLength": 1145,
@@ -245,7 +254,7 @@ describe('assert/validate', () => {
           { owner: owner_1, weight: 128 },
           { owner: owner_2, weight: 127 },
         ],
-        threshold: 255,
+        threshold: 8,
       }),
     ).toBe(true)
   })
@@ -311,7 +320,7 @@ describe('assert/validate', () => {
           { owner: owner_1, weight: 128 },
           { owner: owner_2, weight: 128 },
         ],
-        threshold: 255,
+        threshold: 8,
       },
       name: 'weight overflow',
     },
@@ -358,7 +367,6 @@ describe('assert/validate', () => {
 test('exports', () => {
   expect(Object.keys(MultisigConfig)).toMatchInlineSnapshot(`
     [
-      "maxNestingDepth",
       "maxOwnerSignatureBytes",
       "maxOwners",
       "maxSignatures",

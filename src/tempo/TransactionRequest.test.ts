@@ -6,27 +6,11 @@ import {
 import { describe, expect, test } from 'vp/test'
 
 const multisigSimulationRpc = {
-  account: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   approvals: [
     {
-      keyType: 'secp256k1',
+      keyType: 'webAuthn',
+      keyData: '0x0005',
       owner: '0x1111111111111111111111111111111111111111',
-      type: 'primitive',
-    },
-    {
-      spec: {
-        account: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        approvals: [
-          {
-            keyData: '0x0578',
-            keyType: 'webAuthn',
-            owner: '0x2222222222222222222222222222222222222222',
-          },
-        ],
-        config:
-          '0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201',
-      },
-      type: 'multisig',
     },
   ],
   config:
@@ -34,26 +18,11 @@ const multisigSimulationRpc = {
 } as const satisfies MultisigSimulation.Rpc
 
 const multisigSimulation = {
-  account: multisigSimulationRpc.account,
   approvals: [
-    multisigSimulationRpc.approvals[0],
     {
-      spec: {
-        account: multisigSimulationRpc.approvals[1].spec.account,
-        approvals: multisigSimulationRpc.approvals[1].spec.approvals,
-        config: MultisigConfig.from({
-          owners: [
-            {
-              owner: '0x2222222222222222222222222222222222222222',
-              weight: 1,
-            },
-          ],
-          salt: `0x${'22'.repeat(32)}`,
-          threshold: 1,
-          version: 1n,
-        }),
-      },
-      type: 'multisig',
+      keyType: 'webAuthn',
+      keyData: '0x0005',
+      owner: '0x1111111111111111111111111111111111111111',
     },
   ],
   config: MultisigConfig.from({
@@ -179,36 +148,11 @@ describe('fromRpc', () => {
 
     expect(request.multisigSimulation).toMatchInlineSnapshot(`
       {
-        "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "approvals": [
           {
-            "keyType": "secp256k1",
+            "keyData": "0x0005",
+            "keyType": "webAuthn",
             "owner": "0x1111111111111111111111111111111111111111",
-            "type": "primitive",
-          },
-          {
-            "spec": {
-              "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "approvals": [
-                {
-                  "keyData": "0x0578",
-                  "keyType": "webAuthn",
-                  "owner": "0x2222222222222222222222222222222222222222",
-                },
-              ],
-              "config": {
-                "owners": [
-                  {
-                    "owner": "0x2222222222222222222222222222222222222222",
-                    "weight": 1,
-                  },
-                ],
-                "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
-                "threshold": 1,
-                "version": 1n,
-              },
-            },
-            "type": "multisig",
           },
         ],
         "config": {
@@ -331,26 +275,11 @@ describe('toRpc', () => {
         ],
         "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "multisigSimulation": {
-          "account": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "approvals": [
             {
-              "keyType": "secp256k1",
+              "keyData": "0x0005",
+              "keyType": "webAuthn",
               "owner": "0x1111111111111111111111111111111111111111",
-              "type": "primitive",
-            },
-            {
-              "spec": {
-                "account": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-                "approvals": [
-                  {
-                    "keyData": "0x0578",
-                    "keyType": "webAuthn",
-                    "owner": "0x2222222222222222222222222222222222222222",
-                  },
-                ],
-                "config": "0xf83ba022222222222222222222222222222222222222222222222222222222222222220101d7d694222222222222222222222222222222222222222201",
-              },
-              "type": "multisig",
             },
           ],
           "config": "0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01",
@@ -457,6 +386,7 @@ describe('roundtrip', () => {
       nonceKey: 255n,
       gas: 100000n,
       maxFeePerGas: 1000000000n,
+      keyAuthorizationSimulation: multisigSimulation,
       multisigSimulation,
     }
 
@@ -478,6 +408,9 @@ describe('roundtrip', () => {
     expect(converted.nonceKey).toBe(original.nonceKey)
     expect(converted.gas).toBe(original.gas)
     expect(converted.maxFeePerGas).toBe(original.maxFeePerGas)
+    expect(converted.keyAuthorizationSimulation).toEqual(
+      original.keyAuthorizationSimulation,
+    )
     expect(converted.multisigSimulation).toEqual(original.multisigSimulation)
     expect(converted.type).toBe('tempo')
   })
@@ -496,6 +429,7 @@ describe('roundtrip', () => {
       validAfter: '0x32',
       nonceKey: '0xff',
       gas: '0x186a0',
+      keyAuthorizationSimulation: multisigSimulationRpc,
       multisigSimulation: multisigSimulationRpc,
       type: '0x76',
     }
@@ -509,6 +443,9 @@ describe('roundtrip', () => {
     expect(rpc.validAfter).toBe(original.validAfter)
     expect(rpc.nonceKey).toBe(original.nonceKey)
     expect(rpc.gas).toBe(original.gas)
+    expect(rpc.keyAuthorizationSimulation).toEqual(
+      original.keyAuthorizationSimulation,
+    )
     expect(rpc.multisigSimulation).toEqual(original.multisigSimulation)
     expect(rpc.type).toBe('0x76')
   })
