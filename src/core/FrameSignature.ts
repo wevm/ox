@@ -1,61 +1,88 @@
+import { p256 } from '@noble/curves/nist.js'
+import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import type { Compute, UnionPartialBy } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import * as Signature from './Signature.js'
 
 /** Signature schemes supported by EIP-8141. */
 export const schemes = { arbitrary: 0, secp256k1: 1, p256: 2 } as const
 
-/** A frame transaction signature scheme. */
-export type Scheme = (typeof schemes)[keyof typeof schemes]
+/** A supported numeric or named frame signature scheme. */
+export type Scheme =
+  | keyof typeof schemes
+  | (typeof schemes)[keyof typeof schemes]
 
-/** A signature entry, with empty `msg` selecting the transaction signing hash. */
-export type FrameSignature = {
-  /** Explicit nonzero 32-byte digest, or empty bytes for the canonical hash. */
-  msg: Hex.Hex
-  /** Scheme-specific signature bytes. Empty bytes may represent a signing placeholder. */
+/** Contract-defined signature bytes. */
+export type Arbitrary = {
+  /** Contract-defined verification scheme. */
+  scheme: 0 | 'arbitrary'
+  /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
+  payload: Hex.Hex
+  /** Opaque witness bytes. */
   signature: Hex.Hex
+  /** Arbitrary signatures have no signer metadata. */
+  signer?: undefined
+}
+
+/** A structured secp256k1 signature entry. */
+export type Secp256k1 = {
+  /** secp256k1 verification scheme. */
+  scheme: 1 | 'secp256k1'
+  /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
+  payload: Hex.Hex
+  /** Signer address. Omit to use the transaction sender. */
+  signer?: Address.Address | undefined
+  /** Low-s recovered signature. Omit for an unsigned entry. */
+  signature?: Signature.Signature | undefined
+}
+
+/** A structured P-256 signature entry. */
+export type P256 = {
+  /** P-256 verification scheme. */
+  scheme: 2 | 'p256'
+  /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
+  payload: Hex.Hex
+  /** Signer address. Omit to use the transaction sender. */
+  signer?: Address.Address | undefined
 } & (
   | {
-      /** Contract-defined verification. */
-      scheme: 0
-      /** Arbitrary signatures have no signer metadata. */
-      signer?: undefined
+      /** P-256 signature. High-s is normalized when encoding. */
+      signature: Signature.Signature<false>
+      /** Uncompressed P-256 public key. */
+      publicKey: PublicKey.PublicKey
     }
   | {
-      /** Protocol-defined ECDSA verification scheme. */
-      scheme: 1 | 2
-      /** Signer address. Omit to use the transaction sender. */
-      signer?: Address.Address | undefined
+      /** Omit for an unsigned entry. */
+      signature?: undefined
+      /** Public key, if already known. Empty wire signatures do not retain it. */
+      publicKey?: PublicKey.PublicKey | undefined
     }
 )
 
-/** RLP-ready signature entry. */
+/** An EIP-8141 signature entry. Empty payload selects the transaction signing hash. */
+export type FrameSignature = Arbitrary | Secp256k1 | P256
+
+/** RLP-ready signature entry. The payload occupies the specification's `msg` field. */
 export type Tuple = readonly [
   scheme: Hex.Hex,
   signer: Hex.Hex,
-  msg: Hex.Hex,
+  payload: Hex.Hex,
   signature: Hex.Hex,
 ]
 
-const secp256k1Order =
-  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
-const p256Order =
-  0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
-
 /**
- * Asserts signature metadata and encoding constraints, without verifying the
- * signature against a message or signer. Empty signature placeholders are allowed
- * unless `signed` is true.
+ * Asserts structural constraints without cryptographic verification.
+ * P-256 high-s signatures are accepted and normalized by `toTuple`.
  *
  * @example
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
  * FrameSignature.assert({
- *   scheme: 1,
- *   msg: '0x',
- *   signature: '0x'
+ *   scheme: 'secp256k1',
+ *   payload: '0x'
  * })
  * ```
  * @param entry - Signature entry to check.
@@ -65,42 +92,57 @@ export function assert(
   entry: FrameSignature,
   options: assert.Options = {},
 ): void {
-  if (!Number.isInteger(entry.scheme) || entry.scheme < 0 || entry.scheme > 2)
+  const scheme =
+    typeof entry.scheme === 'string' ? schemes[entry.scheme] : entry.scheme
+  if (!Number.isInteger(scheme) || scheme < 0 || scheme > 2)
     throw new InvalidError('Unsupported signature scheme.')
-  if (entry.scheme === schemes.arbitrary && entry.signer !== undefined)
+  if (scheme === 0 && entry.signer !== undefined)
     throw new InvalidError('Arbitrary signatures cannot specify a signer.')
   if (entry.signer !== undefined)
     Address.assert(entry.signer, { strict: false })
-  for (const field of ['msg', 'signature'] as const) {
-    Hex.assert(entry[field], { strict: true })
-    if (entry[field].length % 2 !== 0)
-      throw new InvalidError(`${field} must contain whole bytes.`)
-  }
+  Hex.assert(entry.payload, { strict: true })
   if (
-    entry.msg !== '0x' &&
-    (Hex.size(entry.msg) !== 32 || Hex.toBigInt(entry.msg) === 0n)
+    entry.payload !== '0x' &&
+    (entry.payload.length !== 66 || Hex.toBigInt(entry.payload) === 0n)
   )
-    throw new InvalidError('msg must be empty or a nonzero 32-byte digest.')
-  if (entry.scheme === schemes.arbitrary) return
-  if (entry.signature === '0x' && !options.signed) return
-  const size = entry.scheme === schemes.secp256k1 ? 65 : 128
-  if (Hex.size(entry.signature) !== size)
-    throw new InvalidError(`Signature must contain ${size} bytes.`)
-  const offset = entry.scheme === schemes.secp256k1 ? 1 : 0
-  if (offset && Hex.toNumber(Hex.slice(entry.signature, 0, 1)) > 1)
-    throw new InvalidError('Recovery parity must be 0 or 1.')
-  const r = Hex.toBigInt(Hex.slice(entry.signature, offset, offset + 32))
-  const s = Hex.toBigInt(Hex.slice(entry.signature, offset + 32, offset + 64))
-  const order = entry.scheme === schemes.secp256k1 ? secp256k1Order : p256Order
-  if (r === 0n || r >= order || s === 0n || s > order / 2n)
+    throw new InvalidError('payload must be empty or a nonzero 32-byte digest.')
+  switch (entry.scheme) {
+    case 0:
+    case 'arbitrary':
+      Hex.assert(entry.signature, { strict: true })
+      if (entry.signature.length % 2 !== 0)
+        throw new InvalidError('signature must contain whole bytes.')
+      return
+  }
+  if (entry.scheme === 2 || entry.scheme === 'p256') {
+    if (entry.publicKey !== undefined)
+      PublicKey.assert(entry.publicKey, { compressed: false })
+    if (entry.signature !== undefined && entry.publicKey === undefined)
+      throw new InvalidError('P-256 signatures require a public key.')
+  }
+  if (entry.signature === undefined) {
+    if (options.signed) throw new InvalidError('Signature is required.')
+    return
+  }
+  Signature.assert(entry.signature, { recovered: scheme === 1 })
+  const r = Hex.toBigInt(entry.signature.r)
+  const s = Hex.toBigInt(entry.signature.s)
+  const order = scheme === 1 ? secp256k1.Point.Fn.ORDER : p256.Point.Fn.ORDER
+  if (
+    r === 0n ||
+    r >= order ||
+    s === 0n ||
+    s >= order ||
+    (scheme === 1 && s > order / 2n)
+  )
     throw new InvalidError(
-      'Signature scalars must be in range and use low-s encoding.',
+      'Signature scalars must be in range; secp256k1 requires low-s.',
     )
 }
 
 export declare namespace assert {
   type Options = {
-    /** Require complete protocol signature bytes. Does not perform cryptographic verification. @default false */
+    /** Require a protocol signature. Does not perform cryptographic verification. @default false */
     signed?: boolean | undefined
   }
   type ErrorType =
@@ -108,141 +150,74 @@ export declare namespace assert {
     | Address.assert.ErrorType
     | Hex.assert.ErrorType
     | Hex.toBigInt.ErrorType
-    | Hex.toNumber.ErrorType
-    | Hex.slice.ErrorType
+    | PublicKey.assert.ErrorType
+    | Signature.assert.ErrorType
     | Errors.GlobalErrorType
 }
 
 /**
- * Constructs a signature entry, preserving its literal types.
+ * Constructs a structured entry, defaulting to arbitrary verification and the transaction signing hash.
  *
  * @example
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
+ * const entry = FrameSignature.from({ signature: '0xaabb' })
+ * ```
+ * @example
+ * ```ts twoslash
+ * import { FrameSignature, Secp256k1 } from 'ox'
+ * const signature = Secp256k1.sign({
+ *   payload:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   privateKey:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000001'
+ * })
  * const entry = FrameSignature.from({
- *   scheme: 0,
- *   msg: '0x',
- *   signature: '0xaabb'
+ *   scheme: 'secp256k1',
+ *   signature
  * })
  * ```
- * @param entry - Signature entry to construct.
- * @returns A structurally validated copy.
+ * @param entry - Signature entry with optional defaults.
+ * @returns A validated copy, retaining the supplied scheme representation and signature.
  */
-export function from<const entry extends FrameSignature>(
-  entry: entry | FrameSignature,
-): entry {
-  assert(entry)
-  return { ...entry } as entry
+export function from<const entry extends from.Input>(
+  entry: entry | from.Input,
+): from.ReturnType<entry> {
+  const result = {
+    ...entry,
+    scheme: entry.scheme ?? 'arbitrary',
+    payload: entry.payload ?? '0x',
+  } as FrameSignature
+  assert(result)
+  return result as from.ReturnType<entry>
 }
 
 export declare namespace from {
+  type Input =
+    | UnionPartialBy<Arbitrary, 'scheme' | 'payload'>
+    | UnionPartialBy<Secp256k1 | P256, 'payload'>
+  type ReturnType<entry extends Input = Input> = entry extends Input
+    ? Compute<
+        Omit<entry, 'scheme' | 'payload'> & {
+          scheme: entry extends { scheme: infer scheme extends Scheme }
+            ? scheme
+            : 'scheme' extends keyof entry
+              ? Exclude<entry['scheme'], undefined> | 'arbitrary'
+              : 'arbitrary'
+          payload: entry extends { payload: infer payload extends Hex.Hex }
+            ? payload
+            : 'payload' extends keyof entry
+              ? Exclude<entry['payload'], undefined> | '0x'
+              : '0x'
+        }
+      >
+    : never
   type ErrorType = assert.ErrorType
 }
 
 /**
- * Encodes a secp256k1 signature as `yParity || r || s`.
- *
- * @example
- * ```ts twoslash
- * import { Hex, Secp256k1, FrameSignature } from 'ox'
- * const signature = Secp256k1.sign({
- *   payload: Hex.fromNumber(1, { size: 32 }),
- *   privateKey: Hex.fromNumber(1, { size: 32 })
- * })
- * const entry = FrameSignature.fromSecp256k1(signature)
- * ```
- * @param signature - Low-s recovered signature.
- * @param options - Signature metadata.
- * @returns A secp256k1 entry.
- */
-export function fromSecp256k1(
-  signature: Signature.Signature,
-  options: fromSecp256k1.Options = {},
-) {
-  const entry = {
-    scheme: schemes.secp256k1,
-    ...options,
-    msg: options.msg ?? '0x',
-    signature: Hex.fromBytes(Signature.toRecoveredBytes(signature)),
-  }
-  assert(entry, { signed: true })
-  return entry
-}
-
-export declare namespace fromSecp256k1 {
-  type Options = {
-    /** Signer address. Omit to use the transaction sender. */
-    signer?: Address.Address | undefined
-    /** Explicit digest. Omit to sign the canonical transaction hash. */
-    msg?: Hex.Hex | undefined
-  }
-  type ErrorType =
-    | assert.ErrorType
-    | Signature.toRecoveredBytes.ErrorType
-    | Hex.fromBytes.ErrorType
-}
-
-/**
- * Encodes a P-256 signature as `r || s || qx || qy`, normalizing high-s signatures.
- * Does not verify the signature or public key against a message.
- *
- * @example
- * ```ts twoslash
- * import { Hex, P256, FrameSignature } from 'ox'
- * const privateKey = Hex.fromNumber(1, { size: 32 })
- * const signature = P256.sign({
- *   payload: Hex.fromNumber(1, { size: 32 }),
- *   privateKey
- * })
- * const entry = FrameSignature.fromP256(signature, {
- *   publicKey: P256.getPublicKey({ privateKey })
- * })
- * ```
- * @param signature - P-256 signature.
- * @param options - Public key and signature metadata.
- * @returns A P-256 entry.
- */
-export function fromP256(
-  signature: Signature.Signature<false>,
-  options: fromP256.Options,
-) {
-  PublicKey.assert(options.publicKey, { compressed: false })
-  Signature.assert(signature)
-  const r = Hex.toBigInt(signature.r)
-  const s = Hex.toBigInt(signature.s)
-  if (r === 0n || r >= p256Order || s === 0n || s >= p256Order)
-    throw new InvalidError('P-256 signature scalars must be in range.')
-  const { publicKey, ...metadata } = options
-  const entry = {
-    scheme: schemes.p256,
-    ...metadata,
-    msg: options.msg ?? '0x',
-    signature: Hex.concat(
-      Hex.fromNumber(r, { size: 32 }),
-      Hex.fromNumber(s > p256Order / 2n ? p256Order - s : s, { size: 32 }),
-      Hex.fromNumber(Hex.toBigInt(publicKey.x), { size: 32 }),
-      Hex.fromNumber(Hex.toBigInt(publicKey.y), { size: 32 }),
-    ),
-  }
-  assert(entry, { signed: true })
-  return entry
-}
-
-export declare namespace fromP256 {
-  type Options = fromSecp256k1.Options & {
-    /** Uncompressed P-256 public key. */
-    publicKey: PublicKey.PublicKey
-  }
-  type ErrorType =
-    | assert.ErrorType
-    | PublicKey.assert.ErrorType
-    | Signature.assert.ErrorType
-    | Hex.fromNumber.ErrorType
-    | Hex.concat.ErrorType
-}
-
-/**
- * Decodes an RLP-ready signature tuple, preserving implicit signer and message fields.
+ * Decodes a signature tuple into a structured entry with a named scheme.
+ * Rejects noncanonical signature encodings, including high-s P-256 signatures.
  *
  * @example
  * ```ts twoslash
@@ -255,69 +230,135 @@ export declare namespace fromP256 {
  * ])
  * ```
  * @param tuple - RLP-decoded signature tuple.
- * @returns A structurally validated entry, possibly containing a signing placeholder.
+ * @returns A structured entry. Empty protocol signatures become unsigned entries.
  */
 export function fromTuple(tuple: Tuple): FrameSignature {
   if (!Array.isArray(tuple) || tuple.length !== 4)
-    throw new InvalidError('Expected [scheme, signer, msg, signature].')
-  const [scheme, signer, msg, signature] = tuple
+    throw new InvalidError('Expected [scheme, signer, payload, signature].')
+  const [scheme, signer, payload, signature] = tuple
   Hex.assert(signer, { strict: true })
+  Hex.assert(signature, { strict: true })
+  if (signature.length % 2 !== 0)
+    throw new InvalidError('signature must contain whole bytes.')
   if (scheme !== '0x' && scheme !== '0x01' && scheme !== '0x02')
     throw new InvalidError(
       'Expected a canonical scheme encoding: empty bytes, 0x01, or 0x02.',
     )
-  const entry = {
-    scheme: (scheme === '0x' ? 0 : Hex.toNumber(scheme)) as Scheme,
-    ...(signer === '0x' ? {} : { signer }),
-    msg,
-    signature,
-  } as FrameSignature
-  assert(entry)
-  return entry
+  const metadata = { ...(signer === '0x' ? {} : { signer }), payload }
+  if (scheme === '0x') {
+    if (signer !== '0x')
+      throw new InvalidError('Arbitrary signatures cannot specify a signer.')
+    return from({ scheme: 'arbitrary', payload, signature })
+  }
+  if (signature === '0x')
+    return scheme === '0x01'
+      ? from({ ...metadata, scheme: 'secp256k1' })
+      : from({ ...metadata, scheme: 'p256' })
+  if (Hex.size(signature) !== (scheme === '0x01' ? 65 : 128))
+    throw new InvalidError('Invalid protocol signature length.')
+  if (scheme === '0x01') {
+    if (Hex.toNumber(Hex.slice(signature, 0, 1)) > 1)
+      throw new InvalidError('Recovery parity must be 0 or 1.')
+    return from({
+      ...metadata,
+      scheme: 'secp256k1',
+      signature: Signature.fromRecoveredBytes(Hex.toBytes(signature)),
+    })
+  }
+  const s = Hex.slice(signature, 32, 64)
+  if (Hex.toBigInt(s) > p256.Point.Fn.ORDER / 2n)
+    throw new InvalidError('P-256 wire signatures require low-s.')
+  return from({
+    ...metadata,
+    scheme: 'p256',
+    signature: { r: Hex.slice(signature, 0, 32), s },
+    publicKey: {
+      prefix: 4,
+      x: Hex.slice(signature, 64, 96),
+      y: Hex.slice(signature, 96, 128),
+    },
+  })
 }
 
 export declare namespace fromTuple {
-  type ErrorType = assert.ErrorType
+  type ErrorType =
+    | assert.ErrorType
+    | Hex.slice.ErrorType
+    | Hex.toNumber.ErrorType
+    | Hex.toBytes.ErrorType
+    | Signature.fromRecoveredBytes.ErrorType
 }
 
 /**
- * Converts a signature entry to its RLP-ready tuple, retaining raw signature bytes.
+ * Encodes a signature entry, packing protocol signatures and normalizing P-256 high-s.
+ * Does not mutate the entry. Empty protocol signatures encode as empty bytes.
  *
  * @example
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
- * const tuple = FrameSignature.toTuple({
- *   scheme: 0,
- *   msg: '0x',
- *   signature: '0xaabb'
- * })
+ * const tuple = FrameSignature.toTuple(
+ *   FrameSignature.from({ signature: '0xaabb' })
+ * )
  * ```
- * @param entry - Signature entry, possibly containing a signing placeholder.
+ * @param entry - Structured signature entry.
  * @returns A canonical signature tuple.
  */
 export function toTuple(entry: FrameSignature): Tuple {
   assert(entry)
+  const scheme =
+    typeof entry.scheme === 'string' ? schemes[entry.scheme] : entry.scheme
+  const signature = (() => {
+    switch (entry.scheme) {
+      case 0:
+      case 'arbitrary':
+        return entry.signature
+      case 1:
+      case 'secp256k1':
+        return entry.signature === undefined
+          ? '0x'
+          : Hex.fromBytes(Signature.toRecoveredBytes(entry.signature))
+      case 2:
+      case 'p256': {
+        if (entry.signature === undefined) return '0x'
+        const { publicKey, signature } = entry
+        const s = Hex.toBigInt(signature.s)
+        return Hex.concat(
+          Hex.fromNumber(Hex.toBigInt(signature.r), { size: 32 }),
+          Hex.fromNumber(
+            s > p256.Point.Fn.ORDER / 2n ? p256.Point.Fn.ORDER - s : s,
+            { size: 32 },
+          ),
+          Hex.fromNumber(Hex.toBigInt(publicKey.x), { size: 32 }),
+          Hex.fromNumber(Hex.toBigInt(publicKey.y), { size: 32 }),
+        )
+      }
+    }
+  })()
   return [
-    entry.scheme ? Hex.fromNumber(entry.scheme, { size: 1 }) : '0x',
+    scheme ? Hex.fromNumber(scheme, { size: 1 }) : '0x',
     entry.signer ?? '0x',
-    entry.msg,
-    entry.signature,
+    entry.payload,
+    signature,
   ]
 }
 
 export declare namespace toTuple {
-  type ErrorType = assert.ErrorType | Hex.fromNumber.ErrorType
+  type ErrorType =
+    | assert.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Hex.concat.ErrorType
+    | Signature.toRecoveredBytes.ErrorType
 }
 
 /**
- * Returns whether signature metadata and encoding satisfy structural constraints.
- * This does not verify that the signature authorizes a message or signer.
+ * Returns structural validity without verifying authorization.
  *
  * @example
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
  * FrameSignature.validate(
- *   { scheme: 1, msg: '0x', signature: '0x' },
+ *   { scheme: 'secp256k1', payload: '0x' },
  *   { signed: true }
  * )
  * // @log: false
@@ -345,7 +386,6 @@ export declare namespace validate {
 /** Thrown when frame signature metadata or encoding is invalid. */
 export class InvalidError extends Errors.BaseError {
   override readonly name = 'FrameSignature.InvalidError'
-
   constructor(details: string) {
     super('Invalid frame signature.', { details })
   }

@@ -2,7 +2,7 @@
 "ox": minor
 ---
 
-Added `Frame` and `FrameSignature` utilities for EIP-8141 frame and signature encoding.
+Added `Frame` and `FrameSignature` utilities for EIP-8141 frame encoding and structured signatures.
 
 ```ts
 import { Frame } from 'ox'

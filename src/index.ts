@@ -1630,8 +1630,6 @@ export * as Frame from './core/Frame.js'
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
  * const signature = FrameSignature.from({
- *   scheme: 0,
- *   msg: '0x',
  *   signature: '0xaabb'
  * })
  * ```
