@@ -74,18 +74,46 @@ export type Tuple = readonly [
 ]
 
 /**
- * Asserts structural constraints without cryptographic verification.
- * P-256 high-s signatures are accepted and normalized by `toTuple`.
+ * Asserts that a {@link ox#FrameSignature.FrameSignature} is structurally valid.
+ *
+ * Checks metadata, signature scalars, and public key shape without verifying
+ * authorization. P-256 high-s signatures are accepted and normalized by
+ * {@link ox#FrameSignature.(toTuple:function)}.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Unsigned protocol entries are accepted by default.
+ *
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
+ *
  * FrameSignature.assert({
  *   payload: '0x',
  *   scheme: 'secp256k1'
  * })
  * ```
- * @param entry - Signature entry to check.
+ *
+ * @example
+ * ### Requiring a Signature
+ *
+ * Set `signed` to require a protocol signature.
+ *
+ * ```ts twoslash
+ * import { FrameSignature, Hash, Secp256k1 } from 'ox'
+ *
+ * const payload = Hash.keccak256('0xdeadbeef')
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const signature = Secp256k1.sign({ payload, privateKey })
+ *
+ * const entry = FrameSignature.fromSecp256k1(signature, {
+ *   payload
+ * })
+ *
+ * FrameSignature.assert(entry, { signed: true })
+ * ```
+ *
+ * @param entry - The signature entry to assert.
  * @param options - Validation options.
  */
 export function assert(
@@ -142,7 +170,10 @@ export function assert(
 
 export declare namespace assert {
   type Options = {
-    /** Require a protocol signature. Does not perform cryptographic verification. @default false */
+    /**
+     * Require a protocol signature. Does not perform cryptographic verification.
+     * @default false
+     */
     signed?: boolean | undefined
   }
   type ErrorType =
@@ -156,29 +187,78 @@ export declare namespace assert {
 }
 
 /**
- * Constructs a structured entry, defaulting to arbitrary verification and the transaction signing hash.
+ * Coerces a value into a {@link ox#FrameSignature.FrameSignature}.
+ *
+ * Accepts arbitrary signature bytes or a structured signature entry. Omitted
+ * `scheme` and `payload` default to `'arbitrary'` and `'0x'`, respectively.
+ * An empty payload selects the canonical transaction signing hash; an explicit
+ * payload must be a nonzero 32-byte digest.
  *
  * @example
+ * ### From Hex
+ *
+ * Wrap arbitrary witness bytes for contract-defined verification.
+ *
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
+ *
  * const entry = FrameSignature.from('0xaabb')
+ * // @log: { payload: '0x', scheme: 'arbitrary', signature: '0xaabb' }
  * ```
+ *
  * @example
+ * ### Secp256k1
+ *
+ * Wrap a signature over an explicit digest, retaining the same payload in the entry.
+ *
  * ```ts twoslash
- * import { FrameSignature, Secp256k1 } from 'ox'
- * const signature = Secp256k1.sign({
- *   payload:
- *     '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   privateKey:
- *     '0x0000000000000000000000000000000000000000000000000000000000000001'
- * })
+ * import { FrameSignature, Hash, Secp256k1 } from 'ox'
+ *
+ * const payload = Hash.keccak256('0xdeadbeef')
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const signature = Secp256k1.sign({ payload, privateKey })
+ *
  * const entry = FrameSignature.from({
+ *   payload,
  *   scheme: 'secp256k1',
  *   signature
  * })
  * ```
- * @param entry - Arbitrary signature bytes, or a signature entry with optional defaults.
- * @returns A validated copy, retaining the supplied scheme representation and signature.
+ *
+ * @example
+ * ### P256
+ *
+ * Include the public key with a P-256 signature over an explicit digest.
+ *
+ * ```ts twoslash
+ * import { FrameSignature, Hash, P256 } from 'ox'
+ *
+ * const { privateKey, publicKey } = P256.createKeyPair()
+ * const payload = Hash.keccak256('0xdeadbeef')
+ * const signature = P256.sign({ payload, privateKey })
+ *
+ * const entry = FrameSignature.from({
+ *   payload,
+ *   publicKey,
+ *   scheme: 'p256',
+ *   signature
+ * })
+ * ```
+ *
+ * @example
+ * ### Unsigned Entries
+ *
+ * Omit the signature to prepare a protocol entry before signing the transaction.
+ *
+ * ```ts twoslash
+ * import { FrameSignature } from 'ox'
+ *
+ * const entry = FrameSignature.from({ scheme: 'secp256k1' })
+ * // @log: { payload: '0x', scheme: 'secp256k1' }
+ * ```
+ *
+ * @param entry - Arbitrary signature bytes or a structured signature entry.
+ * @returns The validated entry, preserving supplied signature and scheme types.
  */
 export function from<const entry extends from.Input>(
   entry: entry | from.Input,
@@ -223,23 +303,33 @@ export declare namespace from {
 }
 
 /**
- * Constructs a structured P-256 entry. High-s is normalized when encoding with `toTuple`.
+ * Creates a {@link ox#FrameSignature.P256} entry from a {@link ox#Signature.Signature}
+ * and {@link ox#PublicKey.PublicKey}.
+ *
+ * The payload defaults to the canonical transaction signing hash. Signature bytes
+ * are packed and high-s is normalized by {@link ox#FrameSignature.(toTuple:function)}.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Generate a key pair and wrap a signature over an explicit digest.
+ *
  * ```ts twoslash
- * import { FrameSignature, Hex, P256 } from 'ox'
- * const privateKey = Hex.fromNumber(1, { size: 32 })
- * const signature = P256.sign({
- *   payload: Hex.fromNumber(1, { size: 32 }),
- *   privateKey
- * })
+ * import { FrameSignature, Hash, P256 } from 'ox'
+ *
+ * const { privateKey, publicKey } = P256.createKeyPair()
+ * const payload = Hash.keccak256('0xdeadbeef')
+ * const signature = P256.sign({ payload, privateKey })
+ *
  * const entry = FrameSignature.fromP256(signature, {
- *   publicKey: P256.getPublicKey({ privateKey })
+ *   payload,
+ *   publicKey
  * })
  * ```
- * @param signature - P-256 signature.
- * @param options - Public key and optional signature metadata.
- * @returns A structurally validated P-256 entry.
+ *
+ * @param signature - The P-256 signature to wrap.
+ * @param options - The public key and optional signature metadata.
+ * @returns The P-256 signature entry.
  */
 export function fromP256<const signature extends Signature.Signature<false>>(
   signature: signature,
@@ -263,20 +353,32 @@ export declare namespace fromP256 {
 }
 
 /**
- * Constructs a structured secp256k1 entry, defaulting to the transaction signing hash.
+ * Creates a {@link ox#FrameSignature.Secp256k1} entry from a recovered
+ * {@link ox#Signature.Signature}.
+ *
+ * The signature must use low-s encoding and contain `yParity`. The payload defaults
+ * to the canonical transaction signing hash.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Generate a private key and wrap a signature over an explicit digest.
+ *
  * ```ts twoslash
- * import { FrameSignature, Hex, Secp256k1 } from 'ox'
- * const signature = Secp256k1.sign({
- *   payload: Hex.fromNumber(1, { size: 32 }),
- *   privateKey: Hex.fromNumber(1, { size: 32 })
+ * import { FrameSignature, Hash, Secp256k1 } from 'ox'
+ *
+ * const payload = Hash.keccak256('0xdeadbeef')
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const signature = Secp256k1.sign({ payload, privateKey })
+ *
+ * const entry = FrameSignature.fromSecp256k1(signature, {
+ *   payload
  * })
- * const entry = FrameSignature.fromSecp256k1(signature)
  * ```
- * @param signature - Low-s recovered signature.
+ *
+ * @param signature - The recovered secp256k1 signature to wrap.
  * @param options - Optional signature metadata.
- * @returns A structurally validated secp256k1 entry.
+ * @returns The secp256k1 signature entry.
  */
 export function fromSecp256k1<const signature extends Signature.Signature>(
   signature: signature,
@@ -303,21 +405,31 @@ export declare namespace fromSecp256k1 {
 }
 
 /**
- * Decodes a signature tuple into a structured entry with a named scheme.
- * Rejects noncanonical signature encodings, including high-s P-256 signatures.
+ * Converts a {@link ox#FrameSignature.Tuple} to a structured
+ * {@link ox#FrameSignature.FrameSignature}.
+ *
+ * Returns a named scheme and unpacks protocol signatures. Empty protocol signatures
+ * become unsigned entries. Rejects noncanonical encodings, including P-256 high-s.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Decode an arbitrary signature tuple.
+ *
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
+ *
  * const entry = FrameSignature.fromTuple([
  *   '0x',
  *   '0x',
  *   '0x',
  *   '0xaabb'
  * ])
+ * // @log: { payload: '0x', scheme: 'arbitrary', signature: '0xaabb' }
  * ```
- * @param tuple - RLP-decoded signature tuple.
- * @returns A structured entry. Empty protocol signatures become unsigned entries.
+ *
+ * @param tuple - The signature tuple to convert.
+ * @returns The decoded signature entry.
  */
 export function fromTuple(tuple: Tuple): FrameSignature {
   if (!Array.isArray(tuple) || tuple.length !== 4)
@@ -377,18 +489,27 @@ export declare namespace fromTuple {
 }
 
 /**
- * Encodes a signature entry, packing protocol signatures and normalizing P-256 high-s.
- * Does not mutate the entry. Empty protocol signatures encode as empty bytes.
+ * Converts a {@link ox#FrameSignature.FrameSignature} to its RLP-ready
+ * {@link ox#FrameSignature.Tuple}.
+ *
+ * Encodes numeric scheme identifiers and packs protocol signatures without mutating
+ * the entry. P-256 high-s is normalized. Omitted protocol signatures become empty bytes.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Encode arbitrary witness bytes with the default scheme and payload.
+ *
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
- * const tuple = FrameSignature.toTuple(
- *   FrameSignature.from({ signature: '0xaabb' })
- * )
+ *
+ * const entry = FrameSignature.from('0xaabb')
+ * const tuple = FrameSignature.toTuple(entry)
+ * // @log: ['0x', '0x', '0x', '0xaabb']
  * ```
- * @param entry - Structured signature entry.
- * @returns A canonical signature tuple.
+ *
+ * @param entry - The signature entry to convert.
+ * @returns The encoded signature tuple.
  */
 export function toTuple(entry: FrameSignature): Tuple {
   assert(entry)
@@ -439,18 +560,27 @@ export declare namespace toTuple {
 }
 
 /**
- * Returns structural validity without verifying authorization.
+ * Returns whether a {@link ox#FrameSignature.FrameSignature} is structurally valid.
+ *
+ * Performs the same checks as {@link ox#FrameSignature.(assert:function)}, returning
+ * `false` instead of throwing. Does not verify that the signature authorizes a payload.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Require a signature when checking a protocol entry.
+ *
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
- * FrameSignature.validate(
- *   { payload: '0x', scheme: 'secp256k1' },
- *   { signed: true }
- * )
+ *
+ * const entry = FrameSignature.from({ scheme: 'secp256k1' })
+ * const valid = FrameSignature.validate(entry, {
+ *   signed: true
+ * })
  * // @log: false
  * ```
- * @param entry - Entry to check.
+ *
+ * @param entry - The signature entry to validate.
  * @param options - Validation options.
  * @returns Whether the entry is structurally valid.
  */

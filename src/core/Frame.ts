@@ -50,12 +50,19 @@ export type Tuple = readonly [
 ]
 
 /**
- * Asserts frame-local constraints. Sender-dependent approval, batch adjacency,
- * expiry, and transaction-wide gas constraints require the enclosing transaction.
+ * Asserts that a {@link ox#Frame.Frame} satisfies frame-local constraints.
+ *
+ * Sender-dependent approval, batch adjacency, expiry, and transaction-wide gas
+ * constraints require the enclosing transaction.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Check a verification frame before including it in a transaction.
+ *
  * ```ts twoslash
  * import { Frame } from 'ox'
+ *
  * Frame.assert({
  *   data: '0x',
  *   executionGasLimit: 50_000n,
@@ -65,7 +72,8 @@ export type Tuple = readonly [
  *   value: 0n
  * })
  * ```
- * @param frame - Frame to check.
+ *
+ * @param frame - The frame to assert.
  */
 export function assert(frame: Frame): void {
   const mode = typeof frame.mode === 'string' ? modes[frame.mode] : frame.mode
@@ -118,11 +126,19 @@ export declare namespace assert {
 }
 
 /**
- * Constructs a frame, preserving literal types.
+ * Coerces a frame object into a {@link ox#Frame.Frame}.
+ *
+ * Validates the frame and returns a copy, preserving literal types and the supplied
+ * numeric or named mode and flags.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Construct a verification frame that approves execution and payment.
+ *
  * ```ts twoslash
  * import { Frame } from 'ox'
+ *
  * const frame = Frame.from({
  *   data: '0x',
  *   executionGasLimit: 50_000n,
@@ -132,8 +148,9 @@ export declare namespace assert {
  *   value: 0n
  * })
  * ```
- * @param frame - Frame to construct.
- * @returns A validated copy of the frame.
+ *
+ * @param frame - The frame object to convert.
+ * @returns The validated frame.
  */
 export function from<const frame extends Frame>(frame: frame | Frame): frame {
   assert(frame)
@@ -145,11 +162,19 @@ export declare namespace from {
 }
 
 /**
- * Decodes a frame tuple with numeric mode and flags. Rejects noncanonical integer encodings.
+ * Converts a {@link ox#Frame.Tuple} to a {@link ox#Frame.Frame}.
+ *
+ * Returns numeric mode and flags. An empty target becomes an omitted `target`.
+ * Integer fields must use minimal whole-byte encodings, with empty bytes for zero.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Decode a frame tuple with separate execution and state gas limits.
+ *
  * ```ts twoslash
  * import { Frame } from 'ox'
+ *
  * const frame = Frame.fromTuple([
  *   '0x01',
  *   '0x03',
@@ -158,8 +183,17 @@ export declare namespace from {
  *   '0x',
  *   '0x'
  * ])
+ * // @log: {
+ * // @log:   data: '0x',
+ * // @log:   executionGasLimit: 50000n,
+ * // @log:   flags: 3,
+ * // @log:   mode: 1,
+ * // @log:   stateGasLimit: 0n,
+ * // @log:   value: 0n
+ * // @log: }
  * ```
- * @param tuple - RLP-decoded frame tuple.
+ *
+ * @param tuple - The frame tuple to convert.
  * @returns The decoded frame.
  */
 export function fromTuple(tuple: Tuple): Frame {
@@ -203,11 +237,19 @@ export declare namespace fromTuple {
 }
 
 /**
- * Converts a frame to its RLP-ready tuple.
+ * Converts a {@link ox#Frame.Frame} to its RLP-ready {@link ox#Frame.Tuple}.
+ *
+ * Named mode and flags are encoded as integers. An omitted target and zero integer
+ * fields are encoded as empty bytes.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Encode a verification frame in the field order required by EIP-8141.
+ *
  * ```ts twoslash
  * import { Frame } from 'ox'
+ *
  * const tuple = Frame.toTuple({
  *   data: '0x',
  *   executionGasLimit: 50_000n,
@@ -216,9 +258,11 @@ export declare namespace fromTuple {
  *   stateGasLimit: 0n,
  *   value: 0n
  * })
+ * // @log: ['0x01', '0x03', '0x', ['0xc350', '0x'], '0x', '0x']
  * ```
- * @param frame - Frame to encode.
- * @returns A canonical frame tuple.
+ *
+ * @param frame - The frame to convert.
+ * @returns The encoded frame tuple.
  */
 export function toTuple(frame: Frame): Tuple {
   assert(frame)
@@ -250,12 +294,20 @@ export declare namespace toTuple {
 }
 
 /**
- * Returns whether a frame satisfies frame-local constraints.
+ * Returns whether a {@link ox#Frame.Frame} satisfies frame-local constraints.
+ *
+ * Performs the same checks as {@link ox#Frame.(assert:function)}, returning `false`
+ * instead of throwing when the frame is invalid.
  *
  * @example
+ * ### Basic Usage
+ *
+ * Check whether a frame is structurally valid.
+ *
  * ```ts twoslash
  * import { Frame } from 'ox'
- * Frame.validate({
+ *
+ * const valid = Frame.validate({
  *   data: '0x',
  *   executionGasLimit: 50_000n,
  *   flags: 'approveExecutionAndPayment',
@@ -263,9 +315,11 @@ export declare namespace toTuple {
  *   stateGasLimit: 0n,
  *   value: 0n
  * })
+ * // @log: true
  * ```
- * @param frame - Frame to check.
- * @returns Whether the frame is structurally valid.
+ *
+ * @param frame - The frame to validate.
+ * @returns Whether the frame satisfies frame-local constraints.
  */
 export function validate(frame: Frame): boolean {
   try {

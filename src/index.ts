@@ -1604,16 +1604,24 @@ export * as Fee from './core/Fee.js'
  */
 export * as Filter from './core/Filter.js'
 /**
- * Types, validation, and tuple encoding for EIP-8141 call frames.
+ * Utilities for constructing, validating, and encoding [EIP-8141](https://eips.ethereum.org/EIPS/eip-8141) call frames.
+ *
+ * A {@link ox#Frame.Frame} describes a call with an execution mode, approval flags,
+ * and separate execution and state gas limits.
  *
  * @example
+ * ### Creating Frames
+ *
+ * Use {@link ox#Frame.(from:function)} to construct a frame with named mode and flags.
+ *
  * ```ts twoslash
  * import { Frame } from 'ox'
+ *
  * const frame = Frame.from({
  *   data: '0x',
  *   executionGasLimit: 50_000n,
- *   flags: 3,
- *   mode: 1,
+ *   flags: 'approveExecutionAndPayment',
+ *   mode: 'verify',
  *   stateGasLimit: 0n,
  *   value: 0n
  * })
@@ -1624,14 +1632,22 @@ export * as Filter from './core/Filter.js'
 export * as Frame from './core/Frame.js'
 
 /**
- * Encoding and structural validation for EIP-8141 signature entries.
+ * Utilities for constructing, validating, and encoding [EIP-8141](https://eips.ethereum.org/EIPS/eip-8141) signature entries.
+ *
+ * Supports {@link ox#FrameSignature.Arbitrary}, {@link ox#FrameSignature.Secp256k1},
+ * and {@link ox#FrameSignature.P256} entries. An empty payload selects the canonical
+ * transaction signing hash.
  *
  * @example
+ * ### Creating Signature Entries
+ *
+ * Use {@link ox#FrameSignature.(from:function)} to wrap arbitrary witness bytes.
+ *
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
- * const signature = FrameSignature.from({
- *   signature: '0xaabb'
- * })
+ *
+ * const entry = FrameSignature.from('0xaabb')
+ * // @log: { payload: '0x', scheme: 'arbitrary', signature: '0xaabb' }
  * ```
  *
  * @category Transaction Envelopes
