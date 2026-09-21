@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vite-plus/test'
-import { Hex, P256, Rlp, Secp256k1, Signature, TxFrameSignature } from 'ox'
+import { Hex, P256, Rlp, Secp256k1, Signature, FrameSignature } from 'ox'
 
 const arbitrary = { scheme: 0, msg: '0x', signature: '0xaabb' } as const
 const privateKey = Hex.fromNumber(1, { size: 32 })
@@ -14,17 +14,17 @@ const publicKey = {
 
 describe('from', () => {
   test('copies metadata without resolving the signer', () => {
-    expect(TxFrameSignature.from(arbitrary)).toEqual(arbitrary)
-    expect(TxFrameSignature.from(arbitrary)).not.toBe(arbitrary)
+    expect(FrameSignature.from(arbitrary)).toEqual(arbitrary)
+    expect(FrameSignature.from(arbitrary)).not.toBe(arbitrary)
     expect(
-      TxFrameSignature.from({ scheme: 1, msg: '0x', signature: '0x' }),
+      FrameSignature.from({ scheme: 1, msg: '0x', signature: '0x' }),
     ).not.toHaveProperty('signer')
   })
 })
 
 describe('toTuple', () => {
   test('encodes arbitrary witness bytes in specification order', () => {
-    expect(TxFrameSignature.toTuple(arbitrary)).toMatchInlineSnapshot(`
+    expect(FrameSignature.toTuple(arbitrary)).toMatchInlineSnapshot(`
       [
         "0x",
         "0x",
@@ -33,7 +33,7 @@ describe('toTuple', () => {
       ]
     `)
     expect(
-      Rlp.fromHex(TxFrameSignature.toTuple(arbitrary)),
+      Rlp.fromHex(FrameSignature.toTuple(arbitrary)),
     ).toMatchInlineSnapshot('"0xc680808082aabb"')
   })
 
@@ -44,7 +44,7 @@ describe('toTuple', () => {
       msg: payload,
       signature: '0x',
     } as const
-    expect(TxFrameSignature.fromTuple(TxFrameSignature.toTuple(entry))).toEqual(
+    expect(FrameSignature.fromTuple(FrameSignature.toTuple(entry))).toEqual(
       entry,
     )
   })
@@ -52,7 +52,7 @@ describe('toTuple', () => {
 
 describe('fromTuple', () => {
   test('decodes fixed arbitrary tuple', () => {
-    expect(TxFrameSignature.fromTuple(['0x', '0x', '0x', '0xaabb'])).toEqual(
+    expect(FrameSignature.fromTuple(['0x', '0x', '0x', '0xaabb'])).toEqual(
       arbitrary,
     )
   })
@@ -61,7 +61,7 @@ describe('fromTuple', () => {
     'rejects scheme %s',
     (scheme) => {
       expect(() =>
-        TxFrameSignature.fromTuple([scheme, '0x', '0x', '0x'] as never),
+        FrameSignature.fromTuple([scheme, '0x', '0x', '0x'] as never),
       ).toThrow()
     },
   )
@@ -73,13 +73,13 @@ describe('fromTuple', () => {
     ['0x01', undefined, '0x', '0x'],
     ['0x', '0x0000000000000000000000000000000000000000', '0x', '0x'],
   ])('rejects malformed tuple %#', (...tuple) => {
-    expect(() => TxFrameSignature.fromTuple(tuple as never)).toThrow()
+    expect(() => FrameSignature.fromTuple(tuple as never)).toThrow()
   })
 })
 
 describe('fromSecp256k1', () => {
   test('uses recovery parity first, followed by padded r and s', () => {
-    expect(TxFrameSignature.fromSecp256k1({ r: '0x01', s: '0x02', yParity: 1 }))
+    expect(FrameSignature.fromSecp256k1({ r: '0x01', s: '0x02', yParity: 1 }))
       .toMatchInlineSnapshot(`
       {
         "msg": "0x",
@@ -95,7 +95,7 @@ describe('fromSecp256k1', () => {
       privateKey,
       extraEntropy: false,
     })
-    const entry = TxFrameSignature.fromSecp256k1(signature, { msg: payload })
+    const entry = FrameSignature.fromSecp256k1(signature, { msg: payload })
     expect(Signature.fromRecoveredBytes(Hex.toBytes(entry.signature))).toEqual(
       signature,
     )
@@ -118,7 +118,7 @@ describe('fromSecp256k1', () => {
     },
   ])('rejects invalid signature %#', (signature) => {
     expect(() =>
-      TxFrameSignature.fromSecp256k1(signature as Signature.Signature),
+      FrameSignature.fromSecp256k1(signature as Signature.Signature),
     ).toThrow()
   })
 })
@@ -126,7 +126,7 @@ describe('fromSecp256k1', () => {
 describe('fromP256', () => {
   test('encodes r, s, x, and y without the public key prefix', () => {
     expect(
-      TxFrameSignature.fromP256({ r: '0x01', s: '0x02' }, { publicKey })
+      FrameSignature.fromP256({ r: '0x01', s: '0x02' }, { publicKey })
         .signature,
     ).toMatchInlineSnapshot(
       '"0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000026b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c2964fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"',
@@ -138,7 +138,7 @@ describe('fromP256', () => {
       r: '0x01',
       s: Hex.fromNumber(order - 2n),
     })
-    const entry = TxFrameSignature.fromP256(signature, { publicKey })
+    const entry = FrameSignature.fromP256(signature, { publicKey })
     expect(Hex.slice(entry.signature, 32, 64)).toBe(
       Hex.fromNumber(2, { size: 32 }),
     )
@@ -147,7 +147,7 @@ describe('fromP256', () => {
 
   test('preserves a real Ox signature', () => {
     const signature = P256.sign({ payload, privateKey, extraEntropy: false })
-    const entry = TxFrameSignature.fromP256(signature, { publicKey })
+    const entry = FrameSignature.fromP256(signature, { publicKey })
     expect(
       P256.verify({
         payload,
@@ -162,7 +162,7 @@ describe('fromP256', () => {
 
   test.each([0n, order, order + 1n])('rejects invalid s %s', (s) => {
     expect(() =>
-      TxFrameSignature.fromP256(
+      FrameSignature.fromP256(
         { r: '0x01', s: Hex.fromNumber(s) },
         { publicKey },
       ),
@@ -173,12 +173,12 @@ describe('fromP256', () => {
 describe('assert', () => {
   test('allows placeholders only when a complete signature is not required', () => {
     const entry = { scheme: 1, msg: '0x', signature: '0x' } as const
-    expect(() => TxFrameSignature.assert(entry)).not.toThrow()
-    expect(() => TxFrameSignature.assert(entry, { signed: true })).toThrow(
-      TxFrameSignature.InvalidError,
+    expect(() => FrameSignature.assert(entry)).not.toThrow()
+    expect(() => FrameSignature.assert(entry, { signed: true })).toThrow(
+      FrameSignature.InvalidError,
     )
     expect(() =>
-      TxFrameSignature.assert({ ...entry, scheme: 0 }, { signed: true }),
+      FrameSignature.assert({ ...entry, scheme: 0 }, { signed: true }),
     ).not.toThrow()
   })
 
@@ -196,17 +196,17 @@ describe('assert', () => {
     { scheme: 2, signature: '0x01' },
   ])('rejects invalid entry %#', (fields) => {
     expect(() =>
-      TxFrameSignature.assert({ ...arbitrary, ...fields } as never),
+      FrameSignature.assert({ ...arbitrary, ...fields } as never),
     ).toThrow()
   })
 
   test('rejects raw high-s P-256 encodings', () => {
-    const entry = TxFrameSignature.fromP256(
+    const entry = FrameSignature.fromP256(
       { r: '0x01', s: '0x02' },
       { publicKey },
     )
     expect(() =>
-      TxFrameSignature.assert({
+      FrameSignature.assert({
         ...entry,
         signature: Hex.concat(
           Hex.slice(entry.signature, 0, 32),
@@ -220,7 +220,7 @@ describe('assert', () => {
 
 describe('validate', () => {
   test('reports structural validity without signature verification', () => {
-    expect(TxFrameSignature.validate(arbitrary)).toBe(true)
-    expect(TxFrameSignature.validate({ ...arbitrary, msg: '0x01' })).toBe(false)
+    expect(FrameSignature.validate(arbitrary)).toBe(true)
+    expect(FrameSignature.validate({ ...arbitrary, msg: '0x01' })).toBe(false)
   })
 })

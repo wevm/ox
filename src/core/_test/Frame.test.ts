@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vite-plus/test'
-import { Rlp, TxFrame } from 'ox'
+import { Rlp, Frame } from 'ox'
 
 const frame = {
   mode: 1,
@@ -14,7 +14,7 @@ const tuple = ['0x01', '0x03', '0x', ['0xc350', '0x'], '0x', '0x'] as const
 
 describe('from', () => {
   test('copies the frame without changing its fields', () => {
-    const result = TxFrame.from(frame)
+    const result = Frame.from(frame)
     expect(result).toEqual(frame)
     expect(result).not.toBe(frame)
   })
@@ -22,8 +22,8 @@ describe('from', () => {
 
 describe('toTuple', () => {
   test('encodes the specification field order', () => {
-    expect(TxFrame.toTuple(frame)).toEqual(tuple)
-    expect(Rlp.fromHex(TxFrame.toTuple(frame))).toMatchInlineSnapshot(
+    expect(Frame.toTuple(frame)).toEqual(tuple)
+    expect(Rlp.fromHex(Frame.toTuple(frame))).toMatchInlineSnapshot(
       '"0xca010380c482c350808080"',
     )
   })
@@ -31,7 +31,7 @@ describe('toTuple', () => {
   test('encodes zero integers as empty bytes', () => {
     expect(
       Rlp.fromHex(
-        TxFrame.toTuple({ ...frame, mode: 0, flags: 0, executionGasLimit: 0n }),
+        Frame.toTuple({ ...frame, mode: 0, flags: 0, executionGasLimit: 0n }),
       ),
     ).toMatchInlineSnapshot('"0xc8808080c280808080"')
   })
@@ -46,20 +46,20 @@ describe('toTuple', () => {
       value: 2n ** 256n - 1n,
       data: '0x0001',
     } as const
-    expect(TxFrame.fromTuple(TxFrame.toTuple(input))).toEqual(input)
+    expect(Frame.fromTuple(Frame.toTuple(input))).toEqual(input)
   })
 })
 
 describe('fromTuple', () => {
   test('decodes a fixed tuple', () => {
-    expect(TxFrame.fromTuple(tuple)).toEqual(frame)
+    expect(Frame.fromTuple(tuple)).toEqual(frame)
   })
 
   test('distinguishes an implicit target from the zero address', () => {
     const target = '0x0000000000000000000000000000000000000000'
-    expect(TxFrame.fromTuple(tuple)).not.toHaveProperty('target')
+    expect(Frame.fromTuple(tuple)).not.toHaveProperty('target')
     expect(
-      TxFrame.fromTuple([
+      Frame.fromTuple([
         tuple[0],
         tuple[1],
         target,
@@ -74,7 +74,7 @@ describe('fromTuple', () => {
     'rejects noncanonical integer %s',
     (value) => {
       expect(() =>
-        TxFrame.fromTuple([value, ...tuple.slice(1)] as never),
+        Frame.fromTuple([value, ...tuple.slice(1)] as never),
       ).toThrow()
     },
   )
@@ -87,7 +87,7 @@ describe('fromTuple', () => {
     [tuple[0], tuple[1], undefined, tuple[3], '0x', '0x'],
     [tuple[0], tuple[1], '0x01', tuple[3], '0x', '0x'],
   ])('rejects malformed tuple %#', (...value) => {
-    expect(() => TxFrame.fromTuple(value as never)).toThrow()
+    expect(() => Frame.fromTuple(value as never)).toThrow()
   })
 })
 
@@ -114,17 +114,17 @@ describe('assert', () => {
     { data: '0xgg' },
     { target: '0x01' },
   ])('rejects invalid fields %#', (fields) => {
-    expect(() => TxFrame.assert({ ...frame, ...fields } as never)).toThrow()
+    expect(() => Frame.assert({ ...frame, ...fields } as never)).toThrow()
   })
 
   test('leaves batch adjacency to the envelope', () => {
-    expect(() => TxFrame.assert({ ...frame, mode: 2, flags: 4 })).not.toThrow()
+    expect(() => Frame.assert({ ...frame, mode: 2, flags: 4 })).not.toThrow()
   })
 })
 
 describe('validate', () => {
   test('returns structural validity', () => {
-    expect(TxFrame.validate(frame)).toBe(true)
-    expect(TxFrame.validate({ ...frame, value: 1n })).toBe(false)
+    expect(Frame.validate(frame)).toBe(true)
+    expect(Frame.validate({ ...frame, value: 1n })).toBe(false)
   })
 })

@@ -4,7 +4,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 
 /** An EIP-8141 call frame. */
-export type TxFrame<bigintType = bigint> = {
+export type Frame<bigintType = bigint> = {
   /** Execution context: default, verify, or sender. */
   mode: Mode
   /** Approval scope and atomic batching bits. */
@@ -52,8 +52,8 @@ export type Tuple = readonly [
  *
  * @example
  * ```ts twoslash
- * import { TxFrame } from 'ox'
- * TxFrame.assert({
+ * import { Frame } from 'ox'
+ * Frame.assert({
  *   mode: 1,
  *   flags: 3,
  *   executionGasLimit: 50_000n,
@@ -64,7 +64,7 @@ export type Tuple = readonly [
  * ```
  * @param frame - Frame to check.
  */
-export function assert(frame: TxFrame): void {
+export function assert(frame: Frame): void {
   if (!Number.isInteger(frame.mode) || frame.mode < 0 || frame.mode > 2)
     throw new InvalidError('mode must be 0, 1, or 2.')
   if (!Number.isInteger(frame.flags) || frame.flags < 0 || frame.flags > 7)
@@ -114,8 +114,8 @@ export declare namespace assert {
  *
  * @example
  * ```ts twoslash
- * import { TxFrame } from 'ox'
- * const frame = TxFrame.from({
+ * import { Frame } from 'ox'
+ * const frame = Frame.from({
  *   mode: 1,
  *   flags: 3,
  *   executionGasLimit: 50_000n,
@@ -127,9 +127,7 @@ export declare namespace assert {
  * @param frame - Frame to construct.
  * @returns A validated copy of the frame.
  */
-export function from<const frame extends TxFrame>(
-  frame: frame | TxFrame,
-): frame {
+export function from<const frame extends Frame>(frame: frame | Frame): frame {
   assert(frame)
   return { ...frame } as frame
 }
@@ -143,8 +141,8 @@ export declare namespace from {
  *
  * @example
  * ```ts twoslash
- * import { TxFrame } from 'ox'
- * const frame = TxFrame.fromTuple([
+ * import { Frame } from 'ox'
+ * const frame = Frame.fromTuple([
  *   '0x01',
  *   '0x03',
  *   '0x',
@@ -156,7 +154,7 @@ export declare namespace from {
  * @param tuple - RLP-decoded frame tuple.
  * @returns The decoded frame.
  */
-export function fromTuple(tuple: Tuple): TxFrame {
+export function fromTuple(tuple: Tuple): Frame {
   if (
     !Array.isArray(tuple) ||
     tuple.length !== 6 ||
@@ -201,8 +199,8 @@ export declare namespace fromTuple {
  *
  * @example
  * ```ts twoslash
- * import { TxFrame } from 'ox'
- * const tuple = TxFrame.toTuple({
+ * import { Frame } from 'ox'
+ * const tuple = Frame.toTuple({
  *   mode: 1,
  *   flags: 3,
  *   executionGasLimit: 50_000n,
@@ -214,7 +212,7 @@ export declare namespace fromTuple {
  * @param frame - Frame to encode.
  * @returns A canonical frame tuple.
  */
-export function toTuple(frame: TxFrame): Tuple {
+export function toTuple(frame: Frame): Tuple {
   assert(frame)
   return [
     frame.mode ? Hex.fromBytes(Bytes.fromNumber(frame.mode)) : '0x',
@@ -245,8 +243,8 @@ export declare namespace toTuple {
  *
  * @example
  * ```ts twoslash
- * import { TxFrame } from 'ox'
- * TxFrame.validate({
+ * import { Frame } from 'ox'
+ * Frame.validate({
  *   mode: 1,
  *   flags: 3,
  *   executionGasLimit: 50_000n,
@@ -258,7 +256,7 @@ export declare namespace toTuple {
  * @param frame - Frame to check.
  * @returns Whether the frame is structurally valid.
  */
-export function validate(frame: TxFrame): boolean {
+export function validate(frame: Frame): boolean {
   try {
     assert(frame)
     return true
@@ -273,7 +271,7 @@ export declare namespace validate {
 
 /** Thrown when an EIP-8141 frame is structurally invalid. */
 export class InvalidError extends Errors.BaseError {
-  override readonly name = 'TxFrame.InvalidError'
+  override readonly name = 'Frame.InvalidError'
 
   constructor(details: string) {
     super('Invalid frame.', { details })

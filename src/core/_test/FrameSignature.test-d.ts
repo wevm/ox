@@ -1,8 +1,8 @@
-import { TxFrameSignature } from 'ox'
+import { FrameSignature } from 'ox'
 import { expectTypeOf, test } from 'vite-plus/test'
 
 test('from preserves literals and tuple types', () => {
-  const entry = TxFrameSignature.from({
+  const entry = FrameSignature.from({
     scheme: 0,
     msg: '0x',
     signature: '0xaabb',
@@ -10,12 +10,12 @@ test('from preserves literals and tuple types', () => {
   expectTypeOf(entry.scheme).toEqualTypeOf<0>()
   expectTypeOf(entry.signature).toEqualTypeOf<'0xaabb'>()
   expectTypeOf(
-    TxFrameSignature.toTuple(entry),
-  ).toEqualTypeOf<TxFrameSignature.Tuple>()
+    FrameSignature.toTuple(entry),
+  ).toEqualTypeOf<FrameSignature.Tuple>()
 })
 
 test('fromSecp256k1 preserves the scheme discriminant', () => {
-  const entry = TxFrameSignature.fromSecp256k1({
+  const entry = FrameSignature.fromSecp256k1({
     r: '0x01',
     s: '0x02',
     yParity: 1,
@@ -31,7 +31,7 @@ test('rejects signer metadata on arbitrary entries', () => {
     signer: '0x0000000000000000000000000000000000000000',
   } as const
   // @ts-expect-error Arbitrary entries cannot specify a signer.
-  TxFrameSignature.from(entry)
+  FrameSignature.from(entry)
   // @ts-expect-error Scheme 3 is reserved.
-  TxFrameSignature.from({ scheme: 3, msg: '0x', signature: '0x' })
+  FrameSignature.from({ scheme: 3, msg: '0x', signature: '0x' })
 })

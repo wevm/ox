@@ -2,12 +2,12 @@
 "ox": minor
 ---
 
-Added `TxFrame` and `TxFrameSignature` utilities for EIP-8141 frame and signature encoding.
+Added `Frame` and `FrameSignature` utilities for EIP-8141 frame and signature encoding.
 
 ```ts
-import { TxFrame } from 'ox'
+import { Frame } from 'ox'
 
-const tuple = TxFrame.toTuple({
+const tuple = Frame.toTuple({
   mode: 1,
   flags: 3,
   executionGasLimit: 50_000n,

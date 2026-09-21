@@ -1,8 +1,8 @@
-import { TxFrame } from 'ox'
+import { Frame } from 'ox'
 import { expectTypeOf, test } from 'vite-plus/test'
 
 test('from preserves literals', () => {
-  const frame = TxFrame.from({
+  const frame = Frame.from({
     mode: 1,
     flags: 3,
     executionGasLimit: 50_000n,
@@ -12,12 +12,12 @@ test('from preserves literals', () => {
   })
   expectTypeOf(frame.mode).toEqualTypeOf<1>()
   expectTypeOf(frame.executionGasLimit).toEqualTypeOf<50_000n>()
-  expectTypeOf(TxFrame.toTuple(frame)).toEqualTypeOf<TxFrame.Tuple>()
+  expectTypeOf(Frame.toTuple(frame)).toEqualTypeOf<Frame.Tuple>()
 })
 
 test('tuple accepts readonly input', () => {
   expectTypeOf(
-    TxFrame.fromTuple([
+    Frame.fromTuple([
       '0x01',
       '0x03',
       '0x',
@@ -25,11 +25,11 @@ test('tuple accepts readonly input', () => {
       '0x',
       '0x',
     ] as const),
-  ).toEqualTypeOf<TxFrame.TxFrame>()
+  ).toEqualTypeOf<Frame.Frame>()
 })
 
 test('rejects unsupported modes and unsafe numeric budgets', () => {
-  TxFrame.from({
+  Frame.from({
     // @ts-expect-error Unsupported execution mode.
     mode: 3,
     flags: 0,
@@ -38,7 +38,7 @@ test('rejects unsupported modes and unsafe numeric budgets', () => {
     value: 0n,
     data: '0x',
   })
-  TxFrame.from({
+  Frame.from({
     mode: 1,
     flags: 0,
     // @ts-expect-error Gas budgets use bigint.

@@ -11,7 +11,7 @@ export const schemes = { arbitrary: 0, secp256k1: 1, p256: 2 } as const
 export type Scheme = (typeof schemes)[keyof typeof schemes]
 
 /** A signature entry, with empty `msg` selecting the transaction signing hash. */
-export type TxFrameSignature = {
+export type FrameSignature = {
   /** Explicit nonzero 32-byte digest, or empty bytes for the canonical hash. */
   msg: Hex.Hex
   /** Scheme-specific signature bytes. Empty bytes may represent a signing placeholder. */
@@ -51,8 +51,8 @@ const p256Order =
  *
  * @example
  * ```ts twoslash
- * import { TxFrameSignature } from 'ox'
- * TxFrameSignature.assert({
+ * import { FrameSignature } from 'ox'
+ * FrameSignature.assert({
  *   scheme: 1,
  *   msg: '0x',
  *   signature: '0x'
@@ -62,7 +62,7 @@ const p256Order =
  * @param options - Validation options.
  */
 export function assert(
-  entry: TxFrameSignature,
+  entry: FrameSignature,
   options: assert.Options = {},
 ): void {
   if (!Number.isInteger(entry.scheme) || entry.scheme < 0 || entry.scheme > 2)
@@ -118,8 +118,8 @@ export declare namespace assert {
  *
  * @example
  * ```ts twoslash
- * import { TxFrameSignature } from 'ox'
- * const entry = TxFrameSignature.from({
+ * import { FrameSignature } from 'ox'
+ * const entry = FrameSignature.from({
  *   scheme: 0,
  *   msg: '0x',
  *   signature: '0xaabb'
@@ -128,8 +128,8 @@ export declare namespace assert {
  * @param entry - Signature entry to construct.
  * @returns A structurally validated copy.
  */
-export function from<const entry extends TxFrameSignature>(
-  entry: entry | TxFrameSignature,
+export function from<const entry extends FrameSignature>(
+  entry: entry | FrameSignature,
 ): entry {
   assert(entry)
   return { ...entry } as entry
@@ -144,12 +144,12 @@ export declare namespace from {
  *
  * @example
  * ```ts twoslash
- * import { Hex, Secp256k1, TxFrameSignature } from 'ox'
+ * import { Hex, Secp256k1, FrameSignature } from 'ox'
  * const signature = Secp256k1.sign({
  *   payload: Hex.fromNumber(1, { size: 32 }),
  *   privateKey: Hex.fromNumber(1, { size: 32 })
  * })
- * const entry = TxFrameSignature.fromSecp256k1(signature)
+ * const entry = FrameSignature.fromSecp256k1(signature)
  * ```
  * @param signature - Low-s recovered signature.
  * @param options - Signature metadata.
@@ -188,13 +188,13 @@ export declare namespace fromSecp256k1 {
  *
  * @example
  * ```ts twoslash
- * import { Hex, P256, TxFrameSignature } from 'ox'
+ * import { Hex, P256, FrameSignature } from 'ox'
  * const privateKey = Hex.fromNumber(1, { size: 32 })
  * const signature = P256.sign({
  *   payload: Hex.fromNumber(1, { size: 32 }),
  *   privateKey
  * })
- * const entry = TxFrameSignature.fromP256(signature, {
+ * const entry = FrameSignature.fromP256(signature, {
  *   publicKey: P256.getPublicKey({ privateKey })
  * })
  * ```
@@ -246,8 +246,8 @@ export declare namespace fromP256 {
  *
  * @example
  * ```ts twoslash
- * import { TxFrameSignature } from 'ox'
- * const entry = TxFrameSignature.fromTuple([
+ * import { FrameSignature } from 'ox'
+ * const entry = FrameSignature.fromTuple([
  *   '0x',
  *   '0x',
  *   '0x',
@@ -257,7 +257,7 @@ export declare namespace fromP256 {
  * @param tuple - RLP-decoded signature tuple.
  * @returns A structurally validated entry, possibly containing a signing placeholder.
  */
-export function fromTuple(tuple: Tuple): TxFrameSignature {
+export function fromTuple(tuple: Tuple): FrameSignature {
   if (!Array.isArray(tuple) || tuple.length !== 4)
     throw new InvalidError('Expected [scheme, signer, msg, signature].')
   const [scheme, signer, msg, signature] = tuple
@@ -271,7 +271,7 @@ export function fromTuple(tuple: Tuple): TxFrameSignature {
     ...(signer === '0x' ? {} : { signer }),
     msg,
     signature,
-  } as TxFrameSignature
+  } as FrameSignature
   assert(entry)
   return entry
 }
@@ -285,8 +285,8 @@ export declare namespace fromTuple {
  *
  * @example
  * ```ts twoslash
- * import { TxFrameSignature } from 'ox'
- * const tuple = TxFrameSignature.toTuple({
+ * import { FrameSignature } from 'ox'
+ * const tuple = FrameSignature.toTuple({
  *   scheme: 0,
  *   msg: '0x',
  *   signature: '0xaabb'
@@ -295,7 +295,7 @@ export declare namespace fromTuple {
  * @param entry - Signature entry, possibly containing a signing placeholder.
  * @returns A canonical signature tuple.
  */
-export function toTuple(entry: TxFrameSignature): Tuple {
+export function toTuple(entry: FrameSignature): Tuple {
   assert(entry)
   return [
     entry.scheme ? Hex.fromNumber(entry.scheme, { size: 1 }) : '0x',
@@ -315,8 +315,8 @@ export declare namespace toTuple {
  *
  * @example
  * ```ts twoslash
- * import { TxFrameSignature } from 'ox'
- * TxFrameSignature.validate(
+ * import { FrameSignature } from 'ox'
+ * FrameSignature.validate(
  *   { scheme: 1, msg: '0x', signature: '0x' },
  *   { signed: true }
  * )
@@ -327,7 +327,7 @@ export declare namespace toTuple {
  * @returns Whether the entry is structurally valid.
  */
 export function validate(
-  entry: TxFrameSignature,
+  entry: FrameSignature,
   options: assert.Options = {},
 ): boolean {
   try {
@@ -344,7 +344,7 @@ export declare namespace validate {
 
 /** Thrown when frame signature metadata or encoding is invalid. */
 export class InvalidError extends Errors.BaseError {
-  override readonly name = 'TxFrameSignature.InvalidError'
+  override readonly name = 'FrameSignature.InvalidError'
 
   constructor(details: string) {
     super('Invalid frame signature.', { details })
