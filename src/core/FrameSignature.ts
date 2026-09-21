@@ -17,10 +17,10 @@ export type Scheme =
 
 /** Contract-defined signature bytes. */
 export type Arbitrary = {
-  /** Contract-defined verification scheme. */
-  scheme: 0 | 'arbitrary'
   /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
   payload: Hex.Hex
+  /** Contract-defined verification scheme. */
+  scheme: 0 | 'arbitrary'
   /** Opaque witness bytes. */
   signature: Hex.Hex
   /** Arbitrary signatures have no signer metadata. */
@@ -29,36 +29,36 @@ export type Arbitrary = {
 
 /** A structured secp256k1 signature entry. */
 export type Secp256k1 = {
-  /** secp256k1 verification scheme. */
-  scheme: 1 | 'secp256k1'
   /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
   payload: Hex.Hex
-  /** Signer address. Omit to use the transaction sender. */
-  signer?: Address.Address | undefined
+  /** secp256k1 verification scheme. */
+  scheme: 1 | 'secp256k1'
   /** Low-s recovered signature. Omit for an unsigned entry. */
   signature?: Signature.Signature | undefined
+  /** Signer address. Omit to use the transaction sender. */
+  signer?: Address.Address | undefined
 }
 
 /** A structured P-256 signature entry. */
 export type P256 = {
-  /** P-256 verification scheme. */
-  scheme: 2 | 'p256'
   /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
   payload: Hex.Hex
+  /** P-256 verification scheme. */
+  scheme: 2 | 'p256'
   /** Signer address. Omit to use the transaction sender. */
   signer?: Address.Address | undefined
 } & (
   | {
-      /** P-256 signature. High-s is normalized when encoding. */
-      signature: Signature.Signature<false>
       /** Uncompressed P-256 public key. */
       publicKey: PublicKey.PublicKey
+      /** P-256 signature. High-s is normalized when encoding. */
+      signature: Signature.Signature<false>
     }
   | {
-      /** Omit for an unsigned entry. */
-      signature?: undefined
       /** Public key, if already known. Empty wire signatures do not retain it. */
       publicKey?: PublicKey.PublicKey | undefined
+      /** Omit for an unsigned entry. */
+      signature?: undefined
     }
 )
 
@@ -199,16 +199,16 @@ export declare namespace from {
   type ReturnType<entry extends Input = Input> = entry extends Input
     ? Compute<
         Omit<entry, 'scheme' | 'payload'> & {
-          scheme: entry extends { scheme: infer scheme extends Scheme }
-            ? scheme
-            : 'scheme' extends keyof entry
-              ? Exclude<entry['scheme'], undefined> | 'arbitrary'
-              : 'arbitrary'
           payload: entry extends { payload: infer payload extends Hex.Hex }
             ? payload
             : 'payload' extends keyof entry
               ? Exclude<entry['payload'], undefined> | '0x'
               : '0x'
+          scheme: entry extends { scheme: infer scheme extends Scheme }
+            ? scheme
+            : 'scheme' extends keyof entry
+              ? Exclude<entry['scheme'], undefined> | 'arbitrary'
+              : 'arbitrary'
         }
       >
     : never

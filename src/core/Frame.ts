@@ -5,20 +5,20 @@ import * as Hex from './Hex.js'
 
 /** An EIP-8141 call frame. */
 export type Frame<bigintType = bigint> = {
-  /** Execution context: default, verify, or sender. */
-  mode: Mode
-  /** Approval scope and atomic batching bits. */
-  flags: number
-  /** Target address. Omit to target the transaction sender. */
-  target?: Address.Address | undefined
-  /** Execution gas budget. */
-  executionGasLimit: bigintType
-  /** State gas budget. */
-  stateGasLimit: bigintType
-  /** Value transferred by a sender frame, in wei. */
-  value: bigintType
   /** Frame calldata. */
   data: Hex.Hex
+  /** Execution gas budget. */
+  executionGasLimit: bigintType
+  /** Approval scope and atomic batching bits. */
+  flags: number
+  /** Execution context: default, verify, or sender. */
+  mode: Mode
+  /** State gas budget. */
+  stateGasLimit: bigintType
+  /** Target address. Omit to target the transaction sender. */
+  target?: Address.Address | undefined
+  /** Value transferred by a sender frame, in wei. */
+  value: bigintType
 }
 
 /** Frame execution modes. */
