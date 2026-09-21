@@ -154,6 +154,8 @@ export default defineConfig({
         test: {
           name: 'frames',
           include: ['test/frames/**/*.test.ts'],
+          globalSetup: [join(root, 'test/frames/setup.global.ts')],
+          setupFiles: [join(root, 'test/frames/setup.ts')],
           hookTimeout: 180_000,
           testTimeout: 180_000,
           retry: 0,
