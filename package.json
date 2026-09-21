@@ -586,6 +586,16 @@
       "types": "./dist/core/TxEnvelopeLegacy.d.ts",
       "default": "./dist/core/TxEnvelopeLegacy.js"
     },
+    "./TxFrame": {
+      "src": "./src/core/TxFrame.ts",
+      "types": "./dist/core/TxFrame.d.ts",
+      "default": "./dist/core/TxFrame.js"
+    },
+    "./TxFrameSignature": {
+      "src": "./src/core/TxFrameSignature.ts",
+      "types": "./dist/core/TxFrameSignature.d.ts",
+      "default": "./dist/core/TxFrameSignature.js"
+    },
     "./TypedData": {
       "src": "./src/core/TypedData.ts",
       "types": "./dist/core/TypedData.d.ts",

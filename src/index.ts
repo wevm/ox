@@ -3681,6 +3681,43 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
 export * as TxEnvelopeLegacy from './core/TxEnvelopeLegacy.js'
 
 /**
+ * Types, validation, and tuple encoding for EIP-8141 call frames.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxFrame } from 'ox'
+ * const frame = TxFrame.from({
+ *   mode: 1,
+ *   flags: 3,
+ *   executionGasLimit: 50_000n,
+ *   stateGasLimit: 0n,
+ *   value: 0n,
+ *   data: '0x'
+ * })
+ * ```
+ *
+ * @category Transaction Envelopes
+ */
+export * as TxFrame from './core/TxFrame.js'
+
+/**
+ * Encoding and structural validation for EIP-8141 signature entries.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxFrameSignature } from 'ox'
+ * const signature = TxFrameSignature.from({
+ *   scheme: 0,
+ *   msg: '0x',
+ *   signature: '0xaabb'
+ * })
+ * ```
+ *
+ * @category Transaction Envelopes
+ */
+export * as TxFrameSignature from './core/TxFrameSignature.js'
+
+/**
  * Utility functions for working with [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712)
  *
  * @example
