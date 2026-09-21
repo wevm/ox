@@ -85,3 +85,12 @@ test('mode accepts numbers and a strict named union', () => {
     number | 'default' | 'verify' | 'sender'
   >()
 })
+
+test('allows omitted zero fields without widening supplied literals', () => {
+  expectTypeOf(Frame.from({})).toEqualTypeOf<{}>()
+  const frame = Frame.from({ mode: 'verify' })
+  expectTypeOf(frame.mode).toEqualTypeOf<'verify'>()
+  expectTypeOf(
+    Frame.toTuple({ mode: 'sender', value: 1n }),
+  ).toEqualTypeOf<Frame.Tuple>()
+})

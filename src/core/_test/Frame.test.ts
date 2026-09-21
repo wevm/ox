@@ -13,6 +13,11 @@ const frame = {
 const tuple = ['0x01', '0x03', '0x', ['0xc350', '0x'], '0x', '0x'] as const
 
 describe('from', () => {
+  test('preserves omitted fields', () => {
+    expect(Frame.from({ mode: 'verify' })).toEqual({ mode: 'verify' })
+    expect(Frame.from({})).toEqual({})
+  })
+
   test('copies the frame without changing its fields', () => {
     const result = Frame.from(frame)
     expect(result).toEqual(frame)
@@ -21,6 +26,34 @@ describe('from', () => {
 })
 
 describe('toTuple', () => {
+  test('encodes defaults for omitted fields', () => {
+    expect(Frame.toTuple({})).toEqual([
+      '0x',
+      '0x',
+      '0x',
+      ['0x', '0x'],
+      '0x',
+      '0x',
+    ])
+    expect(
+      Frame.toTuple({
+        data: undefined,
+        executionGasLimit: undefined,
+        flags: undefined,
+        mode: undefined,
+        stateGasLimit: undefined,
+        value: undefined,
+      }),
+    ).toEqual(Frame.toTuple({}))
+    expect(
+      Frame.toTuple({
+        executionGasLimit: 50_000n,
+        flags: 'approveExecutionAndPayment',
+        mode: 'verify',
+      }),
+    ).toEqual(tuple)
+  })
+
   test.each([
     ['default', 0],
     ['verify', 1],
@@ -119,6 +152,7 @@ describe('fromTuple', () => {
     [tuple[0], tuple[1], '0x', [], '0x', '0x'],
     [tuple[0], tuple[1], '0x', '0x', '0x', '0x'],
     [tuple[0], tuple[1], undefined, tuple[3], '0x', '0x'],
+    [tuple[0], tuple[1], '0x', tuple[3], '0x', undefined],
     [tuple[0], tuple[1], '0x01', tuple[3], '0x', '0x'],
   ])('rejects malformed tuple %#', (...value) => {
     expect(() => Frame.fromTuple(value as never)).toThrow()
@@ -127,6 +161,12 @@ describe('fromTuple', () => {
 
 describe('assert', () => {
   test.each([
+    { data: null },
+    { executionGasLimit: null },
+    { flags: null },
+    { mode: null },
+    { stateGasLimit: null },
+    { value: null },
     { mode: -1 },
     { mode: 3 },
     { mode: 0.5 },
@@ -165,6 +205,13 @@ describe('assert', () => {
 })
 
 describe('validate', () => {
+  test('validates omitted fields using their defaults', () => {
+    expect(Frame.validate({})).toBe(true)
+    expect(Frame.validate({ value: 1n })).toBe(false)
+    expect(Frame.validate({ mode: 'sender', value: 1n })).toBe(true)
+    expect(Frame.validate({ flags: 'atomicBatch', mode: 'verify' })).toBe(false)
+  })
+
   test('returns structural validity', () => {
     expect(Frame.validate(frame)).toBe(true)
     expect(Frame.validate({ ...frame, value: 1n })).toBe(false)

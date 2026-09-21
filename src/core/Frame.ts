@@ -5,20 +5,38 @@ import * as Hex from './Hex.js'
 
 /** An EIP-8141 call frame. */
 export type Frame<bigintType = bigint> = {
-  /** Frame calldata. */
-  data: Hex.Hex
-  /** Execution gas budget. */
-  executionGasLimit: bigintType
-  /** Approval scope and atomic batching bits. */
-  flags: Flags
-  /** Execution context: default, verify, or sender. */
-  mode: Mode
-  /** State gas budget. */
-  stateGasLimit: bigintType
+  /**
+   * Frame calldata.
+   * @default '0x'
+   */
+  data?: Hex.Hex | undefined
+  /**
+   * Execution gas budget.
+   * @default 0n
+   */
+  executionGasLimit?: bigintType | undefined
+  /**
+   * Approval scope and atomic batching bits.
+   * @default 0
+   */
+  flags?: Flags | undefined
+  /**
+   * Execution context: default, verify, or sender.
+   * @default 0
+   */
+  mode?: Mode | undefined
+  /**
+   * State gas budget.
+   * @default 0n
+   */
+  stateGasLimit?: bigintType | undefined
   /** Target address. Omit to target the transaction sender. */
   target?: Address.Address | undefined
-  /** Value transferred by a sender frame, in wei. */
-  value: bigintType
+  /**
+   * Value transferred by a sender frame, in wei.
+   * @default 0n
+   */
+  value?: bigintType | undefined
 }
 
 /** Frame execution modes. */
@@ -64,23 +82,27 @@ export type Tuple = readonly [
  * import { Frame } from 'ox'
  *
  * Frame.assert({
- *   data: '0x',
  *   executionGasLimit: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   mode: 'verify',
- *   stateGasLimit: 0n,
- *   value: 0n
+ *   mode: 'verify'
  * })
  * ```
  *
  * @param frame - The frame to assert.
  */
 export function assert(frame: Frame): void {
-  const mode = typeof frame.mode === 'string' ? modes[frame.mode] : frame.mode
+  const {
+    data = '0x',
+    executionGasLimit = 0n,
+    flags: flagsValue = 0,
+    mode: modeValue = 0,
+    stateGasLimit = 0n,
+    value = 0n,
+  } = frame
+  const mode = typeof modeValue === 'string' ? modes[modeValue] : modeValue
   if (!Number.isInteger(mode) || mode < 0 || mode > 2)
     throw new InvalidError('mode must be a supported name or 0, 1, or 2.')
-  const flags_ =
-    typeof frame.flags === 'string' ? flags[frame.flags] : frame.flags
+  const flags_ = typeof flagsValue === 'string' ? flags[flagsValue] : flagsValue
   if (!Number.isInteger(flags_) || flags_ < 0 || flags_ > 7)
     throw new InvalidError(
       'flags must be a supported name or an integer from 0 to 7.',
@@ -95,25 +117,20 @@ export function assert(frame: Frame): void {
   }
   if (frame.target !== undefined)
     Address.assert(frame.target, { strict: false })
-  for (const field of ['executionGasLimit', 'stateGasLimit'] as const)
-    if (
-      typeof frame[field] !== 'bigint' ||
-      frame[field] < 0n ||
-      frame[field] >= 2n ** 64n
-    )
+  for (const [field, limit] of [
+    ['executionGasLimit', executionGasLimit],
+    ['stateGasLimit', stateGasLimit],
+  ] as const)
+    if (typeof limit !== 'bigint' || limit < 0n || limit >= 2n ** 64n)
       throw new InvalidError(`${field} must be an unsigned 64-bit integer.`)
-  if (frame.executionGasLimit + frame.stateGasLimit >= 2n ** 64n)
+  if (executionGasLimit + stateGasLimit >= 2n ** 64n)
     throw new InvalidError('Combined frame gas must be less than 2^64.')
-  if (
-    typeof frame.value !== 'bigint' ||
-    frame.value < 0n ||
-    frame.value >= 2n ** 256n
-  )
+  if (typeof value !== 'bigint' || value < 0n || value >= 2n ** 256n)
     throw new InvalidError('value must be an unsigned 256-bit integer.')
-  if (mode !== modes.sender && frame.value !== 0n)
+  if (mode !== modes.sender && value !== 0n)
     throw new InvalidError('Only SENDER frames can transfer value.')
-  Hex.assert(frame.data, { strict: true })
-  if (frame.data.length % 2 !== 0)
+  Hex.assert(data, { strict: true })
+  if (data.length % 2 !== 0)
     throw new InvalidError('data must contain whole bytes.')
 }
 
@@ -129,7 +146,8 @@ export declare namespace assert {
  * Coerces a frame object into a {@link ox#Frame.Frame}.
  *
  * Validates the frame and returns a copy, preserving literal types and the supplied
- * numeric or named mode and flags.
+ * numeric or named mode and flags. Omitted fields stay omitted;
+ * {@link ox#Frame.(toTuple:function)} supplies their defaults when encoding.
  *
  * @example
  * ### Basic Usage
@@ -140,12 +158,9 @@ export declare namespace assert {
  * import { Frame } from 'ox'
  *
  * const frame = Frame.from({
- *   data: '0x',
  *   executionGasLimit: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   mode: 'verify',
- *   stateGasLimit: 0n,
- *   value: 0n
+ *   mode: 'verify'
  * })
  * ```
  *
@@ -208,6 +223,7 @@ export function fromTuple(tuple: Tuple): Frame {
     )
   const [mode, flags, target, [execution, state], value, data] = tuple
   Hex.assert(target, { strict: true })
+  Hex.assert(data, { strict: true })
   const quantities = [mode, flags, execution, state, value]
   for (const quantity of quantities) {
     Hex.assert(quantity, { strict: true })
@@ -240,7 +256,8 @@ export declare namespace fromTuple {
  * Converts a {@link ox#Frame.Frame} to its RLP-ready {@link ox#Frame.Tuple}.
  *
  * Named mode and flags are encoded as integers. An omitted target and zero integer
- * fields are encoded as empty bytes.
+ * fields are encoded as empty bytes. Omitted mode and flags default to zero;
+ * omitted gas limits and value default to `0n`, and data defaults to `'0x'`.
  *
  * @example
  * ### Basic Usage
@@ -251,12 +268,9 @@ export declare namespace fromTuple {
  * import { Frame } from 'ox'
  *
  * const tuple = Frame.toTuple({
- *   data: '0x',
  *   executionGasLimit: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   mode: 'verify',
- *   stateGasLimit: 0n,
- *   value: 0n
+ *   mode: 'verify'
  * })
  * // @log: ['0x01', '0x03', '0x', ['0xc350', '0x'], '0x', '0x']
  * ```
@@ -266,9 +280,10 @@ export declare namespace fromTuple {
  */
 export function toTuple(frame: Frame): Tuple {
   assert(frame)
-  const mode = typeof frame.mode === 'string' ? modes[frame.mode] : frame.mode
+  const mode =
+    typeof frame.mode === 'string' ? modes[frame.mode] : (frame.mode ?? 0)
   const flags_ =
-    typeof frame.flags === 'string' ? flags[frame.flags] : frame.flags
+    typeof frame.flags === 'string' ? flags[frame.flags] : (frame.flags ?? 0)
   return [
     mode ? Hex.fromBytes(Bytes.fromNumber(mode)) : '0x',
     flags_ ? Hex.fromBytes(Bytes.fromNumber(flags_)) : '0x',
@@ -282,7 +297,7 @@ export function toTuple(frame: Frame): Tuple {
         : '0x',
     ],
     frame.value ? Hex.fromBytes(Bytes.fromNumber(frame.value)) : '0x',
-    frame.data,
+    frame.data ?? '0x',
   ]
 }
 
@@ -308,12 +323,9 @@ export declare namespace toTuple {
  * import { Frame } from 'ox'
  *
  * const valid = Frame.validate({
- *   data: '0x',
  *   executionGasLimit: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   mode: 'verify',
- *   stateGasLimit: 0n,
- *   value: 0n
+ *   mode: 'verify'
  * })
  * // @log: true
  * ```
