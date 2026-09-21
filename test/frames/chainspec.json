@@ -69,7 +69,9 @@
     "eip7976TransitionTimestamp": "0x0",
     "eip8037TransitionTimestamp": "0x0",
     "eip7708TransitionTimestamp": "0x0",
-    "eip8141TransitionTimestamp": "0x0"
+    "eip8141TransitionTimestamp": "0x0",
+    "eip7951TransitionTimestamp": "0x0",
+    "eip7594TransitionTimestamp": "0x0"
   },
   "genesis": {
     "seal": {
@@ -97,6 +99,16 @@
     },
     "70997970c51812dc3a010c7d01b50e0d17dc79c8": {
       "balance": "1000000000000000000000"
+    },
+    "0000000000000000000000000000000000001000": {
+      "balance": "0",
+      "code": "0x5f5ffd",
+      "nonce": "1"
+    },
+    "1ecba262e4510f333fb5051743e2a53a765debd0": {
+      "balance": "1000000000000000000000",
+      "code": "0x5f5fb4301460015fb46002141660025fb415166019575f5ffd5b60035f5faa",
+      "nonce": "1"
     }
   }
 }

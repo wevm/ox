@@ -3559,6 +3559,26 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * @category Transaction Envelopes
  */
 export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
+
+/**
+ * Utilities for constructing, signing, and encoding EIP-8141 frame transactions.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { TxEnvelopeEip8141 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip8141.from({
+ *   chainId: 1,
+ *   frames: [{ gas: 50_000n, mode: 'sender' }],
+ *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ * })
+ * ```
+ *
+ * @category Transaction
+ */
+export * as TxEnvelopeEip8141 from './core/TxEnvelopeEip8141.js'
 /**
  * Utility functions for working
  * with **Legacy Transaction Envelopes**.

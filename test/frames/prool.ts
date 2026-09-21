@@ -36,6 +36,8 @@ export const nethermind = Instance.define(() => {
           'false',
           '--Init.LogDirectory',
           '/tmp/logs',
+          '--TxPool.BlobsSupport',
+          'InMemory',
           '--JsonRpc.Host',
           '0.0.0.0',
           '--JsonRpc.EnabledModules',
