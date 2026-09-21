@@ -22,6 +22,25 @@ describe('from', () => {
 
 describe('toTuple', () => {
   test.each([
+    ['default', 0],
+    ['verify', 1],
+    ['sender', 2],
+  ] as const)('encodes named mode %s as %i', (mode, numeric) => {
+    const input = { ...frame, mode }
+    const encoded = Frame.toTuple(input)
+    expect(encoded).toEqual(Frame.toTuple({ ...input, mode: numeric }))
+    expect(encoded[0]).toBe(numeric === 0 ? '0x' : `0x0${numeric}`)
+    expect(Frame.from(input).mode).toBe(mode)
+    expect(Frame.fromTuple(encoded).mode).toBe(numeric)
+  })
+
+  test('encodes value transfers in sender mode', () => {
+    expect(
+      Frame.toTuple({ ...frame, mode: 'sender', flags: 'none', value: 1n }),
+    ).toEqual(['0x02', '0x', '0x', ['0xc350', '0x'], '0x01', '0x'])
+  })
+
+  test.each([
     ['none', 0],
     ['approvePayment', 1],
     ['approveExecution', 2],
@@ -112,6 +131,11 @@ describe('assert', () => {
     { mode: 3 },
     { mode: 0.5 },
     { mode: NaN },
+    { mode: 'unknown' },
+    { mode: 'toString' },
+    { mode: 'verify', flags: 'atomicBatch' },
+    { mode: 'verify', value: 1n },
+    { mode: 'default', value: 1n },
     { flags: -1 },
     { flags: 8 },
     { flags: 1.5 },

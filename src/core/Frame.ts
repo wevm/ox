@@ -24,8 +24,8 @@ export type Frame<bigintType = bigint> = {
 /** Frame execution modes. */
 export const modes = { default: 0, verify: 1, sender: 2 } as const
 
-/** A frame execution mode. */
-export type Mode = (typeof modes)[keyof typeof modes]
+/** A numeric or named frame execution mode. */
+export type Mode = number | keyof typeof modes
 
 /** Approval and atomic batching flags. */
 export const flags = {
@@ -57,7 +57,7 @@ export type Tuple = readonly [
  * ```ts twoslash
  * import { Frame } from 'ox'
  * Frame.assert({
- *   mode: 1,
+ *   mode: 'verify',
  *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
@@ -68,8 +68,9 @@ export type Tuple = readonly [
  * @param frame - Frame to check.
  */
 export function assert(frame: Frame): void {
-  if (!Number.isInteger(frame.mode) || frame.mode < 0 || frame.mode > 2)
-    throw new InvalidError('mode must be 0, 1, or 2.')
+  const mode = typeof frame.mode === 'string' ? modes[frame.mode] : frame.mode
+  if (!Number.isInteger(mode) || mode < 0 || mode > 2)
+    throw new InvalidError('mode must be a supported name or 0, 1, or 2.')
   const flags_ =
     typeof frame.flags === 'string' ? flags[frame.flags] : frame.flags
   if (!Number.isInteger(flags_) || flags_ < 0 || flags_ > 7)
@@ -77,7 +78,7 @@ export function assert(frame: Frame): void {
       'flags must be a supported name or an integer from 0 to 7.',
     )
   if (flags_ & flags.atomicBatch) {
-    if (frame.mode === modes.verify)
+    if (mode === modes.verify)
       throw new InvalidError('VERIFY frames cannot belong to an atomic batch.')
     if (flags_ & flags.approveExecutionAndPayment)
       throw new InvalidError(
@@ -101,7 +102,7 @@ export function assert(frame: Frame): void {
     frame.value >= 2n ** 256n
   )
     throw new InvalidError('value must be an unsigned 256-bit integer.')
-  if (frame.mode !== modes.sender && frame.value !== 0n)
+  if (mode !== modes.sender && frame.value !== 0n)
     throw new InvalidError('Only SENDER frames can transfer value.')
   Hex.assert(frame.data, { strict: true })
   if (frame.data.length % 2 !== 0)
@@ -123,7 +124,7 @@ export declare namespace assert {
  * ```ts twoslash
  * import { Frame } from 'ox'
  * const frame = Frame.from({
- *   mode: 1,
+ *   mode: 'verify',
  *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
@@ -144,7 +145,7 @@ export declare namespace from {
 }
 
 /**
- * Decodes a frame tuple with numeric flags. Rejects noncanonical integer encodings.
+ * Decodes a frame tuple with numeric mode and flags. Rejects noncanonical integer encodings.
  *
  * @example
  * ```ts twoslash
@@ -182,7 +183,7 @@ export function fromTuple(tuple: Tuple): Frame {
       )
   }
   const frame = {
-    mode: (mode === '0x' ? 0 : Hex.toNumber(mode)) as Mode,
+    mode: mode === '0x' ? 0 : Hex.toNumber(mode),
     flags: flags === '0x' ? 0 : Hex.toNumber(flags),
     ...(target === '0x' ? {} : { target }),
     executionGasLimit: execution === '0x' ? 0n : Hex.toBigInt(execution),
@@ -208,7 +209,7 @@ export declare namespace fromTuple {
  * ```ts twoslash
  * import { Frame } from 'ox'
  * const tuple = Frame.toTuple({
- *   mode: 1,
+ *   mode: 'verify',
  *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
@@ -221,10 +222,11 @@ export declare namespace fromTuple {
  */
 export function toTuple(frame: Frame): Tuple {
   assert(frame)
+  const mode = typeof frame.mode === 'string' ? modes[frame.mode] : frame.mode
   const flags_ =
     typeof frame.flags === 'string' ? flags[frame.flags] : frame.flags
   return [
-    frame.mode ? Hex.fromBytes(Bytes.fromNumber(frame.mode)) : '0x',
+    mode ? Hex.fromBytes(Bytes.fromNumber(mode)) : '0x',
     flags_ ? Hex.fromBytes(Bytes.fromNumber(flags_)) : '0x',
     frame.target ?? '0x',
     [
@@ -254,7 +256,7 @@ export declare namespace toTuple {
  * ```ts twoslash
  * import { Frame } from 'ox'
  * Frame.validate({
- *   mode: 1,
+ *   mode: 'verify',
  *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,

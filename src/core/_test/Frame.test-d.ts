@@ -30,8 +30,8 @@ test('tuple accepts readonly input', () => {
 
 test('rejects unsupported modes and unsafe numeric budgets', () => {
   Frame.from({
-    // @ts-expect-error Unsupported execution mode.
-    mode: 3,
+    // @ts-expect-error Unknown mode names are not supported.
+    mode: 'unknown',
     flags: 0,
     executionGasLimit: 0n,
     stateGasLimit: 0n,
@@ -69,4 +69,19 @@ test('flags accept numbers and a strict named union', () => {
   >()
   // @ts-expect-error Unknown flag names are not supported.
   Frame.from({ ...input, flags: 'unknown' })
+})
+
+test('mode accepts numbers and a strict named union', () => {
+  const frame = Frame.from({
+    data: '0x',
+    executionGasLimit: 0n,
+    flags: 0,
+    mode: 'sender',
+    stateGasLimit: 0n,
+    value: 1n,
+  })
+  expectTypeOf(frame.mode).toEqualTypeOf<'sender'>()
+  expectTypeOf<Frame.Mode>().toEqualTypeOf<
+    number | 'default' | 'verify' | 'sender'
+  >()
 })
