@@ -384,12 +384,11 @@ export function fromSecp256k1<const signature extends Signature.Signature>(
   signature: signature,
   options: fromSecp256k1.Options = {},
 ) {
-  const entry = {
+  const entry = from({
     ...options,
-    payload: options.payload ?? '0x',
-    scheme: 'secp256k1' as const,
+    scheme: 'secp256k1',
     signature,
-  }
+  })
   assert(entry, { signed: true })
   return entry
 }
