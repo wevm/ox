@@ -3,10 +3,10 @@ import { Rlp, Frame } from 'ox'
 
 const frame = {
   data: '0x',
-  executionGasLimit: 50_000n,
   flags: 3,
+  gas: 50_000n,
   mode: 1,
-  stateGasLimit: 0n,
+  stateGas: 0n,
   value: 0n,
 } as const
 
@@ -38,17 +38,17 @@ describe('toTuple', () => {
     expect(
       Frame.toTuple({
         data: undefined,
-        executionGasLimit: undefined,
         flags: undefined,
+        gas: undefined,
         mode: undefined,
-        stateGasLimit: undefined,
+        stateGas: undefined,
         value: undefined,
       }),
     ).toEqual(Frame.toTuple({}))
     expect(
       Frame.toTuple({
-        executionGasLimit: 50_000n,
         flags: 'approveExecutionAndPayment',
+        gas: 50_000n,
         mode: 'verify',
       }),
     ).toEqual(tuple)
@@ -97,9 +97,7 @@ describe('toTuple', () => {
 
   test('encodes zero integers as empty bytes', () => {
     expect(
-      Rlp.fromHex(
-        Frame.toTuple({ ...frame, executionGasLimit: 0n, flags: 0, mode: 0 }),
-      ),
+      Rlp.fromHex(Frame.toTuple({ ...frame, flags: 0, gas: 0n, mode: 0 })),
     ).toMatchInlineSnapshot('"0xc8808080c280808080"')
   })
 
@@ -107,10 +105,10 @@ describe('toTuple', () => {
     const input = {
       ...frame,
       data: '0x0001',
-      executionGasLimit: 2n ** 63n,
       flags: 0,
+      gas: 2n ** 63n,
       mode: 2,
-      stateGasLimit: 2n ** 63n - 1n,
+      stateGas: 2n ** 63n - 1n,
       value: 2n ** 256n - 1n,
     } as const
     expect(Frame.fromTuple(Frame.toTuple(input))).toEqual(input)
@@ -162,10 +160,10 @@ describe('fromTuple', () => {
 describe('assert', () => {
   test.each([
     { data: null },
-    { executionGasLimit: null },
     { flags: null },
+    { gas: null },
     { mode: null },
-    { stateGasLimit: null },
+    { stateGas: null },
     { value: null },
     { mode: -1 },
     { mode: 3 },
@@ -187,11 +185,11 @@ describe('assert', () => {
     { value: 1n },
     { mode: 2, value: -1n },
     { mode: 2, value: 2n ** 256n },
-    { executionGasLimit: -1n },
-    { executionGasLimit: 2n ** 64n },
-    { stateGasLimit: -1n },
-    { stateGasLimit: 2n ** 64n },
-    { executionGasLimit: 2n ** 64n - 1n, stateGasLimit: 1n },
+    { gas: -1n },
+    { gas: 2n ** 64n },
+    { stateGas: -1n },
+    { stateGas: 2n ** 64n },
+    { gas: 2n ** 64n - 1n, stateGas: 1n },
     { data: '0x0' },
     { data: '0xgg' },
     { target: '0x01' },

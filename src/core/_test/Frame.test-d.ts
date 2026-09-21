@@ -4,14 +4,14 @@ import { expectTypeOf, test } from 'vite-plus/test'
 test('from preserves literals', () => {
   const frame = Frame.from({
     data: '0x',
-    executionGasLimit: 50_000n,
     flags: 3,
+    gas: 50_000n,
     mode: 1,
-    stateGasLimit: 0n,
+    stateGas: 0n,
     value: 0n,
   })
   expectTypeOf(frame.mode).toEqualTypeOf<1>()
-  expectTypeOf(frame.executionGasLimit).toEqualTypeOf<50_000n>()
+  expectTypeOf(frame.gas).toEqualTypeOf<50_000n>()
   expectTypeOf(Frame.toTuple(frame)).toEqualTypeOf<Frame.Tuple>()
 })
 
@@ -31,20 +31,20 @@ test('tuple accepts readonly input', () => {
 test('rejects unsupported modes and unsafe numeric budgets', () => {
   Frame.from({
     data: '0x',
-    executionGasLimit: 0n,
     flags: 0,
+    gas: 0n,
     // @ts-expect-error Unknown mode names are not supported.
     mode: 'unknown',
-    stateGasLimit: 0n,
+    stateGas: 0n,
     value: 0n,
   })
   Frame.from({
     data: '0x',
-    // @ts-expect-error Gas budgets use bigint.
-    executionGasLimit: 1,
     flags: 0,
+    // @ts-expect-error Gas budgets use bigint.
+    gas: 1,
     mode: 1,
-    stateGasLimit: 0n,
+    stateGas: 0n,
     value: 0n,
   })
 })
@@ -52,10 +52,10 @@ test('rejects unsupported modes and unsafe numeric budgets', () => {
 test('flags accept numbers and a strict named union', () => {
   const input = {
     data: '0x',
-    executionGasLimit: 0n,
     flags: 'approvePayment',
+    gas: 0n,
     mode: 1,
-    stateGasLimit: 0n,
+    stateGas: 0n,
     value: 0n,
   } as const
   expectTypeOf(Frame.from(input).flags).toEqualTypeOf<'approvePayment'>()
@@ -74,10 +74,10 @@ test('flags accept numbers and a strict named union', () => {
 test('mode accepts numbers and a strict named union', () => {
   const frame = Frame.from({
     data: '0x',
-    executionGasLimit: 0n,
     flags: 0,
+    gas: 0n,
     mode: 'sender',
-    stateGasLimit: 0n,
+    stateGas: 0n,
     value: 1n,
   })
   expectTypeOf(frame.mode).toEqualTypeOf<'sender'>()

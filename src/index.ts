@@ -1618,8 +1618,8 @@ export * as Filter from './core/Filter.js'
  * import { Frame } from 'ox'
  *
  * const frame = Frame.from({
- *   executionGasLimit: 50_000n,
  *   flags: 'approveExecutionAndPayment',
+ *   gas: 50_000n,
  *   mode: 'verify'
  * })
  * ```
