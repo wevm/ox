@@ -223,6 +223,86 @@ export declare namespace from {
 }
 
 /**
+ * Constructs a structured P-256 entry. High-s is normalized when encoding with `toTuple`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { FrameSignature, Hex, P256 } from 'ox'
+ * const privateKey = Hex.fromNumber(1, { size: 32 })
+ * const signature = P256.sign({
+ *   payload: Hex.fromNumber(1, { size: 32 }),
+ *   privateKey
+ * })
+ * const entry = FrameSignature.fromP256(signature, {
+ *   publicKey: P256.getPublicKey({ privateKey })
+ * })
+ * ```
+ * @param signature - P-256 signature.
+ * @param options - Public key and optional signature metadata.
+ * @returns A structurally validated P-256 entry.
+ */
+export function fromP256<const signature extends Signature.Signature<false>>(
+  signature: signature,
+  options: fromP256.Options,
+) {
+  const entry = from({
+    ...options,
+    scheme: 'p256',
+    signature,
+  })
+  assert(entry, { signed: true })
+  return entry
+}
+
+export declare namespace fromP256 {
+  type Options = fromSecp256k1.Options & {
+    /** Uncompressed P-256 public key. */
+    publicKey: PublicKey.PublicKey
+  }
+  type ErrorType = assert.ErrorType
+}
+
+/**
+ * Constructs a structured secp256k1 entry, defaulting to the transaction signing hash.
+ *
+ * @example
+ * ```ts twoslash
+ * import { FrameSignature, Hex, Secp256k1 } from 'ox'
+ * const signature = Secp256k1.sign({
+ *   payload: Hex.fromNumber(1, { size: 32 }),
+ *   privateKey: Hex.fromNumber(1, { size: 32 })
+ * })
+ * const entry = FrameSignature.fromSecp256k1(signature)
+ * ```
+ * @param signature - Low-s recovered signature.
+ * @param options - Optional signature metadata.
+ * @returns A structurally validated secp256k1 entry.
+ */
+export function fromSecp256k1<const signature extends Signature.Signature>(
+  signature: signature,
+  options: fromSecp256k1.Options = {},
+) {
+  const entry = {
+    ...options,
+    payload: options.payload ?? '0x',
+    scheme: 'secp256k1' as const,
+    signature,
+  }
+  assert(entry, { signed: true })
+  return entry
+}
+
+export declare namespace fromSecp256k1 {
+  type Options = {
+    /** Explicit digest. Omit to use the transaction signing hash. */
+    payload?: Hex.Hex | undefined
+    /** Signer address. Omit to use the transaction sender. */
+    signer?: Address.Address | undefined
+  }
+  type ErrorType = assert.ErrorType
+}
+
+/**
  * Decodes a signature tuple into a structured entry with a named scheme.
  * Rejects noncanonical signature encodings, including high-s P-256 signatures.
  *
