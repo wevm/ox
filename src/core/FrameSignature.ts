@@ -33,7 +33,7 @@ export type Secp256k1 = {
   payload: Hex.Hex
   /** secp256k1 verification scheme. */
   scheme: 1 | 'secp256k1'
-  /** Low-s recovered signature. Omit for an unsigned entry. */
+  /** Recovered signature. Omit for an unsigned entry. */
   signature?: Signature.Signature | undefined
   /** Signer address. Omit to use the transaction sender. */
   signer?: Address.Address | undefined
@@ -51,7 +51,7 @@ export type P256 = {
   | {
       /** Uncompressed P-256 public key. */
       publicKey: PublicKey.PublicKey
-      /** P-256 signature. High-s is normalized when encoding. */
+      /** P-256 signature. */
       signature: Signature.Signature<false>
     }
   | {
@@ -77,8 +77,7 @@ export type Tuple = readonly [
  * Asserts that a {@link ox#FrameSignature.FrameSignature} is structurally valid.
  *
  * Checks metadata, signature scalars, and public key shape without verifying
- * authorization. P-256 high-s signatures are accepted and normalized by
- * {@link ox#FrameSignature.(toTuple:function)}.
+ * authorization.
  *
  * @example
  * ### Basic Usage
@@ -306,8 +305,7 @@ export declare namespace from {
  * Creates a {@link ox#FrameSignature.P256} entry from a {@link ox#Signature.Signature}
  * and {@link ox#PublicKey.PublicKey}.
  *
- * The payload defaults to the canonical transaction signing hash. Signature bytes
- * are packed and high-s is normalized by {@link ox#FrameSignature.(toTuple:function)}.
+ * The payload defaults to the canonical transaction signing hash.
  *
  * @example
  * ### Basic Usage
@@ -363,8 +361,8 @@ export declare namespace fromP256 {
  * Creates a {@link ox#FrameSignature.Secp256k1} entry from a recovered
  * {@link ox#Signature.Signature}.
  *
- * The signature must use low-s encoding and contain `yParity`. The payload defaults
- * to the canonical transaction signing hash.
+ * The signature must contain `yParity`. The payload defaults to the canonical
+ * transaction signing hash.
  *
  * @example
  * ### Basic Usage
@@ -422,7 +420,7 @@ export declare namespace fromSecp256k1 {
  * {@link ox#FrameSignature.FrameSignature}.
  *
  * Returns a named scheme and unpacks protocol signatures. Empty protocol signatures
- * become unsigned entries. Rejects noncanonical encodings, including P-256 high-s.
+ * become unsigned entries. Rejects noncanonical encodings.
  *
  * @example
  * ### Basic Usage
@@ -506,7 +504,7 @@ export declare namespace fromTuple {
  * {@link ox#FrameSignature.Tuple}.
  *
  * Encodes numeric scheme identifiers and packs protocol signatures without mutating
- * the entry. P-256 high-s is normalized. Omitted protocol signatures become empty bytes.
+ * the entry. Omitted protocol signatures become empty bytes.
  *
  * @example
  * ### Basic Usage
