@@ -53,3 +53,14 @@ test('explicit undefined defaults remain narrow', () => {
   expectTypeOf(entry.scheme).toEqualTypeOf<'arbitrary'>()
   expectTypeOf(entry.payload).toEqualTypeOf<'0x'>()
 })
+
+test('from hex preserves signature literals and default metadata', () => {
+  const entry = FrameSignature.from('0xaabb')
+  expectTypeOf(entry).toEqualTypeOf<{
+    payload: '0x'
+    scheme: 'arbitrary'
+    signature: '0xaabb'
+  }>()
+  // @ts-expect-error Signature bytes must be hex-prefixed.
+  FrameSignature.from('aabb')
+})

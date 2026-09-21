@@ -161,7 +161,7 @@ export declare namespace assert {
  * @example
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
- * const entry = FrameSignature.from({ signature: '0xaabb' })
+ * const entry = FrameSignature.from('0xaabb')
  * ```
  * @example
  * ```ts twoslash
@@ -177,41 +177,48 @@ export declare namespace assert {
  *   signature
  * })
  * ```
- * @param entry - Signature entry with optional defaults.
+ * @param entry - Arbitrary signature bytes, or a signature entry with optional defaults.
  * @returns A validated copy, retaining the supplied scheme representation and signature.
  */
 export function from<const entry extends from.Input>(
   entry: entry | from.Input,
 ): from.ReturnType<entry> {
-  const result = {
-    ...entry,
-    scheme: entry.scheme ?? 'arbitrary',
-    payload: entry.payload ?? '0x',
-  } as FrameSignature
+  const result = (
+    typeof entry === 'string'
+      ? { payload: '0x', scheme: 'arbitrary', signature: entry }
+      : {
+          ...entry,
+          scheme: entry.scheme ?? 'arbitrary',
+          payload: entry.payload ?? '0x',
+        }
+  ) as FrameSignature
   assert(result)
   return result as from.ReturnType<entry>
 }
 
 export declare namespace from {
   type Input =
+    | Hex.Hex
     | UnionPartialBy<Arbitrary, 'scheme' | 'payload'>
     | UnionPartialBy<Secp256k1 | P256, 'payload'>
-  type ReturnType<entry extends Input = Input> = entry extends Input
-    ? Compute<
-        Omit<entry, 'scheme' | 'payload'> & {
-          payload: entry extends { payload: infer payload extends Hex.Hex }
-            ? payload
-            : 'payload' extends keyof entry
-              ? Exclude<entry['payload'], undefined> | '0x'
-              : '0x'
-          scheme: entry extends { scheme: infer scheme extends Scheme }
-            ? scheme
-            : 'scheme' extends keyof entry
-              ? Exclude<entry['scheme'], undefined> | 'arbitrary'
-              : 'arbitrary'
-        }
-      >
-    : never
+  type ReturnType<entry extends Input = Input> = entry extends Hex.Hex
+    ? { payload: '0x'; scheme: 'arbitrary'; signature: entry }
+    : entry extends Input
+      ? Compute<
+          Omit<entry, 'scheme' | 'payload'> & {
+            payload: entry extends { payload: infer payload extends Hex.Hex }
+              ? payload
+              : 'payload' extends keyof entry
+                ? Exclude<entry['payload'], undefined> | '0x'
+                : '0x'
+            scheme: entry extends { scheme: infer scheme extends Scheme }
+              ? scheme
+              : 'scheme' extends keyof entry
+                ? Exclude<entry['scheme'], undefined> | 'arbitrary'
+                : 'arbitrary'
+          }
+        >
+      : never
   type ErrorType = assert.ErrorType
 }
 
