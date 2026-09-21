@@ -41,6 +41,8 @@ test('exports', () => {
       "Errors",
       "Fee",
       "Filter",
+      "Frame",
+      "FrameSignature",
       "Hash",
       "HdKey",
       "Hex",
