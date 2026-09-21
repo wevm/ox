@@ -152,7 +152,8 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'frames',
+          // Temporary until frame transaction support is upstreamed into Anvil.
+          name: 'tmp_frames',
           include: ['test/frames/**/*.test.ts'],
           globalSetup: [join(root, 'test/frames/setup.global.ts')],
           setupFiles: [join(root, 'test/frames/setup.ts')],
