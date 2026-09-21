@@ -14,7 +14,7 @@ const fixture: Fixture = JSON.parse(
 )
 
 describe('frame transaction harness', () => {
-  test('mines an independently signed transaction', async ({ rpc }) => {
+  test('mines the fixed signed transaction', async ({ rpc }) => {
     expect(
       await rpc.request({
         method: 'eth_getBalance',

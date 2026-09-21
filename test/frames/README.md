@@ -20,9 +20,9 @@ The consensus configuration follows [Nethermind's Spaceneth chain](https://githu
 
 Blob transaction pooling is disabled by the Spaceneth configuration. This harness verifies non-blob frame transactions; live blob interoperability remains unverified and requires additional pool/KZG configuration before blob tests are added.
 
-## Independent transaction fixture
+## Fixed transaction fixture
 
-`fixtures/transfer.json` is generated with ethers, without Ox's transaction encoding or signing functions. Its wire layout follows [EIP-8141 at revision `b75cbe61`](https://github.com/ethereum/EIPs/blob/b75cbe61150f09a44c38843be916417283d5b7bf/EIPS/eip-8141.md). Regenerate it with:
+`fixtures/transfer.json` is generated with Ox's `Rlp`, `Hash`, `Secp256k1`, and `Signature` primitives. The generator encodes the EIP tuple explicitly, without depending on the future frame transaction APIs. Its wire layout follows [EIP-8141 at revision `b75cbe61`](https://github.com/ethereum/EIPs/blob/b75cbe61150f09a44c38843be916417283d5b7bf/EIPS/eip-8141.md). Regenerate it with:
 
 ```sh
 node --import tsx test/frames/fixtures/generate.ts
