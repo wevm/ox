@@ -152,7 +152,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          // Temporary until frame transaction support is upstreamed into Anvil.
+          // TODO: remove once frame txs in anvil
           name: 'tmp_frames',
           include: ['test/frames/**/*.test.ts'],
           globalSetup: [join(root, 'test/frames/setup.global.ts')],
