@@ -152,6 +152,19 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          // TODO: remove once frame txs in anvil
+          name: 'tmp_frames',
+          include: ['test/frames/**/*.test.ts'],
+          globalSetup: [join(root, 'test/frames/setup.global.ts')],
+          setupFiles: [join(root, 'test/frames/setup.ts')],
+          hookTimeout: 180_000,
+          testTimeout: 180_000,
+          retry: 0,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'core',
           globalSetup: process.env.TYPES
             ? [join(root, 'test/setup.global.types.ts')]
