@@ -334,14 +334,14 @@ export declare namespace from {
 export function fromP256<const signature extends Signature.Signature<false>>(
   signature: signature,
   options: fromP256.Options,
-) {
+): fromP256.ReturnType<signature> {
   const entry = from({
     ...options,
     scheme: 'p256',
     signature,
   })
   assert(entry, { signed: true })
-  return entry
+  return entry as unknown as fromP256.ReturnType<signature>
 }
 
 export declare namespace fromP256 {
@@ -349,6 +349,13 @@ export declare namespace fromP256 {
     /** Uncompressed P-256 public key. */
     publicKey: PublicKey.PublicKey
   }
+  type ReturnType<signature extends Signature.Signature<false>> = Compute<
+    Options & {
+      payload: Hex.Hex
+      scheme: 'p256'
+      signature: signature
+    }
+  >
   type ErrorType = assert.ErrorType
 }
 
@@ -383,7 +390,7 @@ export declare namespace fromP256 {
 export function fromSecp256k1<const signature extends Signature.Signature>(
   signature: signature,
   options: fromSecp256k1.Options = {},
-) {
+): fromSecp256k1.ReturnType<signature> {
   const entry = from({
     ...options,
     scheme: 'secp256k1',
@@ -400,6 +407,13 @@ export declare namespace fromSecp256k1 {
     /** Signer address. Omit to use the transaction sender. */
     signer?: Address.Address | undefined
   }
+  type ReturnType<signature extends Signature.Signature> = Compute<
+    Options & {
+      payload: Hex.Hex
+      scheme: 'secp256k1'
+      signature: signature
+    }
+  >
   type ErrorType = assert.ErrorType
 }
 
