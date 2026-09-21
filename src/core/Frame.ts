@@ -10,7 +10,7 @@ export type Frame<bigintType = bigint> = {
   /** Execution gas budget. */
   executionGasLimit: bigintType
   /** Approval scope and atomic batching bits. */
-  flags: number
+  flags: Flags
   /** Execution context: default, verify, or sender. */
   mode: Mode
   /** State gas budget. */
@@ -36,6 +36,9 @@ export const flags = {
   atomicBatch: 4,
 } as const
 
+/** Numeric approval and batching bits, or a named flag value. */
+export type Flags = number | keyof typeof flags
+
 /** RLP-ready frame tuple. Empty target bytes refer to the transaction sender. */
 export type Tuple = readonly [
   mode: Hex.Hex,
@@ -55,7 +58,7 @@ export type Tuple = readonly [
  * import { Frame } from 'ox'
  * Frame.assert({
  *   mode: 1,
- *   flags: 3,
+ *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
  *   value: 0n,
@@ -67,12 +70,16 @@ export type Tuple = readonly [
 export function assert(frame: Frame): void {
   if (!Number.isInteger(frame.mode) || frame.mode < 0 || frame.mode > 2)
     throw new InvalidError('mode must be 0, 1, or 2.')
-  if (!Number.isInteger(frame.flags) || frame.flags < 0 || frame.flags > 7)
-    throw new InvalidError('flags must be an integer from 0 to 7.')
-  if (frame.flags & flags.atomicBatch) {
+  const flags_ =
+    typeof frame.flags === 'string' ? flags[frame.flags] : frame.flags
+  if (!Number.isInteger(flags_) || flags_ < 0 || flags_ > 7)
+    throw new InvalidError(
+      'flags must be a supported name or an integer from 0 to 7.',
+    )
+  if (flags_ & flags.atomicBatch) {
     if (frame.mode === modes.verify)
       throw new InvalidError('VERIFY frames cannot belong to an atomic batch.')
-    if (frame.flags & flags.approveExecutionAndPayment)
+    if (flags_ & flags.approveExecutionAndPayment)
       throw new InvalidError(
         'Atomic batch frames cannot approve execution or payment.',
       )
@@ -117,7 +124,7 @@ export declare namespace assert {
  * import { Frame } from 'ox'
  * const frame = Frame.from({
  *   mode: 1,
- *   flags: 3,
+ *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
  *   value: 0n,
@@ -137,7 +144,7 @@ export declare namespace from {
 }
 
 /**
- * Decodes a frame tuple. Rejects noncanonical integer encodings.
+ * Decodes a frame tuple with numeric flags. Rejects noncanonical integer encodings.
  *
  * @example
  * ```ts twoslash
@@ -202,7 +209,7 @@ export declare namespace fromTuple {
  * import { Frame } from 'ox'
  * const tuple = Frame.toTuple({
  *   mode: 1,
- *   flags: 3,
+ *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
  *   value: 0n,
@@ -214,9 +221,11 @@ export declare namespace fromTuple {
  */
 export function toTuple(frame: Frame): Tuple {
   assert(frame)
+  const flags_ =
+    typeof frame.flags === 'string' ? flags[frame.flags] : frame.flags
   return [
     frame.mode ? Hex.fromBytes(Bytes.fromNumber(frame.mode)) : '0x',
-    frame.flags ? Hex.fromBytes(Bytes.fromNumber(frame.flags)) : '0x',
+    flags_ ? Hex.fromBytes(Bytes.fromNumber(flags_)) : '0x',
     frame.target ?? '0x',
     [
       frame.executionGasLimit
@@ -246,7 +255,7 @@ export declare namespace toTuple {
  * import { Frame } from 'ox'
  * Frame.validate({
  *   mode: 1,
- *   flags: 3,
+ *   flags: 'approveExecutionAndPayment',
  *   executionGasLimit: 50_000n,
  *   stateGasLimit: 0n,
  *   value: 0n,

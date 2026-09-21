@@ -48,3 +48,25 @@ test('rejects unsupported modes and unsafe numeric budgets', () => {
     data: '0x',
   })
 })
+
+test('flags accept numbers and a strict named union', () => {
+  const input = {
+    data: '0x',
+    executionGasLimit: 0n,
+    flags: 'approvePayment',
+    mode: 1,
+    stateGasLimit: 0n,
+    value: 0n,
+  } as const
+  expectTypeOf(Frame.from(input).flags).toEqualTypeOf<'approvePayment'>()
+  expectTypeOf<Frame.Flags>().toEqualTypeOf<
+    | number
+    | 'none'
+    | 'approvePayment'
+    | 'approveExecution'
+    | 'approveExecutionAndPayment'
+    | 'atomicBatch'
+  >()
+  // @ts-expect-error Unknown flag names are not supported.
+  Frame.from({ ...input, flags: 'unknown' })
+})

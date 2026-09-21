@@ -21,6 +21,21 @@ describe('from', () => {
 })
 
 describe('toTuple', () => {
+  test.each([
+    ['none', 0],
+    ['approvePayment', 1],
+    ['approveExecution', 2],
+    ['approveExecutionAndPayment', 3],
+    ['atomicBatch', 4],
+  ] as const)('encodes named flag %s as %i', (flags, numeric) => {
+    const input = { ...frame, mode: 2, flags } as const
+    const encoded = Frame.toTuple(input)
+    expect(encoded).toEqual(Frame.toTuple({ ...input, flags: numeric }))
+    expect(encoded[1]).toBe(numeric === 0 ? '0x' : `0x0${numeric}`)
+    expect(Frame.from(input).flags).toBe(flags)
+    expect(Frame.fromTuple(encoded).flags).toBe(numeric)
+  })
+
   test('encodes the specification field order', () => {
     expect(Frame.toTuple(frame)).toEqual(tuple)
     expect(Rlp.fromHex(Frame.toTuple(frame))).toMatchInlineSnapshot(
@@ -100,6 +115,9 @@ describe('assert', () => {
     { flags: -1 },
     { flags: 8 },
     { flags: 1.5 },
+    { flags: 'unknown' },
+    { flags: 'toString' },
+    { mode: 1, flags: 'atomicBatch' },
     { mode: 1, flags: 4 },
     { mode: 2, flags: 5 },
     { value: 1n },
