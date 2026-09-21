@@ -3,12 +3,12 @@ import { expectTypeOf, test } from 'vite-plus/test'
 
 test('from preserves literals', () => {
   const frame = Frame.from({
-    mode: 1,
-    flags: 3,
+    data: '0x',
     executionGasLimit: 50_000n,
+    flags: 3,
+    mode: 1,
     stateGasLimit: 0n,
     value: 0n,
-    data: '0x',
   })
   expectTypeOf(frame.mode).toEqualTypeOf<1>()
   expectTypeOf(frame.executionGasLimit).toEqualTypeOf<50_000n>()
@@ -30,22 +30,22 @@ test('tuple accepts readonly input', () => {
 
 test('rejects unsupported modes and unsafe numeric budgets', () => {
   Frame.from({
+    data: '0x',
+    executionGasLimit: 0n,
+    flags: 0,
     // @ts-expect-error Unknown mode names are not supported.
     mode: 'unknown',
-    flags: 0,
-    executionGasLimit: 0n,
     stateGasLimit: 0n,
     value: 0n,
-    data: '0x',
   })
   Frame.from({
-    mode: 1,
-    flags: 0,
+    data: '0x',
     // @ts-expect-error Gas budgets use bigint.
     executionGasLimit: 1,
+    flags: 0,
+    mode: 1,
     stateGasLimit: 0n,
     value: 0n,
-    data: '0x',
   })
 })
 

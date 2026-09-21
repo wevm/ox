@@ -22,18 +22,18 @@ export type Frame<bigintType = bigint> = {
 }
 
 /** Frame execution modes. */
-export const modes = { default: 0, verify: 1, sender: 2 } as const
+export const modes = { default: 0, sender: 2, verify: 1 } as const
 
 /** A numeric or named frame execution mode. */
 export type Mode = number | keyof typeof modes
 
 /** Approval and atomic batching flags. */
 export const flags = {
-  none: 0,
-  approvePayment: 1,
   approveExecution: 2,
   approveExecutionAndPayment: 3,
+  approvePayment: 1,
   atomicBatch: 4,
+  none: 0,
 } as const
 
 /** Numeric approval and batching bits, or a named flag value. */
@@ -57,12 +57,12 @@ export type Tuple = readonly [
  * ```ts twoslash
  * import { Frame } from 'ox'
  * Frame.assert({
- *   mode: 'verify',
- *   flags: 'approveExecutionAndPayment',
+ *   data: '0x',
  *   executionGasLimit: 50_000n,
+ *   flags: 'approveExecutionAndPayment',
+ *   mode: 'verify',
  *   stateGasLimit: 0n,
- *   value: 0n,
- *   data: '0x'
+ *   value: 0n
  * })
  * ```
  * @param frame - Frame to check.
@@ -124,12 +124,12 @@ export declare namespace assert {
  * ```ts twoslash
  * import { Frame } from 'ox'
  * const frame = Frame.from({
- *   mode: 'verify',
- *   flags: 'approveExecutionAndPayment',
+ *   data: '0x',
  *   executionGasLimit: 50_000n,
+ *   flags: 'approveExecutionAndPayment',
+ *   mode: 'verify',
  *   stateGasLimit: 0n,
- *   value: 0n,
- *   data: '0x'
+ *   value: 0n
  * })
  * ```
  * @param frame - Frame to construct.
@@ -183,13 +183,13 @@ export function fromTuple(tuple: Tuple): Frame {
       )
   }
   const frame = {
-    mode: mode === '0x' ? 0 : Hex.toNumber(mode),
-    flags: flags === '0x' ? 0 : Hex.toNumber(flags),
     ...(target === '0x' ? {} : { target }),
+    data,
     executionGasLimit: execution === '0x' ? 0n : Hex.toBigInt(execution),
+    flags: flags === '0x' ? 0 : Hex.toNumber(flags),
+    mode: mode === '0x' ? 0 : Hex.toNumber(mode),
     stateGasLimit: state === '0x' ? 0n : Hex.toBigInt(state),
     value: value === '0x' ? 0n : Hex.toBigInt(value),
-    data,
   }
   assert(frame)
   return frame
@@ -209,12 +209,12 @@ export declare namespace fromTuple {
  * ```ts twoslash
  * import { Frame } from 'ox'
  * const tuple = Frame.toTuple({
- *   mode: 'verify',
- *   flags: 'approveExecutionAndPayment',
+ *   data: '0x',
  *   executionGasLimit: 50_000n,
+ *   flags: 'approveExecutionAndPayment',
+ *   mode: 'verify',
  *   stateGasLimit: 0n,
- *   value: 0n,
- *   data: '0x'
+ *   value: 0n
  * })
  * ```
  * @param frame - Frame to encode.
@@ -256,12 +256,12 @@ export declare namespace toTuple {
  * ```ts twoslash
  * import { Frame } from 'ox'
  * Frame.validate({
- *   mode: 'verify',
- *   flags: 'approveExecutionAndPayment',
+ *   data: '0x',
  *   executionGasLimit: 50_000n,
+ *   flags: 'approveExecutionAndPayment',
+ *   mode: 'verify',
  *   stateGasLimit: 0n,
- *   value: 0n,
- *   data: '0x'
+ *   value: 0n
  * })
  * ```
  * @param frame - Frame to check.

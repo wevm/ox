@@ -4,8 +4,8 @@ import { FrameSignature, Hex, P256, Rlp, Secp256k1 } from 'ox'
 import { describe, expect, test } from 'vite-plus/test'
 
 const arbitrary = {
-  scheme: 'arbitrary',
   payload: '0x',
+  scheme: 'arbitrary',
   signature: '0xaabb',
 } as const
 const privateKey = Hex.fromNumber(1, { size: 32 })
@@ -49,8 +49,8 @@ describe('from', () => {
     `)
     expect(
       FrameSignature.from({
-        scheme: undefined,
         payload: undefined,
+        scheme: undefined,
         signature: '0xaabb',
       }),
     ).toEqual(arbitrary)
@@ -60,20 +60,20 @@ describe('from', () => {
     expect(FrameSignature.from(arbitrary)).toEqual(arbitrary)
     expect(FrameSignature.from(arbitrary)).not.toBe(arbitrary)
     expect(FrameSignature.from({ scheme: 1 })).toEqual({
-      scheme: 1,
       payload: '0x',
+      scheme: 1,
     })
   })
 
   test('preserves structured signatures and public keys', () => {
-    const signature = P256.sign({ payload, privateKey, extraEntropy: false })
+    const signature = P256.sign({ extraEntropy: false, payload, privateKey })
     const entry = FrameSignature.from({
+      payload,
+      publicKey,
       scheme: 'p256',
       signature,
-      publicKey,
-      payload,
     })
-    expect(entry).toEqual({ scheme: 'p256', signature, publicKey, payload })
+    expect(entry).toEqual({ payload, publicKey, scheme: 'p256', signature })
   })
 })
 
@@ -120,9 +120,9 @@ describe('toTuple', () => {
 
   test.each([2, 'p256'] as const)('encodes P-256 scheme %s', (scheme) => {
     const entry = FrameSignature.from({
+      publicKey,
       scheme,
       signature: { r: '0x01', s: '0x02' },
-      publicKey,
     })
     expect(FrameSignature.toTuple(entry)).toEqual([
       '0x02',
@@ -134,9 +134,9 @@ describe('toTuple', () => {
 
   test('retains explicit payload and signer', () => {
     const entry = FrameSignature.from({
+      payload,
       scheme: 'secp256k1',
       signer: '0x0000000000000000000000000000000000000000',
-      payload,
     })
     expect(FrameSignature.toTuple(entry)).toEqual([
       '0x01',
@@ -154,7 +154,7 @@ describe('toTuple', () => {
       r: '0x01',
       s: Hex.fromNumber(p256.Point.Fn.ORDER - 2n),
     })
-    const entry = FrameSignature.from({ scheme: 'p256', signature, publicKey })
+    const entry = FrameSignature.from({ publicKey, scheme: 'p256', signature })
     expect(FrameSignature.toTuple(entry)[3]).toBe(p256Bytes)
     expect(entry.signature.s).toBe(Hex.fromNumber(p256.Point.Fn.ORDER - 2n))
   })
@@ -169,8 +169,8 @@ describe('fromTuple', () => {
 
   test('decodes fixed secp256k1 bytes', () => {
     expect(FrameSignature.fromTuple(['0x01', '0x', '0x', secpBytes])).toEqual({
-      scheme: 'secp256k1',
       payload: '0x',
+      scheme: 'secp256k1',
       signature: {
         r: Hex.fromNumber(1, { size: 32 }),
         s: Hex.fromNumber(2, { size: 32 }),
@@ -181,13 +181,13 @@ describe('fromTuple', () => {
 
   test('decodes fixed P-256 bytes', () => {
     expect(FrameSignature.fromTuple(['0x02', '0x', '0x', p256Bytes])).toEqual({
-      scheme: 'p256',
       payload: '0x',
+      publicKey,
+      scheme: 'p256',
       signature: {
         r: Hex.fromNumber(1, { size: 32 }),
         s: Hex.fromNumber(2, { size: 32 }),
       },
-      publicKey,
     })
   })
 
@@ -196,20 +196,20 @@ describe('fromTuple', () => {
     ['0x02', 'p256'],
   ] as const)('decodes unsigned %s entries', (scheme, name) => {
     expect(FrameSignature.fromTuple([scheme, '0x', '0x', '0x'])).toEqual({
-      scheme: name,
       payload: '0x',
+      scheme: name,
     })
   })
 
   test('round-trips a real secp256k1 signature', () => {
     const signature = Secp256k1.sign({
+      extraEntropy: false,
       payload,
       privateKey,
-      extraEntropy: false,
     })
     const entry = FrameSignature.fromTuple(
       FrameSignature.toTuple(
-        FrameSignature.from({ scheme: 'secp256k1', signature, payload }),
+        FrameSignature.from({ payload, scheme: 'secp256k1', signature }),
       ),
     ) as FrameSignature.Secp256k1
     expect(entry.signature).toEqual(signature)
@@ -219,17 +219,17 @@ describe('fromTuple', () => {
   })
 
   test('round-trips a real P-256 signature', () => {
-    const signature = P256.sign({ payload, privateKey, extraEntropy: false })
+    const signature = P256.sign({ extraEntropy: false, payload, privateKey })
     const entry = FrameSignature.fromTuple(
       FrameSignature.toTuple(
-        FrameSignature.from({ scheme: 'p256', signature, publicKey }),
+        FrameSignature.from({ publicKey, scheme: 'p256', signature }),
       ),
     ) as FrameSignature.P256
     expect(
       P256.verify({
         payload,
-        signature: entry.signature!,
         publicKey: entry.publicKey!,
+        signature: entry.signature!,
       }),
     ).toBe(true)
   })
@@ -325,9 +325,9 @@ describe('assert', () => {
     (s) => {
       expect(() =>
         FrameSignature.from({
+          publicKey,
           scheme: 2,
           signature: { r: '0x01', s: Hex.fromNumber(s) },
-          publicKey,
         }),
       ).toThrow()
     },
@@ -336,8 +336,8 @@ describe('assert', () => {
   test('rejects missing public key for signed P-256', () => {
     expect(() =>
       FrameSignature.assert({
-        scheme: 2,
         payload: '0x',
+        scheme: 2,
         signature: { r: '0x01', s: '0x02' },
       } as never),
     ).toThrow()

@@ -34,7 +34,7 @@
 - **Hex helpers over ad hoc conversion** -- use ox helpers like `Hex.fromNumber`, `Hex.toBytes`, `Bytes.fromHex`, `Value.fromGwei`, etc. instead of open-coded conversions.
 - **Use ox branded types** -- prefer existing ox types such as `Hex.Hex`, `Bytes.Bytes`, and `Address.Address` over raw template literal types when the branded module type exists.
 - **Alphabetize type properties** -- order object type properties alphabetically, keeping each property’s TSDoc with it. Preserve positional order in tuples, arrays, ABI parameters, and other wire formats.
-- **Keep runtime property order readable** -- preserve the local ordering style in object values.
+- **Alphabetize object properties** -- order properties in object literals alphabetically, including examples and tests. Preserve spread override precedence and evaluation order when reordering could change behavior.
 
 ## Type Inference Conventions
 

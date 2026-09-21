@@ -46,8 +46,8 @@ test('rejects invalid schemes and signature shapes', () => {
 
 test('explicit undefined defaults remain narrow', () => {
   const entry = FrameSignature.from({
-    scheme: undefined,
     payload: undefined,
+    scheme: undefined,
     signature: '0x',
   })
   expectTypeOf(entry.scheme).toEqualTypeOf<'arbitrary'>()

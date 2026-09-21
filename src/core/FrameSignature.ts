@@ -8,7 +8,7 @@ import * as PublicKey from './PublicKey.js'
 import * as Signature from './Signature.js'
 
 /** Signature schemes supported by EIP-8141. */
-export const schemes = { arbitrary: 0, secp256k1: 1, p256: 2 } as const
+export const schemes = { arbitrary: 0, p256: 2, secp256k1: 1 } as const
 
 /** A supported numeric or named frame signature scheme. */
 export type Scheme =
@@ -81,8 +81,8 @@ export type Tuple = readonly [
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
  * FrameSignature.assert({
- *   scheme: 'secp256k1',
- *   payload: '0x'
+ *   payload: '0x',
+ *   scheme: 'secp256k1'
  * })
  * ```
  * @param entry - Signature entry to check.
@@ -188,8 +188,8 @@ export function from<const entry extends from.Input>(
       ? { payload: '0x', scheme: 'arbitrary', signature: entry }
       : {
           ...entry,
-          scheme: entry.scheme ?? 'arbitrary',
           payload: entry.payload ?? '0x',
+          scheme: entry.scheme ?? 'arbitrary',
         }
   ) as FrameSignature
   assert(result)
@@ -255,7 +255,7 @@ export function fromTuple(tuple: Tuple): FrameSignature {
   if (scheme === '0x') {
     if (signer !== '0x')
       throw new InvalidError('Arbitrary signatures cannot specify a signer.')
-    return from({ scheme: 'arbitrary', payload, signature })
+    return from({ payload, scheme: 'arbitrary', signature })
   }
   if (signature === '0x')
     return scheme === '0x01'
@@ -277,13 +277,13 @@ export function fromTuple(tuple: Tuple): FrameSignature {
     throw new InvalidError('P-256 wire signatures require low-s.')
   return from({
     ...metadata,
-    scheme: 'p256',
-    signature: { r: Hex.slice(signature, 0, 32), s },
     publicKey: {
       prefix: 4,
       x: Hex.slice(signature, 64, 96),
       y: Hex.slice(signature, 96, 128),
     },
+    scheme: 'p256',
+    signature: { r: Hex.slice(signature, 0, 32), s },
   })
 }
 
@@ -365,7 +365,7 @@ export declare namespace toTuple {
  * ```ts twoslash
  * import { FrameSignature } from 'ox'
  * FrameSignature.validate(
- *   { scheme: 'secp256k1', payload: '0x' },
+ *   { payload: '0x', scheme: 'secp256k1' },
  *   { signed: true }
  * )
  * // @log: false

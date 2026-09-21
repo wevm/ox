@@ -2,12 +2,12 @@ import { describe, expect, test } from 'vite-plus/test'
 import { Rlp, Frame } from 'ox'
 
 const frame = {
-  mode: 1,
-  flags: 3,
+  data: '0x',
   executionGasLimit: 50_000n,
+  flags: 3,
+  mode: 1,
   stateGasLimit: 0n,
   value: 0n,
-  data: '0x',
 } as const
 
 const tuple = ['0x01', '0x03', '0x', ['0xc350', '0x'], '0x', '0x'] as const
@@ -36,7 +36,7 @@ describe('toTuple', () => {
 
   test('encodes value transfers in sender mode', () => {
     expect(
-      Frame.toTuple({ ...frame, mode: 'sender', flags: 'none', value: 1n }),
+      Frame.toTuple({ ...frame, flags: 'none', mode: 'sender', value: 1n }),
     ).toEqual(['0x02', '0x', '0x', ['0xc350', '0x'], '0x01', '0x'])
   })
 
@@ -47,7 +47,7 @@ describe('toTuple', () => {
     ['approveExecutionAndPayment', 3],
     ['atomicBatch', 4],
   ] as const)('encodes named flag %s as %i', (flags, numeric) => {
-    const input = { ...frame, mode: 2, flags } as const
+    const input = { ...frame, flags, mode: 2 } as const
     const encoded = Frame.toTuple(input)
     expect(encoded).toEqual(Frame.toTuple({ ...input, flags: numeric }))
     expect(encoded[1]).toBe(numeric === 0 ? '0x' : `0x0${numeric}`)
@@ -65,7 +65,7 @@ describe('toTuple', () => {
   test('encodes zero integers as empty bytes', () => {
     expect(
       Rlp.fromHex(
-        Frame.toTuple({ ...frame, mode: 0, flags: 0, executionGasLimit: 0n }),
+        Frame.toTuple({ ...frame, executionGasLimit: 0n, flags: 0, mode: 0 }),
       ),
     ).toMatchInlineSnapshot('"0xc8808080c280808080"')
   })
@@ -73,12 +73,12 @@ describe('toTuple', () => {
   test('preserves large integers and opaque data', () => {
     const input = {
       ...frame,
-      mode: 2,
-      flags: 0,
+      data: '0x0001',
       executionGasLimit: 2n ** 63n,
+      flags: 0,
+      mode: 2,
       stateGasLimit: 2n ** 63n - 1n,
       value: 2n ** 256n - 1n,
-      data: '0x0001',
     } as const
     expect(Frame.fromTuple(Frame.toTuple(input))).toEqual(input)
   })
@@ -133,7 +133,7 @@ describe('assert', () => {
     { mode: NaN },
     { mode: 'unknown' },
     { mode: 'toString' },
-    { mode: 'verify', flags: 'atomicBatch' },
+    { flags: 'atomicBatch', mode: 'verify' },
     { mode: 'verify', value: 1n },
     { mode: 'default', value: 1n },
     { flags: -1 },
@@ -141,9 +141,9 @@ describe('assert', () => {
     { flags: 1.5 },
     { flags: 'unknown' },
     { flags: 'toString' },
-    { mode: 1, flags: 'atomicBatch' },
-    { mode: 1, flags: 4 },
-    { mode: 2, flags: 5 },
+    { flags: 'atomicBatch', mode: 1 },
+    { flags: 4, mode: 1 },
+    { flags: 5, mode: 2 },
     { value: 1n },
     { mode: 2, value: -1n },
     { mode: 2, value: 2n ** 256n },
@@ -160,7 +160,7 @@ describe('assert', () => {
   })
 
   test('leaves batch adjacency to the envelope', () => {
-    expect(() => Frame.assert({ ...frame, mode: 2, flags: 4 })).not.toThrow()
+    expect(() => Frame.assert({ ...frame, flags: 4, mode: 2 })).not.toThrow()
   })
 })
 

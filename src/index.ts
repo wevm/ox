@@ -1610,12 +1610,12 @@ export * as Filter from './core/Filter.js'
  * ```ts twoslash
  * import { Frame } from 'ox'
  * const frame = Frame.from({
- *   mode: 1,
- *   flags: 3,
+ *   data: '0x',
  *   executionGasLimit: 50_000n,
+ *   flags: 3,
+ *   mode: 1,
  *   stateGasLimit: 0n,
- *   value: 0n,
- *   data: '0x'
+ *   value: 0n
  * })
  * ```
  *
