@@ -152,6 +152,16 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'frames',
+          include: ['test/frames/**/*.test.ts'],
+          hookTimeout: 180_000,
+          testTimeout: 180_000,
+          retry: 0,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'core',
           globalSetup: process.env.TYPES
             ? [join(root, 'test/setup.global.types.ts')]

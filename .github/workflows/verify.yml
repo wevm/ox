@@ -53,6 +53,23 @@ jobs:
         env:
           VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
 
+  test-frames:
+    name: Test Runtime (frames)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Run tests
+        run: pnpm test --project frames --bail=1
+
   test-browser:
     name: Test Runtime (browser)
     runs-on: ubuntu-latest
