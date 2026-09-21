@@ -37,9 +37,13 @@ export type TxEnvelopeEip8141 = {
 }
 
 export type Serialized = `${SerializedType}${string}`
+
 export const serializedType = '0x06' as const
+
 export type SerializedType = typeof serializedType
+
 export const type = 'eip8141' as const
+
 export type Type = typeof type
 
 /**
