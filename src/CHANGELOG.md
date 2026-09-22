@@ -1,5 +1,15 @@
 # ox
 
+## 0.14.47
+
+### Patch Changes
+
+- [#463](https://github.com/wevm/ox/pull/463) [`3416b65`](https://github.com/wevm/ox/commit/3416b65601ce4de44f2dc0a48c48c203d26f0768) Thanks [@jxom](https://github.com/jxom)! - Renamed the decoded frame destination from `target` to `to`.
+
+  ```ts
+  Frame.from({ to: recipient });
+  ```
+
 ## 0.14.46
 
 ### Patch Changes
