@@ -1,3 +1,4 @@
+import * as core_FrameSignature from '../core/FrameSignature.js'
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as core_TxEnvelope from '../core/TxEnvelope.js'
 import * as z_AccessList from './AccessList.js'
@@ -70,7 +71,15 @@ export const TransactionEnvelopeToRpc = z.union([
 
 /** Signed transaction envelope schema. */
 export const Signed = z.union([
-  z_TxEnvelopeEip8141.TxEnvelopeEip8141,
+  z_TxEnvelopeEip8141.TxEnvelopeEip8141.check(
+    z.refine(
+      (value) =>
+        (value.signatures ?? []).every((entry) =>
+          core_FrameSignature.validate(entry, { signed: true }),
+        ),
+      'Invalid signed frame transaction',
+    ),
+  ),
   z_TxEnvelopeLegacy.Signed,
   z_TxEnvelopeEip2930.Signed,
   z_TxEnvelopeEip1559.Signed,
@@ -80,7 +89,15 @@ export const Signed = z.union([
 
 /** Encode-only signed transaction envelope schema accepting numberish `toRpc` inputs. */
 export const SignedToRpc = z.union([
-  z_TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc,
+  z_TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc.check(
+    z.refine(
+      (value) =>
+        (value.signatures ?? []).every((entry) =>
+          core_FrameSignature.validate(entry, { signed: true }),
+        ),
+      'Invalid signed frame transaction',
+    ),
+  ),
   z_TxEnvelopeLegacy.SignedToRpc,
   z_TxEnvelopeEip2930.SignedToRpc,
   z_TxEnvelopeEip1559.SignedToRpc,
@@ -163,7 +180,15 @@ const SignedEip7702Decoded = z.object({
 
 /** Decoded signed transaction envelope schema. */
 export const SignedDecoded = z.union([
-  z_TxEnvelopeEip8141.Decoded,
+  z_TxEnvelopeEip8141.Decoded.check(
+    z.refine(
+      (value) =>
+        (value.signatures ?? []).every((entry) =>
+          core_FrameSignature.validate(entry, { signed: true }),
+        ),
+      'Invalid signed frame transaction',
+    ),
+  ),
   SignedLegacyDecoded,
   SignedEip2930Decoded,
   SignedEip1559Decoded,

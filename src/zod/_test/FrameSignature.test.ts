@@ -4,6 +4,16 @@ import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('FrameSignature', () => {
+  test('safeDecode rejects malformed protocol signatures without throwing', () => {
+    expect(
+      z.safeDecode(z.FrameSignature.FrameSignature, {
+        msg: '0x',
+        scheme: 1,
+        signature: '0x01',
+      }).success,
+    ).toBe(false)
+  })
+
   test('encodes omitted payloads', () => {
     expect(
       z.encode(z.FrameSignature.FrameSignature, {

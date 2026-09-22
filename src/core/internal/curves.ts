@@ -16,3 +16,7 @@
  */
 export const p256N =
   0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
+
+/** Order of the secp256k1 curve. @internal */
+export const secp256k1N =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n

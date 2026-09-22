@@ -360,6 +360,10 @@ export function toEnvelope(
     })()
 
     const blobVersionedHashes = (() => {
+      if (type === 'eip8141' && sidecars)
+        return Blobs.commitmentsToVersionedHashes(sidecars.commitments, {
+          as: 'Hex',
+        })
       if (request.blobVersionedHashes) return request.blobVersionedHashes
       if (sidecars) {
         if (!kzg) throw new MissingKzgError()
