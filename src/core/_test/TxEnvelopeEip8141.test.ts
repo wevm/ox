@@ -533,7 +533,7 @@ describe('getSignPayload', () => {
     })
     const signed = {
       ...input,
-      signatures: [FrameSignature.fromSecp256k1(signature)],
+      signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
     }
     expect(TxEnvelopeEip8141.getSignPayload(signed)).toBe(payload)
     expect(

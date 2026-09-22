@@ -358,7 +358,7 @@ export declare namespace from {
  * const signature = Secp256k1.sign({ payload, privateKey })
  * const signed = TxEnvelopeEip8141.from({
  *   ...envelope,
- *   signatures: [FrameSignature.fromSecp256k1(signature)]
+ *   signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })]
  * })
  * ```
  *

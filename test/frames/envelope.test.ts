@@ -51,7 +51,7 @@ describe('serialize', () => {
 
     const signed = TxEnvelopeEip8141.from({
       ...envelope,
-      signatures: [FrameSignature.fromSecp256k1(signature)],
+      signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
     })
     const serialized = TxEnvelopeEip8141.serialize(signed)
     const hash = await rpc.request({
@@ -141,8 +141,10 @@ describe('serialize', () => {
     const signed = TxEnvelopeEip8141.from({
       ...envelope,
       signatures: [
-        FrameSignature.fromSecp256k1(signature),
-        FrameSignature.fromSecp256k1(payerSignature, {
+        FrameSignature.from({ scheme: 'secp256k1', signature }),
+        FrameSignature.from({
+          scheme: 'secp256k1',
+          signature: payerSignature,
           signer: accounts[1].address,
         }),
       ],
@@ -231,7 +233,7 @@ describe('serialize', () => {
 
     const signed = TxEnvelopeEip8141.from({
       ...envelope,
-      signatures: [FrameSignature.fromSecp256k1(signature)],
+      signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
     })
     const serialized = TxEnvelopeEip8141.serialize(signed)
     const hash = await rpc.request({
@@ -288,7 +290,9 @@ describe('serialize', () => {
         params: [
           TxEnvelopeEip8141.serialize({
             ...envelope,
-            signatures: [FrameSignature.fromSecp256k1(signature)],
+            signatures: [
+              FrameSignature.from({ scheme: 'secp256k1', signature }),
+            ],
           }),
         ],
       }),
@@ -328,7 +332,7 @@ describe('serialize', () => {
 
     const signed = TxEnvelopeEip8141.from({
       ...envelope,
-      signatures: [FrameSignature.fromSecp256k1(signature)],
+      signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
     })
     await expect(
       rpc.request({
@@ -379,7 +383,9 @@ describe('serialize', () => {
     )
     const signed = TxEnvelopeEip8141.from({
       ...envelope,
-      signatures: [FrameSignature.fromP256(signature, { publicKey })],
+      signatures: [
+        FrameSignature.from({ publicKey, scheme: 'p256', signature }),
+      ],
     })
     const serialized = TxEnvelopeEip8141.serialize(signed)
     const hash = await rpc.request({
@@ -446,7 +452,7 @@ describe('serialize', () => {
 
       const signed = TxEnvelopeEip8141.from({
         ...envelope,
-        signatures: [FrameSignature.fromSecp256k1(signature)],
+        signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
       })
       const serialized = TxEnvelopeEip8141.serialize(signed)
       const hash = await rpc.request({
