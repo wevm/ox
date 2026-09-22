@@ -76,7 +76,7 @@ function fields<uint extends z.ZodMiniType>(uint: uint) {
     gas: z.optional(uint),
     mode: z.optional(Mode),
     stateGas: z.optional(uint),
-    target: z.optional(z_Address.Address),
+    to: z.optional(z_Address.Address),
     value: z.optional(uint),
   }
 }

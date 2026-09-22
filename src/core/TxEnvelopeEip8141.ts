@@ -166,8 +166,8 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     const batch = (flags & 4) !== 0
     if (
       flags & 2 &&
-      frame.target !== undefined &&
-      !Address.isEqual(frame.target, sender)
+      frame.to !== undefined &&
+      !Address.isEqual(frame.to, sender)
     )
       throw new InvalidError('Execution approval must target the sender.')
     if ((batch || previousBatch) && flags & 3)
@@ -182,8 +182,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     previousBatch = batch
     if (
       (frame.mode === 1 || frame.mode === 'verify') &&
-      frame.target?.toLowerCase() ===
-        '0x0000000000000000000000000000000000008141'
+      frame.to?.toLowerCase() === '0x0000000000000000000000000000000000008141'
     ) {
       if (
         expiry ||
@@ -199,8 +198,8 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     count(frame.data ?? '0x')
     if (
       (frame.value ?? 0n) > 0n &&
-      frame.target !== undefined &&
-      !Address.isEqual(frame.target, sender)
+      frame.to !== undefined &&
+      !Address.isEqual(frame.to, sender)
     )
       intrinsic += 6_000n
   }
