@@ -4,6 +4,25 @@ import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('FrameSignature', () => {
+  test('encodes omitted payloads', () => {
+    expect(
+      z.encode(z.FrameSignature.FrameSignature, {
+        scheme: 'arbitrary',
+        signature: '0xaabb',
+      }),
+    ).toEqual({ msg: '0x', scheme: 0, signature: '0xaabb' })
+    expect(
+      z.encode(z.FrameSignature.FrameSignature, {
+        scheme: 'secp256k1',
+      }),
+    ).toEqual({ msg: '0x', scheme: 1, signature: '0x' })
+    expect(
+      z.encode(z.FrameSignature.FrameSignature, {
+        scheme: 'p256',
+      }),
+    ).toEqual({ msg: '0x', scheme: 2, signature: '0x' })
+  })
+
   test('arbitrary bytes', () => {
     expect(
       z.encode(z.FrameSignature.FrameSignature, FrameSignature.from('0xaabb')),

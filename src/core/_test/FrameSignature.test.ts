@@ -160,6 +160,21 @@ describe('from', () => {
 })
 
 describe('toTuple', () => {
+  test('omitted payload selects the canonical signing hash', () => {
+    expect(
+      FrameSignature.toTuple({ scheme: 'arbitrary', signature: '0xaabb' }),
+    ).toEqual(['0x', '0x', '0x', '0xaabb'])
+    expect(FrameSignature.toTuple({ scheme: 'secp256k1' })).toEqual([
+      '0x01',
+      '0x',
+      '0x',
+      '0x',
+    ])
+    expect(
+      FrameSignature.toTuple({ payload: undefined, scheme: 'p256' }),
+    ).toEqual(['0x02', '0x', '0x', '0x'])
+  })
+
   test('encodes arbitrary witness bytes in specification order', () => {
     expect(FrameSignature.toTuple(arbitrary)).toEqual([
       '0x',
