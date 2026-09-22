@@ -1,5 +1,15 @@
 # ox
 
+## 1.8.1
+
+### Patch Changes
+
+- [#462](https://github.com/wevm/ox/pull/462) [`16c3378`](https://github.com/wevm/ox/commit/16c33788e1b82a66222ff437f4e1814bda092a47) Thanks [@jxom](https://github.com/jxom)! - Renamed the decoded frame destination from `target` to `to`.
+
+  ```ts
+  Frame.from({ to: recipient });
+  ```
+
 ## 1.8.0
 
 ### Minor Changes
