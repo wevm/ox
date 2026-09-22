@@ -26,6 +26,12 @@ export type TransactionReceipt<
   cumulativeGasUsed: bigintType
   /** Pre-London, it is equal to the transaction's gasPrice. Post-London, it is equal to the actual gas price paid for inclusion. */
   effectiveGasPrice: bigintType
+  /** Receipts for each EIP-8141 frame, in execution order. */
+  frameReceipts?:
+    | readonly ([bigintType] extends [Hex.Hex]
+        ? FrameReceiptRpc
+        : FrameReceipt<bigintType>)[]
+    | undefined
   /** Transaction sender */
   from: Address.Address
   /** Gas used by this transaction */
@@ -34,6 +40,8 @@ export type TransactionReceipt<
   logs: Log.Log<false, bigintType, numberType>[]
   /** Logs bloom filter */
   logsBloom: Hex.Hex
+  /** Account that paid the transaction fees. */
+  payer?: Address.Address | undefined
   /** The post-transaction state root. Only specified for transactions included before the Byzantium upgrade. */
   root?: Hex.Hex | undefined
   /** `success` if this transaction was successful or `reverted` if it failed */
@@ -47,6 +55,30 @@ export type TransactionReceipt<
   /** Transaction type */
   type: type
 }>
+
+/** Receipt for one frame. Frame logs contain only address, data, and topics. */
+export type FrameReceipt<bigintType = bigint> = {
+  /** Execution gas used before transaction-level refunds. */
+  gasUsed: bigintType
+  /** Logs emitted by this frame. */
+  logs: readonly Pick<Log.Log, 'address' | 'data' | 'topics'>[]
+  /** Final state gas after refills and rollbacks. */
+  stateGasUsed: bigintType
+  /** Frame execution result. */
+  status: 'reverted' | 'success' | 'skipped'
+}
+
+/** JSON-RPC receipt for one frame. */
+export type FrameReceiptRpc = {
+  /** Execution gas used. */
+  executionGasUsed: Hex.Hex
+  /** Logs emitted by this frame. */
+  logs: readonly Pick<Log.Log, 'address' | 'data' | 'topics'>[]
+  /** Final state gas used. */
+  stateGasUsed: Hex.Hex
+  /** Zero for failure, one for success, or two for a skipped frame. */
+  status: 0 | 1 | 2
+}
 
 /** An RPC Transaction Receipt as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
 export type Rpc = TransactionReceipt<RpcStatus, RpcType, Hex.Hex, Hex.Hex>
@@ -75,6 +107,7 @@ export type RpcStatus = '0x0' | '0x1'
  * - `eip2930`
  * - `eip4844`
  * - `eip7702`
+ * - `eip8141`
  * - any other string
  */
 export type Type =
@@ -83,6 +116,7 @@ export type Type =
   | 'eip2930'
   | 'eip4844'
   | 'eip7702'
+  | 'eip8141'
   | (string & {})
 
 /**
@@ -93,9 +127,17 @@ export type Type =
  * - `0x2`: EIP-2930 transactions
  * - `0x3`: EIP-4844 transactions
  * - `0x4`: EIP-7702 transactions
+ * - `0x6`: EIP-8141 transactions
  * - any other string
  */
-export type RpcType = '0x0' | '0x1' | '0x2' | '0x3' | '0x4' | (string & {})
+export type RpcType =
+  | '0x0'
+  | '0x1'
+  | '0x2'
+  | '0x3'
+  | '0x4'
+  | '0x6'
+  | (string & {})
 
 /** RPC status to status mapping. */
 export const fromRpcStatus = {
@@ -116,6 +158,7 @@ export const fromRpcType = {
   '0x2': 'eip1559',
   '0x3': 'eip4844',
   '0x4': 'eip7702',
+  '0x6': 'eip8141',
 } as const
 
 /** Type to RPC type mapping. */
@@ -125,6 +168,7 @@ export const toRpcType = {
   eip1559: '0x2',
   eip4844: '0x3',
   eip7702: '0x4',
+  eip8141: '0x6',
 } as const
 
 /**
@@ -231,6 +275,18 @@ export function fromRpc<const receipt extends Rpc | null>(
 
   return {
     ...receipt,
+    ...(receipt.frameReceipts
+      ? {
+          frameReceipts: receipt.frameReceipts.map((frame) => ({
+            gasUsed: BigInt(frame.executionGasUsed),
+            logs: frame.logs,
+            stateGasUsed: BigInt(frame.stateGasUsed),
+            status: ({ 0: 'reverted', 1: 'success', 2: 'skipped' } as const)[
+              frame.status
+            ],
+          })),
+        }
+      : {}),
     blobGasPrice: receipt.blobGasPrice
       ? BigInt(receipt.blobGasPrice)
       : undefined,
@@ -316,10 +372,23 @@ export function toRpc(receipt: toRpc.Input): Rpc {
     contractAddress: receipt.contractAddress,
     cumulativeGasUsed: Quantity.fromNumberish(receipt.cumulativeGasUsed),
     effectiveGasPrice: Quantity.fromNumberish(receipt.effectiveGasPrice),
+    ...(receipt.frameReceipts
+      ? {
+          frameReceipts: receipt.frameReceipts.map((frame) => ({
+            executionGasUsed: Quantity.fromNumberish(frame.gasUsed),
+            logs: frame.logs,
+            stateGasUsed: Quantity.fromNumberish(frame.stateGasUsed),
+            status: ({ reverted: 0, skipped: 2, success: 1 } as const)[
+              frame.status
+            ],
+          })),
+        }
+      : {}),
     from: receipt.from,
     gasUsed: Quantity.fromNumberish(receipt.gasUsed),
     logs: receipt.logs.map(Log.toRpc as never),
     logsBloom: receipt.logsBloom,
+    ...(receipt.payer === undefined ? {} : { payer: receipt.payer }),
     root: receipt.root,
     status: toRpcStatus[receipt.status],
     to: receipt.to,

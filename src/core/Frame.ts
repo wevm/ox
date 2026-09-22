@@ -2,6 +2,7 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 
 /** An EIP-8141 call frame. */
 export type Frame<bigintType = bigint> = {
@@ -37,6 +38,24 @@ export type Frame<bigintType = bigint> = {
    * @default 0n
    */
   value?: bigintType | undefined
+}
+
+/** JSON-RPC representation of a frame. */
+export type Rpc = {
+  /** Frame calldata. */
+  data: Hex.Hex
+  /** Execution gas budget. */
+  executionGasLimit: Hex.Hex
+  /** Approval scope and batching bits. */
+  flags: number
+  /** Execution mode. */
+  mode: number
+  /** State gas budget. */
+  stateGasLimit: Hex.Hex
+  /** Target address; absent for the transaction sender. */
+  target?: Address.Address | null | undefined
+  /** Value transferred in wei. */
+  value: Hex.Hex
 }
 
 /** Frame execution modes. */
@@ -174,6 +193,78 @@ export function from<const frame extends Frame>(frame: frame | Frame): frame {
 
 export declare namespace from {
   type ErrorType = assert.ErrorType
+}
+
+/**
+ * Converts an RPC frame to a frame.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { Frame } from 'ox'
+ *
+ * const frame = Frame.fromRpc({
+ *   data: '0x',
+ *   executionGasLimit: '0xc350',
+ *   flags: 3,
+ *   mode: 1,
+ *   stateGasLimit: '0x0',
+ *   value: '0x0',
+ * })
+ * ```
+ *
+ * @param frame - The value to convert.
+ * @returns The converted value.
+ */
+export function fromRpc(frame: Rpc): Frame {
+  return from({
+    data: frame.data,
+    flags: frame.flags,
+    gas: Hex.toBigInt(frame.executionGasLimit),
+    mode: frame.mode,
+    stateGas: Hex.toBigInt(frame.stateGasLimit),
+    ...(frame.target == null ? {} : { target: frame.target }),
+    value: Hex.toBigInt(frame.value),
+  })
+}
+
+export declare namespace fromRpc {
+  type ErrorType = from.ErrorType | Hex.toBigInt.ErrorType
+}
+
+/**
+ * Converts a frame to its JSON-RPC representation.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { Frame } from 'ox'
+ *
+ * const frame = Frame.from({ gas: 50_000n, mode: 'verify' })
+ * const rpc = Frame.toRpc(frame)
+ * ```
+ *
+ * @param frame - The value to convert.
+ * @returns The converted value.
+ */
+export function toRpc(frame: toRpc.Input): Rpc {
+  const { flags: flags_ = 0, mode = 0 } = frame
+  return {
+    data: frame.data ?? '0x',
+    executionGasLimit: Quantity.fromNumberish(frame.gas ?? 0n),
+    flags: typeof flags_ === 'string' ? flags[flags_] : flags_,
+    mode: typeof mode === 'string' ? modes[mode] : mode,
+    stateGasLimit: Quantity.fromNumberish(frame.stateGas ?? 0n),
+    ...(frame.target === undefined ? {} : { target: frame.target }),
+    value: Quantity.fromNumberish(frame.value ?? 0n),
+  }
+}
+
+export declare namespace toRpc {
+  type Input = Frame<Hex.Hex | bigint | number>
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /**

@@ -7,6 +7,7 @@ import * as z_TxEnvelopeEip1559 from './TxEnvelopeEip1559.js'
 import * as z_TxEnvelopeEip2930 from './TxEnvelopeEip2930.js'
 import * as z_TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
 import * as z_TxEnvelopeEip7702 from './TxEnvelopeEip7702.js'
+import * as z_TxEnvelopeEip8141 from './TxEnvelopeEip8141.js'
 import * as z_TxEnvelopeLegacy from './TxEnvelopeLegacy.js'
 import {
   baseFields,
@@ -21,6 +22,7 @@ const fromRpcType = {
   '0x2': 'eip1559',
   '0x3': 'eip4844',
   '0x4': 'eip7702',
+  '0x6': 'eip8141',
 } as const
 
 const toRpcType = {
@@ -29,6 +31,7 @@ const toRpcType = {
   eip1559: '0x2',
   eip4844: '0x3',
   eip7702: '0x4',
+  eip8141: '0x6',
 } as const
 
 /** Transaction envelope type schema. */
@@ -47,6 +50,7 @@ export const BaseSigned = z.object(
 
 /** Transaction envelope schema. */
 export const TransactionEnvelope = z.union([
+  z_TxEnvelopeEip8141.TxEnvelopeEip8141,
   z_TxEnvelopeLegacy.TxEnvelopeLegacy,
   z_TxEnvelopeEip2930.TxEnvelopeEip2930,
   z_TxEnvelopeEip1559.TxEnvelopeEip1559,
@@ -56,6 +60,7 @@ export const TransactionEnvelope = z.union([
 
 /** Encode-only transaction envelope schema accepting numberish `toRpc` inputs. */
 export const TransactionEnvelopeToRpc = z.union([
+  z_TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc,
   z_TxEnvelopeLegacy.TxEnvelopeLegacyToRpc,
   z_TxEnvelopeEip2930.TxEnvelopeEip2930ToRpc,
   z_TxEnvelopeEip1559.TxEnvelopeEip1559ToRpc,
@@ -65,6 +70,7 @@ export const TransactionEnvelopeToRpc = z.union([
 
 /** Signed transaction envelope schema. */
 export const Signed = z.union([
+  z_TxEnvelopeEip8141.TxEnvelopeEip8141,
   z_TxEnvelopeLegacy.Signed,
   z_TxEnvelopeEip2930.Signed,
   z_TxEnvelopeEip1559.Signed,
@@ -74,6 +80,7 @@ export const Signed = z.union([
 
 /** Encode-only signed transaction envelope schema accepting numberish `toRpc` inputs. */
 export const SignedToRpc = z.union([
+  z_TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc,
   z_TxEnvelopeLegacy.SignedToRpc,
   z_TxEnvelopeEip2930.SignedToRpc,
   z_TxEnvelopeEip1559.SignedToRpc,
@@ -156,6 +163,7 @@ const SignedEip7702Decoded = z.object({
 
 /** Decoded signed transaction envelope schema. */
 export const SignedDecoded = z.union([
+  z_TxEnvelopeEip8141.Decoded,
   SignedLegacyDecoded,
   SignedEip2930Decoded,
   SignedEip1559Decoded,

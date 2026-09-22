@@ -3,12 +3,15 @@ import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import * as Blobs from './Blobs.js'
 import * as Errors from './Errors.js'
+import * as Frame from './Frame.js'
+import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 import type * as Kzg from './Kzg.js'
 import * as Transaction from './Transaction.js'
 import * as TxEnvelope from './TxEnvelope.js'
+import * as TxEnvelopeEip8141 from './TxEnvelopeEip8141.js'
 import type * as TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
 
 /** A Transaction Request that is generic to all transaction types, as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423). */
@@ -27,18 +30,27 @@ export type TransactionRequest<
   blobVersionedHashes?: readonly Hex.Hex[] | undefined
   /** Raw blob data. */
   blobs?: readonly Hex.Hex[] | undefined
-  /** EIP-155 Chain ID. */
-  chainId?: numberType | undefined
+  /** Chain ID. EIP-8141 supports bigint IDs beyond the safe integer range. */
+  chainId?:
+    | numberType
+    | ([bigintType] extends [Hex.Hex] ? never : bigint)
+    | undefined
   /** Contract code or a hashed method call with encoded args */
   data?: Hex.Hex | undefined
-  /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */
-  input?: Hex.Hex | undefined
+  /** Frames in execution order for EIP-8141 transactions. */
+  frames?:
+    | readonly ([bigintType] extends [Hex.Hex]
+        ? Frame.Rpc
+        : Frame.Frame<bigintType>)[]
+    | undefined
   /** Sender of the transaction. */
   from?: Address.Address | undefined
   /** Gas provided for transaction execution */
   gas?: bigintType | undefined
   /** Base fee per gas. */
   gasPrice?: bigintType | undefined
+  /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */
+  input?: Hex.Hex | undefined
   /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
   maxFeePerBlobGas?: bigintType | undefined
   /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
@@ -47,6 +59,12 @@ export type TransactionRequest<
   maxPriorityFeePerGas?: bigintType | undefined
   /** Unique number identifying this transaction */
   nonce?: bigintType | undefined
+  /** Frame signature entries for EIP-8141 transactions. */
+  signatures?:
+    | readonly ([bigintType] extends [Hex.Hex]
+        ? FrameSignature.Rpc
+        : FrameSignature.FrameSignature)[]
+    | undefined
   /** Transaction recipient */
   to?: Address.Address | null | undefined
   /** Transaction type */
@@ -89,8 +107,18 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.authorizationList = Authorization.fromRpcList(
       request.authorizationList,
     )
-  if (typeof request.chainId !== 'undefined')
-    request_.chainId = Hex.toNumber(request.chainId)
+  if (typeof request.chainId !== 'undefined') {
+    const chainId = Hex.toBigInt(request.chainId)
+    request_.chainId =
+      (request.type === '0x6' || request.frames !== undefined) &&
+      chainId > BigInt(Number.MAX_SAFE_INTEGER)
+        ? chainId
+        : Hex.toNumber(request.chainId)
+  }
+  if (request.frames !== undefined)
+    request_.frames = request.frames.map(Frame.fromRpc)
+  if (request.signatures !== undefined)
+    request_.signatures = request.signatures.map(FrameSignature.fromRpc)
   if (typeof request.gas !== 'undefined')
     request_.gas = Hex.toBigInt(request.gas)
   if (typeof request.gasPrice !== 'undefined')
@@ -120,6 +148,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
 export declare namespace fromRpc {
   export type ErrorType =
     | Authorization.fromRpcList.ErrorType
+    | Frame.fromRpc.ErrorType
+    | FrameSignature.fromRpc.ErrorType
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
     | Errors.GlobalErrorType
@@ -186,6 +216,10 @@ export function toRpc(request: toRpc.Input): Rpc {
     request_rpc.data = request.input
     request_rpc.input = request.input
   }
+  if (request.frames !== undefined)
+    request_rpc.frames = request.frames.map(Frame.toRpc)
+  if (request.signatures !== undefined)
+    request_rpc.signatures = request.signatures.map(FrameSignature.toRpc)
   if (typeof request.from !== 'undefined') request_rpc.from = request.from
   if (typeof request.gas !== 'undefined')
     request_rpc.gas = Quantity.fromNumberish(request.gas)
@@ -231,6 +265,8 @@ export declare namespace toRpc {
 
   export type ErrorType =
     | Authorization.toRpcList.ErrorType
+    | Frame.toRpc.ErrorType
+    | FrameSignature.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }
@@ -305,7 +341,7 @@ export function toEnvelope(
         : {}),
     }) as never
 
-  if (type === 'eip4844') {
+  if (type === 'eip4844' || type === 'eip8141') {
     const { kzg } = options
     const blobs = request.blobs
     const hasSidecars =
@@ -340,6 +376,38 @@ export function toEnvelope(
       }
       return []
     })()
+
+    if (type === 'eip8141') {
+      if (request.chainId === undefined)
+        throw new Quantity.MissingFieldError({
+          container: 'TransactionRequest',
+          field: 'chainId',
+        })
+      if (request.frames === undefined)
+        throw new Quantity.MissingFieldError({
+          container: 'TransactionRequest',
+          field: 'frames',
+        })
+      if (request.from === undefined)
+        throw new Quantity.MissingFieldError({
+          container: 'TransactionRequest',
+          field: 'from',
+        })
+      return TxEnvelopeEip8141.from({
+        ...(request.blobVersionedHashes || sidecars
+          ? { blobVersionedHashes }
+          : {}),
+        chainId: request.chainId,
+        frames: request.frames,
+        maxFeePerBlobGas: request.maxFeePerBlobGas,
+        maxFeePerGas: request.maxFeePerGas,
+        maxPriorityFeePerGas: request.maxPriorityFeePerGas,
+        nonce: request.nonce,
+        sender: request.from,
+        sidecars,
+        signatures: request.signatures,
+      })
+    }
 
     return TxEnvelope.from({
       type: 'eip4844',
@@ -411,6 +479,8 @@ export declare namespace toEnvelope {
   type ErrorType =
     | TxEnvelope.getType.ErrorType
     | TxEnvelope.from.ErrorType
+    | Quantity.MissingFieldError
+    | TxEnvelopeEip8141.from.ErrorType
     | Blobs.toCommitments.ErrorType
     | Blobs.toCellProofs.ErrorType
     | Blobs.commitmentsToVersionedHashes.ErrorType

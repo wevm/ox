@@ -87,6 +87,7 @@ export type Rpc<signed extends boolean = false> =
   | TxEnvelopeEip1559.Rpc<signed>
   | TxEnvelopeEip4844.Rpc<signed>
   | TxEnvelopeEip7702.Rpc<signed>
+  | TxEnvelopeEip8141.Rpc
 
 /** Serialized Transaction Envelope. */
 export type Serialized =
@@ -404,10 +405,7 @@ export function getType<const envelope extends Typeable>(
   const type = envelope.type
   if (type) {
     // Reject known RPC type strings at the envelope boundary. Custom transaction types still pass through.
-    if (
-      typeof type === 'string' &&
-      (type in Transaction.fromRpcType || type === '0x6')
-    )
+    if (typeof type === 'string' && type in Transaction.fromRpcType)
       throw new InvalidTypeError({ type })
     return type as never
   }
@@ -684,7 +682,8 @@ export function toRpc<const envelope extends toRpc.Input>(
   envelope: envelope | toRpc.Input,
 ): toRpc.ReturnType<envelope> {
   const type = getType(envelope) as Type | string
-  if (type === 'eip8141') throw new InvalidTypeError({ type })
+  if (type === 'eip8141')
+    return TxEnvelopeEip8141.toRpc(envelope as never) as never
   if (type === 'legacy')
     return TxEnvelopeLegacy.toRpc(envelope as never) as never
   if (type === 'eip2930')
@@ -700,21 +699,22 @@ export function toRpc<const envelope extends toRpc.Input>(
 
 export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#(TransactionEnvelope:namespace).(toRpc:function)}. */
-  export type Input = Exclude<
-    TxEnvelope<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
-    { type?: TxEnvelopeEip8141.Type | undefined }
-  >
+  export type Input =
+    | TxEnvelope<boolean, Hex.Hex | bigint | number, Hex.Hex | number>
+    | TxEnvelopeEip8141.toRpc.Input
 
   export type ReturnType<envelope extends Typeable = TxEnvelope> =
-    getType.ReturnType<envelope> extends 'legacy'
-      ? TxEnvelopeLegacy.Rpc
-      : getType.ReturnType<envelope> extends 'eip2930'
-        ? TxEnvelopeEip2930.Rpc
-        : getType.ReturnType<envelope> extends 'eip4844'
-          ? TxEnvelopeEip4844.Rpc
-          : getType.ReturnType<envelope> extends 'eip7702'
-            ? TxEnvelopeEip7702.Rpc
-            : TxEnvelopeEip1559.Rpc
+    getType.ReturnType<envelope> extends 'eip8141'
+      ? TxEnvelopeEip8141.Rpc
+      : getType.ReturnType<envelope> extends 'legacy'
+        ? TxEnvelopeLegacy.Rpc
+        : getType.ReturnType<envelope> extends 'eip2930'
+          ? TxEnvelopeEip2930.Rpc
+          : getType.ReturnType<envelope> extends 'eip4844'
+            ? TxEnvelopeEip4844.Rpc
+            : getType.ReturnType<envelope> extends 'eip7702'
+              ? TxEnvelopeEip7702.Rpc
+              : TxEnvelopeEip1559.Rpc
 
   export type ErrorType =
     | TxEnvelopeLegacy.toRpc.ErrorType
@@ -722,6 +722,7 @@ export declare namespace toRpc {
     | TxEnvelopeEip1559.toRpc.ErrorType
     | TxEnvelopeEip4844.toRpc.ErrorType
     | TxEnvelopeEip7702.toRpc.ErrorType
+    | TxEnvelopeEip8141.toRpc.ErrorType
     | InvalidTypeError
     | Errors.GlobalErrorType
 }
@@ -771,7 +772,15 @@ export function toTransactionRequest(
   envelope: TxEnvelope,
 ): TransactionRequest.TransactionRequest {
   const type = getType(envelope) as Type | string
-  if (type === 'eip8141') throw new InvalidTypeError({ type })
+  if (type === 'eip8141') {
+    const { sender, sidecars, ...rest } =
+      envelope as TxEnvelopeEip8141.TxEnvelopeEip8141
+    return {
+      ...rest,
+      ...(sidecars ? { blobs: sidecars.blobs } : {}),
+      from: sender,
+    }
+  }
   const {
     // Flatten sidecars; surface their `blobs` payload instead.
     sidecars,

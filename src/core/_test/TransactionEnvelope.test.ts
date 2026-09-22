@@ -364,9 +364,9 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
-  test('rejects unsupported frame conversion', () => {
-    expect(() => TransactionEnvelope.toRpc(eip8141 as never)).toThrow(
-      TransactionEnvelope.InvalidTypeError,
+  test('converts frame envelopes', () => {
+    expect(TransactionEnvelope.toRpc(eip8141)).toEqual(
+      TxEnvelopeEip8141.toRpc(eip8141),
     )
   })
 
@@ -431,10 +431,13 @@ describe('getType', () => {
 })
 
 describe('toTransactionRequest', () => {
-  test('rejects unsupported frame conversion', () => {
-    expect(() =>
-      TransactionEnvelope.toTransactionRequest(eip8141 as never),
-    ).toThrow(TransactionEnvelope.InvalidTypeError)
+  test('maps frame sender to request from', () => {
+    expect(TransactionEnvelope.toTransactionRequest(eip8141)).toEqual({
+      chainId: 1,
+      frames: [{}],
+      from: '0x1111111111111111111111111111111111111111',
+      type: 'eip8141',
+    })
   })
 
   test('behavior: eip1559', () => {

@@ -1081,6 +1081,16 @@
       "types": "./dist/zod/Filter.d.ts",
       "default": "./dist/zod/Filter.js"
     },
+    "./zod/Frame": {
+      "src": "./src/zod/Frame.ts",
+      "types": "./dist/zod/Frame.d.ts",
+      "default": "./dist/zod/Frame.js"
+    },
+    "./zod/FrameSignature": {
+      "src": "./src/zod/FrameSignature.ts",
+      "types": "./dist/zod/FrameSignature.d.ts",
+      "default": "./dist/zod/FrameSignature.js"
+    },
     "./zod/Hash": {
       "src": "./src/zod/Hash.ts",
       "types": "./dist/zod/Hash.d.ts",
@@ -1170,6 +1180,11 @@
       "src": "./src/zod/TxEnvelopeEip7702.ts",
       "types": "./dist/zod/TxEnvelopeEip7702.d.ts",
       "default": "./dist/zod/TxEnvelopeEip7702.js"
+    },
+    "./zod/TxEnvelopeEip8141": {
+      "src": "./src/zod/TxEnvelopeEip8141.ts",
+      "types": "./dist/zod/TxEnvelopeEip8141.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip8141.js"
     },
     "./zod/TxEnvelopeLegacy": {
       "src": "./src/zod/TxEnvelopeLegacy.ts",

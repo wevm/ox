@@ -1,4 +1,5 @@
 import { TransactionReceipt } from 'ox'
+import { z } from 'ox/zod'
 import { describe, expect, test } from 'vp/test'
 import { anvilMainnet } from '../../../test/prool.js'
 
@@ -456,4 +457,62 @@ test('exports', () => {
       "toRpc",
     ]
   `)
+})
+
+describe('frame receipts', () => {
+  test('preserves payer, statuses, logs, and large gas totals', () => {
+    const rpc = {
+      blockHash: '0x00',
+      blockNumber: '0x1',
+      cumulativeGasUsed: '0x20000000000001',
+      effectiveGasPrice: '0x1',
+      frameReceipts: [
+        {
+          executionGasUsed: '0x20000000000001',
+          logs: [
+            {
+              address: '0x1111111111111111111111111111111111111111',
+              data: '0xab',
+              topics: ['0x01'],
+            },
+          ],
+          stateGasUsed: '0x2',
+          status: 1,
+        },
+        { executionGasUsed: '0x3', logs: [], stateGasUsed: '0x0', status: 0 },
+        { executionGasUsed: '0x0', logs: [], stateGasUsed: '0x0', status: 2 },
+      ],
+      from: '0x1111111111111111111111111111111111111111',
+      gasUsed: '0x20000000000001',
+      logs: [],
+      logsBloom: '0x00',
+      payer: '0x2222222222222222222222222222222222222222',
+      status: '0x0',
+      to: null,
+      transactionHash: '0x00',
+      transactionIndex: '0x0',
+      type: '0x6',
+    } satisfies TransactionReceipt.Rpc
+    const receipt = TransactionReceipt.fromRpc(rpc)
+    expect(receipt.type).toBe('eip8141')
+    expect(receipt.payer).toBe(rpc.payer)
+    expect(receipt.frameReceipts).toEqual([
+      {
+        gasUsed: 9007199254740993n,
+        logs: rpc.frameReceipts[0]!.logs,
+        stateGasUsed: 2n,
+        status: 'success',
+      },
+      { gasUsed: 3n, logs: [], stateGasUsed: 0n, status: 'reverted' },
+      { gasUsed: 0n, logs: [], stateGasUsed: 0n, status: 'skipped' },
+    ])
+    expect(TransactionReceipt.toRpc(receipt)).toMatchObject(rpc)
+    expect(
+      z.decode(z.TransactionReceipt.TransactionReceipt, rpc).frameReceipts,
+    ).toEqual(receipt.frameReceipts)
+    expect(
+      z.encode(z.TransactionReceipt.TransactionReceipt, receipt).frameReceipts,
+    ).toEqual(rpc.frameReceipts)
+    expect(rpc.frameReceipts[0]!.executionGasUsed).toBe('0x20000000000001')
+  })
 })

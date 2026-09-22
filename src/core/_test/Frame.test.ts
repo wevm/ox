@@ -215,3 +215,53 @@ describe('validate', () => {
     expect(Frame.validate({ ...frame, value: 1n })).toBe(false)
   })
 })
+
+describe('fromRpc', () => {
+  test('maps budgets and preserves uint64 precision', () => {
+    expect(
+      Frame.fromRpc({
+        data: '0xdeadbeef',
+        executionGasLimit: '0x20000000000001',
+        flags: 0,
+        mode: 2,
+        stateGasLimit: '0x0',
+        target: null,
+        value: '0x1',
+      }),
+    ).toEqual({
+      data: '0xdeadbeef',
+      flags: 0,
+      gas: 9007199254740993n,
+      mode: 2,
+      stateGas: 0n,
+      value: 1n,
+    })
+  })
+})
+
+describe('toRpc', () => {
+  test('encodes defaults and named modes and flags', () => {
+    expect(
+      Frame.toRpc(
+        Frame.from({ flags: 'approveExecutionAndPayment', mode: 'verify' }),
+      ),
+    ).toEqual({
+      data: '0x',
+      executionGasLimit: '0x0',
+      flags: 3,
+      mode: 1,
+      stateGasLimit: '0x0',
+      value: '0x0',
+    })
+  })
+  test('accepts numberish budgets', () => {
+    expect(Frame.toRpc({ gas: '0xc350', stateGas: 12, value: 0n })).toEqual({
+      data: '0x',
+      executionGasLimit: '0xc350',
+      flags: 0,
+      mode: 0,
+      stateGasLimit: '0xc',
+      value: '0x0',
+    })
+  })
+})

@@ -2,6 +2,8 @@ import type * as AccessList from './AccessList.js'
 import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
+import * as Frame from './Frame.js'
+import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
 import type { Compute, OneOf, UnionCompute } from './internal/types.js'
@@ -21,6 +23,7 @@ export type Transaction<
     | Eip2930<pending, bigintType, numberType>
     | Eip4844<pending, bigintType, numberType>
     | Eip7702<pending, bigintType, numberType>
+    | Eip8141<pending, bigintType, numberType>
     | (Base & { type: Hex.Hex })
   >
 >
@@ -35,6 +38,7 @@ export type Rpc<pending extends boolean = false> = UnionCompute<
     | Eip2930Rpc<pending>
     | Eip4844Rpc<pending>
     | Eip7702Rpc<pending>
+    | Eip8141Rpc<pending>
     | (BaseRpc & { type: Hex.Hex })
   >
 >
@@ -184,6 +188,48 @@ export type Eip7702Rpc<pending extends boolean = false> = Compute<
   Eip7702<pending, Hex.Hex, Hex.Hex, ToRpcType['eip7702']>
 >
 
+/** An EIP-8141 frame transaction. */
+export type Eip8141<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+  type extends string = 'eip8141',
+> = Compute<
+  Omit<
+    Base<type, pending, bigintType, numberType>,
+    'chainId' | 'r' | 's' | 'v' | 'yParity'
+  > & {
+    /** Versioned blob hashes. */
+    blobVersionedHashes: readonly Hex.Hex[]
+    /** Chain ID, retaining bigint precision when needed. */
+    chainId: numberType | bigintType
+    /** Frames in execution order. */
+    frames: readonly ([bigintType] extends [Hex.Hex]
+      ? Frame.Rpc
+      : Frame.Frame<bigintType>)[]
+    /** Effective gas price. */
+    gasPrice?: bigintType | undefined
+    /** Maximum fee per blob gas. */
+    maxFeePerBlobGas: bigintType
+    /** Maximum fee per gas. */
+    maxFeePerGas: bigintType
+    /** Maximum priority fee per gas. */
+    maxPriorityFeePerGas: bigintType
+    /** Frame signature entries. */
+    signatures: readonly ([bigintType] extends [Hex.Hex]
+      ? FrameSignature.Rpc
+      : FrameSignature.FrameSignature)[]
+  }
+>
+
+/** An EIP-8141 RPC transaction. */
+export type Eip8141Rpc<pending extends boolean = false> = Eip8141<
+  pending,
+  Hex.Hex,
+  Hex.Hex,
+  '0x6'
+>
+
 /** An legacy Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Legacy<
   pending extends boolean = false,
@@ -217,6 +263,7 @@ export const toRpcType = {
   eip1559: '0x2',
   eip4844: '0x3',
   eip7702: '0x4',
+  eip8141: '0x6',
 } as const
 
 /** Type to RPC Type mapping. */
@@ -231,6 +278,7 @@ export const fromRpcType = {
   '0x2': 'eip1559',
   '0x3': 'eip4844',
   '0x4': 'eip7702',
+  '0x6': 'eip8141',
 } as const
 
 /** RPC Type to Type mapping. */
@@ -282,7 +330,8 @@ export function fromRpc<
 ): transaction extends Rpc<pending> ? Transaction<pending> : null {
   if (!transaction) return null as never
 
-  const signature = Signature.extract(transaction)
+  const signature =
+    transaction.type === '0x6' ? undefined : Signature.extract(transaction)
 
   const transaction_ = {
     ...transaction,
@@ -310,7 +359,23 @@ export function fromRpc<
     transaction_.authorizationList = Authorization.fromRpcList(
       transaction.authorizationList,
     )
-  if (transaction.chainId) transaction_.chainId = Number(transaction.chainId)
+  if (transaction.chainId) {
+    const chainId = BigInt(transaction.chainId)
+    transaction_.chainId =
+      transaction.type === '0x6' && chainId > BigInt(Number.MAX_SAFE_INTEGER)
+        ? chainId
+        : Number(chainId)
+  }
+  if (transaction.type === '0x6' && transaction.frames) {
+    transaction_.frames = transaction.frames.map(Frame.fromRpc)
+    transaction_.signatures = (transaction.signatures ?? []).map(
+      FrameSignature.fromRpc,
+    )
+    delete transaction_.r
+    delete transaction_.s
+    delete transaction_.v
+    delete transaction_.yParity
+  }
   if (transaction.gasPrice) transaction_.gasPrice = BigInt(transaction.gasPrice)
   if (transaction.maxFeePerBlobGas)
     transaction_.maxFeePerBlobGas = BigInt(transaction.maxFeePerBlobGas)
@@ -335,7 +400,11 @@ export declare namespace fromRpc {
     pending?: pending | boolean | undefined
   }
 
-  type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | Signature.extract.ErrorType
+    | Frame.fromRpc.ErrorType
+    | FrameSignature.fromRpc.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -400,6 +469,10 @@ export function toRpc<pending extends boolean = false>(
   rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
   rpc.value = Quantity.fromNumberish(transaction.value ?? 0n)
 
+  if (transaction.type === 'eip8141' && transaction.frames) {
+    rpc.frames = transaction.frames.map(Frame.toRpc)
+    rpc.signatures = transaction.signatures.map(FrameSignature.toRpc)
+  }
   if (transaction.accessList) rpc.accessList = transaction.accessList
   if (transaction.authorizationList)
     rpc.authorizationList = Authorization.toRpcList(
@@ -407,7 +480,7 @@ export function toRpc<pending extends boolean = false>(
     )
   if (transaction.blobVersionedHashes)
     rpc.blobVersionedHashes = transaction.blobVersionedHashes
-  if (transaction.chainId)
+  if (transaction.chainId !== undefined)
     rpc.chainId = Quantity.fromNumberish(transaction.chainId)
   if (transaction.gasPrice !== undefined)
     rpc.gasPrice = Quantity.fromNumberish(transaction.gasPrice)
@@ -441,5 +514,9 @@ export declare namespace toRpc {
     pending?: pending | boolean | undefined
   }
 
-  type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | Signature.extract.ErrorType
+    | Frame.toRpc.ErrorType
+    | FrameSignature.toRpc.ErrorType
+    | Errors.GlobalErrorType
 }

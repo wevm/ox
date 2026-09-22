@@ -2,6 +2,9 @@
 import * as z_AccessList from './AccessList.js'
 import * as z_Address from './Address.js'
 import * as z_Authorization from './Authorization.js'
+import * as z_Frame from './Frame.js'
+import * as z_FrameSignature from './FrameSignature.js'
+import { chainId, chainIdToRpc } from './internal/Frame.js'
 import * as z_Hex from './Hex.js'
 import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
@@ -13,6 +16,7 @@ const fromRpcType = {
   '0x2': 'eip1559',
   '0x3': 'eip4844',
   '0x4': 'eip7702',
+  '0x6': 'eip8141',
 } as const
 
 const toRpcType = {
@@ -21,6 +25,7 @@ const toRpcType = {
   eip1559: '0x2',
   eip4844: '0x3',
   eip7702: '0x4',
+  eip8141: '0x6',
 } as const
 
 /** Transaction type schema. */
@@ -134,6 +139,61 @@ export const PendingEip7702 = z.object(
   ),
 )
 
+const Eip8141Type = type('0x6', 'eip8141')
+
+/** EIP-8141 transaction schema. */
+export const Eip8141 = z.object({
+  ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame),
+  blockHash: z_Hex.Hex,
+  blockNumber: z_Uint.Uint,
+  blockTimestamp: z.optional(z_Uint.Uint),
+  transactionIndex: z_Number.Number,
+})
+
+/** Encode-only EIP-8141 transaction schema accepting numberish values. */
+export const Eip8141ToRpc = z.object({
+  ...eip8141Fields(z_Uint.UintToRpc, chainIdToRpc, z_Frame.FrameToRpc),
+  blockHash: z_Hex.Hex,
+  blockNumber: z_Uint.UintToRpc,
+  blockTimestamp: z.optional(z_Uint.UintToRpc),
+  transactionIndex: z_Number.NumberToRpc,
+})
+
+/** Pending EIP-8141 transaction schema. */
+export const PendingEip8141 = z.object({
+  ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame),
+  blockHash: z.null(),
+  blockNumber: z.null(),
+  blockTimestamp: z.optional(z.null()),
+  transactionIndex: z.null(),
+})
+
+function eip8141Fields<
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+  frame extends z.ZodMiniType,
+>(uint: uint, num: num, frame: frame) {
+  return {
+    blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
+    chainId: num,
+    data: z.optional(z_Hex.Hex),
+    frames: z.readonly(z.array(frame)),
+    from: z_Address.Address,
+    gas: uint,
+    gasPrice: z.optional(uint),
+    hash: z_Hex.Hex,
+    input: z_Hex.Hex,
+    maxFeePerBlobGas: uint,
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
+    nonce: uint,
+    signatures: z.readonly(z.array(z_FrameSignature.FrameSignature)),
+    to: z.nullable(z_Address.Address),
+    type: Eip8141Type,
+    value: uint,
+  }
+}
+
 /** Unknown typed transaction schema. */
 export const Unknown = z.object(
   baseFields(UnknownType, z_Uint.Uint, z_Number.Number),
@@ -155,6 +215,7 @@ export const Transaction = z.union([
   Eip1559,
   Eip4844,
   Eip7702,
+  Eip8141,
   Unknown,
 ])
 
@@ -165,6 +226,7 @@ export const TransactionToRpc = z.union([
   Eip1559ToRpc,
   Eip4844ToRpc,
   Eip7702ToRpc,
+  Eip8141ToRpc,
   UnknownToRpc,
 ])
 
@@ -175,6 +237,7 @@ export const Pending = z.union([
   PendingEip1559,
   PendingEip4844,
   PendingEip7702,
+  PendingEip8141,
   PendingUnknown,
 ])
 

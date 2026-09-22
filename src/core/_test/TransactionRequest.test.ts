@@ -1,4 +1,13 @@
-import { Blobs, Hex, TransactionRequest, Value } from 'ox'
+import {
+  Blobs,
+  Frame,
+  FrameSignature,
+  Hex,
+  TransactionEnvelope,
+  TransactionRequest,
+  TxEnvelopeEip8141,
+  Value,
+} from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { kzg } from '../../../test/kzg.js'
 import { anvilMainnet } from '../../../test/prool.js'
@@ -427,4 +436,61 @@ test('exports', () => {
       "MissingAuthorizationListError",
     ]
   `)
+})
+
+describe('frame transactions', () => {
+  test('derives frame blob sidecars through the existing KZG option', () => {
+    const blobs = Blobs.from('0xdeadbeef')
+    const request = {
+      blobs,
+      chainId: 1,
+      frames: [Frame.from({})],
+      from: '0x1111111111111111111111111111111111111111' as const,
+      maxFeePerBlobGas: 1n,
+    }
+    expect(() => TransactionRequest.toEnvelope(request)).toThrow(
+      TransactionRequest.MissingKzgError,
+    )
+    const envelope = TransactionRequest.toEnvelope(request, { kzg })
+    expect(envelope.type).toBe('eip8141')
+    if (envelope.type !== 'eip8141') throw new Error('Expected frame envelope')
+    expect(envelope.sidecars?.blobs).toEqual(blobs)
+    expect(envelope.sidecars?.cellProofs).toHaveLength(128)
+    expect(
+      TxEnvelopeEip8141.deserialize(TxEnvelopeEip8141.serialize(envelope))
+        .blobVersionedHashes,
+    ).toEqual(envelope.blobVersionedHashes)
+  })
+
+  test('round-trips requests and envelopes with large chain IDs', () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 9007199254740993n,
+      frames: [Frame.from({ gas: 50_000n, mode: 'verify' })],
+      sender: '0x1111111111111111111111111111111111111111',
+      signatures: [FrameSignature.from('0xaabb')],
+    })
+    const request = TransactionEnvelope.toTransactionRequest(envelope)
+    const rpc = TransactionRequest.toRpc(request)
+    expect(rpc.chainId).toBe('0x20000000000001')
+    expect(rpc.type).toBe('0x6')
+    expect(rpc.signatures).toEqual([
+      { msg: '0x', scheme: 0, signature: '0xaabb' },
+    ])
+    const decoded = TransactionRequest.fromRpc(rpc)
+    expect(decoded.chainId).toBe(9007199254740993n)
+    expect(
+      TxEnvelopeEip8141.serialize(
+        TransactionRequest.toEnvelope(
+          decoded,
+        ) as TxEnvelopeEip8141.TxEnvelopeEip8141,
+      ),
+    ).toBe(TxEnvelopeEip8141.serialize(envelope))
+  })
+  test('requires a sender', () => {
+    expect(() =>
+      TransactionRequest.toEnvelope({ chainId: 1, frames: [] }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Quantity.MissingFieldError: Missing required field \`from\` on \`TransactionRequest\`.]`,
+    )
+  })
 })

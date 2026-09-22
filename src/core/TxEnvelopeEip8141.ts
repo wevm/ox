@@ -6,6 +6,7 @@ import * as Frame from './Frame.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Assign, Compute, PartialBy } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import type * as TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
@@ -34,6 +35,30 @@ export type TxEnvelopeEip8141 = {
   signatures?: readonly FrameSignature.FrameSignature[] | undefined
   /** Transaction type. */
   type: Type
+}
+
+/** JSON-RPC representation of an EIP-8141 envelope. */
+export type Rpc = {
+  /** Versioned blob hashes. */
+  blobVersionedHashes: readonly Hex.Hex[]
+  /** Chain ID. */
+  chainId: Hex.Hex
+  /** Frames in execution order. */
+  frames: readonly Frame.Rpc[]
+  /** Account authorizing execution. */
+  from: Address.Address
+  /** Maximum fee per blob gas. */
+  maxFeePerBlobGas: Hex.Hex
+  /** Maximum fee per gas. */
+  maxFeePerGas: Hex.Hex
+  /** Maximum priority fee per gas. */
+  maxPriorityFeePerGas: Hex.Hex
+  /** Sender nonce. */
+  nonce: Hex.Hex
+  /** Frame signature entries. */
+  signatures: readonly FrameSignature.Rpc[]
+  /** RPC transaction type. */
+  type: '0x6'
 }
 
 export type Serialized = `${SerializedType}${string}`
@@ -205,11 +230,11 @@ export declare namespace assert {
  * ### Basic Usage
  *
  * ```ts twoslash
- * import { TxEnvelopeEip8141 } from 'ox'
+ * import { Frame, TxEnvelopeEip8141 } from 'ox'
  *
  * const serialized = TxEnvelopeEip8141.serialize({
  *   chainId: 1,
- *   frames: [{}],
+ *   frames: [Frame.from({})],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  *
@@ -334,6 +359,112 @@ export declare namespace from {
 }
 
 /**
+ * Converts an RPC envelope to an EIP-8141 envelope without losing chain ID precision.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { Frame, TxEnvelopeEip8141 } from 'ox'
+ *
+ * const rpc = TxEnvelopeEip8141.toRpc(TxEnvelopeEip8141.from({
+ *   chainId: 1,
+ *   frames: [Frame.from({})],
+ *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * }))
+ * const envelope = TxEnvelopeEip8141.fromRpc(rpc)
+ * ```
+ *
+ * @param envelope - The value to convert.
+ * @returns The converted value.
+ */
+export function fromRpc(envelope: Rpc): TxEnvelopeEip8141 {
+  const chainId = Hex.toBigInt(envelope.chainId)
+  return from({
+    blobVersionedHashes: envelope.blobVersionedHashes,
+    chainId:
+      chainId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(chainId) : chainId,
+    frames: envelope.frames.map(Frame.fromRpc),
+    maxFeePerBlobGas: Hex.toBigInt(envelope.maxFeePerBlobGas),
+    maxFeePerGas: Hex.toBigInt(envelope.maxFeePerGas),
+    maxPriorityFeePerGas: Hex.toBigInt(envelope.maxPriorityFeePerGas),
+    nonce: Hex.toBigInt(envelope.nonce),
+    sender: envelope.from,
+    signatures: envelope.signatures.map(FrameSignature.fromRpc),
+  })
+}
+
+export declare namespace fromRpc {
+  type ErrorType =
+    | from.ErrorType
+    | Frame.fromRpc.ErrorType
+    | FrameSignature.fromRpc.ErrorType
+    | Hex.toBigInt.ErrorType
+}
+
+/**
+ * Converts an EIP-8141 envelope to RPC fields. Sidecars are excluded.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { Frame, TxEnvelopeEip8141 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip8141.from({
+ *   chainId: 1,
+ *   frames: [Frame.from({})],
+ *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * })
+ * const rpc = TxEnvelopeEip8141.toRpc(envelope)
+ * ```
+ *
+ * @param envelope - The value to convert.
+ * @returns The converted value.
+ */
+export function toRpc(envelope: toRpc.Input): Rpc {
+  return {
+    blobVersionedHashes: envelope.blobVersionedHashes ?? [],
+    chainId: Quantity.fromNumberish(envelope.chainId),
+    frames: envelope.frames.map(Frame.toRpc),
+    from: envelope.sender,
+    maxFeePerBlobGas: Quantity.fromNumberish(envelope.maxFeePerBlobGas ?? 0n),
+    maxFeePerGas: Quantity.fromNumberish(envelope.maxFeePerGas ?? 0n),
+    maxPriorityFeePerGas: Quantity.fromNumberish(
+      envelope.maxPriorityFeePerGas ?? 0n,
+    ),
+    nonce: Quantity.fromNumberish(envelope.nonce ?? 0n),
+    signatures: (envelope.signatures ?? []).map(FrameSignature.toRpc),
+    type: '0x6',
+  }
+}
+
+export declare namespace toRpc {
+  type Input = Omit<
+    TxEnvelopeEip8141,
+    | 'chainId'
+    | 'frames'
+    | 'maxFeePerBlobGas'
+    | 'maxFeePerGas'
+    | 'maxPriorityFeePerGas'
+    | 'nonce'
+    | 'type'
+  > & {
+    chainId: Hex.Hex | bigint | number
+    frames: readonly Frame.toRpc.Input[]
+    maxFeePerBlobGas?: Hex.Hex | bigint | number | undefined
+    maxFeePerGas?: Hex.Hex | bigint | number | undefined
+    maxPriorityFeePerGas?: Hex.Hex | bigint | number | undefined
+    nonce?: Hex.Hex | bigint | number | undefined
+    type?: Type | undefined
+  }
+  type ErrorType =
+    | Frame.toRpc.ErrorType
+    | FrameSignature.toRpc.ErrorType
+    | Hex.fromNumber.ErrorType
+}
+
+/**
  * Returns the canonical signing payload of an EIP-8141 envelope.
  *
  * Elides signature bytes only for entries with an empty payload. Explicit-payload
@@ -381,11 +512,11 @@ export declare namespace getSignPayload {
  * ### Basic Usage
  *
  * ```ts twoslash
- * import { TxEnvelopeEip8141 } from 'ox'
+ * import { Frame, TxEnvelopeEip8141 } from 'ox'
  *
  * const hash = TxEnvelopeEip8141.hash({
  *   chainId: 1,
- *   frames: [{}],
+ *   frames: [Frame.from({})],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * ```
@@ -492,11 +623,11 @@ export declare namespace serialize {
  * ### Basic Usage
  *
  * ```ts twoslash
- * import { TxEnvelopeEip8141 } from 'ox'
+ * import { Frame, TxEnvelopeEip8141 } from 'ox'
  *
  * const valid = TxEnvelopeEip8141.validate({
  *   chainId: 1,
- *   frames: [{}],
+ *   frames: [Frame.from({})],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * ```

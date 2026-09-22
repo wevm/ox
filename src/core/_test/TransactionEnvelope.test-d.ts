@@ -208,8 +208,9 @@ describe('eip8141', () => {
       TransactionEnvelope.getSerializedType('0x06c0'),
     ).toEqualTypeOf<'eip8141'>()
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelope.TxEnvelope<true>>()
-    // @ts-expect-error Frame RPC conversion is not supported yet.
-    TransactionEnvelope.toRpc(envelope)
+    expectTypeOf(
+      TransactionEnvelope.toRpc(envelope),
+    ).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
   })
 
   test('frames take precedence over blob and fee fields', () => {
