@@ -426,6 +426,11 @@
       "types": "./dist/core/Frame.d.ts",
       "default": "./dist/core/Frame.js"
     },
+    "./FrameReceipt": {
+      "src": "./src/core/FrameReceipt.ts",
+      "types": "./dist/core/FrameReceipt.d.ts",
+      "default": "./dist/core/FrameReceipt.js"
+    },
     "./FrameSignature": {
       "src": "./src/core/FrameSignature.ts",
       "types": "./dist/core/FrameSignature.d.ts",
@@ -1085,6 +1090,11 @@
       "src": "./src/zod/Frame.ts",
       "types": "./dist/zod/Frame.d.ts",
       "default": "./dist/zod/Frame.js"
+    },
+    "./zod/FrameReceipt": {
+      "src": "./src/zod/FrameReceipt.ts",
+      "types": "./dist/zod/FrameReceipt.d.ts",
+      "default": "./dist/zod/FrameReceipt.js"
     },
     "./zod/FrameSignature": {
       "src": "./src/zod/FrameSignature.ts",

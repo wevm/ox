@@ -1,5 +1,6 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
+import * as FrameReceipt from './FrameReceipt.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
@@ -29,8 +30,8 @@ export type TransactionReceipt<
   /** Receipts for each EIP-8141 frame, in execution order. */
   frameReceipts?:
     | readonly ([bigintType] extends [Hex.Hex]
-        ? FrameReceiptRpc
-        : FrameReceipt<bigintType>)[]
+        ? FrameReceipt.Rpc
+        : FrameReceipt.FrameReceipt<bigintType>)[]
     | undefined
   /** Transaction sender */
   from: Address.Address
@@ -55,30 +56,6 @@ export type TransactionReceipt<
   /** Transaction type */
   type: type
 }>
-
-/** Receipt for one frame. Frame logs contain only address, data, and topics. */
-export type FrameReceipt<bigintType = bigint> = {
-  /** Execution gas used before transaction-level refunds. */
-  gasUsed: bigintType
-  /** Logs emitted by this frame. */
-  logs: readonly Pick<Log.Log, 'address' | 'data' | 'topics'>[]
-  /** Final state gas after refills and rollbacks. */
-  stateGasUsed: bigintType
-  /** Frame execution result. */
-  status: 'reverted' | 'success' | 'skipped'
-}
-
-/** JSON-RPC receipt for one frame. */
-export type FrameReceiptRpc = {
-  /** Execution gas used. */
-  executionGasUsed: Hex.Hex
-  /** Logs emitted by this frame. */
-  logs: readonly Pick<Log.Log, 'address' | 'data' | 'topics'>[]
-  /** Final state gas used. */
-  stateGasUsed: Hex.Hex
-  /** Zero for failure, one for success, or two for a skipped frame. */
-  status: 0 | 1 | 2
-}
 
 /** An RPC Transaction Receipt as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
 export type Rpc = TransactionReceipt<RpcStatus, RpcType, Hex.Hex, Hex.Hex>
@@ -277,14 +254,7 @@ export function fromRpc<const receipt extends Rpc | null>(
     ...receipt,
     ...(receipt.frameReceipts
       ? {
-          frameReceipts: receipt.frameReceipts.map((frame) => ({
-            gasUsed: BigInt(frame.executionGasUsed),
-            logs: frame.logs,
-            stateGasUsed: BigInt(frame.stateGasUsed),
-            status: ({ 0: 'reverted', 1: 'success', 2: 'skipped' } as const)[
-              frame.status
-            ],
-          })),
+          frameReceipts: receipt.frameReceipts.map(FrameReceipt.fromRpc),
         }
       : {}),
     blobGasPrice: receipt.blobGasPrice
@@ -303,7 +273,10 @@ export function fromRpc<const receipt extends Rpc | null>(
 }
 
 export declare namespace fromRpc {
-  export type ErrorType = Log.fromRpc.ErrorType | Errors.GlobalErrorType
+  export type ErrorType =
+    | Log.fromRpc.ErrorType
+    | FrameReceipt.fromRpc.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -374,14 +347,7 @@ export function toRpc(receipt: toRpc.Input): Rpc {
     effectiveGasPrice: Quantity.fromNumberish(receipt.effectiveGasPrice),
     ...(receipt.frameReceipts
       ? {
-          frameReceipts: receipt.frameReceipts.map((frame) => ({
-            executionGasUsed: Quantity.fromNumberish(frame.gasUsed),
-            logs: frame.logs,
-            stateGasUsed: Quantity.fromNumberish(frame.stateGasUsed),
-            status: ({ reverted: 0, skipped: 2, success: 1 } as const)[
-              frame.status
-            ],
-          })),
+          frameReceipts: receipt.frameReceipts.map(FrameReceipt.toRpc),
         }
       : {}),
     from: receipt.from,
@@ -407,5 +373,8 @@ export declare namespace toRpc {
     Hex.Hex | number
   >
 
-  export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
+  export type ErrorType =
+    | Hex.fromNumber.ErrorType
+    | FrameReceipt.toRpc.ErrorType
+    | Errors.GlobalErrorType
 }

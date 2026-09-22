@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
-import * as Quantity from '../core/internal/quantity.js'
 import * as z_Address from './Address.js'
+import * as z_FrameReceipt from './FrameReceipt.js'
 import * as z_Hex from './Hex.js'
 import * as z_Log from './Log.js'
 import * as z_Number from './Number.js'
@@ -51,64 +51,9 @@ export const Type = z.codec(z.string(), z.string(), {
   encode: (value) => toRpcType[value as keyof typeof toRpcType] ?? value,
 })
 
-const frameLog = z.object({
-  address: z_Address.Address,
-  data: z_Hex.Hex,
-  topics: z.array(z_Hex.Hex),
-})
-
-const frameReceiptRpc = z.object({
-  executionGasUsed: z_Hex.Hex,
-  logs: z.readonly(z.array(frameLog)),
-  stateGasUsed: z_Hex.Hex,
-  status: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-})
-const frameReceiptDecoded = z.object({
-  gasUsed: z.bigint(),
-  logs: z.readonly(z.array(frameLog)),
-  stateGasUsed: z.bigint(),
-  status: z.enum(['reverted', 'success', 'skipped']),
-})
-
-/** Per-frame receipt codec. */
-export const FrameReceipt = z.codec(frameReceiptRpc, frameReceiptDecoded, {
-  decode: (value) => ({
-    gasUsed: BigInt(value.executionGasUsed),
-    logs: value.logs,
-    stateGasUsed: BigInt(value.stateGasUsed),
-    status: ({ 0: 'reverted', 1: 'success', 2: 'skipped' } as const)[
-      value.status
-    ],
-  }),
-  encode: (value) => ({
-    executionGasUsed: Quantity.fromNumberish(value.gasUsed),
-    logs: value.logs,
-    stateGasUsed: Quantity.fromNumberish(value.stateGasUsed),
-    status: ({ reverted: 0, skipped: 2, success: 1 } as const)[value.status],
-  }),
-})
-
-/** Encode-only per-frame receipt codec accepting numberish gas. */
-export const FrameReceiptToRpc = z.codec(
-  frameReceiptRpc,
-  z.extend(frameReceiptDecoded, {
-    gasUsed: z.union([z_Hex.Hex, z.bigint(), z.number()]),
-    stateGasUsed: z.union([z_Hex.Hex, z.bigint(), z.number()]),
-  }),
-  {
-    decode: (value) => z.decode(FrameReceipt, value),
-    encode: (value) => ({
-      executionGasUsed: Quantity.fromNumberish(value.gasUsed),
-      logs: value.logs,
-      stateGasUsed: Quantity.fromNumberish(value.stateGasUsed),
-      status: ({ reverted: 0, skipped: 2, success: 1 } as const)[value.status],
-    }),
-  },
-)
-
 /** Transaction receipt schema. */
 export const TransactionReceipt = z.object(
-  fields(z_Uint.Uint, z_Number.Number, z_Log.Log, FrameReceipt),
+  fields(z_Uint.Uint, z_Number.Number, z_Log.Log, z_FrameReceipt.FrameReceipt),
 )
 
 /** Encode-only transaction receipt schema accepting numberish `toRpc` inputs. */
@@ -117,7 +62,7 @@ export const TransactionReceiptToRpc = z.object(
     z_Uint.UintToRpc,
     z_Number.NumberToRpc,
     z_Log.LogToRpc,
-    FrameReceiptToRpc,
+    z_FrameReceipt.FrameReceiptToRpc,
   ),
 )
 

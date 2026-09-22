@@ -1,8 +1,8 @@
 import type {
   Frame,
+  FrameReceipt,
   FrameSignature,
   Transaction,
-  TransactionReceipt,
   TxEnvelopeEip8141,
 } from 'ox'
 import { z } from 'ox/zod'
@@ -33,9 +33,9 @@ test('frame codecs preserve core types', () => {
     Transaction.Eip8141<true>
   >()
   expectTypeOf<
-    z.output<typeof z.TransactionReceipt.FrameReceipt>
-  >().toEqualTypeOf<TransactionReceipt.FrameReceipt>()
+    z.output<typeof z.FrameReceipt.FrameReceipt>
+  >().toEqualTypeOf<FrameReceipt.FrameReceipt>()
   expectTypeOf<
-    z.input<typeof z.TransactionReceipt.FrameReceipt>
-  >().toEqualTypeOf<TransactionReceipt.FrameReceiptRpc>()
+    z.input<typeof z.FrameReceipt.FrameReceipt>
+  >().toEqualTypeOf<FrameReceipt.Rpc>()
 })

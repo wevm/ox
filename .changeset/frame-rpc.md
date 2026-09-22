@@ -2,7 +2,7 @@
 "ox": minor
 ---
 
-Added frame transaction RPC conversions and Zod codecs, including payer metadata and per-frame receipts.
+Added frame transaction RPC conversions and Zod codecs, including payer metadata and a dedicated `FrameReceipt` module.
 
 ```ts
 import { Frame, TxEnvelopeEip8141 } from 'ox'

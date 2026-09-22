@@ -1629,6 +1629,15 @@ export * as Filter from './core/Filter.js'
 export * as Frame from './core/Frame.js'
 
 /**
+ * Utilities for converting EIP-8141 frame receipts between RPC and decoded forms.
+ *
+ * Frame receipts include execution gas, state gas, logs, and execution status.
+ *
+ * @category Execution Spec
+ */
+export * as FrameReceipt from './core/FrameReceipt.js'
+
+/**
  * Utilities for constructing, validating, and encoding [EIP-8141](https://eips.ethereum.org/EIPS/eip-8141) signature entries.
  *
  * Supports {@link ox#FrameSignature.Arbitrary}, {@link ox#FrameSignature.Secp256k1},
