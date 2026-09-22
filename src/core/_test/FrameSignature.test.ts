@@ -75,74 +75,87 @@ describe('from', () => {
     })
     expect(entry).toEqual({ payload, publicKey, scheme: 'p256', signature })
   })
-})
 
-describe('fromP256', () => {
-  test('constructs a structured entry with default payload', () => {
-    const signature = { r: '0x01', s: '0x02' } as const
-    const entry = FrameSignature.fromP256(signature, { publicKey })
-    expect(entry).toEqual({
-      payload: '0x',
-      publicKey,
-      scheme: 'p256',
-      signature,
+  describe('p256', () => {
+    test('constructs a structured entry with default payload', () => {
+      const signature = { r: '0x01', s: '0x02' } as const
+      const entry = FrameSignature.from({
+        publicKey,
+        scheme: 'p256',
+        signature,
+      })
+      expect(entry).toEqual({
+        payload: '0x',
+        publicKey,
+        scheme: 'p256',
+        signature,
+      })
+      expect(FrameSignature.toTuple(entry)[3]).toBe(p256Bytes)
     })
-    expect(FrameSignature.toTuple(entry)[3]).toBe(p256Bytes)
-  })
 
-  test('preserves metadata and high-s until encoding', () => {
-    const signature = Object.freeze({
-      r: '0x01',
-      s: Hex.fromNumber(p256.Point.Fn.ORDER - 2n),
+    test('preserves metadata and high-s until encoding', () => {
+      const signature = Object.freeze({
+        r: '0x01',
+        s: Hex.fromNumber(p256.Point.Fn.ORDER - 2n),
+      })
+      const signer = '0x0000000000000000000000000000000000000000'
+      const entry = FrameSignature.from({
+        payload,
+        publicKey,
+        scheme: 'p256',
+        signature,
+        signer,
+      })
+      expect(entry).toEqual({
+        payload,
+        publicKey,
+        scheme: 'p256',
+        signature,
+        signer,
+      })
+      expect(FrameSignature.toTuple(entry)[3]).toBe(p256Bytes)
+      expect(entry.signature.s).toBe(signature.s)
     })
-    const signer = '0x0000000000000000000000000000000000000000'
-    const entry = FrameSignature.fromP256(signature, {
-      payload,
-      publicKey,
-      signer,
+
+    test('rejects a missing public key', () => {
+      expect(() =>
+        FrameSignature.from({
+          scheme: 'p256',
+          signature: { r: '0x01', s: '0x02' },
+        } as never),
+      ).toThrow()
     })
-    expect(entry).toEqual({
-      payload,
-      publicKey,
-      scheme: 'p256',
-      signature,
-      signer,
+  })
+
+  describe('secp256k1', () => {
+    test('constructs a structured entry with default payload', () => {
+      const signature = { r: '0x01', s: '0x02', yParity: 1 } as const
+      const entry = FrameSignature.from({ scheme: 'secp256k1', signature })
+      expect(entry).toEqual({ payload: '0x', scheme: 'secp256k1', signature })
+      expect(FrameSignature.toTuple(entry)[3]).toBe(secpBytes)
     })
-    expect(FrameSignature.toTuple(entry)[3]).toBe(p256Bytes)
-    expect(entry.signature.s).toBe(signature.s)
-  })
 
-  test('rejects a missing signature or public key', () => {
-    expect(() =>
-      FrameSignature.fromP256(undefined as never, { publicKey }),
-    ).toThrow()
-    expect(() =>
-      FrameSignature.fromP256({ r: '0x01', s: '0x02' }, {} as never),
-    ).toThrow()
-  })
-})
+    test('preserves explicit payload and signer', () => {
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const signer = '0x0000000000000000000000000000000000000000'
+      expect(
+        FrameSignature.from({
+          payload,
+          scheme: 'secp256k1',
+          signature,
+          signer,
+        }),
+      ).toEqual({ payload, scheme: 'secp256k1', signature, signer })
+    })
 
-describe('fromSecp256k1', () => {
-  test('constructs a structured entry with default payload', () => {
-    const signature = { r: '0x01', s: '0x02', yParity: 1 } as const
-    const entry = FrameSignature.fromSecp256k1(signature)
-    expect(entry).toEqual({ payload: '0x', scheme: 'secp256k1', signature })
-    expect(FrameSignature.toTuple(entry)[3]).toBe(secpBytes)
-  })
-
-  test('preserves explicit payload and signer', () => {
-    const signature = Secp256k1.sign({ payload, privateKey })
-    const signer = '0x0000000000000000000000000000000000000000'
-    expect(
-      FrameSignature.fromSecp256k1(signature, { payload, signer }),
-    ).toEqual({ payload, scheme: 'secp256k1', signature, signer })
-  })
-
-  test('rejects missing signatures and invalid parity', () => {
-    expect(() => FrameSignature.fromSecp256k1(undefined as never)).toThrow()
-    expect(() =>
-      FrameSignature.fromSecp256k1({ r: '0x01', s: '0x02', yParity: 27 }),
-    ).toThrow()
+    test('rejects invalid parity', () => {
+      expect(() =>
+        FrameSignature.from({
+          scheme: 'secp256k1',
+          signature: { r: '0x01', s: '0x02', yParity: 27 },
+        }),
+      ).toThrow()
+    })
   })
 })
 

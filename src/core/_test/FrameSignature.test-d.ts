@@ -65,22 +65,29 @@ test('from hex preserves signature literals and default metadata', () => {
   FrameSignature.from('aabb')
 })
 
-test('scheme helpers preserve structured signature types', () => {
-  const secp = FrameSignature.fromSecp256k1({
-    r: '0x01',
-    s: '0x02',
-    yParity: 1,
+test('from preserves structured signature types', () => {
+  const secp = FrameSignature.from({
+    scheme: 'secp256k1',
+    signature: {
+      r: '0x01',
+      s: '0x02',
+      yParity: 1,
+    },
   })
   expectTypeOf(secp.scheme).toEqualTypeOf<'secp256k1'>()
   expectTypeOf(secp.signature.yParity).toEqualTypeOf<1>()
-  const p256 = FrameSignature.fromP256(
-    { r: '0x01', s: '0x02' },
-    { publicKey: { prefix: 4, x: '0x01', y: '0x02' } },
-  )
+  const p256 = FrameSignature.from({
+    publicKey: { prefix: 4, x: '0x01', y: '0x02' },
+    scheme: 'p256',
+    signature: { r: '0x01', s: '0x02' },
+  })
   expectTypeOf(p256.scheme).toEqualTypeOf<'p256'>()
   expectTypeOf(p256.signature.r).toEqualTypeOf<'0x01'>()
   // @ts-expect-error P-256 requires a public key.
-  FrameSignature.fromP256({ r: '0x01', s: '0x02' }, {})
-  // @ts-expect-error secp256k1 requires recovery parity.
-  FrameSignature.fromSecp256k1({ r: '0x01', s: '0x02' })
+  FrameSignature.from({ scheme: 'p256', signature: { r: '0x01', s: '0x02' } })
+  FrameSignature.from({
+    scheme: 'secp256k1',
+    // @ts-expect-error secp256k1 requires recovery parity.
+    signature: { r: '0x01', s: '0x02' },
+  })
 })

@@ -105,8 +105,10 @@ export type Tuple = readonly [
  * const privateKey = Secp256k1.randomPrivateKey()
  * const signature = Secp256k1.sign({ payload, privateKey })
  *
- * const entry = FrameSignature.fromSecp256k1(signature, {
- *   payload
+ * const entry = FrameSignature.from({
+ *   payload,
+ *   scheme: 'secp256k1',
+ *   signature
  * })
  *
  * FrameSignature.assert(entry, { signed: true })
@@ -298,120 +300,6 @@ export declare namespace from {
           }
         >
       : never
-  type ErrorType = assert.ErrorType
-}
-
-/**
- * Creates a {@link ox#FrameSignature.P256} entry from a {@link ox#Signature.Signature}
- * and {@link ox#PublicKey.PublicKey}.
- *
- * The payload defaults to the canonical transaction signing hash.
- *
- * @example
- * ### Basic Usage
- *
- * Generate a key pair and wrap a signature over an explicit digest.
- *
- * ```ts twoslash
- * import { FrameSignature, Hash, P256 } from 'ox'
- *
- * const { privateKey, publicKey } = P256.createKeyPair()
- * const payload = Hash.keccak256('0xdeadbeef')
- * const signature = P256.sign({ payload, privateKey })
- *
- * const entry = FrameSignature.fromP256(signature, {
- *   payload,
- *   publicKey
- * })
- * ```
- *
- * @param signature - The P-256 signature to wrap.
- * @param options - The public key and optional signature metadata.
- * @returns The P-256 signature entry.
- */
-export function fromP256<const signature extends Signature.Signature<false>>(
-  signature: signature,
-  options: fromP256.Options,
-): fromP256.ReturnType<signature> {
-  const entry = from({
-    ...options,
-    scheme: 'p256',
-    signature,
-  })
-  assert(entry, { signed: true })
-  return entry as unknown as fromP256.ReturnType<signature>
-}
-
-export declare namespace fromP256 {
-  type Options = fromSecp256k1.Options & {
-    /** Uncompressed P-256 public key. */
-    publicKey: PublicKey.PublicKey
-  }
-  type ReturnType<signature extends Signature.Signature<false>> = Compute<
-    Options & {
-      payload: Hex.Hex
-      scheme: 'p256'
-      signature: signature
-    }
-  >
-  type ErrorType = assert.ErrorType
-}
-
-/**
- * Creates a {@link ox#FrameSignature.Secp256k1} entry from a recovered
- * {@link ox#Signature.Signature}.
- *
- * The signature must contain `yParity`. The payload defaults to the canonical
- * transaction signing hash.
- *
- * @example
- * ### Basic Usage
- *
- * Generate a private key and wrap a signature over an explicit digest.
- *
- * ```ts twoslash
- * import { FrameSignature, Hash, Secp256k1 } from 'ox'
- *
- * const payload = Hash.keccak256('0xdeadbeef')
- * const privateKey = Secp256k1.randomPrivateKey()
- * const signature = Secp256k1.sign({ payload, privateKey })
- *
- * const entry = FrameSignature.fromSecp256k1(signature, {
- *   payload
- * })
- * ```
- *
- * @param signature - The recovered secp256k1 signature to wrap.
- * @param options - Optional signature metadata.
- * @returns The secp256k1 signature entry.
- */
-export function fromSecp256k1<const signature extends Signature.Signature>(
-  signature: signature,
-  options: fromSecp256k1.Options = {},
-): fromSecp256k1.ReturnType<signature> {
-  const entry = from({
-    ...options,
-    scheme: 'secp256k1',
-    signature,
-  })
-  assert(entry, { signed: true })
-  return entry
-}
-
-export declare namespace fromSecp256k1 {
-  type Options = {
-    /** Explicit digest. Omit to use the transaction signing hash. */
-    payload?: Hex.Hex | undefined
-    /** Signer address. Omit to use the transaction sender. */
-    signer?: Address.Address | undefined
-  }
-  type ReturnType<signature extends Signature.Signature> = Compute<
-    Options & {
-      payload: Hex.Hex
-      scheme: 'secp256k1'
-      signature: signature
-    }
-  >
   type ErrorType = assert.ErrorType
 }
 
