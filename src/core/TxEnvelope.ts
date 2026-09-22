@@ -703,7 +703,7 @@ export declare namespace toRpc {
   export type Input = Exclude<
     TxEnvelope<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
     { type?: TxEnvelopeEip8141.Type | undefined }
-  > & { frames?: never }
+  > & { frames?: undefined }
 
   export type ReturnType<envelope extends Typeable = TxEnvelope> =
     getType.ReturnType<envelope> extends 'legacy'
@@ -768,7 +768,10 @@ export declare namespace toRpc {
  * @returns A transaction request.
  */
 export function toTransactionRequest(
-  envelope: TxEnvelope,
+  envelope: Exclude<
+    TxEnvelope,
+    { type?: TxEnvelopeEip8141.Type | undefined }
+  > & { frames?: undefined },
 ): TransactionRequest.TransactionRequest {
   const type = getType(envelope) as Type | string
   if (type === 'eip8141') throw new InvalidTypeError({ type })

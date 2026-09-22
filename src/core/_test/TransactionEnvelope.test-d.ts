@@ -238,3 +238,18 @@ test('toRpc rejects implicit frame envelopes until RPC support is available', ()
   // @ts-expect-error Frame RPC conversion is not supported here.
   TransactionEnvelope.toRpc(envelope)
 })
+
+test('request conversions exclude frames and accept undefined', () => {
+  TransactionEnvelope.toRpc({ chainId: 1, frames: undefined, maxFeePerGas: 1n })
+  TransactionEnvelope.toTransactionRequest({
+    chainId: 1,
+    frames: undefined,
+    maxFeePerGas: 1n,
+  })
+  TransactionEnvelope.toTransactionRequest({
+    chainId: 1,
+    // @ts-expect-error Frame request conversion is introduced with RPC support.
+    frames: [{}],
+    sender: '0x1111111111111111111111111111111111111111',
+  })
+})
