@@ -23,9 +23,9 @@ smart accounts can require different verification frames.
 Create a verification frame that approves execution and payment, followed by a sender
 frame that transfers value. Omitting a frame's `target` selects the transaction sender.
 
-The example reads the chain ID and pending nonce from your node. Supply your sender's
-private key and a funded recipient address. Choose fees and per-frame budgets for your
-network; the values below illustrate the flow on a development network.
+The example assumes a chain ID, sender nonce, and configured RPC transport. Choose
+fees and per-frame budgets for your network; the values below illustrate the flow
+on a development network.
 
 ```ts twoslash
 import {
@@ -39,22 +39,20 @@ import {
   Value,
 } from 'ox'
 
+declare const chainId: number
+
+declare const nonce: bigint
+
 declare const privateKey: Hex.Hex
 
 declare const recipient: Address.Address
 
-declare const rpcUrl: string
+declare const rpc: RpcTransport.Http
 
-const rpc = RpcTransport.fromHttp(rpcUrl)
 const sender = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
-const chainId = await rpc.request({ method: 'eth_chainId' })
-const nonce = await rpc.request({
-  method: 'eth_getTransactionCount',
-  params: [sender, 'pending'],
-})
 
 const envelope = TxEnvelopeEip8141.from({
-  chainId: Hex.toNumber(chainId),
+  chainId,
   frames: [
     Frame.from({
       flags: 'approveExecutionAndPayment',
@@ -70,7 +68,7 @@ const envelope = TxEnvelopeEip8141.from({
   ],
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
-  nonce: Hex.toBigInt(nonce),
+  nonce,
   sender,
   signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
 })
@@ -156,9 +154,8 @@ import { Hex, RpcTransport, TransactionReceipt } from 'ox'
 
 declare const hash: Hex.Hex
 
-declare const rpcUrl: string
+declare const rpc: RpcTransport.Http
 
-const rpc = RpcTransport.fromHttp(rpcUrl)
 const receipt = TransactionReceipt.fromRpc(
   await rpc.request({
     method: 'eth_getTransactionReceipt',
