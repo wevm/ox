@@ -10,8 +10,6 @@ import {
   Secp256k1,
   TxEnvelopeEip8141,
 } from 'ox'
-import { Setups } from 'ox/trusted-setups'
-import { Kzg } from 'ox/wasm'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { rpcUrl } from '../../../test/frames/prool.js'
@@ -1019,77 +1017,6 @@ describe('serialize', () => {
           }),
         ),
       ).toBe(before + 1n)
-    })
-
-    // TODO: enable once the NethDev harness mines blob-carrying frame transactions.
-    test.skip('submits a PeerDAS blob wrapper and retrieves the mined body', async () => {
-      const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
-      try {
-        const blobs = Blobs.from('0xdeadbeef')
-        const commitments = Blobs.toCommitments(blobs, { kzg })
-        const envelope = TxEnvelopeEip8141.from({
-          blobVersionedHashes: Blobs.commitmentsToVersionedHashes(commitments),
-          chainId: 8141,
-          frames: [
-            Frame.from({
-              flags: 'approveExecutionAndPayment',
-              gas: 50_000n,
-              mode: 'verify',
-            }),
-          ],
-          maxFeePerBlobGas: 1_000_000_000n,
-          maxFeePerGas: 10_000_000_000n,
-          maxPriorityFeePerGas: 1_000_000_000n,
-          nonce: BigInt(
-            await rpc.request({
-              method: 'eth_getTransactionCount',
-              params: [accounts[0].address, 'latest'],
-            }),
-          ),
-          sender: accounts[0].address,
-          sidecars: {
-            blobs,
-            cellProofs: Blobs.toCellProofs(blobs, { kzg }),
-            commitments,
-          },
-          signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
-        })
-        const payload = TxEnvelopeEip8141.getSignPayload(envelope)
-        const signature = Secp256k1.sign({
-          payload,
-          privateKey: accounts[0].privateKey,
-        })
-
-        const signed = TxEnvelopeEip8141.from({
-          ...envelope,
-          signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
-        })
-        const serialized = TxEnvelopeEip8141.serialize(signed)
-        const hash = await rpc.request({
-          method: 'eth_sendRawTransaction',
-          params: [serialized],
-        })
-        expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
-        await expect
-          .poll(
-            () =>
-              rpc.request({
-                method: 'eth_getTransactionReceipt',
-                params: [hash],
-              }),
-            { timeout: 30_000 },
-          )
-          .not.toBeNull()
-        const transaction = await rpc.request({
-          method: 'eth_getTransactionByHash',
-          params: [TxEnvelopeEip8141.hash(signed)],
-        })
-        expect(transaction?.blobVersionedHashes).toEqual(
-          envelope.blobVersionedHashes,
-        )
-      } finally {
-        kzg.dispose()
-      }
     })
   })
 
