@@ -15,18 +15,29 @@ export const Decoded = z
   .check(z.refine(core_TxEnvelopeEip8141.validate, 'Invalid frame transaction'))
 
 /** RPC EIP-8141 envelope schema. */
-export const Rpc = z.object({
-  blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
-  chainId: z_Hex.Hex,
-  frames: z.readonly(z.array(z_Frame.Rpc)),
-  from: z_Address.Address,
-  maxFeePerBlobGas: z_Hex.Hex,
-  maxFeePerGas: z_Hex.Hex,
-  maxPriorityFeePerGas: z_Hex.Hex,
-  nonce: z_Hex.Hex,
-  signatures: z.readonly(z.array(z_FrameSignature.Rpc)),
-  type: z.literal('0x6'),
-})
+export const Rpc = z
+  .object({
+    blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
+    chainId: z_Hex.Hex,
+    frames: z.readonly(z.array(z_Frame.Rpc)),
+    from: z_Address.Address,
+    maxFeePerBlobGas: z_Hex.Hex,
+    maxFeePerGas: z_Hex.Hex,
+    maxPriorityFeePerGas: z_Hex.Hex,
+    nonce: z_Hex.Hex,
+    signatures: z.readonly(z.array(z_FrameSignature.Rpc)),
+    type: z.literal('0x6'),
+  })
+  .check(
+    z.refine((value) => {
+      try {
+        core_TxEnvelopeEip8141.fromRpc(value)
+        return true
+      } catch {
+        return false
+      }
+    }, 'Invalid frame transaction'),
+  )
 
 /** Codec between RPC and decoded EIP-8141 envelopes. */
 export const TxEnvelopeEip8141 = z.codec(Rpc, Decoded, {
@@ -37,13 +48,24 @@ export const TxEnvelopeEip8141 = z.codec(Rpc, Decoded, {
 /** Encode-only EIP-8141 envelope codec accepting numberish values. */
 export const TxEnvelopeEip8141ToRpc = z.codec(
   Rpc,
-  z.object(
-    fields(
-      z.union([z_Hex.Hex, z.bigint(), z.number()]),
-      z.union([z_Hex.Hex, z.bigint(), z.number()]),
-      z_Frame.DecodedToRpc,
+  z
+    .object(
+      fields(
+        z.union([z_Hex.Hex, z.bigint(), z.number()]),
+        z.union([z_Hex.Hex, z.bigint(), z.number()]),
+        z_Frame.DecodedToRpc,
+      ),
+    )
+    .check(
+      z.refine((value) => {
+        try {
+          core_TxEnvelopeEip8141.fromRpc(core_TxEnvelopeEip8141.toRpc(value))
+          return true
+        } catch {
+          return false
+        }
+      }, 'Invalid frame transaction'),
     ),
-  ),
   {
     decode: core_TxEnvelopeEip8141.fromRpc,
     encode: core_TxEnvelopeEip8141.toRpc,

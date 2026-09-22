@@ -161,3 +161,14 @@ describe('frame generics', () => {
     >()
   })
 })
+
+test('chain ID remains a number for every request type', () => {
+  expectTypeOf<
+    TransactionRequest.TransactionRequest['chainId']
+  >().toEqualTypeOf<number | undefined>()
+  expectTypeOf<
+    TransactionRequest.TransactionRequest<bigint, number, 'eip8141'>['chainId']
+  >().toEqualTypeOf<number | undefined>()
+  // @ts-expect-error Request chain IDs must be numbers.
+  TransactionRequest.toEnvelope({ chainId: 1n, type: 'eip1559' })
+})

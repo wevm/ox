@@ -38,3 +38,17 @@ describe('Frame', () => {
     ).toBe('0xc350')
   })
 })
+
+describe('FrameToRpc validation', () => {
+  test.each([
+    { mode: 3 },
+    { flags: 8 },
+    { gas: 2n ** 64n },
+    { stateGas: -1 },
+    { gas: '0x10000000000000000' },
+  ])('rejects invalid frame %#', (frame) => {
+    expect(
+      z.safeEncode(z.Frame.FrameToRpc, frame as Frame.toRpc.Input).success,
+    ).toBe(false)
+  })
+})

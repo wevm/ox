@@ -4,7 +4,6 @@ import * as z_Address from './Address.js'
 import * as z_Authorization from './Authorization.js'
 import * as z_Frame from './Frame.js'
 import * as z_FrameSignature from './FrameSignature.js'
-import { chainId, chainIdToRpc } from './internal/Frame.js'
 import * as z_Hex from './Hex.js'
 import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
@@ -39,7 +38,6 @@ export const TransactionRequest = z.object(
     z_Uint.Uint,
     z_Number.Number,
     z_Authorization.ListSigned,
-    chainId,
     z_Frame.Frame,
   ),
 )
@@ -50,7 +48,6 @@ export const TransactionRequestToRpc = z.object(
     z_Uint.UintToRpc,
     z_Number.NumberToRpc,
     z_Authorization.ListSignedToRpc,
-    chainIdToRpc,
     z_Frame.FrameToRpc,
   ),
 )
@@ -59,21 +56,14 @@ function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,
   authorizationList extends z.ZodMiniType,
-  chainId extends z.ZodMiniType,
   frame extends z.ZodMiniType,
->(
-  uint: uint,
-  num: num,
-  authorizationList: authorizationList,
-  chainId: chainId,
-  frame: frame,
-) {
+>(uint: uint, num: num, authorizationList: authorizationList, frame: frame) {
   return {
     accessList: z.optional(z_AccessList.AccessList),
     authorizationList: z.optional(authorizationList),
     blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
     blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
-    chainId: z.optional(chainId),
+    chainId: z.optional(num),
     data: z.optional(z_Hex.Hex),
     frames: z.optional(z.readonly(z.array(frame))),
     from: z.optional(z_Address.Address),

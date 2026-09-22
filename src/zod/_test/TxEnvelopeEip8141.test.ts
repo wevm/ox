@@ -58,3 +58,35 @@ describe('TxEnvelopeEip8141', () => {
     ).toBe('0xc350')
   })
 })
+
+describe('invalid envelopes', () => {
+  const envelope = TxEnvelopeEip8141.from({
+    chainId: 1,
+    frames: [Frame.from({})],
+    sender: accounts[0].address,
+  })
+  test.each([
+    { frames: [] },
+    { frames: Array.from({ length: 65 }, () => Frame.from({})) },
+    { maxFeePerBlobGas: 1n },
+    { maxFeePerGas: 1n, maxPriorityFeePerGas: 2n },
+  ])('rejects numberish envelope %#', (fields) => {
+    const invalid = { ...envelope, ...fields }
+    expect(
+      z.safeEncode(z.TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc, invalid).success,
+    ).toBe(false)
+    const rpc = TxEnvelopeEip8141.toRpc(invalid)
+    expect(
+      z.safeDecode(z.TxEnvelopeEip8141.TxEnvelopeEip8141, rpc).success,
+    ).toBe(false)
+  })
+  test('rejects malformed nested RPC signatures without throwing', () => {
+    const rpc = {
+      ...TxEnvelopeEip8141.toRpc(envelope),
+      signatures: [{ msg: '0x', scheme: 1, signature: '0x01' }],
+    } as const
+    expect(
+      z.safeDecode(z.TxEnvelopeEip8141.TxEnvelopeEip8141, rpc).success,
+    ).toBe(false)
+  })
+})

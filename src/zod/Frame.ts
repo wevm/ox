@@ -22,15 +22,26 @@ export const Decoded: z.ZodMiniType<core_Frame.Frame, core_Frame.Frame> = z
   .check(z.refine(core_Frame.validate, 'Invalid frame'))
 
 /** RPC frame schema. */
-export const Rpc = z.object({
-  data: z_Hex.Hex,
-  executionGasLimit: z_Hex.Hex,
-  flags: z.number(),
-  mode: z.number(),
-  stateGasLimit: z_Hex.Hex,
-  target: z.optional(z.nullable(z_Address.Address)),
-  value: z_Hex.Hex,
-})
+export const Rpc = z
+  .object({
+    data: z_Hex.Hex,
+    executionGasLimit: z_Hex.Hex,
+    flags: z.number(),
+    mode: z.number(),
+    stateGasLimit: z_Hex.Hex,
+    target: z.optional(z.nullable(z_Address.Address)),
+    value: z_Hex.Hex,
+  })
+  .check(
+    z.refine((value) => {
+      try {
+        core_Frame.fromRpc(value)
+        return true
+      } catch {
+        return false
+      }
+    }, 'Invalid frame'),
+  )
 
 /** Codec between RPC and decoded frames. */
 export const Frame = z.codec(Rpc, Decoded, {
@@ -39,9 +50,18 @@ export const Frame = z.codec(Rpc, Decoded, {
 })
 
 /** Decoded frame schema accepting numberish budgets. */
-export const DecodedToRpc = z.object(
-  fields(z.union([z_Hex.Hex, z.bigint(), z.number()])),
-)
+export const DecodedToRpc = z
+  .object(fields(z.union([z_Hex.Hex, z.bigint(), z.number()])))
+  .check(
+    z.refine((value) => {
+      try {
+        core_Frame.fromRpc(core_Frame.toRpc(value))
+        return true
+      } catch {
+        return false
+      }
+    }, 'Invalid frame'),
+  )
 
 /** Encode-only frame codec accepting numberish budgets. */
 export const FrameToRpc = z.codec(Rpc, DecodedToRpc, {

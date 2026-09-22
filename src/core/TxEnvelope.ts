@@ -778,6 +778,7 @@ export function toTransactionRequest(
     return {
       ...rest,
       ...(sidecars ? { blobs: sidecars.blobs } : {}),
+      chainId: Hex.toNumber(Hex.fromNumber(rest.chainId)),
       from: sender,
     }
   }
@@ -803,7 +804,11 @@ export function toTransactionRequest(
 }
 
 export declare namespace toTransactionRequest {
-  type ErrorType = getType.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | getType.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.toNumber.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**

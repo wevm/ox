@@ -34,11 +34,8 @@ export type TransactionRequest<
   blobVersionedHashes?: readonly Hex.Hex[] | undefined
   /** Raw blob data. */
   blobs?: readonly Hex.Hex[] | undefined
-  /** Chain ID. EIP-8141 supports bigint IDs beyond the safe integer range. */
-  chainId?:
-    | numberType
-    | ([bigintType] extends [Hex.Hex] ? never : bigint)
-    | undefined
+  /** EIP-155 Chain ID. */
+  chainId?: numberType | undefined
   /** Contract code or a hashed method call with encoded args */
   data?: Hex.Hex | undefined
   /** Frames in execution order for EIP-8141 transactions. */
@@ -109,14 +106,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.authorizationList = Authorization.fromRpcList(
       request.authorizationList,
     )
-  if (typeof request.chainId !== 'undefined') {
-    const chainId = Hex.toBigInt(request.chainId)
-    request_.chainId =
-      (request.type === '0x6' || request.frames !== undefined) &&
-      chainId > BigInt(Number.MAX_SAFE_INTEGER)
-        ? chainId
-        : Hex.toNumber(request.chainId)
-  }
+  if (typeof request.chainId !== 'undefined')
+    request_.chainId = Hex.toNumber(request.chainId)
   if (request.frames !== undefined)
     request_.frames = request.frames.map(Frame.fromRpc)
   if (request.signatures !== undefined)

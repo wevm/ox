@@ -462,22 +462,22 @@ describe('frame transactions', () => {
     ).toEqual(envelope.blobVersionedHashes)
   })
 
-  test('round-trips requests and envelopes with large chain IDs', () => {
+  test('round-trips frame requests and envelopes', () => {
     const envelope = TxEnvelopeEip8141.from({
-      chainId: 9007199254740993n,
+      chainId: 8141,
       frames: [Frame.from({ gas: 50_000n, mode: 'verify' })],
       sender: '0x1111111111111111111111111111111111111111',
       signatures: [FrameSignature.from('0xaabb')],
     })
     const request = TransactionEnvelope.toTransactionRequest(envelope)
     const rpc = TransactionRequest.toRpc(request)
-    expect(rpc.chainId).toBe('0x20000000000001')
+    expect(rpc.chainId).toBe('0x1fcd')
     expect(rpc.type).toBe('0x6')
     expect(rpc.signatures).toEqual([
       { msg: '0x', scheme: 0, signature: '0xaabb' },
     ])
     const decoded = TransactionRequest.fromRpc(rpc)
-    expect(decoded.chainId).toBe(9007199254740993n)
+    expect(decoded.chainId).toBe(8141)
     expect(
       TxEnvelopeEip8141.serialize(
         TransactionRequest.toEnvelope(
@@ -492,5 +492,25 @@ describe('frame transactions', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[Quantity.MissingFieldError: Missing required field \`from\` on \`TransactionRequest\`.]`,
     )
+  })
+})
+
+describe('chain ID precision', () => {
+  test('rejects unsafe RPC chain IDs', () => {
+    expect(() =>
+      TransactionRequest.fromRpc({
+        chainId: '0x20000000000001',
+        frames: [],
+        type: '0x6',
+      }),
+    ).toThrow()
+  })
+  test('rejects unsafe envelope chain IDs when converting to a request', () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 9007199254740993n,
+      frames: [Frame.from({})],
+      sender: '0x1111111111111111111111111111111111111111',
+    })
+    expect(() => TransactionEnvelope.toTransactionRequest(envelope)).toThrow()
   })
 })

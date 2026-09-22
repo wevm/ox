@@ -387,10 +387,7 @@ export function toEnvelope(
   const input: Input = {
     type: 'tempo',
     calls,
-    chainId:
-      typeof request.chainId === 'bigint'
-        ? Hex.toNumber(Hex.fromNumber(request.chainId))
-        : request.chainId!,
+    chainId: request.chainId!,
     ...(typeof request.accessList !== 'undefined'
       ? { accessList: request.accessList }
       : {}),
