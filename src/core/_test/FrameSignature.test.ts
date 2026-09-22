@@ -450,6 +450,78 @@ describe('validate', () => {
   })
 })
 
+describe('fromRpc', () => {
+  test('arbitrary signature', () => {
+    expect(
+      FrameSignature.fromRpc({
+        msg: '0x',
+        scheme: 0,
+        signature: '0xaabb',
+        signer: null,
+      }),
+    ).toEqual(FrameSignature.from('0xaabb'))
+  })
+  test('secp256k1 signature', () => {
+    expect(
+      FrameSignature.fromRpc({ msg: '0x', scheme: 1, signature: secpBytes }),
+    ).toEqual(
+      FrameSignature.from({
+        scheme: 'secp256k1',
+        signature: {
+          r: `0x${'00'.repeat(31)}01`,
+          s: `0x${'00'.repeat(31)}02`,
+          yParity: 1,
+        },
+      }),
+    )
+  })
+  test('P-256 signature', () => {
+    const entry = FrameSignature.fromRpc({
+      msg: '0x',
+      scheme: 2,
+      signature: p256Bytes,
+    })
+    expect(entry).toMatchObject({ payload: '0x', publicKey, scheme: 'p256' })
+    expect(FrameSignature.toRpc(entry)).toEqual({
+      msg: '0x',
+      scheme: 2,
+      signature: p256Bytes,
+    })
+  })
+  test('unsigned placeholder', () => {
+    expect(
+      FrameSignature.fromRpc({ msg: '0x', scheme: 1, signature: '0x' }),
+    ).toEqual(FrameSignature.from({ scheme: 'secp256k1' }))
+  })
+  test('malformed protocol signature', () => {
+    expect(() =>
+      FrameSignature.fromRpc({ msg: '0x', scheme: 1, signature: '0x01' }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[FrameSignature.InvalidError: Invalid frame signature.
+
+Details: Invalid protocol signature length.]`,
+    )
+  })
+})
+
+describe('toRpc', () => {
+  test('preserves explicit payload and signer', () => {
+    const entry = FrameSignature.from({
+      payload,
+      scheme: 'secp256k1',
+      signature: { r: '0x01', s: '0x02', yParity: 1 },
+      signer: '0x1111111111111111111111111111111111111111',
+    })
+    expect(FrameSignature.toRpc(entry)).toEqual({
+      msg: payload,
+      scheme: 1,
+      signature: secpBytes,
+      signer: '0x1111111111111111111111111111111111111111',
+    })
+    expect(entry.signature.r).toBe('0x01')
+  })
+})
+
 describe('structured validation', () => {
   test.each(['invalid', '1', '0x', `0x${'11'.repeat(33)}`])(
     'rejects coordinate %s',

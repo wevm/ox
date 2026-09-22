@@ -39,8 +39,9 @@ const envelope = TxEnvelopeEip8141.from({
 })
 ```
 
-RPC conversion with `toRpc` is available for the other five envelope types. Frame RPC
-conversion is not available yet; serialize frame transactions for raw submission.
+Use `toRpc` to convert envelopes to RPC fields. Frame transaction `sender` maps to RPC
+`from`; frames and signatures are converted through their respective modules.
+Transaction requests use numeric chain IDs, matching the other transaction types.
 
 ## Recipes
 

@@ -3,6 +3,9 @@ import {
   Secp256k1,
   Transaction,
   TxEnvelopeEip1559,
+  Frame,
+  FrameSignature,
+  TxEnvelopeEip8141,
   TxEnvelopeLegacy,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
@@ -2045,4 +2048,34 @@ test('exports', () => {
       "toRpc",
     ]
   `)
+})
+
+describe('frame transaction RPC', () => {
+  test('preserves pending metadata and large chain IDs without outer signatures', () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 9007199254740993n,
+      frames: [Frame.from({})],
+      sender: '0x1111111111111111111111111111111111111111',
+      signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+    })
+    const rpc = {
+      ...TxEnvelopeEip8141.toRpc(envelope),
+      blockHash: null,
+      blockNumber: null,
+      blockTimestamp: null,
+      gas: '0x0',
+      hash: '0x00',
+      input: '0x',
+      to: null,
+      transactionIndex: null,
+      value: '0x0',
+    } satisfies Transaction.Eip8141Rpc<true>
+    const transaction = Transaction.fromRpc(rpc, { pending: true })!
+    expect(transaction.chainId).toBe(9007199254740993n)
+    expect(transaction.blockNumber).toBeNull()
+    expect(transaction.transactionIndex).toBeNull()
+    expect(transaction).not.toHaveProperty('r')
+    expect(transaction).not.toHaveProperty('s')
+    expect(Transaction.toRpc(transaction, { pending: true })).toEqual(rpc)
+  })
 })

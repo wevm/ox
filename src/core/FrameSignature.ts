@@ -1,8 +1,7 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import { p256N } from './internal/curves.js'
+import { p256N, secp256k1N } from './internal/curves.js'
 import type { Compute, UnionPartialBy } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import * as Signature from './Signature.js'
@@ -64,6 +63,18 @@ export type P256 = {
 
 /** An EIP-8141 signature entry. Empty payload selects the transaction signing hash. */
 export type FrameSignature = Arbitrary | Secp256k1 | P256
+
+/** JSON-RPC representation of a frame signature. */
+export type Rpc = {
+  /** Explicit digest, or empty bytes for the transaction signing hash. */
+  msg: Hex.Hex
+  /** Signature verification scheme. */
+  scheme: 0 | 1 | 2
+  /** Encoded signature bytes. */
+  signature: Hex.Hex
+  /** Signer address; absent for the transaction sender. */
+  signer?: Address.Address | null | undefined
+}
 
 /** RLP-ready signature entry. The payload occupies the specification's `msg` field. */
 export type Tuple = readonly [
@@ -171,7 +182,7 @@ export function assert(
   Signature.assert(entry.signature, { recovered: scheme === 1 })
   const r = Hex.toBigInt(entry.signature.r)
   const s = Hex.toBigInt(entry.signature.s)
-  const order = scheme === 1 ? secp256k1.Point.Fn.ORDER : p256N
+  const order = scheme === 1 ? secp256k1N : p256N
   if (
     r === 0n ||
     r >= order ||
@@ -316,6 +327,68 @@ export declare namespace from {
         >
       : never
   type ErrorType = assert.ErrorType
+}
+
+/**
+ * Converts an RPC signature entry to a structured frame signature.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { FrameSignature } from 'ox'
+ *
+ * const entry = FrameSignature.fromRpc({
+ *   msg: '0x',
+ *   scheme: 0,
+ *   signature: '0xdeadbeef'
+ * })
+ * ```
+ *
+ * @param entry - The value to convert.
+ * @returns The converted value.
+ */
+export function fromRpc(entry: Rpc): FrameSignature {
+  return fromTuple([
+    entry.scheme === 0 ? '0x' : Hex.fromNumber(entry.scheme, { size: 1 }),
+    entry.signer ?? '0x',
+    entry.msg,
+    entry.signature,
+  ])
+}
+
+export declare namespace fromRpc {
+  type ErrorType = fromTuple.ErrorType | Hex.fromNumber.ErrorType
+}
+
+/**
+ * Converts a structured frame signature to its RPC representation.
+ *
+ * @example
+ * ### Basic Usage
+ *
+ * ```ts twoslash
+ * import { FrameSignature } from 'ox'
+ *
+ * const entry = FrameSignature.from('0xdeadbeef')
+ * const rpc = FrameSignature.toRpc(entry)
+ * ```
+ *
+ * @param entry - The value to convert.
+ * @returns The converted value.
+ */
+export function toRpc(entry: FrameSignature): Rpc {
+  const [scheme, signer, msg, signature] = toTuple(entry)
+  return {
+    msg,
+    scheme: (scheme === '0x' ? 0 : Hex.toNumber(scheme)) as Rpc['scheme'],
+    signature,
+    ...(signer === '0x' ? {} : { signer }),
+  }
+}
+
+export declare namespace toRpc {
+  type ErrorType = toTuple.ErrorType | Hex.toNumber.ErrorType
 }
 
 /**

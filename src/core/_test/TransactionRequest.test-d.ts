@@ -1,4 +1,6 @@
 import {
+  type Frame,
+  type FrameSignature,
   TransactionEnvelope,
   type TransactionRequest as TransactionRequestNs,
   TransactionRequest,
@@ -123,4 +125,51 @@ describe('round-trip: Request → Envelope → Request', () => {
       roundtripped,
     ).toEqualTypeOf<TransactionRequestNs.TransactionRequest>()
   })
+})
+
+describe('frame generics', () => {
+  test('decoded defaults', () => {
+    expectTypeOf<
+      TransactionRequest.TransactionRequest['frames']
+    >().toEqualTypeOf<readonly Frame.Frame[] | undefined>()
+    expectTypeOf<
+      TransactionRequest.TransactionRequest['signatures']
+    >().toEqualTypeOf<readonly FrameSignature.FrameSignature[] | undefined>()
+  })
+
+  test('RPC types', () => {
+    expectTypeOf<TransactionRequest.Rpc['frames']>().toEqualTypeOf<
+      readonly Frame.Rpc[] | undefined
+    >()
+    expectTypeOf<TransactionRequest.Rpc['signatures']>().toEqualTypeOf<
+      readonly FrameSignature.Rpc[] | undefined
+    >()
+  })
+
+  test('custom frame and signature types', () => {
+    type Request = TransactionRequest.TransactionRequest<
+      bigint,
+      number,
+      string,
+      Frame.Frame & { label: string },
+      FrameSignature.Arbitrary
+    >
+    expectTypeOf<Request['frames']>().toEqualTypeOf<
+      readonly (Frame.Frame & { label: string })[] | undefined
+    >()
+    expectTypeOf<Request['signatures']>().toEqualTypeOf<
+      readonly FrameSignature.Arbitrary[] | undefined
+    >()
+  })
+})
+
+test('chain ID remains a number for every request type', () => {
+  expectTypeOf<
+    TransactionRequest.TransactionRequest['chainId']
+  >().toEqualTypeOf<number | undefined>()
+  expectTypeOf<
+    TransactionRequest.TransactionRequest<bigint, number, 'eip8141'>['chainId']
+  >().toEqualTypeOf<number | undefined>()
+  // @ts-expect-error Request chain IDs must be numbers.
+  TransactionRequest.toEnvelope({ chainId: 1n, type: 'eip1559' })
 })

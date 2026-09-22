@@ -208,8 +208,9 @@ describe('eip8141', () => {
       TransactionEnvelope.getSerializedType('0x06c0'),
     ).toEqualTypeOf<'eip8141'>()
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelope.TxEnvelope<true>>()
-    // @ts-expect-error Frame RPC conversion is not supported yet.
-    TransactionEnvelope.toRpc(envelope)
+    expectTypeOf(
+      TransactionEnvelope.toRpc(envelope),
+    ).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
   })
 
   test('frames take precedence over blob and fee fields', () => {
@@ -229,17 +230,18 @@ describe('eip8141', () => {
   })
 })
 
-test('toRpc rejects implicit frame envelopes until RPC support is available', () => {
+test('toRpc accepts implicit frame envelopes', () => {
   const envelope = {
     chainId: 1,
     frames: [{}],
     sender: '0x1111111111111111111111111111111111111111',
   } as const
-  // @ts-expect-error Frame RPC conversion is not supported here.
-  TransactionEnvelope.toRpc(envelope)
+  expectTypeOf(
+    TransactionEnvelope.toRpc(envelope),
+  ).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
 })
 
-test('request conversions exclude frames and accept undefined', () => {
+test('request conversions accept frames and undefined', () => {
   TransactionEnvelope.toRpc({ chainId: 1, frames: undefined, maxFeePerGas: 1n })
   TransactionEnvelope.toTransactionRequest({
     chainId: 1,
@@ -248,7 +250,6 @@ test('request conversions exclude frames and accept undefined', () => {
   })
   TransactionEnvelope.toTransactionRequest({
     chainId: 1,
-    // @ts-expect-error Frame request conversion is introduced with RPC support.
     frames: [{}],
     sender: '0x1111111111111111111111111111111111111111',
   })

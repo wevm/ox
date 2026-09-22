@@ -1,5 +1,6 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as z_Address from './Address.js'
+import * as z_FrameReceipt from './FrameReceipt.js'
 import * as z_Hex from './Hex.js'
 import * as z_Log from './Log.js'
 import * as z_Number from './Number.js'
@@ -22,6 +23,7 @@ const fromRpcType = {
   '0x2': 'eip1559',
   '0x3': 'eip4844',
   '0x4': 'eip7702',
+  '0x6': 'eip8141',
 } as const
 
 const toRpcType = {
@@ -30,6 +32,7 @@ const toRpcType = {
   eip1559: '0x2',
   eip4844: '0x3',
   eip7702: '0x4',
+  eip8141: '0x6',
 } as const
 
 /** Transaction receipt status schema. */
@@ -50,19 +53,25 @@ export const Type = z.codec(z.string(), z.string(), {
 
 /** Transaction receipt schema. */
 export const TransactionReceipt = z.object(
-  fields(z_Uint.Uint, z_Number.Number, z_Log.Log),
+  fields(z_Uint.Uint, z_Number.Number, z_Log.Log, z_FrameReceipt.FrameReceipt),
 )
 
 /** Encode-only transaction receipt schema accepting numberish `toRpc` inputs. */
 export const TransactionReceiptToRpc = z.object(
-  fields(z_Uint.UintToRpc, z_Number.NumberToRpc, z_Log.LogToRpc),
+  fields(
+    z_Uint.UintToRpc,
+    z_Number.NumberToRpc,
+    z_Log.LogToRpc,
+    z_FrameReceipt.FrameReceiptToRpc,
+  ),
 )
 
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,
   log extends z.ZodMiniType,
->(uint: uint, num: num, log: log) {
+  frame extends z.ZodMiniType,
+>(uint: uint, num: num, log: log, frame: frame) {
   return {
     blobGasPrice: z.optional(uint),
     blobGasUsed: z.optional(uint),
@@ -71,10 +80,12 @@ function fields<
     contractAddress: z.optional(z.union([z_Address.Address, z.null()])),
     cumulativeGasUsed: uint,
     effectiveGasPrice: uint,
+    frameReceipts: z.optional(z.readonly(z.array(frame))),
     from: z_Address.Address,
     gasUsed: uint,
     logs: z.array(log),
     logsBloom: z_Hex.Hex,
+    payer: z.optional(z_Address.Address),
     root: z.optional(z_Hex.Hex),
     status: Status,
     to: z.union([z_Address.Address, z.null()]),
