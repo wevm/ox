@@ -17,8 +17,8 @@ export type Scheme =
 
 /** Contract-defined signature bytes. */
 export type Arbitrary = {
-  /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
-  payload: Hex.Hex
+  /** Explicit nonzero digest. Omit or use empty bytes for the transaction signing hash. */
+  payload?: Hex.Hex | undefined
   /** Contract-defined verification scheme. */
   scheme: 0 | 'arbitrary'
   /** Opaque witness bytes. */
@@ -29,8 +29,8 @@ export type Arbitrary = {
 
 /** A structured secp256k1 signature entry. */
 export type Secp256k1 = {
-  /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
-  payload: Hex.Hex
+  /** Explicit nonzero digest. Omit or use empty bytes for the transaction signing hash. */
+  payload?: Hex.Hex | undefined
   /** secp256k1 verification scheme. */
   scheme: 1 | 'secp256k1'
   /** Recovered signature. Omit for an unsigned entry. */
@@ -41,8 +41,8 @@ export type Secp256k1 = {
 
 /** A structured P-256 signature entry. */
 export type P256 = {
-  /** Explicit nonzero digest, or empty bytes for the transaction signing hash. */
-  payload: Hex.Hex
+  /** Explicit nonzero digest. Omit or use empty bytes for the transaction signing hash. */
+  payload?: Hex.Hex | undefined
   /** P-256 verification scheme. */
   scheme: 2 | 'p256'
   /** Signer address. Omit to use the transaction sender. */
@@ -129,10 +129,11 @@ export function assert(
     throw new InvalidError('Arbitrary signatures cannot specify a signer.')
   if (entry.signer !== undefined)
     Address.assert(entry.signer, { strict: false })
-  Hex.assert(entry.payload, { strict: true })
+  const payload = entry.payload ?? '0x'
+  Hex.assert(payload, { strict: true })
   if (
-    entry.payload !== '0x' &&
-    (entry.payload.length !== 66 || Hex.toBigInt(entry.payload) === 0n)
+    payload !== '0x' &&
+    (payload.length !== 66 || Hex.toBigInt(payload) === 0n)
   )
     throw new InvalidError('payload must be empty or a nonzero 32-byte digest.')
   switch (entry.scheme) {
@@ -455,7 +456,7 @@ export function toTuple(entry: FrameSignature): Tuple {
   return [
     scheme ? Hex.fromNumber(scheme, { size: 1 }) : '0x',
     entry.signer ?? '0x',
-    entry.payload,
+    entry.payload ?? '0x',
     signature,
   ]
 }
