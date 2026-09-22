@@ -133,7 +133,7 @@ const serialized = TxEnvelopeEip8141.serialize(restored)
 ## Inspect Frame Receipts
 
 Convert the transaction receipt with
-[`TransactionReceipt.fromRpc`](/api/TransactionReceipt/fromRpc) to read the payer
+`TransactionReceipt.fromRpc` to read the payer
 and individual frame results. Each frame receipt exposes `gasUsed`, `stateGasUsed`,
 `logs`, and a `status` of `'success'`, `'reverted'`, or `'skipped'`.
 
