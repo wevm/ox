@@ -32,7 +32,7 @@ export type Frame<bigintType = bigint> = {
    */
   stateGas?: bigintType | undefined
   /** Target address. Omit to target the transaction sender. */
-  target?: Address.Address | undefined
+  to?: Address.Address | undefined
   /**
    * Value transferred by a sender frame, in wei.
    * @default 0n
@@ -134,8 +134,7 @@ export function assert(frame: Frame): void {
         'Atomic batch frames cannot approve execution or payment.',
       )
   }
-  if (frame.target !== undefined)
-    Address.assert(frame.target, { strict: false })
+  if (frame.to !== undefined) Address.assert(frame.to, { strict: false })
   for (const [field, limit] of [
     ['gas', gas],
     ['stateGas', stateGas],
@@ -224,7 +223,7 @@ export function fromRpc(frame: Rpc): Frame {
     gas: Hex.toBigInt(frame.executionGasLimit),
     mode: frame.mode,
     stateGas: Hex.toBigInt(frame.stateGasLimit),
-    ...(frame.target == null ? {} : { target: frame.target }),
+    ...(frame.target == null ? {} : { to: frame.target }),
     value: Hex.toBigInt(frame.value),
   })
 }
@@ -257,7 +256,7 @@ export function toRpc(frame: toRpc.Input): Rpc {
     flags: typeof flags_ === 'string' ? flags[flags_] : flags_,
     mode: typeof mode === 'string' ? modes[mode] : mode,
     stateGasLimit: Quantity.fromNumberish(frame.stateGas ?? 0n),
-    ...(frame.target === undefined ? {} : { target: frame.target }),
+    ...(frame.to === undefined ? {} : { target: frame.to }),
     value: Quantity.fromNumberish(frame.value ?? 0n),
   }
 }
@@ -270,7 +269,7 @@ export declare namespace toRpc {
 /**
  * Converts a {@link ox#Frame.Tuple} to a {@link ox#Frame.Frame}.
  *
- * Returns numeric mode and flags. An empty target becomes an omitted `target`.
+ * Returns numeric mode and flags. An empty target becomes an omitted `to`.
  * Integer fields must use minimal whole-byte encodings, with empty bytes for zero.
  *
  * @example
@@ -324,7 +323,7 @@ export function fromTuple(tuple: Tuple): Frame {
       )
   }
   const frame = {
-    ...(target === '0x' ? {} : { target }),
+    ...(target === '0x' ? {} : { to: target }),
     data,
     flags: flags === '0x' ? 0 : Hex.toNumber(flags),
     gas: execution === '0x' ? 0n : Hex.toBigInt(execution),
@@ -378,7 +377,7 @@ export function toTuple(frame: Frame): Tuple {
   return [
     mode ? Hex.fromBytes(Bytes.fromNumber(mode)) : '0x',
     flags_ ? Hex.fromBytes(Bytes.fromNumber(flags_)) : '0x',
-    frame.target ?? '0x',
+    frame.to ?? '0x',
     [
       frame.gas ? Hex.fromBytes(Bytes.fromNumber(frame.gas)) : '0x',
       frame.stateGas ? Hex.fromBytes(Bytes.fromNumber(frame.stateGas)) : '0x',

@@ -8,6 +8,7 @@ describe('Frame', () => {
       flags: 'approveExecutionAndPayment',
       gas: 50_000n,
       mode: 'verify',
+      to: '0x1111111111111111111111111111111111111111',
     })
     const rpc = z.encode(z.Frame.Frame, frame)
     expect(rpc).toEqual({
@@ -16,6 +17,7 @@ describe('Frame', () => {
       flags: 3,
       mode: 1,
       stateGasLimit: '0x0',
+      target: '0x1111111111111111111111111111111111111111',
       value: '0x0',
     })
     expect(z.decode(z.Frame.Frame, rpc)).toEqual({
@@ -24,6 +26,7 @@ describe('Frame', () => {
       gas: 50_000n,
       mode: 1,
       stateGas: 0n,
+      to: '0x1111111111111111111111111111111111111111',
       value: 0n,
     })
   })

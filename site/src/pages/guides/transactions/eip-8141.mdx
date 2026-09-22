@@ -22,7 +22,7 @@ support.
 ## Build, Sign & Send
 
 Create a verification frame that approves execution and payment, followed by a sender
-frame that transfers value. Omitting a frame's `target` selects the transaction sender.
+frame that transfers value. Omitting a frame's `to` selects the transaction sender.
 
 The example assumes a chain ID, sender nonce, and configured RPC transport. Choose
 fees and per-frame budgets for your network; the values below illustrate the flow
@@ -57,7 +57,7 @@ const envelope = TxEnvelopeEip8141.from({
     {
       gas: 50_000n,
       mode: 'sender',
-      target: recipient,
+      to: recipient,
       value: Value.fromEther('0.001'),
     },
   ],
@@ -118,7 +118,7 @@ Use an explicit 32-byte `payload` only when the account expects a separate diges
 ## Convert RPC Data
 
 [`TxEnvelopeEip8141.toRpc`](/api/TxEnvelopeEip8141/toRpc) converts `sender` to
-`from`, frame `gas` to `executionGasLimit`, `stateGas` to `stateGasLimit`, and
+`from`, frame `to` to `target`, `gas` to `executionGasLimit`, `stateGas` to `stateGasLimit`, and
 signature `payload` to `msg`. RPC frame modes, flags, and signature schemes are
 numbers, while gas and fee quantities are hex strings.
 
