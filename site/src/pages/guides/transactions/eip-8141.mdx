@@ -13,10 +13,11 @@ multiple [`Frame`](/api/Frame) calls. Each frame has its own execution mode, tar
 calldata, value, and gas budgets. The transaction carries a shared
 [`FrameSignature`](/api/FrameSignature) list rather than an outer ECDSA signature.
 
+:::warning
 [EIP-8141](https://eips.ethereum.org/EIPS/eip-8141) is a draft. Sending these
 transactions requires a network and execution client with compatible frame transaction
-support. The example below assumes a funded EOA using the default account behavior;
-smart accounts can require different verification frames.
+support.
+:::
 
 ## Build, Sign & Send
 
