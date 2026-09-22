@@ -42,6 +42,7 @@ test('exports', () => {
       "Fee",
       "Filter",
       "Frame",
+      "FrameReceipt",
       "FrameSignature",
       "Hash",
       "HdKey",
