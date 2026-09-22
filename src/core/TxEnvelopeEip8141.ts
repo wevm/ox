@@ -114,7 +114,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     )
   for (const hash of blobVersionedHashes) {
     Hex.assert(hash, { strict: true })
-    if (Hex.size(hash) !== 32 || Hex.slice(hash, 0, 1) !== '0x01')
+    if (hash.length !== 66 || Hex.slice(hash, 0, 1) !== '0x01')
       throw new InvalidError(
         'Blob versioned hashes must contain 32 bytes and version 0x01.',
       )
@@ -212,13 +212,14 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeEip8141 } from 'ox'
  *
- * const serialized = TxEnvelopeEip8141.serialize({
+ * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
  *   frames: [{}],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  *
- * const envelope = TxEnvelopeEip8141.deserialize(serialized)
+ * const serialized = TxEnvelopeEip8141.serialize(envelope)
+ * const decoded = TxEnvelopeEip8141.deserialize(serialized)
  * ```
  *
  * @param serialized - Serialized transaction or network wrapper.
@@ -454,11 +455,12 @@ export declare namespace hash {
  * ```ts twoslash
  * import { TxEnvelopeEip8141 } from 'ox'
  *
- * const serialized = TxEnvelopeEip8141.serialize({
+ * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
  *   frames: [{ gas: 50_000n, mode: 'sender' }],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
+ * const serialized = TxEnvelopeEip8141.serialize(envelope)
  * ```
  *
  * @param envelope - The transaction envelope to serialize.
@@ -485,8 +487,8 @@ export function serialize(
       const commitment = commitments[index]!
       Hex.assert(commitment, { strict: true })
       if (
-        Hex.size(blob) !== Blobs.bytesPerBlob ||
-        Hex.size(commitment) !== 48 ||
+        blob.length !== 2 + Blobs.bytesPerBlob * 2 ||
+        commitment.length !== 98 ||
         Blobs.commitmentToVersionedHash(commitment).toLowerCase() !==
           hashes[index]!.toLowerCase()
       )
@@ -494,7 +496,7 @@ export function serialize(
     }
     for (const proof of cellProofs) {
       Hex.assert(proof, { strict: true })
-      if (Hex.size(proof) !== 48)
+      if (proof.length !== 98)
         throw new InvalidError('Cell proofs must contain 48 bytes.')
     }
     return Hex.concat(
