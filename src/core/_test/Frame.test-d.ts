@@ -94,3 +94,15 @@ test('allows omitted zero fields without widening supplied literals', () => {
     Frame.toTuple({ mode: 'sender', value: 1n }),
   ).toEqualTypeOf<Frame.Tuple>()
 })
+
+test('destination is named to', () => {
+  const frame = Frame.from({ to: '0x1111111111111111111111111111111111111111' })
+  expectTypeOf(
+    frame.to,
+  ).toEqualTypeOf<'0x1111111111111111111111111111111111111111'>()
+  const invalid: Frame.Frame = {
+    // @ts-expect-error The decoded destination is named to.
+    target: '0x1111111111111111111111111111111111111111',
+  }
+  void invalid
+})
