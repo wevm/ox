@@ -1568,7 +1568,7 @@ export * as Filter from './core/Filter.js'
  * })
  * ```
  *
- * @category Transaction Envelopes
+ * @category Frames (EIP-8141)
  */
 export * as Frame from './core/Frame.js'
 /**
@@ -1576,7 +1576,7 @@ export * as Frame from './core/Frame.js'
  *
  * Frame receipts include execution gas, state gas, logs, and execution status.
  *
- * @category Execution Spec
+ * @category Frames (EIP-8141)
  */
 export * as FrameReceipt from './core/FrameReceipt.js'
 /**
@@ -1598,7 +1598,7 @@ export * as FrameReceipt from './core/FrameReceipt.js'
  * // @log: { payload: '0x', scheme: 'arbitrary', signature: '0xaabb' }
  * ```
  *
- * @category Transaction Envelopes
+ * @category Frames (EIP-8141)
  */
 export * as FrameSignature from './core/FrameSignature.js'
 /**
