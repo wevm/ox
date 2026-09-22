@@ -1,8 +1,8 @@
-import { p256 } from '@noble/curves/nist.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import { p256N } from './internal/curves.js'
 import type { Compute, UnionPartialBy } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import * as Signature from './Signature.js'
@@ -156,8 +156,14 @@ export function assert(
       return
   }
   if (entry.scheme === 2 || entry.scheme === 'p256') {
-    if (entry.publicKey !== undefined)
+    if (entry.publicKey !== undefined) {
       PublicKey.assert(entry.publicKey, { compressed: false })
+      for (const coordinate of [entry.publicKey.x, entry.publicKey.y]) {
+        Hex.assert(coordinate, { strict: true })
+        if (coordinate === '0x' || coordinate.length > 66)
+          throw new InvalidError('Public key coordinates must fit in 32 bytes.')
+      }
+    }
     if (entry.signature !== undefined && entry.publicKey === undefined)
       throw new InvalidError('P-256 signatures require a public key.')
   }
@@ -165,10 +171,18 @@ export function assert(
     if (options.signed) throw new InvalidError('Signature is required.')
     return
   }
+  Hex.assert(entry.signature.r, { strict: true })
+  Hex.assert(entry.signature.s, { strict: true })
+  if (
+    (scheme === 1 || entry.signature.yParity !== undefined) &&
+    entry.signature.yParity !== 0 &&
+    entry.signature.yParity !== 1
+  )
+    throw new InvalidError('Signature parity must be 0 or 1.')
   Signature.assert(entry.signature, { recovered: scheme === 1 })
   const r = Hex.toBigInt(entry.signature.r)
   const s = Hex.toBigInt(entry.signature.s)
-  const order = scheme === 1 ? secp256k1.Point.Fn.ORDER : p256.Point.Fn.ORDER
+  const order = scheme === 1 ? secp256k1.Point.Fn.ORDER : p256N
   if (
     r === 0n ||
     r >= order ||
@@ -438,7 +452,7 @@ export function fromTuple(tuple: Tuple): FrameSignature {
     })
   }
   const s = Hex.slice(signature, 32, 64)
-  if (Hex.toBigInt(s) > p256.Point.Fn.ORDER / 2n)
+  if (Hex.toBigInt(s) > p256N / 2n)
     throw new InvalidError('P-256 wire signatures require low-s.')
   return from({
     ...metadata,
@@ -505,10 +519,7 @@ export function toTuple(entry: FrameSignature): Tuple {
         const s = Hex.toBigInt(signature.s)
         return Hex.concat(
           Hex.fromNumber(Hex.toBigInt(signature.r), { size: 32 }),
-          Hex.fromNumber(
-            s > p256.Point.Fn.ORDER / 2n ? p256.Point.Fn.ORDER - s : s,
-            { size: 32 },
-          ),
+          Hex.fromNumber(s > p256N / 2n ? p256N - s : s, { size: 32 }),
           Hex.fromNumber(Hex.toBigInt(publicKey.x), { size: 32 }),
           Hex.fromNumber(Hex.toBigInt(publicKey.y), { size: 32 }),
         )

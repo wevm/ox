@@ -506,3 +506,34 @@ describe('toRpc', () => {
     expect(entry.signature.r).toBe('0x01')
   })
 })
+
+describe('structured validation', () => {
+  test.each(['invalid', '1', '0x', `0x${'11'.repeat(33)}`])(
+    'rejects coordinate %s',
+    (coordinate) => {
+      for (const key of ['x', 'y'] as const) {
+        const entry = {
+          payload: '0x',
+          publicKey: { ...publicKey, [key]: coordinate },
+          scheme: 'p256',
+        } as FrameSignature.P256
+        expect(FrameSignature.validate(entry)).toBe(false)
+        expect(() => FrameSignature.from(entry)).toThrow()
+      }
+    },
+  )
+  test.each([
+    { r: '1', s: '0x02', yParity: 1 },
+    { r: '0x01', s: '2', yParity: 1 },
+    { r: '0x01', s: '0x02', yParity: '1' },
+    { r: '0x01', s: '0x02', yParity: undefined },
+  ])('rejects malformed scalars or parity %j', (signature) => {
+    const entry = {
+      payload: '0x',
+      scheme: 'secp256k1',
+      signature,
+    } as unknown as FrameSignature.Secp256k1
+    expect(FrameSignature.validate(entry)).toBe(false)
+    expect(() => FrameSignature.from(entry)).toThrow()
+  })
+})

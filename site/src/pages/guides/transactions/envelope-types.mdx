@@ -8,8 +8,8 @@ import { Card, Cards } from 'vocs'
 
 ## Overview
 
-Ox supports the five core Ethereum transaction envelope types, each with a dedicated module.
-They share the same lifecycle functions (`from`, `getSignPayload`, `serialize`, `toRpc`), so
+Ox supports six Ethereum transaction envelope types, each with a dedicated module.
+They share the same lifecycle functions (`from`, `getSignPayload`, `serialize`), so
 switching types means changing which fields you supply. The generic
 [`TransactionEnvelope`](/api/TransactionEnvelope) module dispatches to the right type
 automatically, inferring it from the envelope's shape when `type` is omitted.
@@ -21,6 +21,28 @@ automatically, inferring it from the envelope's shape when `type` is omitted.
 | [`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) | [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) | `0x02` | `maxFeePerGas`, `maxPriorityFeePerGas` | Dynamic fee market                |
 | [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) | [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) | `0x03` | EIP-1559 fields + `maxFeePerBlobGas`   | `blobVersionedHashes`, `sidecars` |
 | [`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) | [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) | `0x04` | EIP-1559 fields                        | `authorizationList`               |
+| [`TxEnvelopeEip8141`](/api/TxEnvelopeEip8141) | [EIP-8141](https://eips.ethereum.org/EIPS/eip-8141) | `0x06` | EIP-1559 fields + optional blob fee | `frames`, `sender`, `signatures` |
+
+
+### Frame transactions (EIP-8141)
+
+Use [`TxEnvelopeEip8141`](/api/TxEnvelopeEip8141) on clients that support frame transactions.
+Each frame defines a call, execution mode, approval flags, and execution/state gas budgets.
+Frame transactions use a `sender` and a `signatures` list instead of an outer ECDSA signature.
+
+```ts twoslash
+import { Frame, TxEnvelopeEip8141 } from 'ox'
+
+const envelope = TxEnvelopeEip8141.from({
+  chainId: 1,
+  frames: [Frame.from({ gas: 50_000n, mode: 'sender' })],
+  sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+})
+```
+
+Use `toRpc` to convert envelopes to RPC fields. Frame transaction `sender` maps to RPC
+`from`; frames and signatures are converted through their respective modules.
+Transaction requests use numeric chain IDs, matching the other transaction types.
 
 ## Recipes
 
@@ -166,7 +188,7 @@ set above the block's base fee plus a competitive tip.
 When handling heterogeneous input, use the generic
 [`TransactionEnvelope.from`](/api/TransactionEnvelope/from): it infers `eip1559` from
 `maxFeePerGas`, `eip4844` from blob fields, `eip7702` from `authorizationList`, and so on —
-no manual `type` bookkeeping.
+no manual `type` bookkeeping. `frames` selects `eip8141` before blob and fee fields.
 
 ## See More
 
