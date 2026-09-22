@@ -60,7 +60,7 @@ export const toRpcStatus = {
  *   executionGasUsed: '0x5208',
  *   logs: [],
  *   stateGasUsed: '0x0',
- *   status: 1,
+ *   status: 1
  * })
  * ```
  *
@@ -93,7 +93,7 @@ export declare namespace fromRpc {
  *   executionGasUsed: '0x5208',
  *   logs: [],
  *   stateGasUsed: '0x0',
- *   status: 1,
+ *   status: 1
  * })
  * const rpc = FrameReceipt.toRpc(receipt)
  * ```

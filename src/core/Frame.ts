@@ -210,7 +210,7 @@ export declare namespace from {
  *   flags: 3,
  *   mode: 1,
  *   stateGasLimit: '0x0',
- *   value: '0x0',
+ *   value: '0x0'
  * })
  * ```
  *

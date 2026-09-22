@@ -329,7 +329,13 @@ export declare namespace deserialize {
  *
  * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
- *   frames: [{ flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' }],
+ *   frames: [
+ *     {
+ *       flags: 'approveExecutionAndPayment',
+ *       gas: 50_000n,
+ *       mode: 'verify'
+ *     }
+ *   ],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * ```
@@ -367,11 +373,13 @@ export declare namespace from {
  * ```ts twoslash
  * import { Frame, TxEnvelopeEip8141 } from 'ox'
  *
- * const rpc = TxEnvelopeEip8141.toRpc(TxEnvelopeEip8141.from({
- *   chainId: 1,
- *   frames: [Frame.from({})],
- *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- * }))
+ * const rpc = TxEnvelopeEip8141.toRpc(
+ *   TxEnvelopeEip8141.from({
+ *     chainId: 1,
+ *     frames: [Frame.from({})],
+ *     sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *   })
+ * )
  * const envelope = TxEnvelopeEip8141.fromRpc(rpc)
  * ```
  *
@@ -414,7 +422,7 @@ export declare namespace fromRpc {
  * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
  *   frames: [Frame.from({})],
- *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * const rpc = TxEnvelopeEip8141.toRpc(envelope)
  * ```
@@ -474,13 +482,26 @@ export declare namespace toRpc {
  * ### Signing
  *
  * ```ts twoslash
- * import { Address, FrameSignature, Secp256k1, TxEnvelopeEip8141 } from 'ox'
+ * import {
+ *   Address,
+ *   FrameSignature,
+ *   Secp256k1,
+ *   TxEnvelopeEip8141
+ * } from 'ox'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
- * const sender = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+ * const sender = Address.fromPublicKey(
+ *   Secp256k1.getPublicKey({ privateKey })
+ * )
  * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
- *   frames: [{ flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' }],
+ *   frames: [
+ *     {
+ *       flags: 'approveExecutionAndPayment',
+ *       gas: 50_000n,
+ *       mode: 'verify'
+ *     }
+ *   ],
  *   sender,
  *   signatures: [FrameSignature.from({ scheme: 'secp256k1' })]
  * })
@@ -489,7 +510,9 @@ export declare namespace toRpc {
  * const signature = Secp256k1.sign({ payload, privateKey })
  * const signed = TxEnvelopeEip8141.from({
  *   ...envelope,
- *   signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })]
+ *   signatures: [
+ *     FrameSignature.from({ scheme: 'secp256k1', signature })
+ *   ]
  * })
  * ```
  *

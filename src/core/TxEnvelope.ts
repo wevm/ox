@@ -243,7 +243,7 @@ export declare namespace deserialize {
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
  *   frames: [Frame.from({ gas: 50_000n, mode: 'sender' })],
- *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * ```
  *

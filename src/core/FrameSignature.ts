@@ -327,7 +327,7 @@ export declare namespace from {
  * const entry = FrameSignature.fromRpc({
  *   msg: '0x',
  *   scheme: 0,
- *   signature: '0xdeadbeef',
+ *   signature: '0xdeadbeef'
  * })
  * ```
  *
