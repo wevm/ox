@@ -585,6 +585,89 @@ describe('hash', () => {
 
 describe('serialize', () => {
   describe('e2e', () => {
+    test.each(['eth_call', 'eth_estimateGas'] as const)(
+      '%s handles frame transactions without changing state',
+      async (method) => {
+        const sender = accounts[0].address
+        const target = accounts[1].address
+        const balance = await rpc.request({
+          method: 'eth_getBalance',
+          params: [target, 'latest'],
+        })
+        const nonce = await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [sender, 'latest'],
+        })
+        const envelope = TxEnvelopeEip8141.from({
+          chainId: 8141,
+          frames: [
+            Frame.from({
+              flags: 'approveExecutionAndPayment',
+              gas: 50_000n,
+              mode: 'verify',
+            }),
+            Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
+            Frame.from({
+              data: '0xdeadbeef',
+              gas: 50_000n,
+              mode: 'sender',
+              target: '0x0000000000000000000000000000000000000004',
+            }),
+          ],
+          maxFeePerGas: 10_000_000_000n,
+          maxPriorityFeePerGas: 1_000_000_000n,
+          nonce: Hex.toBigInt(nonce),
+          sender,
+          signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+        })
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeEip8141.getSignPayload(envelope),
+          privateKey: accounts[0].privateKey,
+        })
+        const signed = TxEnvelopeEip8141.from({
+          ...envelope,
+          signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
+        })
+        const request = TransactionRequest.toRpc({
+          ...TransactionEnvelope.toTransactionRequest(signed),
+          // Nethermind's simulation mapping requires an outer recipient before processing frames.
+          to: sender,
+        })
+        const result = await rpc.request({
+          method,
+          params: [request, 'latest'],
+        })
+        // Frame return data is not exposed by Nethermind's transaction-level call result.
+        if (method === 'eth_call') expect(result).toBe('0x')
+        else {
+          // Estimation includes all signed frame budgets plus intrinsic gas.
+          expect(Hex.toBigInt(result)).toBeGreaterThan(150_000n)
+          expect(Hex.toBigInt(result)).toBeLessThan(200_000n)
+        }
+        await expect(
+          rpc.request({
+            method,
+            params: [
+              { ...request, frames: [{ ...request.frames![0]!, mode: 255 }] },
+              'latest',
+            ],
+          }),
+        ).rejects.toThrow('frame mode')
+        expect(
+          await rpc.request({
+            method: 'eth_getBalance',
+            params: [target, 'latest'],
+          }),
+        ).toBe(balance)
+        expect(
+          await rpc.request({
+            method: 'eth_getTransactionCount',
+            params: [sender, 'latest'],
+          }),
+        ).toBe(nonce)
+      },
+    )
+
     test('signs, submits, and mines through the generic envelope API', async () => {
       const target = accounts[1].address
       const before = BigInt(
