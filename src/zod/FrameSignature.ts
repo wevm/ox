@@ -13,7 +13,7 @@ const signature = z.object({
 
 /** Contract-defined frame signature schema. */
 export const Arbitrary = z.object({
-  payload: z_Hex.Hex,
+  payload: z.optional(z_Hex.Hex),
   scheme: z.union([z.literal(0), z.literal('arbitrary')]),
   signature: z_Hex.Hex,
   signer: z.optional(z.undefined()),
@@ -21,7 +21,7 @@ export const Arbitrary = z.object({
 
 /** secp256k1 frame signature schema. */
 export const Secp256k1 = z.object({
-  payload: z_Hex.Hex,
+  payload: z.optional(z_Hex.Hex),
   scheme: z.union([z.literal(1), z.literal('secp256k1')]),
   signature: z.optional(
     z.object({ r: z_Hex.Hex, s: z_Hex.Hex, yParity: z.number() }),
@@ -30,7 +30,7 @@ export const Secp256k1 = z.object({
 })
 
 const p256 = {
-  payload: z_Hex.Hex,
+  payload: z.optional(z_Hex.Hex),
   scheme: z.union([z.literal(2), z.literal('p256')]),
   signer: z.optional(z_Address.Address),
 }

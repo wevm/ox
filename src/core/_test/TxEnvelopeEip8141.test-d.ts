@@ -31,15 +31,13 @@ test('unsigned signature', () => {
     chainId: 1n,
     frames: [{}],
     sender: '0x1111111111111111111111111111111111111111',
-    signatures: [{ payload: '0x', scheme: 'secp256k1' }],
+    signatures: [{ scheme: 'secp256k1' }],
   })
   expectTypeOf(envelope).toEqualTypeOf<{
     readonly chainId: 1n
     readonly frames: readonly [{}]
     readonly sender: '0x1111111111111111111111111111111111111111'
-    readonly signatures: readonly [
-      { readonly payload: '0x'; readonly scheme: 'secp256k1' },
-    ]
+    readonly signatures: readonly [{ readonly scheme: 'secp256k1' }]
     readonly type: 'eip8141'
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip8141.TxEnvelopeEip8141>()

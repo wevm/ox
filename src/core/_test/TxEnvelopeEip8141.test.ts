@@ -488,6 +488,26 @@ describe('from', () => {
 })
 
 describe('getSignPayload', () => {
+  test('omitted nested defaults preserve the signing hash and encoding', () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 1,
+      frames: [{ gas: 50_000n, mode: 'sender' }],
+      sender: accounts[0].address,
+      signatures: [{ scheme: 'secp256k1' }],
+    })
+    const explicit = TxEnvelopeEip8141.from({
+      ...envelope,
+      frames: [Frame.from({ gas: 50_000n, mode: 'sender' })],
+      signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+    })
+    expect(TxEnvelopeEip8141.getSignPayload(envelope)).toBe(
+      TxEnvelopeEip8141.getSignPayload(explicit),
+    )
+    expect(TxEnvelopeEip8141.serialize(envelope)).toBe(
+      TxEnvelopeEip8141.serialize(explicit),
+    )
+  })
+
   test('default', () => {
     const envelope = {
       chainId: 1,
@@ -606,7 +626,7 @@ describe('serialize', () => {
           Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
         ],
         from: sender,
-        signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+        signatures: [{ scheme: 'secp256k1' }],
         // Nethermind's simulation mapping requires an outer recipient before processing frames.
         to: sender,
         type: 'eip8141',
@@ -653,7 +673,7 @@ describe('serialize', () => {
       })
       const signed = TxEnvelopeEip8141.from({
         ...envelope,
-        signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
+        signatures: [{ scheme: 'secp256k1', signature }],
       })
       const hash = await rpc.request({
         method: 'eth_sendRawTransaction',
