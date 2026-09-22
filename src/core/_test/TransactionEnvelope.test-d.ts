@@ -210,8 +210,6 @@ describe('eip8141', () => {
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelope.TxEnvelope<true>>()
     // @ts-expect-error Frame RPC conversion is not supported yet.
     TransactionEnvelope.toRpc(envelope)
-    // @ts-expect-error Frame request conversion is not supported yet.
-    TransactionEnvelope.toTransactionRequest(envelope)
   })
 
   test('frames take precedence over blob and fee fields', () => {
