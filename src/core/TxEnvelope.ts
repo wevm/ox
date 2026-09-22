@@ -65,7 +65,7 @@ export type BaseRpc<
 /** Signed representation of a {@link ox#(TransactionEnvelope:namespace).Base}. */
 export type BaseSigned<type extends string = string> = Base<type, true>
 
-/** Transaction Envelope. EIP-8141 uses its `signatures` list regardless of `signed`. */
+/** Transaction Envelope. */
 export type TxEnvelope<
   signed extends boolean = false,
   bigintType = bigint,
