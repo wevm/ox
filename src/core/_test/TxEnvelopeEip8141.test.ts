@@ -8,6 +8,7 @@ import {
   Rlp,
   RpcTransport,
   Secp256k1,
+  TransactionEnvelope,
   TxEnvelopeEip8141,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
@@ -580,7 +581,7 @@ describe('hash', () => {
 
 describe('serialize', () => {
   describe('e2e', () => {
-    test('signs, submits, and mines a sender-paid frame transaction', async () => {
+    test('signs, submits, and mines through the generic envelope API', async () => {
       const target = accounts[1].address
       const before = BigInt(
         await rpc.request({
@@ -588,7 +589,7 @@ describe('serialize', () => {
           params: [target, 'latest'],
         }),
       )
-      const envelope = TxEnvelopeEip8141.from({
+      const envelope = TransactionEnvelope.from({
         chainId: 8141,
         frames: [
           Frame.from({
@@ -609,22 +610,22 @@ describe('serialize', () => {
         sender: accounts[0].address,
         signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
       })
-      const payload = TxEnvelopeEip8141.getSignPayload(envelope)
+      const payload = TransactionEnvelope.getSignPayload(envelope)
       const signature = Secp256k1.sign({
         payload,
         privateKey: accounts[0].privateKey,
       })
 
-      const signed = TxEnvelopeEip8141.from({
+      const signed = TransactionEnvelope.from({
         ...envelope,
         signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
       })
-      const serialized = TxEnvelopeEip8141.serialize(signed)
+      const serialized = TransactionEnvelope.serialize(signed)
       const hash = await rpc.request({
         method: 'eth_sendRawTransaction',
         params: [serialized],
       })
-      expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+      expect(hash).toBe(TransactionEnvelope.hash(signed))
       await expect
         .poll(
           () =>
@@ -1049,6 +1050,12 @@ describe('serialize', () => {
       expect(tuple[1]).toBe('0x01')
       expect(tuple.length).toBe(5)
       expect(TxEnvelopeEip8141.deserialize(encoded).sidecars).toEqual(sidecars)
+      expect(
+        TransactionEnvelope.serialize(
+          TxEnvelopeEip8141.from({ ...input, sidecars: undefined }),
+          { sidecars },
+        ),
+      ).toBe(encoded)
       expect(TxEnvelopeEip8141.hash(input)).toBe(
         TxEnvelopeEip8141.hash({ ...input, sidecars: undefined }),
       )

@@ -277,7 +277,7 @@ export declare namespace toRpc {
 export function toEnvelope(
   request: TransactionRequest,
   options: toEnvelope.Options = {},
-): TxEnvelope.TxEnvelope {
+): Exclude<TxEnvelope.TxEnvelope, { type?: 'eip8141' | undefined }> {
   const type = TxEnvelope.getType(request as never) as TxEnvelope.Type | string
 
   if (type === 'legacy')

@@ -2,7 +2,7 @@ import type * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import type * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import type { Compute, UnionPartialBy } from './internal/types.js'
+import type { Compute, PartialBy, UnionPartialBy } from './internal/types.js'
 import type * as Signature from './Signature.js'
 import * as Transaction from './Transaction.js'
 import type * as TransactionRequest from './TransactionRequest.js'
@@ -10,6 +10,7 @@ import * as TxEnvelopeEip1559 from './TxEnvelopeEip1559.js'
 import * as TxEnvelopeEip2930 from './TxEnvelopeEip2930.js'
 import * as TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
 import * as TxEnvelopeEip7702 from './TxEnvelopeEip7702.js'
+import * as TxEnvelopeEip8141 from './TxEnvelopeEip8141.js'
 import * as TxEnvelopeLegacy from './TxEnvelopeLegacy.js'
 import * as Value from './Value.js'
 
@@ -64,7 +65,7 @@ export type BaseRpc<
 /** Signed representation of a {@link ox#(TransactionEnvelope:namespace).Base}. */
 export type BaseSigned<type extends string = string> = Base<type, true>
 
-/** Transaction Envelope. */
+/** Transaction Envelope. EIP-8141 uses its `signatures` list regardless of `signed`. */
 export type TxEnvelope<
   signed extends boolean = false,
   bigintType = bigint,
@@ -74,7 +75,8 @@ export type TxEnvelope<
   | TxEnvelopeEip2930.TxEnvelopeEip2930<signed, bigintType, numberType>
   | TxEnvelopeEip1559.TxEnvelopeEip1559<signed, bigintType, numberType>
   | TxEnvelopeEip4844.TxEnvelopeEip4844<signed, bigintType, numberType>
-  | TxEnvelopeEip7702.TxEnvelopeEip7702<signed, bigintType, numberType>,
+  | TxEnvelopeEip7702.TxEnvelopeEip7702<signed, bigintType, numberType>
+  | TxEnvelopeEip8141.TxEnvelopeEip8141,
   'type'
 >
 
@@ -93,6 +95,7 @@ export type Serialized =
   | TxEnvelopeEip1559.Serialized
   | TxEnvelopeEip4844.Serialized
   | TxEnvelopeEip7702.Serialized
+  | TxEnvelopeEip8141.Serialized
 
 /** Transaction Envelope type. */
 export type Type =
@@ -101,6 +104,7 @@ export type Type =
   | TxEnvelopeEip1559.Type
   | TxEnvelopeEip4844.Type
   | TxEnvelopeEip7702.Type
+  | TxEnvelopeEip8141.Type
 
 type Typeable =
   | TxEnvelope
@@ -135,6 +139,7 @@ type HasDefined<envelope, key extends string> = envelope extends {
  */
 export function assert(envelope: TxEnvelope) {
   const type = getType(envelope) as Type | string
+  if (type === 'eip8141') return TxEnvelopeEip8141.assert(envelope as never)
   if (type === 'legacy') return TxEnvelopeLegacy.assert(envelope as never)
   if (type === 'eip2930') return TxEnvelopeEip2930.assert(envelope as never)
   if (type === 'eip1559') return TxEnvelopeEip1559.assert(envelope as never)
@@ -150,6 +155,7 @@ export declare namespace assert {
     | TxEnvelopeEip1559.assert.ErrorType
     | TxEnvelopeEip4844.assert.ErrorType
     | TxEnvelopeEip7702.assert.ErrorType
+    | TxEnvelopeEip8141.assert.ErrorType
     | InvalidTypeError
     | Errors.GlobalErrorType
 }
@@ -173,6 +179,8 @@ export function deserialize<const serialized extends Serialized | Hex.Hex>(
   serialized: serialized | Serialized | Hex.Hex,
 ): deserialize.ReturnType<serialized> {
   const type = getSerializedType(serialized)
+  if (type === 'eip8141')
+    return TxEnvelopeEip8141.deserialize(serialized as never) as never
   if (type === 'legacy')
     return TxEnvelopeLegacy.deserialize(serialized) as never
   if (type === 'eip2930')
@@ -186,17 +194,19 @@ export function deserialize<const serialized extends Serialized | Hex.Hex>(
 
 export declare namespace deserialize {
   type ReturnType<serialized extends Serialized | Hex.Hex = Serialized> =
-    serialized extends TxEnvelopeLegacy.Serialized
-      ? TxEnvelopeLegacy.TxEnvelopeLegacy
-      : serialized extends TxEnvelopeEip2930.Serialized
-        ? TxEnvelopeEip2930.TxEnvelopeEip2930
-        : serialized extends TxEnvelopeEip1559.Serialized
-          ? TxEnvelopeEip1559.TxEnvelopeEip1559
-          : serialized extends TxEnvelopeEip4844.Serialized
-            ? TxEnvelopeEip4844.TxEnvelopeEip4844
-            : serialized extends TxEnvelopeEip7702.Serialized
-              ? TxEnvelopeEip7702.TxEnvelopeEip7702
-              : TxEnvelope
+    serialized extends TxEnvelopeEip8141.Serialized
+      ? TxEnvelopeEip8141.TxEnvelopeEip8141
+      : serialized extends TxEnvelopeLegacy.Serialized
+        ? TxEnvelopeLegacy.TxEnvelopeLegacy
+        : serialized extends TxEnvelopeEip2930.Serialized
+          ? TxEnvelopeEip2930.TxEnvelopeEip2930
+          : serialized extends TxEnvelopeEip1559.Serialized
+            ? TxEnvelopeEip1559.TxEnvelopeEip1559
+            : serialized extends TxEnvelopeEip4844.Serialized
+              ? TxEnvelopeEip4844.TxEnvelopeEip4844
+              : serialized extends TxEnvelopeEip7702.Serialized
+                ? TxEnvelopeEip7702.TxEnvelopeEip7702
+                : TxEnvelope
 
   type ErrorType =
     | getSerializedType.ErrorType
@@ -205,6 +215,7 @@ export declare namespace deserialize {
     | TxEnvelopeEip1559.deserialize.ErrorType
     | TxEnvelopeEip4844.deserialize.ErrorType
     | TxEnvelopeEip7702.deserialize.ErrorType
+    | TxEnvelopeEip8141.deserialize.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -222,6 +233,19 @@ export declare namespace deserialize {
  * })
  * ```
  *
+ * @example
+ * ### Frame Transaction
+ *
+ * ```ts twoslash
+ * import { Frame, TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   frames: [Frame.from({ gas: 50_000n, mode: 'sender' })],
+ *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * })
+ * ```
+ *
  * @param envelope - The transaction envelope.
  * @param options - Options.
  * @returns Transaction Envelope.
@@ -236,6 +260,8 @@ export function from<
   if (typeof envelope === 'string') return deserialize(envelope) as never
 
   const type = getType(envelope) as Type | string
+  if (type === 'eip8141')
+    return TxEnvelopeEip8141.from(envelope as never) as never
   if (type === 'legacy')
     return TxEnvelopeLegacy.from(envelope as never, options) as never
   if (type === 'eip2930')
@@ -252,7 +278,7 @@ export function from<
 export declare namespace from {
   type Options<signature extends Signature.Signature | undefined = undefined> =
     {
-      /** Signature to append to the Transaction Envelope. */
+      /** Outer signature to append. EIP-8141 uses the envelope’s `signatures` list. */
       signature?: signature | Signature.Signature | undefined
     }
 
@@ -267,30 +293,34 @@ export declare namespace from {
     envelope extends Typeable,
     signature extends Signature.Signature | undefined = undefined,
   > =
-    getType.ReturnType<envelope> extends 'legacy'
-      ? TxEnvelopeLegacy.from.ReturnType<
-          envelope & TxEnvelopeLegacy.TxEnvelopeLegacy,
-          signature
-        >
-      : getType.ReturnType<envelope> extends 'eip2930'
-        ? TxEnvelopeEip2930.from.ReturnType<
-            envelope & TxEnvelopeEip2930.TxEnvelopeEip2930,
+    getType.ReturnType<envelope> extends 'eip8141'
+      ? envelope extends PartialBy<TxEnvelopeEip8141.TxEnvelopeEip8141, 'type'>
+        ? TxEnvelopeEip8141.from.ReturnType<envelope>
+        : never
+      : getType.ReturnType<envelope> extends 'legacy'
+        ? TxEnvelopeLegacy.from.ReturnType<
+            envelope & TxEnvelopeLegacy.TxEnvelopeLegacy,
             signature
           >
-        : getType.ReturnType<envelope> extends 'eip4844'
-          ? TxEnvelopeEip4844.from.ReturnType<
-              envelope & TxEnvelopeEip4844.TxEnvelopeEip4844,
+        : getType.ReturnType<envelope> extends 'eip2930'
+          ? TxEnvelopeEip2930.from.ReturnType<
+              envelope & TxEnvelopeEip2930.TxEnvelopeEip2930,
               signature
             >
-          : getType.ReturnType<envelope> extends 'eip7702'
-            ? TxEnvelopeEip7702.from.ReturnType<
-                envelope & TxEnvelopeEip7702.TxEnvelopeEip7702,
+          : getType.ReturnType<envelope> extends 'eip4844'
+            ? TxEnvelopeEip4844.from.ReturnType<
+                envelope & TxEnvelopeEip4844.TxEnvelopeEip4844,
                 signature
               >
-            : TxEnvelopeEip1559.from.ReturnType<
-                Omit<envelope, 'type'> & TxEnvelopeEip1559.TxEnvelopeEip1559,
-                signature
-              >
+            : getType.ReturnType<envelope> extends 'eip7702'
+              ? TxEnvelopeEip7702.from.ReturnType<
+                  envelope & TxEnvelopeEip7702.TxEnvelopeEip7702,
+                  signature
+                >
+              : TxEnvelopeEip1559.from.ReturnType<
+                  Omit<envelope, 'type'> & TxEnvelopeEip1559.TxEnvelopeEip1559,
+                  signature
+                >
 
   type ErrorType =
     | deserialize.ErrorType
@@ -299,6 +329,7 @@ export declare namespace from {
     | TxEnvelopeEip1559.from.ErrorType
     | TxEnvelopeEip4844.from.ErrorType
     | TxEnvelopeEip7702.from.ErrorType
+    | TxEnvelopeEip8141.from.ErrorType
     | InvalidTypeError
     | Errors.GlobalErrorType
 }
@@ -322,6 +353,8 @@ export declare namespace from {
  */
 export function getSignPayload(envelope: TxEnvelope<false>): Hex.Hex {
   const type = getType(envelope) as Type | string
+  if (type === 'eip8141')
+    return TxEnvelopeEip8141.getSignPayload(envelope as never)
   if (type === 'legacy')
     return TxEnvelopeLegacy.getSignPayload(envelope as never)
   if (type === 'eip2930')
@@ -344,6 +377,7 @@ export declare namespace getSignPayload {
     | TxEnvelopeEip1559.getSignPayload.ErrorType
     | TxEnvelopeEip4844.getSignPayload.ErrorType
     | TxEnvelopeEip7702.getSignPayload.ErrorType
+    | TxEnvelopeEip8141.getSignPayload.ErrorType
     | InvalidTypeError
     | Errors.GlobalErrorType
 }
@@ -369,17 +403,17 @@ export function getType<const envelope extends Typeable>(
 ): getType.ReturnType<envelope> {
   const type = envelope.type
   if (type) {
-    // Guard against accidental RPC-style type strings that map to a known
-    // canonical envelope type ('0x0'…'0x4'). Canonical envelopes use
-    // 'legacy' | 'eip2930' | 'eip1559' | 'eip4844' | 'eip7702'. RPC payloads
-    // should be normalized through `TransactionRequest.fromRpc` (which
-    // translates via `Transaction.fromRpcType`) before reaching the envelope
-    // layer. Other custom `0x*` types (e.g. OP-Stack `0x7e`) pass through.
-    if (typeof type === 'string' && type in Transaction.fromRpcType)
+    // Reject known RPC type strings at the envelope boundary. Custom transaction types still pass through.
+    if (
+      typeof type === 'string' &&
+      (type in Transaction.fromRpcType || type === '0x6')
+    )
       throw new InvalidTypeError({ type })
     return type as never
   }
 
+  if ('frames' in envelope && envelope.frames !== undefined)
+    return 'eip8141' as never
   if (
     'authorizationList' in envelope &&
     envelope.authorizationList !== undefined
@@ -412,25 +446,27 @@ export declare namespace getType {
     type: infer type extends string
   }
     ? type
-    : HasDefined<envelope, 'authorizationList'> extends true
-      ? TxEnvelopeEip7702.Type
-      : HasDefined<envelope, 'blobs'> extends true
-        ? TxEnvelopeEip4844.Type
-        : HasDefined<envelope, 'blobVersionedHashes'> extends true
+    : HasDefined<envelope, 'frames'> extends true
+      ? TxEnvelopeEip8141.Type
+      : HasDefined<envelope, 'authorizationList'> extends true
+        ? TxEnvelopeEip7702.Type
+        : HasDefined<envelope, 'blobs'> extends true
           ? TxEnvelopeEip4844.Type
-          : HasDefined<envelope, 'sidecars'> extends true
+          : HasDefined<envelope, 'blobVersionedHashes'> extends true
             ? TxEnvelopeEip4844.Type
-            : HasDefined<envelope, 'maxFeePerBlobGas'> extends true
+            : HasDefined<envelope, 'sidecars'> extends true
               ? TxEnvelopeEip4844.Type
-              : HasDefined<envelope, 'maxFeePerGas'> extends true
-                ? TxEnvelopeEip1559.Type
-                : HasDefined<envelope, 'maxPriorityFeePerGas'> extends true
+              : HasDefined<envelope, 'maxFeePerBlobGas'> extends true
+                ? TxEnvelopeEip4844.Type
+                : HasDefined<envelope, 'maxFeePerGas'> extends true
                   ? TxEnvelopeEip1559.Type
-                  : HasDefined<envelope, 'gasPrice'> extends true
-                    ? HasDefined<envelope, 'accessList'> extends true
-                      ? TxEnvelopeEip2930.Type
-                      : TxEnvelopeLegacy.Type
-                    : TxEnvelopeEip1559.Type
+                  : HasDefined<envelope, 'maxPriorityFeePerGas'> extends true
+                    ? TxEnvelopeEip1559.Type
+                    : HasDefined<envelope, 'gasPrice'> extends true
+                      ? HasDefined<envelope, 'accessList'> extends true
+                        ? TxEnvelopeEip2930.Type
+                        : TxEnvelopeLegacy.Type
+                      : TxEnvelopeEip1559.Type
 
   type ErrorType = InvalidTypeError | Errors.GlobalErrorType
 }
@@ -460,6 +496,8 @@ export function getSerializedType<
     throw new InvalidSerializedTypeError({ serialized })
 
   const serializedType = Hex.slice(serialized, 0, 1)
+  if (serializedType === TxEnvelopeEip8141.serializedType)
+    return 'eip8141' as never
   if (serializedType === TxEnvelopeEip2930.serializedType)
     return 'eip2930' as never
   if (serializedType === TxEnvelopeEip1559.serializedType)
@@ -474,17 +512,19 @@ export function getSerializedType<
 
 export declare namespace getSerializedType {
   type ReturnType<serialized extends Serialized | Hex.Hex = Serialized> =
-    serialized extends TxEnvelopeEip2930.Serialized
-      ? TxEnvelopeEip2930.Type
-      : serialized extends TxEnvelopeEip1559.Serialized
-        ? TxEnvelopeEip1559.Type
-        : serialized extends TxEnvelopeEip4844.Serialized
-          ? TxEnvelopeEip4844.Type
-          : serialized extends TxEnvelopeEip7702.Serialized
-            ? TxEnvelopeEip7702.Type
-            : serialized extends TxEnvelopeLegacy.Serialized
-              ? TxEnvelopeLegacy.Type
-              : Type
+    serialized extends TxEnvelopeEip8141.Serialized
+      ? TxEnvelopeEip8141.Type
+      : serialized extends TxEnvelopeEip2930.Serialized
+        ? TxEnvelopeEip2930.Type
+        : serialized extends TxEnvelopeEip1559.Serialized
+          ? TxEnvelopeEip1559.Type
+          : serialized extends TxEnvelopeEip4844.Serialized
+            ? TxEnvelopeEip4844.Type
+            : serialized extends TxEnvelopeEip7702.Serialized
+              ? TxEnvelopeEip7702.Type
+              : serialized extends TxEnvelopeLegacy.Serialized
+                ? TxEnvelopeLegacy.Type
+                : Type
 
   type ErrorType =
     | Hex.size.ErrorType
@@ -520,6 +560,8 @@ export function hash<presign extends boolean = false>(
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const type = getType(envelope) as Type | string
+  if (type === 'eip8141')
+    return TxEnvelopeEip8141.hash(envelope as never, options)
   if (type === 'legacy')
     return TxEnvelopeLegacy.hash(envelope as never, options)
   if (type === 'eip2930')
@@ -571,6 +613,11 @@ export function serialize<const envelope extends Typeable>(
   options: serialize.Options = {},
 ): serialize.ReturnType<envelope> {
   const type = getType(envelope) as Type | string
+  if (type === 'eip8141')
+    return TxEnvelopeEip8141.serialize({
+      ...envelope,
+      ...(options.sidecars ? { sidecars: options.sidecars } : {}),
+    } as never) as never
   if (type === 'legacy')
     return TxEnvelopeLegacy.serialize(envelope as never, options) as never
   if (type === 'eip2930')
@@ -586,22 +633,24 @@ export function serialize<const envelope extends Typeable>(
 
 export declare namespace serialize {
   type Options = {
-    /** Signature to append to the serialized Transaction Envelope. */
+    /** Outer signature to append. EIP-8141 uses the envelope’s `signatures` list. */
     signature?: Signature.Signature | undefined
     /** PeerDAS sidecars to append, producing the 5-element network wrapper. */
     sidecars?: TxEnvelopeEip4844.Sidecars<Hex.Hex> | undefined
   }
 
   type ReturnType<envelope extends Typeable = TxEnvelope> =
-    getType.ReturnType<envelope> extends 'legacy'
-      ? TxEnvelopeLegacy.Serialized
-      : getType.ReturnType<envelope> extends 'eip2930'
-        ? TxEnvelopeEip2930.Serialized
-        : getType.ReturnType<envelope> extends 'eip4844'
-          ? TxEnvelopeEip4844.Serialized
-          : getType.ReturnType<envelope> extends 'eip7702'
-            ? TxEnvelopeEip7702.Serialized
-            : TxEnvelopeEip1559.Serialized
+    getType.ReturnType<envelope> extends 'eip8141'
+      ? TxEnvelopeEip8141.Serialized
+      : getType.ReturnType<envelope> extends 'legacy'
+        ? TxEnvelopeLegacy.Serialized
+        : getType.ReturnType<envelope> extends 'eip2930'
+          ? TxEnvelopeEip2930.Serialized
+          : getType.ReturnType<envelope> extends 'eip4844'
+            ? TxEnvelopeEip4844.Serialized
+            : getType.ReturnType<envelope> extends 'eip7702'
+              ? TxEnvelopeEip7702.Serialized
+              : TxEnvelopeEip1559.Serialized
 
   type ErrorType =
     | TxEnvelopeLegacy.serialize.ErrorType
@@ -609,6 +658,7 @@ export declare namespace serialize {
     | TxEnvelopeEip1559.serialize.ErrorType
     | TxEnvelopeEip4844.serialize.ErrorType
     | TxEnvelopeEip7702.serialize.ErrorType
+    | TxEnvelopeEip8141.serialize.ErrorType
     | InvalidTypeError
     | Errors.GlobalErrorType
 }
@@ -634,6 +684,7 @@ export function toRpc<const envelope extends toRpc.Input>(
   envelope: envelope | toRpc.Input,
 ): toRpc.ReturnType<envelope> {
   const type = getType(envelope) as Type | string
+  if (type === 'eip8141') throw new InvalidTypeError({ type })
   if (type === 'legacy')
     return TxEnvelopeLegacy.toRpc(envelope as never) as never
   if (type === 'eip2930')
@@ -649,10 +700,9 @@ export function toRpc<const envelope extends toRpc.Input>(
 
 export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#(TransactionEnvelope:namespace).(toRpc:function)}. */
-  export type Input = TxEnvelope<
-    boolean,
-    Hex.Hex | bigint | number,
-    Hex.Hex | number
+  export type Input = Exclude<
+    TxEnvelope<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
+    { type?: TxEnvelopeEip8141.Type | undefined }
   >
 
   export type ReturnType<envelope extends Typeable = TxEnvelope> =
@@ -718,14 +768,16 @@ export declare namespace toRpc {
  * @returns A transaction request.
  */
 export function toTransactionRequest(
-  envelope: TxEnvelope,
+  envelope: Exclude<TxEnvelope, { type?: TxEnvelopeEip8141.Type | undefined }>,
 ): TransactionRequest.TransactionRequest {
+  const type = getType(envelope) as Type | string
+  if (type === 'eip8141') throw new InvalidTypeError({ type })
   const {
     // Flatten sidecars; surface their `blobs` payload instead.
     sidecars,
     blobs,
     ...rest
-  } = envelope as TxEnvelope & {
+  } = envelope as typeof envelope & {
     sidecars?: TxEnvelopeEip4844.Sidecars<Hex.Hex> | undefined
     blobs?: readonly Hex.Hex[] | undefined
   }
@@ -739,7 +791,7 @@ export function toTransactionRequest(
 }
 
 export declare namespace toTransactionRequest {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = getType.ErrorType | Errors.GlobalErrorType
 }
 
 /**
