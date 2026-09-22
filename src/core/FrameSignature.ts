@@ -1,8 +1,7 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import { p256N } from './internal/curves.js'
+import { p256N, secp256k1N } from './internal/curves.js'
 import type { Compute, UnionPartialBy } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import * as Signature from './Signature.js'
@@ -183,7 +182,7 @@ export function assert(
   Signature.assert(entry.signature, { recovered: scheme === 1 })
   const r = Hex.toBigInt(entry.signature.r)
   const s = Hex.toBigInt(entry.signature.s)
-  const order = scheme === 1 ? secp256k1.Point.Fn.ORDER : p256N
+  const order = scheme === 1 ? secp256k1N : p256N
   if (
     r === 0n ||
     r >= order ||

@@ -53,12 +53,23 @@ export const Decoded: z.ZodMiniType<
   .check(z.refine(core_FrameSignature.validate, 'Invalid frame signature'))
 
 /** RPC frame signature schema. */
-export const Rpc = z.object({
-  msg: z_Hex.Hex,
-  scheme: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-  signature: z_Hex.Hex,
-  signer: z.optional(z.nullable(z_Address.Address)),
-})
+export const Rpc = z
+  .object({
+    msg: z_Hex.Hex,
+    scheme: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+    signature: z_Hex.Hex,
+    signer: z.optional(z.nullable(z_Address.Address)),
+  })
+  .check(
+    z.refine((value) => {
+      try {
+        core_FrameSignature.fromRpc(value)
+        return true
+      } catch {
+        return false
+      }
+    }, 'Invalid frame signature'),
+  )
 
 /** Codec between RPC and structured frame signatures. */
 export const FrameSignature = z.codec(Rpc, Decoded, {

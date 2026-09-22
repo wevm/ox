@@ -9,6 +9,30 @@ import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('TxEnvelopeEip8141', () => {
+  test('signed codecs reject protocol signature placeholders', () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 1,
+      frames: [{}],
+      sender: accounts[0].address,
+      signatures: [{ scheme: 'secp256k1' }],
+    })
+    expect(
+      z.safeDecode(
+        z.TransactionEnvelope.Signed,
+        TxEnvelopeEip8141.toRpc(envelope),
+      ).success,
+    ).toBe(false)
+    expect(z.safeEncode(z.TransactionEnvelope.Signed, envelope).success).toBe(
+      false,
+    )
+    expect(
+      z.safeEncode(z.TransactionEnvelope.SignedToRpc, envelope).success,
+    ).toBe(false)
+    expect(
+      z.safeParse(z.TransactionEnvelope.SignedDecoded, envelope).success,
+    ).toBe(false)
+  })
+
   test('RPC codec preserves chain ID precision and signing payloads', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 9007199254740993n,

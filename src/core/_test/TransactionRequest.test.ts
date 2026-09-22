@@ -439,9 +439,10 @@ test('exports', () => {
 })
 
 describe('frame transactions', () => {
-  test('derives frame blob sidecars through the existing KZG option', () => {
+  test('derives frame blob sidecars and replaces stale hashes', () => {
     const blobs = Blobs.from('0xdeadbeef')
     const request = {
+      blobVersionedHashes: [],
       blobs,
       chainId: 1,
       frames: [Frame.from({})],

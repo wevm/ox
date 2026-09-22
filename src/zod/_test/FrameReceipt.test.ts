@@ -3,6 +3,34 @@ import { z } from 'ox/zod'
 import { describe, expect, test } from 'vp/test'
 
 describe('FrameReceipt', () => {
+  test('safe codecs reject invalid gas without throwing', () => {
+    expect(
+      z.safeDecode(z.FrameReceipt.FrameReceipt, {
+        executionGasUsed: '0x',
+        logs: [],
+        stateGasUsed: '0x0',
+        status: 1,
+      }).success,
+    ).toBe(false)
+    expect(
+      z.safeEncode(z.FrameReceipt.FrameReceipt, {
+        gasUsed: -1n,
+        logs: [],
+        stateGasUsed: 0n,
+        status: 'success',
+      }).success,
+    ).toBe(false)
+    for (const gasUsed of [-1, Number.MAX_SAFE_INTEGER + 1, '0x'] as const)
+      expect(
+        z.safeEncode(z.FrameReceipt.FrameReceiptToRpc, {
+          gasUsed,
+          logs: [],
+          stateGasUsed: 0n,
+          status: 'success',
+        }).success,
+      ).toBe(false)
+  })
+
   test('roundtrip', () => {
     const rpc = {
       executionGasUsed: '0x20000000000001',

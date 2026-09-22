@@ -2,6 +2,11 @@
 import * as core_FrameReceipt from '../core/FrameReceipt.js'
 import * as z_Address from './Address.js'
 import * as z_Hex from './Hex.js'
+import {
+  quantityHex,
+  uintBigint,
+  uintBigintNumberish,
+} from './internal/Integer.js'
 import * as z from 'zod/mini'
 
 const frameLog = z.object({
@@ -11,15 +16,15 @@ const frameLog = z.object({
 })
 
 const frameReceiptRpc = z.object({
-  executionGasUsed: z_Hex.Hex,
+  executionGasUsed: quantityHex(),
   logs: z.readonly(z.array(frameLog)),
-  stateGasUsed: z_Hex.Hex,
+  stateGasUsed: quantityHex(),
   status: z.union([z.literal(0), z.literal(1), z.literal(2)]),
 })
 const frameReceiptDecoded = z.object({
-  gasUsed: z.bigint(),
+  gasUsed: uintBigint(),
   logs: z.readonly(z.array(frameLog)),
-  stateGasUsed: z.bigint(),
+  stateGasUsed: uintBigint(),
   status: z.enum(['reverted', 'success', 'skipped']),
 })
 
@@ -33,8 +38,8 @@ export const FrameReceipt = z.codec(frameReceiptRpc, frameReceiptDecoded, {
 export const FrameReceiptToRpc = z.codec(
   frameReceiptRpc,
   z.extend(frameReceiptDecoded, {
-    gasUsed: z.union([z_Hex.Hex, z.bigint(), z.number()]),
-    stateGasUsed: z.union([z_Hex.Hex, z.bigint(), z.number()]),
+    gasUsed: uintBigintNumberish(),
+    stateGasUsed: uintBigintNumberish(),
   }),
   {
     decode: core_FrameReceipt.fromRpc,
