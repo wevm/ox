@@ -230,8 +230,13 @@ describe('eip8141', () => {
   })
 })
 
-
 test('toRpc accepts implicit frame envelopes', () => {
-  const envelope = { chainId: 1, frames: [{}], sender: '0x1111111111111111111111111111111111111111' } as const
-  expectTypeOf(TransactionEnvelope.toRpc(envelope)).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
+  const envelope = {
+    chainId: 1,
+    frames: [{}],
+    sender: '0x1111111111111111111111111111111111111111',
+  } as const
+  expectTypeOf(
+    TransactionEnvelope.toRpc(envelope),
+  ).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
 })
