@@ -19,6 +19,10 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
+  frame = [bigintType] extends [Hex.Hex] ? Frame.Rpc : Frame.Frame<bigintType>,
+  signature = [bigintType] extends [Hex.Hex]
+    ? FrameSignature.Rpc
+    : FrameSignature.FrameSignature,
 > = Compute<{
   /** EIP-2930 Access List. */
   accessList?: AccessList.AccessList | undefined
@@ -38,11 +42,7 @@ export type TransactionRequest<
   /** Contract code or a hashed method call with encoded args */
   data?: Hex.Hex | undefined
   /** Frames in execution order for EIP-8141 transactions. */
-  frames?:
-    | readonly ([bigintType] extends [Hex.Hex]
-        ? Frame.Rpc
-        : Frame.Frame<bigintType>)[]
-    | undefined
+  frames?: readonly frame[] | undefined
   /** Sender of the transaction. */
   from?: Address.Address | undefined
   /** Gas provided for transaction execution */
@@ -60,11 +60,7 @@ export type TransactionRequest<
   /** Unique number identifying this transaction */
   nonce?: bigintType | undefined
   /** Frame signature entries for EIP-8141 transactions. */
-  signatures?:
-    | readonly ([bigintType] extends [Hex.Hex]
-        ? FrameSignature.Rpc
-        : FrameSignature.FrameSignature)[]
-    | undefined
+  signatures?: readonly signature[] | undefined
   /** Transaction recipient */
   to?: Address.Address | null | undefined
   /** Transaction type */
@@ -82,7 +78,13 @@ export type TransactionRequest<
 }>
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
-export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
+export type Rpc = TransactionRequest<
+  Hex.Hex,
+  Hex.Hex,
+  string,
+  Frame.Rpc,
+  FrameSignature.Rpc
+>
 
 /**
  * Converts a {@link ox#TransactionRequest.Rpc} to a {@link ox#TransactionRequest.TransactionRequest}.
