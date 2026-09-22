@@ -585,6 +585,100 @@ describe('hash', () => {
 
 describe('serialize', () => {
   describe('e2e', () => {
+    test('fills, signs, and mines a frame transaction', async () => {
+      const sender = accounts[0].address
+      const target = accounts[1].address
+      const balance = await rpc.request({
+        method: 'eth_getBalance',
+        params: [target, 'latest'],
+      })
+      const nonce = await rpc.request({
+        method: 'eth_getTransactionCount',
+        params: [sender, 'pending'],
+      })
+      const request = TransactionRequest.toRpc({
+        frames: [
+          Frame.from({
+            flags: 'approveExecutionAndPayment',
+            gas: 50_000n,
+            mode: 'verify',
+          }),
+          Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
+        ],
+        from: sender,
+        signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+        // Nethermind's simulation mapping requires an outer recipient before processing frames.
+        to: sender,
+        type: 'eip8141',
+      })
+      // Nethermind validates signatures when filling gas, before the transaction can be signed.
+      await expect(
+        rpc.request({ method: 'eth_fillTransaction', params: [request] }),
+      ).rejects.toThrow('frame transaction signature has the wrong length')
+      const { tx } = await rpc.request({
+        method: 'eth_fillTransaction',
+        params: [{ ...request, gas: Hex.fromNumber(100_000n) }],
+      })
+      expect(tx.type).toBe('0x6')
+      if (tx.type !== '0x6' || !tx.frames)
+        throw new Error('Expected a frame transaction')
+      expect(tx.chainId).toBe('0x1fcd')
+      expect(tx.nonce).toBe(nonce)
+      expect(tx.frames).toEqual(request.frames)
+      expect(tx.signatures).toEqual(request.signatures)
+      expect(Hex.toBigInt(tx.gas)).toBe(100_000n)
+      expect(Hex.toBigInt(tx.maxFeePerGas)).toBeGreaterThan(0n)
+      expect(Hex.toBigInt(tx.maxPriorityFeePerGas)).toBeGreaterThanOrEqual(0n)
+      expect(Hex.toBigInt(tx.maxFeePerGas)).toBeGreaterThanOrEqual(
+        Hex.toBigInt(tx.maxPriorityFeePerGas),
+      )
+      expect(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [sender, 'pending'],
+        }),
+      ).toBe(nonce)
+      expect(
+        await rpc.request({
+          method: 'eth_getBalance',
+          params: [target, 'latest'],
+        }),
+      ).toBe(balance)
+
+      const envelope = TxEnvelopeEip8141.fromRpc(tx)
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeEip8141.getSignPayload(envelope),
+        privateKey: accounts[0].privateKey,
+      })
+      const signed = TxEnvelopeEip8141.from({
+        ...envelope,
+        signatures: [FrameSignature.from({ scheme: 'secp256k1', signature })],
+      })
+      const hash = await rpc.request({
+        method: 'eth_sendRawTransaction',
+        params: [TxEnvelopeEip8141.serialize(signed)],
+      })
+      expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+      await expect
+        .poll(
+          () =>
+            rpc.request({
+              method: 'eth_getTransactionReceipt',
+              params: [hash],
+            }),
+          { timeout: 30_000 },
+        )
+        .toMatchObject({ status: '0x1' })
+      expect(
+        Hex.toBigInt(
+          await rpc.request({
+            method: 'eth_getBalance',
+            params: [target, 'latest'],
+          }),
+        ),
+      ).toBe(Hex.toBigInt(balance) + 1n)
+    })
+
     test.each(['eth_call', 'eth_estimateGas'] as const)(
       '%s handles frame transactions without changing state',
       async (method) => {
