@@ -3576,7 +3576,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  * })
  * ```
  *
- * @category Transaction
+ * @category Transaction Envelopes
  */
 export * as TxEnvelopeEip8141 from './core/TxEnvelopeEip8141.js'
 /**
