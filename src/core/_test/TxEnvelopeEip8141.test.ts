@@ -611,6 +611,7 @@ describe('serialize', () => {
         to: sender,
         type: 'eip8141',
       })
+      // TODO: remove once migrated to reth or anvil.
       // Nethermind validates signatures when filling gas, before the transaction can be signed.
       await expect(
         rpc.request({ method: 'eth_fillTransaction', params: [request] }),
