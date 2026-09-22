@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.0
+
+### Minor Changes
+
+- [#457](https://github.com/wevm/ox/pull/457) [`bcda555`](https://github.com/wevm/ox/commit/bcda5558e8dd601425b3ddbf469a892c8bae3248) Thanks [@jxom](https://github.com/jxom)! - Added Frame Transactions
+
 ## 1.7.5
 
 ### Patch Changes
