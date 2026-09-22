@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.46
+
+### Patch Changes
+
+- [#460](https://github.com/wevm/ox/pull/460) [`4c9ef11`](https://github.com/wevm/ox/commit/4c9ef11a69e5b5780dee963ea2005e2bb17c44d2) Thanks [@jxom](https://github.com/jxom)! - Added Frame Transactions
+
 ## 0.14.45
 
 ### Patch Changes
