@@ -75,6 +75,7 @@ test('exports', () => {
       "TxEnvelopeEip2930",
       "TxEnvelopeEip4844",
       "TxEnvelopeEip7702",
+      "TxEnvelopeEip8141",
       "TxEnvelopeLegacy",
       "TypedData",
       "ValidatorData",

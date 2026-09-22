@@ -591,6 +591,11 @@
       "types": "./dist/core/TxEnvelopeEip7702.d.ts",
       "default": "./dist/core/TxEnvelopeEip7702.js"
     },
+    "./TxEnvelopeEip8141": {
+      "src": "./src/core/TxEnvelopeEip8141.ts",
+      "types": "./dist/core/TxEnvelopeEip8141.d.ts",
+      "default": "./dist/core/TxEnvelopeEip8141.js"
+    },
     "./TxEnvelopeLegacy": {
       "src": "./src/core/TxEnvelopeLegacy.ts",
       "types": "./dist/core/TxEnvelopeLegacy.d.ts",

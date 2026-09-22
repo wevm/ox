@@ -152,6 +152,22 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          // TODO: remove once frame txs in anvil
+          name: 'tmp_frames',
+          include: [
+            'src/core/_test/TxEnvelopeEip8141.test.ts',
+            'test/frames/**/*.test.ts',
+          ],
+          globalSetup: [join(root, 'test/frames/setup.global.ts')],
+          setupFiles: [join(root, 'test/frames/setup.ts')],
+          hookTimeout: 180_000,
+          testTimeout: 180_000,
+          retry: 0,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'core',
           globalSetup: process.env.TYPES
             ? [join(root, 'test/setup.global.types.ts')]
@@ -161,6 +177,7 @@ export default defineConfig({
               ? ['src/**/*.snap-d.ts']
               : ['src/**/*.test.ts', 'src/**/*.conformance.ts']),
             '!src/tempo/**',
+            '!src/core/_test/TxEnvelopeEip8141.test.ts',
             '!src/**/*.browser.test.ts',
           ],
           setupFiles: process.env.TYPES ? [] : [join(root, 'test/setup.ts')],

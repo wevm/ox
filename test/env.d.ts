@@ -1,4 +1,6 @@
 interface ImportMetaEnv {
+  readonly VITE_FRAMES_LOG?: string
+  readonly VITE_FRAMES_PORT?: string
   readonly VITE_TEMPO_ENV?: string
   readonly VITE_TEMPO_RPC_URL?: string
   readonly VITE_TEMPO_PORT?: string
