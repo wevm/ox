@@ -351,6 +351,10 @@ export default defineConfig({
                 link: '/guides/transactions/eip-7702',
               },
               {
+                link: '/guides/transactions/eip-8141',
+                text: 'Frame Transactions (EIP-8141)',
+              },
+              {
                 text: 'Estimate Fees & Access Lists',
                 link: '/guides/transactions/fees-access-lists',
               },
