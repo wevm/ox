@@ -40,13 +40,9 @@ import {
 } from 'ox'
 
 declare const chainId: number
-
 declare const nonce: bigint
-
 declare const privateKey: Hex.Hex
-
 declare const recipient: Address.Address
-
 declare const rpc: RpcTransport.Http
 
 const sender = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
@@ -153,7 +149,6 @@ and individual frame results. Each frame receipt exposes `gasUsed`, `stateGasUse
 import { Hex, RpcTransport, TransactionReceipt } from 'ox'
 
 declare const hash: Hex.Hex
-
 declare const rpc: RpcTransport.Http
 
 const receipt = TransactionReceipt.fromRpc(
