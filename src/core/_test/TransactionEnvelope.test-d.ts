@@ -240,3 +240,17 @@ test('toRpc accepts implicit frame envelopes', () => {
     TransactionEnvelope.toRpc(envelope),
   ).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
 })
+
+test('request conversions accept frames and undefined', () => {
+  TransactionEnvelope.toRpc({ chainId: 1, frames: undefined, maxFeePerGas: 1n })
+  TransactionEnvelope.toTransactionRequest({
+    chainId: 1,
+    frames: undefined,
+    maxFeePerGas: 1n,
+  })
+  TransactionEnvelope.toTransactionRequest({
+    chainId: 1,
+    frames: [{}],
+    sender: '0x1111111111111111111111111111111111111111',
+  })
+})
