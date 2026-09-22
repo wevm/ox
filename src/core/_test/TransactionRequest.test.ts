@@ -1,4 +1,4 @@
-import { TransactionRequest, Value } from 'ox'
+import { Frame, FrameSignature, TransactionRequest, Value } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/prool.js'
 
@@ -205,4 +205,38 @@ test('exports', () => {
       "toRpc",
     ]
   `)
+})
+
+describe('frame transactions', () => {
+  test('round-trips nested frames and signatures without mutating RPC input', () => {
+    const request = {
+      chainId: 8141,
+      frames: [Frame.from({ gas: 50_000n, mode: 'verify' })],
+      from: '0x1111111111111111111111111111111111111111',
+      signatures: [FrameSignature.from('0xaabb')],
+      type: 'eip8141',
+    } satisfies TransactionRequest.TransactionRequest
+    const rpc = TransactionRequest.toRpc(request)
+    const original = structuredClone(rpc)
+    expect(rpc.chainId).toBe('0x1fcd')
+    expect(rpc.frames?.[0]?.executionGasLimit).toBe('0xc350')
+    expect(rpc.signatures).toEqual([
+      { msg: '0x', scheme: 0, signature: '0xaabb' },
+    ])
+    expect(rpc.type).toBe('0x6')
+    expect(TransactionRequest.fromRpc(rpc)).toEqual({
+      ...request,
+      frames: [
+        {
+          data: '0x',
+          flags: 0,
+          gas: 50_000n,
+          mode: 1,
+          stateGas: 0n,
+          value: 0n,
+        },
+      ],
+    })
+    expect(rpc).toEqual(original)
+  })
 })
