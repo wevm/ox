@@ -176,6 +176,17 @@ describe('assert', () => {
     )
   })
 
+  test('rejects a half-byte versioned hash', () => {
+    expect(() =>
+      TxEnvelopeEip8141.from({
+        blobVersionedHashes: [`0x01${'0'.repeat(61)}`],
+        chainId: 1,
+        frames: [{}],
+        sender: accounts[0].address,
+      }),
+    ).toThrow('Blob versioned hashes must contain 32 bytes and version 0x01.')
+  })
+
   test('invalid blob hash size', () => {
     expect(() =>
       TxEnvelopeEip8141.assert({
@@ -1064,6 +1075,20 @@ describe('serialize', () => {
       blobVersionedHashes: [Blobs.commitmentToVersionedHash(commitment)],
       sidecars,
     }
+    test.each(['blobs', 'cellProofs', 'commitments'] as const)(
+      'rejects half-byte %s',
+      (field) => {
+        const values = [...sidecars[field]]
+        values[0] = values[0]!.slice(0, -1) as Hex.Hex
+        expect(() =>
+          TxEnvelopeEip8141.serialize({
+            ...input,
+            sidecars: { ...sidecars, [field]: values },
+          }),
+        ).toThrow(TxEnvelopeEip8141.InvalidError)
+      },
+    )
+
     test('round-trips the version 1 network wrapper', () => {
       const encoded = TxEnvelopeEip8141.serialize(input)
       const tuple = Rlp.toHex(Hex.slice(encoded, 1))
