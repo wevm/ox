@@ -36,14 +36,19 @@ export type TxEnvelopeEip8141 = {
   type: Type
 }
 
+/** Serialized EIP-8141 transaction envelope. */
 export type Serialized = `${SerializedType}${string}`
 
+/** Serialized EIP-8141 transaction type prefix. */
 export const serializedType = '0x06' as const
 
+/** Serialized EIP-8141 transaction type. */
 export type SerializedType = typeof serializedType
 
+/** EIP-8141 transaction type. */
 export const type = 'eip8141' as const
 
+/** EIP-8141 transaction type identifier. */
 export type Type = typeof type
 
 /**
@@ -288,6 +293,7 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip8141 {
 export declare namespace deserialize {
   type ErrorType =
     | assert.ErrorType
+    | Hex.slice.ErrorType
     | Rlp.toHex.ErrorType
     | serialize.ErrorType
     | Errors.GlobalErrorType
