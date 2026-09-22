@@ -2,6 +2,8 @@ import type * as AccessList from './AccessList.js'
 import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
+import * as Frame from './Frame.js'
+import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
 import * as Transaction from './Transaction.js'
@@ -11,6 +13,8 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
+  frame = Frame.Frame<bigintType>,
+  signature = FrameSignature.FrameSignature,
 > = Compute<{
   /** EIP-2930 Access List. */
   accessList?: AccessList.AccessList | undefined
@@ -28,6 +32,8 @@ export type TransactionRequest<
   data?: Hex.Hex | undefined
   /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */
   input?: Hex.Hex | undefined
+  /** Frames in execution order for EIP-8141 transactions. */
+  frames?: readonly frame[] | undefined
   /** Sender of the transaction. */
   from?: Address.Address | undefined
   /** Gas provided for transaction execution */
@@ -42,6 +48,8 @@ export type TransactionRequest<
   maxPriorityFeePerGas?: bigintType | undefined
   /** Unique number identifying this transaction */
   nonce?: bigintType | undefined
+  /** Frame signature entries for EIP-8141 transactions. */
+  signatures?: readonly signature[] | undefined
   /** Transaction recipient */
   to?: Address.Address | null | undefined
   /** Transaction type */
@@ -51,7 +59,13 @@ export type TransactionRequest<
 }>
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
-export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
+export type Rpc = TransactionRequest<
+  Hex.Hex,
+  Hex.Hex,
+  string,
+  Frame.Rpc,
+  FrameSignature.Rpc
+>
 
 /**
  * Converts a {@link ox#TransactionRequest.Rpc} to a {@link ox#TransactionRequest.TransactionRequest}.
@@ -70,7 +84,7 @@ export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const request_ = request as TransactionRequest
+  const request_ = { ...request } as unknown as TransactionRequest
 
   if (typeof request.authorizationList !== 'undefined')
     request_.authorizationList = Authorization.fromRpcList(
@@ -78,6 +92,9 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (typeof request.chainId !== 'undefined')
     request_.chainId = Hex.toNumber(request.chainId)
+  if (request.frames) request_.frames = request.frames.map(Frame.fromRpc)
+  if (request.signatures)
+    request_.signatures = request.signatures.map(FrameSignature.fromRpc)
   if (typeof request.gas !== 'undefined')
     request_.gas = Hex.toBigInt(request.gas)
   if (typeof request.gasPrice !== 'undefined')
@@ -103,6 +120,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
 
 export declare namespace fromRpc {
   export type ErrorType =
+    | Frame.fromRpc.ErrorType
+    | FrameSignature.fromRpc.ErrorType
     | Authorization.fromRpcList.ErrorType
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
@@ -170,6 +189,9 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.input = request.input
   }
   if (typeof request.from !== 'undefined') request_rpc.from = request.from
+  if (request.frames) request_rpc.frames = request.frames.map(Frame.toRpc)
+  if (request.signatures)
+    request_rpc.signatures = request.signatures.map(FrameSignature.toRpc)
   if (typeof request.gas !== 'undefined')
     request_rpc.gas = Hex.fromNumber(request.gas)
   if (typeof request.gasPrice !== 'undefined')
@@ -202,6 +224,8 @@ export function toRpc(request: TransactionRequest): Rpc {
 
 export declare namespace toRpc {
   export type ErrorType =
+    | Frame.toRpc.ErrorType
+    | FrameSignature.toRpc.ErrorType
     | Authorization.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType

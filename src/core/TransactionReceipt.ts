@@ -1,5 +1,6 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
+import * as FrameReceipt from './FrameReceipt.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
 import * as Log from './Log.js'
@@ -10,6 +11,7 @@ export type TransactionReceipt<
   type = Type,
   bigintType = bigint,
   numberType = number,
+  frameReceipt = FrameReceipt.FrameReceipt<bigintType>,
 > = Compute<{
   /** The actual value per gas deducted from the sender's account for blob gas. Only specified for blob transactions as defined by EIP-4844. */
   blobGasPrice?: bigintType | undefined
@@ -25,6 +27,8 @@ export type TransactionReceipt<
   cumulativeGasUsed: bigintType
   /** Pre-London, it is equal to the transaction's gasPrice. Post-London, it is equal to the actual gas price paid for inclusion. */
   effectiveGasPrice: bigintType
+  /** Results for individual EIP-8141 frames. */
+  frameReceipts?: readonly frameReceipt[] | undefined
   /** Transaction sender */
   from: Address.Address
   /** Gas used by this transaction */
@@ -33,6 +37,8 @@ export type TransactionReceipt<
   logs: Log.Log<false, bigintType, numberType>[]
   /** Logs bloom filter */
   logsBloom: Hex.Hex
+  /** Account paying for an EIP-8141 transaction. */
+  payer?: Address.Address | undefined
   /** The post-transaction state root. Only specified for transactions included before the Byzantium upgrade. */
   root?: Hex.Hex | undefined
   /** `success` if this transaction was successful or `reverted` if it failed */
@@ -48,7 +54,13 @@ export type TransactionReceipt<
 }>
 
 /** An RPC Transaction Receipt as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
-export type Rpc = TransactionReceipt<RpcStatus, RpcType, Hex.Hex, Hex.Hex>
+export type Rpc = TransactionReceipt<
+  RpcStatus,
+  RpcType,
+  Hex.Hex,
+  Hex.Hex,
+  FrameReceipt.Rpc
+>
 
 /**
  * Union of Transaction Receipt statuses.
@@ -74,6 +86,7 @@ export type RpcStatus = '0x0' | '0x1'
  * - `eip2930`
  * - `eip4844`
  * - `eip7702`
+ * - `eip8141`
  * - any other string
  */
 export type Type =
@@ -82,6 +95,7 @@ export type Type =
   | 'eip2930'
   | 'eip4844'
   | 'eip7702'
+  | 'eip8141'
   | (string & {})
 
 /**
@@ -92,9 +106,17 @@ export type Type =
  * - `0x2`: EIP-2930 transactions
  * - `0x3`: EIP-4844 transactions
  * - `0x4`: EIP-7702 transactions
+ * - `0x6`: EIP-8141 transactions
  * - any other string
  */
-export type RpcType = '0x0' | '0x1' | '0x2' | '0x3' | '0x4' | (string & {})
+export type RpcType =
+  | '0x0'
+  | '0x1'
+  | '0x2'
+  | '0x3'
+  | '0x4'
+  | '0x6'
+  | (string & {})
 
 /** RPC status to status mapping. */
 export const fromRpcStatus = {
@@ -115,6 +137,7 @@ export const fromRpcType = {
   '0x2': 'eip1559',
   '0x3': 'eip4844',
   '0x4': 'eip7702',
+  '0x6': 'eip8141',
 } as const
 
 /** Type to RPC type mapping. */
@@ -124,6 +147,7 @@ export const toRpcType = {
   eip1559: '0x2',
   eip4844: '0x3',
   eip7702: '0x4',
+  eip8141: '0x6',
 } as const
 
 /**
@@ -230,6 +254,9 @@ export function fromRpc<const receipt extends Rpc | null>(
 
   return {
     ...receipt,
+    ...(receipt.frameReceipts
+      ? { frameReceipts: receipt.frameReceipts.map(FrameReceipt.fromRpc) }
+      : {}),
     blobGasPrice: receipt.blobGasPrice
       ? BigInt(receipt.blobGasPrice)
       : undefined,
@@ -246,7 +273,10 @@ export function fromRpc<const receipt extends Rpc | null>(
 }
 
 export declare namespace fromRpc {
-  export type ErrorType = Log.fromRpc.ErrorType | Errors.GlobalErrorType
+  export type ErrorType =
+    | FrameReceipt.fromRpc.ErrorType
+    | Log.fromRpc.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -304,6 +334,10 @@ export declare namespace fromRpc {
  */
 export function toRpc(receipt: TransactionReceipt): Rpc {
   return {
+    ...(receipt.frameReceipts
+      ? { frameReceipts: receipt.frameReceipts.map(FrameReceipt.toRpc) }
+      : {}),
+    ...(receipt.payer ? { payer: receipt.payer } : {}),
     blobGasPrice: receipt.blobGasPrice
       ? Hex.fromNumber(receipt.blobGasPrice)
       : undefined,
@@ -329,5 +363,8 @@ export function toRpc(receipt: TransactionReceipt): Rpc {
 }
 
 export declare namespace toRpc {
-  export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
+  export type ErrorType =
+    | FrameReceipt.toRpc.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Errors.GlobalErrorType
 }

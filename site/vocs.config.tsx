@@ -72,6 +72,10 @@ export default defineConfig({
             text: 'Transaction Envelopes',
             link: '/guides/transaction-envelopes',
           },
+          {
+            text: 'Frame Transactions (EIP-8141)',
+            link: '/guides/frame-transactions',
+          },
           { text: 'WebAuthn Signers', link: '/guides/webauthn' },
         ],
       },

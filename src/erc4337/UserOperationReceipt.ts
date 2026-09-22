@@ -51,12 +51,7 @@ export type Rpc<
   entryPointVersion,
   Hex.Hex,
   Hex.Hex,
-  TransactionReceipt.TransactionReceipt<
-    TransactionReceipt.RpcStatus,
-    TransactionReceipt.RpcType,
-    Hex.Hex,
-    Hex.Hex
-  >
+  TransactionReceipt.Rpc
 >
 
 /**
