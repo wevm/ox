@@ -1,7 +1,6 @@
 import {
   Address,
   Blobs,
-  Frame,
   FrameSignature,
   P256,
   RpcTransport,
@@ -10,7 +9,7 @@ import {
 } from 'ox'
 import { Setups } from 'ox/trusted-setups'
 import { Kzg } from 'ox/wasm'
-import { expect, test } from 'vite-plus/test'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../constants/accounts.js'
 import { rpcUrl } from './prool.js'
 
@@ -18,159 +17,181 @@ const rpc = RpcTransport.fromHttp(rpcUrl)
 
 type Receipt = { frameReceipts: { status: number }[]; payer: Address.Address }
 
-async function prepare(frames: readonly Frame.Frame[], sponsored = false) {
-  return TxEnvelopeEip8141.from({
-    chainId: 8141,
-    frames,
-    maxFeePerGas: 10_000_000_000n,
-    maxPriorityFeePerGas: 1_000_000_000n,
-    nonce: BigInt(
-      await rpc.request({
-        method: 'eth_getTransactionCount',
-        params: [accounts[0].address, 'latest'],
-      }),
-    ),
-    sender: accounts[0].address,
-    signatures: [
-      FrameSignature.from({ scheme: 'secp256k1' }),
-      ...(sponsored
-        ? [
-            FrameSignature.from({
-              scheme: 'secp256k1',
-              signer: accounts[1].address,
-            }),
-          ]
-        : []),
-    ],
-  })
-}
-
-function sign(envelope: TxEnvelopeEip8141.TxEnvelopeEip8141) {
-  const payload = TxEnvelopeEip8141.getSignPayload(envelope)
-  return TxEnvelopeEip8141.from({
-    ...envelope,
-    signatures: envelope.signatures!.map((entry, index) =>
-      FrameSignature.fromSecp256k1(
-        Secp256k1.sign({ payload, privateKey: accounts[index]!.privateKey }),
-        { signer: entry.signer },
-      ),
-    ),
-  })
-}
-
-async function submit(envelope: TxEnvelopeEip8141.TxEnvelopeEip8141) {
-  const hash = await rpc.request({
-    method: 'eth_sendRawTransaction',
-    params: [TxEnvelopeEip8141.serialize(envelope)],
-  })
-  expect(hash).toBe(TxEnvelopeEip8141.hash(envelope))
-  await expect
-    .poll(
-      () =>
-        rpc.request({ method: 'eth_getTransactionReceipt', params: [hash] }),
-      { timeout: 30_000 },
-    )
-    .not.toBeNull()
-  return (await rpc.request({
-    method: 'eth_getTransactionReceipt',
-    params: [hash],
-  })) as unknown as Receipt
-}
-
-const approval = {
-  flags: 'approveExecutionAndPayment',
-  gas: 50_000n,
-  mode: 'verify',
-} as const
-
-test('signs, submits, and mines a sender-paid frame transaction', async () => {
-  const target = accounts[1].address
-  const before = BigInt(
-    await rpc.request({ method: 'eth_getBalance', params: [target, 'latest'] }),
-  )
-  const receipt = await submit(
-    sign(
-      await prepare([
-        approval,
-        { gas: 50_000n, mode: 'sender', target, value: 1n },
-      ]),
-    ),
-  )
-  expect(receipt.payer.toLowerCase()).toBe(accounts[0].address.toLowerCase())
-  expect(receipt.frameReceipts.map((frame) => frame.status)).toEqual([1, 1])
-  expect(
-    BigInt(
+describe('serialize', () => {
+  test('signs, submits, and mines a sender-paid frame transaction', async () => {
+    const target = accounts[1].address
+    const before = BigInt(
       await rpc.request({
         method: 'eth_getBalance',
         params: [target, 'latest'],
       }),
-    ),
-  ).toBe(before + 1n)
-})
-
-test('charges a separate sponsor', async () => {
-  const senderBefore = BigInt(
-    await rpc.request({
-      method: 'eth_getBalance',
-      params: [accounts[0].address, 'latest'],
-    }),
-  )
-  const payerBefore = BigInt(
-    await rpc.request({
-      method: 'eth_getBalance',
-      params: [accounts[1].address, 'latest'],
-    }),
-  )
-  const receipt = await submit(
-    sign(
-      await prepare(
-        [
-          { flags: 'approveExecution', gas: 50_000n, mode: 'verify' },
-          {
-            flags: 'approvePayment',
-            gas: 50_000n,
-            mode: 'verify',
-            target: accounts[1].address,
-          },
-          {
-            gas: 50_000n,
-            mode: 'sender',
-            target: accounts[1].address,
-            value: 1n,
-          },
-        ],
-        true,
+    )
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 8141,
+      frames: [
+        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+        { gas: 50_000n, mode: 'sender', target, value: 1n },
+      ],
+      maxFeePerGas: 10_000_000_000n,
+      maxPriorityFeePerGas: 1_000_000_000n,
+      nonce: BigInt(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [accounts[0].address, 'latest'],
+        }),
       ),
-    ),
-  )
-  expect(receipt.payer.toLowerCase()).toBe(accounts[1].address.toLowerCase())
-  expect(
-    BigInt(
+      sender: accounts[0].address,
+      signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+    })
+    const payload = TxEnvelopeEip8141.getSignPayload(envelope)
+    const signature = Secp256k1.sign({
+      payload,
+      privateKey: accounts[0].privateKey,
+    })
+
+    const signed = TxEnvelopeEip8141.from({
+      ...envelope,
+      signatures: [FrameSignature.fromSecp256k1(signature)],
+    })
+    const serialized = TxEnvelopeEip8141.serialize(signed)
+    const hash = await rpc.request({
+      method: 'eth_sendRawTransaction',
+      params: [serialized],
+    })
+    expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+    await expect
+      .poll(
+        () =>
+          rpc.request({ method: 'eth_getTransactionReceipt', params: [hash] }),
+        { timeout: 30_000 },
+      )
+      .not.toBeNull()
+    const receipt = (await rpc.request({
+      method: 'eth_getTransactionReceipt',
+      params: [hash],
+    })) as unknown as Receipt
+    expect(receipt.payer.toLowerCase()).toBe(accounts[0].address.toLowerCase())
+    expect(receipt.frameReceipts.map((frame) => frame.status)).toEqual([1, 1])
+    expect(
+      BigInt(
+        await rpc.request({
+          method: 'eth_getBalance',
+          params: [target, 'latest'],
+        }),
+      ),
+    ).toBe(before + 1n)
+  })
+
+  test('charges a separate sponsor', async () => {
+    const senderBefore = BigInt(
       await rpc.request({
         method: 'eth_getBalance',
         params: [accounts[0].address, 'latest'],
       }),
-    ),
-  ).toBe(senderBefore - 1n)
-  expect(
-    BigInt(
+    )
+    const payerBefore = BigInt(
       await rpc.request({
         method: 'eth_getBalance',
         params: [accounts[1].address, 'latest'],
       }),
-    ),
-  ).toBeLessThan(payerBefore)
-})
-
-test('rolls back an atomic batch and skips its remaining frames', async () => {
-  const before = await rpc.request({
-    method: 'eth_getBalance',
-    params: [accounts[1].address, 'latest'],
+    )
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 8141,
+      frames: [
+        { flags: 'approveExecution', gas: 50_000n, mode: 'verify' },
+        {
+          flags: 'approvePayment',
+          gas: 50_000n,
+          mode: 'verify',
+          target: accounts[1].address,
+        },
+        {
+          gas: 50_000n,
+          mode: 'sender',
+          target: accounts[1].address,
+          value: 1n,
+        },
+      ],
+      maxFeePerGas: 10_000_000_000n,
+      maxPriorityFeePerGas: 1_000_000_000n,
+      nonce: BigInt(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [accounts[0].address, 'latest'],
+        }),
+      ),
+      sender: accounts[0].address,
+      signatures: [
+        FrameSignature.from({ scheme: 'secp256k1' }),
+        FrameSignature.from({
+          scheme: 'secp256k1',
+          signer: accounts[1].address,
+        }),
+      ],
+    })
+    const payload = TxEnvelopeEip8141.getSignPayload(envelope)
+    const signature = Secp256k1.sign({
+      payload,
+      privateKey: accounts[0].privateKey,
+    })
+    const payerSignature = Secp256k1.sign({
+      payload,
+      privateKey: accounts[1].privateKey,
+    })
+    const signed = TxEnvelopeEip8141.from({
+      ...envelope,
+      signatures: [
+        FrameSignature.fromSecp256k1(signature),
+        FrameSignature.fromSecp256k1(payerSignature, {
+          signer: accounts[1].address,
+        }),
+      ],
+    })
+    const serialized = TxEnvelopeEip8141.serialize(signed)
+    const hash = await rpc.request({
+      method: 'eth_sendRawTransaction',
+      params: [serialized],
+    })
+    expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+    await expect
+      .poll(
+        () =>
+          rpc.request({ method: 'eth_getTransactionReceipt', params: [hash] }),
+        { timeout: 30_000 },
+      )
+      .not.toBeNull()
+    const receipt = (await rpc.request({
+      method: 'eth_getTransactionReceipt',
+      params: [hash],
+    })) as unknown as Receipt
+    expect(receipt.payer.toLowerCase()).toBe(accounts[1].address.toLowerCase())
+    expect(
+      BigInt(
+        await rpc.request({
+          method: 'eth_getBalance',
+          params: [accounts[0].address, 'latest'],
+        }),
+      ),
+    ).toBe(senderBefore - 1n)
+    expect(
+      BigInt(
+        await rpc.request({
+          method: 'eth_getBalance',
+          params: [accounts[1].address, 'latest'],
+        }),
+      ),
+    ).toBeLessThan(payerBefore)
   })
-  const receipt = await submit(
-    sign(
-      await prepare([
-        approval,
+
+  test('rolls back an atomic batch and skips its remaining frames', async () => {
+    const before = await rpc.request({
+      method: 'eth_getBalance',
+      params: [accounts[1].address, 'latest'],
+    })
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 8141,
+      frames: [
+        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
         {
           flags: 'atomicBatch',
           gas: 50_000n,
@@ -190,133 +211,268 @@ test('rolls back an atomic batch and skips its remaining frames', async () => {
           target: accounts[1].address,
           value: 2n,
         },
-      ]),
-    ),
-  )
-  expect(receipt.frameReceipts.map((frame) => frame.status)).toEqual([
-    1, 1, 0, 2,
-  ])
-  expect(
-    await rpc.request({
-      method: 'eth_getBalance',
-      params: [accounts[1].address, 'latest'],
-    }),
-  ).toBe(before)
-})
-
-test('rejects a signature from the wrong sender', async () => {
-  const envelope = await prepare([approval])
-  const signature = Secp256k1.sign({
-    payload: TxEnvelopeEip8141.getSignPayload(envelope),
-    privateKey: accounts[1].privateKey,
-  })
-  await expect(
-    rpc.request({
-      method: 'eth_sendRawTransaction',
-      params: [
-        TxEnvelopeEip8141.serialize({
-          ...envelope,
-          signatures: [FrameSignature.fromSecp256k1(signature)],
-        }),
       ],
-    }),
-  ).rejects.toThrow(/signer does not match the recovered address/i)
-})
+      maxFeePerGas: 10_000_000_000n,
+      maxPriorityFeePerGas: 1_000_000_000n,
+      nonce: BigInt(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [accounts[0].address, 'latest'],
+        }),
+      ),
+      sender: accounts[0].address,
+      signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+    })
+    const payload = TxEnvelopeEip8141.getSignPayload(envelope)
+    const signature = Secp256k1.sign({
+      payload,
+      privateKey: accounts[0].privateKey,
+    })
 
-test('rejects an expired transaction', async () => {
-  const envelope = sign(
-    await prepare([
-      {
-        data: '0x0000000000000001',
-        gas: 50_000n,
-        mode: 'verify',
-        target: '0x0000000000000000000000000000000000008141',
-      },
-      approval,
-    ]),
-  )
-  await expect(
-    rpc.request({
+    const signed = TxEnvelopeEip8141.from({
+      ...envelope,
+      signatures: [FrameSignature.fromSecp256k1(signature)],
+    })
+    const serialized = TxEnvelopeEip8141.serialize(signed)
+    const hash = await rpc.request({
       method: 'eth_sendRawTransaction',
-      params: [TxEnvelopeEip8141.serialize(envelope)],
-    }),
-  ).rejects.toThrow(/expir|valid|revert/i)
-})
-
-test('authorizes P-256 through signature introspection', async () => {
-  const privateKey = accounts[0].privateKey
-  const publicKey = P256.getPublicKey({ privateKey })
-  const sender = Address.fromPublicKey(publicKey)
-  // Genesis verifier checks SIGPARAM signer, scheme, and payload before APPROVE(3).
-  const envelope = TxEnvelopeEip8141.from({
-    chainId: 8141,
-    frames: [
-      approval,
-      { gas: 50_000n, mode: 'sender', target: accounts[1].address, value: 1n },
-    ],
-    maxFeePerGas: 10_000_000_000n,
-    maxPriorityFeePerGas: 1_000_000_000n,
-    nonce: BigInt(
-      await rpc.request({
-        method: 'eth_getTransactionCount',
-        params: [sender, 'latest'],
-      }),
-    ),
-    sender,
-    signatures: [FrameSignature.from({ scheme: 'p256' })],
-  })
-  const signature = P256.sign({
-    payload: TxEnvelopeEip8141.getSignPayload(envelope),
-    privateKey,
-  })
-  const before = BigInt(
-    await rpc.request({
-      method: 'eth_getBalance',
-      params: [accounts[1].address, 'latest'],
-    }),
-  )
-  const receipt = await submit({
-    ...envelope,
-    signatures: [FrameSignature.fromP256(signature, { publicKey })],
-  })
-  expect(receipt.frameReceipts.map((frame) => frame.status)).toEqual([1, 1])
-  expect(
-    BigInt(
+      params: [serialized],
+    })
+    expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+    await expect
+      .poll(
+        () =>
+          rpc.request({ method: 'eth_getTransactionReceipt', params: [hash] }),
+        { timeout: 30_000 },
+      )
+      .not.toBeNull()
+    const receipt = (await rpc.request({
+      method: 'eth_getTransactionReceipt',
+      params: [hash],
+    })) as unknown as Receipt
+    expect(receipt.frameReceipts.map((frame) => frame.status)).toEqual([
+      1, 1, 0, 2,
+    ])
+    expect(
       await rpc.request({
         method: 'eth_getBalance',
         params: [accounts[1].address, 'latest'],
       }),
-    ),
-  ).toBe(before + 1n)
-})
+    ).toBe(before)
+  })
 
-// TODO: enable once the NethDev harness mines blob-carrying frame transactions.
-test.skip('submits a PeerDAS blob wrapper and retrieves the mined body', async () => {
-  const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
-  try {
-    const blobs = Blobs.from('0xdeadbeef')
-    const commitments = Blobs.toCommitments(blobs, { kzg })
-    const envelope = sign(
-      TxEnvelopeEip8141.from({
-        ...(await prepare([approval])),
+  test('rejects a signature from the wrong sender', async () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 8141,
+      frames: [
+        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+      ],
+      maxFeePerGas: 10_000_000_000n,
+      maxPriorityFeePerGas: 1_000_000_000n,
+      nonce: BigInt(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [accounts[0].address, 'latest'],
+        }),
+      ),
+      sender: accounts[0].address,
+      signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeEip8141.getSignPayload(envelope),
+      privateKey: accounts[1].privateKey,
+    })
+    await expect(
+      rpc.request({
+        method: 'eth_sendRawTransaction',
+        params: [
+          TxEnvelopeEip8141.serialize({
+            ...envelope,
+            signatures: [FrameSignature.fromSecp256k1(signature)],
+          }),
+        ],
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[RpcResponse.InvalidInputError: transaction invalid, frame transaction SECP256K1 signer does not match the recovered address]`,
+    )
+  })
+
+  test('rejects an expired transaction', async () => {
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 8141,
+      frames: [
+        {
+          data: '0x0000000000000001',
+          gas: 50_000n,
+          mode: 'verify',
+          target: '0x0000000000000000000000000000000000008141',
+        },
+        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+      ],
+      maxFeePerGas: 10_000_000_000n,
+      maxPriorityFeePerGas: 1_000_000_000n,
+      nonce: BigInt(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [accounts[0].address, 'latest'],
+        }),
+      ),
+      sender: accounts[0].address,
+      signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+    })
+    const payload = TxEnvelopeEip8141.getSignPayload(envelope)
+    const signature = Secp256k1.sign({
+      payload,
+      privateKey: accounts[0].privateKey,
+    })
+
+    const signed = TxEnvelopeEip8141.from({
+      ...envelope,
+      signatures: [FrameSignature.fromSecp256k1(signature)],
+    })
+    await expect(
+      rpc.request({
+        method: 'eth_sendRawTransaction',
+        params: [TxEnvelopeEip8141.serialize(signed)],
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[RpcResponse.InvalidInputError: frame transaction expired]`,
+    )
+  })
+
+  test('authorizes P-256 through signature introspection', async () => {
+    const privateKey = accounts[0].privateKey
+    const publicKey = P256.getPublicKey({ privateKey })
+    const sender = Address.fromPublicKey(publicKey)
+    // Genesis verifier checks SIGPARAM signer, scheme, and payload before APPROVE(3).
+    const envelope = TxEnvelopeEip8141.from({
+      chainId: 8141,
+      frames: [
+        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+        {
+          gas: 50_000n,
+          mode: 'sender',
+          target: accounts[1].address,
+          value: 1n,
+        },
+      ],
+      maxFeePerGas: 10_000_000_000n,
+      maxPriorityFeePerGas: 1_000_000_000n,
+      nonce: BigInt(
+        await rpc.request({
+          method: 'eth_getTransactionCount',
+          params: [sender, 'latest'],
+        }),
+      ),
+      sender,
+      signatures: [FrameSignature.from({ scheme: 'p256' })],
+    })
+    const signature = P256.sign({
+      payload: TxEnvelopeEip8141.getSignPayload(envelope),
+      privateKey,
+    })
+    const before = BigInt(
+      await rpc.request({
+        method: 'eth_getBalance',
+        params: [accounts[1].address, 'latest'],
+      }),
+    )
+    const signed = TxEnvelopeEip8141.from({
+      ...envelope,
+      signatures: [FrameSignature.fromP256(signature, { publicKey })],
+    })
+    const serialized = TxEnvelopeEip8141.serialize(signed)
+    const hash = await rpc.request({
+      method: 'eth_sendRawTransaction',
+      params: [serialized],
+    })
+    expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+    await expect
+      .poll(
+        () =>
+          rpc.request({ method: 'eth_getTransactionReceipt', params: [hash] }),
+        { timeout: 30_000 },
+      )
+      .not.toBeNull()
+    const receipt = (await rpc.request({
+      method: 'eth_getTransactionReceipt',
+      params: [hash],
+    })) as unknown as Receipt
+    expect(receipt.frameReceipts.map((frame) => frame.status)).toEqual([1, 1])
+    expect(
+      BigInt(
+        await rpc.request({
+          method: 'eth_getBalance',
+          params: [accounts[1].address, 'latest'],
+        }),
+      ),
+    ).toBe(before + 1n)
+  })
+
+  // TODO: enable once the NethDev harness mines blob-carrying frame transactions.
+  test.skip('submits a PeerDAS blob wrapper and retrieves the mined body', async () => {
+    const kzg = await Kzg.create({ trustedSetup: Setups.mainnet })
+    try {
+      const blobs = Blobs.from('0xdeadbeef')
+      const commitments = Blobs.toCommitments(blobs, { kzg })
+      const envelope = TxEnvelopeEip8141.from({
         blobVersionedHashes: Blobs.commitmentsToVersionedHashes(commitments),
+        chainId: 8141,
+        frames: [
+          { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+        ],
         maxFeePerBlobGas: 1_000_000_000n,
+        maxFeePerGas: 10_000_000_000n,
+        maxPriorityFeePerGas: 1_000_000_000n,
+        nonce: BigInt(
+          await rpc.request({
+            method: 'eth_getTransactionCount',
+            params: [accounts[0].address, 'latest'],
+          }),
+        ),
+        sender: accounts[0].address,
         sidecars: {
           blobs,
           cellProofs: Blobs.toCellProofs(blobs, { kzg }),
           commitments,
         },
-      }),
-    )
-    await submit(envelope)
-    const transaction = await rpc.request({
-      method: 'eth_getTransactionByHash',
-      params: [TxEnvelopeEip8141.hash(envelope)],
-    })
-    expect(transaction?.blobVersionedHashes).toEqual(
-      envelope.blobVersionedHashes,
-    )
-  } finally {
-    kzg.dispose()
-  }
+        signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
+      })
+      const payload = TxEnvelopeEip8141.getSignPayload(envelope)
+      const signature = Secp256k1.sign({
+        payload,
+        privateKey: accounts[0].privateKey,
+      })
+
+      const signed = TxEnvelopeEip8141.from({
+        ...envelope,
+        signatures: [FrameSignature.fromSecp256k1(signature)],
+      })
+      const serialized = TxEnvelopeEip8141.serialize(signed)
+      const hash = await rpc.request({
+        method: 'eth_sendRawTransaction',
+        params: [serialized],
+      })
+      expect(hash).toBe(TxEnvelopeEip8141.hash(signed))
+      await expect
+        .poll(
+          () =>
+            rpc.request({
+              method: 'eth_getTransactionReceipt',
+              params: [hash],
+            }),
+          { timeout: 30_000 },
+        )
+        .not.toBeNull()
+      const transaction = await rpc.request({
+        method: 'eth_getTransactionByHash',
+        params: [TxEnvelopeEip8141.hash(signed)],
+      })
+      expect(transaction?.blobVersionedHashes).toEqual(
+        envelope.blobVersionedHashes,
+      )
+    } finally {
+      kzg.dispose()
+    }
+  })
 })

@@ -96,6 +96,7 @@
 - **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz`; default `pnpm test` should not pick them up.
 - **Fuzz regressions become deterministic** -- when a property fails, add the minimized case as a regular `*.test.ts` or vector fixture.
 - **Vectors use Bun** -- run vector tests with `pnpm vectors`. That covers the generated corpora under `vectors/` only. Published upstream fixtures (NIST `.rsp`, XKCP intermediate values) live in `test/vectors/`, are consumed by colocated `*.vectors.test.ts` suites, and run in the `core` project instead -- `pnpm vectors` will not touch them.
+- **Match neighboring module tests** -- group envelope tests by public function, use named cases and inline error snapshots, assert complete inferred types, and show the API calls directly in integration tests.
 - **Unit and type tests as you go** -- write unit tests and `.test-d.ts` type tests alongside implementation for each public behavior change.
 
 ## Workflow Conventions
