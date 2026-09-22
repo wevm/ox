@@ -1,5 +1,5 @@
 ---
-"ox": minor
+"ox": patch
 ---
 
 Added Frame Transactions
