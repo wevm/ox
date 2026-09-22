@@ -122,7 +122,7 @@ describe('fromTuple', () => {
 
   test('distinguishes an implicit target from the zero address', () => {
     const target = '0x0000000000000000000000000000000000000000'
-    expect(Frame.fromTuple(tuple)).not.toHaveProperty('target')
+    expect(Frame.fromTuple(tuple)).not.toHaveProperty('to')
     expect(
       Frame.fromTuple([
         tuple[0],
@@ -132,7 +132,7 @@ describe('fromTuple', () => {
         tuple[4],
         tuple[5],
       ]),
-    ).toHaveProperty('target', target)
+    ).toHaveProperty('to', target)
   })
 
   test.each(['0x00', '0x0001', '0x1', '0xgg'])(
@@ -192,7 +192,7 @@ describe('assert', () => {
     { gas: 2n ** 64n - 1n, stateGas: 1n },
     { data: '0x0' },
     { data: '0xgg' },
-    { target: '0x01' },
+    { to: '0x01' },
   ])('rejects invalid fields %#', (fields) => {
     expect(() => Frame.assert({ ...frame, ...fields } as never)).toThrow()
   })
@@ -264,4 +264,17 @@ describe('toRpc', () => {
       value: '0x0',
     })
   })
+})
+
+test('maps to to the RPC target without changing tuple encoding', () => {
+  const to = '0x1111111111111111111111111111111111111111'
+  const frame = Frame.from({ to })
+  const rpc = Frame.toRpc(frame)
+  expect(rpc.target).toBe(to)
+  expect(rpc).not.toHaveProperty('to')
+  const decoded = Frame.fromRpc(rpc)
+  expect(decoded.to).toBe(to)
+  expect(decoded).not.toHaveProperty('target')
+  expect(Frame.toTuple(frame)[2]).toBe(to)
+  expect(Frame.fromTuple(Frame.toTuple(frame)).to).toBe(to)
 })

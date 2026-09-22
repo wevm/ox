@@ -267,7 +267,7 @@ describe('assert', () => {
     expect(() =>
       TxEnvelopeEip8141.assert({
         chainId: 1,
-        frames: [{ flags: 'approveExecution', target: accounts[1].address }],
+        frames: [{ flags: 'approveExecution', to: accounts[1].address }],
         sender: accounts[0].address,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -318,7 +318,7 @@ describe('assert', () => {
         frames: [
           {
             mode: 'verify',
-            target: '0x0000000000000000000000000000000000008141',
+            to: '0x0000000000000000000000000000000000008141',
           },
         ],
         sender: accounts[0].address,
@@ -632,7 +632,7 @@ describe('serialize', () => {
             gas: 50_000n,
             mode: 'verify',
           }),
-          Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
+          Frame.from({ gas: 50_000n, mode: 'sender', to: target, value: 1n }),
         ],
         from: sender,
         signatures: [{ scheme: 'secp256k1' }],
@@ -730,12 +730,12 @@ describe('serialize', () => {
               gas: 50_000n,
               mode: 'verify',
             }),
-            Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
+            Frame.from({ gas: 50_000n, mode: 'sender', to: target, value: 1n }),
             Frame.from({
               data: '0xdeadbeef',
               gas: 50_000n,
               mode: 'sender',
-              target: '0x0000000000000000000000000000000000000004',
+              to: '0x0000000000000000000000000000000000000004',
             }),
           ],
           maxFeePerGas: 10_000_000_000n,
@@ -808,7 +808,7 @@ describe('serialize', () => {
             gas: 50_000n,
             mode: 'verify',
           }),
-          Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
+          Frame.from({ gas: 50_000n, mode: 'sender', to: target, value: 1n }),
         ],
         maxFeePerGas: 10_000_000_000n,
         maxPriorityFeePerGas: 1_000_000_000n,
@@ -918,12 +918,12 @@ describe('serialize', () => {
             flags: 'approvePayment',
             gas: 50_000n,
             mode: 'verify',
-            target: accounts[1].address,
+            to: accounts[1].address,
           }),
           Frame.from({
             gas: 50_000n,
             mode: 'sender',
-            target: accounts[1].address,
+            to: accounts[1].address,
             value: 1n,
           }),
         ],
@@ -1024,19 +1024,19 @@ describe('serialize', () => {
             flags: 'atomicBatch',
             gas: 50_000n,
             mode: 'sender',
-            target: accounts[1].address,
+            to: accounts[1].address,
             value: 1n,
           }),
           Frame.from({
             flags: 'atomicBatch',
             gas: 50_000n,
             mode: 'sender',
-            target: '0x0000000000000000000000000000000000001000',
+            to: '0x0000000000000000000000000000000000001000',
           }),
           Frame.from({
             gas: 50_000n,
             mode: 'sender',
-            target: accounts[1].address,
+            to: accounts[1].address,
             value: 2n,
           }),
         ],
@@ -1149,7 +1149,7 @@ describe('serialize', () => {
             data: '0x0000000000000001',
             gas: 50_000n,
             mode: 'verify',
-            target: '0x0000000000000000000000000000000000008141',
+            to: '0x0000000000000000000000000000000000008141',
           }),
           Frame.from({
             flags: 'approveExecutionAndPayment',
@@ -1204,7 +1204,7 @@ describe('serialize', () => {
           Frame.from({
             gas: 50_000n,
             mode: 'sender',
-            target: accounts[1].address,
+            to: accounts[1].address,
             value: 1n,
           }),
         ],
@@ -1595,7 +1595,7 @@ describe('validate', () => {
     expect(
       TxEnvelopeEip8141.validate({
         chainId: 1,
-        frames: [{ flags: 'approveExecution', target: accounts[1].address }],
+        frames: [{ flags: 'approveExecution', to: accounts[1].address }],
         sender: accounts[0].address,
       }),
     ).toBe(false)
@@ -1638,7 +1638,7 @@ describe('validate', () => {
         frames: [
           {
             mode: 'verify',
-            target: '0x0000000000000000000000000000000000008141',
+            to: '0x0000000000000000000000000000000000008141',
           },
         ],
         sender: accounts[0].address,
@@ -1670,7 +1670,7 @@ describe('validate', () => {
       data: '0x0000000000000001',
       gas: 5000n,
       mode: 'verify',
-      target: '0x0000000000000000000000000000000000008141',
+      to: '0x0000000000000000000000000000000000008141',
     } as const
     expect(TxEnvelopeEip8141.validate({ ...envelope, frames: [frame] })).toBe(
       true,
