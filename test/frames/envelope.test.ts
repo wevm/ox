@@ -1,6 +1,7 @@
 import {
   Address,
   Blobs,
+  Frame,
   FrameSignature,
   P256,
   RpcTransport,
@@ -29,8 +30,12 @@ describe('serialize', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
       frames: [
-        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
-        { gas: 50_000n, mode: 'sender', target, value: 1n },
+        Frame.from({
+          flags: 'approveExecutionAndPayment',
+          gas: 50_000n,
+          mode: 'verify',
+        }),
+        Frame.from({ gas: 50_000n, mode: 'sender', target, value: 1n }),
       ],
       maxFeePerGas: 10_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
@@ -98,19 +103,19 @@ describe('serialize', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
       frames: [
-        { flags: 'approveExecution', gas: 50_000n, mode: 'verify' },
-        {
+        Frame.from({ flags: 'approveExecution', gas: 50_000n, mode: 'verify' }),
+        Frame.from({
           flags: 'approvePayment',
           gas: 50_000n,
           mode: 'verify',
           target: accounts[1].address,
-        },
-        {
+        }),
+        Frame.from({
           gas: 50_000n,
           mode: 'sender',
           target: accounts[1].address,
           value: 1n,
-        },
+        }),
       ],
       maxFeePerGas: 10_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
@@ -193,26 +198,30 @@ describe('serialize', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
       frames: [
-        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
-        {
+        Frame.from({
+          flags: 'approveExecutionAndPayment',
+          gas: 50_000n,
+          mode: 'verify',
+        }),
+        Frame.from({
           flags: 'atomicBatch',
           gas: 50_000n,
           mode: 'sender',
           target: accounts[1].address,
           value: 1n,
-        },
-        {
+        }),
+        Frame.from({
           flags: 'atomicBatch',
           gas: 50_000n,
           mode: 'sender',
           target: '0x0000000000000000000000000000000000001000',
-        },
-        {
+        }),
+        Frame.from({
           gas: 50_000n,
           mode: 'sender',
           target: accounts[1].address,
           value: 2n,
-        },
+        }),
       ],
       maxFeePerGas: 10_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
@@ -267,7 +276,11 @@ describe('serialize', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
       frames: [
-        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+        Frame.from({
+          flags: 'approveExecutionAndPayment',
+          gas: 50_000n,
+          mode: 'verify',
+        }),
       ],
       maxFeePerGas: 10_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
@@ -288,12 +301,14 @@ describe('serialize', () => {
       rpc.request({
         method: 'eth_sendRawTransaction',
         params: [
-          TxEnvelopeEip8141.serialize({
-            ...envelope,
-            signatures: [
-              FrameSignature.from({ scheme: 'secp256k1', signature }),
-            ],
-          }),
+          TxEnvelopeEip8141.serialize(
+            TxEnvelopeEip8141.from({
+              ...envelope,
+              signatures: [
+                FrameSignature.from({ scheme: 'secp256k1', signature }),
+              ],
+            }),
+          ),
         ],
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
@@ -305,13 +320,17 @@ describe('serialize', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
       frames: [
-        {
+        Frame.from({
           data: '0x0000000000000001',
           gas: 50_000n,
           mode: 'verify',
           target: '0x0000000000000000000000000000000000008141',
-        },
-        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+        }),
+        Frame.from({
+          flags: 'approveExecutionAndPayment',
+          gas: 50_000n,
+          mode: 'verify',
+        }),
       ],
       maxFeePerGas: 10_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
@@ -352,13 +371,17 @@ describe('serialize', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
       frames: [
-        { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
-        {
+        Frame.from({
+          flags: 'approveExecutionAndPayment',
+          gas: 50_000n,
+          mode: 'verify',
+        }),
+        Frame.from({
           gas: 50_000n,
           mode: 'sender',
           target: accounts[1].address,
           value: 1n,
-        },
+        }),
       ],
       maxFeePerGas: 10_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
@@ -425,7 +448,11 @@ describe('serialize', () => {
         blobVersionedHashes: Blobs.commitmentsToVersionedHashes(commitments),
         chainId: 8141,
         frames: [
-          { flags: 'approveExecutionAndPayment', gas: 50_000n, mode: 'verify' },
+          Frame.from({
+            flags: 'approveExecutionAndPayment',
+            gas: 50_000n,
+            mode: 'verify',
+          }),
         ],
         maxFeePerBlobGas: 1_000_000_000n,
         maxFeePerGas: 10_000_000_000n,
