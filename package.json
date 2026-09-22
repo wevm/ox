@@ -421,6 +421,16 @@
       "types": "./dist/core/Filter.d.ts",
       "default": "./dist/core/Filter.js"
     },
+    "./Frame": {
+      "src": "./src/core/Frame.ts",
+      "types": "./dist/core/Frame.d.ts",
+      "default": "./dist/core/Frame.js"
+    },
+    "./FrameSignature": {
+      "src": "./src/core/FrameSignature.ts",
+      "types": "./dist/core/FrameSignature.d.ts",
+      "default": "./dist/core/FrameSignature.js"
+    },
     "./Hash": {
       "src": "./src/core/Hash.ts",
       "types": "./dist/core/Hash.d.ts",

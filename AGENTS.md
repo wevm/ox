@@ -33,7 +33,8 @@
 - **Read from `options.x` when normalizing a single field** -- when transforming exactly one option into a local of the same name, read it directly from `options` instead of destructuring and inventing a second name.
 - **Hex helpers over ad hoc conversion** -- use ox helpers like `Hex.fromNumber`, `Hex.toBytes`, `Bytes.fromHex`, `Value.fromGwei`, etc. instead of open-coded conversions.
 - **Use ox branded types** -- prefer existing ox types such as `Hex.Hex`, `Bytes.Bytes`, and `Address.Address` over raw template literal types when the branded module type exists.
-- **Keep property order readable** -- preserve the local ordering style. Do not alphabetize arrays, RLP tuples, ABI parameters, transaction fields, or other order-sensitive wire shapes.
+- **Alphabetize type properties** -- order object type properties alphabetically, keeping each property’s TSDoc with it. Preserve positional order in tuples, arrays, ABI parameters, and other wire formats.
+- **Alphabetize object properties** -- order properties in object literals alphabetically, including examples and tests. Preserve spread override precedence and evaluation order when reordering could change behavior.
 
 ## Type Inference Conventions
 
