@@ -229,9 +229,12 @@ describe('eip8141', () => {
   })
 })
 
-
 test('toRpc rejects implicit frame envelopes until RPC support is available', () => {
-  const envelope = { chainId: 1, frames: [{}], sender: '0x1111111111111111111111111111111111111111' } as const
+  const envelope = {
+    chainId: 1,
+    frames: [{}],
+    sender: '0x1111111111111111111111111111111111111111',
+  } as const
   // @ts-expect-error Frame RPC conversion is not supported here.
   TransactionEnvelope.toRpc(envelope)
 })
