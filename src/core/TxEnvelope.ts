@@ -703,7 +703,7 @@ export declare namespace toRpc {
   export type Input = Exclude<
     TxEnvelope<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
     { type?: TxEnvelopeEip8141.Type | undefined }
-  >
+  > & { frames?: never }
 
   export type ReturnType<envelope extends Typeable = TxEnvelope> =
     getType.ReturnType<envelope> extends 'legacy'
