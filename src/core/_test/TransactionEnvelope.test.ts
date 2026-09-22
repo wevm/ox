@@ -1,9 +1,12 @@
 import {
+  Frame,
+  FrameSignature,
   TransactionEnvelope,
   TxEnvelopeEip1559,
   TxEnvelopeEip2930,
   TxEnvelopeEip4844,
   TxEnvelopeEip7702,
+  TxEnvelopeEip8141,
   TxEnvelopeLegacy,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
@@ -62,6 +65,14 @@ const eip7702 = TxEnvelopeEip7702.from({
   value: 1n,
 })
 
+const eip8141 = TxEnvelopeEip8141.from({
+  chainId: 1,
+  frames: [Frame.from({})],
+  sender: '0x1111111111111111111111111111111111111111',
+})
+const serialized8141 =
+  '0x06e70180941111111111111111111111111111111111111111c9c8808080c280808080c0c3808080c0'
+
 test('exports', () => {
   expect(Object.keys(TransactionEnvelope)).toMatchInlineSnapshot(`
     [
@@ -88,6 +99,25 @@ test('exports', () => {
 })
 
 describe('getType', () => {
+  test('frame fields take precedence over blobs and fees', () => {
+    expect(
+      TransactionEnvelope.getType({
+        blobVersionedHashes: [],
+        frames: [],
+        maxFeePerGas: 1n,
+      }),
+    ).toBe('eip8141')
+    expect(
+      TransactionEnvelope.getType({ frames: undefined, maxFeePerGas: 1n }),
+    ).toBe('eip1559')
+    expect(TransactionEnvelope.getType({ frames: [], type: 'eip1559' })).toBe(
+      'eip1559',
+    )
+    expect(() => TransactionEnvelope.getType({ type: '0x6' })).toThrow(
+      TransactionEnvelope.InvalidTypeError,
+    )
+  })
+
   test('behavior: routes explicit transaction types', () => {
     expect(TransactionEnvelope.getType(legacy)).toBe('legacy')
     expect(TransactionEnvelope.getType(eip2930)).toBe('eip2930')
@@ -156,6 +186,12 @@ describe('getType', () => {
 })
 
 describe('getSerializedType', () => {
+  test('eip8141', () => {
+    expect(TransactionEnvelope.getSerializedType(serialized8141)).toBe(
+      'eip8141',
+    )
+  })
+
   test('behavior: routes serialized transaction types', () => {
     expect(
       TransactionEnvelope.getSerializedType(TxEnvelopeLegacy.serialize(legacy)),
@@ -202,6 +238,12 @@ describe('getSerializedType', () => {
 })
 
 describe('deserialize', () => {
+  test('eip8141', () => {
+    expect(TransactionEnvelope.deserialize(serialized8141)).toEqual(
+      TxEnvelopeEip8141.deserialize(serialized8141),
+    )
+  })
+
   test('behavior: routes to the matching concrete deserializer', () => {
     const serialized = TxEnvelopeEip1559.serialize(eip1559)
 
@@ -212,6 +254,14 @@ describe('deserialize', () => {
 })
 
 describe('from', () => {
+  test('eip8141', () => {
+    const { type: _, ...input } = eip8141
+    expect(TransactionEnvelope.from(input)).toEqual(eip8141)
+    expect(TransactionEnvelope.from(serialized8141)).toEqual(
+      TxEnvelopeEip8141.deserialize(serialized8141),
+    )
+  })
+
   test('behavior: routes objects to the matching concrete converter', () => {
     expect(TransactionEnvelope.from({ maxFeePerGas: 10n, chainId: 1 })).toEqual(
       TxEnvelopeEip1559.from({ maxFeePerGas: 10n, chainId: 1 }),
@@ -244,6 +294,26 @@ describe('from', () => {
 })
 
 describe('getSignPayload', () => {
+  test('eip8141 signature elision', () => {
+    const envelope = TxEnvelopeEip8141.from({
+      ...eip8141,
+      signatures: [
+        FrameSignature.from('0xaabb'),
+        FrameSignature.from({
+          payload: `0x${'ab'.repeat(32)}`,
+          signature: '0xccdd',
+        }),
+      ],
+    })
+    expect(TransactionEnvelope.getSignPayload(envelope)).toBe(
+      '0x85ec4544ddb227c5425add4b606f71ddfc0852100d14066d0061a1b092bad6d3',
+    )
+    expect(TransactionEnvelope.hash(envelope, { presign: true })).toBe(
+      TransactionEnvelope.getSignPayload(envelope),
+    )
+    expect(envelope.signatures[0].signature).toBe('0xaabb')
+  })
+
   test('behavior: routes to the matching concrete payload helper', () => {
     expect(TransactionEnvelope.getSignPayload(eip1559)).toBe(
       TxEnvelopeEip1559.getSignPayload(eip1559),
@@ -252,6 +322,12 @@ describe('getSignPayload', () => {
 })
 
 describe('hash', () => {
+  test('eip8141 without outer signature fields', () => {
+    expect(TransactionEnvelope.hash(eip8141)).toBe(
+      '0xa795b6de44696d46c096aaa3d6401d6eaa21b9b639408c82be7e9e60358e4387',
+    )
+  })
+
   test('behavior: routes to the matching concrete hash helper', () => {
     expect(TransactionEnvelope.hash(eip1559, { presign: true })).toBe(
       TxEnvelopeEip1559.hash(eip1559, { presign: true }),
@@ -260,6 +336,10 @@ describe('hash', () => {
 })
 
 describe('serialize', () => {
+  test('eip8141', () => {
+    expect(TransactionEnvelope.serialize(eip8141)).toBe(serialized8141)
+  })
+
   test('behavior: routes to the matching concrete serializer', () => {
     expect(TransactionEnvelope.serialize(eip1559)).toBe(
       TxEnvelopeEip1559.serialize(eip1559),
@@ -284,6 +364,12 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
+  test('rejects unsupported frame conversion', () => {
+    expect(() => TransactionEnvelope.toRpc(eip8141 as never)).toThrow(
+      TransactionEnvelope.InvalidTypeError,
+    )
+  })
+
   test('behavior: routes to the matching concrete RPC converter', () => {
     expect(TransactionEnvelope.toRpc(eip1559)).toEqual(
       TxEnvelopeEip1559.toRpc(eip1559),
@@ -292,6 +378,13 @@ describe('toRpc', () => {
 })
 
 describe('assert', () => {
+  test('eip8141', () => {
+    expect(() => TransactionEnvelope.assert(eip8141)).not.toThrow()
+    expect(() =>
+      TransactionEnvelope.assert({ ...eip8141, frames: [] }),
+    ).toThrow(TxEnvelopeEip8141.InvalidError)
+  })
+
   test('behavior: routes to the matching concrete assertion', () => {
     expect(() =>
       TransactionEnvelope.assert({
@@ -306,6 +399,11 @@ describe('assert', () => {
 })
 
 describe('validate', () => {
+  test('eip8141', () => {
+    expect(TransactionEnvelope.validate(eip8141)).toBe(true)
+    expect(TransactionEnvelope.validate({ ...eip8141, frames: [] })).toBe(false)
+  })
+
   test('behavior: returns validation result for routed envelope', () => {
     expect(TransactionEnvelope.validate(eip1559)).toBe(true)
     expect(
@@ -333,6 +431,12 @@ describe('getType', () => {
 })
 
 describe('toTransactionRequest', () => {
+  test('rejects unsupported frame conversion', () => {
+    expect(() =>
+      TransactionEnvelope.toTransactionRequest(eip8141 as never),
+    ).toThrow(TransactionEnvelope.InvalidTypeError)
+  })
+
   test('behavior: eip1559', () => {
     const request = TransactionEnvelope.toTransactionRequest(eip1559)
     expect(request).toMatchInlineSnapshot(`

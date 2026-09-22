@@ -117,6 +117,7 @@ describe('round-trip: Request → Envelope → Request', () => {
       value: 1n,
     }
     const envelope = TransactionRequest.toEnvelope(request)
+    if ('frames' in envelope) throw new Error('Expected a non-frame envelope')
     const roundtripped = TransactionEnvelope.toTransactionRequest(envelope)
     expectTypeOf(
       roundtripped,
