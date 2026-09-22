@@ -1,5 +1,5 @@
 ---
-"ox": minor
+"ox": patch
 ---
 
 Renamed the decoded frame destination from `target` to `to`.
