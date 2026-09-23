@@ -640,7 +640,7 @@ export * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
  *
  * @category Reference
  */
-export * as Funding from './Funding.js'
+export * as FundingRequirement from './FundingRequirement.js'
 
 /**
  * Funding policy commitments and authorization codecs.

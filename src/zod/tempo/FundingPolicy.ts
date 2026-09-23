@@ -3,13 +3,16 @@ import * as core_FundingPolicy from '../../tempo/FundingPolicy.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
 import { uintBigintNumberish } from '../internal/Integer.js'
-import * as z_Funding from './Funding.js'
+import * as z_FundingRequirement from './FundingRequirement.js'
 
 /** Funding permissions keyed by output token. */
 export const Rules = z
   .object({
     maxSlippageBps: z.number(),
-    sources: z.record(z_Address.Address, z.readonly(z.array(z_Funding.Source))),
+    sources: z.record(
+      z_Address.Address,
+      z.readonly(z.array(z_FundingRequirement.Source)),
+    ),
   })
   .check(
     z.refine((value) => {

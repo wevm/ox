@@ -15,7 +15,7 @@ import * as Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
-import * as Funding from './Funding.js'
+import * as FundingRequirement from './FundingRequirement.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import type * as TransactionRequest from './TransactionRequest.js'
@@ -101,7 +101,7 @@ export type TxEnvelopeTempo<
       | undefined
     /** Required balances processed before application calls. */
     requireFunds?:
-      | readonly Funding.Requirement<bigintType, numberType>[]
+      | readonly FundingRequirement.FundingRequirement<bigintType, numberType>[]
       | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
@@ -186,7 +186,7 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   } = envelope
 
   for (const requirement of envelope.requireFunds ?? [])
-    Funding.assert(requirement)
+    FundingRequirement.assert(requirement)
 
   // Calls must not be empty
   if (!calls || calls.length === 0) throw new CallsEmptyError()
@@ -328,7 +328,7 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
       type,
     })
   const requireFunds = funding?.map((value) =>
-    Funding.fromTuple(value as Funding.Tuple),
+    FundingRequirement.fromTuple(value as FundingRequirement.Tuple),
   )
 
   let transaction = {
@@ -743,7 +743,9 @@ export function serialize(
       : requireFunds?.length
         ? ['0x' as const]
         : []),
-    ...(requireFunds?.length ? [requireFunds.map(Funding.toTuple)] : []),
+    ...(requireFunds?.length
+      ? [requireFunds.map(FundingRequirement.toTuple)]
+      : []),
     ...(signature
       ? [SignatureEnvelope.serialize(SignatureEnvelope.from(signature))]
       : []),

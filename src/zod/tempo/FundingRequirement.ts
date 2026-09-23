@@ -1,5 +1,5 @@
 import * as z from 'zod/mini'
-import * as core_Funding from '../../tempo/Funding.js'
+import * as core_FundingRequirement from '../../tempo/FundingRequirement.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
 import {
@@ -31,7 +31,7 @@ export const Domain = z
   .check(
     z.refine((value) => {
       try {
-        core_Funding.assert(value)
+        core_FundingRequirement.assert(value)
         return true
       } catch {
         return false
@@ -49,13 +49,13 @@ export const DomainToRpc = z.object({
 })
 
 /** RPC funding requirement codec. */
-export const Requirement = z.codec(Rpc, Domain, {
-  decode: core_Funding.fromRpc,
-  encode: core_Funding.toRpc,
+export const FundingRequirement = z.codec(Rpc, Domain, {
+  decode: core_FundingRequirement.fromRpc,
+  encode: core_FundingRequirement.toRpc,
 })
 
 /** Encode-only funding codec accepting numberish quantities. */
-export const RequirementToRpc = z.codec(Rpc, DomainToRpc, {
-  decode: core_Funding.fromRpc,
-  encode: core_Funding.toRpc,
+export const FundingRequirementToRpc = z.codec(Rpc, DomainToRpc, {
+  decode: core_FundingRequirement.fromRpc,
+  encode: core_FundingRequirement.toRpc,
 })

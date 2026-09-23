@@ -16,7 +16,7 @@ export type Source = {
 
 /**
  * Target balance to satisfy before application calls. */
-export type Requirement<bigintType = bigint, numberType = number> = {
+export type FundingRequirement<bigintType = bigint, numberType = number> = {
   /**
    * Requested output token. */
   token: Address.Address
@@ -36,7 +36,7 @@ export type Requirement<bigintType = bigint, numberType = number> = {
 
 /**
  * RPC funding requirement. */
-export type Rpc = Requirement<Hex.Hex, Hex.Hex>
+export type Rpc = FundingRequirement<Hex.Hex, Hex.Hex>
 
 /**
  * RLP funding requirement tuple. */
@@ -53,13 +53,13 @@ export type Tuple = readonly [
  *
  * @example
  * ```ts
- * import { Funding } from 'ox/tempo'
+ * import { FundingRequirement } from 'ox/tempo'
  *
  * const token = '0x20c0000000000000000000000000000000000001' as const
- * Funding.assert({ token, amount: 50n, sources: [] })
+ * FundingRequirement.assert({ token, amount: 50n, sources: [] })
  * ```
  */
-export function assert(value: Requirement): void {
+export function assert(value: FundingRequirement): void {
   Address.assert(value.token, { strict: false })
   if (value.amount < 0n || value.amount >= 2n ** 256n)
     throw new InvalidRequirementError('Amount must fit uint256.')
@@ -90,17 +90,38 @@ export function assert(value: Requirement): void {
 }
 
 /**
+ * Creates and validates a funding requirement, preserving inferred literal types.
+ *
+ * @example
+ * ```ts
+ * import { FundingRequirement } from 'ox/tempo'
+ *
+ * const requirement = FundingRequirement.from({
+ *   token: '0x20c0000000000000000000000000000000000001',
+ *   amount: 50n,
+ *   sources: [],
+ * })
+ * ```
+ */
+export function from<const requirement extends FundingRequirement>(
+  requirement: requirement,
+): requirement {
+  assert(requirement)
+  return requirement
+}
+
+/**
  * Converts a funding requirement to its RLP tuple.
  *
  * @example
  * ```ts
- * import { Funding } from 'ox/tempo'
+ * import { FundingRequirement } from 'ox/tempo'
  *
  * const token = '0x20c0000000000000000000000000000000000001' as const
- * Funding.toTuple({ token, amount: 50n, sources: [] })
+ * FundingRequirement.toTuple({ token, amount: 50n, sources: [] })
  * ```
  */
-export function toTuple(value: Requirement): Tuple {
+export function toTuple(value: FundingRequirement): Tuple {
   assert(value)
   return [
     value.token,
@@ -124,13 +145,13 @@ export function toTuple(value: Requirement): Tuple {
  *
  * @example
  * ```ts
- * import { Funding } from 'ox/tempo'
+ * import { FundingRequirement } from 'ox/tempo'
  *
  * const token = '0x20c0000000000000000000000000000000000001' as const
- * Funding.fromTuple([token, '0x32', [], []])
+ * FundingRequirement.fromTuple([token, '0x32', [], []])
  * ```
  */
-export function fromTuple(value: Tuple): Requirement {
+export function fromTuple(value: Tuple): FundingRequirement {
   if (!Array.isArray(value) || (value.length !== 4 && value.length !== 5))
     throw new InvalidRequirementError('Expected four or five funding fields.')
   const [token, amount, sources, slippage, policyRules] = value
@@ -149,7 +170,7 @@ export function fromTuple(value: Tuple): Requirement {
       throw new InvalidRequirementError('Noncanonical funding integer.')
     return hex === '0x' ? 0n : BigInt(hex)
   }
-  const requirement: Requirement = {
+  const requirement: FundingRequirement = {
     token,
     amount: decode(amount),
     sources: sources.map((source) => {
@@ -169,15 +190,15 @@ export function fromTuple(value: Tuple): Requirement {
  *
  * @example
  * ```ts
- * import { Funding } from 'ox/tempo'
+ * import { FundingRequirement } from 'ox/tempo'
  *
  * const token = '0x20c0000000000000000000000000000000000001' as const
- * Funding.fromRpc({ token, amount: '0x32', sources: [] })
+ * FundingRequirement.fromRpc({ token, amount: '0x32', sources: [] })
  * ```
  */
-export function fromRpc(value: Rpc): Requirement {
+export function fromRpc(value: Rpc): FundingRequirement {
   const { amount, slippageBps, ...rest } = value
-  const result: Requirement = {
+  const result: FundingRequirement = {
     ...rest,
     amount: BigInt(amount),
     ...(slippageBps === undefined ? {} : { slippageBps: Number(slippageBps) }),
@@ -191,14 +212,14 @@ export function fromRpc(value: Rpc): Requirement {
  *
  * @example
  * ```ts
- * import { Funding } from 'ox/tempo'
+ * import { FundingRequirement } from 'ox/tempo'
  *
  * const token = '0x20c0000000000000000000000000000000000001' as const
- * Funding.toRpc({ token, amount: 50n, sources: [] })
+ * FundingRequirement.toRpc({ token, amount: 50n, sources: [] })
  * ```
  */
 export function toRpc(
-  value: Requirement<bigint | number | Hex.Hex, number | Hex.Hex>,
+  value: FundingRequirement<bigint | number | Hex.Hex, number | Hex.Hex>,
 ): Rpc {
   assert({
     ...value,
@@ -219,7 +240,7 @@ export function toRpc(
 /**
  * Thrown when funding fields violate the protocol encoding. */
 export class InvalidRequirementError extends Errors.BaseError {
-  override readonly name = 'Funding.InvalidRequirementError'
+  override readonly name = 'FundingRequirement.InvalidRequirementError'
   constructor(message: string) {
     super(message)
   }

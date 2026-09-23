@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
-import * as z_Funding from './Funding.js'
+import * as z_FundingRequirement from './FundingRequirement.js'
 import * as z_AccessList from '../AccessList.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
@@ -125,7 +125,7 @@ export const Tempo = wire(
       z_Number.Number,
       Call,
       z_AuthorizationTempo.ListSigned,
-      z_Funding.Requirement,
+      z_FundingRequirement.FundingRequirement,
     ),
   ),
 )
@@ -138,7 +138,7 @@ export const TempoToRpc = wire(
       z_Number.NumberToRpc,
       CallToRpc,
       z_AuthorizationTempo.ListSignedToRpc,
-      z_Funding.RequirementToRpc,
+      z_FundingRequirement.FundingRequirementToRpc,
     ),
   ),
 )
@@ -151,7 +151,7 @@ export const PendingTempo = wire(
       z_Number.Number,
       Call,
       z_AuthorizationTempo.ListSigned,
-      z_Funding.Requirement,
+      z_FundingRequirement.FundingRequirement,
     ),
     blockHash: z.null(),
     blockNumber: z.null(),

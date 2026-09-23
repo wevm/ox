@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
-import * as core_Funding from '../../tempo/Funding.js'
-import * as z_Funding from './Funding.js'
+import * as core_FundingRequirement from '../../tempo/FundingRequirement.js'
+import * as z_FundingRequirement from './FundingRequirement.js'
 import * as core_Hex from '../../core/Hex.js'
 import type * as core_TransactionRequest from '../../tempo/TransactionRequest.js'
 import * as z_AccessList from '../AccessList.js'
@@ -79,7 +79,7 @@ export const Rpc = z.object({
   gas: z.optional(z_Hex.Hex),
   gasPrice: z.optional(z_Hex.Hex),
   input: z.optional(z_Hex.Hex),
-  requireFunds: z.optional(z.readonly(z.array(z_Funding.Rpc))),
+  requireFunds: z.optional(z.readonly(z.array(z_FundingRequirement.Rpc))),
   keyAuthorization: z.optional(z_KeyAuthorization.Rpc),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -134,7 +134,7 @@ export const Domain = z.object({
   gas: z.optional(z.bigint()),
   gasPrice: z.optional(z.bigint()),
   input: z.optional(z_Hex.Hex),
-  requireFunds: z.optional(z.readonly(z.array(z_Funding.Domain))),
+  requireFunds: z.optional(z.readonly(z.array(z_FundingRequirement.Domain))),
   keyAuthorization: z.optional(z_KeyAuthorization.Domain),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -175,7 +175,9 @@ export const DomainToRpc = z.object({
   gas: z.optional(uintBigintNumberish()),
   gasPrice: z.optional(uintBigintNumberish()),
   input: z.optional(z_Hex.Hex),
-  requireFunds: z.optional(z.readonly(z.array(z_Funding.DomainToRpc))),
+  requireFunds: z.optional(
+    z.readonly(z.array(z_FundingRequirement.DomainToRpc)),
+  ),
   keyAuthorization: z.optional(z_KeyAuthorization.DomainToRpc),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -248,7 +250,9 @@ function fromRpc(
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
   if (request.requireFunds)
-    request_.requireFunds = request.requireFunds.map(core_Funding.fromRpc)
+    request_.requireFunds = request.requireFunds.map(
+      core_FundingRequirement.fromRpc,
+    )
   if (request.keyAuthorization)
     request_.keyAuthorization = z.decode(
       z_KeyAuthorization.KeyAuthorization,
@@ -342,7 +346,9 @@ function toRpc(
   )
     request_rpc.feeToken = request.feeToken
   if (request.requireFunds)
-    request_rpc.requireFunds = request.requireFunds.map(core_Funding.toRpc)
+    request_rpc.requireFunds = request.requireFunds.map(
+      core_FundingRequirement.toRpc,
+    )
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = z.encode(
       z_KeyAuthorization.KeyAuthorizationToRpc,
