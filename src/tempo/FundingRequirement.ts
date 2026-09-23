@@ -2,17 +2,7 @@ import * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import * as Quantity from '../core/internal/quantity.js'
-
-/**
- * A concrete call to a funding source. */
-export type Source = {
-  /**
-   * Source-specific ABI-encoded request. */
-  data: Hex.Hex
-  /**
-   * Funding source address. */
-  to: Address.Address
-}
+import type * as FundingSource from './FundingSource.js'
 
 /**
  * Target balance to satisfy before application calls. */
@@ -31,7 +21,7 @@ export type FundingRequirement<bigintType = bigint, numberType = number> = {
   slippageBps?: numberType | undefined
   /**
    * Sources attempted in order. */
-  sources: readonly Source[]
+  sources: readonly FundingSource.Source[]
 }
 
 /**
