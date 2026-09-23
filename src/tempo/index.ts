@@ -649,8 +649,14 @@ export * as FundingRequirement from './FundingRequirement.js'
  */
 export * as FundingPolicy from './FundingPolicy.js'
 /**
- * Funding source shapes and native DEX payload codecs.
+ * Funding source shapes.
  *
  * @category Reference
  */
 export * as FundingSource from './FundingSource.js'
+/**
+ * Native DEX funding source constructors and payload codecs.
+ *
+ * @category Reference
+ */
+export * as FundingSourceDex from './FundingSourceDex.js'
