@@ -1,0 +1,5 @@
+export const port = 3112
+
+// Run 35911644417, commit 492639758d54b83ddd68f4a4b7a67e5c51221c0e.
+export const tag =
+  'sha256:485e878fb0a68894ceb4743280f1d2747932ae3728e94cf51302d0cae5476f5a'

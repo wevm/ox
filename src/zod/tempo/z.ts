@@ -1,5 +1,7 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 export * as AuthorizationTempo from './AuthorizationTempo.js'
+export * as Funding from './Funding.js'
+export * as FundingPolicy from './FundingPolicy.js'
 export * as KeyAuthorization from './KeyAuthorization.js'
 export * as MultisigConfig from './MultisigConfig.js'
 export * as MultisigOperation from './MultisigOperation.js'

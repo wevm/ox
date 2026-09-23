@@ -47,7 +47,7 @@ export async function createServer(options: createServer.Options = {}) {
     instance: tag
       ? TestContainers.Instance.tempo({
           ...args,
-          image: `ghcr.io/tempoxyz/tempo:${tag}`,
+          image: `ghcr.io/tempoxyz/tempo${tag.startsWith('sha256:') ? '@' : ':'}${tag}`,
         })
       : Instance.tempo(args),
     port: serverPort,

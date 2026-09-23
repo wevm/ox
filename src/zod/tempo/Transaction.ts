@@ -1,4 +1,5 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
+import * as z_Funding from './Funding.js'
 import * as z_AccessList from '../AccessList.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
@@ -119,7 +120,13 @@ function wire<schema extends z.ZodMiniType>(schema: schema) {
 /** Tempo transaction schema (type `0x76`). */
 export const Tempo = wire(
   z.object(
-    fields(z_Uint.Uint, z_Number.Number, Call, z_AuthorizationTempo.ListSigned),
+    fields(
+      z_Uint.Uint,
+      z_Number.Number,
+      Call,
+      z_AuthorizationTempo.ListSigned,
+      z_Funding.Requirement,
+    ),
   ),
 )
 
@@ -131,6 +138,7 @@ export const TempoToRpc = wire(
       z_Number.NumberToRpc,
       CallToRpc,
       z_AuthorizationTempo.ListSignedToRpc,
+      z_Funding.RequirementToRpc,
     ),
   ),
 )
@@ -143,6 +151,7 @@ export const PendingTempo = wire(
       z_Number.Number,
       Call,
       z_AuthorizationTempo.ListSigned,
+      z_Funding.Requirement,
     ),
     blockHash: z.null(),
     blockNumber: z.null(),
@@ -156,7 +165,8 @@ function fields<
   num extends z.ZodMiniType,
   call extends z.ZodMiniType,
   authList extends z.ZodMiniType,
->(uint: uint, num: num, call: call, authList: authList) {
+  funding extends z.ZodMiniType,
+>(uint: uint, num: num, call: call, authList: authList, funding: funding) {
   return {
     accessList: z_AccessList.AccessList,
     authorizationList: z.optional(authList),
@@ -172,6 +182,7 @@ function fields<
     gas: uint,
     gasPrice: z.optional(uint),
     hash: z_Hex.Hex,
+    requireFunds: z.optional(z.readonly(z.array(funding))),
     keyAuthorization: z.optional(z_KeyAuthorization.KeyAuthorization),
     maxFeePerGas: uint,
     maxPriorityFeePerGas: uint,

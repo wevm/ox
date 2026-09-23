@@ -6,6 +6,7 @@ import type { Compute } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
+import * as Funding from './Funding.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as MultisigSimulation from './MultisigSimulation.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
@@ -40,6 +41,10 @@ export type TransactionRequest<
     feePayer?: boolean | undefined
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     feeToken?: Address.Address | undefined
+    /** Required balances before application calls. */
+    requireFunds?:
+      | readonly Funding.Requirement<bigintType, numberType>[]
+      | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
     keyData?: Hex.Hex | undefined
@@ -133,6 +138,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
     })
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
+  if (request.requireFunds)
+    request_.requireFunds = request.requireFunds.map(Funding.fromRpc)
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
@@ -230,6 +237,7 @@ export function toRpc(request: toRpc.Input): Rpc {
     typeof request.capabilities !== 'undefined' ||
     typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
+    typeof request.requireFunds !== 'undefined' ||
     typeof request.keyAuthorization !== 'undefined' ||
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
@@ -272,6 +280,8 @@ export function toRpc(request: toRpc.Input): Rpc {
     !(request.feePayer === true && !request.feePayerSignature)
   )
     request_rpc.feeToken = request.feeToken
+  if (request.requireFunds)
+    request_rpc.requireFunds = request.requireFunds.map(Funding.toRpc)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
@@ -404,6 +414,7 @@ export function toEnvelope(
       : {}),
     ...(typeof request.from !== 'undefined' ? { from: request.from } : {}),
     ...(typeof request.gas !== 'undefined' ? { gas: request.gas } : {}),
+    ...(request.requireFunds ? { requireFunds: request.requireFunds } : {}),
     ...(typeof request.keyAuthorization !== 'undefined'
       ? { keyAuthorization: request.keyAuthorization }
       : {}),

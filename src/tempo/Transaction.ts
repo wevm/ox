@@ -7,6 +7,7 @@ import type { Compute, OneOf, UnionCompute } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as ox_Transaction from '../core/Transaction.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
+import * as Funding from './Funding.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import type { Call } from './TxEnvelopeTempo.js'
@@ -79,6 +80,10 @@ export type Tempo<
     /** Effective gas price paid by the sender in wei. */
     gasPrice?: bigintType | undefined
     /** Key authorization for provisioning a new access key. */
+    /** Required balances before application calls. */
+    requireFunds?:
+      | readonly Funding.Requirement<bigintType, numberType>[]
+      | undefined
     keyAuthorization?:
       | KeyAuthorization.KeyAuthorization<true, bigintType, numberType>
       | undefined
@@ -251,6 +256,8 @@ export function fromRpc<
     transaction_.validAfter = Number(transaction.validAfter)
   if (transaction.validBefore)
     transaction_.validBefore = Number(transaction.validBefore)
+  if (transaction.requireFunds)
+    transaction_.requireFunds = transaction.requireFunds.map(Funding.fromRpc)
   if (transaction.keyAuthorization)
     transaction_.keyAuthorization = KeyAuthorization.fromRpc(
       transaction.keyAuthorization,
@@ -362,6 +369,8 @@ export function toRpc<pending extends boolean = false>(
       data: call.data,
     }))
   if (transaction.feeToken) rpc.feeToken = transaction.feeToken
+  if (transaction.requireFunds)
+    rpc.requireFunds = transaction.requireFunds.map(Funding.toRpc)
   if (transaction.keyAuthorization)
     rpc.keyAuthorization = KeyAuthorization.toRpc(transaction.keyAuthorization)
   if (transaction.feePayerSignature) {
