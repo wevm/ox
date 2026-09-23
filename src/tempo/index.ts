@@ -97,17 +97,11 @@ export * as FundingPolicy from './FundingPolicy.js'
  */
 export * as FundingRequirement from './FundingRequirement.js'
 /**
- * Funding source shapes.
+ * Funding source constructors and native DEX payload codecs.
  *
  * @category Reference
  */
 export * as FundingSource from './FundingSource.js'
-/**
- * Native DEX funding source constructors and payload codecs.
- *
- * @category Reference
- */
-export * as FundingSourceDex from './FundingSourceDex.js'
 /**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
