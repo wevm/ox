@@ -14,14 +14,14 @@ describe('from', () => {
   })
 })
 
-describe('encode', () => {
+describe('encodeData', () => {
   test('preserves zero and defaults to unlimited input', () => {
     expect(
-      FundingSourceDex.decode(FundingSourceDex.encode({ tokenIn: token })),
+      FundingSourceDex.decode(FundingSourceDex.encodeData({ tokenIn: token })),
     ).toEqual({ tokenIn: token, maxAmountIn: 2n ** 256n - 1n })
     expect(
       FundingSourceDex.decode(
-        FundingSourceDex.encode({ tokenIn: token, maxAmountIn: 0n }),
+        FundingSourceDex.encodeData({ tokenIn: token, maxAmountIn: 0n }),
       ),
     ).toEqual({ tokenIn: token, maxAmountIn: 0n })
   })

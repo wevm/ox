@@ -30,7 +30,7 @@ const nativeDexAddress = '0x1120000000000000000000000000000000000001'
  */
 export function from(request: Request) {
   return {
-    data: encode(request),
+    data: encodeData(request),
     to: nativeDexAddress,
   } satisfies FundingSource.Source
 }
@@ -44,13 +44,13 @@ export function from(request: Request) {
  *
  * const token =
  *   '0x20c0000000000000000000000000000000000001' as const
- * FundingSourceDex.encode({
+ * FundingSourceDex.encodeData({
  *   maxAmountIn: 30_000_000n,
  *   tokenIn: token
  * })
  * ```
  */
-export function encode(request: Request): Hex.Hex {
+export function encodeData(request: Request): Hex.Hex {
   return AbiParameters.encode(parameters, [
     request.tokenIn,
     request.maxAmountIn ?? 2n ** 256n - 1n,
@@ -67,7 +67,7 @@ export function encode(request: Request): Hex.Hex {
  * const token =
  *   '0x20c0000000000000000000000000000000000001' as const
  * FundingSourceDex.decode(
- *   FundingSourceDex.encode({ tokenIn: token })
+ *   FundingSourceDex.encodeData({ tokenIn: token })
  * )
  * ```
  */
