@@ -5,8 +5,8 @@ import { describe, expect, test } from 'vp/test'
 describe('Frame', () => {
   test('decodes RPC budgets and encodes named flags', () => {
     const frame = Frame.from({
+      executionGas: 50_000n,
       flags: 'approveExecutionAndPayment',
-      gas: 50_000n,
       mode: 'verify',
       to: '0x1111111111111111111111111111111111111111',
     })
@@ -22,8 +22,8 @@ describe('Frame', () => {
     })
     expect(z.decode(z.Frame.Frame, rpc)).toEqual({
       data: '0x',
+      executionGas: 50_000n,
       flags: 3,
-      gas: 50_000n,
       mode: 1,
       stateGas: 0n,
       to: '0x1111111111111111111111111111111111111111',
@@ -32,11 +32,13 @@ describe('Frame', () => {
   })
   test('rejects invalid mode and budget', () => {
     expect(z.safeParse(z.Frame.Decoded, { mode: 3 }).success).toBe(false)
-    expect(z.safeParse(z.Frame.Decoded, { gas: -1n }).success).toBe(false)
+    expect(z.safeParse(z.Frame.Decoded, { executionGas: -1n }).success).toBe(
+      false,
+    )
   })
   test('encodes numberish values', () => {
     expect(
-      z.encode(z.Frame.FrameToRpc, { gas: '0xc350', stateGas: 0 })
+      z.encode(z.Frame.FrameToRpc, { executionGas: '0xc350', stateGas: 0 })
         .executionGasLimit,
     ).toBe('0xc350')
   })
@@ -46,9 +48,9 @@ describe('FrameToRpc validation', () => {
   test.each([
     { mode: 3 },
     { flags: 8 },
-    { gas: 2n ** 64n },
+    { executionGas: 2n ** 64n },
     { stateGas: -1 },
-    { gas: '0x10000000000000000' },
+    { executionGas: '0x10000000000000000' },
   ])('rejects invalid frame %#', (frame) => {
     expect(
       z.safeEncode(z.Frame.FrameToRpc, frame as Frame.toRpc.Input).success,

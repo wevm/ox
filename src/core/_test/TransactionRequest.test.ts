@@ -466,7 +466,7 @@ describe('frame transactions', () => {
   test('round-trips frame requests and envelopes', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 8141,
-      frames: [Frame.from({ gas: 50_000n, mode: 'verify' })],
+      frames: [Frame.from({ executionGas: 50_000n, mode: 'verify' })],
       sender: '0x1111111111111111111111111111111111111111',
       signatures: [FrameSignature.from('0xaabb')],
     })

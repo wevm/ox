@@ -72,8 +72,8 @@ export const FrameToRpc = z.codec(Rpc, DecodedToRpc, {
 function fields<uint extends z.ZodMiniType>(uint: uint) {
   return {
     data: z.optional(z_Hex.Hex),
+    executionGas: z.optional(uint),
     flags: z.optional(Flags),
-    gas: z.optional(uint),
     mode: z.optional(Mode),
     stateGas: z.optional(uint),
     to: z.optional(z_Address.Address),

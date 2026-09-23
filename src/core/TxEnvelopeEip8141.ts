@@ -90,7 +90,7 @@ export type Type = typeof type
  *
  * TxEnvelopeEip8141.assert({
  *   chainId: 1,
- *   frames: [{ gas: 50_000n, mode: 'verify' }],
+ *   frames: [{ executionGas: 50_000n, mode: 'verify' }],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * ```
@@ -146,7 +146,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
   }
   if (blobVersionedHashes.length === 0 && maxFeePerBlobGas !== 0n)
     throw new InvalidError('maxFeePerBlobGas must be zero without blobs.')
-  let gas = 0n
+  let executionGas = 0n
   let stateGas = 0n
   let previousBatch = false
   let expiry = false
@@ -193,7 +193,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
         throw new InvalidError('Invalid or duplicate expiry verifier frame.')
       expiry = true
     }
-    gas += frame.gas ?? 0n
+    executionGas += frame.executionGas ?? 0n
     stateGas += frame.stateGas ?? 0n
     count(frame.data ?? '0x')
     if (
@@ -210,10 +210,10 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     count(payload)
     count(signature)
   }
-  if (gas + stateGas >= 2n ** 64n)
+  if (executionGas + stateGas >= 2n ** 64n)
     throw new InvalidError('Combined frame gas must be less than 2^64.')
   if (
-    intrinsic + tokens * 4n + gas > 16_777_216n ||
+    intrinsic + tokens * 4n + executionGas > 16_777_216n ||
     intrinsic + size * 64n > 16_777_216n
   )
     throw new InvalidError('Transaction execution gas exceeds 16777216.')
@@ -337,8 +337,8 @@ export declare namespace deserialize {
  *   chainId: 1,
  *   frames: [
  *     {
+ *       executionGas: 50_000n,
  *       flags: 'approveExecutionAndPayment',
- *       gas: 50_000n,
  *       mode: 'verify'
  *     }
  *   ],
@@ -503,8 +503,8 @@ export declare namespace toRpc {
  *   chainId: 1,
  *   frames: [
  *     {
+ *       executionGas: 50_000n,
  *       flags: 'approveExecutionAndPayment',
- *       gas: 50_000n,
  *       mode: 'verify'
  *     }
  *   ],
@@ -589,7 +589,7 @@ export declare namespace hash {
  *
  * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
- *   frames: [{ gas: 50_000n, mode: 'sender' }],
+ *   frames: [{ executionGas: 50_000n, mode: 'sender' }],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * const serialized = TxEnvelopeEip8141.serialize(envelope)

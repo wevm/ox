@@ -75,7 +75,7 @@ describe('TxEnvelopeEip8141', () => {
     expect(
       z.encode(z.TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc, {
         chainId: '0x1',
-        frames: [{ gas: 50_000 }],
+        frames: [{ executionGas: 50_000 }],
         sender: accounts[0].address,
         type: 'eip8141',
       }).frames[0]!.executionGasLimit,

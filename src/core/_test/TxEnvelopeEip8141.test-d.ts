@@ -4,12 +4,12 @@ import { expectTypeOf, test } from 'vp/test'
 test('default', () => {
   const envelope = TxEnvelopeEip8141.from({
     chainId: 1,
-    frames: [{ gas: 50000n }],
+    frames: [{ executionGas: 50000n }],
     sender: '0x1111111111111111111111111111111111111111',
   })
   expectTypeOf(envelope).toEqualTypeOf<{
     readonly chainId: 1
-    readonly frames: readonly [{ readonly gas: 50000n }]
+    readonly frames: readonly [{ readonly executionGas: 50000n }]
     readonly sender: '0x1111111111111111111111111111111111111111'
     readonly type: 'eip8141'
   }>()
