@@ -85,6 +85,18 @@ export * as Channel from './Channel.js'
  */
 export * as EarnShares from './EarnShares.js'
 /**
+ * Funding policy commitments and authorization codecs.
+ *
+ * @category Reference
+ */
+export * as FundingPolicy from './FundingPolicy.js'
+/**
+ * Funding requirements and source request types.
+ *
+ * @category Reference
+ */
+export * as FundingRequirement from './FundingRequirement.js'
+/**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary
@@ -171,6 +183,12 @@ export * as MultisigOperation from './MultisigOperation.js'
  */
 export * as MultisigSimulation from './MultisigSimulation.js'
 /**
+ * Native DEX funding payload codecs.
+ *
+ * @category Reference
+ */
+export * as NativeDexFunding from './NativeDexFunding.js'
+/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
@@ -199,7 +217,6 @@ export * as MultisigSimulation from './MultisigSimulation.js'
  * @category Reference
  */
 export * as Period from './Period.js'
-
 /**
  * Pool ID utilities for computing pool identifiers from token pairs.
  *
@@ -264,7 +281,6 @@ export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
  * @category Reference
  */
 export * as RpcSchemaTempo from './RpcSchemaTempo.js'
-
 /**
  * Signature envelope utilities for secp256k1, P256, WebAuthn, and keychain signatures.
  *
@@ -541,7 +557,6 @@ export * as VirtualAddress from './VirtualAddress.js'
  * @category Reference
  */
 export * as VirtualMaster from './VirtualMaster.js'
-
 /**
  * Zone ID utilities for converting between zone IDs and zone chain IDs.
  *

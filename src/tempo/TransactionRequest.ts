@@ -3,6 +3,7 @@ import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
+import * as FundingRequirement from './FundingRequirement.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as MultisigSimulation from './MultisigSimulation.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
@@ -33,6 +34,10 @@ export type TransactionRequest<
   > & {
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
+      | undefined
+    /** Required balances before application calls. */
+    requireFunds?:
+      | readonly FundingRequirement.FundingRequirement<bigintType, numberType>[]
       | undefined
     calls?: readonly Call<bigintType, addressType>[] | undefined
     feePayer?: boolean | undefined
@@ -118,6 +123,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
     })
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
+  if (request.requireFunds)
+    request_.requireFunds = request.requireFunds.map(FundingRequirement.fromRpc)
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
@@ -224,6 +231,10 @@ export function toRpc(request: TransactionRequest): Rpc {
     ]
   if (typeof request.feeToken !== 'undefined')
     request_rpc.feeToken = TokenId.toAddress(request.feeToken)
+  if (request.requireFunds)
+    request_rpc.requireFunds = request.requireFunds.map(
+      FundingRequirement.toRpc,
+    )
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
@@ -250,6 +261,7 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (nonceKey) request_rpc.nonceKey = nonceKey
 
   if (
+    typeof request.requireFunds !== 'undefined' ||
     typeof request.calls !== 'undefined' ||
     typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||

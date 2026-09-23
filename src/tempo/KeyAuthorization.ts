@@ -9,6 +9,7 @@ import type {
   UnionPartialBy,
 } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
+import * as FundingPolicy from './FundingPolicy.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
 
@@ -45,6 +46,8 @@ export type KeyAuthorization<
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
+  /** Existing funding policy ID or inline policy creation. */
+  fundingPolicy?: FundingPolicy.Authorization<bigintType> | undefined
   /** Whether this authorization provisions an admin access key. */
   isAdmin?: boolean | undefined
   /** TIP20 spending limits for this key. */
@@ -122,6 +125,8 @@ export type Rpc = {
   chainId: Hex.Hex
   /** Expiry timestamp (hex quantity or null). */
   expiry: Hex.Hex | null | undefined
+  /** Existing policy ID or inline creation. */
+  fundingPolicy?: FundingPolicy.Authorization<Hex.Hex> | undefined
   /** Whether this authorization provisions an admin access key (TIP-1049). */
   isAdmin?: boolean | null | undefined
   /** Key identifier. */
@@ -201,6 +206,16 @@ type CallScopeTuple = readonly [
 ]
 
 type AuthorizationTuple =
+  | readonly [
+      ...BaseTuple,
+      expiry: Hex.Hex,
+      limits: readonly TokenLimitTuple[] | Hex.Hex,
+      calls: readonly CallScopeTuple[] | Hex.Hex,
+      witness: Hex.Hex,
+      isAdmin: Hex.Hex,
+      account: Hex.Hex,
+      fundingPolicy: FundingPolicy.Tuple,
+    ]
   | BaseTuple
   | readonly [...BaseTuple, expiry: Hex.Hex]
   | readonly [...BaseTuple, expiry: Hex.Hex, limits: readonly TokenLimitTuple[]]
@@ -446,6 +461,8 @@ export function from<
       recipients?: readonly TempoAddress.Address[]
     }[]
   }
+  if (auth.fundingPolicy !== undefined)
+    FundingPolicy.toTuple(auth.fundingPolicy)
   if (auth.witness !== undefined) assertWitness(auth.witness)
   if (auth.signature) assertSignature(auth.signature)
   const resolved = {
@@ -599,6 +616,9 @@ export function fromRpc(authorization: Rpc): Signed {
       ? { account: account!, type: keyType }
       : { type: keyType }),
     ...(witness !== undefined ? { witness } : {}),
+    ...(authorization.fundingPolicy !== undefined
+      ? { fundingPolicy: FundingPolicy.fromRpc(authorization.fundingPolicy) }
+      : {}),
     ...(account !== undefined ? { account } : {}),
     ...(isAdmin ? { isAdmin: true as const } : {}),
   }
@@ -679,8 +699,19 @@ export function fromTuple<const tuple extends Tuple>(
   // Trailing optional fields in wire order. Each entry pulls one slot off the
   // trailing array and decodes it (treating absent or RLP-null placeholders as
   // missing). To add a new optional trailing field, append a single entry.
-  const [rawExpiry, rawLimits, rawScopes, rawWitness, rawIsAdmin, rawAccount] =
-    trailing
+  const [
+    rawExpiry,
+    rawLimits,
+    rawScopes,
+    rawWitness,
+    rawIsAdmin,
+    rawAccount,
+    rawFundingPolicy,
+  ] = trailing
+  if (trailing.length > 7)
+    throw new FundingPolicy.InvalidPolicyError(
+      'Unexpected key authorization fields.',
+    )
   const expiry = isAbsent(rawExpiry)
     ? undefined
     : hexToNumber(rawExpiry as Hex.Hex) || undefined
@@ -738,6 +769,13 @@ export function fromTuple<const tuple extends Tuple>(
     ...(limits !== undefined ? { limits } : {}),
     ...(scopes !== undefined ? { scopes } : {}),
     ...(witness !== undefined ? { witness } : {}),
+    ...(rawFundingPolicy !== undefined
+      ? {
+          fundingPolicy: FundingPolicy.fromTuple(
+            rawFundingPolicy as FundingPolicy.Tuple,
+          ),
+        }
+      : {}),
     ...(account !== undefined ? { account } : {}),
     ...(isAdmin ? { isAdmin: true as const } : {}),
   }
@@ -1005,6 +1043,9 @@ export function toRpc(authorization: Signed): Rpc {
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
+    ...(authorization.fundingPolicy !== undefined
+      ? { fundingPolicy: FundingPolicy.toRpc(authorization.fundingPolicy) }
+      : {}),
     ...(account !== undefined ? { account } : {}),
   }
 }
@@ -1127,7 +1168,10 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // To add a new optional trailing field (e.g. from a future TIP): append a
   // single entry to this list with `placeholder: '0x'`.
   const hasTip1053Plus =
-    witness !== undefined || isAdmin || account !== undefined
+    witness !== undefined ||
+    isAdmin ||
+    account !== undefined ||
+    authorization.fundingPolicy !== undefined
   const optionals: readonly { placeholder: unknown; value: unknown }[] = [
     {
       value:
@@ -1145,8 +1189,15 @@ export function toTuple<const authorization extends KeyAuthorization>(
     // TIP-1049: admin marker. Present = `0x01` (RLP integer 1); absent
     // skipped or omitted. Any other value is a hard decode error on the node.
     { value: isAdmin ? '0x01' : undefined, placeholder: '0x' },
-    // TIP-1049: optional account binding. Last field — never a placeholder.
+    // Optional account binding precedes the funding policy.
     { value: account, placeholder: '0x' },
+    {
+      value:
+        authorization.fundingPolicy === undefined
+          ? undefined
+          : FundingPolicy.toTuple(authorization.fundingPolicy),
+      placeholder: '0x',
+    },
   ]
   let lastPresent = -1
   for (let i = optionals.length - 1; i >= 0; i--)
