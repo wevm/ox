@@ -12,15 +12,15 @@ export type Frame<bigintType = bigint> = {
    */
   data?: Hex.Hex | undefined
   /**
+   * Execution gas budget.
+   * @default 0n
+   */
+  executionGas?: bigintType | undefined
+  /**
    * Approval scope and atomic batching bits.
    * @default 0
    */
   flags?: Flags | undefined
-  /**
-   * Execution gas budget.
-   * @default 0n
-   */
-  gas?: bigintType | undefined
   /**
    * Execution context: default, verify, or sender.
    * @default 0
@@ -101,8 +101,8 @@ export type Tuple = readonly [
  * import { Frame } from 'ox'
  *
  * Frame.assert({
+ *   executionGas: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   gas: 50_000n,
  *   mode: 'verify'
  * })
  * ```
@@ -112,8 +112,8 @@ export type Tuple = readonly [
 export function assert(frame: Frame): void {
   const {
     data = '0x',
+    executionGas = 0n,
     flags: flagsValue = 0,
-    gas = 0n,
     mode: modeValue = 0,
     stateGas = 0n,
     value = 0n,
@@ -136,12 +136,12 @@ export function assert(frame: Frame): void {
   }
   if (frame.to !== undefined) Address.assert(frame.to, { strict: false })
   for (const [field, limit] of [
-    ['gas', gas],
+    ['executionGas', executionGas],
     ['stateGas', stateGas],
   ] as const)
     if (typeof limit !== 'bigint' || limit < 0n || limit >= 2n ** 64n)
       throw new InvalidError(`${field} must be an unsigned 64-bit integer.`)
-  if (gas + stateGas >= 2n ** 64n)
+  if (executionGas + stateGas >= 2n ** 64n)
     throw new InvalidError('Combined frame gas must be less than 2^64.')
   if (typeof value !== 'bigint' || value < 0n || value >= 2n ** 256n)
     throw new InvalidError('value must be an unsigned 256-bit integer.')
@@ -176,8 +176,8 @@ export declare namespace assert {
  * import { Frame } from 'ox'
  *
  * const frame = Frame.from({
+ *   executionGas: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   gas: 50_000n,
  *   mode: 'verify'
  * })
  * ```
@@ -219,8 +219,8 @@ export declare namespace from {
 export function fromRpc(frame: Rpc): Frame {
   return from({
     data: frame.data,
+    executionGas: Hex.toBigInt(frame.executionGasLimit),
     flags: frame.flags,
-    gas: Hex.toBigInt(frame.executionGasLimit),
     mode: frame.mode,
     stateGas: Hex.toBigInt(frame.stateGasLimit),
     ...(frame.target == null ? {} : { to: frame.target }),
@@ -241,7 +241,7 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { Frame } from 'ox'
  *
- * const frame = Frame.from({ gas: 50_000n, mode: 'verify' })
+ * const frame = Frame.from({ executionGas: 50_000n, mode: 'verify' })
  * const rpc = Frame.toRpc(frame)
  * ```
  *
@@ -252,7 +252,7 @@ export function toRpc(frame: toRpc.Input): Rpc {
   const { flags: flags_ = 0, mode = 0 } = frame
   return {
     data: frame.data ?? '0x',
-    executionGasLimit: Quantity.fromNumberish(frame.gas ?? 0n),
+    executionGasLimit: Quantity.fromNumberish(frame.executionGas ?? 0n),
     flags: typeof flags_ === 'string' ? flags[flags_] : flags_,
     mode: typeof mode === 'string' ? modes[mode] : mode,
     stateGasLimit: Quantity.fromNumberish(frame.stateGas ?? 0n),
@@ -290,8 +290,8 @@ export declare namespace toRpc {
  * ])
  * // @log: {
  * // @log:   data: '0x',
+ * // @log:   executionGas: 50000n,
  * // @log:   flags: 3,
- * // @log:   gas: 50000n,
  * // @log:   mode: 1,
  * // @log:   stateGas: 0n,
  * // @log:   value: 0n
@@ -325,8 +325,8 @@ export function fromTuple(tuple: Tuple): Frame {
   const frame = {
     ...(target === '0x' ? {} : { to: target }),
     data,
+    executionGas: execution === '0x' ? 0n : Hex.toBigInt(execution),
     flags: flags === '0x' ? 0 : Hex.toNumber(flags),
-    gas: execution === '0x' ? 0n : Hex.toBigInt(execution),
     mode: mode === '0x' ? 0 : Hex.toNumber(mode),
     stateGas: state === '0x' ? 0n : Hex.toBigInt(state),
     value: value === '0x' ? 0n : Hex.toBigInt(value),
@@ -358,8 +358,8 @@ export declare namespace fromTuple {
  * import { Frame } from 'ox'
  *
  * const tuple = Frame.toTuple({
+ *   executionGas: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   gas: 50_000n,
  *   mode: 'verify'
  * })
  * // @log: ['0x01', '0x03', '0x', ['0xc350', '0x'], '0x', '0x']
@@ -379,7 +379,9 @@ export function toTuple(frame: Frame): Tuple {
     flags_ ? Hex.fromBytes(Bytes.fromNumber(flags_)) : '0x',
     frame.to ?? '0x',
     [
-      frame.gas ? Hex.fromBytes(Bytes.fromNumber(frame.gas)) : '0x',
+      frame.executionGas
+        ? Hex.fromBytes(Bytes.fromNumber(frame.executionGas))
+        : '0x',
       frame.stateGas ? Hex.fromBytes(Bytes.fromNumber(frame.stateGas)) : '0x',
     ],
     frame.value ? Hex.fromBytes(Bytes.fromNumber(frame.value)) : '0x',
@@ -409,8 +411,8 @@ export declare namespace toTuple {
  * import { Frame } from 'ox'
  *
  * const valid = Frame.validate({
+ *   executionGas: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   gas: 50_000n,
  *   mode: 'verify'
  * })
  * // @log: true

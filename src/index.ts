@@ -1562,8 +1562,8 @@ export * as Filter from './core/Filter.js'
  * import { Frame } from 'ox'
  *
  * const frame = Frame.from({
+ *   executionGas: 50_000n,
  *   flags: 'approveExecutionAndPayment',
- *   gas: 50_000n,
  *   mode: 'verify'
  * })
  * ```
@@ -3335,7 +3335,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  *
  * const envelope = TxEnvelopeEip8141.from({
  *   chainId: 1,
- *   frames: [{ gas: 50_000n, mode: 'sender' }],
+ *   frames: [{ executionGas: 50_000n, mode: 'sender' }],
  *   sender: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
  * })
  * ```

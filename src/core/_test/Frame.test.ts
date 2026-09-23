@@ -3,8 +3,8 @@ import { describe, expect, test } from 'vitest'
 
 const frame = {
   data: '0x',
+  executionGas: 50_000n,
   flags: 3,
-  gas: 50_000n,
   mode: 1,
   stateGas: 0n,
   value: 0n,
@@ -38,8 +38,8 @@ describe('toTuple', () => {
     expect(
       Frame.toTuple({
         data: undefined,
+        executionGas: undefined,
         flags: undefined,
-        gas: undefined,
         mode: undefined,
         stateGas: undefined,
         value: undefined,
@@ -47,8 +47,8 @@ describe('toTuple', () => {
     ).toEqual(Frame.toTuple({}))
     expect(
       Frame.toTuple({
+        executionGas: 50_000n,
         flags: 'approveExecutionAndPayment',
-        gas: 50_000n,
         mode: 'verify',
       }),
     ).toEqual(tuple)
@@ -95,9 +95,25 @@ describe('toTuple', () => {
     )
   })
 
+  test('preserves separate execution and state gas budgets', () => {
+    const frame = Frame.from({ executionGas: 50_000n, stateGas: 12n })
+    const tuple = Frame.toTuple(frame)
+    expect(tuple).toEqual(['0x', '0x', '0x', ['0xc350', '0x0c'], '0x', '0x'])
+    expect(Frame.fromTuple(tuple)).toEqual({
+      data: '0x',
+      executionGas: 50_000n,
+      flags: 0,
+      mode: 0,
+      stateGas: 12n,
+      value: 0n,
+    })
+  })
+
   test('encodes zero integers as empty bytes', () => {
     expect(
-      Rlp.fromHex(Frame.toTuple({ ...frame, flags: 0, gas: 0n, mode: 0 })),
+      Rlp.fromHex(
+        Frame.toTuple({ ...frame, executionGas: 0n, flags: 0, mode: 0 }),
+      ),
     ).toMatchInlineSnapshot('"0xc8808080c280808080"')
   })
 
@@ -105,8 +121,8 @@ describe('toTuple', () => {
     const input = {
       ...frame,
       data: '0x0001',
+      executionGas: 2n ** 63n,
       flags: 0,
-      gas: 2n ** 63n,
       mode: 2,
       stateGas: 2n ** 63n - 1n,
       value: 2n ** 256n - 1n,
@@ -158,10 +174,20 @@ describe('fromTuple', () => {
 })
 
 describe('assert', () => {
+  test('reports the execution gas field', () => {
+    expect(() =>
+      Frame.assert({ executionGas: -1n }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Frame.InvalidError: Invalid frame.
+
+Details: executionGas must be an unsigned 64-bit integer.]`,
+    )
+  })
+
   test.each([
     { data: null },
     { flags: null },
-    { gas: null },
+    { executionGas: null },
     { mode: null },
     { stateGas: null },
     { value: null },
@@ -185,11 +211,11 @@ describe('assert', () => {
     { value: 1n },
     { mode: 2, value: -1n },
     { mode: 2, value: 2n ** 256n },
-    { gas: -1n },
-    { gas: 2n ** 64n },
+    { executionGas: -1n },
+    { executionGas: 2n ** 64n },
     { stateGas: -1n },
     { stateGas: 2n ** 64n },
-    { gas: 2n ** 64n - 1n, stateGas: 1n },
+    { executionGas: 2n ** 64n - 1n, stateGas: 1n },
     { data: '0x0' },
     { data: '0xgg' },
     { to: '0x01' },
@@ -224,16 +250,16 @@ describe('fromRpc', () => {
         executionGasLimit: '0x20000000000001',
         flags: 0,
         mode: 2,
-        stateGasLimit: '0x0',
+        stateGasLimit: '0xc',
         target: null,
         value: '0x1',
       }),
     ).toEqual({
       data: '0xdeadbeef',
+      executionGas: 9007199254740993n,
       flags: 0,
-      gas: 9007199254740993n,
       mode: 2,
-      stateGas: 0n,
+      stateGas: 12n,
       value: 1n,
     })
   })
@@ -255,7 +281,9 @@ describe('toRpc', () => {
     })
   })
   test('accepts numberish budgets', () => {
-    expect(Frame.toRpc({ gas: '0xc350', stateGas: 12, value: 0n })).toEqual({
+    expect(
+      Frame.toRpc({ executionGas: '0xc350', stateGas: 12, value: 0n }),
+    ).toEqual({
       data: '0x',
       executionGasLimit: '0xc350',
       flags: 0,

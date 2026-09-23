@@ -4,14 +4,15 @@ import { expectTypeOf, test } from 'vitest'
 test('from preserves literals', () => {
   const frame = Frame.from({
     data: '0x',
+    executionGas: 50_000n,
     flags: 3,
-    gas: 50_000n,
     mode: 1,
     stateGas: 0n,
     value: 0n,
   })
   expectTypeOf(frame.mode).toEqualTypeOf<1>()
-  expectTypeOf(frame.gas).toEqualTypeOf<50_000n>()
+  expectTypeOf(frame.executionGas).toEqualTypeOf<50_000n>()
+  expectTypeOf(frame.stateGas).toEqualTypeOf<0n>()
   expectTypeOf(Frame.toTuple(frame)).toEqualTypeOf<Frame.Tuple>()
 })
 
@@ -31,8 +32,8 @@ test('tuple accepts readonly input', () => {
 test('rejects unsupported modes and unsafe numeric budgets', () => {
   Frame.from({
     data: '0x',
+    executionGas: 0n,
     flags: 0,
-    gas: 0n,
     // @ts-expect-error Unknown mode names are not supported.
     mode: 'unknown',
     stateGas: 0n,
@@ -40,9 +41,9 @@ test('rejects unsupported modes and unsafe numeric budgets', () => {
   })
   Frame.from({
     data: '0x',
-    flags: 0,
     // @ts-expect-error Gas budgets use bigint.
-    gas: 1,
+    executionGas: 1,
+    flags: 0,
     mode: 1,
     stateGas: 0n,
     value: 0n,
@@ -52,8 +53,8 @@ test('rejects unsupported modes and unsafe numeric budgets', () => {
 test('flags accept numbers and a strict named union', () => {
   const input = {
     data: '0x',
+    executionGas: 0n,
     flags: 'approvePayment',
-    gas: 0n,
     mode: 1,
     stateGas: 0n,
     value: 0n,
@@ -74,8 +75,8 @@ test('flags accept numbers and a strict named union', () => {
 test('mode accepts numbers and a strict named union', () => {
   const frame = Frame.from({
     data: '0x',
+    executionGas: 0n,
     flags: 0,
-    gas: 0n,
     mode: 'sender',
     stateGas: 0n,
     value: 1n,
@@ -93,6 +94,14 @@ test('allows omitted zero fields without widening supplied literals', () => {
   expectTypeOf(
     Frame.toTuple({ mode: 'sender', value: 1n }),
   ).toEqualTypeOf<Frame.Tuple>()
+})
+
+test('execution gas is named explicitly', () => {
+  const invalid: Frame.Frame = {
+    // @ts-expect-error The execution budget is named executionGas.
+    gas: 50_000n,
+  }
+  void invalid
 })
 
 test('destination is named to', () => {

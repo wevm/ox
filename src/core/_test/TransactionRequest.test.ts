@@ -211,7 +211,7 @@ describe('frame transactions', () => {
   test('round-trips nested frames and signatures without mutating RPC input', () => {
     const request = {
       chainId: 8141,
-      frames: [Frame.from({ gas: 50_000n, mode: 'verify' })],
+      frames: [Frame.from({ executionGas: 50_000n, mode: 'verify' })],
       from: '0x1111111111111111111111111111111111111111',
       signatures: [FrameSignature.from('0xaabb')],
       type: 'eip8141',
@@ -229,8 +229,8 @@ describe('frame transactions', () => {
       frames: [
         {
           data: '0x',
+          executionGas: 50_000n,
           flags: 0,
-          gas: 50_000n,
           mode: 1,
           stateGas: 0n,
           value: 0n,

@@ -243,7 +243,7 @@ describe('assert', () => {
     expect(() =>
       TxEnvelopeEip8141.assert({
         chainId: 1,
-        frames: [{ gas: 2n ** 64n - 1n }, { stateGas: 1n }],
+        frames: [{ executionGas: 2n ** 64n - 1n }, { stateGas: 1n }],
         sender: accounts[0].address,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -255,7 +255,7 @@ describe('assert', () => {
     expect(() =>
       TxEnvelopeEip8141.assert({
         chainId: 1,
-        frames: [{ gas: 16_777_216n }],
+        frames: [{ executionGas: 16_777_216n }],
         sender: accounts[0].address,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -352,8 +352,8 @@ describe('deserialize', () => {
         "frames": [
           {
             "data": "0x",
+            "executionGas": 0n,
             "flags": 0,
-            "gas": 0n,
             "mode": 0,
             "stateGas": 0n,
             "value": 0n,
@@ -448,7 +448,7 @@ describe('from', () => {
     expect(
       TxEnvelopeEip8141.from({
         chainId: 1,
-        frames: [{ gas: 50000n }],
+        frames: [{ executionGas: 50000n }],
         sender: accounts[0].address,
       }),
     ).toMatchInlineSnapshot(`
@@ -456,7 +456,7 @@ describe('from', () => {
         "chainId": 1,
         "frames": [
           {
-            "gas": 50000n,
+            "executionGas": 50000n,
           },
         ],
         "sender": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
@@ -477,8 +477,8 @@ describe('from', () => {
         "frames": [
           {
             "data": "0x",
+            "executionGas": 0n,
             "flags": 0,
-            "gas": 0n,
             "mode": 0,
             "stateGas": 0n,
             "value": 0n,
@@ -500,13 +500,13 @@ describe('getSignPayload', () => {
   test('omitted nested defaults preserve the signing hash and encoding', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 1,
-      frames: [{ gas: 50_000n, mode: 'sender' }],
+      frames: [{ executionGas: 50_000n, mode: 'sender' }],
       sender: accounts[0].address,
       signatures: [{ scheme: 'secp256k1' }],
     })
     const explicit = TxEnvelopeEip8141.from({
       ...envelope,
-      frames: [Frame.from({ gas: 50_000n, mode: 'sender' })],
+      frames: [Frame.from({ executionGas: 50_000n, mode: 'sender' })],
       signatures: [FrameSignature.from({ scheme: 'secp256k1' })],
     })
     expect(TxEnvelopeEip8141.getSignPayload(envelope)).toBe(
@@ -628,11 +628,16 @@ describe('serialize', () => {
       const request = TransactionRequest.toRpc({
         frames: [
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
-            gas: 50_000n,
             mode: 'verify',
           }),
-          Frame.from({ gas: 50_000n, mode: 'sender', to: target, value: 1n }),
+          Frame.from({
+            executionGas: 50_000n,
+            mode: 'sender',
+            to: target,
+            value: 1n,
+          }),
         ],
         from: sender,
         signatures: [{ scheme: 'secp256k1' }],
@@ -726,14 +731,19 @@ describe('serialize', () => {
           chainId: 8141,
           frames: [
             Frame.from({
+              executionGas: 50_000n,
               flags: 'approveExecutionAndPayment',
-              gas: 50_000n,
               mode: 'verify',
             }),
-            Frame.from({ gas: 50_000n, mode: 'sender', to: target, value: 1n }),
+            Frame.from({
+              executionGas: 50_000n,
+              mode: 'sender',
+              to: target,
+              value: 1n,
+            }),
             Frame.from({
               data: '0xdeadbeef',
-              gas: 50_000n,
+              executionGas: 50_000n,
               mode: 'sender',
               to: '0x0000000000000000000000000000000000000004',
             }),
@@ -804,11 +814,16 @@ describe('serialize', () => {
         chainId: 8141,
         frames: [
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
-            gas: 50_000n,
             mode: 'verify',
           }),
-          Frame.from({ gas: 50_000n, mode: 'sender', to: target, value: 1n }),
+          Frame.from({
+            executionGas: 50_000n,
+            mode: 'sender',
+            to: target,
+            value: 1n,
+          }),
         ],
         maxFeePerGas: 10_000_000_000n,
         maxPriorityFeePerGas: 1_000_000_000n,
@@ -910,18 +925,18 @@ describe('serialize', () => {
         chainId: 8141,
         frames: [
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecution',
-            gas: 50_000n,
             mode: 'verify',
           }),
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approvePayment',
-            gas: 50_000n,
             mode: 'verify',
             to: accounts[1].address,
           }),
           Frame.from({
-            gas: 50_000n,
+            executionGas: 50_000n,
             mode: 'sender',
             to: accounts[1].address,
             value: 1n,
@@ -1016,25 +1031,25 @@ describe('serialize', () => {
         chainId: 8141,
         frames: [
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
-            gas: 50_000n,
             mode: 'verify',
           }),
           Frame.from({
+            executionGas: 50_000n,
             flags: 'atomicBatch',
-            gas: 50_000n,
             mode: 'sender',
             to: accounts[1].address,
             value: 1n,
           }),
           Frame.from({
+            executionGas: 50_000n,
             flags: 'atomicBatch',
-            gas: 50_000n,
             mode: 'sender',
             to: '0x0000000000000000000000000000000000001000',
           }),
           Frame.from({
-            gas: 50_000n,
+            executionGas: 50_000n,
             mode: 'sender',
             to: accounts[1].address,
             value: 2n,
@@ -1102,8 +1117,8 @@ describe('serialize', () => {
         chainId: 8141,
         frames: [
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
-            gas: 50_000n,
             mode: 'verify',
           }),
         ],
@@ -1147,13 +1162,13 @@ describe('serialize', () => {
         frames: [
           Frame.from({
             data: '0x0000000000000001',
-            gas: 50_000n,
+            executionGas: 50_000n,
             mode: 'verify',
             to: '0x0000000000000000000000000000000000008141',
           }),
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
-            gas: 50_000n,
             mode: 'verify',
           }),
         ],
@@ -1197,12 +1212,12 @@ describe('serialize', () => {
         chainId: 8141,
         frames: [
           Frame.from({
+            executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
-            gas: 50_000n,
             mode: 'verify',
           }),
           Frame.from({
-            gas: 50_000n,
+            executionGas: 50_000n,
             mode: 'sender',
             to: accounts[1].address,
             value: 1n,
@@ -1575,7 +1590,7 @@ describe('validate', () => {
     expect(
       TxEnvelopeEip8141.validate({
         chainId: 1,
-        frames: [{ gas: 2n ** 64n - 1n }, { stateGas: 1n }],
+        frames: [{ executionGas: 2n ** 64n - 1n }, { stateGas: 1n }],
         sender: accounts[0].address,
       }),
     ).toBe(false)
@@ -1585,7 +1600,7 @@ describe('validate', () => {
     expect(
       TxEnvelopeEip8141.validate({
         chainId: 1,
-        frames: [{ gas: 16_777_216n }],
+        frames: [{ executionGas: 16_777_216n }],
         sender: accounts[0].address,
       }),
     ).toBe(false)
@@ -1668,7 +1683,7 @@ describe('validate', () => {
 
     const frame = {
       data: '0x0000000000000001',
-      gas: 5000n,
+      executionGas: 5000n,
       mode: 'verify',
       to: '0x0000000000000000000000000000000000008141',
     } as const

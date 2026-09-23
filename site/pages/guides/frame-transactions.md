@@ -48,12 +48,12 @@ const envelope = TxEnvelopeEip8141.from({
   chainId,
   frames: [
     {
+      executionGas: 50_000n,
       flags: 'approveExecutionAndPayment',
-      gas: 50_000n,
       mode: 'verify',
     },
     {
-      gas: 50_000n,
+      executionGas: 50_000n,
       mode: 'sender',
       to: recipient,
       value: Value.fromEther('0.001'),
@@ -91,9 +91,9 @@ const hash = await rpc.request({
 | `verify`  | `1`   | Validate the transaction.                   |
 | `sender`  | `2`   | Execute a call as the transaction sender.   |
 
-Use `gas` for execution and `stateGas` for state creation. Both default to zero;
-provide budgets appropriate for each call. A transfer to an existing account avoids
-new-account state costs. Contract calls that create storage or accounts can need
+Use `executionGas` for execution and `stateGas` for state creation. Both default to
+zero; provide budgets appropriate for each call. A transfer to an existing account
+avoids new-account state costs. Contract calls that create storage or accounts can need
 `stateGas` as well.
 
 Additional sender frames can carry contract calldata in `data`. Calls do not become
@@ -116,9 +116,10 @@ Use an explicit 32-byte `payload` only when the account expects a separate diges
 ## Convert RPC Data
 
 [`TxEnvelopeEip8141.toRpc`](/api/TxEnvelopeEip8141/toRpc) converts `sender` to
-`from`, frame `to` to `target`, `gas` to `executionGasLimit`, `stateGas` to `stateGasLimit`, and
-signature `payload` to `msg`. RPC frame modes, flags, and signature schemes are
-numbers, while gas and fee quantities are hex strings.
+`from`, frame `to` to `target`, `executionGas` to `executionGasLimit`,
+`stateGas` to `stateGasLimit`, and signature `payload` to `msg`. RPC frame modes,
+flags, and signature schemes are numbers, while gas and fee quantities are hex
+strings.
 
 ```ts twoslash
 import { TxEnvelopeEip8141 } from 'ox'
