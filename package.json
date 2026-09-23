@@ -796,11 +796,6 @@
       "types": "./dist/tempo/FundingSource.d.ts",
       "default": "./dist/tempo/FundingSource.js"
     },
-    "./tempo/FundingSourceDex": {
-      "src": "./src/tempo/FundingSourceDex.ts",
-      "types": "./dist/tempo/FundingSourceDex.d.ts",
-      "default": "./dist/tempo/FundingSourceDex.js"
-    },
     "./tempo/KeyAuthorization": {
       "src": "./src/tempo/KeyAuthorization.ts",
       "types": "./dist/tempo/KeyAuthorization.d.ts",

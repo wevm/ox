@@ -1,9 +1,8 @@
 import { expectTypeOf, test } from 'vp/test'
-import type * as FundingSource from './FundingSource.js'
-import * as FundingSourceDex from './FundingSourceDex.js'
+import * as FundingSource from './FundingSource.js'
 
-test('from', () => {
-  const source = FundingSourceDex.from({
+test('dex', () => {
+  const source = FundingSource.dex({
     tokenIn: '0x0101010101010101010101010101010101010101',
   })
   expectTypeOf(
