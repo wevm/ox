@@ -241,7 +241,10 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { Frame } from 'ox'
  *
- * const frame = Frame.from({ executionGas: 50_000n, mode: 'verify' })
+ * const frame = Frame.from({
+ *   executionGas: 50_000n,
+ *   mode: 'verify'
+ * })
  * const rpc = Frame.toRpc(frame)
  * ```
  *

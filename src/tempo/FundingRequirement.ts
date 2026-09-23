@@ -55,8 +55,13 @@ export type Tuple = readonly [
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * const token = '0x20c0000000000000000000000000000000000001' as const
- * FundingRequirement.assert({ token, amount: 50n, sources: [] })
+ * const token =
+ *   '0x20c0000000000000000000000000000000000001' as const
+ * FundingRequirement.assert({
+ *   token,
+ *   amount: 50n,
+ *   sources: []
+ * })
  * ```
  */
 export function assert(value: FundingRequirement): void {
@@ -99,7 +104,7 @@ export function assert(value: FundingRequirement): void {
  * const requirement = FundingRequirement.from({
  *   token: '0x20c0000000000000000000000000000000000001',
  *   amount: 50n,
- *   sources: [],
+ *   sources: []
  * })
  * ```
  */
@@ -117,8 +122,13 @@ export function from<const requirement extends FundingRequirement>(
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * const token = '0x20c0000000000000000000000000000000000001' as const
- * FundingRequirement.toTuple({ token, amount: 50n, sources: [] })
+ * const token =
+ *   '0x20c0000000000000000000000000000000000001' as const
+ * FundingRequirement.toTuple({
+ *   token,
+ *   amount: 50n,
+ *   sources: []
+ * })
  * ```
  */
 export function toTuple(value: FundingRequirement): Tuple {
@@ -147,7 +157,8 @@ export function toTuple(value: FundingRequirement): Tuple {
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * const token = '0x20c0000000000000000000000000000000000001' as const
+ * const token =
+ *   '0x20c0000000000000000000000000000000000001' as const
  * FundingRequirement.fromTuple([token, '0x32', [], []])
  * ```
  */
@@ -192,8 +203,13 @@ export function fromTuple(value: Tuple): FundingRequirement {
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * const token = '0x20c0000000000000000000000000000000000001' as const
- * FundingRequirement.fromRpc({ token, amount: '0x32', sources: [] })
+ * const token =
+ *   '0x20c0000000000000000000000000000000000001' as const
+ * FundingRequirement.fromRpc({
+ *   token,
+ *   amount: '0x32',
+ *   sources: []
+ * })
  * ```
  */
 export function fromRpc(value: Rpc): FundingRequirement {
@@ -214,8 +230,13 @@ export function fromRpc(value: Rpc): FundingRequirement {
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * const token = '0x20c0000000000000000000000000000000000001' as const
- * FundingRequirement.toRpc({ token, amount: 50n, sources: [] })
+ * const token =
+ *   '0x20c0000000000000000000000000000000000001' as const
+ * FundingRequirement.toRpc({
+ *   token,
+ *   amount: 50n,
+ *   sources: []
+ * })
  * ```
  */
 export function toRpc(
