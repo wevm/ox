@@ -23,8 +23,8 @@ const nativeDexAddress = '0x1120000000000000000000000000000000000001'
  * import { FundingSourceDex } from 'ox/tempo'
  *
  * FundingSourceDex.from({
- *   tokenIn: '0x20c0000000000000000000000000000000000000',
  *   maxAmountIn: 30_000_000n,
+ *   tokenIn: '0x20c0000000000000000000000000000000000000'
  * })
  * ```
  */
@@ -45,8 +45,8 @@ export function from(request: Request) {
  * const token =
  *   '0x20c0000000000000000000000000000000000001' as const
  * FundingSourceDex.encode({
- *   tokenIn: token,
- *   maxAmountIn: 30_000_000n
+ *   maxAmountIn: 30_000_000n,
+ *   tokenIn: token
  * })
  * ```
  */
