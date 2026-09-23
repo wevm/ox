@@ -8,7 +8,7 @@ import {
 } from '../internal/Integer.js'
 
 /** Concrete funding source schema. */
-export const Source = z.object({ target: z_Address.Address, data: z_Hex.Hex })
+export const Source = z.object({ to: z_Address.Address, data: z_Hex.Hex })
 
 /** RPC funding requirement schema. */
 export const Rpc = z.object({
@@ -16,7 +16,9 @@ export const Rpc = z.object({
   amount: z_Hex.Hex,
   policyRules: z.optional(z_Hex.Hex),
   slippageBps: z.optional(z_Hex.Hex),
-  sources: z.readonly(z.array(Source)),
+  sources: z.readonly(
+    z.array(z.object({ target: z_Address.Address, data: z_Hex.Hex })),
+  ),
 })
 
 /** Domain funding requirement schema. */

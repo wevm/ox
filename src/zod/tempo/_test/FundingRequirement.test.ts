@@ -11,7 +11,7 @@ const requirement = {
   token,
   amount: 50n,
   slippageBps: 0,
-  sources: [{ target: token, data: '0xab' as const }],
+  sources: [{ to: token, data: '0xab' as const }],
 }
 
 describe('behavior', () => {
@@ -56,7 +56,12 @@ describe('behavior', () => {
         admins: [token],
         rules: {
           maxSlippageBps: 100,
-          sources: { [token]: requirement.sources },
+          sources: {
+            [token]: requirement.sources.map(({ to, data }) => ({
+              target: to,
+              data,
+            })),
+          },
         },
       },
     ]) {

@@ -62,6 +62,7 @@ export type TransactionRequest<
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string>,
   | 'authorizationList'
+  | 'requireFunds'
   | 'feePayerSignature'
   | 'feeToken'
   | 'keyAuthorization'
@@ -69,6 +70,7 @@ export type Rpc = Omit<
   | 'keyAuthorizationSimulation'
   | 'signature'
 > & {
+  requireFunds?: readonly FundingRequirement.Rpc[] | undefined
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feePayerSignature?: Signature.Rpc | null | undefined
   feeToken?: Hex.Hex | undefined

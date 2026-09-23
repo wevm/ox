@@ -12,7 +12,7 @@ const target = '0x0202020202020202020202020202020202020202' as const
 const requirement = {
   token,
   amount: 50n,
-  sources: [{ target, data: '0xab' as const }],
+  sources: [{ to: target, data: '0xab' as const }],
   slippageBps: 100,
 }
 const envelope = TxEnvelopeTempo.from({
@@ -40,6 +40,12 @@ describe('toTuple', () => {
 })
 
 describe('toRpc', () => {
+  test('maps to to the RPC target field', () => {
+    expect(FundingRequirement.toRpc(requirement).sources).toEqual([
+      { target, data: '0xab' },
+    ])
+  })
+
   test('rejects unsafe numeric RPC inputs', () => {
     expect(() =>
       FundingRequirement.toRpc({
@@ -107,10 +113,27 @@ describe('from', () => {
   })
 })
 
+describe('fromRpc', () => {
+  test('maps the RPC target field to to', () => {
+    expect(
+      FundingRequirement.fromRpc({
+        token,
+        amount: '0x32',
+        sources: [{ target, data: '0xab' }],
+      }),
+    ).toEqual({ token, amount: 50n, sources: [{ to: target, data: '0xab' }] })
+  })
+})
+
 describe('behavior', () => {
   const rules = {
     maxSlippageBps: 100,
-    sources: { [token]: requirement.sources },
+    sources: {
+      [token]: requirement.sources.map(({ to, data }) => ({
+        target: to,
+        data,
+      })),
+    },
   }
 
   test('every funding field is covered by sender and sponsor signatures', () => {
@@ -119,8 +142,8 @@ describe('behavior', () => {
       { ...requirement, amount: 51n },
       { ...requirement, slippageBps: 0 },
       { ...requirement, policyRules: '0xab' as const },
-      { ...requirement, sources: [{ target: token, data: '0xab' as const }] },
-      { ...requirement, sources: [{ target, data: '0xcd' as const }] },
+      { ...requirement, sources: [{ to: token, data: '0xab' as const }] },
+      { ...requirement, sources: [{ to: target, data: '0xcd' as const }] },
     ]) {
       const altered = { ...envelope, requireFunds: [changed] }
       expect(TxEnvelopeTempo.getSignPayload(altered)).not.toBe(
