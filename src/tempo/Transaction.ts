@@ -107,8 +107,13 @@ export type Tempo<
 export type TempoRpc<pending extends boolean = false> = Compute<
   Omit<
     Tempo<pending, Hex.Hex, Hex.Hex, ToRpcType['tempo']>,
-    'authorizationList' | 'calls' | 'keyAuthorization' | 'signature'
+    | 'authorizationList'
+    | 'calls'
+    | 'keyAuthorization'
+    | 'requireFunds'
+    | 'signature'
   > & {
+    requireFunds?: readonly FundingRequirement.Rpc[] | undefined
     aaAuthorizationList?: AuthorizationTempo.ListRpc | undefined
     calls:
       | readonly {

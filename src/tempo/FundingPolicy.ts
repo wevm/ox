@@ -3,7 +3,14 @@ import * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type * as FundingRequirement from './FundingRequirement.js'
+
+/** An approved funding source and its policy data. */
+export type Source = {
+  /** Source-specific policy data. */
+  data: Hex.Hex
+  /** Funding source address. */
+  target: Address.Address
+}
 
 /**
  * Funding permissions, represented by output token. */
@@ -13,9 +20,7 @@ export type Rules = {
   maxSlippageBps: number
   /**
    * Ordered source permissions for each output token. */
-  sources: Readonly<
-    Record<Address.Address, readonly FundingRequirement.Source[]>
-  >
+  sources: Readonly<Record<Address.Address, readonly Source[]>>
 }
 
 /**
@@ -52,7 +57,7 @@ export type Route = {
   token: Address.Address
   /**
    * Ordered source permissions. */
-  sources: readonly FundingRequirement.Source[]
+  sources: readonly Source[]
 }
 
 /**
@@ -279,8 +284,7 @@ export function fromTuple(value: Tuple): Authorization {
     !Array.isArray(routes)
   )
     throw new InvalidPolicyError('Invalid policy rules tuple.')
-  const sources: Record<Address.Address, readonly FundingRequirement.Source[]> =
-    {}
+  const sources: Record<Address.Address, readonly Source[]> = {}
   let previous = -1n
   for (const route of routes) {
     if (!Array.isArray(route) || route.length !== 2 || !Array.isArray(route[1]))

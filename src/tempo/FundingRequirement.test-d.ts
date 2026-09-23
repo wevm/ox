@@ -37,7 +37,7 @@ test('from', () => {
     amount: 50n,
     slippageBps: 0,
     sources: [
-      { target: '0x0202020202020202020202020202020202020202', data: '0xab' },
+      { to: '0x0202020202020202020202020202020202020202', data: '0xab' },
     ],
   })
   expectTypeOf(requirement.amount).toEqualTypeOf<50n>()

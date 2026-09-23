@@ -11,7 +11,7 @@ export type Source = {
   data: Hex.Hex
   /**
    * Funding source address. */
-  target: Address.Address
+  to: Address.Address
 }
 
 /**
@@ -36,7 +36,9 @@ export type FundingRequirement<bigintType = bigint, numberType = number> = {
 
 /**
  * RPC funding requirement. */
-export type Rpc = FundingRequirement<Hex.Hex, Hex.Hex>
+export type Rpc = Omit<FundingRequirement<Hex.Hex, Hex.Hex>, 'sources'> & {
+  sources: readonly { data: Hex.Hex; target: Address.Address }[]
+}
 
 /**
  * RLP funding requirement tuple. */
@@ -80,7 +82,7 @@ export function assert(value: FundingRequirement): void {
   )
     throw new InvalidRequirementError('Policy rules must be nonempty bytes.')
   for (const source of value.sources) {
-    Address.assert(source.target, { strict: false })
+    Address.assert(source.to, { strict: false })
     if (
       !Hex.validate(source.data, { strict: true }) ||
       source.data.length % 2 !== 0
@@ -126,7 +128,7 @@ export function toTuple(value: FundingRequirement): Tuple {
   return [
     value.token,
     value.amount === 0n ? '0x' : Hex.fromNumber(BigInt(value.amount)),
-    value.sources.map(({ target, data }) => [target, data] as const),
+    value.sources.map(({ to, data }) => [to, data] as const),
     value.slippageBps === undefined
       ? []
       : [
@@ -176,7 +178,7 @@ export function fromTuple(value: Tuple): FundingRequirement {
     sources: sources.map((source) => {
       if (!Array.isArray(source) || source.length !== 2)
         throw new InvalidRequirementError('Expected source target and data.')
-      return { target: source[0], data: source[1] }
+      return { to: source[0], data: source[1] }
     }),
     ...(slippage.length ? { slippageBps: Number(decode(slippage[0]!)) } : {}),
     ...(policyRules !== undefined ? { policyRules } : {}),
@@ -197,10 +199,11 @@ export function fromTuple(value: Tuple): FundingRequirement {
  * ```
  */
 export function fromRpc(value: Rpc): FundingRequirement {
-  const { amount, slippageBps, ...rest } = value
+  const { amount, slippageBps, sources, ...rest } = value
   const result: FundingRequirement = {
     ...rest,
     amount: BigInt(amount),
+    sources: sources.map(({ target, data }) => ({ to: target, data })),
     ...(slippageBps === undefined ? {} : { slippageBps: Number(slippageBps) }),
   }
   assert(result)
@@ -227,10 +230,11 @@ export function toRpc(
     slippageBps:
       value.slippageBps === undefined ? undefined : Number(value.slippageBps),
   })
-  const { amount, slippageBps, ...rest } = value
+  const { amount, slippageBps, sources, ...rest } = value
   return {
     ...rest,
     amount: Quantity.fromNumberish(amount),
+    sources: sources.map(({ to, data }) => ({ target: to, data })),
     ...(slippageBps === undefined
       ? {}
       : { slippageBps: Quantity.fromNumberish(slippageBps) }),
