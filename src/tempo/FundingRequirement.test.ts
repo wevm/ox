@@ -39,6 +39,74 @@ describe('toTuple', () => {
   })
 })
 
+describe('toRpc', () => {
+  test('rejects unsafe numeric RPC inputs', () => {
+    expect(() =>
+      FundingRequirement.toRpc({
+        ...requirement,
+        amount: Number.MAX_SAFE_INTEGER + 1,
+      }),
+    ).toThrow()
+    expect(() => FundingPolicy.toRpc(Number.MAX_SAFE_INTEGER + 1)).toThrow()
+  })
+})
+
+describe('fromTuple', () => {
+  test('rejects malformed tuples and noncanonical quantities', () => {
+    for (const tuple of [
+      [token, '0x0032', [], []],
+      [token, '0x32', [], ['0x00']],
+      [token, '0x32', [], ['0x', '0x']],
+      [token, '0x32', [[target]], []],
+      [token, '0x32', [], [], '0x'],
+      [token, '0x32', [], [], '0xab', '0xcd'],
+    ])
+      expect(() => FundingRequirement.fromTuple(tuple as never)).toThrow()
+  })
+})
+
+describe('assert', () => {
+  test('accepts uint256 maximum and rejects overflow', () => {
+    const value = { ...requirement, amount: 2n ** 256n - 1n }
+    expect(
+      FundingRequirement.fromTuple(FundingRequirement.toTuple(value)),
+    ).toEqual(value)
+    expect(() =>
+      FundingRequirement.toTuple({ ...value, amount: 2n ** 256n }),
+    ).toThrow()
+  })
+})
+
+describe('from', () => {
+  test('default', () => {
+    expect(
+      FundingRequirement.from({ token, amount: 50n, sources: [] }),
+    ).toEqual({
+      token,
+      amount: 50n,
+      sources: [],
+    })
+  })
+
+  test('preserves optional fields and source order', () => {
+    const value = {
+      ...requirement,
+      policyRules: '0xab' as const,
+      slippageBps: 0,
+    }
+    expect(FundingRequirement.from(value)).toEqual(value)
+  })
+
+  test('rejects invalid requirements', () => {
+    expect(() =>
+      FundingRequirement.from({ ...requirement, amount: -1n }),
+    ).toThrow(FundingRequirement.InvalidRequirementError)
+    expect(() =>
+      FundingRequirement.from({ ...requirement, slippageBps: 10001 }),
+    ).toThrow(FundingRequirement.InvalidRequirementError)
+  })
+})
+
 describe('behavior', () => {
   const rules = {
     maxSlippageBps: 100,
@@ -155,73 +223,5 @@ describe('behavior', () => {
     expect(Rlp.fromHex(KeyAuthorization.toTuple(authorization)[0])).toBe(
       '0xde018094111111111111111111111111111111111111111180808080808007',
     )
-  })
-})
-
-describe('toRpc', () => {
-  test('rejects unsafe numeric RPC inputs', () => {
-    expect(() =>
-      FundingRequirement.toRpc({
-        ...requirement,
-        amount: Number.MAX_SAFE_INTEGER + 1,
-      }),
-    ).toThrow()
-    expect(() => FundingPolicy.toRpc(Number.MAX_SAFE_INTEGER + 1)).toThrow()
-  })
-})
-
-describe('fromTuple', () => {
-  test('rejects malformed tuples and noncanonical quantities', () => {
-    for (const tuple of [
-      [token, '0x0032', [], []],
-      [token, '0x32', [], ['0x00']],
-      [token, '0x32', [], ['0x', '0x']],
-      [token, '0x32', [[target]], []],
-      [token, '0x32', [], [], '0x'],
-      [token, '0x32', [], [], '0xab', '0xcd'],
-    ])
-      expect(() => FundingRequirement.fromTuple(tuple as never)).toThrow()
-  })
-})
-
-describe('assert', () => {
-  test('accepts uint256 maximum and rejects overflow', () => {
-    const value = { ...requirement, amount: 2n ** 256n - 1n }
-    expect(
-      FundingRequirement.fromTuple(FundingRequirement.toTuple(value)),
-    ).toEqual(value)
-    expect(() =>
-      FundingRequirement.toTuple({ ...value, amount: 2n ** 256n }),
-    ).toThrow()
-  })
-})
-
-describe('from', () => {
-  test('default', () => {
-    expect(
-      FundingRequirement.from({ token, amount: 50n, sources: [] }),
-    ).toEqual({
-      token,
-      amount: 50n,
-      sources: [],
-    })
-  })
-
-  test('preserves optional fields and source order', () => {
-    const value = {
-      ...requirement,
-      policyRules: '0xab' as const,
-      slippageBps: 0,
-    }
-    expect(FundingRequirement.from(value)).toEqual(value)
-  })
-
-  test('rejects invalid requirements', () => {
-    expect(() =>
-      FundingRequirement.from({ ...requirement, amount: -1n }),
-    ).toThrow(FundingRequirement.InvalidRequirementError)
-    expect(() =>
-      FundingRequirement.from({ ...requirement, slippageBps: 10001 }),
-    ).toThrow(FundingRequirement.InvalidRequirementError)
   })
 })
