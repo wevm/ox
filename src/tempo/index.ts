@@ -187,7 +187,7 @@ export * as MultisigSimulation from './MultisigSimulation.js'
  *
  * @category Reference
  */
-export * as NativeDexFunding from './NativeDexFunding.js'
+export * as DexFundingSource from './DexFundingSource.js'
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
