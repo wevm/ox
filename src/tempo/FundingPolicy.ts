@@ -351,7 +351,4 @@ export function toRpc(
  * Thrown when a funding policy cannot be canonically encoded. */
 export class InvalidPolicyError extends Errors.BaseError {
   override readonly name = 'FundingPolicy.InvalidPolicyError'
-  constructor(message: string) {
-    super(message)
-  }
 }

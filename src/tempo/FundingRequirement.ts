@@ -241,7 +241,4 @@ export function toRpc(
  * Thrown when funding fields violate the protocol encoding. */
 export class InvalidRequirementError extends Errors.BaseError {
   override readonly name = 'FundingRequirement.InvalidRequirementError'
-  constructor(message: string) {
-    super(message)
-  }
 }
