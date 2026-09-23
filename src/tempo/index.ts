@@ -63,6 +63,12 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  */
 export * as Channel from './Channel.js'
 /**
+ * Native DEX funding payload codecs.
+ *
+ * @category Reference
+ */
+export * as DexFundingSource from './DexFundingSource.js'
+/**
  * Tempo Earn `VaultAdapter` share math: raw vault-share and venue-share conversions
  * at the anchor rate, the dilution-correct fee-share formula, and the
  * `minimumOutput` slippage floor.
@@ -182,12 +188,6 @@ export * as MultisigOperation from './MultisigOperation.js'
  * @category Reference
  */
 export * as MultisigSimulation from './MultisigSimulation.js'
-/**
- * Native DEX funding payload codecs.
- *
- * @category Reference
- */
-export * as DexFundingSource from './DexFundingSource.js'
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
