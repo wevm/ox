@@ -63,12 +63,6 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  */
 export * as Channel from './Channel.js'
 /**
- * Native DEX funding payload codecs.
- *
- * @category Reference
- */
-export * as DexFundingSource from './DexFundingSource.js'
-/**
  * Tempo Earn `VaultAdapter` share math: raw vault-share and venue-share conversions
  * at the anchor rate, the dilution-correct fee-share formula, and the
  * `minimumOutput` slippage floor.
@@ -102,6 +96,12 @@ export * as FundingPolicy from './FundingPolicy.js'
  * @category Reference
  */
 export * as FundingRequirement from './FundingRequirement.js'
+/**
+ * Funding source shapes and native DEX payload codecs.
+ *
+ * @category Reference
+ */
+export * as FundingSource from './FundingSource.js'
 /**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
