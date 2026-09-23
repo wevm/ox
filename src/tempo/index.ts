@@ -653,4 +653,4 @@ export * as FundingPolicy from './FundingPolicy.js'
  *
  * @category Reference
  */
-export * as NativeDexFunding from './NativeDexFunding.js'
+export * as DexFundingSource from './DexFundingSource.js'

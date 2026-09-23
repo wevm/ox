@@ -20,11 +20,11 @@ const parameters = AbiParameters.from('address tokenIn, uint256 maxAmountIn')
  *
  * @example
  * ```ts
- * import { NativeDexFunding } from 'ox/tempo'
+ * import { DexFundingSource } from 'ox/tempo'
  *
  * const token =
  *   '0x20c0000000000000000000000000000000000001' as const
- * NativeDexFunding.encode({
+ * DexFundingSource.encode({
  *   tokenIn: token,
  *   maxAmountIn: 30_000_000n
  * })
@@ -42,12 +42,12 @@ export function encode(request: Request): Hex.Hex {
  *
  * @example
  * ```ts
- * import { NativeDexFunding } from 'ox/tempo'
+ * import { DexFundingSource } from 'ox/tempo'
  *
  * const token =
  *   '0x20c0000000000000000000000000000000000001' as const
- * NativeDexFunding.decode(
- *   NativeDexFunding.encode({ tokenIn: token })
+ * DexFundingSource.decode(
+ *   DexFundingSource.encode({ tokenIn: token })
  * )
  * ```
  */

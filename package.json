@@ -776,6 +776,11 @@
       "types": "./dist/tempo/Channel.d.ts",
       "default": "./dist/tempo/Channel.js"
     },
+    "./tempo/DexFundingSource": {
+      "src": "./src/tempo/DexFundingSource.ts",
+      "types": "./dist/tempo/DexFundingSource.d.ts",
+      "default": "./dist/tempo/DexFundingSource.js"
+    },
     "./tempo/EarnShares": {
       "src": "./src/tempo/EarnShares.ts",
       "types": "./dist/tempo/EarnShares.d.ts",
@@ -810,11 +815,6 @@
       "src": "./src/tempo/MultisigSimulation.ts",
       "types": "./dist/tempo/MultisigSimulation.d.ts",
       "default": "./dist/tempo/MultisigSimulation.js"
-    },
-    "./tempo/NativeDexFunding": {
-      "src": "./src/tempo/NativeDexFunding.ts",
-      "types": "./dist/tempo/NativeDexFunding.d.ts",
-      "default": "./dist/tempo/NativeDexFunding.js"
     },
     "./tempo/Period": {
       "src": "./src/tempo/Period.ts",
