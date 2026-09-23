@@ -6,11 +6,6 @@ import {
   tag as tempoMultisigTag,
 } from './test/tempo/multisig.js'
 
-import {
-  port as tempoFundingPort,
-  tag as tempoFundingTag,
-} from './test/tempo/funding.js'
-
 const root = import.meta.dirname
 
 /**
@@ -196,22 +191,7 @@ export default defineConfig({
             'src/tempo/**/*.test.ts',
             '!src/tempo/e2e.test.ts',
             '!src/tempo/multisig.e2e.test.ts',
-            '!src/tempo/funding.e2e.test.ts',
           ],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'tempo-funding',
-          include: ['src/tempo/funding.e2e.test.ts'],
-          globalSetup: [join(root, 'test/tempo/setup.global.funding.ts')],
-          hookTimeout: 180_000,
-          testTimeout: 60_000,
-          env: {
-            VITE_TEMPO_PORT: String(tempoFundingPort),
-            VITE_TEMPO_TAG: tempoFundingTag,
-          },
         },
       },
       {
