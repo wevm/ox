@@ -91,3 +91,17 @@ test('from preserves structured signature types', () => {
     signature: { r: 0x01n, s: 0x02n },
   })
 })
+
+test('preserves protocol hex signature types', () => {
+  const signature = '0x1234' as const
+  const secp = FrameSignature.from({ scheme: 'secp256k1', signature })
+  expectTypeOf(secp.signature).toEqualTypeOf<typeof signature>()
+  const p256 = FrameSignature.from({
+    publicKey: { prefix: 4, x: 1n, y: 2n },
+    scheme: 'p256',
+    signature,
+  })
+  expectTypeOf(p256.signature).toEqualTypeOf<typeof signature>()
+  // @ts-expect-error P256 hex signatures also require a public key.
+  FrameSignature.from({ scheme: 'p256', signature })
+})
