@@ -654,3 +654,10 @@ export * as FundingPolicy from './FundingPolicy.js'
  * @category Reference
  */
 export * as FundingSource from './FundingSource.js'
+
+/**
+ * Native DEX funding source construction and payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceDex from './FundingSourceDex.js'
