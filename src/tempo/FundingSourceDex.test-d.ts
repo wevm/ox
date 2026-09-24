@@ -27,3 +27,15 @@ test('encodeConfigData', () => {
     }),
   ).toEqualTypeOf<`0x${string}`>()
 })
+
+test('decodeConfigData', () => {
+  expectTypeOf(FundingSourceDex.decodeConfigData('0x')).toEqualTypeOf<
+    Required<FundingSourceDex.Request>
+  >()
+})
+
+test('decodeExecutionData', () => {
+  expectTypeOf(FundingSourceDex.decodeExecutionData('0x')).toEqualTypeOf<
+    Required<FundingSourceDex.Request>
+  >()
+})

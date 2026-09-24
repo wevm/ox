@@ -35,10 +35,13 @@ for (const method of ['encodeConfigData', 'encodeExecutionData'] as const)
     })
   })
 
-describe('decode', () => {
+describe('decodeExecutionData', () => {
   test('decodes an independently encoded contract request', () => {
-    expect(FundingSourceEarn.decode(`0x${addressWord}${thirty}${fifty}`))
-      .toMatchInlineSnapshot(`
+    expect(
+      FundingSourceEarn.decodeExecutionData(
+        `0x${addressWord}${thirty}${fifty}`,
+      ),
+    ).toMatchInlineSnapshot(`
       {
         "maxAmountIn": 30n,
         "maxValueIn": 50n,
@@ -48,10 +51,20 @@ describe('decode', () => {
   })
 })
 
+describe('decodeConfigData', () => {
+  test('decodes configuration bytes', () => {
+    expect(
+      FundingSourceEarn.decodeConfigData(
+        '0x000000000000000000000000010101010101010101010101010101010101010100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002',
+      ),
+    ).toEqual({ maxAmountIn: 1n, maxValueIn: 2n, vault })
+  })
+})
+
 describe('behavior', () => {
   test('rejects malformed data', () => {
     expect(() =>
-      FundingSourceEarn.decode('0x'),
+      FundingSourceEarn.decodeExecutionData('0x'),
     ).toThrowErrorMatchingInlineSnapshot(
       `[AbiParameters.ZeroDataError: Cannot decode zero data ("0x") with ABI parameters.]`,
     )

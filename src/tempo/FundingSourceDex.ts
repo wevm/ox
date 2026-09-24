@@ -74,20 +74,36 @@ export function encodeConfigData(config: Request): Hex.Hex {
 }
 
 /**
- * Decodes native DEX execution or configuration data, returning the concrete input cap.
+ * Decodes native DEX execution data, returning the concrete input cap.
  *
  * @example
  * ```ts
  * import { FundingSourceDex } from 'ox/tempo'
  *
- * FundingSourceDex.decode(
+ * FundingSourceDex.decodeExecutionData(
  *   FundingSourceDex.encodeExecutionData({
  *     tokenIn: '0x20c0000000000000000000000000000000000001'
  *   })
  * )
  * ```
  */
-export function decode(data: Hex.Hex): Required<Request> {
+export function decodeExecutionData(data: Hex.Hex): Required<Request> {
   const [tokenIn, maxAmountIn] = AbiParameters.decode(parameters, data)
   return { tokenIn, maxAmountIn }
+}
+
+/**
+ * Decodes native DEX source configuration, returning concrete input caps.
+ *
+ * @example
+ * ```ts
+ * import { FundingSourceDex } from 'ox/tempo'
+ *
+ * FundingSourceDex.decodeConfigData(FundingSourceDex.encodeConfigData({
+ *   tokenIn: '0x0101010101010101010101010101010101010101',
+ * }))
+ * ```
+ */
+export function decodeConfigData(data: Hex.Hex): Required<Request> {
+  return decodeExecutionData(data)
 }

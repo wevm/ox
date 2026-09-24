@@ -59,21 +59,37 @@ export function encodeConfigData(config: Request): Hex.Hex {
 }
 
 /**
- * Decodes an Earn execution request or configuration, returning both concrete caps.
+ * Decodes an Earn execution request, returning both concrete caps.
  *
  * @example
  * ```ts
  * import { FundingSourceEarn } from 'ox/tempo'
  *
- * FundingSourceEarn.decode(FundingSourceEarn.encodeConfigData({
+ * FundingSourceEarn.decodeExecutionData(FundingSourceEarn.encodeExecutionData({
  *   vault: '0x0101010101010101010101010101010101010101',
  * }))
  * ```
  */
-export function decode(data: Hex.Hex): Required<Request> {
+export function decodeExecutionData(data: Hex.Hex): Required<Request> {
   const [vault, maxAmountIn, maxValueIn] = AbiParameters.decode(
     parameters,
     data,
   )
   return { maxAmountIn, maxValueIn, vault }
+}
+
+/**
+ * Decodes Earn source configuration, returning concrete input caps.
+ *
+ * @example
+ * ```ts
+ * import { FundingSourceEarn } from 'ox/tempo'
+ *
+ * FundingSourceEarn.decodeConfigData(FundingSourceEarn.encodeConfigData({
+ *   vault: '0x0101010101010101010101010101010101010101',
+ * }))
+ * ```
+ */
+export function decodeConfigData(data: Hex.Hex): Required<Request> {
+  return decodeExecutionData(data)
 }
