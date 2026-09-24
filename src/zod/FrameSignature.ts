@@ -24,7 +24,10 @@ export const Secp256k1 = z.object({
   payload: z.optional(z_Hex.Hex),
   scheme: z.union([z.literal(1), z.literal('secp256k1')]),
   signature: z.optional(
-    z.object({ r: z_Hex.Hex, s: z_Hex.Hex, yParity: z.number() }),
+    z.union([
+      z_Hex.Hex,
+      z.object({ r: z_Hex.Hex, s: z_Hex.Hex, yParity: z.number() }),
+    ]),
   ),
   signer: z.optional(z_Address.Address),
 })
@@ -36,7 +39,7 @@ const p256 = {
 }
 /** P-256 frame signature schema, including unsigned placeholders. */
 export const P256 = z.union([
-  z.object({ ...p256, publicKey, signature }),
+  z.object({ ...p256, publicKey, signature: z.union([z_Hex.Hex, signature]) }),
   z.object({
     ...p256,
     publicKey: z.optional(publicKey),

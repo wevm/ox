@@ -1,4 +1,4 @@
-import { FrameSignature, P256, Secp256k1, Hash } from 'ox'
+import { FrameSignature, P256, Secp256k1, Hash, Signature } from 'ox'
 import { z } from 'ox/zod'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -91,4 +91,31 @@ describe('FrameSignature', () => {
       }).success,
     ).toBe(false)
   })
+})
+
+test('encodes protocol hex signatures', () => {
+  const payload = Hash.keccak256('0xdeadbeef')
+  const privateKey = accounts[0].privateKey
+  const secp = FrameSignature.from({
+    scheme: 'secp256k1',
+    signature: Secp256k1.sign({ payload, privateKey }),
+  })
+  const p256 = FrameSignature.from({
+    publicKey: P256.getPublicKey({ privateKey }),
+    scheme: 'p256',
+    signature: P256.sign({ payload, privateKey }),
+  })
+
+  expect(
+    z.encode(z.FrameSignature.FrameSignature, {
+      ...secp,
+      signature: Signature.toHex(secp.signature),
+    }),
+  ).toEqual(FrameSignature.toRpc(secp))
+  expect(
+    z.encode(z.FrameSignature.FrameSignature, {
+      ...p256,
+      signature: Signature.toHex(p256.signature),
+    }),
+  ).toEqual(FrameSignature.toRpc(p256))
 })

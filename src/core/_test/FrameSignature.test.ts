@@ -1,6 +1,6 @@
 import { p256 } from '@noble/curves/nist.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
-import { FrameSignature, Hex, P256, Rlp, Secp256k1 } from 'ox'
+import { FrameSignature, Hex, P256, Rlp, Secp256k1, Signature } from 'ox'
 import { describe, expect, test } from 'vite-plus/test'
 
 const arbitrary = {
@@ -551,4 +551,97 @@ describe('structured validation', () => {
     expect(FrameSignature.validate(entry)).toBe(false)
     expect(() => FrameSignature.from(entry)).toThrow()
   })
+})
+
+describe('hex signatures', () => {
+  test.each(['secp256k1', 1] as const)('secp256k1 scheme %s', (scheme) => {
+    const signature = Secp256k1.sign({ payload, privateKey })
+    const hex = Signature.toHex(signature)
+    const entry = FrameSignature.from({ scheme, signature: hex })
+    const structured = FrameSignature.from({ scheme, signature })
+
+    expect(entry.signature).toBe(hex)
+    expect(FrameSignature.toRpc(entry)).toEqual(
+      FrameSignature.toRpc(structured),
+    )
+    expect(FrameSignature.toTuple(entry)).toEqual(
+      FrameSignature.toTuple(structured),
+    )
+    expect(FrameSignature.validate(entry, { signed: true })).toBe(true)
+  })
+
+  test.each(['p256', 2] as const)('P256 scheme %s', (scheme) => {
+    const signature = P256.sign({ payload, privateKey })
+    const hex = Signature.toHex({ r: signature.r, s: signature.s })
+    const entry = FrameSignature.from({ publicKey, scheme, signature: hex })
+    const structured = FrameSignature.from({ publicKey, scheme, signature })
+
+    expect(entry.signature).toBe(hex)
+    expect(FrameSignature.toRpc(entry)).toEqual(
+      FrameSignature.toRpc(structured),
+    )
+    expect(FrameSignature.toTuple(entry)).toEqual(
+      FrameSignature.toTuple(structured),
+    )
+    expect(FrameSignature.validate(entry, { signed: true })).toBe(true)
+  })
+
+  test.each([
+    '0x',
+    '0x01',
+    `0x${'00'.repeat(65)}`,
+    `0x${'gg'.repeat(65)}`,
+  ] as const)('rejects invalid secp256k1 hex: %s', (signature) => {
+    expect(() =>
+      FrameSignature.from({ scheme: 'secp256k1', signature }),
+    ).toThrow()
+  })
+
+  test('requires secp256k1 recovery parity', () => {
+    const signature = Signature.toHex({
+      r: Hex.fromNumber(1, { size: 32 }),
+      s: Hex.fromNumber(2, { size: 32 }),
+    })
+    expect(() =>
+      FrameSignature.from({ scheme: 'secp256k1', signature }),
+    ).toThrow()
+  })
+
+  test('requires a public key with P256 hex', () => {
+    const entry = {
+      scheme: 'p256',
+      signature: Signature.toHex({
+        r: Hex.fromNumber(1, { size: 32 }),
+        s: Hex.fromNumber(2, { size: 32 }),
+      }),
+    } as const
+    // @ts-expect-error P256 requires a public key.
+    expect(() => FrameSignature.from(entry)).toThrow(
+      'P-256 signatures require a public key.',
+    )
+  })
+
+  test('normalizes P256 scalars on encoding', () => {
+    const signature = {
+      r: Hex.fromNumber(1, { size: 32 }),
+      s: Hex.fromNumber(p256.Point.Fn.ORDER - 1n),
+    } as const
+    const entry = FrameSignature.from({
+      publicKey,
+      scheme: 'p256',
+      signature: Signature.toHex(signature),
+    })
+    expect(FrameSignature.toTuple(entry)).toEqual(
+      FrameSignature.toTuple(
+        FrameSignature.from({ publicKey, scheme: 'p256', signature }),
+      ),
+    )
+  })
+})
+
+test('rejects malformed P256 hex bytes', () => {
+  const signature = `0x${'00'.repeat(64)}gg` as const
+  expect(
+    FrameSignature.validate({ publicKey, scheme: 'p256', signature }),
+  ).toBe(false)
 })
