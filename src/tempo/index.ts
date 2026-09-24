@@ -109,7 +109,12 @@ export * as FundingSource from './FundingSource.js'
  * @category Reference
  */
 export * as FundingSourceDex from './FundingSourceDex.js'
-
+/**
+ * Earn funding source payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceEarn from './FundingSourceEarn.js'
 /**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
@@ -619,10 +624,3 @@ export * as ZoneId from './ZoneId.js'
  * @category Reference
  */
 export * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
-
-/**
- * Earn funding source payload encoding.
- *
- * @category Reference
- */
-export * as FundingSourceEarn from './FundingSourceEarn.js'
