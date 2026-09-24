@@ -26,19 +26,19 @@ export type Arbitrary = {
   signer?: undefined
 }
 
-/** A structured secp256k1 signature entry. */
+/** A secp256k1 signature entry. */
 export type Secp256k1 = {
   /** Explicit nonzero digest. Omit or use empty bytes for the transaction signing hash. */
   payload?: Hex.Hex | undefined
   /** secp256k1 verification scheme. */
   scheme: 1 | 'secp256k1'
-  /** Recovered signature. Omit for an unsigned entry. */
-  signature?: Signature.Signature | undefined
+  /** Recovered signature or `Signature.toHex` bytes. Omit for an unsigned entry. */
+  signature?: Hex.Hex | Signature.Signature | undefined
   /** Signer address. Omit to use the transaction sender. */
   signer?: Address.Address | undefined
 }
 
-/** A structured P-256 signature entry. */
+/** A P-256 signature entry. */
 export type P256 = {
   /** Explicit nonzero digest. Omit or use empty bytes for the transaction signing hash. */
   payload?: Hex.Hex | undefined
@@ -50,8 +50,8 @@ export type P256 = {
   | {
       /** Uncompressed P-256 public key. */
       publicKey: PublicKey.PublicKey
-      /** P-256 signature. */
-      signature: Signature.Signature<false>
+      /** P-256 signature or `Signature.toHex` bytes. */
+      signature: Hex.Hex | Signature.Signature<false>
     }
   | {
       /** Public key, if already known. Empty wire signatures do not retain it. */
@@ -174,20 +174,23 @@ export function assert(
     if (options.signed) throw new InvalidError('Signature is required.')
     return
   }
-  if (
-    typeof entry.signature.r !== 'bigint' ||
-    typeof entry.signature.s !== 'bigint'
-  )
+  if (typeof entry.signature === 'string')
+    Hex.assert(entry.signature, { strict: true })
+  const signature =
+    typeof entry.signature === 'string'
+      ? Signature.fromHex(entry.signature)
+      : entry.signature
+  if (typeof signature.r !== 'bigint' || typeof signature.s !== 'bigint')
     throw new InvalidError('Signature scalars must be bigint.')
   if (
-    (scheme === 1 || entry.signature.yParity !== undefined) &&
-    entry.signature.yParity !== 0 &&
-    entry.signature.yParity !== 1
+    (scheme === 1 || signature.yParity !== undefined) &&
+    signature.yParity !== 0 &&
+    signature.yParity !== 1
   )
     throw new InvalidError('Signature parity must be 0 or 1.')
-  Signature.assert(entry.signature, { recovered: scheme === 1 })
-  const r = entry.signature.r
-  const s = entry.signature.s
+  Signature.assert(signature, { recovered: scheme === 1 })
+  const r = signature.r
+  const s = signature.s
   const order = scheme === 1 ? secp256k1N : p256N
   if (
     r === 0n ||
@@ -216,13 +219,15 @@ export declare namespace assert {
     | Hex.toBigInt.ErrorType
     | PublicKey.assert.ErrorType
     | Signature.assert.ErrorType
+    | Signature.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
 /**
  * Coerces a value into a {@link ox#FrameSignature.FrameSignature}.
  *
- * Accepts arbitrary signature bytes or a structured signature entry. Omitted
+ * Accepts arbitrary signature bytes or a signature entry. Protocol signatures accept
+ * structured objects or `Signature.toHex` bytes. P-256 entries still require a public key. Omitted
  * `scheme` and `payload` default to `'arbitrary'` and `'0x'`, respectively.
  * An empty payload selects the canonical transaction signing hash; an explicit
  * payload must be a nonzero 32-byte digest.
@@ -518,18 +523,26 @@ export function toTuple(entry: FrameSignature): Tuple {
       case 'arbitrary':
         return entry.signature
       case 1:
-      case 'secp256k1':
-        return entry.signature === undefined
-          ? '0x'
-          : Hex.concat(
-              Hex.fromNumber(entry.signature.yParity, { size: 1 }),
-              Hex.fromNumber(entry.signature.r, { size: 32 }),
-              Hex.fromNumber(entry.signature.s, { size: 32 }),
-            )
+      case 'secp256k1': {
+        if (entry.signature === undefined) return '0x'
+        const signature =
+          typeof entry.signature === 'string'
+            ? Signature.fromHex(entry.signature)
+            : entry.signature
+        return Hex.concat(
+          Hex.fromNumber(signature.yParity, { size: 1 }),
+          Hex.fromNumber(signature.r, { size: 32 }),
+          Hex.fromNumber(signature.s, { size: 32 }),
+        )
+      }
       case 2:
       case 'p256': {
         if (entry.signature === undefined) return '0x'
-        const { publicKey, signature } = entry
+        const { publicKey } = entry
+        const signature =
+          typeof entry.signature === 'string'
+            ? Signature.fromHex(entry.signature)
+            : entry.signature
         const s = signature.s
         return Hex.concat(
           Hex.fromNumber(signature.r, { size: 32 }),
