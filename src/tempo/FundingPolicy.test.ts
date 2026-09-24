@@ -6,7 +6,7 @@ const target = '0x0202020202020202020202020202020202020202' as const
 const requirement = {
   token,
   amount: 50n,
-  sources: [{ target, data: '0xab' as const }],
+  sources: [{ to: target, data: '0xab' as const }],
   slippageBps: 100,
 }
 
@@ -36,7 +36,10 @@ describe('hash', () => {
       sources: { [token]: requirement.sources, [second]: requirement.sources },
     }
     expect(FundingPolicy.encode(first)).toBe(FundingPolicy.encode(reordered))
-    const sources = [...requirement.sources, { target, data: '0xcd' as const }]
+    const sources = [
+      ...requirement.sources,
+      { to: target, data: '0xcd' as const },
+    ]
     expect(
       FundingPolicy.hash({ ...rules, sources: { [token]: sources } }),
     ).not.toBe(
@@ -57,5 +60,50 @@ describe('toTuple', () => {
       { admins: [token, token], rules },
     ])
       expect(() => FundingPolicy.toTuple(value)).toThrow()
+  })
+})
+
+describe('toRoutes', () => {
+  test('maps source addresses to the contract ABI field', () => {
+    expect(FundingPolicy.toRoutes(rules)).toEqual([
+      { token, sources: [{ target, data: '0xab' }] },
+    ])
+  })
+})
+
+describe('toRpc', () => {
+  test('keeps the RPC target field', () => {
+    expect(FundingPolicy.toRpc({ admins: [token], rules })).toEqual({
+      admins: [token],
+      rules: {
+        maxSlippageBps: 100,
+        sources: { [token]: [{ target, data: '0xab' }] },
+      },
+    })
+  })
+})
+
+describe('fromRpc', () => {
+  test('maps RPC sources to to', () => {
+    expect(
+      FundingPolicy.fromRpc({
+        admins: [token],
+        rules: {
+          maxSlippageBps: 100,
+          sources: { [token]: [{ target, data: '0xab' }] },
+        },
+      }),
+    ).toEqual({ admins: [token], rules })
+  })
+})
+
+describe('fromTuple', () => {
+  test('decodes source addresses as to', () => {
+    expect(
+      FundingPolicy.fromTuple([
+        [token],
+        ['0x64', [[token, [[target, '0xab']]]]],
+      ]),
+    ).toEqual({ admins: [token], rules })
   })
 })
