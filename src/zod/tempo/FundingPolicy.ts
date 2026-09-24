@@ -10,9 +10,7 @@ export const Rules = z
     maxSlippageBps: z.number(),
     sources: z.record(
       z_Address.Address,
-      z.readonly(
-        z.array(z.object({ target: z_Address.Address, data: z_Hex.Hex })),
-      ),
+      z.readonly(z.array(z.object({ to: z_Address.Address, data: z_Hex.Hex }))),
     ),
   })
   .check(
@@ -46,6 +44,31 @@ export const Authorization = z.union([
   Inline,
 ])
 /** RPC policy authorization schema. */
-export const Rpc = z.union([z_Hex.Hex, Inline])
+export const Rpc = z.union([
+  z_Hex.Hex,
+  z
+    .object({
+      admins: z.readonly(z.array(z_Address.Address)),
+      rules: z.object({
+        maxSlippageBps: z.number(),
+        sources: z.record(
+          z_Address.Address,
+          z.readonly(
+            z.array(z.object({ target: z_Address.Address, data: z_Hex.Hex })),
+          ),
+        ),
+      }),
+    })
+    .check(
+      z.refine((value) => {
+        try {
+          core_FundingPolicy.fromRpc(value)
+          return true
+        } catch {
+          return false
+        }
+      }, 'Invalid inline policy'),
+    ),
+])
 /** Encode-only policy authorization schema. */
 export const AuthorizationToRpc = z.union([uintBigintNumberish(), Inline])

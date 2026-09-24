@@ -57,10 +57,7 @@ describe('behavior', () => {
         rules: {
           maxSlippageBps: 100,
           sources: {
-            [token]: requirement.sources.map(({ to, data }) => ({
-              target: to,
-              data,
-            })),
+            [token]: requirement.sources,
           },
         },
       },

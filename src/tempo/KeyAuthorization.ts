@@ -110,7 +110,7 @@ export type Rpc = {
   /** Expiry timestamp (hex quantity or null). */
   expiry: Hex.Hex | null | undefined
   /** Existing policy ID or inline creation. */
-  fundingPolicy?: FundingPolicy.Authorization<Hex.Hex> | undefined
+  fundingPolicy?: FundingPolicy.Rpc | undefined
   /** Whether this authorization provisions an admin access key (TIP-1049). */
   isAdmin?: boolean | null | undefined
   /** Key identifier. */

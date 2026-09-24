@@ -9,7 +9,7 @@ export type Source = {
   /** Source-specific policy data. */
   data: Hex.Hex
   /** Funding source address. */
-  target: Address.Address
+  to: Address.Address
 }
 
 /**
@@ -38,6 +38,21 @@ export type Inline = {
  * Policy authorization: an existing nonzero uint64 ID or inline creation. */
 export type Authorization<bigintType = bigint> = bigintType | Inline
 
+/** Policy authorization in RPC form. */
+export type Rpc =
+  | Hex.Hex
+  | {
+      /** Accounts authorized to modify the policy. */
+      admins: readonly Address.Address[]
+      /** Committed funding permissions. */
+      rules: {
+        /** Maximum aggregate slippage in basis points. */
+        maxSlippageBps: number
+        /** Ordered source permissions for each output token. */
+        sources: Readonly<Record<Address.Address, Route['sources']>>
+      }
+    }
+
 /**
  * Policy state returned by the precompile; rules are available in events. */
 export type Policy = {
@@ -57,7 +72,12 @@ export type Route = {
   token: Address.Address
   /**
    * Ordered source permissions. */
-  sources: readonly Source[]
+  sources: readonly {
+    /** Funding source address in the contract ABI. */
+    target: Address.Address
+    /** Source-specific policy data. */
+    data: Hex.Hex
+  }[]
 }
 
 /**
@@ -102,7 +122,7 @@ const parameters = [
 const domain = Hash.keccak256(Hex.fromString('tempo.funding-policy.rules.v1'))
 
 /**
- * Converts a token map to canonical ascending routes without reordering sources.
+ * Converts a token map to canonical ABI routes, mapping `to` to `target` without reordering sources.
  *
  * @example
  * ```ts
@@ -127,16 +147,19 @@ export function toRoutes(rules: Rules): readonly Route[] {
     if (BigInt(token) === 0n || seen.has(token.toLowerCase()))
       throw new InvalidPolicyError('Output tokens must be unique and nonzero.')
     seen.add(token.toLowerCase())
-    for (const { target, data } of sources) {
-      Address.assert(target, { strict: false })
+    for (const { to, data } of sources) {
+      Address.assert(to, { strict: false })
       if (
-        BigInt(target) === 0n ||
+        BigInt(to) === 0n ||
         !Hex.validate(data, { strict: true }) ||
         data.length % 2 !== 0
       )
-        throw new InvalidPolicyError('Invalid source target or data.')
+        throw new InvalidPolicyError('Invalid source address or data.')
     }
-    return { token, sources }
+    return {
+      token,
+      sources: sources.map(({ to, data }) => ({ target: to, data })),
+    }
   })
   return routes.sort((a, b) => (BigInt(a.token) < BigInt(b.token) ? -1 : 1))
 }
@@ -174,7 +197,10 @@ export function decode(data: Hex.Hex): Rules {
   const rules: Rules = {
     maxSlippageBps: value.maxSlippageBps,
     sources: Object.fromEntries(
-      value.routes.map(({ token, sources }) => [token, sources]),
+      value.routes.map(({ token, sources }) => [
+        token,
+        sources.map(({ target, data }) => ({ to: target, data })),
+      ]),
     ),
   }
   if (encode(rules).toLowerCase() !== data.toLowerCase())
@@ -297,7 +323,7 @@ export function fromTuple(value: Tuple): Authorization {
     sources[token] = entries.map((source) => {
       if (!Array.isArray(source) || source.length !== 2)
         throw new InvalidPolicyError('Invalid source tuple.')
-      return { target: source[0], data: source[1] }
+      return { to: source[0], data: source[1] }
     })
   }
   const policy = {
@@ -321,8 +347,22 @@ export function fromTuple(value: Tuple): Authorization {
  * FundingPolicy.fromRpc('0x7')
  * ```
  */
-export function fromRpc(value: Authorization<Hex.Hex>): Authorization {
-  const result = typeof value === 'string' ? BigInt(value) : value
+export function fromRpc(value: Rpc): Authorization {
+  const result =
+    typeof value === 'string'
+      ? BigInt(value)
+      : {
+          ...value,
+          rules: {
+            ...value.rules,
+            sources: Object.fromEntries(
+              Object.entries(value.rules.sources).map(([token, sources]) => [
+                token,
+                sources.map(({ target, data }) => ({ to: target, data })),
+              ]),
+            ),
+          },
+        }
   toTuple(result)
   return result
 }
@@ -337,9 +377,7 @@ export function fromRpc(value: Authorization<Hex.Hex>): Authorization {
  * FundingPolicy.toRpc(7n)
  * ```
  */
-export function toRpc(
-  value: Authorization<bigint | number | Hex.Hex>,
-): Authorization<Hex.Hex> {
+export function toRpc(value: Authorization<bigint | number | Hex.Hex>): Rpc {
   if (typeof value !== 'object') {
     if (typeof value === 'number' && !Number.isSafeInteger(value))
       throw new InvalidPolicyError('Numeric policy IDs must be safe integers.')
@@ -348,7 +386,15 @@ export function toRpc(
     return Hex.fromNumber(id)
   }
   toTuple(value)
-  return value
+  return {
+    ...value,
+    rules: {
+      ...value.rules,
+      sources: Object.fromEntries(
+        toRoutes(value.rules).map(({ token, sources }) => [token, sources]),
+      ),
+    },
+  }
 }
 
 /**
