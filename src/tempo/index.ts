@@ -661,3 +661,10 @@ export * as FundingSource from './FundingSource.js'
  * @category Reference
  */
 export * as FundingSourceDex from './FundingSourceDex.js'
+
+/**
+ * Earn funding source payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceEarn from './FundingSourceEarn.js'

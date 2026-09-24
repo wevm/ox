@@ -801,6 +801,11 @@
       "types": "./dist/tempo/FundingSourceDex.d.ts",
       "default": "./dist/tempo/FundingSourceDex.js"
     },
+    "./tempo/FundingSourceEarn": {
+      "src": "./src/tempo/FundingSourceEarn.ts",
+      "types": "./dist/tempo/FundingSourceEarn.d.ts",
+      "default": "./dist/tempo/FundingSourceEarn.js"
+    },
     "./tempo/KeyAuthorization": {
       "src": "./src/tempo/KeyAuthorization.ts",
       "types": "./dist/tempo/KeyAuthorization.d.ts",
