@@ -102,6 +102,14 @@ export * as FundingRequirement from './FundingRequirement.js'
  * @category Reference
  */
 export * as FundingSource from './FundingSource.js'
+
+/**
+ * Native DEX funding source construction and payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceDex from './FundingSourceDex.js'
+
 /**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
