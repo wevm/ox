@@ -1,5 +1,17 @@
 # ox
 
+## 0.14.48
+
+### Patch Changes
+
+- [`42381cf`](https://github.com/wevm/ox/commit/42381cfee704c87c406796317266e122fe202115) Thanks [@jxom](https://github.com/jxom)! - Renamed `Frame.gas` to `Frame.executionGas`.
+
+  ```ts
+  import { Frame } from "ox";
+
+  Frame.from({ executionGas: 50_000n, stateGas: 1_000n });
+  ```
+
 ## 0.14.47
 
 ### Patch Changes
