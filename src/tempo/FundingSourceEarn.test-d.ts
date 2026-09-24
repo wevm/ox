@@ -19,8 +19,14 @@ test('encodeConfigData', () => {
   FundingSourceEarn.encodeConfigData({ maxValueIn: 50n })
 })
 
-test('decode', () => {
-  expectTypeOf(FundingSourceEarn.decode('0x')).toEqualTypeOf<
+test('decodeExecutionData', () => {
+  expectTypeOf(FundingSourceEarn.decodeExecutionData('0x')).toEqualTypeOf<
+    Required<FundingSourceEarn.Request>
+  >()
+})
+
+test('decodeConfigData', () => {
+  expectTypeOf(FundingSourceEarn.decodeConfigData('0x')).toEqualTypeOf<
     Required<FundingSourceEarn.Request>
   >()
 })

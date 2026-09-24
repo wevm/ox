@@ -17,12 +17,12 @@ describe('from', () => {
 describe('encodeExecutionData', () => {
   test('preserves zero and defaults to unlimited input', () => {
     expect(
-      FundingSourceDex.decode(
+      FundingSourceDex.decodeExecutionData(
         FundingSourceDex.encodeExecutionData({ tokenIn: token }),
       ),
     ).toEqual({ tokenIn: token, maxAmountIn: 2n ** 256n - 1n })
     expect(
-      FundingSourceDex.decode(
+      FundingSourceDex.decodeExecutionData(
         FundingSourceDex.encodeExecutionData({
           tokenIn: token,
           maxAmountIn: 0n,
@@ -43,14 +43,24 @@ describe('encodeConfigData', () => {
 
   test('preserves zero and defaults to unlimited input', () => {
     expect(
-      FundingSourceDex.decode(
+      FundingSourceDex.decodeConfigData(
         FundingSourceDex.encodeConfigData({ tokenIn: token }),
       ),
     ).toEqual({ maxAmountIn: 2n ** 256n - 1n, tokenIn: token })
     expect(
-      FundingSourceDex.decode(
+      FundingSourceDex.decodeConfigData(
         FundingSourceDex.encodeConfigData({ maxAmountIn: 0n, tokenIn: token }),
       ),
     ).toEqual({ maxAmountIn: 0n, tokenIn: token })
+  })
+})
+
+describe('decodeConfigData', () => {
+  test('decodes configuration bytes', () => {
+    expect(
+      FundingSourceDex.decodeConfigData(
+        '0x00000000000000000000000001010101010101010101010101010101010101010000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toEqual({ maxAmountIn: 1n, tokenIn: token })
   })
 })
