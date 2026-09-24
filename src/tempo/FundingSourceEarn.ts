@@ -1,6 +1,7 @@
 import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
+import type * as FundingSource from './FundingSource.js'
 
 /** Earn execution arguments or source configuration. */
 export type Request = {
@@ -15,6 +16,39 @@ export type Request = {
 const parameters = AbiParameters.from(
   'address vault, uint256 maxAmountIn, uint256 maxValueIn',
 )
+
+/**
+ * Creates an Earn source for funding, policy rules, or discovery.
+ *
+ * The source address identifies a deployed Earn funding source. Caps apply per invocation.
+ *
+ * @example
+ * ```ts
+ * import { FundingSourceEarn } from 'ox/tempo'
+ *
+ * FundingSourceEarn.from({
+ *   maxValueIn: 50_000_000n,
+ *   source: '0x0202020202020202020202020202020202020202',
+ *   vault: '0x0101010101010101010101010101010101010101',
+ * })
+ * ```
+ */
+export function from<const source extends Address.Address>(
+  request: from.Parameters<source>,
+) {
+  return {
+    data: encodeExecutionData(request),
+    to: request.source,
+  } satisfies FundingSource.Source
+}
+
+export declare namespace from {
+  type Parameters<source extends Address.Address = Address.Address> =
+    Request & {
+      /** Deployed Earn funding source address. */
+      source: source
+    }
+}
 
 /**
  * Encodes an Earn funding request as `executionData`.
