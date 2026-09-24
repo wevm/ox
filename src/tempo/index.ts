@@ -619,3 +619,10 @@ export * as ZoneId from './ZoneId.js'
  * @category Reference
  */
 export * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
+
+/**
+ * Earn funding source payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceEarn from './FundingSourceEarn.js'
