@@ -4,9 +4,9 @@ import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 
-/** An approved funding source and its policy data. */
+/** An approved funding source and its configuration data. */
 export type Source = {
-  /** Source-specific policy data. */
+  /** Source-specific configuration passed to funding hooks as `configData`. */
   data: Hex.Hex
   /** Funding source address. */
   to: Address.Address
@@ -75,7 +75,7 @@ export type Route = {
   sources: readonly {
     /** Funding source address in the contract ABI. */
     target: Address.Address
-    /** Source-specific policy data. */
+    /** Source-specific configuration passed to funding hooks as `configData`. */
     data: Hex.Hex
   }[]
 }
