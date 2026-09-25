@@ -219,9 +219,9 @@ describe('frame transactions', () => {
     const rpc = TransactionRequest.toRpc(request)
     const original = structuredClone(rpc)
     expect(rpc.chainId).toBe('0x1fcd')
-    expect(rpc.frames?.[0]?.executionGasLimit).toBe('0xc350')
+    expect(rpc.frames?.[0]?.executionGas).toBe('0xc350')
     expect(rpc.signatures).toEqual([
-      { msg: '0x', scheme: 0, signature: '0xaabb' },
+      { msg: '0x', scheme: '0x0', signature: '0xaabb' },
     ])
     expect(rpc.type).toBe('0x6')
     expect(TransactionRequest.fromRpc(rpc)).toEqual({

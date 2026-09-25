@@ -458,7 +458,7 @@ describe('fromRpc', () => {
     expect(
       FrameSignature.fromRpc({
         msg: '0x',
-        scheme: 0,
+        scheme: '0x0',
         signature: '0xaabb',
         signer: null,
       }),
@@ -466,7 +466,11 @@ describe('fromRpc', () => {
   })
   test('secp256k1 signature', () => {
     expect(
-      FrameSignature.fromRpc({ msg: '0x', scheme: 1, signature: secpBytes }),
+      FrameSignature.fromRpc({
+        msg: '0x',
+        scheme: '0x1',
+        signature: secpBytes,
+      }),
     ).toEqual(
       FrameSignature.from({
         scheme: 'secp256k1',
@@ -481,24 +485,24 @@ describe('fromRpc', () => {
   test('P-256 signature', () => {
     const entry = FrameSignature.fromRpc({
       msg: '0x',
-      scheme: 2,
+      scheme: '0x2',
       signature: p256Bytes,
     })
     expect(entry).toMatchObject({ payload: '0x', publicKey, scheme: 'p256' })
     expect(FrameSignature.toRpc(entry)).toEqual({
       msg: '0x',
-      scheme: 2,
+      scheme: '0x2',
       signature: p256Bytes,
     })
   })
   test('unsigned placeholder', () => {
-    expect(
-      FrameSignature.fromRpc({ msg: '0x', scheme: 1, signature: '0x' }),
-    ).toEqual(FrameSignature.from({ scheme: 'secp256k1' }))
+    expect(FrameSignature.fromRpc({ scheme: '0x1' })).toEqual(
+      FrameSignature.from({ scheme: 'secp256k1' }),
+    )
   })
   test('malformed protocol signature', () => {
     expect(() =>
-      FrameSignature.fromRpc({ msg: '0x', scheme: 1, signature: '0x01' }),
+      FrameSignature.fromRpc({ msg: '0x', scheme: '0x1', signature: '0x01' }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[FrameSignature.InvalidError: Invalid frame signature.
 
@@ -508,6 +512,11 @@ Details: Invalid protocol signature length.]`,
 })
 
 describe('toRpc', () => {
+  test('omits an unsigned protocol signature', () => {
+    expect(
+      FrameSignature.toRpc(FrameSignature.from({ scheme: 'secp256k1' })),
+    ).toEqual({ msg: '0x', scheme: '0x1' })
+  })
   test('preserves explicit payload and signer', () => {
     const entry = FrameSignature.from({
       payload,
@@ -517,7 +526,7 @@ describe('toRpc', () => {
     })
     expect(FrameSignature.toRpc(entry)).toEqual({
       msg: payload,
-      scheme: 1,
+      scheme: '0x1',
       signature: secpBytes,
       signer: '0x1111111111111111111111111111111111111111',
     })

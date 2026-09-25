@@ -641,19 +641,12 @@ describe('serialize', () => {
         ],
         from: sender,
         signatures: [{ scheme: 'secp256k1' }],
-        // Nethermind's simulation mapping requires an outer recipient before processing frames.
-        to: sender,
         type: 'eip8141',
       })
-      // TODO: remove once migrated to reth or anvil.
-      // Nethermind validates signatures when filling gas, before the transaction can be signed.
-      await expect(
-        rpc.request({ method: 'eth_fillTransaction', params: [request] }),
-      ).rejects.toThrow('frame transaction signature has the wrong length')
       const { tx } = (await rpc.request({
         method: 'eth_fillTransaction',
-        params: [{ ...request, gas: Hex.fromNumber(100_000n) }],
-      })) as { tx: TxEnvelopeEip8141.Rpc & { gas: Hex.Hex } }
+        params: [request],
+      })) as { tx: TxEnvelopeEip8141.Rpc }
       expect(tx.type).toBe('0x6')
       if (tx.type !== '0x6' || !tx.frames)
         throw new Error('Expected a frame transaction')
@@ -661,7 +654,6 @@ describe('serialize', () => {
       expect(tx.nonce).toBe(nonce)
       expect(tx.frames).toEqual(request.frames)
       expect(tx.signatures).toEqual(request.signatures)
-      expect(Hex.toBigInt(tx.gas)).toBe(100_000n)
       expect(Hex.toBigInt(tx.maxFeePerGas)).toBeGreaterThan(0n)
       expect(Hex.toBigInt(tx.maxPriorityFeePerGas)).toBeGreaterThanOrEqual(0n)
       expect(Hex.toBigInt(tx.maxFeePerGas)).toBeGreaterThanOrEqual(
@@ -764,14 +756,12 @@ describe('serialize', () => {
         })
         const request = TransactionRequest.toRpc({
           ...TransactionRequest.fromRpc(TxEnvelopeEip8141.toRpc(signed)),
-          // Nethermind's simulation mapping requires an outer recipient before processing frames.
-          to: sender,
         })
         const result = await rpc.request({
           method,
           params: [request, 'latest'],
         })
-        // Frame return data is not exposed by Nethermind's transaction-level call result.
+        // Transaction-level calls do not expose individual frame return data.
         if (method === 'eth_call') expect(result).toBe('0x')
         else {
           // Estimation includes all signed frame budgets plus intrinsic gas.
@@ -782,11 +772,14 @@ describe('serialize', () => {
           rpc.request({
             method,
             params: [
-              { ...request, frames: [{ ...request.frames![0]!, mode: 255 }] },
+              {
+                ...request,
+                frames: [{ ...request.frames![0]!, mode: '0xff' }],
+              },
               'latest',
             ],
           }),
-        ).rejects.toThrow('frame mode')
+        ).rejects.toThrow('Invalid params')
         expect(
           await rpc.request({
             method: 'eth_getBalance',
@@ -925,18 +918,18 @@ describe('serialize', () => {
         chainId: 8141,
         frames: [
           Frame.from({
-            executionGas: 50_000n,
+            executionGas: 20_000n,
             flags: 'approveExecution',
             mode: 'verify',
           }),
           Frame.from({
-            executionGas: 50_000n,
+            executionGas: 20_000n,
             flags: 'approvePayment',
             mode: 'verify',
             to: accounts[1].address,
           }),
           Frame.from({
-            executionGas: 50_000n,
+            executionGas: 20_000n,
             mode: 'sender',
             to: accounts[1].address,
             value: 1n,
@@ -1152,7 +1145,7 @@ describe('serialize', () => {
           ],
         }),
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[RpcResponse.InvalidInputError: transaction invalid, frame transaction SECP256K1 signer does not match the recovered address]`,
+        `[RpcResponse.InvalidInputError: EIP-8141 public mempool policy: validation prefix execution failed]`,
       )
     })
 
@@ -1162,12 +1155,12 @@ describe('serialize', () => {
         frames: [
           Frame.from({
             data: '0x0000000000000001',
-            executionGas: 50_000n,
+            executionGas: 20_000n,
             mode: 'verify',
             to: '0x0000000000000000000000000000000000008141',
           }),
           Frame.from({
-            executionGas: 50_000n,
+            executionGas: 20_000n,
             flags: 'approveExecutionAndPayment',
             mode: 'verify',
           }),
@@ -1199,7 +1192,7 @@ describe('serialize', () => {
           params: [TxEnvelopeEip8141.serialize(signed)],
         }),
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[RpcResponse.InvalidInputError: frame transaction expired]`,
+        `[RpcResponse.InvalidInputError: EIP-8141 public mempool policy: validation prefix execution failed]`,
       )
     })
 
@@ -1715,10 +1708,10 @@ describe('toRpc', () => {
       frames: [
         {
           data: '0x',
-          executionGasLimit: '0x0',
-          flags: 0,
-          mode: 0,
-          stateGasLimit: '0x0',
+          executionGas: '0x0',
+          flags: '0x0',
+          mode: '0x0',
+          stateGas: '0x0',
           value: '0x0',
         },
       ],
