@@ -116,10 +116,10 @@ Use an explicit 32-byte `payload` only when the account expects a separate diges
 ## Convert RPC Data
 
 [`TxEnvelopeEip8141.toRpc`](/api/TxEnvelopeEip8141/toRpc) converts `sender` to
-`from`, frame `to` to `target`, `executionGas` to `executionGasLimit`,
-`stateGas` to `stateGasLimit`, and signature `payload` to `msg`. RPC frame modes,
-flags, and signature schemes are numbers, while gas and fee quantities are hex
-strings.
+`from`, frame `to` to `target`, and signature `payload` to `msg`. Frame gas fields
+remain `executionGas` and `stateGas`. RPC frame modes, flags, signature schemes,
+and gas and fee quantities are hex strings. Protocol signature placeholders omit
+`signature`.
 
 ```ts twoslash
 import { TxEnvelopeEip8141 } from 'ox'
@@ -135,8 +135,9 @@ const serialized = TxEnvelopeEip8141.serialize(restored)
 
 Convert the transaction receipt with
 `TransactionReceipt.fromRpc` to read the payer
-and individual frame results. Each frame receipt exposes `gasUsed`, `stateGasUsed`,
-`logs`, and a `status` of `'success'`, `'reverted'`, or `'skipped'`.
+and individual frame results. Each frame receipt exposes `executionGasUsed`,
+`stateGasUsed`, total `gasUsed`, `logs`, and a `status` of `'success'`, `'reverted'`,
+or `'skipped'`.
 
 ```ts twoslash
 import { Hex, RpcTransport, TransactionReceipt } from 'ox'
