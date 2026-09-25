@@ -118,6 +118,14 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
   if (prefix < 0xc0) {
     const length = readLength(cursor, prefix, 0x80)
     const bytes = cursor.readBytes(length)
+    // A single byte below `0x80` must be its own encoding (no length
+    // prefix); wrapping it in an explicit one-byte-length prefix is a
+    // non-canonical alternate encoding of the same value (Yellow Paper,
+    // Appendix B).
+    if (prefix >= 0x80 && length === 1 && bytes[0]! < 0x80)
+      throw new NonCanonicalError({
+        reason: `single byte \`0x${bytes[0]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
+      })
     return (
       to === 'Hex' ? Hex.fromBytes(bytes) : bytes
     ) as decodeRlpCursor.ReturnType<to>
@@ -152,10 +160,42 @@ export function readLength(
 ) {
   if (offset === 0x80 && prefix < 0x80) return 1
   if (prefix <= offset + 55) return prefix - offset
-  if (prefix === offset + 55 + 1) return cursor.readUint8()
-  if (prefix === offset + 55 + 2) return cursor.readUint16()
-  if (prefix === offset + 55 + 3) return cursor.readUint24()
-  if (prefix === offset + 55 + 4) return cursor.readUint32()
+  // Long-form lengths must use the minimal number of length-bytes: a value
+  // that fits in fewer bytes (or in the short form, i.e. <= 55) encoded via
+  // a longer form is a non-canonical alternate encoding of the same value
+  // (Yellow Paper, Appendix B).
+  if (prefix === offset + 55 + 1) {
+    const length = cursor.readUint8()
+    if (length <= 55)
+      throw new NonCanonicalError({
+        reason: `length \`${length}\` fits in the short form and must not use a one-byte length prefix`,
+      })
+    return length
+  }
+  if (prefix === offset + 55 + 2) {
+    const length = cursor.readUint16()
+    if (length <= 0xff)
+      throw new NonCanonicalError({
+        reason: `length \`${length}\` fits in fewer length-bytes and must not use a two-byte length prefix`,
+      })
+    return length
+  }
+  if (prefix === offset + 55 + 3) {
+    const length = cursor.readUint24()
+    if (length <= 0xffff)
+      throw new NonCanonicalError({
+        reason: `length \`${length}\` fits in fewer length-bytes and must not use a three-byte length prefix`,
+      })
+    return length
+  }
+  if (prefix === offset + 55 + 4) {
+    const length = cursor.readUint32()
+    if (length <= 0xffffff)
+      throw new NonCanonicalError({
+        reason: `length \`${length}\` fits in fewer length-bytes and must not use a four-byte length prefix`,
+      })
+    return length
+  }
   throw new Errors.BaseError('Invalid RLP prefix')
 }
 
@@ -871,5 +911,14 @@ export class TrailingBytesError extends Errors.BaseError {
         count === 1 ? 'byte remains' : 'bytes remain'
       }.`,
     )
+  }
+}
+
+/** Thrown when an RLP payload uses a non-canonical alternate encoding of a value. */
+export class NonCanonicalError extends Errors.BaseError {
+  override readonly name = 'Rlp.NonCanonicalError'
+
+  constructor({ reason }: { reason: string }) {
+    super(`RLP payload is not canonically encoded: ${reason}.`)
   }
 }
