@@ -179,18 +179,18 @@ function eip8141Fields<
     data: z.optional(z_Hex.Hex),
     frames: z.readonly(z.array(frame)),
     from: z_Address.Address,
-    gas: uint,
+    gas: z.optional(uint),
     gasPrice: z.optional(uint),
     hash: z_Hex.Hex,
-    input: z_Hex.Hex,
+    input: z.optional(z_Hex.Hex),
     maxFeePerBlobGas: uint,
     maxFeePerGas: uint,
     maxPriorityFeePerGas: uint,
     nonce: uint,
     signatures: z.readonly(z.array(z_FrameSignature.FrameSignature)),
-    to: z.nullable(z_Address.Address),
+    to: z.optional(z.nullable(z_Address.Address)),
     type: Eip8141Type,
-    value: uint,
+    value: z.optional(uint),
   }
 }
 

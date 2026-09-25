@@ -474,8 +474,9 @@ describe('frame transactions', () => {
     const rpc = TransactionRequest.toRpc(request)
     expect(rpc.chainId).toBe('0x1fcd')
     expect(rpc.type).toBe('0x6')
+    expect(rpc.frames?.[0]?.executionGas).toBe('0xc350')
     expect(rpc.signatures).toEqual([
-      { msg: '0x', scheme: 0, signature: '0xaabb' },
+      { msg: '0x', scheme: '0x0', signature: '0xaabb' },
     ])
     const decoded = TransactionRequest.fromRpc(rpc)
     expect(decoded.chainId).toBe(8141)

@@ -11,17 +11,26 @@ import * as z from 'zod/mini'
 
 const frameLog = z.object({
   address: z_Address.Address,
+  blockHash: z.optional(z_Hex.Hex),
+  blockNumber: z.optional(quantityHex()),
+  blockTimestamp: z.optional(quantityHex()),
   data: z_Hex.Hex,
+  logIndex: z.optional(quantityHex()),
+  removed: z.optional(z.boolean()),
   topics: z.array(z_Hex.Hex),
+  transactionHash: z.optional(z_Hex.Hex),
+  transactionIndex: z.optional(quantityHex()),
 })
 
 const frameReceiptRpc = z.object({
   executionGasUsed: quantityHex(),
+  gasUsed: quantityHex(),
   logs: z.readonly(z.array(frameLog)),
   stateGasUsed: quantityHex(),
-  status: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  status: z.enum(['0x0', '0x1', '0x2']),
 })
 const frameReceiptDecoded = z.object({
+  executionGasUsed: uintBigint(),
   gasUsed: uintBigint(),
   logs: z.readonly(z.array(frameLog)),
   stateGasUsed: uintBigint(),
@@ -38,6 +47,7 @@ export const FrameReceipt = z.codec(frameReceiptRpc, frameReceiptDecoded, {
 export const FrameReceiptToRpc = z.codec(
   frameReceiptRpc,
   z.extend(frameReceiptDecoded, {
+    executionGasUsed: uintBigintNumberish(),
     gasUsed: uintBigintNumberish(),
     stateGasUsed: uintBigintNumberish(),
   }),

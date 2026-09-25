@@ -136,6 +136,8 @@ describe('decode', () => {
       params: [hash],
     }))!
 
+    if (input === undefined) throw new Error('Missing transaction input')
+
     expect(
       AbiConstructor.decode(abiConstructor, {
         bytecode: Constructor.bytecode.object,

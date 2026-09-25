@@ -67,11 +67,11 @@ export type FrameSignature = Arbitrary | Secp256k1 | P256
 /** JSON-RPC representation of a frame signature. */
 export type Rpc = {
   /** Explicit digest, or empty bytes for the transaction signing hash. */
-  msg: Hex.Hex
+  msg?: Hex.Hex | undefined
   /** Signature verification scheme. */
-  scheme: 0 | 1 | 2
+  scheme: '0x0' | '0x1' | '0x2'
   /** Encoded signature bytes. */
-  signature: Hex.Hex
+  signature?: Hex.Hex | undefined
   /** Signer address; absent for the transaction sender. */
   signer?: Address.Address | null | undefined
 }
@@ -348,7 +348,7 @@ export declare namespace from {
  *
  * const entry = FrameSignature.fromRpc({
  *   msg: '0x',
- *   scheme: 0,
+ *   scheme: '0x0',
  *   signature: '0xdeadbeef'
  * })
  * ```
@@ -358,15 +358,20 @@ export declare namespace from {
  */
 export function fromRpc(entry: Rpc): FrameSignature {
   return fromTuple([
-    entry.scheme === 0 ? '0x' : Hex.fromNumber(entry.scheme, { size: 1 }),
+    entry.scheme === '0x0'
+      ? '0x'
+      : Hex.fromNumber(Hex.toNumber(entry.scheme), { size: 1 }),
     entry.signer ?? '0x',
-    entry.msg,
-    entry.signature,
+    entry.msg ?? '0x',
+    entry.signature ?? '0x',
   ])
 }
 
 export declare namespace fromRpc {
-  type ErrorType = fromTuple.ErrorType | Hex.fromNumber.ErrorType
+  type ErrorType =
+    | fromTuple.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.toNumber.ErrorType
 }
 
 /**
@@ -389,8 +394,10 @@ export function toRpc(entry: FrameSignature): Rpc {
   const [scheme, signer, msg, signature] = toTuple(entry)
   return {
     msg,
-    scheme: (scheme === '0x' ? 0 : Hex.toNumber(scheme)) as Rpc['scheme'],
-    signature,
+    scheme: (scheme === '0x'
+      ? '0x0'
+      : Hex.fromNumber(Hex.toNumber(scheme))) as Rpc['scheme'],
+    ...(signature === '0x' && scheme !== '0x' ? {} : { signature }),
     ...(signer === '0x' ? {} : { signer }),
   }
 }

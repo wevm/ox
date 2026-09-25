@@ -78,7 +78,7 @@ describe('TxEnvelopeEip8141', () => {
         frames: [{ executionGas: 50_000 }],
         sender: accounts[0].address,
         type: 'eip8141',
-      }).frames[0]!.executionGasLimit,
+      }).frames[0]!.executionGas,
     ).toBe('0xc350')
   })
 })
@@ -107,7 +107,7 @@ describe('invalid envelopes', () => {
   test('rejects malformed nested RPC signatures without throwing', () => {
     const rpc = {
       ...TxEnvelopeEip8141.toRpc(envelope),
-      signatures: [{ msg: '0x', scheme: 1, signature: '0x01' }],
+      signatures: [{ msg: '0x', scheme: '0x1', signature: '0x01' }],
     } as const
     expect(
       z.safeDecode(z.TxEnvelopeEip8141.TxEnvelopeEip8141, rpc).success,

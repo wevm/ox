@@ -14,13 +14,14 @@ test('exports', () => {
 
 describe('fromRpc', () => {
   test.each([
-    [0, 'reverted'],
-    [1, 'success'],
-    [2, 'skipped'],
+    ['0x0', 'reverted'],
+    ['0x1', 'success'],
+    ['0x2', 'skipped'],
   ] as const)('status %s', (status, expected) => {
     expect(
       FrameReceipt.fromRpc({
         executionGasUsed: '0x20000000000001',
+        gasUsed: '0x20000000000003',
         logs: [
           {
             address: '0x1111111111111111111111111111111111111111',
@@ -32,7 +33,8 @@ describe('fromRpc', () => {
         status,
       }),
     ).toEqual({
-      gasUsed: 9007199254740993n,
+      executionGasUsed: 9007199254740993n,
+      gasUsed: 9007199254740995n,
       logs: [
         {
           address: '0x1111111111111111111111111111111111111111',
@@ -48,18 +50,20 @@ describe('fromRpc', () => {
 
 describe('toRpc', () => {
   test.each([
-    ['reverted', 0],
-    ['success', 1],
-    ['skipped', 2],
+    ['reverted', '0x0'],
+    ['success', '0x1'],
+    ['skipped', '0x2'],
   ] as const)('status %s', (status, expected) => {
     const receipt = FrameReceipt.fromRpc({
       executionGasUsed: '0x20000000000001',
+      gasUsed: '0x20000000000003',
       logs: [],
       stateGasUsed: '0x2',
       status: expected,
     })
     expect(FrameReceipt.toRpc({ ...receipt, status })).toEqual({
       executionGasUsed: '0x20000000000001',
+      gasUsed: '0x20000000000003',
       logs: [],
       stateGasUsed: '0x2',
       status: expected,
@@ -69,7 +73,8 @@ describe('toRpc', () => {
   test('numberish gas', () => {
     expect(
       FrameReceipt.toRpc({
-        gasUsed: '0x5208',
+        executionGasUsed: '0x5208',
+        gasUsed: '0x520a',
         logs: [],
         stateGasUsed: 2,
         status: 'success',
@@ -77,9 +82,10 @@ describe('toRpc', () => {
     ).toMatchInlineSnapshot(`
       {
         "executionGasUsed": "0x5208",
+        "gasUsed": "0x520a",
         "logs": [],
         "stateGasUsed": "0x2",
-        "status": 1,
+        "status": "0x1",
       }
     `)
   })

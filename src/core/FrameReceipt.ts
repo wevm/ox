@@ -2,13 +2,21 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
 import type * as Log from './Log.js'
+import type { Compute, ExactPartial } from './internal/types.js'
 
-/** Receipt for one frame. Frame logs contain only address, data, and topics. */
+type FrameLog = Compute<
+  Pick<Log.Rpc, 'address' | 'data' | 'topics'> &
+    ExactPartial<Omit<Log.Rpc, 'address' | 'data' | 'topics'>>
+>
+
+/** Receipt for one frame. */
 export type FrameReceipt<bigintType = bigint> = {
   /** Execution gas used before transaction-level refunds. */
+  executionGasUsed: bigintType
+  /** Total execution and state gas used. */
   gasUsed: bigintType
   /** Logs emitted by this frame. */
-  logs: readonly Pick<Log.Log, 'address' | 'data' | 'topics'>[]
+  logs: readonly FrameLog[]
   /** Final state gas after refills and rollbacks. */
   stateGasUsed: bigintType
   /** Frame execution result. */
@@ -19,8 +27,10 @@ export type FrameReceipt<bigintType = bigint> = {
 export type Rpc = {
   /** Execution gas used. */
   executionGasUsed: Hex.Hex
+  /** Total execution and state gas used. */
+  gasUsed: Hex.Hex
   /** Logs emitted by this frame. */
-  logs: readonly Pick<Log.Log, 'address' | 'data' | 'topics'>[]
+  logs: readonly FrameLog[]
   /** Final state gas used. */
   stateGasUsed: Hex.Hex
   /** Zero for failure, one for success, or two for a skipped frame. */
@@ -30,21 +40,21 @@ export type Rpc = {
 /** Frame execution status. */
 export type Status = 'reverted' | 'skipped' | 'success'
 
-/** Numeric JSON-RPC frame execution status. */
-export type RpcStatus = 0 | 1 | 2
+/** Hex JSON-RPC frame execution status. */
+export type RpcStatus = '0x0' | '0x1' | '0x2'
 
 /** RPC status to status mapping. */
 export const fromRpcStatus = {
-  0: 'reverted',
-  1: 'success',
-  2: 'skipped',
+  '0x0': 'reverted',
+  '0x1': 'success',
+  '0x2': 'skipped',
 } as const
 
 /** Status to RPC status mapping. */
 export const toRpcStatus = {
-  reverted: 0,
-  skipped: 2,
-  success: 1,
+  reverted: '0x0',
+  skipped: '0x2',
+  success: '0x1',
 } as const
 
 /**
@@ -58,9 +68,10 @@ export const toRpcStatus = {
  *
  * const receipt = FrameReceipt.fromRpc({
  *   executionGasUsed: '0x5208',
+ *   gasUsed: '0x5208',
  *   logs: [],
  *   stateGasUsed: '0x0',
- *   status: 1
+ *   status: '0x1'
  * })
  * ```
  *
@@ -69,7 +80,8 @@ export const toRpcStatus = {
  */
 export function fromRpc(receipt: Rpc): FrameReceipt {
   return {
-    gasUsed: Hex.toBigInt(receipt.executionGasUsed),
+    executionGasUsed: Hex.toBigInt(receipt.executionGasUsed),
+    gasUsed: Hex.toBigInt(receipt.gasUsed),
     logs: receipt.logs,
     stateGasUsed: Hex.toBigInt(receipt.stateGasUsed),
     status: fromRpcStatus[receipt.status],
@@ -91,19 +103,21 @@ export declare namespace fromRpc {
  *
  * const receipt = FrameReceipt.fromRpc({
  *   executionGasUsed: '0x5208',
+ *   gasUsed: '0x5208',
  *   logs: [],
  *   stateGasUsed: '0x0',
- *   status: 1
+ *   status: '0x1'
  * })
  * const rpc = FrameReceipt.toRpc(receipt)
  * ```
  *
  * @param receipt - The frame receipt. Gas accepts hex, bigint, or number values.
- * @returns The RPC frame receipt with hex gas and a numeric status.
+ * @returns The RPC frame receipt with hex gas and a hex status.
  */
 export function toRpc(receipt: toRpc.Input): Rpc {
   return {
-    executionGasUsed: Quantity.fromNumberish(receipt.gasUsed),
+    executionGasUsed: Quantity.fromNumberish(receipt.executionGasUsed),
+    gasUsed: Quantity.fromNumberish(receipt.gasUsed),
     logs: receipt.logs,
     stateGasUsed: Quantity.fromNumberish(receipt.stateGasUsed),
     status: toRpcStatus[receipt.status],

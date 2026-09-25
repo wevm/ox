@@ -58,9 +58,9 @@ export const Decoded: z.ZodMiniType<
 /** RPC frame signature schema. */
 export const Rpc = z
   .object({
-    msg: z_Hex.Hex,
-    scheme: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-    signature: z_Hex.Hex,
+    msg: z.optional(z_Hex.Hex),
+    scheme: z.enum(['0x0', '0x1', '0x2']),
+    signature: z.optional(z_Hex.Hex),
     signer: z.optional(z.nullable(z_Address.Address)),
   })
   .check(

@@ -45,13 +45,13 @@ export type Rpc = {
   /** Frame calldata. */
   data: Hex.Hex
   /** Execution gas budget. */
-  executionGasLimit: Hex.Hex
+  executionGas: Hex.Hex
   /** Approval scope and batching bits. */
-  flags: number
+  flags: Hex.Hex
   /** Execution mode. */
-  mode: number
+  mode: Hex.Hex
   /** State gas budget. */
-  stateGasLimit: Hex.Hex
+  stateGas: Hex.Hex
   /** Target address; absent for the transaction sender. */
   target?: Address.Address | null | undefined
   /** Value transferred in wei. */
@@ -205,10 +205,10 @@ export declare namespace from {
  *
  * const frame = Frame.fromRpc({
  *   data: '0x',
- *   executionGasLimit: '0xc350',
- *   flags: 3,
- *   mode: 1,
- *   stateGasLimit: '0x0',
+ *   executionGas: '0xc350',
+ *   flags: '0x3',
+ *   mode: '0x1',
+ *   stateGas: '0x0',
  *   value: '0x0'
  * })
  * ```
@@ -219,17 +219,20 @@ export declare namespace from {
 export function fromRpc(frame: Rpc): Frame {
   return from({
     data: frame.data,
-    executionGas: Hex.toBigInt(frame.executionGasLimit),
-    flags: frame.flags,
-    mode: frame.mode,
-    stateGas: Hex.toBigInt(frame.stateGasLimit),
+    executionGas: Hex.toBigInt(frame.executionGas),
+    flags: Hex.toNumber(frame.flags),
+    mode: Hex.toNumber(frame.mode),
+    stateGas: Hex.toBigInt(frame.stateGas),
     ...(frame.target == null ? {} : { to: frame.target }),
     value: Hex.toBigInt(frame.value),
   })
 }
 
 export declare namespace fromRpc {
-  type ErrorType = from.ErrorType | Hex.toBigInt.ErrorType
+  type ErrorType =
+    | from.ErrorType
+    | Hex.toBigInt.ErrorType
+    | Hex.toNumber.ErrorType
 }
 
 /**
@@ -255,10 +258,10 @@ export function toRpc(frame: toRpc.Input): Rpc {
   const { flags: flags_ = 0, mode = 0 } = frame
   return {
     data: frame.data ?? '0x',
-    executionGasLimit: Quantity.fromNumberish(frame.executionGas ?? 0n),
-    flags: typeof flags_ === 'string' ? flags[flags_] : flags_,
-    mode: typeof mode === 'string' ? modes[mode] : mode,
-    stateGasLimit: Quantity.fromNumberish(frame.stateGas ?? 0n),
+    executionGas: Quantity.fromNumberish(frame.executionGas ?? 0n),
+    flags: Hex.fromNumber(typeof flags_ === 'string' ? flags[flags_] : flags_),
+    mode: Hex.fromNumber(typeof mode === 'string' ? modes[mode] : mode),
+    stateGas: Quantity.fromNumberish(frame.stateGas ?? 0n),
     ...(frame.to === undefined ? {} : { target: frame.to }),
     value: Quantity.fromNumberish(frame.value ?? 0n),
   }

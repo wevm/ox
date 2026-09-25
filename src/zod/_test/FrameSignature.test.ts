@@ -8,7 +8,7 @@ describe('FrameSignature', () => {
     expect(
       z.safeDecode(z.FrameSignature.FrameSignature, {
         msg: '0x',
-        scheme: 1,
+        scheme: '0x1',
         signature: '0x01',
       }).success,
     ).toBe(false)
@@ -20,27 +20,27 @@ describe('FrameSignature', () => {
         scheme: 'arbitrary',
         signature: '0xaabb',
       }),
-    ).toEqual({ msg: '0x', scheme: 0, signature: '0xaabb' })
+    ).toEqual({ msg: '0x', scheme: '0x0', signature: '0xaabb' })
     expect(
       z.encode(z.FrameSignature.FrameSignature, {
         scheme: 'secp256k1',
       }),
-    ).toEqual({ msg: '0x', scheme: 1, signature: '0x' })
+    ).toEqual({ msg: '0x', scheme: '0x1' })
     expect(
       z.encode(z.FrameSignature.FrameSignature, {
         scheme: 'p256',
       }),
-    ).toEqual({ msg: '0x', scheme: 2, signature: '0x' })
+    ).toEqual({ msg: '0x', scheme: '0x2' })
   })
 
   test('arbitrary bytes', () => {
     expect(
       z.encode(z.FrameSignature.FrameSignature, FrameSignature.from('0xaabb')),
-    ).toEqual({ msg: '0x', scheme: 0, signature: '0xaabb' })
+    ).toEqual({ msg: '0x', scheme: '0x0', signature: '0xaabb' })
     expect(
       z.decode(z.FrameSignature.FrameSignature, {
         msg: '0x',
-        scheme: 0,
+        scheme: '0x0',
         signature: '0xaabb',
       }),
     ).toEqual(FrameSignature.from('0xaabb'))
@@ -54,7 +54,7 @@ describe('FrameSignature', () => {
       }),
     })
     const rpc = z.encode(z.FrameSignature.FrameSignature, entry)
-    expect(rpc.scheme).toBe(1)
+    expect(rpc.scheme).toBe('0x1')
     expect(z.decode(z.FrameSignature.FrameSignature, rpc)).toEqual(entry)
   })
   test('P-256 signature', () => {
@@ -68,7 +68,7 @@ describe('FrameSignature', () => {
       }),
     })
     const rpc = z.encode(z.FrameSignature.FrameSignature, entry)
-    expect(rpc.scheme).toBe(2)
+    expect(rpc.scheme).toBe('0x2')
     expect(z.decode(z.FrameSignature.FrameSignature, rpc)).toEqual({
       ...entry,
       signature: { r: entry.signature.r, s: entry.signature.s },
