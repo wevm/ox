@@ -52,6 +52,10 @@ export type Tuple = readonly [
  * ```
  */
 export function assert(value: FundingRequirement): void {
+  if (!Array.isArray(value.sources))
+    throw new InvalidRequirementError(
+      'Funding sources must be resolved before signing.',
+    )
   Address.assert(value.token, { strict: false })
   if (value.amount < 0n || value.amount >= 2n ** 256n)
     throw new InvalidRequirementError('Amount must fit uint256.')

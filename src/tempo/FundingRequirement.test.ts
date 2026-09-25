@@ -126,6 +126,30 @@ describe('fromRpc', () => {
 })
 
 describe('behavior', () => {
+  test('rejects unresolved sources before signing', () => {
+    expect(() =>
+      FundingRequirement.assert({
+        amount: 1n,
+        token: '0x20c0000000000000000000000000000000000000',
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[FundingRequirement.InvalidRequirementError: Funding sources must be resolved before signing.]`,
+    )
+  })
+
+  test('rejects unresolved policy before signing', () => {
+    expect(() =>
+      KeyAuthorization.getSignPayload({
+        address: '0x1111111111111111111111111111111111111111',
+        chainId: 1n,
+        fundingPolicy: true as never,
+        type: 'secp256k1',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[FundingPolicy.InvalidPolicyError: Funding policy must be resolved before signing.]`,
+    )
+  })
+
   const rules = {
     maxSlippageBps: 100,
     sources: {
