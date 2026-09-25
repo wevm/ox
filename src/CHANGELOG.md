@@ -1,5 +1,24 @@
 # ox
 
+## 0.14.49
+
+### Patch Changes
+
+- [#475](https://github.com/wevm/ox/pull/475) [`e0999aa`](https://github.com/wevm/ox/commit/e0999aae66462078429717db8aa54c7348bc489b) Thanks [@jxom](https://github.com/jxom)! - Aligned frame RPC quantities, signature placeholders, and receipt gas totals with the execution API definitions.
+
+- [#472](https://github.com/wevm/ox/pull/472) [`1e2fb85`](https://github.com/wevm/ox/commit/1e2fb856dd61d9ff2f5953296296aef9578e6f2a) Thanks [@jxom](https://github.com/jxom)! - Added hex signature support for secp256k1 and P256 frame signature entries.
+
+  ```ts
+  import { FrameSignature, Signature } from "ox";
+
+  declare const signature: Signature.Signature;
+
+  FrameSignature.from({
+    scheme: "secp256k1",
+    signature: Signature.toHex(signature),
+  });
+  ```
+
 ## 0.14.48
 
 ### Patch Changes
