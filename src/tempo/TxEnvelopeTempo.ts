@@ -185,6 +185,13 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
     validAfter,
   } = envelope
 
+  if (
+    envelope.requireFunds !== undefined &&
+    !Array.isArray(envelope.requireFunds)
+  )
+    throw new FundingRequirement.InvalidRequirementError(
+      'Funding requirements must be resolved before signing.',
+    )
   for (const requirement of envelope.requireFunds ?? [])
     FundingRequirement.assert(requirement)
 

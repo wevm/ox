@@ -241,6 +241,14 @@ export function hash(rules: Rules): Hex.Hex {
  * ```
  */
 export function toTuple(value: Authorization): Tuple {
+  if (
+    typeof value !== 'bigint' &&
+    (typeof value !== 'object' || value === null)
+  )
+    throw new InvalidPolicyError(
+      'Funding policy must be resolved before signing.',
+    )
+
   if (typeof value === 'bigint') {
     if (value <= 0n || value >= 2n ** 64n)
       throw new InvalidPolicyError('Policy ID must be a nonzero uint64.')

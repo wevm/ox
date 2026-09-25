@@ -99,6 +99,16 @@ export type SignatureRpc =
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<false, bigint, number>
 
+/** Unsigned RPC authorization used before owner signing. */
+export type UnsignedRpc = Rpc extends infer authorization
+  ? authorization extends Rpc
+    ? Omit<authorization, 'signature'> & { signature?: never }
+    : never
+  : never
+
+/** Authorization fields before owner signing. */
+export type Unsigned = KeyAuthorization<false> & { signature?: never }
+
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
   /** Optional account address binding (TIP-1049). */
@@ -551,14 +561,34 @@ export declare namespace from {
  * @returns A signed {@link ox#AuthorizationTempo.AuthorizationTempo}.
  */
 export function fromRpc(authorization: Rpc): Signed {
+  const { signature: signatureRpc, ...unsigned } = authorization
+  const signature = SignatureEnvelope.fromRpc(signatureRpc)
+  assertSignature(signature)
+  return { ...fromRpcUnsigned(unsigned), signature }
+}
+
+/**
+ * Converts unsigned RPC fields before owner signing.
+ *
+ * @example
+ * ```ts
+ * import { KeyAuthorization } from 'ox/tempo'
+ *
+ * const authorization = KeyAuthorization.fromRpcUnsigned({
+ *   chainId: '0x1',
+ *   expiry: null,
+ *   keyId: '0x2222222222222222222222222222222222222222',
+ *   keyType: 'secp256k1',
+ * })
+ * ```
+ */
+export function fromRpcUnsigned(authorization: UnsignedRpc): Unsigned {
   const { allowedCalls, chainId, keyId, expiry, limits, keyType } =
     authorization
   const witness = authorization.witness ?? undefined
   const isAdmin = authorization.isAdmin ?? undefined
   const account = authorization.account ?? undefined
   assertAccountBinding(keyType, account)
-  const signature = SignatureEnvelope.fromRpc(authorization.signature)
-  assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Unflatten nested allowedCalls into flat scopes
@@ -590,7 +620,6 @@ export function fromRpc(authorization: Rpc): Signed {
         : {}),
     })),
     ...(scopes ? { scopes } : {}),
-    signature,
     type: keyType,
     ...(witness !== undefined ? { witness } : {}),
     ...(authorization.fundingPolicy !== undefined
@@ -986,6 +1015,34 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: toRpc.Input): Rpc {
+  const { signature, ...unsigned } = authorization
+  assertSignature(signature)
+  return {
+    ...toRpcUnsigned(unsigned),
+    signature: SignatureEnvelope.toRpc(signature) as SignatureRpc,
+  }
+}
+
+/**
+ * Converts unsigned authorization fields to RPC before owner signing.
+ *
+ * @example
+ * ```ts
+ * import { KeyAuthorization } from 'ox/tempo'
+ *
+ * const authorization = KeyAuthorization.toRpcUnsigned({
+ *   address: '0x2222222222222222222222222222222222222222',
+ *   chainId: 1n,
+ *   type: 'secp256k1',
+ * })
+ * ```
+ */
+export function toRpcUnsigned(
+  authorization: Omit<
+    KeyAuthorization<false, Hex.Hex | bigint | number, Hex.Hex | number>,
+    'signature'
+  >,
+): UnsignedRpc {
   assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
@@ -994,12 +1051,10 @@ export function toRpc(authorization: toRpc.Input): Rpc {
     expiry,
     limits,
     type,
-    signature,
     witness,
     isAdmin,
     account,
   } = authorization
-  assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
@@ -1038,9 +1093,6 @@ export function toRpc(authorization: toRpc.Input): Rpc {
       limit: Quantity.fromNumberish(limit),
       ...(period ? { period: Quantity.fromNumberish(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(signature) as
-      | SignatureEnvelope.PrimitiveRpc
-      | SignatureEnvelope.MultisigRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
