@@ -247,10 +247,10 @@ describe('fromRpc', () => {
     expect(
       Frame.fromRpc({
         data: '0xdeadbeef',
-        executionGasLimit: '0x20000000000001',
-        flags: 0,
-        mode: 2,
-        stateGasLimit: '0xc',
+        executionGas: '0x20000000000001',
+        flags: '0x0',
+        mode: '0x2',
+        stateGas: '0xc',
         target: null,
         value: '0x1',
       }),
@@ -273,10 +273,10 @@ describe('toRpc', () => {
       ),
     ).toEqual({
       data: '0x',
-      executionGasLimit: '0x0',
-      flags: 3,
-      mode: 1,
-      stateGasLimit: '0x0',
+      executionGas: '0x0',
+      flags: '0x3',
+      mode: '0x1',
+      stateGas: '0x0',
       value: '0x0',
     })
   })
@@ -285,10 +285,10 @@ describe('toRpc', () => {
       Frame.toRpc({ executionGas: '0xc350', stateGas: 12, value: 0n }),
     ).toEqual({
       data: '0x',
-      executionGasLimit: '0xc350',
-      flags: 0,
-      mode: 0,
-      stateGasLimit: '0xc',
+      executionGas: '0xc350',
+      flags: '0x0',
+      mode: '0x0',
+      stateGas: '0xc',
       value: '0x0',
     })
   })

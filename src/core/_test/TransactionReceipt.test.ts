@@ -469,6 +469,7 @@ describe('frame receipts', () => {
       frameReceipts: [
         {
           executionGasUsed: '0x20000000000001',
+          gasUsed: '0x20000000000003',
           logs: [
             {
               address: '0x1111111111111111111111111111111111111111',
@@ -477,10 +478,22 @@ describe('frame receipts', () => {
             },
           ],
           stateGasUsed: '0x2',
-          status: 1,
+          status: '0x1',
         },
-        { executionGasUsed: '0x3', logs: [], stateGasUsed: '0x0', status: 0 },
-        { executionGasUsed: '0x0', logs: [], stateGasUsed: '0x0', status: 2 },
+        {
+          executionGasUsed: '0x3',
+          gasUsed: '0x3',
+          logs: [],
+          stateGasUsed: '0x0',
+          status: '0x0',
+        },
+        {
+          executionGasUsed: '0x0',
+          gasUsed: '0x0',
+          logs: [],
+          stateGasUsed: '0x0',
+          status: '0x2',
+        },
       ],
       from: '0x1111111111111111111111111111111111111111',
       gasUsed: '0x20000000000001',
@@ -498,13 +511,26 @@ describe('frame receipts', () => {
     expect(receipt.payer).toBe(rpc.payer)
     expect(receipt.frameReceipts).toEqual([
       {
-        gasUsed: 9007199254740993n,
+        executionGasUsed: 9007199254740993n,
+        gasUsed: 9007199254740995n,
         logs: rpc.frameReceipts[0]!.logs,
         stateGasUsed: 2n,
         status: 'success',
       },
-      { gasUsed: 3n, logs: [], stateGasUsed: 0n, status: 'reverted' },
-      { gasUsed: 0n, logs: [], stateGasUsed: 0n, status: 'skipped' },
+      {
+        executionGasUsed: 3n,
+        gasUsed: 3n,
+        logs: [],
+        stateGasUsed: 0n,
+        status: 'reverted',
+      },
+      {
+        executionGasUsed: 0n,
+        gasUsed: 0n,
+        logs: [],
+        stateGasUsed: 0n,
+        status: 'skipped',
+      },
     ])
     expect(TransactionReceipt.toRpc(receipt)).toMatchObject(rpc)
     expect(

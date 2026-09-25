@@ -6,7 +6,12 @@ import * as Frame from './Frame.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
-import type { Compute, OneOf, UnionCompute } from './internal/types.js'
+import type {
+  Compute,
+  ExactPartial,
+  OneOf,
+  UnionCompute,
+} from './internal/types.js'
 import * as Signature from './Signature.js'
 
 /**
@@ -197,29 +202,35 @@ export type Eip8141<
 > = Compute<
   Omit<
     Base<type, pending, bigintType, numberType>,
-    'chainId' | 'r' | 's' | 'v' | 'yParity'
-  > & {
-    /** Versioned blob hashes. */
-    blobVersionedHashes: readonly Hex.Hex[]
-    /** Chain ID, retaining bigint precision when needed. */
-    chainId: numberType | bigintType
-    /** Frames in execution order. */
-    frames: readonly ([bigintType] extends [Hex.Hex]
-      ? Frame.Rpc
-      : Frame.Frame<bigintType>)[]
-    /** Effective gas price. */
-    gasPrice?: bigintType | undefined
-    /** Maximum fee per blob gas. */
-    maxFeePerBlobGas: bigintType
-    /** Maximum fee per gas. */
-    maxFeePerGas: bigintType
-    /** Maximum priority fee per gas. */
-    maxPriorityFeePerGas: bigintType
-    /** Frame signature entries. */
-    signatures: readonly ([bigintType] extends [Hex.Hex]
-      ? FrameSignature.Rpc
-      : FrameSignature.FrameSignature)[]
-  }
+    'chainId' | 'gas' | 'input' | 'to' | 'value' | 'r' | 's' | 'v' | 'yParity'
+  > &
+    ExactPartial<
+      Pick<
+        Base<type, pending, bigintType, numberType>,
+        'gas' | 'input' | 'to' | 'value'
+      >
+    > & {
+      /** Versioned blob hashes. */
+      blobVersionedHashes: readonly Hex.Hex[]
+      /** Chain ID, retaining bigint precision when needed. */
+      chainId: numberType | bigintType
+      /** Frames in execution order. */
+      frames: readonly ([bigintType] extends [Hex.Hex]
+        ? Frame.Rpc
+        : Frame.Frame<bigintType>)[]
+      /** Effective gas price. */
+      gasPrice?: bigintType | undefined
+      /** Maximum fee per blob gas. */
+      maxFeePerBlobGas: bigintType
+      /** Maximum fee per gas. */
+      maxFeePerGas: bigintType
+      /** Maximum priority fee per gas. */
+      maxPriorityFeePerGas: bigintType
+      /** Frame signature entries. */
+      signatures: readonly ([bigintType] extends [Hex.Hex]
+        ? FrameSignature.Rpc
+        : FrameSignature.FrameSignature)[]
+    }
 >
 
 /** An EIP-8141 RPC transaction. */

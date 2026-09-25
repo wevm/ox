@@ -9,17 +9,18 @@ import {
 export const port = Number(import.meta.env.VITE_FRAMES_PORT ?? 3001)
 export const rpcUrl = `http://localhost:${port}/${Number(import.meta.env.VITEST_POOL_ID ?? 1) + Math.floor(Math.random() * 10_000)}`
 
-export const nethermind = Instance.define(() => {
+export const reth = Instance.define(() => {
   let container: StartedTestContainer | undefined
 
   return {
-    name: 'nethermind',
+    name: 'reth',
     host: 'localhost',
     port: 8545,
     async start({ port = 8545 }, { emitter }) {
       container = await new GenericContainer(
-        'ghcr.io/wevm/nethermind-frames@sha256:1f8e5b5698e18af41849fd95016271a96f8d7fd192014270c08d0306283dc07a',
+        'ghcr.io/wevm/reth:sha-0acab10e8123',
       )
+        .withPlatform('linux/amd64')
         .withExposedPorts({ container: 8545, host: port })
         .withCopyFilesToContainer([
           {
@@ -28,22 +29,18 @@ export const nethermind = Instance.define(() => {
           },
         ])
         .withCommand([
-          '--config',
-          'spaceneth',
-          '--Init.ChainSpecPath',
+          'node',
+          '--chain',
           '/tmp/frames.json',
-          '--Init.EnableUnsecuredDevWallet',
-          'false',
-          '--Init.LogDirectory',
-          '/tmp/logs',
-          '--TxPool.BlobsSupport',
-          'InMemory',
-          '--JsonRpc.Host',
+          '--dev',
+          '--http',
+          '--http.addr',
           '0.0.0.0',
-          '--JsonRpc.EnabledModules',
-          'Eth,Net,Web3',
+          '--http.api',
+          'eth,net,web3',
+          '--ipcdisable',
         ])
-        .withWaitStrategy(Wait.forLogMessage('Initialization Completed'))
+        .withWaitStrategy(Wait.forLogMessage('RPC HTTP server started'))
         .withStartupTimeout(120_000)
         .withLogConsumer((stream) => {
           stream.on('data', (data) => {
@@ -63,5 +60,5 @@ export const nethermind = Instance.define(() => {
 })
 
 export function createServer() {
-  return Server.create({ instance: nethermind(), port })
+  return Server.create({ instance: reth(), port })
 }

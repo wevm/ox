@@ -13,10 +13,10 @@ describe('Frame', () => {
     const rpc = z.encode(z.Frame.Frame, frame)
     expect(rpc).toEqual({
       data: '0x',
-      executionGasLimit: '0xc350',
-      flags: 3,
-      mode: 1,
-      stateGasLimit: '0x0',
+      executionGas: '0xc350',
+      flags: '0x3',
+      mode: '0x1',
+      stateGas: '0x0',
       target: '0x1111111111111111111111111111111111111111',
       value: '0x0',
     })
@@ -39,7 +39,7 @@ describe('Frame', () => {
   test('encodes numberish values', () => {
     expect(
       z.encode(z.Frame.FrameToRpc, { executionGas: '0xc350', stateGas: 0 })
-        .executionGasLimit,
+        .executionGas,
     ).toBe('0xc350')
   })
 })

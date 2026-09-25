@@ -25,10 +25,10 @@ export const Decoded: z.ZodMiniType<core_Frame.Frame, core_Frame.Frame> = z
 export const Rpc = z
   .object({
     data: z_Hex.Hex,
-    executionGasLimit: z_Hex.Hex,
-    flags: z.number(),
-    mode: z.number(),
-    stateGasLimit: z_Hex.Hex,
+    executionGas: z_Hex.Hex,
+    flags: z_Hex.Hex,
+    mode: z_Hex.Hex,
+    stateGas: z_Hex.Hex,
     target: z.optional(z.nullable(z_Address.Address)),
     value: z_Hex.Hex,
   })

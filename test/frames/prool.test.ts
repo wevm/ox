@@ -5,10 +5,10 @@ import { rpcUrl } from './prool.js'
 
 const rpc = RpcTransport.fromHttp(rpcUrl)
 
-describe('nethermind', () => {
+describe('reth', () => {
   test('starts a funded development chain', async () => {
     expect(await rpc.request({ method: 'web3_clientVersion' })).toContain(
-      'Nethermind/',
+      'reth/',
     )
     expect(await rpc.request({ method: 'eth_chainId' })).toMatchInlineSnapshot(
       '"0x1fcd"',
