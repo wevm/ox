@@ -781,6 +781,31 @@
       "types": "./dist/tempo/EarnShares.d.ts",
       "default": "./dist/tempo/EarnShares.js"
     },
+    "./tempo/FundingPolicy": {
+      "src": "./src/tempo/FundingPolicy.ts",
+      "types": "./dist/tempo/FundingPolicy.d.ts",
+      "default": "./dist/tempo/FundingPolicy.js"
+    },
+    "./tempo/FundingRequirement": {
+      "src": "./src/tempo/FundingRequirement.ts",
+      "types": "./dist/tempo/FundingRequirement.d.ts",
+      "default": "./dist/tempo/FundingRequirement.js"
+    },
+    "./tempo/FundingSource": {
+      "src": "./src/tempo/FundingSource.ts",
+      "types": "./dist/tempo/FundingSource.d.ts",
+      "default": "./dist/tempo/FundingSource.js"
+    },
+    "./tempo/FundingSourceDex": {
+      "src": "./src/tempo/FundingSourceDex.ts",
+      "types": "./dist/tempo/FundingSourceDex.d.ts",
+      "default": "./dist/tempo/FundingSourceDex.js"
+    },
+    "./tempo/FundingSourceEarn": {
+      "src": "./src/tempo/FundingSourceEarn.ts",
+      "types": "./dist/tempo/FundingSourceEarn.d.ts",
+      "default": "./dist/tempo/FundingSourceEarn.js"
+    },
     "./tempo/KeyAuthorization": {
       "src": "./src/tempo/KeyAuthorization.ts",
       "types": "./dist/tempo/KeyAuthorization.d.ts",
@@ -1225,6 +1250,16 @@
       "src": "./src/zod/tempo/AuthorizationTempo.ts",
       "types": "./dist/zod/tempo/AuthorizationTempo.d.ts",
       "default": "./dist/zod/tempo/AuthorizationTempo.js"
+    },
+    "./zod/tempo/FundingPolicy": {
+      "src": "./src/zod/tempo/FundingPolicy.ts",
+      "types": "./dist/zod/tempo/FundingPolicy.d.ts",
+      "default": "./dist/zod/tempo/FundingPolicy.js"
+    },
+    "./zod/tempo/FundingRequirement": {
+      "src": "./src/zod/tempo/FundingRequirement.ts",
+      "types": "./dist/zod/tempo/FundingRequirement.d.ts",
+      "default": "./dist/zod/tempo/FundingRequirement.js"
     },
     "./zod/tempo/KeyAuthorization": {
       "src": "./src/zod/tempo/KeyAuthorization.ts",
