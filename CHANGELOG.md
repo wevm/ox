@@ -1,5 +1,34 @@
 # ox
 
+## 1.8.2
+
+### Patch Changes
+
+- [`03eb47a`](https://github.com/wevm/ox/commit/03eb47a4c5d87b52215cbf345a95da854add9f26) Thanks [@jxom](https://github.com/jxom)! - Renamed `Frame.gas` to `Frame.executionGas`.
+
+  ```ts
+  import { Frame } from "ox";
+
+  Frame.from({ executionGas: 50_000n, stateGas: 1_000n });
+  ```
+
+- [#476](https://github.com/wevm/ox/pull/476) [`3f0726b`](https://github.com/wevm/ox/commit/3f0726b4fd0795402d08effc199081e7cff54241) Thanks [@jxom](https://github.com/jxom)! - Aligned frame RPC quantities, signature placeholders, and receipt gas totals with the execution API definitions.
+
+- [#471](https://github.com/wevm/ox/pull/471) [`1270b42`](https://github.com/wevm/ox/commit/1270b4279a48acea5f2e397c19fa252342f30f90) Thanks [@jxom](https://github.com/jxom)! - Added hex signature support for secp256k1 and P256 frame signature entries.
+
+  ```ts
+  import { FrameSignature, Signature } from "ox";
+
+  declare const signature: Signature.Signature;
+
+  FrameSignature.from({
+    scheme: "secp256k1",
+    signature: Signature.toHex(signature),
+  });
+  ```
+
+- [#477](https://github.com/wevm/ox/pull/477) [`10075a8`](https://github.com/wevm/ox/commit/10075a8971ffd73d2345f3a1bda97bb1df5b6cac) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.parseMessage` losing or truncating resources when `Resources:` appeared in another message field or resource.
+
 ## 1.8.1
 
 ### Patch Changes
