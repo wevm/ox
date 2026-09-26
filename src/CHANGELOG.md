@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.50
+
+### Patch Changes
+
+- [#478](https://github.com/wevm/ox/pull/478) [`17b4308`](https://github.com/wevm/ox/commit/17b43085d8cd3d5796f35399200214b75116cb9f) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.parseMessage` losing or truncating resources when `Resources:` appeared in another message field or resource.
+
 ## 0.14.49
 
 ### Patch Changes
