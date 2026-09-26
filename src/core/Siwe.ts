@@ -21,7 +21,7 @@ export const prefixRegex =
 
 // https://regexr.com/80gf9
 export const suffixRegex =
-  /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.+))?/
+  /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
 
 const siweDateTimeRegex =
   /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/
@@ -421,18 +421,26 @@ export function parseMessage(message: string): ExactPartial<Message> {
     scheme?: string
     statement?: string
   }
-  const { chainId, expirationTime, issuedAt, notBefore, requestId, ...suffix } =
-    (message.match(suffixRegex)?.groups ?? {}) as {
-      chainId: string
-      expirationTime?: string
-      issuedAt?: string
-      nonce: string
-      notBefore?: string
-      requestId?: string
-      uri: string
-      version: '1'
-    }
-  const resources = message.split('Resources:')[1]?.split('\n- ').slice(1)
+  const {
+    chainId,
+    expirationTime,
+    issuedAt,
+    notBefore,
+    requestId,
+    resources: resources_,
+    ...suffix
+  } = (message.match(suffixRegex)?.groups ?? {}) as {
+    chainId: string
+    expirationTime?: string
+    issuedAt?: string
+    nonce: string
+    notBefore?: string
+    requestId?: string
+    resources?: string
+    uri: string
+    version: '1'
+  }
+  const resources = resources_?.split('\n- ').slice(1)
   return {
     ...prefix,
     ...suffix,
