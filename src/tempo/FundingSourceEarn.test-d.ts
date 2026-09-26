@@ -1,0 +1,47 @@
+import { expectTypeOf, test } from 'vitest'
+import * as FundingSourceEarn from './FundingSourceEarn.js'
+
+const vault = '0x0101010101010101010101010101010101010101' as const
+
+test('encodeExecutionData', () => {
+  expectTypeOf(
+    FundingSourceEarn.encodeExecutionData({ vault }),
+  ).toEqualTypeOf<`0x${string}`>()
+  // @ts-expect-error Input caps use bigint base units.
+  FundingSourceEarn.encodeExecutionData({ maxAmountIn: 30, vault })
+})
+
+test('encodeConfigData', () => {
+  expectTypeOf(
+    FundingSourceEarn.encodeConfigData({ maxValueIn: 50n, vault }),
+  ).toEqualTypeOf<`0x${string}`>()
+  // @ts-expect-error A vault is required.
+  FundingSourceEarn.encodeConfigData({ maxValueIn: 50n })
+})
+
+test('decodeExecutionData', () => {
+  expectTypeOf(FundingSourceEarn.decodeExecutionData('0x')).toEqualTypeOf<
+    Required<FundingSourceEarn.Request>
+  >()
+})
+
+test('decodeConfigData', () => {
+  expectTypeOf(FundingSourceEarn.decodeConfigData('0x')).toEqualTypeOf<
+    Required<FundingSourceEarn.Request>
+  >()
+})
+
+test('from', () => {
+  const source = FundingSourceEarn.from({
+    source: '0x0202020202020202020202020202020202020202',
+    vault: '0x0101010101010101010101010101010101010101',
+  })
+  expectTypeOf(
+    source.to,
+  ).toEqualTypeOf<'0x0202020202020202020202020202020202020202'>()
+  expectTypeOf(source.data).toEqualTypeOf<`0x${string}`>()
+  // @ts-expect-error The deployed source address is required.
+  FundingSourceEarn.from({
+    vault: '0x0101010101010101010101010101010101010101',
+  })
+})

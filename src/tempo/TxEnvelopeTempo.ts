@@ -15,6 +15,7 @@ import * as Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
+import * as FundingRequirement from './FundingRequirement.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
@@ -103,6 +104,10 @@ export type TxEnvelopeTempo<
     keyAuthorization?:
       | KeyAuthorization.Signed<bigintType, numberType, addressType>
       | undefined
+    /** Required balances processed before application calls. */
+    requireFunds?:
+      | readonly FundingRequirement.FundingRequirement<bigintType, numberType>[]
+      | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
     /** Max priority fee per gas (in wei). */
@@ -183,6 +188,16 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
     validBefore,
     validAfter,
   } = envelope
+
+  if (
+    envelope.requireFunds !== undefined &&
+    !Array.isArray(envelope.requireFunds)
+  )
+    throw new FundingRequirement.InvalidRequirementError(
+      'Funding requirements must be resolved before signing.',
+    )
+  for (const requirement of envelope.requireFunds ?? [])
+    FundingRequirement.assert(requirement)
 
   // Calls must not be empty
   if (!calls || calls.length === 0) throw new CallsEmptyError()
@@ -270,23 +285,24 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     feeToken,
     feePayerSignatureOrSender,
     authorizationList,
-    keyAuthorizationOrSignature,
-    maybeSignature,
+    ...trailing
   ] = transactionArray as readonly Hex.Hex[]
 
-  const keyAuthorization = Array.isArray(keyAuthorizationOrSignature)
-    ? keyAuthorizationOrSignature
+  const fields: unknown[] = [...trailing]
+  const keyAuthorization = Array.isArray(fields[0]) ? fields.shift() : undefined
+  const placeholder = fields[0] === '0x'
+  if (placeholder) fields.shift()
+  const funding = Array.isArray(fields[0])
+    ? (fields.shift() as unknown[])
     : undefined
-  const signature = keyAuthorization
-    ? maybeSignature
-    : keyAuthorizationOrSignature
-
+  const signature = fields.shift() as Hex.Hex | undefined
   if (
-    !(
-      transactionArray.length === 13 ||
-      transactionArray.length === 14 ||
-      transactionArray.length === 15
-    )
+    transactionArray.length < 13 ||
+    fields.length ||
+    (placeholder && (!funding || keyAuthorization !== undefined)) ||
+    (funding && !keyAuthorization && !placeholder) ||
+    (funding && funding.length === 0) ||
+    (signature !== undefined && typeof signature !== 'string')
   )
     throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
@@ -304,15 +320,14 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
         validAfter,
         feeToken,
         feePayerSignatureOrSender,
-        ...(transactionArray.length > 12
-          ? {
-              signature,
-            }
-          : {}),
+        ...(transactionArray.length > 12 ? { signature } : {}),
       },
       serialized,
       type,
     })
+  const requireFunds = funding?.map((value) =>
+    FundingRequirement.fromTuple(value as FundingRequirement.Tuple),
+  )
 
   let transaction = {
     chainId: Number(chainId),
@@ -372,6 +387,8 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
         feePayerSignatureOrSender as never,
       )
   }
+
+  if (requireFunds) transaction.requireFunds = requireFunds
 
   if (keyAuthorization)
     transaction.keyAuthorization = KeyAuthorization.fromTuple(
@@ -641,6 +658,7 @@ export function serialize(
     feeToken,
     gas,
     keyAuthorization,
+    requireFunds,
     nonce,
     nonceKey,
     maxFeePerGas,
@@ -722,7 +740,14 @@ export function serialize(
       : '0x',
     feePayerSignatureOrSender,
     authorizationTupleList,
-    ...(keyAuthorization ? [KeyAuthorization.toTuple(keyAuthorization)] : []),
+    ...(keyAuthorization
+      ? [KeyAuthorization.toTuple(keyAuthorization)]
+      : requireFunds?.length
+        ? ['0x' as const]
+        : []),
+    ...(requireFunds?.length
+      ? [requireFunds.map(FundingRequirement.toTuple)]
+      : []),
     ...(signature
       ? [SignatureEnvelope.serialize(SignatureEnvelope.from(signature))]
       : []),
