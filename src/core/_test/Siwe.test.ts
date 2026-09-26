@@ -773,6 +773,153 @@ Resources:
   `)
   })
 
+  test('behavior: "Resources:" in statement', () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+See the Resources: list below.
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Resources:
+- https://example.com/foo
+- https://example.com/bar`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed).toMatchInlineSnapshot(`
+      {
+        "address": "0xA0Cf798816D4b9b9866b5330EEa46a18382f251e",
+        "chainId": 1,
+        "domain": "example.com",
+        "issuedAt": 2023-02-01T00:00:00.000Z,
+        "nonce": "foobarbaz",
+        "resources": [
+          "https://example.com/foo",
+          "https://example.com/bar",
+        ],
+        "statement": "See the Resources: list below.",
+        "uri": "https://example.com/path",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('behavior: "Resources:" in statement without resources', () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+See the Resources: page.
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.resources).toBeUndefined()
+  })
+
+  test('behavior: "Resources:" in uri', () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+URI: https://example.com/Resources:path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Resources:
+- https://example.com/foo`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.resources).toMatchInlineSnapshot(`
+      [
+        "https://example.com/foo",
+      ]
+    `)
+  })
+
+  test('behavior: "Resources:" in requestId', () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Request ID: Resources:123
+Resources:
+- https://example.com/foo`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.resources).toMatchInlineSnapshot(`
+      [
+        "https://example.com/foo",
+      ]
+    `)
+  })
+
+  test('behavior: "Resources:" in a resource', () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Resources:
+- https://example.com/Resources:foo
+- https://example.com/bar`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.resources).toMatchInlineSnapshot(`
+      [
+        "https://example.com/Resources:foo",
+        "https://example.com/bar",
+      ]
+    `)
+  })
+
+  test('behavior: empty requestId with resources', () => {
+    // EIP-4361 allows an empty Request ID (`request-id = *pchar`).
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z
+Request ID: \nResources:
+- https://example.com/foo`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.resources).toMatchInlineSnapshot(`
+      [
+        "https://example.com/foo",
+      ]
+    `)
+  })
+
+  test('behavior: empty resources', () => {
+    const message = Siwe.createMessage({
+      address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+      chainId: 1,
+      domain: 'example.com',
+      issuedAt: new Date('2023-02-01T00:00:00.000Z'),
+      nonce: 'foobarbaz',
+      resources: [],
+      statement: 'Resources:',
+      uri: 'https://example.com/path',
+      version: '1',
+    })
+    expect(Siwe.parseMessage(message).resources).toMatchInlineSnapshot('[]')
+  })
+
   test('behavior: no suffix', () => {
     const message = `https://example.com wants you to sign in with your Ethereum account:
 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
