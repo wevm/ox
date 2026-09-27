@@ -37,7 +37,7 @@ test('from', () => {
     vault: '0x0101010101010101010101010101010101010101',
   })
   expectTypeOf(
-    source.to,
+    source.target,
   ).toEqualTypeOf<'0x0202020202020202020202020202020202020202'>()
   expectTypeOf(source.data).toEqualTypeOf<`0x${string}`>()
   // @ts-expect-error The deployed source address is required.

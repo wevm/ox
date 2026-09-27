@@ -8,7 +8,7 @@ export type Source = {
   /** ABI-encoded execution data for funding, or configuration data for policies and discovery. */
   data: Hex.Hex
   /** Funding source address. */
-  to: Address.Address
+  target: Address.Address
 }
 
 /**

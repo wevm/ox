@@ -38,7 +38,7 @@ export function from<const source extends Address.Address>(
 ) {
   return {
     data: encodeExecutionData(request),
-    to: request.source,
+    target: request.source,
   } satisfies FundingSource.Source
 }
 

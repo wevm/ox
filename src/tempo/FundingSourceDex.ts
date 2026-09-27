@@ -30,7 +30,7 @@ const nativeDexAddress = '0x1120000000000000000000000000000000000001'
 export function from(request: Request) {
   return {
     data: encodeExecutionData(request),
-    to: nativeDexAddress,
+    target: nativeDexAddress,
   } satisfies FundingSource.Source
 }
 

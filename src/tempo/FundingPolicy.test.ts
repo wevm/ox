@@ -6,7 +6,7 @@ const target = '0x0202020202020202020202020202020202020202' as const
 const requirement = {
   token,
   amount: 50n,
-  sources: [{ to: target, data: '0xab' as const }],
+  sources: [{ target, data: '0xab' as const }],
   slippageBps: 100,
 }
 
@@ -38,7 +38,7 @@ describe('hash', () => {
     expect(FundingPolicy.encode(first)).toBe(FundingPolicy.encode(reordered))
     const sources = [
       ...requirement.sources,
-      { to: target, data: '0xcd' as const },
+      { target, data: '0xcd' as const },
     ]
     expect(
       FundingPolicy.hash({ ...rules, sources: { [token]: sources } }),
@@ -84,7 +84,7 @@ describe('toRpc', () => {
 })
 
 describe('fromRpc', () => {
-  test('maps RPC sources to to', () => {
+  test('preserves RPC source targets', () => {
     expect(
       FundingPolicy.fromRpc({
         admins: [token],
@@ -98,7 +98,7 @@ describe('fromRpc', () => {
 })
 
 describe('fromTuple', () => {
-  test('decodes source addresses as to', () => {
+  test('decodes source targets', () => {
     expect(
       FundingPolicy.fromTuple([
         [token],
