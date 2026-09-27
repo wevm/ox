@@ -357,10 +357,6 @@ export declare namespace from {
  * @returns The converted value.
  */
 export function fromRpc(entry: Rpc): FrameSignature {
-  if (entry.signer === null)
-    throw new InvalidError(
-      'signer must be omitted, empty bytes, or an address.',
-    )
   return fromTuple([
     entry.scheme === '0x0'
       ? '0x'
