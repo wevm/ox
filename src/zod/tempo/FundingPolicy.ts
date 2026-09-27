@@ -54,7 +54,7 @@ export const Rpc = z.union([
         sources: z.record(
           z_Address.Address,
           z.readonly(
-            z.array(z.object({ to: z_Address.Address, data: z_Hex.Hex })),
+            z.array(z.object({ target: z_Address.Address, data: z_Hex.Hex })),
           ),
         ),
       }),
