@@ -72,25 +72,25 @@ describe('toRoutes', () => {
 })
 
 describe('toRpc', () => {
-  test('preserves the source to field', () => {
+  test('keeps the RPC target field', () => {
     expect(FundingPolicy.toRpc({ admins: [token], rules })).toEqual({
       admins: [token],
       rules: {
         maxSlippageBps: 100,
-        sources: { [token]: [{ to: target, data: '0xab' }] },
+        sources: { [token]: [{ target, data: '0xab' }] },
       },
     })
   })
 })
 
 describe('fromRpc', () => {
-  test('decodes the source to field', () => {
+  test('maps RPC sources to to', () => {
     expect(
       FundingPolicy.fromRpc({
         admins: [token],
         rules: {
           maxSlippageBps: 100,
-          sources: { [token]: [{ to: target, data: '0xab' }] },
+          sources: { [token]: [{ target, data: '0xab' }] },
         },
       }),
     ).toEqual({ admins: [token], rules })
