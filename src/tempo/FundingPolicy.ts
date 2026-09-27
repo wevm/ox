@@ -49,7 +49,7 @@ export type Rpc =
         /** Maximum aggregate slippage in basis points. */
         maxSlippageBps: number
         /** Ordered source permissions for each output token. */
-        sources: Readonly<Record<Address.Address, Route['sources']>>
+        sources: Readonly<Record<Address.Address, readonly Source[]>>
       }
     }
 
@@ -356,21 +356,7 @@ export function fromTuple(value: Tuple): Authorization {
  * ```
  */
 export function fromRpc(value: Rpc): Authorization {
-  const result =
-    typeof value === 'string'
-      ? BigInt(value)
-      : {
-          ...value,
-          rules: {
-            ...value.rules,
-            sources: Object.fromEntries(
-              Object.entries(value.rules.sources).map(([token, sources]) => [
-                token,
-                sources.map(({ target, data }) => ({ to: target, data })),
-              ]),
-            ),
-          },
-        }
+  const result = typeof value === 'string' ? BigInt(value) : value
   toTuple(result)
   return result
 }
@@ -399,7 +385,10 @@ export function toRpc(value: Authorization<bigint | number | Hex.Hex>): Rpc {
     rules: {
       ...value.rules,
       sources: Object.fromEntries(
-        toRoutes(value.rules).map(({ token, sources }) => [token, sources]),
+        toRoutes(value.rules).map(({ token, sources }) => [
+          token,
+          sources.map(({ target, data }) => ({ to: target, data })),
+        ]),
       ),
     },
   }
