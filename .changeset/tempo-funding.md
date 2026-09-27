@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Added Tempo funding codecs, policy rules, native DEX and Earn source helpers, access key funding authorization, and unsigned key authorization RPC conversion.
+Added Tempo funding codecs, policy rules, source helpers, and access key funding authorization using consistent `target` and `data` source fields.

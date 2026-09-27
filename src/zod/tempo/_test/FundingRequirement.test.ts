@@ -11,7 +11,7 @@ const requirement = {
   token,
   amount: 50n,
   slippageBps: 0,
-  sources: [{ to: token, data: '0xab' as const }],
+  sources: [{ target: token, data: '0xab' as const }],
 }
 
 describe('behavior', () => {
@@ -35,7 +35,7 @@ describe('behavior', () => {
     const envelope = {
       type: 'tempo' as const,
       chainId: 1,
-      calls: [{ to: token }],
+      calls: [{ target: token }],
       requireFunds: [requirement],
     }
     expect(

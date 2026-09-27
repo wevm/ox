@@ -7,7 +7,7 @@ test('from', () => {
     tokenIn: '0x0101010101010101010101010101010101010101',
   })
   expectTypeOf(
-    source.to,
+    source.target,
   ).toEqualTypeOf<'0x1120000000000000000000000000000000000001'>()
   expectTypeOf(source).toExtend<FundingSource.Source>()
 })

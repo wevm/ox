@@ -12,7 +12,7 @@ const target = '0x0202020202020202020202020202020202020202' as const
 const requirement = {
   token,
   amount: 50n,
-  sources: [{ to: target, data: '0xab' as const }],
+  sources: [{ target, data: '0xab' as const }],
   slippageBps: 100,
 }
 const envelope = TxEnvelopeTempo.from({
@@ -40,7 +40,7 @@ describe('toTuple', () => {
 })
 
 describe('toRpc', () => {
-  test('maps to to the RPC target field', () => {
+  test('preserves source targets', () => {
     expect(FundingRequirement.toRpc(requirement).sources).toEqual([
       { target, data: '0xab' },
     ])
@@ -114,14 +114,14 @@ describe('from', () => {
 })
 
 describe('fromRpc', () => {
-  test('maps the RPC target field to to', () => {
+  test('decodes source targets', () => {
     expect(
       FundingRequirement.fromRpc({
         token,
         amount: '0x32',
         sources: [{ target, data: '0xab' }],
       }),
-    ).toEqual({ token, amount: 50n, sources: [{ to: target, data: '0xab' }] })
+    ).toEqual({ token, amount: 50n, sources: [{ target, data: '0xab' }] })
   })
 })
 
@@ -163,8 +163,8 @@ describe('behavior', () => {
       { ...requirement, amount: 51n },
       { ...requirement, slippageBps: 0 },
       { ...requirement, policyRules: '0xab' as const },
-      { ...requirement, sources: [{ to: token, data: '0xab' as const }] },
-      { ...requirement, sources: [{ to: target, data: '0xcd' as const }] },
+      { ...requirement, sources: [{ target: token, data: '0xab' as const }] },
+      { ...requirement, sources: [{ target, data: '0xcd' as const }] },
     ]) {
       const altered = { ...envelope, requireFunds: [changed] }
       expect(TxEnvelopeTempo.getSignPayload(altered)).not.toBe(

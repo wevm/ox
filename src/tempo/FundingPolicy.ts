@@ -9,7 +9,7 @@ export type Source = {
   /** Source-specific configuration passed to funding hooks as `configData`. */
   data: Hex.Hex
   /** Funding source address. */
-  to: Address.Address
+  target: Address.Address
 }
 
 /**
@@ -122,7 +122,7 @@ const parameters = [
 const domain = Hash.keccak256(Hex.fromString('tempo.funding-policy.rules.v1'))
 
 /**
- * Converts a token map to canonical ABI routes, mapping `to` to `target` without reordering sources.
+ * Converts a token map to canonical ABI routes, without reordering sources.
  *
  * @example
  * ```ts
@@ -147,10 +147,10 @@ export function toRoutes(rules: Rules): readonly Route[] {
     if (BigInt(token) === 0n || seen.has(token.toLowerCase()))
       throw new InvalidPolicyError('Output tokens must be unique and nonzero.')
     seen.add(token.toLowerCase())
-    for (const { to, data } of sources) {
-      Address.assert(to, { strict: false })
+    for (const { target, data } of sources) {
+      Address.assert(target, { strict: false })
       if (
-        BigInt(to) === 0n ||
+        BigInt(target) === 0n ||
         !Hex.validate(data, { strict: true }) ||
         data.length % 2 !== 0
       )
@@ -158,7 +158,7 @@ export function toRoutes(rules: Rules): readonly Route[] {
     }
     return {
       token,
-      sources: sources.map(({ to, data }) => ({ target: to, data })),
+      sources: sources.map(({ target, data }) => ({ target, data })),
     }
   })
   return routes.sort((a, b) => (BigInt(a.token) < BigInt(b.token) ? -1 : 1))
@@ -199,7 +199,7 @@ export function decode(data: Hex.Hex): Rules {
     sources: Object.fromEntries(
       value.routes.map(({ token, sources }) => [
         token,
-        sources.map(({ target, data }) => ({ to: target, data })),
+        sources.map(({ target, data }) => ({ target, data })),
       ]),
     ),
   }
@@ -331,7 +331,7 @@ export function fromTuple(value: Tuple): Authorization {
     sources[token] = entries.map((source) => {
       if (!Array.isArray(source) || source.length !== 2)
         throw new InvalidPolicyError('Invalid source tuple.')
-      return { to: source[0], data: source[1] }
+      return { target: source[0], data: source[1] }
     })
   }
   const policy = {
@@ -366,7 +366,7 @@ export function fromRpc(value: Rpc): Authorization {
             sources: Object.fromEntries(
               Object.entries(value.rules.sources).map(([token, sources]) => [
                 token,
-                sources.map(({ target, data }) => ({ to: target, data })),
+                sources.map(({ target, data }) => ({ target, data })),
               ]),
             ),
           },
