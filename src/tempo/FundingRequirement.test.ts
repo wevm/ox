@@ -40,9 +40,9 @@ describe('toTuple', () => {
 })
 
 describe('toRpc', () => {
-  test('maps to to the RPC target field', () => {
+  test('preserves the source to field', () => {
     expect(FundingRequirement.toRpc(requirement).sources).toEqual([
-      { target, data: '0xab' },
+      { to: target, data: '0xab' },
     ])
   })
 
@@ -114,12 +114,12 @@ describe('from', () => {
 })
 
 describe('fromRpc', () => {
-  test('maps the RPC target field to to', () => {
+  test('decodes the source to field', () => {
     expect(
       FundingRequirement.fromRpc({
         token,
         amount: '0x32',
-        sources: [{ target, data: '0xab' }],
+        sources: [{ to: target, data: '0xab' }],
       }),
     ).toEqual({ token, amount: 50n, sources: [{ to: target, data: '0xab' }] })
   })
