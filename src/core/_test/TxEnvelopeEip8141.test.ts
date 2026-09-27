@@ -497,6 +497,33 @@ describe('from', () => {
 })
 
 describe('getSignPayload', () => {
+  test.each([
+    { scheme: 'secp256k1', signature: '0x' },
+    { scheme: 'p256', signature: '0x' },
+  ] as const)(
+    'empty $scheme placeholders preserve the signing hash',
+    (entry) => {
+      const { signature: _, ...unsigned } = entry
+      const envelope = {
+        chainId: 1,
+        frames: [{ executionGas: 50_000n, mode: 'sender' }],
+        sender: accounts[0].address,
+        signatures: [unsigned],
+      } as const
+      const input = {
+        ...envelope,
+        signatures: [entry],
+      } as const
+      expect(TxEnvelopeEip8141.getSignPayload(input)).toBe(
+        TxEnvelopeEip8141.getSignPayload(envelope),
+      )
+      expect(TxEnvelopeEip8141.serialize(input)).toBe(
+        TxEnvelopeEip8141.serialize(envelope),
+      )
+      expect(input.signatures[0].signature).toBe('0x')
+    },
+  )
+
   test('omitted nested defaults preserve the signing hash and encoding', () => {
     const envelope = TxEnvelopeEip8141.from({
       chainId: 1,
