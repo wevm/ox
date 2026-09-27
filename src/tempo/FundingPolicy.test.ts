@@ -36,10 +36,7 @@ describe('hash', () => {
       sources: { [token]: requirement.sources, [second]: requirement.sources },
     }
     expect(FundingPolicy.encode(first)).toBe(FundingPolicy.encode(reordered))
-    const sources = [
-      ...requirement.sources,
-      { target, data: '0xcd' as const },
-    ]
+    const sources = [...requirement.sources, { target, data: '0xcd' as const }]
     expect(
       FundingPolicy.hash({ ...rules, sources: { [token]: sources } }),
     ).not.toBe(
