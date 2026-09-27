@@ -1644,7 +1644,10 @@ export * as FrameReceipt from './core/FrameReceipt.js'
  * ```ts twoslash
  * import { FrameRequest } from 'ox'
  *
- * const frame = FrameRequest.toRpc({ mode: 'sender', stateGas: 0n })
+ * const frame = FrameRequest.toRpc({
+ *   mode: 'sender',
+ *   stateGas: 0n
+ * })
  * ```
  *
  * @category Frames (EIP-8141)

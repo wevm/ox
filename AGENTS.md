@@ -48,6 +48,7 @@
 
 - **Construct Ox objects through module APIs** -- use constructors such as `TxEnvelopeEip8141.from`, `Frame.from`, and `FrameSignature.from` in examples and test setup. Use plain nested objects when the enclosing constructor validates them and encoding supplies omitted-field defaults. Use raw objects when testing raw input handling or invalid values.
 - **Stateless module APIs** -- public APIs are module namespaces full of functions and types. Do not introduce stateful classes for normal library behavior.
+- **Public export checks** -- update `src/core/_test/index.test.ts` when adding a root module export, and run `pnpm zile examples:check` for new JSDoc examples.
 - **Public entrypoint docs** -- when adding a public module or export, update `src/index.ts` with the module export and TSDoc block.
 - **Package exports are generated** -- run `pnpm exports:update` only when intentionally adding, removing, or renaming public subpath exports.
 - **Keep public APIs lean** -- avoid exposing options for values the library can derive from existing inputs.

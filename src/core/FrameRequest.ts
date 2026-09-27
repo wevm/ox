@@ -16,7 +16,10 @@ export type Rpc = Compute<
  * ```ts twoslash
  * import { FrameRequest } from 'ox'
  *
- * const frame = FrameRequest.fromRpc({ mode: '0x2', stateGas: '0x0' })
+ * const frame = FrameRequest.fromRpc({
+ *   mode: '0x2',
+ *   stateGas: '0x0'
+ * })
  * ```
  *
  * @param frame - The RPC frame request.
@@ -51,7 +54,10 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { FrameRequest } from 'ox'
  *
- * const frame = FrameRequest.toRpc({ mode: 'sender', stateGas: 0n })
+ * const frame = FrameRequest.toRpc({
+ *   mode: 'sender',
+ *   stateGas: 0n
+ * })
  * ```
  *
  * @param frame - The frame request. Gas and value accept hex, bigint, or number values.
