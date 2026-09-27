@@ -10,7 +10,9 @@ export const Rules = z
     maxSlippageBps: z.number(),
     sources: z.record(
       z_Address.Address,
-      z.readonly(z.array(z.object({ target: z_Address.Address, data: z_Hex.Hex }))),
+      z.readonly(
+        z.array(z.object({ target: z_Address.Address, data: z_Hex.Hex })),
+      ),
     ),
   })
   .check(
