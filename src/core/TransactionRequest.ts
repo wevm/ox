@@ -2,10 +2,9 @@ import type * as AccessList from './AccessList.js'
 import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
-import type * as Frame from './Frame.js'
+import * as FrameRequest from './FrameRequest.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
-import * as FrameRequest from './internal/frameRequest.js'
 import type { Compute } from './internal/types.js'
 import * as Transaction from './Transaction.js'
 
@@ -14,7 +13,7 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
-  frame = Frame.Frame<bigintType>,
+  frame = FrameRequest.FrameRequest<bigintType>,
   signature = FrameSignature.FrameSignature,
 > = Compute<{
   /** EIP-2930 Access List. */
@@ -121,7 +120,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
 
 export declare namespace fromRpc {
   export type ErrorType =
-    | Frame.fromRpc.ErrorType
+    | FrameRequest.fromRpc.ErrorType
     | FrameSignature.fromRpc.ErrorType
     | Authorization.fromRpcList.ErrorType
     | Hex.toNumber.ErrorType
@@ -226,7 +225,7 @@ export function toRpc(request: TransactionRequest): Rpc {
 
 export declare namespace toRpc {
   export type ErrorType =
-    | Frame.toRpc.ErrorType
+    | FrameRequest.toRpc.ErrorType
     | FrameSignature.toRpc.ErrorType
     | Authorization.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
