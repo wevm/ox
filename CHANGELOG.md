@@ -12,7 +12,7 @@
   Frame.from({ executionGas: 50_000n, stateGas: 1_000n });
   ```
 
-- [#476](https://github.com/wevm/ox/pull/476) [`3f0726b`](https://github.com/wevm/ox/commit/3f0726b4fd0795402d08effc199081e7cff54241) Thanks [@jxom](https://github.com/jxom)! - Aligned frame RPC quantities, signature placeholders, and receipt gas totals with the execution API definitions.
+- [#480](https://github.com/wevm/ox/pull/480) [`1ae6d07`](https://github.com/wevm/ox/commit/1ae6d078ee65b56983b6a5b9c4e7210aa38d3e37) Thanks [@jxom](https://github.com/jxom)! - Aligned to the frame transaction spec.
 
 - [#471](https://github.com/wevm/ox/pull/471) [`1270b42`](https://github.com/wevm/ox/commit/1270b4279a48acea5f2e397c19fa252342f30f90) Thanks [@jxom](https://github.com/jxom)! - Added hex signature support for secp256k1 and P256 frame signature entries.
 

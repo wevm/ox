@@ -633,10 +633,12 @@ describe('serialize', () => {
             executionGas: 50_000n,
             flags: 'approveExecutionAndPayment',
             mode: 'verify',
+            stateGas: 0n,
           }),
           Frame.from({
             executionGas: 50_000n,
             mode: 'sender',
+            stateGas: 0n,
             to: target,
             value: 1n,
           }),
@@ -848,10 +850,12 @@ describe('serialize', () => {
       })
       expect(hash).toBe(TransactionEnvelope.hash(signed))
       expect(
-        TransactionRequest.toEnvelope(
-          TransactionEnvelope.toTransactionRequest(signed),
+        TransactionEnvelope.serialize(
+          TransactionRequest.toEnvelope(
+            TransactionEnvelope.toTransactionRequest(signed),
+          ),
         ),
-      ).toEqual(signed)
+      ).toBe(serialized)
       expect(TxEnvelopeEip8141.toRpc(signed)).toMatchObject(
         TransactionRequest.toRpc(
           TransactionEnvelope.toTransactionRequest(signed),

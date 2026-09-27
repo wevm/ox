@@ -214,3 +214,48 @@ test('eth_call accepts a 4-tuple with state + block overrides', () => {
     ]
   >().toExtend<Params>()
 })
+
+test('frame fill responses do not require raw bytes or lookup metadata', () => {
+  type Filled = Extract<
+    RpcSchema.Eth,
+    { Request: { method: 'eth_fillTransaction' } }
+  >['ReturnType']
+  const filled = {
+    tx: {
+      type: '0x6',
+      chainId: '0x1',
+      nonce: '0x0',
+      from: '0x1111111111111111111111111111111111111111',
+      frames: [
+        {
+          mode: '0x2',
+          flags: '0x0',
+          executionGas: '0x10000',
+          stateGas: '0x0',
+          value: '0x0',
+          data: '0x',
+        },
+      ],
+      signatures: [{ scheme: '0x1' }],
+      maxFeePerGas: '0x2',
+      maxPriorityFeePerGas: '0x1',
+      maxFeePerBlobGas: '0x0',
+      blobVersionedHashes: [],
+    },
+  } as const satisfies Filled
+  expectTypeOf(filled).toExtend<Filled>()
+})
+
+test('frame simulation results expose payer and frame results', () => {
+  type Result = Extract<
+    RpcSchema.Eth,
+    { Request: { method: 'eth_simulateV1' } }
+  >['ReturnType'][number]
+  type Call = NonNullable<Result['calls']>[number]
+  expectTypeOf<Call['payer']>().toEqualTypeOf<`0x${string}` | undefined>()
+  type Frame = NonNullable<Call['frameResults']>[number]
+  expectTypeOf<Frame['status']>().toEqualTypeOf<'0x0' | '0x1' | '0x2'>()
+  expectTypeOf<Frame['executionGasUsed']>().toEqualTypeOf<`0x${string}`>()
+  expectTypeOf<Frame['stateGasUsed']>().toEqualTypeOf<`0x${string}`>()
+  expectTypeOf<Frame['returnData']>().toEqualTypeOf<`0x${string}`>()
+})

@@ -5,6 +5,7 @@ import * as z_Block from '../../Block.js'
 import * as z_BlockOverrides from '../../BlockOverrides.js'
 import * as z_Fee from '../../Fee.js'
 import * as z_Filter from '../../Filter.js'
+import * as z_FrameReceipt from '../../FrameReceipt.js'
 import * as z_Hex from '../../Hex.js'
 import * as z_Log from '../../Log.js'
 import * as z_Number from '../../Number.js'
@@ -322,6 +323,25 @@ export const eth_simulateV1 = from({
                   message: z.string(),
                 }),
               ),
+              frameResults: z.optional(
+                z.readonly(
+                  z.array(
+                    z.intersection(
+                      z_FrameReceipt.FrameReceipt,
+                      z.object({
+                        error: z.optional(
+                          z.object({
+                            code: z.number(),
+                            message: z.string(),
+                          }),
+                        ),
+                        returnData: z_Hex.Hex,
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+              payer: z.optional(z_Address.Address),
               logs: z.optional(z.array(z_Log.Log)),
               gasUsed: z_Hex.Hex,
               returnData: z_Hex.Hex,

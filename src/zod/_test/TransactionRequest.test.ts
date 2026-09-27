@@ -220,3 +220,64 @@ describe('TransactionRequest', () => {
     ).toBe(false)
   })
 })
+
+describe('frame requests', () => {
+  test.each([
+    z_TransactionRequest.TransactionRequest,
+    z_TransactionRequest.TransactionRequestToRpc,
+  ])('preserves gas omission and zero through the request codec', (schema) => {
+    const decoded = z.decode(schema, {
+      type: '0x6',
+      frames: [{ mode: '0x2' }, { mode: '0x2', stateGas: '0x0' }],
+    })
+    expect(decoded).toEqual({
+      type: 'eip8141',
+      frames: [
+        { mode: 2, flags: 0, data: '0x', value: 0n },
+        { mode: 2, flags: 0, data: '0x', value: 0n, stateGas: 0n },
+      ],
+    })
+    expect(z.encode(schema, decoded)).toEqual({
+      type: '0x6',
+      frames: [
+        { mode: '0x2', flags: '0x0', data: '0x', value: '0x0' },
+        {
+          mode: '0x2',
+          flags: '0x0',
+          data: '0x',
+          value: '0x0',
+          stateGas: '0x0',
+        },
+      ],
+    })
+  })
+  test('encodes numberish frame limits', () => {
+    expect(
+      z.encode(z_TransactionRequest.TransactionRequestToRpc, {
+        frames: [{ mode: 'sender', executionGas: 50000, stateGas: '0x0' }],
+      }),
+    ).toEqual({
+      frames: [
+        {
+          mode: '0x2',
+          flags: '0x0',
+          data: '0x',
+          value: '0x0',
+          executionGas: '0xc350',
+          stateGas: '0x0',
+        },
+      ],
+    })
+  })
+  test.each([
+    { mode: '0x3' },
+    { mode: '0x2', executionGas: '0x00' },
+    { mode: '0x2', stateGas: null },
+    {},
+  ])('rejects malformed frame request %j', (frame) => {
+    expect(
+      z.safeParse(z_TransactionRequest.TransactionRequest, { frames: [frame] })
+        .success,
+    ).toBe(false)
+  })
+})

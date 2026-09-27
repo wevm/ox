@@ -781,6 +781,12 @@ export function toTransactionRequest(
       ...rest,
       ...(sidecars ? { blobs: sidecars.blobs } : {}),
       chainId: Hex.toNumber(Hex.fromNumber(rest.chainId)),
+      // Envelopes commit to zero defaults; request omission would trigger estimation.
+      frames: rest.frames.map((frame) => ({
+        ...frame,
+        executionGas: frame.executionGas ?? 0n,
+        stateGas: frame.stateGas ?? 0n,
+      })),
       from: sender,
     }
   }
