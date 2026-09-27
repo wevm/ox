@@ -21,6 +21,26 @@ const p256Bytes =
   '0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000026b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c2964fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5'
 
 describe('from', () => {
+  test.each([
+    { scheme: 'secp256k1', signature: '0x' },
+    { scheme: 1, signature: '0x' },
+    { scheme: 'p256', signature: '0x' },
+    { scheme: 2, signature: '0x' },
+  ] as const)('accepts empty unsigned signatures: $scheme', (input) => {
+    const entry = FrameSignature.from(input)
+    const { signature: _, ...unsigned } = input
+    expect(entry).toEqual({ payload: '0x', ...input })
+    expect(FrameSignature.toTuple(entry)).toEqual(
+      FrameSignature.toTuple(unsigned),
+    )
+    expect(FrameSignature.toRpc(entry)).toEqual(FrameSignature.toRpc(unsigned))
+    expect(FrameSignature.validate(entry)).toBe(true)
+    expect(FrameSignature.validate(entry, { signed: true })).toBe(false)
+    expect(() => FrameSignature.assert(entry, { signed: true })).toThrow(
+      'Signature is required.',
+    )
+  })
+
   test.each(['0x', '0xaabb'] as const)(
     'constructs an arbitrary signature from %s',
     (signature) => {
@@ -598,16 +618,14 @@ describe('hex signatures', () => {
     expect(FrameSignature.validate(entry, { signed: true })).toBe(true)
   })
 
-  test.each([
-    '0x',
-    '0x01',
-    `0x${'00'.repeat(65)}`,
-    `0x${'gg'.repeat(65)}`,
-  ] as const)('rejects invalid secp256k1 hex: %s', (signature) => {
-    expect(() =>
-      FrameSignature.from({ scheme: 'secp256k1', signature }),
-    ).toThrow()
-  })
+  test.each(['0x01', `0x${'00'.repeat(65)}`, `0x${'gg'.repeat(65)}`] as const)(
+    'rejects invalid secp256k1 hex: %s',
+    (signature) => {
+      expect(() =>
+        FrameSignature.from({ scheme: 'secp256k1', signature }),
+      ).toThrow()
+    },
+  )
 
   test('requires secp256k1 recovery parity', () => {
     const signature = Signature.toHex({

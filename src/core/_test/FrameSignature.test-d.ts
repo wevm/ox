@@ -105,3 +105,9 @@ test('preserves protocol hex signature types', () => {
   // @ts-expect-error P256 hex signatures also require a public key.
   FrameSignature.from({ scheme: 'p256', signature })
 })
+
+test('preserves empty protocol signature placeholders', () => {
+  const entry = FrameSignature.from({ scheme: 'p256', signature: '0x' })
+  expectTypeOf(entry.signature).toEqualTypeOf<'0x'>()
+  expectTypeOf(entry).toExtend<FrameSignature.P256>()
+})
