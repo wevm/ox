@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.3
+
+### Patch Changes
+
+- [#482](https://github.com/wevm/ox/pull/482) [`9d2ab90`](https://github.com/wevm/ox/commit/9d2ab900d397066d036ddedef655d1a9da26a014) Thanks [@jxom](https://github.com/jxom)! - Fixed empty protocol signature placeholders in frame signature validation, encoding, and transaction signing payloads.
+
 ## 1.8.2
 
 ### Patch Changes
