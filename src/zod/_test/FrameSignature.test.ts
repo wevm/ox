@@ -143,3 +143,16 @@ describe('RPC signers', () => {
     ).toBe(false)
   })
 })
+
+describe('unsigned placeholders', () => {
+  test.each([
+    { scheme: 'secp256k1', signature: '0x' },
+    { scheme: 'p256', signature: '0x' },
+  ] as const)('$scheme', (entry) => {
+    const { signature: _, ...unsigned } = entry
+    expect(z.safeParse(z.FrameSignature.Decoded, entry).success).toBe(true)
+    expect(z.encode(z.FrameSignature.FrameSignature, entry)).toEqual(
+      FrameSignature.toRpc(unsigned),
+    )
+  })
+})
