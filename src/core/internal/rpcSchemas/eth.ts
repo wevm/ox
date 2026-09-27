@@ -4,6 +4,7 @@ import type * as Block from '../../Block.js'
 import type * as BlockOverrides from '../../BlockOverrides.js'
 import type * as Fee from '../../Fee.js'
 import type * as Filter from '../../Filter.js'
+import type * as FrameReceipt from '../../FrameReceipt.js'
 import type * as Hex from '../../Hex.js'
 import type * as Log from '../../Log.js'
 import type * as RpcSchema from '../../RpcSchema.js'
@@ -11,6 +12,12 @@ import type * as StateOverrides from '../../StateOverrides.js'
 import type * as Transaction from '../../Transaction.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
+import type * as TxEnvelopeEip1559 from '../../TxEnvelopeEip1559.js'
+import type * as TxEnvelopeEip2930 from '../../TxEnvelopeEip2930.js'
+import type * as TxEnvelopeEip4844 from '../../TxEnvelopeEip4844.js'
+import type * as TxEnvelopeEip7702 from '../../TxEnvelopeEip7702.js'
+import type * as TxEnvelopeEip8141 from '../../TxEnvelopeEip8141.js'
+import type * as TxEnvelopeLegacy from '../../TxEnvelopeLegacy.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -216,6 +223,31 @@ export type Eth = RpcSchema.From<
         ]
       }
       ReturnType: Fee.FeeHistoryRpc
+    }
+  /**
+   * Fills transaction defaults and returns the unsigned transaction.
+   *
+   * @example
+   * ```
+   * request({ method: 'eth_fillTransaction', params: [{ from: '0x...', to: '0x...', value: '0x...' }] })
+   * // { tx: { ... } }
+   * ```
+   */
+  | {
+      Request: {
+        method: 'eth_fillTransaction'
+        params: [transaction: TransactionRequest.Rpc]
+      }
+      ReturnType: {
+        tx: (
+          | TxEnvelopeLegacy.Rpc<false>
+          | TxEnvelopeEip2930.Rpc<false>
+          | TxEnvelopeEip1559.Rpc<false>
+          | TxEnvelopeEip4844.Rpc<false>
+          | TxEnvelopeEip7702.Rpc<false>
+          | TxEnvelopeEip8141.Rpc
+        ) & { from: Address.Address }
+      }
     }
   /**
    * Returns the current price of gas expressed in wei
@@ -772,6 +804,13 @@ export type Eth = RpcSchema.From<
                     message: string
                   }
                 | undefined
+              frameResults?:
+                | readonly (FrameReceipt.Rpc & {
+                    error?: { code: number; message: string } | undefined
+                    returnData: Hex.Hex
+                  })[]
+                | undefined
+              payer?: Address.Address | undefined
               logs?: readonly Log.Rpc[] | undefined
               gasUsed: Hex.Hex
               returnData: Hex.Hex
