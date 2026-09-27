@@ -460,7 +460,7 @@ describe('fromRpc', () => {
         msg: '0x',
         scheme: '0x0',
         signature: '0xaabb',
-        signer: null,
+        signer: '0x',
       }),
     ).toEqual(FrameSignature.from('0xaabb'))
   })

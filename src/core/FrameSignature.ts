@@ -73,7 +73,7 @@ export type Rpc = {
   /** Encoded signature bytes. */
   signature?: Hex.Hex | undefined
   /** Signer address; absent for the transaction sender. */
-  signer?: Address.Address | null | undefined
+  signer?: Address.Address | '0x' | undefined
 }
 
 /** RLP-ready signature entry. The payload occupies the specification's `msg` field. */

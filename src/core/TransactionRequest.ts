@@ -2,7 +2,7 @@ import type * as AccessList from './AccessList.js'
 import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
-import * as Frame from './Frame.js'
+import * as FrameRequest from './FrameRequest.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
@@ -13,7 +13,7 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
-  frame = Frame.Frame<bigintType>,
+  frame = FrameRequest.FrameRequest<bigintType>,
   signature = FrameSignature.FrameSignature,
 > = Compute<{
   /** EIP-2930 Access List. */
@@ -63,7 +63,7 @@ export type Rpc = TransactionRequest<
   Hex.Hex,
   Hex.Hex,
   string,
-  Frame.Rpc,
+  FrameRequest.Rpc,
   FrameSignature.Rpc
 >
 
@@ -92,7 +92,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (typeof request.chainId !== 'undefined')
     request_.chainId = Hex.toNumber(request.chainId)
-  if (request.frames) request_.frames = request.frames.map(Frame.fromRpc)
+  if (request.frames) request_.frames = request.frames.map(FrameRequest.fromRpc)
   if (request.signatures)
     request_.signatures = request.signatures.map(FrameSignature.fromRpc)
   if (typeof request.gas !== 'undefined')
@@ -120,7 +120,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
 
 export declare namespace fromRpc {
   export type ErrorType =
-    | Frame.fromRpc.ErrorType
+    | FrameRequest.fromRpc.ErrorType
     | FrameSignature.fromRpc.ErrorType
     | Authorization.fromRpcList.ErrorType
     | Hex.toNumber.ErrorType
@@ -189,7 +189,8 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.input = request.input
   }
   if (typeof request.from !== 'undefined') request_rpc.from = request.from
-  if (request.frames) request_rpc.frames = request.frames.map(Frame.toRpc)
+  if (request.frames)
+    request_rpc.frames = request.frames.map(FrameRequest.toRpc)
   if (request.signatures)
     request_rpc.signatures = request.signatures.map(FrameSignature.toRpc)
   if (typeof request.gas !== 'undefined')
@@ -224,7 +225,7 @@ export function toRpc(request: TransactionRequest): Rpc {
 
 export declare namespace toRpc {
   export type ErrorType =
-    | Frame.toRpc.ErrorType
+    | FrameRequest.toRpc.ErrorType
     | FrameSignature.toRpc.ErrorType
     | Authorization.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType

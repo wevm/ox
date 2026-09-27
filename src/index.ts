@@ -1579,6 +1579,21 @@ export * as Frame from './core/Frame.js'
  * @category Frames (EIP-8141)
  */
 export * as FrameReceipt from './core/FrameReceipt.js'
+
+/**
+ * Convert EIP-8141 frame requests while preserving omitted gas limits for node estimation.
+ *
+ * @example
+ * ```ts twoslash
+ * import { FrameRequest } from 'ox'
+ *
+ * const frame = FrameRequest.toRpc({ mode: 'sender', stateGas: 0n })
+ * ```
+ *
+ * @category Frames (EIP-8141)
+ */
+export * as FrameRequest from './core/FrameRequest.js'
+
 /**
  * Utilities for constructing, validating, and encoding [EIP-8141](https://eips.ethereum.org/EIPS/eip-8141) signature entries.
  *
