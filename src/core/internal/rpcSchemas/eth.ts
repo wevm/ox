@@ -4,6 +4,7 @@ import type * as Block from '../../Block.js'
 import type * as BlockOverrides from '../../BlockOverrides.js'
 import type * as Fee from '../../Fee.js'
 import type * as Filter from '../../Filter.js'
+import type * as FrameReceipt from '../../FrameReceipt.js'
 import type * as Hex from '../../Hex.js'
 import type * as Log from '../../Log.js'
 import type * as RpcSchema from '../../RpcSchema.js'
@@ -11,6 +12,7 @@ import type * as StateOverrides from '../../StateOverrides.js'
 import type * as Transaction from '../../Transaction.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
+import type * as TxEnvelope from '../../TxEnvelope.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -219,12 +221,12 @@ export type Eth = RpcSchema.From<
       ReturnType: Fee.FeeHistoryRpc
     }
   /**
-   * Fills the defaults (nonce, gas, gasPrice, or 1559 fields) on a given unsigned transaction, and returns the unsigned transaction along with its raw form
+   * Fills transaction defaults and returns the unsigned transaction.
    *
    * @example
    * ```
    * request({ method: 'eth_fillTransaction', params: [{ from: '0x...', to: '0x...', value: '0x...' }] })
-   * // { raw: '0x...', tx: { ... } }
+   * // { tx: { ... } }
    * ```
    */
   | {
@@ -234,8 +236,8 @@ export type Eth = RpcSchema.From<
       }
       ReturnType: {
         capabilities?: Record<string, unknown> | undefined
-        raw: Hex.Hex
-        tx: Transaction.Rpc
+        raw?: Hex.Hex | undefined
+        tx: TxEnvelope.Rpc & { from: Address.Address }
       }
     }
   /**
@@ -769,6 +771,13 @@ export type Eth = RpcSchema.From<
                     message: string
                   }
                 | undefined
+              frameResults?:
+                | readonly (FrameReceipt.Rpc & {
+                    error?: { code: number; message: string } | undefined
+                    returnData: Hex.Hex
+                  })[]
+                | undefined
+              payer?: Address.Address | undefined
               logs?: readonly Log.Rpc[] | undefined
               gasUsed: Hex.Hex
               returnData: Hex.Hex

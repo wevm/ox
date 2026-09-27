@@ -423,3 +423,109 @@ describe('from', () => {
     expect(schema.abe_foo.method).toMatchInlineSnapshot(`"abe_foo"`)
   })
 })
+
+describe('frame simulation results', () => {
+  test('preserves payer, per-frame output, errors, and gas through the codec', () => {
+    const block = {
+      difficulty: '0x0',
+      extraData: '0x',
+      gasLimit: '0x100000',
+      gasUsed: '0x5208',
+      hash,
+      logsBloom: '0x',
+      miner: address,
+      mixHash: hash,
+      nonce: '0x0000000000000000',
+      number: '0x1',
+      parentHash: hash,
+      receiptsRoot: hash,
+      sha3Uncles: hash,
+      size: '0x1',
+      stateRoot: hash,
+      timestamp: '0x1',
+      transactions: [],
+      transactionsRoot: hash,
+      uncles: [],
+      calls: [
+        {
+          payer: address,
+          gasUsed: '0x5208',
+          returnData: '0xdead',
+          status: '0x0',
+          logs: [],
+          frameResults: [
+            {
+              status: '0x1',
+              gasUsed: '0x2',
+              executionGasUsed: '0x1',
+              stateGasUsed: '0x1',
+              logs: [],
+              returnData: '0xabcd',
+            },
+            {
+              status: '0x0',
+              gasUsed: '0x1',
+              executionGasUsed: '0x1',
+              stateGasUsed: '0x0',
+              logs: [],
+              returnData: '0xdead',
+              error: { code: 3, message: 'execution reverted' },
+            },
+            {
+              status: '0x2',
+              gasUsed: '0x0',
+              executionGasUsed: '0x0',
+              stateGasUsed: '0x0',
+              logs: [],
+              returnData: '0x',
+            },
+          ],
+        },
+      ],
+    } satisfies z.input<typeof z_RpcSchema.Eth.eth_simulateV1.returns>[number]
+    const decoded = z_RpcSchema.decodeReturns(
+      z_RpcSchema.Eth,
+      'eth_simulateV1',
+      [block],
+    )
+    expect(decoded[0]?.calls).toEqual([
+      {
+        payer: address,
+        gasUsed: '0x5208',
+        returnData: '0xdead',
+        status: '0x0',
+        logs: [],
+        frameResults: [
+          {
+            status: 'success',
+            gasUsed: 2n,
+            executionGasUsed: 1n,
+            stateGasUsed: 1n,
+            logs: [],
+            returnData: '0xabcd',
+          },
+          {
+            status: 'reverted',
+            gasUsed: 1n,
+            executionGasUsed: 1n,
+            stateGasUsed: 0n,
+            logs: [],
+            returnData: '0xdead',
+            error: { code: 3, message: 'execution reverted' },
+          },
+          {
+            status: 'skipped',
+            gasUsed: 0n,
+            executionGasUsed: 0n,
+            stateGasUsed: 0n,
+            logs: [],
+            returnData: '0x',
+          },
+        ],
+      },
+    ])
+    expect(
+      z_RpcSchema.encodeReturns(z_RpcSchema.Eth, 'eth_simulateV1', decoded),
+    ).toEqual([block])
+  })
+})

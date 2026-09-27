@@ -139,7 +139,16 @@ describe('frame generics', () => {
 
   test('RPC types', () => {
     expectTypeOf<TransactionRequest.Rpc['frames']>().toEqualTypeOf<
-      readonly Frame.Rpc[] | undefined
+      | readonly {
+          mode: `0x${string}`
+          flags?: `0x${string}` | undefined
+          data?: `0x${string}` | undefined
+          executionGas?: `0x${string}` | undefined
+          stateGas?: `0x${string}` | undefined
+          target?: `0x${string}` | null | undefined
+          value?: `0x${string}` | undefined
+        }[]
+      | undefined
     >()
     expectTypeOf<TransactionRequest.Rpc['signatures']>().toEqualTypeOf<
       readonly FrameSignature.Rpc[] | undefined
