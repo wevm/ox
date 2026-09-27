@@ -73,7 +73,7 @@ export type Rpc = {
   /** Encoded signature bytes. */
   signature?: Hex.Hex | undefined
   /** Signer address; absent for the transaction sender. */
-  signer?: Address.Address | null | undefined
+  signer?: Address.Address | '0x' | undefined
 }
 
 /** RLP-ready signature entry. The payload occupies the specification's `msg` field. */
@@ -357,6 +357,10 @@ export declare namespace from {
  * @returns The converted value.
  */
 export function fromRpc(entry: Rpc): FrameSignature {
+  if (entry.signer === null)
+    throw new InvalidError(
+      'signer must be omitted, empty bytes, or an address.',
+    )
   return fromTuple([
     entry.scheme === '0x0'
       ? '0x'

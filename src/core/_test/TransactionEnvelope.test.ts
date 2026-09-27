@@ -434,7 +434,7 @@ describe('toTransactionRequest', () => {
   test('maps frame sender to request from', () => {
     expect(TransactionEnvelope.toTransactionRequest(eip8141)).toEqual({
       chainId: 1,
-      frames: [{}],
+      frames: [{ executionGas: 0n, stateGas: 0n }],
       from: '0x1111111111111111111111111111111111111111',
       type: 'eip8141',
     })

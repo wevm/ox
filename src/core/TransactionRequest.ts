@@ -3,9 +3,10 @@ import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import * as Blobs from './Blobs.js'
 import * as Errors from './Errors.js'
-import * as Frame from './Frame.js'
+import type * as Frame from './Frame.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
+import * as FrameRequest from './internal/frameRequest.js'
 import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 import type * as Kzg from './Kzg.js'
@@ -19,7 +20,9 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
-  frame = [bigintType] extends [Hex.Hex] ? Frame.Rpc : Frame.Frame<bigintType>,
+  frame = [bigintType] extends [Hex.Hex]
+    ? FrameRequest.Rpc
+    : Frame.Frame<bigintType>,
   signature = [bigintType] extends [Hex.Hex]
     ? FrameSignature.Rpc
     : FrameSignature.FrameSignature,
@@ -79,7 +82,7 @@ export type Rpc = TransactionRequest<
   Hex.Hex,
   Hex.Hex,
   string,
-  Frame.Rpc,
+  FrameRequest.Rpc,
   FrameSignature.Rpc
 >
 
@@ -109,7 +112,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
   if (typeof request.chainId !== 'undefined')
     request_.chainId = Hex.toNumber(request.chainId)
   if (request.frames !== undefined)
-    request_.frames = request.frames.map(Frame.fromRpc)
+    request_.frames = request.frames.map(FrameRequest.fromRpc)
   if (request.signatures !== undefined)
     request_.signatures = request.signatures.map(FrameSignature.fromRpc)
   if (typeof request.gas !== 'undefined')
@@ -210,7 +213,7 @@ export function toRpc(request: toRpc.Input): Rpc {
     request_rpc.input = request.input
   }
   if (request.frames !== undefined)
-    request_rpc.frames = request.frames.map(Frame.toRpc)
+    request_rpc.frames = request.frames.map(FrameRequest.toRpc)
   if (request.signatures !== undefined)
     request_rpc.signatures = request.signatures.map(FrameSignature.toRpc)
   if (typeof request.from !== 'undefined') request_rpc.from = request.from

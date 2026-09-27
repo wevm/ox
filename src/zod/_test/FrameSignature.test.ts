@@ -119,3 +119,27 @@ test('encodes protocol hex signatures', () => {
     }),
   ).toEqual(FrameSignature.toRpc(p256))
 })
+
+describe('RPC signers', () => {
+  test.each(['0x0', '0x1', '0x2'] as const)(
+    'accepts an empty signer for scheme %s',
+    (scheme) => {
+      expect(
+        z.safeDecode(z.FrameSignature.FrameSignature, {
+          scheme,
+          signer: '0x',
+          msg: '0x',
+          ...(scheme === '0x0' ? { signature: '0x' } : {}),
+        }).success,
+      ).toBe(true)
+    },
+  )
+  test('rejects a null signer', () => {
+    expect(
+      z.safeParse(z.FrameSignature.FrameSignature, {
+        scheme: '0x1',
+        signer: null,
+      }).success,
+    ).toBe(false)
+  })
+})

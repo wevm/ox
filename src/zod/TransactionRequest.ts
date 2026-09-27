@@ -2,7 +2,7 @@
 import * as z_AccessList from './AccessList.js'
 import * as z_Address from './Address.js'
 import * as z_Authorization from './Authorization.js'
-import * as z_Frame from './Frame.js'
+import * as z_FrameRequest from './internal/FrameRequest.js'
 import * as z_FrameSignature from './FrameSignature.js'
 import * as z_Hex from './Hex.js'
 import * as z_Number from './Number.js'
@@ -38,7 +38,7 @@ export const TransactionRequest = z.object(
     z_Uint.Uint,
     z_Number.Number,
     z_Authorization.ListSigned,
-    z_Frame.Frame,
+    z_FrameRequest.FrameRequest,
   ),
 )
 
@@ -48,7 +48,7 @@ export const TransactionRequestToRpc = z.object(
     z_Uint.UintToRpc,
     z_Number.NumberToRpc,
     z_Authorization.ListSignedToRpc,
-    z_Frame.FrameToRpc,
+    z_FrameRequest.FrameRequestToRpc,
   ),
 )
 

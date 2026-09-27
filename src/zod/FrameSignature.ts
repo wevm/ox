@@ -61,7 +61,7 @@ export const Rpc = z
     msg: z.optional(z_Hex.Hex),
     scheme: z.enum(['0x0', '0x1', '0x2']),
     signature: z.optional(z_Hex.Hex),
-    signer: z.optional(z.nullable(z_Address.Address)),
+    signer: z.optional(z.union([z.literal('0x'), z_Address.Address])),
   })
   .check(
     z.refine((value) => {
