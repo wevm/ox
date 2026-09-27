@@ -2,7 +2,7 @@
 import * as z_AccessList from './AccessList.js'
 import * as z_Address from './Address.js'
 import * as z_Authorization from './Authorization.js'
-import * as z_FrameRequest from './internal/FrameRequest.js'
+import * as z_FrameRequest from './FrameRequest.js'
 import * as z_FrameSignature from './FrameSignature.js'
 import * as z_Hex from './Hex.js'
 import * as z_Number from './Number.js'

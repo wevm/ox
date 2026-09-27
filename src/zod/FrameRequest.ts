@@ -1,7 +1,8 @@
-import * as core_FrameRequest from '../../core/internal/frameRequest.js'
-import * as z_Address from '../Address.js'
-import * as z_Frame from '../Frame.js'
-import * as z_Hex from '../Hex.js'
+/* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
+import * as core_FrameRequest from '../core/FrameRequest.js'
+import * as z_Address from './Address.js'
+import * as z_Frame from './Frame.js'
+import * as z_Hex from './Hex.js'
 import * as z from 'zod/mini'
 
 const quantity = z_Hex.Hex.check(
@@ -32,13 +33,13 @@ const rpc = z
     }, 'Invalid frame request'),
   )
 
-/** @internal */
+/** Codec between RPC and decoded frame requests, preserving omitted gas limits. */
 export const FrameRequest = z.codec(rpc, z_Frame.Decoded, {
   decode: core_FrameRequest.fromRpc,
   encode: core_FrameRequest.toRpc,
 })
 
-/** @internal */
+/** Encode-only frame request codec accepting numberish gas and value. */
 export const FrameRequestToRpc = z.codec(rpc, z_Frame.DecodedToRpc, {
   decode: core_FrameRequest.fromRpc,
   encode: core_FrameRequest.toRpc,

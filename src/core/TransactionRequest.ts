@@ -3,10 +3,9 @@ import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import * as Blobs from './Blobs.js'
 import * as Errors from './Errors.js'
-import type * as Frame from './Frame.js'
+import * as FrameRequest from './FrameRequest.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
-import * as FrameRequest from './internal/frameRequest.js'
 import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 import type * as Kzg from './Kzg.js'
@@ -22,7 +21,7 @@ export type TransactionRequest<
   type extends string = string,
   frame = [bigintType] extends [Hex.Hex]
     ? FrameRequest.Rpc
-    : Frame.Frame<bigintType>,
+    : FrameRequest.FrameRequest<bigintType>,
   signature = [bigintType] extends [Hex.Hex]
     ? FrameSignature.Rpc
     : FrameSignature.FrameSignature,
@@ -144,7 +143,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
 export declare namespace fromRpc {
   export type ErrorType =
     | Authorization.fromRpcList.ErrorType
-    | Frame.fromRpc.ErrorType
+    | FrameRequest.fromRpc.ErrorType
     | FrameSignature.fromRpc.ErrorType
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
@@ -261,7 +260,7 @@ export declare namespace toRpc {
 
   export type ErrorType =
     | Authorization.toRpcList.ErrorType
-    | Frame.toRpc.ErrorType
+    | FrameRequest.toRpc.ErrorType
     | FrameSignature.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
