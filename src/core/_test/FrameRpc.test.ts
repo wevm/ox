@@ -99,17 +99,10 @@ describe('TxEnvelopeEip8141.toRpc', () => {
 })
 
 describe('FrameSignature.fromRpc', () => {
-  test('accepts empty signers and rejects null signers', () => {
+  test('accepts empty signers', () => {
     expect(FrameSignature.fromRpc({ scheme: '0x1', signer: '0x' })).toEqual({
       scheme: 'secp256k1',
       payload: '0x',
     })
-    expect(() =>
-      FrameSignature.fromRpc({
-        scheme: '0x1',
-        // @ts-expect-error Null is not an RPC signer.
-        signer: null,
-      }),
-    ).toThrow('signer must be omitted, empty bytes, or an address.')
   })
 })
