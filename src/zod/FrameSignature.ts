@@ -43,7 +43,7 @@ export const P256 = z.union([
   z.object({
     ...p256,
     publicKey: z.optional(publicKey),
-    signature: z.optional(z.undefined()),
+    signature: z.optional(z.literal('0x')),
   }),
 ])
 

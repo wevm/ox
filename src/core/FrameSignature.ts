@@ -32,7 +32,7 @@ export type Secp256k1 = {
   payload?: Hex.Hex | undefined
   /** secp256k1 verification scheme. */
   scheme: 1 | 'secp256k1'
-  /** Recovered signature or `Signature.toHex` bytes. Omit for an unsigned entry. */
+  /** Recovered signature or `Signature.toHex` bytes. Omit or use `0x` for an unsigned entry. */
   signature?: Hex.Hex | Signature.Signature | undefined
   /** Signer address. Omit to use the transaction sender. */
   signer?: Address.Address | undefined
@@ -56,8 +56,8 @@ export type P256 = {
   | {
       /** Public key, if already known. Empty wire signatures do not retain it. */
       publicKey?: PublicKey.PublicKey | undefined
-      /** Omit for an unsigned entry. */
-      signature?: undefined
+      /** Omit or use `0x` for an unsigned entry. */
+      signature?: '0x' | undefined
     }
 )
 
@@ -164,10 +164,14 @@ export function assert(
           throw new InvalidError('Public key coordinates must fit in 32 bytes.')
       }
     }
-    if (entry.signature !== undefined && entry.publicKey === undefined)
+    if (
+      entry.signature !== undefined &&
+      entry.signature !== '0x' &&
+      entry.publicKey === undefined
+    )
       throw new InvalidError('P-256 signatures require a public key.')
   }
-  if (entry.signature === undefined) {
+  if (entry.signature === undefined || entry.signature === '0x') {
     if (options.signed) throw new InvalidError('Signature is required.')
     return
   }
@@ -524,7 +528,7 @@ export function toTuple(entry: FrameSignature): Tuple {
         return entry.signature
       case 1:
       case 'secp256k1':
-        return entry.signature === undefined
+        return entry.signature === undefined || entry.signature === '0x'
           ? '0x'
           : Hex.fromBytes(
               Signature.toRecoveredBytes(
@@ -535,8 +539,9 @@ export function toTuple(entry: FrameSignature): Tuple {
             )
       case 2:
       case 'p256': {
-        if (entry.signature === undefined) return '0x'
-        const { publicKey } = entry
+        if (entry.signature === undefined || entry.signature === '0x')
+          return '0x'
+        const publicKey = entry.publicKey!
         const signature =
           typeof entry.signature === 'string'
             ? Signature.fromHex(entry.signature)
