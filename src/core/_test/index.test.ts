@@ -40,6 +40,7 @@ test('exports', () => {
       "Filter",
       "Frame",
       "FrameReceipt",
+      "FrameRequest",
       "FrameSignature",
       "Hash",
       "HdKey",
