@@ -15,11 +15,13 @@ export type Source = {
 /**
  * Funding permissions, represented by output token. */
 export type Rules = {
+  /** Enforce policy source order. Defaults to `false`. */
+  enforceOrder?: boolean | undefined
   /**
    * Maximum aggregate slippage in basis points. */
   maxSlippageBps: number
   /**
-   * Ordered source permissions for each output token. */
+   * Source permissions for each output token. */
   sources: Readonly<Record<Address.Address, readonly Source[]>>
 }
 
@@ -46,9 +48,11 @@ export type Rpc =
       admins: readonly Address.Address[]
       /** Committed funding permissions. */
       rules: {
+        /** Enforce policy source order. Defaults to `false`. */
+        enforceOrder?: boolean | undefined
         /** Maximum aggregate slippage in basis points. */
         maxSlippageBps: number
-        /** Ordered source permissions for each output token. */
+        /** Source permissions for each output token. */
         sources: Readonly<Record<Address.Address, Route['sources']>>
       }
     }
@@ -71,7 +75,7 @@ export type Route = {
    * Output token. */
   token: Address.Address
   /**
-   * Ordered source permissions. */
+   * Source permissions. */
   sources: readonly {
     /** Funding source address in the contract ABI. */
     target: Address.Address
@@ -92,6 +96,7 @@ export type Tuple =
           Hex.Hex,
           readonly (readonly [Hex.Hex, Hex.Hex])[],
         ])[],
+        '0x' | '0x01',
       ],
     ]
 
@@ -115,6 +120,7 @@ const parameters = [
           },
         ],
       },
+      { name: 'enforceOrder', type: 'bool' },
     ],
   },
 ] as const
@@ -133,6 +139,11 @@ const domain = Hash.keccak256(Hex.fromString('tempo.funding-policy.rules.v1'))
  * ```
  */
 export function toRoutes(rules: Rules): readonly Route[] {
+  if (
+    rules.enforceOrder !== undefined &&
+    typeof rules.enforceOrder !== 'boolean'
+  )
+    throw new InvalidPolicyError('Ordering enforcement must be a boolean.')
   if (
     !Number.isInteger(rules.maxSlippageBps) ||
     rules.maxSlippageBps < 0 ||
@@ -177,7 +188,11 @@ export function toRoutes(rules: Rules): readonly Route[] {
  */
 export function encode(rules: Rules): Hex.Hex {
   return AbiParameters.encode(parameters, [
-    { maxSlippageBps: rules.maxSlippageBps, routes: toRoutes(rules) },
+    {
+      enforceOrder: rules.enforceOrder ?? false,
+      maxSlippageBps: rules.maxSlippageBps,
+      routes: toRoutes(rules),
+    },
   ])
 }
 
@@ -195,6 +210,7 @@ export function encode(rules: Rules): Hex.Hex {
 export function decode(data: Hex.Hex): Rules {
   const [value] = AbiParameters.decode(parameters, data)
   const rules: Rules = {
+    enforceOrder: value.enforceOrder,
     maxSlippageBps: value.maxSlippageBps,
     sources: Object.fromEntries(
       value.routes.map(({ token, sources }) => [
@@ -276,6 +292,7 @@ export function toTuple(value: Authorization): Tuple {
             sources.map(({ target, data }) => [target, data] as const),
           ] as const,
       ),
+      value.rules.enforceOrder ? '0x01' : '0x',
     ],
   ]
 }
@@ -307,15 +324,16 @@ export function fromTuple(value: Tuple): Authorization {
     value.length !== 2 ||
     !Array.isArray(value[0]) ||
     !Array.isArray(value[1]) ||
-    value[1].length !== 2
+    value[1].length !== 3
   )
     throw new InvalidPolicyError('Invalid inline policy tuple.')
-  const [admins, [slippage, routes]] = value
+  const [admins, [slippage, routes, enforceOrder]] = value
   if (
     typeof slippage !== 'string' ||
     !Hex.validate(slippage, { strict: true }) ||
     slippage.startsWith('0x00') ||
-    !Array.isArray(routes)
+    !Array.isArray(routes) ||
+    (enforceOrder !== '0x' && enforceOrder !== '0x01')
   )
     throw new InvalidPolicyError('Invalid policy rules tuple.')
   const sources: Record<Address.Address, readonly Source[]> = {}
@@ -337,6 +355,7 @@ export function fromTuple(value: Tuple): Authorization {
   const policy = {
     admins,
     rules: {
+      enforceOrder: enforceOrder === '0x01',
       maxSlippageBps: slippage === '0x' ? 0 : Number(slippage),
       sources,
     },

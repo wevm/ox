@@ -151,6 +151,7 @@ describe('behavior', () => {
   })
 
   const rules = {
+    enforceOrder: false,
     maxSlippageBps: 100,
     sources: {
       [token]: requirement.sources,

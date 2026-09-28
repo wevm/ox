@@ -86,12 +86,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # `edge` tracks `tempoxyz/tempo` main and includes unreleased
-        # features the tests depend on (e.g. TIP-1049 admin keys). The
-        # `latest` tag is pinned to released versions and lags behind.
-        tag: 
-          - edge
-          # - https://rpc.moderato.tempo.xyz
+        # TIP-1120 image from tempoxyz/tempo/actions/runs/36383271463.
+        tag:
+          - sha-6e27f81
 
     steps:
       - name: Clone repository

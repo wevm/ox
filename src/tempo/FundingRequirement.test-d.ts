@@ -23,6 +23,12 @@ test('funding requirements use executable values', () => {
 })
 
 test('policy authorization preserves ID and inline types', () => {
+  expectTypeOf<FundingPolicy.Rules['enforceOrder']>().toEqualTypeOf<
+    boolean | undefined
+  >()
+  expectTypeOf<
+    Exclude<FundingPolicy.Rpc, string>['rules']['enforceOrder']
+  >().toEqualTypeOf<boolean | undefined>()
   expectTypeOf<KeyAuthorization.Input['fundingPolicy']>().toEqualTypeOf<
     FundingPolicy.Authorization | undefined
   >()

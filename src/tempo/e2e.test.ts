@@ -8,11 +8,13 @@ import {
   WebAuthnP256,
   WebCryptoP256,
 } from 'ox'
-import { getTransactionCount } from 'viem/actions'
+import { getTransactionCount, readContract } from 'viem/actions'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { chain, client, fundAddress, nodeEnv } from '../../test/tempo/config.js'
 import {
   AuthorizationTempo,
+  FundingPolicy,
+  FundingSourceDex,
   KeyAuthorization,
   Period,
   SignatureEnvelope,
@@ -892,6 +894,98 @@ describe('behavior: keyAuthorization', () => {
       address,
     })
   })
+
+  test.each([undefined, false, true])(
+    'behavior: funding policy ordering (%s)',
+    async (enforceOrder) => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      const rules = {
+        enforceOrder,
+        maxSlippageBps: 100,
+        sources: {
+          '0x20c0000000000000000000000000000000000001': [
+            FundingSourceDex.from({
+              tokenIn: '0x20c0000000000000000000000000000000000002',
+            }),
+          ],
+        },
+      }
+      const authorization = KeyAuthorization.from({
+        address,
+        chainId: BigInt(chainId),
+        fundingPolicy: { admins: [root.address], rules },
+        type: 'secp256k1',
+      })
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        gas: 5_000_000n,
+        keyAuthorization: KeyAuthorization.from(authorization, {
+          signature: SignatureEnvelope.from(
+            Secp256k1.sign({
+              payload: KeyAuthorization.getSignPayload(authorization),
+              privateKey: root.privateKey,
+            }),
+          ),
+        }),
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+        nonce: BigInt(
+          await getTransactionCount(client, {
+            address: root.address,
+            blockTag: 'pending',
+          }),
+        ),
+      })
+      const serialized = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          inner: SignatureEnvelope.from(
+            Secp256k1.sign({
+              payload: TxEnvelopeTempo.getSignPayload(transaction, {
+                from: root.address,
+              }),
+              privateKey,
+            }),
+          ),
+          type: 'keychain',
+          userAddress: root.address,
+        }),
+      })
+      const receipt = await client.request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized],
+      })
+      expect(receipt?.status).toBe('0x1')
+      const policyId = await readContract(client, {
+        abi: [
+          AbiFunction.from(
+            'function getFundingPolicyId(address account, address keyId) view returns (uint64)',
+          ),
+        ],
+        address: '0xaaaaaaaa00000000000000000000000000000000',
+        args: [root.address, address],
+        functionName: 'getFundingPolicyId',
+      })
+      const policy = await readContract(client, {
+        abi: [
+          AbiFunction.from(
+            'function getPolicy(uint64 policyId) view returns ((address[] admins, bytes32 rulesHash) policy)',
+          ),
+        ],
+        address: '0x1120000000000000000000000000000000000002',
+        args: [policyId],
+        functionName: 'getPolicy',
+      })
+      expect(policy.admins.map((admin) => admin.toLowerCase())).toEqual([
+        root.address.toLowerCase(),
+      ])
+      expect(policy.rulesHash).toBe(FundingPolicy.hash(rules))
+    },
+  )
 
   test('behavior: secp256k1 access key', async () => {
     const privateKey =
