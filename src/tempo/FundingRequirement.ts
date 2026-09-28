@@ -28,6 +28,16 @@ export type FundingRequirement<bigintType = bigint, numberType = number> = {
  * RPC funding requirement. */
 export type Rpc = FundingRequirement<Hex.Hex, Hex.Hex>
 
+/** Unsigned funding fields to resolve before signing. */
+export type Intent<bigintType = bigint, numberType = number> = {
+  [key in keyof FundingRequirement<bigintType, numberType>]?:
+    | FundingRequirement<bigintType, numberType>[key]
+    | undefined
+}
+
+/** RPC funding intent with optional token, amount, and sources. */
+export type IntentRpc = Intent<Hex.Hex, Hex.Hex>
+
 /**
  * RLP funding requirement tuple. */
 export type Tuple = readonly [
@@ -54,38 +64,16 @@ export type Tuple = readonly [
  * })
  * ```
  */
-export function assert(value: FundingRequirement): void {
+export function assert(value: Intent): asserts value is FundingRequirement {
   if (!Array.isArray(value.sources))
     throw new InvalidRequirementError(
       'Funding sources must be resolved before signing.',
     )
-  Address.assert(value.token, { strict: false })
-  if (value.amount < 0n || value.amount >= 2n ** 256n)
-    throw new InvalidRequirementError('Amount must fit uint256.')
-  if (
-    value.slippageBps !== undefined &&
-    (!Number.isInteger(value.slippageBps) ||
-      value.slippageBps < 0 ||
-      value.slippageBps > 10_000)
-  )
+  if (value.token === undefined || value.amount === undefined)
     throw new InvalidRequirementError(
-      'Slippage must be between 0 and 10,000 basis points.',
+      'Funding token and amount must be resolved before signing.',
     )
-  if (
-    value.policyRules !== undefined &&
-    (!Hex.validate(value.policyRules, { strict: true }) ||
-      value.policyRules === '0x' ||
-      value.policyRules.length % 2 !== 0)
-  )
-    throw new InvalidRequirementError('Policy rules must be nonempty bytes.')
-  for (const source of value.sources) {
-    Address.assert(source.target, { strict: false })
-    if (
-      !Hex.validate(source.data, { strict: true }) ||
-      source.data.length % 2 !== 0
-    )
-      throw new InvalidRequirementError('Source data must be bytes.')
-  }
+  assertFields(value)
 }
 
 /**
@@ -251,6 +239,97 @@ export function toRpc(
     ...(slippageBps === undefined
       ? {}
       : { slippageBps: Quantity.fromNumberish(slippageBps) }),
+  }
+}
+
+/**
+ * Decodes unsigned funding intent, preserving omitted fields for inference.
+ *
+ * @example
+ * ```ts
+ * import { FundingRequirement } from 'ox/tempo'
+ *
+ * FundingRequirement.fromRpcIntent({ amount: '0x32' })
+ * ```
+ */
+export function fromRpcIntent(value: IntentRpc): Intent {
+  const { amount, slippageBps, sources, ...rest } = value
+  const result = {
+    ...rest,
+    ...(amount === undefined ? {} : { amount: BigInt(amount) }),
+    ...(slippageBps === undefined ? {} : { slippageBps: Number(slippageBps) }),
+    ...(sources === undefined
+      ? {}
+      : { sources: sources.map(({ target, data }) => ({ target, data })) }),
+  }
+  assertFields(result)
+  return result
+}
+
+/**
+ * Encodes unsigned funding intent without filling omitted fields.
+ *
+ * @example
+ * ```ts
+ * import { FundingRequirement } from 'ox/tempo'
+ *
+ * FundingRequirement.toRpcIntent({ amount: 50n })
+ * ```
+ */
+export function toRpcIntent(
+  value: Intent<bigint | number | Hex.Hex, number | Hex.Hex>,
+): IntentRpc {
+  assertFields({
+    ...value,
+    amount: value.amount === undefined ? undefined : BigInt(value.amount),
+    slippageBps:
+      value.slippageBps === undefined ? undefined : Number(value.slippageBps),
+  })
+  const { amount, slippageBps, sources, ...rest } = value
+  return {
+    ...rest,
+    ...(amount === undefined ? {} : { amount: Quantity.fromNumberish(amount) }),
+    ...(slippageBps === undefined
+      ? {}
+      : { slippageBps: Quantity.fromNumberish(slippageBps) }),
+    ...(sources === undefined
+      ? {}
+      : { sources: sources.map(({ target, data }) => ({ target, data })) }),
+  }
+}
+
+function assertFields(value: Intent): void {
+  if (value.sources !== undefined && !Array.isArray(value.sources))
+    throw new InvalidRequirementError('Funding sources must be an array.')
+  if (value.token !== undefined) Address.assert(value.token, { strict: false })
+  if (
+    value.amount !== undefined &&
+    (value.amount < 0n || value.amount >= 2n ** 256n)
+  )
+    throw new InvalidRequirementError('Amount must fit uint256.')
+  if (
+    value.slippageBps !== undefined &&
+    (!Number.isInteger(value.slippageBps) ||
+      value.slippageBps < 0 ||
+      value.slippageBps > 10_000)
+  )
+    throw new InvalidRequirementError(
+      'Slippage must be between 0 and 10,000 basis points.',
+    )
+  if (
+    value.policyRules !== undefined &&
+    (!Hex.validate(value.policyRules, { strict: true }) ||
+      value.policyRules === '0x' ||
+      value.policyRules.length % 2 !== 0)
+  )
+    throw new InvalidRequirementError('Policy rules must be nonempty bytes.')
+  for (const source of value.sources ?? []) {
+    Address.assert(source.target, { strict: false })
+    if (
+      !Hex.validate(source.data, { strict: true }) ||
+      source.data.length % 2 !== 0
+    )
+      throw new InvalidRequirementError('Source data must be bytes.')
   }
 }
 

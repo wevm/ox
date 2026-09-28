@@ -41,9 +41,10 @@ export type TransactionRequest<
     feePayer?: boolean | undefined
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     feeToken?: Address.Address | undefined
-    /** Required balances before application calls. */
+    /** Required balances before application calls. Use true or omit fields to request inference before signing. */
     requireFunds?:
-      | readonly FundingRequirement.FundingRequirement<bigintType, numberType>[]
+      | true
+      | readonly FundingRequirement.Intent<bigintType, numberType>[]
       | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
@@ -70,7 +71,7 @@ export type Rpc = Omit<
   | 'keyAuthorizationSimulation'
   | 'signature'
 > & {
-  requireFunds?: readonly FundingRequirement.Rpc[] | undefined
+  requireFunds?: true | readonly FundingRequirement.IntentRpc[] | undefined
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feePayerSignature?: Signature.Rpc | null | undefined
   feeToken?: Hex.Hex | undefined
@@ -141,7 +142,10 @@ export function fromRpc(request: Rpc): TransactionRequest {
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
   if (request.requireFunds)
-    request_.requireFunds = request.requireFunds.map(FundingRequirement.fromRpc)
+    request_.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(FundingRequirement.fromRpcIntent)
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
@@ -283,9 +287,10 @@ export function toRpc(request: toRpc.Input): Rpc {
   )
     request_rpc.feeToken = request.feeToken
   if (request.requireFunds)
-    request_rpc.requireFunds = request.requireFunds.map(
-      FundingRequirement.toRpc,
-    )
+    request_rpc.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(FundingRequirement.toRpcIntent)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
@@ -373,6 +378,16 @@ export function toEnvelope(
   request: TransactionRequest,
   options: toEnvelope.Options = {},
 ): TxEnvelopeTempo.TxEnvelopeTempo {
+  const requireFunds = (() => {
+    if (request.requireFunds === true)
+      throw new FundingRequirement.InvalidRequirementError(
+        'Funding requirements must be resolved before signing.',
+      )
+    return request.requireFunds?.map((requirement) => {
+      FundingRequirement.assert(requirement)
+      return requirement
+    })
+  })()
   const calls = (() => {
     if (request.calls) return request.calls
     const to =
@@ -418,7 +433,7 @@ export function toEnvelope(
       : {}),
     ...(typeof request.from !== 'undefined' ? { from: request.from } : {}),
     ...(typeof request.gas !== 'undefined' ? { gas: request.gas } : {}),
-    ...(request.requireFunds ? { requireFunds: request.requireFunds } : {}),
+    ...(requireFunds ? { requireFunds } : {}),
     ...(typeof request.keyAuthorization !== 'undefined'
       ? { keyAuthorization: request.keyAuthorization }
       : {}),

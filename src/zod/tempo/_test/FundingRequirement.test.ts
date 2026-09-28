@@ -84,3 +84,17 @@ describe('behavior', () => {
     expect(z.safeParse(FundingPolicy.Authorization, 0n).success).toBe(false)
   })
 })
+
+describe('unsigned intent', () => {
+  test.each([true, [], [{ sources: [] }, { amount: 0n }]] as const)(
+    'round-trips partial request fields (%s)',
+    (requireFunds) => {
+      const rpc = z.encode(TransactionRequest.TransactionRequest, {
+        requireFunds,
+      })
+      expect(
+        z.decode(TransactionRequest.TransactionRequest, rpc).requireFunds,
+      ).toEqual(requireFunds)
+    },
+  )
+})

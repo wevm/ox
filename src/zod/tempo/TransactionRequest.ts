@@ -79,7 +79,12 @@ export const Rpc = z.object({
   gas: z.optional(z_Hex.Hex),
   gasPrice: z.optional(z_Hex.Hex),
   input: z.optional(z_Hex.Hex),
-  requireFunds: z.optional(z.readonly(z.array(z_FundingRequirement.Rpc))),
+  requireFunds: z.optional(
+    z.union([
+      z.literal(true),
+      z.readonly(z.array(z.partial(z_FundingRequirement.Rpc))),
+    ]),
+  ),
   keyAuthorization: z.optional(z_KeyAuthorization.Rpc),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -134,7 +139,14 @@ export const Domain = z.object({
   gas: z.optional(z.bigint()),
   gasPrice: z.optional(z.bigint()),
   input: z.optional(z_Hex.Hex),
-  requireFunds: z.optional(z.readonly(z.array(z_FundingRequirement.Domain))),
+  requireFunds: z.optional(
+    z.union([
+      z.literal(true),
+      z.readonly(
+        z.array(z.partial(z.object(z_FundingRequirement.Domain.shape))),
+      ),
+    ]),
+  ),
   keyAuthorization: z.optional(z_KeyAuthorization.Domain),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -176,7 +188,10 @@ export const DomainToRpc = z.object({
   gasPrice: z.optional(uintBigintNumberish()),
   input: z.optional(z_Hex.Hex),
   requireFunds: z.optional(
-    z.readonly(z.array(z_FundingRequirement.DomainToRpc)),
+    z.union([
+      z.literal(true),
+      z.readonly(z.array(z.partial(z_FundingRequirement.DomainToRpc))),
+    ]),
   ),
   keyAuthorization: z.optional(z_KeyAuthorization.DomainToRpc),
   keyData: z.optional(z_Hex.Hex),
@@ -250,9 +265,10 @@ function fromRpc(
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
   if (request.requireFunds)
-    request_.requireFunds = request.requireFunds.map(
-      core_FundingRequirement.fromRpc,
-    )
+    request_.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(core_FundingRequirement.fromRpcIntent)
   if (request.keyAuthorization)
     request_.keyAuthorization = z.decode(
       z_KeyAuthorization.KeyAuthorization,
@@ -346,9 +362,10 @@ function toRpc(
   )
     request_rpc.feeToken = request.feeToken
   if (request.requireFunds)
-    request_rpc.requireFunds = request.requireFunds.map(
-      core_FundingRequirement.toRpc,
-    )
+    request_rpc.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(core_FundingRequirement.toRpcIntent)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = z.encode(
       z_KeyAuthorization.KeyAuthorizationToRpc,
