@@ -1,3 +1,4 @@
+import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
@@ -37,7 +38,14 @@ export type TransactionRequest<
     calls?: readonly Call<bigintType, addressType>[] | undefined
     feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
-    keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
+    keyAuthorization?:
+      | KeyAuthorization.Signed<
+          bigint,
+          number,
+          Address.Address,
+          KeyAuthorization.Type
+        >
+      | undefined
     keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
@@ -59,7 +67,7 @@ export type Rpc = Omit<
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
-  keyAuthorization?: KeyAuthorization.Rpc | undefined
+  keyAuthorization?: KeyAuthorization.Rpc<KeyAuthorization.Type> | undefined
   keyAuthorizationSimulation?: MultisigSimulation.Rpc | undefined
   multisigSimulation?: MultisigSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined

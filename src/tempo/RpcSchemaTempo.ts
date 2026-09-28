@@ -78,7 +78,7 @@ export type Multisig = RpcSchema.From<
       Request: {
         method: 'multisig_approveKeyAuthorization'
         params: [
-          | { keyAuthorization: KeyAuthorization.Rpc }
+          | { keyAuthorization: KeyAuthorization.Rpc<KeyAuthorization.Type> }
           | { hash: Hex.Hex; signature: Hex.Hex },
         ]
       }

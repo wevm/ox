@@ -155,14 +155,14 @@ export type SignatureEnvelope<bigintType = bigint, numberType = number> =
   | EnvelopeOneOf<Multisig<bigintType, numberType>, SignatureEnvelopeKey>
 
 /**
- * RPC-formatted signature envelope.
+ * RPC-formatted signature envelope. Multisig signatures are hex strings with no `type` discriminant.
  */
 export type SignatureEnvelopeRpc =
   | EnvelopeOneOf<
       Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc,
       SignatureEnvelopeRpcKey
     >
-  | MultisigRpc
+  | (MultisigRpc & { type?: undefined })
 
 /** Primitive signature envelope accepted by protocol sidecars. */
 export type Primitive<bigintType = bigint, numberType = number> = OneOf<

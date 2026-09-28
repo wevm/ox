@@ -45,32 +45,56 @@ test('accepts multisig signatures and account-bound grants', () => {
     { ...authorization, account: multisig.account, type: 'multisig' },
     { signature: multisig },
   )
-  expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
-  expectTypeOf(
-    KeyAuthorization.toRpc(signed),
-  ).toMatchTypeOf<KeyAuthorization.Rpc>()
+  expectTypeOf(signed).toMatchTypeOf<
+    KeyAuthorization.Signed<
+      bigint,
+      number,
+      `0x${string}`,
+      KeyAuthorization.Type
+    >
+  >()
+  expectTypeOf(KeyAuthorization.toRpc(signed)).toMatchTypeOf<
+    KeyAuthorization.Rpc<KeyAuthorization.Type>
+  >()
 })
 
 test('requires an account for multisig grants', () => {
-  type Multisig = Extract<KeyAuthorization.Input, { type: 'multisig' }>
+  type Multisig = Extract<
+    KeyAuthorization.Input<KeyAuthorization.Type>,
+    { type: 'multisig' }
+  >
   expectTypeOf<Multisig['account']>().toEqualTypeOf<TempoAddress.Address>()
   expectTypeOf<
-    Extract<KeyAuthorization.Signed, { type: 'multisig' }>['account']
+    Extract<
+      KeyAuthorization.Signed<
+        bigint,
+        number,
+        `0x${string}`,
+        KeyAuthorization.Type
+      >,
+      { type: 'multisig' }
+    >['account']
   >().toEqualTypeOf<`0x${string}`>()
   expectTypeOf<
-    Omit<Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>, 'account'>
-  >().not.toExtend<KeyAuthorization.Rpc>()
+    Omit<
+      Extract<
+        KeyAuthorization.Rpc<KeyAuthorization.Type>,
+        { keyType: 'multisig' }
+      >,
+      'account'
+    >
+  >().not.toExtend<KeyAuthorization.Rpc<KeyAuthorization.Type>>()
   expectTypeOf<{
     address: `0x${string}`
     chainId: bigint
     type: 'multisig'
-  }>().not.toExtend<KeyAuthorization.Input>()
+  }>().not.toExtend<KeyAuthorization.Input<KeyAuthorization.Type>>()
   expectTypeOf<{
     account: undefined
     address: `0x${string}`
     chainId: bigint
     type: 'multisig'
-  }>().not.toExtend<KeyAuthorization.Input>()
+  }>().not.toExtend<KeyAuthorization.Input<KeyAuthorization.Type>>()
   expectTypeOf<{
     account: null
     chainId: '0x1'
@@ -78,9 +102,12 @@ test('requires an account for multisig grants', () => {
     keyId: `0x${string}`
     keyType: 'multisig'
     signature: KeyAuthorization.SignatureRpc
-  }>().not.toExtend<KeyAuthorization.Rpc>()
+  }>().not.toExtend<KeyAuthorization.Rpc<KeyAuthorization.Type>>()
   expectTypeOf<
-    Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>['account']
+    Extract<
+      KeyAuthorization.Rpc<KeyAuthorization.Type>,
+      { keyType: 'multisig' }
+    >['account']
   >().toEqualTypeOf<`0x${string}`>()
 })
 
@@ -130,4 +157,62 @@ test('resolves Tempo address bindings for multisig grants', () => {
   )
   expectTypeOf(signed.account).toMatchTypeOf<`0x${string}`>()
   expectTypeOf(signed.address).toMatchTypeOf<`0x${string}`>()
+})
+
+test('defaults to primitive key types', () => {
+  expectTypeOf<
+    KeyAuthorization.KeyAuthorization['type']
+  >().toEqualTypeOf<SignatureEnvelope.Type>()
+  expectTypeOf<
+    KeyAuthorization.Signed['type']
+  >().toEqualTypeOf<SignatureEnvelope.Type>()
+  expectTypeOf<
+    KeyAuthorization.Input['type']
+  >().toEqualTypeOf<SignatureEnvelope.Type>()
+  expectTypeOf<
+    KeyAuthorization.Rpc['keyType']
+  >().toEqualTypeOf<SignatureEnvelope.Type>()
+})
+
+test('infers key types through RPC conversions', () => {
+  const signed = KeyAuthorization.from(authorization, { signature })
+  const rpc = KeyAuthorization.toRpc(signed)
+  expectTypeOf(rpc.keyType).toEqualTypeOf<'secp256k1'>()
+  expectTypeOf(KeyAuthorization.fromRpc(rpc).type).toEqualTypeOf<'secp256k1'>()
+  expectTypeOf(KeyAuthorization.from(rpc).type).toEqualTypeOf<'secp256k1'>()
+
+  const signed_multisig = KeyAuthorization.from(
+    { ...authorization, account: multisig.account, type: 'multisig' },
+    { signature },
+  )
+  const rpc_multisig = KeyAuthorization.toRpc(signed_multisig)
+  expectTypeOf(rpc_multisig.keyType).toEqualTypeOf<'multisig'>()
+  expectTypeOf(rpc_multisig.account).toEqualTypeOf<`0x${string}`>()
+  expectTypeOf(
+    KeyAuthorization.fromRpc(rpc_multisig).type,
+  ).toEqualTypeOf<'multisig'>()
+  expectTypeOf(
+    KeyAuthorization.from(rpc_multisig).type,
+  ).toEqualTypeOf<'multisig'>()
+})
+
+test('keeps arbitrary serialized authorizations broad', () => {
+  expectTypeOf<
+    ReturnType<typeof KeyAuthorization.deserialize>['type']
+  >().toEqualTypeOf<KeyAuthorization.Type>()
+})
+
+test('keeps primitive grants independent of the signer type', () => {
+  const signed = KeyAuthorization.from(authorization, { signature: multisig })
+  expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
+  expectTypeOf(
+    KeyAuthorization.toRpc(signed).keyType,
+  ).toEqualTypeOf<'secp256k1'>()
+})
+
+test('preserves RPC signature type access', () => {
+  const inspect = (rpc: KeyAuthorization.Rpc) => rpc.signature.type
+  expectTypeOf(inspect).returns.toEqualTypeOf<
+    SignatureEnvelope.Type | undefined
+  >()
 })

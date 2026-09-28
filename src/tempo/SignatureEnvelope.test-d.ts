@@ -38,3 +38,24 @@ test('requires config and primitive approvals', () => {
   }
   expectTypeOf(rpc).toEqualTypeOf<Hex.Hex>()
 })
+
+test('preserves RPC discriminant access with hex signatures', () => {
+  const inspect = (rpc: SignatureEnvelope.SignatureEnvelopeRpc) => rpc.type
+  expectTypeOf(inspect).returns.toEqualTypeOf<
+    SignatureEnvelope.Type | 'keychain' | undefined
+  >()
+  expectTypeOf<Hex.Hex>().toExtend<SignatureEnvelope.SignatureEnvelopeRpc>()
+
+  const narrow = (rpc: SignatureEnvelope.SignatureEnvelopeRpc) => {
+    if (rpc.type === 'webAuthn') {
+      expectTypeOf(rpc).toMatchTypeOf<SignatureEnvelope.WebAuthnRpc>()
+      return rpc.webauthnData
+    }
+    if (typeof rpc === 'string') {
+      expectTypeOf(rpc).toMatchTypeOf<Hex.Hex>()
+      return rpc
+    }
+    return undefined
+  }
+  expectTypeOf(narrow).returns.toEqualTypeOf<Hex.Hex | undefined>()
+})

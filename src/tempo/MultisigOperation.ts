@@ -979,7 +979,7 @@ function assertRetainedApprovals(
 function assertSelectedApprovals(
   operation: KeyAuthorizationOperation,
   selected: readonly SignatureEnvelope.SignatureEnvelope[],
-  authorization: KeyAuthorization_.KeyAuthorization,
+  authorization: ReturnType<typeof KeyAuthorization_.deserialize>,
 ): void {
   const retained = operation.approvals.map((approval) =>
     SignatureEnvelope.deserialize(approval),

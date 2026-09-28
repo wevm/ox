@@ -15,6 +15,8 @@ import * as TempoAddress from './TempoAddress.js'
 /**
  * Key authorization for provisioning access keys.
  *
+ * Defaults to primitive key types. Use the `type` parameter to include multisig grants.
+ *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary
  * keys with customizable permissions including expiry timestamps and per-TIP-20 token spending
  * limits. This enables a user to sign transactions without repeated passkey prompts.
@@ -38,6 +40,7 @@ export type KeyAuthorization<
   bigintType = bigint,
   numberType = number,
   addressType = Address.Address,
+  type extends Type = SignatureEnvelope.Type,
 > = {
   /** Address derived from the public key of the key type. */
   address: addressType
@@ -82,8 +85,7 @@ export type KeyAuthorization<
       /** Multisig key type. */
       type: 'multisig'
     }
-) &
-  (signed extends true
+) & { type: type } & (signed extends true
     ? {
         signature:
           | SignatureEnvelope.Primitive<bigintType, numberType>
@@ -103,19 +105,15 @@ export type Signature<bigintType = bigint, numberType = number> =
 
 /** RPC-formatted signature that can authorize an access key. */
 export type SignatureRpc =
-  | SignatureEnvelope.MultisigRpc
+  | (SignatureEnvelope.MultisigRpc & { type?: undefined })
   | SignatureEnvelope.PrimitiveRpc
 
 /** Input type for a Key Authorization. */
-export type Input = KeyAuthorization<
-  false,
-  bigint,
-  number,
-  TempoAddress.Address
->
+export type Input<type extends Type = SignatureEnvelope.Type> =
+  KeyAuthorization<false, bigint, number, TempoAddress.Address, type>
 
-/** RPC representation matching the node's wire format. */
-export type Rpc = {
+/** RPC representation matching the node's wire format. Defaults to primitive key types. */
+export type Rpc<type extends Type = SignatureEnvelope.Type> = {
   /** Allowed call scopes (node field: `allowedCalls`). */
   allowedCalls?: readonly RpcCallScope[] | undefined
   /** Chain ID (hex quantity). */
@@ -145,7 +143,7 @@ export type Rpc = {
       /** Multisig key type. */
       keyType: 'multisig'
     }
-)
+) & { keyType: type }
 
 /** RPC representation of a token limit (matches node's `TokenLimit` serde). */
 export type RpcTokenLimit = {
@@ -171,7 +169,19 @@ export type Signed<
   bigintType = bigint,
   numberType = number,
   addressType = Address.Address,
-> = KeyAuthorization<true, bigintType, numberType, addressType>
+  type extends Type = SignatureEnvelope.Type,
+> = KeyAuthorization<true, bigintType, numberType, addressType, type>
+
+/** Access key types accepted by the protocol. */
+export type Type = SignatureEnvelope.Type | 'multisig'
+
+type Authorization<signed extends boolean = boolean> = KeyAuthorization<
+  signed,
+  bigint,
+  number,
+  Address.Address,
+  Type
+>
 
 type SignatureValue =
   | SignatureEnvelope.from.MultisigFromConfig
@@ -430,15 +440,16 @@ export type TokenLimit<
  * @returns The {@link ox#KeyAuthorization.KeyAuthorization}.
  */
 export function from<
-  const authorization extends Input | Rpc,
+  const authorization extends Input<Type> | Rpc<Type>,
   const signature extends SignatureValue | undefined = undefined,
 >(
-  authorization: authorization | KeyAuthorization,
+  authorization: authorization | Authorization,
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
-  if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
+  if ('keyId' in authorization)
+    return fromRpc(authorization as Rpc<Type>) as never
   assertAccountBinding(authorization.type, authorization.account)
-  const auth = authorization as KeyAuthorization & {
+  const auth = authorization as Authorization & {
     limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
     scopes?: readonly {
       address: TempoAddress.Address
@@ -505,11 +516,14 @@ export declare namespace from {
   }
 
   type ReturnType<
-    authorization extends KeyAuthorization | Input | Rpc = KeyAuthorization,
+    authorization extends
+      | Authorization
+      | Input<Type>
+      | Rpc<Type> = KeyAuthorization,
     signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = Compute<
-    authorization extends Rpc
-      ? Signed
+    authorization extends Rpc<Type>
+      ? fromRpc.ReturnType<authorization>
       : TempoAddress.ResolveAddresses<
           authorization &
             (signature extends SignatureValue
@@ -554,7 +568,9 @@ export declare namespace from {
  * @param authorization - The RPC-formatted Key Authorization.
  * @returns A signed {@link ox#AuthorizationTempo.AuthorizationTempo}.
  */
-export function fromRpc(authorization: Rpc): Signed {
+export function fromRpc<const authorization extends Rpc<Type>>(
+  authorization: authorization,
+): fromRpc.ReturnType<authorization> {
   const { allowedCalls, chainId, keyId, expiry, limits, keyType } =
     authorization
   const witness = authorization.witness ?? undefined
@@ -601,10 +617,17 @@ export function fromRpc(authorization: Rpc): Signed {
     ...(witness !== undefined ? { witness } : {}),
     ...(account !== undefined ? { account } : {}),
     ...(isAdmin ? { isAdmin: true as const } : {}),
-  }
+  } satisfies Authorization<true> as never
 }
 
 export declare namespace fromRpc {
+  type ReturnType<authorization extends Rpc<Type> = Rpc> = Signed<
+    bigint,
+    number,
+    Address.Address,
+    authorization['keyType']
+  >
+
   type ErrorType =
     | InvalidSignatureTypeError
     | MissingAccountError
@@ -728,7 +751,7 @@ export function fromTuple<const tuple extends Tuple>(
     ? undefined
     : (rawAccount as Address.Address)
   assertAccountBinding(keyType, account)
-  const args: KeyAuthorization = {
+  const args: Authorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
     ...(keyType === 'multisig'
@@ -751,7 +774,7 @@ export function fromTuple<const tuple extends Tuple>(
 
 export declare namespace fromTuple {
   type ReturnType<authorization extends Tuple = Tuple> = Compute<
-    KeyAuthorization<authorization extends Tuple<true> ? true : false>
+    Authorization<authorization extends Tuple<true> ? true : false>
   >
 
   type ErrorType =
@@ -794,7 +817,7 @@ export declare namespace fromTuple {
  * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.
  * @returns The sign payload.
  */
-export function getSignPayload(authorization: KeyAuthorization): Hex.Hex {
+export function getSignPayload(authorization: Authorization): Hex.Hex {
   return hash(authorization)
 }
 
@@ -828,7 +851,7 @@ export declare namespace getSignPayload {
  * @param serialized - The RLP-encoded Key Authorization.
  * @returns The {@link ox#KeyAuthorization.KeyAuthorization}.
  */
-export function deserialize(serialized: Hex.Hex): KeyAuthorization {
+export function deserialize(serialized: Hex.Hex): Authorization {
   const tuple = Rlp.toHex(serialized) as unknown as Tuple
   return fromTuple(tuple)
 }
@@ -865,7 +888,7 @@ export declare namespace deserialize {
  * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.
  * @returns The hash.
  */
-export function hash(authorization: KeyAuthorization): Hex.Hex {
+export function hash(authorization: Authorization): Hex.Hex {
   const [authorizationTuple] = toTuple(authorization)
   const serialized = Rlp.fromHex(authorizationTuple)
   return Hash.keccak256(serialized)
@@ -905,7 +928,7 @@ export declare namespace hash {
  * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.
  * @returns The RLP-encoded Key Authorization.
  */
-export function serialize(authorization: KeyAuthorization): Hex.Hex {
+export function serialize(authorization: Authorization): Hex.Hex {
   const tuple = toTuple(authorization)
   return Rlp.fromHex(tuple as any)
 }
@@ -948,7 +971,9 @@ export declare namespace serialize {
  * @param authorization - A Key Authorization.
  * @returns An RPC-formatted Key Authorization.
  */
-export function toRpc(authorization: Signed): Rpc {
+export function toRpc<const authorization extends Authorization<true>>(
+  authorization: authorization,
+): toRpc.ReturnType<authorization> {
   assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
@@ -1006,10 +1031,14 @@ export function toRpc(authorization: Signed): Rpc {
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
     ...(account !== undefined ? { account } : {}),
-  }
+  } satisfies Rpc<Type> as never
 }
 
 export declare namespace toRpc {
+  type ReturnType<authorization extends Authorization<true> = Signed> = Rpc<
+    authorization['type']
+  >
+
   type ErrorType =
     | InvalidSignatureTypeError
     | MissingAccountError
@@ -1047,7 +1076,7 @@ export declare namespace toRpc {
  * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.
  * @returns A Tempo Key Authorization tuple.
  */
-export function toTuple<const authorization extends KeyAuthorization>(
+export function toTuple<const authorization extends Authorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
   assertAccountBinding(authorization.type, authorization.account)
@@ -1162,8 +1191,8 @@ export function toTuple<const authorization extends KeyAuthorization>(
 }
 
 export declare namespace toTuple {
-  type ReturnType<authorization extends KeyAuthorization = KeyAuthorization> =
-    Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
+  type ReturnType<authorization extends Authorization = KeyAuthorization> =
+    Compute<Tuple<authorization extends Authorization<true> ? true : false>>
 
   type ErrorType =
     | InvalidSignatureTypeError
@@ -1203,7 +1232,7 @@ function resolveSelector(
 }
 
 function assertAccountBinding(
-  type: KeyAuthorization['type'],
+  type: Type,
   account: TempoAddress.Address | null | undefined,
 ): void {
   if (type === 'multisig' && account == null) throw new MissingAccountError()

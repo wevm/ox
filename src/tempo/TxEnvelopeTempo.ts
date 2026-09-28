@@ -101,7 +101,12 @@ export type TxEnvelopeTempo<
      * The authorization must be signed with the root key, the tx can be signed by the Keychain signature.
      */
     keyAuthorization?:
-      | KeyAuthorization.Signed<bigintType, numberType, addressType>
+      | KeyAuthorization.Signed<
+          bigintType,
+          numberType,
+          addressType,
+          KeyAuthorization.Type
+        >
       | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined

@@ -79,7 +79,12 @@ export type Tempo<
     gasPrice?: bigintType | undefined
     /** Key authorization for provisioning a new access key. */
     keyAuthorization?:
-      | KeyAuthorization.KeyAuthorization<true, bigintType, numberType>
+      | KeyAuthorization.Signed<
+          bigintType,
+          numberType,
+          Address.Address,
+          KeyAuthorization.Type
+        >
       | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas: bigintType
@@ -112,7 +117,7 @@ export type TempoRpc<pending extends boolean = false> = Compute<
           value?: Hex.Hex | undefined
         }[]
       | undefined
-    keyAuthorization?: KeyAuthorization.Rpc | undefined
+    keyAuthorization?: KeyAuthorization.Rpc<KeyAuthorization.Type> | undefined
     signature: SignatureEnvelope.SignatureEnvelopeRpc
   }
 >
