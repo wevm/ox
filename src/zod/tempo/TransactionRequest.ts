@@ -268,7 +268,7 @@ function fromRpc(
     request_.requireFunds =
       request.requireFunds === true
         ? true
-        : request.requireFunds.map(core_FundingRequirement.fromRpcIntent)
+        : request.requireFunds.map(core_FundingRequirement.fromRpcRequest)
   if (request.keyAuthorization)
     request_.keyAuthorization = z.decode(
       z_KeyAuthorization.KeyAuthorization,
@@ -365,7 +365,7 @@ function toRpc(
     request_rpc.requireFunds =
       request.requireFunds === true
         ? true
-        : request.requireFunds.map(core_FundingRequirement.toRpcIntent)
+        : request.requireFunds.map(core_FundingRequirement.toRpcRequest)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = z.encode(
       z_KeyAuthorization.KeyAuthorizationToRpc,

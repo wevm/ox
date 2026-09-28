@@ -29,14 +29,14 @@ export type FundingRequirement<bigintType = bigint, numberType = number> = {
 export type Rpc = FundingRequirement<Hex.Hex, Hex.Hex>
 
 /** Unsigned funding fields to resolve before signing. */
-export type Intent<bigintType = bigint, numberType = number> = {
+export type Request<bigintType = bigint, numberType = number> = {
   [key in keyof FundingRequirement<bigintType, numberType>]?:
     | FundingRequirement<bigintType, numberType>[key]
     | undefined
 }
 
 /** RPC funding intent with optional token, amount, and sources. */
-export type IntentRpc = Intent<Hex.Hex, Hex.Hex>
+export type RequestRpc = Request<Hex.Hex, Hex.Hex>
 
 /**
  * RLP funding requirement tuple. */
@@ -64,7 +64,7 @@ export type Tuple = readonly [
  * })
  * ```
  */
-export function assert(value: Intent): asserts value is FundingRequirement {
+export function assert(value: Request): asserts value is FundingRequirement {
   if (!Array.isArray(value.sources))
     throw new InvalidRequirementError(
       'Funding sources must be resolved before signing.',
@@ -249,10 +249,10 @@ export function toRpc(
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * FundingRequirement.fromRpcIntent({ amount: '0x32' })
+ * FundingRequirement.fromRpcRequest({ amount: '0x32' })
  * ```
  */
-export function fromRpcIntent(value: IntentRpc): Intent {
+export function fromRpcRequest(value: RequestRpc): Request {
   const { amount, slippageBps, sources, ...rest } = value
   const result = {
     ...rest,
@@ -273,12 +273,12 @@ export function fromRpcIntent(value: IntentRpc): Intent {
  * ```ts
  * import { FundingRequirement } from 'ox/tempo'
  *
- * FundingRequirement.toRpcIntent({ amount: 50n })
+ * FundingRequirement.toRpcRequest({ amount: 50n })
  * ```
  */
-export function toRpcIntent(
-  value: Intent<bigint | number | Hex.Hex, number | Hex.Hex>,
-): IntentRpc {
+export function toRpcRequest(
+  value: Request<bigint | number | Hex.Hex, number | Hex.Hex>,
+): RequestRpc {
   assertFields({
     ...value,
     amount: value.amount === undefined ? undefined : BigInt(value.amount),
@@ -298,7 +298,7 @@ export function toRpcIntent(
   }
 }
 
-function assertFields(value: Intent): void {
+function assertFields(value: Request): void {
   if (value.sources !== undefined && !Array.isArray(value.sources))
     throw new InvalidRequirementError('Funding sources must be an array.')
   if (value.token !== undefined) Address.assert(value.token, { strict: false })
