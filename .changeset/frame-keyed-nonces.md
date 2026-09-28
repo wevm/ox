@@ -1,5 +1,5 @@
 ---
-"ox": minor
+"ox": patch
 ---
 
 Added EIP-8250 keyed frame nonces with shared `nonce` sequences while preserving the original EIP-8141 encoding when `nonceKeys` is omitted.
