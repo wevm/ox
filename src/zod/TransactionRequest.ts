@@ -5,6 +5,7 @@ import * as z_Authorization from './Authorization.js'
 import * as z_FrameRequest from './FrameRequest.js'
 import * as z_FrameSignature from './FrameSignature.js'
 import * as z_Hex from './Hex.js'
+import { nonceKeys, nonceKeysToRpc, validNonce } from './internal/Frame.js'
 import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
 import * as z from 'zod/mini'
@@ -33,31 +34,44 @@ const type = z.codec(z.string(), z.string(), {
 })
 
 /** Transaction request schema. */
-export const TransactionRequest = z.object(
-  fields(
-    z_Uint.Uint,
-    z_Number.Number,
-    z_Authorization.ListSigned,
-    z_FrameRequest.FrameRequest,
-  ),
-)
+export const TransactionRequest = z
+  .object(
+    fields(
+      z_Uint.Uint,
+      z_Number.Number,
+      z_Authorization.ListSigned,
+      z_FrameRequest.FrameRequest,
+      nonceKeys,
+    ),
+  )
+  .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
 /** Encode-only transaction request schema accepting numberish `toRpc` inputs. */
-export const TransactionRequestToRpc = z.object(
-  fields(
-    z_Uint.UintToRpc,
-    z_Number.NumberToRpc,
-    z_Authorization.ListSignedToRpc,
-    z_FrameRequest.FrameRequestToRpc,
-  ),
-)
+export const TransactionRequestToRpc = z
+  .object(
+    fields(
+      z_Uint.UintToRpc,
+      z_Number.NumberToRpc,
+      z_Authorization.ListSignedToRpc,
+      z_FrameRequest.FrameRequestToRpc,
+      nonceKeysToRpc,
+    ),
+  )
+  .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,
   authorizationList extends z.ZodMiniType,
   frame extends z.ZodMiniType,
->(uint: uint, num: num, authorizationList: authorizationList, frame: frame) {
+  keys extends z.ZodMiniType,
+>(
+  uint: uint,
+  num: num,
+  authorizationList: authorizationList,
+  frame: frame,
+  keys: keys,
+) {
   return {
     accessList: z.optional(z_AccessList.AccessList),
     authorizationList: z.optional(authorizationList),
@@ -74,6 +88,7 @@ function fields<
     maxFeePerGas: z.optional(uint),
     maxPriorityFeePerGas: z.optional(uint),
     nonce: z.optional(uint),
+    nonceKeys: z.optional(keys),
     signatures: z.optional(
       z.readonly(z.array(z_FrameSignature.FrameSignature)),
     ),

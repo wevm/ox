@@ -25,6 +25,7 @@ export const Rpc = z
     maxFeePerGas: z_Hex.Hex,
     maxPriorityFeePerGas: z_Hex.Hex,
     nonce: z_Hex.Hex,
+    nonceKeys: z.optional(z.readonly(z.array(z_Hex.Hex))),
     signatures: z.readonly(z.array(z_FrameSignature.Rpc)),
     type: z.literal('0x6'),
   })
@@ -94,6 +95,7 @@ function fields<
     maxFeePerGas: z.optional(uint),
     maxPriorityFeePerGas: z.optional(uint),
     nonce: z.optional(uint),
+    nonceKeys: z.optional(z.readonly(z.array(uint))),
     sender: z_Address.Address,
     sidecars: z.optional(z_TxEnvelopeEip4844.Sidecars),
     signatures: z.optional(z.readonly(z.array(z_FrameSignature.Decoded))),

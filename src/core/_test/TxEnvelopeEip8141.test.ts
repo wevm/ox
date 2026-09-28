@@ -402,7 +402,7 @@ describe('deserialize', () => {
     expect(() =>
       TxEnvelopeEip8141.deserialize('0x06c0' as TxEnvelopeEip8141.Serialized),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TxEnvelopeEip8141.InvalidError: Expected seven transaction fields.]`,
+      `[TxEnvelopeEip8141.InvalidError: Expected seven or eight transaction fields.]`,
     )
   })
 
@@ -426,7 +426,7 @@ describe('deserialize', () => {
     expect(() =>
       TxEnvelopeEip8141.deserialize('0x06c180' as TxEnvelopeEip8141.Serialized),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TxEnvelopeEip8141.InvalidError: Expected seven transaction fields.]`,
+      `[TxEnvelopeEip8141.InvalidError: Expected seven or eight transaction fields.]`,
     )
   })
 

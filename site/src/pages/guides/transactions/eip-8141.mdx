@@ -115,6 +115,39 @@ list available to account verification logic. `FrameSignature.from` supports
 `'arbitrary'`, `'secp256k1'`, and `'p256'`; omitting `scheme` selects `'arbitrary'`.
 Use an explicit 32-byte `payload` only when the account expects a separate digest.
 
+## Select Nonce Domains
+
+On networks supporting [EIP-8250](https://eips.ethereum.org/EIPS/eip-8250), supply
+`nonceKeys` to select nonce domains. `nonce` is the single sequence shared by every
+selected domain. Each domain must have that sequence before execution.
+
+```ts twoslash
+import { TxEnvelopeEip8141 } from 'ox'
+
+const envelope = TxEnvelopeEip8141.from({
+  chainId: 1,
+  sender: '0x1111111111111111111111111111111111111111',
+  frames: [{ mode: 'sender', executionGas: 50_000n }],
+  nonceKeys: [1n, 2n],
+  nonce: 0n,
+})
+```
+
+Keys must be 1–16 strictly increasing uint256 values. `[0n]` selects the sender's
+legacy account nonce; zero cannot appear with another key. Sequences must be
+nonnegative and less than `2n ** 64n - 1n`. Ox validates these constraints locally;
+the execution client checks each domain's current sequence and account authorization.
+
+Omitting `nonceKeys` preserves the original seven-field EIP-8141 encoding. Explicit
+keys, including `[0n]`, select the eight-field EIP-8250 encoding. Use `[0n]` for the
+legacy nonce domain after activation. Ox does not infer network activation or add
+keys automatically. Both keys and sequence affect transaction and signing hashes.
+
+RPC uses `nonceKeys` and `nonce`. RLP encodes the keys followed by the sequence at
+the old nonce position. An incomplete request can omit `nonce` for client filling;
+an envelope defaults it to zero. First use of nonzero domains also requires state
+gas for nonce storage; supply budgets appropriate for the network.
+
 ## Convert RPC Data
 
 [`TxEnvelopeEip8141.toRpc`](/api/TxEnvelopeEip8141/toRpc) converts `sender` to

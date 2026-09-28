@@ -4,7 +4,13 @@ import * as z_Address from './Address.js'
 import * as z_Authorization from './Authorization.js'
 import * as z_Frame from './Frame.js'
 import * as z_FrameSignature from './FrameSignature.js'
-import { chainId, chainIdToRpc } from './internal/Frame.js'
+import {
+  chainId,
+  chainIdToRpc,
+  nonceKeys,
+  nonceKeysToRpc,
+  validNonce,
+} from './internal/Frame.js'
 import * as z_Hex from './Hex.js'
 import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
@@ -142,37 +148,49 @@ export const PendingEip7702 = z.object(
 const Eip8141Type = type('0x6', 'eip8141')
 
 /** EIP-8141 transaction schema. */
-export const Eip8141 = z.object({
-  ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame),
-  blockHash: z_Hex.Hex,
-  blockNumber: z_Uint.Uint,
-  blockTimestamp: z.optional(z_Uint.Uint),
-  transactionIndex: z_Number.Number,
-})
+export const Eip8141 = z
+  .object({
+    ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame, nonceKeys),
+    blockHash: z_Hex.Hex,
+    blockNumber: z_Uint.Uint,
+    blockTimestamp: z.optional(z_Uint.Uint),
+    transactionIndex: z_Number.Number,
+  })
+  .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
 /** Encode-only EIP-8141 transaction schema accepting numberish values. */
-export const Eip8141ToRpc = z.object({
-  ...eip8141Fields(z_Uint.UintToRpc, chainIdToRpc, z_Frame.FrameToRpc),
-  blockHash: z_Hex.Hex,
-  blockNumber: z_Uint.UintToRpc,
-  blockTimestamp: z.optional(z_Uint.UintToRpc),
-  transactionIndex: z_Number.NumberToRpc,
-})
+export const Eip8141ToRpc = z
+  .object({
+    ...eip8141Fields(
+      z_Uint.UintToRpc,
+      chainIdToRpc,
+      z_Frame.FrameToRpc,
+      nonceKeysToRpc,
+    ),
+    blockHash: z_Hex.Hex,
+    blockNumber: z_Uint.UintToRpc,
+    blockTimestamp: z.optional(z_Uint.UintToRpc),
+    transactionIndex: z_Number.NumberToRpc,
+  })
+  .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
 /** Pending EIP-8141 transaction schema. */
-export const PendingEip8141 = z.object({
-  ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame),
-  blockHash: z.null(),
-  blockNumber: z.null(),
-  blockTimestamp: z.optional(z.null()),
-  transactionIndex: z.null(),
-})
+export const PendingEip8141 = z
+  .object({
+    ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame, nonceKeys),
+    blockHash: z.null(),
+    blockNumber: z.null(),
+    blockTimestamp: z.optional(z.null()),
+    transactionIndex: z.null(),
+  })
+  .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
 function eip8141Fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,
   frame extends z.ZodMiniType,
->(uint: uint, num: num, frame: frame) {
+  keys extends z.ZodMiniType,
+>(uint: uint, num: num, frame: frame, keys: keys) {
   return {
     blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
     chainId: num,
@@ -187,6 +205,7 @@ function eip8141Fields<
     maxFeePerGas: uint,
     maxPriorityFeePerGas: uint,
     nonce: uint,
+    nonceKeys: z.optional(keys),
     signatures: z.readonly(z.array(z_FrameSignature.FrameSignature)),
     to: z.optional(z.nullable(z_Address.Address)),
     type: Eip8141Type,
