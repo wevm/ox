@@ -281,14 +281,14 @@ describe('unsigned intent', () => {
   ] as const
 
   test('round-trips omitted fields, zero amounts, and explicit empty sources', () => {
-    const rpc = intents.map(FundingRequirement.toRpcIntent)
+    const rpc = intents.map(FundingRequirement.toRpcRequest)
     expect(rpc).toEqual([
       {},
       { token },
       { amount: '0x0', sources: [] },
       { sources: [{ target, data: '0xab' }], slippageBps: '0x0' },
     ])
-    expect(rpc.map(FundingRequirement.fromRpcIntent)).toEqual(intents)
+    expect(rpc.map(FundingRequirement.fromRpcRequest)).toEqual(intents)
   })
 
   test.each([true, [], intents] as const)(
@@ -306,7 +306,7 @@ describe('unsigned intent', () => {
       expect(() => FundingRequirement.toRpc(intent as never)).toThrow()
       expect(() =>
         FundingRequirement.fromRpc(
-          FundingRequirement.toRpcIntent(intent) as never,
+          FundingRequirement.toRpcRequest(intent) as never,
         ),
       ).toThrow()
       expect(() =>

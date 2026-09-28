@@ -38,7 +38,7 @@ export type TransactionRequest<
     /** Required balances before application calls. Use true or omit fields to request inference before signing. */
     requireFunds?:
       | true
-      | readonly FundingRequirement.Intent<bigintType, numberType>[]
+      | readonly FundingRequirement.Request<bigintType, numberType>[]
       | undefined
     calls?: readonly Call<bigintType, addressType>[] | undefined
     feePayer?: boolean | undefined
@@ -64,7 +64,7 @@ export type Rpc = Omit<
   | 'multisigSimulation'
   | 'keyAuthorizationSimulation'
 > & {
-  requireFunds?: true | readonly FundingRequirement.IntentRpc[] | undefined
+  requireFunds?: true | readonly FundingRequirement.RequestRpc[] | undefined
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
@@ -130,7 +130,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.requireFunds =
       request.requireFunds === true
         ? true
-        : request.requireFunds.map(FundingRequirement.fromRpcIntent)
+        : request.requireFunds.map(FundingRequirement.fromRpcRequest)
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
@@ -241,7 +241,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.requireFunds =
       request.requireFunds === true
         ? true
-        : request.requireFunds.map(FundingRequirement.toRpcIntent)
+        : request.requireFunds.map(FundingRequirement.toRpcRequest)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
