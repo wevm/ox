@@ -2,4 +2,10 @@
 "ox": patch
 ---
 
-Added Tempo funding codecs, policy rules, source helpers, and access key funding authorization using consistent `target` and `data` source fields.
+Added Tempo funding codecs, unsigned requirement inference, policy rules, source helpers, and access key funding authorization.
+
+```ts
+import { TransactionRequest } from 'ox/tempo'
+
+TransactionRequest.toRpc({ requireFunds: [{ sources: [] }] })
+```

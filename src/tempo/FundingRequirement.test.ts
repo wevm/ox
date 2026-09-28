@@ -187,7 +187,9 @@ describe('behavior', () => {
       TxEnvelopeTempo.serialize({ ...envelope, requireFunds: undefined }),
     )
     const rpc = TransactionRequest.toRpc(envelope)
-    expect(rpc.requireFunds?.[0]?.amount).toBe('0x32')
+    expect(rpc.requireFunds !== true && rpc.requireFunds?.[0]?.amount).toBe(
+      '0x32',
+    )
     expect(TransactionRequest.fromRpc(rpc).requireFunds).toEqual([requirement])
   })
 
@@ -267,5 +269,70 @@ describe('behavior', () => {
     expect(Rlp.fromHex(KeyAuthorization.toTuple(authorization)[0])).toBe(
       '0xde018094111111111111111111111111111111111111111180808080808007',
     )
+  })
+})
+
+describe('unsigned intent', () => {
+  const intents = [
+    {},
+    { token },
+    { amount: 0n, sources: [] },
+    { sources: [{ target, data: '0xab' as const }], slippageBps: 0 },
+  ] as const
+
+  test('round-trips omitted fields, zero amounts, and explicit empty sources', () => {
+    const rpc = intents.map(FundingRequirement.toRpcIntent)
+    expect(rpc).toEqual([
+      {},
+      { token },
+      { amount: '0x0', sources: [] },
+      { sources: [{ target, data: '0xab' }], slippageBps: '0x0' },
+    ])
+    expect(rpc.map(FundingRequirement.fromRpcIntent)).toEqual(intents)
+  })
+
+  test.each([true, [], intents] as const)(
+    'round-trips transaction intent (%s)',
+    (requireFunds) => {
+      const rpc = TransactionRequest.toRpc({ requireFunds })
+      expect(rpc.type).toBe('0x76')
+      expect(TransactionRequest.fromRpc(rpc).requireFunds).toEqual(requireFunds)
+    },
+  )
+
+  test('keeps resolved RPC and signed codecs strict', () => {
+    for (const intent of intents) {
+      expect(() => FundingRequirement.toTuple(intent as never)).toThrow()
+      expect(() => FundingRequirement.toRpc(intent as never)).toThrow()
+      expect(() =>
+        FundingRequirement.fromRpc(
+          FundingRequirement.toRpcIntent(intent) as never,
+        ),
+      ).toThrow()
+      expect(() =>
+        TxEnvelopeTempo.serialize({
+          ...envelope,
+          requireFunds: [intent],
+        } as never),
+      ).toThrow()
+    }
+    expect(() =>
+      TxEnvelopeTempo.serialize({ ...envelope, requireFunds: true } as never),
+    ).toThrow()
+  })
+
+  test.each([
+    { token: '0x1234' },
+    { amount: -1n },
+    { amount: 2n ** 256n },
+    { amount: Number.MAX_SAFE_INTEGER + 1 },
+    { slippageBps: 10_001 },
+    { policyRules: '0x' },
+    { sources: [{ target, data: '0x1' }] },
+    { sources: null },
+  ])('rejects invalid supplied fields (%s)', (intent) => {
+    expect(() =>
+      TransactionRequest.toRpc({ requireFunds: [intent] } as never),
+    ).toThrow()
   })
 })

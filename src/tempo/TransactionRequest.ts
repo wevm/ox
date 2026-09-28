@@ -35,9 +35,10 @@ export type TransactionRequest<
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
-    /** Required balances before application calls. */
+    /** Required balances before application calls. Use true or omit fields to request inference before signing. */
     requireFunds?:
-      | readonly FundingRequirement.FundingRequirement<bigintType, numberType>[]
+      | true
+      | readonly FundingRequirement.Intent<bigintType, numberType>[]
       | undefined
     calls?: readonly Call<bigintType, addressType>[] | undefined
     feePayer?: boolean | undefined
@@ -63,7 +64,7 @@ export type Rpc = Omit<
   | 'multisigSimulation'
   | 'keyAuthorizationSimulation'
 > & {
-  requireFunds?: readonly FundingRequirement.Rpc[] | undefined
+  requireFunds?: true | readonly FundingRequirement.IntentRpc[] | undefined
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
@@ -126,7 +127,10 @@ export function fromRpc(request: Rpc): TransactionRequest {
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
   if (request.requireFunds)
-    request_.requireFunds = request.requireFunds.map(FundingRequirement.fromRpc)
+    request_.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(FundingRequirement.fromRpcIntent)
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
@@ -234,9 +238,10 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (typeof request.feeToken !== 'undefined')
     request_rpc.feeToken = TokenId.toAddress(request.feeToken)
   if (request.requireFunds)
-    request_rpc.requireFunds = request.requireFunds.map(
-      FundingRequirement.toRpc,
-    )
+    request_rpc.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(FundingRequirement.toRpcIntent)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
