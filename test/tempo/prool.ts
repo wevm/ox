@@ -22,8 +22,10 @@ export const rpcUrl = (() => {
 export async function createServer(options: createServer.Options = {}) {
   const serverPort = options.port ?? port
   const tag = await (async () => {
-    const envTag =
-      options.tag ?? import.meta.env.VITE_TEMPO_TAG ?? 'sha-6e27f81'
+    // Default to `edge` which tracks `tempoxyz/tempo` main and includes
+    // unreleased features the tests depend on (e.g. TIP-1049 admin keys).
+    // The `latest` tag lags behind released versions.
+    const envTag = options.tag ?? import.meta.env.VITE_TEMPO_TAG ?? 'edge'
     if (!envTag.startsWith('http')) return envTag
 
     const transport = RpcTransport.fromHttp(envTag)
