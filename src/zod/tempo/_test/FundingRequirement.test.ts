@@ -98,3 +98,33 @@ describe('unsigned intent', () => {
     },
   )
 })
+
+describe('funding policy ordering', () => {
+  test.each([undefined, false, true])(
+    'preserves ordering (%s)',
+    (enforceOrder) => {
+      const policy = {
+        admins: [token],
+        rules: {
+          enforceOrder,
+          maxSlippageBps: 100,
+          sources: { [token]: requirement.sources },
+        },
+      }
+      expect(z.parse(FundingPolicy.Inline, policy)).toEqual(policy)
+      expect(z.parse(FundingPolicy.Rpc, policy)).toEqual(policy)
+    },
+  )
+
+  test.each([0, 1, 'false', null])(
+    'rejects invalid ordering (%s)',
+    (enforceOrder) => {
+      const policy = {
+        admins: [token],
+        rules: { enforceOrder, maxSlippageBps: 0, sources: {} },
+      }
+      expect(z.safeParse(FundingPolicy.Inline, policy).success).toBe(false)
+      expect(z.safeParse(FundingPolicy.Rpc, policy).success).toBe(false)
+    },
+  )
+})

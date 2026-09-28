@@ -7,6 +7,7 @@ import { uintBigintNumberish } from '../internal/Integer.js'
 /** Funding permissions keyed by output token. */
 export const Rules = z
   .object({
+    enforceOrder: z.optional(z.boolean()),
     maxSlippageBps: z.number(),
     sources: z.record(
       z_Address.Address,
@@ -52,6 +53,7 @@ export const Rpc = z.union([
     .object({
       admins: z.readonly(z.array(z_Address.Address)),
       rules: z.object({
+        enforceOrder: z.optional(z.boolean()),
         maxSlippageBps: z.number(),
         sources: z.record(
           z_Address.Address,
