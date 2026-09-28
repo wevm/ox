@@ -42,3 +42,30 @@ test('unsigned signature', () => {
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip8141.TxEnvelopeEip8141>()
 })
+
+test('keyed nonce literals and numberish RPC input', () => {
+  const envelope = TxEnvelopeEip8141.from({
+    chainId: 1,
+    frames: [{}],
+    sender: '0x1111111111111111111111111111111111111111',
+    nonceKeys: [1n, 2n],
+    nonce: 3n,
+  })
+  expectTypeOf(envelope.nonceKeys).toEqualTypeOf<readonly [1n, 2n]>()
+  expectTypeOf(envelope.nonce).toEqualTypeOf<3n>()
+  expectTypeOf(TxEnvelopeEip8141.toRpc(envelope).nonceKeys).toEqualTypeOf<
+    readonly `0x${string}`[] | undefined
+  >()
+  expectTypeOf(
+    TxEnvelopeEip8141.toRpc({
+      ...envelope,
+      nonceKeys: ['0x1', 2],
+      nonce: '0x3',
+    }),
+  ).toEqualTypeOf<TxEnvelopeEip8141.Rpc>()
+  // @ts-expect-error decoded nonce keys are bigint
+  TxEnvelopeEip8141.from({ ...envelope, nonceKeys: [1] })
+  expectTypeOf<keyof TxEnvelopeEip8141.Rpc>()
+    .exclude<'nonceSeq'>()
+    .toEqualTypeOf<keyof TxEnvelopeEip8141.Rpc>()
+})
