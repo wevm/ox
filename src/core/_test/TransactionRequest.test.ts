@@ -208,35 +208,43 @@ test('exports', () => {
 })
 
 describe('frame transactions', () => {
-  test('round-trips nested frames and signatures without mutating RPC input', () => {
-    const request = {
-      chainId: 8141,
-      frames: [Frame.from({ executionGas: 50_000n, mode: 'verify' })],
-      from: '0x1111111111111111111111111111111111111111',
-      signatures: [FrameSignature.from('0xaabb')],
-      type: 'eip8141',
-    } satisfies TransactionRequest.TransactionRequest
-    const rpc = TransactionRequest.toRpc(request)
-    const original = structuredClone(rpc)
-    expect(rpc.chainId).toBe('0x1fcd')
-    expect(rpc.frames?.[0]?.executionGas).toBe('0xc350')
-    expect(rpc.signatures).toEqual([
-      { msg: '0x', scheme: '0x0', signature: '0xaabb' },
-    ])
-    expect(rpc.type).toBe('0x6')
-    expect(TransactionRequest.fromRpc(rpc)).toEqual({
-      ...request,
-      frames: [
-        {
-          data: '0x',
-          executionGas: 50_000n,
-          flags: 0,
-          mode: 1,
-          stateGas: 0n,
-          value: 0n,
-        },
-      ],
-    })
-    expect(rpc).toEqual(original)
-  })
+  test.each([undefined, 0n])(
+    'round-trips nested frames with state gas %s without mutating RPC input',
+    (stateGas) => {
+      const request = {
+        chainId: 8141,
+        frames: [
+          Frame.from({ executionGas: 50_000n, mode: 'verify', stateGas }),
+        ],
+        from: '0x1111111111111111111111111111111111111111',
+        signatures: [FrameSignature.from('0xaabb')],
+        type: 'eip8141',
+      } satisfies TransactionRequest.TransactionRequest
+      const rpc = TransactionRequest.toRpc(request)
+      const original = structuredClone(rpc)
+      expect(rpc.chainId).toBe('0x1fcd')
+      expect(rpc.frames?.[0]?.executionGas).toBe('0xc350')
+      expect(rpc.signatures).toEqual([
+        { msg: '0x', scheme: '0x0', signature: '0xaabb' },
+      ])
+      expect(rpc.type).toBe('0x6')
+      if (stateGas === undefined)
+        expect(rpc.frames?.[0]).not.toHaveProperty('stateGas')
+      else expect(rpc.frames?.[0]?.stateGas).toBe('0x0')
+      expect(TransactionRequest.fromRpc(rpc)).toEqual({
+        ...request,
+        frames: [
+          {
+            data: '0x',
+            executionGas: 50_000n,
+            flags: 0,
+            mode: 1,
+            ...(stateGas === undefined ? {} : { stateGas }),
+            value: 0n,
+          },
+        ],
+      })
+      expect(rpc).toEqual(original)
+    },
+  )
 })
