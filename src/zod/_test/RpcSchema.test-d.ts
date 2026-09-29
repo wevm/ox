@@ -82,6 +82,7 @@ test('encode helpers infer params/returns by method', () => {
         | core_Block.Tag
         | core_Block.Identifier<core_Hex.Hex>
       ),
+      (readonly core_Hex.Hex[] | undefined)?,
     ]
   >()
 })
@@ -103,6 +104,7 @@ test('codecs accept a resolved item and infer params/returns', () => {
         | core_Block.Tag
         | core_Block.Identifier<core_Hex.Hex>
       ),
+      (readonly core_Hex.Hex[] | undefined)?,
     ]
   >()
 
@@ -140,4 +142,20 @@ test('from: single method returns an Item', () => {
     returns: z.string(),
   })
   expectTypeOf(item.method).toEqualTypeOf<'abe_foo'>()
+})
+
+test('eth_getTransactionCount nonce keys preserve wire and decoded types', () => {
+  type Params = typeof z_RpcSchema.Eth.eth_getTransactionCount.params
+  expectTypeOf<z.input<Params>[2]>().toEqualTypeOf<
+    readonly core_Hex.Hex[] | undefined
+  >()
+  expectTypeOf<z.output<Params>[2]>().toEqualTypeOf<
+    readonly (core_Hex.Hex | bigint | number)[] | undefined
+  >()
+  expectTypeOf<
+    z.input<typeof z_RpcSchema.Eth.eth_getTransactionCount.returns>
+  >().toEqualTypeOf<core_Hex.Hex>()
+  expectTypeOf<
+    z.output<typeof z_RpcSchema.Eth.eth_getTransactionCount.returns>
+  >().toEqualTypeOf<number>()
 })

@@ -1,6 +1,6 @@
 import { RpcSchema } from 'ox'
 import { z } from 'ox/zod'
-import { expectTypeOf, test } from 'vp/test'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 test('ToViem: converts ox schema to viem schema', () => {
   type OxSchema =
@@ -258,4 +258,34 @@ test('frame simulation results expose payer and frame results', () => {
   expectTypeOf<Frame['executionGasUsed']>().toEqualTypeOf<`0x${string}`>()
   expectTypeOf<Frame['stateGasUsed']>().toEqualTypeOf<`0x${string}`>()
   expectTypeOf<Frame['returnData']>().toEqualTypeOf<`0x${string}`>()
+})
+
+describe('Eth', () => {
+  test('eth_getTransactionCount', () => {
+    type Request = RpcSchema.ExtractRequest<
+      RpcSchema.Eth,
+      'eth_getTransactionCount'
+    >
+    type Params = Request['params']
+
+    expectTypeOf<['0x1234', 'latest']>().toMatchTypeOf<Params>()
+    expectTypeOf<
+      ['0x1234', 'pending', readonly ['0x0']]
+    >().toMatchTypeOf<Params>()
+    expectTypeOf<
+      ['0x1234', '0x10', readonly ['0x1', '0x2']]
+    >().toMatchTypeOf<Params>()
+    expectTypeOf<['0x1234', 'latest', undefined]>().toMatchTypeOf<Params>()
+    expectTypeOf<['0x1234', 'latest', '0x1']>().not.toMatchTypeOf<Params>()
+    expectTypeOf<
+      ['0x1234', 'latest', readonly [1n]]
+    >().not.toMatchTypeOf<Params>()
+    expectTypeOf<['0x1234', readonly ['0x1']]>().not.toMatchTypeOf<Params>()
+    expectTypeOf<
+      ['0x1234', 'latest', readonly ['0x1'], '0x2']
+    >().not.toMatchTypeOf<Params>()
+    expectTypeOf<
+      RpcSchema.ExtractReturnType<RpcSchema.Eth, 'eth_getTransactionCount'>
+    >().toEqualTypeOf<`0x${string}`>()
+  })
 })

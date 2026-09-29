@@ -532,7 +532,15 @@ export type Eth = RpcSchema.From<
       ReturnType: Transaction.Rpc | null
     }
   /**
-   * Returns the number of transactions sent from an address
+   * Returns the account nonce or the shared EIP-8250 sequence at the selected block.
+   *
+   * Omitted `nonceKeys` or `['0x0']` queries the account nonce. Nonzero keys query
+   * their shared sequence, with unused keys returning zero. `pending` uses pending state.
+   * Keys must be 1–16 canonical uint256 quantities in strictly increasing order;
+   * zero cannot be combined with other keys.
+   *
+   * Invalid keys return RPC error `-32602`. Differing sequences or EIP-8250 being
+   * inactive at the selected block for nonzero keys return `-32000`.
    *
    * @example
    * ```
@@ -546,6 +554,7 @@ export type Eth = RpcSchema.From<
         params: [
           address: Address.Address,
           block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
+          nonceKeys?: readonly Hex.Hex[] | undefined,
         ]
       }
       ReturnType: Hex.Hex
