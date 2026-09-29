@@ -99,6 +99,32 @@ test('exports', () => {
 })
 
 describe('getType', () => {
+  test('infers frame transactions from nonce keys', () => {
+    expect([
+      TransactionEnvelope.getType({ nonceKeys: [1n] }),
+      TransactionEnvelope.getType({ nonceKeys: [0n] }),
+      TransactionEnvelope.getType({ nonceKeys: [] }),
+      TransactionEnvelope.getType({
+        nonceKeys: [1n],
+        frames: undefined,
+        authorizationList: [],
+        blobVersionedHashes: [],
+        gasPrice: 1n,
+      }),
+      TransactionEnvelope.getType({ nonceKeys: undefined, maxFeePerGas: 1n }),
+      TransactionEnvelope.getType({ nonceKeys: [1n], type: 'eip1559' }),
+    ]).toMatchInlineSnapshot(`
+      [
+        "eip8141",
+        "eip8141",
+        "eip8141",
+        "eip8141",
+        "eip1559",
+        "eip1559",
+      ]
+    `)
+  })
+
   test('frame fields take precedence over blobs and fees', () => {
     expect(
       TransactionEnvelope.getType({

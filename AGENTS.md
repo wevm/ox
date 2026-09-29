@@ -147,4 +147,4 @@
 - **Type snapshot config** -- `@ark/attest` 0.16 does not follow root project references. Point `ATTEST_CONFIG.tsconfig` at `test/tsconfig.json`.
 - **Node local storage** -- Node 24+ needs a valid `--localstorage-file` for the `@typescript/vfs` dependency used by attest.
 
-- **Frame nonce encodings** -- omitted `nonceKeys` preserves seven-field EIP-8141 encoding; explicit keys, including `[0n]`, select eight-field EIP-8250 encoding. RPC keeps `nonce` as the shared sequence.
+- **Frame nonce encodings** -- omitted `nonceKeys` preserves seven-field EIP-8141 encoding; explicit keys, including `[0n]`, select eight-field EIP-8250 encoding. RPC keeps `nonce` as the shared sequence. Infer `eip8141` from either defined `frames` or `nonceKeys`.

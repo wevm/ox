@@ -10,6 +10,33 @@ import {
 import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('getType', () => {
+  test('infers frame transactions from nonce keys', () => {
+    expectTypeOf(
+      TransactionEnvelope.getType({ nonceKeys: [1n] }),
+    ).toEqualTypeOf<'eip8141'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({ nonceKeys: [0n] }),
+    ).toEqualTypeOf<'eip8141'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({ nonceKeys: [] }),
+    ).toEqualTypeOf<'eip8141'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({
+        nonceKeys: [1n],
+        frames: undefined,
+        authorizationList: [],
+        blobVersionedHashes: [],
+        gasPrice: 1n,
+      }),
+    ).toEqualTypeOf<'eip8141'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({ nonceKeys: undefined, maxFeePerGas: 1n }),
+    ).toEqualTypeOf<'eip1559'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({ nonceKeys: [1n], type: 'eip1559' }),
+    ).toEqualTypeOf<'eip1559'>()
+  })
+
   test('behavior: infers explicit transaction types', () => {
     expectTypeOf(
       TransactionEnvelope.getType({ type: 'legacy' }),

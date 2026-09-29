@@ -412,7 +412,10 @@ export function getType<const envelope extends Typeable>(
     return type as never
   }
 
-  if ('frames' in envelope && envelope.frames !== undefined)
+  if (
+    ('frames' in envelope && envelope.frames !== undefined) ||
+    ('nonceKeys' in envelope && envelope.nonceKeys !== undefined)
+  )
     return 'eip8141' as never
   if (
     'authorizationList' in envelope &&
@@ -446,7 +449,9 @@ export declare namespace getType {
     type: infer type extends string
   }
     ? type
-    : HasDefined<envelope, 'frames'> extends true
+    : true extends
+          | HasDefined<envelope, 'frames'>
+          | HasDefined<envelope, 'nonceKeys'>
       ? TxEnvelopeEip8141.Type
       : HasDefined<envelope, 'authorizationList'> extends true
         ? TxEnvelopeEip7702.Type
