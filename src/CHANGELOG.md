@@ -1,5 +1,23 @@
 # ox
 
+## 0.14.52
+
+### Patch Changes
+
+- [#490](https://github.com/wevm/ox/pull/490) [`e5056e3`](https://github.com/wevm/ox/commit/e5056e3dd9cb6f3ad15fdebda67a21690b0a4d7d) Thanks [@jxom](https://github.com/jxom)! - Added EIP-8250 keyed frame nonces with shared `nonce` sequences while preserving the original EIP-8141 encoding when `nonceKeys` is omitted.
+
+  ```ts
+  import { TxEnvelopeEip8141 } from "ox";
+
+  const envelope = TxEnvelopeEip8141.from({
+    chainId: 1,
+    sender: "0x1111111111111111111111111111111111111111",
+    frames: [{ mode: "sender", executionGas: 50_000n }],
+    nonceKeys: [1n, 2n],
+    nonce: 0n,
+  });
+  ```
+
 ## 0.14.51
 
 ### Patch Changes
