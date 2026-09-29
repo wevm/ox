@@ -1,5 +1,18 @@
 # ox
 
+## 0.14.53
+
+### Patch Changes
+
+- [#494](https://github.com/wevm/ox/pull/494) [`5c4e554`](https://github.com/wevm/ox/commit/5c4e554c2a3501b2a3d69d168d0f1eac8091821a) Thanks [@jxom](https://github.com/jxom)! - Added optional `nonceKeys` to `eth_getTransactionCount` requests.
+
+  ```ts
+  const nonce = await provider.request({
+    method: "eth_getTransactionCount",
+    params: [address, "pending", ["0x1", "0x2"]],
+  });
+  ```
+
 ## 0.14.52
 
 ### Patch Changes
