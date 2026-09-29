@@ -13,6 +13,21 @@ import { kzg } from '../../../test/kzg.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('toRpc', () => {
+  test('preserves nonce keys without type or frames', () => {
+    const request = { nonceKeys: [1n, 2n], nonce: 0n }
+    const rpc = TransactionRequest.toRpc(request)
+    expect(rpc).toMatchInlineSnapshot(`
+      {
+        "nonce": "0x0",
+        "nonceKeys": [
+          "0x1",
+          "0x2",
+        ],
+      }
+    `)
+    expect(TransactionRequest.fromRpc(rpc)).toEqual(request)
+  })
+
   test('default', () => {
     const request = TransactionRequest.toRpc({
       to: '0x0000000000000000000000000000000000000000',
@@ -439,6 +454,19 @@ test('exports', () => {
 })
 
 describe('frame transactions', () => {
+  test('requires frames when nonce keys select a frame envelope', () => {
+    expect(() =>
+      TransactionRequest.toEnvelope({
+        chainId: 1,
+        from: '0x1111111111111111111111111111111111111111',
+        nonceKeys: [1n],
+        nonce: 0n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Quantity.MissingFieldError: Missing required field `frames` on `TransactionRequest`.]',
+    )
+  })
+
   test('derives frame blob sidecars and replaces stale hashes', () => {
     const blobs = Blobs.from('0xdeadbeef')
     const request = {

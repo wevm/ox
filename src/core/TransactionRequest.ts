@@ -6,6 +6,7 @@ import * as Errors from './Errors.js'
 import * as FrameRequest from './FrameRequest.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
+import * as FrameNonce from './internal/frameNonce.js'
 import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 import type * as Kzg from './Kzg.js'
@@ -58,6 +59,8 @@ export type TransactionRequest<
   maxPriorityFeePerGas?: bigintType | undefined
   /** Unique number identifying this transaction */
   nonce?: bigintType | undefined
+  /** EIP-8250 nonce domains. `nonce` is their shared sequence; omitted keys preserve EIP-8141 encoding. */
+  nonceKeys?: readonly bigintType[] | undefined
   /** Frame signature entries for EIP-8141 transactions. */
   signatures?: readonly signature[] | undefined
   /** Transaction recipient */
@@ -126,6 +129,8 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.maxPriorityFeePerGas = Hex.toBigInt(request.maxPriorityFeePerGas)
   if (typeof request.nonce !== 'undefined')
     request_.nonce = Hex.toBigInt(request.nonce)
+  if (request.nonceKeys !== undefined)
+    request_.nonceKeys = FrameNonce.fromRpc(request.nonceKeys, request.nonce)
   if (typeof request.type !== 'undefined')
     request_.type =
       Transaction.fromRpcType[
@@ -143,6 +148,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
 export declare namespace fromRpc {
   export type ErrorType =
     | Authorization.fromRpcList.ErrorType
+    | FrameNonce.InvalidError
     | FrameRequest.fromRpc.ErrorType
     | FrameSignature.fromRpc.ErrorType
     | Hex.toNumber.ErrorType
@@ -232,6 +238,8 @@ export function toRpc(request: toRpc.Input): Rpc {
     )
   if (typeof request.nonce !== 'undefined')
     request_rpc.nonce = Quantity.fromNumberish(request.nonce)
+  if (request.nonceKeys !== undefined)
+    request_rpc.nonceKeys = FrameNonce.toRpc(request.nonceKeys, request.nonce)
   if (typeof request.to !== 'undefined') request_rpc.to = request.to
   if (typeof request.type !== 'undefined')
     request_rpc.type =
@@ -260,6 +268,7 @@ export declare namespace toRpc {
 
   export type ErrorType =
     | Authorization.toRpcList.ErrorType
+    | FrameNonce.InvalidError
     | FrameRequest.toRpc.ErrorType
     | FrameSignature.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
@@ -402,6 +411,9 @@ export function toEnvelope(
         maxFeePerGas: request.maxFeePerGas,
         maxPriorityFeePerGas: request.maxPriorityFeePerGas,
         nonce: request.nonce,
+        ...(request.nonceKeys !== undefined
+          ? { nonceKeys: request.nonceKeys }
+          : {}),
         sender: request.from,
         sidecars,
         signatures: request.signatures,
