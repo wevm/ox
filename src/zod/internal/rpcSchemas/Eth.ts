@@ -15,6 +15,7 @@ import * as z_TransactionReceipt from '../../TransactionReceipt.js'
 import * as z_TransactionRequest from '../../TransactionRequest.js'
 import * as z_Uint from '../../Uint.js'
 import * as z from 'zod/mini'
+import * as Frame from '../Frame.js'
 import { from } from './from.js'
 
 const NoParams = z.optional(z.tuple([]))
@@ -214,7 +215,11 @@ export const eth_getTransactionByHash = from({
 
 export const eth_getTransactionCount = from({
   method: 'eth_getTransactionCount',
-  params: z.tuple([z_Address.Address, BlockNumberOrTagOrIdentifier]),
+  params: z.tuple([
+    z_Address.Address,
+    BlockNumberOrTagOrIdentifier,
+    z.optional(Frame.nonceKeysToRpc),
+  ]),
   returns: z_Number.Number,
 })
 

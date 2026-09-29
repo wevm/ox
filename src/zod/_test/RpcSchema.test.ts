@@ -7,6 +7,131 @@ const hash = `0x${'11'.repeat(32)}` as const
 const topic = `0x${'33'.repeat(32)}` as const
 
 describe('decodeParams', () => {
+  test.each([
+    'latest',
+    'pending',
+    '0x10',
+    { blockHash: hash },
+    { blockNumber: '0x10' },
+  ] as const)('decodes keyed nonce queries at %j', (block) => {
+    const params = z_RpcSchema.decodeParams(
+      z_RpcSchema.Eth,
+      'eth_getTransactionCount',
+      [address, block, ['0x1', '0xa']],
+    )
+    expect(params[2]).toMatchInlineSnapshot(`
+        [
+          1n,
+          10n,
+        ]
+      `)
+    expect(
+      z_RpcSchema.encodeParams(
+        z_RpcSchema.Eth,
+        'eth_getTransactionCount',
+        params,
+      ),
+    ).toEqual([address, block, ['0x1', '0xa']])
+  })
+
+  test('preserves legacy nonce query params', () => {
+    expect(
+      z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+        address,
+        'pending',
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        "0x0000000000000000000000000000000000000000",
+        "pending",
+      ]
+    `)
+    expect(
+      z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+        address,
+        'pending',
+        ['0x0'],
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        "0x0000000000000000000000000000000000000000",
+        "pending",
+        [
+          0n,
+        ],
+      ]
+    `)
+  })
+
+  test('accepts nonce key limits', () => {
+    expect(
+      z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+        address,
+        'latest',
+        [`0x${'f'.repeat(64)}`],
+      ])[2],
+    ).toMatchInlineSnapshot(`
+      [
+        115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+      ]
+    `)
+    expect(
+      z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+        address,
+        'latest',
+        Array.from(
+          { length: 16 },
+          (_, i) => `0x${(i + 1).toString(16)}` as const,
+        ),
+      ])[2]?.length,
+    ).toMatchInlineSnapshot(`16`)
+  })
+
+  test.each(
+    [
+      [],
+      ['0x1', '0x1'],
+      ['0x2', '0x1'],
+      ['0x0', '0x1'],
+      ['0x01'],
+      ['0x'],
+      ['0xg'],
+      [`0x1${'0'.repeat(64)}`],
+      Array.from(
+        { length: 17 },
+        (_, i) => `0x${(i + 1).toString(16)}` as const,
+      ),
+      [1],
+      '0x1',
+      null,
+    ].map((keys) => ({ keys })),
+  )('rejects invalid nonce keys $keys', ({ keys }) => {
+    expect(
+      z.safeParse(z_RpcSchema.Eth.eth_getTransactionCount.params, [
+        address,
+        'latest',
+        keys,
+      ]).success,
+    ).toMatchInlineSnapshot(`false`)
+  })
+
+  test('rejects misplaced nonce keys and extra parameters', () => {
+    expect(
+      z.safeParse(z_RpcSchema.Eth.eth_getTransactionCount.params, [
+        address,
+        ['0x1'],
+      ]).success,
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      z.safeParse(z_RpcSchema.Eth.eth_getTransactionCount.params, [
+        address,
+        'latest',
+        ['0x1'],
+        '0x2',
+      ]).success,
+    ).toMatchInlineSnapshot(`false`)
+  })
+
   test('decodes params (block number / tag coercion)', () => {
     expect(
       z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
@@ -149,6 +274,38 @@ describe('decodeReturns', () => {
 })
 
 describe('encodeParams', () => {
+  test('encodes nonce keys as canonical quantities', () => {
+    expect(
+      z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+        address,
+        'pending',
+        [1n, 10, '0x10'],
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        "0x0000000000000000000000000000000000000000",
+        "pending",
+        [
+          "0x1",
+          "0xa",
+          "0x10",
+        ],
+      ]
+    `)
+  })
+
+  test('rejects unordered nonce keys when encoding', () => {
+    expect(() =>
+      z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+        address,
+        'pending',
+        [2n, 1n],
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[FrameNonce.InvalidError: Nonce keys must be strictly increasing.]`,
+    )
+  })
+
   test('encodes params (native → wire)', () => {
     expect(
       z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
