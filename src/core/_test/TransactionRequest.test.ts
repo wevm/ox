@@ -3,6 +3,21 @@ import { describe, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('toRpc', () => {
+  test('preserves nonce keys without type or frames', () => {
+    const request = { nonceKeys: [1n, 2n], nonce: 0n }
+    const rpc = TransactionRequest.toRpc(request)
+    expect(rpc).toMatchInlineSnapshot(`
+      {
+        "nonce": "0x0",
+        "nonceKeys": [
+          "0x1",
+          "0x2",
+        ],
+      }
+    `)
+    expect(TransactionRequest.fromRpc(rpc)).toEqual(request)
+  })
+
   test('default', () => {
     const request = TransactionRequest.toRpc({
       to: '0x0000000000000000000000000000000000000000',
