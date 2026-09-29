@@ -5,6 +5,7 @@ import type * as Errors from './Errors.js'
 import * as Frame from './Frame.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hex from './Hex.js'
+import * as FrameNonce from './internal/frameNonce.js'
 import type { Compute, OneOf, UnionCompute } from './internal/types.js'
 import * as Signature from './Signature.js'
 
@@ -214,6 +215,8 @@ export type Eip8141<
     maxFeePerGas: bigintType
     /** Maximum priority fee per gas. */
     maxPriorityFeePerGas: bigintType
+    /** EIP-8250 domains sharing the transaction's `nonce` sequence. */
+    nonceKeys?: readonly bigintType[] | undefined
     /** Frame signature entries. */
     signatures: readonly ([bigintType] extends [Hex.Hex]
       ? FrameSignature.Rpc
@@ -354,6 +357,16 @@ export function fromRpc<
     : null
   transaction_.value = BigInt(transaction.value ?? 0n)
 
+  if (transaction.type === '0x6' && transaction.nonceKeys !== undefined) {
+    if (transaction.nonce === undefined)
+      throw new FrameNonce.InvalidError(
+        'A keyed transaction result requires nonce.',
+      )
+    transaction_.nonceKeys = FrameNonce.fromRpc(
+      transaction.nonceKeys,
+      transaction.nonce,
+    )
+  }
   if (transaction.frames)
     transaction_.frames = transaction.frames.map(Frame.fromRpc)
   if (transaction.signatures)
@@ -389,6 +402,7 @@ export declare namespace fromRpc {
   }
 
   type ErrorType =
+    | FrameNonce.InvalidError
     | Frame.fromRpc.ErrorType
     | FrameSignature.fromRpc.ErrorType
     | Signature.extract.ErrorType
@@ -456,6 +470,8 @@ export function toRpc<pending extends boolean = false>(
   rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
   rpc.value = Hex.fromNumber(transaction.value ?? 0n)
 
+  if (transaction.type === 'eip8141' && transaction.nonceKeys !== undefined)
+    rpc.nonceKeys = FrameNonce.toRpc(transaction.nonceKeys, transaction.nonce)
   if (transaction.frames) rpc.frames = transaction.frames.map(Frame.toRpc)
   if (transaction.signatures)
     rpc.signatures = transaction.signatures.map(FrameSignature.toRpc)
@@ -493,6 +509,7 @@ export declare namespace toRpc {
   }
 
   type ErrorType =
+    | FrameNonce.InvalidError
     | Frame.toRpc.ErrorType
     | FrameSignature.toRpc.ErrorType
     | Signature.extract.ErrorType

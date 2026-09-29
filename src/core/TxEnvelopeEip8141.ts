@@ -6,11 +6,17 @@ import * as Frame from './Frame.js'
 import * as FrameSignature from './FrameSignature.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as FrameNonce from './internal/frameNonce.js'
 import * as Quantity from './internal/quantity.js'
 import type { Assign, Compute, PartialBy } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 
-/** An EIP-8141 transaction containing independently budgeted call frames. */
+/**
+ * An EIP-8141 transaction containing independently budgeted call frames.
+ *
+ * Omitted `nonceKeys` preserves the original EIP-8141 encoding. Supplying keys,
+ * including `[0n]`, selects EIP-8250 encoding and changes the signing hash.
+ */
 export type TxEnvelopeEip8141 = {
   /** Versioned blob hashes. @default [] */
   blobVersionedHashes?: readonly Hex.Hex[] | undefined
@@ -24,8 +30,10 @@ export type TxEnvelopeEip8141 = {
   maxFeePerGas?: bigint | undefined
   /** Maximum priority fee per gas, in wei. @default 0n */
   maxPriorityFeePerGas?: bigint | undefined
-  /** Sender nonce. @default 0n */
+  /** Sender nonce or shared sequence. With `nonceKeys`, the sequence must be less than 2^64 - 1. @default 0n */
   nonce?: bigint | undefined
+  /** EIP-8250 domains: 1–16 strictly increasing uint256 keys. `[0n]` selects the legacy account nonce; zero cannot accompany other keys. */
+  nonceKeys?: readonly bigint[] | undefined
   /** Account authorizing execution. */
   sender: Address.Address
   /** PeerDAS sidecars. Excluded from transaction and signing hashes. */
@@ -58,8 +66,10 @@ export type Rpc = {
   maxFeePerGas: Hex.Hex
   /** Maximum priority fee per gas. */
   maxPriorityFeePerGas: Hex.Hex
-  /** Sender nonce. */
+  /** Sender nonce or shared EIP-8250 sequence. */
   nonce: Hex.Hex
+  /** EIP-8250 domains. Omitted for the original EIP-8141 encoding. */
+  nonceKeys?: readonly Hex.Hex[] | undefined
   /** Frame signature entries. */
   signatures: readonly FrameSignature.Rpc[]
   /** RPC transaction type. */
@@ -111,6 +121,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     maxFeePerGas = 0n,
     maxPriorityFeePerGas = 0n,
     nonce = 0n,
+    nonceKeys,
     sender,
     signatures = [],
   } = envelope
@@ -123,6 +134,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
     throw new InvalidError(
       'chainId must be an unsigned 256-bit integer; use bigint for large IDs.',
     )
+  if (nonceKeys !== undefined) FrameNonce.assert(nonceKeys, nonce)
   Address.assert(sender, { strict: false })
   for (const [field, value, bits] of [
     ['maxFeePerBlobGas', maxFeePerBlobGas, 256n],
@@ -161,6 +173,18 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
   const count = (data: Hex.Hex) => {
     for (const byte of Hex.toBytes(data)) tokens += byte === 0 ? 1n : 4n
     size += BigInt(Hex.size(data))
+  }
+  if (nonceKeys !== undefined) {
+    count(
+      Rlp.fromHex(
+        nonceKeys.map((key) =>
+          key === 0n ? '0x' : Hex.fromBytes(Bytes.fromNumber(key)),
+        ),
+      ),
+    )
+    count(
+      Rlp.fromHex(nonce === 0n ? '0x' : Hex.fromBytes(Bytes.fromNumber(nonce))),
+    )
   }
   for (const [index, frame] of (frames as readonly Frame.Frame[]).entries()) {
     Frame.assert(frame)
@@ -226,6 +250,7 @@ export function assert(envelope: PartialBy<TxEnvelopeEip8141, 'type'>): void {
 export declare namespace assert {
   type ErrorType =
     | InvalidError
+    | FrameNonce.InvalidError
     | Frame.assert.ErrorType
     | FrameSignature.toTuple.ErrorType
     | Address.assert.ErrorType
@@ -263,9 +288,14 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip8141 {
     throw new InvalidError('Expected a transaction list.')
   const wrapped = Array.isArray(decoded[0])
   const body = wrapped ? decoded[0] : decoded
-  if (!Array.isArray(body) || body.length !== 7)
-    throw new InvalidError('Expected seven transaction fields.')
-  const [chainId, nonce, sender, frames, signatures, fees, hashes] = body
+  if (!Array.isArray(body) || (body.length !== 7 && body.length !== 8))
+    throw new InvalidError('Expected seven or eight transaction fields.')
+  const keyed = body.length === 8
+  const [chainId, ...fields] = body
+  const keys = keyed ? fields.shift() : undefined
+  if (keyed && !Array.isArray(keys))
+    throw new InvalidError('Expected a nonce key list.')
+  const [nonce, sender, frames, signatures, fees, hashes] = fields
   if (
     typeof sender !== 'string' ||
     !Array.isArray(frames) ||
@@ -293,6 +323,7 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip8141 {
     maxFeePerGas: integer(fees[1]),
     maxPriorityFeePerGas: integer(fees[0]),
     nonce: integer(nonce),
+    ...(Array.isArray(keys) ? { nonceKeys: keys.map(integer) } : {}),
     sender: sender as Address.Address,
     signatures: signatures.map((entry) =>
       FrameSignature.fromTuple(entry as FrameSignature.Tuple),
@@ -408,6 +439,9 @@ export function fromRpc(envelope: Rpc): TxEnvelopeEip8141 {
     maxFeePerGas: Hex.toBigInt(envelope.maxFeePerGas),
     maxPriorityFeePerGas: Hex.toBigInt(envelope.maxPriorityFeePerGas),
     nonce: Hex.toBigInt(envelope.nonce),
+    ...(envelope.nonceKeys !== undefined
+      ? { nonceKeys: FrameNonce.fromRpc(envelope.nonceKeys, envelope.nonce) }
+      : {}),
     sender: envelope.from,
     signatures: envelope.signatures.map(FrameSignature.fromRpc),
   })
@@ -415,6 +449,7 @@ export function fromRpc(envelope: Rpc): TxEnvelopeEip8141 {
 
 export declare namespace fromRpc {
   type ErrorType =
+    | FrameNonce.InvalidError
     | from.ErrorType
     | Frame.fromRpc.ErrorType
     | FrameSignature.fromRpc.ErrorType
@@ -453,6 +488,9 @@ export function toRpc(envelope: toRpc.Input): Rpc {
       envelope.maxPriorityFeePerGas ?? 0n,
     ),
     nonce: Quantity.fromNumberish(envelope.nonce ?? 0n),
+    ...(envelope.nonceKeys !== undefined
+      ? { nonceKeys: FrameNonce.toRpc(envelope.nonceKeys, envelope.nonce) }
+      : {}),
     signatures: (envelope.signatures ?? []).map(FrameSignature.toRpc),
     type: '0x6',
   }
@@ -467,6 +505,7 @@ export declare namespace toRpc {
     | 'maxFeePerGas'
     | 'maxPriorityFeePerGas'
     | 'nonce'
+    | 'nonceKeys'
     | 'type'
   > & {
     chainId: Hex.Hex | bigint | number
@@ -475,9 +514,11 @@ export declare namespace toRpc {
     maxFeePerGas?: Hex.Hex | bigint | number | undefined
     maxPriorityFeePerGas?: Hex.Hex | bigint | number | undefined
     nonce?: Hex.Hex | bigint | number | undefined
+    nonceKeys?: readonly (Hex.Hex | bigint | number)[] | undefined
     type?: Type | undefined
   }
   type ErrorType =
+    | FrameNonce.InvalidError
     | Frame.toRpc.ErrorType
     | FrameSignature.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
@@ -565,10 +606,12 @@ export function hash(
 ): Hex.Hex {
   assert(envelope)
   const body = toTuple(envelope)
-  if (options.presign)
-    body[4] = body[4].map((entry) =>
-      entry[2] === '0x' ? [entry[0], entry[1], entry[2], '0x'] : entry,
-    )
+  if (options.presign) {
+    const signatures = body.length === 8 ? body[5] : body[4]
+    for (const [index, entry] of signatures.entries())
+      if (entry[2] === '0x')
+        signatures[index] = [entry[0], entry[1], entry[2], '0x']
+  }
   return Hash.keccak256(Hex.concat(serializedType, Rlp.fromHex(body)))
 }
 export declare namespace hash {
@@ -692,8 +735,7 @@ export class InvalidError extends Errors.BaseError {
 function toTuple(envelope: PartialBy<TxEnvelopeEip8141, 'type'>) {
   const quantity = (value: bigint | number | undefined): Hex.Hex =>
     value ? Hex.fromBytes(Bytes.fromNumber(value)) : '0x'
-  return [
-    quantity(envelope.chainId),
+  const fields = [
     quantity(envelope.nonce),
     envelope.sender,
     envelope.frames.map((frame) => Frame.toTuple(frame)),
@@ -706,11 +748,17 @@ function toTuple(envelope: PartialBy<TxEnvelopeEip8141, 'type'>) {
     envelope.blobVersionedHashes ?? [],
   ] satisfies [
     Hex.Hex,
-    Hex.Hex,
     Address.Address,
     Frame.Tuple[],
     FrameSignature.Tuple[],
     Hex.Hex[],
     readonly Hex.Hex[],
   ]
+  return envelope.nonceKeys === undefined
+    ? ([quantity(envelope.chainId), ...fields] as const)
+    : ([
+        quantity(envelope.chainId),
+        envelope.nonceKeys.map(quantity),
+        ...fields,
+      ] as const)
 }
