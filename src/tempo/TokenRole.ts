@@ -7,6 +7,7 @@ export const roles = [
   'unpause',
   'issuer',
   'burnBlocked',
+  'burnAt',
 ] as const
 export type TokenRole = (typeof roles)[number]
 
@@ -16,13 +17,15 @@ export const toPreHashed = {
   unpause: 'UNPAUSE_ROLE',
   issuer: 'ISSUER_ROLE',
   burnBlocked: 'BURN_BLOCKED_ROLE',
+  burnAt: 'BURN_AT_ROLE',
 } as const satisfies Record<TokenRole, string>
 
 /**
  * Serializes a token role to its keccak256 hash representation.
  *
  * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),
- * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), and `BURN_BLOCKED_ROLE` (compliance).
+ * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), `BURN_BLOCKED_ROLE` (compliance), and
+ * `BURN_AT_ROLE` (burn from any unprotected account, T12+).
  *
  * [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
  *
