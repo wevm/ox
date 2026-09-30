@@ -634,3 +634,37 @@ export * as ZoneId from './ZoneId.js'
  * @category Reference
  */
 export * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
+
+/**
+ * Funding requirements and source request types.
+ *
+ * @category Reference
+ */
+export * as FundingRequirement from './FundingRequirement.js'
+
+/**
+ * Funding policy commitments and authorization codecs.
+ *
+ * @category Reference
+ */
+export * as FundingPolicy from './FundingPolicy.js'
+/**
+ * Funding source constructors and native DEX payload codecs.
+ *
+ * @category Reference
+ */
+export * as FundingSource from './FundingSource.js'
+
+/**
+ * Native DEX funding source construction and payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceDex from './FundingSourceDex.js'
+
+/**
+ * Earn funding source payload encoding.
+ *
+ * @category Reference
+ */
+export * as FundingSourceEarn from './FundingSourceEarn.js'

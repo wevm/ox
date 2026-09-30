@@ -1,4 +1,5 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
+import * as z_FundingRequirement from './FundingRequirement.js'
 import * as core_TxEnvelopeTempo from '../../tempo/TxEnvelopeTempo.js'
 import * as z_AccessList from '../AccessList.js'
 import * as z_Address from '../Address.js'
@@ -34,6 +35,7 @@ const baseFields = {
   feeToken: z.optional(z_Address.Address),
   from: z.optional(z_Address.Address),
   gas: z.optional(z.bigint()),
+  requireFunds: z.optional(z.readonly(z.array(z_FundingRequirement.Domain))),
   keyAuthorization: z.optional(z_KeyAuthorization.Domain),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),

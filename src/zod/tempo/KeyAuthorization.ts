@@ -1,4 +1,5 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
+import * as z_FundingPolicy from './FundingPolicy.js'
 import * as core_KeyAuthorization from '../../tempo/KeyAuthorization.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
@@ -35,6 +36,7 @@ export const Rpc = z
     allowedCalls: z.optional(z.nullable(z.readonly(z.array(RpcCallScope)))),
     chainId: z_Hex.Hex,
     expiry: z.optional(z.nullable(z_Hex.Hex)),
+    fundingPolicy: z.optional(z_FundingPolicy.Rpc),
     isAdmin: z.optional(z.nullable(z.boolean())),
     keyId: z_Address.Address,
     keyType: z.union([z_SignatureEnvelope.Type, z.literal('multisig')]),
@@ -74,6 +76,7 @@ export const Scope = z.object({
 })
 
 const domainShape = {
+  fundingPolicy: z.optional(z_FundingPolicy.Authorization),
   address: z_Address.Address,
   chainId: z.bigint(),
   expiry: z.optional(z.number()),
@@ -103,6 +106,7 @@ export const Domain = z
 
 const domainToRpcShape = {
   ...domainShape,
+  fundingPolicy: z.optional(z_FundingPolicy.AuthorizationToRpc),
   chainId: uintBigintNumberish(),
   expiry: z.optional(uintNumberNumberish()),
   limits: z.optional(z.readonly(z.array(TokenLimitToRpc))),

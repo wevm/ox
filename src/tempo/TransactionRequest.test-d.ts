@@ -127,3 +127,25 @@ describe('round-trip: Request → Envelope → Request', () => {
     ).toEqualTypeOf<TransactionRequest.TransactionRequest>()
   })
 })
+
+describe('funding intent', () => {
+  test('accepts partial unsigned requirements but keeps envelopes strict', () => {
+    const partial = { sources: [] } as const
+    expectTypeOf(partial).toExtend<
+      Exclude<
+        NonNullable<TransactionRequest.TransactionRequest['requireFunds']>,
+        true
+      >[number]
+    >()
+    expectTypeOf(partial).not.toExtend<
+      NonNullable<TxEnvelopeTempo.TxEnvelopeTempo['requireFunds']>[number]
+    >()
+    const rpc = TransactionRequest.toRpc({
+      requireFunds: [{ amount: 0n }, partial],
+    })
+    expectTypeOf(rpc).toEqualTypeOf<TransactionRequest.Rpc>()
+    TransactionRequest.toRpc({ requireFunds: true })
+    TransactionRequest.fromRpc({ requireFunds: [{ amount: '0x0' }, partial] })
+    TransactionRequest.fromRpc({ requireFunds: true })
+  })
+})

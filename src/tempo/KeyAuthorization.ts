@@ -10,6 +10,7 @@ import type {
   UnionPartialBy,
 } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
+import * as FundingPolicy from './FundingPolicy.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 /**
@@ -46,6 +47,8 @@ export type KeyAuthorization<
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
+  /** Existing funding policy ID or inline policy creation. */
+  fundingPolicy?: FundingPolicy.Authorization<bigintType> | undefined
   /** Whether this authorization provisions an admin access key. */
   isAdmin?: boolean | undefined
   /** TIP20 spending limits for this key. */
@@ -96,6 +99,16 @@ export type SignatureRpc =
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<false, bigint, number>
 
+/** Unsigned RPC authorization used before owner signing. */
+export type UnsignedRpc = Rpc extends infer authorization
+  ? authorization extends Rpc
+    ? Omit<authorization, 'signature'> & { signature?: never }
+    : never
+  : never
+
+/** Authorization fields before owner signing. */
+export type Unsigned = KeyAuthorization<false> & { signature?: never }
+
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
   /** Optional account address binding (TIP-1049). */
@@ -106,6 +119,8 @@ export type Rpc = {
   chainId: Hex.Hex
   /** Expiry timestamp (hex quantity or null). */
   expiry: Hex.Hex | null | undefined
+  /** Existing policy ID or inline creation. */
+  fundingPolicy?: FundingPolicy.Rpc | undefined
   /** Whether this authorization provisions an admin access key (TIP-1049). */
   isAdmin?: boolean | null | undefined
   /** Key identifier. */
@@ -174,6 +189,16 @@ type CallScopeTuple = readonly [
 ]
 
 type AuthorizationTuple =
+  | readonly [
+      ...BaseTuple,
+      expiry: Hex.Hex,
+      limits: readonly TokenLimitTuple[] | Hex.Hex,
+      calls: readonly CallScopeTuple[] | Hex.Hex,
+      witness: Hex.Hex,
+      isAdmin: Hex.Hex,
+      account: Hex.Hex,
+      fundingPolicy: FundingPolicy.Tuple,
+    ]
   | BaseTuple
   | readonly [...BaseTuple, expiry: Hex.Hex]
   | readonly [...BaseTuple, expiry: Hex.Hex, limits: readonly TokenLimitTuple[]]
@@ -442,6 +467,8 @@ export function from<
       selector?: Hex.Hex | string
     }[]
   }
+  if (auth.fundingPolicy !== undefined)
+    FundingPolicy.toTuple(auth.fundingPolicy)
   if (auth.witness !== undefined) assertWitness(auth.witness)
   if (auth.signature) assertSignature(auth.signature)
   const resolved = {
@@ -534,14 +561,34 @@ export declare namespace from {
  * @returns A signed {@link ox#AuthorizationTempo.AuthorizationTempo}.
  */
 export function fromRpc(authorization: Rpc): Signed {
+  const { signature: signatureRpc, ...unsigned } = authorization
+  const signature = SignatureEnvelope.fromRpc(signatureRpc)
+  assertSignature(signature)
+  return { ...fromRpcUnsigned(unsigned), signature }
+}
+
+/**
+ * Converts unsigned RPC fields before owner signing.
+ *
+ * @example
+ * ```ts
+ * import { KeyAuthorization } from 'ox/tempo'
+ *
+ * const authorization = KeyAuthorization.fromRpcUnsigned({
+ *   chainId: '0x1',
+ *   expiry: null,
+ *   keyId: '0x2222222222222222222222222222222222222222',
+ *   keyType: 'secp256k1',
+ * })
+ * ```
+ */
+export function fromRpcUnsigned(authorization: UnsignedRpc): Unsigned {
   const { allowedCalls, chainId, keyId, expiry, limits, keyType } =
     authorization
   const witness = authorization.witness ?? undefined
   const isAdmin = authorization.isAdmin ?? undefined
   const account = authorization.account ?? undefined
   assertAccountBinding(keyType, account)
-  const signature = SignatureEnvelope.fromRpc(authorization.signature)
-  assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Unflatten nested allowedCalls into flat scopes
@@ -573,9 +620,11 @@ export function fromRpc(authorization: Rpc): Signed {
         : {}),
     })),
     ...(scopes ? { scopes } : {}),
-    signature,
     type: keyType,
     ...(witness !== undefined ? { witness } : {}),
+    ...(authorization.fundingPolicy !== undefined
+      ? { fundingPolicy: FundingPolicy.fromRpc(authorization.fundingPolicy) }
+      : {}),
     ...(account !== undefined ? { account } : {}),
     ...(isAdmin ? { isAdmin: true as const } : {}),
   }
@@ -666,8 +715,19 @@ export function fromTuple<const tuple extends Tuple>(
   // Trailing optional fields in wire order. Each entry pulls one slot off the
   // trailing array and decodes it (treating absent or RLP-null placeholders as
   // missing). To add a new optional trailing field, append a single entry.
-  const [rawExpiry, rawLimits, rawScopes, rawWitness, rawIsAdmin, rawAccount] =
-    trailing
+  const [
+    rawExpiry,
+    rawLimits,
+    rawScopes,
+    rawWitness,
+    rawIsAdmin,
+    rawAccount,
+    rawFundingPolicy,
+  ] = trailing
+  if (trailing.length > 7)
+    throw new FundingPolicy.InvalidPolicyError(
+      'Unexpected key authorization fields.',
+    )
   const expiry = isAbsent(rawExpiry)
     ? undefined
     : hexToNumber(rawExpiry as Hex.Hex) || undefined
@@ -723,6 +783,13 @@ export function fromTuple<const tuple extends Tuple>(
     ...(limits !== undefined ? { limits } : {}),
     ...(scopes !== undefined ? { scopes } : {}),
     ...(witness !== undefined ? { witness } : {}),
+    ...(rawFundingPolicy !== undefined
+      ? {
+          fundingPolicy: FundingPolicy.fromTuple(
+            rawFundingPolicy as FundingPolicy.Tuple,
+          ),
+        }
+      : {}),
     ...(account !== undefined ? { account } : {}),
     ...(isAdmin ? { isAdmin: true as const } : {}),
   }
@@ -948,6 +1015,34 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: toRpc.Input): Rpc {
+  const { signature, ...unsigned } = authorization
+  assertSignature(signature)
+  return {
+    ...toRpcUnsigned(unsigned),
+    signature: SignatureEnvelope.toRpc(signature) as SignatureRpc,
+  }
+}
+
+/**
+ * Converts unsigned authorization fields to RPC before owner signing.
+ *
+ * @example
+ * ```ts
+ * import { KeyAuthorization } from 'ox/tempo'
+ *
+ * const authorization = KeyAuthorization.toRpcUnsigned({
+ *   address: '0x2222222222222222222222222222222222222222',
+ *   chainId: 1n,
+ *   type: 'secp256k1',
+ * })
+ * ```
+ */
+export function toRpcUnsigned(
+  authorization: Omit<
+    KeyAuthorization<false, Hex.Hex | bigint | number, Hex.Hex | number>,
+    'signature'
+  >,
+): UnsignedRpc {
   assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
@@ -956,12 +1051,10 @@ export function toRpc(authorization: toRpc.Input): Rpc {
     expiry,
     limits,
     type,
-    signature,
     witness,
     isAdmin,
     account,
   } = authorization
-  assertSignature(signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
@@ -1000,12 +1093,12 @@ export function toRpc(authorization: toRpc.Input): Rpc {
       limit: Quantity.fromNumberish(limit),
       ...(period ? { period: Quantity.fromNumberish(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(signature) as
-      | SignatureEnvelope.PrimitiveRpc
-      | SignatureEnvelope.MultisigRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
+    ...(authorization.fundingPolicy !== undefined
+      ? { fundingPolicy: FundingPolicy.toRpc(authorization.fundingPolicy) }
+      : {}),
     ...(account !== undefined ? { account } : {}),
   }
 }
@@ -1132,7 +1225,10 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // To add a new optional trailing field (e.g. from a future TIP): append a
   // single entry to this list with `placeholder: '0x'`.
   const hasTip1053Plus =
-    witness !== undefined || isAdmin || account !== undefined
+    witness !== undefined ||
+    isAdmin ||
+    account !== undefined ||
+    authorization.fundingPolicy !== undefined
   const optionals: readonly { placeholder: unknown; value: unknown }[] = [
     {
       value:
@@ -1150,8 +1246,15 @@ export function toTuple<const authorization extends KeyAuthorization>(
     // TIP-1049: admin marker. Present = `0x01` (RLP integer 1); absent
     // skipped or omitted. Any other value is a hard decode error on the node.
     { value: isAdmin ? '0x01' : undefined, placeholder: '0x' },
-    // TIP-1049: optional account binding. Last field — never a placeholder.
+    // Optional account binding precedes the funding policy.
     { value: account, placeholder: '0x' },
+    {
+      value:
+        authorization.fundingPolicy === undefined
+          ? undefined
+          : FundingPolicy.toTuple(authorization.fundingPolicy),
+      placeholder: '0x',
+    },
   ]
   let lastPresent = -1
   for (let i = optionals.length - 1; i >= 0; i--)

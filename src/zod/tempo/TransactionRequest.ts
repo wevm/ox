@@ -1,4 +1,6 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
+import * as core_FundingRequirement from '../../tempo/FundingRequirement.js'
+import * as z_FundingRequirement from './FundingRequirement.js'
 import * as core_Hex from '../../core/Hex.js'
 import type * as core_TransactionRequest from '../../tempo/TransactionRequest.js'
 import * as z_AccessList from '../AccessList.js'
@@ -77,6 +79,12 @@ export const Rpc = z.object({
   gas: z.optional(z_Hex.Hex),
   gasPrice: z.optional(z_Hex.Hex),
   input: z.optional(z_Hex.Hex),
+  requireFunds: z.optional(
+    z.union([
+      z.literal(true),
+      z.readonly(z.array(z.partial(z_FundingRequirement.Rpc))),
+    ]),
+  ),
   keyAuthorization: z.optional(z_KeyAuthorization.Rpc),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -131,6 +139,14 @@ export const Domain = z.object({
   gas: z.optional(z.bigint()),
   gasPrice: z.optional(z.bigint()),
   input: z.optional(z_Hex.Hex),
+  requireFunds: z.optional(
+    z.union([
+      z.literal(true),
+      z.readonly(
+        z.array(z.partial(z.object(z_FundingRequirement.Domain.shape))),
+      ),
+    ]),
+  ),
   keyAuthorization: z.optional(z_KeyAuthorization.Domain),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -171,6 +187,12 @@ export const DomainToRpc = z.object({
   gas: z.optional(uintBigintNumberish()),
   gasPrice: z.optional(uintBigintNumberish()),
   input: z.optional(z_Hex.Hex),
+  requireFunds: z.optional(
+    z.union([
+      z.literal(true),
+      z.readonly(z.array(z.partial(z_FundingRequirement.DomainToRpc))),
+    ]),
+  ),
   keyAuthorization: z.optional(z_KeyAuthorization.DomainToRpc),
   keyData: z.optional(z_Hex.Hex),
   keyId: z.optional(z_Address.Address),
@@ -242,6 +264,11 @@ function fromRpc(
     }))
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = request.feeToken
+  if (request.requireFunds)
+    request_.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(core_FundingRequirement.fromRpcRequest)
   if (request.keyAuthorization)
     request_.keyAuthorization = z.decode(
       z_KeyAuthorization.KeyAuthorization,
@@ -288,6 +315,7 @@ function toRpc(
     typeof request.capabilities !== 'undefined' ||
     typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
+    typeof request.requireFunds !== 'undefined' ||
     typeof request.keyAuthorization !== 'undefined' ||
     typeof request.keyData !== 'undefined' ||
     typeof request.keyId !== 'undefined' ||
@@ -333,6 +361,11 @@ function toRpc(
     !(request.feePayer === true && !request.feePayerSignature)
   )
     request_rpc.feeToken = request.feeToken
+  if (request.requireFunds)
+    request_rpc.requireFunds =
+      request.requireFunds === true
+        ? true
+        : request.requireFunds.map(core_FundingRequirement.toRpcRequest)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = z.encode(
       z_KeyAuthorization.KeyAuthorizationToRpc,
