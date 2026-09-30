@@ -2807,3 +2807,69 @@ describe('admin keys (TIP-1049)', () => {
     expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
   })
 })
+
+describe('fromRpcUnsigned', () => {
+  test('decodes an authorization before owner signing', () => {
+    expect(
+      KeyAuthorization.fromRpcUnsigned({
+        chainId: '0x1',
+        expiry: '0x0',
+        fundingPolicy: '0x7',
+        keyId: address,
+        keyType: 'secp256k1',
+        limits: [],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
+        "expiry": 0,
+        "fundingPolicy": 7n,
+        "limits": [],
+        "type": "secp256k1",
+      }
+    `)
+  })
+})
+
+describe('toRpcUnsigned', () => {
+  test('encodes an authorization without a signature', () => {
+    expect(
+      KeyAuthorization.toRpcUnsigned({
+        address,
+        chainId: 1n,
+        fundingPolicy: 7n,
+        limits: [{ limit: 50n, token }],
+        type: 'secp256k1',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "chainId": "0x1",
+        "expiry": null,
+        "fundingPolicy": "0x7",
+        "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "keyType": "secp256k1",
+        "limits": [
+          {
+            "limit": "0x32",
+            "token": "0x20c0000000000000000000000000000000000001",
+          },
+        ],
+      }
+    `)
+  })
+
+  test('preserves multisig account binding', () => {
+    const authorization = {
+      account: '0x1111111111111111111111111111111111111111',
+      address,
+      chainId: 1n,
+      type: 'multisig',
+    } as const
+    expect(
+      KeyAuthorization.fromRpcUnsigned(
+        KeyAuthorization.toRpcUnsigned(authorization),
+      ),
+    ).toEqual(authorization)
+  })
+})

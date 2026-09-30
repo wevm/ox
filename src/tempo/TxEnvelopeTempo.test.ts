@@ -1644,3 +1644,17 @@ describe('validate', () => {
     ).toBe(false)
   })
 })
+
+describe('behavior', () => {
+  test('rejects unresolved funding intent before signing', () => {
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        calls: [],
+        chainId: 1,
+        requireFunds: true as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[FundingRequirement.InvalidRequirementError: Funding requirements must be resolved before signing.]`,
+    )
+  })
+})
