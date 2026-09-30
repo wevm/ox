@@ -13,7 +13,8 @@ export const anvilMainnet = defineAnvil({
 /////////////////////////////////////////////////////////////////
 
 function getEnv(key: string, fallback: string): string {
-  if (typeof process.env[key] === 'string') return process.env[key] as string
+  const value = process.env[key]
+  if (value) return value
   // biome-ignore lint/suspicious/noConsole: _
   console.warn(
     `\`process.env.${key}\` not found. Falling back to \`${fallback}\`.`,
