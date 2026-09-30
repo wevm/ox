@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.6
+
+### Patch Changes
+
+- [#497](https://github.com/wevm/ox/pull/497) [`ee2bce9`](https://github.com/wevm/ox/commit/ee2bce93a9a4d70923d3798b830ee49df1ebaf85) Thanks [@decofe](https://github.com/decofe)! - Added the TIP-1006 `burnAt` role (`BURN_AT_ROLE`) to `TokenRole`.
+
 ## 1.8.5
 
 ### Patch Changes
