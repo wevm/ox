@@ -205,6 +205,32 @@ describe('fromNumber', () => {
       '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
     )
   })
+
+  test('behavior: signed, negative, no size throws instead of silently zeroing', () => {
+    // Without an explicit `size`, there is no defined two's-complement width
+    // to encode a negative value into. This must throw (matching the
+    // `bigint` overload's existing behavior for the same shape of input)
+    // rather than silently collapsing to `0x0`.
+    //
+    // The public type already requires `size` whenever `signed` is passed
+    // (see `fromNumber.Options`) — these calls deliberately bypass that at
+    // the type level to exercise the runtime guard directly, since nothing
+    // stops an untyped/JS caller from doing the same.
+    expect(() =>
+      // @ts-expect-error — intentionally omitting the required `size`.
+      Hex.fromNumber(-1, { signed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Hex.IntegerOutOfRangeError: Number `-1` is not in safe signed integer range (`0` to `9007199254740991`)]',
+    )
+    expect(() =>
+      // @ts-expect-error — intentionally omitting the required `size`.
+      Hex.fromNumber(-1n, { signed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Hex.IntegerOutOfRangeError: Number `-1n` is not in safe signed integer range (above `0n`)]',
+    )
+    // Control: an explicit `size` still encodes correctly.
+    expect(Hex.fromNumber(-1, { signed: true, size: 1 })).toBe('0xff')
+  })
 })
 
 describe('fromString', () => {
@@ -403,6 +429,24 @@ describe('toBigInt', () => {
         },
       ),
     ).toBe(-12312312312312312412n)
+  })
+
+  test('behavior: signed, odd-length hex', () => {
+    // Odd-length hex (an odd number of nibbles) previously threw a
+    // `RangeError` in signed mode, since the byte-width computation
+    // (`(hex.length - 2) / 2`) produced a fraction. `Hex.fromNumber`'s own
+    // output is odd-length for roughly half of all values, so this needed
+    // to round-trip.
+    expect(Hex.toBigInt('0xf', { signed: true })).toBe(15n)
+    expect(Hex.toBigInt('0x1a4', { signed: true })).toBe(420n)
+    expect(Hex.toBigInt('0xfff', { signed: true })).toBe(4095n)
+    // An explicit `size` doesn't help on its own — it only drives a
+    // separate `assertSize` validation; the width used for the actual
+    // two's-complement decode is still derived unconditionally from
+    // `hex.length`, so this case threw on the old code too.
+    expect(Hex.toBigInt('0x1a4', { signed: true, size: 32 })).toBe(420n)
+    // Round-trip through ox's own encoder.
+    expect(Hex.toBigInt(Hex.fromNumber(420), { signed: true })).toBe(420n)
   })
 
   test('args: size', () => {
