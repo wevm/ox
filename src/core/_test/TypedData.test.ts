@@ -498,6 +498,172 @@ describe('assert', () => {
       [Hex.IntegerOutOfRangeError: Number \`256n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)]
     `)
   })
+
+  test('behavior: bare `uint` (no bit-width) is rejected', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amount', type: 'uint' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amount: 1n,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint\` is not a valid EIP-712 type.
+
+      Use \`uint256\` instead.]
+    `)
+  })
+
+  test('behavior: bare `int` (no bit-width) is rejected', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amount', type: 'int' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amount: -1n,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`int\` is not a valid EIP-712 type.
+
+      Use \`int256\` instead.]
+    `)
+  })
+
+  test('behavior: bare `uint[]` (array of bare alias) is rejected', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amounts', type: 'uint[]' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amounts: [1n],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint[]\` is not a valid EIP-712 type.
+
+      Use \`uint256[]\` instead.]
+    `)
+  })
+
+  test('behavior: EMPTY `uint[]` is still rejected (schema-level check, not data-driven)', () => {
+    // An empty array has no elements to recurse into, so a purely
+    // data-driven check would never visit the element type and would
+    // silently accept this.
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amounts', type: 'uint[]' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amounts: [],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint[]\` is not a valid EIP-712 type.
+
+      Use \`uint256[]\` instead.]
+    `)
+  })
+
+  test('behavior: EMPTY `uint[][]` (both dimensions empty) is still rejected', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amounts', type: 'uint[][]' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amounts: [],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint[][]\` is not a valid EIP-712 type.
+
+      Use \`uint256[][]\` instead.]
+    `)
+  })
+
+  test('behavior: `uint[][]` with an empty INNER array is still rejected', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amounts', type: 'uint[][]' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amounts: [[]],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint[][]\` is not a valid EIP-712 type.
+
+      Use \`uint256[][]\` instead.]
+    `)
+  })
+
+  test('behavior: EMPTY `Person[]` where `Person` declares a bare `uint` field is still rejected', () => {
+    // The struct's own fields are never visited when the array has no
+    // elements to recurse into — this must be caught at the schema level
+    // (via the type graph reachable from `primaryType`), not by walking
+    // message data.
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'people', type: 'Person[]' }],
+          Person: [{ name: 'amount', type: 'uint' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          people: [],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint\` is not a valid EIP-712 type.
+
+      Use \`uint256\` instead.]
+    `)
+  })
+
+  test('behavior: bare `uint` with an out-of-range value is still rejected (not silently accepted)', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amount', type: 'uint' }],
+        } as any,
+        primaryType: 'Foo',
+        message: {
+          amount: 2n ** 300n,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint\` is not a valid EIP-712 type.
+
+      Use \`uint256\` instead.]
+    `)
+  })
+
+  test('behavior: explicit `uint256` is still accepted (no regression)', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amount', type: 'uint256' }],
+        },
+        primaryType: 'Foo',
+        message: {
+          amount: 1n,
+        },
+      }),
+    ).not.toThrow()
+  })
 })
 
 describe('domainSeparator', () => {
@@ -710,6 +876,29 @@ describe('encode', () => {
     expect(encoded).toMatchInlineSnapshot(
       `"0x190162d1d3234124be639f11bfcb3c421b50cc645b88e2aca76f3a6ddf860a94e5b115d2c54cdaa22a6a3a8dbd89086b2ffcf0853857db9bcf1541765a8f769a63ba"`,
     )
+  })
+
+  test('behavior: rejects a bare `uint` field before producing a non-canonical hash', () => {
+    // Without validation, this would hash the field using the literal type
+    // string `uint` (not the EIP-712 atomic type `uint256`), producing a
+    // signature that would not verify against any correctly-implementing
+    // verifier that declares `uint256`. `encode` calls `assert` internally,
+    // so this must be rejected outright rather than silently hashed.
+    expect(() =>
+      TypedData.encode({
+        types: {
+          Message: [{ name: 'amount', type: 'uint' }],
+        } as any,
+        primaryType: 'Message',
+        message: {
+          amount: 1n,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypedDataTypeError: Type \`uint\` is not a valid EIP-712 type.
+
+      Use \`uint256\` instead.]
+    `)
   })
 })
 
@@ -1567,6 +1756,18 @@ test('InvalidPrimaryTypeError', () => {
   `)
 })
 
+test('InvalidTypedDataTypeError', () => {
+  expect(
+    new TypedData.InvalidTypedDataTypeError({
+      type: 'uint',
+    }),
+  ).toMatchInlineSnapshot(`
+    [TypedData.InvalidTypedDataTypeError: Type \`uint\` is not a valid EIP-712 type.
+
+    Use \`uint256\` instead.]
+  `)
+})
+
 test('exports', () => {
   expect(Object.keys(TypedData)).toMatchInlineSnapshot(`
     [
@@ -1583,6 +1784,7 @@ test('exports', () => {
       "BytesSizeMismatchError",
       "InvalidDomainError",
       "InvalidPrimaryTypeError",
+      "InvalidTypedDataTypeError",
       "InvalidStructTypeError",
       "InvalidArrayError",
       "InvalidArrayLengthError",
