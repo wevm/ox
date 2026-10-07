@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vp/test'
+import { transaction } from '../../../../test/tempo/zk.js'
 import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as z_SignatureEnvelope from '../SignatureEnvelope.js'
 import * as z from 'zod/mini'
@@ -136,6 +137,45 @@ describe('SignatureEnvelope', () => {
           z.decode(z_SignatureEnvelope.SignatureEnvelope, rpc),
         ),
       ).toEqual(rpc)
+  })
+
+  test('decodes a ZK envelope from the node', () => {
+    const { signature } = transaction.keyAuthorization
+    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, signature)).toEqual(
+      core_SignatureEnvelope.fromRpc(signature),
+    )
+  })
+
+  test('round-trips ZK envelopes', () => {
+    const decoded = z.decode(
+      z_SignatureEnvelope.SignatureEnvelope,
+      transaction.keyAuthorization.signature,
+    )
+    const rpc = z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)
+    expect(rpc).toEqual(core_SignatureEnvelope.toRpc(decoded))
+    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, rpc)).toEqual(
+      decoded,
+    )
+  })
+
+  test('rejects malformed ZK envelopes', () => {
+    const { signature } = transaction.keyAuthorization
+    for (const rpc of [
+      { ...signature, proof: '0x01' },
+      { ...signature, addressSeed: `0x${'ff'.repeat(32)}` },
+      { ...signature, accessKeySignature: multisig },
+    ])
+      expect(
+        z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc as never)
+          .success,
+      ).toMatchInlineSnapshot('false')
+    const decoded = core_SignatureEnvelope.fromRpc(signature)
+    expect(
+      z.safeEncode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...decoded,
+        accessKeySignature: envelope,
+      } as never).success,
+    ).toMatchInlineSnapshot('false')
   })
 })
 

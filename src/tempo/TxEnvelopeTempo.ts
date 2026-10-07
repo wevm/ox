@@ -17,6 +17,7 @@ import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as ZkSignature from './ZkSignature.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
 /**
@@ -684,9 +685,11 @@ export function serialize(
     // - secp256k1: recover address via ecrecover from the sign payload.
     // - p256/webAuthn: derive address from the embedded public key.
     // - keychain: use the explicit `userAddress` on the signature.
+    // - zk: derive the identity's address from the proof's statement.
     if (options.format === 'feePayer' && signature) {
       const sig = SignatureEnvelope.from(signature)
       if (sig.type === 'keychain') return sig.userAddress
+      if (sig.type === 'zk') return ZkSignature.getAddress(sig)
       if (sig.type === 'p256' || sig.type === 'webAuthn')
         return Address.fromPublicKey(sig.publicKey)
       if (sig.type === 'secp256k1')

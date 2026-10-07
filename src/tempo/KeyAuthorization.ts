@@ -75,11 +75,13 @@ export type KeyAuthorization<
       signature:
         | SignatureEnvelope.Primitive<numberType>
         | SignatureEnvelope.Multisig<numberType>
+        | SignatureEnvelope.Zk<numberType>
     }
   : {
       signature?:
         | SignatureEnvelope.Primitive<numberType>
         | SignatureEnvelope.Multisig<numberType>
+        | SignatureEnvelope.Zk<numberType>
         | undefined
     })
 
@@ -87,11 +89,13 @@ export type KeyAuthorization<
 export type Signature<numberType = number> =
   | SignatureEnvelope.Primitive<numberType>
   | SignatureEnvelope.Multisig<numberType>
+  | SignatureEnvelope.Zk<numberType>
 
 /** RPC-formatted signature that can authorize an access key. */
 export type SignatureRpc =
   | SignatureEnvelope.MultisigRpc
   | SignatureEnvelope.PrimitiveRpc
+  | SignatureEnvelope.ZkRpc
 
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<false, bigint, number>
@@ -114,8 +118,11 @@ export type Rpc = {
   keyType: SignatureEnvelope.Type | 'multisig'
   /** Token spending limits. */
   limits?: readonly RpcTokenLimit[] | null | undefined
-  /** Primitive or multisig signature authorizing this key. */
-  signature: SignatureEnvelope.PrimitiveRpc | SignatureEnvelope.MultisigRpc
+  /** Primitive, multisig, or ZK signature authorizing this key. */
+  signature:
+    | SignatureEnvelope.PrimitiveRpc
+    | SignatureEnvelope.MultisigRpc
+    | SignatureEnvelope.ZkRpc
   /** Optional 32-byte witness (hex). */
   witness?: Hex.Hex | null | undefined
 }
@@ -150,6 +157,7 @@ type SignatureValue =
   | SignatureEnvelope.from.MultisigFromConfig
   | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
   | PartialBy<SignatureEnvelope.Multisig, 'type'>
+  | PartialBy<SignatureEnvelope.Zk, 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
 
@@ -472,11 +480,12 @@ export declare namespace from {
   type Options<
     signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = {
-    /** The primitive or multisig signature to attach to the Key Authorization. */
+    /** The primitive, multisig, or ZK signature to attach to the Key Authorization. */
     signature?:
       | signature
       | SignatureEnvelope.Primitive
       | SignatureEnvelope.Multisig
+      | SignatureEnvelope.Zk
       | undefined
   }
 
@@ -491,7 +500,9 @@ export declare namespace from {
             ? {
                 signature: Extract<
                   SignatureEnvelope.from.ReturnValue<signature>,
-                  SignatureEnvelope.Primitive | SignatureEnvelope.Multisig
+                  | SignatureEnvelope.Primitive
+                  | SignatureEnvelope.Multisig
+                  | SignatureEnvelope.Zk
                 >
               }
             : {})
@@ -1002,7 +1013,8 @@ export function toRpc(authorization: toRpc.Input): Rpc {
     })),
     signature: SignatureEnvelope.toRpc(signature) as
       | SignatureEnvelope.PrimitiveRpc
-      | SignatureEnvelope.MultisigRpc,
+      | SignatureEnvelope.MultisigRpc
+      | SignatureEnvelope.ZkRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -1222,7 +1234,8 @@ function assertSignature<numberType>(
   signature: SignatureEnvelope.SignatureEnvelope<numberType>,
 ): asserts signature is
   | SignatureEnvelope.Primitive<numberType>
-  | SignatureEnvelope.Multisig<numberType> {
+  | SignatureEnvelope.Multisig<numberType>
+  | SignatureEnvelope.Zk<numberType> {
   if (signature.type === 'keychain')
     throw new InvalidSignatureTypeError(signature.type)
 }
@@ -1256,7 +1269,7 @@ export class InvalidSignatureTypeError extends Error {
   override readonly name = 'KeyAuthorization.InvalidSignatureTypeError'
   constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
     super(
-      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.`,
+      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`multisig\`, or \`zk\`.`,
     )
   }
 }

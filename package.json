@@ -806,6 +806,11 @@
       "types": "./dist/tempo/MultisigSimulation.d.ts",
       "default": "./dist/tempo/MultisigSimulation.js"
     },
+    "./tempo/Oidc": {
+      "src": "./src/tempo/Oidc.ts",
+      "types": "./dist/tempo/Oidc.d.ts",
+      "default": "./dist/tempo/Oidc.js"
+    },
     "./tempo/Period": {
       "src": "./src/tempo/Period.ts",
       "types": "./dist/tempo/Period.d.ts",
@@ -815,6 +820,11 @@
       "src": "./src/tempo/PoolId.ts",
       "types": "./dist/tempo/PoolId.d.ts",
       "default": "./dist/tempo/PoolId.js"
+    },
+    "./tempo/PublisherId": {
+      "src": "./src/tempo/PublisherId.ts",
+      "types": "./dist/tempo/PublisherId.d.ts",
+      "default": "./dist/tempo/PublisherId.js"
     },
     "./tempo/ReceivePolicyReceipt": {
       "src": "./src/tempo/ReceivePolicyReceipt.ts",
@@ -875,6 +885,11 @@
       "src": "./src/tempo/WithdrawalSenderTag.ts",
       "types": "./dist/tempo/WithdrawalSenderTag.d.ts",
       "default": "./dist/tempo/WithdrawalSenderTag.js"
+    },
+    "./tempo/ZkSignature": {
+      "src": "./src/tempo/ZkSignature.ts",
+      "types": "./dist/tempo/ZkSignature.d.ts",
+      "default": "./dist/tempo/ZkSignature.js"
     },
     "./tempo/ZoneId": {
       "src": "./src/tempo/ZoneId.ts",

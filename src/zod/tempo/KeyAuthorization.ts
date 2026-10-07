@@ -42,6 +42,7 @@ export const Rpc = z
     signature: z.union([
       z_SignatureEnvelope.PrimitiveRpc,
       z_SignatureEnvelope.MultisigRpc,
+      z_SignatureEnvelope.ZkRpc,
     ]),
     witness: z.optional(z.nullable(z_Hex.Hex)),
   })
@@ -82,6 +83,7 @@ const domainShape = {
   signature: z.union([
     z_SignatureEnvelope.Primitive,
     z_SignatureEnvelope.Multisig,
+    z_SignatureEnvelope.Zk,
   ]),
   type: z.union([z_SignatureEnvelope.Type, z.literal('multisig')]),
   witness: z.optional(z_Hex.Hex),

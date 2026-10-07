@@ -9,6 +9,10 @@ import {
   WebAuthnP256,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
+import {
+  rawTransaction,
+  transaction as zkTransaction,
+} from '../../test/tempo/zk.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
@@ -709,6 +713,15 @@ describe('deserialize', () => {
         Serialized Transaction: "0x76ec01010101d8d7940000000000000000000000000000000000000000008080000080808080c0c0821234825678"]
       `)
     })
+  })
+
+  test('behavior: ZK-authorized transaction', () => {
+    const envelope = TxEnvelopeTempo.deserialize(rawTransaction)
+    expect(envelope.keyAuthorization?.signature.type).toBe('zk')
+    expect(TxEnvelopeTempo.serialize(envelope)).toBe(rawTransaction)
+    expect(TxEnvelopeTempo.hash(envelope as TxEnvelopeTempo.Signed)).toBe(
+      zkTransaction.hash,
+    )
   })
 })
 
@@ -1412,6 +1425,22 @@ describe('serialize', () => {
       }),
     })
     expect(serialized).toBe(expected)
+  })
+
+  test('behavior: feePayer format derives a ZK sender', () => {
+    const { keyAuthorization } = TxEnvelopeTempo.deserialize(rawTransaction)
+    const signature = keyAuthorization!.signature
+    const envelope = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1337,
+      feeToken: '0x20c0000000000000000000000000000000000000',
+      nonce: 0n,
+    })
+    const serialized = TxEnvelopeTempo.serialize(envelope, {
+      format: 'feePayer',
+      signature,
+    })
+    expect(serialized.includes(zkTransaction.from.slice(2))).toBe(true)
   })
 })
 

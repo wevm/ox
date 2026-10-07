@@ -116,6 +116,8 @@
 - **Native C benchmarks mirror WASM target configuration** -- compile the same wrappers, vendored sources, and target defines for the host. Use raw Engine inputs, preserve encodings, and exclude C from fastest-engine calculations.
 - **`pnpm contracts:build` mutates generated contract artifacts** -- it runs Forge and `contracts/scripts/generate-typed-artifacts.ts`.
 - **Install hooks can mutate** -- `pnpm install` runs `postinstall`, which initializes submodules, builds contracts with the compiler pinned in `contracts/foundry.toml`, and runs `pnpm dev`.
+- **Examples need linked exports** -- `pnpm zile examples:check` resolves `ox` imports through `pnpm dev`; after an install with `--ignore-scripts`, run `pnpm dev` first. Snippets cannot use `declare`, so use concrete values or `// @noErrors`.
+- **Lint autofix and helper JSDoc** -- `vp check --fix` inserts stray `@example` lines above JSDoc on non-exported helpers in public modules. Document such helpers with `//` comments or `@internal`.
 
 ## Changeset Conventions
 
@@ -141,6 +143,7 @@
 - **KZG WASM disables LTO** -- full LTO makes valid c-kzg trusted-setup initialization trap. Preserve `-fno-lto` and the KZG conformance tests.
 - **Secrets are local** -- `.env` is local. Do not print, rewrite, or commit secrets.
 - **Tempo configurable accounts** -- Every multisig signature carries `[account, config, primitive approvals]`; config includes a uint64 version. RPC uses the RLP bytes without the `0x05` prefix. Account derivation requires an explicit recovery factory; multisig delegates require keychain V2.
+- **Tempo ZK signatures** -- type `0x06` is `rlp([scheme, publisherId, issuer, keyHash, addressSeed, issuedAt, validUntil, proof, accessKeySignature])` with a primitive access key signature, and decoding rejects non-canonical RLP as the node does. Node RPC omits the `type` of ZK and keychain signatures. Proofs expire minutes after sign-in, so tests use the node-captured transaction in `test/tempo/zk.ts`.
 - **Zone chain IDs** -- Presto and Moderato use separate fixed bases and ranges. Derive chain IDs as `base + (zoneId % range)`.
 - **Offline core tests** -- Set `SKIP_GLOBAL_SETUP=1` for focused core tests that do not need Anvil.
 - **Docgen export comments** -- `extractNamespaceDocComments` should read the nearest JSDoc on an export declaration. ts-morph can include earlier file-level JSDoc descendants on the first export.
