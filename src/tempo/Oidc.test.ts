@@ -1,4 +1,4 @@
-import { Hex } from 'ox'
+import { Address, Hex, Secp256k1 } from 'ox'
 import { Oidc } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
 
@@ -212,6 +212,42 @@ describe('hashKey', () => {
       Oidc.hashKey(Hex.slice(modulus, 1)),
     ).toThrowErrorMatchingInlineSnapshot(
       `[Oidc.UnsupportedKeyError: The key is unsupported: modulus is not 256 bytes.]`,
+    )
+  })
+})
+
+describe('prepare', () => {
+  const publicKey = Secp256k1.getPublicKey({
+    privateKey:
+      '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+  })
+
+  test('default', () => {
+    const prepared = Oidc.prepare({ publicKey, validUntil: 1760000540 })
+    const { blinding, nonce, ...rest } = prepared
+    expect(Hex.size(blinding)).toBe(32)
+    expect(nonce).toBe(Oidc.getNonce(prepared))
+    expect(rest.accessKeyAddress).toBe(Address.fromPublicKey(publicKey))
+    expect(rest).toMatchInlineSnapshot(`
+      {
+        "accessKeyAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "validUntil": 1760000540,
+      }
+    `)
+  })
+
+  test('behavior: defaults validUntil to about 540 seconds from now', () => {
+    const now = Math.floor(Date.now() / 1000)
+    const { validUntil } = Oidc.prepare({ publicKey })
+    expect(validUntil).toBeGreaterThanOrEqual(now + 540)
+    expect(validUntil).toBeLessThanOrEqual(now + 545)
+  })
+
+  test('error: rejects an invalid expiry', () => {
+    expect(() =>
+      Oidc.prepare({ publicKey, validUntil: 1.5 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Oidc.InvalidTimestampError: \`validUntil\` (\`1.5\`) is not a timestamp in seconds.]`,
     )
   })
 })

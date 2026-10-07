@@ -203,14 +203,13 @@ export * as MultisigSimulation from './MultisigSimulation.js'
  *
  * @example
  * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
  * import { Oidc } from 'ox/tempo'
  *
- * const nonce = Oidc.getNonce({
- *   accessKeyAddress:
- *     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   blinding: Oidc.randomBlinding(),
- *   validUntil: Math.floor(Date.now() / 1000) + 540
- * })
+ * const { publicKey } = await WebCryptoP256.createKeyPair()
+ *
+ * const prepared = Oidc.prepare({ publicKey })
+ * // @log: { accessKeyAddress: '0x...', blinding: '0x...', nonce: '...', validUntil: 1760000540 }
  * ```
  *
  * @category Reference
