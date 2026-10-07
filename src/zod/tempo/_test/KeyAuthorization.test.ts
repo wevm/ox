@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vp/test'
+import { transaction } from '../../../../test/tempo/zk.js'
 import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as core_KeyAuthorization from '../../../tempo/KeyAuthorization.js'
 import * as z_KeyAuthorization from '../KeyAuthorization.js'
@@ -54,6 +55,22 @@ describe('KeyAuthorization', () => {
     expect(z.decode(z_KeyAuthorization.KeyAuthorization, rpc)).toEqual(
       core_KeyAuthorization.fromRpc(rpc),
     )
+  })
+
+  test('round-trips a ZK-signed key authorization from the node', () => {
+    const { keyAuthorization } = transaction
+    const decoded = z.decode(
+      z_KeyAuthorization.KeyAuthorization,
+      keyAuthorization,
+    )
+    expect(decoded).toEqual(core_KeyAuthorization.fromRpc(keyAuthorization))
+    expect(decoded.signature.type).toBe('zk')
+    expect(
+      z.decode(
+        z_KeyAuthorization.KeyAuthorization,
+        z.encode(z_KeyAuthorization.KeyAuthorization, decoded),
+      ),
+    ).toEqual(decoded)
   })
 
   test('decodes node-null optional fields', () => {

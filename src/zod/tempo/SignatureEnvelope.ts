@@ -107,6 +107,31 @@ export const MultisigRpc = z_Hex.Hex.check(
   }, 'expected valid native multisig signature'),
 )
 
+/** RPC ZK signature envelope schema. The node omits `type`. */
+export const ZkRpc = z
+  .object({
+    accessKeySignature: PrimitiveRpc,
+    addressSeed: z_Hex.Hex32,
+    issuedAt: z_Hex.Hex,
+    issuer: z_Hex.Hex32,
+    keyHash: z_Hex.Hex32,
+    proof: z_Hex.Hex,
+    publisherId: z_Hex.Hex32,
+    scheme: z_Hex.Hex,
+    type: z.optional(z.literal('zk')),
+    validUntil: z_Hex.Hex,
+  })
+  .check(
+    z.refine((value) => {
+      try {
+        core_SignatureEnvelope.fromRpc(value as never)
+        return true
+      } catch {
+        return false
+      }
+    }, 'expected valid ZK signature'),
+  )
+
 /** RPC signature envelope schema. */
 export const Rpc = z.union([
   Secp256k1Rpc,
@@ -114,6 +139,7 @@ export const Rpc = z.union([
   WebAuthnRpc,
   KeychainRpc,
   MultisigRpc,
+  ZkRpc,
 ])
 
 /** secp256k1 signature envelope schema. */
@@ -184,8 +210,36 @@ export const Multisig = z
     ),
   )
 
+/** ZK signature envelope schema. */
+export const Zk = z
+  .object({
+    accessKeySignature: Primitive,
+    addressSeed: z_Hex.Hex32,
+    issuedAt: z.number(),
+    issuer: z_Hex.Hex32,
+    keyHash: z_Hex.Hex32,
+    proof: z_Hex.Hex,
+    publisherId: z_Hex.Hex32,
+    scheme: z.number(),
+    type: z.literal('zk'),
+    validUntil: z.number(),
+  })
+  .check(
+    z.refine(
+      (value) => core_SignatureEnvelope.validate(value),
+      'expected valid ZK signature',
+    ),
+  )
+
 /** Decoded signature envelope schema. */
-export const Domain = z.union([Secp256k1, P256, WebAuthn, Keychain, Multisig])
+export const Domain = z.union([
+  Secp256k1,
+  P256,
+  WebAuthn,
+  Keychain,
+  Multisig,
+  Zk,
+])
 
 /** Codec decoding an RPC signature envelope into a signature envelope. */
 export const SignatureEnvelope = z.codec(Rpc, Domain, {
@@ -247,6 +301,28 @@ function fromRpc(
     }
   }
 
+  // The node serializes ZK signatures without a `type` tag.
+  if (
+    value.type === 'zk' ||
+    ('accessKeySignature' in value && 'proof' in value)
+  ) {
+    const zk = value as core_SignatureEnvelope.ZkRpc
+    return {
+      accessKeySignature: fromRpc(
+        zk.accessKeySignature,
+      ) as core_SignatureEnvelope.Primitive,
+      addressSeed: zk.addressSeed,
+      issuedAt: core_Hex.toNumber(zk.issuedAt),
+      issuer: zk.issuer,
+      keyHash: zk.keyHash,
+      proof: zk.proof,
+      publisherId: zk.publisherId,
+      scheme: core_Hex.toNumber(zk.scheme),
+      type: 'zk',
+      validUntil: core_Hex.toNumber(zk.validUntil),
+    }
+  }
+
   const keychain = value as core_SignatureEnvelope.KeychainRpc
   return {
     inner: fromRpc(keychain.signature),
@@ -302,6 +378,24 @@ function toRpc(
     return core_SignatureEnvelope.toRpc(
       value as core_SignatureEnvelope.Multisig,
     )
+
+  if (value.type === 'zk') {
+    const zk = value as core_SignatureEnvelope.Zk
+    return {
+      accessKeySignature: toRpc(
+        zk.accessKeySignature,
+      ) as core_SignatureEnvelope.PrimitiveRpc,
+      addressSeed: zk.addressSeed,
+      issuedAt: core_Hex.fromNumber(zk.issuedAt),
+      issuer: zk.issuer,
+      keyHash: zk.keyHash,
+      proof: zk.proof,
+      publisherId: zk.publisherId,
+      scheme: core_Hex.fromNumber(zk.scheme),
+      type: 'zk',
+      validUntil: core_Hex.fromNumber(zk.validUntil),
+    }
+  }
 
   const keychain = value as core_SignatureEnvelope.Keychain
   return {

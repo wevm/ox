@@ -1,4 +1,5 @@
 import { Transaction } from 'ox/tempo'
+import { transaction as zkTransaction } from '../../test/tempo/zk.js'
 import { describe, expect, test } from 'vp/test'
 
 const multisigRpcSignature =
@@ -258,6 +259,15 @@ describe('fromRpc', () => {
         "type": "tempo",
       }
     `)
+  })
+
+  test('behavior: ZK-authorized transaction', () => {
+    const { keyAuthorization, signature } = Transaction.fromRpc(
+      // The node omits the `type` of keychain signatures.
+      zkTransaction as unknown as Transaction.TempoRpc,
+    )
+    expect(keyAuthorization?.signature.type).toBe('zk')
+    expect(signature?.type).toBe('keychain')
   })
 })
 
