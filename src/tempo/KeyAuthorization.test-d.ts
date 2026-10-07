@@ -131,3 +131,12 @@ test('resolves Tempo address bindings for multisig grants', () => {
   expectTypeOf(signed.account).toMatchTypeOf<`0x${string}`>()
   expectTypeOf(signed.address).toMatchTypeOf<`0x${string}`>()
 })
+
+test('Tuple: skipped limits slot may be the RLP null placeholder', () => {
+  type Authorization = KeyAuthorization.Tuple[0]
+  type Limits = Extract<Authorization, { length: 5 }>[4]
+  expectTypeOf<'0x'>().toMatchTypeOf<Limits>()
+  expectTypeOf<
+    readonly [token: `0x${string}`, limit: `0x${string}`][]
+  >().toMatchTypeOf<Limits>()
+})

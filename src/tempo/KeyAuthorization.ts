@@ -47,7 +47,13 @@ export type KeyAuthorization<
   expiry?: numberType | null | undefined
   /** Whether this authorization provisions an admin access key. */
   isAdmin?: boolean | undefined
-  /** TIP20 spending limits for this key. */
+  /**
+   * TIP20 spending limits for this key.
+   *
+   * - `undefined` = unlimited spending
+   * - `[]` = no spending allowed
+   * - `[...]` = only listed token limits allowed
+   */
   limits?:
     | readonly TokenLimit<bigintType, numberType, addressType>[]
     | undefined
@@ -126,7 +132,7 @@ export type Rpc = {
   isAdmin?: boolean | null | undefined
   /** Key identifier. */
   keyId: Address.Address
-  /** Token spending limits. */
+  /** Token spending limits (`undefined` = unlimited, `[]` = no spending allowed). */
   limits?: readonly RpcTokenLimit[] | undefined
   /** Signature authorizing this key. */
   signature: SignatureRpc
@@ -200,36 +206,42 @@ type CallScopeTuple = readonly [
   selectorRules: readonly SelectorRuleTuple[],
 ]
 
+/** Spending limits slot; `'0x'` (RLP null) when skipped before a later field. */
+type LimitsTuple = readonly TokenLimitTuple[] | '0x'
+
+/** Call scopes slot; `'0x'` (RLP null) when skipped before a later field. */
+type CallsTuple = readonly CallScopeTuple[] | '0x'
+
 type AuthorizationTuple =
   | BaseTuple
   | readonly [...BaseTuple, expiry: Hex.Hex]
-  | readonly [...BaseTuple, expiry: Hex.Hex, limits: readonly TokenLimitTuple[]]
+  | readonly [...BaseTuple, expiry: Hex.Hex, limits: LimitsTuple]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
     ]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
       witness: Hex.Hex,
     ]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
       witness: Hex.Hex,
       isAdmin: Hex.Hex,
     ]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
       witness: Hex.Hex,
       isAdmin: Hex.Hex,
       account: Address.Address,
