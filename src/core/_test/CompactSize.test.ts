@@ -79,6 +79,19 @@ describe('toBytes', () => {
       `[CompactSize.NegativeValueError: CompactSize value must be non-negative, got -1.]`,
     )
   })
+
+  test('error: value larger than uint64', () => {
+    expect(() =>
+      CompactSize.toBytes(18446744073709551616n),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[CompactSize.ValueTooLargeError: CompactSize value must be at most 18446744073709551615, got 18446744073709551616.]`,
+    )
+    expect(() =>
+      CompactSize.toBytes(18446744073709551616n + 4294967296n),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[CompactSize.ValueTooLargeError: CompactSize value must be at most 18446744073709551615, got 18446744078004518912.]`,
+    )
+  })
 })
 
 describe('toHex', () => {
@@ -168,6 +181,7 @@ test('exports', () => {
       "fromBytes",
       "fromHex",
       "NegativeValueError",
+      "ValueTooLargeError",
       "InsufficientBytesError",
       "InvalidValueError",
       "NonMinimalEncodingError",
