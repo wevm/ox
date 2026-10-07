@@ -88,11 +88,13 @@ export type KeyAuthorization<
         signature:
           | SignatureEnvelope.Primitive<bigintType, numberType>
           | SignatureEnvelope.Multisig<bigintType, numberType>
+          | SignatureEnvelope.Zk<bigintType, numberType>
       }
     : {
         signature?:
           | SignatureEnvelope.Primitive<bigintType, numberType>
           | SignatureEnvelope.Multisig<bigintType, numberType>
+          | SignatureEnvelope.Zk<bigintType, numberType>
           | undefined
       })
 
@@ -100,11 +102,13 @@ export type KeyAuthorization<
 export type Signature<bigintType = bigint, numberType = number> =
   | SignatureEnvelope.Primitive<bigintType, numberType>
   | SignatureEnvelope.Multisig<bigintType, numberType>
+  | SignatureEnvelope.Zk<bigintType, numberType>
 
 /** RPC-formatted signature that can authorize an access key. */
 export type SignatureRpc =
   | SignatureEnvelope.MultisigRpc
   | SignatureEnvelope.PrimitiveRpc
+  | SignatureEnvelope.ZkRpc
 
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<
@@ -177,6 +181,7 @@ type SignatureValue =
   | SignatureEnvelope.from.MultisigFromConfig
   | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
   | PartialBy<SignatureEnvelope.Multisig, 'type'>
+  | PartialBy<SignatureEnvelope.Zk, 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
 
@@ -496,11 +501,12 @@ export declare namespace from {
   type Options<
     signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = {
-    /** The primitive or multisig signature to attach to the Key Authorization. */
+    /** The primitive, multisig, or ZK signature to attach to the Key Authorization. */
     signature?:
       | signature
       | SignatureEnvelope.Primitive
       | SignatureEnvelope.Multisig
+      | SignatureEnvelope.Zk
       | undefined
   }
 
@@ -1001,7 +1007,8 @@ export function toRpc(authorization: Signed): Rpc {
     })),
     signature: SignatureEnvelope.toRpc(signature) as
       | SignatureEnvelope.PrimitiveRpc
-      | SignatureEnvelope.MultisigRpc,
+      | SignatureEnvelope.MultisigRpc
+      | SignatureEnvelope.ZkRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -1249,7 +1256,7 @@ export class InvalidSignatureTypeError extends Error {
   override readonly name = 'KeyAuthorization.InvalidSignatureTypeError'
   constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
     super(
-      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.`,
+      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`multisig\`, or \`zk\`.`,
     )
   }
 }

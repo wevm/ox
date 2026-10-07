@@ -927,7 +927,11 @@ function assertApproval(
   config: MultisigConfig.Config,
 ): SignatureEnvelope.Primitive {
   const approval = SignatureEnvelope.deserialize(serialized)
-  if (approval.type === 'keychain' || approval.type === 'multisig')
+  if (
+    approval.type === 'keychain' ||
+    approval.type === 'multisig' ||
+    approval.type === 'zk'
+  )
     throw new InvalidOperationError({
       reason: 'only primitive owner approvals are allowed',
     })

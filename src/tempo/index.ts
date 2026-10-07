@@ -171,6 +171,29 @@ export * as MultisigOperation from './MultisigOperation.js'
  */
 export * as MultisigSimulation from './MultisigSimulation.js'
 /**
+ * Utilities for OIDC signers ([TIP-1133](https://docs.tempo.xyz/protocol/tips/tip-1133)): the
+ * hashes that bind an OpenID Connect sign-in to an identity, an access key, and a proof.
+ *
+ * A wallet requests an ID token whose `nonce` commits to a new access key. After verifying the
+ * token, a salt service derives the identity's salt, and a prover proves a statement whose public
+ * input uses these hashes. Publishers list issuers' keys by their key hashes.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Oidc } from 'ox/tempo'
+ *
+ * const nonce = Oidc.getNonce({
+ *   accessKeyAddress:
+ *     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ *   blinding: Oidc.randomBlinding(),
+ *   validUntil: Math.floor(Date.now() / 1000) + 540
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as Oidc from './Oidc.js'
+/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
@@ -221,6 +244,26 @@ export * as Period from './Period.js'
  * @category Reference
  */
 export * as PoolId from './PoolId.js'
+/**
+ * Utilities for Key Publisher IDs ([TIP-1132](https://docs.tempo.xyz/protocol/tips/tip-1132)).
+ *
+ * A Key Publisher lists the signing keys of the issuers that ZK signatures may use. Its ID derives
+ * from the account that creates it and a salt that account chooses.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hash, Hex } from 'ox'
+ * import { PublisherId } from 'ox/tempo'
+ *
+ * const publisherId = PublisherId.from({
+ *   creator: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ *   salt: Hash.keccak256(Hex.fromString('tempo:oidc-demo'))
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as PublisherId from './PublisherId.js'
 /**
  * TIP-1028 receive-policy claim receipt utilities.
  *
@@ -542,6 +585,40 @@ export * as VirtualAddress from './VirtualAddress.js'
  */
 export * as VirtualMaster from './VirtualMaster.js'
 
+/**
+ * Utilities for ZK signatures ([TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131)).
+ *
+ * A ZK signature (type `0x06`) proves that an issuer signed a statement for an identity,
+ * committing to an access key, and carries that access key's signature. A credential is
+ * everything but the access key signature: a prover issues it after a sign-in, and the access key
+ * signs {@link ox#ZkSignature.(getSignPayload:function)} for each payload until it expires.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Secp256k1 } from 'ox'
+ * import { SignatureEnvelope, ZkSignature } from 'ox/tempo'
+ *
+ * // `credential` comes from a prover, `accessKey` is the key it commits to,
+ * // and `payload` is the digest to authorize.
+ * const signature = SignatureEnvelope.from({
+ *   ...credential,
+ *   accessKeySignature: SignatureEnvelope.from(
+ *     Secp256k1.sign({
+ *       payload: ZkSignature.getSignPayload({
+ *         credential,
+ *         payload
+ *       }),
+ *       privateKey: accessKey
+ *     })
+ *   ),
+ *   type: 'zk'
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as ZkSignature from './ZkSignature.js'
 /**
  * Zone ID utilities for converting between zone IDs and zone chain IDs.
  *

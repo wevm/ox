@@ -1,5 +1,6 @@
 import { Transaction } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
+import { transaction as zkTransaction } from '../../test/tempo/zk.js'
 
 const multisigRpcSignature =
   '0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
@@ -264,6 +265,15 @@ describe('fromRpc', () => {
         "value": 0n,
       }
     `)
+  })
+
+  test('behavior: ZK-authorized transaction', () => {
+    const { keyAuthorization, signature } = Transaction.fromRpc(
+      // The node omits the `type` of keychain signatures.
+      zkTransaction as unknown as Transaction.TempoRpc,
+    )
+    expect(keyAuthorization?.signature.type).toBe('zk')
+    expect(signature?.type).toBe('keychain')
   })
 })
 
