@@ -2,14 +2,13 @@
 "ox": patch
 ---
 
-Added TIP-1131 ZK signatures (type `0x06`) to `SignatureEnvelope`, key authorizations, and transactions, along with the `ZkSignature`, `Oidc` (TIP-1133 hashing), and `PublisherId` (TIP-1132) modules.
+Added TIP-1131 ZK signatures (type `0x06`) to `SignatureEnvelope`, key authorizations, and transactions, along with the `ZkSignature`, `Oidc` (TIP-1133 hashing and sign-in preparation), and `PublisherId` (TIP-1132) modules.
 
 ```ts
+import { WebCryptoP256 } from 'ox'
 import { Oidc, PublisherId, ZkSignature } from 'ox/tempo'
 
-const nonce = Oidc.getNonce({
-  accessKeyAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-  blinding: Oidc.randomBlinding(),
-  validUntil: Math.floor(Date.now() / 1000) + 540,
-})
+const { publicKey } = await WebCryptoP256.createKeyPair()
+
+const prepared = Oidc.prepare({ publicKey })
 ```

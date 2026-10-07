@@ -4,6 +4,7 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import type * as PublicKey from '../core/PublicKey.js'
 import * as Poseidon from './internal/poseidon.js'
 
 /**
@@ -382,6 +383,72 @@ export declare namespace hashKey {
   type ErrorType =
     | Bytes.from.ErrorType
     | UnsupportedKeyError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Prepares a sign-in for an access key: generates a blinding value, sets the
+ * expiry, and computes the `nonce` to request the ID token with.
+ *
+ * The result is a plain JSON object. A wallet can store it while the user signs
+ * in with the issuer, then pass it with the ID token to a prover.
+ *
+ * [TIP-1133](https://docs.tempo.xyz/protocol/tips/tip-1133#hashing)
+ *
+ * @example
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ * import { Oidc } from 'ox/tempo'
+ *
+ * const { publicKey } = await WebCryptoP256.createKeyPair()
+ *
+ * const prepared = Oidc.prepare({ publicKey })
+ * // @log: { accessKeyAddress: '0x...', blinding: '0x...', nonce: '...', validUntil: 1760000540 }
+ * ```
+ *
+ * @param options - The access key the proof will authorize, and optionally the expiry.
+ * @returns The access key address, blinding value, nonce, and expiry.
+ */
+export function prepare(options: prepare.Options): prepare.ReturnType {
+  const { publicKey, validUntil = Math.floor(Date.now() / 1000) + 540 } =
+    options
+  const accessKeyAddress = Address.fromPublicKey(publicKey)
+  const blinding = randomBlinding()
+  return {
+    accessKeyAddress,
+    blinding,
+    nonce: getNonce({ accessKeyAddress, blinding, validUntil }),
+    validUntil,
+  }
+}
+
+export declare namespace prepare {
+  type Options = {
+    /** Public key of the access key the proof will authorize. */
+    publicKey: PublicKey.PublicKey
+    /**
+     * When the signature expires, in seconds.
+     *
+     * @default `Math.floor(Date.now() / 1000) + 540`, which leaves 60 seconds for clock skew
+     * under scheme `0x01`'s 600-second window after the token's `iat`.
+     */
+    validUntil?: number | undefined
+  }
+
+  type ReturnType = {
+    /** Address of the access key the proof will authorize. */
+    accessKeyAddress: Address.Address
+    /** The random blinding value the nonce commits to. */
+    blinding: Hex.Hex
+    /** The `nonce` to request the ID token with. */
+    nonce: string
+    /** When the signature expires, in seconds. */
+    validUntil: number
+  }
+
+  type ErrorType =
+    | Address.fromPublicKey.ErrorType
+    | getNonce.ErrorType
     | Errors.GlobalErrorType
 }
 
