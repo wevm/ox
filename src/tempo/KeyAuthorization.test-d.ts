@@ -49,3 +49,12 @@ test('accepts multisig signatures and account-bound grants', () => {
     KeyAuthorization.toRpc(signed),
   ).toMatchTypeOf<KeyAuthorization.Rpc>()
 })
+
+test('Tuple: skipped limits slot may be the RLP null placeholder', () => {
+  type Authorization = KeyAuthorization.Tuple[0]
+  type Limits = Extract<Authorization, { length: 5 }>[4]
+  expectTypeOf<'0x'>().toMatchTypeOf<Limits>()
+  expectTypeOf<
+    readonly [token: `0x${string}`, limit: `0x${string}`][]
+  >().toMatchTypeOf<Limits>()
+})
