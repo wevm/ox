@@ -1,4 +1,4 @@
-import { Abi, AbiEvent, Hex } from 'ox'
+import { Abi, AbiEvent, AbiParameters, Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
@@ -991,6 +991,32 @@ describe('extractLogs', () => {
 })
 
 describe('encode', () => {
+  test('behavior: indexed args out of range for their type', () => {
+    const event = AbiEvent.from(
+      'event Foo(int8 indexed a, uint8 indexed b, bytes4 indexed c)',
+    )
+    expect(() => AbiEvent.encode(event, { a: 128n })).toThrowError(
+      Hex.IntegerOutOfRangeError,
+    )
+    expect(() => AbiEvent.encode(event, { b: 256n })).toThrowError(
+      Hex.IntegerOutOfRangeError,
+    )
+    expect(() => AbiEvent.encode(event, { c: '0x0102030405' })).toThrowError(
+      AbiParameters.BytesSizeMismatchError,
+    )
+    expect(AbiEvent.encode(event, { a: -128n, b: 255n, c: '0x01020304' }))
+      .toMatchInlineSnapshot(`
+        {
+          "topics": [
+            "0xd6e31c53a9a68addf818ebcdb6a5b6f8a18be2d94c1c57fb0f1d4c8014bbbe8c",
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80",
+            "0x00000000000000000000000000000000000000000000000000000000000000ff",
+            "0x0102030400000000000000000000000000000000000000000000000000000000",
+          ],
+        }
+      `)
+  })
+
   test('default', () => {
     const transfer = AbiEvent.from('event Transfer()')
     expect(AbiEvent.encode(transfer)).toMatchInlineSnapshot(`

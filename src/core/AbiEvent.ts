@@ -57,12 +57,15 @@ function encodePrimitiveTopic(
     const signed = type[0] === 'i'
     const sizeStr = signed ? type.slice(3) : type.slice(4)
     const size = sizeStr === '' ? 256 : Number(sizeStr)
-    if (!Number.isFinite(size)) return undefined
+    // Narrower widths go through `AbiParameters.encode`, which range-checks them.
+    if (size !== 256) return undefined
     return Hex.fromNumber(value as number | bigint, { size: 32, signed })
   }
   // `bytesN` (fixed): right-pad to 32 bytes.
   if (type.startsWith('bytes') && type.length > 5) {
     if (typeof value !== 'string') return undefined
+    // Other sizes go through `AbiParameters.encode`, which checks the length.
+    if (type !== 'bytes32') return undefined
     return Hex.padRight(value as Hex.Hex, 32)
   }
   return undefined
