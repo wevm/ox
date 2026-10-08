@@ -2,6 +2,51 @@
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
 
 /**
+ * Configurable account configuration utilities (TIP-1107).
+ *
+ * Configurable accounts have weighted owners and an approval threshold that
+ * can change without changing the account address. Derives the stable account
+ * address from the initial configuration, computes configuration commitments,
+ * and computes the owner approval digest that owners sign.
+ *
+ * [TIP-1107](https://tips.sh/1107) · [TIP-1114](https://tips.sh/1114)
+ *
+ * @example
+ * ```ts twoslash
+ * import { AccountConfig } from 'ox/tempo'
+ *
+ * const initialConfig = AccountConfig.from({
+ *   threshold: 2,
+ *   owners: [
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     },
+ *     {
+ *       owner: '0x2222222222222222222222222222222222222222',
+ *       weight: 1
+ *     }
+ *   ]
+ * })
+ *
+ * const account = AccountConfig.getAddress(initialConfig, {
+ *   factory: '0x7171717171717171717171717171717171717171'
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as AccountConfig from './AccountConfig.js'
+/**
+ * Configurable account RPC simulation utilities.
+ *
+ * Converts the owner approvals and configuration modeled during gas estimation
+ * between their domain and Tempo JSON-RPC representations.
+ *
+ * @category Reference
+ */
+export * as AccountSimulation from './AccountSimulation.js'
+/**
  * Utilities for Tempo-flavoured EIP-7702 authorizations.
  *
  * Tempo extends EIP-7702 to support more signature types (secp256k1, P256, and WebAuthn),
@@ -142,40 +187,6 @@ export * as EarnShares from './EarnShares.js'
  */
 export * as KeyAuthorization from './KeyAuthorization.js'
 /**
- * Native multisig account utilities (TIP-1061).
- *
- * Derives stable multisig account addresses from a weighted owner
- * configuration, and computes the owner approval digest that owners sign.
- *
- * [TIP-1061](https://tips.sh/1061)
- *
- * @example
- * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
- *
- * const initialConfig = MultisigConfig.from({
- *   threshold: 2,
- *   owners: [
- *     {
- *       owner: '0x1111111111111111111111111111111111111111',
- *       weight: 1
- *     },
- *     {
- *       owner: '0x2222222222222222222222222222222222222222',
- *       weight: 1
- *     }
- *   ]
- * })
- *
- * const account = MultisigConfig.getAddress(initialConfig, {
- *   factory: '0x7171717171717171717171717171717171717171'
- * })
- * ```
- *
- * @category Reference
- */
-export * as MultisigConfig from './MultisigConfig.js'
-/**
  * Offchain multisig transaction and key authorization operation utilities.
  *
  * Derives operation hashes, selects owner approvals, serializes transactions,
@@ -184,15 +195,6 @@ export * as MultisigConfig from './MultisigConfig.js'
  * @category Reference
  */
 export * as MultisigOperation from './MultisigOperation.js'
-/**
- * Native multisig RPC simulation utilities.
- *
- * Converts complete root and nested owner specs between their domain and Tempo
- * JSON-RPC representations.
- *
- * @category Reference
- */
-export * as MultisigSimulation from './MultisigSimulation.js'
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *

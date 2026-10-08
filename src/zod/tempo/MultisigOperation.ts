@@ -4,13 +4,13 @@ import * as z_Address from '../Address.js'
 import * as z_Hash from '../Hash.js'
 import * as z_Hex from '../Hex.js'
 import * as z from 'zod/mini'
-import * as z_MultisigConfig from './MultisigConfig.js'
+import * as z_AccountConfig from './AccountConfig.js'
 
 function baseFields() {
   return {
     account: z_Address.Address,
     approvals: z.readonly(z.array(z_Hex.Hex)),
-    config: z_MultisigConfig.MultisigConfig,
+    config: z_AccountConfig.AccountConfig,
     createdAt: z.number(),
     hash: z_Hash.Hash,
     signatureCount: z.number(),

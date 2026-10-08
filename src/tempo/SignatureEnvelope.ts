@@ -18,14 +18,14 @@ import * as ox_Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
-import * as MultisigConfig from './MultisigConfig.js'
+import * as AccountConfig from './AccountConfig.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'
 const serializedWebAuthnType = '0x02'
 const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
-const serializedMultisigType = '0x05'
+const serializedConfigurableType = '0x05'
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -86,10 +86,10 @@ export type GetType<
               ? 'keychain'
               : envelope extends {
                     account: Address.Address
-                    config: MultisigConfig.Input
+                    config: AccountConfig.Input
                     signatures: any
                   }
-                ? 'multisig'
+                ? 'configurable'
                 : never
 
 /**
@@ -113,6 +113,9 @@ export type GetType<
  *   V2 binds the signature to the user account via `keccak256(sigHash || userAddress)`.
  *   The protocol validates the access key authorization via the AccountKeychain precompile.
  *
+ * - **configurable** (type `0x05`): Configurable account signature carrying the account address,
+ *   its complete current configuration, and primitive owner approvals over the version-bound digest.
+ *
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<numberType = number> = OneOf<
@@ -120,7 +123,7 @@ export type SignatureEnvelope<numberType = number> = OneOf<
   | P256<numberType>
   | WebAuthn<numberType>
   | Keychain<numberType>
-  | Multisig<numberType>
+  | Configurable<numberType>
 >
 
 /**
@@ -128,7 +131,7 @@ export type SignatureEnvelope<numberType = number> = OneOf<
  */
 export type SignatureEnvelopeRpc =
   | OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc>
-  | MultisigRpc
+  | ConfigurableRpc
 
 /** Primitive signature envelope accepted by protocol sidecars. */
 export type Primitive<numberType = number> = OneOf<
@@ -168,24 +171,24 @@ export type KeychainRpc = {
 }
 
 /**
- * Native multisig signature (type `0x05`).
+ * Configurable account signature (type `0x05`).
  *
  * Carries the account's complete current configuration and primitive owner
  * approvals over its version-bound digest. The node validates the account
  * identity or stored commitment and the owner quorum against chain state.
  */
-export type Multisig<numberType = number> = {
-  /** Permanent native multisig account address. */
+export type Configurable<numberType = number> = {
+  /** Permanent account address. */
   account: Address.Address
   /** Complete current configuration, included in every signature. */
-  config: MultisigConfig.Config<bigint, numberType>
+  config: AccountConfig.Config<bigint, numberType>
   /** Primitive owner approvals in ascending recovered-address order. */
   signatures: readonly Primitive<numberType>[]
-  type: 'multisig'
+  type: 'configurable'
 }
 
 /** RLP-encoded `[account, config, signatures]`, without the `0x05` type byte. */
-export type MultisigRpc = Hex.Hex
+export type ConfigurableRpc = Hex.Hex
 
 export type P256<numberType = number> = {
   prehash: boolean
@@ -328,9 +331,9 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     return
   }
 
-  if (type === 'multisig') {
-    const multisig = envelope as Multisig
-    assertMultisig(multisig)
+  if (type === 'configurable') {
+    const configurable = envelope as Configurable
+    assertConfigurable(configurable)
     return
   }
 }
@@ -338,10 +341,10 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
 export declare namespace assert {
   type ErrorType =
     | CoercionError
-    | InvalidMultisigApprovalError
+    | InvalidApprovalError
     | MissingPropertiesError
-    | MultisigConfig.assert.ErrorType
-    | MultisigConfig.getAddress.ErrorType
+    | AccountConfig.assert.ErrorType
+    | AccountConfig.getAddress.ErrorType
     | Signature.assert.ErrorType
     | Errors.GlobalErrorType
 }
@@ -350,13 +353,13 @@ function assertKeychainVersion(keychain: Keychain): void {
   if (keychain.version !== 'v1') return
   let inner = keychain.inner
   while (getType(inner) === 'keychain') inner = (inner as Keychain).inner
-  if (getType(inner) === 'multisig')
-    throw new InvalidMultisigApprovalError({
-      reason: 'multisig access keys require keychain V2',
+  if (getType(inner) === 'configurable')
+    throw new InvalidApprovalError({
+      reason: 'configurable access keys require keychain V2',
     })
 }
 
-function assertMultisig(envelope: Multisig): void {
+function assertConfigurable(envelope: Configurable): void {
   const missing: string[] = []
   if (!envelope.account) missing.push('account')
   if (!envelope.config) missing.push('config')
@@ -365,47 +368,47 @@ function assertMultisig(envelope: Multisig): void {
     throw new MissingPropertiesError({
       envelope,
       missing,
-      type: 'multisig',
+      type: 'configurable',
     })
   if (!Address.validate(envelope.account))
-    throw new InvalidMultisigApprovalError({
-      reason: 'multisig account is invalid',
+    throw new InvalidApprovalError({
+      reason: 'configurable account is invalid',
     })
   if (Hex.toBigInt(envelope.account) === 0n)
-    throw new InvalidMultisigApprovalError({
-      reason: 'multisig account cannot be zero',
+    throw new InvalidApprovalError({
+      reason: 'configurable account cannot be zero',
     })
   if (envelope.signatures.length === 0)
-    throw new InvalidMultisigApprovalError({
-      reason: 'multisig signatures cannot be empty',
+    throw new InvalidApprovalError({
+      reason: 'configurable signatures cannot be empty',
     })
-  if (envelope.signatures.length > MultisigConfig.maxSignatures)
-    throw new InvalidMultisigApprovalError({
-      reason: `multisig signatures exceed ${MultisigConfig.maxSignatures}`,
+  if (envelope.signatures.length > AccountConfig.maxSignatures)
+    throw new InvalidApprovalError({
+      reason: `configurable signatures exceed ${AccountConfig.maxSignatures}`,
     })
 
-  MultisigConfig.assert(envelope.config)
+  AccountConfig.assert(envelope.config)
   if (
     (envelope.config.version ?? 0n) === 0n &&
     envelope.config.owners.some((owner) =>
       Address.isEqual(owner.owner, envelope.account),
     )
   )
-    throw new InvalidMultisigApprovalError({
+    throw new InvalidApprovalError({
       reason: 'initial account cannot be an owner',
     })
 
   for (const inner of envelope.signatures) {
     const type = getType(inner as SignatureEnvelope)
-    if (type === 'keychain' || type === 'multisig')
-      throw new InvalidMultisigApprovalError({
+    if (type === 'keychain' || type === 'configurable')
+      throw new InvalidApprovalError({
         reason: 'owner approvals must be primitive signatures',
       })
     assert(inner)
 
-    if (Hex.size(serialize(inner)) > MultisigConfig.maxOwnerSignatureBytes)
-      throw new InvalidMultisigApprovalError({
-        reason: `multisig owner signature exceeds ${MultisigConfig.maxOwnerSignatureBytes} bytes`,
+    if (Hex.size(serialize(inner)) > AccountConfig.maxOwnerSignatureBytes)
+      throw new InvalidApprovalError({
+        reason: `configurable owner signature exceeds ${AccountConfig.maxOwnerSignatureBytes} bytes`,
       })
   }
 }
@@ -447,9 +450,9 @@ export function extractAddress(
     if (root) return signature.userAddress
     return extractAddress({ ...options, signature: signature.inner })
   }
-  // Native multisig signatures have no single signer; the recovered sender is the
-  // derived multisig account address.
-  if (signature.type === 'multisig') return signature.account
+  // Configurable signatures have no single signer; the recovered sender is the
+  // derived configurable account address.
+  if (signature.type === 'configurable') return signature.account
   return Address.fromPublicKey(extractPublicKey(options))
 }
 
@@ -516,9 +519,9 @@ export function extractPublicKey(
       return signature.publicKey
     case 'keychain':
       return extractPublicKey({ payload, signature: signature.inner })
-    case 'multisig':
-      // A multisig signature aggregates multiple owner approvals and has no
-      // single public key; recover the multisig account via `extractAddress`.
+    case 'configurable':
+      // A configurable signature aggregates multiple owner approvals and has no
+      // single public key; recover the configurable account via `extractAddress`.
       throw new CoercionError({ envelope: signature })
   }
 }
@@ -681,46 +684,45 @@ function deserialize_(value: Serialized): SignatureEnvelope {
     return envelope
   }
 
-  if (typeId === serializedMultisigType) {
+  if (typeId === serializedConfigurableType) {
     const decoded = Rlp.toHex(data)
     if (!Array.isArray(decoded) || decoded.length !== 3)
       throw new InvalidSerializedError({
-        reason: 'invalid multisig wire shape: expected exactly three fields',
+        reason:
+          'invalid configurable wire shape: expected exactly three fields',
         serialized,
       })
     const [account, config, signatures] = decoded
     if (typeof account !== 'string' || !Address.validate(account))
       throw new InvalidSerializedError({
-        reason: 'invalid multisig account',
+        reason: 'invalid configurable account',
         serialized,
       })
     if (!Array.isArray(config))
       throw new InvalidSerializedError({
-        reason: 'invalid multisig config',
+        reason: 'invalid account config',
         serialized,
       })
     if (
       !Array.isArray(signatures) ||
       signatures.length === 0 ||
-      signatures.length > MultisigConfig.maxSignatures
+      signatures.length > AccountConfig.maxSignatures
     )
       throw new InvalidSerializedError({
-        reason: 'invalid multisig signatures list',
+        reason: 'invalid configurable signatures list',
         serialized,
       })
     const envelope = {
-      type: 'multisig',
+      type: 'configurable',
       account,
-      config: MultisigConfig.fromTuple(
-        config as unknown as MultisigConfig.Tuple,
-      ),
+      config: AccountConfig.fromTuple(config as unknown as AccountConfig.Tuple),
       signatures: signatures.map((signature) => {
         if (
           !Hex.validate(signature) ||
-          Hex.size(signature) > MultisigConfig.maxOwnerSignatureBytes
+          Hex.size(signature) > AccountConfig.maxOwnerSignatureBytes
         )
           throw new InvalidSerializedError({
-            reason: 'invalid multisig owner signature',
+            reason: 'invalid configurable owner signature',
             serialized,
           })
         // Reject recursive envelopes before decoding their contents.
@@ -734,13 +736,13 @@ function deserialize_(value: Serialized): SignatureEnvelope {
           })
         return deserialize(signature) as Primitive
       }),
-    } satisfies Multisig
-    assertMultisig(envelope)
+    } satisfies Configurable
+    assertConfigurable(envelope)
     return envelope
   }
 
   throw new InvalidSerializedError({
-    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), ${serializedKeychainV2Type} (Keychain V2), or ${serializedMultisigType} (Multisig)`,
+    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), ${serializedKeychainV2Type} (Keychain V2), or ${serializedConfigurableType} (Configurable)`,
     serialized,
   })
 }
@@ -871,7 +873,7 @@ function deserialize_(value: Serialized): SignatureEnvelope {
  * ```
  *
  * @example
- * ### Multisig
+ * ### Configurable
  *
  * Include the permanent account and current configuration on every transaction.
  *
@@ -920,12 +922,12 @@ export function from<const value extends from.Value>(
 
   const type = getType(value)
 
-  if (type === 'multisig') {
-    const multisig = value as Multisig
+  if (type === 'configurable') {
+    const configurable = value as Configurable
     return {
-      ...multisig,
-      config: MultisigConfig.from(multisig.config),
-      signatures: multisig.signatures.map((signature) => from(signature)),
+      ...configurable,
+      config: AccountConfig.from(configurable.config),
+      signatures: configurable.signatures.map((signature) => from(signature)),
       type,
     } as never
   }
@@ -972,14 +974,14 @@ export declare namespace from {
     payload?: Hex.Hex | Bytes.Bytes | undefined
   }
 
-  /** Multisig input with an explicit account and a normalizable configuration. */
-  type MultisigFromConfig = Omit<Multisig, 'config' | 'type'> & {
-    config: MultisigConfig.Input
-    type?: 'multisig' | undefined
+  /** Configurable input with an explicit account and a normalizable configuration. */
+  type ConfigurableFromConfig = Omit<Configurable, 'config' | 'type'> & {
+    config: AccountConfig.Input
+    type?: 'configurable' | undefined
   }
 
   type Value =
-    | MultisigFromConfig
+    | ConfigurableFromConfig
     | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
     | Serialized
@@ -990,8 +992,8 @@ export declare namespace from {
         ? SignatureEnvelope
         : value extends Secp256k1Flat
           ? Secp256k1
-          : value extends MultisigFromConfig
-            ? Extract<SignatureEnvelope, { type: 'multisig' }>
+          : value extends ConfigurableFromConfig
+            ? Extract<SignatureEnvelope, { type: 'configurable' }>
             : IsNarrowable<value, SignatureEnvelope> extends true
               ? SignatureEnvelope
               : Assign<
@@ -1026,8 +1028,10 @@ export declare namespace from {
  */
 export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
   if (typeof envelope === 'string') {
-    const signature = deserialize(Hex.concat(serializedMultisigType, envelope))
-    if (signature.type !== 'multisig') throw new CoercionError({ envelope })
+    const signature = deserialize(
+      Hex.concat(serializedConfigurableType, envelope),
+    )
+    if (signature.type !== 'configurable') throw new CoercionError({ envelope })
     return signature
   }
   if (envelope.type === 'secp256k1')
@@ -1122,7 +1126,7 @@ export declare namespace fromRpc {
     | assert.ErrorType
     | CoercionError
     | InvalidSerializedError
-    | MultisigConfig.getAddress.ErrorType
+    | AccountConfig.getAddress.ErrorType
     | Signature.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
@@ -1196,9 +1200,9 @@ export function getType<
   if ('userAddress' in envelope && 'inner' in envelope)
     return 'keychain' as never
 
-  // Detect Multisig signature
+  // Detect Configurable signature
   if ('account' in envelope && 'config' in envelope && 'signatures' in envelope)
-    return 'multisig' as never
+    return 'configurable' as never
 
   throw new CoercionError({
     envelope,
@@ -1214,7 +1218,7 @@ export function getType<
  * - WebAuthn: `0x02` + webauthnData (variable) + r (32) + s (32) + pubKeyX (32) + pubKeyY (32)
  * - Keychain V1: `0x03` + userAddress (20) + inner signature (recursive)
  * - Keychain V2: `0x04` + userAddress (20) + inner signature (recursive)
- * - Multisig: `0x05` + RLP `[account, config, signatures]`
+ * - Configurable: `0x05` + RLP `[account, config, signatures]`
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -1299,15 +1303,15 @@ export function serialize(
     )
   }
 
-  if (type === 'multisig') {
-    const multisig = envelope as Multisig
-    assert(multisig)
+  if (type === 'configurable') {
+    const configurable = envelope as Configurable
+    assert(configurable)
     return Hex.concat(
-      serializedMultisigType,
+      serializedConfigurableType,
       Rlp.fromHex([
-        multisig.account,
-        MultisigConfig.toTuple(multisig.config),
-        multisig.signatures.map((signature) => serialize(signature)),
+        configurable.account,
+        AccountConfig.toTuple(configurable.config),
+        configurable.signatures.map((signature) => serialize(signature)),
       ]),
       options.magic ? magicBytes : '0x',
     )
@@ -1339,14 +1343,14 @@ export declare namespace serialize {
 /**
  * Sorts primitive owner approvals by recovered address.
  *
- * Recovery uses the account and current config version's multisig digest.
+ * Recovery uses the account and current config version's owner approval digest.
  * Duplicate or non-owner approvals must still be rejected by the node.
  *
  * @example
  * ```ts twoslash
  * import { SignatureEnvelope } from 'ox/tempo'
  *
- * const ordered = SignatureEnvelope.sortMultisigApprovals({
+ * const ordered = SignatureEnvelope.sortApprovals({
  *   account: '0x2222222222222222222222222222222222222222',
  *   config: { version: 0n },
  *   payload: `0x${'ab'.repeat(32)}`,
@@ -1357,11 +1361,11 @@ export declare namespace serialize {
  * @param value - Account, version, payload, and primitive approvals.
  * @returns The approvals in ascending recovered-address order.
  */
-export function sortMultisigApprovals(
-  value: sortMultisigApprovals.Value,
+export function sortApprovals(
+  value: sortApprovals.Value,
 ): readonly Primitive[] {
   const { signatures } = value
-  const digest = MultisigConfig.getSignPayload(value)
+  const digest = AccountConfig.getSignPayload(value)
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
   // comparator.
   return signatures
@@ -1373,14 +1377,14 @@ export function sortMultisigApprovals(
     .map((entry) => entry.signature)
 }
 
-export declare namespace sortMultisigApprovals {
-  type Value = MultisigConfig.getSignPayload.Value & {
+export declare namespace sortApprovals {
+  type Value = AccountConfig.getSignPayload.Value & {
     /** Primitive owner approvals to order. */
     signatures: readonly Primitive[]
   }
 
   type ErrorType =
-    | MultisigConfig.getSignPayload.ErrorType
+    | AccountConfig.getSignPayload.ErrorType
     | extractAddress.ErrorType
     | Errors.GlobalErrorType
 }
@@ -1459,20 +1463,20 @@ export function toRpc<const envelope extends toRpc.Input>(
     } as never
   }
 
-  if (type === 'multisig') {
-    const multisig = envelope as Multisig<Hex.Hex | number>
+  if (type === 'configurable') {
+    const configurable = envelope as Configurable<Hex.Hex | number>
     return Hex.slice(
       serialize({
-        ...multisig,
+        ...configurable,
         config: {
-          ...multisig.config,
-          threshold: Number(multisig.config.threshold),
-          owners: multisig.config.owners.map((owner) => ({
+          ...configurable.config,
+          threshold: Number(configurable.config.threshold),
+          owners: configurable.config.owners.map((owner) => ({
             ...owner,
             weight: Number(owner.weight),
           })),
         },
-        signatures: multisig.signatures.map((signature) =>
+        signatures: configurable.signatures.map((signature) =>
           signature.type === 'secp256k1'
             ? {
                 ...signature,
@@ -1511,8 +1515,8 @@ export declare namespace toRpc {
           ? WebAuthnRpc
           : GetType<envelope> extends 'keychain'
             ? KeychainRpc
-            : GetType<envelope> extends 'multisig'
-              ? MultisigRpc
+            : GetType<envelope> extends 'configurable'
+              ? ConfigurableRpc
               : SignatureEnvelopeRpc
 
   type ErrorType =
@@ -1769,7 +1773,7 @@ export class MissingPropertiesError extends Errors.BaseError {
   }: {
     envelope: unknown
     missing: string[]
-    type: Type | 'keychain' | 'multisig'
+    type: Type | 'keychain' | 'configurable'
   }) {
     super(
       `Signature envelope of type "${type}" is missing required properties: ${missing.map((m) => `\`${m}\``).join(', ')}.\n\nProvided: ${Json.stringify(envelope)}`,
@@ -1790,12 +1794,12 @@ export class InvalidSerializedError extends Errors.BaseError {
 }
 
 /**
- * Error thrown when a native multisig owner approval is invalid.
+ * Error thrown when a configurable account owner approval is invalid.
  */
-export class InvalidMultisigApprovalError extends Errors.BaseError {
-  override readonly name = 'SignatureEnvelope.InvalidMultisigApprovalError'
+export class InvalidApprovalError extends Errors.BaseError {
+  override readonly name = 'SignatureEnvelope.InvalidApprovalError'
   constructor({ reason }: { reason: string }) {
-    super(`Invalid native multisig owner approval: ${reason}.`)
+    super(`Invalid owner approval: ${reason}.`)
   }
 }
 

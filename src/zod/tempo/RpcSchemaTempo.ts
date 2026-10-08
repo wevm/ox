@@ -7,8 +7,8 @@ import * as z_Log from '../Log.js'
 import * as z_StateOverrides from '../StateOverrides.js'
 import { from } from '../internal/rpcSchemas/from.js'
 import * as z from 'zod/mini'
+import * as z_AccountConfig from './AccountConfig.js'
 import * as z_KeyAuthorization from './KeyAuthorization.js'
-import * as z_MultisigConfig from './MultisigConfig.js'
 import * as z_MultisigOperation from './MultisigOperation.js'
 import * as z_TransactionRequest from './TransactionRequest.js'
 
@@ -120,7 +120,7 @@ export const multisig_approveRawTransactionSync = from({
 export const multisig_getConfig = from({
   method: 'multisig_getConfig',
   params: z.tuple([z.object({ address: z_Address.Address })]),
-  returns: z.nullable(z_MultisigConfig.Rpc),
+  returns: z.nullable(z_AccountConfig.Rpc),
 })
 
 /** Schema for the `multisig_getOperation` JSON-RPC method. */

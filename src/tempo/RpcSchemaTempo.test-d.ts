@@ -1,9 +1,9 @@
 import type { Provider } from 'ox'
 import type {
+  AccountConfig,
+  AccountSimulation,
   KeyAuthorization,
-  MultisigConfig,
   MultisigOperation,
-  MultisigSimulation,
   RpcSchemaTempo,
 } from 'ox/tempo'
 import { expectTypeOf, test } from 'vp/test'
@@ -17,7 +17,7 @@ declare const tempoProvider: Provider.Provider<{
 declare const address: Address.Address
 declare const hash: Hex.Hex
 declare const keyAuthorization: KeyAuthorization.Rpc
-declare const multisigSimulation: MultisigSimulation.Rpc
+declare const multisigSimulation: AccountSimulation.Rpc
 declare const serializedTransaction: Hex.Hex
 declare const signature: Hex.Hex
 
@@ -60,7 +60,7 @@ test('multisig provider methods', () => {
       method: 'multisig_getConfig',
       params: [{ address }],
     }),
-  ).resolves.toEqualTypeOf<MultisigConfig.Rpc | null>()
+  ).resolves.toEqualTypeOf<AccountConfig.Rpc | null>()
 
   expectTypeOf(
     provider.request({
@@ -70,7 +70,7 @@ test('multisig provider methods', () => {
   ).resolves.toEqualTypeOf<MultisigOperation.Rpc | null>()
 })
 
-test('tempo simulation accepts multisig specs', () => {
+test('tempo simulation accepts account simulation specs', () => {
   void tempoProvider.request({
     method: 'tempo_simulateV1',
     params: [

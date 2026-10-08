@@ -41,14 +41,14 @@ export const Rpc = z
     limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
     signature: z.union([
       z_SignatureEnvelope.PrimitiveRpc,
-      z_SignatureEnvelope.MultisigRpc,
+      z_SignatureEnvelope.ConfigurableRpc,
     ]),
     witness: z.optional(z.nullable(z_Hex.Hex)),
   })
   .check(
     z.refine(
       (value) => value.keyType !== 'multisig' || value.account != null,
-      'multisig key grants require a parent account binding',
+      'configurable account key grants require a parent account binding',
     ),
   )
 
@@ -81,9 +81,9 @@ const domainShape = {
   scopes: z.optional(z.readonly(z.array(Scope))),
   signature: z.union([
     z_SignatureEnvelope.Primitive,
-    z_SignatureEnvelope.Multisig,
+    z_SignatureEnvelope.Configurable,
   ]),
-  type: z.union([z_SignatureEnvelope.Type, z.literal('multisig')]),
+  type: z.union([z_SignatureEnvelope.Type, z.literal('configurable')]),
   witness: z.optional(z_Hex.Hex),
 }
 
@@ -96,8 +96,8 @@ export const Domain = z
   })
   .check(
     z.refine(
-      (value) => value.type !== 'multisig' || value.account != null,
-      'multisig key grants require a parent account binding',
+      (value) => value.type !== 'configurable' || value.account != null,
+      'configurable account key grants require a parent account binding',
     ),
   )
 
@@ -117,8 +117,8 @@ export const DomainToRpc = z
   })
   .check(
     z.refine(
-      (value) => value.type !== 'multisig' || value.account != null,
-      'multisig key grants require a parent account binding',
+      (value) => value.type !== 'configurable' || value.account != null,
+      'configurable account key grants require a parent account binding',
     ),
   )
 

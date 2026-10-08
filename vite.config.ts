@@ -2,9 +2,9 @@ import { basename, dirname, join } from 'node:path'
 import { defineConfig } from 'vp'
 import { playwright } from 'vp/test/browser-playwright'
 import {
-  port as tempoMultisigPort,
-  tag as tempoMultisigTag,
-} from './test/tempo/multisig.js'
+  port as tempoConfigurableAccountsPort,
+  tag as tempoConfigurableAccountsTag,
+} from './test/tempo/configurableAccounts.js'
 
 const root = import.meta.dirname
 
@@ -190,7 +190,7 @@ export default defineConfig({
           include: [
             'src/tempo/**/*.test.ts',
             '!src/tempo/e2e.test.ts',
-            '!src/tempo/multisig.e2e.test.ts',
+            '!src/tempo/configurableAccounts.e2e.test.ts',
           ],
         },
       },
@@ -207,16 +207,18 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'tempo-multisig',
-          include: ['src/tempo/multisig.e2e.test.ts'],
+          name: 'tempo-configurable-accounts',
+          include: ['src/tempo/configurableAccounts.e2e.test.ts'],
           setupFiles: [join(root, 'test/tempo/setup.ts')],
-          globalSetup: [join(root, 'test/tempo/setup.global.multisig.ts')],
+          globalSetup: [
+            join(root, 'test/tempo/setup.global.configurableAccounts.ts'),
+          ],
           hookTimeout: 60_000,
           env: {
             VITE_TEMPO_ENV: 'localnet',
-            VITE_TEMPO_PORT: String(tempoMultisigPort),
+            VITE_TEMPO_PORT: String(tempoConfigurableAccountsPort),
             VITE_TEMPO_RPC_URL: '',
-            VITE_TEMPO_TAG: tempoMultisigTag,
+            VITE_TEMPO_TAG: tempoConfigurableAccountsTag,
           },
         },
       },

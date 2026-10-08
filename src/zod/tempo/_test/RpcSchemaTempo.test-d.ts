@@ -1,5 +1,5 @@
 import type * as core_Address from '../../../core/Address.js'
-import type * as core_MultisigConfig from '../../../tempo/MultisigConfig.js'
+import type * as core_AccountConfig from '../../../tempo/AccountConfig.js'
 import type * as core_MultisigOperation from '../../../tempo/MultisigOperation.js'
 import type * as z from 'zod/mini'
 import { expectTypeOf, test } from 'vp/test'
@@ -48,7 +48,7 @@ test('multisig_getConfig has the expected request and return types', () => {
   >().toEqualTypeOf<[{ address: core_Address.Address }]>()
   expectTypeOf<
     z.output<typeof z_RpcSchemaTempo.multisig_getConfig.returns>
-  >().toEqualTypeOf<core_MultisigConfig.Rpc | null>()
+  >().toEqualTypeOf<core_AccountConfig.Rpc | null>()
 })
 
 test('multisig return schemas decode RPC operations', () => {

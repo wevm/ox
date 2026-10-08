@@ -1,10 +1,10 @@
 ---
-description: Derive and sign experimental native multisig transaction envelopes.
+description: Derive, sign, and rotate experimental configurable account transaction envelopes.
 ---
 
 import { Card, Cards } from 'vocs'
 
-# Multisig Transactions
+# Configurable Accounts
 
 :::info
 This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
@@ -13,36 +13,37 @@ This guide is intended to be low-level. If you are looking for a high-level abst
 
 ## Overview
 
-Ox models a native Tempo multisig with a weighted
-[`MultisigConfig`](/tempo/reference/MultisigConfig) and a top-level
-[`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) of type `multisig`. The initial,
-version-0 config derives a stable account address. Owners approve a multisig-specific digest, and
+A Tempo configurable account has weighted owners and an approval threshold that can change without
+changing the account address. It can have a single owner or several. Ox models it with an
+[`AccountConfig`](/tempo/reference/AccountConfig) and a top-level
+[`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) of type `configurable`. The initial,
+version-0 config derives a stable account address. Owners approve an account-specific digest, and
 their combined weight must meet the configured threshold.
 
-Every multisig signature carries the complete applicable config. A version-0 config authorizes the
+Every configurable account signature carries the complete applicable config. A version-0 config authorizes the
 counterfactual account while its onchain config commitment is zero. After an owner update, the
 signature carries the current nonzero version whose commitment is stored by the network.
 
 :::warning
-Native multisig support is experimental. These examples describe Ox's current API. TIP-1061 is a
-draft and its protocol shape may change, so confirm that your Ox and Tempo node versions agree
+Configurable account support is experimental. These examples describe Ox's current API. TIP-1107
+is a draft and its protocol shape may change, so confirm that your Ox and Tempo node versions agree
 before producing signatures.
 :::
 
-[See the TIP-1061 draft](https://tips.sh/1061)
+[See the TIP-1107 draft](https://tips.sh/1107)
 
 ## Recipes
 
-### Derive a Weighted Multisig Account
+### Derive a Configurable Account
 
 Normalize the initial config with
-[`MultisigConfig.from`](/tempo/reference/MultisigConfig/from), then derive its permanent account
-with [`MultisigConfig.getAddress`](/tempo/reference/MultisigConfig/getAddress). Supply the recovery
+[`AccountConfig.from`](/tempo/reference/AccountConfig/from), then derive its permanent account
+with [`AccountConfig.getAddress`](/tempo/reference/AccountConfig/getAddress). Supply the recovery
 factory configured by your chain. The pinned experimental node has no public-network default.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
-import { MultisigConfig } from 'ox/tempo'
+import { AccountConfig } from 'ox/tempo'
 
 const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
@@ -55,27 +56,27 @@ const owners = ownerPrivateKeys.map((privateKey) => ({
 }))
 
 // [!code focus:start]
-const initialConfig = MultisigConfig.from({
+const initialConfig = AccountConfig.from({
   owners,
   salt: Hex.random(32),
   threshold: 2, // [!code hl]
 })
 // Replace this development factory with your chain's configured factory.
 const factory = '0x7171717171717171717171717171717171717171'
-const account = MultisigConfig.getAddress(initialConfig, { factory })
+const account = AccountConfig.getAddress(initialConfig, { factory })
 // @log: '0x...'
 // [!code focus:end]
 ```
 
-`MultisigConfig.from` sorts owners by ascending address, applies the zero salt and version when
+`AccountConfig.from` sorts owners by ascending address, applies the zero salt and version when
 omitted, and rejects invalid thresholds, weights, versions, salts, or owner lists.
 
 ### Sign an Initial Transaction
 
 Build a nonempty transaction, derive its owner-approval digest with
-[`MultisigConfig.getSignPayload`](/tempo/reference/MultisigConfig/getSignPayload), and collect
+[`AccountConfig.getSignPayload`](/tempo/reference/AccountConfig/getSignPayload), and collect
 enough owner signatures to meet the threshold. Use
-[`SignatureEnvelope.sortMultisigApprovals`](/tempo/reference/SignatureEnvelope/sortMultisigApprovals)
+[`SignatureEnvelope.sortApprovals`](/tempo/reference/SignatureEnvelope/sortApprovals)
 to put approvals in the order required by Tempo.
 
 Pass the complete initial config to
@@ -84,7 +85,7 @@ version-0 configuration.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
-import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+import { AccountConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
 // 1. Set up the owner keys and initial config.
 const ownerPrivateKeys = [
@@ -92,7 +93,7 @@ const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
 ]
-const initialConfig = MultisigConfig.from({
+const initialConfig = AccountConfig.from({
   owners: ownerPrivateKeys.map((privateKey) => ({
     owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
     weight: 1,
@@ -102,7 +103,7 @@ const initialConfig = MultisigConfig.from({
 })
 // Replace this development factory with your chain's configured factory.
 const factory = '0x7171717171717171717171717171717171717171'
-const account = MultisigConfig.getAddress(initialConfig, { factory })
+const account = AccountConfig.getAddress(initialConfig, { factory })
 
 // 2. Build the initial transaction.
 const transaction = TxEnvelopeTempo.from({
@@ -115,9 +116,9 @@ const transaction = TxEnvelopeTempo.from({
   nonce: 0n,
 })
 // [!code focus:start]
-// 3. Derive the multisig approval payload.
+// 3. Derive the owner approval payload.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
-const approvalPayload = MultisigConfig.getSignPayload({
+const approvalPayload = AccountConfig.getSignPayload({
   account,
   config: initialConfig,
   payload,
@@ -132,7 +133,7 @@ const approvals = ownerPrivateKeys.slice(0, 2).map((privateKey) =>
     }),
   ),
 )
-const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
+const orderedApprovals = SignatureEnvelope.sortApprovals({
   account,
   config: initialConfig,
   payload,
@@ -158,12 +159,14 @@ commitment. Use that configuration until an owner update stores a new commitment
 ### Sign a Later Transaction
 
 Reuse the original `initialConfig` to derive the permanent account, even if the owners have changed.
-Track the complete current config offchain because the network stores only its commitment. Use that
-config for the approval digest and signature witness.
+Owners change the config by calling the `updateConfig` precompile, which keeps the salt and
+increments the version. Derive the same next config offchain with
+[`AccountConfig.update`](/tempo/reference/AccountConfig/update), and track it because the network
+stores only its commitment. Use that config for the approval digest and signature witness.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
-import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+import { AccountConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
 
 // 1. Set up the owner keys and initial config.
 const ownerPrivateKeys = [
@@ -171,7 +174,7 @@ const ownerPrivateKeys = [
   Secp256k1.randomPrivateKey(),
   Secp256k1.randomPrivateKey(),
 ]
-const initialConfig = MultisigConfig.from({
+const initialConfig = AccountConfig.from({
   owners: ownerPrivateKeys.map((privateKey) => ({
     owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
     weight: 1,
@@ -181,12 +184,15 @@ const initialConfig = MultisigConfig.from({
 })
 // Replace this development factory with your chain's configured factory.
 const factory = '0x7171717171717171717171717171717171717171'
-const account = MultisigConfig.getAddress(initialConfig, { factory })
+const account = AccountConfig.getAddress(initialConfig, { factory })
 
-// 2. Load the complete config committed by the latest owner update.
-const currentConfig = MultisigConfig.from({
-  ...initialConfig,
-  version: 1,
+// 2. Derive the config committed by an owner update that removed the first owner.
+const currentConfig = AccountConfig.update(initialConfig, {
+  owners: ownerPrivateKeys.slice(1).map((privateKey) => ({
+    owner: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
+    weight: 1,
+  })),
+  threshold: 2,
 })
 
 // 3. Build a later transaction.
@@ -201,9 +207,9 @@ const transaction = TxEnvelopeTempo.from({
   nonce: 1n,
 })
 // [!code focus:start]
-// 4. Derive the multisig approval payload with the current config version.
+// 4. Derive the owner approval payload with the current config version.
 const payload = TxEnvelopeTempo.getSignPayload(transaction)
-const approvalPayload = MultisigConfig.getSignPayload({
+const approvalPayload = AccountConfig.getSignPayload({
   account,
   config: currentConfig,
   payload,
@@ -218,7 +224,7 @@ const approvals = ownerPrivateKeys.slice(1, 3).map((privateKey) =>
     }),
   ),
 )
-const orderedApprovals = SignatureEnvelope.sortMultisigApprovals({
+const orderedApprovals = SignatureEnvelope.sortApprovals({
   account,
   config: currentConfig,
   payload,
@@ -246,13 +252,13 @@ The network hashes `currentConfig` and checks that its commitment matches the va
 ### Persist Config Witnesses
 
 Store the normalized initial config with the account because it remains the source for deriving the
-permanent address. After each owner update, store or index the complete new config. The precompile
-stores only the config commitment, not the owner list.
+permanent address. After each owner update, store or index the complete new config returned by
+`AccountConfig.update`. The precompile stores only the config commitment, not the owner list.
 
 ### Sort Both Config Owners and Approvals
 
-Construct configs with `MultisigConfig.from` and order every approval set with
-`sortMultisigApprovals`. These are separate ordering requirements.
+Construct configs with `AccountConfig.from` and order every approval set with
+`sortApprovals`. These are separate ordering requirements.
 
 ### Check Approval Weight
 
@@ -262,14 +268,14 @@ signature.
 
 ### Authorize Access Keys with Owner Approvals
 
-A native multisig can provision an account-bound non-admin access key. Set the authorization's
-`account` to the multisig address and `isAdmin` to `false`, then sign
-`KeyAuthorization.getSignPayload` with a multisig envelope whose owner approvals use the current
+A configurable account can provision an account-bound non-admin access key. Set the
+authorization's `account` to the configurable account address and `isAdmin` to `false`, then sign
+`KeyAuthorization.getSignPayload` with a configurable envelope whose owner approvals use the current
 config. Attach the signed authorization as `keyAuthorization` when provisioning the key; later
 transactions omit it and use the account-bound keychain signature flow.
 
-When both the outer transaction and the key authorization use multisig signatures, each signature
-carries and validates its own complete applicable config witness.
+When both the outer transaction and the key authorization use configurable account signatures,
+each signature carries and validates its own complete applicable config witness.
 
 ### Use the Applicable Config
 
@@ -293,8 +299,8 @@ use the complete config whose commitment is currently stored for the account.
   />
   <Card
     icon="lucide:square-function"
-    title="MultisigConfig"
-    description="Review the complete experimental multisig API."
-    to="/tempo/reference/MultisigConfig"
+    title="AccountConfig"
+    description="Review the complete experimental configurable account API."
+    to="/tempo/reference/AccountConfig"
   />
 </Cards>

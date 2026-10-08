@@ -10,11 +10,11 @@ import { Card, Cards } from 'vocs'
 
 Tempo uses [`SignatureEnvelope`](/tempo/reference/SignatureEnvelope) to carry the information
 needed to interpret different signer types. An envelope can contain a secp256k1, P-256,
-WebAuthn, access-key, or native multisig signature.
+WebAuthn, access-key, or configurable account signature.
 
 Primitive signatures can be verified locally from their payload and signer identity. Access-key
-and multisig signatures also depend on protocol state or configuration, so applications should
-validate those through their complete authorization flow.
+and configurable account signatures also depend on protocol state or configuration, so
+applications should validate those through their complete authorization flow.
 
 [See the Tempo signature types specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
 
@@ -184,7 +184,7 @@ signing. Store and transmit them with the signature and public key.
 ### Verify Primitive Signatures Only
 
 `SignatureEnvelope.verify` supports secp256k1, P-256, and WebAuthn envelopes. Do not use it as a
-standalone authorization check for keychain or multisig envelopes.
+standalone authorization check for keychain or configurable envelopes.
 
 ### Keep the Original Payload
 
@@ -203,9 +203,9 @@ transaction, obtain it from
   />
   <Card
     icon="lucide:users"
-    title="Multisig Transactions"
-    description="Assemble weighted owner approvals into a native multisig envelope."
-    to="/tempo/guides/transaction-envelopes/multisig-transactions"
+    title="Configurable Accounts"
+    description="Assemble weighted owner approvals into a configurable account envelope."
+    to="/tempo/guides/transaction-envelopes/configurable-accounts"
   />
   <Card
     icon="lucide:square-function"
