@@ -828,6 +828,17 @@ describe('fromAbi', () => {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
       "inputs": [],
       "name": "Foo",
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "Foo",
+          "type": "error",
+        },
+      ],
       "type": "error",
     }
   `)
@@ -841,6 +852,17 @@ describe('fromAbi', () => {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
       "inputs": [],
       "name": "Foo",
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "Foo",
+          "type": "error",
+        },
+      ],
       "type": "error",
     }
   `)
@@ -858,6 +880,26 @@ describe('fromAbi', () => {
       "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
       "inputs": [],
       "name": "Mint",
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "Mint",
+          "type": "error",
+        },
+        {
+          "inputs": [
+            {
+              "type": "string",
+            },
+          ],
+          "name": "Mint",
+          "type": "error",
+        },
+      ],
       "type": "error",
     }
   `)
