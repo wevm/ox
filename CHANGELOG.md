@@ -1,5 +1,13 @@
 # ox
 
+## 1.8.6
+
+### Patch Changes
+
+- [#497](https://github.com/wevm/ox/pull/497) [`ee2bce9`](https://github.com/wevm/ox/commit/ee2bce93a9a4d70923d3798b830ee49df1ebaf85) Thanks [@decofe](https://github.com/decofe)! - Added the TIP-1006 `burnAt` role (`BURN_AT_ROLE`) to `TokenRole`.
+
+- [#506](https://github.com/wevm/ox/pull/506) [`ce81454`](https://github.com/wevm/ox/commit/ce814549fdea8b0fd091b36432c5a96616ba5d1a) Thanks [@jxom](https://github.com/jxom)! - Fixed `KeyAuthorization` encoding to keep absent `limits` (unlimited) distinct from an empty `limits` list (deny-all), matching the Tempo node.
+
 ## 1.8.5
 
 ### Patch Changes
