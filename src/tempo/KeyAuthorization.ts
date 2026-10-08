@@ -48,7 +48,13 @@ export type KeyAuthorization<
   expiry?: numberType | null | undefined
   /** Whether this authorization provisions an admin access key. */
   isAdmin?: boolean | undefined
-  /** TIP20 spending limits for this key. */
+  /**
+   * TIP20 spending limits for this key.
+   *
+   * - `undefined` = unlimited spending
+   * - `[]` = no spending allowed
+   * - `[...]` = only listed token limits allowed
+   */
   limits?: readonly TokenLimit<bigintType, numberType>[] | undefined
   /**
    * Call scopes restricting which contracts/selectors this key can call.
@@ -112,7 +118,7 @@ export type Rpc = {
   keyId: Address.Address
   /** Key type. */
   keyType: SignatureEnvelope.Type | 'multisig'
-  /** Token spending limits. */
+  /** Token spending limits (`null`/`undefined` = unlimited, `[]` = no spending allowed). */
   limits?: readonly RpcTokenLimit[] | null | undefined
   /** Primitive or multisig signature authorizing this key. */
   signature: SignatureEnvelope.PrimitiveRpc | SignatureEnvelope.MultisigRpc
@@ -173,36 +179,42 @@ type CallScopeTuple = readonly [
   selectorRules: readonly SelectorRuleTuple[],
 ]
 
+/** Spending limits slot; `'0x'` (RLP null) when skipped before a later field. */
+type LimitsTuple = readonly TokenLimitTuple[] | '0x'
+
+/** Call scopes slot; `'0x'` (RLP null) when skipped before a later field. */
+type CallsTuple = readonly CallScopeTuple[] | '0x'
+
 type AuthorizationTuple =
   | BaseTuple
   | readonly [...BaseTuple, expiry: Hex.Hex]
-  | readonly [...BaseTuple, expiry: Hex.Hex, limits: readonly TokenLimitTuple[]]
+  | readonly [...BaseTuple, expiry: Hex.Hex, limits: LimitsTuple]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
     ]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
       witness: Hex.Hex,
     ]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
       witness: Hex.Hex,
       isAdmin: Hex.Hex,
     ]
   | readonly [
       ...BaseTuple,
       expiry: Hex.Hex,
-      limits: readonly TokenLimitTuple[],
-      calls: readonly CallScopeTuple[],
+      limits: LimitsTuple,
+      calls: CallsTuple,
       witness: Hex.Hex,
       isAdmin: Hex.Hex,
       account: Address.Address,
@@ -671,17 +683,18 @@ export function fromTuple<const tuple extends Tuple>(
   const expiry = isAbsent(rawExpiry)
     ? undefined
     : hexToNumber(rawExpiry as Hex.Hex) || undefined
-  const limits =
-    Array.isArray(rawLimits) && rawLimits.length > 0
-      ? rawLimits.map((limitTuple: any) => {
-          const [token, limit, period] = limitTuple
-          return {
-            token,
-            limit: hexToBigint(limit),
-            ...(period !== undefined ? { period: hexToNumber(period) } : {}),
-          }
-        })
-      : undefined
+  // An empty list (`0xc0`) is an explicit deny-all, distinct from an absent
+  // field (`0x80` or omitted), which leaves spending unlimited.
+  const limits = Array.isArray(rawLimits)
+    ? rawLimits.map((limitTuple: any) => {
+        const [token, limit, period] = limitTuple
+        return {
+          token,
+          limit: hexToBigint(limit),
+          ...(period !== undefined ? { period: hexToNumber(period) } : {}),
+        }
+      })
+    : undefined
   const scopes = Array.isArray(rawScopes)
     ? rawScopes.flatMap((scopeTuple: any) => {
         const [address, selectorRules] = scopeTuple
@@ -1121,18 +1134,12 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // Optional trailing fields in wire order. Each entry's `placeholder` is
   // emitted when this field is skipped but a later field is present.
   //
-  // Placeholder convention:
-  // - `'0x'` (RLP null) is the canonical placeholder for fields added at or
-  //   after TIP-1053. The node decodes it as `None` (unrestricted).
-  // - `limits` keeps `[]` as its skipped placeholder for pre-TIP-1053 wire
-  //   shapes — preserving byte-for-byte equivalence with signed payloads
-  //   produced before TIP-1053 was added. When any TIP-1053+ field is
-  //   present, the canonical `'0x'` placeholder is used instead.
+  // `'0x'` (RLP null) is the canonical placeholder: the node decodes it as
+  // `None` (unrestricted). An empty list would decode as `Some([])`, so a
+  // skipped `limits` must never use `[]` (that reads as deny-all spending).
   //
   // To add a new optional trailing field (e.g. from a future TIP): append a
   // single entry to this list with `placeholder: '0x'`.
-  const hasTip1053Plus =
-    witness !== undefined || isAdmin || account !== undefined
   const optionals: readonly { placeholder: unknown; value: unknown }[] = [
     {
       value:
@@ -1143,7 +1150,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
     },
     {
       value: limitsValue,
-      placeholder: hasTip1053Plus ? '0x' : [],
+      placeholder: '0x',
     },
     { value: callsValue, placeholder: '0x' },
     { value: witness, placeholder: '0x' },

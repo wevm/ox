@@ -17,6 +17,23 @@ const address = '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
 const expiry = 1234567890
 const token = '0x20c0000000000000000000000000000000000001'
 
+// Unsigned RLP and hashes produced by the Tempo node's `KeyAuthorization::encode`
+// (`tempo-primitives`) for `address` on chain 1337.
+const limitsVectors = {
+  denyAll: {
+    hash: '0x647445af52e13830d879f11656840959bf7cffd26c5858b6e79696ef051e1115',
+    rlp: '0xdb8205398094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c80c0',
+  },
+  scopedDenyAll: {
+    hash: '0xed04735d65180756db1cac8134ee53ed77737803902572beff10d5da03eab2cf',
+    rlp: '0xf38205398094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c80c0d7d69420c0000000000000000000000000000000000001c0',
+  },
+  scopedUnlimited: {
+    hash: '0x4c30b56b178f44172feee4a80a27222101e19b72de396be4d764e2f4054f32d7',
+    rlp: '0xf38205398094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c8080d7d69420c0000000000000000000000000000000000001c0',
+  },
+} as const
+
 const privateKey_secp256k1 =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 const signature_secp256k1 = Secp256k1.sign({
@@ -118,6 +135,27 @@ describe('multisig account binding', () => {
 })
 
 describe('from', () => {
+  test('behavior: limits encode like the Tempo node', () => {
+    const encode = (authorization: KeyAuthorization.KeyAuthorization) => ({
+      hash: KeyAuthorization.hash(authorization),
+      rlp: Rlp.fromHex(KeyAuthorization.toTuple(authorization)[0]),
+    })
+    const base = { address, chainId: 1337n, type: 'secp256k1' } as const
+    expect({
+      denyAll: encode(KeyAuthorization.from({ ...base, limits: [] })),
+      scopedDenyAll: encode(
+        KeyAuthorization.from({
+          ...base,
+          limits: [],
+          scopes: [{ address: token }],
+        }),
+      ),
+      scopedUnlimited: encode(
+        KeyAuthorization.from({ ...base, scopes: [{ address: token }] }),
+      ),
+    }).toEqual(limitsVectors)
+  })
+
   test('accepts multisig grants and delegates', () => {
     const signed = KeyAuthorization.from(
       {
@@ -832,6 +870,22 @@ describe('fromRpc', () => {
 })
 
 describe('fromTuple', () => {
+  test('behavior: keeps absent and empty limits distinct', () => {
+    const decoded = Object.fromEntries(
+      Object.entries(limitsVectors).map(([name, { rlp }]) => [
+        name,
+        KeyAuthorization.fromTuple([Rlp.toHex(rlp) as never]).limits,
+      ]),
+    )
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "denyAll": [],
+        "scopedDenyAll": [],
+        "scopedUnlimited": undefined,
+      }
+    `)
+  })
+
   test('default', () => {
     const authorization = KeyAuthorization.fromTuple([
       [
@@ -1662,6 +1716,16 @@ describe('toRpc', () => {
 })
 
 describe('toTuple', () => {
+  test('behavior: round-trips Tempo node limits encoding', () => {
+    for (const { hash, rlp } of Object.values(limitsVectors)) {
+      const authorization = KeyAuthorization.fromTuple([
+        Rlp.toHex(rlp) as never,
+      ])
+      expect(Rlp.fromHex(KeyAuthorization.toTuple(authorization)[0])).toBe(rlp)
+      expect(KeyAuthorization.hash(authorization)).toBe(hash)
+    }
+  })
+
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
@@ -2074,7 +2138,7 @@ describe('toTuple', () => {
           "0x",
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "0x",
-          [],
+          "0x",
           [
             [
               "0x1234567890123456789012345678901234567890",
