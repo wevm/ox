@@ -154,7 +154,7 @@
 - [#412](https://github.com/wevm/ox/pull/412) [`200d9a7`](https://github.com/wevm/ox/commit/200d9a7832b676880d296b5b03fe1dde548b9f37) Thanks [@jxom](https://github.com/jxom)! - Changed native multisig configuration and signature APIs to require complete TIP-1061 witnesses with a `version`.
 
   ```ts
-  const config = MultisigConfig.from({
+  const config = AccountConfig.from({
     owners,
     threshold: 2,
     version: 1,
@@ -203,9 +203,9 @@
 - [#391](https://github.com/wevm/ox/pull/391) [`b949452`](https://github.com/wevm/ox/commit/b949452c4e7edc13b975cdb8476ba22567280528) Thanks [@jxom](https://github.com/jxom)! - Updated native multisig signing for configuration versions, access-key authorization, current protocol limits, and the `initialConfig` naming.
 
   ```ts
-  import { MultisigConfig } from "ox/tempo";
+  import { AccountConfig } from "ox/tempo";
 
-  const digest = MultisigConfig.getSignPayload({ initialConfig, payload });
+  const digest = AccountConfig.getSignPayload({ initialConfig, payload });
   ```
 
 ## 0.14.33
@@ -249,15 +249,15 @@
 
 ### Patch Changes
 
-- [#281](https://github.com/wevm/ox/pull/281) [`da3309e`](https://github.com/wevm/ox/commit/da3309e19907db3e5a497140dee5e9041c05f514) Thanks [@jxom](https://github.com/jxom)! - **Breaking (`ox/tempo`):** Removed the TIP-1061 multisig `config_id` concept to match the updated Tempo reference implementation: multisig account addresses now derive directly from the initial config, owner approval digests bind only `account`, the signature wire format is `0x05 || rlp([account, signatures, init?])`, `MultisigConfig.maxOwners` is now 255 with `u8` weights, and owner approvals may be nested multisig signatures.
+- [#281](https://github.com/wevm/ox/pull/281) [`da3309e`](https://github.com/wevm/ox/commit/da3309e19907db3e5a497140dee5e9041c05f514) Thanks [@jxom](https://github.com/jxom)! - **Breaking (`ox/tempo`):** Removed the TIP-1061 multisig `config_id` concept to match the updated Tempo reference implementation: multisig account addresses now derive directly from the initial config, owner approval digests bind only `account`, the signature wire format is `0x05 || rlp([account, signatures, init?])`, `AccountConfig.maxOwners` is now 255 with `u8` weights, and owner approvals may be nested multisig signatures.
 
   ```diff
-  - const id = MultisigConfig.toId(genesisConfig)
-  - const account = MultisigConfig.getAddress({ genesisConfigId: id })
-  + const account = MultisigConfig.getAddress(genesisConfig)
+  - const id = AccountConfig.toId(genesisConfig)
+  - const account = AccountConfig.getAddress({ genesisConfigId: id })
+  + const account = AccountConfig.getAddress(genesisConfig)
 
-  - MultisigConfig.getSignPayload({ payload, account, genesisConfigId })
-  + MultisigConfig.getSignPayload({ payload, account })
+  - AccountConfig.getSignPayload({ payload, account, genesisConfigId })
+  + AccountConfig.getSignPayload({ payload, account })
 
   - SignatureEnvelope.from({ account, genesisConfigId, signatures })
   + SignatureEnvelope.from({ account, signatures })
@@ -267,7 +267,7 @@
 
 ### Patch Changes
 
-- [#268](https://github.com/wevm/ox/pull/268) [`ed93945`](https://github.com/wevm/ox/commit/ed93945197dd505d4848535de72a93c225fa8466) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Added `genesisConfig` shorthand to TIP-1061 multisig helpers and renamed `configId` → `genesisConfigId` on the typed `SignatureEnvelope.Multisig`.
+- [#268](https://github.com/wevm/ox/pull/268) [`ed93945`](https://github.com/wevm/ox/commit/ed93945197dd505d4848535de72a93c225fa8466) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Added `genesisConfig` shorthand to TIP-1061 multisig helpers and renamed `configId` → `genesisConfigId` on the typed `SignatureEnvelope.Configurable`.
 
 ## 0.14.28
 

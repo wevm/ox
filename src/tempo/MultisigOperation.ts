@@ -2,19 +2,19 @@ import * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as AccountConfig from './AccountConfig.js'
 import * as KeyAuthorization_ from './KeyAuthorization.js'
-import * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 /** Fields shared by every multisig operation. */
 export type Base<quantity = bigint> = {
-  /** Root multisig account. */
+  /** Root configurable account. */
   account: Address.Address
   /** Every retained serialized owner approval. */
   approvals: readonly Hex.Hex[]
   /** Root configuration used to verify approvals. */
-  config: MultisigConfig.Config<quantity>
+  config: AccountConfig.Config<quantity>
   /** Unix creation time in milliseconds. */
   createdAt: number
   /** Deterministic multisig operation hash. */
@@ -85,7 +85,7 @@ export type Rpc = Operation<Hex.Hex>
  * })
  * ```
  *
- * @param options - Operation payload and multisig identity.
+ * @param options - Operation payload and account identity.
  * @returns The operation hash signed by each owner.
  */
 export function getHash(options: getHash.Options): Hex.Hex {
@@ -100,7 +100,7 @@ export function getHash(options: getHash.Options): Hex.Hex {
       : KeyAuthorization_.getSignPayload(
           KeyAuthorization_.deserialize(options.keyAuthorization),
         )
-  return MultisigConfig.getSignPayload({
+  return AccountConfig.getSignPayload({
     account,
     config,
     payload,
@@ -110,10 +110,10 @@ export function getHash(options: getHash.Options): Hex.Hex {
 export declare namespace getHash {
   /** Parameters for `getHash`. */
   export type Options = {
-    /** Root multisig account. */
+    /** Root configurable account. */
     account: Address.Address
-    /** Complete root multisig configuration witness. */
-    config: MultisigConfig.Config
+    /** Complete root account configuration witness. */
+    config: AccountConfig.Config
   } & (
     | {
         /** Canonical serialized key authorization. */
@@ -133,7 +133,7 @@ export declare namespace getHash {
   export type ErrorType =
     | KeyAuthorization_.deserialize.ErrorType
     | KeyAuthorization_.getSignPayload.ErrorType
-    | MultisigConfig.getSignPayload.ErrorType
+    | AccountConfig.getSignPayload.ErrorType
     | TxEnvelopeTempo.deserialize.ErrorType
     | TxEnvelopeTempo.getSignPayload.ErrorType
     | Errors.GlobalErrorType
@@ -171,7 +171,7 @@ export async function selectApprovals(
     throw new InvalidApprovalError({ reason: 'account is invalid' })
   if (!Hash.validate(hash))
     throw new InvalidApprovalError({ reason: 'hash is invalid' })
-  const config = MultisigConfig.from(options.config)
+  const config = AccountConfig.from(options.config)
   return selectApprovals_internal({
     account,
     approvals,
@@ -183,12 +183,12 @@ export async function selectApprovals(
 export declare namespace selectApprovals {
   /** Parameters for `selectApprovals`. */
   export type Options = {
-    /** Root multisig account. */
+    /** Root configurable account. */
     account: Address.Address
     /** Serialized primitive owner approvals. */
     approvals: readonly SignatureEnvelope.Serialized[]
-    /** Current root multisig configuration. */
-    config: MultisigConfig.Config
+    /** Current root account configuration. */
+    config: AccountConfig.Config
     /** Deterministic operation hash approved by root owners. */
     hash: Hex.Hex
   }
@@ -210,8 +210,8 @@ export declare namespace selectApprovals {
   /** Error type for `selectApprovals`. */
   export type ErrorType =
     | InvalidApprovalError
-    | MultisigConfig.assert.ErrorType
-    | MultisigConfig.getSignPayload.ErrorType
+    | AccountConfig.assert.ErrorType
+    | AccountConfig.getSignPayload.ErrorType
     | SignatureEnvelope.CoercionError
     | SignatureEnvelope.extractAddress.ErrorType
     | SignatureEnvelope.serialize.ErrorType
@@ -238,7 +238,7 @@ export declare namespace selectApprovals {
  * ```
  *
  * @param keyAuthorization - Canonical serialized unsigned key authorization.
- * @param options - Multisig account, config, and selected approvals.
+ * @param options - Configurable account, config, and selected approvals.
  * @returns The signed serialized key authorization.
  */
 export function serializeKeyAuthorization(
@@ -257,8 +257,8 @@ export function serializeKeyAuthorization(
     throw new InvalidOperationError({
       reason: 'keyAuthorization is not canonically serialized',
     })
-  const config = MultisigConfig.from(options.config)
-  const signatures = SignatureEnvelope.sortMultisigApprovals({
+  const config = AccountConfig.from(options.config)
+  const signatures = SignatureEnvelope.sortApprovals({
     account: options.account,
     config,
     payload: KeyAuthorization_.getSignPayload(authorization),
@@ -280,12 +280,12 @@ export function serializeKeyAuthorization(
 export declare namespace serializeKeyAuthorization {
   /** Options for `serializeKeyAuthorization`. */
   export type Options = {
-    /** Root multisig account. */
+    /** Root configurable account. */
     account: Address.Address
     /** Selected serialized owner approvals. */
     approvals: readonly SignatureEnvelope.Serialized[]
-    /** Complete applicable root multisig config. */
-    config: MultisigConfig.Config
+    /** Complete applicable root account config. */
+    config: AccountConfig.Config
   }
 
   /** Error type for `serializeKeyAuthorization`. */
@@ -295,10 +295,10 @@ export declare namespace serializeKeyAuthorization {
     | KeyAuthorization_.from.ErrorType
     | KeyAuthorization_.getSignPayload.ErrorType
     | KeyAuthorization_.serialize.ErrorType
-    | MultisigConfig.assert.ErrorType
+    | AccountConfig.assert.ErrorType
     | SignatureEnvelope.assert.ErrorType
     | SignatureEnvelope.InvalidSerializedError
-    | SignatureEnvelope.sortMultisigApprovals.ErrorType
+    | SignatureEnvelope.sortApprovals.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -331,7 +331,7 @@ export function serializeTransaction(
     assertApproval(value.account, approval, value.config),
   )
   assertRetainedApprovals(value, approvals)
-  const signatures = SignatureEnvelope.sortMultisigApprovals({
+  const signatures = SignatureEnvelope.sortApprovals({
     account: value.account,
     config: value.config,
     payload: TxEnvelopeTempo.getSignPayload(envelope),
@@ -365,7 +365,7 @@ export declare namespace serializeTransaction {
   export type ErrorType =
     | from.ErrorType
     | InvalidOperationError
-    | SignatureEnvelope.sortMultisigApprovals.ErrorType
+    | SignatureEnvelope.sortApprovals.ErrorType
     | TxEnvelopeTempo.deserialize.ErrorType
     | TxEnvelopeTempo.getSignPayload.ErrorType
     | TxEnvelopeTempo.serialize.ErrorType
@@ -390,7 +390,7 @@ export function from<const operation extends Operation>(
   operation: operation,
 ): from.ReturnValue<operation> {
   try {
-    const config = MultisigConfig.from(operation.config)
+    const config = AccountConfig.from(operation.config)
     if (
       typeof config.threshold !== 'number' ||
       config.owners.some((owner) => typeof owner.weight !== 'number')
@@ -452,7 +452,7 @@ export function fromRpc<const operation extends Rpc>(
       })
     return from({
       ...operation,
-      config: MultisigConfig.fromRpc(operation.config),
+      config: AccountConfig.fromRpc(operation.config),
     } as Operation) as never
   } catch (cause) {
     if (cause instanceof InvalidOperationError) throw cause
@@ -491,7 +491,7 @@ export function toRpc<const operation extends Operation>(
   const value = from(operation)
   return {
     ...value,
-    config: MultisigConfig.toRpc(value.config),
+    config: AccountConfig.toRpc(value.config),
   } as never
 }
 
@@ -503,7 +503,7 @@ export declare namespace toRpc {
       : KeyAuthorizationRpc
 
   /** Error type for `toRpc`. */
-  export type ErrorType = from.ErrorType | MultisigConfig.toRpc.ErrorType
+  export type ErrorType = from.ErrorType | AccountConfig.toRpc.ErrorType
 }
 
 /**
@@ -523,7 +523,7 @@ async function selectApprovals_internal(
   const groups = new Map<string, ApprovalGroup>()
   for (const serialized of options.approvals) {
     const signature = SignatureEnvelope.from(serialized)
-    if (signature.type === 'keychain' || signature.type === 'multisig')
+    if (signature.type === 'keychain' || signature.type === 'configurable')
       throw new InvalidApprovalError({
         reason: 'only primitive signatures can approve a multisig operation',
       })
@@ -576,7 +576,7 @@ async function selectApprovals_internal(
   )
   const selected: typeof ranked = []
   let weight = 0
-  for (const approval of ranked.slice(0, MultisigConfig.maxSignatures)) {
+  for (const approval of ranked.slice(0, AccountConfig.maxSignatures)) {
     if (weight >= Number(options.config.threshold)) break
     selected.push(approval)
     weight += approval.weight
@@ -652,7 +652,7 @@ function compareHex(a: Hex.Hex, b: Hex.Hex) {
  *
  * @internal
  */
-function assertBase(operation: Operation, config: MultisigConfig.Config): void {
+function assertBase(operation: Operation, config: AccountConfig.Config): void {
   if (!Address.validate(operation.account))
     throw new InvalidOperationError({ reason: 'account is invalid' })
   if (Hex.toBigInt(operation.account) === 0n)
@@ -674,7 +674,7 @@ function assertBase(operation: Operation, config: MultisigConfig.Config): void {
     })
   if (operation.weight > 0xff)
     throw new InvalidOperationError({ reason: 'weight exceeds u8 max' })
-  if (operation.signatureCount > MultisigConfig.maxSignatures)
+  if (operation.signatureCount > AccountConfig.maxSignatures)
     throw new InvalidOperationError({ reason: 'too many selected signatures' })
   if (!Array.isArray(operation.approvals))
     throw new InvalidOperationError({ reason: 'approvals must be an array' })
@@ -835,7 +835,7 @@ function assertTransaction(operation: TransactionOperation): void {
  */
 function assertKeyAuthorization(
   operation: KeyAuthorizationOperation,
-  config: MultisigConfig.Config,
+  config: AccountConfig.Config,
 ): void {
   const transactionFields = operation as KeyAuthorizationOperation & {
     expiresAt?: unknown
@@ -885,9 +885,10 @@ function assertKeyAuthorization(
       reason: 'pending key authorizations must be unsigned',
     })
   if (operation.status === 'success') {
-    if (signature?.type !== 'multisig')
+    if (signature?.type !== 'configurable')
       throw new InvalidOperationError({
-        reason: 'successful key authorizations require a multisig signature',
+        reason:
+          'successful key authorizations require a configurable account signature',
       })
     if (signature.account.toLowerCase() !== operation.account.toLowerCase())
       throw new InvalidOperationError({
@@ -924,10 +925,10 @@ function assertKeyAuthorization(
 function assertApproval(
   account: Address.Address,
   serialized: SignatureEnvelope.Serialized,
-  config: MultisigConfig.Config,
+  config: AccountConfig.Config,
 ): SignatureEnvelope.Primitive {
   const approval = SignatureEnvelope.deserialize(serialized)
-  if (approval.type === 'keychain' || approval.type === 'multisig')
+  if (approval.type === 'keychain' || approval.type === 'configurable')
     throw new InvalidOperationError({
       reason: 'only primitive owner approvals are allowed',
     })
@@ -935,7 +936,7 @@ function assertApproval(
     account,
     config,
     signatures: [approval],
-    type: 'multisig',
+    type: 'configurable',
   })
   if (
     SignatureEnvelope.serialize(approval).toLowerCase() !==
@@ -997,7 +998,7 @@ function assertSelectedApprovals(
     retained.splice(index, 1)
   }
 
-  const digest = MultisigConfig.getSignPayload({
+  const digest = AccountConfig.getSignPayload({
     account: operation.account,
     config: operation.config,
     payload: KeyAuthorization_.getSignPayload(authorization),
@@ -1047,7 +1048,7 @@ function isWeightReachable(
  * @internal
  */
 function assertOperationHash(operation: Operation, payload: Hex.Hex): void {
-  const hash = MultisigConfig.getSignPayload({
+  const hash = AccountConfig.getSignPayload({
     account: operation.account,
     config: operation.config,
     payload,
@@ -1071,20 +1072,17 @@ function assertInteger(value: unknown, field: string): asserts value is number {
 }
 
 /**
- * Compares normalized multisig configurations.
+ * Compares normalized account configurations.
  *
  * @internal
  */
-function sameConfig(
-  a: MultisigConfig.Config,
-  b: MultisigConfig.Config,
-): boolean {
-  const configA = MultisigConfig.from(a)
-  const configB = MultisigConfig.from(b)
+function sameConfig(a: AccountConfig.Config, b: AccountConfig.Config): boolean {
+  const configA = AccountConfig.from(a)
+  const configB = AccountConfig.from(b)
   return (
     Hex.isEqual(
-      configA.salt ?? MultisigConfig.zeroSalt,
-      configB.salt ?? MultisigConfig.zeroSalt,
+      configA.salt ?? AccountConfig.zeroSalt,
+      configB.salt ?? AccountConfig.zeroSalt,
     ) &&
     configA.threshold === configB.threshold &&
     configA.version === configB.version &&

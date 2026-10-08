@@ -5,8 +5,8 @@ import type * as Hex from '../core/Hex.js'
 import type * as Log from '../core/Log.js'
 import type * as RpcSchema from '../core/RpcSchema.js'
 import type * as StateOverrides from '../core/StateOverrides.js'
+import type * as AccountConfig from './AccountConfig.js'
 import type * as KeyAuthorization from './KeyAuthorization.js'
-import type * as MultisigConfig from './MultisigConfig.js'
 import type * as MultisigOperation from './MultisigOperation.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
@@ -89,7 +89,7 @@ export type Multisig = RpcSchema.From<
         method: 'multisig_getConfig'
         params: [{ address: Address.Address }]
       }
-      ReturnType: MultisigConfig.Rpc | null
+      ReturnType: AccountConfig.Rpc | null
     }
   | {
       Request: {

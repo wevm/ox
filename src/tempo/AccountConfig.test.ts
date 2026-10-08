@@ -1,21 +1,21 @@
 import { Hash, Hex, Rlp } from 'ox'
-import { MultisigConfig } from 'ox/tempo'
+import { AccountConfig } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
-import { factory } from '../../test/tempo/multisig.js'
+import { factory } from '../../test/tempo/configurableAccounts.js'
 
 const owner_1 = '0x1111111111111111111111111111111111111111'
 const owner_2 = '0x2222222222222222222222222222222222222222'
 const payload = `0x${'42'.repeat(32)}` as const
-const config = MultisigConfig.from({
+const config = AccountConfig.from({
   owners: [{ owner: owner_1, weight: 1 }],
   threshold: 1,
 })
-const account = MultisigConfig.getAddress(config, { factory })
+const account = AccountConfig.getAddress(config, { factory })
 
 describe('from', () => {
   test('behavior: normalizes an initial configuration', () => {
     expect(
-      MultisigConfig.from({
+      AccountConfig.from({
         owners: [
           { owner: owner_2, weight: 1 },
           { owner: owner_1, weight: 1 },
@@ -43,7 +43,7 @@ describe('from', () => {
 
   test('behavior: normalizes a numeric configuration version', () => {
     expect(
-      MultisigConfig.from({ ...config, version: 1 }),
+      AccountConfig.from({ ...config, version: 1 }),
     ).toMatchInlineSnapshot(`
       {
         "owners": [
@@ -61,24 +61,24 @@ describe('from', () => {
 
   test('error: rejects an invalid configuration', () => {
     expect(() =>
-      MultisigConfig.from({ owners: [], threshold: 0 }),
+      AccountConfig.from({ owners: [], threshold: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigConfig.InvalidConfigError: Invalid native multisig config: owners cannot be empty.]`,
+      `[AccountConfig.InvalidConfigError: Invalid account config: owners cannot be empty.]`,
     )
   })
 
   test('error: rejects an invalid numeric version', () => {
     expect(() =>
-      MultisigConfig.from({ ...config, version: 1.5 }),
+      AccountConfig.from({ ...config, version: 1.5 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigConfig.InvalidConfigError: Invalid native multisig config: version must be an unsigned 64-bit integer.]`,
+      `[AccountConfig.InvalidConfigError: Invalid account config: version must be an unsigned 64-bit integer.]`,
     )
   })
 })
 
 describe('fromRpc/toRpc', () => {
   test('behavior: round trips a configuration', () => {
-    const rpc = MultisigConfig.toRpc({ ...config, version: 1n })
+    const rpc = AccountConfig.toRpc({ ...config, version: 1n })
     expect(rpc).toMatchInlineSnapshot(`
       {
         "owners": [
@@ -92,7 +92,7 @@ describe('fromRpc/toRpc', () => {
         "version": "0x1",
       }
     `)
-    expect(MultisigConfig.fromRpc(rpc)).toStrictEqual({
+    expect(AccountConfig.fromRpc(rpc)).toStrictEqual({
       ...config,
       version: 1n,
     })
@@ -109,7 +109,7 @@ describe('getAddress', () => {
 
   test('behavior: includes salt, threshold, and owners', () => {
     expect(
-      MultisigConfig.getAddress(
+      AccountConfig.getAddress(
         {
           owners: [
             { owner: owner_1, weight: 1 },
@@ -125,8 +125,8 @@ describe('getAddress', () => {
 
   test('behavior: is stable and binds the salt', () => {
     expect({
-      repeated: MultisigConfig.getAddress(config, { factory }),
-      salted: MultisigConfig.getAddress(
+      repeated: AccountConfig.getAddress(config, { factory }),
+      salted: AccountConfig.getAddress(
         {
           ...config,
           salt: `0x${'42'.repeat(32)}`,
@@ -143,15 +143,15 @@ describe('getAddress', () => {
 
   test('error: rejects a current configuration', () => {
     expect(() =>
-      MultisigConfig.getAddress({ ...config, version: 1n }, { factory }),
+      AccountConfig.getAddress({ ...config, version: 1n }, { factory }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigConfig.InvalidConfigError: Invalid native multisig config: account address requires version zero.]`,
+      `[AccountConfig.InvalidConfigError: Invalid account config: account address requires version zero.]`,
     )
   })
 
   test('behavior: accepts numeric zero for an initial configuration', () => {
     expect(
-      MultisigConfig.getAddress({ ...config, version: 0 }, { factory }),
+      AccountConfig.getAddress({ ...config, version: 0 }, { factory }),
     ).toBe(account)
   })
 })
@@ -159,9 +159,9 @@ describe('getAddress', () => {
 describe('getCommitment', () => {
   test('example: matches the frozen initial and current vectors', () => {
     expect({
-      current: MultisigConfig.getCommitment({ ...config, version: 1n }),
-      currentNumber: MultisigConfig.getCommitment({ ...config, version: 1 }),
-      initial: MultisigConfig.getCommitment(config),
+      current: AccountConfig.getCommitment({ ...config, version: 1n }),
+      currentNumber: AccountConfig.getCommitment({ ...config, version: 1 }),
+      initial: AccountConfig.getCommitment(config),
     }).toMatchInlineSnapshot(`
       {
         "current": "0x6237ca5930f2265d4fb70a0305dd6ceea4df227053b4a62c304489ede946a2f8",
@@ -175,7 +175,7 @@ describe('getCommitment', () => {
 describe('getSignPayload', () => {
   test('example: matches the frozen version-0 vector', () => {
     expect(
-      MultisigConfig.getSignPayload({ account, config, payload }),
+      AccountConfig.getSignPayload({ account, config, payload }),
     ).toMatchInlineSnapshot(
       `"0x728efe90611b01c91c2be0da56e7eb8e0d2c274c84f97182e274187dde0b8a20"`,
     )
@@ -183,20 +183,20 @@ describe('getSignPayload', () => {
 
   test('behavior: binds the configuration version', () => {
     expect(
-      MultisigConfig.getSignPayload({
+      AccountConfig.getSignPayload({
         account,
         config: { version: 1 },
         payload,
       }),
-    ).not.toBe(MultisigConfig.getSignPayload({ account, config, payload }))
+    ).not.toBe(AccountConfig.getSignPayload({ account, config, payload }))
   })
 })
 
 describe('toTuple/fromTuple', () => {
   test('example: matches the frozen initial and current RLP vectors', () => {
     expect({
-      current: Rlp.fromHex(MultisigConfig.toTuple({ ...config, version: 1n })),
-      initial: Rlp.fromHex(MultisigConfig.toTuple(config)),
+      current: Rlp.fromHex(AccountConfig.toTuple({ ...config, version: 1n })),
+      initial: Rlp.fromHex(AccountConfig.toTuple(config)),
     }).toMatchInlineSnapshot(`
       {
         "current": "0xf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694111111111111111111111111111111111111111101",
@@ -206,7 +206,7 @@ describe('toTuple/fromTuple', () => {
   })
 
   test('behavior: round trips the complete witness', () => {
-    const current = MultisigConfig.from({
+    const current = AccountConfig.from({
       owners: [
         { owner: owner_1, weight: 1 },
         { owner: owner_2, weight: 2 },
@@ -216,27 +216,113 @@ describe('toTuple/fromTuple', () => {
       version: 1n,
     })
     expect(
-      MultisigConfig.fromTuple(MultisigConfig.toTuple(current)),
+      AccountConfig.fromTuple(AccountConfig.toTuple(current)),
     ).toStrictEqual(current)
+  })
+})
+
+describe('update', () => {
+  test('default', () => {
+    expect(
+      AccountConfig.update(config, {
+        owners: [
+          { owner: owner_2, weight: 1 },
+          { owner: owner_1, weight: 1 },
+        ],
+        threshold: 2,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "owners": [
+          {
+            "owner": "0x1111111111111111111111111111111111111111",
+            "weight": 1,
+          },
+          {
+            "owner": "0x2222222222222222222222222222222222222222",
+            "weight": 1,
+          },
+        ],
+        "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "threshold": 2,
+        "version": 1n,
+      }
+    `)
+  })
+
+  test('behavior: keeps the salt and increments each version', () => {
+    const initialConfig = AccountConfig.from({
+      owners: [{ owner: owner_1, weight: 1 }],
+      salt: `0x${'42'.repeat(32)}`,
+      threshold: 1,
+    })
+    const next = AccountConfig.update(initialConfig, {
+      owners: [{ owner: owner_2, weight: 1 }],
+      threshold: 1,
+    })
+    const last = AccountConfig.update(next, {
+      owners: [{ owner: owner_1, weight: 1 }],
+      threshold: 1,
+    })
+    expect({
+      last: { salt: last.salt, version: last.version },
+      next: { salt: next.salt, version: next.version },
+    }).toMatchInlineSnapshot(`
+      {
+        "last": {
+          "salt": "0x4242424242424242424242424242424242424242424242424242424242424242",
+          "version": 2n,
+        },
+        "next": {
+          "salt": "0x4242424242424242424242424242424242424242424242424242424242424242",
+          "version": 1n,
+        },
+      }
+    `)
+    expect(AccountConfig.getCommitment(last)).not.toBe(
+      AccountConfig.getCommitment(initialConfig),
+    )
+  })
+
+  test('error: rejects version overflow', () => {
+    expect(() =>
+      AccountConfig.update(
+        { ...config, version: AccountConfig.maxVersion },
+        { owners: config.owners, threshold: 1 },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AccountConfig.InvalidConfigError: Invalid account config: version overflow.]`,
+    )
+  })
+
+  test('error: rejects an invalid replacement', () => {
+    expect(() =>
+      AccountConfig.update(config, {
+        owners: [{ owner: owner_1, weight: 1 }],
+        threshold: 2,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AccountConfig.InvalidConfigError: Invalid account config: threshold exceeds total owner weight.]`,
+    )
   })
 })
 
 describe('assert/validate', () => {
   test('example: matches the frozen 48-owner boundary vector', () => {
-    const boundary = MultisigConfig.from({
+    const boundary = AccountConfig.from({
       owners: Array.from({ length: 48 }, (_, index) => ({
         owner: `0x${(index + 1).toString(16).padStart(40, '0')}` as const,
         weight: 1,
       })),
       threshold: 8,
     })
-    const rlp = Rlp.fromHex(MultisigConfig.toTuple(boundary))
+    const rlp = Rlp.fromHex(AccountConfig.toTuple(boundary))
     expect({
-      account: MultisigConfig.getAddress(boundary, { factory }),
-      commitment: MultisigConfig.getCommitment(boundary),
+      account: AccountConfig.getAddress(boundary, { factory }),
+      commitment: AccountConfig.getCommitment(boundary),
       rlpHash: Hash.keccak256(rlp),
       rlpLength: Hex.size(rlp),
-      valid: MultisigConfig.validate(boundary),
+      valid: AccountConfig.validate(boundary),
     }).toMatchInlineSnapshot(`
       {
         "account": "0x6acb25715a2b0cf05c098f753a87d9b38471e99f",
@@ -248,9 +334,30 @@ describe('assert/validate', () => {
     `)
   })
 
+  test('behavior: accepts thresholds above eight reachable by eight signatures', () => {
+    expect(
+      AccountConfig.validate({
+        owners: [
+          { owner: owner_1, weight: 100 },
+          { owner: owner_2, weight: 100 },
+        ],
+        threshold: 150,
+      }),
+    ).toBe(true)
+    expect(
+      AccountConfig.validate({
+        owners: [
+          { owner: owner_1, weight: 128 },
+          { owner: owner_2, weight: 127 },
+        ],
+        threshold: AccountConfig.maxThreshold,
+      }),
+    ).toBe(true)
+  })
+
   test('behavior: accepts the uint8 weight boundary', () => {
     expect(
-      MultisigConfig.validate({
+      AccountConfig.validate({
         owners: [
           { owner: owner_1, weight: 128 },
           { owner: owner_2, weight: 127 },
@@ -337,6 +444,16 @@ describe('assert/validate', () => {
       name: 'unreachable threshold',
     },
     {
+      config: {
+        owners: [
+          { owner: owner_1, weight: 128 },
+          { owner: owner_2, weight: 127 },
+        ],
+        threshold: AccountConfig.maxThreshold + 1,
+      },
+      name: 'threshold above max',
+    },
+    {
       config: { ...config, salt: '0x42' as const },
       name: 'short salt',
     },
@@ -349,7 +466,7 @@ describe('assert/validate', () => {
       name: 'negative numeric version',
     },
     {
-      config: { ...config, version: MultisigConfig.maxVersion + 1n },
+      config: { ...config, version: AccountConfig.maxVersion + 1n },
       name: 'version overflow',
     },
     {
@@ -361,12 +478,12 @@ describe('assert/validate', () => {
       name: 'unsafe numeric version',
     },
   ])('error: rejects $name', ({ config }) => {
-    expect(MultisigConfig.validate(config as MultisigConfig.Input)).toBe(false)
+    expect(AccountConfig.validate(config as AccountConfig.Input)).toBe(false)
   })
 })
 
 test('exports', () => {
-  expect(Object.keys(MultisigConfig)).toMatchInlineSnapshot(`
+  expect(Object.keys(AccountConfig)).toMatchInlineSnapshot(`
     [
       "maxOwnerSignatureBytes",
       "maxOwners",
@@ -384,6 +501,7 @@ test('exports', () => {
       "getSignPayload",
       "toRpc",
       "toTuple",
+      "update",
       "validate",
       "InvalidConfigError",
     ]

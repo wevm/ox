@@ -1,13 +1,13 @@
 import { Address, Hash, P256 } from 'ox'
 import {
+  AccountConfig,
   KeyAuthorization,
-  MultisigConfig,
   MultisigOperation,
   SignatureEnvelope,
   TxEnvelopeTempo,
 } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
-import { factory } from '../../test/tempo/multisig.js'
+import { factory } from '../../test/tempo/configurableAccounts.js'
 
 const owners = [1n, 2n, 3n]
   .map((value, index) => {
@@ -30,15 +30,15 @@ const owners = [1n, 2n, 3n]
   .sort((a, b) => a.address.localeCompare(b.address))
 const owner_1 = owners[0]!.address
 const owner_2 = owners[1]!.address
-const config = MultisigConfig.from({
+const config = AccountConfig.from({
   owners: [
     { owner: owner_1, weight: 1 },
     { owner: owner_2, weight: 1 },
   ],
   threshold: 2,
 })
-const currentConfig = MultisigConfig.from({ ...config, version: 1n })
-const account = MultisigConfig.getAddress(config, { factory })
+const currentConfig = AccountConfig.from({ ...config, version: 1n })
+const account = AccountConfig.getAddress(config, { factory })
 const ownerSignature_1 = owners[0]!.signature
 const approval_1 = SignatureEnvelope.serialize(ownerSignature_1)
 const approval_2 = SignatureEnvelope.serialize(owners[1]!.signature)
@@ -62,14 +62,14 @@ const keyAuthorization = KeyAuthorization.serialize(
   }),
 )
 
-const transactionHash_ = MultisigConfig.getSignPayload({
+const transactionHash_ = AccountConfig.getSignPayload({
   account,
   config: currentConfig,
   payload: TxEnvelopeTempo.getSignPayload(
     TxEnvelopeTempo.deserialize(transaction),
   ),
 })
-const keyAuthorizationHash = MultisigConfig.getSignPayload({
+const keyAuthorizationHash = AccountConfig.getSignPayload({
   account,
   config: currentConfig,
   payload: KeyAuthorization.getSignPayload(
@@ -159,7 +159,7 @@ describe('getHash', () => {
 
 describe('selectApprovals', () => {
   test('selects a deterministic weighted quorum', async () => {
-    const config = MultisigConfig.from({
+    const config = AccountConfig.from({
       owners: [
         { owner: owners[0]!.address, weight: 2 },
         { owner: owners[1]!.address, weight: 1 },
@@ -167,7 +167,7 @@ describe('selectApprovals', () => {
       ],
       threshold: 3,
     })
-    const account = MultisigConfig.getAddress(config, { factory })
+    const account = AccountConfig.getAddress(config, { factory })
     const hash = MultisigOperation.getHash({
       account,
       config: { ...config, version: 1n },
@@ -232,7 +232,7 @@ describe('selectApprovals', () => {
     })
     expect(selected.weight).toMatchInlineSnapshot(`0`)
   })
-  test('rejects keychain and multisig owner approvals', async () => {
+  test('rejects keychain and configurable owner approvals', async () => {
     for (const signature of [
       SignatureEnvelope.from({
         inner: ownerSignature_1,
@@ -324,16 +324,16 @@ describe('serializeKeyAuthorization', () => {
       const value = KeyAuthorization.deserialize(serialized)
       results.push({
         account:
-          value.signature?.type === 'multisig'
+          value.signature?.type === 'configurable'
             ? value.signature.account
             : undefined,
         hash: Hash.keccak256(serialized),
         signatureCount:
-          value.signature?.type === 'multisig'
+          value.signature?.type === 'configurable'
             ? value.signature.signatures.length
             : 0,
         version:
-          value.signature?.type === 'multisig'
+          value.signature?.type === 'configurable'
             ? value.signature.config.version
             : undefined,
       })
@@ -428,12 +428,12 @@ describe('serializeTransaction', () => {
       results.push({
         account: value.signature?.account,
         version:
-          value.signature?.type === 'multisig'
+          value.signature?.type === 'configurable'
             ? value.signature.config.version
             : undefined,
         hash: Hash.keccak256(serialized),
         signatureCount:
-          value.signature?.type === 'multisig'
+          value.signature?.type === 'configurable'
             ? value.signature.signatures.length
             : 0,
         type: serialized.slice(0, 4),
@@ -517,7 +517,7 @@ describe('serializeTransaction', () => {
         feePayerSignature: value.feePayerSignature,
         from: value.from,
         signatureCount:
-          value.signature?.type === 'multisig'
+          value.signature?.type === 'configurable'
             ? value.signature.signatures.length
             : 0,
         type: serialized.slice(0, 4),
@@ -718,7 +718,7 @@ describe('from', () => {
     )
     const operation = MultisigOperation.from({
       ...transactionPending,
-      hash: MultisigConfig.getSignPayload({
+      hash: AccountConfig.getSignPayload({
         account,
         config: currentConfig,
         payload: TxEnvelopeTempo.getSignPayload(
@@ -779,7 +779,7 @@ describe('from', () => {
     )
     const operation = MultisigOperation.from({
       ...transactionPending,
-      hash: MultisigConfig.getSignPayload({
+      hash: AccountConfig.getSignPayload({
         account,
         config: currentConfig,
         payload: TxEnvelopeTempo.getSignPayload(
@@ -796,7 +796,7 @@ describe('from', () => {
     const operation = MultisigOperation.from({
       ...transactionPending,
       config,
-      hash: MultisigConfig.getSignPayload({
+      hash: AccountConfig.getSignPayload({
         account,
         config,
         payload: TxEnvelopeTempo.getSignPayload(
@@ -857,7 +857,7 @@ describe('from', () => {
             account,
             config: currentConfig,
             signatures: [ownerSignature_1, owners[1]!.signature],
-            type: 'multisig',
+            type: 'configurable',
           },
         }),
       ),
@@ -941,7 +941,7 @@ describe('from', () => {
           account,
           config,
           signatures: [ownerSignature_1, owners[1]!.signature],
-          type: 'multisig',
+          type: 'configurable',
         },
       }),
     )
@@ -949,7 +949,7 @@ describe('from', () => {
       ...keyAuthorizationPending,
       approvals: [approval_1, approval_2],
       config,
-      hash: MultisigConfig.getSignPayload({
+      hash: AccountConfig.getSignPayload({
         account,
         config,
         payload: KeyAuthorization.getSignPayload(authorization),
@@ -1175,7 +1175,7 @@ describe('validation', () => {
       name: 'weight unreachable by the retained owner approvals',
       operation: {
         ...transactionPending,
-        config: MultisigConfig.from({
+        config: AccountConfig.from({
           owners: [
             { owner: owner_1, weight: 1 },
             { owner: owner_2, weight: 2 },
@@ -1194,7 +1194,7 @@ describe('validation', () => {
       operation: {
         ...transactionPending,
         account: '0x0000000000000000000000000000000000000000',
-        hash: MultisigConfig.getSignPayload({
+        hash: AccountConfig.getSignPayload({
           account: '0x0000000000000000000000000000000000000000',
           config: currentConfig,
           payload: TxEnvelopeTempo.getSignPayload(
@@ -1271,7 +1271,7 @@ describe('validation', () => {
             account,
             config,
             signatures: [ownerSignature_1],
-            type: 'multisig',
+            type: 'configurable',
           }),
         ],
       },
@@ -1319,7 +1319,7 @@ describe('validation', () => {
             account,
             config: currentConfig,
             signatures: [ownerSignature_1, owners[2]!.signature],
-            type: 'multisig',
+            type: 'configurable',
           },
         }),
       ),
@@ -1336,7 +1336,7 @@ describe('validation', () => {
   test('rejects unordered key authorization approvals', () => {
     const authorization = KeyAuthorization.deserialize(keyAuthorization)
     const signatures = [
-      ...SignatureEnvelope.sortMultisigApprovals({
+      ...SignatureEnvelope.sortApprovals({
         account,
         config: currentConfig,
         payload: KeyAuthorization.getSignPayload(authorization),
@@ -1352,7 +1352,7 @@ describe('validation', () => {
             account,
             config: currentConfig,
             signatures,
-            type: 'multisig',
+            type: 'configurable',
           },
         }),
       ),
@@ -1377,7 +1377,7 @@ describe('validation', () => {
             account,
             config: currentConfig,
             signatures: [ownerSignature_1, ownerSignature_1],
-            type: 'multisig',
+            type: 'configurable',
           },
         }),
       ),
@@ -1392,7 +1392,7 @@ describe('validation', () => {
   })
 
   test('accepts case-insensitive initial configs', () => {
-    const config = MultisigConfig.from({
+    const config = AccountConfig.from({
       owners: [
         {
           owner: Address.checksum(owner_1),
@@ -1406,7 +1406,7 @@ describe('validation', () => {
       salt: `0x${'AB'.repeat(32)}`,
       threshold: 2,
     })
-    const account = MultisigConfig.getAddress(config, { factory })
+    const account = AccountConfig.getAddress(config, { factory })
     const authorization = KeyAuthorization.from({
       account,
       address: '0x3333333333333333333333333333333333333333',
@@ -1415,7 +1415,7 @@ describe('validation', () => {
       isAdmin: false,
       type: 'secp256k1',
     })
-    const signatures = SignatureEnvelope.sortMultisigApprovals({
+    const signatures = SignatureEnvelope.sortApprovals({
       account,
       config,
       payload: KeyAuthorization.getSignPayload(authorization),
@@ -1430,7 +1430,7 @@ describe('validation', () => {
       approvals,
       config,
       createdAt: 1,
-      hash: MultisigConfig.getSignPayload({
+      hash: AccountConfig.getSignPayload({
         account,
         config,
         payload: KeyAuthorization.getSignPayload(authorization),
@@ -1441,7 +1441,7 @@ describe('validation', () => {
             account,
             config,
             signatures,
-            type: 'multisig',
+            type: 'configurable',
           },
         }),
       ),

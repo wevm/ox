@@ -18,7 +18,7 @@ const signature = {
   type: 'secp256k1',
 } as const satisfies SignatureEnvelope.Secp256k1
 
-const multisig = {
+const configurable = {
   account: '0x2222222222222222222222222222222222222222',
   config: {
     salt: `0x${'00'.repeat(32)}`,
@@ -29,8 +29,8 @@ const multisig = {
     ],
   },
   signatures: [signature],
-  type: 'multisig',
-} as const satisfies SignatureEnvelope.Multisig
+  type: 'configurable',
+} as const satisfies SignatureEnvelope.Configurable
 
 test('accepts primitive signatures', () => {
   const signed = KeyAuthorization.from(authorization, { signature })
@@ -40,10 +40,10 @@ test('accepts primitive signatures', () => {
   >()
 })
 
-test('accepts multisig signatures and account-bound grants', () => {
+test('accepts configurable signatures and account-bound grants', () => {
   const signed = KeyAuthorization.from(
-    { ...authorization, account: multisig.account, type: 'multisig' },
-    { signature: multisig },
+    { ...authorization, account: configurable.account, type: 'configurable' },
+    { signature: configurable },
   )
   expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
   expectTypeOf(
@@ -51,11 +51,11 @@ test('accepts multisig signatures and account-bound grants', () => {
   ).toMatchTypeOf<KeyAuthorization.Rpc>()
 })
 
-test('requires an account for multisig grants', () => {
-  type Multisig = Extract<KeyAuthorization.Input, { type: 'multisig' }>
-  expectTypeOf<Multisig['account']>().toEqualTypeOf<TempoAddress.Address>()
+test('requires an account for configurable grants', () => {
+  type Configurable = Extract<KeyAuthorization.Input, { type: 'configurable' }>
+  expectTypeOf<Configurable['account']>().toEqualTypeOf<TempoAddress.Address>()
   expectTypeOf<
-    Extract<KeyAuthorization.Signed, { type: 'multisig' }>['account']
+    Extract<KeyAuthorization.Signed, { type: 'configurable' }>['account']
   >().toEqualTypeOf<`0x${string}`>()
   expectTypeOf<
     Omit<Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>, 'account'>
@@ -63,13 +63,13 @@ test('requires an account for multisig grants', () => {
   expectTypeOf<{
     address: `0x${string}`
     chainId: bigint
-    type: 'multisig'
+    type: 'configurable'
   }>().not.toExtend<KeyAuthorization.Input>()
   expectTypeOf<{
     account: undefined
     address: `0x${string}`
     chainId: bigint
-    type: 'multisig'
+    type: 'configurable'
   }>().not.toExtend<KeyAuthorization.Input>()
   expectTypeOf<{
     account: null
@@ -118,13 +118,13 @@ test('rejects keychain signatures', () => {
   expectTypeOf(rpc).toMatchTypeOf<KeyAuthorization.Rpc>()
 })
 
-test('resolves Tempo address bindings for multisig grants', () => {
+test('resolves Tempo address bindings for configurable grants', () => {
   const signed = KeyAuthorization.from(
     {
       account: TempoAddress.format(authorization.address),
       address: TempoAddress.format(authorization.address),
       chainId: 1n,
-      type: 'multisig',
+      type: 'configurable',
     },
     { signature },
   )
