@@ -2371,14 +2371,14 @@ describe('behavior: keyAuthorization', () => {
         Value.from('1', 6),
       ])
 
-      // Scope key to only token1
+      // Scope key to only token2
       const keyAuth = KeyAuthorization.from({
         address: accessAddress,
         chainId: BigInt(chainId),
         type: 'secp256k1',
         scopes: [
           {
-            address: token1,
+            address: token2,
             selector: AbiFunction.getSelector(transfer),
           },
         ],
@@ -2398,9 +2398,9 @@ describe('behavior: keyAuthorization', () => {
         blockTag: 'pending',
       })
 
-      // Call transfer on token2 (not scoped) — should be rejected
+      // Call transfer on token1 (not scoped), which the account could otherwise pay
       const transaction = TxEnvelopeTempo.from({
-        calls: [{ to: token2, data: transferData }],
+        calls: [{ to: token1, data: transferData }],
         chainId,
         feeToken: token1,
         keyAuthorization: keyAuth_signed,
@@ -2425,12 +2425,15 @@ describe('behavior: keyAuthorization', () => {
         }),
       })
 
-      await expect(
-        client.request({
+      // The keychain rejects out-of-scope calls during execution, so the
+      // transaction is mined with a reverted status.
+      const receipt = await client
+        .request({
           method: 'eth_sendRawTransactionSync',
           params: [serialized_signed],
-        }),
-      ).rejects.toThrow()
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any))
+      expect(receipt?.status).toBe('reverted')
     },
   )
 
@@ -2508,12 +2511,15 @@ describe('behavior: keyAuthorization', () => {
         }),
       })
 
-      await expect(
-        client.request({
+      // The keychain rejects out-of-scope calls during execution, so the
+      // transaction is mined with a reverted status.
+      const receipt = await client
+        .request({
           method: 'eth_sendRawTransactionSync',
           params: [serialized_signed],
-        }),
-      ).rejects.toThrow()
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any))
+      expect(receipt?.status).toBe('reverted')
     },
   )
 
@@ -2591,12 +2597,15 @@ describe('behavior: keyAuthorization', () => {
         }),
       })
 
-      await expect(
-        client.request({
+      // The keychain rejects out-of-scope calls during execution, so the
+      // transaction is mined with a reverted status.
+      const receipt = await client
+        .request({
           method: 'eth_sendRawTransactionSync',
           params: [serialized_signed],
-        }),
-      ).rejects.toThrow()
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any))
+      expect(receipt?.status).toBe('reverted')
     },
   )
 
@@ -2665,12 +2674,15 @@ describe('behavior: keyAuthorization', () => {
         }),
       })
 
-      await expect(
-        client.request({
+      // The keychain rejects out-of-scope calls during execution, so the
+      // transaction is mined with a reverted status.
+      const receipt = await client
+        .request({
           method: 'eth_sendRawTransactionSync',
           params: [serialized_signed],
-        }),
-      ).rejects.toThrow()
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any))
+      expect(receipt?.status).toBe('reverted')
     },
   )
 
