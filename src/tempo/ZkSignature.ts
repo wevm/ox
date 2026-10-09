@@ -1,8 +1,10 @@
 import * as Address from '../core/Address.js'
+import type * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as Rlp from '../core/Rlp.js'
+import * as Groth16 from './Groth16.js'
 import * as Poseidon from './internal/poseidon.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -458,6 +460,85 @@ export declare namespace serializeMessage {
   type ErrorType =
     | toTuple.ErrorType
     | Rlp.fromHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Verifies a [message signature](https://docs.tempo.xyz/protocol/tips/tip-1131#message-signatures)'s
+ * proof for a payload, with the public input
+ * `Poseidon(scheme, issuer, keyHash, addressSeed, uint256(payload) mod p, MESSAGE_TAG, issuedAt)`.
+ *
+ * Pass `address` to also check that the signature signs for that address. See
+ * {@link ox#ZkSignature.(getAddress:function)}.
+ *
+ * This checks the proof only. A verifier also checks, against chain state, that the Key
+ * Publisher listed `keyHash` under `publisherId` and `issuer` at `issuedAt` and has not
+ * revoked it, and applies its own freshness rules to `issuedAt`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TypedData } from 'ox'
+ * import { Passport, ZkSignature } from 'ox/tempo'
+ *
+ * const payload = TypedData.getSignPayload(
+ *   Passport.getBindingTypedData({
+ *     account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     chainId: 4217
+ *   })
+ * )
+ *
+ * const valid = ZkSignature.verifyMessage({
+ *   payload,
+ *   signature: '0x...',
+ *   verifyingKey: '0x...'
+ * })
+ * ```
+ *
+ * @param options - The message signature, the payload it signs, and the scheme's verifying key.
+ * @returns Whether the signature is valid for the payload (and address).
+ */
+export function verifyMessage(options: verifyMessage.Options): boolean {
+  const { address, payload, verifyingKey } = options
+  const signature =
+    typeof options.signature === 'string'
+      ? deserializeMessage(options.signature)
+      : options.signature
+  assert({ ...signature, validUntil: 0 })
+  if (!Hex.validate(payload) || Hex.size(payload) !== 32)
+    throw new InvalidCredentialError({ reason: 'payload is not 32 bytes' })
+  if (address !== undefined && !Address.isEqual(getAddress(signature), address))
+    return false
+  const { addressSeed, issuedAt, issuer, keyHash, proof, scheme } = signature
+  const publicInput = Poseidon.hash([
+    BigInt(scheme),
+    Hex.toBigInt(issuer),
+    Hex.toBigInt(keyHash),
+    Hex.toBigInt(addressSeed),
+    Hex.toBigInt(payload) % Poseidon.fieldModulus,
+    messageTag,
+    BigInt(issuedAt),
+  ])
+  return Groth16.verify({ proof, publicInput, verifyingKey })
+}
+
+export declare namespace verifyMessage {
+  type Options = {
+    /** The address the signature must sign for. */
+    address?: Address.Address | undefined
+    /** The 32-byte digest of the message, such as an EIP-712 sign payload. */
+    payload: Hex.Hex
+    /** The message signature, or its serialized form. */
+    signature: MessageSignature | Hex.Hex
+    /** The scheme's 576-byte Groth16 verifying key. See {@link ox#Groth16.(verify:function)}. */
+    verifyingKey: Hex.Hex | Bytes.Bytes
+  }
+
+  type ErrorType =
+    | assert.ErrorType
+    | deserializeMessage.ErrorType
+    | getAddress.ErrorType
+    | Groth16.verify.ErrorType
+    | InvalidCredentialError
     | Errors.GlobalErrorType
 }
 
