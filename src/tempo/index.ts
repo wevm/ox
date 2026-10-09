@@ -193,6 +193,34 @@ export * as MultisigSimulation from './MultisigSimulation.js'
  */
 export * as Oidc from './Oidc.js'
 /**
+ * Utilities for passport signers ([TIP-1142](https://docs.tempo.xyz/protocol/tips/tip-1142)): the
+ * hashes that bind an ICAO passport's chip to an identity, a commitment, and a proof.
+ *
+ * A passport app reads the chip's data groups, sends the chip a challenge committing to an owner
+ * binding or approval, and proves a statement whose public input uses these hashes. Publishers
+ * list each issuing state's document signer tree by its root.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TypedData } from 'ox'
+ * import { Passport } from 'ox/tempo'
+ *
+ * const payload = TypedData.getSignPayload(
+ *   Passport.getBindingTypedData({
+ *     account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     chainId: 4217
+ *   })
+ * )
+ * const challenge = Passport.getChallenge({
+ *   blinding: Passport.randomBlinding(),
+ *   payload
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as Passport from './Passport.js'
+/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
