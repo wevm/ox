@@ -19,6 +19,7 @@ import * as Signature from '../core/Signature.js'
 import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as MultisigConfig from './MultisigConfig.js'
+import * as ZkSignature from './ZkSignature.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'
@@ -26,6 +27,10 @@ const serializedWebAuthnType = '0x02'
 const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
 const serializedMultisigType = '0x05'
+const serializedZkType = '0x06'
+
+/** Most bytes a ZK signature may encode to, including its type byte. */
+const maxZkSize = 2049
 
 type EnvelopeOneOf<
   union extends object,
@@ -39,31 +44,49 @@ type EnvelopeOneOf<
   : never
 
 type SignatureEnvelopeKey =
+  | 'accessKeySignature'
   | 'account'
+  | 'addressSeed'
   | 'config'
   | 'inner'
+  | 'issuedAt'
+  | 'issuer'
+  | 'keyHash'
   | 'keyId'
   | 'metadata'
   | 'prehash'
+  | 'proof'
   | 'publicKey'
+  | 'publisherId'
+  | 'scheme'
   | 'signature'
   | 'signatures'
   | 'type'
   | 'userAddress'
+  | 'validUntil'
   | 'version'
 
 type SignatureEnvelopeRpcKey =
+  | 'accessKeySignature'
+  | 'addressSeed'
+  | 'issuedAt'
+  | 'issuer'
+  | 'keyHash'
   | 'keyId'
   | 'metadata'
   | 'preHash'
+  | 'proof'
   | 'pubKeyX'
   | 'pubKeyY'
+  | 'publisherId'
   | 'r'
   | 's'
+  | 'scheme'
   | 'signature'
   | 'type'
   | 'userAddress'
   | 'v'
+  | 'validUntil'
   | 'version'
   | 'webauthnData'
   | 'yParity'
@@ -119,7 +142,13 @@ export type GetType<
                     signatures: any
                   }
                 ? 'multisig'
-                : never
+                : envelope extends {
+                      accessKeySignature: any
+                      addressSeed: Hex.Hex
+                      proof: Hex.Hex
+                    }
+                  ? 'zk'
+                  : never
 
 /**
  * Represents a signature envelope that can contain different signature types.
@@ -142,6 +171,10 @@ export type GetType<
  *   V2 binds the signature to the user account via `keccak256(sigHash || userAddress)`.
  *   The protocol validates the access key authorization via the AccountKeychain precompile.
  *
+ * - **zk** (type `0x06`): A Groth16 proof that an issuer signed a statement for an identity,
+ *   committing to an access key, plus that access key's signature. Format: type byte + RLP list
+ *   ([TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131)).
+ *
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<bigintType = bigint, numberType = number> =
@@ -149,7 +182,8 @@ export type SignatureEnvelope<bigintType = bigint, numberType = number> =
       | Secp256k1<bigintType, numberType>
       | P256<bigintType, numberType>
       | WebAuthn<bigintType, numberType>
-      | Keychain<bigintType, numberType>,
+      | Keychain<bigintType, numberType>
+      | Zk<bigintType, numberType>,
       SignatureEnvelopeKey
     >
   | EnvelopeOneOf<Multisig<bigintType, numberType>, SignatureEnvelopeKey>
@@ -159,7 +193,7 @@ export type SignatureEnvelope<bigintType = bigint, numberType = number> =
  */
 export type SignatureEnvelopeRpc =
   | EnvelopeOneOf<
-      Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc,
+      Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc | ZkRpc,
       SignatureEnvelopeRpcKey
     >
   | MultisigRpc
@@ -277,6 +311,52 @@ export type WebAuthnRpc = {
   webauthnData: Hex.Hex
 }
 
+/**
+ * ZK signature (type `0x06`).
+ *
+ * Carries a Groth16 proof that an issuer signed a statement for an identity,
+ * committing to an access key, and that access key's signature over
+ * {@link ox#ZkSignature.(getSignPayload:function)}. The node checks the proof,
+ * the issuer's listed key, and the validity window.
+ *
+ * [TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131)
+ */
+export type Zk<bigintType = bigint, numberType = number> = {
+  /** The access key's signature over the ZK sign payload. */
+  accessKeySignature: Primitive<bigintType, numberType>
+  /** Scheme-defined identity commitment. */
+  addressSeed: Hex.Hex
+  /** When the issuer signed the statement, in seconds. */
+  issuedAt: numberType
+  /** Scheme-defined issuer hash. */
+  issuer: Hex.Hex
+  /** Scheme-defined hash of the issuer key that signed the statement. */
+  keyHash: Hex.Hex
+  /** Groth16 proof: `A` (G1) `|| B` (G2) `|| C` (G1), 256 bytes. */
+  proof: Hex.Hex
+  /** [TIP-1132](https://docs.tempo.xyz/protocol/tips/tip-1132) publisher whose key list the identity trusts. */
+  publisherId: Hex.Hex
+  /** Proof scheme. */
+  scheme: numberType
+  type: 'zk'
+  /** When the signature expires, in seconds. */
+  validUntil: numberType
+}
+
+/** RPC-formatted ZK signature. The node omits `type`. */
+export type ZkRpc = {
+  accessKeySignature: PrimitiveRpc
+  addressSeed: Hex.Hex
+  issuedAt: Hex.Hex
+  issuer: Hex.Hex
+  keyHash: Hex.Hex
+  proof: Hex.Hex
+  publisherId: Hex.Hex
+  scheme: Hex.Hex
+  type?: 'zk' | undefined
+  validUntil: Hex.Hex
+}
+
 /** Hex-encoded serialized signature envelope. */
 export type Serialized = Hex.Hex
 
@@ -369,16 +449,24 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     assertMultisig(multisig)
     return
   }
+
+  if (type === 'zk') {
+    const zk = envelope as Zk
+    assertZk(zk)
+    return
+  }
 }
 
 export declare namespace assert {
   type ErrorType =
     | CoercionError
     | InvalidMultisigApprovalError
+    | InvalidZkSignatureError
     | MissingPropertiesError
     | MultisigConfig.assert.ErrorType
     | MultisigConfig.getAddress.ErrorType
     | Signature.assert.ErrorType
+    | ZkSignature.assert.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -446,12 +534,54 @@ function assertMultisig(envelope: Multisig): void {
   }
 }
 
+function assertZk(envelope: Zk): void {
+  const missing = (
+    [
+      'accessKeySignature',
+      'addressSeed',
+      'issuedAt',
+      'issuer',
+      'keyHash',
+      'proof',
+      'publisherId',
+      'scheme',
+      'validUntil',
+    ] as const
+  ).filter((key) => envelope[key] === undefined)
+  if (missing.length > 0)
+    throw new MissingPropertiesError({ envelope, missing, type: 'zk' })
+
+  ZkSignature.assert(envelope)
+  const inner = getType(envelope.accessKeySignature as SignatureEnvelope)
+  if (inner !== 'secp256k1' && inner !== 'p256' && inner !== 'webAuthn')
+    throw new InvalidZkSignatureError({
+      reason: 'the access key signature must be a primitive signature',
+    })
+  assert(envelope.accessKeySignature)
+  if (Hex.size(serializeZk(envelope)) > maxZkSize)
+    throw new InvalidZkSignatureError({
+      reason: `the signature exceeds ${maxZkSize} bytes`,
+    })
+}
+
+function serializeZk(envelope: Zk): Hex.Hex {
+  return Hex.concat(
+    serializedZkType,
+    Rlp.fromHex([
+      ...ZkSignature.toTuple(envelope),
+      serialize(envelope.accessKeySignature),
+    ]),
+  )
+}
+
 /**
  * Extracts the address of the signer from a {@link ox#SignatureEnvelope.SignatureEnvelope}.
  *
  * - **secp256k1**: Recovers the address from the payload via `ecrecover`.
  * - **p256** / **webAuthn**: Derives the address from the embedded public key.
  * - **keychain**: Extracts from the inner signature (or returns `userAddress` if `user` is `true`).
+ * - **multisig**: Returns the multisig account.
+ * - **zk**: Returns the identity's address, derived from the proof's statement.
  *
  * @example
  * ```ts twoslash
@@ -482,6 +612,8 @@ export function extractAddress(
   // Native multisig signatures have no single signer; the recovered sender is the
   // derived multisig account address.
   if (signature.type === 'multisig') return signature.account
+  // A ZK signature signs for the identity's address, not the access key's.
+  if (signature.type === 'zk') return ZkSignature.getAddress(signature)
   return Address.fromPublicKey(extractPublicKey(options))
 }
 
@@ -500,6 +632,7 @@ export declare namespace extractAddress {
   type ErrorType =
     | Address.fromPublicKey.ErrorType
     | extractPublicKey.ErrorType
+    | ZkSignature.getAddress.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -545,8 +678,9 @@ export function extractPublicKey(
     case 'keychain':
       return extractPublicKey({ payload, signature: signature.inner })
     case 'multisig':
-      // A multisig signature aggregates multiple owner approvals and has no
-      // single public key; recover the multisig account via `extractAddress`.
+    case 'zk':
+      // Multisig and ZK signatures sign for accounts without a single public
+      // key; derive the account via `extractAddress`.
       throw new CoercionError({ envelope: signature })
   }
 }
@@ -576,6 +710,8 @@ export declare namespace extractPublicKey {
  * - Type `0x02` + variable: WebAuthn signature (webauthnData, r, s, pubKeyX, pubKeyY)
  * - Type `0x03` + 20 bytes + inner: Keychain V1 signature (userAddress + inner signature)
  * - Type `0x04` + 20 bytes + inner: Keychain V2 signature (userAddress + inner signature)
+ * - Type `0x05` + RLP: Multisig signature (account, config, owner approvals)
+ * - Type `0x06` + RLP: ZK signature (statement, proof, access key signature)
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -775,8 +911,52 @@ function deserialize_(value: Serialized): SignatureEnvelope {
     return envelope
   }
 
+  if (typeId === serializedZkType) {
+    if (Hex.size(serialized) > maxZkSize)
+      throw new InvalidSerializedError({
+        reason: `ZK signature exceeds ${maxZkSize} bytes`,
+        serialized,
+      })
+    const decoded = Rlp.toHex(data)
+    // The node rejects non-canonical RLP, so the fields must re-encode to the same bytes.
+    if (
+      !Array.isArray(decoded) ||
+      decoded.length !== 9 ||
+      decoded.some((field) => typeof field !== 'string') ||
+      Rlp.fromHex(decoded) !== data.toLowerCase()
+    )
+      throw new InvalidSerializedError({
+        reason:
+          'invalid ZK signature wire shape: expected nine canonical fields',
+        serialized,
+      })
+    const fields = decoded as readonly Hex.Hex[]
+    const accessKeySignature = fields[8]!
+    if (
+      Hex.size(accessKeySignature) !== 65 &&
+      !['0x01', '0x02'].includes(Hex.slice(accessKeySignature, 0, 1))
+    )
+      throw new InvalidSerializedError({
+        reason: 'the access key signature must be a primitive signature',
+        serialized,
+      })
+    const inner = deserialize(accessKeySignature) as Primitive
+    if (serialize(inner) !== accessKeySignature)
+      throw new InvalidSerializedError({
+        reason: 'the access key signature is not canonical',
+        serialized,
+      })
+    const envelope = {
+      ...ZkSignature.fromTuple(fields.slice(0, 8) as never),
+      accessKeySignature: inner,
+      type: 'zk',
+    } satisfies Zk
+    assertZk(envelope)
+    return envelope
+  }
+
   throw new InvalidSerializedError({
-    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), ${serializedKeychainV2Type} (Keychain V2), or ${serializedMultisigType} (Multisig)`,
+    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), ${serializedKeychainV2Type} (Keychain V2), ${serializedMultisigType} (Multisig), or ${serializedZkType} (ZK)`,
     serialized,
   })
 }
@@ -953,6 +1133,15 @@ export function from<const value extends from.Value>(
     } as never
   }
 
+  if (type === 'zk') {
+    const zk = value as Zk
+    return {
+      ...zk,
+      accessKeySignature: from(zk.accessKeySignature),
+      type,
+    } as never
+  }
+
   return {
     ...value,
     ...(type === 'p256' ? { prehash: (value as P256).prehash } : {}),
@@ -1117,6 +1306,28 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     }
   }
 
+  // The node serializes ZK signatures without a `type` tag.
+  if (
+    envelope.type === 'zk' ||
+    ('accessKeySignature' in envelope && 'proof' in envelope)
+  ) {
+    const zk = envelope as ZkRpc
+    const result = {
+      accessKeySignature: fromRpc(zk.accessKeySignature) as Primitive,
+      addressSeed: zk.addressSeed,
+      issuedAt: Hex.toNumber(zk.issuedAt),
+      issuer: zk.issuer,
+      keyHash: zk.keyHash,
+      proof: zk.proof,
+      publisherId: zk.publisherId,
+      scheme: Hex.toNumber(zk.scheme),
+      type: 'zk',
+      validUntil: Hex.toNumber(zk.validUntil),
+    } satisfies Zk
+    assert(result)
+    return result
+  }
+
   if (
     envelope.type === 'keychain' ||
     ('userAddress' in envelope && 'signature' in envelope)
@@ -1215,6 +1426,14 @@ export function getType<
   if ('account' in envelope && 'config' in envelope && 'signatures' in envelope)
     return 'multisig' as never
 
+  // Detect ZK signature
+  if (
+    'accessKeySignature' in envelope &&
+    'addressSeed' in envelope &&
+    'proof' in envelope
+  )
+    return 'zk' as never
+
   throw new CoercionError({
     envelope,
   })
@@ -1230,6 +1449,7 @@ export function getType<
  * - Keychain V1: `0x03` + userAddress (20) + inner signature (recursive)
  * - Keychain V2: `0x04` + userAddress (20) + inner signature (recursive)
  * - Multisig: `0x05` + RLP `[account, config, signatures]`
+ * - ZK: `0x06` + RLP `[scheme, publisherId, issuer, keyHash, addressSeed, issuedAt, validUntil, proof, accessKeySignature]`
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -1322,6 +1542,12 @@ export function serialize(
       ]),
       options.magic ? magicBytes : '0x',
     )
+  }
+
+  if (type === 'zk') {
+    const zk = envelope as Zk
+    assert(zk)
+    return Hex.concat(serializeZk(zk), options.magic ? magicBytes : '0x')
   }
 
   throw new CoercionError({ envelope })
@@ -1469,6 +1695,22 @@ export function toRpc<const envelope extends toRpc.Input>(
   if (type === 'multisig')
     return Hex.slice(serialize(envelope as Multisig), 1) as never
 
+  if (type === 'zk') {
+    const zk = envelope as Zk
+    return {
+      accessKeySignature: toRpc(zk.accessKeySignature),
+      addressSeed: zk.addressSeed,
+      issuedAt: Hex.fromNumber(zk.issuedAt),
+      issuer: zk.issuer,
+      keyHash: zk.keyHash,
+      proof: zk.proof,
+      publisherId: zk.publisherId,
+      scheme: Hex.fromNumber(zk.scheme),
+      type: 'zk',
+      validUntil: Hex.fromNumber(zk.validUntil),
+    } as never
+  }
+
   throw new CoercionError({ envelope })
 }
 
@@ -1488,7 +1730,9 @@ export declare namespace toRpc {
             ? KeychainRpc
             : GetType<envelope> extends 'multisig'
               ? MultisigRpc
-              : SignatureEnvelopeRpc
+              : GetType<envelope> extends 'zk'
+                ? ZkRpc
+                : SignatureEnvelopeRpc
 
   type ErrorType =
     | assert.ErrorType
@@ -1538,7 +1782,8 @@ export declare namespace validate {
  * Supports `secp256k1`, `p256`, and `webAuthn` signature types.
  *
  * :::warning
- * `keychain` signatures are not supported and will throw an error.
+ * `keychain`, `multisig`, and `zk` signatures are not supported and will throw an error.
+ * Nodes verify ZK proofs against the scheme's verifying key.
  * :::
  *
  * @example
@@ -1727,7 +1972,7 @@ export class MissingPropertiesError extends Errors.BaseError {
   }: {
     envelope: unknown
     missing: string[]
-    type: Type | 'keychain' | 'multisig'
+    type: Type | 'keychain' | 'multisig' | 'zk'
   }) {
     super(
       `Signature envelope of type "${type}" is missing required properties: ${missing.map((m) => `\`${m}\``).join(', ')}.\n\nProvided: ${Json.stringify(envelope)}`,
@@ -1760,6 +2005,16 @@ export class InvalidMultisigApprovalError extends Errors.BaseError {
   override readonly name = 'SignatureEnvelope.InvalidMultisigApprovalError'
   constructor({ reason }: { reason: string }) {
     super(`Invalid native multisig owner approval: ${reason}.`)
+  }
+}
+
+/**
+ * Error thrown when a ZK signature is invalid.
+ */
+export class InvalidZkSignatureError extends Errors.BaseError {
+  override readonly name = 'SignatureEnvelope.InvalidZkSignatureError'
+  constructor({ reason }: { reason: string }) {
+    super(`Invalid ZK signature: ${reason}.`)
   }
 }
 

@@ -132,6 +132,30 @@ test('resolves Tempo address bindings for multisig grants', () => {
   expectTypeOf(signed.address).toMatchTypeOf<`0x${string}`>()
 })
 
+const zk = {
+  accessKeySignature: signature,
+  addressSeed: `0x${'01'.repeat(32)}`,
+  issuedAt: 1760000000,
+  issuer: `0x${'02'.repeat(32)}`,
+  keyHash: `0x${'03'.repeat(32)}`,
+  proof: `0x${'04'.repeat(256)}`,
+  publisherId: `0x${'05'.repeat(32)}`,
+  scheme: 1,
+  type: 'zk',
+  validUntil: 1760000540,
+} as const satisfies SignatureEnvelope.Zk
+
+test('accepts ZK signatures', () => {
+  const signed = KeyAuthorization.from(authorization, { signature: zk })
+  expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
+  expectTypeOf<SignatureEnvelope.Zk>().toMatchTypeOf<
+    KeyAuthorization.Signed['signature']
+  >()
+  expectTypeOf<SignatureEnvelope.ZkRpc>().toMatchTypeOf<
+    KeyAuthorization.Rpc['signature']
+  >()
+})
+
 test('Tuple: skipped limits slot may be the RLP null placeholder', () => {
   type Authorization = KeyAuthorization.Tuple[0]
   type Limits = Extract<Authorization, { length: 5 }>[4]

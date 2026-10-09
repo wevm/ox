@@ -10,6 +10,7 @@ import {
   WebCryptoP256,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
+import { transaction, zkSignature } from '../../test/tempo/zk.js'
 import * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -64,6 +65,16 @@ const signature_keychain_p256 = SignatureEnvelope.from({
 const signature_keychain_webauthn = SignatureEnvelope.from({
   userAddress: '0xfedcbafedcbafedcbafedcbafedcbafedcbafedc',
   inner: signature_webauthn,
+  version: 'v2',
+})
+
+// A ZK signature over a real proof, as a dev node encoded it.
+const signature_zk = SignatureEnvelope.deserialize(
+  zkSignature,
+) as SignatureEnvelope.Zk
+const signature_zk_keychain = SignatureEnvelope.from({
+  userAddress: transaction.from,
+  inner: signature_zk.accessKeySignature,
   version: 'v2',
 })
 
@@ -472,6 +483,45 @@ describe('assert', () => {
       `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"r":"0#__bigint","s":"0#__bigint"}\`) to a valid signature envelope.]`,
     )
   })
+
+  describe('zk', () => {
+    test('default', () => {
+      expect(() => SignatureEnvelope.assert(signature_zk)).not.toThrow()
+    })
+
+    test('error: missing properties', () => {
+      const { proof: _, ...rest } = signature_zk
+      expect(() =>
+        SignatureEnvelope.assert(rest as never),
+      ).toThrowErrorMatchingInlineSnapshot(`
+          [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "zk" is missing required properties: \`proof\`.
+
+          Provided: {"addressSeed":"0x05667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb","issuedAt":1791404628,"issuer":"0x1656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45d","keyHash":"0x14d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddb","publisherId":"0xb2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143ac","scheme":1,"validUntil":1791405168,"accessKeySignature":{"signature":{"r":"89568461620332745607330445937640265321447006557314205510849140606726405571268#__bigint","s":"9075578951400019780992722728727723920067541373790998266153821924545132358967#__bigint","yParity":1},"type":"secp256k1"},"type":"zk"}]
+        `)
+    })
+
+    test('error: access key signature is not primitive', () => {
+      expect(() =>
+        SignatureEnvelope.assert({
+          ...signature_zk,
+          accessKeySignature: signature_zk_keychain as never,
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidZkSignatureError: Invalid ZK signature: the access key signature must be a primitive signature.]`,
+      )
+    })
+
+    test('error: statement outside the field', () => {
+      expect(() =>
+        SignatureEnvelope.assert({
+          ...signature_zk,
+          issuer: `0x${'ff'.repeat(32)}`,
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[ZkSignature.InvalidCredentialError: Invalid ZK signature credential: \`issuer\` is not a BN254 scalar field element.]`,
+      )
+    })
+  })
 })
 
 describe('deserialize', () => {
@@ -514,7 +564,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize('0xdeadbeef'),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Multisig)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), 0x05 (Multisig), or 0x06 (ZK)
 
         Serialized: 0xdeadbeef]
       `,
@@ -674,7 +724,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize(unknownType),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Multisig)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), 0x05 (Multisig), or 0x06 (ZK)
 
         Serialized: 0xff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
       `,
@@ -777,6 +827,110 @@ describe('deserialize', () => {
       )
     })
   })
+
+  describe('zk', () => {
+    test('default', () => {
+      const { accessKeySignature, proof, ...rest } =
+        SignatureEnvelope.deserialize(zkSignature) as SignatureEnvelope.Zk
+      expect({
+        ...rest,
+        accessKeySignature: accessKeySignature.type,
+        proof: Hex.size(proof),
+      }).toMatchInlineSnapshot(`
+        {
+          "accessKeySignature": "secp256k1",
+          "addressSeed": "0x05667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb",
+          "issuedAt": 1791404628,
+          "issuer": "0x1656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45d",
+          "keyHash": "0x14d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddb",
+          "proof": 256,
+          "publisherId": "0xb2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143ac",
+          "scheme": 1,
+          "type": "zk",
+          "validUntil": 1791405168,
+        }
+      `)
+    })
+
+    test('behavior: accepts uppercase hex', () => {
+      expect(
+        SignatureEnvelope.deserialize(
+          `0x${zkSignature.slice(2).toUpperCase()}`,
+        ),
+      ).toEqual(signature_zk)
+    })
+
+    test('error: non-canonical list header', () => {
+      // The same fields under a long-form length prefix.
+      const nonCanonical = Hex.concat(
+        '0x06',
+        '0xfa0001d5',
+        Hex.slice(zkSignature, 4),
+      )
+      expect(() =>
+        SignatureEnvelope.deserialize(nonCanonical),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: invalid ZK signature wire shape: expected nine canonical fields
+
+        Serialized: 0x06fa0001d501a0b2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143aca01656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45da014d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddba005667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb846ac6aa54846ac6ac70b90100011da325c2ed023f0e86b297a0dd45066bff191e4f180eccf13a1ba6403b3ad218af8bb3e7f90ee19b137aeb4f32d55ece9c9d014d282985b55d25e81c2f5e5a1d0b2a75de6a7ea4ccae1d569d1fe2768aed72536987af797e27e2df68c7ae7e00129977205036d99d6c77f05f6a62b78985204ef4ed32b717a61a369a22a2220daea83c9ac75ef501e02c6083af719ecfb225748e036315c16f3dbbd3d654e70260bc8a78b2d2e39b94f3f56be927d332bef9704e516d9e77af8167303e29a514eae25fe90c9ba78da7b89db2cb4f289db58a1950f9f8f8740a9d609f386d6a1fda77142707ff6d00dc15191c12734271ae57bfe753b49992fa0bab662f7e5db841c605f3e77f5b26c4b45fd0975a734a8b23991319139241a7a32d0869fed342c41410987cad02b45194ae0f4eb5f3da0f6b96253b9ee6199c92b346f413cded371c]
+      `)
+    })
+
+    test('error: trailing bytes', () => {
+      expect(() =>
+        SignatureEnvelope.deserialize(Hex.concat(zkSignature, '0x00')),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: invalid ZK signature wire shape: expected nine canonical fields
+
+        Serialized: 0x06f901d501a0b2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143aca01656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45da014d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddba005667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb846ac6aa54846ac6ac70b90100011da325c2ed023f0e86b297a0dd45066bff191e4f180eccf13a1ba6403b3ad218af8bb3e7f90ee19b137aeb4f32d55ece9c9d014d282985b55d25e81c2f5e5a1d0b2a75de6a7ea4ccae1d569d1fe2768aed72536987af797e27e2df68c7ae7e00129977205036d99d6c77f05f6a62b78985204ef4ed32b717a61a369a22a2220daea83c9ac75ef501e02c6083af719ecfb225748e036315c16f3dbbd3d654e70260bc8a78b2d2e39b94f3f56be927d332bef9704e516d9e77af8167303e29a514eae25fe90c9ba78da7b89db2cb4f289db58a1950f9f8f8740a9d609f386d6a1fda77142707ff6d00dc15191c12734271ae57bfe753b49992fa0bab662f7e5db841c605f3e77f5b26c4b45fd0975a734a8b23991319139241a7a32d0869fed342c41410987cad02b45194ae0f4eb5f3da0f6b96253b9ee6199c92b346f413cded371c00]
+      `,
+      )
+    })
+
+    test('error: access key signature is not primitive', () => {
+      const fields = Rlp.toHex(Hex.slice(zkSignature, 1)) as Hex.Hex[]
+      const nested = Hex.concat(
+        '0x06',
+        Rlp.fromHex([
+          ...fields.slice(0, 8),
+          SignatureEnvelope.serialize(signature_zk_keychain),
+        ]),
+      )
+      expect(() =>
+        SignatureEnvelope.deserialize(nested),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: the access key signature must be a primitive signature
+
+        Serialized: 0x06f901ea01a0b2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143aca01656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45da014d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddba005667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb846ac6aa54846ac6ac70b90100011da325c2ed023f0e86b297a0dd45066bff191e4f180eccf13a1ba6403b3ad218af8bb3e7f90ee19b137aeb4f32d55ece9c9d014d282985b55d25e81c2f5e5a1d0b2a75de6a7ea4ccae1d569d1fe2768aed72536987af797e27e2df68c7ae7e00129977205036d99d6c77f05f6a62b78985204ef4ed32b717a61a369a22a2220daea83c9ac75ef501e02c6083af719ecfb225748e036315c16f3dbbd3d654e70260bc8a78b2d2e39b94f3f56be927d332bef9704e516d9e77af8167303e29a514eae25fe90c9ba78da7b89db2cb4f289db58a1950f9f8f8740a9d609f386d6a1fda77142707ff6d00dc15191c12734271ae57bfe753b49992fa0bab662f7e5db85604ada6063f1aade8b2516566a2a7e77d214b7f34f9c605f3e77f5b26c4b45fd0975a734a8b23991319139241a7a32d0869fed342c41410987cad02b45194ae0f4eb5f3da0f6b96253b9ee6199c92b346f413cded371c]
+      `)
+    })
+
+    test('error: wrong field count', () => {
+      const fields = Rlp.toHex(Hex.slice(zkSignature, 1)) as Hex.Hex[]
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          Hex.concat('0x06', Rlp.fromHex(fields.slice(0, 8))),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: invalid ZK signature wire shape: expected nine canonical fields
+
+        Serialized: 0x06f9019201a0b2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143aca01656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45da014d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddba005667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb846ac6aa54846ac6ac70b90100011da325c2ed023f0e86b297a0dd45066bff191e4f180eccf13a1ba6403b3ad218af8bb3e7f90ee19b137aeb4f32d55ece9c9d014d282985b55d25e81c2f5e5a1d0b2a75de6a7ea4ccae1d569d1fe2768aed72536987af797e27e2df68c7ae7e00129977205036d99d6c77f05f6a62b78985204ef4ed32b717a61a369a22a2220daea83c9ac75ef501e02c6083af719ecfb225748e036315c16f3dbbd3d654e70260bc8a78b2d2e39b94f3f56be927d332bef9704e516d9e77af8167303e29a514eae25fe90c9ba78da7b89db2cb4f289db58a1950f9f8f8740a9d609f386d6a1fda77142707ff6d00dc15191c12734271ae57bfe753b49992fa0bab662f7e5d]
+      `)
+    })
+
+    test('error: oversized', () => {
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          Hex.concat('0x06', `0x${'00'.repeat(2049)}`),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: ZK signature exceeds 2049 bytes
+
+        Serialized: 0x06000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+      `)
+    })
+  })
 })
 
 describe('extractAddress', () => {
@@ -859,6 +1013,16 @@ describe('extractAddress', () => {
       ).toBe('0x1234567890123456789012345678901234567890')
     })
   })
+
+  describe('zk', () => {
+    test('default', () => {
+      const address = SignatureEnvelope.extractAddress({
+        payload: '0xdeadbeef',
+        signature: signature_zk,
+      })
+      expect(Address.isEqual(address, transaction.from)).toBe(true)
+    })
+  })
 })
 
 describe('extractPublicKey', () => {
@@ -922,6 +1086,17 @@ describe('extractPublicKey', () => {
       expect(
         SignatureEnvelope.extractPublicKey({ payload, signature: envelope }),
       ).toEqual(pk)
+    })
+  })
+
+  describe('zk', () => {
+    test('error: has no single public key', () => {
+      expect(() =>
+        SignatureEnvelope.extractPublicKey({
+          payload: '0xdeadbeef',
+          signature: signature_zk,
+        }),
+      ).toThrowError(SignatureEnvelope.CoercionError)
     })
   })
 })
@@ -1126,6 +1301,27 @@ describe('from', () => {
       `)
     })
   })
+
+  describe('zk', () => {
+    test('default', () => {
+      expect(SignatureEnvelope.from(signature_zk)).toEqual(signature_zk)
+    })
+
+    test('behavior: normalizes the access key signature', () => {
+      const { type: _, ...rest } = signature_zk
+      const envelope = SignatureEnvelope.from({
+        ...rest,
+        accessKeySignature: (
+          signature_zk.accessKeySignature as SignatureEnvelope.Secp256k1
+        ).signature as never,
+      })
+      expect(envelope).toEqual(signature_zk)
+    })
+
+    test('behavior: deserializes', () => {
+      expect(SignatureEnvelope.from(zkSignature)).toEqual(signature_zk)
+    })
+  })
 })
 
 describe('getType', () => {
@@ -1213,6 +1409,13 @@ describe('getType', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"r":"0#__bigint","s":"0#__bigint"}\`) to a valid signature envelope.]`,
     )
+  })
+
+  describe('zk', () => {
+    test('default', () => {
+      const { type: _, ...rest } = signature_zk
+      expect(SignatureEnvelope.getType(rest)).toBe('zk')
+    })
   })
 })
 
@@ -1724,6 +1927,22 @@ describe('serialize', () => {
       `"Unable to coerce value (\`{}\`) to a valid signature envelope."`,
     )
   })
+
+  describe('zk', () => {
+    test('default', () => {
+      expect(SignatureEnvelope.serialize(signature_zk)).toBe(zkSignature)
+    })
+
+    test('behavior: with magic bytes', () => {
+      const serialized = SignatureEnvelope.serialize(signature_zk, {
+        magic: true,
+      })
+      expect(serialized).toBe(
+        Hex.concat(zkSignature, SignatureEnvelope.magicBytes),
+      )
+      expect(SignatureEnvelope.deserialize(serialized)).toEqual(signature_zk)
+    })
+  })
 })
 
 describe('sortMultisigApprovals', () => {
@@ -1904,6 +2123,18 @@ describe('validate', () => {
         s: 0n,
       } as any),
     ).toBe(false)
+  })
+
+  describe('zk', () => {
+    test('default', () => {
+      expect(SignatureEnvelope.validate(signature_zk)).toBe(true)
+      expect(
+        SignatureEnvelope.validate({
+          ...signature_zk,
+          proof: Hex.slice(signature_zk.proof, 1),
+        }),
+      ).toBe(false)
+    })
   })
 })
 
@@ -2195,6 +2426,19 @@ describe('verify', () => {
       )
     })
   })
+
+  describe('zk', () => {
+    test('error: proofs are verified by nodes', () => {
+      expect(() =>
+        SignatureEnvelope.verify(signature_zk, {
+          address: transaction.from,
+          payload: '0xdeadbeef',
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.VerificationError: Unable to verify signature envelope of type "zk".]`,
+      )
+    })
+  })
 })
 
 describe('fromRpc', () => {
@@ -2416,6 +2660,24 @@ describe('fromRpc', () => {
       expect(envelope.keyId).toBe('0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c')
     })
   })
+
+  describe('zk', () => {
+    test('default', () => {
+      // The node's JSON and its binary encoding decode to the same signature.
+      expect(
+        SignatureEnvelope.fromRpc(transaction.keyAuthorization.signature),
+      ).toEqual(signature_zk)
+    })
+
+    test('behavior: with a type tag', () => {
+      expect(
+        SignatureEnvelope.fromRpc({
+          ...transaction.keyAuthorization.signature,
+          type: 'zk',
+        }),
+      ).toEqual(signature_zk)
+    })
+  })
 })
 
 describe('toRpc', () => {
@@ -2570,6 +2832,42 @@ describe('toRpc', () => {
       ) as SignatureEnvelope.KeychainRpc
 
       expect(rpc.keyId).toBeUndefined()
+    })
+  })
+
+  describe('zk', () => {
+    test('default', () => {
+      const { accessKeySignature, proof, ...rest } =
+        SignatureEnvelope.toRpc(signature_zk)
+      expect({
+        ...rest,
+        accessKeySignature,
+        proof: Hex.size(proof),
+      }).toMatchInlineSnapshot(`
+        {
+          "accessKeySignature": {
+            "r": "0xc605f3e77f5b26c4b45fd0975a734a8b23991319139241a7a32d0869fed342c4",
+            "s": "0x1410987cad02b45194ae0f4eb5f3da0f6b96253b9ee6199c92b346f413cded37",
+            "type": "secp256k1",
+            "yParity": "0x1",
+          },
+          "addressSeed": "0x05667e1ce177c0206e082a863a572ba92d755d50a314e680f5036f504395b5bb",
+          "issuedAt": "0x6ac6aa54",
+          "issuer": "0x1656ea090c49c9b4a8872fc6540d3c210b34ad42859aff31f059c28e999ba45d",
+          "keyHash": "0x14d3f177c646a83e556512bc1cd8168982e09509d281dad23664b24d0e89cddb",
+          "proof": 256,
+          "publisherId": "0xb2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143ac",
+          "scheme": "0x1",
+          "type": "zk",
+          "validUntil": "0x6ac6ac70",
+        }
+      `)
+    })
+
+    test('behavior: round-trips through fromRpc', () => {
+      expect(
+        SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(signature_zk)),
+      ).toEqual(signature_zk)
     })
   })
 })

@@ -38,3 +38,28 @@ test('requires config and primitive approvals', () => {
   }
   expectTypeOf(rpc).toEqualTypeOf<Hex.Hex>()
 })
+
+const zk = SignatureEnvelope.from({
+  accessKeySignature: primitive,
+  addressSeed: `0x${'01'.repeat(32)}`,
+  issuedAt: 1760000000,
+  issuer: `0x${'02'.repeat(32)}`,
+  keyHash: `0x${'03'.repeat(32)}`,
+  proof: `0x${'04'.repeat(256)}`,
+  publisherId: `0x${'05'.repeat(32)}`,
+  scheme: 1,
+  validUntil: 1760000540,
+})
+
+test('infers ZK signatures and their RPC type', () => {
+  expectTypeOf<SignatureEnvelope.GetType<typeof zk>>().toEqualTypeOf<'zk'>()
+  expectTypeOf(zk).toMatchTypeOf<SignatureEnvelope.Zk>()
+  expectTypeOf(
+    SignatureEnvelope.toRpc(zk),
+  ).toEqualTypeOf<SignatureEnvelope.ZkRpc>()
+})
+
+test('requires a primitive access key signature', () => {
+  // @ts-expect-error Access keys sign with primitive signatures.
+  SignatureEnvelope.from({ ...zk, accessKeySignature: envelope })
+})

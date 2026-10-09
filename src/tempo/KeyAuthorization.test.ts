@@ -8,6 +8,7 @@ import {
   WebAuthnP256,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
+import { rawTransaction, transaction } from '../../test/tempo/zk.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as MultisigConfig from './MultisigConfig.js'
 import * as Period from './Period.js'
@@ -626,7 +627,7 @@ describe('fromRpc', () => {
         signature: signature_keychain as never,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`multisig\`, or \`zk\`.]`,
     )
 
     expect(() =>
@@ -634,7 +635,7 @@ describe('fromRpc', () => {
         signature: SignatureEnvelope.serialize(signature_keychain),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`multisig\`, or \`zk\`.]`,
     )
 
     expect(() =>
@@ -643,7 +644,7 @@ describe('fromRpc', () => {
         signature: signature_keychain,
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`multisig\`, or \`zk\`.]`,
     )
   })
 })
@@ -697,7 +698,7 @@ describe('fromRpc', () => {
         signature: SignatureEnvelope.toRpc(signature_keychain),
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`multisig\`, or \`zk\`.]`,
     )
   })
 
@@ -2869,5 +2870,37 @@ describe('admin keys (TIP-1049)', () => {
       type: 'secp256k1',
     })
     expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
+  })
+})
+
+describe('ZK signatures (TIP-1131)', () => {
+  // The node returns `null` for absent fields, which `KeyAuthorization.Rpc` omits.
+  const rpc = transaction.keyAuthorization as unknown as KeyAuthorization.Rpc
+
+  test('fromRpc: reads a ZK-signed authorization', () => {
+    const { signature, ...rest } = KeyAuthorization.fromRpc(rpc)
+    expect({ ...rest, signature: signature.type }).toMatchInlineSnapshot(`
+      {
+        "address": "0x22d5d8d66e2f3316c61c5d8b5fd5034ae1935022",
+        "chainId": 1337n,
+        "limits": undefined,
+        "signature": "zk",
+        "type": "secp256k1",
+      }
+    `)
+  })
+
+  test('toRpc: round-trips through fromRpc', () => {
+    const authorization = KeyAuthorization.fromRpc(rpc)
+    expect(
+      KeyAuthorization.fromRpc(KeyAuthorization.toRpc(authorization)),
+    ).toEqual(authorization)
+  })
+
+  test('serialize: matches the node encoding', () => {
+    const authorization = KeyAuthorization.fromRpc(rpc)
+    const serialized = KeyAuthorization.serialize(authorization)
+    expect(rawTransaction.includes(serialized.slice(2))).toBe(true)
+    expect(KeyAuthorization.deserialize(serialized)).toEqual(authorization)
   })
 })
