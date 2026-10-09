@@ -3257,6 +3257,54 @@ describe('multisig', () => {
     }
   })
 
+  test('carries ZK owner approvals', () => {
+    const zk = SignatureEnvelope.deserialize(
+      zkSignature,
+    ) as SignatureEnvelope.Zk
+    const value = SignatureEnvelope.from({
+      ...envelope,
+      signatures: [primitive, zk],
+    })
+    const serialized = SignatureEnvelope.serialize(value)
+    expect(Rlp.toHex(Hex.slice(serialized, 1))[2]).toEqual([
+      SignatureEnvelope.serialize(primitive),
+      zkSignature,
+    ])
+    expect(SignatureEnvelope.deserialize(serialized)).toEqual(value)
+    expect(SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(value))).toEqual(
+      value,
+    )
+
+    const payload = `0x${'ab'.repeat(32)}` as const
+    const sorted = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      config,
+      payload,
+      signatures: [primitive, zk],
+    })
+    const digest = MultisigConfig.getSignPayload({ account, config, payload })
+    const addresses = sorted.map((signature) =>
+      Hex.toBigInt(
+        SignatureEnvelope.extractAddress({ payload: digest, signature }),
+      ),
+    )
+    expect(addresses[0]! < addresses[1]!).toBe(true)
+  })
+
+  test('rejects more than two ZK owner approvals', () => {
+    const zk = SignatureEnvelope.deserialize(
+      zkSignature,
+    ) as SignatureEnvelope.Zk
+    expect(() =>
+      SignatureEnvelope.assert({ ...envelope, signatures: [zk, zk] }),
+    ).not.toThrow()
+    expect(() =>
+      SignatureEnvelope.assert({ ...envelope, signatures: [zk, zk, zk] }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig signatures exceed 2 ZK approvals.]`,
+    )
+  })
+
   test('rejects oversized owner approvals', () => {
     const oversized = {
       ...signature_webauthn,

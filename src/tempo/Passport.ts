@@ -4,6 +4,7 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as TypedData from '../core/TypedData.js'
 import * as Der from './internal/der.js'
 import * as Poseidon from './internal/poseidon.js'
 import * as Rsa from './internal/rsa.js'
@@ -326,6 +327,51 @@ export declare namespace fromSod {
     | InvalidSodError
     | UnsupportedKeyError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Computes a passport's address under a publisher:
+ * `keccak256(0x06 || 0x02 || publisherId || issuer || addressSeed)[12:]`.
+ *
+ * Every passport scheme uses the passport namespace `0x02`, so the address is the same across
+ * schemes, document signers, roots, and times. The same passport under another publisher has
+ * another address.
+ *
+ * [TIP-1142](https://docs.tempo.xyz/protocol/tips/tip-1142#registry)
+ *
+ * @example
+ * ```ts twoslash
+ * import { Passport } from 'ox/tempo'
+ *
+ * const address = Passport.getAddress({
+ *   addressSeed: Passport.getAddressSeed({
+ *     birthDate: '740812',
+ *     documentNumber: 'L898902C3',
+ *     salt: '0x01d2f3a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60'
+ *   }),
+ *   issuer: Passport.hashIssuer('UTO'),
+ *   publisherId: '0xb2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143ac'
+ * })
+ * ```
+ *
+ * @param options - The publisher, and the passport's issuer and address seed.
+ * @returns The passport's address.
+ */
+export function getAddress(options: getAddress.Options): Address.Address {
+  return ZkSignature.getAddress({ ...options, scheme })
+}
+
+export declare namespace getAddress {
+  type Options = {
+    /** The passport's address seed. See {@link ox#Passport.(getAddressSeed:function)}. */
+    addressSeed: Hex.Hex
+    /** The issuer hash. See {@link ox#Passport.(hashIssuer:function)}. */
+    issuer: Hex.Hex
+    /** The [TIP-1132](https://docs.tempo.xyz/protocol/tips/tip-1132) publisher whose document signer trees the passport trusts. */
+    publisherId: Hex.Hex
+  }
+
+  type ErrorType = ZkSignature.getAddress.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -754,6 +800,61 @@ export declare namespace verifyActiveAuthentication {
   type ErrorType =
     | fromDg15.ErrorType
     | InvalidFieldLengthError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Verifies an [owner binding](https://docs.tempo.xyz/protocol/tips/tip-1142#owner-bindings)'s proof:
+ * a scheme `0x02` message signature over the EIP-712 hash of `PassportOwner(account)` on `chainId`.
+ *
+ * This checks the proof only, so the binding names `account`. A verifier also checks, against chain
+ * state, that the Key Publisher lists `keyHash` under the binding's publisher and issuer, and that the
+ * binding's signer, {@link ox#Passport.(getAddress:function)}, is an owner of `account`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Passport } from 'ox/tempo'
+ *
+ * const valid = Passport.verifyBinding({
+ *   account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   binding: '0x...',
+ *   chainId: 4217,
+ *   verifyingKey: '0x...'
+ * })
+ * ```
+ *
+ * @param options - The account and chain the binding names, the binding, and scheme `0x02`'s verifying key.
+ * @returns Whether the binding's proof is valid for the account.
+ */
+export function verifyBinding(options: verifyBinding.Options): boolean {
+  const { account, chainId, verifyingKey } = options
+  const binding =
+    typeof options.binding === 'string'
+      ? ZkSignature.deserializeMessage(options.binding)
+      : options.binding
+  if (binding.scheme !== scheme) return false
+  return ZkSignature.verifyMessage({
+    payload: TypedData.getSignPayload(
+      getBindingTypedData({ account, chainId }),
+    ),
+    signature: binding,
+    verifyingKey,
+  })
+}
+
+export declare namespace verifyBinding {
+  type Options = getBindingTypedData.Options & {
+    /** The binding, a scheme `0x02` message signature, or its serialized form. */
+    binding: ZkSignature.MessageSignature | Hex.Hex
+    /** Scheme `0x02`'s 576-byte Groth16 verifying key, `VK_PASSPORT_RSA_V1`. */
+    verifyingKey: Hex.Hex | Bytes.Bytes
+  }
+
+  type ErrorType =
+    | getBindingTypedData.ErrorType
+    | TypedData.getSignPayload.ErrorType
+    | ZkSignature.deserializeMessage.ErrorType
+    | ZkSignature.verifyMessage.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -1,7 +1,67 @@
+import { bn254 } from '@noble/curves/bn254'
 import { Bytes, Hash, Hex, TypedData } from 'ox'
-import { Passport } from 'ox/tempo'
+import { Passport, ZkSignature } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 import * as TestPassport from '../../test/tempo/passport.js'
+
+// A Groth16 verifying key with a known trapdoor, which simulates a valid proof for any public
+// input, so tests check scheme `0x02`'s public input layout end to end before a reference
+// circuit exists. The trapdoor is public, so the key proves nothing.
+const r = bn254.fields.Fr.ORDER
+const [alpha, beta, gamma, delta, ic0, ic1] = [3n, 5n, 7n, 11n, 13n, 17n]
+
+const G1 = bn254.G1.ProjectivePoint
+const G2 = bn254.G2.ProjectivePoint
+
+function g1(point: InstanceType<typeof G1>): Uint8Array {
+  const { x, y } = point.toAffine()
+  return Bytes.concat(
+    Bytes.fromNumber(x, { size: 32 }),
+    Bytes.fromNumber(y, { size: 32 }),
+  )
+}
+
+// `F_p^2` elements are written `(c1, c0)`, as in EIP-197.
+function g2(point: InstanceType<typeof G2>): Uint8Array {
+  const { x, y } = point.toAffine()
+  return Bytes.concat(
+    ...[x.c1, x.c0, y.c1, y.c0].map((value) =>
+      Bytes.fromNumber(value, { size: 32 }),
+    ),
+  )
+}
+
+// The verifying key, in TIP-1131's point encoding.
+const verifyingKey = Hex.fromBytes(
+  Bytes.concat(
+    g1(G1.BASE.multiply(alpha)),
+    g2(G2.BASE.multiply(beta)),
+    g2(G2.BASE.multiply(gamma)),
+    g2(G2.BASE.multiply(delta)),
+    g1(G1.BASE.multiply(ic0)),
+    g1(G1.BASE.multiply(ic1)),
+  ),
+)
+
+// Simulates a proof for a public input under `verifyingKey`:
+// `C = (a·b - α·β - (IC0 + x·IC1)·γ) / δ`.
+function simulateProof(publicInput: Hex.Hex | bigint): Hex.Hex {
+  const x =
+    typeof publicInput === 'bigint' ? publicInput : Hex.toBigInt(publicInput)
+  const [a, b] = [19n, 23n]
+  const mod = (value: bigint) => ((value % r) + r) % r
+  const c = mod(
+    (a * b - alpha * beta - mod(ic0 + x * ic1) * gamma) *
+      bn254.fields.Fr.inv(delta),
+  )
+  return Hex.fromBytes(
+    Bytes.concat(
+      g1(G1.BASE.multiply(a)),
+      g2(G2.BASE.multiply(b)),
+      g1(G1.BASE.multiply(c)),
+    ),
+  )
+}
 
 // ICAO 9303's specimen passport, and an Oidc test salt. Expected hashes come from circomlibjs.
 const dg1 =
@@ -87,6 +147,20 @@ describe('hashIssuer', () => {
     expect(() => Passport.hashIssuer('D')).toThrowErrorMatchingInlineSnapshot(
       `[Passport.InvalidFieldLengthError: \`issuingState\` is 1 bytes; expected 3.]`,
     )
+  })
+})
+
+describe('getAddress', () => {
+  test('default', () => {
+    // Expected address from keccak256(0x06 || 0x02 || publisherId || issuer || addressSeed).
+    expect(
+      Passport.getAddress({
+        addressSeed,
+        issuer,
+        publisherId:
+          '0xb2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143ac',
+      }),
+    ).toMatchInlineSnapshot(`"0xc301e176d0c5b1829b72c36293b4d267eaf5b174"`)
   })
 })
 
@@ -735,5 +809,92 @@ describe('verifyActiveAuthentication', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[Passport.InvalidFieldLengthError: \`challenge\` is 7 bytes; expected 8.]`,
     )
+  })
+})
+
+describe('verifyBinding', () => {
+  const account = '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+  const publisherId =
+    '0xb2fdbde0aad8da84287b254c3b0e164af920692de35ca2fd27f6ea150ee143ac'
+  const statement = {
+    addressSeed,
+    issuedAt: 1760000000,
+    issuer,
+    keyHash: root,
+  } as const
+  // A binding under a simulated verifying key, over scheme `0x02`'s message-form public input.
+  const binding = {
+    ...statement,
+    proof: simulateProof(Passport.getPublicInput({ ...statement, payload })),
+    publisherId,
+    scheme: 2,
+  } as const satisfies ZkSignature.MessageSignature
+
+  test('default', () => {
+    expect(
+      Passport.verifyBinding({ account, binding, chainId: 4217, verifyingKey }),
+    ).toBe(true)
+    expect(
+      Passport.verifyBinding({
+        account,
+        binding: ZkSignature.serializeMessage(binding),
+        chainId: 4217,
+        verifyingKey,
+      }),
+    ).toBe(true)
+  })
+
+  test('behavior: another account or chain', () => {
+    expect(
+      Passport.verifyBinding({
+        account: '0x0000000000000000000000000000000000000001',
+        binding,
+        chainId: 4217,
+        verifyingKey,
+      }),
+    ).toBe(false)
+    expect(
+      Passport.verifyBinding({ account, binding, chainId: 1, verifyingKey }),
+    ).toBe(false)
+  })
+
+  test('behavior: another statement', () => {
+    expect(
+      Passport.verifyBinding({
+        account,
+        binding: { ...binding, issuedAt: binding.issuedAt + 1 },
+        chainId: 4217,
+        verifyingKey,
+      }),
+    ).toBe(false)
+  })
+
+  test('behavior: another scheme', () => {
+    expect(
+      Passport.verifyBinding({
+        account,
+        binding: { ...binding, scheme: 1 },
+        chainId: 4217,
+        verifyingKey,
+      }),
+    ).toBe(false)
+  })
+
+  test('behavior: signature form', () => {
+    const proof = simulateProof(
+      Passport.getPublicInput({
+        ...statement,
+        accessKeyAddress: account,
+        validUntil: 1760000540,
+      }),
+    )
+    expect(
+      Passport.verifyBinding({
+        account,
+        binding: { ...binding, proof },
+        chainId: 4217,
+        verifyingKey,
+      }),
+    ).toBe(false)
   })
 })
