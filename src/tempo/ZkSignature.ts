@@ -13,7 +13,17 @@ const domain = '0x74656d706f3a7a6b2d7369676e6174757265'
 const namespaces: Record<number, number> = {
   // Scheme `0x01` (OIDC RS256) uses the OIDC namespace.
   1: 1,
+  // Scheme `0x02` (passport, RSA Active Authentication) uses the passport namespace.
+  2: 2,
 }
+
+/**
+ * `MESSAGE_TAG`, the `commit_b` of a message signature's public input. It exceeds any
+ * `validUntil`, so a message signature's proof never verifies as a ZK signature's.
+ *
+ * [TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131#message-signatures)
+ */
+export const messageTag = 2n ** 64n
 
 /**
  * A ZK signature without its access key signature.
@@ -28,6 +38,17 @@ const namespaces: Record<number, number> = {
 export type Credential<numberType = number> = Omit<
   SignatureEnvelope.Zk<bigint, numberType>,
   'accessKeySignature' | 'type'
+>
+
+/**
+ * A message signature: a proof that an identity approved one message, with no access key.
+ * Verifiers check it offchain.
+ *
+ * [TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131#message-signatures)
+ */
+export type MessageSignature<numberType = number> = Omit<
+  Credential<numberType>,
+  'validUntil'
 >
 
 /** RLP tuple of a credential's fields, in wire order. */
@@ -344,6 +365,100 @@ export function toTuple(credential: Credential): Tuple {
 
 export declare namespace toTuple {
   type ErrorType = assert.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Deserializes a message signature: `rlp([scheme, publisherId, issuer, keyHash, addressSeed, issuedAt, proof])`.
+ *
+ * [TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131#message-signatures)
+ *
+ * @example
+ * ```ts twoslash
+ * import { ZkSignature } from 'ox/tempo'
+ *
+ * const signature = ZkSignature.deserializeMessage('0x...')
+ * ```
+ *
+ * @param serialized - The serialized message signature.
+ * @returns The message signature.
+ */
+export function deserializeMessage(serialized: Hex.Hex): MessageSignature {
+  const decoded = Rlp.toHex(serialized)
+  // Verifiers reject non-canonical RLP, so the fields must re-encode to the same bytes.
+  if (
+    !Array.isArray(decoded) ||
+    decoded.length !== 7 ||
+    decoded.some((field) => typeof field !== 'string') ||
+    Rlp.fromHex(decoded) !== serialized.toLowerCase()
+  )
+    throw new InvalidCredentialError({
+      reason: 'expected seven canonical message signature fields',
+    })
+  const [scheme, publisherId, issuer, keyHash, addressSeed, issuedAt, proof] =
+    decoded as readonly Hex.Hex[]
+  const signature = {
+    addressSeed: addressSeed!,
+    issuedAt: toInteger(issuedAt!, 'issuedAt'),
+    issuer: issuer!,
+    keyHash: keyHash!,
+    proof: proof!,
+    publisherId: publisherId!,
+    scheme: toInteger(scheme!, 'scheme'),
+  } satisfies MessageSignature
+  assert({ ...signature, validUntil: 0 })
+  return signature
+}
+
+export declare namespace deserializeMessage {
+  type ErrorType =
+    | assert.ErrorType
+    | InvalidCredentialError
+    | Rlp.toHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Serializes a message signature: `rlp([scheme, publisherId, issuer, keyHash, addressSeed, issuedAt, proof])`.
+ *
+ * [TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131#message-signatures)
+ *
+ * @example
+ * ```ts twoslash
+ * import { ZkSignature } from 'ox/tempo'
+ *
+ * const serialized = ZkSignature.serializeMessage({
+ *   addressSeed: `0x${'01'.repeat(32)}`,
+ *   issuedAt: 1760000000,
+ *   issuer: `0x${'02'.repeat(32)}`,
+ *   keyHash: `0x${'03'.repeat(32)}`,
+ *   proof: `0x${'04'.repeat(256)}`,
+ *   publisherId: `0x${'05'.repeat(32)}`,
+ *   scheme: 2
+ * })
+ * ```
+ *
+ * @param signature - The message signature.
+ * @returns The serialized message signature.
+ */
+export function serializeMessage(signature: MessageSignature): Hex.Hex {
+  const [scheme, publisherId, issuer, keyHash, addressSeed, issuedAt, , proof] =
+    toTuple({ ...signature, validUntil: 0 })
+  return Rlp.fromHex([
+    scheme,
+    publisherId,
+    issuer,
+    keyHash,
+    addressSeed,
+    issuedAt,
+    proof,
+  ])
+}
+
+export declare namespace serializeMessage {
+  type ErrorType =
+    | toTuple.ErrorType
+    | Rlp.fromHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
 type Credential_ = Credential
