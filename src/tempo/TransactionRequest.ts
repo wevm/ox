@@ -2,16 +2,16 @@ import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
+import * as AccountSimulation from './AccountSimulation.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as MultisigSimulation from './MultisigSimulation.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
-type KeyType = SignatureEnvelope.Type | 'multisig'
+type KeyType = SignatureEnvelope.Type | 'configurable'
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -31,6 +31,7 @@ export type TransactionRequest<
     ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
     'authorizationList'
   > & {
+    accountSimulation?: AccountSimulation.Spec | undefined
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
@@ -38,10 +39,9 @@ export type TransactionRequest<
     feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
-    keyAuthorizationSimulation?: MultisigSimulation.Spec | undefined
+    keyAuthorizationSimulation?: AccountSimulation.Spec | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
-    multisigSimulation?: MultisigSimulation.Spec | undefined
     nonceKey?: 'random' | bigintType | undefined
     validAfter?: numberType | undefined
     validBefore?: numberType | undefined
@@ -51,17 +51,20 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
+  | 'accountSimulation'
   | 'authorizationList'
   | 'feeToken'
   | 'keyAuthorization'
-  | 'multisigSimulation'
   | 'keyAuthorizationSimulation'
+  | 'keyType'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
-  keyAuthorizationSimulation?: MultisigSimulation.Rpc | undefined
-  multisigSimulation?: MultisigSimulation.Rpc | undefined
+  keyAuthorizationSimulation?: AccountSimulation.Rpc | undefined
+  /** Key type. Configurable accounts use the node's `multisig` key type. */
+  keyType?: SignatureEnvelope.Type | 'multisig' | undefined
+  multisigSimulation?: AccountSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
 
@@ -88,8 +91,9 @@ export type Rpc = Omit<
 export function fromRpc(request: Rpc): TransactionRequest {
   const {
     authorizationList: _,
-    multisigSimulation: __,
-    keyAuthorizationSimulation: ___,
+    keyAuthorizationSimulation: __,
+    keyType: ___,
+    multisigSimulation: ____,
     ...rest
   } = request
   const request_ = ox_TransactionRequest.fromRpc(
@@ -123,11 +127,14 @@ export function fromRpc(request: Rpc): TransactionRequest {
       request.keyAuthorization,
     )
   if (request.keyAuthorizationSimulation)
-    request_.keyAuthorizationSimulation = MultisigSimulation.fromRpc(
+    request_.keyAuthorizationSimulation = AccountSimulation.fromRpc(
       request.keyAuthorizationSimulation,
     )
+  if (typeof request.keyType !== 'undefined')
+    request_.keyType =
+      request.keyType === 'multisig' ? 'configurable' : request.keyType
   if (request.multisigSimulation)
-    request_.multisigSimulation = MultisigSimulation.fromRpc(
+    request_.accountSimulation = AccountSimulation.fromRpc(
       request.multisigSimulation,
     )
   if (typeof request.validBefore !== 'undefined')
@@ -145,7 +152,7 @@ export declare namespace fromRpc {
     | AuthorizationTempo.fromRpcList.ErrorType
     | Hex.toBigInt.ErrorType
     | Hex.toNumber.ErrorType
-    | MultisigSimulation.fromRpc.ErrorType
+    | AccountSimulation.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -229,12 +236,12 @@ export function toRpc(request: TransactionRequest): Rpc {
       request.keyAuthorization,
     )
   if (request.keyAuthorizationSimulation)
-    request_rpc.keyAuthorizationSimulation = MultisigSimulation.toRpc(
+    request_rpc.keyAuthorizationSimulation = AccountSimulation.toRpc(
       request.keyAuthorizationSimulation,
     )
-  if (request.multisigSimulation)
-    request_rpc.multisigSimulation = MultisigSimulation.toRpc(
-      request.multisigSimulation,
+  if (request.accountSimulation)
+    request_rpc.multisigSimulation = AccountSimulation.toRpc(
+      request.accountSimulation,
     )
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = Hex.fromNumber(request.validBefore)
@@ -250,11 +257,11 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (nonceKey) request_rpc.nonceKey = nonceKey
 
   if (
+    typeof request.accountSimulation !== 'undefined' ||
     typeof request.calls !== 'undefined' ||
     typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
     typeof request.keyAuthorization !== 'undefined' ||
-    typeof request.multisigSimulation !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
@@ -273,7 +280,7 @@ export function toRpc(request: TransactionRequest): Rpc {
 export declare namespace toRpc {
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
-    | MultisigSimulation.toRpc.ErrorType
+    | AccountSimulation.toRpc.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }

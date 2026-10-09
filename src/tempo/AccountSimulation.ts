@@ -3,13 +3,13 @@ import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
-import * as MultisigConfig from './MultisigConfig.js'
+import * as AccountConfig from './AccountConfig.js'
 import type * as SignatureEnvelope from './SignatureEnvelope.js'
 
-/** Native multisig owner approval used for RPC simulation. */
+/** Configurable account owner approval used for RPC simulation. */
 export type Approval = PrimitiveApproval
 
-/** JSON-RPC native multisig owner approval used for RPC simulation. */
+/** JSON-RPC configurable account owner approval used for RPC simulation. */
 export type ApprovalRpc = PrimitiveApproval
 
 /** Primitive owner approval used for RPC simulation. */
@@ -22,7 +22,7 @@ export type PrimitiveApproval = {
   owner: Address.Address
 }
 
-/** JSON-RPC representation of a native multisig simulation spec. */
+/** JSON-RPC representation of an account simulation spec. */
 export type Rpc = Compute<{
   /** Owner approvals to model. */
   approvals: readonly ApprovalRpc[]
@@ -30,27 +30,27 @@ export type Rpc = Compute<{
   config: Hex.Hex
 }>
 
-/** Native multisig spec used to construct an RPC simulation signature. */
+/** Account simulation spec used to construct an RPC simulation signature. */
 export type Spec = Compute<{
   /** Owner approvals to model. */
   approvals: readonly Approval[]
   /** Complete applicable configuration. */
-  config: MultisigConfig.Config
+  config: AccountConfig.Config
 }>
 
 /**
- * Converts a JSON-RPC multisig simulation spec to its domain representation.
+ * Converts a JSON-RPC account simulation spec to its domain representation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigSimulation } from 'ox/tempo'
+ * import { AccountSimulation } from 'ox/tempo'
  *
- * const spec = MultisigSimulation.fromRpc(specRpc)
+ * const spec = AccountSimulation.fromRpc(specRpc)
  * ```
  *
- * @param spec - JSON-RPC multisig simulation spec.
- * @returns The multisig simulation spec with decoded configurations.
+ * @param spec - JSON-RPC account simulation spec.
+ * @returns The account simulation spec with decoded configurations.
  */
 export function fromRpc(spec: Rpc): Spec {
   const { approvals, config } = spec
@@ -63,25 +63,25 @@ export declare namespace fromRpc {
   export type ErrorType =
     | Hex.isEqual.ErrorType
     | InvalidSimulationError
-    | MultisigConfig.assert.ErrorType
+    | AccountConfig.assert.ErrorType
     | Rlp.fromHex.ErrorType
     | Rlp.toHex.ErrorType
     | Errors.GlobalErrorType
 }
 
 /**
- * Converts a multisig simulation spec to its JSON-RPC representation.
+ * Converts an account simulation spec to its JSON-RPC representation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigSimulation } from 'ox/tempo'
+ * import { AccountSimulation } from 'ox/tempo'
  *
- * const specRpc = MultisigSimulation.toRpc(spec)
+ * const specRpc = AccountSimulation.toRpc(spec)
  * ```
  *
- * @param spec - Multisig simulation spec.
- * @returns The JSON-RPC multisig simulation spec with encoded configurations.
+ * @param spec - Account simulation spec.
+ * @returns The JSON-RPC account simulation spec with encoded configurations.
  */
 export function toRpc(spec: Spec): Rpc {
   const { approvals, config } = spec
@@ -101,7 +101,7 @@ export declare namespace toRpc {
   export type ErrorType =
     | Hex.fromNumber.ErrorType
     | InvalidSimulationError
-    | MultisigConfig.assert.ErrorType
+    | AccountConfig.assert.ErrorType
     | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -120,14 +120,14 @@ function assertApprovals(approvals: readonly unknown[]) {
     throw new InvalidSimulationError({
       reason: 'only untagged primitive owner approvals are allowed',
     })
-  if (approvals.length > MultisigConfig.maxSignatures)
+  if (approvals.length > AccountConfig.maxSignatures)
     throw new InvalidSimulationError({
-      reason: `approval count exceeds ${MultisigConfig.maxSignatures}`,
+      reason: `approval count exceeds ${AccountConfig.maxSignatures}`,
     })
 }
 
 /** @internal */
-function deserializeConfig(config: Hex.Hex): MultisigConfig.Config {
+function deserializeConfig(config: Hex.Hex): AccountConfig.Config {
   const tuple = Rlp.toHex(config)
   if (!Array.isArray(tuple) || tuple.length !== 4)
     throw new InvalidSimulationError({ reason: 'invalid config encoding' })
@@ -151,18 +151,16 @@ function deserializeConfig(config: Hex.Hex): MultisigConfig.Config {
     )
   )
     throw new InvalidSimulationError({ reason: 'invalid config encoding' })
-  const value = MultisigConfig.fromTuple(
-    tuple as unknown as MultisigConfig.Tuple,
-  )
-  MultisigConfig.assert(value)
+  const value = AccountConfig.fromTuple(tuple as unknown as AccountConfig.Tuple)
+  AccountConfig.assert(value)
   if (!Hex.isEqual(config, serializeConfig(value)))
     throw new InvalidSimulationError({ reason: 'noncanonical config encoding' })
   return value
 }
 
 /** @internal */
-function serializeConfig(config: MultisigConfig.Input): Hex.Hex {
-  return Rlp.fromHex(MultisigConfig.toTuple(config))
+function serializeConfig(config: AccountConfig.Input): Hex.Hex {
+  return Rlp.fromHex(AccountConfig.toTuple(config))
 }
 
 /**
@@ -175,11 +173,11 @@ function shimKeyData(data: Hex.Hex): Hex.Hex {
   return Hex.fromNumber(size, { size: 2 })
 }
 
-/** Thrown when a native multisig simulation spec is invalid. */
+/** Thrown when an account simulation spec is invalid. */
 export class InvalidSimulationError extends Errors.BaseError {
-  override readonly name = 'MultisigSimulation.InvalidSimulationError'
+  override readonly name = 'AccountSimulation.InvalidSimulationError'
   constructor(options: InvalidSimulationError.Options) {
-    super(`Invalid multisig simulation: ${options.reason}.`)
+    super(`Invalid account simulation: ${options.reason}.`)
   }
 }
 

@@ -5,9 +5,9 @@ import type * as Hex from '../core/Hex.js'
 import type * as Log from '../core/Log.js'
 import type * as RpcSchema from '../core/RpcSchema.js'
 import type * as StateOverrides from '../core/StateOverrides.js'
+import type * as AccountConfig from './AccountConfig.js'
+import type * as AccountOperation from './AccountOperation.js'
 import type * as KeyAuthorization from './KeyAuthorization.js'
-import type * as MultisigConfig from './MultisigConfig.js'
-import type * as MultisigOperation from './MultisigOperation.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
 /**
@@ -58,44 +58,44 @@ export type Tempo = RpcSchema.From<{
   }
 }>
 
-/** Union of all JSON-RPC methods for the `multisig_` namespace. */
-export type Multisig = RpcSchema.From<
+/** Union of all JSON-RPC methods for the `account_` namespace. */
+export type Account = RpcSchema.From<
   | {
       Request: {
-        method: 'multisig_approveRawTransaction'
+        method: 'account_approveRawTransaction'
         params: [serializedTransaction: Hex.Hex]
       }
       ReturnType: Hex.Hex
     }
   | {
       Request: {
-        method: 'multisig_approveRawTransactionSync'
+        method: 'account_approveRawTransactionSync'
         params: [serializedTransaction: Hex.Hex, timeout?: number]
       }
-      ReturnType: MultisigOperation.TransactionRpc
+      ReturnType: AccountOperation.TransactionRpc
     }
   | {
       Request: {
-        method: 'multisig_approveKeyAuthorization'
+        method: 'account_approveKeyAuthorization'
         params: [
           | { keyAuthorization: KeyAuthorization.Rpc }
           | { hash: Hex.Hex; signature: Hex.Hex },
         ]
       }
-      ReturnType: MultisigOperation.KeyAuthorizationRpc
+      ReturnType: AccountOperation.KeyAuthorizationRpc
     }
   | {
       Request: {
-        method: 'multisig_getConfig'
+        method: 'account_getConfig'
         params: [{ address: Address.Address }]
       }
-      ReturnType: MultisigConfig.Rpc | null
+      ReturnType: AccountConfig.Rpc | null
     }
   | {
       Request: {
-        method: 'multisig_getOperation'
+        method: 'account_getOperation'
         params: [hash: Hex.Hex]
       }
-      ReturnType: MultisigOperation.Rpc | null
+      ReturnType: AccountOperation.Rpc | null
     }
 >
