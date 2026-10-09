@@ -63,8 +63,8 @@ describe('TransactionRequest', () => {
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 
-  test('multisig simulation round-trips', () => {
-    const multisigSimulation = {
+  test('account simulation round-trips', () => {
+    const accountSimulationRpc = {
       approvals: [
         {
           keyType: 'webAuthn',
@@ -78,20 +78,40 @@ describe('TransactionRequest', () => {
 
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
       ...rpc,
-      keyAuthorizationSimulation: multisigSimulation,
-      multisigSimulation,
+      keyAuthorizationSimulation: accountSimulationRpc,
+      multisigSimulation: accountSimulationRpc,
     })
     expect(decoded).toEqual(
       core_TransactionRequest.fromRpc({
         ...rpc,
-        keyAuthorizationSimulation: multisigSimulation,
-        multisigSimulation,
+        keyAuthorizationSimulation: accountSimulationRpc,
+        multisigSimulation: accountSimulationRpc,
       }),
+    )
+    expect(decoded.accountSimulation).toEqual(
+      decoded.keyAuthorizationSimulation,
     )
 
     const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
-    expect(encoded.keyAuthorizationSimulation).toStrictEqual(multisigSimulation)
-    expect(encoded.multisigSimulation).toStrictEqual(multisigSimulation)
+    expect(encoded.keyAuthorizationSimulation).toStrictEqual(
+      accountSimulationRpc,
+    )
+    expect(encoded.multisigSimulation).toStrictEqual(accountSimulationRpc)
+    expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
+  })
+
+  test('configurable key type maps to the multisig RPC key type', () => {
+    const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
+      ...rpc,
+      keyType: 'multisig',
+    })
+    expect(decoded.keyType).toBe('configurable')
+    expect(decoded).toEqual(
+      core_TransactionRequest.fromRpc({ ...rpc, keyType: 'multisig' }),
+    )
+
+    const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+    expect(encoded.keyType).toBe('multisig')
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 

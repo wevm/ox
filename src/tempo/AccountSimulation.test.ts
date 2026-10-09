@@ -1,4 +1,4 @@
-import { MultisigConfig, MultisigSimulation } from 'ox/tempo'
+import { AccountConfig, AccountSimulation } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
 
 const config =
@@ -12,11 +12,11 @@ const rpc = {
     },
   ],
   config,
-} as const satisfies MultisigSimulation.Rpc
+} as const satisfies AccountSimulation.Rpc
 
 describe('fromRpc', () => {
   test('behavior: decodes the configuration', () => {
-    expect(MultisigSimulation.fromRpc(rpc)).toMatchInlineSnapshot(`
+    expect(AccountSimulation.fromRpc(rpc)).toMatchInlineSnapshot(`
       {
         "approvals": [
           {
@@ -49,35 +49,35 @@ describe('fromRpc', () => {
       '0xf843a0000000000000000000000000000000000000000000000000000000000000000088ffffffffffffffff01d7d694111111111111111111111111111111111111111101' as const
 
     expect(
-      MultisigSimulation.fromRpc({ ...rpc, approvals: [], config }).config
+      AccountSimulation.fromRpc({ ...rpc, approvals: [], config }).config
         .version,
     ).toMatchInlineSnapshot(`18446744073709551615n`)
   })
 
   test('error: rejects excess root approvals', () => {
     expect(() =>
-      MultisigSimulation.fromRpc({
+      AccountSimulation.fromRpc({
         ...rpc,
         approvals: Array.from({ length: 9 }, () => rpc.approvals[0]),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: approval count exceeds 8.]`,
+      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: approval count exceeds 8.]`,
     )
   })
   test('error: rejects nested approvals', () => {
     expect(() =>
-      MultisigSimulation.fromRpc({
+      AccountSimulation.fromRpc({
         ...rpc,
-        approvals: [{ type: 'multisig', spec: rpc }],
+        approvals: [{ type: 'configurable', spec: rpc }],
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: only untagged primitive owner approvals are allowed.]`,
+      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: only untagged primitive owner approvals are allowed.]`,
     )
   })
 
   test('error: rejects trailing configuration bytes', () => {
     expect(() =>
-      MultisigSimulation.fromRpc({ ...rpc, config: `${config}00` }),
+      AccountSimulation.fromRpc({ ...rpc, config: `${config}00` }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
     )
@@ -85,7 +85,7 @@ describe('fromRpc', () => {
 
   test('error: rejects malformed configuration RLP', () => {
     expect(() =>
-      MultisigSimulation.fromRpc({ ...rpc, config: '0xf8' }),
+      AccountSimulation.fromRpc({ ...rpc, config: '0xf8' }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[Cursor.PositionOutOfBoundsError: Position \`1\` is out of bounds (\`0 < position < 1\`).]`,
     )
@@ -93,9 +93,9 @@ describe('fromRpc', () => {
 
   test('error: rejects a non-list configuration', () => {
     expect(() =>
-      MultisigSimulation.fromRpc({ ...rpc, config: '0x01' }),
+      AccountSimulation.fromRpc({ ...rpc, config: '0x01' }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: invalid config encoding.]`,
+      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: invalid config encoding.]`,
     )
   })
 
@@ -105,16 +105,16 @@ describe('fromRpc', () => {
       .replace('118002', '11810002') as `0x${string}`
 
     expect(() =>
-      MultisigSimulation.fromRpc({ ...rpc, config: noncanonical }),
+      AccountSimulation.fromRpc({ ...rpc, config: noncanonical }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: invalid config encoding.]`,
+      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: invalid config encoding.]`,
     )
   })
 })
 
 describe('toRpc', () => {
   test('behavior: encodes configurations and shims long key data', () => {
-    expect(MultisigSimulation.toRpc(MultisigSimulation.fromRpc(rpc)))
+    expect(AccountSimulation.toRpc(AccountSimulation.fromRpc(rpc)))
       .toMatchInlineSnapshot(`
         {
           "approvals": [
@@ -130,12 +130,12 @@ describe('toRpc', () => {
   })
 
   test('behavior: preserves short key data', () => {
-    const spec = MultisigSimulation.fromRpc({
+    const spec = AccountSimulation.fromRpc({
       ...rpc,
       approvals: [{ ...rpc.approvals[0], keyData: '0x0102' }],
     })
 
-    expect(MultisigSimulation.toRpc(spec).approvals).toMatchInlineSnapshot(`
+    expect(AccountSimulation.toRpc(spec).approvals).toMatchInlineSnapshot(`
       [
         {
           "keyData": "0x0102",
@@ -147,13 +147,13 @@ describe('toRpc', () => {
   })
 
   test('behavior: encodes the maximum uint64 configuration version', () => {
-    const spec = MultisigSimulation.fromRpc(rpc)
+    const spec = AccountSimulation.fromRpc(rpc)
 
     expect(
-      MultisigSimulation.toRpc({
+      AccountSimulation.toRpc({
         ...spec,
         approvals: [],
-        config: MultisigConfig.from({
+        config: AccountConfig.from({
           owners: [
             {
               owner: '0x1111111111111111111111111111111111111111',
@@ -161,7 +161,7 @@ describe('toRpc', () => {
             },
           ],
           threshold: 1,
-          version: MultisigConfig.maxVersion,
+          version: AccountConfig.maxVersion,
         }),
       }).config,
     ).toMatchInlineSnapshot(
@@ -170,25 +170,25 @@ describe('toRpc', () => {
   })
 
   test('error: rejects excess root approvals', () => {
-    const spec = MultisigSimulation.fromRpc(rpc)
+    const spec = AccountSimulation.fromRpc(rpc)
 
     expect(() =>
-      MultisigSimulation.toRpc({
+      AccountSimulation.toRpc({
         ...spec,
         approvals: Array.from({ length: 9 }, () => spec.approvals[0]!),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: approval count exceeds 8.]`,
+      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: approval count exceeds 8.]`,
     )
   })
   test('error: rejects nested approvals', () => {
     expect(() =>
-      MultisigSimulation.toRpc({
+      AccountSimulation.toRpc({
         ...rpc,
-        approvals: [{ type: 'multisig', spec: rpc }],
+        approvals: [{ type: 'configurable', spec: rpc }],
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigSimulation.InvalidSimulationError: Invalid multisig simulation: only untagged primitive owner approvals are allowed.]`,
+      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: only untagged primitive owner approvals are allowed.]`,
     )
   })
 })

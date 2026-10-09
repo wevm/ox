@@ -1,16 +1,16 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
-import * as core_MultisigConfig from '../../tempo/MultisigConfig.js'
+import * as core_AccountConfig from '../../tempo/AccountConfig.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
 import * as z from 'zod/mini'
 
-/** Multisig owner schema. */
+/** Account config owner schema. */
 export const Owner = z.object({
   owner: z_Address.Address,
   weight: z.number(),
 })
 
-/** Native multisig configuration domain schema. */
+/** Account configuration domain schema. */
 export const Config = z
   .object({
     owners: z.readonly(z.array(Owner)),
@@ -20,12 +20,12 @@ export const Config = z
   })
   .check(
     z.refine(
-      (value) => core_MultisigConfig.validate(value),
-      'expected valid native multisig configuration',
+      (value) => core_AccountConfig.validate(value),
+      'expected valid account configuration',
     ),
   )
 
-/** Native multisig configuration RPC schema. */
+/** Account configuration RPC schema. */
 export const Rpc = z
   .object({
     owners: z.readonly(z.array(Owner)),
@@ -36,16 +36,16 @@ export const Rpc = z
   .check(
     z.refine((value) => {
       try {
-        core_MultisigConfig.fromRpc(value)
+        core_AccountConfig.fromRpc(value)
         return true
       } catch {
         return false
       }
-    }, 'expected valid native multisig configuration'),
+    }, 'expected valid account configuration'),
   )
 
-/** Codec decoding an RPC multisig configuration into a domain configuration. */
-export const MultisigConfig = z.codec(Rpc, Config, {
-  decode: (value) => core_MultisigConfig.fromRpc(value),
-  encode: (value) => core_MultisigConfig.toRpc(value),
+/** Codec decoding an RPC account configuration into a domain configuration. */
+export const AccountConfig = z.codec(Rpc, Config, {
+  decode: (value) => core_AccountConfig.fromRpc(value),
+  encode: (value) => core_AccountConfig.toRpc(value),
 })

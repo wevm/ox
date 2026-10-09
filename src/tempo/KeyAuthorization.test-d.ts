@@ -17,7 +17,7 @@ const signature = {
   type: 'secp256k1',
 } as const satisfies SignatureEnvelope.Secp256k1
 
-const multisig = {
+const configurable = {
   account: '0x2222222222222222222222222222222222222222',
   config: {
     salt: `0x${'00'.repeat(32)}`,
@@ -28,8 +28,8 @@ const multisig = {
     ],
   },
   signatures: [signature],
-  type: 'multisig',
-} as const satisfies SignatureEnvelope.Multisig
+  type: 'configurable',
+} as const satisfies SignatureEnvelope.Configurable
 
 test('accepts primitive signatures', () => {
   const signed = KeyAuthorization.from(authorization, { signature })
@@ -39,10 +39,10 @@ test('accepts primitive signatures', () => {
   >()
 })
 
-test('accepts multisig signatures and account-bound grants', () => {
+test('accepts configurable signatures and account-bound grants', () => {
   const signed = KeyAuthorization.from(
-    { ...authorization, account: multisig.account, type: 'multisig' },
-    { signature: multisig },
+    { ...authorization, account: configurable.account, type: 'configurable' },
+    { signature: configurable },
   )
   expectTypeOf(signed).toMatchTypeOf<KeyAuthorization.Signed>()
   expectTypeOf(

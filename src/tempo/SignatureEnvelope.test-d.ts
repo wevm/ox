@@ -15,24 +15,24 @@ const envelope = SignatureEnvelope.from({
   signatures: [primitive],
 })
 
-test('preserves primitive and multisig RPC types', () => {
+test('preserves primitive and configurable RPC types', () => {
   expectTypeOf(
     SignatureEnvelope.toRpc(primitive),
   ).toEqualTypeOf<SignatureEnvelope.Secp256k1Rpc>()
   expectTypeOf(SignatureEnvelope.toRpc(envelope)).toEqualTypeOf<Hex.Hex>()
   expectTypeOf<
     SignatureEnvelope.GetType<typeof envelope>
-  >().toEqualTypeOf<'multisig'>()
-  expectTypeOf(envelope).toMatchTypeOf<SignatureEnvelope.Multisig>()
+  >().toEqualTypeOf<'configurable'>()
+  expectTypeOf(envelope).toMatchTypeOf<SignatureEnvelope.Configurable>()
 })
 
 test('requires config and primitive approvals', () => {
-  // @ts-expect-error Every multisig signature carries its current config.
+  // @ts-expect-error Every configurable signature carries its current config.
   SignatureEnvelope.from({ account: envelope.account, signatures: [primitive] })
-  // @ts-expect-error Multisig owners cannot recursively approve with multisigs.
+  // @ts-expect-error Configurable owners cannot recursively approve with configurable signatures.
   SignatureEnvelope.from({ ...envelope, signatures: [envelope] })
-  // @ts-expect-error Multisig RPC signatures are hex-encoded RLP.
-  const rpc: SignatureEnvelope.MultisigRpc = {
+  // @ts-expect-error Configurable RPC signatures are hex-encoded RLP.
+  const rpc: SignatureEnvelope.ConfigurableRpc = {
     account: envelope.account,
     signatures: [],
   }

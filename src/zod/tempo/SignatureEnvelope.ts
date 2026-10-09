@@ -1,10 +1,10 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as core_SignatureEnvelope from '../../tempo/SignatureEnvelope.js'
 import * as core_Hex from '../../core/Hex.js'
-import * as core_MultisigConfig from '../../tempo/MultisigConfig.js'
+import * as core_AccountConfig from '../../tempo/AccountConfig.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
-import * as z_MultisigConfig from './MultisigConfig.js'
+import * as z_AccountConfig from './AccountConfig.js'
 import * as z from 'zod/mini'
 
 /** Signature envelope key type schema. */
@@ -92,11 +92,11 @@ export const KeychainRpc = z
       } catch {
         return false
       }
-    }, 'multisig access keys require keychain V2'),
+    }, 'configurable access keys require keychain V2'),
   )
 
-/** RPC native multisig signature envelope schema. */
-export const MultisigRpc = z_Hex.Hex.check(
+/** RPC configurable account signature envelope schema. */
+export const ConfigurableRpc = z_Hex.Hex.check(
   z.refine((value) => {
     try {
       core_SignatureEnvelope.fromRpc(value)
@@ -104,7 +104,7 @@ export const MultisigRpc = z_Hex.Hex.check(
     } catch {
       return false
     }
-  }, 'expected valid native multisig signature'),
+  }, 'expected valid configurable account signature'),
 )
 
 /** RPC signature envelope schema. */
@@ -113,7 +113,7 @@ export const Rpc = z.union([
   P256Rpc,
   WebAuthnRpc,
   KeychainRpc,
-  MultisigRpc,
+  ConfigurableRpc,
 ])
 
 /** secp256k1 signature envelope schema. */
@@ -160,32 +160,38 @@ export const Keychain = z
   .check(
     z.refine(
       (value) => core_SignatureEnvelope.validate(value),
-      'multisig access keys require keychain V2',
+      'configurable access keys require keychain V2',
     ),
   )
 
-/** Native multisig signature envelope schema. */
-export const Multisig = z
+/** Configurable account signature envelope schema. */
+export const Configurable = z
   .object({
     account: z_Address.Address,
-    config: z_MultisigConfig.Config,
+    config: z_AccountConfig.Config,
     signatures: z.readonly(
       z
         .array(Primitive)
-        .check(z.minLength(1), z.maxLength(core_MultisigConfig.maxSignatures)),
+        .check(z.minLength(1), z.maxLength(core_AccountConfig.maxSignatures)),
     ),
-    type: z.literal('multisig'),
+    type: z.literal('configurable'),
   })
   // Keep invalid recursive approvals inside Zod's issue path.
   .check(
     z.refine(
       (value) => core_SignatureEnvelope.validate(value),
-      'expected valid native multisig signature',
+      'expected valid configurable account signature',
     ),
   )
 
 /** Decoded signature envelope schema. */
-export const Domain = z.union([Secp256k1, P256, WebAuthn, Keychain, Multisig])
+export const Domain = z.union([
+  Secp256k1,
+  P256,
+  WebAuthn,
+  Keychain,
+  Configurable,
+])
 
 /** Codec decoding an RPC signature envelope into a signature envelope. */
 export const SignatureEnvelope = z.codec(Rpc, Domain, {
@@ -298,9 +304,9 @@ function toRpc(
     }
   }
 
-  if (value.type === 'multisig')
+  if (value.type === 'configurable')
     return core_SignatureEnvelope.toRpc(
-      value as core_SignatureEnvelope.Multisig,
+      value as core_SignatureEnvelope.Configurable,
     )
 
   const keychain = value as core_SignatureEnvelope.Keychain
