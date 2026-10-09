@@ -2,11 +2,11 @@
 "ox": patch
 ---
 
-Renamed the Tempo multisig account APIs to configurable accounts (TIP-1107), raised `AccountConfig.maxThreshold` to `255` per TIP-1114, and added `AccountConfig.update` for deriving the next config after an owner update.
+Renamed the Tempo multisig account APIs to configurable accounts (TIP-1107), including the `account_` relay RPC namespace, raised `AccountConfig.maxThreshold` to `255` per TIP-1114, and added `AccountConfig.update` for deriving the next config after an owner update.
 
 ```diff
-- import { MultisigConfig, MultisigSimulation } from 'ox/tempo'
-+ import { AccountConfig, AccountSimulation } from 'ox/tempo'
+- import { MultisigConfig, MultisigOperation, MultisigSimulation } from 'ox/tempo'
++ import { AccountConfig, AccountOperation, AccountSimulation } from 'ox/tempo'
 
 - const initialConfig = MultisigConfig.from({ owners, threshold: 2 })
 + const initialConfig = AccountConfig.from({ owners, threshold: 2 })
@@ -22,4 +22,7 @@ Renamed the Tempo multisig account APIs to configurable accounts (TIP-1107), rai
 
 - TransactionRequest.toRpc({ from, keyType: 'multisig', multisigSimulation })
 + TransactionRequest.toRpc({ accountSimulation, from, keyType: 'configurable' })
+
+- RpcSchema.from<RpcSchemaTempo.Multisig>() // multisig_getConfig, multisig_getOperation, ...
++ RpcSchema.from<RpcSchemaTempo.Account>() // account_getConfig, account_getOperation, ...
 ```

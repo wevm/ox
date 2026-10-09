@@ -776,6 +776,11 @@
       "types": "./dist/tempo/AccountConfig.d.ts",
       "default": "./dist/tempo/AccountConfig.js"
     },
+    "./tempo/AccountOperation": {
+      "src": "./src/tempo/AccountOperation.ts",
+      "types": "./dist/tempo/AccountOperation.d.ts",
+      "default": "./dist/tempo/AccountOperation.js"
+    },
     "./tempo/AccountSimulation": {
       "src": "./src/tempo/AccountSimulation.ts",
       "types": "./dist/tempo/AccountSimulation.d.ts",
@@ -800,11 +805,6 @@
       "src": "./src/tempo/KeyAuthorization.ts",
       "types": "./dist/tempo/KeyAuthorization.d.ts",
       "default": "./dist/tempo/KeyAuthorization.js"
-    },
-    "./tempo/MultisigOperation": {
-      "src": "./src/tempo/MultisigOperation.ts",
-      "types": "./dist/tempo/MultisigOperation.d.ts",
-      "default": "./dist/tempo/MultisigOperation.js"
     },
     "./tempo/Period": {
       "src": "./src/tempo/Period.ts",
@@ -1236,6 +1236,11 @@
       "types": "./dist/zod/tempo/AccountConfig.d.ts",
       "default": "./dist/zod/tempo/AccountConfig.js"
     },
+    "./zod/tempo/AccountOperation": {
+      "src": "./src/zod/tempo/AccountOperation.ts",
+      "types": "./dist/zod/tempo/AccountOperation.d.ts",
+      "default": "./dist/zod/tempo/AccountOperation.js"
+    },
     "./zod/tempo/AccountSimulation": {
       "src": "./src/zod/tempo/AccountSimulation.ts",
       "types": "./dist/zod/tempo/AccountSimulation.d.ts",
@@ -1250,11 +1255,6 @@
       "src": "./src/zod/tempo/KeyAuthorization.ts",
       "types": "./dist/zod/tempo/KeyAuthorization.d.ts",
       "default": "./dist/zod/tempo/KeyAuthorization.js"
-    },
-    "./zod/tempo/MultisigOperation": {
-      "src": "./src/zod/tempo/MultisigOperation.ts",
-      "types": "./dist/zod/tempo/MultisigOperation.d.ts",
-      "default": "./dist/zod/tempo/MultisigOperation.js"
     },
     "./zod/tempo/PoolId": {
       "src": "./src/zod/tempo/PoolId.ts",

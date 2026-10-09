@@ -7,7 +7,7 @@ import * as KeyAuthorization_ from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
-/** Fields shared by every multisig operation. */
+/** Fields shared by every account operation. */
 export type Base<quantity = bigint> = {
   /** Root configurable account. */
   account: Address.Address
@@ -17,7 +17,7 @@ export type Base<quantity = bigint> = {
   config: AccountConfig.Config<quantity>
   /** Unix creation time in milliseconds. */
   createdAt: number
-  /** Deterministic multisig operation hash. */
+  /** Deterministic account operation hash. */
   hash: Hex.Hex
   /** Number of approvals selected for quorum evaluation. */
   signatureCount: number
@@ -29,7 +29,7 @@ export type Base<quantity = bigint> = {
   weight: number
 }
 
-/** Multisig transaction approval operation. */
+/** Account transaction approval operation. */
 export type TransactionOperation<quantity = bigint> = Base<quantity> & {
   /** Time when another relay may reclaim the submission lease. */
   expiresAt?: number | undefined
@@ -45,7 +45,7 @@ export type TransactionOperation<quantity = bigint> = Base<quantity> & {
   type: 'transaction'
 }
 
-/** Multisig key authorization approval operation. */
+/** Account key authorization approval operation. */
 export type KeyAuthorizationOperation<quantity = bigint> = Base<quantity> & {
   /** Canonical serialized key authorization. */
   keyAuthorization: Hex.Hex
@@ -55,29 +55,29 @@ export type KeyAuthorizationOperation<quantity = bigint> = Base<quantity> & {
   type: 'keyAuthorization'
 }
 
-/** Transaction or key authorization multisig operation. */
+/** Transaction or key authorization account operation. */
 export type Operation<quantity = bigint> =
   | TransactionOperation<quantity>
   | KeyAuthorizationOperation<quantity>
 
-/** JSON-RPC multisig transaction operation. */
+/** JSON-RPC account transaction operation. */
 export type TransactionRpc = TransactionOperation<Hex.Hex>
 
-/** JSON-RPC multisig key authorization operation. */
+/** JSON-RPC account key authorization operation. */
 export type KeyAuthorizationRpc = KeyAuthorizationOperation<Hex.Hex>
 
-/** JSON-RPC multisig operation. */
+/** JSON-RPC account operation. */
 export type Rpc = Operation<Hex.Hex>
 
 /**
- * Derives the deterministic hash for a multisig operation.
+ * Derives the deterministic hash for an account operation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
- * const hash = MultisigOperation.getHash({
+ * const hash = AccountOperation.getHash({
  *   account,
  *   config,
  *   transaction,
@@ -148,9 +148,9 @@ export declare namespace getHash {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
- * const selection = await MultisigOperation.selectApprovals({
+ * const selection = await AccountOperation.selectApprovals({
  *   account,
  *   approvals,
  *   config,
@@ -218,15 +218,15 @@ export declare namespace selectApprovals {
 }
 
 /**
- * Serializes a key authorization with selected multisig owner approvals.
+ * Serializes a key authorization with selected owner approvals.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
  * const authorization =
- *   MultisigOperation.serializeKeyAuthorization(
+ *   AccountOperation.serializeKeyAuthorization(
  *     keyAuthorization,
  *     {
  *       account,
@@ -302,14 +302,14 @@ export declare namespace serializeKeyAuthorization {
 }
 
 /**
- * Serializes a multisig transaction operation with selected owner approvals.
+ * Serializes an account transaction operation with selected owner approvals.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
- * const transaction = MultisigOperation.serializeTransaction(
+ * const transaction = AccountOperation.serializeTransaction(
  *   operation,
  *   {
  *     approvals: selection.selectedApprovals
@@ -317,7 +317,7 @@ export declare namespace serializeKeyAuthorization {
  * )
  * ```
  *
- * @param operation - Multisig transaction operation.
+ * @param operation - Account transaction operation.
  * @param options - Transaction serialization options.
  * @returns The signed serialized Tempo transaction.
  */
@@ -375,17 +375,17 @@ export declare namespace serializeTransaction {
 }
 
 /**
- * Validates and normalizes a multisig operation.
+ * Validates and normalizes an account operation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
- * const operation = MultisigOperation.from(value)
+ * const operation = AccountOperation.from(value)
  * ```
  *
- * @param operation - Multisig operation.
+ * @param operation - Account operation.
  * @returns The validated operation.
  */
 export function from<const operation extends Operation>(
@@ -425,17 +425,17 @@ export declare namespace from {
 }
 
 /**
- * Converts a JSON-RPC multisig operation to its domain representation.
+ * Converts a JSON-RPC account operation to its domain representation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
- * const operation = MultisigOperation.fromRpc(value)
+ * const operation = AccountOperation.fromRpc(value)
  * ```
  *
- * @param operation - JSON-RPC multisig operation.
+ * @param operation - JSON-RPC account operation.
  * @returns The validated operation.
  */
 export function fromRpc<const operation extends Rpc>(
@@ -474,17 +474,17 @@ export declare namespace fromRpc {
 }
 
 /**
- * Converts a multisig operation to its JSON-RPC representation.
+ * Converts an account operation to its JSON-RPC representation.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { MultisigOperation } from 'ox/tempo'
+ * import { AccountOperation } from 'ox/tempo'
  *
- * const operationRpc = MultisigOperation.toRpc(operation)
+ * const operationRpc = AccountOperation.toRpc(operation)
  * ```
  *
- * @param operation - Multisig operation.
+ * @param operation - Account operation.
  * @returns The JSON-RPC operation.
  */
 export function toRpc<const operation extends Operation>(
@@ -527,7 +527,7 @@ async function selectApprovals_internal(
     const signature = SignatureEnvelope.from(serialized)
     if (signature.type === 'keychain' || signature.type === 'configurable')
       throw new InvalidApprovalError({
-        reason: 'only primitive signatures can approve a multisig operation',
+        reason: 'only primitive signatures can approve an account operation',
       })
     const address = SignatureEnvelope.extractAddress({
       payload: options.hash,
@@ -1099,18 +1099,18 @@ function sameConfig(a: AccountConfig.Config, b: AccountConfig.Config): boolean {
   )
 }
 
-/** Thrown when a multisig owner approval is invalid. */
+/** Thrown when an account operation owner approval is invalid. */
 export class InvalidApprovalError extends Errors.BaseError<Error | undefined> {
-  override readonly name = 'MultisigOperation.InvalidApprovalError'
+  override readonly name = 'AccountOperation.InvalidApprovalError'
 
   /**
-   * Creates an invalid multisig approval error.
+   * Creates an invalid operation approval error.
    *
    * @example
    * ```ts twoslash
-   * import { MultisigOperation } from 'ox/tempo'
+   * import { AccountOperation } from 'ox/tempo'
    *
-   * throw new MultisigOperation.InvalidApprovalError({
+   * throw new AccountOperation.InvalidApprovalError({
    *   reason: 'signature is from a non-owner'
    * })
    * ```
@@ -1120,8 +1120,8 @@ export class InvalidApprovalError extends Errors.BaseError<Error | undefined> {
   constructor(options: InvalidApprovalError.Options = {}) {
     super(
       options.reason
-        ? `Invalid multisig approval: ${options.reason}.`
-        : 'Invalid multisig approval.',
+        ? `Invalid operation approval: ${options.reason}.`
+        : 'Invalid operation approval.',
       { cause: options.cause as Error | undefined },
     )
   }
@@ -1137,18 +1137,18 @@ export declare namespace InvalidApprovalError {
   }
 }
 
-/** Thrown when a multisig operation is malformed or internally inconsistent. */
+/** Thrown when an account operation is malformed or internally inconsistent. */
 export class InvalidOperationError extends Errors.BaseError<Error | undefined> {
-  override readonly name = 'MultisigOperation.InvalidOperationError'
+  override readonly name = 'AccountOperation.InvalidOperationError'
 
   /**
-   * Creates an invalid multisig operation error.
+   * Creates an invalid account operation error.
    *
    * @example
    * ```ts twoslash
-   * import { MultisigOperation } from 'ox/tempo'
+   * import { AccountOperation } from 'ox/tempo'
    *
-   * throw new MultisigOperation.InvalidOperationError({
+   * throw new AccountOperation.InvalidOperationError({
    *   reason: 'hash does not match the operation payload'
    * })
    * ```
@@ -1158,8 +1158,8 @@ export class InvalidOperationError extends Errors.BaseError<Error | undefined> {
   constructor(options: InvalidOperationError.Options = {}) {
     super(
       options.reason
-        ? `Invalid multisig operation: ${options.reason}.`
-        : 'Invalid multisig operation.',
+        ? `Invalid account operation: ${options.reason}.`
+        : 'Invalid account operation.',
       { cause: options.cause as Error | undefined },
     )
   }

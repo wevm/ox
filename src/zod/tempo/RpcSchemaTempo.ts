@@ -9,7 +9,7 @@ import { from } from '../internal/rpcSchemas/from.js'
 import * as z from 'zod/mini'
 import * as z_AccountConfig from './AccountConfig.js'
 import * as z_KeyAuthorization from './KeyAuthorization.js'
-import * as z_MultisigOperation from './MultisigOperation.js'
+import * as z_AccountOperation from './AccountOperation.js'
 import * as z_TransactionRequest from './TransactionRequest.js'
 
 const BlockNumberOrTagOrIdentifier = z.union([
@@ -90,51 +90,51 @@ export const tempo_simulateV1 = from({
 /** JSON-RPC method schemas for the `tempo_` namespace. */
 export const Tempo = { tempo_simulateV1 }
 
-/** Schema for the `multisig_approveKeyAuthorization` JSON-RPC method. */
-export const multisig_approveKeyAuthorization = from({
-  method: 'multisig_approveKeyAuthorization',
+/** Schema for the `account_approveKeyAuthorization` JSON-RPC method. */
+export const account_approveKeyAuthorization = from({
+  method: 'account_approveKeyAuthorization',
   params: z.tuple([
     z.union([
       z.object({ keyAuthorization: z_KeyAuthorization.Rpc }),
       z.object({ hash: z_Hex.Hex, signature: z_Hex.Hex }),
     ]),
   ]),
-  returns: z_MultisigOperation.KeyAuthorizationOperation,
+  returns: z_AccountOperation.KeyAuthorizationOperation,
 })
 
-/** Schema for the `multisig_approveRawTransaction` JSON-RPC method. */
-export const multisig_approveRawTransaction = from({
-  method: 'multisig_approveRawTransaction',
+/** Schema for the `account_approveRawTransaction` JSON-RPC method. */
+export const account_approveRawTransaction = from({
+  method: 'account_approveRawTransaction',
   params: z.tuple([z_Hex.Hex]),
   returns: z_Hex.Hex,
 })
 
-/** Schema for the `multisig_approveRawTransactionSync` JSON-RPC method. */
-export const multisig_approveRawTransactionSync = from({
-  method: 'multisig_approveRawTransactionSync',
+/** Schema for the `account_approveRawTransactionSync` JSON-RPC method. */
+export const account_approveRawTransactionSync = from({
+  method: 'account_approveRawTransactionSync',
   params: z.tuple([z_Hex.Hex, z.optional(z.number())]),
-  returns: z_MultisigOperation.TransactionOperation,
+  returns: z_AccountOperation.TransactionOperation,
 })
 
-/** Schema for the `multisig_getConfig` JSON-RPC method. */
-export const multisig_getConfig = from({
-  method: 'multisig_getConfig',
+/** Schema for the `account_getConfig` JSON-RPC method. */
+export const account_getConfig = from({
+  method: 'account_getConfig',
   params: z.tuple([z.object({ address: z_Address.Address })]),
   returns: z.nullable(z_AccountConfig.Rpc),
 })
 
-/** Schema for the `multisig_getOperation` JSON-RPC method. */
-export const multisig_getOperation = from({
-  method: 'multisig_getOperation',
+/** Schema for the `account_getOperation` JSON-RPC method. */
+export const account_getOperation = from({
+  method: 'account_getOperation',
   params: z.tuple([z_Hex.Hex]),
-  returns: z.nullable(z_MultisigOperation.Operation),
+  returns: z.nullable(z_AccountOperation.Operation),
 })
 
-/** JSON-RPC method schemas for the `multisig_` namespace. */
-export const Multisig = {
-  multisig_approveKeyAuthorization,
-  multisig_approveRawTransaction,
-  multisig_approveRawTransactionSync,
-  multisig_getConfig,
-  multisig_getOperation,
+/** JSON-RPC method schemas for the `account_` namespace. */
+export const Account = {
+  account_approveKeyAuthorization,
+  account_approveRawTransaction,
+  account_approveRawTransactionSync,
+  account_getConfig,
+  account_getOperation,
 }

@@ -55,12 +55,12 @@ describe('tempo_simulateV1', () => {
   })
 })
 
-describe('multisig methods', () => {
+describe('account methods', () => {
   test('decodes key authorization approval params', () => {
     expect(
       z_RpcSchema.decodeParams(
-        z_RpcSchemaTempo.Multisig,
-        'multisig_approveKeyAuthorization',
+        z_RpcSchemaTempo.Account,
+        'account_approveKeyAuthorization',
         [{ hash: '0x01', signature: '0x02' }],
       ),
     ).toEqual([{ hash: '0x01', signature: '0x02' }])
@@ -69,8 +69,8 @@ describe('multisig methods', () => {
   test('decodes raw transaction params', () => {
     expect(
       z_RpcSchema.decodeParams(
-        z_RpcSchemaTempo.Multisig,
-        'multisig_approveRawTransactionSync',
+        z_RpcSchemaTempo.Account,
+        'account_approveRawTransactionSync',
         ['0x76', 30_000],
       ),
     ).toEqual(['0x76', 30_000])
@@ -78,11 +78,9 @@ describe('multisig methods', () => {
 
   test('decodes config params', () => {
     expect(
-      z_RpcSchema.decodeParams(
-        z_RpcSchemaTempo.Multisig,
-        'multisig_getConfig',
-        [{ address: '0xcafebabecafebabecafebabecafebabecafebabe' }],
-      ),
+      z_RpcSchema.decodeParams(z_RpcSchemaTempo.Account, 'account_getConfig', [
+        { address: '0xcafebabecafebabecafebabecafebabecafebabe' },
+      ]),
     ).toEqual([{ address: '0xcafebabecafebabecafebabecafebabecafebabe' }])
   })
 
@@ -101,8 +99,8 @@ describe('multisig methods', () => {
 
     expect(
       z_RpcSchema.decodeReturns(
-        z_RpcSchemaTempo.Multisig,
-        'multisig_getConfig',
+        z_RpcSchemaTempo.Account,
+        'account_getConfig',
         config,
       ),
     ).toEqual(config)
@@ -111,8 +109,8 @@ describe('multisig methods', () => {
   test('accepts a missing config result', () => {
     expect(
       z_RpcSchema.decodeReturns(
-        z_RpcSchemaTempo.Multisig,
-        'multisig_getConfig',
+        z_RpcSchemaTempo.Account,
+        'account_getConfig',
         null,
       ),
     ).toBeNull()
@@ -121,8 +119,8 @@ describe('multisig methods', () => {
   test('accepts a missing operation result', () => {
     expect(
       z_RpcSchema.decodeReturns(
-        z_RpcSchemaTempo.Multisig,
-        'multisig_getOperation',
+        z_RpcSchemaTempo.Account,
+        'account_getOperation',
         null,
       ),
     ).toBeNull()
@@ -130,8 +128,8 @@ describe('multisig methods', () => {
 
   test('exposes method and request schemas', () => {
     expect(
-      z.safeDecode(z_RpcSchemaTempo.multisig_getOperation.request, {
-        method: 'multisig_getOperation',
+      z.safeDecode(z_RpcSchemaTempo.account_getOperation.request, {
+        method: 'account_getOperation',
         params: ['0x01'],
       }).success,
     ).toBe(true)

@@ -3,14 +3,14 @@ import type {
   AccountConfig,
   AccountSimulation,
   KeyAuthorization,
-  MultisigOperation,
+  AccountOperation,
   RpcSchemaTempo,
 } from 'ox/tempo'
 import { expectTypeOf, test } from 'vp/test'
 import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
 
-declare const provider: Provider.Provider<{ schema: RpcSchemaTempo.Multisig }>
+declare const provider: Provider.Provider<{ schema: RpcSchemaTempo.Account }>
 declare const tempoProvider: Provider.Provider<{
   schema: RpcSchemaTempo.Tempo
 }>
@@ -21,53 +21,53 @@ declare const multisigSimulation: AccountSimulation.Rpc
 declare const serializedTransaction: Hex.Hex
 declare const signature: Hex.Hex
 
-test('multisig provider methods', () => {
+test('account provider methods', () => {
   expectTypeOf(
     provider.request({
-      method: 'multisig_approveKeyAuthorization',
+      method: 'account_approveKeyAuthorization',
       params: [{ keyAuthorization }],
     }),
-  ).resolves.toEqualTypeOf<MultisigOperation.KeyAuthorizationRpc>()
+  ).resolves.toEqualTypeOf<AccountOperation.KeyAuthorizationRpc>()
 
   expectTypeOf(
     provider.request({
-      method: 'multisig_approveKeyAuthorization',
+      method: 'account_approveKeyAuthorization',
       params: [{ hash, signature }],
     }),
-  ).resolves.toEqualTypeOf<MultisigOperation.KeyAuthorizationRpc>()
+  ).resolves.toEqualTypeOf<AccountOperation.KeyAuthorizationRpc>()
 
   expectTypeOf(
     provider.request({
-      method: 'multisig_approveRawTransaction',
+      method: 'account_approveRawTransaction',
       params: [serializedTransaction],
     }),
   ).resolves.toEqualTypeOf<Hex.Hex>()
 
   expectTypeOf(
     provider.request({
-      method: 'multisig_approveRawTransactionSync',
+      method: 'account_approveRawTransactionSync',
       params: [serializedTransaction],
     }),
-  ).resolves.toEqualTypeOf<MultisigOperation.TransactionRpc>()
+  ).resolves.toEqualTypeOf<AccountOperation.TransactionRpc>()
 
   void provider.request({
-    method: 'multisig_approveRawTransactionSync',
+    method: 'account_approveRawTransactionSync',
     params: [serializedTransaction, 30_000],
   })
 
   expectTypeOf(
     provider.request({
-      method: 'multisig_getConfig',
+      method: 'account_getConfig',
       params: [{ address }],
     }),
   ).resolves.toEqualTypeOf<AccountConfig.Rpc | null>()
 
   expectTypeOf(
     provider.request({
-      method: 'multisig_getOperation',
+      method: 'account_getOperation',
       params: [hash],
     }),
-  ).resolves.toEqualTypeOf<MultisigOperation.Rpc | null>()
+  ).resolves.toEqualTypeOf<AccountOperation.Rpc | null>()
 })
 
 test('tempo simulation accepts account simulation specs', () => {
