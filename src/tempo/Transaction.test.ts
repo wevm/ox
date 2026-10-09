@@ -529,6 +529,42 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('behavior: nonceKey', () => {
+    const transaction = Transaction.toRpc({
+      accessList: [],
+      blockHash:
+        '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+      blockNumber: 19868015n,
+      calls: [
+        {
+          data: '0xdeadbeef',
+          to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+        },
+      ],
+      chainId: 1,
+      feeToken: '0x20c0000000000000000000000000000000000000',
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      gas: 278365n,
+      hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      maxFeePerGas: 2n,
+      maxPriorityFeePerGas: 1n,
+      nonce: 0n,
+      nonceKey: 42n,
+      signature: {
+        signature: {
+          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
+          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          yParity: 0,
+        },
+        type: 'secp256k1',
+      },
+      transactionIndex: 2,
+      type: 'tempo',
+    })
+    expect(transaction.nonceKey).toMatchInlineSnapshot(`"0x2a"`)
+    expect(Transaction.fromRpc(transaction)?.nonceKey).toBe(42n)
+  })
 })
 
 describe('roundtrip', () => {

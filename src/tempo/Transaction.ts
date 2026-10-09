@@ -312,6 +312,8 @@ export function toRpc<pending extends boolean = false>(
   if (transaction.feeToken) rpc.feeToken = transaction.feeToken
   if (transaction.keyAuthorization)
     rpc.keyAuthorization = KeyAuthorization.toRpc(transaction.keyAuthorization)
+  if (typeof transaction.nonceKey === 'bigint')
+    rpc.nonceKey = Hex.fromNumber(transaction.nonceKey)
   if (transaction.feePayerSignature) {
     rpc.feePayerSignature = Signature.toRpc(
       transaction.feePayerSignature,
