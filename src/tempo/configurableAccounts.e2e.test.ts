@@ -4,8 +4,8 @@ import { chain, client, fundAddress } from '../../test/tempo/config.js'
 import { factory } from '../../test/tempo/configurableAccounts.js'
 import {
   AccountConfig,
+  AccountOperation,
   KeyAuthorization,
-  MultisigOperation,
   SignatureEnvelope,
 } from './index.js'
 import * as Transaction from './Transaction.js'
@@ -109,13 +109,13 @@ describe('behavior: configurable accounts', () => {
     const account = await setup()
     const tx = transaction(0n)
     const serialized = TxEnvelopeTempo.serialize(tx)
-    const hash = MultisigOperation.getHash({
+    const hash = AccountOperation.getHash({
       account: account.account,
       config: account.config,
       transaction: serialized,
       type: 'transaction',
     })
-    const selected = await MultisigOperation.selectApprovals({
+    const selected = await AccountOperation.selectApprovals({
       account: account.account,
       approvals: account.keys.map(({ privateKey }) =>
         SignatureEnvelope.serialize(
@@ -125,7 +125,7 @@ describe('behavior: configurable accounts', () => {
       config: account.config,
       hash,
     })
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       account: account.account,
       approvals: selected.approvals,
       config: account.config,
@@ -139,7 +139,7 @@ describe('behavior: configurable accounts', () => {
       updatedAt: 1,
       weight: selected.weight,
     })
-    const signed = MultisigOperation.serializeTransaction(operation, {
+    const signed = AccountOperation.serializeTransaction(operation, {
       approvals: selected.selectedApprovals,
     })
     const result = await client.request({

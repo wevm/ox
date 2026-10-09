@@ -33,6 +33,15 @@ export type {}
  */
 export * as AccountConfig from './AccountConfig.js'
 /**
+ * Offchain configurable account transaction and key authorization operation utilities.
+ *
+ * Derives operation hashes, selects owner approvals, serializes transactions,
+ * validates operation state, and converts JSON-RPC representations.
+ *
+ * @category Reference
+ */
+export * as AccountOperation from './AccountOperation.js'
+/**
  * Configurable account RPC simulation utilities.
  *
  * Converts the owner approvals and configuration modeled during gas estimation
@@ -164,15 +173,6 @@ export * as EarnShares from './EarnShares.js'
  */
 export * as KeyAuthorization from './KeyAuthorization.js'
 /**
- * Offchain multisig transaction and key authorization operation utilities.
- *
- * Derives operation hashes, selects owner approvals, serializes transactions,
- * validates operation state, and converts JSON-RPC representations.
- *
- * @category Reference
- */
-export * as MultisigOperation from './MultisigOperation.js'
-/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
@@ -246,7 +246,7 @@ export * as PoolId from './PoolId.js'
  */
 export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
 /**
- * JSON-RPC schemas for the `tempo_` and `multisig_` namespaces.
+ * JSON-RPC schemas for the `tempo_` and `account_` namespaces.
  *
  * @example
  * ```ts twoslash
@@ -256,7 +256,7 @@ export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
  *
  * const schema = RpcSchema.from<
  *   | RpcSchema.Default
- *   | RpcSchemaTempo.Multisig
+ *   | RpcSchemaTempo.Account
  *   | RpcSchemaTempo.Tempo
  * >()
  *

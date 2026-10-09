@@ -86,7 +86,7 @@ const signature_configurable = {
   signatures: [SignatureEnvelope.from(signature_secp256k1)],
   type: 'configurable',
 } as const satisfies SignatureEnvelope.Configurable
-const signature_multisig_rpc =
+const signature_configurable_rpc =
   '0xf89794be95c3f554e9fc85ec51be69a3d807a0d55bcf2cf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694f39fd6e51aad88f6f4ce6ab8827279cfffb9226601f843b841fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c' as const
 
 const signature_keychain = {
@@ -664,7 +664,7 @@ describe('fromRpc', () => {
       expiry: null,
       keyId: address,
       keyType: 'secp256k1',
-      signature: signature_multisig_rpc,
+      signature: signature_configurable_rpc,
     })
 
     expect(authorization.signature).toMatchInlineSnapshot(`
@@ -1533,7 +1533,7 @@ describe('toRpc', () => {
     })
 
     expect(authorization.signature).toMatchInlineSnapshot(
-      `"${signature_multisig_rpc}"`,
+      `"${signature_configurable_rpc}"`,
     )
   })
 

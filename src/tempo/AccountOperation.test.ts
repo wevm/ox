@@ -1,8 +1,8 @@
 import { Address, Hash, P256 } from 'ox'
 import {
   AccountConfig,
+  AccountOperation,
   KeyAuthorization,
-  MultisigOperation,
   SignatureEnvelope,
   TxEnvelopeTempo,
 } from 'ox/tempo'
@@ -136,13 +136,13 @@ function approvalAddresses(
 describe('getHash', () => {
   test('transaction and key authorization', () => {
     expect({
-      keyAuthorization: MultisigOperation.getHash({
+      keyAuthorization: AccountOperation.getHash({
         account,
         config: currentConfig,
         keyAuthorization,
         type: 'keyAuthorization',
       }),
-      transaction: MultisigOperation.getHash({
+      transaction: AccountOperation.getHash({
         account,
         config: currentConfig,
         transaction,
@@ -168,7 +168,7 @@ describe('selectApprovals', () => {
       threshold: 3,
     })
     const account = AccountConfig.getAddress(config, { factory })
-    const hash = MultisigOperation.getHash({
+    const hash = AccountOperation.getHash({
       account,
       config: { ...config, version: 1n },
       transaction,
@@ -176,7 +176,7 @@ describe('selectApprovals', () => {
     })
     const approvals = owners.map((owner) => signApproval(owner, hash))
     const alternate = signApproval(owners[0]!, hash, `0x${'01'.repeat(32)}`)
-    const selection = await MultisigOperation.selectApprovals({
+    const selection = await AccountOperation.selectApprovals({
       account,
       approvals: [
         approvals[2]!,
@@ -188,7 +188,7 @@ describe('selectApprovals', () => {
       config,
       hash,
     })
-    const reversed = await MultisigOperation.selectApprovals({
+    const reversed = await AccountOperation.selectApprovals({
       account,
       approvals: [
         approvals[0]!,
@@ -224,7 +224,7 @@ describe('selectApprovals', () => {
     `)
   })
   test('accepts an explicit account from a chain-configured factory', async () => {
-    const selected = await MultisigOperation.selectApprovals({
+    const selected = await AccountOperation.selectApprovals({
       account,
       approvals: [],
       config,
@@ -247,19 +247,19 @@ describe('selectApprovals', () => {
       }),
     ])
       await expect(
-        MultisigOperation.selectApprovals({
+        AccountOperation.selectApprovals({
           account,
           approvals: [SignatureEnvelope.serialize(signature)],
           config,
           hash: transactionHash_,
         }),
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: only primitive signatures can approve a multisig operation.]`,
+        `[AccountOperation.InvalidApprovalError: Invalid operation approval: only primitive signatures can approve an account operation.]`,
       )
   })
 
   test('rejects invalid and non-owner approvals', async () => {
-    const hash = MultisigOperation.getHash({
+    const hash = AccountOperation.getHash({
       account,
       config: currentConfig,
       transaction,
@@ -272,24 +272,24 @@ describe('selectApprovals', () => {
     const nonOwner = signApproval(owners[2]!, hash)
 
     await expect(
-      MultisigOperation.selectApprovals({
+      AccountOperation.selectApprovals({
         account,
         approvals: [invalid],
         config,
         hash,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: signature from owner 0x07e1ed8ea0e9601e5546b0a03aed683df3601407 is invalid.]`,
+      `[AccountOperation.InvalidApprovalError: Invalid operation approval: signature from owner 0x07e1ed8ea0e9601e5546b0a03aed683df3601407 is invalid.]`,
     )
     await expect(
-      MultisigOperation.selectApprovals({
+      AccountOperation.selectApprovals({
         account,
         approvals: [nonOwner],
         config,
         hash,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidApprovalError: Invalid multisig approval: signature is from non-owner 0xd3a9f047ad43d7e2e4e7e491f1fe2e657a2651b6.]`,
+      `[AccountOperation.InvalidApprovalError: Invalid operation approval: signature is from non-owner 0xd3a9f047ad43d7e2e4e7e491f1fe2e657a2651b6.]`,
     )
   })
 })
@@ -298,13 +298,13 @@ describe('serializeKeyAuthorization', () => {
   test('behavior: current and initial authorizations', async () => {
     const results = []
     for (const applicableConfig of [currentConfig, config]) {
-      const hash = MultisigOperation.getHash({
+      const hash = AccountOperation.getHash({
         account,
         config: applicableConfig,
         keyAuthorization,
         type: 'keyAuthorization',
       })
-      const selection = await MultisigOperation.selectApprovals({
+      const selection = await AccountOperation.selectApprovals({
         account,
         approvals: [
           signApproval(owners[1]!, hash),
@@ -313,7 +313,7 @@ describe('serializeKeyAuthorization', () => {
         config: applicableConfig,
         hash,
       })
-      const serialized = MultisigOperation.serializeKeyAuthorization(
+      const serialized = AccountOperation.serializeKeyAuthorization(
         keyAuthorization,
         {
           account,
@@ -358,7 +358,7 @@ describe('serializeKeyAuthorization', () => {
   })
 
   test('error: signed authorization', async () => {
-    const selection = await MultisigOperation.selectApprovals({
+    const selection = await AccountOperation.selectApprovals({
       account,
       approvals: [
         signApproval(owners[0]!, keyAuthorizationHash),
@@ -367,7 +367,7 @@ describe('serializeKeyAuthorization', () => {
       config: currentConfig,
       hash: keyAuthorizationHash,
     })
-    const signed = MultisigOperation.serializeKeyAuthorization(
+    const signed = AccountOperation.serializeKeyAuthorization(
       keyAuthorization,
       {
         account,
@@ -377,13 +377,13 @@ describe('serializeKeyAuthorization', () => {
     )
 
     expect(() =>
-      MultisigOperation.serializeKeyAuthorization(signed, {
+      AccountOperation.serializeKeyAuthorization(signed, {
         account,
         approvals: selection.selectedApprovals,
         config: currentConfig,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: keyAuthorization must not contain a signature.]`,
+      `[AccountOperation.InvalidOperationError: Invalid account operation: keyAuthorization must not contain a signature.]`,
     )
   })
 })
@@ -392,13 +392,13 @@ describe('serializeTransaction', () => {
   test('current and initial transactions', async () => {
     const results = []
     for (const applicableConfig of [currentConfig, config]) {
-      const hash = MultisigOperation.getHash({
+      const hash = AccountOperation.getHash({
         account,
         config: applicableConfig,
         transaction,
         type: 'transaction',
       })
-      const selection = await MultisigOperation.selectApprovals({
+      const selection = await AccountOperation.selectApprovals({
         account,
         approvals: [
           signApproval(owners[1]!, hash),
@@ -407,7 +407,7 @@ describe('serializeTransaction', () => {
         config: applicableConfig,
         hash,
       })
-      const operation = MultisigOperation.from({
+      const operation = AccountOperation.from({
         account,
         approvals: selection.approvals,
         config: applicableConfig,
@@ -421,7 +421,7 @@ describe('serializeTransaction', () => {
         updatedAt: 1,
         weight: selection.weight,
       })
-      const serialized = MultisigOperation.serializeTransaction(operation, {
+      const serialized = AccountOperation.serializeTransaction(operation, {
         approvals: selection.selectedApprovals,
       })
       const value = TxEnvelopeTempo.deserialize(serialized)
@@ -480,13 +480,13 @@ describe('serializeTransaction', () => {
     ] as const
     const results = []
     for (const transaction of transactions) {
-      const hash = MultisigOperation.getHash({
+      const hash = AccountOperation.getHash({
         account,
         config: currentConfig,
         transaction,
         type: 'transaction',
       })
-      const selection = await MultisigOperation.selectApprovals({
+      const selection = await AccountOperation.selectApprovals({
         account,
         approvals: [
           signApproval(owners[0]!, hash),
@@ -495,8 +495,8 @@ describe('serializeTransaction', () => {
         config: currentConfig,
         hash,
       })
-      const serialized = MultisigOperation.serializeTransaction(
-        MultisigOperation.from({
+      const serialized = AccountOperation.serializeTransaction(
+        AccountOperation.from({
           account,
           approvals: selection.approvals,
           config: currentConfig,
@@ -547,7 +547,7 @@ describe('serializeTransaction', () => {
   })
 
   test('rejects an approval not retained by the operation', async () => {
-    const hash = MultisigOperation.getHash({
+    const hash = AccountOperation.getHash({
       account,
       config: currentConfig,
       transaction,
@@ -555,13 +555,13 @@ describe('serializeTransaction', () => {
     })
     const approval_1 = signApproval(owners[0]!, hash)
     const approval_2 = signApproval(owners[1]!, hash)
-    const selection = await MultisigOperation.selectApprovals({
+    const selection = await AccountOperation.selectApprovals({
       account,
       approvals: [approval_1],
       config: currentConfig,
       hash,
     })
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       account,
       approvals: selection.approvals,
       config: currentConfig,
@@ -577,19 +577,19 @@ describe('serializeTransaction', () => {
     })
 
     expect(() =>
-      MultisigOperation.serializeTransaction(operation, {
+      AccountOperation.serializeTransaction(operation, {
         approvals: [approval_2],
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[MultisigOperation.InvalidOperationError: Invalid multisig operation: transaction signature is not a retained approval.]`,
+      `[AccountOperation.InvalidOperationError: Invalid account operation: transaction signature is not a retained approval.]`,
     )
   })
 })
 
 describe('from', () => {
   test('transaction states', () => {
-    const pending = MultisigOperation.from(transactionPending)
-    const submitting = MultisigOperation.from({
+    const pending = AccountOperation.from(transactionPending)
+    const submitting = AccountOperation.from({
       ...transactionPending,
       approvals: [approval_1, approval_2],
       expiresAt: 10,
@@ -598,7 +598,7 @@ describe('from', () => {
       submissionId,
       weight: 2,
     })
-    const success = MultisigOperation.from({
+    const success = AccountOperation.from({
       ...transactionPending,
       approvals: [approval_1, approval_2],
       signatureCount: 2,
@@ -716,7 +716,7 @@ describe('from', () => {
       }),
       { format: 'feePayer', sender: account },
     )
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       ...transactionPending,
       hash: AccountConfig.getSignPayload({
         account,
@@ -777,7 +777,7 @@ describe('from', () => {
       }),
       { format: 'feePayer' },
     )
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       ...transactionPending,
       hash: AccountConfig.getSignPayload({
         account,
@@ -793,7 +793,7 @@ describe('from', () => {
   })
 
   test('initial transaction', () => {
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       ...transactionPending,
       config,
       hash: AccountConfig.getSignPayload({
@@ -846,9 +846,9 @@ describe('from', () => {
   })
 
   test('key authorization states', () => {
-    const pending = MultisigOperation.from(keyAuthorizationPending)
+    const pending = AccountOperation.from(keyAuthorizationPending)
     const authorization = KeyAuthorization.deserialize(keyAuthorization)
-    const success = MultisigOperation.from({
+    const success = AccountOperation.from({
       ...keyAuthorizationPending,
       approvals: [approval_1, approval_2],
       keyAuthorization: KeyAuthorization.serialize(
@@ -945,7 +945,7 @@ describe('from', () => {
         },
       }),
     )
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       ...keyAuthorizationPending,
       approvals: [approval_1, approval_2],
       config,
@@ -1004,8 +1004,8 @@ describe('from', () => {
 
 describe('RPC conversion', () => {
   test('round-trips transaction and key authorization operations', () => {
-    const transactionRpc = MultisigOperation.toRpc(transactionPending)
-    const keyAuthorizationRpc = MultisigOperation.toRpc(keyAuthorizationPending)
+    const transactionRpc = AccountOperation.toRpc(transactionPending)
+    const keyAuthorizationRpc = AccountOperation.toRpc(keyAuthorizationPending)
 
     expect(() =>
       JSON.stringify({ keyAuthorizationRpc, transactionRpc }),
@@ -1074,11 +1074,11 @@ describe('RPC conversion', () => {
         },
       }
     `)
-    expect(MultisigOperation.fromRpc(transactionRpc)).toStrictEqual(
-      MultisigOperation.from(transactionPending),
+    expect(AccountOperation.fromRpc(transactionRpc)).toStrictEqual(
+      AccountOperation.from(transactionPending),
     )
-    expect(MultisigOperation.fromRpc(keyAuthorizationRpc)).toStrictEqual(
-      MultisigOperation.from(keyAuthorizationPending),
+    expect(AccountOperation.fromRpc(keyAuthorizationRpc)).toStrictEqual(
+      AccountOperation.from(keyAuthorizationPending),
     )
   })
 })
@@ -1278,14 +1278,14 @@ describe('validation', () => {
     },
   ])('rejects $name', ({ operation }) => {
     expect(() =>
-      MultisigOperation.from(operation as MultisigOperation.Operation),
-    ).toThrowError(MultisigOperation.InvalidOperationError)
+      AccountOperation.from(operation as AccountOperation.Operation),
+    ).toThrowError(AccountOperation.InvalidOperationError)
   })
   test('accepts initial accounts validated by the chain', () => {
-    const value = MultisigOperation.from({
+    const value = AccountOperation.from({
       ...transactionPending,
       config,
-      hash: MultisigOperation.getHash({
+      hash: AccountOperation.getHash({
         account,
         config,
         transaction,
@@ -1297,14 +1297,14 @@ describe('validation', () => {
   })
 
   test('rejects noncanonical RPC quantities', () => {
-    const operation = MultisigOperation.toRpc(transactionPending)
+    const operation = AccountOperation.toRpc(transactionPending)
     expect(() =>
-      MultisigOperation.fromRpc({
+      AccountOperation.fromRpc({
         ...operation,
         config: { ...operation.config, version: '0x01' },
       }),
     ).toThrowError(
-      'Invalid multisig operation: config.version must use canonical quantity encoding.',
+      'Invalid account operation: config.version must use canonical quantity encoding.',
     )
   })
 
@@ -1328,8 +1328,8 @@ describe('validation', () => {
       weight: 2,
     } as const
 
-    expect(() => MultisigOperation.from(operation)).toThrowError(
-      'Invalid multisig operation: key authorization signature is not a retained approval.',
+    expect(() => AccountOperation.from(operation)).toThrowError(
+      'Invalid account operation: key authorization signature is not a retained approval.',
     )
   })
 
@@ -1361,8 +1361,8 @@ describe('validation', () => {
       weight: 2,
     } as const
 
-    expect(() => MultisigOperation.from(operation)).toThrowError(
-      'Invalid multisig operation: key authorization approvals are not canonically ordered.',
+    expect(() => AccountOperation.from(operation)).toThrowError(
+      'Invalid account operation: key authorization approvals are not canonically ordered.',
     )
   })
 
@@ -1386,8 +1386,8 @@ describe('validation', () => {
       weight: 2,
     } as const
 
-    expect(() => MultisigOperation.from(operation)).toThrowError(
-      'Invalid multisig operation: key authorization contains duplicate owner approvals.',
+    expect(() => AccountOperation.from(operation)).toThrowError(
+      'Invalid account operation: key authorization contains duplicate owner approvals.',
     )
   })
 
@@ -1425,7 +1425,7 @@ describe('validation', () => {
       SignatureEnvelope.serialize(signature),
     )
 
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       account,
       approvals,
       config,
