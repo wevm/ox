@@ -85,6 +85,28 @@ export * as Channel from './Channel.js'
  */
 export * as EarnShares from './EarnShares.js'
 /**
+ * Groth16 proof verification over BN254, as Tempo nodes verify
+ * [TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131#verification) ZK signatures.
+ *
+ * Proofs and verifying keys use TIP-1131's point encoding: uncompressed EIP-197 points with
+ * `F_p^2` elements written `(c1, c0)`. Each scheme has one public input. To verify a message
+ * signature, see {@link ox#ZkSignature.(verifyMessage:function)}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Groth16 } from 'ox/tempo'
+ *
+ * const valid = Groth16.verify({
+ *   proof: '0x...',
+ *   publicInput: '0x...',
+ *   verifyingKey: '0x...'
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as Groth16 from './Groth16.js'
+/**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary

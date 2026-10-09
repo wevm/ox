@@ -1,6 +1,7 @@
-import { TypedData } from 'ox'
+import { Bytes, Hash, Hex, TypedData } from 'ox'
 import { Passport } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
+import * as TestPassport from '../../test/tempo/passport.js'
 
 // ICAO 9303's specimen passport, and an Oidc test salt. Expected hashes come from circomlibjs.
 const dg1 =
@@ -238,5 +239,501 @@ describe('randomBlinding', () => {
   test('default', () => {
     const value = Passport.randomBlinding()
     expect(value).toMatch(/^0x00[0-9a-f]{62}$/)
+  })
+})
+
+describe('fromDg15', () => {
+  const { chip, dg15 } = TestPassport.issue()
+
+  test('default', () => {
+    expect(Passport.fromDg15(dg15)).toBe(
+      Hex.fromNumber(chip.modulus, { size: 128 }),
+    )
+  })
+
+  test('error: not the template', () => {
+    // An extra byte.
+    expect(() =>
+      Passport.fromDg15(Bytes.concat(dg15, Bytes.from([0]))),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidDataGroupError: The data group is invalid: not an EF.DG15 with a 1024-bit RSA key and exponent 65537.]`,
+    )
+    // Exponent 3.
+    const exponent3 = Bytes.concat(
+      dg15.slice(0, 160),
+      Bytes.fromHex('0x0203010003'),
+    )
+    expect(() => Passport.fromDg15(exponent3)).toThrow(
+      Passport.InvalidDataGroupError,
+    )
+    // A 2048-bit chip key.
+    const rsa2048 = TestPassport.der.tlv(
+      0x6f,
+      TestPassport.rsaKey(2048, 65537, 'dsc').spki,
+    )
+    expect(() => Passport.fromDg15(rsa2048)).toThrow(
+      Passport.InvalidDataGroupError,
+    )
+  })
+
+  test('error: modulus is not 1024 bits', () => {
+    const bytes = dg15.slice()
+    bytes[32] = 0x7f
+    expect(() => Passport.fromDg15(bytes)).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedKeyError: The key is unsupported: Active Authentication modulus is not 1024 bits.]`,
+    )
+  })
+})
+
+// A certificate with a P-256 key.
+const ecCertificate = TestPassport.der.sequence(
+  TestPassport.der.sequence(
+    TestPassport.der.explicit(0, TestPassport.der.integer(2)),
+    TestPassport.der.integer(1),
+    TestPassport.der.algorithm('1.2.840.10045.4.3.2'),
+    TestPassport.der.name('UT', 'CSCA'),
+    TestPassport.der.sequence(),
+    TestPassport.der.name('UT', 'DS'),
+    TestPassport.der.sequence(
+      TestPassport.der.sequence(
+        TestPassport.der.oid('1.2.840.10045.2.1'),
+        TestPassport.der.oid('1.2.840.10045.3.1.7'),
+      ),
+      TestPassport.der.tlv(0x03, new Uint8Array(66)),
+    ),
+  ),
+  TestPassport.der.algorithm('1.2.840.10045.4.3.2'),
+  TestPassport.der.tlv(0x03, new Uint8Array(1)),
+)
+
+describe('fromCertificate', () => {
+  test('default', () => {
+    const { certificate, dscModulus } = TestPassport.issue()
+    expect(Passport.fromCertificate(certificate)).toEqual({
+      exponent: 65537n,
+      modulus: Hex.fromBytes(dscModulus),
+    })
+  })
+
+  test('error: not RSA', () => {
+    expect(() =>
+      Passport.fromCertificate(ecCertificate),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedKeyError: The key is unsupported: key algorithm \`1.2.840.10045.2.1\` is not RSA.]`,
+    )
+  })
+
+  test('error: malformed', () => {
+    const { certificate } = TestPassport.issue()
+    expect(() =>
+      Passport.fromCertificate(certificate.slice(0, -1)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidCertificateError: The certificate is invalid: truncated element.]`,
+    )
+  })
+})
+
+describe('fromSod', () => {
+  test('default', () => {
+    const passport = TestPassport.issue()
+    const sod = Passport.fromSod(passport.sod)
+    expect(sod.certificate).toBe(Hex.fromBytes(passport.certificate))
+    expect(sod.eContent).toBe(Hex.fromBytes(passport.eContent))
+    expect(sod.signedAttributes).toBe(Hex.fromBytes(passport.signedAttributes))
+    expect(sod.publicKey).toEqual({
+      exponent: 65537n,
+      modulus: Hex.fromBytes(passport.dscModulus),
+    })
+    expect(sod.messageDigest).toBe(
+      Hex.fromBytes(Hash.sha256(passport.eContent)),
+    )
+    expect(Hex.size(sod.signature)).toBe(256)
+    expect(Object.keys(sod.dataGroupHashes)).toEqual(['1', '2', '15'])
+    expect(sod.dataGroupHashes[1]).toBe(
+      Hex.fromBytes(Hash.sha256(passport.dg1)),
+    )
+    expect(sod.dataGroupHashes[15]).toBe(
+      Hex.fromBytes(Hash.sha256(passport.dg15)),
+    )
+    expect({
+      dataGroupHashAlgorithm: sod.dataGroupHashAlgorithm,
+      digestAlgorithm: sod.digestAlgorithm,
+      signatureAlgorithm: sod.signatureAlgorithm,
+    }).toMatchInlineSnapshot(`
+      {
+        "dataGroupHashAlgorithm": "2.16.840.1.101.3.4.2.1",
+        "digestAlgorithm": "2.16.840.1.101.3.4.2.1",
+        "signatureAlgorithm": "1.2.840.113549.1.1.11",
+      }
+    `)
+  })
+
+  test('behavior: signer identified by subject key identifier', () => {
+    const passport = TestPassport.issue({ sid: 'subjectKeyIdentifier' })
+    const sod = Passport.fromSod(passport.sod)
+    expect(sod.certificate).toBe(Hex.fromBytes(passport.certificate))
+  })
+
+  test("behavior: skips other signers' certificates", () => {
+    const passport = TestPassport.issue({
+      extraCertificates: [ecCertificate],
+    })
+    expect(Passport.fromSod(passport.sod).certificate).toBe(
+      Hex.fromBytes(passport.certificate),
+    )
+  })
+
+  test('behavior: parses suites scheme 0x02 does not support', () => {
+    const passport = TestPassport.issue({
+      hashAlgorithm: TestPassport.oids.sha1,
+    })
+    expect(Passport.fromSod(passport.sod).dataGroupHashAlgorithm).toBe(
+      '1.3.14.3.2.26',
+    )
+  })
+
+  test('error: malformed', () => {
+    const { sod } = TestPassport.issue()
+    expect(() =>
+      Passport.fromSod(sod.slice(4)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidSodError: The SOD is invalid: expected tag 0x77, got 0x30.]`,
+    )
+    expect(() =>
+      Passport.fromSod(Bytes.concat(sod, Bytes.from([0]))),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidSodError: The SOD is invalid: trailing bytes.]`,
+    )
+    expect(() =>
+      Passport.fromSod(sod.slice(0, -1)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidSodError: The SOD is invalid: truncated element.]`,
+    )
+  })
+
+  test('error: duplicate data group', () => {
+    const { sod } = TestPassport.issue({
+      dataGroupHashes: (entries) => [...entries, entries[0]!],
+    })
+    expect(() => Passport.fromSod(sod)).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidSodError: The SOD is invalid: data group 1 is hashed twice.]`,
+    )
+  })
+})
+
+describe('assertSod', () => {
+  test('default', () => {
+    const { sod } = TestPassport.issue()
+    expect(() => Passport.assertSod(Passport.fromSod(sod))).not.toThrow()
+  })
+
+  test('error: SHA-1', () => {
+    const { sod } = TestPassport.issue({
+      hashAlgorithm: TestPassport.oids.sha1,
+    })
+    expect(() =>
+      Passport.assertSod(Passport.fromSod(sod)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedSodError: The SOD is unsupported: data group hashes are not SHA-256.]`,
+    )
+  })
+
+  test('error: RSASSA-PSS', () => {
+    const { sod } = TestPassport.issue({
+      signatureAlgorithm: '1.2.840.113549.1.1.10',
+    })
+    expect(() =>
+      Passport.assertSod(Passport.fromSod(sod)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedSodError: The SOD is unsupported: signature algorithm \`1.2.840.113549.1.1.10\` is not RSASSA-PKCS1-v1_5.]`,
+    )
+  })
+
+  test('error: 2047-bit document signer', () => {
+    const { sod } = TestPassport.issue({ dsc: TestPassport.rsaKey(2047) })
+    expect(() =>
+      Passport.assertSod(Passport.fromSod(sod)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedKeyError: The key is unsupported: modulus is not 2048 bits.]`,
+    )
+  })
+
+  test('error: exponent 3', () => {
+    const { sod } = TestPassport.issue({ dsc: TestPassport.rsaKey(2048, 3) })
+    expect(() =>
+      Passport.assertSod(Passport.fromSod(sod)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedKeyError: The key is unsupported: exponent is not 65537.]`,
+    )
+  })
+
+  test('error: security object past MAX_ECONTENT_LEN', () => {
+    const issue = (extra: number) =>
+      TestPassport.issue({
+        dataGroupHashes: (entries) => [
+          ...entries,
+          ...Array.from(
+            { length: extra },
+            (_, i) => [3 + i, new Uint8Array(32)] as [number, Uint8Array],
+          ),
+        ],
+      }).sod
+    expect(() => Passport.assertSod(Passport.fromSod(issue(11)))).not.toThrow()
+    expect(() =>
+      Passport.assertSod(Passport.fromSod(issue(12))),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedSodError: The SOD is unsupported: the LDS security object is 611 bytes; at most 576 are supported.]`,
+    )
+  })
+
+  test('error: signed attributes past MAX_SIGNED_ATTRS_LEN', () => {
+    // An extra attribute with a `size`-byte value.
+    const issue = (size: number) =>
+      Passport.fromSod(
+        TestPassport.issue({
+          signedAttributes: [
+            TestPassport.der.sequence(
+              TestPassport.der.oid('1.2.3.4'),
+              TestPassport.der.set(
+                TestPassport.der.octetString(new Uint8Array(size)),
+              ),
+            ),
+          ],
+        }).sod,
+      )
+    let room = 0
+    while (Hex.size(issue(room + 1).signedAttributes) <= 192) room++
+    expect(Hex.size(issue(room).signedAttributes)).toBe(192)
+    expect(() => Passport.assertSod(issue(room))).not.toThrow()
+    expect(() =>
+      Passport.assertSod(issue(room + 1)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.UnsupportedSodError: The SOD is unsupported: the signed attributes are 193 bytes; at most 192 are supported.]`,
+    )
+  })
+})
+
+describe('verifyDocument', () => {
+  test('default', () => {
+    const passport = TestPassport.issue()
+    const { modulus, mrz, sod } = Passport.verifyDocument(passport)
+    expect(modulus).toBe(Hex.fromBytes(passport.dscModulus))
+    expect(mrz).toEqual(Passport.fromDg1(passport.dg1))
+    expect(sod).toEqual(Passport.fromSod(passport.sod))
+    // Publishers list the modulus's leaf.
+    expect(() => Passport.hashLeaf(modulus)).not.toThrow()
+  })
+
+  test('behavior: signer identified by subject key identifier', () => {
+    const passport = TestPassport.issue({ sid: 'subjectKeyIdentifier' })
+    expect(Passport.verifyDocument(passport).modulus).toBe(
+      Hex.fromBytes(passport.dscModulus),
+    )
+  })
+
+  test('error: DG1 does not match its hash', () => {
+    const passport = TestPassport.issue()
+    const dg1 = passport.dg1.slice()
+    dg1[50] = 0x3c
+    expect(() =>
+      Passport.verifyDocument({ ...passport, dg1 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.DataGroupHashMismatchError: The security object does not contain the SHA-256 hash of data group 1.]`,
+    )
+  })
+
+  test('error: DG15 does not match its hash', () => {
+    const passport = TestPassport.issue()
+    const dg15 = passport.dg15.slice()
+    dg15[100]! ^= 1
+    expect(() =>
+      Passport.verifyDocument({ ...passport, dg15 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.DataGroupHashMismatchError: The security object does not contain the SHA-256 hash of data group 15.]`,
+    )
+  })
+
+  test('error: DG15 does not match the template', () => {
+    const passport = TestPassport.issue()
+    expect(() =>
+      Passport.verifyDocument({ ...passport, dg15: passport.dg15.slice(1) }),
+    ).toThrow(Passport.InvalidDataGroupError)
+  })
+
+  test('error: DataGroupHash for another data group', () => {
+    // DG1's hash listed as data group 2.
+    const passport = TestPassport.issue({
+      dataGroupHashes: ([dg1, , dg15]) => [[2, dg1![1]], dg15!],
+    })
+    expect(() =>
+      Passport.verifyDocument(passport),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.DataGroupHashMismatchError: The security object does not contain the SHA-256 hash of data group 1.]`,
+    )
+  })
+
+  test('error: messageDigest for another security object', () => {
+    const passport = TestPassport.issue({
+      messageDigest: (digest) => {
+        const copy = digest.slice()
+        copy[0]! ^= 1
+        return copy
+      },
+    })
+    expect(() =>
+      Passport.verifyDocument(passport),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.MessageDigestMismatchError: The signed attributes do not contain the SHA-256 digest of the security object.]`,
+    )
+  })
+
+  test('error: signature by another key', () => {
+    const other = TestPassport.issue({
+      dsc: TestPassport.rsaKey(2048, 65537, 'other'),
+    })
+    const passport = TestPassport.issue({
+      signature: () => Bytes.fromHex(Passport.fromSod(other.sod).signature),
+    })
+    expect(() =>
+      Passport.verifyDocument(passport),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidDocumentSignatureError: The document signer's signature over the signed attributes is invalid.]`,
+    )
+  })
+
+  test('error: signature not less than its modulus', () => {
+    const passport = TestPassport.issue({
+      signature: () => TestPassport.issue().dscModulus,
+    })
+    expect(() => Passport.verifyDocument(passport)).toThrow(
+      Passport.InvalidDocumentSignatureError,
+    )
+  })
+
+  test('error: unsupported suite', () => {
+    const passport = TestPassport.issue({
+      hashAlgorithm: TestPassport.oids.sha1,
+    })
+    expect(() => Passport.verifyDocument(passport)).toThrow(
+      Passport.UnsupportedSodError,
+    )
+  })
+})
+
+describe('verifyActiveAuthentication', () => {
+  const { chip, dg15 } = TestPassport.issue()
+  const challenge = Bytes.fromHex(
+    Passport.getChallenge({
+      blinding,
+      payload: TypedData.getSignPayload(
+        Passport.getBindingTypedData({
+          account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+          chainId: 4217,
+        }),
+      ),
+    }),
+  )
+
+  test('default', () => {
+    const signature = chip.sign(challenge)
+    expect(
+      Passport.verifyActiveAuthentication({ challenge, dg15, signature }),
+    ).toBe(true)
+  })
+
+  test('behavior: chips returning J or n - J', () => {
+    for (let i = 0; i < 4; i++)
+      for (const form of ['J', 'n - J'] as const)
+        expect(
+          Passport.verifyActiveAuthentication({
+            challenge: Hex.fromBytes(challenge),
+            dg15: Hex.fromBytes(dg15),
+            signature: Hex.fromBytes(chip.sign(challenge, { form })),
+          }),
+        ).toBe(true)
+  })
+
+  test('behavior: H over another challenge', () => {
+    const signature = chip.sign(challenge)
+    const other = challenge.slice()
+    other[7]! ^= 1
+    expect(
+      Passport.verifyActiveAuthentication({
+        challenge: other,
+        dg15,
+        signature,
+      }),
+    ).toBe(false)
+  })
+
+  test('behavior: challenge for another commitment', () => {
+    const signature = chip.sign(challenge)
+    const other = Passport.getChallenge({
+      accessKeyAddress,
+      blinding,
+      validUntil: 1760000540,
+    })
+    expect(
+      Passport.verifyActiveAuthentication({
+        challenge: other,
+        dg15,
+        signature,
+      }),
+    ).toBe(false)
+  })
+
+  test('behavior: wrong header or trailer', () => {
+    for (const options of [{ header: 0x6b }, { trailer: 0xcc }])
+      expect(
+        Passport.verifyActiveAuthentication({
+          challenge,
+          dg15,
+          signature: chip.sign(challenge, options),
+        }),
+      ).toBe(false)
+  })
+
+  test('behavior: signature not less than its modulus', () => {
+    const modulus = Bytes.fromNumber(chip.modulus, { size: 128 })
+    expect(
+      Passport.verifyActiveAuthentication({
+        challenge,
+        dg15,
+        signature: modulus,
+      }),
+    ).toBe(false)
+    expect(
+      Passport.verifyActiveAuthentication({
+        challenge,
+        dg15,
+        signature: new Uint8Array(128),
+      }),
+    ).toBe(false)
+  })
+
+  test('behavior: another chip', () => {
+    const other = TestPassport.der.tlv(
+      0x6f,
+      TestPassport.rsaKey(1024, 65537, 'other chip').spki,
+    )
+    expect(
+      Passport.verifyActiveAuthentication({
+        challenge,
+        dg15: other,
+        signature: chip.sign(challenge),
+      }),
+    ).toBe(false)
+  })
+
+  test('error: challenge is not 8 bytes', () => {
+    expect(() =>
+      Passport.verifyActiveAuthentication({
+        challenge: challenge.slice(1),
+        dg15,
+        signature: chip.sign(challenge),
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Passport.InvalidFieldLengthError: \`challenge\` is 7 bytes; expected 8.]`,
+    )
   })
 })

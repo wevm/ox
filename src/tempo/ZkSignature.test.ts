@@ -1,7 +1,7 @@
 import { Address, Hex, Rlp, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope, ZkSignature } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
-import { transaction } from '../../test/tempo/zk.js'
+import { oidcDev, transaction } from '../../test/tempo/zk.js'
 
 // The node returns `null` for absent fields, which `KeyAuthorization.Rpc` omits.
 const authorization = KeyAuthorization.fromRpc(
@@ -214,5 +214,91 @@ describe('toTuple', () => {
         "validUntil": "0x6ac6ac70",
       }
     `)
+  })
+})
+
+describe('verifyMessage', () => {
+  const { digest, proof, publicInput: _, ...rest } = oidcDev.message
+  const signature = {
+    ...rest,
+    proof,
+    publisherId: credential.publisherId,
+    scheme: 1,
+  } as const satisfies ZkSignature.MessageSignature
+  const { verifyingKey } = oidcDev
+
+  test('default', () => {
+    expect(
+      ZkSignature.verifyMessage({ payload: digest, signature, verifyingKey }),
+    ).toBe(true)
+  })
+
+  test('behavior: serialized signature', () => {
+    expect(
+      ZkSignature.verifyMessage({
+        payload: digest,
+        signature: ZkSignature.serializeMessage(signature),
+        verifyingKey,
+      }),
+    ).toBe(true)
+  })
+
+  test('behavior: address', () => {
+    expect(
+      ZkSignature.verifyMessage({
+        address: ZkSignature.getAddress(signature),
+        payload: digest,
+        signature,
+        verifyingKey,
+      }),
+    ).toBe(true)
+    expect(
+      ZkSignature.verifyMessage({
+        address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        payload: digest,
+        signature,
+        verifyingKey,
+      }),
+    ).toBe(false)
+  })
+
+  test('behavior: rejects another message or statement', () => {
+    const verify = (
+      overrides: Partial<ZkSignature.MessageSignature> = {},
+      payload: Hex.Hex = digest,
+    ) =>
+      ZkSignature.verifyMessage({
+        payload,
+        signature: { ...signature, ...overrides },
+        verifyingKey,
+      })
+    expect(verify({}, `0x${'00'.repeat(32)}`)).toBe(false)
+    expect(verify({ issuedAt: signature.issuedAt + 1 })).toBe(false)
+    expect(verify({ scheme: 2 })).toBe(false)
+    expect(verify({ keyHash: signature.issuer })).toBe(false)
+    // The publisher is not part of the proof's statement, only of the address.
+    expect(verify({ publisherId: `0x${'05'.repeat(32)}` })).toBe(true)
+  })
+
+  test('behavior: rejects a signature-form proof', () => {
+    expect(
+      ZkSignature.verifyMessage({
+        payload: digest,
+        signature: { ...signature, proof: oidcDev.signature.proof },
+        verifyingKey,
+      }),
+    ).toBe(false)
+  })
+
+  test('error: payload is not 32 bytes', () => {
+    expect(() =>
+      ZkSignature.verifyMessage({
+        payload: '0xdeadbeef',
+        signature,
+        verifyingKey,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[ZkSignature.InvalidCredentialError: Invalid ZK signature credential: payload is not 32 bytes.]`,
+    )
   })
 })
