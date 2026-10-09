@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.55
+
+### Patch Changes
+
+- [#510](https://github.com/wevm/ox/pull/510) [`5b2a75b`](https://github.com/wevm/ox/commit/5b2a75b08397483e3ab4a157e11e8ef70b65f9ff) Thanks [@jxom](https://github.com/jxom)! - Fixed `Transaction.toRpc` (in `ox/tempo`) dropping `nonceKey`, so serialized Tempo transactions keep their 2D nonce lane.
+
 ## 0.14.54
 
 ### Patch Changes
