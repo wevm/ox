@@ -700,8 +700,8 @@ const tempoGuides: SidebarItem = {
           link: '/tempo/guides/transaction-envelopes/sponsor-user-fees',
         },
         {
-          text: 'Multisig Transactions',
-          link: '/tempo/guides/transaction-envelopes/multisig-transactions',
+          text: 'Configurable Accounts',
+          link: '/tempo/guides/transaction-envelopes/configurable-accounts',
           badge: { text: 'EXP', variant: 'warning' },
         },
       ],
@@ -818,9 +818,9 @@ individual modules.
   />
   <Card
     icon="lucide:users"
-    title="Native Multisig"
-    description="Derive accounts and assemble weighted owner approvals."
-    to="/tempo/guides/transaction-envelopes/multisig-transactions"
+    title="Configurable Accounts"
+    description="Derive accounts, assemble weighted owner approvals, and rotate owners."
+    to="/tempo/guides/transaction-envelopes/configurable-accounts"
   />
   <Card
     icon="lucide:shield-check"
@@ -831,7 +831,7 @@ individual modules.
   <Card
     icon="lucide:signature"
     title="Signature Envelopes"
-    description="Encode and verify secp256k1, P-256, keychain, and multisig signatures."
+    description="Encode and verify secp256k1, P-256, keychain, and configurable account signatures."
     to="/tempo/guides/signature-envelopes"
   />
   <Card

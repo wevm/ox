@@ -1,6 +1,6 @@
 import type * as core_Address from '../../../core/Address.js'
-import type * as core_MultisigConfig from '../../../tempo/MultisigConfig.js'
-import type * as core_MultisigOperation from '../../../tempo/MultisigOperation.js'
+import type * as core_AccountConfig from '../../../tempo/AccountConfig.js'
+import type * as core_AccountOperation from '../../../tempo/AccountOperation.js'
 import type * as z from 'zod/mini'
 import { expectTypeOf, test } from 'vp/test'
 import * as z_RpcSchemaTempo from '../RpcSchemaTempo.js'
@@ -24,47 +24,47 @@ test('Tempo namespace exposes tempo_simulateV1', () => {
   >()
 })
 
-test('multisig methods have the expected method names', () => {
+test('account methods have the expected method names', () => {
   expectTypeOf<
-    typeof z_RpcSchemaTempo.multisig_approveKeyAuthorization.method
-  >().toEqualTypeOf<'multisig_approveKeyAuthorization'>()
+    typeof z_RpcSchemaTempo.account_approveKeyAuthorization.method
+  >().toEqualTypeOf<'account_approveKeyAuthorization'>()
   expectTypeOf<
-    typeof z_RpcSchemaTempo.multisig_approveRawTransaction.method
-  >().toEqualTypeOf<'multisig_approveRawTransaction'>()
+    typeof z_RpcSchemaTempo.account_approveRawTransaction.method
+  >().toEqualTypeOf<'account_approveRawTransaction'>()
   expectTypeOf<
-    typeof z_RpcSchemaTempo.multisig_approveRawTransactionSync.method
-  >().toEqualTypeOf<'multisig_approveRawTransactionSync'>()
+    typeof z_RpcSchemaTempo.account_approveRawTransactionSync.method
+  >().toEqualTypeOf<'account_approveRawTransactionSync'>()
   expectTypeOf<
-    typeof z_RpcSchemaTempo.multisig_getConfig.method
-  >().toEqualTypeOf<'multisig_getConfig'>()
+    typeof z_RpcSchemaTempo.account_getConfig.method
+  >().toEqualTypeOf<'account_getConfig'>()
   expectTypeOf<
-    typeof z_RpcSchemaTempo.multisig_getOperation.method
-  >().toEqualTypeOf<'multisig_getOperation'>()
+    typeof z_RpcSchemaTempo.account_getOperation.method
+  >().toEqualTypeOf<'account_getOperation'>()
 })
 
-test('multisig_getConfig has the expected request and return types', () => {
+test('account_getConfig has the expected request and return types', () => {
   expectTypeOf<
-    z.input<typeof z_RpcSchemaTempo.multisig_getConfig.params>
+    z.input<typeof z_RpcSchemaTempo.account_getConfig.params>
   >().toEqualTypeOf<[{ address: core_Address.Address }]>()
   expectTypeOf<
-    z.output<typeof z_RpcSchemaTempo.multisig_getConfig.returns>
-  >().toEqualTypeOf<core_MultisigConfig.Rpc | null>()
+    z.output<typeof z_RpcSchemaTempo.account_getConfig.returns>
+  >().toEqualTypeOf<core_AccountConfig.Rpc | null>()
 })
 
-test('multisig return schemas decode RPC operations', () => {
+test('account return schemas decode RPC operations', () => {
   expectTypeOf<
-    z.output<typeof z_RpcSchemaTempo.multisig_approveRawTransactionSync.returns>
-  >().toMatchTypeOf<core_MultisigOperation.TransactionOperation>()
+    z.output<typeof z_RpcSchemaTempo.account_approveRawTransactionSync.returns>
+  >().toMatchTypeOf<core_AccountOperation.TransactionOperation>()
   expectTypeOf<
-    z.output<typeof z_RpcSchemaTempo.multisig_getOperation.returns>
-  >().toMatchTypeOf<core_MultisigOperation.Operation | null>()
+    z.output<typeof z_RpcSchemaTempo.account_getOperation.returns>
+  >().toMatchTypeOf<core_AccountOperation.Operation | null>()
 })
 
-test('Multisig namespace exposes multisig methods', () => {
+test('Account namespace exposes account methods', () => {
   expectTypeOf<
-    typeof z_RpcSchemaTempo.Multisig.multisig_getConfig
-  >().toEqualTypeOf<typeof z_RpcSchemaTempo.multisig_getConfig>()
+    typeof z_RpcSchemaTempo.Account.account_getConfig
+  >().toEqualTypeOf<typeof z_RpcSchemaTempo.account_getConfig>()
   expectTypeOf<
-    typeof z_RpcSchemaTempo.Multisig.multisig_getOperation
-  >().toEqualTypeOf<typeof z_RpcSchemaTempo.multisig_getOperation>()
+    typeof z_RpcSchemaTempo.Account.account_getOperation
+  >().toEqualTypeOf<typeof z_RpcSchemaTempo.account_getOperation>()
 })

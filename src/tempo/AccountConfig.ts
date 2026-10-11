@@ -9,39 +9,44 @@ import type { Compute } from '../core/internal/types.js'
 /** Maximum encoded byte length for one primitive owner approval. */
 export const maxOwnerSignatureBytes = 2049
 
-/** Maximum number of owners allowed in a native multisig config. */
+/** Maximum number of owners allowed in an account config. */
 export const maxOwners = 48
 
-/** Maximum number of owner approvals in a native multisig signature. */
+/** Maximum number of owner approvals in a configurable account signature. */
 export const maxSignatures = 8
 
-/** Maximum threshold accepted by a native multisig config. */
-export const maxThreshold = 8
+/**
+ * Maximum threshold accepted by an account config.
+ *
+ * The threshold must also be reachable by at most {@link ox#AccountConfig.maxSignatures}
+ * owner approvals.
+ */
+export const maxThreshold = 0xff
 
-/** Maximum version accepted by a native multisig config. */
+/** Maximum version accepted by an account config. */
 export const maxVersion = 2n ** 64n - 1n
 
-/** Tempo signature type byte for native multisig signatures. */
+/** Tempo signature type byte for configurable account signatures. */
 export const signatureTypeByte = '0x05' as const
 
 /** Zero 32-byte salt (the default when no salt is provided). */
 export const zeroSalt = `0x${'00'.repeat(32)}` as const
 
-/** Domain prefix for the native multisig account address derivation. */
+/** Domain prefix for the configurable account address derivation. */
 const accountDomain = 'tempo:multisig:account'
 
-/** Domain prefix for native multisig configuration commitments. */
+/** Domain prefix for account configuration commitments. */
 const configDomain = 'tempo:multisig:config'
 
 /** Keccak-256 of the canonical recovery wallet creation code. */
 const recoveryWalletInitCodeHash =
   '0x583cc63a2e37f645b43eac911b1a6d6de08b83abdc308c61364edda8cfc3bd37'
 
-/** Domain prefix for native multisig owner approvals. */
+/** Domain prefix for configurable account owner approvals. */
 const signatureDomain = 'tempo:multisig:signature'
 
 /**
- * Complete native multisig configuration witness.
+ * Complete account configuration witness.
  */
 export type Config<bigintType = bigint, numberType = number> = Compute<{
   /** Weighted owner list, strictly ascending by owner address. */
@@ -54,7 +59,7 @@ export type Config<bigintType = bigint, numberType = number> = Compute<{
   version: bigintType
 }>
 
-/** Input accepted when constructing a native multisig configuration. */
+/** Input accepted when constructing an account configuration. */
 export type Input<
   versionType extends bigint | number = bigint | number,
   numberType = number,
@@ -63,7 +68,7 @@ export type Input<
   owners: readonly Owner<numberType>[]
   /**
    * Caller-chosen 32-byte salt mixed into the derived account address.
-   * Defaults to the zero salt (`MultisigConfig.zeroSalt`) when omitted.
+   * Defaults to the zero salt (`AccountConfig.zeroSalt`) when omitted.
    */
   salt?: Hex.Hex | undefined
   /** Minimum total owner weight required to authorize a transaction. */
@@ -72,7 +77,7 @@ export type Input<
   version?: versionType | undefined
 }>
 
-/** Native multisig owner entry. */
+/** Account config owner entry. */
 export type Owner<numberType = number> = {
   /** Owner address (recovered from the owner's approval). */
   owner: Address.Address
@@ -80,10 +85,10 @@ export type Owner<numberType = number> = {
   weight: numberType
 }
 
-/** JSON-RPC representation of a native multisig configuration. */
+/** JSON-RPC representation of an account configuration. */
 export type Rpc = Config<Hex.Hex, number>
 
-/** RLP tuple representation of a {@link ox#MultisigConfig.Config}. */
+/** RLP tuple representation of a {@link ox#AccountConfig.Config}. */
 export type Tuple = readonly [
   salt: Hex.Hex,
   version: Hex.Hex,
@@ -92,7 +97,7 @@ export type Tuple = readonly [
 ]
 
 /**
- * Asserts that a native multisig {@link ox#MultisigConfig.Config} is valid.
+ * Asserts that an {@link ox#AccountConfig.Config} is valid.
  *
  * Mirrors the Tempo configuration rules: owners non-empty and
  * `<= maxOwners`, strictly ascending unique nonzero owner addresses, nonzero
@@ -102,9 +107,9 @@ export type Tuple = readonly [
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * MultisigConfig.assert({
+ * AccountConfig.assert({
  *   threshold: 1,
  *   owners: [
  *     {
@@ -115,7 +120,7 @@ export type Tuple = readonly [
  * })
  * ```
  *
- * @param config - The multisig config.
+ * @param config - The account config.
  */
 export function assert<
   versionType extends bigint | number = bigint | number,
@@ -186,16 +191,16 @@ export declare namespace assert {
 }
 
 /**
- * Normalizes a native multisig {@link ox#MultisigConfig.Config}.
+ * Normalizes an {@link ox#AccountConfig.Config}.
  *
  * Sorts owners into strictly ascending `owner` address order (the canonical
  * form required for account derivation) and asserts the config is valid.
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const config = MultisigConfig.from({
+ * const config = AccountConfig.from({
  *   owners: [
  *     {
  *       owner: '0x2222222222222222222222222222222222222222',
@@ -211,8 +216,8 @@ export declare namespace assert {
  * // owners are now sorted ascending by address
  * ```
  *
- * @param config - The multisig config.
- * @returns The normalized multisig config.
+ * @param config - The account config.
+ * @returns The normalized account config.
  */
 export function from<numberType = number>(
   config: Input<0 | 0n, numberType> & { version?: 0 | 0n | undefined },
@@ -246,13 +251,13 @@ export function from<numberType = number>(
 }
 
 /**
- * Converts a JSON-RPC multisig configuration to its domain representation.
+ * Converts a JSON-RPC account configuration to its domain representation.
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const config = MultisigConfig.fromRpc({
+ * const config = AccountConfig.fromRpc({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -265,8 +270,8 @@ export function from<numberType = number>(
  * })
  * ```
  *
- * @param config - The JSON-RPC multisig configuration.
- * @returns The normalized multisig configuration.
+ * @param config - The JSON-RPC account configuration.
+ * @returns The normalized account configuration.
  */
 export function fromRpc(config: Rpc): Config {
   return from({
@@ -283,14 +288,14 @@ export declare namespace fromRpc {
 }
 
 /**
- * Converts an RLP {@link ox#MultisigConfig.Tuple} back to a
- * {@link ox#MultisigConfig.Config}.
+ * Converts an RLP {@link ox#AccountConfig.Tuple} back to a
+ * {@link ox#AccountConfig.Config}.
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const config = MultisigConfig.fromTuple([
+ * const config = AccountConfig.fromTuple([
  *   `0x${'00'.repeat(32)}`,
  *   '0x',
  *   '0x01',
@@ -299,7 +304,7 @@ export declare namespace fromRpc {
  * ```
  *
  * @param tuple - The RLP tuple.
- * @returns The multisig config.
+ * @returns The account config.
  */
 export function fromTuple(tuple: Tuple): Config {
   const [salt, version, threshold, owners] = tuple
@@ -343,7 +348,7 @@ export function fromTuple(tuple: Tuple): Config {
 }
 
 /**
- * Derives the stable native multisig account address.
+ * Derives the stable configurable account address.
  *
  * The initial config is hashed into a CREATE2 salt using fixed-width
  * big-endian fields, not RLP. The account uses the chain-configured recovery
@@ -354,9 +359,9 @@ export function fromTuple(tuple: Tuple): Config {
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const initialConfig = MultisigConfig.from({
+ * const initialConfig = AccountConfig.from({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -366,14 +371,14 @@ export function fromTuple(tuple: Tuple): Config {
  *   threshold: 1
  * })
  *
- * const address = MultisigConfig.getAddress(initialConfig, {
+ * const address = AccountConfig.getAddress(initialConfig, {
  *   factory: '0x7171717171717171717171717171717171717171'
  * })
  * ```
  *
- * @param config - The initial multisig config.
+ * @param config - The initial account config.
  * @param options - The recovery factory configured by the chain.
- * @returns The multisig account address.
+ * @returns The configurable account address.
  */
 export function getAddress(
   config: Input,
@@ -428,16 +433,16 @@ export declare namespace getAddress {
 }
 
 /**
- * Computes the commitment for a native multisig configuration.
+ * Computes the commitment for an account configuration.
  *
  * The commitment uses raw fixed-width fields, not RLP or ABI encoding:
  * `keccak256("tempo:multisig:config" || salt || uint64be(version) || uint8(threshold) || uint8(owners.length) || owners)`.
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const commitment = MultisigConfig.getCommitment({
+ * const commitment = AccountConfig.getCommitment({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -449,7 +454,7 @@ export declare namespace getAddress {
  * })
  * ```
  *
- * @param config - The complete multisig configuration.
+ * @param config - The complete account configuration.
  * @returns The configuration commitment.
  */
 export function getCommitment(config: Input): Hex.Hex {
@@ -480,7 +485,7 @@ export declare namespace getCommitment {
 }
 
 /**
- * Computes the digest a native multisig owner approves (signs).
+ * Computes the digest a configurable account owner approves (signs).
  *
  * `keccak256("tempo:multisig:signature" || inner_digest || account || uint64be(version))`,
  * where `inner_digest` is the transaction sign payload
@@ -492,9 +497,9 @@ export declare namespace getCommitment {
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
+ * import { AccountConfig, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const config = MultisigConfig.from({
+ * const config = AccountConfig.from({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -509,8 +514,8 @@ export declare namespace getCommitment {
  *   calls: []
  * })
  *
- * const digest = MultisigConfig.getSignPayload({
- *   account: MultisigConfig.getAddress(config, {
+ * const digest = AccountConfig.getSignPayload({
+ *   account: AccountConfig.getAddress(config, {
  *     factory: '0x7171717171717171717171717171717171717171'
  *   }),
  *   config,
@@ -539,7 +544,7 @@ export function getSignPayload(value: getSignPayload.Value): Hex.Hex {
 
 export declare namespace getSignPayload {
   type Value = {
-    /** The native multisig account address. */
+    /** The configurable account address. */
     account: Address.Address
     /** Configuration whose version applies to the approval. */
     config: Pick<Config<bigint | number>, 'version'>
@@ -557,13 +562,13 @@ export declare namespace getSignPayload {
 }
 
 /**
- * Converts a multisig configuration to its JSON-RPC representation.
+ * Converts an account configuration to its JSON-RPC representation.
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const config = MultisigConfig.toRpc({
+ * const config = AccountConfig.toRpc({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -574,8 +579,8 @@ export declare namespace getSignPayload {
  * })
  * ```
  *
- * @param config - The multisig configuration.
- * @returns The JSON-RPC multisig configuration.
+ * @param config - The account configuration.
+ * @returns The JSON-RPC account configuration.
  */
 export function toRpc(config: Input): Rpc {
   const value = from(config)
@@ -598,7 +603,7 @@ export declare namespace toRpc {
 }
 
 /**
- * Converts a {@link ox#MultisigConfig.Config} to its RLP tuple form.
+ * Converts a {@link ox#AccountConfig.Config} to its RLP tuple form.
  *
  * Tuple shape: `[salt, version, threshold, [[owner, weight], ...]]`. The
  * 32-byte `salt` encodes as a full fixed-width string; other integers use
@@ -606,9 +611,9 @@ export declare namespace toRpc {
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const tuple = MultisigConfig.toTuple({
+ * const tuple = AccountConfig.toTuple({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -619,7 +624,7 @@ export declare namespace toRpc {
  * })
  * ```
  *
- * @param config - The multisig config.
+ * @param config - The account config.
  * @returns The RLP tuple.
  */
 export function toTuple(config: Input): Tuple {
@@ -640,14 +645,81 @@ export function toTuple(config: Input): Tuple {
 }
 
 /**
- * Validates a native multisig {@link ox#MultisigConfig.Config}. Returns `true`
+ * Derives the configuration that replaces the current one in an owner update.
+ *
+ * Mirrors the `updateConfig` precompile ([TIP-1109](https://tips.sh/1109)):
+ * keeps the current salt, increments the version by one, and replaces the
+ * owners and threshold. Owners are sorted into canonical order and the next
+ * configuration is validated. The account address does not change.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AccountConfig } from 'ox/tempo'
+ *
+ * const initialConfig = AccountConfig.from({
+ *   owners: [
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ],
+ *   threshold: 1
+ * })
+ *
+ * const config = AccountConfig.update(initialConfig, {
+ *   owners: [
+ *     {
+ *       owner: '0x2222222222222222222222222222222222222222',
+ *       weight: 1
+ *     }
+ *   ],
+ *   threshold: 1
+ * })
+ * // config.version === 1n, with the initial salt
+ * ```
+ *
+ * @param config - The current account config.
+ * @param options - The replacement owners and threshold.
+ * @returns The next account config.
+ */
+export function update<numberType = number>(
+  config: Input<bigint | number, numberType>,
+  options: update.Options<numberType>,
+): Config<bigint, numberType> {
+  const current = from(config)
+  if (current.version === maxVersion)
+    throw new InvalidConfigError({ reason: 'version overflow' })
+  return from({
+    owners: options.owners,
+    salt: current.salt,
+    threshold: options.threshold,
+    version: current.version + 1n,
+  })
+}
+
+export declare namespace update {
+  type Options<numberType = number> = {
+    /** Replacement weighted owners. Sorted into canonical order. */
+    owners: readonly Owner<numberType>[]
+    /** Replacement minimum total owner weight required for authorization. */
+    threshold: numberType
+  }
+
+  type ErrorType =
+    | assert.ErrorType
+    | InvalidConfigError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Validates an {@link ox#AccountConfig.Config}. Returns `true`
  * if valid, `false` otherwise.
  *
  * @example
  * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
+ * import { AccountConfig } from 'ox/tempo'
  *
- * const valid = MultisigConfig.validate({
+ * const valid = AccountConfig.validate({
  *   owners: [
  *     {
  *       owner: '0x1111111111111111111111111111111111111111',
@@ -659,7 +731,7 @@ export function toTuple(config: Input): Tuple {
  * // @log: true
  * ```
  *
- * @param config - The multisig config.
+ * @param config - The account config.
  * @returns Whether the config is valid.
  */
 export function validate(config: Input): boolean {
@@ -671,11 +743,11 @@ export function validate(config: Input): boolean {
   }
 }
 
-/** Thrown when a native multisig config is invalid. */
+/** Thrown when an account config is invalid. */
 export class InvalidConfigError extends Errors.BaseError {
-  override readonly name = 'MultisigConfig.InvalidConfigError'
+  override readonly name = 'AccountConfig.InvalidConfigError'
   constructor({ reason }: { reason: string }) {
-    super(`Invalid native multisig config: ${reason}.`)
+    super(`Invalid account config: ${reason}.`)
   }
 }
 

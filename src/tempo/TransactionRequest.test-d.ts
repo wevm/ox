@@ -1,7 +1,7 @@
 import type * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as Signature from '../core/Signature.js'
 import { describe, expectTypeOf, test } from 'vp/test'
-import * as MultisigSimulation from './MultisigSimulation.js'
+import * as AccountSimulation from './AccountSimulation.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TransactionRequest from './TransactionRequest.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
@@ -49,12 +49,23 @@ describe('TransactionRequest type', () => {
     >()
   })
 
-  test('carries domain and RPC multisig simulations', () => {
+  test('carries domain and RPC account simulations', () => {
     expectTypeOf<
-      TransactionRequest.TransactionRequest['multisigSimulation']
-    >().toEqualTypeOf<MultisigSimulation.Spec | undefined>()
+      TransactionRequest.TransactionRequest['accountSimulation']
+    >().toEqualTypeOf<AccountSimulation.Spec | undefined>()
     expectTypeOf<TransactionRequest.Rpc['multisigSimulation']>().toEqualTypeOf<
-      MultisigSimulation.Rpc | undefined
+      AccountSimulation.Rpc | undefined
+    >()
+  })
+
+  test('maps the configurable key type to the RPC multisig key type', () => {
+    expectTypeOf<
+      TransactionRequest.TransactionRequest['keyType']
+    >().toEqualTypeOf<
+      'configurable' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
+    >()
+    expectTypeOf<TransactionRequest.Rpc['keyType']>().toEqualTypeOf<
+      'multisig' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
     >()
   })
 })
@@ -73,6 +84,7 @@ describe('toEnvelope', () => {
     // Forces us to update toEnvelope when fields are added to the request.
     TransactionRequest.toEnvelope({
       accessList: [],
+      accountSimulation: undefined,
       authorizationList: undefined,
       calls: undefined,
       chainId: 1,
@@ -87,7 +99,6 @@ describe('toEnvelope', () => {
       keyType: 'secp256k1',
       maxFeePerGas: 1n,
       maxPriorityFeePerGas: 1n,
-      multisigSimulation: undefined,
       nonce: 0n,
       nonceKey: 'random',
       signature: undefined,

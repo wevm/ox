@@ -130,7 +130,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Run tests
-        run: pnpm test --project tempo-multisig --bail=1
+        run: pnpm test --project tempo-configurable-accounts --bail=1
 
   # test-tempo-e2e:
   #   name: 'Test Runtime (tempo, env: ${{ matrix.tempo-env }}, e2e)'

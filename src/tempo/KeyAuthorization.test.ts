@@ -8,8 +8,8 @@ import {
   WebAuthnP256,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
+import * as AccountConfig from './AccountConfig.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as MultisigConfig from './MultisigConfig.js'
 import * as Period from './Period.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -71,9 +71,9 @@ const signature_webauthn = SignatureEnvelope.from({
   },
 })
 
-const signature_multisig = {
+const signature_configurable = {
   account: address,
-  config: MultisigConfig.from({
+  config: AccountConfig.from({
     owners: [
       {
         owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -84,9 +84,9 @@ const signature_multisig = {
     version: 1n,
   }),
   signatures: [SignatureEnvelope.from(signature_secp256k1)],
-  type: 'multisig',
-} as const satisfies SignatureEnvelope.Multisig
-const signature_multisig_rpc =
+  type: 'configurable',
+} as const satisfies SignatureEnvelope.Configurable
+const signature_configurable_rpc =
   '0xf89794be95c3f554e9fc85ec51be69a3d807a0d55bcf2cf83ba000000000000000000000000000000000000000000000000000000000000000000101d7d694f39fd6e51aad88f6f4ce6ab8827279cfffb9226601f843b841fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c' as const
 
 const signature_keychain = {
@@ -95,9 +95,13 @@ const signature_keychain = {
   userAddress: address,
 } as const satisfies SignatureEnvelope.Keychain
 
-describe('multisig account binding', () => {
+describe('configurable account binding', () => {
   test('rejects unbound grants before signing or encoding', () => {
-    const authorization = { address, chainId: 1n, type: 'multisig' } as const
+    const authorization = {
+      address,
+      chainId: 1n,
+      type: 'configurable',
+    } as const
     const signed = {
       ...authorization,
       signature: SignatureEnvelope.from(signature_secp256k1),
@@ -110,13 +114,13 @@ describe('multisig account binding', () => {
       () => KeyAuthorization.toRpc(signed),
     ])
       expect(encode).toThrowErrorMatchingInlineSnapshot(
-        `[KeyAuthorization.MissingAccountError: Multisig key grants require a parent account binding.]`,
+        `[KeyAuthorization.MissingAccountError: Configurable account key grants require a parent account binding.]`,
       )
   })
 
   test('rejects unbound RPC and RLP grants', () => {
     const signed = KeyAuthorization.from(
-      { account: address, address, chainId: 1n, type: 'multisig' },
+      { account: address, address, chainId: 1n, type: 'configurable' },
       { signature: signature_secp256k1 },
     )
     const rpc = KeyAuthorization.toRpc(signed)
@@ -156,15 +160,15 @@ describe('from', () => {
     }).toEqual(limitsVectors)
   })
 
-  test('accepts multisig grants and delegates', () => {
+  test('accepts configurable grants and delegates', () => {
     const signed = KeyAuthorization.from(
       {
         address,
         chainId: 1n,
-        type: 'multisig',
-        account: signature_multisig.account,
+        type: 'configurable',
+        account: signature_configurable.account,
       },
-      { signature: signature_multisig },
+      { signature: signature_configurable },
     )
     expect(
       KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
@@ -539,7 +543,7 @@ describe('fromRpc', () => {
     `)
   })
 
-  test('with signature (multisig)', () => {
+  test('with signature (configurable)', () => {
     const authorization = KeyAuthorization.from({
       address,
       chainId: 1n,
@@ -547,20 +551,20 @@ describe('fromRpc', () => {
     })
 
     const signed = KeyAuthorization.from(authorization, {
-      signature: signature_multisig,
+      signature: signature_configurable,
     })
-    expect(signed.signature).toEqual(signature_multisig)
+    expect(signed.signature).toEqual(signature_configurable)
     expect(
       KeyAuthorization.from(authorization, {
-        signature: SignatureEnvelope.serialize(signature_multisig),
+        signature: SignatureEnvelope.serialize(signature_configurable),
       }).signature,
-    ).toEqual(signature_multisig)
+    ).toEqual(signature_configurable)
     expect(
       KeyAuthorization.from({
         ...authorization,
-        signature: signature_multisig,
+        signature: signature_configurable,
       }).signature,
-    ).toEqual(signature_multisig)
+    ).toEqual(signature_configurable)
     expect(
       KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
     ).toEqual(signed)
@@ -578,7 +582,7 @@ describe('fromRpc', () => {
         signature: signature_keychain as never,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
     )
 
     expect(() =>
@@ -586,7 +590,7 @@ describe('fromRpc', () => {
         signature: SignatureEnvelope.serialize(signature_keychain),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
     )
 
     expect(() =>
@@ -595,19 +599,19 @@ describe('fromRpc', () => {
         signature: signature_keychain,
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
     )
   })
 })
 
 describe('fromRpc', () => {
-  test('behavior: multisig', () => {
+  test('behavior: configurable', () => {
     const authorization = KeyAuthorization.fromRpc({
       chainId: '0x1',
       expiry: null,
       keyId: address,
       keyType: 'secp256k1',
-      signature: signature_multisig_rpc,
+      signature: signature_configurable_rpc,
     })
 
     expect(authorization.signature).toMatchInlineSnapshot(`
@@ -634,7 +638,7 @@ describe('fromRpc', () => {
             "type": "secp256k1",
           },
         ],
-        "type": "multisig",
+        "type": "configurable",
       }
     `)
   })
@@ -649,7 +653,7 @@ describe('fromRpc', () => {
         signature: SignatureEnvelope.toRpc(signature_keychain),
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`multisig\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
     )
   })
 
@@ -1223,7 +1227,7 @@ describe('getSignPayload', () => {
 })
 
 describe('deserialize', () => {
-  test('example: matches the frozen multisig witness vector', () => {
+  test('example: matches the frozen configurable witness vector', () => {
     const serialized =
       '0xf8f1f85382107980941eff47bc3a10a45d4b230b5d10e37751fe6aa718808080a053535353535353535353535353535353535353535353535353535353535353538094c4a590afa7337e5cd5eb3aa60cacf91c5400044bb89a05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b8412cfed9350faf80e4115e3c4c967356b80a8e6ee42e4a49ab953c8c8a3537d8d8359bf035a9bea18f32b0da7129cdce3ce701abc09ad8919b93da21a0d57e21451b' as const
     const authorization = KeyAuthorization.deserialize(serialized)
@@ -1256,7 +1260,7 @@ describe('deserialize', () => {
               "type": "secp256k1",
             },
           ],
-          "type": "multisig",
+          "type": "configurable",
         },
         "type": "secp256k1",
         "witness": "0x5353535353535353535353535353535353535353535353535353535353535353",
@@ -1265,14 +1269,14 @@ describe('deserialize', () => {
     expect(KeyAuthorization.serialize(authorization)).toBe(serialized)
   })
 
-  test('multisig', () => {
+  test('configurable', () => {
     const serialized = Rlp.fromHex([
       ['0x1', '0x', address],
-      SignatureEnvelope.serialize(signature_multisig),
+      SignatureEnvelope.serialize(signature_configurable),
     ])
 
     expect(KeyAuthorization.deserialize(serialized).signature).toEqual(
-      signature_multisig,
+      signature_configurable,
     )
   })
 
@@ -1446,16 +1450,28 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
-  test('behavior: multisig', () => {
+  test('behavior: configurable key type uses the RPC multisig key type', () => {
+    const authorization = KeyAuthorization.from(
+      { account: address, address, chainId: 1n, type: 'configurable' },
+      { signature: signature_secp256k1 },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    expect(rpc.keyType).toMatchInlineSnapshot(`"multisig"`)
+    expect(KeyAuthorization.fromRpc(rpc).type).toMatchInlineSnapshot(
+      `"configurable"`,
+    )
+  })
+
+  test('behavior: configurable', () => {
     const authorization = KeyAuthorization.toRpc({
       address,
       chainId: 1n,
-      signature: signature_multisig,
+      signature: signature_configurable,
       type: 'secp256k1',
     })
 
     expect(authorization.signature).toMatchInlineSnapshot(
-      `"${signature_multisig_rpc}"`,
+      `"${signature_configurable_rpc}"`,
     )
   })
 

@@ -34,7 +34,7 @@ const envelope = core_SignatureEnvelope.from({
     ) as core_SignatureEnvelope.Primitive,
   ],
 })
-const multisig = core_SignatureEnvelope.toRpc(envelope)
+const configurable = core_SignatureEnvelope.toRpc(envelope)
 
 describe('SignatureEnvelope', () => {
   test('decodes a secp256k1 envelope', () => {
@@ -60,20 +60,23 @@ describe('SignatureEnvelope', () => {
     )
   })
 
-  test('round-trips versioned multisig RPC bytes', () => {
-    const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)
+  test('round-trips versioned configurable RPC bytes', () => {
+    const decoded = z.decode(
+      z_SignatureEnvelope.SignatureEnvelope,
+      configurable,
+    )
     expect(decoded).toEqual(envelope)
     expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
-      multisig,
+      configurable,
     )
   })
 
-  test('round-trips a multisig delegate in a keychain', () => {
+  test('round-trips a configurable delegate in a keychain', () => {
     const rpc = {
       type: 'keychain',
       version: 'v2',
       userAddress: '0x3333333333333333333333333333333333333333',
-      signature: multisig,
+      signature: configurable,
     } as const
     expect(
       z.encode(
@@ -108,12 +111,12 @@ describe('SignatureEnvelope', () => {
         } as never).success,
       ).toMatchInlineSnapshot('false')
   })
-  test('rejects keychain V1 multisig delegates', () => {
+  test('rejects keychain V1 configurable delegates', () => {
     const rpc = {
       type: 'keychain',
       version: 'v1',
       userAddress: envelope.account,
-      signature: multisig,
+      signature: configurable,
     } as const
     expect(
       z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, rpc).success,
@@ -140,7 +143,7 @@ describe('SignatureEnvelope', () => {
 })
 
 describe('Keychain', () => {
-  test('rejects V1 wrappers with nested multisig delegates', () => {
+  test('rejects V1 wrappers with nested configurable delegates', () => {
     const inner = {
       inner: envelope,
       type: 'keychain',

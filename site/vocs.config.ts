@@ -114,6 +114,11 @@ export default defineConfig({
       status: 301,
     },
     { source: '/guides/zod', destination: '/guides/schemas/zod', status: 301 },
+    {
+      source: '/tempo/guides/transaction-envelopes/multisig-transactions',
+      destination: '/tempo/guides/transaction-envelopes/configurable-accounts',
+      status: 301,
+    },
   ],
   sidebar: {
     '/': [

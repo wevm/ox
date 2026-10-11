@@ -1,7 +1,7 @@
 import { Transaction } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
 
-const multisigRpcSignature =
+const configurableRpcSignature =
   '0xf89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
 
 describe('fromRpc', () => {
@@ -517,7 +517,7 @@ describe('toRpc', () => {
 })
 
 describe('roundtrip', () => {
-  test('behavior: multisig RPC signature', () => {
+  test('behavior: configurable RPC signature', () => {
     const rpc = {
       accessList: [],
       blockHash:
@@ -532,7 +532,7 @@ describe('roundtrip', () => {
       maxFeePerGas: '0x2',
       maxPriorityFeePerGas: '0x1',
       nonce: '0x357',
-      signature: multisigRpcSignature,
+      signature: configurableRpcSignature,
       transactionIndex: '0x2',
       type: '0x76',
     } as const satisfies Transaction.TempoRpc
@@ -567,7 +567,7 @@ describe('roundtrip', () => {
               "type": "secp256k1",
             },
           ],
-          "type": "multisig",
+          "type": "configurable",
         },
       }
     `)

@@ -12,13 +12,13 @@ test('SignatureEnvelope decodes RPC into a signature envelope', () => {
   >()
 })
 
-test('MultisigRpc preserves the complete witness shape', () => {
-  expectTypeOf<core_SignatureEnvelope.MultisigRpc>().toExtend<
-    z.input<typeof z_SignatureEnvelope.MultisigRpc>
+test('ConfigurableRpc preserves the complete witness shape', () => {
+  expectTypeOf<core_SignatureEnvelope.ConfigurableRpc>().toExtend<
+    z.input<typeof z_SignatureEnvelope.ConfigurableRpc>
   >()
   expectTypeOf<
-    z.output<typeof z_SignatureEnvelope.MultisigRpc>
-  >().toExtend<core_SignatureEnvelope.MultisigRpc>()
+    z.output<typeof z_SignatureEnvelope.ConfigurableRpc>
+  >().toExtend<core_SignatureEnvelope.ConfigurableRpc>()
 })
 
 test('Type preserves the key type union', () => {

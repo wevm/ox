@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vp/test'
-import * as core_MultisigOperation from '../../../tempo/MultisigOperation.js'
-import * as z_MultisigOperation from '../MultisigOperation.js'
+import * as core_AccountOperation from '../../../tempo/AccountOperation.js'
+import * as z_AccountOperation from '../AccountOperation.js'
 import * as z from 'zod/mini'
 
 const rpc = {
@@ -37,21 +37,21 @@ const rpc = {
 
 describe('TransactionOperation', () => {
   test('decodes an RPC operation', () => {
-    expect(z.decode(z_MultisigOperation.TransactionOperation, rpc)).toEqual(
-      core_MultisigOperation.fromRpc(rpc),
+    expect(z.decode(z_AccountOperation.TransactionOperation, rpc)).toEqual(
+      core_AccountOperation.fromRpc(rpc),
     )
   })
 
   test('round-trips via encode', () => {
-    const operation = z.decode(z_MultisigOperation.TransactionOperation, rpc)
+    const operation = z.decode(z_AccountOperation.TransactionOperation, rpc)
     expect(
-      z.encode(z_MultisigOperation.TransactionOperation, operation),
-    ).toEqual(core_MultisigOperation.toRpc(operation))
+      z.encode(z_AccountOperation.TransactionOperation, operation),
+    ).toEqual(core_AccountOperation.toRpc(operation))
   })
 
   test('rejects internally inconsistent operations', () => {
     expect(
-      z.safeDecode(z_MultisigOperation.TransactionOperation, {
+      z.safeDecode(z_AccountOperation.TransactionOperation, {
         ...rpc,
         weight: 2,
       }).success,
@@ -61,6 +61,6 @@ describe('TransactionOperation', () => {
 
 describe('Operation', () => {
   test('accepts transaction operations', () => {
-    expect(z.safeDecode(z_MultisigOperation.Operation, rpc).success).toBe(true)
+    expect(z.safeDecode(z_AccountOperation.Operation, rpc).success).toBe(true)
   })
 })

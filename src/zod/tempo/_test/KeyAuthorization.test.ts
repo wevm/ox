@@ -21,10 +21,10 @@ const rpc = {
 } as const
 
 describe('KeyAuthorization', () => {
-  test('rejects unbound multisig grants through every schema', () => {
+  test('rejects unbound configurable grants through every schema', () => {
     const domain = {
       ...z.decode(z_KeyAuthorization.KeyAuthorization, rpc),
-      type: 'multisig',
+      type: 'configurable',
     } as const
     for (const account of [undefined, null])
       expect(
@@ -171,15 +171,15 @@ describe('KeyAuthorization', () => {
     ).toBe(false)
   })
 
-  test('rejects legacy multisig signatures', () => {
-    const multisigRpc = {
+  test('rejects legacy signatures without a config', () => {
+    const legacyRpc = {
       account: '0x1111111111111111111111111111111111111111',
       signatures: [rpc.signature],
     } as const
     expect(
       z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
         ...rpc,
-        signature: multisigRpc,
+        signature: legacyRpc,
       } as never).success,
     ).toBe(false)
 
@@ -188,14 +188,14 @@ describe('KeyAuthorization', () => {
       z.safeEncode(z_KeyAuthorization.KeyAuthorization, {
         ...authorization,
         signature: {
-          account: multisigRpc.account,
+          account: legacyRpc.account,
           signatures: [authorization.signature],
-          type: 'multisig',
+          type: 'configurable',
         },
       } as never).success,
     ).toBe(false)
   })
-  test('round-trips account-bound multisig grants', () => {
+  test('round-trips account-bound configurable grants', () => {
     const signature = core_SignatureEnvelope.from({
       account: '0x2222222222222222222222222222222222222222',
       config: {
@@ -215,7 +215,7 @@ describe('KeyAuthorization', () => {
         account: signature.account,
         address: '0x3333333333333333333333333333333333333333',
         chainId: 1n,
-        type: 'multisig',
+        type: 'configurable',
       },
       { signature },
     )

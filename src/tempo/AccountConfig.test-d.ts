@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from 'vp/test'
-import * as MultisigConfig from './MultisigConfig.js'
+import * as AccountConfig from './AccountConfig.js'
 
 const input = {
   owners: [
@@ -9,41 +9,51 @@ const input = {
     },
   ],
   threshold: 1,
-} as const satisfies MultisigConfig.Input
+} as const satisfies AccountConfig.Input
 
 test('from returns a complete configuration', () => {
-  const config = MultisigConfig.from(input)
-  const numeric = MultisigConfig.from({ ...input, version: 1 })
-  const zero = MultisigConfig.from({ ...input, version: 0 })
+  const config = AccountConfig.from(input)
+  const numeric = AccountConfig.from({ ...input, version: 1 })
+  const zero = AccountConfig.from({ ...input, version: 0 })
 
-  expectTypeOf(config).toMatchTypeOf<MultisigConfig.Config>()
+  expectTypeOf(config).toMatchTypeOf<AccountConfig.Config>()
   expectTypeOf(config.version).toEqualTypeOf<0n>()
   expectTypeOf(numeric.version).toEqualTypeOf<bigint>()
   expectTypeOf(zero.version).toEqualTypeOf<0n>()
 })
 
-test('RPC configurations use hexadecimal versions', () => {
-  const rpc = MultisigConfig.toRpc(MultisigConfig.from(input))
+test('update returns the next complete configuration', () => {
+  const config = AccountConfig.update(AccountConfig.from(input), {
+    owners: input.owners,
+    threshold: 1,
+  })
 
-  expectTypeOf(rpc).toEqualTypeOf<MultisigConfig.Rpc>()
+  expectTypeOf(config).toEqualTypeOf<AccountConfig.Config>()
+  expectTypeOf(config.version).toEqualTypeOf<bigint>()
+})
+
+test('RPC configurations use hexadecimal versions', () => {
+  const rpc = AccountConfig.toRpc(AccountConfig.from(input))
+
+  expectTypeOf(rpc).toEqualTypeOf<AccountConfig.Rpc>()
   expectTypeOf(rpc.version).toEqualTypeOf<`0x${string}`>()
 })
 
 test('complete configurations require a version', () => {
   // @ts-expect-error Complete configurations include their version.
-  const config: MultisigConfig.Config = input
+  const config: AccountConfig.Config = input
 
-  expectTypeOf(config).toEqualTypeOf<MultisigConfig.Config>()
+  expectTypeOf(config).toEqualTypeOf<AccountConfig.Config>()
 })
 
 test('sign payloads take the version from config', () => {
-  MultisigConfig.getSignPayload({
+  AccountConfig.getSignPayload({
     account: '0x2222222222222222222222222222222222222222',
     config: { version: 1 },
     payload: '0x1234',
   })
 
-  MultisigConfig.getSignPayload({
+  AccountConfig.getSignPayload({
     account: '0x2222222222222222222222222222222222222222',
     // @ts-expect-error A configuration version is required.
     config: {},

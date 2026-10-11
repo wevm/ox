@@ -10,7 +10,7 @@ import {
   WebCryptoP256,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
-import * as MultisigConfig from './MultisigConfig.js'
+import * as AccountConfig from './AccountConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const publicKey = PublicKey.from({
@@ -530,7 +530,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize('0xdeadbeef'),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Multisig)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Configurable)
 
         Serialized: 0xdeadbeef]
       `,
@@ -690,7 +690,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize(unknownType),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Multisig)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Configurable)
 
         Serialized: 0xff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
       `,
@@ -1115,7 +1115,7 @@ describe('from', () => {
     })
   })
 
-  describe('multisig', () => {
+  describe('configurable', () => {
     test('normalizes the current config', () => {
       const envelope = SignatureEnvelope.from({
         account: '0x2222222222222222222222222222222222222222',
@@ -1750,7 +1750,7 @@ describe('serialize', () => {
   })
 })
 
-describe('sortMultisigApprovals', () => {
+describe('sortApprovals', () => {
   // Build owner key pairs first so we can construct a real genesis config
   // whose owner set matches the keys that produce the approvals below.
   const ownerKeys = Array.from({ length: 3 }, () => {
@@ -1764,16 +1764,16 @@ describe('sortMultisigApprovals', () => {
     Hex.toBigInt(a.address) < Hex.toBigInt(b.address) ? -1 : 1,
   )
 
-  const genesisConfig = MultisigConfig.from({
+  const genesisConfig = AccountConfig.from({
     threshold: 2,
     owners: ascendingOwners.map((o) => ({ owner: o.address, weight: 1 })),
   })
   const payload = `0x${'42'.repeat(32)}` as const
-  const account = MultisigConfig.getAddress(genesisConfig, {
+  const account = AccountConfig.getAddress(genesisConfig, {
     factory: '0x7171717171717171717171717171717171717171',
   })
   const version = 3n
-  const digest = MultisigConfig.getSignPayload({
+  const digest = AccountConfig.getSignPayload({
     payload,
     account,
     config: { version },
@@ -1791,7 +1791,7 @@ describe('sortMultisigApprovals', () => {
   }))
 
   test('behavior: orders approvals ascending by recovered owner address', () => {
-    const ordered = SignatureEnvelope.sortMultisigApprovals({
+    const ordered = SignatureEnvelope.sortApprovals({
       account,
       config: { version },
       payload,
@@ -1804,7 +1804,7 @@ describe('sortMultisigApprovals', () => {
   test('behavior: already-sorted input is unchanged', () => {
     const signatures = ascending.map((owner) => owner.signature)
     expect(
-      SignatureEnvelope.sortMultisigApprovals({
+      SignatureEnvelope.sortApprovals({
         account,
         config: { version },
         payload,
@@ -1814,7 +1814,7 @@ describe('sortMultisigApprovals', () => {
   })
 
   test('behavior: recovered order matches the config owner order', () => {
-    const ordered = SignatureEnvelope.sortMultisigApprovals({
+    const ordered = SignatureEnvelope.sortApprovals({
       account,
       config: { version },
       payload,
@@ -2832,9 +2832,9 @@ describe('CoercionError', () => {
   })
 })
 
-describe('multisig', () => {
+describe('configurable', () => {
   const account = '0x2222222222222222222222222222222222222222'
-  const config = MultisigConfig.from({
+  const config = AccountConfig.from({
     threshold: 1,
     owners: [
       { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -2853,7 +2853,7 @@ describe('multisig', () => {
     expect(Rlp.toHex(Hex.slice(serialized, 1))).toEqual([
       account,
       [
-        MultisigConfig.zeroSalt,
+        AccountConfig.zeroSalt,
         '0x',
         '0x01',
         [['0x1111111111111111111111111111111111111111', '0x01']],
@@ -2894,7 +2894,7 @@ describe('multisig', () => {
   })
 
   test('rejects old wire and RPC shapes', () => {
-    for (const first of [account, MultisigConfig.toTuple(config)] as const)
+    for (const first of [account, AccountConfig.toTuple(config)] as const)
       expect(() =>
         SignatureEnvelope.deserialize(
           Hex.concat(
@@ -2909,7 +2909,7 @@ describe('multisig', () => {
   })
 
   test('rejects malformed configs', () => {
-    const valid = MultisigConfig.toTuple(config)
+    const valid = AccountConfig.toTuple(config)
     for (const tuple of [
       ['0x00', ...valid.slice(1)],
       [valid[0], '0x00', valid[2], valid[3]],
@@ -2929,7 +2929,7 @@ describe('multisig', () => {
             ]),
           ),
         ),
-      ).toThrowError(MultisigConfig.InvalidConfigError)
+      ).toThrowError(AccountConfig.InvalidConfigError)
   })
 
   test('rejects invalid accounts, missing configs, and invalid approval counts', () => {
@@ -2955,7 +2955,7 @@ describe('multisig', () => {
       config: { ...config, owners: [{ owner: account, weight: 1 }] },
     } as const
     expect(() => SignatureEnvelope.assert(self)).toThrowError(
-      SignatureEnvelope.InvalidMultisigApprovalError,
+      SignatureEnvelope.InvalidApprovalError,
     )
     expect(() =>
       SignatureEnvelope.assert({
@@ -2972,12 +2972,12 @@ describe('multisig', () => {
           ...envelope,
           signatures: [signature],
         } as never),
-      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+      ).toThrowError(SignatureEnvelope.InvalidApprovalError)
       const wire = Hex.concat(
         '0x05',
         Rlp.fromHex([
           account,
-          MultisigConfig.toTuple(config),
+          AccountConfig.toTuple(config),
           [SignatureEnvelope.serialize(signature)],
         ]),
       )
@@ -2997,9 +2997,9 @@ describe('multisig', () => {
     }
     expect(() =>
       SignatureEnvelope.assert({ ...envelope, signatures: [oversized] }),
-    ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+    ).toThrowError(SignatureEnvelope.InvalidApprovalError)
   })
-  test('requires keychain V2 for multisig delegates', () => {
+  test('requires keychain V2 for configurable delegates', () => {
     const keychain = SignatureEnvelope.from({
       userAddress: account,
       version: 'v2',
@@ -3009,12 +3009,12 @@ describe('multisig', () => {
     expect(SignatureEnvelope.deserialize(serialized)).toEqual(keychain)
     expect(() =>
       SignatureEnvelope.serialize({ ...keychain, version: 'v1' }),
-    ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+    ).toThrowError(SignatureEnvelope.InvalidApprovalError)
     expect(() =>
       SignatureEnvelope.deserialize(
         Hex.concat('0x03', Hex.slice(serialized, 1)),
       ),
-    ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+    ).toThrowError(SignatureEnvelope.InvalidApprovalError)
     expect(() =>
       SignatureEnvelope.fromRpc({
         type: 'keychain',
@@ -3022,9 +3022,9 @@ describe('multisig', () => {
         version: 'v1',
         signature: SignatureEnvelope.toRpc(envelope),
       }),
-    ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+    ).toThrowError(SignatureEnvelope.InvalidApprovalError)
   })
-  test('rejects V1 wrappers around recursively nested multisig delegates', () => {
+  test('rejects V1 wrappers around recursively nested configurable delegates', () => {
     let inner: SignatureEnvelope.SignatureEnvelope = envelope
     for (let depth = 0; depth < 3; depth++) {
       inner = { inner, type: 'keychain', userAddress: account, version: 'v2' }
@@ -3038,10 +3038,10 @@ describe('multisig', () => {
       expect(SignatureEnvelope.validate(valid)).toBe(true)
       expect(SignatureEnvelope.validate(invalid)).toBe(false)
       expect(() => SignatureEnvelope.serialize(invalid)).toThrowError(
-        SignatureEnvelope.InvalidMultisigApprovalError,
+        SignatureEnvelope.InvalidApprovalError,
       )
       expect(() => SignatureEnvelope.toRpc(invalid)).toThrowError(
-        SignatureEnvelope.InvalidMultisigApprovalError,
+        SignatureEnvelope.InvalidApprovalError,
       )
       expect(() =>
         SignatureEnvelope.fromRpc({
@@ -3050,15 +3050,15 @@ describe('multisig', () => {
           version: 'v1',
           signature: SignatureEnvelope.toRpc(inner),
         }),
-      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+      ).toThrowError(SignatureEnvelope.InvalidApprovalError)
       expect(() =>
         SignatureEnvelope.deserialize(
           Hex.concat('0x03', account, SignatureEnvelope.serialize(inner)),
         ),
-      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+      ).toThrowError(SignatureEnvelope.InvalidApprovalError)
       expect(() =>
         SignatureEnvelope.serialize({ ...valid, inner: invalid }),
-      ).toThrowError(SignatureEnvelope.InvalidMultisigApprovalError)
+      ).toThrowError(SignatureEnvelope.InvalidApprovalError)
     }
     expect(
       SignatureEnvelope.validate({
@@ -3123,7 +3123,7 @@ describe('multisig', () => {
   })
 })
 
-describe('multisig vectors', () => {
+describe('configurable vectors', () => {
   const initial =
     '0x05f89794c4a590afa7337e5cd5eb3aa60cacf91c5400044bf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6947e5f4552091a69125d5dfcb7b8c2659029395bdf01f843b841869437e01f64bebeb78a8a6b30bfd3a993819c8cad82c807515d9b9e9b36f98535dfaa5eebc597715d05f6ce4927747f14fa4cd2acc717fdcd3877146437f8f41b' as const
   const current =
@@ -3156,7 +3156,7 @@ describe('multisig vectors', () => {
             "type": "secp256k1",
           },
         ],
-        "type": "multisig",
+        "type": "configurable",
       }
     `)
     expect(SignatureEnvelope.serialize(envelope)).toBe(initial)
@@ -3189,7 +3189,7 @@ describe('multisig vectors', () => {
             "type": "secp256k1",
           },
         ],
-        "type": "multisig",
+        "type": "configurable",
       }
     `)
     expect(SignatureEnvelope.serialize(envelope)).toBe(current)

@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from 'vp/test'
-import * as MultisigSimulation from './MultisigSimulation.js'
+import * as AccountSimulation from './AccountSimulation.js'
 
 const rpc = {
   approvals: [
@@ -11,23 +11,21 @@ const rpc = {
   ],
   config:
     '0xf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d694111111111111111111111111111111111111111101',
-} as const satisfies MultisigSimulation.Rpc
+} as const satisfies AccountSimulation.Rpc
 
 test('fromRpc returns a domain spec', () => {
-  const spec = MultisigSimulation.fromRpc(rpc)
+  const spec = AccountSimulation.fromRpc(rpc)
 
-  expectTypeOf(spec).toEqualTypeOf<MultisigSimulation.Spec>()
+  expectTypeOf(spec).toEqualTypeOf<AccountSimulation.Spec>()
   expectTypeOf(spec.config.version).toEqualTypeOf<bigint>()
 })
 
 test('RPC specs use encoded configurations', () => {
-  expectTypeOf<
-    MultisigSimulation.Rpc['config']
-  >().toEqualTypeOf<`0x${string}`>()
+  expectTypeOf<AccountSimulation.Rpc['config']>().toEqualTypeOf<`0x${string}`>()
 })
 
 test('toRpc returns an RPC spec', () => {
   expectTypeOf(
-    MultisigSimulation.toRpc(MultisigSimulation.fromRpc(rpc)),
-  ).toEqualTypeOf<MultisigSimulation.Rpc>()
+    AccountSimulation.toRpc(AccountSimulation.fromRpc(rpc)),
+  ).toEqualTypeOf<AccountSimulation.Rpc>()
 })

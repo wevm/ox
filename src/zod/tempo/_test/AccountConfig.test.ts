@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vp/test'
-import * as z_MultisigConfig from '../MultisigConfig.js'
+import * as z_AccountConfig from '../AccountConfig.js'
 import * as z from 'zod/mini'
 
 const config = {
@@ -17,20 +17,20 @@ const config = {
 const rpc = { ...config, version: '0x0' } as const
 
 describe('Config', () => {
-  test('accepts valid native multisig configurations', () => {
-    expect(z.safeDecode(z_MultisigConfig.Config, config).success).toBe(true)
+  test('accepts valid account configurations', () => {
+    expect(z.safeDecode(z_AccountConfig.Config, config).success).toBe(true)
   })
 
   test('round-trips RPC configurations', () => {
-    const decoded = z.decode(z_MultisigConfig.MultisigConfig, rpc)
+    const decoded = z.decode(z_AccountConfig.AccountConfig, rpc)
 
     expect(decoded).toEqual(config)
-    expect(z.encode(z_MultisigConfig.MultisigConfig, decoded)).toEqual(rpc)
+    expect(z.encode(z_AccountConfig.AccountConfig, decoded)).toEqual(rpc)
   })
 
   test('rejects configurations outside protocol limits', () => {
     expect(
-      z.safeDecode(z_MultisigConfig.Config, {
+      z.safeDecode(z_AccountConfig.Config, {
         ...config,
         owners: [{ ...config.owners[0], weight: 255 }],
         threshold: 256,
@@ -40,7 +40,7 @@ describe('Config', () => {
 
   test('rejects non-canonical owner order', () => {
     expect(
-      z.safeDecode(z_MultisigConfig.Config, {
+      z.safeDecode(z_AccountConfig.Config, {
         ...config,
         owners: [
           {
