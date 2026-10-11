@@ -1,5 +1,34 @@
 # ox
 
+## 1.8.7
+
+### Patch Changes
+
+- [#508](https://github.com/wevm/ox/pull/508) [`42a84e6`](https://github.com/wevm/ox/commit/42a84e64caeb1cb55ed7e36f0135dbc504fcc346) Thanks [@jxom](https://github.com/jxom)! - Renamed the Tempo multisig account APIs to configurable accounts (TIP-1107), including the `account_` relay RPC namespace, raised `AccountConfig.maxThreshold` to `255` per TIP-1114, and added `AccountConfig.update` for deriving the next config after an owner update.
+
+  ```diff
+  - import { MultisigConfig, MultisigOperation, MultisigSimulation } from 'ox/tempo'
+  + import { AccountConfig, AccountOperation, AccountSimulation } from 'ox/tempo'
+
+  - const initialConfig = MultisigConfig.from({ owners, threshold: 2 })
+  + const initialConfig = AccountConfig.from({ owners, threshold: 2 })
+
+  - SignatureEnvelope.sortMultisigApprovals({ account, config, payload, signatures })
+  + SignatureEnvelope.sortApprovals({ account, config, payload, signatures })
+
+  - if (signature.type === 'multisig') signature satisfies SignatureEnvelope.Multisig
+  + if (signature.type === 'configurable') signature satisfies SignatureEnvelope.Configurable
+
+  - KeyAuthorization.from({ account, address, chainId, type: 'multisig' })
+  + KeyAuthorization.from({ account, address, chainId, type: 'configurable' })
+
+  - TransactionRequest.toRpc({ from, keyType: 'multisig', multisigSimulation })
+  + TransactionRequest.toRpc({ accountSimulation, from, keyType: 'configurable' })
+
+  - RpcSchema.from<RpcSchemaTempo.Multisig>() // multisig_getConfig, multisig_getOperation, ...
+  + RpcSchema.from<RpcSchemaTempo.Account>() // account_getConfig, account_getOperation, ...
+  ```
+
 ## 1.8.6
 
 ### Patch Changes
