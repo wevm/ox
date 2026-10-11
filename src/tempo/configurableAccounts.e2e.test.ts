@@ -1,11 +1,11 @@
 import { AbiFunction, Address, Hex, Secp256k1, Value } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { chain, client, fundAddress } from '../../test/tempo/config.js'
-import { factory } from '../../test/tempo/multisig.js'
+import { factory } from '../../test/tempo/configurableAccounts.js'
 import {
+  AccountConfig,
+  AccountOperation,
   KeyAuthorization,
-  MultisigConfig,
-  MultisigOperation,
   SignatureEnvelope,
 } from './index.js'
 import * as Transaction from './Transaction.js'
@@ -26,12 +26,12 @@ async function setup() {
       address: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
     }
   })
-  const config: MultisigConfig.Config = MultisigConfig.from({
+  const config: AccountConfig.Config = AccountConfig.from({
     salt: Hex.random(32),
     threshold: 2,
     owners: keys.map((key) => ({ owner: key.address, weight: 1 })),
   })
-  const account = MultisigConfig.getAddress(config, { factory })
+  const account = AccountConfig.getAddress(config, { factory })
   await fundAddress(client, { address: account })
   return { account, config, keys }
 }
@@ -59,11 +59,11 @@ function sign(account: Awaited<ReturnType<typeof setup>>, payload: Hex.Hex) {
     config: account.config,
     payload,
   }
-  const digest = MultisigConfig.getSignPayload(value)
+  const digest = AccountConfig.getSignPayload(value)
   return SignatureEnvelope.from({
     account: account.account,
     config: account.config,
-    signatures: SignatureEnvelope.sortMultisigApprovals({
+    signatures: SignatureEnvelope.sortApprovals({
       ...value,
       signatures: account.keys
         .slice(0, 2)
@@ -109,13 +109,13 @@ describe('behavior: configurable accounts', () => {
     const account = await setup()
     const tx = transaction(0n)
     const serialized = TxEnvelopeTempo.serialize(tx)
-    const hash = MultisigOperation.getHash({
+    const hash = AccountOperation.getHash({
       account: account.account,
       config: account.config,
       transaction: serialized,
       type: 'transaction',
     })
-    const selected = await MultisigOperation.selectApprovals({
+    const selected = await AccountOperation.selectApprovals({
       account: account.account,
       approvals: account.keys.map(({ privateKey }) =>
         SignatureEnvelope.serialize(
@@ -125,7 +125,7 @@ describe('behavior: configurable accounts', () => {
       config: account.config,
       hash,
     })
-    const operation = MultisigOperation.from({
+    const operation = AccountOperation.from({
       account: account.account,
       approvals: selected.approvals,
       config: account.config,
@@ -139,7 +139,7 @@ describe('behavior: configurable accounts', () => {
       updatedAt: 1,
       weight: selected.weight,
     })
-    const signed = MultisigOperation.serializeTransaction(operation, {
+    const signed = AccountOperation.serializeTransaction(operation, {
       approvals: selected.selectedApprovals,
     })
     const result = await client.request({
@@ -167,7 +167,7 @@ describe('behavior: configurable accounts', () => {
       data,
       gas: 5_000_000n,
       feeToken: '0x20c0000000000000000000000000000000000001',
-      multisigSimulation: {
+      accountSimulation: {
         config: account.config,
         approvals: account.config.owners
           .slice(0, 2)
@@ -178,7 +178,7 @@ describe('behavior: configurable accounts', () => {
       method: 'eth_call',
       params: [request as never, 'latest'],
     })
-    expect(simulated).not.toBe(MultisigConfig.zeroSalt)
+    expect(simulated).not.toBe(AccountConfig.zeroSalt)
     const estimate = await client.request({
       method: 'eth_estimateGas',
       params: [request as never],
@@ -188,7 +188,7 @@ describe('behavior: configurable accounts', () => {
       method: 'eth_call',
       params: [{ to: precompile, data }, 'latest'],
     })
-    expect(persisted).toBe(MultisigConfig.zeroSalt)
+    expect(persisted).toBe(AccountConfig.zeroSalt)
     const tx = transaction(0n)
     await submit(tx, sign(account, TxEnvelopeTempo.getSignPayload(tx)))
     expect(
@@ -252,14 +252,14 @@ describe('behavior: configurable accounts', () => {
     )
   })
 
-  test('authorizes a multisig delegate and preserves the grant after delegate rotation', async () => {
+  test('authorizes a configurable delegate and preserves the grant after delegate rotation', async () => {
     const parent = await setup()
     const delegate = await setup()
     const grant = KeyAuthorization.from({
       address: delegate.account,
       account: parent.account,
       chainId: BigInt(chain.id),
-      type: 'multisig',
+      type: 'configurable',
     })
     const signed = KeyAuthorization.from(grant, {
       signature: sign(parent, KeyAuthorization.getSignPayload(grant)),

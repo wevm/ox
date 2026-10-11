@@ -1,11 +1,11 @@
 import {
-  MultisigConfig,
-  type MultisigSimulation,
+  AccountConfig,
+  type AccountSimulation,
   TransactionRequest,
 } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
-const multisigSimulationRpc = {
+const accountSimulationRpc = {
   approvals: [
     {
       keyType: 'webAuthn',
@@ -15,9 +15,9 @@ const multisigSimulationRpc = {
   ],
   config:
     '0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01',
-} as const satisfies MultisigSimulation.Rpc
+} as const satisfies AccountSimulation.Rpc
 
-const multisigSimulation = {
+const accountSimulation = {
   approvals: [
     {
       keyType: 'webAuthn',
@@ -25,7 +25,7 @@ const multisigSimulation = {
       owner: '0x1111111111111111111111111111111111111111',
     },
   ],
-  config: MultisigConfig.from({
+  config: AccountConfig.from({
     owners: [
       {
         owner: '0x1111111111111111111111111111111111111111',
@@ -39,7 +39,7 @@ const multisigSimulation = {
     salt: `0x${'11'.repeat(32)}`,
     threshold: 2,
   }),
-} as const satisfies MultisigSimulation.Spec
+} as const satisfies AccountSimulation.Spec
 
 describe('fromRpc', () => {
   test('default', () => {
@@ -109,14 +109,22 @@ describe('fromRpc', () => {
     expect(request.nonceKey).toBe(255n)
   })
 
-  test('behavior: multisig simulation', () => {
+  test('behavior: multisig key type decodes as configurable', () => {
+    const request = TransactionRequest.fromRpc({
+      keyType: 'multisig',
+      type: '0x76',
+    })
+    expect(request.keyType).toMatchInlineSnapshot(`"configurable"`)
+  })
+
+  test('behavior: account simulation', () => {
     const request = TransactionRequest.fromRpc({
       from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      multisigSimulation: multisigSimulationRpc,
+      multisigSimulation: accountSimulationRpc,
       type: '0x76',
     })
 
-    expect(request.multisigSimulation).toMatchInlineSnapshot(`
+    expect(request.accountSimulation).toMatchInlineSnapshot(`
       {
         "approvals": [
           {
@@ -198,10 +206,10 @@ describe('toRpc', () => {
     `)
   })
 
-  test('behavior: multisig simulation', () => {
+  test('behavior: account simulation', () => {
     const request = TransactionRequest.toRpc({
+      accountSimulation,
       from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      multisigSimulation,
     })
 
     expect(request).toMatchInlineSnapshot(`
@@ -243,8 +251,8 @@ describe('roundtrip', () => {
       nonceKey: 255n,
       gas: 100000n,
       maxFeePerGas: 1000000000n,
-      keyAuthorizationSimulation: multisigSimulation,
-      multisigSimulation,
+      keyAuthorizationSimulation: accountSimulation,
+      accountSimulation,
     }
 
     const rpc = TransactionRequest.toRpc(original)
@@ -268,7 +276,7 @@ describe('roundtrip', () => {
     expect(converted.keyAuthorizationSimulation).toEqual(
       original.keyAuthorizationSimulation,
     )
-    expect(converted.multisigSimulation).toEqual(original.multisigSimulation)
+    expect(converted.accountSimulation).toEqual(original.accountSimulation)
     expect(converted.type).toBe('tempo')
   })
 
@@ -286,8 +294,8 @@ describe('roundtrip', () => {
       validAfter: '0x32',
       nonceKey: '0xff',
       gas: '0x186a0',
-      keyAuthorizationSimulation: multisigSimulationRpc,
-      multisigSimulation: multisigSimulationRpc,
+      keyAuthorizationSimulation: accountSimulationRpc,
+      multisigSimulation: accountSimulationRpc,
       type: '0x76',
     }
 
