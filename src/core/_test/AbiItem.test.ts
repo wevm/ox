@@ -2043,6 +2043,26 @@ describe('getSignature', () => {
       expect(normalizeSignature('event Bar()')).toBe('Bar()')
     })
 
+    test('leading space after opening parenthesis', () => {
+      expect(normalizeSignature('function foo( uint256 a )')).toBe(
+        'foo(uint256)',
+      )
+      expect(normalizeSignature('foo( uint256 a, address b)')).toBe(
+        'foo(uint256,address)',
+      )
+      expect(
+        normalizeSignature(
+          'event Transfer( address indexed from, address indexed to, uint256 value)',
+        ),
+      ).toBe('Transfer(address,address,uint256)')
+      expect(normalizeSignature('function foo(( uint256 a, bool b) c)')).toBe(
+        'foo((uint256,bool))',
+      )
+      expect(
+        normalizeSignature('function foo( ( uint256 a, bool b)[] c)'),
+      ).toBe('foo((uint256,bool)[])')
+    })
+
     test('function bar(uint foo)', () => {
       expect(normalizeSignature('function bar(uint foo)')).toBe('bar(uint)')
     })
