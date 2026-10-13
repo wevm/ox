@@ -115,6 +115,26 @@ describe('fromPrice', () => {
     expect(Tick.fromPrice('  1.0  ')).toBe(0)
     expect(Tick.fromPrice(' 1.001 ')).toBe(100)
   })
+
+  test('never silently accepts a negative price as its positive counterpart', () => {
+    // Regression: `BigInt('-0')` is `0n`, so a fractional negative price
+    // (magnitude < 1) previously lost its sign entirely and was silently
+    // treated as the equivalent positive price, landing at the SAME
+    // in-bounds tick instead of correctly being rejected. No tick in
+    // [minTick, maxTick] ever round-trips to a negative or zero price
+    // (see `toPrice`, whose output range is always positive), so every
+    // negative price string must throw.
+    expect(() => Tick.fromPrice('-0.999')).toThrow(Tick.PriceOutOfBoundsError)
+    expect(() => Tick.fromPrice('-0.98')).toThrow(Tick.PriceOutOfBoundsError)
+    expect(() => Tick.fromPrice('-0.0005')).toThrow(Tick.PriceOutOfBoundsError)
+    expect(() => Tick.fromPrice('-1.0')).toThrow(Tick.PriceOutOfBoundsError)
+    expect(() => Tick.fromPrice('0')).toThrow(Tick.PriceOutOfBoundsError)
+    expect(() => Tick.fromPrice('-0')).toThrow(Tick.PriceOutOfBoundsError)
+
+    // Positive prices are unaffected.
+    expect(Tick.fromPrice('0.999')).toBe(-100)
+    expect(Tick.fromPrice('0.98')).toBe(-2000)
+  })
 })
 
 describe('round-trip conversions', () => {
