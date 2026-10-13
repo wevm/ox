@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.8
+
+### Patch Changes
+
+- [#516](https://github.com/wevm/ox/pull/516) [`36dce4a`](https://github.com/wevm/ox/commit/36dce4a2b18831e555ce98eafa4ad616a1e9bbe2) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.getSignature` (and `AbiFunction.getSelector`, `AbiEvent.getSelector`) dropping the first parameter when a space directly follows an opening parenthesis.
+
 ## 1.8.7
 
 ### Patch Changes
