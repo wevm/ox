@@ -28,7 +28,8 @@ implementation PRs.
 | `crates/primitives/tests/configurable_account.rs` (`configurable_account_hashes_follow_vectors_and_documented_layout`) | Byte-exact vectors to pin in ox tests |
 | `crates/contracts/src/precompiles/configurable_account.rs` | `IConfigurableAccount` ABI, including `upgradeAccount` / `AccountUpgraded` |
 | [tempoxyz/tempo#8204](https://github.com/tempoxyz/tempo/pull/8204) (TIP-1137) | Admin access keys removed at T14 |
-| Open impl PRs [#7577](https://github.com/tempoxyz/tempo/pull/7577), [#7579](https://github.com/tempoxyz/tempo/pull/7579), [#7581](https://github.com/tempoxyz/tempo/pull/7581), [#7894](https://github.com/tempoxyz/tempo/pull/7894), [#8183](https://github.com/tempoxyz/tempo/pull/8183), [#8486](https://github.com/tempoxyz/tempo/pull/8486) | RPC wire names. These still use "multisig" naming and have not been rebased onto #8502. |
+| Open impl PRs [#7577](https://github.com/tempoxyz/tempo/pull/7577), [#7579](https://github.com/tempoxyz/tempo/pull/7579), [#7581](https://github.com/tempoxyz/tempo/pull/7581), [#7894](https://github.com/tempoxyz/tempo/pull/7894), [#8183](https://github.com/tempoxyz/tempo/pull/8183) | RPC wire names. These still use "multisig" naming and have not been rebased onto #8502. |
+| [#8486](https://github.com/tempoxyz/tempo/pull/8486) | The precompile. Stacked on #8502, so it uses the new domains, but it does not accept configurable signatures in transactions. |
 
 ## Current state
 
@@ -99,7 +100,8 @@ Optional in `src/tempo/TxEnvelopeTempo.ts` or `TransactionRequest.ts`:
 Out of scope for ox: the ABI and the actions. Those belong in viem.
 
 Done when: the new exports have TSDoc and tests, `pnpm zile examples:check`
-passes, and a changeset exists (minor).
+passes, and a changeset exists (`patch`, following #508, which added
+`AccountConfig.update` as a patch).
 
 ## Phase 3: TIP-1137 admin access keys
 
@@ -107,8 +109,10 @@ At T14, `is_admin = true` and admin-signed `key_authorization` are invalid.
 Configurable accounts only exist from T14, so they can never use admin keys.
 
 Tasks:
-- `KeyAuthorization.ts:50,116`: mark `isAdmin` `@deprecated` (removed from T14
-  per TIP-1137). Leave encode and decode in place for pre-T14 chains.
+- `KeyAuthorization.ts:50,116`: document `isAdmin` as removed from T14 per
+  TIP-1137. Do not tag it `@deprecated`: admin keys are still valid before
+  T14, and TIP-1137 is a draft. Leave encode and decode in place for pre-T14
+  chains.
 - Add a check that rejects `isAdmin: true` when the authorizing account is
   configurable, wherever ox can tell (a sign payload with a configurable
   `account` binding).
@@ -136,9 +140,9 @@ Tasks:
 - `test/tempo/configurableAccounts.ts:3`: replace image `sha-83f3ccd` with a
   build that has the new domains and T14 integration.
 
-**Blocked:** main does not accept configurable-account signatures in
-transactions yet. The only integration branches, #7581 and #7894, still use
-the old domains. Until one of them rebases onto #8502, the e2e suite cannot
+**Blocked:** neither main nor #8486 accepts configurable-account signatures
+in transactions yet. The only integration branches, #7581 and #7894, still
+use the old domains. Until one of them rebases onto #8502, the e2e suite cannot
 pass with Phase 1 applied. Either skip the configurable e2e project in CI
 with a link to the tracking PR, or build a local image from a rebased
 integration branch. Do not reintroduce the old domains to keep e2e green.
