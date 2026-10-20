@@ -1,6 +1,12 @@
 # Plan: sync ox configurable accounts with Tempo main
 
-Status: proposed · Owner: jxom · Last reviewed: 2026-10-20
+Status: in progress · Owner: jxom · Last reviewed: 2026-10-20
+
+Progress:
+- Phases 1, 2, 3 and 4b are done. Phase 2 shipped as `AccountConfig.fromUpgrade` only; the salt is
+  available as `fromUpgrade(...).salt`, so a separate `getUpgradeSalt` was not added.
+- Phase 4a is open, waiting on a decision (see below).
+- Phase 5 is blocked.
 
 Bring `ox/tempo` configurable-account APIs up to date with Tempo main and the
 current TIP cluster, and add TIP-1113 in-place migration helpers. viem depends
@@ -55,8 +61,9 @@ Tasks:
   - v1 digest `0x285c850cb2803beb10f2f212dac73784a1a03b3991ba79081b24bfa91beb9182`
   - v1 commitment `0xee570a0f26f17b41cdf0952a04ee01ea23495b0c0a59f9c904b0d60cb76453c3`
   - 48 owners of weight 1, threshold 8 → `0x7a4279bb3f1b8b54d703484317f64eae6814e827`
-- Add a changeset (major on `main`, patch on `0.x`). It must say that
-  addresses, commitments and approval digests change.
+- Add a changeset. Use `patch`, following #508's precedent for breaking
+  configurable-account changes. It must say that addresses, commitments and
+  approval digests change.
 
 Done when: the new vector test passes, and
 `pnpm test --project tempo-unit --bail=1` and `pnpm check:types` are green.
@@ -110,8 +117,10 @@ Tasks:
   (reached from `deserialize`) and zod `KeyAuthorization.ts:50` throw
   `MissingAccountError` for a configurable `keyType` with no `account`. The
   node only checks the binding when one is present, so ox should accept these
-  grants. Verify against #7581's `validate_authorization_for_account` before
-  changing.
+  grants. Checked against #7894: the node requires `account` only for
+  admin-signed grants (signer != caller), never for a configurable key type.
+  Not changed yet, because relaxing it also drops a signing-side guard.
+  Decide whether to relax decoding only, or both directions.
 - **Simulation `keyData`:** `AccountSimulation.ts:170-174` (`shimKeyData`) passes
   any value up to 4 bytes through unchanged. The node rejects owner-approval
   hints that are not 1, 2 or 4 bytes. Throw `InvalidSimulationError` for 0

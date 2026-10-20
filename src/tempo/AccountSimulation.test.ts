@@ -146,6 +146,30 @@ describe('toRpc', () => {
     `)
   })
 
+  test('behavior: shims key data that is not a valid length hint', () => {
+    const keyData = (keyData: `0x${string}`) =>
+      AccountSimulation.toRpc(
+        AccountSimulation.fromRpc({
+          ...rpc,
+          approvals: [{ ...rpc.approvals[0], keyData }],
+        }),
+      ).approvals[0]?.keyData
+
+    expect({
+      empty: keyData('0x'),
+      four: keyData('0x01020304'),
+      one: keyData('0x01'),
+      three: keyData('0x010203'),
+    }).toMatchInlineSnapshot(`
+      {
+        "empty": "0x0000",
+        "four": "0x01020304",
+        "one": "0x01",
+        "three": "0x0003",
+      }
+    `)
+  })
+
   test('behavior: encodes the maximum uint64 configuration version', () => {
     const spec = AccountSimulation.fromRpc(rpc)
 
