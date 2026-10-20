@@ -239,6 +239,29 @@ describe('KeyAuthorization', () => {
     `)
   })
 
+  test('rejects configurable accounts granted as admin keys', () => {
+    const domain = {
+      ...core_KeyAuthorization.fromRpc(rpc),
+      isAdmin: true,
+      type: 'configurable',
+    } as const
+    expect({
+      domain: z.safeParse(z_KeyAuthorization.Domain, domain).success,
+      domainToRpc: z.safeParse(z_KeyAuthorization.DomainToRpc, domain).success,
+      rpc: z.safeParse(z_KeyAuthorization.Rpc, {
+        ...rpc,
+        isAdmin: true,
+        keyType: 'multisig',
+      }).success,
+    }).toMatchInlineSnapshot(`
+      {
+        "domain": false,
+        "domainToRpc": false,
+        "rpc": false,
+      }
+    `)
+  })
+
   test('round-trips account-bound configurable grants', () => {
     const signature = core_SignatureEnvelope.from({
       account: '0x2222222222222222222222222222222222222222',

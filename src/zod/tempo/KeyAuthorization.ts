@@ -48,8 +48,10 @@ export const Rpc = z
   .check(
     // Configurable signatures are RLP hex on the wire (TIP-1137).
     z.refine(
-      (value) => !value.isAdmin || typeof value.signature !== 'string',
-      'configurable accounts cannot authorize admin access keys',
+      (value) =>
+        !value.isAdmin ||
+        (value.keyType !== 'multisig' && typeof value.signature !== 'string'),
+      'configurable accounts cannot authorize or be admin access keys',
     ),
   )
 
@@ -97,8 +99,11 @@ export const Domain = z
   })
   .check(
     z.refine(
-      (value) => !value.isAdmin || value.signature.type !== 'configurable',
-      'configurable accounts cannot authorize admin access keys',
+      (value) =>
+        !value.isAdmin ||
+        (value.type !== 'configurable' &&
+          value.signature.type !== 'configurable'),
+      'configurable accounts cannot authorize or be admin access keys',
     ),
   )
 
@@ -118,8 +123,11 @@ export const DomainToRpc = z
   })
   .check(
     z.refine(
-      (value) => !value.isAdmin || value.signature.type !== 'configurable',
-      'configurable accounts cannot authorize admin access keys',
+      (value) =>
+        !value.isAdmin ||
+        (value.type !== 'configurable' &&
+          value.signature.type !== 'configurable'),
+      'configurable accounts cannot authorize or be admin access keys',
     ),
   )
 
