@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Added `KeyAuthorization.InvalidAdminAuthorizerError`, thrown when a configurable account signs an admin key authorization, since admin access keys are removed at T14 (TIP-1137).
+Added `KeyAuthorization.InvalidAdminAuthorizerError`, thrown when a configurable account signs an admin key authorization, and made the `KeyAuthorization` zod schemas reject the same grants, since admin access keys are removed at T14 (TIP-1137).

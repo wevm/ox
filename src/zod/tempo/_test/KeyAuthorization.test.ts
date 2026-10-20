@@ -195,6 +195,50 @@ describe('KeyAuthorization', () => {
       } as never).success,
     ).toBe(false)
   })
+  test('rejects admin grants signed by a configurable account', () => {
+    const signature = core_SignatureEnvelope.from({
+      account: '0x2222222222222222222222222222222222222222',
+      config: {
+        threshold: 1,
+        owners: [
+          { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+        ],
+      },
+      signatures: [
+        core_SignatureEnvelope.fromRpc(
+          rpc.signature,
+        ) as core_SignatureEnvelope.Primitive,
+      ],
+    })
+    const signed = core_KeyAuthorization.from(
+      {
+        account: signature.account,
+        address: '0x3333333333333333333333333333333333333333',
+        chainId: 1n,
+        type: 'secp256k1',
+      },
+      { signature },
+    )
+    const encoded = core_KeyAuthorization.toRpc(signed)
+    const admin = { ...signed, isAdmin: true }
+    expect({
+      domain: z.safeParse(z_KeyAuthorization.Domain, admin).success,
+      domainToRpc: z.safeParse(z_KeyAuthorization.DomainToRpc, admin).success,
+      nonAdmin: z.safeParse(z_KeyAuthorization.Domain, signed).success,
+      rpc: z.safeParse(z_KeyAuthorization.Rpc, { ...encoded, isAdmin: true })
+        .success,
+      rpcNonAdmin: z.safeParse(z_KeyAuthorization.Rpc, encoded).success,
+    }).toMatchInlineSnapshot(`
+      {
+        "domain": false,
+        "domainToRpc": false,
+        "nonAdmin": true,
+        "rpc": false,
+        "rpcNonAdmin": true,
+      }
+    `)
+  })
+
   test('round-trips account-bound configurable grants', () => {
     const signature = core_SignatureEnvelope.from({
       account: '0x2222222222222222222222222222222222222222',
