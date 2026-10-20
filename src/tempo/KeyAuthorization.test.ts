@@ -2942,7 +2942,7 @@ describe('admin keys (TIP-1049)', () => {
           signature: signature_configurable,
         }),
       ).toThrowErrorMatchingInlineSnapshot(
-        `[KeyAuthorization.InvalidAdminAuthorizerError: Configurable accounts cannot authorize admin access keys (TIP-1137).]`,
+        `[KeyAuthorization.InvalidAdminAuthorizerError: Configurable accounts cannot authorize or be admin access keys (TIP-1137).]`,
       )
     })
 
@@ -2977,6 +2977,24 @@ describe('admin keys (TIP-1049)', () => {
           signature: signature_configurable,
         }),
       ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
+    })
+
+    test('from: rejects granting a configurable account as an admin key', () => {
+      const grant = {
+        address,
+        chainId: 1n,
+        isAdmin: true,
+        type: 'configurable',
+      } as const
+      expect(() => KeyAuthorization.from(grant)).toThrowError(
+        KeyAuthorization.InvalidAdminAuthorizerError,
+      )
+      expect(() =>
+        KeyAuthorization.from(grant, { signature: signature_secp256k1 }),
+      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
+      expect(() => KeyAuthorization.getSignPayload(grant)).toThrowError(
+        KeyAuthorization.InvalidAdminAuthorizerError,
+      )
     })
 
     test('behavior: accepts a non-admin grant', () => {

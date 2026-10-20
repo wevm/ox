@@ -49,7 +49,7 @@ export type KeyAuthorization<
    * Whether this authorization provisions an admin access key.
    *
    * Removed from T14 ([TIP-1137](https://tips.sh/1137)). Configurable accounts
-   * cannot authorize admin access keys.
+   * can neither authorize nor be admin access keys.
    */
   isAdmin?: boolean | undefined
   /**
@@ -463,10 +463,8 @@ export function from<
     }[]
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
-  if (auth.signature) {
-    assertSignature(auth.signature)
-    assertAdminAuthorizer(auth.isAdmin, auth.signature)
-  }
+  if (auth.signature) assertSignature(auth.signature)
+  assertAdminAuthorizer(auth.isAdmin, auth.type, auth.signature)
   const resolved = {
     ...auth,
     ...(auth.account !== undefined
@@ -503,7 +501,7 @@ export function from<
       options.signature,
     ) as SignatureEnvelope.SignatureEnvelope
     assertSignature(signature)
-    assertAdminAuthorizer(auth.isAdmin, signature)
+    assertAdminAuthorizer(auth.isAdmin, auth.type, signature)
     return {
       ...resolved,
       signature,
@@ -583,7 +581,7 @@ export function fromRpc(authorization: Rpc): Signed {
   const type = keyType === 'multisig' ? 'configurable' : keyType
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   assertSignature(signature)
-  assertAdminAuthorizer(isAdmin, signature)
+  assertAdminAuthorizer(isAdmin, type, signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Unflatten nested allowedCalls into flat scopes
@@ -763,7 +761,7 @@ export function fromTuple<const tuple extends Tuple>(
   if (signatureSerialized) {
     const signature = SignatureEnvelope.deserialize(signatureSerialized)
     assertSignature(signature)
-    assertAdminAuthorizer(isAdmin, signature)
+    assertAdminAuthorizer(isAdmin, keyType, signature)
     args.signature = signature
   }
   return from(args) as never
@@ -982,7 +980,7 @@ export function toRpc(authorization: Signed): Rpc {
     account,
   } = authorization
   assertSignature(signature)
-  assertAdminAuthorizer(isAdmin, signature)
+  assertAdminAuthorizer(isAdmin, type, signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
@@ -1083,10 +1081,10 @@ export function toTuple<const authorization extends KeyAuthorization>(
     account,
   } = authorization
   if (witness !== undefined) assertWitness(witness)
+  assertAdminAuthorizer(isAdmin, authorization.type, authorization.signature)
   const signature = (() => {
     if (!authorization.signature) return undefined
     assertSignature(authorization.signature)
-    assertAdminAuthorizer(isAdmin, authorization.signature)
     return SignatureEnvelope.serialize(authorization.signature)
   })()
   const keyType = authorization.type
@@ -1231,9 +1229,11 @@ function assertSignature<bigintType, numberType>(
 
 function assertAdminAuthorizer(
   isAdmin: boolean | null | undefined,
-  signature: SignatureEnvelope.SignatureEnvelope<unknown>,
+  type: KeyAuthorization['type'],
+  signature: SignatureEnvelope.SignatureEnvelope<unknown> | undefined,
 ): void {
-  if (isAdmin && signature.type === 'configurable')
+  if (!isAdmin) return
+  if (type === 'configurable' || signature?.type === 'configurable')
     throw new InvalidAdminAuthorizerError()
 }
 
@@ -1262,7 +1262,8 @@ export class InvalidAdminMarkerError extends Error {
 }
 
 /**
- * Thrown when a configurable account signs an admin key authorization.
+ * Thrown when an admin key authorization is signed by, or grants, a
+ * configurable account.
  *
  * Configurable accounts activate at T14, where admin access keys are removed
  * ([TIP-1137](https://tips.sh/1137)).
@@ -1271,7 +1272,7 @@ export class InvalidAdminAuthorizerError extends Error {
   override readonly name = 'KeyAuthorization.InvalidAdminAuthorizerError'
   constructor() {
     super(
-      'Configurable accounts cannot authorize admin access keys (TIP-1137).',
+      'Configurable accounts cannot authorize or be admin access keys (TIP-1137).',
     )
   }
 }
