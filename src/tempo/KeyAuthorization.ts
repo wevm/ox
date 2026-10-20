@@ -38,7 +38,7 @@ export type KeyAuthorization<
   bigintType = bigint,
   numberType = number,
 > = {
-  /** Account address this authorization is bound to. Required for configurable account grants. */
+  /** Account address this authorization is bound to. Required when an admin access key signs the grant (TIP-1049). */
   account?: Address.Address | undefined
   /** Address derived from the public key of the key type. */
   address: Address.Address
@@ -450,7 +450,6 @@ export function from<
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
-  assertAccountBinding(authorization.type, authorization.account)
   const auth = authorization as KeyAuthorization & {
     limits?: readonly { limit: bigint; token: Address.Address }[]
     scopes?: readonly {
@@ -521,7 +520,6 @@ export declare namespace from {
   type ErrorType =
     | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
-    | MissingAccountError
     | Errors.GlobalErrorType
 }
 
@@ -562,7 +560,6 @@ export function fromRpc(authorization: Rpc): Signed {
   const isAdmin = authorization.isAdmin ?? undefined
   const account = authorization.account ?? undefined
   const type = keyType === 'multisig' ? 'configurable' : keyType
-  assertAccountBinding(type, account)
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   assertSignature(signature)
   assertAdminAuthorizer(isAdmin, signature)
@@ -609,7 +606,6 @@ export declare namespace fromRpc {
   type ErrorType =
     | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
-    | MissingAccountError
     | Errors.GlobalErrorType
 }
 
@@ -740,7 +736,6 @@ export function fromTuple<const tuple extends Tuple>(
   const account = isAbsent(rawAccount)
     ? undefined
     : (rawAccount as Address.Address)
-  assertAccountBinding(keyType, account)
   const args: KeyAuthorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -769,7 +764,6 @@ export declare namespace fromTuple {
   type ErrorType =
     | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
-    | MissingAccountError
     | Errors.GlobalErrorType
 }
 
@@ -976,7 +970,6 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: toRpc.Input): Rpc {
-  assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
     scopes,
@@ -1046,7 +1039,6 @@ export declare namespace toRpc {
   type ErrorType =
     | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
-    | MissingAccountError
     | Errors.GlobalErrorType
 }
 
@@ -1086,7 +1078,6 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
-  assertAccountBinding(authorization.type, authorization.account)
   const {
     address,
     chainId,
@@ -1198,7 +1189,6 @@ export declare namespace toTuple {
   type ErrorType =
     | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
-    | MissingAccountError
     | Errors.GlobalErrorType
 }
 
@@ -1231,14 +1221,6 @@ function resolveSelector(
   if (!selector) return undefined
   if (selector.startsWith('0x')) return selector as Hex.Hex
   return AbiItem.getSelector(selector)
-}
-
-function assertAccountBinding(
-  type: KeyAuthorization['type'],
-  account: Address.Address | null | undefined,
-): void {
-  if (type === 'configurable' && account == null)
-    throw new MissingAccountError()
 }
 
 function assertWitness(witness: Hex.Hex): void {
@@ -1311,7 +1293,12 @@ export class InvalidSignatureTypeError extends Error {
   }
 }
 
-/** Thrown when a configurable account key grant omits its parent account binding. */
+/**
+ * Thrown when a configurable account key grant omits its parent account binding.
+ *
+ * @deprecated No longer thrown. The Tempo node only requires `account` on grants
+ * signed by an admin access key, which it checks against the transaction sender.
+ */
 export class MissingAccountError extends Error {
   override readonly name = 'KeyAuthorization.MissingAccountError'
   constructor() {

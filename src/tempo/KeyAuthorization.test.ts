@@ -96,42 +96,80 @@ const signature_keychain = {
 } as const satisfies SignatureEnvelope.Keychain
 
 describe('configurable account binding', () => {
-  test('rejects unbound grants before signing or encoding', () => {
-    const authorization = {
-      address,
-      chainId: 1n,
-      type: 'configurable',
-    } as const
-    const signed = {
-      ...authorization,
-      signature: SignatureEnvelope.from(signature_secp256k1),
-    }
-    for (const encode of [
-      () => KeyAuthorization.from(authorization),
-      () => KeyAuthorization.toTuple(authorization),
-      () => KeyAuthorization.getSignPayload(authorization),
-      () => KeyAuthorization.serialize(authorization),
-      () => KeyAuthorization.toRpc(signed),
-    ])
-      expect(encode).toThrowErrorMatchingInlineSnapshot(
-        `[KeyAuthorization.MissingAccountError: Configurable account key grants require a parent account binding.]`,
-      )
+  test('behavior: accepts unbound configurable grants', () => {
+    // The node binds a root-signed grant to its signer, so only admin-signed
+    // grants need `account` (TIP-1049).
+    const signed = KeyAuthorization.from(
+      { address, chainId: 1n, type: 'configurable' },
+      { signature: signature_secp256k1 },
+    )
+    const rpc = KeyAuthorization.toRpc(signed)
+    expect({
+      deserialized: KeyAuthorization.deserialize(
+        KeyAuthorization.serialize(signed),
+      ),
+      fromRpc: KeyAuthorization.fromRpc(rpc),
+      fromTuple: KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
+      rpc,
+    }).toMatchInlineSnapshot(`
+      {
+        "deserialized": {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "signature": {
+            "signature": {
+              "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+              "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+          "type": "configurable",
+        },
+        "fromRpc": {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "limits": undefined,
+          "signature": {
+            "signature": {
+              "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+              "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+          "type": "configurable",
+        },
+        "fromTuple": {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "type": "configurable",
+        },
+        "rpc": {
+          "chainId": "0x1",
+          "expiry": null,
+          "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "keyType": "multisig",
+          "limits": undefined,
+          "signature": {
+            "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+            "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+            "type": "secp256k1",
+            "yParity": "0x1",
+          },
+        },
+      }
+    `)
   })
 
-  test('rejects unbound RPC and RLP grants', () => {
+  test('behavior: preserves a bound account', () => {
     const signed = KeyAuthorization.from(
       { account: address, address, chainId: 1n, type: 'configurable' },
       { signature: signature_secp256k1 },
     )
-    const rpc = KeyAuthorization.toRpc(signed)
-    for (const account of [undefined, null])
-      expect(() => KeyAuthorization.fromRpc({ ...rpc, account })).toThrowError(
-        KeyAuthorization.MissingAccountError,
-      )
-    expect(() =>
-      KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
-    ).toThrowError(KeyAuthorization.MissingAccountError)
-    expect(KeyAuthorization.fromRpc(rpc).account).toBe(address)
+    expect(
+      KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed)).account,
+    ).toBe(address)
     expect(
       KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)).account,
     ).toBe(address)

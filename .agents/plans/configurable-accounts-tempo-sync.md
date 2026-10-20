@@ -5,7 +5,9 @@ Status: in progress · Owner: jxom · Last reviewed: 2026-10-20
 Progress:
 - Phases 1, 2, 3 and 4b are done. Phase 2 shipped as `AccountConfig.fromUpgrade` only; the salt is
   available as `fromUpgrade(...).salt`, so a separate `getUpgradeSalt` was not added.
-- Phase 4a is open, waiting on a decision (see below).
+- Phase 4a is done: `account` is no longer required for configurable key grants, and no new
+  requirement was added for `isAdmin` grants, since viem's root-signed admin grants omit it and
+  TIP-1049 allows that.
 - Phase 5 is blocked.
 
 Bring `ox/tempo` configurable-account APIs up to date with Tempo main and the
