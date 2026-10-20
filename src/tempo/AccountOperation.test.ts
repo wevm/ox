@@ -732,7 +732,8 @@ describe('from', () => {
       {
         hash: expect.any(String),
         transaction: expect.stringMatching(/^0x78/),
-      }, `
+      },
+      `
       {
         "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
         "approvals": [
@@ -763,7 +764,8 @@ describe('from', () => {
         "updatedAt": 2,
         "weight": 1,
       }
-    `)
+    `,
+    )
   })
 
   test('fee-payer-signed transaction', () => {
@@ -807,7 +809,8 @@ describe('from', () => {
       {
         hash: expect.any(String),
         transaction: expect.any(String),
-      }, `
+      },
+      `
       {
         "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
         "approvals": [
@@ -838,7 +841,8 @@ describe('from', () => {
         "updatedAt": 2,
         "weight": 1,
       }
-    `)
+    `,
+    )
   })
 
   test('key authorization states', () => {
@@ -960,7 +964,8 @@ describe('from', () => {
       {
         hash: expect.any(String),
         keyAuthorization: expect.any(String),
-      }, `
+      },
+      `
       {
         "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
         "approvals": [
@@ -992,7 +997,8 @@ describe('from', () => {
         "updatedAt": 2,
         "weight": 2,
       }
-    `)
+    `,
+    )
   })
 })
 

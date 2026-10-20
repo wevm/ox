@@ -51,26 +51,19 @@ test('accepts configurable signatures and account-bound grants', () => {
   ).toMatchTypeOf<KeyAuthorization.Rpc>()
 })
 
-test('requires an account for configurable grants', () => {
+test('allows configurable grants without an account', () => {
   type Configurable = Extract<KeyAuthorization.Input, { type: 'configurable' }>
-  expectTypeOf<Configurable['account']>().toEqualTypeOf<TempoAddress.Address>()
+  expectTypeOf<Configurable['account']>().toEqualTypeOf<
+    TempoAddress.Address | undefined
+  >()
   expectTypeOf<
     Extract<KeyAuthorization.Signed, { type: 'configurable' }>['account']
-  >().toEqualTypeOf<`0x${string}`>()
-  expectTypeOf<
-    Omit<Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>, 'account'>
-  >().not.toExtend<KeyAuthorization.Rpc>()
+  >().toEqualTypeOf<`0x${string}` | undefined>()
   expectTypeOf<{
     address: `0x${string}`
     chainId: bigint
     type: 'configurable'
-  }>().not.toExtend<KeyAuthorization.Input>()
-  expectTypeOf<{
-    account: undefined
-    address: `0x${string}`
-    chainId: bigint
-    type: 'configurable'
-  }>().not.toExtend<KeyAuthorization.Input>()
+  }>().toExtend<KeyAuthorization.Input>()
   expectTypeOf<{
     account: null
     chainId: '0x1'
@@ -78,10 +71,7 @@ test('requires an account for configurable grants', () => {
     keyId: `0x${string}`
     keyType: 'multisig'
     signature: KeyAuthorization.SignatureRpc
-  }>().not.toExtend<KeyAuthorization.Rpc>()
-  expectTypeOf<
-    Extract<KeyAuthorization.Rpc, { keyType: 'multisig' }>['account']
-  >().toEqualTypeOf<`0x${string}`>()
+  }>().toExtend<KeyAuthorization.Rpc>()
 })
 
 test('rejects keychain signatures', () => {

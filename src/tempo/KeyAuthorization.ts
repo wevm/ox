@@ -151,8 +151,8 @@ export type Rpc = {
       keyType: SignatureEnvelope.Type
     }
   | {
-      /** Required parent account binding for a configurable account grant. */
-      account: Address.Address
+      /** Optional account address binding (TIP-1049). */
+      account?: Address.Address | null | undefined
       /** Configurable account key type, named `multisig` by the node. */
       keyType: 'multisig'
     }

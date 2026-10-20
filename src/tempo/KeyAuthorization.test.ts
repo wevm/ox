@@ -132,7 +132,59 @@ describe('configurable account binding', () => {
       fromRpc: KeyAuthorization.fromRpc(rpc),
       fromTuple: KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
       rpc,
-    }).toMatchInlineSnapshot()
+    }).toMatchInlineSnapshot(`
+      {
+        "deserialized": {
+          "account": undefined,
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "signature": {
+            "signature": {
+              "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
+              "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+          "type": "configurable",
+        },
+        "fromRpc": {
+          "account": undefined,
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "limits": undefined,
+          "signature": {
+            "signature": {
+              "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
+              "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+          "type": "configurable",
+        },
+        "fromTuple": {
+          "account": undefined,
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "type": "configurable",
+        },
+        "rpc": {
+          "account": undefined,
+          "chainId": "0x1",
+          "expiry": null,
+          "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "keyType": "multisig",
+          "limits": undefined,
+          "signature": {
+            "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+            "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+            "type": "secp256k1",
+            "yParity": "0x1",
+          },
+        },
+      }
+    `)
   })
 
   test('behavior: preserves a bound account', () => {
