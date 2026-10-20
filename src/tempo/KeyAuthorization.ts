@@ -45,7 +45,12 @@ export type KeyAuthorization<
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
-  /** Whether this authorization provisions an admin access key. */
+  /**
+   * Whether this authorization provisions an admin access key.
+   *
+   * Removed from T14 ([TIP-1137](https://tips.sh/1137)). Configurable accounts
+   * cannot authorize admin access keys.
+   */
   isAdmin?: boolean | undefined
   /**
    * TIP20 spending limits for this key.
@@ -459,7 +464,10 @@ export function from<
     }[]
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
-  if (auth.signature) assertSignature(auth.signature)
+  if (auth.signature) {
+    assertSignature(auth.signature)
+    assertAdminAuthorizer(auth.isAdmin, auth.signature)
+  }
   const resolved = {
     ...auth,
     ...(auth.account !== undefined
@@ -496,6 +504,7 @@ export function from<
       options.signature,
     ) as SignatureEnvelope.SignatureEnvelope
     assertSignature(signature)
+    assertAdminAuthorizer(auth.isAdmin, signature)
     return {
       ...resolved,
       signature,
@@ -536,6 +545,7 @@ export declare namespace from {
   >
 
   type ErrorType =
+    | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
     | MissingAccountError
     | Errors.GlobalErrorType
@@ -576,6 +586,7 @@ export function fromRpc(authorization: Rpc): Signed {
   assertAccountBinding(type, account)
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   assertSignature(signature)
+  assertAdminAuthorizer(isAdmin, signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Unflatten nested allowedCalls into flat scopes
@@ -617,6 +628,7 @@ export function fromRpc(authorization: Rpc): Signed {
 
 export declare namespace fromRpc {
   type ErrorType =
+    | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
     | MissingAccountError
     | Errors.GlobalErrorType
@@ -756,6 +768,7 @@ export function fromTuple<const tuple extends Tuple>(
   if (signatureSerialized) {
     const signature = SignatureEnvelope.deserialize(signatureSerialized)
     assertSignature(signature)
+    assertAdminAuthorizer(isAdmin, signature)
     args.signature = signature
   }
   return from(args) as never
@@ -767,6 +780,7 @@ export declare namespace fromTuple {
   >
 
   type ErrorType =
+    | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
     | MissingAccountError
     | Errors.GlobalErrorType
@@ -975,6 +989,7 @@ export function toRpc(authorization: Signed): Rpc {
     account,
   } = authorization
   assertSignature(signature)
+  assertAdminAuthorizer(isAdmin, signature)
   if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
@@ -1025,6 +1040,7 @@ export function toRpc(authorization: Signed): Rpc {
 
 export declare namespace toRpc {
   type ErrorType =
+    | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
     | MissingAccountError
     | Errors.GlobalErrorType
@@ -1079,6 +1095,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
   const signature = (() => {
     if (!authorization.signature) return undefined
     assertSignature(authorization.signature)
+    assertAdminAuthorizer(isAdmin, authorization.signature)
     return SignatureEnvelope.serialize(authorization.signature)
   })()
   const keyType = authorization.type
@@ -1174,6 +1191,7 @@ export declare namespace toTuple {
     Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
 
   type ErrorType =
+    | InvalidAdminAuthorizerError
     | InvalidSignatureTypeError
     | MissingAccountError
     | Errors.GlobalErrorType
@@ -1229,6 +1247,14 @@ function assertSignature<bigintType, numberType>(
     throw new InvalidSignatureTypeError(signature.type)
 }
 
+function assertAdminAuthorizer(
+  isAdmin: boolean | null | undefined,
+  signature: SignatureEnvelope.SignatureEnvelope<unknown>,
+): void {
+  if (isAdmin && signature.type === 'configurable')
+    throw new InvalidAdminAuthorizerError()
+}
+
 function isAbsent(value: unknown): boolean {
   return value === undefined || value === '0x'
 }
@@ -1249,6 +1275,21 @@ export class InvalidAdminMarkerError extends Error {
   constructor(marker: Hex.Hex) {
     super(
       `Admin marker \`${marker}\` is invalid; expected \`0x01\` (TIP-1049).`,
+    )
+  }
+}
+
+/**
+ * Thrown when a configurable account signs an admin key authorization.
+ *
+ * Configurable accounts activate at T14, where admin access keys are removed
+ * ([TIP-1137](https://tips.sh/1137)).
+ */
+export class InvalidAdminAuthorizerError extends Error {
+  override readonly name = 'KeyAuthorization.InvalidAdminAuthorizerError'
+  constructor() {
+    super(
+      'Configurable accounts cannot authorize admin access keys (TIP-1137).',
     )
   }
 }

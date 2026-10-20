@@ -164,12 +164,13 @@ function serializeConfig(config: AccountConfig.Input): Hex.Hex {
 }
 
 /**
- * Shims long key data into the length hint accepted by Tempo's gas estimator.
+ * Shims key data into the 1-, 2-, or 4-byte length hint accepted by Tempo's
+ * gas estimator. Other sizes are replaced by a 2-byte hint of their length.
  * @internal
  */
 function shimKeyData(data: Hex.Hex): Hex.Hex {
   const size = Hex.size(data)
-  if (size <= 4) return data
+  if (size === 1 || size === 2 || size === 4) return data
   return Hex.fromNumber(size, { size: 2 })
 }
 

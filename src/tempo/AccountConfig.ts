@@ -33,17 +33,25 @@ export const signatureTypeByte = '0x05' as const
 export const zeroSalt = `0x${'00'.repeat(32)}` as const
 
 /** Domain prefix for the configurable account address derivation. */
-const accountDomain = 'tempo:multisig:account'
+const accountDomain = 'tempo:configurable-account:account'
 
 /** Domain prefix for account configuration commitments. */
-const configDomain = 'tempo:multisig:config'
+const configDomain = 'tempo:configurable-account:config'
 
-/** Keccak-256 of the canonical recovery wallet creation code. */
-const recoveryWalletInitCodeHash =
+/**
+ * Keccak-256 of the account proxy creation code.
+ *
+ * Placeholder until [TIP-1110](https://tips.sh/1110) fixes the canonical
+ * account proxy, which will change every derived address.
+ */
+const accountProxyInitCodeHash =
   '0x583cc63a2e37f645b43eac911b1a6d6de08b83abdc308c61364edda8cfc3bd37'
 
 /** Domain prefix for configurable account owner approvals. */
-const signatureDomain = 'tempo:multisig:signature'
+const signatureDomain = 'tempo:configurable-account:signature'
+
+/** Domain prefix for the salt of an account migrated in place. */
+const upgradeDomain = 'tempo:configurable-account:upgrade'
 
 /**
  * Complete account configuration witness.
@@ -336,11 +344,74 @@ export function fromTuple(tuple: Tuple): Config {
 }
 
 /**
+ * Derives the configuration an existing account installs when it migrates in
+ * place with the `upgradeAccount` precompile call
+ * ([TIP-1113](https://tips.sh/1113)).
+ *
+ * The account keeps its address. Its salt is
+ * `keccak256("tempo:configurable-account:upgrade" || account)` and its version
+ * is `1n`. Owners are sorted into canonical order and the config is validated.
+ * The account itself may be listed as an owner.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AccountConfig } from 'ox/tempo'
+ *
+ * const config = AccountConfig.fromUpgrade(
+ *   '0x3333333333333333333333333333333333333333',
+ *   {
+ *     owners: [
+ *       {
+ *         owner: '0x1111111111111111111111111111111111111111',
+ *         weight: 1
+ *       }
+ *     ],
+ *     threshold: 1
+ *   }
+ * )
+ * // config.version === 1n
+ * ```
+ *
+ * @param account - The account migrating in place.
+ * @param options - The owners and threshold to install.
+ * @returns The installed account config.
+ */
+export function fromUpgrade<numberType = number>(
+  account: Address.Address,
+  options: fromUpgrade.Options<numberType>,
+): Config<1n, numberType> {
+  Address.assert(account)
+  return from({
+    owners: options.owners,
+    salt: Hash.keccak256(Hex.concat(Hex.fromString(upgradeDomain), account)),
+    threshold: options.threshold,
+    version: 1n,
+  })
+}
+
+export declare namespace fromUpgrade {
+  type Options<numberType = number> = {
+    /** Weighted owners to install. Sorted into canonical order. */
+    owners: readonly Owner<numberType>[]
+    /** Minimum total owner weight required for authorization. */
+    threshold: numberType
+  }
+
+  type ErrorType =
+    | Address.assert.ErrorType
+    | assert.ErrorType
+    | Hash.keccak256.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.fromString.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Derives the stable configurable account address.
  *
  * The initial config is hashed into a CREATE2 salt using fixed-width
  * big-endian fields, not RLP. The account uses the chain-configured recovery
- * factory and wallet init-code hash.
+ * factory and account proxy init-code hash.
  *
  * The address is derived once from the initial version-0 config. Config
  * updates do not change it.
@@ -388,7 +459,7 @@ export function getAddress(
     ),
   )
   const account = ContractAddress.fromCreate2({
-    bytecodeHash: recoveryWalletInitCodeHash,
+    bytecodeHash: accountProxyInitCodeHash,
     from: options.factory,
     salt: accountSalt,
   })
@@ -421,7 +492,7 @@ export declare namespace getAddress {
  * Computes the commitment for an account configuration.
  *
  * The commitment uses raw fixed-width fields, not RLP or ABI encoding:
- * `keccak256("tempo:multisig:config" || salt || uint64be(version) || uint8(threshold) || uint8(owners.length) || owners)`.
+ * `keccak256("tempo:configurable-account:config" || salt || uint64be(version) || uint8(threshold) || uint8(owners.length) || owners)`.
  *
  * @example
  * ```ts twoslash
@@ -469,7 +540,7 @@ export declare namespace getCommitment {
 /**
  * Computes the digest a configurable account owner approves (signs).
  *
- * `keccak256("tempo:multisig:signature" || inner_digest || account || uint64be(version))`,
+ * `keccak256("tempo:configurable-account:signature" || inner_digest || account || uint64be(version))`,
  * where `inner_digest` is the transaction sign payload
  * ({@link ox#TxEnvelopeTempo.(getSignPayload:function)}).
  *

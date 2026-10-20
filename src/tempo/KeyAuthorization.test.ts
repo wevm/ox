@@ -2891,4 +2891,66 @@ describe('admin keys (TIP-1049)', () => {
     })
     expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
   })
+
+  describe('configurable authorizer (TIP-1137)', () => {
+    const authorization = {
+      account: signature_configurable.account,
+      address,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    } as const
+
+    test('from: rejects an admin grant', () => {
+      expect(() =>
+        KeyAuthorization.from(authorization, {
+          signature: signature_configurable,
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[KeyAuthorization.InvalidAdminAuthorizerError: Configurable accounts cannot authorize admin access keys (TIP-1137).]`,
+      )
+    })
+
+    test('fromRpc: rejects an admin grant', () => {
+      expect(() =>
+        KeyAuthorization.fromRpc({
+          account: authorization.account,
+          chainId: '0x1',
+          expiry: null,
+          isAdmin: true,
+          keyId: address,
+          keyType: 'secp256k1',
+          signature: signature_configurable_rpc,
+        }),
+      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
+    })
+
+    test('fromTuple: rejects an admin grant', () => {
+      const [tuple] = KeyAuthorization.toTuple(authorization)
+      expect(() =>
+        KeyAuthorization.fromTuple([
+          tuple,
+          SignatureEnvelope.serialize(signature_configurable),
+        ]),
+      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
+    })
+
+    test('toTuple: rejects an admin grant', () => {
+      expect(() =>
+        KeyAuthorization.toTuple({
+          ...authorization,
+          signature: signature_configurable,
+        }),
+      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
+    })
+
+    test('behavior: accepts a non-admin grant', () => {
+      expect(
+        KeyAuthorization.from(
+          { ...authorization, isAdmin: undefined },
+          { signature: signature_configurable },
+        ).signature,
+      ).toEqual(signature_configurable)
+    })
+  })
 })
