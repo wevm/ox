@@ -1,5 +1,24 @@
 # ox
 
+## 0.14.57
+
+### Patch Changes
+
+- [#519](https://github.com/wevm/ox/pull/519) [`e9b66c2`](https://github.com/wevm/ox/commit/e9b66c28e3595fd02150f816f1ebf8971deee5d1) Thanks [@jxom](https://github.com/jxom)! - Added `AccountConfig.fromUpgrade` for deriving the version-one config an account installs when it migrates in place with `upgradeAccount` (TIP-1113).
+
+- [#519](https://github.com/wevm/ox/pull/519) [`e9b66c2`](https://github.com/wevm/ox/commit/e9b66c28e3595fd02150f816f1ebf8971deee5d1) Thanks [@jxom](https://github.com/jxom)! - Fixed `AccountSimulation.toRpc` passing through empty and 3-byte `keyData`, which the Tempo node rejects, by shimming them into a 2-byte length hint.
+
+- [#519](https://github.com/wevm/ox/pull/519) [`e9b66c2`](https://github.com/wevm/ox/commit/e9b66c28e3595fd02150f816f1ebf8971deee5d1) Thanks [@jxom](https://github.com/jxom)! - Renamed the Tempo configurable account hash domains from `tempo:multisig:*` to `tempo:configurable-account:*` to match Tempo main (tempoxyz/tempo#8502), which changes every `AccountConfig.getAddress`, `AccountConfig.getCommitment`, and `AccountConfig.getSignPayload` result.
+
+- [#519](https://github.com/wevm/ox/pull/519) [`e9b66c2`](https://github.com/wevm/ox/commit/e9b66c28e3595fd02150f816f1ebf8971deee5d1) Thanks [@jxom](https://github.com/jxom)! - Renamed the configurable account RPC key type from `multisig` to `configurableAccount` and `TransactionRequest.multisigSimulation` to `configurableAccountSimulation`, and added the optional `AccountSimulation` grant `signer`, to match the Tempo node.
+
+  ```diff
+  - { keyType: 'multisig', multisigSimulation: spec }
+  + { keyType: 'configurableAccount', configurableAccountSimulation: spec }
+  ```
+
+- [#519](https://github.com/wevm/ox/pull/519) [`e9b66c2`](https://github.com/wevm/ox/commit/e9b66c28e3595fd02150f816f1ebf8971deee5d1) Thanks [@jxom](https://github.com/jxom)! - Stopped requiring an `account` binding on configurable account key grants, so `KeyAuthorization` accepts every grant the Tempo node accepts, and deprecated `KeyAuthorization.MissingAccountError`, which is no longer thrown.
+
 ## 0.14.56
 
 ### Patch Changes
