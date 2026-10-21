@@ -113,6 +113,25 @@ describe('fromRpc', () => {
 })
 
 describe('toRpc', () => {
+  test('behavior: round-trips the grant signer', () => {
+    const signer = '0x2222222222222222222222222222222222222222'
+    const spec = AccountSimulation.fromRpc({ ...rpc, signer })
+    expect(spec.signer).toBe(signer)
+    expect(AccountSimulation.toRpc(spec).signer).toBe(signer)
+    expect(
+      'signer' in AccountSimulation.toRpc(AccountSimulation.fromRpc(rpc)),
+    ).toBe(false)
+  })
+
+  test('error: rejects an invalid grant signer', () => {
+    expect(() => AccountSimulation.fromRpc({ ...rpc, signer: '0x1234' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0x1234" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
   test('behavior: encodes configurations and shims long key data', () => {
     expect(AccountSimulation.toRpc(AccountSimulation.fromRpc(rpc)))
       .toMatchInlineSnapshot(`

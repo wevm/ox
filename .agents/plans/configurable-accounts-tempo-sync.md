@@ -8,7 +8,17 @@ Progress:
 - Phase 4a is done: `account` is no longer required for configurable key grants, and no new
   requirement was added for `isAdmin` grants, since viem's root-signed admin grants omit it and
   TIP-1049 allows that.
-- Phase 5 is blocked.
+- Phase 3 is reversed. The node on `joshie/configurable-t14-devnet-checkpoint` still allows admin keys at
+  T14, including configurable accounts as admin delegates and as admin-grant authorizers (test
+  `configurable_account_admin_can_sign_inline_grant`), and has no TIP-1137 code. ox no longer rejects
+  those grants. Revisit if TIP-1137 lands in the node.
+- Phase 5: the e2e runs against `sha-04e67d3`, built from `liam/t14-checkpoint-recovery-factory`
+  (the devnet checkpoint plus a recovery-factory genesis option).
+- Phase 6 wire names are done: the key type is `configurableAccount` and the request field is
+  `configurableAccountSimulation`; the simulation spec gained the optional grant `signer`.
+- Not done, from the checkpoint audit: ox still accepts a keychain nested in a keychain and a
+  configurable signature in a Tempo authorization list, which the node rejects or skips. Both
+  predate this work.
 
 Bring `ox/tempo` configurable-account APIs up to date with Tempo main and the
 current TIP cluster, and add TIP-1113 in-place migration helpers. viem depends
