@@ -113,6 +113,26 @@ describe('fromRpc', () => {
 })
 
 describe('toRpc', () => {
+  test('behavior: round-trips the grant signer', () => {
+    const signer = '0x2222222222222222222222222222222222222222'
+    const spec = AccountSimulation.fromRpc({ ...rpc, signer })
+    expect(spec.signer).toBe(signer)
+    expect(AccountSimulation.toRpc(spec).signer).toBe(signer)
+    expect(
+      'signer' in AccountSimulation.toRpc(AccountSimulation.fromRpc(rpc)),
+    ).toBe(false)
+  })
+
+  test('error: rejects an invalid grant signer', () => {
+    expect(() =>
+      AccountSimulation.fromRpc({ ...rpc, signer: '0x1234' }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0x1234" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
   test('behavior: encodes configurations and shims long key data', () => {
     expect(
       AccountSimulation.toRpc(AccountSimulation.fromRpc(rpc)),
@@ -144,6 +164,30 @@ describe('toRpc', () => {
           "owner": "0x1111111111111111111111111111111111111111",
         },
       ]
+    `)
+  })
+
+  test('behavior: shims key data that is not a valid length hint', () => {
+    const keyData = (keyData: `0x${string}`) =>
+      AccountSimulation.toRpc(
+        AccountSimulation.fromRpc({
+          ...rpc,
+          approvals: [{ ...rpc.approvals[0], keyData }],
+        }),
+      ).approvals[0]?.keyData
+
+    expect({
+      empty: keyData('0x'),
+      four: keyData('0x01020304'),
+      one: keyData('0x01'),
+      three: keyData('0x010203'),
+    }).toMatchInlineSnapshot(`
+      {
+        "empty": "0x0000",
+        "four": "0x01020304",
+        "one": "0x01",
+        "three": "0x0003",
+      }
     `)
   })
 

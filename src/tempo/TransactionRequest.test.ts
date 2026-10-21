@@ -109,9 +109,9 @@ describe('fromRpc', () => {
     expect(request.nonceKey).toBe(255n)
   })
 
-  test('behavior: multisig key type decodes as configurable', () => {
+  test('behavior: configurableAccount key type decodes as configurable', () => {
     const request = TransactionRequest.fromRpc({
-      keyType: 'multisig',
+      keyType: 'configurableAccount',
       type: '0x76',
     })
     expect(request.keyType).toMatchInlineSnapshot(`"configurable"`)
@@ -120,7 +120,7 @@ describe('fromRpc', () => {
   test('behavior: account simulation', () => {
     const request = TransactionRequest.fromRpc({
       from: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      multisigSimulation: accountSimulationRpc,
+      configurableAccountSimulation: accountSimulationRpc,
       type: '0x76',
     })
 
@@ -214,8 +214,7 @@ describe('toRpc', () => {
 
     expect(request).toMatchInlineSnapshot(`
       {
-        "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "multisigSimulation": {
+        "configurableAccountSimulation": {
           "approvals": [
             {
               "keyData": "0x0005",
@@ -225,9 +224,10 @@ describe('toRpc', () => {
           ],
           "config": "0xf852a011111111111111111111111111111111111111111111111111111111111111118002eed694111111111111111111111111111111111111111101d694bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01",
         },
+        "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "type": "0x76",
       }
-      `)
+    `)
   })
 })
 
@@ -295,7 +295,7 @@ describe('roundtrip', () => {
       nonceKey: '0xff',
       gas: '0x186a0',
       keyAuthorizationSimulation: accountSimulationRpc,
-      multisigSimulation: accountSimulationRpc,
+      configurableAccountSimulation: accountSimulationRpc,
       type: '0x76',
     }
 
@@ -311,7 +311,9 @@ describe('roundtrip', () => {
     expect(rpc.keyAuthorizationSimulation).toEqual(
       original.keyAuthorizationSimulation,
     )
-    expect(rpc.multisigSimulation).toEqual(original.multisigSimulation)
+    expect(rpc.configurableAccountSimulation).toEqual(
+      original.configurableAccountSimulation,
+    )
     expect(rpc.type).toBe('0x76')
   })
 })

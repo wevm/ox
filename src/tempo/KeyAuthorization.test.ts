@@ -117,49 +117,84 @@ describe('configurable account binding', () => {
     ).toMatchInlineSnapshot(`"0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c"`)
   })
 
-  test('rejects unbound grants before signing or encoding', () => {
-    const authorization = {
-      address,
-      chainId: 1n,
-      type: 'configurable',
-    } as const
-    const signed = {
-      ...authorization,
-      signature: SignatureEnvelope.from(signature_secp256k1),
-    }
-    for (const encode of [
-      // @ts-expect-error Deliberately unbound configurable grant.
-      () => KeyAuthorization.from(authorization),
-      // @ts-expect-error Deliberately unbound configurable grant.
-      () => KeyAuthorization.toTuple(authorization),
-      // @ts-expect-error Deliberately unbound configurable grant.
-      () => KeyAuthorization.getSignPayload(authorization),
-      // @ts-expect-error Deliberately unbound configurable grant.
-      () => KeyAuthorization.serialize(authorization),
-      // @ts-expect-error Deliberately unbound configurable grant.
-      () => KeyAuthorization.toRpc(signed),
-    ])
-      expect(encode).toThrowErrorMatchingInlineSnapshot(
-        `[KeyAuthorization.MissingAccountError: Configurable account key grants require a parent account binding.]`,
-      )
+  test('behavior: accepts unbound configurable grants', () => {
+    // The node binds a root-signed grant to its signer, so only admin-signed
+    // grants need `account` (TIP-1049).
+    const signed = KeyAuthorization.from(
+      { address, chainId: 1n, type: 'configurable' },
+      { signature: signature_secp256k1 },
+    )
+    const rpc = KeyAuthorization.toRpc(signed)
+    expect({
+      deserialized: KeyAuthorization.deserialize(
+        KeyAuthorization.serialize(signed),
+      ),
+      fromRpc: KeyAuthorization.fromRpc(rpc),
+      fromTuple: KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
+      rpc,
+    }).toMatchInlineSnapshot(`
+      {
+        "deserialized": {
+          "account": undefined,
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "signature": {
+            "signature": {
+              "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
+              "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+          "type": "configurable",
+        },
+        "fromRpc": {
+          "account": undefined,
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "limits": undefined,
+          "signature": {
+            "signature": {
+              "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
+              "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
+              "yParity": 1,
+            },
+            "type": "secp256k1",
+          },
+          "type": "configurable",
+        },
+        "fromTuple": {
+          "account": undefined,
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1n,
+          "type": "configurable",
+        },
+        "rpc": {
+          "account": undefined,
+          "chainId": "0x1",
+          "expiry": null,
+          "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "keyType": "configurableAccount",
+          "limits": undefined,
+          "signature": {
+            "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
+            "s": "0x780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d0",
+            "type": "secp256k1",
+            "yParity": "0x1",
+          },
+        },
+      }
+    `)
   })
 
-  test('rejects unbound RPC and RLP grants', () => {
+  test('behavior: preserves a bound account', () => {
     const signed = KeyAuthorization.from(
       { account: address, address, chainId: 1n, type: 'configurable' },
       { signature: signature_secp256k1 },
     )
-    const rpc = KeyAuthorization.toRpc(signed)
-    for (const account of [undefined, null]) {
-      // @ts-expect-error Deliberately unbound configurable grant.
-      expect(() => KeyAuthorization.fromRpc({ ...rpc, account })).toThrowError(
-        KeyAuthorization.MissingAccountError,
-      )
-    }
-    expect(() =>
-      KeyAuthorization.fromTuple([['0x01', '0x03', address]]),
-    ).toThrowError(KeyAuthorization.MissingAccountError)
-    expect(KeyAuthorization.fromRpc(rpc).account).toBe(address)
+    expect(
+      KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed)).account,
+    ).toBe(address)
     expect(
       KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)).account,
     ).toBe(address)
@@ -1512,13 +1547,13 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
-  test('behavior: configurable key type uses the RPC multisig key type', () => {
+  test('behavior: configurable key type uses the RPC configurableAccount key type', () => {
     const authorization = KeyAuthorization.from(
       { account: address, address, chainId: 1n, type: 'configurable' },
       { signature: signature_secp256k1 },
     )
     const rpc = KeyAuthorization.toRpc(authorization)
-    expect(rpc.keyType).toMatchInlineSnapshot(`"multisig"`)
+    expect(rpc.keyType).toMatchInlineSnapshot(`"configurableAccount"`)
     expect(KeyAuthorization.fromRpc(rpc).type).toMatchInlineSnapshot(
       `"configurable"`,
     )
@@ -2890,5 +2925,26 @@ describe('admin keys (TIP-1049)', () => {
       type: 'secp256k1',
     })
     expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
+  })
+
+  describe('configurable admin keys', () => {
+    test('behavior: a configurable account may sign or be granted an admin key', () => {
+      const signed = KeyAuthorization.from(
+        {
+          account: signature_configurable.account,
+          address,
+          chainId: 1n,
+          isAdmin: true,
+          type: 'configurable',
+        },
+        { signature: signature_configurable },
+      )
+      expect(
+        KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
+      ).toEqual(signed)
+      expect(
+        KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed)),
+      ).toMatchObject({ isAdmin: true, type: 'configurable' })
+    })
   })
 })
