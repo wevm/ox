@@ -28,6 +28,8 @@ export type Rpc = Compute<{
   approvals: readonly ApprovalRpc[]
   /** Canonical RLP-encoded applicable configuration. */
   config: Hex.Hex
+  /** Account that signs the modeled key authorization. Omitted for a direct signature. */
+  signer?: Address.Address | undefined
 }>
 
 /** Account simulation spec used to construct an RPC simulation signature. */
@@ -36,6 +38,8 @@ export type Spec = Compute<{
   approvals: readonly Approval[]
   /** Complete applicable configuration. */
   config: AccountConfig.Config
+  /** Account that signs the modeled key authorization. Omitted for a direct signature. */
+  signer?: Address.Address | undefined
 }>
 
 /**
@@ -53,14 +57,20 @@ export type Spec = Compute<{
  * @returns The account simulation spec with decoded configurations.
  */
 export function fromRpc(spec: Rpc): Spec {
-  const { approvals, config } = spec
+  const { approvals, config, signer } = spec
   assertApprovals(approvals)
-  return { approvals, config: deserializeConfig(config) }
+  if (signer !== undefined) Address.assert(signer)
+  return {
+    approvals,
+    config: deserializeConfig(config),
+    ...(signer !== undefined ? { signer } : {}),
+  }
 }
 
 export declare namespace fromRpc {
   /** Error type for `fromRpc`. */
   export type ErrorType =
+    | Address.assert.ErrorType
     | Hex.isEqual.ErrorType
     | InvalidSimulationError
     | AccountConfig.assert.ErrorType
@@ -84,8 +94,9 @@ export declare namespace fromRpc {
  * @returns The JSON-RPC account simulation spec with encoded configurations.
  */
 export function toRpc(spec: Spec): Rpc {
-  const { approvals, config } = spec
+  const { approvals, config, signer } = spec
   assertApprovals(approvals)
+  if (signer !== undefined) Address.assert(signer)
   return {
     approvals: approvals.map(({ keyData, keyType, owner }) => ({
       ...(keyData !== undefined ? { keyData: shimKeyData(keyData) } : {}),
@@ -93,12 +104,14 @@ export function toRpc(spec: Spec): Rpc {
       owner,
     })),
     config: serializeConfig(config),
+    ...(signer !== undefined ? { signer } : {}),
   }
 }
 
 export declare namespace toRpc {
   /** Error type for `toRpc`. */
   export type ErrorType =
+    | Address.assert.ErrorType
     | Hex.fromNumber.ErrorType
     | InvalidSimulationError
     | AccountConfig.assert.ErrorType
@@ -164,12 +177,13 @@ function serializeConfig(config: AccountConfig.Input): Hex.Hex {
 }
 
 /**
- * Shims long key data into the length hint accepted by Tempo's gas estimator.
+ * Shims key data into the 1-, 2-, or 4-byte length hint accepted by Tempo's
+ * gas estimator. Other sizes are replaced by a 2-byte hint of their length.
  * @internal
  */
 function shimKeyData(data: Hex.Hex): Hex.Hex {
   const size = Hex.size(data)
-  if (size <= 4) return data
+  if (size === 1 || size === 2 || size === 4) return data
   return Hex.fromNumber(size, { size: 2 })
 }
 

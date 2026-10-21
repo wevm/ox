@@ -21,7 +21,7 @@ const rpc = {
 } as const
 
 describe('KeyAuthorization', () => {
-  test('rejects unbound configurable grants through every schema', () => {
+  test('accepts unbound configurable grants through every schema', () => {
     const domain = {
       ...z.decode(z_KeyAuthorization.KeyAuthorization, rpc),
       type: 'configurable',
@@ -30,15 +30,15 @@ describe('KeyAuthorization', () => {
       expect(
         z.safeDecode(z_KeyAuthorization.KeyAuthorization, {
           ...rpc,
-          keyType: 'multisig',
+          keyType: 'configurableAccount',
           account,
         }).success,
-      ).toMatchInlineSnapshot(`false`)
+      ).toMatchInlineSnapshot(`true`)
     for (const schema of [
       z_KeyAuthorization.Domain,
       z_KeyAuthorization.DomainToRpc,
     ]) {
-      expect(z.safeParse(schema, domain).success).toMatchInlineSnapshot(`false`)
+      expect(z.safeParse(schema, domain).success).toMatchInlineSnapshot(`true`)
       expect(
         z.safeParse(schema, { ...domain, account: rpc.keyId }).success,
       ).toMatchInlineSnapshot(`true`)
@@ -47,7 +47,7 @@ describe('KeyAuthorization', () => {
       z_KeyAuthorization.KeyAuthorization,
       z_KeyAuthorization.KeyAuthorizationToRpc,
     ])
-      expect(z.safeEncode(codec, domain).success).toMatchInlineSnapshot(`false`)
+      expect(z.safeEncode(codec, domain).success).toMatchInlineSnapshot(`true`)
   })
 
   test('decodes an RPC key authorization', () => {

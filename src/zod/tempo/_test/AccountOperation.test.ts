@@ -24,7 +24,7 @@ const rpc = {
     version: '0x1',
   },
   createdAt: 1,
-  hash: '0xcdbc24a8fb192f799c5d166b13a99fb29cbb15e71a5e730988d6f8b3c5959d02',
+  hash: '0x2b7a9f98ab46088ccfbd145553b5ec804cd6a24eab46a21f023cbe68385f0fb4',
   signatureCount: 1,
   status: 'pending',
   threshold: 2,

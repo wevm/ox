@@ -22,6 +22,16 @@ test('from returns a complete configuration', () => {
   expectTypeOf(zero.version).toEqualTypeOf<0n>()
 })
 
+test('fromUpgrade returns a version-one configuration', () => {
+  const config = AccountConfig.fromUpgrade(
+    '0x3333333333333333333333333333333333333333',
+    input,
+  )
+
+  expectTypeOf(config).toMatchTypeOf<AccountConfig.Config>()
+  expectTypeOf(config.version).toEqualTypeOf<1n>()
+})
+
 test('update returns the next complete configuration', () => {
   const config = AccountConfig.update(AccountConfig.from(input), {
     owners: input.owners,

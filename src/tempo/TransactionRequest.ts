@@ -70,9 +70,9 @@ export type Rpc = Omit<
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
   keyAuthorizationSimulation?: AccountSimulation.Rpc | undefined
-  /** Key type. Configurable accounts use the node's `multisig` key type. */
-  keyType?: SignatureEnvelope.Type | 'multisig' | undefined
-  multisigSimulation?: AccountSimulation.Rpc | undefined
+  /** Key type. Configurable accounts use the node's `configurableAccount` key type. */
+  keyType?: SignatureEnvelope.Type | 'configurableAccount' | undefined
+  configurableAccountSimulation?: AccountSimulation.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
   signature?: SignatureEnvelope.SignatureEnvelopeRpc | undefined
 }
@@ -104,7 +104,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
     authorizationList: _,
     keyAuthorizationSimulation: __,
     keyType: ___,
-    multisigSimulation: ____,
+    configurableAccountSimulation: ____,
     ...rest
   } = request
   const request_ = ox_TransactionRequest.fromRpc(
@@ -147,10 +147,12 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (typeof request.keyType !== 'undefined')
     request_.keyType =
-      request.keyType === 'multisig' ? 'configurable' : request.keyType
-  if (request.multisigSimulation)
+      request.keyType === 'configurableAccount'
+        ? 'configurable'
+        : request.keyType
+  if (request.configurableAccountSimulation)
     request_.accountSimulation = AccountSimulation.fromRpc(
-      request.multisigSimulation,
+      request.configurableAccountSimulation,
     )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = Hex.toNumber(request.validBefore as Hex.Hex)
@@ -292,13 +294,15 @@ export function toRpc(request: toRpc.Input): Rpc {
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType =
-      request.keyType === 'configurable' ? 'multisig' : request.keyType
+      request.keyType === 'configurable'
+        ? 'configurableAccount'
+        : request.keyType
   if (typeof request.keyAuthorizationSimulation !== 'undefined')
     request_rpc.keyAuthorizationSimulation = AccountSimulation.toRpc(
       request.keyAuthorizationSimulation,
     )
   if (typeof request.accountSimulation !== 'undefined')
-    request_rpc.multisigSimulation = AccountSimulation.toRpc(
+    request_rpc.configurableAccountSimulation = AccountSimulation.toRpc(
       request.accountSimulation,
     )
   if (typeof request.validBefore !== 'undefined')

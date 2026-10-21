@@ -12,6 +12,13 @@ const config = AccountConfig.from({
 })
 const account = AccountConfig.getAddress(config, { factory })
 
+// Vectors from Tempo `crates/primitives/tests/configurable_account.rs`
+// (`configurable_account_hashes_follow_vectors_and_documented_layout`).
+const tempo = {
+  account: '0x91847576f406d0842ad7c1a0c97c22a122e64278',
+  factory: '0x9999999999999999999999999999999999999999',
+} as const
+
 describe('from', () => {
   test('behavior: normalizes an initial configuration', () => {
     expect(
@@ -98,10 +105,103 @@ describe('fromRpc/toRpc', () => {
   })
 })
 
+describe('fromUpgrade', () => {
+  const root = '0x3333333333333333333333333333333333333333'
+
+  test('example: derives the migrated config', () => {
+    // The root key may also be listed as an owner.
+    const config = AccountConfig.fromUpgrade(root, {
+      owners: [
+        { owner: root, weight: 1 },
+        { owner: owner_1, weight: 1 },
+      ],
+      threshold: 2,
+    })
+    expect({
+      commitment: AccountConfig.getCommitment(config),
+      config,
+    }).toMatchInlineSnapshot(`
+      {
+        "commitment": "0xabca6d8f3a14b99ecaef378042e6a2ffa4f231125517e073cfbd3bcd69ac6ea1",
+        "config": {
+          "owners": [
+            {
+              "owner": "0x1111111111111111111111111111111111111111",
+              "weight": 1,
+            },
+            {
+              "owner": "0x3333333333333333333333333333333333333333",
+              "weight": 1,
+            },
+          ],
+          "salt": "0x42b3dad8fa6c40b50e6dbbbdaaace72d6c04250c16c1e263a52355983a30eb56",
+          "threshold": 2,
+          "version": 1n,
+        },
+      }
+    `)
+  })
+
+  test('behavior: binds the salt to the account', () => {
+    const options = {
+      owners: [{ owner: owner_1, weight: 1 }],
+      threshold: 1,
+    } as const
+    expect(AccountConfig.fromUpgrade(root, options).salt).not.toBe(
+      AccountConfig.fromUpgrade(owner_2, options).salt,
+    )
+  })
+
+  test('error: rejects an invalid account', () => {
+    expect(() =>
+      AccountConfig.fromUpgrade('0x1234', {
+        owners: [{ owner: owner_1, weight: 1 }],
+        threshold: 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0x1234" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('error: rejects an invalid config', () => {
+    expect(() =>
+      AccountConfig.fromUpgrade(root, {
+        owners: [{ owner: owner_1, weight: 1 }],
+        threshold: 2,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AccountConfig.InvalidConfigError: Invalid account config: threshold exceeds total owner weight.]`,
+    )
+  })
+})
+
 describe('getAddress', () => {
+  test('example: matches the Tempo vectors', () => {
+    expect({
+      maxOwners: AccountConfig.getAddress(
+        {
+          owners: Array.from({ length: AccountConfig.maxOwners }, (_, i) => ({
+            owner: Hex.padLeft(Hex.fromNumber(i + 1), 20),
+            weight: 1,
+          })),
+          threshold: 8,
+        },
+        { factory: tempo.factory },
+      ),
+      single: AccountConfig.getAddress(config, { factory: tempo.factory }),
+    }).toMatchInlineSnapshot(`
+      {
+        "maxOwners": "0x7a4279bb3f1b8b54d703484317f64eae6814e827",
+        "single": "0x87c346a9029d675f296db533b12e146439cf20d5",
+      }
+    `)
+  })
+
   test('example: matches the frozen CREATE2 vector', () => {
     expect(account).toMatchInlineSnapshot(
-      `"0x90ba71cb7534da990a1182cf28c9bf415055e03d"`,
+      `"0x2318ebe50d1d476ec10854bfd949f96ea7737b68"`,
     )
     expect(account).not.toBe('0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da')
   })
@@ -119,7 +219,7 @@ describe('getAddress', () => {
         },
         { factory },
       ),
-    ).toMatchInlineSnapshot(`"0x7898a7d1dd96946d2a968de1540ca884a244320c"`)
+    ).toMatchInlineSnapshot(`"0x1baa996a4f142d99999aa22f1cb1eb97eed2a24a"`)
   })
 
   test('behavior: is stable and binds the salt', () => {
@@ -134,8 +234,8 @@ describe('getAddress', () => {
       ),
     }).toMatchInlineSnapshot(`
       {
-        "repeated": "0x90ba71cb7534da990a1182cf28c9bf415055e03d",
-        "salted": "0xa1a8472f4a01772db729d8ebc73fe46120750b83",
+        "repeated": "0x2318ebe50d1d476ec10854bfd949f96ea7737b68",
+        "salted": "0x70d2e44032514493b68641ce5182cc878baa51f0",
       }
     `)
   })
@@ -156,6 +256,18 @@ describe('getAddress', () => {
 })
 
 describe('getCommitment', () => {
+  test('example: matches the Tempo vectors', () => {
+    expect({
+      current: AccountConfig.getCommitment({ ...config, version: 1n }),
+      initial: AccountConfig.getCommitment(config),
+    }).toMatchInlineSnapshot(`
+      {
+        "current": "0xee570a0f26f17b41cdf0952a04ee01ea23495b0c0a59f9c904b0d60cb76453c3",
+        "initial": "0x79cc3a5fcbe18cb8cbbd2b41393750ccf3bbc20533a846755767fa10068ae01d",
+      }
+    `)
+  })
+
   test('example: matches the frozen initial and current vectors', () => {
     expect({
       current: AccountConfig.getCommitment({ ...config, version: 1n }),
@@ -163,20 +275,40 @@ describe('getCommitment', () => {
       initial: AccountConfig.getCommitment(config),
     }).toMatchInlineSnapshot(`
       {
-        "current": "0x6237ca5930f2265d4fb70a0305dd6ceea4df227053b4a62c304489ede946a2f8",
-        "currentNumber": "0x6237ca5930f2265d4fb70a0305dd6ceea4df227053b4a62c304489ede946a2f8",
-        "initial": "0xa9e7d1e2ad25e227a4de5f38f3bba31d854ffc8efec46aaa8649097a516bb4ee",
+        "current": "0xee570a0f26f17b41cdf0952a04ee01ea23495b0c0a59f9c904b0d60cb76453c3",
+        "currentNumber": "0xee570a0f26f17b41cdf0952a04ee01ea23495b0c0a59f9c904b0d60cb76453c3",
+        "initial": "0x79cc3a5fcbe18cb8cbbd2b41393750ccf3bbc20533a846755767fa10068ae01d",
       }
     `)
   })
 })
 
 describe('getSignPayload', () => {
+  test('example: matches the Tempo vectors', () => {
+    expect({
+      current: AccountConfig.getSignPayload({
+        account: tempo.account,
+        config: { version: 1n },
+        payload,
+      }),
+      initial: AccountConfig.getSignPayload({
+        account: tempo.account,
+        config,
+        payload,
+      }),
+    }).toMatchInlineSnapshot(`
+      {
+        "current": "0x285c850cb2803beb10f2f212dac73784a1a03b3991ba79081b24bfa91beb9182",
+        "initial": "0xe6fa513b5ab32da6f116443f13191096bce77b4850f4d51f3aa436fa7650c964",
+      }
+    `)
+  })
+
   test('example: matches the frozen version-0 vector', () => {
     expect(
       AccountConfig.getSignPayload({ account, config, payload }),
     ).toMatchInlineSnapshot(
-      `"0x728efe90611b01c91c2be0da56e7eb8e0d2c274c84f97182e274187dde0b8a20"`,
+      `"0x32144254ec42f7a37b97e3a843667b527479f933320be553265e6594dc44ea87"`,
     )
   })
 
@@ -324,8 +456,8 @@ describe('assert/validate', () => {
       valid: AccountConfig.validate(boundary),
     }).toMatchInlineSnapshot(`
       {
-        "account": "0x6acb25715a2b0cf05c098f753a87d9b38471e99f",
-        "commitment": "0x0dc47a7ab45ffa21a01bfd115427e26617b5a57d7ccbea57db2fd4537ba96f56",
+        "account": "0x8400988285be93cba9391d445e473601633e5d62",
+        "commitment": "0xa9282ca5b73ac63b7e27f49cafa6ab13bd2aa79fc45267cf27342db73150cd46",
         "rlpHash": "0xbaf0d030add91caaa10815d2e99c942f1e39b0d199216973781adb4fc1af6955",
         "rlpLength": 1145,
         "valid": true,
@@ -495,6 +627,7 @@ test('exports', () => {
       "from",
       "fromRpc",
       "fromTuple",
+      "fromUpgrade",
       "getAddress",
       "getCommitment",
       "getSignPayload",

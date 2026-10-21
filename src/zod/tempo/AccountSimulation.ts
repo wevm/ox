@@ -21,6 +21,7 @@ export const Domain = z.object({
       .check(z.maxLength(core_AccountConfig.maxSignatures)),
   ),
   config: z_AccountConfig.Config,
+  signer: z.optional(z_Address.Address),
 })
 
 const Rpc_ = z
@@ -31,6 +32,7 @@ const Rpc_ = z
         .check(z.maxLength(core_AccountConfig.maxSignatures)),
     ),
     config: z_Hex.Hex,
+    signer: z.optional(z_Address.Address),
   })
   .check(
     z.refine((value) => {

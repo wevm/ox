@@ -79,13 +79,13 @@ describe('TransactionRequest', () => {
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
       ...rpc,
       keyAuthorizationSimulation: accountSimulationRpc,
-      multisigSimulation: accountSimulationRpc,
+      configurableAccountSimulation: accountSimulationRpc,
     })
     expect(decoded).toEqual(
       core_TransactionRequest.fromRpc({
         ...rpc,
         keyAuthorizationSimulation: accountSimulationRpc,
-        multisigSimulation: accountSimulationRpc,
+        configurableAccountSimulation: accountSimulationRpc,
       }),
     )
     expect(decoded.accountSimulation).toEqual(
@@ -96,22 +96,27 @@ describe('TransactionRequest', () => {
     expect(encoded.keyAuthorizationSimulation).toStrictEqual(
       accountSimulationRpc,
     )
-    expect(encoded.multisigSimulation).toStrictEqual(accountSimulationRpc)
+    expect(encoded.configurableAccountSimulation).toStrictEqual(
+      accountSimulationRpc,
+    )
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 
-  test('configurable key type maps to the multisig RPC key type', () => {
+  test('configurable key type maps to the configurableAccount RPC key type', () => {
     const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
       ...rpc,
-      keyType: 'multisig',
+      keyType: 'configurableAccount',
     })
     expect(decoded.keyType).toBe('configurable')
     expect(decoded).toEqual(
-      core_TransactionRequest.fromRpc({ ...rpc, keyType: 'multisig' }),
+      core_TransactionRequest.fromRpc({
+        ...rpc,
+        keyType: 'configurableAccount',
+      }),
     )
 
     const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
-    expect(encoded.keyType).toBe('multisig')
+    expect(encoded.keyType).toBe('configurableAccount')
     expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
   })
 

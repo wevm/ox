@@ -26,12 +26,12 @@ const KeyType = z.union([
   z.literal('configurable'),
 ])
 
-// The node's wire format names the configurable account key type `multisig`.
+// The node's wire format names the configurable account key type `configurableAccount`.
 const KeyTypeRpc = z.union([
   z.literal('secp256k1'),
   z.literal('p256'),
   z.literal('webAuthn'),
-  z.literal('multisig'),
+  z.literal('configurableAccount'),
 ])
 
 const SignatureRpc = z.object({
@@ -93,7 +93,7 @@ export const Rpc = z.object({
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
   keyAuthorizationSimulation: z.optional(z_AccountSimulation.Rpc),
-  multisigSimulation: z.optional(z_AccountSimulation.Rpc),
+  configurableAccountSimulation: z.optional(z_AccountSimulation.Rpc),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
   r: z.optional(z_Hex.Hex),
@@ -218,7 +218,11 @@ export const TransactionRequestToRpc = z.codec(Rpc, DomainToRpc, {
 function fromRpc(
   request: core_TransactionRequest.Rpc,
 ): core_TransactionRequest.TransactionRequest {
-  const { authorizationList: _, multisigSimulation: __, ...rest } = request
+  const {
+    authorizationList: _,
+    configurableAccountSimulation: __,
+    ...rest
+  } = request
   const request_ = z.decode(
     z_TransactionRequest.TransactionRequest,
     rest as never,
@@ -263,16 +267,18 @@ function fromRpc(
   if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_.keyType =
-      request.keyType === 'multisig' ? 'configurable' : request.keyType
+      request.keyType === 'configurableAccount'
+        ? 'configurable'
+        : request.keyType
   if (typeof request.keyAuthorizationSimulation !== 'undefined')
     request_.keyAuthorizationSimulation = z.decode(
       z_AccountSimulation.AccountSimulation,
       request.keyAuthorizationSimulation,
     )
-  if (typeof request.multisigSimulation !== 'undefined')
+  if (typeof request.configurableAccountSimulation !== 'undefined')
     request_.accountSimulation = z.decode(
       z_AccountSimulation.AccountSimulation,
-      request.multisigSimulation,
+      request.configurableAccountSimulation,
     )
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = core_Hex.toNumber(request.validBefore)
@@ -357,14 +363,16 @@ function toRpc(
   if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
   if (typeof request.keyType !== 'undefined')
     request_rpc.keyType =
-      request.keyType === 'configurable' ? 'multisig' : request.keyType
+      request.keyType === 'configurable'
+        ? 'configurableAccount'
+        : request.keyType
   if (typeof request.keyAuthorizationSimulation !== 'undefined')
     request_rpc.keyAuthorizationSimulation = z.encode(
       z_AccountSimulation.AccountSimulation,
       request.keyAuthorizationSimulation,
     )
   if (typeof request.accountSimulation !== 'undefined')
-    request_rpc.multisigSimulation = z.encode(
+    request_rpc.configurableAccountSimulation = z.encode(
       z_AccountSimulation.AccountSimulation,
       request.accountSimulation,
     )

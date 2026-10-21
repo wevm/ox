@@ -29,28 +29,24 @@ export const RpcCallScope = z.object({
 })
 
 /** RPC key authorization schema. */
-export const Rpc = z
-  .object({
-    account: z.optional(z.nullable(z_Address.Address)),
-    allowedCalls: z.optional(z.nullable(z.readonly(z.array(RpcCallScope)))),
-    chainId: z_Hex.Hex,
-    expiry: z.optional(z.nullable(z_Hex.Hex)),
-    isAdmin: z.optional(z.nullable(z.boolean())),
-    keyId: z_Address.Address,
-    keyType: z.union([z_SignatureEnvelope.Type, z.literal('multisig')]),
-    limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
-    signature: z.union([
-      z_SignatureEnvelope.PrimitiveRpc,
-      z_SignatureEnvelope.ConfigurableRpc,
-    ]),
-    witness: z.optional(z.nullable(z_Hex.Hex)),
-  })
-  .check(
-    z.refine(
-      (value) => value.keyType !== 'multisig' || value.account != null,
-      'configurable account key grants require a parent account binding',
-    ),
-  )
+export const Rpc = z.object({
+  account: z.optional(z.nullable(z_Address.Address)),
+  allowedCalls: z.optional(z.nullable(z.readonly(z.array(RpcCallScope)))),
+  chainId: z_Hex.Hex,
+  expiry: z.optional(z.nullable(z_Hex.Hex)),
+  isAdmin: z.optional(z.nullable(z.boolean())),
+  keyId: z_Address.Address,
+  keyType: z.union([
+    z_SignatureEnvelope.Type,
+    z.literal('configurableAccount'),
+  ]),
+  limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
+  signature: z.union([
+    z_SignatureEnvelope.PrimitiveRpc,
+    z_SignatureEnvelope.ConfigurableRpc,
+  ]),
+  witness: z.optional(z.nullable(z_Hex.Hex)),
+})
 
 /** Token spending limit schema. */
 export const TokenLimit = z.object({
@@ -88,18 +84,11 @@ const domainShape = {
 }
 
 /** Decoded key authorization schema. */
-export const Domain = z
-  .object({
-    ...domainShape,
-    account: z.optional(z_Address.Address),
-    isAdmin: z.optional(z.boolean()),
-  })
-  .check(
-    z.refine(
-      (value) => value.type !== 'configurable' || value.account != null,
-      'configurable account key grants require a parent account binding',
-    ),
-  )
+export const Domain = z.object({
+  ...domainShape,
+  account: z.optional(z_Address.Address),
+  isAdmin: z.optional(z.boolean()),
+})
 
 const domainToRpcShape = {
   ...domainShape,
@@ -109,18 +98,11 @@ const domainToRpcShape = {
 }
 
 /** Encode-only decoded key authorization schema accepting numberish `toRpc` inputs. */
-export const DomainToRpc = z
-  .object({
-    ...domainToRpcShape,
-    account: z.optional(z_Address.Address),
-    isAdmin: z.optional(z.boolean()),
-  })
-  .check(
-    z.refine(
-      (value) => value.type !== 'configurable' || value.account != null,
-      'configurable account key grants require a parent account binding',
-    ),
-  )
+export const DomainToRpc = z.object({
+  ...domainToRpcShape,
+  account: z.optional(z_Address.Address),
+  isAdmin: z.optional(z.boolean()),
+})
 
 /** Codec decoding an RPC key authorization into a signed key authorization. */
 export const KeyAuthorization = z.codec(Rpc, Domain, {

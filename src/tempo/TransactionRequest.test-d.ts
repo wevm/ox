@@ -53,19 +53,19 @@ describe('TransactionRequest type', () => {
     expectTypeOf<
       TransactionRequest.TransactionRequest['accountSimulation']
     >().toEqualTypeOf<AccountSimulation.Spec | undefined>()
-    expectTypeOf<TransactionRequest.Rpc['multisigSimulation']>().toEqualTypeOf<
-      AccountSimulation.Rpc | undefined
-    >()
+    expectTypeOf<
+      TransactionRequest.Rpc['configurableAccountSimulation']
+    >().toEqualTypeOf<AccountSimulation.Rpc | undefined>()
   })
 
-  test('maps the configurable key type to the RPC multisig key type', () => {
+  test('maps the configurable key type to the RPC configurableAccount key type', () => {
     expectTypeOf<
       TransactionRequest.TransactionRequest['keyType']
     >().toEqualTypeOf<
       'configurable' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
     >()
     expectTypeOf<TransactionRequest.Rpc['keyType']>().toEqualTypeOf<
-      'multisig' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
+      'configurableAccount' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
     >()
   })
 })
