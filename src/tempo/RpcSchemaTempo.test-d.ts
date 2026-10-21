@@ -17,7 +17,7 @@ declare const tempoProvider: Provider.Provider<{
 declare const address: Address.Address
 declare const hash: Hex.Hex
 declare const keyAuthorization: KeyAuthorization.Rpc
-declare const multisigSimulation: AccountSimulation.Rpc
+declare const configurableAccountSimulation: AccountSimulation.Rpc
 declare const serializedTransaction: Hex.Hex
 declare const signature: Hex.Hex
 
@@ -79,7 +79,7 @@ test('tempo simulation accepts account simulation specs', () => {
           {
             calls: [
               {
-                multisigSimulation,
+                configurableAccountSimulation,
               },
             ],
           },

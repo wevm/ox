@@ -19,16 +19,16 @@ test('transaction requests use domain account simulation specs', () => {
 })
 
 test('RPC requests use encoded account configurations', () => {
-  expectTypeOf(rpc.multisigSimulation?.config).toEqualTypeOf<
+  expectTypeOf(rpc.configurableAccountSimulation?.config).toEqualTypeOf<
     `0x${string}` | undefined
   >()
 })
 
-test('maps the configurable key type to the RPC multisig key type', () => {
+test('maps the configurable key type to the RPC configurableAccount key type', () => {
   expectTypeOf(request.keyType).toEqualTypeOf<
     'configurable' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
   >()
   expectTypeOf(rpc.keyType).toEqualTypeOf<
-    'multisig' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
+    'configurableAccount' | 'p256' | 'secp256k1' | 'webAuthn' | undefined
   >()
 })

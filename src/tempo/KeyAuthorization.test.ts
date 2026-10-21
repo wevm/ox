@@ -174,7 +174,7 @@ describe('configurable account binding', () => {
           "chainId": "0x1",
           "expiry": null,
           "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-          "keyType": "multisig",
+          "keyType": "configurableAccount",
           "limits": undefined,
           "signature": {
             "r": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7",
@@ -1547,13 +1547,13 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
-  test('behavior: configurable key type uses the RPC multisig key type', () => {
+  test('behavior: configurable key type uses the RPC configurableAccount key type', () => {
     const authorization = KeyAuthorization.from(
       { account: address, address, chainId: 1n, type: 'configurable' },
       { signature: signature_secp256k1 },
     )
     const rpc = KeyAuthorization.toRpc(authorization)
-    expect(rpc.keyType).toMatchInlineSnapshot(`"multisig"`)
+    expect(rpc.keyType).toMatchInlineSnapshot(`"configurableAccount"`)
     expect(KeyAuthorization.fromRpc(rpc).type).toMatchInlineSnapshot(
       `"configurable"`,
     )
@@ -2927,83 +2927,24 @@ describe('admin keys (TIP-1049)', () => {
     expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
   })
 
-  describe('configurable authorizer (TIP-1137)', () => {
-    const authorization = {
-      account: signature_configurable.account,
-      address,
-      chainId: 1n,
-      isAdmin: true,
-      type: 'secp256k1',
-    } as const
-
-    test('from: rejects an admin grant', () => {
-      expect(() =>
-        KeyAuthorization.from(authorization, {
-          signature: signature_configurable,
-        }),
-      ).toThrowErrorMatchingInlineSnapshot(
-        `[KeyAuthorization.InvalidAdminAuthorizerError: Configurable accounts cannot authorize or be admin access keys (TIP-1137).]`,
-      )
-    })
-
-    test('fromRpc: rejects an admin grant', () => {
-      expect(() =>
-        KeyAuthorization.fromRpc({
-          account: authorization.account,
-          chainId: '0x1',
-          expiry: null,
+  describe('configurable admin keys', () => {
+    test('behavior: a configurable account may sign or be granted an admin key', () => {
+      const signed = KeyAuthorization.from(
+        {
+          account: signature_configurable.account,
+          address,
+          chainId: 1n,
           isAdmin: true,
-          keyId: address,
-          keyType: 'secp256k1',
-          signature: signature_configurable_rpc,
-        }),
-      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
-    })
-
-    test('fromTuple: rejects an admin grant', () => {
-      const [tuple] = KeyAuthorization.toTuple(authorization)
-      expect(() =>
-        KeyAuthorization.fromTuple([
-          tuple,
-          SignatureEnvelope.serialize(signature_configurable),
-        ]),
-      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
-    })
-
-    test('toTuple: rejects an admin grant', () => {
-      expect(() =>
-        KeyAuthorization.toTuple({
-          ...authorization,
-          signature: signature_configurable,
-        }),
-      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
-    })
-
-    test('from: rejects granting a configurable account as an admin key', () => {
-      const grant = {
-        address,
-        chainId: 1n,
-        isAdmin: true,
-        type: 'configurable',
-      } as const
-      expect(() => KeyAuthorization.from(grant)).toThrowError(
-        KeyAuthorization.InvalidAdminAuthorizerError,
+          type: 'configurable',
+        },
+        { signature: signature_configurable },
       )
-      expect(() =>
-        KeyAuthorization.from(grant, { signature: signature_secp256k1 }),
-      ).toThrowError(KeyAuthorization.InvalidAdminAuthorizerError)
-      expect(() => KeyAuthorization.getSignPayload(grant)).toThrowError(
-        KeyAuthorization.InvalidAdminAuthorizerError,
-      )
-    })
-
-    test('behavior: accepts a non-admin grant', () => {
       expect(
-        KeyAuthorization.from(
-          { ...authorization, isAdmin: undefined },
-          { signature: signature_configurable },
-        ).signature,
-      ).toEqual(signature_configurable)
+        KeyAuthorization.deserialize(KeyAuthorization.serialize(signed)),
+      ).toEqual(signed)
+      expect(
+        KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed)),
+      ).toMatchObject({ isAdmin: true, type: 'configurable' })
     })
   })
 })

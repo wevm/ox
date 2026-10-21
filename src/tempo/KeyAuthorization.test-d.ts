@@ -69,7 +69,7 @@ test('allows configurable grants without an account', () => {
     chainId: '0x1'
     expiry: null
     keyId: `0x${string}`
-    keyType: 'multisig'
+    keyType: 'configurableAccount'
     signature: KeyAuthorization.SignatureRpc
   }>().toExtend<KeyAuthorization.Rpc>()
 })
