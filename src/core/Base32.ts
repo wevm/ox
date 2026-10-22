@@ -5,6 +5,7 @@ import {
   alphabet,
   alphabetMap,
   convertBits,
+  InvalidPaddingError as SharedInvalidPaddingError,
 } from './internal/codec/bech32-base32.js'
 
 /**
@@ -62,7 +63,7 @@ export declare namespace fromHex {
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toBytes('qqsa0')
+ * const value = Base32.toBytes('qrlsq')
  * ```
  *
  * @param value - The Base32 encoded string.
@@ -78,24 +79,24 @@ export function toBytes(value: string): Bytes.Bytes {
     values[i] = v
   }
 
-  let bits = 0
-  let acc = 0
-  // Worst-case: every 5 bits maps to up to 1 byte; preallocate.
-  const bytes = new Uint8Array((len * 5) >> 3)
-  let n = 0
-  for (let i = 0; i < len; i++) {
-    acc = (acc << 5) | values[i]!
-    bits += 5
-    if (bits >= 8) {
-      bits -= 8
-      bytes[n++] = (acc >>> bits) & 0xff
-    }
+  // `pad: false` enforces that leftover bits below a byte boundary are zero
+  // (canonical form); a non-zero remainder means the string re-encodes to a
+  // different Base32 string than it decoded from, so it is rejected here
+  // rather than silently accepted.
+  try {
+    return Uint8Array.from(convertBits(values, 5, 8, false))
+  } catch (error) {
+    if (error instanceof SharedInvalidPaddingError)
+      throw new InvalidPaddingError()
+    throw error
   }
-  return bytes.subarray(0, n)
 }
 
 export declare namespace toBytes {
-  type ErrorType = InvalidCharacterError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidCharacterError
+    | InvalidPaddingError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -105,7 +106,7 @@ export declare namespace toBytes {
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toHex('qqsa0')
+ * const value = Base32.toHex('qrlsq')
  * ```
  *
  * @param value - The Base32 encoded string.
