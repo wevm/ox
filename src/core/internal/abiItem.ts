@@ -575,7 +575,7 @@ const fixedBytesTypeRegex = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/
  *
  * @internal
  */
-const arrayTypeRegex = /[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/
+const arrayTypeRegex = /[a-z]+[0-9]{0,3}(\[[0-9]{0,}\])+$/
 
 /**
  * Strips a single trailing `[...]` array suffix from a type.
@@ -665,6 +665,25 @@ export function getAmbiguousTypes(
 
     const sourceType = sourceParameter.type
     const targetType = targetParameter.type
+
+    // Arrays with the same `[]` or `[M]` suffix: compare the element types of each item
+    const suffix = arraySuffixStripRegex.exec(sourceType)?.[0]
+    if (suffix && targetType.endsWith(suffix)) {
+      const sourceElement = [
+        { ...sourceParameter, type: sourceType.slice(0, -suffix.length) },
+      ] as readonly AbiParameters.Parameter[]
+      const targetElement = [
+        { ...targetParameter, type: targetType.slice(0, -suffix.length) },
+      ] as readonly AbiParameters.Parameter[]
+      for (const item of (args as any)[parameterIndex] as readonly unknown[]) {
+        const types = getAmbiguousTypes(sourceElement, targetElement, [
+          item,
+        ] as ExtractArgs)
+        if (types) return types
+      }
+      continue
+    }
+
     const arg = args[parameterIndex] as Address.Address
 
     let ambiguous = false
