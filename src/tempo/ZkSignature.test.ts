@@ -1,4 +1,4 @@
-import { Address, Hex, Secp256k1 } from 'ox'
+import { Address, Hex, Rlp, Secp256k1 } from 'ox'
 import { KeyAuthorization, SignatureEnvelope, ZkSignature } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 import { transaction } from '../../test/tempo/zk.js'
@@ -10,6 +10,18 @@ const authorization = KeyAuthorization.fromRpc(
 const zk = SignatureEnvelope.fromRpc(transaction.keyAuthorization.signature)
 if (zk.type !== 'zk') throw new Error('expected a ZK signature')
 const { accessKeySignature, type: _, ...credential } = zk
+
+const messageSignature = {
+  addressSeed: `0x${'01'.repeat(32)}`,
+  issuedAt: 1760000000,
+  issuer: `0x${'02'.repeat(32)}`,
+  keyHash: `0x${'03'.repeat(32)}`,
+  proof: `0x${'04'.repeat(256)}`,
+  publisherId: `0x${'05'.repeat(32)}`,
+  scheme: 2,
+} as const satisfies ZkSignature.MessageSignature
+const serializedMessage =
+  '0xf9018d02a00505050505050505050505050505050505050505050505050505050505050505a00202020202020202020202020202020202020202020202020202020202020202a00303030303030303030303030303030303030303030303030303030303030303a001010101010101010101010101010101010101010101010101010101010101018468e77800b9010004040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404040404'
 
 describe('assert', () => {
   test('default', () => {
@@ -78,12 +90,62 @@ describe('getAddress', () => {
     ).toBe(true)
   })
 
+  test('behavior: passport namespace', () => {
+    // Expected address from ethers.
+    expect(ZkSignature.getAddress({ ...messageSignature })).toBe(
+      '0x20bc64ccded09957be3b68220c924a1b8516100b',
+    )
+  })
+
   test('error: rejects unknown schemes', () => {
     expect(() =>
-      ZkSignature.getAddress({ ...credential, scheme: 2 }),
+      ZkSignature.getAddress({ ...credential, scheme: 3 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[ZkSignature.UnknownSchemeError: ZK signature scheme \`2\` is unknown.]`,
+      `[ZkSignature.UnknownSchemeError: ZK signature scheme \`3\` is unknown.]`,
     )
+  })
+})
+
+describe('serializeMessage', () => {
+  test('default', () => {
+    // Expected RLP from ethers.
+    expect(ZkSignature.serializeMessage(messageSignature)).toBe(
+      serializedMessage,
+    )
+  })
+
+  test('error: invalid field', () => {
+    expect(() =>
+      ZkSignature.serializeMessage({ ...messageSignature, proof: '0x04' }),
+    ).toThrow(ZkSignature.InvalidCredentialError)
+  })
+})
+
+describe('deserializeMessage', () => {
+  test('default', () => {
+    expect(ZkSignature.deserializeMessage(serializedMessage)).toEqual(
+      messageSignature,
+    )
+  })
+
+  test('error: a ZK signature credential', () => {
+    expect(() =>
+      ZkSignature.deserializeMessage(
+        Rlp.fromHex(
+          ZkSignature.toTuple({ ...messageSignature, validUntil: 1 }),
+        ),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[ZkSignature.InvalidCredentialError: Invalid ZK signature credential: expected seven canonical message signature fields.]`,
+    )
+  })
+
+  test('error: non-canonical integer', () => {
+    const [scheme, ...rest] = Rlp.toHex(serializedMessage) as Hex.Hex[]
+    expect(scheme).toBe('0x02')
+    expect(() =>
+      ZkSignature.deserializeMessage(Rlp.fromHex(['0x0002', ...rest])),
+    ).toThrow(ZkSignature.InvalidCredentialError)
   })
 })
 
