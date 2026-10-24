@@ -12,6 +12,7 @@ import type * as AbiItem_internal from './internal/abiItem.js'
 import * as Cursor from './internal/cursor.js'
 import { prettyPrint } from './internal/errors.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
+import * as Solidity from './Solidity.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype.AbiEvent & {
@@ -136,9 +137,29 @@ export function assertArgs<const abiEvent extends AbiEvent>(
   ) {
     if (input.type === 'address')
       return Address.isEqual(value as Address.Address, arg as Address.Address)
-    if (input.type === 'string')
-      return Hash.keccak256(Bytes.fromString(value as string)) === arg
-    if (input.type === 'bytes') return Hash.keccak256(value as Hex.Hex) === arg
+    // Indexed `string` and `bytes` topics hold the keccak256 of their contents.
+    // Values decoded from data hold the contents.
+    if (input.indexed) {
+      if (input.type === 'string')
+        return (
+          Hash.keccak256(Bytes.fromString(value as string), { as: 'Hex' }) ===
+          arg
+        )
+      if (input.type === 'bytes') {
+        const hex =
+          typeof value === 'string'
+            ? (value as Hex.Hex)
+            : Hex.fromBytes(value as Bytes.Bytes)
+        return Hash.keccak256(hex, { as: 'Hex' }) === arg
+      }
+    }
+    // Decoded `bytes` and `bytesN` are lowercase hex, so match either case.
+    if (
+      typeof value === 'string' &&
+      typeof arg === 'string' &&
+      Solidity.bytesRegex.test(input.type)
+    )
+      return value.toLowerCase() === arg.toLowerCase()
     return value === arg
   }
 
