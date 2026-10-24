@@ -173,7 +173,8 @@ export type GetType<
  *
  * - **zk** (type `0x06`): A Groth16 proof that an issuer signed a statement for an identity,
  *   committing to an access key, plus that access key's signature. Format: type byte + RLP list
- *   ([TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131)).
+ *   ([TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131)). Accepted as a transaction
+ *   signature, a key authorization signature, or a multisig owner approval.
  *
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
@@ -240,19 +241,28 @@ export type KeychainRpc = {
 /**
  * Native multisig signature (type `0x05`).
  *
- * Carries the account's complete current configuration and primitive owner
- * approvals over its version-bound digest. The node validates the account
- * identity or stored commitment and the owner quorum against chain state.
+ * Carries the account's complete current configuration and owner approvals
+ * over its version-bound digest. The node validates the account identity or
+ * stored commitment and the owner quorum against chain state.
  */
 export type Multisig<bigintType = bigint, numberType = number> = {
   /** Permanent native multisig account address. */
   account: Address.Address
   /** Complete current configuration, included in every signature. */
   config: MultisigConfig.Config<bigintType, numberType>
-  /** Primitive owner approvals in ascending recovered-address order. */
-  signatures: readonly Primitive<bigintType, numberType>[]
+  /** Owner approvals in ascending recovered-address order. */
+  signatures: readonly MultisigApproval<bigintType, numberType>[]
   type: 'multisig'
 }
+
+/**
+ * Owner approval carried by a native multisig signature: a primitive signature,
+ * or a ZK signature ([TIP-1131](https://docs.tempo.xyz/protocol/tips/tip-1131))
+ * approving for its identity's address.
+ */
+export type MultisigApproval<bigintType = bigint, numberType = number> = OneOf<
+  Primitive<bigintType, numberType> | Zk<bigintType, numberType>
+>
 
 /** RLP-encoded `[account, config, signatures]`, without the `0x05` type byte. */
 export type MultisigRpc = Hex.Hex
@@ -523,7 +533,7 @@ function assertMultisig(envelope: Multisig): void {
     const type = getType(inner as SignatureEnvelope)
     if (type === 'keychain' || type === 'multisig')
       throw new InvalidMultisigApprovalError({
-        reason: 'owner approvals must be primitive signatures',
+        reason: 'owner approvals must be primitive or ZK signatures',
       })
     assert(inner)
 
@@ -898,13 +908,15 @@ function deserialize_(value: Serialized): SignatureEnvelope {
         // Reject recursive envelopes before decoding their contents.
         if (
           Hex.size(signature) !== 65 &&
-          !['0x01', '0x02'].includes(Hex.slice(signature, 0, 1))
+          !['0x01', '0x02', serializedZkType].includes(
+            Hex.slice(signature, 0, 1),
+          )
         )
           throw new InvalidSerializedError({
-            reason: 'owner approvals must be primitive signatures',
+            reason: 'owner approvals must be primitive or ZK signatures',
             serialized,
           })
-        return deserialize(signature) as Primitive
+        return deserialize(signature) as MultisigApproval
       }),
     } satisfies Multisig
     assertMultisig(envelope)
@@ -1574,10 +1586,11 @@ export declare namespace serialize {
 }
 
 /**
- * Sorts primitive owner approvals by recovered address.
+ * Sorts owner approvals by recovered address.
  *
- * Recovery uses the account and current config version's multisig digest.
- * Duplicate or non-owner approvals must still be rejected by the node.
+ * Recovery uses the account and current config version's multisig digest. A ZK
+ * approval orders by its identity's address. Duplicate or non-owner approvals
+ * must still be rejected by the node.
  *
  * @example
  * ```ts twoslash
@@ -1591,12 +1604,12 @@ export declare namespace serialize {
  * })
  * ```
  *
- * @param value - Account, version, payload, and primitive approvals.
+ * @param value - Account, version, payload, and owner approvals.
  * @returns The approvals in ascending recovered-address order.
  */
 export function sortMultisigApprovals(
   value: sortMultisigApprovals.Value,
-): readonly Primitive[] {
+): readonly MultisigApproval[] {
   const { signatures } = value
   const digest = MultisigConfig.getSignPayload(value)
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
@@ -1612,8 +1625,8 @@ export function sortMultisigApprovals(
 
 export declare namespace sortMultisigApprovals {
   type Value = MultisigConfig.getSignPayload.Value & {
-    /** Primitive owner approvals to order. */
-    signatures: readonly Primitive[]
+    /** Owner approvals to order. */
+    signatures: readonly MultisigApproval[]
   }
 
   type ErrorType =

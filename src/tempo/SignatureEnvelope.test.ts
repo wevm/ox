@@ -13,6 +13,7 @@ import { describe, expect, test } from 'vitest'
 import { transaction, zkSignature } from '../../test/tempo/zk.js'
 import * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as ZkSignature from './ZkSignature.js'
 
 const publicKey = PublicKey.from({
   prefix: 4,
@@ -2020,6 +2021,25 @@ describe('sortMultisigApprovals', () => {
     )
     expect(recovered).toEqual(ascending.map((owner) => owner.address))
   })
+
+  test('behavior: orders ZK approvals by their identity address', () => {
+    const zkAddress = ZkSignature.getAddress(signature_zk)
+    const expected = [...ascending.map((owner) => owner.address), zkAddress]
+      .map((address) => Hex.toBigInt(address))
+      .sort((a, b) => (a < b ? -1 : 1))
+    const ordered = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      config: { version },
+      payload,
+      signatures: [signature_zk, ...owners.map((owner) => owner.signature)],
+    })
+    const recovered = ordered.map((signature) =>
+      Hex.toBigInt(
+        SignatureEnvelope.extractAddress({ payload: digest, signature }),
+      ),
+    )
+    expect(recovered).toEqual(expected)
+  })
 })
 
 describe('validate', () => {
@@ -3367,6 +3387,21 @@ describe('multisig', () => {
     expect(SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(mixed))).toEqual(
       mixed,
     )
+  })
+  test('round-trips ZK owner approvals', () => {
+    // TIP-1131: a ZK signature approves as an owner for its identity's address.
+    const zk = SignatureEnvelope.from({
+      ...envelope,
+      signatures: [primitive, signature_zk],
+    })
+    const serialized = SignatureEnvelope.serialize(zk)
+    expect(Rlp.toHex(Hex.slice(serialized, 1))[2]).toEqual([
+      SignatureEnvelope.serialize(primitive),
+      zkSignature,
+    ])
+    expect(SignatureEnvelope.deserialize(serialized)).toEqual(zk)
+    expect(SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(zk))).toEqual(zk)
+    expect(SignatureEnvelope.validate(zk)).toBe(true)
   })
 })
 
