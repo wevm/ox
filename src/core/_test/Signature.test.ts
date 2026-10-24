@@ -1,4 +1,11 @@
-import { Bytes, Hex, Signature, Solidity, TxEnvelopeEip1559 } from 'ox'
+import {
+  Bytes,
+  Hex,
+  Secp256k1,
+  Signature,
+  Solidity,
+  TxEnvelopeEip1559,
+} from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 describe('assert', () => {
@@ -487,6 +494,40 @@ describe('serialize', () => {
     ).toMatchInlineSnapshot(
       `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"`,
     )
+  })
+
+  test('behavior: `r` and `s` shorter than 32 bytes', () => {
+    const signature = Signature.toHex({
+      r: '0x1cdb3cbf94c7059e0e16d2ba046daef144d77384995a66f379194b638fc07e',
+      s: '0xc3d1ccd2c334876b9f8ef0ba3725c30dd5e1def225df36efa406d881ed610b',
+      yParity: 1,
+    })
+    expect(signature).toMatchInlineSnapshot(
+      `"0x001cdb3cbf94c7059e0e16d2ba046daef144d77384995a66f379194b638fc07e00c3d1ccd2c334876b9f8ef0ba3725c30dd5e1def225df36efa406d881ed610b1c"`,
+    )
+    expect(Hex.size(signature)).toMatchInlineSnapshot(`65`)
+  })
+
+  test('behavior: short `s` round-trips through recovery', () => {
+    const payload =
+      '0x44caf484852acee09d52b2802dba26d3c8ab3d28c7abcc1398b87898115633ec'
+    const signature = Signature.fromHex(
+      Signature.toHex({
+        r: '0xdf1cdb3cbf94c7059e0e16d2ba046daef144d77384995a66f379194b638fc07e',
+        s: '0xc3d1ccd2c334876b9f8ef0ba3725c30dd5e1def225df36efa406d881ed610b',
+        yParity: 1,
+      }),
+    )
+    expect(signature).toMatchInlineSnapshot(`
+      {
+        "r": "0xdf1cdb3cbf94c7059e0e16d2ba046daef144d77384995a66f379194b638fc07e",
+        "s": "0x00c3d1ccd2c334876b9f8ef0ba3725c30dd5e1def225df36efa406d881ed610b",
+        "yParity": 1,
+      }
+    `)
+    expect(
+      Secp256k1.recoverAddress({ payload, signature }),
+    ).toMatchInlineSnapshot(`"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"`)
   })
 })
 
