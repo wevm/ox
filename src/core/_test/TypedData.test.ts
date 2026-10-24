@@ -791,6 +791,23 @@ describe('extractEip712DomainTypes', () => {
   test('empty', () => {
     expect(TypedData.extractEip712DomainTypes({})).toMatchInlineSnapshot('[]')
   })
+
+  test('empty version', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({ name: 'Ether Mail', version: '' }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "name",
+          "type": "string",
+        },
+        {
+          "name": "version",
+          "type": "string",
+        },
+      ]
+    `)
+  })
 })
 
 describe('getSignPayload', () => {
@@ -846,6 +863,18 @@ describe('getSignPayload', () => {
       }),
     ).toMatchInlineSnapshot(
       `"0xc3f4f9ebd774352940f60aebbc83fcee20d0b17eb42bd1b20c91a748001ecb53"`,
+    )
+  })
+
+  test('domain: empty version', () => {
+    expect(
+      TypedData.getSignPayload({
+        ...typedData.complex,
+        domain: { name: 'Ether Mail', version: '' },
+        primaryType: 'Mail',
+      }),
+    ).toMatchInlineSnapshot(
+      `"0xa437e12ee2fd4391429d9714be617951b7e69fb61dc520ad6fb8230d03b7508c"`,
     )
   })
 
