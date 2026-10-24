@@ -236,7 +236,9 @@ describe('fromHttp', () => {
 
     await expect(() =>
       transport.request({ method: 'eth_accounts' }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(`[Promise.TimeoutError: Operation timed out.]`)
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Promise.TimeoutError: Operation timed out.]`,
+    )
 
     await server.close()
   })
@@ -255,7 +257,9 @@ describe('fromHttp', () => {
 
     await expect(() =>
       transport.request({ method: 'eth_accounts' }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(`[Promise.TimeoutError: Operation timed out.]`)
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Promise.TimeoutError: Operation timed out.]`,
+    )
 
     await server.close()
   })

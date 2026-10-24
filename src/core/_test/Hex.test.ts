@@ -30,14 +30,16 @@ describe('assert', () => {
   })
 
   test('options: even', () => {
-    expect(() => Hex.assert('0x0', { even: true }))
-      .toThrowErrorMatchingInlineSnapshot(`
+    expect(() =>
+      Hex.assert('0x0', { even: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
       [Hex.InvalidLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
 
       It must be an even length.]
     `)
-    expect(() => Hex.assert('0x400', { even: true }))
-      .toThrowErrorMatchingInlineSnapshot(`
+    expect(() =>
+      Hex.assert('0x400', { even: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
       [Hex.InvalidLengthError: Hex value \`"0x400"\` is an odd length (3 nibbles).
 
       It must be an even length.]
