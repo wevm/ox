@@ -648,6 +648,41 @@ describe('fromAbi', () => {
     `)
   })
 
+  test('behavior: overloads: tuple object keys in a different order', () => {
+    const abi = Abi.from([
+      'function foo((address a, string b) x)',
+      'function foo((string a, string b) x)',
+    ])
+    const item = AbiItem.fromAbi(abi, 'foo', {
+      args: [{ b: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e', a: 'hello' }],
+    })
+    expect(item).toMatchInlineSnapshot(`
+      {
+        "hash": "0xdd0b43b6d117718cd57f3e320a76cfbe273b4896ff11ecfa3da506a2d372773b",
+        "inputs": [
+          {
+            "components": [
+              {
+                "name": "a",
+                "type": "string",
+              },
+              {
+                "name": "b",
+                "type": "string",
+              },
+            ],
+            "name": "x",
+            "type": "tuple",
+          },
+        ],
+        "name": "foo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
+  })
+
   test('behavior: overloads: tuple', () => {
     const abi = Abi.from([
       'function foo(uint256 foo, (string a, string b, uint256 c) bar)',
@@ -896,6 +931,24 @@ describe('fromAbi', () => {
       [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
       \`bytes20\` in \`foo(bytes20[])\`, and
+      \`address\` in \`foo(address[])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(address[])', 'function foo(string[])']),
+        'foo',
+        {
+          args: [[]],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`string\` in \`foo(string[])\`, and
       \`address\` in \`foo(address[])\`
 
       These types encode differently and cannot be distinguished at runtime.
@@ -1219,6 +1272,19 @@ describe('fromAbi', () => {
           [['foo', 'bar']],
         ),
       ).toBeUndefined()
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('string[]'),
+          AbiParameters.from('address[]'),
+          [[]],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "string",
+          "address",
+        ]
+      `)
 
       expect(
         getAmbiguousTypes(
