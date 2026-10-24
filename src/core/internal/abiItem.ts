@@ -510,9 +510,12 @@ export function isArgOfType(
       if (abiParameterType === 'tuple' && 'components' in abiParameter)
         return Object.values(abiParameter.components).every(
           (component, index) => {
-            return isArgOfType(
-              Object.values(arg as unknown[] | Record<string, unknown>)[index],
-              component as AbiParameters.Parameter,
+            return (
+              argType === 'object' &&
+              isArgOfType(
+                getComponentValue(arg, component, index),
+                component as AbiParameters.Parameter,
+              )
             )
           },
         )
@@ -569,11 +572,13 @@ export function getAmbiguousTypes(
       'components' in sourceParameter &&
       'components' in targetParameter
     ) {
-      // Tuple args can be arrays or objects, matched by position like `isArgOfType`.
+      const value = args[parameterIndex]
       const types = getAmbiguousTypes(
         sourceParameter.components,
         targetParameter.components,
-        Object.values((args[parameterIndex] ?? {}) as object),
+        sourceParameter.components.map((component, index) =>
+          getComponentValue(value, component, index),
+        ),
       )
       if (types) return types
       continue
@@ -582,7 +587,7 @@ export function getAmbiguousTypes(
     const sourceArray = getArrayComponents(sourceParameter.type)
     const targetArray = getArrayComponents(targetParameter.type)
     if (sourceArray && targetArray) {
-      // Every item matches both element types, so the first item decides. Empty arrays compare types only.
+      // Every item matches both element types, so the first item (or `undefined` for an empty array) decides.
       const types = getAmbiguousTypes(
         [
           {
@@ -604,16 +609,19 @@ export function getAmbiguousTypes(
 
     const types = [sourceParameter.type, targetParameter.type]
 
+    const value = args[parameterIndex]
+
     const ambiguous = (() => {
       if (types.includes('address') && types.includes('bytes20')) return true
-      if (types.includes('address') && types.includes('string'))
-        return Address.validate(args[parameterIndex] as Address.Address, {
-          strict: false,
-        })
-      if (types.includes('address') && types.includes('bytes'))
-        return Address.validate(args[parameterIndex] as Address.Address, {
-          strict: false,
-        })
+      // An `undefined` value comes from an empty array, which matches both types.
+      if (
+        types.includes('address') &&
+        (types.includes('string') || types.includes('bytes'))
+      )
+        return (
+          value === undefined ||
+          Address.validate(value as Address.Address, { strict: false })
+        )
       return false
     })()
 
@@ -621,4 +629,14 @@ export function getAmbiguousTypes(
   }
 
   return
+}
+
+/** Reads a tuple component's value by index from arrays and by name from objects, like `AbiParameters.encode`. */
+function getComponentValue(
+  arg: unknown,
+  component: AbiParameters.Parameter,
+  index: number,
+): unknown {
+  if (Array.isArray(arg)) return arg[index]
+  return (arg as Record<string, unknown> | undefined)?.[component.name!]
 }
