@@ -35,16 +35,23 @@ export function assert(
   value: unknown,
   options: assert.Options = {},
 ): asserts value is Hex {
-  const { strict = false } = options
+  const { even = false, strict = false } = options
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
     if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
   }
   if (!value.startsWith('0x')) throw new InvalidHexValueError(value)
+  if (even && value.length % 2 !== 0) throw new InvalidLengthError(value as Hex)
 }
 
 export declare namespace assert {
   type Options = {
+    /**
+     * Checks if the {@link ox#Hex.Hex} value has an even number of hexadecimal characters (whole bytes).
+     * Keep disabled for RPC quantities (e.g. `0x0`, `0x400`).
+     * @default false
+     */
+    even?: boolean | undefined
     /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default false */
     strict?: boolean | undefined
   }
@@ -52,6 +59,7 @@ export declare namespace assert {
   type ErrorType =
     | InvalidHexTypeError
     | InvalidHexValueError
+    | InvalidLengthError
     | Errors.GlobalErrorType
 }
 
@@ -815,9 +823,9 @@ export function validate(
   value: unknown,
   options: validate.Options = {},
 ): value is Hex {
-  const { strict = false } = options
+  const { even = false, strict = false } = options
   try {
-    assert(value, { strict })
+    assert(value, { even, strict })
     return true
   } catch {
     return false
@@ -826,6 +834,12 @@ export function validate(
 
 export declare namespace validate {
   type Options = {
+    /**
+     * Checks if the {@link ox#Hex.Hex} value has an even number of hexadecimal characters (whole bytes).
+     * Keep disabled for RPC quantities (e.g. `0x0`, `0x400`).
+     * @default false
+     */
+    even?: boolean | undefined
     /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default false */
     strict?: boolean | undefined
   }

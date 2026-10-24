@@ -566,6 +566,88 @@ describe('fromAbi', () => {
     `)
   })
 
+  test('behavior: overloads: array of sized type with a zero digit', () => {
+    const abi = Abi.from(['function foo(bool x)', 'function foo(uint160[] x)'])
+    const item = AbiItem.fromAbi(abi, 'foo', {
+      args: [[1n, 2n]],
+    })
+    expect(item).toMatchInlineSnapshot(`
+      {
+        "hash": "0x7bde9aac82d6d2ebf4a41781f2948136bf4f6c8ebf8f4e48fef38fa1e84c8956",
+        "inputs": [
+          {
+            "name": "x",
+            "type": "uint160[]",
+          },
+        ],
+        "name": "foo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
+  })
+
+  test('behavior: overloads: fixed-length arrays', () => {
+    const abi = Abi.from([
+      'function foo(uint256[3] x)',
+      'function foo(uint256[2] x)',
+    ])
+    const item = AbiItem.fromAbi(abi, 'foo', {
+      args: [[1n, 2n, 3n]],
+    })
+    expect(item).toMatchInlineSnapshot(`
+      {
+        "hash": "0x692ce76c55b41cf69172ef1ac912f391f409c4752ccbc07a9223c555ab216e8a",
+        "inputs": [
+          {
+            "name": "x",
+            "type": "uint256[3]",
+          },
+        ],
+        "name": "foo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
+  })
+
+  test('behavior: overloads: tuple object with array component', () => {
+    const abi = Abi.from([
+      'function foo((uint256[] a) x)',
+      'function foo((uint256[] a, uint256 b) x)',
+    ])
+    const item = AbiItem.fromAbi(abi, 'foo', {
+      args: [{ a: [1n], b: 2n }],
+    })
+    expect(item).toMatchInlineSnapshot(`
+      {
+        "hash": "0x61457dec1afc1333188255223fb1db69745528cabbb7e205dbd87802866b7d4b",
+        "inputs": [
+          {
+            "components": [
+              {
+                "name": "a",
+                "type": "uint256[]",
+              },
+              {
+                "name": "b",
+                "type": "uint256",
+              },
+            ],
+            "name": "x",
+            "type": "tuple",
+          },
+        ],
+        "name": "foo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
+  })
+
   test('behavior: overloads: tuple', () => {
     const abi = Abi.from([
       'function foo(uint256 foo, (string a, string b, uint256 c) bar)',
@@ -783,6 +865,107 @@ describe('fromAbi', () => {
       These types encode differently and cannot be distinguished at runtime.
       Remove one of the ambiguous items in the ABI.]
     `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(address[])', 'function foo(bytes20[])']),
+        'foo',
+        {
+          args: [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`bytes20\` in \`foo(bytes20[])\`, and
+      \`address\` in \`foo(address[])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(address[])', 'function foo(bytes20[])']),
+        'foo',
+        {
+          args: [[]],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`bytes20\` in \`foo(bytes20[])\`, and
+      \`address\` in \`foo(address[])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(address[2])', 'function foo(bytes20[])']),
+        'foo',
+        {
+          args: [
+            [
+              '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+              '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+            ],
+          ],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`bytes20\` in \`foo(bytes20[])\`, and
+      \`address\` in \`foo(address[2])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from([
+          'function foo((address[] a))',
+          'function foo((bytes20[] a))',
+        ]),
+        'foo',
+        {
+          args: [{ a: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'] }],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`bytes20\` in \`foo((bytes20[]))\`, and
+      \`address\` in \`foo((address[]))\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from([
+          'function foo((uint256), address[])',
+          'function foo((uint256), bytes20[])',
+        ]),
+        'foo',
+        {
+          args: [[1n], ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`bytes20\` in \`foo((uint256),bytes20[])\`, and
+      \`address\` in \`foo((uint256),address[])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
   })
 
   describe('getAmbiguousTypes', () => {
@@ -970,6 +1153,86 @@ describe('fromAbi', () => {
         ]
       `)
     })
+
+    test('arrays', () => {
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('address[]'),
+          AbiParameters.from('bytes20[]'),
+          [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "address",
+          "bytes20",
+        ]
+      `)
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('address[]'),
+          AbiParameters.from('bytes20[]'),
+          [[]],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "address",
+          "bytes20",
+        ]
+      `)
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('string[2]'),
+          AbiParameters.from('address[]'),
+          [
+            [
+              '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+              '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+            ],
+          ],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "string",
+          "address",
+        ]
+      `)
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('(address[] a)'),
+          AbiParameters.from('(bytes20[] a)'),
+          [{ a: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'] }],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "address",
+          "bytes20",
+        ]
+      `)
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('string[]'),
+          AbiParameters.from('address[]'),
+          [['foo', 'bar']],
+        ),
+      ).toBeUndefined()
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('address[][]'),
+          AbiParameters.from('bytes20[][]'),
+          [[['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']]],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "address",
+          "bytes20",
+        ]
+      `)
+    })
   })
 
   describe.each([
@@ -981,6 +1244,19 @@ describe('fromAbi', () => {
     {
       arg: [1n],
       abiParameter: { type: 'uint256[]' },
+      expected: true,
+    },
+    { arg: [1n], abiParameter: { type: 'uint160[]' }, expected: true },
+    { arg: [1, 2], abiParameter: { type: 'int40[2]' }, expected: true },
+    {
+      arg: [1n, 2n, 3n],
+      abiParameter: { type: 'uint256[2]' },
+      expected: false,
+    },
+    { arg: [[1n]], abiParameter: { type: 'uint120[][]' }, expected: true },
+    {
+      arg: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      abiParameter: { type: 'bytes20[]' },
       expected: true,
     },
     {

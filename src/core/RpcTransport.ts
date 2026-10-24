@@ -102,8 +102,8 @@ export function fromHttp<
             ? await fetchOptions_(body_)
             : fetchOptions_
 
-        const response = await promise.withTimeout(
-          ({ signal }) => {
+        const { response, text } = await promise.withTimeout(
+          async ({ signal }) => {
             const externalSignal = fetchOptions?.signal
             const timeoutSignal = timeout > 0 ? signal : null
             const signals = [externalSignal, timeoutSignal].filter(
@@ -125,7 +125,10 @@ export function fromHttp<
               method: fetchOptions?.method ?? 'POST',
               signal: composedSignal,
             }
-            return fetchFn(url, init)
+            const response = await fetchFn(url, init)
+            // Read the body within the timeout too, so a response that stalls
+            // after its headers cannot hang the request.
+            return { response, text: await response.text() }
           },
           {
             timeout,
@@ -136,22 +139,22 @@ export function fromHttp<
         // Always read as text so we can handle empty bodies and non-JSON
         // payloads (some servers return `Content-Type: application/json` with
         // an empty body for error responses).
-        const data = await response.text().then((data) => {
-          if (data === '') {
+        const data = (() => {
+          if (text === '') {
             if (response.ok)
-              throw new MalformedResponseError({ response: data })
+              throw new MalformedResponseError({ response: text })
             return { error: undefined }
           }
           try {
-            return JSON.parse(data)
+            return JSON.parse(text)
           } catch {
             if (response.ok)
               throw new MalformedResponseError({
-                response: data,
+                response: text,
               })
-            return { error: data }
+            return { error: text }
           }
-        })
+        })()
 
         if (!response.ok) {
           const error = (data as { error?: unknown })?.error
