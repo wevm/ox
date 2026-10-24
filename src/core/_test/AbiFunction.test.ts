@@ -1080,6 +1080,9 @@ describe('getSelector', () => {
     expect(
       AbiFunction.getSelector('function ownerOf(uint256 tokenId)'),
     ).toEqual('0x6352211e')
+    expect(
+      AbiFunction.getSelector('function ownerOf( uint256 tokenId )'),
+    ).toEqual('0x6352211e')
     expect(AbiFunction.getSelector('ownerOf(uint256)')).toEqual('0x6352211e')
     expect(
       AbiFunction.getSelector('processInvestment(address,uint256,bool)'),

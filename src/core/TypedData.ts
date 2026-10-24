@@ -393,7 +393,7 @@ export function extractEip712DomainTypes(
 ): Parameter[] {
   return [
     typeof domain?.name === 'string' && { name: 'name', type: 'string' },
-    domain?.version && { name: 'version', type: 'string' },
+    typeof domain?.version === 'string' && { name: 'version', type: 'string' },
     (typeof domain?.chainId === 'number' ||
       typeof domain?.chainId === 'bigint') && {
       name: 'chainId',
