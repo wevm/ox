@@ -13,6 +13,7 @@ import * as Cursor from './internal/cursor.js'
 import { prettyPrint } from './internal/errors.js'
 import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
+import * as Solidity from './Solidity.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype.AbiEvent & {
@@ -209,6 +210,31 @@ export function assertArgs<const abiEvent extends AbiEvent>(
         >
     : unknown,
 ) {
+  // `decode` reads every indexed input from its topic.
+  assertMatchingArgs(
+    abiEvent,
+    args,
+    matchArgs,
+    abiEvent.inputs.filter((input) => input.indexed),
+  )
+}
+
+export declare namespace assertArgs {
+  type ErrorType =
+    | Address.isEqual.ErrorType
+    | Bytes.fromString.ErrorType
+    | Hash.keccak256.ErrorType
+    | ArgsMismatchError
+    | Errors.GlobalErrorType
+}
+
+function assertMatchingArgs(
+  abiEvent: AbiEvent,
+  args: unknown,
+  matchArgs: unknown,
+  // Indexed inputs decoded from a topic, rather than from data.
+  topicInputs: readonly abitype.AbiEventParameter[],
+) {
   if (!args || !matchArgs)
     throw new ArgsMismatchError({
       abiEvent,
@@ -223,17 +249,29 @@ export function assertArgs<const abiEvent extends AbiEvent>(
   ) {
     if (input.type === 'address')
       return Address.isEqual(value as Address.Address, arg as Address.Address)
-    if (input.type === 'string')
-      return (
-        Hash.keccak256(Bytes.fromString(value as string), { as: 'Hex' }) === arg
-      )
-    if (input.type === 'bytes') {
-      const hex =
-        typeof value === 'string'
-          ? (value as Hex.Hex)
-          : Hex.fromBytes(value as Bytes.Bytes)
-      return Hash.keccak256(hex, { as: 'Hex' }) === arg
+    // `string` and `bytes` topics hold the keccak256 of their contents.
+    // Values decoded from data hold the contents.
+    if (topicInputs.includes(input)) {
+      if (input.type === 'string')
+        return (
+          Hash.keccak256(Bytes.fromString(value as string), { as: 'Hex' }) ===
+          arg
+        )
+      if (input.type === 'bytes') {
+        const hex =
+          typeof value === 'string'
+            ? (value as Hex.Hex)
+            : Hex.fromBytes(value as Bytes.Bytes)
+        return Hash.keccak256(hex, { as: 'Hex' }) === arg
+      }
     }
+    // Decoded `bytes` and `bytesN` are lowercase hex, so match either case.
+    if (
+      typeof value === 'string' &&
+      typeof arg === 'string' &&
+      Solidity.bytesRegex.test(input.type)
+    )
+      return value.toLowerCase() === arg.toLowerCase()
     return value === arg
   }
 
@@ -283,15 +321,6 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
-}
-
-export declare namespace assertArgs {
-  type ErrorType =
-    | Address.isEqual.ErrorType
-    | Bytes.fromString.ErrorType
-    | Hash.keccak256.ErrorType
-    | ArgsMismatchError
-    | Errors.GlobalErrorType
 }
 
 /**
@@ -801,7 +830,7 @@ export function extractLogs<
 
     if (!event) continue
     if (eventName && !eventName.includes(event.event.name)) continue
-    if (!includesArgs(event.event, event.args, args)) continue
+    if (!includesArgs(event.event, event.args, args, log_.topics)) continue
 
     out.push({
       ...log_,
@@ -1045,10 +1074,20 @@ function formatExtractLog<const log extends extractLogs.Log>(log: log) {
   }
 }
 
-function includesArgs(abiEvent: AbiEvent, args: unknown, matchArgs: unknown) {
+function includesArgs(
+  abiEvent: AbiEvent,
+  args: unknown,
+  matchArgs: unknown,
+  topics: readonly Hex.Hex[],
+) {
   try {
     if (!matchArgs) return true
-    assertArgs(abiEvent, args, matchArgs)
+    // Topics hold the selector, then indexed inputs in order. Non-strict
+    // decoding reads indexed inputs without a topic from data.
+    const topicInputs = abiEvent.inputs
+      .filter((input) => input.indexed)
+      .slice(0, topics.length - 1)
+    assertMatchingArgs(abiEvent, args, matchArgs, topicInputs)
     return true
   } catch {
     return false
