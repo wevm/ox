@@ -4,6 +4,7 @@ import type * as AbiItem from '../AbiItem.js'
 import type * as AbiParameters from '../AbiParameters.js'
 import * as Address from '../Address.js'
 import * as Errors from '../Errors.js'
+import { getArrayComponents } from './abiParameters.js'
 import type {
   Compute,
   IsNever,
@@ -570,20 +571,6 @@ const integerTypeRegex =
  */
 const fixedBytesTypeRegex = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/
 
-/**
- * Fixed-length (`<type>[M]`) / dynamic (`<type>[]`) array regex.
- *
- * @internal
- */
-const arrayTypeRegex = /[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/
-
-/**
- * Strips a single trailing `[...]` array suffix from a type.
- *
- * @internal
- */
-const arraySuffixStripRegex = /(\[[0-9]{0,}\])$/
-
 /** @internal */
 export function isArgOfType(
   arg: unknown,
@@ -605,7 +592,7 @@ export function isArgOfType(
         return Object.values(abiParameter.components).every(
           (component, index) => {
             return isArgOfType(
-              Object.values(arg as unknown[] | Record<string, unknown>)[index],
+              getComponentValue(arg, component, index),
               component as AbiParameters.Parameter,
             )
           },
@@ -617,14 +604,17 @@ export function isArgOfType(
       if (fixedBytesTypeRegex.test(abiParameterType))
         return argType === 'string' || arg instanceof Uint8Array
 
-      if (arrayTypeRegex.test(abiParameterType)) {
+      // Fixed-length (`<type>[M]`) and dynamic (`<type>[]`) arrays
+      const arrayComponents = getArrayComponents(abiParameterType)
+      if (arrayComponents) {
+        const [length, type] = arrayComponents
         return (
           Array.isArray(arg) &&
+          (length === null || arg.length === length) &&
           arg.every((x: unknown) =>
             isArgOfType(x, {
               ...abiParameter,
-              // Pop off `[]` or `[M]` from end of type
-              type: abiParameterType.replace(arraySuffixStripRegex, ''),
+              type,
             } as AbiParameters.Parameter),
           )
         )
@@ -649,23 +639,56 @@ export function getAmbiguousTypes(
     parameterIndex++
   ) {
     const sourceParameter = sourceParameters[parameterIndex]!
-    const targetParameter = targetParameters[parameterIndex]!
+    const targetParameter = targetParameters[parameterIndex]
+    if (!targetParameter) continue
 
     if (
       sourceParameter.type === 'tuple' &&
       targetParameter.type === 'tuple' &&
       'components' in sourceParameter &&
       'components' in targetParameter
-    )
-      return getAmbiguousTypes(
+    ) {
+      const value = args[parameterIndex]
+      const types = getAmbiguousTypes(
         sourceParameter.components,
         targetParameter.components,
-        (args as any)[parameterIndex],
+        sourceParameter.components.map((component, index) =>
+          getComponentValue(value, component, index),
+        ) as ExtractArgs,
       )
+      if (types) return types
+      continue
+    }
 
     const sourceType = sourceParameter.type
     const targetType = targetParameter.type
-    const arg = args[parameterIndex] as Address.Address
+
+    const sourceArray = getArrayComponents(sourceType)
+    const targetArray = getArrayComponents(targetType)
+    if (sourceArray && targetArray) {
+      // Every item matches both element types, so the first item (or `undefined` for an empty array) decides
+      const types = getAmbiguousTypes(
+        [
+          {
+            ...sourceParameter,
+            type: sourceArray[1],
+          } as AbiParameters.Parameter,
+        ],
+        [
+          {
+            ...targetParameter,
+            type: targetArray[1],
+          } as AbiParameters.Parameter,
+        ],
+        [
+          (args[parameterIndex] as readonly unknown[] | undefined)?.[0],
+        ] as ExtractArgs,
+      )
+      if (types) return types
+      continue
+    }
+
+    const arg = args[parameterIndex] as Address.Address | undefined
 
     let ambiguous = false
     if (
@@ -679,10 +702,21 @@ export function getAmbiguousTypes(
       (sourceType === 'address' && targetType === 'bytes') ||
       (sourceType === 'bytes' && targetType === 'address')
     )
-      ambiguous = Address.validate(arg, { strict: false })
+      // An `undefined` value comes from an empty array, which matches both types
+      ambiguous = arg === undefined || Address.validate(arg, { strict: false })
 
     if (ambiguous) return [sourceType, targetType]
   }
 
   return
+}
+
+// Reads a tuple component's value by index from arrays and by name from objects, like `AbiParameters.encode`
+function getComponentValue(
+  arg: unknown,
+  component: AbiParameters.Parameter,
+  index: number,
+): unknown {
+  if (Array.isArray(arg)) return arg[index]
+  return (arg as Record<string, unknown> | undefined)?.[component.name!]
 }
