@@ -255,14 +255,17 @@ describe('fromHttp', () => {
       },
     })
 
-    const any = AbortSignal.any
-    ;(AbortSignal as { any?: unknown }).any = undefined
+    const descriptor = Object.getOwnPropertyDescriptor(AbortSignal, 'any')!
+    Object.defineProperty(AbortSignal, 'any', {
+      configurable: true,
+      value: undefined,
+    })
     try {
       await expect(
         transport.request({ method: 'eth_accounts' }),
       ).resolves.toMatchInlineSnapshot(`"wagmi"`)
     } finally {
-      AbortSignal.any = any
+      Object.defineProperty(AbortSignal, 'any', descriptor)
       await server.close()
     }
   })
