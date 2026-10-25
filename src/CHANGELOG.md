@@ -1,5 +1,21 @@
 # ox
 
+## 0.14.58
+
+### Patch Changes
+
+- [#527](https://github.com/wevm/ox/pull/527) [`b0588e1`](https://github.com/wevm/ox/commit/b0588e1673fc0c046265e996964ba267750e5281) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.assertArgs` not matching indexed `string` values, non-indexed `string` and `bytes` values, or `bytes` values in a different hex case.
+
+- [#527](https://github.com/wevm/ox/pull/527) [`b0588e1`](https://github.com/wevm/ox/commit/b0588e1673fc0c046265e996964ba267750e5281) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.fromAbi` overload resolution for arrays with a `0` in the element size (e.g. `uint160[]`) or the wrong fixed length, tuple objects with reordered keys, and ambiguous `address[]` overloads.
+
+- [#527](https://github.com/wevm/ox/pull/527) [`b0588e1`](https://github.com/wevm/ox/commit/b0588e1673fc0c046265e996964ba267750e5281) Thanks [@jxom](https://github.com/jxom)! - Added an `even` option to `Hex.assert` and `Hex.validate` that rejects hex values with an odd number of hexadecimal characters.
+
+- [#527](https://github.com/wevm/ox/pull/527) [`b0588e1`](https://github.com/wevm/ox/commit/b0588e1673fc0c046265e996964ba267750e5281) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.getSignature` (and `AbiFunction.getSelector`, `AbiEvent.getSelector`) dropping the first parameter when a space directly follows an opening parenthesis.
+
+- [#527](https://github.com/wevm/ox/pull/527) [`b0588e1`](https://github.com/wevm/ox/commit/b0588e1673fc0c046265e996964ba267750e5281) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` not applying `timeout` to reading the response body, or when `fetchOptions.signal` was set.
+
+- [#527](https://github.com/wevm/ox/pull/527) [`b0588e1`](https://github.com/wevm/ox/commit/b0588e1673fc0c046265e996964ba267750e5281) Thanks [@jxom](https://github.com/jxom)! - Fixed `TypedData.extractEip712DomainTypes` (and `TypedData.encode`, `TypedData.getSignPayload`, `TypedData.hashDomain`) dropping an empty `version` from the `EIP712Domain` type.
+
 ## 0.14.57
 
 ### Patch Changes
