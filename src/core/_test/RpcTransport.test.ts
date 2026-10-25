@@ -243,6 +243,30 @@ describe('fromHttp', () => {
     await server.close()
   })
 
+  test('behavior: caller signal without `AbortSignal.any`', async () => {
+    const server = await createHttpServer((_, res) => {
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: 'wagmi' }))
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      timeout: 50,
+      fetchOptions: {
+        signal: new AbortController().signal,
+      },
+    })
+
+    const any = AbortSignal.any
+    ;(AbortSignal as { any?: unknown }).any = undefined
+    try {
+      await expect(
+        transport.request({ method: 'eth_accounts' }),
+      ).resolves.toMatchInlineSnapshot(`"wagmi"`)
+    } finally {
+      AbortSignal.any = any
+      await server.close()
+    }
+  })
+
   test('behavior: timeout covers a response body that stalls after its headers', async () => {
     const server = await createHttpServer(async (_, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' })

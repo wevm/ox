@@ -111,10 +111,13 @@ export function fromHttp<
                 ...fetchOptions?.headers,
               },
               method: fetchOptions?.method ?? 'POST',
-              signal:
-                signals.length > 1
-                  ? AbortSignal.any(signals)
-                  : (signals[0] ?? null),
+              signal: (() => {
+                if (signals.length < 2) return signals[0] ?? null
+                // Runtimes without `AbortSignal.any` (e.g. Node < 18.17) keep
+                // only the caller's signal, as before.
+                if (typeof AbortSignal.any !== 'function') return signals[0]!
+                return AbortSignal.any(signals)
+              })(),
             }
             const request = new Request(url, init)
             const response = await fetchFn(request)
