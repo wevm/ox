@@ -4,6 +4,7 @@ import type * as AbiItem from '../AbiItem.js'
 import type * as AbiParameters from '../AbiParameters.js'
 import * as Address from '../Address.js'
 import * as Errors from '../Errors.js'
+import { getArrayComponents } from './abiParameters.js'
 import type {
   Compute,
   IsNever,
@@ -466,8 +467,9 @@ export function normalizeSignature(signature: string): string {
 
     // Ignore spaces
     if (char === ' ') {
-      // If the previous character is a separator, and the current section isn't empty, we want to deactivate.
-      if (signature[i - 1] !== ',' && current !== ',' && current !== ',(') {
+      // A space directly after a `(` or `,` separator is leading whitespace.
+      // Otherwise, it ends the type, so we want to deactivate.
+      if (!current.endsWith(',') && !current.endsWith('(')) {
         current = ''
         active = false
       }
@@ -508,9 +510,12 @@ export function isArgOfType(
       if (abiParameterType === 'tuple' && 'components' in abiParameter)
         return Object.values(abiParameter.components).every(
           (component, index) => {
-            return isArgOfType(
-              Object.values(arg as unknown[] | Record<string, unknown>)[index],
-              component as AbiParameters.Parameter,
+            return (
+              argType === 'object' &&
+              isArgOfType(
+                getComponentValue(arg, component, index),
+                component as AbiParameters.Parameter,
+              )
             )
           },
         )
@@ -530,15 +535,16 @@ export function isArgOfType(
         return argType === 'string' || arg instanceof Uint8Array
 
       // fixed-length (`<type>[M]`) and dynamic (`<type>[]`) arrays
-      // https://regexr.com/6va6i
-      if (/[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/.test(abiParameterType)) {
+      const arrayComponents = getArrayComponents(abiParameterType)
+      if (arrayComponents) {
+        const [length, type] = arrayComponents
         return (
           Array.isArray(arg) &&
+          (length === null || arg.length === length) &&
           arg.every((x: unknown) =>
             isArgOfType(x, {
               ...abiParameter,
-              // Pop off `[]` or `[M]` from end of type
-              type: abiParameterType.replace(/(\[[0-9]{0,}\])$/, ''),
+              type,
             } as AbiParameters.Parameter),
           )
         )
@@ -557,32 +563,65 @@ export function getAmbiguousTypes(
 ): AbiParameters.Parameter['type'][] | undefined {
   for (const parameterIndex in sourceParameters) {
     const sourceParameter = sourceParameters[parameterIndex]!
-    const targetParameter = targetParameters[parameterIndex]!
+    const targetParameter = targetParameters[parameterIndex]
+    if (!targetParameter) continue
 
     if (
       sourceParameter.type === 'tuple' &&
       targetParameter.type === 'tuple' &&
       'components' in sourceParameter &&
       'components' in targetParameter
-    )
-      return getAmbiguousTypes(
+    ) {
+      const value = args[parameterIndex]
+      const types = getAmbiguousTypes(
         sourceParameter.components,
         targetParameter.components,
-        (args as any)[parameterIndex],
+        sourceParameter.components.map((component, index) =>
+          getComponentValue(value, component, index),
+        ),
       )
+      if (types) return types
+      continue
+    }
+
+    const sourceArray = getArrayComponents(sourceParameter.type)
+    const targetArray = getArrayComponents(targetParameter.type)
+    if (sourceArray && targetArray) {
+      // Every item matches both element types, so the first item (or `undefined` for an empty array) decides.
+      const types = getAmbiguousTypes(
+        [
+          {
+            ...sourceParameter,
+            type: sourceArray[1],
+          } as AbiParameters.Parameter,
+        ],
+        [
+          {
+            ...targetParameter,
+            type: targetArray[1],
+          } as AbiParameters.Parameter,
+        ],
+        [(args[parameterIndex] as readonly unknown[] | undefined)?.[0]],
+      )
+      if (types) return types
+      continue
+    }
 
     const types = [sourceParameter.type, targetParameter.type]
 
+    const value = args[parameterIndex]
+
     const ambiguous = (() => {
       if (types.includes('address') && types.includes('bytes20')) return true
-      if (types.includes('address') && types.includes('string'))
-        return Address.validate(args[parameterIndex] as Address.Address, {
-          strict: false,
-        })
-      if (types.includes('address') && types.includes('bytes'))
-        return Address.validate(args[parameterIndex] as Address.Address, {
-          strict: false,
-        })
+      // An `undefined` value comes from an empty array, which matches both types.
+      if (
+        types.includes('address') &&
+        (types.includes('string') || types.includes('bytes'))
+      )
+        return (
+          value === undefined ||
+          Address.validate(value as Address.Address, { strict: false })
+        )
       return false
     })()
 
@@ -590,4 +629,14 @@ export function getAmbiguousTypes(
   }
 
   return
+}
+
+// Reads a tuple component's value by index from arrays and by name from objects, like `AbiParameters.encode`.
+function getComponentValue(
+  arg: unknown,
+  component: AbiParameters.Parameter,
+  index: number,
+): unknown {
+  if (Array.isArray(arg)) return arg[index]
+  return (arg as Record<string, unknown> | undefined)?.[component.name!]
 }

@@ -95,8 +95,14 @@ export function fromHttp<
             ? await fetchOptions_(body_)
             : fetchOptions_
 
-        const response = await promise.withTimeout(
-          ({ signal }) => {
+        const { data, response } = await promise.withTimeout(
+          async ({ signal }) => {
+            // Abort on whichever signal fires first, so that a caller's
+            // `signal` does not disable the timeout.
+            const signals = [
+              fetchOptions?.signal,
+              timeout > 0 ? signal : null,
+            ].filter((s): s is AbortSignal => Boolean(s))
             const init: RequestInit = {
               ...fetchOptions,
               body,
@@ -105,34 +111,46 @@ export function fromHttp<
                 ...fetchOptions?.headers,
               },
               method: fetchOptions?.method ?? 'POST',
-              signal: fetchOptions?.signal ?? (timeout > 0 ? signal : null),
+              signal: (() => {
+                if (signals.length < 2) return signals[0] ?? null
+                // Runtimes without `AbortSignal.any` (e.g. Node < 18.17) keep
+                // only the caller's signal, as before.
+                if (typeof AbortSignal.any !== 'function') return signals[0]!
+                return AbortSignal.any(signals)
+              })(),
             }
             const request = new Request(url, init)
-            return fetchFn(request)
+            const response = await fetchFn(request)
+
+            // Read the body within the timeout too, so a response that stalls
+            // after its headers cannot hang the request.
+            const data = await (async () => {
+              if (
+                response.headers
+                  .get('Content-Type')
+                  ?.startsWith('application/json')
+              )
+                return response.json()
+              return response.text().then((data) => {
+                try {
+                  return JSON.parse(data || '{}')
+                } catch (_err) {
+                  if (response.ok)
+                    throw new MalformedResponseError({
+                      response: data,
+                    })
+                  return { error: data }
+                }
+              })
+            })()
+
+            return { data, response }
           },
           {
             timeout,
             signal: true,
           },
         )
-
-        const data = await (async () => {
-          if (
-            response.headers.get('Content-Type')?.startsWith('application/json')
-          )
-            return response.json()
-          return response.text().then((data) => {
-            try {
-              return JSON.parse(data || '{}')
-            } catch (_err) {
-              if (response.ok)
-                throw new MalformedResponseError({
-                  response: data,
-                })
-              return { error: data }
-            }
-          })
-        })()
 
         if (!response.ok)
           throw new HttpError({

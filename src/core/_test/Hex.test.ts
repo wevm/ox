@@ -28,6 +28,25 @@ describe('assert', () => {
   Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
 `)
   })
+
+  test('options: even', () => {
+    expect(() =>
+      Hex.assert('0x0', { even: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
+
+      It must be an even length.]
+    `)
+    expect(() =>
+      Hex.assert('0x400', { even: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x400"\` is an odd length (3 nibbles).
+
+      It must be an even length.]
+    `)
+    expect(() => Hex.assert('0x00', { even: true })).not.toThrow()
+    expect(() => Hex.assert('0x0', { even: false })).not.toThrow()
+  })
 })
 
 describe('concat', () => {
@@ -744,6 +763,20 @@ describe('validate', () => {
     expect(Hex.validate('0x0123456789abcdefg')).toBeTruthy()
     expect(Hex.validate({ foo: 'bar' })).toBeFalsy()
     expect(Hex.validate(undefined)).toBeFalsy()
+  })
+
+  test('options: even', () => {
+    expect(Hex.validate('0x', { even: true })).toMatchInlineSnapshot(`true`)
+    expect(Hex.validate('0x00', { even: true })).toMatchInlineSnapshot(`true`)
+    expect(Hex.validate('0x0400', { even: true })).toMatchInlineSnapshot(`true`)
+    expect(Hex.validate('0x0', { even: true })).toMatchInlineSnapshot(`false`)
+    expect(Hex.validate('0x400', { even: true })).toMatchInlineSnapshot(`false`)
+    expect(Hex.validate('0x0g', { even: true })).toMatchInlineSnapshot(`true`)
+    expect(
+      Hex.validate('0x0g', { even: true, strict: true }),
+    ).toMatchInlineSnapshot(`false`)
+    expect(Hex.validate('0xg', { even: true })).toMatchInlineSnapshot(`false`)
+    expect(Hex.validate('0x0', { even: false })).toMatchInlineSnapshot(`true`)
   })
 })
 

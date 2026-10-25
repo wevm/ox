@@ -1,10 +1,62 @@
-import { Abi, AbiEvent, Hex } from 'ox'
+import { Abi, AbiEvent, AbiParameters, Hash, Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assertArgs', () => {
+  test('behavior: non-indexed `string` and `bytes`', () => {
+    const abiEvent = AbiEvent.from(
+      'event Message(string indexed topic, string text, bytes data, bytes32 key)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: AbiParameters.encode(AbiParameters.from('string, bytes, bytes32'), [
+        'hello',
+        '0xabcd',
+        `0x${'ab'.repeat(32)}`,
+      ]),
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        Hash.keccak256(Hex.fromString('greeting')),
+      ],
+    })
+
+    AbiEvent.assertArgs(abiEvent, args, {
+      data: '0xABCD',
+      key: `0x${'AB'.repeat(32)}`,
+      text: 'hello',
+      topic: 'greeting',
+    })
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, { text: 'goodbye' }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Message(string indexed topic, string text, bytes data, bytes32 key)
+      Expected Arguments: 
+        topic:  0xb6b19d010a6e0901db334da92e3eed820e0244fba35be613232ddf8d2ee39391
+        text:   hello
+        data:   0xabcd
+        key:    0xabababababababababababababababababababababababababababababababab
+      Given Arguments: 
+        text:  goodbye]
+    `)
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, { data: '0xab' }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Message(string indexed topic, string text, bytes data, bytes32 key)
+      Expected Arguments: 
+        topic:  0xb6b19d010a6e0901db334da92e3eed820e0244fba35be613232ddf8d2ee39391
+        text:   hello
+        data:   0xabcd
+        key:    0xabababababababababababababababababababababababababababababababab
+      Given Arguments: 
+        data:  0xab]
+    `)
+  })
+
   test('default', () => {
     const abiEvent = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -1480,6 +1532,13 @@ describe('fromAbi', () => {
 
 describe('getSelector', () => {
   test('default', () => {
+    expect(
+      AbiEvent.getSelector(
+        'event Transfer( address indexed from, address indexed to, uint256 value)',
+      ),
+    ).toEqual(
+      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+    )
     expect(
       AbiEvent.getSelector(
         'event Transfer(address indexed from, address indexed to, uint256 value)',
