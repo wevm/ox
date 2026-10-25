@@ -198,6 +198,8 @@ function getLinkForApiItem(item: model.ApiItem) {
       return `${basePath}/${item.displayName}/types#${item.displayName.toLowerCase()}`
     return `${baseLink}/types#${item.displayName.toLowerCase()}`
   }
+  if (item.kind === model.ApiItemKind.Variable)
+    return parent.displayName ? baseLink : basePath === '/' ? '/api' : basePath
   if (
     item.kind === model.ApiItemKind.Class &&
     item.displayName.endsWith('Error')
