@@ -7,12 +7,13 @@ import { anvilMainnet } from '../../../test/prool.js'
 describe('assertArgs', () => {
   test('behavior: non-indexed `string` and `bytes`', () => {
     const abiEvent = AbiEvent.from(
-      'event Message(string indexed topic, string text, bytes data)',
+      'event Message(string indexed topic, string text, bytes data, bytes32 key)',
     )
     const args = AbiEvent.decode(abiEvent, {
-      data: AbiParameters.encode(AbiParameters.from('string, bytes'), [
+      data: AbiParameters.encode(AbiParameters.from('string, bytes, bytes32'), [
         'hello',
         '0xabcd',
+        `0x${'ab'.repeat(32)}`,
       ]),
       topics: [
         AbiEvent.getSelector(abiEvent),
@@ -22,6 +23,7 @@ describe('assertArgs', () => {
 
     AbiEvent.assertArgs(abiEvent, args, {
       data: '0xABCD',
+      key: `0x${'AB'.repeat(32)}`,
       text: 'hello',
       topic: 'greeting',
     })
@@ -29,13 +31,27 @@ describe('assertArgs', () => {
       .toThrowErrorMatchingInlineSnapshot(`
       [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
 
-      Event: event Message(string indexed topic, string text, bytes data)
+      Event: event Message(string indexed topic, string text, bytes data, bytes32 key)
       Expected Arguments: 
         topic:  0xb6b19d010a6e0901db334da92e3eed820e0244fba35be613232ddf8d2ee39391
         text:   hello
         data:   0xabcd
+        key:    0xabababababababababababababababababababababababababababababababab
       Given Arguments: 
         text:  goodbye]
+    `)
+    expect(() => AbiEvent.assertArgs(abiEvent, args, { data: '0xab' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Message(string indexed topic, string text, bytes data, bytes32 key)
+      Expected Arguments: 
+        topic:  0xb6b19d010a6e0901db334da92e3eed820e0244fba35be613232ddf8d2ee39391
+        text:   hello
+        data:   0xabcd
+        key:    0xabababababababababababababababababababababababababababababababab
+      Given Arguments: 
+        data:  0xab]
     `)
   })
 

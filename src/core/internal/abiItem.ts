@@ -711,7 +711,7 @@ export function getAmbiguousTypes(
   return
 }
 
-/** Reads a tuple component's value by index from arrays and by name from objects, like `AbiParameters.encode`. */
+// Reads a tuple component's value by index from arrays and by name from objects, like `AbiParameters.encode`.
 function getComponentValue(
   arg: unknown,
   component: AbiParameters.Parameter,

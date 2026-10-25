@@ -109,12 +109,13 @@ export function fromHttp<
             const signals = [externalSignal, timeoutSignal].filter(
               (s): s is AbortSignal => Boolean(s),
             )
-            const composedSignal =
-              signals.length === 0
-                ? null
-                : signals.length === 1
-                  ? signals[0]!
-                  : AbortSignal.any(signals)
+            const composedSignal = (() => {
+              if (signals.length < 2) return signals[0] ?? null
+              // Runtimes without `AbortSignal.any` (e.g. Node < 18.17) keep
+              // only the caller's signal.
+              if (typeof AbortSignal.any !== 'function') return signals[0]!
+              return AbortSignal.any(signals)
+            })()
             const init: RequestInit = {
               ...fetchOptions,
               body,
