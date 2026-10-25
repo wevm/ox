@@ -242,6 +242,54 @@ describe('fromHttp', () => {
 
     await server.close()
   })
+
+  test('behavior: caller signal without `AbortSignal.any`', async () => {
+    const server = await createHttpServer((_, res) => {
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: 'wagmi' }))
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      timeout: 50,
+      fetchOptions: {
+        signal: new AbortController().signal,
+      },
+    })
+
+    const descriptor = Object.getOwnPropertyDescriptor(AbortSignal, 'any')!
+    Object.defineProperty(AbortSignal, 'any', {
+      configurable: true,
+      value: undefined,
+    })
+    try {
+      await expect(
+        transport.request({ method: 'eth_accounts' }),
+      ).resolves.toMatchInlineSnapshot(`"wagmi"`)
+    } finally {
+      Object.defineProperty(AbortSignal, 'any', descriptor)
+      await server.close()
+    }
+  })
+
+  test('behavior: timeout covers a response body that stalls after its headers', async () => {
+    const server = await createHttpServer(async (_, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.write('{"id":0,"jsonrpc":"2.0",')
+      await setTimeout(200)
+      res.end('"result":"wagmi"}')
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      timeout: 50,
+    })
+
+    await expect(() =>
+      transport.request({ method: 'eth_accounts' }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Promise.TimeoutError: Operation timed out.]`,
+    )
+
+    await server.close()
+  })
 })
 
 test('exports', () => {

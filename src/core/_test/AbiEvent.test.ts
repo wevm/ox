@@ -1,10 +1,60 @@
-import { Abi, AbiEvent, Hex } from 'ox'
+import { Abi, AbiEvent, AbiParameters, Hash, Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assertArgs', () => {
+  test('behavior: non-indexed `string` and `bytes`', () => {
+    const abiEvent = AbiEvent.from(
+      'event Message(string indexed topic, string text, bytes data, bytes32 key)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: AbiParameters.encode(AbiParameters.from('string, bytes, bytes32'), [
+        'hello',
+        '0xabcd',
+        `0x${'ab'.repeat(32)}`,
+      ]),
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        Hash.keccak256(Hex.fromString('greeting')),
+      ],
+    })
+
+    AbiEvent.assertArgs(abiEvent, args, {
+      data: '0xABCD',
+      key: `0x${'AB'.repeat(32)}`,
+      text: 'hello',
+      topic: 'greeting',
+    })
+    expect(() => AbiEvent.assertArgs(abiEvent, args, { text: 'goodbye' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Message(string indexed topic, string text, bytes data, bytes32 key)
+      Expected Arguments: 
+        topic:  0xb6b19d010a6e0901db334da92e3eed820e0244fba35be613232ddf8d2ee39391
+        text:   hello
+        data:   0xabcd
+        key:    0xabababababababababababababababababababababababababababababababab
+      Given Arguments: 
+        text:  goodbye]
+    `)
+    expect(() => AbiEvent.assertArgs(abiEvent, args, { data: '0xab' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Message(string indexed topic, string text, bytes data, bytes32 key)
+      Expected Arguments: 
+        topic:  0xb6b19d010a6e0901db334da92e3eed820e0244fba35be613232ddf8d2ee39391
+        text:   hello
+        data:   0xabcd
+        key:    0xabababababababababababababababababababababababababababababababab
+      Given Arguments: 
+        data:  0xab]
+    `)
+  })
+
   test('default', () => {
     const abiEvent = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -928,6 +978,187 @@ describe('extractLogs', () => {
           "topics": [
             "0x2d339b1e3334d3f43e7aa6d5b1fa3ca5e4228b2dd547d1710c726019d98e53fa",
             "0xdead",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: filters by non-indexed `string` arguments', () => {
+    const message = AbiEvent.from(
+      'event Message(address indexed from, string text)',
+    )
+    const log = {
+      data: AbiParameters.encode(AbiParameters.from('string'), ['hello']),
+      topics: [
+        AbiEvent.getSelector(message),
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      ],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([message], [log], { args: { text: 'goodbye' } }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(AbiEvent.extractLogs([message], [log], { args: { text: 'hello' } }))
+      .toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "from": "0x0000000000000000000000000000000000000001",
+            "text": "hello",
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000",
+          "eventName": "Message",
+          "topics": [
+            "0x811f7cff0a3374ff67cccc3726035d34ba70410e0256818a891e4d6acc01d88e",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: filters by unnamed non-indexed `string` arguments', () => {
+    const message = AbiEvent.from('event Message(address indexed, string)')
+    const log = {
+      data: AbiParameters.encode(AbiParameters.from('string'), ['hello']),
+      topics: [
+        AbiEvent.getSelector(message),
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      ],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([message], [log], { args: [null, 'goodbye'] }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([message], [log], {
+        args: ['0x0000000000000000000000000000000000000001', 'hello'],
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": [
+            "0x0000000000000000000000000000000000000001",
+            "hello",
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000",
+          "eventName": "Message",
+          "topics": [
+            "0x811f7cff0a3374ff67cccc3726035d34ba70410e0256818a891e4d6acc01d88e",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: filters by non-indexed `bytes` and `bytes32` arguments in either case', () => {
+    const payload = AbiEvent.from('event Payload(bytes data, bytes32 key)')
+    const log = {
+      data: AbiParameters.encode(AbiParameters.from('bytes, bytes32'), [
+        '0xabcd',
+        `0x${'ab'.repeat(32)}`,
+      ]),
+      topics: [AbiEvent.getSelector(payload)],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([payload], [log], { args: { data: '0xab' } }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([payload], [log], {
+        args: { key: `0x${'cd'.repeat(32)}` },
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([payload], [log], {
+        args: { data: '0xABCD', key: `0x${'AB'.repeat(32)}` },
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "data": "0xabcd",
+            "key": "0xabababababababababababababababababababababababababababababababab",
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000040abababababababababababababababababababababababababababababababab0000000000000000000000000000000000000000000000000000000000000002abcd000000000000000000000000000000000000000000000000000000000000",
+          "eventName": "Payload",
+          "topics": [
+            "0x1d7847897c7e3bd365111aaf33b5ea1cc653db465de055620fb4cde96c75147f",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: filters by indexed `bytes` and `bytes32` arguments', () => {
+    const payload = AbiEvent.from(
+      'event Payload(bytes indexed data, bytes32 indexed key)',
+    )
+    const log = {
+      data: '0x',
+      topics: [
+        AbiEvent.getSelector(payload),
+        Hash.keccak256('0x1234'),
+        `0x${'ab'.repeat(32)}`,
+      ],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([payload], [log], { args: { data: '0x5678' } }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([payload], [log], {
+        args: { data: '0x1234', key: `0x${'AB'.repeat(32)}` },
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "data": "0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432",
+            "key": "0xabababababababababababababababababababababababababababababababab",
+          },
+          "data": "0x",
+          "eventName": "Payload",
+          "topics": [
+            "0x1d7847897c7e3bd365111aaf33b5ea1cc653db465de055620fb4cde96c75147f",
+            "0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432",
+            "0xabababababababababababababababababababababababababababababababab",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: non-strict mode filters indexed `string` arguments decoded from data', () => {
+    const message = AbiEvent.from('event Message(string indexed text)')
+    const log = {
+      data: AbiParameters.encode(AbiParameters.from('string'), ['hello']),
+      topics: [AbiEvent.getSelector(message)],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([message], [log], {
+        args: { text: 'goodbye' },
+        strict: false,
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([message], [log], {
+        args: { text: 'hello' },
+        strict: false,
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "text": "hello",
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000",
+          "eventName": "Message",
+          "topics": [
+            "0x51a7f65c6325882f237d4aeb43228179cfad48b868511d508e24b4437a819137",
           ],
         },
       ]
