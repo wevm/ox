@@ -181,6 +181,40 @@ describe('deserialize', () => {
     })
   })
 
+  test('behavior: authorization yParity above 1', () => {
+    // Mainnet transaction 0xaec8420968abd74e70ef5b3099d6ba7baa3f069c4f718d7c4d729d591cffcb09,
+    // whose authorization holds a `y_parity` of 28.
+    const serialized =
+      '0x04f8c90102843b9aca0084408206be830186a094db35624115a810cf541988294a57766cd02acc828080c0f85cf85a8094c498cea4bfedbb8de856491bdd9967e677775f4f061ca044754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512a027a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b19180a0287d894b2ebb8a178a55810b242af186c73de663382358363d58b42628bbded3a0678f589cd41571248f24df7e60912d05f14c76471b859f4abd956c612bf175ee'
+
+    const envelope = TxEnvelopeEip7702.deserialize(serialized)
+    expect(envelope).toMatchInlineSnapshot(`
+      {
+        "authorizationList": [
+          {
+            "address": "0xc498cea4bfedbb8de856491bdd9967e677775f4f",
+            "chainId": 0,
+            "nonce": 6n,
+            "r": 30964515868655106433036502287203436257290680647415891351985523743570145879314n,
+            "s": 17934770472423492098478015079635439572256243326666419680677537610945398288785n,
+            "yParity": 28,
+          },
+        ],
+        "chainId": 1,
+        "gas": 100000n,
+        "maxFeePerGas": 1082263230n,
+        "maxPriorityFeePerGas": 1000000000n,
+        "nonce": 2n,
+        "r": 18314317392594978579691526199612073536401195570835743258052290637921347428051n,
+        "s": 46841494116104971152840507451641406775618699547216785006265779016918222599662n,
+        "to": "0xdb35624115a810cf541988294a57766cd02acc82",
+        "type": "eip7702",
+        "yParity": 0,
+      }
+    `)
+    expect(TxEnvelopeEip7702.serialize(envelope)).toBe(serialized)
+  })
+
   describe('raw', () => {
     test('default', () => {
       const serialized = `0x04${Rlp.fromHex([
@@ -531,6 +565,38 @@ describe('hash', () => {
     const hash = TxEnvelopeEip7702.hash(envelope)
     expect(hash).toMatchInlineSnapshot(
       `"0xa5ccd813e459b9154917af19270091cf3312bd759af08e0e18cd2560ef586cf4"`,
+    )
+  })
+
+  test('behavior: authorization yParity above 1', () => {
+    // Mainnet transaction 0xaec8420968abd74e70ef5b3099d6ba7baa3f069c4f718d7c4d729d591cffcb09,
+    // whose authorization holds a `y_parity` of 28.
+    const envelope = TxEnvelopeEip7702.from({
+      authorizationList: [
+        {
+          address: '0xc498cea4bfedbb8de856491bdd9967e677775f4f',
+          chainId: 0,
+          nonce: 6n,
+          r: 0x44754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512n,
+          s: 0x27a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b191n,
+          yParity: 28,
+        },
+      ],
+      chainId: 1,
+      gas: 100000n,
+      maxFeePerGas: 1082263230n,
+      maxPriorityFeePerGas: 1000000000n,
+      nonce: 2n,
+      r: 0x287d894b2ebb8a178a55810b242af186c73de663382358363d58b42628bbded3n,
+      s: 0x678f589cd41571248f24df7e60912d05f14c76471b859f4abd956c612bf175een,
+      to: '0xdb35624115a810cf541988294a57766cd02acc82',
+      value: 0n,
+      yParity: 0,
+    })
+
+    const hash = TxEnvelopeEip7702.hash(envelope)
+    expect(hash).toMatchInlineSnapshot(
+      `"0xaec8420968abd74e70ef5b3099d6ba7baa3f069c4f718d7c4d729d591cffcb09"`,
     )
   })
 })

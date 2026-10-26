@@ -175,7 +175,11 @@ export declare namespace from {
  */
 export function fromRpc(authorization: Rpc): Signed {
   const { address, chainId, nonce } = authorization
-  const signature = Signature.extract(authorization)!
+  // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
+  // check `yParity` against one byte rather than against 0 or 1.
+  const signature = Signature.fromRpc(authorization)
+  Signature.assert({ r: signature.r, s: signature.s })
+  assertYParity(signature.yParity)
 
   return {
     address,
@@ -272,8 +276,18 @@ export function fromTuple<const tuple extends Tuple>(
     chainId: chainId === '0x' ? 0 : Number(chainId),
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
   }
-  if (yParity && r && s)
-    args = { ...args, ...Signature.fromTuple([yParity, r, s]) }
+  if (yParity && r && s) {
+    // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
+    // check `yParity` against one byte rather than against 0 or 1.
+    const signature = {
+      r: r === '0x' ? 0n : BigInt(r),
+      s: s === '0x' ? 0n : BigInt(s),
+      yParity: yParity === '0x' ? 0 : Number(yParity),
+    }
+    Signature.assert({ r: signature.r, s: signature.s })
+    assertYParity(signature.yParity)
+    args = { ...args, ...signature }
+  }
   return from(args) as never
 }
 
@@ -472,12 +486,16 @@ export declare namespace hash {
  */
 export function toRpc(authorization: Signed): Rpc {
   const { address, chainId, nonce, ...signature } = authorization
+  assertYParity(signature.yParity)
 
   return {
     address,
     chainId: Hex.fromNumber(chainId),
     nonce: Hex.fromNumber(nonce),
     ...Signature.toRpc(signature),
+    // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
+    // encode `yParity` as is instead of the 0 or 1 of `Signature.toRpc`.
+    yParity: Hex.fromNumber(signature.yParity),
   }
 }
 
@@ -540,13 +558,23 @@ export declare namespace toRpcList {
 export function toTuple<const authorization extends Authorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
-  const { address, chainId, nonce } = authorization
-  const signature = Signature.extract(authorization)
+  const { address, chainId, nonce, r, s, yParity } = authorization
+  const signature = Signature.extract({ r, s })
+  if (signature && typeof yParity !== 'undefined') assertYParity(yParity)
   return [
     chainId ? Hex.fromNumber(chainId) : '0x',
     address,
     nonce ? Hex.fromNumber(nonce) : '0x',
-    ...(signature ? Signature.toTuple(signature) : []),
+    // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, and a
+    // tuple that fails recovery does not invalidate the transaction. Encode
+    // `yParity` as is, so that serialization preserves the transaction hash.
+    ...(signature
+      ? [
+          yParity ? Hex.fromNumber(yParity, { size: 1 }) : '0x',
+          signature.r === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.r)),
+          signature.s === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.s)),
+        ]
+      : []),
   ] as never
 }
 
@@ -616,4 +644,16 @@ export declare namespace toTupleList {
   >
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+// Asserts that an EIP-7702 authorization `yParity` fits in one byte.
+function assertYParity(yParity: number) {
+  if (Number.isInteger(yParity) && yParity >= 0 && yParity < 256) return
+  throw new Hex.IntegerOutOfRangeError({
+    max: '255',
+    min: '0',
+    signed: false,
+    size: 1,
+    value: `${yParity}`,
+  })
 }
