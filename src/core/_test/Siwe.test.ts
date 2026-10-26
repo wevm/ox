@@ -466,6 +466,12 @@ describe('createMessage', () => {
   })
 })
 
+describe('domainRegex', () => {
+  test('behavior: captures the port in group 3', () => {
+    expect(Siwe.domainRegex.exec('example.xn--p1ai:443')?.[3]).toBe(':443')
+  })
+})
+
 describe('generateNonce', () => {
   test('default', () => {
     const nonce = Siwe.generateNonce()
