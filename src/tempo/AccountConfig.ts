@@ -1,6 +1,5 @@
 import * as Address from '../core/Address.js'
 import type * as Bytes from '../core/Bytes.js'
-import * as ContractAddress from '../core/ContractAddress.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -37,15 +36,6 @@ const accountDomain = 'tempo:configurable-account:account'
 
 /** Domain prefix for account configuration commitments. */
 const configDomain = 'tempo:configurable-account:config'
-
-/**
- * Keccak-256 of the account proxy creation code.
- *
- * Placeholder until [TIP-1110](https://tips.sh/1110) fixes the canonical
- * account proxy, which will change every derived address.
- */
-const accountProxyInitCodeHash =
-  '0x583cc63a2e37f645b43eac911b1a6d6de08b83abdc308c61364edda8cfc3bd37'
 
 /** Domain prefix for configurable account owner approvals. */
 const signatureDomain = 'tempo:configurable-account:signature'
@@ -409,9 +399,9 @@ export declare namespace fromUpgrade {
 /**
  * Derives the stable configurable account address.
  *
- * The initial config is hashed into a CREATE2 salt using fixed-width
- * big-endian fields, not RLP. The account uses the chain-configured recovery
- * factory and account proxy init-code hash.
+ * The address is the last 20 bytes of the keccak256 hash of the initial
+ * config, encoded with fixed-width big-endian fields, not RLP:
+ * `keccak256("tempo:configurable-account:account" || salt || uint8(threshold) || uint8(owners.length) || owners)`.
  *
  * The address is derived once from the initial version-0 config. Config
  * updates do not change it.
@@ -427,26 +417,19 @@ export declare namespace fromUpgrade {
  *   threshold: 1,
  * })
  *
- * const address = AccountConfig.getAddress(initialConfig, {
- *   factory: '0x7171717171717171717171717171717171717171'
- * })
+ * const address = AccountConfig.getAddress(initialConfig)
  * ```
  *
  * @param config - The initial account config.
- * @param options - The recovery factory configured by the chain.
  * @returns The configurable account address.
  */
-export function getAddress(
-  config: Input,
-  options: getAddress.Options,
-): Address.Address {
-  Address.assert(options.factory)
+export function getAddress(config: Input): Address.Address {
   assert(config)
   if (BigInt(config.version ?? 0) !== 0n)
     throw new InvalidConfigError({
       reason: 'account address requires version zero',
     })
-  const accountSalt = Hash.keccak256(
+  const hash = Hash.keccak256(
     Hex.concat(
       Hex.fromString(accountDomain),
       Hex.padLeft(config.salt ?? zeroSalt, 32),
@@ -458,11 +441,7 @@ export function getAddress(
       ]),
     ),
   )
-  const account = ContractAddress.fromCreate2({
-    bytecodeHash: accountProxyInitCodeHash,
-    from: options.factory,
-    salt: accountSalt,
-  })
+  const account = Hex.slice(hash, 12)
   if (Hex.toBigInt(account) === 0n)
     throw new InvalidConfigError({ reason: 'derived account cannot be zero' })
   if (config.owners.some((owner) => Address.isEqual(owner.owner, account)))
@@ -473,18 +452,13 @@ export function getAddress(
 }
 
 export declare namespace getAddress {
-  type Options = {
-    /** Recovery factory configured by the chain. */
-    factory: Address.Address
-  }
-
   type ErrorType =
     | assert.ErrorType
-    | ContractAddress.fromCreate2.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.fromString.ErrorType
+    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -565,9 +539,7 @@ export declare namespace getCommitment {
  * })
  *
  * const digest = AccountConfig.getSignPayload({
- *   account: AccountConfig.getAddress(config, {
- *     factory: '0x7171717171717171717171717171717171717171'
- *   }),
+ *   account: AccountConfig.getAddress(config),
  *   config,
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  * })

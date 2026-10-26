@@ -7,7 +7,6 @@ import {
   TxEnvelopeTempo,
 } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
-import { factory } from '../../test/tempo/configurableAccounts.js'
 
 const owners = [1n, 2n, 3n]
   .map((value, index) => {
@@ -38,7 +37,7 @@ const config = AccountConfig.from({
   threshold: 2,
 })
 const currentConfig = AccountConfig.from({ ...config, version: 1n })
-const account = AccountConfig.getAddress(config, { factory })
+const account = AccountConfig.getAddress(config)
 const ownerSignature_1 = owners[0]!.signature
 const approval_1 = SignatureEnvelope.serialize(ownerSignature_1)
 const approval_2 = SignatureEnvelope.serialize(owners[1]!.signature)
@@ -150,8 +149,8 @@ describe('getHash', () => {
       }),
     }).toMatchInlineSnapshot(`
       {
-        "keyAuthorization": "0xd18f389ae23bdc81939861c9a1079201968a2ec5fbd67ad1063556b46af8914f",
-        "transaction": "0x246027f7c6940fb4b68a746c49819c1c45737aa6c975aafcce721b4a619a9ab1",
+        "keyAuthorization": "0x5e8fa6d31c6e604cdac971bdd0a10b825cbb039c76ee399a6d6f619957032de4",
+        "transaction": "0x4f312a4616f3f96375e6bd4c20f992694408a8c804429140068aee31bd0b0eaf",
       }
     `)
   })
@@ -167,7 +166,7 @@ describe('selectApprovals', () => {
       ],
       threshold: 3,
     })
-    const account = AccountConfig.getAddress(config, { factory })
+    const account = AccountConfig.getAddress(config)
     const hash = AccountOperation.getHash({
       account,
       config: { ...config, version: 1n },
@@ -223,7 +222,7 @@ describe('selectApprovals', () => {
       }
     `)
   })
-  test('accepts an explicit account from a chain-configured factory', async () => {
+  test('accepts an explicit derived account', async () => {
     const selected = await AccountOperation.selectApprovals({
       account,
       approvals: [],
@@ -342,14 +341,14 @@ describe('serializeKeyAuthorization', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
-          "hash": "0x8d72c92f8aca5cf651ff914a928a32b1717e51b70fce97e305aaab02617474f5",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
+          "hash": "0xa12b482453a90d0be6ec0c85e9871d47c322278e2e623191196a974aef52cafd",
           "signatureCount": 2,
           "version": 1n,
         },
         {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
-          "hash": "0x1dce79ae000bb60526cbe3b18be29d517319ee0958b01e5e3e89608e19c13459",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
+          "hash": "0x65666f84fa858423447d9eb84e4ad8e36ea483b358cfb935103f14912db0de93",
           "signatureCount": 2,
           "version": 0n,
         },
@@ -443,15 +442,15 @@ describe('serializeTransaction', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
-          "hash": "0x75106153400c34efbeb7380828e3fef939340eb0a3a42dda6a22f798f94665d0",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
+          "hash": "0x58d5d2655982d69e28c791189c23056344a2b7a166a893988a4b9be228b73469",
           "signatureCount": 2,
           "type": "0x76",
           "version": 1n,
         },
         {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
-          "hash": "0x2718b956492b1f8ff4e25165ac425e9e7064580b76eb087ce764e263723152bc",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
+          "hash": "0xb3e7bcc63f69d80a954c2e4a5ba186903012686ea31bd049465f6c1e2308c046",
           "signatureCount": 2,
           "type": "0x76",
           "version": 0n,
@@ -528,7 +527,7 @@ describe('serializeTransaction', () => {
       [
         {
           "feePayerSignature": null,
-          "from": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "from": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "signatureCount": 2,
           "type": "0x78",
         },
@@ -538,7 +537,7 @@ describe('serializeTransaction', () => {
             "s": 6n,
             "yParity": 0,
           },
-          "from": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "from": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "signatureCount": 2,
           "type": "0x78",
         },
@@ -610,7 +609,7 @@ describe('from', () => {
     expect({ pending, submitting, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -630,7 +629,7 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0x246027f7c6940fb4b68a746c49819c1c45737aa6c975aafcce721b4a619a9ab1",
+          "hash": "0x4f312a4616f3f96375e6bd4c20f992694408a8c804429140068aee31bd0b0eaf",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -640,7 +639,7 @@ describe('from', () => {
           "weight": 1,
         },
         "submitting": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -662,7 +661,7 @@ describe('from', () => {
           },
           "createdAt": 1,
           "expiresAt": 10,
-          "hash": "0x246027f7c6940fb4b68a746c49819c1c45737aa6c975aafcce721b4a619a9ab1",
+          "hash": "0x4f312a4616f3f96375e6bd4c20f992694408a8c804429140068aee31bd0b0eaf",
           "signatureCount": 2,
           "status": "submitting",
           "submissionId": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -673,7 +672,7 @@ describe('from', () => {
           "weight": 2,
         },
         "success": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -694,7 +693,7 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0x246027f7c6940fb4b68a746c49819c1c45737aa6c975aafcce721b4a619a9ab1",
+          "hash": "0x4f312a4616f3f96375e6bd4c20f992694408a8c804429140068aee31bd0b0eaf",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -735,7 +734,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+        "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
@@ -812,7 +811,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+        "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
         ],
@@ -869,7 +868,7 @@ describe('from', () => {
     expect({ pending, success }).toMatchInlineSnapshot(`
       {
         "pending": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -889,8 +888,8 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xd18f389ae23bdc81939861c9a1079201968a2ec5fbd67ad1063556b46af8914f",
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d20080808080940f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "hash": "0x5e8fa6d31c6e604cdac971bdd0a10b825cbb039c76ee399a6d6f619957032de4",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094b3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -899,7 +898,7 @@ describe('from', () => {
           "weight": 1,
         },
         "success": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
             "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -920,8 +919,8 @@ describe('from', () => {
             "version": 1n,
           },
           "createdAt": 1,
-          "hash": "0xd18f389ae23bdc81939861c9a1079201968a2ec5fbd67ad1063556b46af8914f",
-          "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d20080808080940f8659dd87410f00a1668211ecda7ac7f9c9fd13b9017805f90174940f8659dd87410f00a1668211ecda7ac7f9c9fd13f852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
+          "hash": "0x5e8fa6d31c6e604cdac971bdd0a10b825cbb039c76ee399a6d6f619957032de4",
+          "keyAuthorization": "0xf901b3f782107980943333333333333333333333333333333333333333846b49d2008080808094b3cc0b31026c7a54a9c45e468c674722c3c5b3b5b9017805f9017494b3cc0b31026c7a54a9c45e468c674722c3c5b3b5f852a000000000000000000000000000000000000000000000000000000000000000000102eed69407e1ed8ea0e9601e5546b0a03aed683df360140701d694288f0cd85005f34168f731a468aef268c2f9456f01f90108b88201000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200b88201000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
           "signatureCount": 2,
           "status": "success",
           "threshold": 2,
@@ -967,7 +966,7 @@ describe('from', () => {
       },
       `
       {
-        "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+        "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
         "approvals": [
           "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           "0x01000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d100",
@@ -1013,7 +1012,7 @@ describe('RPC conversion', () => {
     expect({ keyAuthorizationRpc, transactionRpc }).toMatchInlineSnapshot(`
       {
         "keyAuthorizationRpc": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1033,8 +1032,8 @@ describe('RPC conversion', () => {
             "version": "0x1",
           },
           "createdAt": 1,
-          "hash": "0xd18f389ae23bdc81939861c9a1079201968a2ec5fbd67ad1063556b46af8914f",
-          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d20080808080940f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "hash": "0x5e8fa6d31c6e604cdac971bdd0a10b825cbb039c76ee399a6d6f619957032de4",
+          "keyAuthorization": "0xf838f782107980943333333333333333333333333333333333333333846b49d2008080808094b3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1043,7 +1042,7 @@ describe('RPC conversion', () => {
           "weight": 1,
         },
         "transactionRpc": {
-          "account": "0x0f8659dd87410f00a1668211ecda7ac7f9c9fd13",
+          "account": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
           "approvals": [
             "0x01000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000065ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d503200",
           ],
@@ -1063,7 +1062,7 @@ describe('RPC conversion', () => {
             "version": "0x1",
           },
           "createdAt": 1,
-          "hash": "0x246027f7c6940fb4b68a746c49819c1c45737aa6c975aafcce721b4a619a9ab1",
+          "hash": "0x4f312a4616f3f96375e6bd4c20f992694408a8c804429140068aee31bd0b0eaf",
           "signatureCount": 1,
           "status": "pending",
           "threshold": 2,
@@ -1406,7 +1405,7 @@ describe('validation', () => {
       salt: `0x${'AB'.repeat(32)}`,
       threshold: 2,
     })
-    const account = AccountConfig.getAddress(config, { factory })
+    const account = AccountConfig.getAddress(config)
     const authorization = KeyAuthorization.from({
       account,
       address: '0x3333333333333333333333333333333333333333',
