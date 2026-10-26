@@ -1745,9 +1745,7 @@ describe('sortApprovals', () => {
     owners: ascendingOwners.map((o) => ({ owner: o.address, weight: 1 })),
   })
   const payload = `0x${'42'.repeat(32)}` as const
-  const account = AccountConfig.getAddress(genesisConfig, {
-    factory: '0x7171717171717171717171717171717171717171',
-  })
+  const account = AccountConfig.getAddress(genesisConfig)
   const version = 3n
   const digest = AccountConfig.getSignPayload({
     payload,

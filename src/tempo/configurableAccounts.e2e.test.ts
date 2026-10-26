@@ -1,7 +1,6 @@
 import { AbiFunction, Address, Hex, Secp256k1, Value } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { chain, client, fundAddress } from '../../test/tempo/config.js'
-import { factory } from '../../test/tempo/configurableAccounts.js'
 import {
   AccountConfig,
   AccountOperation,
@@ -31,7 +30,7 @@ async function setup() {
     threshold: 2,
     owners: keys.map((key) => ({ owner: key.address, weight: 1 })),
   })
-  const account = AccountConfig.getAddress(config, { factory })
+  const account = AccountConfig.getAddress(config)
   await fundAddress(client, { address: account })
   return { account, config, keys }
 }
