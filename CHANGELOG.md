@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.12
+
+### Patch Changes
+
+- [#534](https://github.com/wevm/ox/pull/534) [`93bc744`](https://github.com/wevm/ox/commit/93bc7446fa77bf3955c3cea2c56125e06bf733dd) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Derived configurable account addresses from the initial config hash instead of a recovery factory (tempoxyz/tempo#8595), so `AccountConfig.getAddress` no longer takes a `factory` option.
+
 ## 1.8.11
 
 ### Patch Changes
