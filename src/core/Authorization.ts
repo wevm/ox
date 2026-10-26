@@ -593,6 +593,7 @@ export function toTuple<const authorization extends Authorization>(
 ): toTuple.ReturnType<authorization> {
   const { address, chainId, nonce, r, s, yParity } = authorization
   const signature = Signature.extract({ r, s })
+  if (signature && typeof yParity !== 'undefined') assertYParity(yParity)
   return [
     chainId ? Hex.fromNumber(chainId) : '0x',
     address,
