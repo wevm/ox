@@ -176,9 +176,10 @@ export declare namespace from {
 export function fromRpc(authorization: Rpc): Signed {
   const { address, chainId, nonce } = authorization
   // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
-  // read `yParity` as is, without the 0 or 1 check of `Signature.extract`.
+  // check `yParity` against one byte rather than against 0 or 1.
   const signature = Signature.fromRpc(authorization)
   Signature.assert({ r: signature.r, s: signature.s })
+  assertYParity(signature.yParity)
 
   return {
     address,
@@ -277,13 +278,14 @@ export function fromTuple<const tuple extends Tuple>(
   }
   if (yParity && r && s) {
     // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
-    // read `yParity` as is, without the 0 or 1 check of `Signature.fromTuple`.
+    // check `yParity` against one byte rather than against 0 or 1.
     const signature = {
       r: r === '0x' ? 0n : BigInt(r),
       s: s === '0x' ? 0n : BigInt(s),
       yParity: yParity === '0x' ? 0 : Number(yParity),
     }
     Signature.assert({ r: signature.r, s: signature.s })
+    assertYParity(signature.yParity)
     args = { ...args, ...signature }
   }
   return from(args) as never
@@ -490,6 +492,9 @@ export function toRpc(authorization: Signed): Rpc {
     chainId: Hex.fromNumber(chainId),
     nonce: Hex.fromNumber(nonce),
     ...Signature.toRpc(signature),
+    // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
+    // encode `yParity` as is instead of the 0 or 1 of `Signature.toRpc`.
+    yParity: Hex.fromNumber(signature.yParity),
   }
 }
 
@@ -637,4 +642,16 @@ export declare namespace toTupleList {
   >
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/** Asserts that an EIP-7702 authorization `yParity` fits in one byte. */
+function assertYParity(yParity: number) {
+  if (Number.isInteger(yParity) && yParity >= 0 && yParity < 256) return
+  throw new Hex.IntegerOutOfRangeError({
+    max: '255',
+    min: '0',
+    signed: false,
+    size: 1,
+    value: `${yParity}`,
+  })
 }
