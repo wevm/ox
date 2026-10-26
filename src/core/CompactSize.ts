@@ -31,6 +31,7 @@ export function toBytes(value: bigint | number): Bytes.Bytes {
     throw new InvalidValueError({ value })
   const n = BigInt(value)
   if (n < 0n) throw new NegativeValueError({ value: n })
+  if (n > 0xffffffffffffffffn) throw new ValueTooLargeError({ value: n })
   if (n <= 252n) return new Uint8Array([Number(n)])
   if (n <= 0xffffn) {
     const buf = new Uint8Array(3)
@@ -57,6 +58,7 @@ export declare namespace toBytes {
   type ErrorType =
     | InvalidValueError
     | NegativeValueError
+    | ValueTooLargeError
     | Errors.GlobalErrorType
 }
 
@@ -170,6 +172,17 @@ export class NegativeValueError extends Errors.BaseError {
 
   constructor({ value }: { value: bigint }) {
     super(`CompactSize value must be non-negative, got ${value}.`)
+  }
+}
+
+/** Thrown when a CompactSize value does not fit in 64 bits. */
+export class ValueTooLargeError extends Errors.BaseError {
+  override readonly name = 'CompactSize.ValueTooLargeError'
+
+  constructor({ value }: { value: bigint }) {
+    super(
+      `CompactSize value must be at most 18446744073709551615, got ${value}.`,
+    )
   }
 }
 
