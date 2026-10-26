@@ -1,5 +1,15 @@
 # ox
 
+## 0.14.59
+
+### Patch Changes
+
+- [#531](https://github.com/wevm/ox/pull/531) [`b1b39ac`](https://github.com/wevm/ox/commit/b1b39acb8f2999701cde58d9ad90664a19285ca4) Thanks [@jxom](https://github.com/jxom)! - Fixed `Authorization.fromRpc`, `Authorization.fromTuple`, `Authorization.toTuple`, and `Authorization.toRpc` rejecting or rewriting an EIP-7702 authorization `yParity` above 1, which made valid transactions fail to deserialize, serialize, or hash.
+
+- [#531](https://github.com/wevm/ox/pull/531) [`b1b39ac`](https://github.com/wevm/ox/commit/b1b39acb8f2999701cde58d9ad90664a19285ca4) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` rejecting domains with a punycode (internationalized) top-level domain, such as `example.xn--p1ai`, and accepting top-level domain labels longer than 63 characters.
+
+- [#535](https://github.com/wevm/ox/pull/535) [`94aded3`](https://github.com/wevm/ox/commit/94aded35b65cf3275cd53d436f661ac4ab39e4f2) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Derived configurable account addresses from the initial config hash instead of a recovery factory (tempoxyz/tempo#8595), so `AccountConfig.getAddress` no longer takes a `factory` option.
+
 ## 0.14.58
 
 ### Patch Changes
