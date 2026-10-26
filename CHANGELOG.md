@@ -1,5 +1,13 @@
 # ox
 
+## 1.8.11
+
+### Patch Changes
+
+- [#530](https://github.com/wevm/ox/pull/530) [`e8f3251`](https://github.com/wevm/ox/commit/e8f32512bba6a0fa11b2b1d6647ec27df6f23f9e) Thanks [@jxom](https://github.com/jxom)! - Fixed `Authorization.fromRpc`, `Authorization.fromTuple`, `Authorization.toTuple`, and the zod `Authorization` schemas rejecting an EIP-7702 authorization `yParity` above 1, which made valid transactions fail to deserialize, serialize, or hash.
+
+- [#530](https://github.com/wevm/ox/pull/530) [`e8f3251`](https://github.com/wevm/ox/commit/e8f32512bba6a0fa11b2b1d6647ec27df6f23f9e) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` rejecting domains with a punycode (internationalized) top-level domain, such as `example.xn--p1ai`, and accepting top-level domain labels longer than 63 characters.
+
 ## 1.8.10
 
 ### Patch Changes
