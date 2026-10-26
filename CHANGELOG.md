@@ -1,5 +1,23 @@
 # ox
 
+## 1.8.10
+
+### Patch Changes
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.assertArgs` and `AbiEvent.extractLogs` `args` filters not matching non-indexed `string` and `bytes` values, data-decoded indexed values in non-strict mode, or `bytes` values in a different hex case.
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.fromAbi` overload resolution for arrays with a `0` in the element size (e.g. `uint160[]`) or the wrong fixed length, tuple objects with reordered keys, and ambiguous `address[]` overloads.
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Added an `even` option to `Hex.assert` and `Hex.validate` that rejects hex values with an odd number of hexadecimal characters.
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` throwing when `fetchOptions.signal` is set on runtimes without `AbortSignal.any`.
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` not applying `timeout` to reading the response body.
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Fixed `Signature.toHex` and `Signature.toBytes` producing a malformed signature when `r` or `s` is shorter than 32 bytes.
+
+- [#526](https://github.com/wevm/ox/pull/526) [`71decbb`](https://github.com/wevm/ox/commit/71decbb7bd1d30156cbcc8d9842410c57c136c25) Thanks [@jxom](https://github.com/jxom)! - Fixed `TypedData.extractEip712DomainTypes` (and `TypedData.encode`, `TypedData.getSignPayload`, `TypedData.hashDomain`) dropping an empty `version` from the `EIP712Domain` type.
+
 ## 1.8.9
 
 ### Patch Changes
