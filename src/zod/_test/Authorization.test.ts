@@ -165,6 +165,39 @@ describe('Authorization', () => {
     `)
   })
 
+  test('accepts yParity above 1', () => {
+    expect(
+      z.decode(z_Authorization.Signed, {
+        address,
+        chainId: '0x1',
+        nonce: '0x2',
+        r,
+        s,
+        yParity: '0x1c',
+      }).yParity,
+    ).toMatchInlineSnapshot(`28`)
+    expect(
+      z.encode(z_Authorization.SignedToRpc, {
+        address,
+        chainId: 1,
+        nonce: 2n,
+        r,
+        s,
+        yParity: 28,
+      }).yParity,
+    ).toMatchInlineSnapshot(`"0x1c"`)
+    expect(
+      z.decode(z_Authorization.TupleSigned, [
+        '0x1',
+        address,
+        '0x2',
+        '0x1c',
+        r,
+        s,
+      ])[3],
+    ).toMatchInlineSnapshot(`"0x1c"`)
+  })
+
   test('rejects invalid signatures', () => {
     expect(
       z.safeDecode(z_Authorization.Signed, {
@@ -173,7 +206,7 @@ describe('Authorization', () => {
         nonce: '0x2',
         r,
         s,
-        yParity: '0x2',
+        yParity: '0x100',
       }).success,
     ).toBe(false)
     expect(
@@ -181,7 +214,7 @@ describe('Authorization', () => {
         '0x1',
         address,
         '0x2',
-        '0x2',
+        '0x100',
         r,
         s,
       ]).success,

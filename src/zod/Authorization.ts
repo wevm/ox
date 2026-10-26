@@ -1,16 +1,14 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as z_Address from './Address.js'
 import * as z_Hex from './Hex.js'
+import { quantityHex } from './internal/Integer.js'
 import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
 import * as z from 'zod/mini'
 
-const yParityHex = z_Hex.Hex.check(
-  z.refine(
-    (value) => value === '0x0' || value === '0x1',
-    'expected yParity hex',
-  ),
-)
+// EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
+// every authorization schema accepts an 8-bit `yParity`.
+const yParityHex = quantityHex(8)
 
 /** Unsigned EIP-7702 authorization schema. */
 export const Unsigned = z.object(unsignedFields(z_Number.Number, z_Uint.Uint))
@@ -22,12 +20,12 @@ export const UnsignedToRpc = z.object(
 
 /** Signed EIP-7702 authorization schema. */
 export const Signed = z.object(
-  signedFields(z_Number.Number, z_Uint.Uint, yParityUint()),
+  signedFields(z_Number.Number, z_Uint.Uint, z_Uint.Uint8),
 )
 
 /** Encode-only signed EIP-7702 authorization schema accepting numberish `toRpc` inputs. */
 export const SignedToRpc = z.object(
-  signedFields(z_Number.NumberToRpc, z_Uint.UintToRpc, yParityUintToRpc()),
+  signedFields(z_Number.NumberToRpc, z_Uint.UintToRpc, z_Uint.Uint8ToRpc),
 )
 
 /** EIP-7702 authorization schema. */
@@ -70,22 +68,6 @@ export const TupleList = z.readonly(z.array(Tuple))
 
 /** Signed EIP-7702 authorization tuple list schema. */
 export const TupleListSigned = z.readonly(z.array(TupleSigned))
-
-function yParityUint() {
-  return z_Uint.Uint8.check(
-    z.refine((value) => value === 0 || value === 1, 'expected yParity'),
-  )
-}
-
-function yParityUintToRpc() {
-  return z_Uint.Uint8ToRpc.check(
-    z.refine(
-      (value) =>
-        value === 0 || value === 1 || value === '0x0' || value === '0x1',
-      'expected yParity',
-    ),
-  )
-}
 
 function unsignedFields<num extends z.ZodMiniType, uint extends z.ZodMiniType>(
   num: num,

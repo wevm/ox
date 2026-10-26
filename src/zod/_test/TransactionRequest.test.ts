@@ -214,7 +214,7 @@ describe('TransactionRequest', () => {
     expect(
       z.safeDecode(z_TransactionRequest.TransactionRequest, {
         authorizationList: [
-          { address, chainId: '0x1', nonce: '0x2', r, s, yParity: '0x2' },
+          { address, chainId: '0x1', nonce: '0x2', r, s, yParity: '0x100' },
         ],
       }).success,
     ).toBe(false)
