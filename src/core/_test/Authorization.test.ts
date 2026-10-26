@@ -173,6 +173,21 @@ describe('fromRpc', () => {
       }
     `)
   })
+
+  test('error: yParity above 2**8 - 1', () => {
+    expect(() =>
+      Authorization.fromRpc({
+        address: '0xc498cea4bfedbb8de856491bdd9967e677775f4f',
+        chainId: '0x0',
+        nonce: '0x6',
+        r: '0x44754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512',
+        s: '0x27a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b191',
+        yParity: '0x100',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
 })
 
 describe('fromRpcList', () => {
@@ -294,6 +309,22 @@ describe('fromTuple', () => {
         "yParity": 28,
       }
     `)
+  })
+
+  test('error: yParity above 2**8 - 1', () => {
+    const tuple = [
+      '0x',
+      '0xc498cea4bfedbb8de856491bdd9967e677775f4f',
+      '0x06',
+      '0x0100',
+      '0x44754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512',
+      '0x27a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b191',
+    ] as const satisfies Authorization.Tuple
+    expect(() =>
+      Authorization.fromTuple(tuple),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
   })
 })
 
@@ -497,6 +528,28 @@ describe('toRpc', () => {
     })
     expect(fromBigint).toEqual(fromNumber)
     expect(fromBigint).toEqual(fromHex)
+  })
+
+  test('behavior: yParity above 1', () => {
+    expect(
+      Authorization.toRpc({
+        address: '0xc498cea4bfedbb8de856491bdd9967e677775f4f',
+        chainId: 0,
+        nonce: 6n,
+        r: '0x44754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512',
+        s: '0x27a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b191',
+        yParity: 28,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "address": "0xc498cea4bfedbb8de856491bdd9967e677775f4f",
+        "chainId": "0x0",
+        "nonce": "0x6",
+        "r": "0x44754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512",
+        "s": "0x27a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b191",
+        "yParity": "0x1c",
+      }
+    `)
   })
 })
 
