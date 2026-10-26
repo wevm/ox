@@ -1,4 +1,3 @@
-import { factory } from '../../test/tempo/configurableAccounts.js'
 import { Hash, Hex, Rlp } from 'ox'
 import { AccountConfig } from 'ox/tempo'
 import { describe, expect, test } from 'vp/test'
@@ -10,13 +9,12 @@ const config = AccountConfig.from({
   owners: [{ owner: owner_1, weight: 1 }],
   threshold: 1,
 })
-const account = AccountConfig.getAddress(config, { factory })
+const account = AccountConfig.getAddress(config)
 
 // Vectors from Tempo `crates/primitives/tests/configurable_account.rs`
 // (`configurable_account_hashes_follow_vectors_and_documented_layout`).
 const tempo = {
   account: '0x91847576f406d0842ad7c1a0c97c22a122e64278',
-  factory: '0x9999999999999999999999999999999999999999',
 } as const
 
 describe('from', () => {
@@ -180,78 +178,67 @@ describe('fromUpgrade', () => {
 describe('getAddress', () => {
   test('example: matches the Tempo vectors', () => {
     expect({
-      maxOwners: AccountConfig.getAddress(
-        {
-          owners: Array.from({ length: AccountConfig.maxOwners }, (_, i) => ({
-            owner: Hex.padLeft(Hex.fromNumber(i + 1), 20),
-            weight: 1,
-          })),
-          threshold: 8,
-        },
-        { factory: tempo.factory },
-      ),
-      single: AccountConfig.getAddress(config, { factory: tempo.factory }),
+      maxOwners: AccountConfig.getAddress({
+        owners: Array.from({ length: AccountConfig.maxOwners }, (_, i) => ({
+          owner: Hex.padLeft(Hex.fromNumber(i + 1), 20),
+          weight: 1,
+        })),
+        threshold: 8,
+      }),
+      single: AccountConfig.getAddress(config),
     }).toMatchInlineSnapshot(`
       {
-        "maxOwners": "0x7a4279bb3f1b8b54d703484317f64eae6814e827",
-        "single": "0x87c346a9029d675f296db533b12e146439cf20d5",
+        "maxOwners": "0x9859f0316567499ebcd81d3417c0622999d7179f",
+        "single": "0xcbb727e2489c904a905420e794e8275b6150bfe1",
       }
     `)
   })
 
-  test('example: matches the frozen CREATE2 vector', () => {
+  test('example: matches the frozen keccak vector', () => {
     expect(account).toMatchInlineSnapshot(
-      `"0x2318ebe50d1d476ec10854bfd949f96ea7737b68"`,
+      `"0xcbb727e2489c904a905420e794e8275b6150bfe1"`,
     )
     expect(account).not.toBe('0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da')
   })
 
   test('behavior: includes salt, threshold, and owners', () => {
     expect(
-      AccountConfig.getAddress(
-        {
-          owners: [
-            { owner: owner_1, weight: 1 },
-            { owner: owner_2, weight: 2 },
-          ],
-          salt: `0x${'42'.repeat(32)}`,
-          threshold: 2,
-        },
-        { factory },
-      ),
-    ).toMatchInlineSnapshot(`"0x1baa996a4f142d99999aa22f1cb1eb97eed2a24a"`)
+      AccountConfig.getAddress({
+        owners: [
+          { owner: owner_1, weight: 1 },
+          { owner: owner_2, weight: 2 },
+        ],
+        salt: `0x${'42'.repeat(32)}`,
+        threshold: 2,
+      }),
+    ).toMatchInlineSnapshot(`"0x870b14ffcb3d1bd52be7cc6e8358a35712fec535"`)
   })
 
   test('behavior: is stable and binds the salt', () => {
     expect({
-      repeated: AccountConfig.getAddress(config, { factory }),
-      salted: AccountConfig.getAddress(
-        {
-          ...config,
-          salt: `0x${'42'.repeat(32)}`,
-        },
-        { factory },
-      ),
+      repeated: AccountConfig.getAddress(config),
+      salted: AccountConfig.getAddress({
+        ...config,
+        salt: `0x${'42'.repeat(32)}`,
+      }),
     }).toMatchInlineSnapshot(`
       {
-        "repeated": "0x2318ebe50d1d476ec10854bfd949f96ea7737b68",
-        "salted": "0x70d2e44032514493b68641ce5182cc878baa51f0",
+        "repeated": "0xcbb727e2489c904a905420e794e8275b6150bfe1",
+        "salted": "0xfc6a724c4715d331ec47dc8c1636798956fd3e4d",
       }
     `)
   })
 
   test('error: rejects a current configuration', () => {
     expect(() =>
-      AccountConfig.getAddress({ ...config, version: 1n }, { factory }),
+      AccountConfig.getAddress({ ...config, version: 1n }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[AccountConfig.InvalidConfigError: Invalid account config: account address requires version zero.]`,
     )
   })
 
   test('behavior: accepts numeric zero for an initial configuration', () => {
-    expect(
-      AccountConfig.getAddress({ ...config, version: 0 }, { factory }),
-    ).toBe(account)
+    expect(AccountConfig.getAddress({ ...config, version: 0 })).toBe(account)
   })
 })
 
@@ -308,7 +295,7 @@ describe('getSignPayload', () => {
     expect(
       AccountConfig.getSignPayload({ account, config, payload }),
     ).toMatchInlineSnapshot(
-      `"0x32144254ec42f7a37b97e3a843667b527479f933320be553265e6594dc44ea87"`,
+      `"0x53a60618dd8fd4d01c2c94a4d9dc482dbb7b97115eb448a4590d153b933e549a"`,
     )
   })
 
@@ -449,14 +436,14 @@ describe('assert/validate', () => {
     })
     const rlp = Rlp.fromHex(AccountConfig.toTuple(boundary))
     expect({
-      account: AccountConfig.getAddress(boundary, { factory }),
+      account: AccountConfig.getAddress(boundary),
       commitment: AccountConfig.getCommitment(boundary),
       rlpHash: Hash.keccak256(rlp),
       rlpLength: Hex.size(rlp),
       valid: AccountConfig.validate(boundary),
     }).toMatchInlineSnapshot(`
       {
-        "account": "0x8400988285be93cba9391d445e473601633e5d62",
+        "account": "0x9859f0316567499ebcd81d3417c0622999d7179f",
         "commitment": "0xa9282ca5b73ac63b7e27f49cafa6ab13bd2aa79fc45267cf27342db73150cd46",
         "rlpHash": "0xbaf0d030add91caaa10815d2e99c942f1e39b0d199216973781adb4fc1af6955",
         "rlpLength": 1145,

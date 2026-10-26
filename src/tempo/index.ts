@@ -29,9 +29,7 @@
  *   ]
  * })
  *
- * const account = AccountConfig.getAddress(initialConfig, {
- *   factory: '0x7171717171717171717171717171717171717171'
- * })
+ * const account = AccountConfig.getAddress(initialConfig)
  * ```
  *
  * @category Reference
