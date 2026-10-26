@@ -644,7 +644,7 @@ export declare namespace toTupleList {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/** Asserts that an EIP-7702 authorization `yParity` fits in one byte. */
+// Asserts that an EIP-7702 authorization `yParity` fits in one byte.
 function assertYParity(yParity: number) {
   if (Number.isInteger(yParity) && yParity >= 0 && yParity < 256) return
   throw new Hex.IntegerOutOfRangeError({
