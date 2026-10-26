@@ -143,7 +143,7 @@ export declare namespace getHash {
  * The function retains one canonical approval per owner. It selects the
  * smallest deterministic quorum by owner weight, then orders the selected
  * approvals by owner address for serialization. The caller supplies the
- * account and config; the chain validates their factory-derived identity.
+ * account and config; the chain validates their derived identity.
  *
  * @example
  * ```ts twoslash
