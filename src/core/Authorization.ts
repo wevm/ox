@@ -514,6 +514,7 @@ export declare namespace hash {
  */
 export function toRpc(authorization: toRpc.Input): Rpc {
   const { address, chainId, nonce, ...signature } = authorization
+  assertYParity(Number(signature.yParity))
 
   return {
     address,

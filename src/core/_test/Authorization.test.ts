@@ -551,6 +551,21 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('error: yParity above 2**8 - 1', () => {
+    expect(() =>
+      Authorization.toRpc({
+        address: '0xc498cea4bfedbb8de856491bdd9967e677775f4f',
+        chainId: 0,
+        nonce: 6n,
+        r: '0x44754b7f217808e21f1935cfa450380e17a3ab8f2c6996c0190d678f0c14a512',
+        s: '0x27a6b869798cbbbd8d538dbc95b9bb28783bf08f8ef88ad6bb82552d0b47b191',
+        yParity: 256,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
 })
 
 describe('toRpcList', () => {
