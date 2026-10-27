@@ -38,8 +38,8 @@ before producing signatures.
 
 Normalize the initial config with
 [`AccountConfig.from`](/tempo/reference/AccountConfig/from), then derive its permanent account
-with [`AccountConfig.getAddress`](/tempo/reference/AccountConfig/getAddress). Supply the recovery
-factory configured by your chain. The pinned experimental node has no public-network default.
+with [`AccountConfig.getAddress`](/tempo/reference/AccountConfig/getAddress). The address is
+derived from the initial config alone, so later config updates do not change it.
 
 ```ts twoslash
 import { Address, Hex, Secp256k1 } from 'ox'
@@ -61,9 +61,7 @@ const initialConfig = AccountConfig.from({
   salt: Hex.random(32),
   threshold: 2, // [!code hl]
 })
-// Replace this development factory with your chain's configured factory.
-const factory = '0x7171717171717171717171717171717171717171'
-const account = AccountConfig.getAddress(initialConfig, { factory })
+const account = AccountConfig.getAddress(initialConfig)
 // @log: '0x...'
 // [!code focus:end]
 ```
@@ -101,9 +99,7 @@ const initialConfig = AccountConfig.from({
   salt: Hex.random(32),
   threshold: 2,
 })
-// Replace this development factory with your chain's configured factory.
-const factory = '0x7171717171717171717171717171717171717171'
-const account = AccountConfig.getAddress(initialConfig, { factory })
+const account = AccountConfig.getAddress(initialConfig)
 
 // 2. Build the initial transaction.
 const transaction = TxEnvelopeTempo.from({
@@ -182,9 +178,7 @@ const initialConfig = AccountConfig.from({
   salt: Hex.random(32),
   threshold: 2,
 })
-// Replace this development factory with your chain's configured factory.
-const factory = '0x7171717171717171717171717171717171717171'
-const account = AccountConfig.getAddress(initialConfig, { factory })
+const account = AccountConfig.getAddress(initialConfig)
 
 // 2. Derive the config committed by an owner update that removed the first owner.
 const currentConfig = AccountConfig.update(initialConfig, {
