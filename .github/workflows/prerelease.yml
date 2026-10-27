@@ -4,7 +4,15 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, closed]
+    types:
+      [
+        opened,
+        reopened,
+        synchronize,
+        ready_for_review,
+        converted_to_draft,
+        closed,
+      ]
 
 permissions: {} # each job should declare only the permissions it needs
 
