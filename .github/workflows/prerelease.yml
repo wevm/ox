@@ -65,7 +65,8 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          pnpm version "$VERSION" --no-git-tag-version
+          # The install hooks change tracked files, and `pnpm version` refuses an unclean working tree.
+          npm pkg set version="$VERSION"
           pnpm version:update
           pnpm exports:update
           pnpm exec zile publish:prepare
