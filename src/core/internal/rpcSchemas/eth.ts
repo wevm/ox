@@ -18,6 +18,7 @@ import type * as TxEnvelopeEip4844 from '../../TxEnvelopeEip4844.js'
 import type * as TxEnvelopeEip7702 from '../../TxEnvelopeEip7702.js'
 import type * as TxEnvelopeEip8141 from '../../TxEnvelopeEip8141.js'
 import type * as TxEnvelopeLegacy from '../../TxEnvelopeLegacy.js'
+import type { OneOf, UnionCompute } from '../types.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -239,14 +240,16 @@ export type Eth = RpcSchema.From<
         params: [transaction: TransactionRequest.Rpc]
       }
       ReturnType: {
-        tx: (
-          | TxEnvelopeLegacy.Rpc<false>
-          | TxEnvelopeEip2930.Rpc<false>
-          | TxEnvelopeEip1559.Rpc<false>
-          | TxEnvelopeEip4844.Rpc<false>
-          | TxEnvelopeEip7702.Rpc<false>
-          | TxEnvelopeEip8141.Rpc
-        ) & { from: Address.Address }
+        tx: UnionCompute<
+          OneOf<
+            | TxEnvelopeLegacy.Rpc<false>
+            | TxEnvelopeEip2930.Rpc<false>
+            | TxEnvelopeEip1559.Rpc<false>
+            | TxEnvelopeEip4844.Rpc<false>
+            | TxEnvelopeEip7702.Rpc<false>
+            | TxEnvelopeEip8141.Rpc
+          > & { from: Address.Address }
+        >
       }
     }
   /**

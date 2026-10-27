@@ -1,4 +1,4 @@
-import type { RpcSchema } from 'ox'
+import type { Frame, RpcSchema } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 
 test('ToViem: converts ox schema to viem schema', () => {
@@ -146,6 +146,28 @@ test('frame fill responses do not require raw bytes or lookup metadata', () => {
     },
   } as const satisfies Filled
   expectTypeOf(filled).toExtend<Filled>()
+})
+
+test('fill responses expose fields not shared by every envelope as optional', () => {
+  type Tx = Extract<
+    RpcSchema.Eth,
+    { Request: { method: 'eth_fillTransaction' } }
+  >['ReturnType']['tx']
+  expectTypeOf<Tx['from']>().toEqualTypeOf<`0x${string}`>()
+  expectTypeOf<Tx['gas']>().toEqualTypeOf<`0x${string}` | undefined>()
+  expectTypeOf<Tx['frames']>().toEqualTypeOf<readonly Frame.Rpc[] | undefined>()
+
+  type Eip1559 = Extract<Tx, { type: '0x2' }>
+  expectTypeOf<Eip1559['gas']>().toEqualTypeOf<`0x${string}` | undefined>()
+  expectTypeOf<Eip1559['gasPrice']>().toEqualTypeOf<undefined>()
+  expectTypeOf<Eip1559['maxFeePerGas']>().toEqualTypeOf<
+    `0x${string}` | undefined
+  >()
+  expectTypeOf<Eip1559['frames']>().toEqualTypeOf<undefined>()
+
+  type Eip8141 = Extract<Tx, { type: '0x6' }>
+  expectTypeOf<Eip8141['frames']>().toEqualTypeOf<readonly Frame.Rpc[]>()
+  expectTypeOf<Eip8141['gas']>().toEqualTypeOf<undefined>()
 })
 
 test('frame simulation results expose payer and frame results', () => {
