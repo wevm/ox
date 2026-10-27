@@ -13,6 +13,7 @@ import type * as Transaction from '../../Transaction.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
 import type * as TxEnvelope from '../../TxEnvelope.js'
+import type { OneOf, UnionCompute } from '../types.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -237,7 +238,7 @@ export type Eth = RpcSchema.From<
       ReturnType: {
         capabilities?: Record<string, unknown> | undefined
         raw?: Hex.Hex | undefined
-        tx: TxEnvelope.Rpc & { from: Address.Address }
+        tx: UnionCompute<OneOf<TxEnvelope.Rpc> & { from: Address.Address }>
       }
     }
   /**
