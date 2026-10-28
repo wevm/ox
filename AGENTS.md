@@ -133,7 +133,7 @@
 ## Learned Workspace Facts
 
 - **Source layout** -- source lives in `src/`; tests live under `src/**/_test`; docs live in `site`; shared test utilities live in `test`; vectors live in `vectors`; contracts live in `contracts`.
-- **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@11.0.8`.
+- **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@11.13.1`.
 - **Generated exports** -- `scripts/exports:update.ts` derives `package.json#exports` from `src/`. It flattens `src/core/<Name>.ts` to root package subpaths and ignores test/bench/snapshot files.
 - **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.
