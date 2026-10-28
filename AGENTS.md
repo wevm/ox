@@ -109,6 +109,7 @@
 - **Repo checks** -- run `pnpm check:repo` when package metadata or workspace shape changes.
 - **Docs dev server** -- use `pnpm docs:dev` for documentation UI work.
 - **`pnpm check` mutates** -- it runs `vp check --fix`. Use it only when intentionally applying lint/format fixes.
+- **Format workflow edits before release** -- `pnpm changeset:version` runs `pnpm check`, so unformatted workflow YAML enters the release commit and its push is rejected by `GITHUB_TOKEN`. Run `pnpm exec vp fmt .github/workflows/<file>.yml` when editing workflows.
 - **`pnpm exports:update` mutates** -- it rewrites `package.json#exports`.
 - **`pnpm docs:gen` and `pnpm docs:build` mutate generated docs output** -- run only when docs generation is part of the task.
 - **`FC_NUM_RUNS` sets the fuzz budget, and CI owns the number** -- `pnpm test:fuzz` runs the `fuzz` project on Node at 100 cases per property; the workflow raises it to 2000 through the environment. Size it against a runner rather than a laptop: 10k timed out at the default per-test limit in CI. Browsers are opt-in via `pnpm test:fuzz --project fuzz-browser`, since they triple the wall time and their unique risk (native codecs differing between engine versions) is already pinned per pull request by the `*.conformance.ts` suites. The `fuzz` projects raise `testTimeout`: one `test` is thousands of cases, so the unit-test default does not apply.
