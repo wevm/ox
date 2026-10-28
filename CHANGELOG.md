@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.13
+
+### Patch Changes
+
+- [#539](https://github.com/wevm/ox/pull/539) [`24b4a3d`](https://github.com/wevm/ox/commit/24b4a3d111074749bede87e7b2a18915c280492c) Thanks [@jxom](https://github.com/jxom)! - Typed the `eth_fillTransaction` result `tx` as a `OneOf` union so common fields like `gas` are readable as optional across all envelope types.
+
 ## 1.8.12
 
 ### Patch Changes
