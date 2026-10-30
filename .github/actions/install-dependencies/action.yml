@@ -11,7 +11,7 @@ runs:
   using: 'composite'
   steps:
     - name: Set up foundry
-      uses: foundry-rs/foundry-toolchain@8b0419c685ef46cb79ec93fbdc131174afceb730 # v1.6.0
+      uses: wevm/actions/vendor/foundry-rs/foundry-toolchain/v1.6.0@73e899a58d51092d694fbaf94b7a1d8c09bfea28
       with:
         version: nightly
 
