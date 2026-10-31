@@ -38,7 +38,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: PR or publish
-        uses: wevm/actions/vendor/changesets/action/ox@817c9008b1112c1d61003f2f155687c30601de97 # upstream v1.5.3
+        uses: wevm/actions/vendor/changesets/action/ox@8963daf30237417f873c8e2f17e3bf9415e3a7b9 # upstream v1.5.3
         with:
           title: 'chore: version packages'
           commit: 'chore: version packages'
