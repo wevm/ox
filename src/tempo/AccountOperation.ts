@@ -926,7 +926,7 @@ function assertApproval(
   account: Address.Address,
   serialized: SignatureEnvelope.Serialized,
   config: AccountConfig.Config,
-): SignatureEnvelope.Primitive {
+): SignatureEnvelope.OwnerApproval {
   const approval = SignatureEnvelope.deserialize(serialized)
   if (approval.type === 'keychain' || approval.type === 'configurable')
     throw new InvalidOperationError({
