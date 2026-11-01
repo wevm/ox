@@ -796,16 +796,14 @@ export const abi = [
 ] as const
 
 /**
- * Attested Key Registry precompile address, as the Tempo node's attested
- * signers proof of concept deploys it.
+ * Attested Key Registry precompile address (TIP-1161).
  *
- * TIP-1161 names `0x1161000000000000000000000000000000000000`. The proof of
- * concept uses this address until the TIP is final.
+ * [TIP-1161](https://tips.sh/1161)
  *
  * @experimental
  */
 export const registryAddress =
-  '0xA77E570000000000000000000000000000000000' as const satisfies Address.Address
+  '0x1161000000000000000000000000000000000000' as const satisfies Address.Address
 
 /**
  * Program key slots of each policy. An attested signature names a slot below
