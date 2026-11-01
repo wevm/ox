@@ -38,7 +38,10 @@ export type KeyAuthorization<
   bigintType = bigint,
   numberType = number,
 > = {
-  /** Account address this authorization is bound to. Required when an admin access key signs the grant (TIP-1049). */
+  /**
+   * Account address this authorization is bound to. When present, the Tempo node
+   * requires it to equal the transaction sender.
+   */
   account?: Address.Address | undefined
   /** Address derived from the public key of the key type. */
   address: Address.Address
@@ -46,7 +49,14 @@ export type KeyAuthorization<
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
-  /** Whether this authorization provisions an admin access key. */
+  /**
+   * Whether this authorization provisions an admin access key (TIP-1049).
+   *
+   * @deprecated Admin access keys are removed at T14 by
+   * [TIP-1137](https://docs.tempo.xyz/protocol/tips/tip-1137). From T14 the Tempo
+   * node rejects any key authorization with `isAdmin: true`. The field is still
+   * encoded and decoded so pre-T14 history round-trips.
+   */
   isAdmin?: boolean | undefined
   /**
    * TIP20 spending limits for this key.
@@ -104,7 +114,7 @@ export type Input = KeyAuthorization<false, bigint, number>
 
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
-  /** Optional account address binding (TIP-1049). */
+  /** Optional account address binding. When present, must equal the transaction sender. */
   account?: Address.Address | null | undefined
   /** Allowed call scopes (node field: `allowedCalls`). */
   allowedCalls?: readonly RpcCallScope[] | null | undefined
@@ -112,7 +122,12 @@ export type Rpc = {
   chainId: Hex.Hex
   /** Expiry timestamp (hex quantity or null). */
   expiry: Hex.Hex | null | undefined
-  /** Whether this authorization provisions an admin access key (TIP-1049). */
+  /**
+   * Whether this authorization provisions an admin access key (TIP-1049).
+   *
+   * @deprecated Rejected from T14 by [TIP-1137](https://docs.tempo.xyz/protocol/tips/tip-1137).
+   * Still decoded for pre-T14 history.
+   */
   isAdmin?: boolean | null | undefined
   /** Key identifier. */
   keyId: Address.Address
@@ -709,7 +724,9 @@ export function fromTuple<const tuple extends Tuple>(
   const isAdmin = (() => {
     if (isAbsent(rawIsAdmin)) return undefined
     // TIP-1049: the admin marker is strictly `0x01`. Any other value is a
-    // protocol-level decode error on the node, so reject it here too.
+    // protocol-level decode error on the node, so reject it here too. T14
+    // (TIP-1137) rejects admin authorizations at validation, not decoding,
+    // so pre-T14 history still decodes.
     if (rawIsAdmin !== '0x01')
       throw new InvalidAdminMarkerError(rawIsAdmin as Hex.Hex)
     return true
@@ -1135,8 +1152,9 @@ export function toTuple<const authorization extends KeyAuthorization>(
     { value: witness, placeholder: '0x' },
     // TIP-1049: admin marker. Present = `0x01` (RLP integer 1); absent
     // skipped or omitted. Any other value is a hard decode error on the node.
+    // TIP-1137 keeps this encoding but rejects `0x01` from T14.
     { value: isAdmin ? '0x01' : undefined, placeholder: '0x' },
-    // TIP-1049: optional account binding. Last field — never a placeholder.
+    // Optional account binding. Last field — never a placeholder.
     { value: account, placeholder: '0x' },
   ]
   let lastPresent = -1
@@ -1238,8 +1256,8 @@ export class InvalidSignatureTypeError extends Error {
 /**
  * Thrown when a configurable account key grant omits its parent account binding.
  *
- * @deprecated No longer thrown. The Tempo node only requires `account` on grants
- * signed by an admin access key, which it checks against the transaction sender.
+ * @deprecated No longer thrown. The Tempo node does not require `account`; when
+ * present, it must equal the transaction sender.
  */
 export class MissingAccountError extends Error {
   override readonly name = 'KeyAuthorization.MissingAccountError'
