@@ -1,5 +1,21 @@
 # ox
 
+## 1.8.13
+
+### Patch Changes
+
+- [#560](https://github.com/wevm/ox/pull/560) [`ca4d7b7`](https://github.com/wevm/ox/commit/ca4d7b7bc39d8636f9449af54cef0b491e02f93b) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.fromAbi` resolving indistinguishable overloads, such as `bytes32` and `bytes`, `uint256` and `int256`, or `uint256[]` and `uint256[2]`, to the last match. It now throws `AbiItem.AmbiguityError`, and a selector selects the overload. An overload matches only an integer in its range or fixed bytes of its size.
+
+- [#558](https://github.com/wevm/ox/pull/558) [`e7600e0`](https://github.com/wevm/ox/commit/e7600e07178f51762f3741c70572228623a36459) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` accepting `intN`/`uintN` words outside the declared type's range and `address` words with non-zero padding; it now throws `Hex.IntegerOutOfRangeError` or `Address.InvalidAddressError`, matching Solidity's `abi.decode`.
+
+- [#539](https://github.com/wevm/ox/pull/539) [`24b4a3d`](https://github.com/wevm/ox/commit/24b4a3d111074749bede87e7b2a18915c280492c) Thanks [@jxom](https://github.com/jxom)! - Typed the `eth_fillTransaction` result `tx` as a `OneOf` union so common fields like `gas` are readable as optional across all envelope types.
+
+- [#554](https://github.com/wevm/ox/pull/554) [`14ae9ac`](https://github.com/wevm/ox/commit/14ae9acc9d6a8793c5b48ce92ce2a3243e99d0b6) Thanks [@jxom](https://github.com/jxom)! - Deprecated `KeyAuthorization` `isAdmin` and updated `account` docs for TIP-1137, which removes admin access keys at T14 while keeping their wire encoding decodable.
+
+- [#560](https://github.com/wevm/ox/pull/560) [`ca4d7b7`](https://github.com/wevm/ox/commit/ca4d7b7bc39d8636f9449af54cef0b491e02f93b) Thanks [@jxom](https://github.com/jxom)! - Fixed `TxEnvelopeEip1559.assert`, `TxEnvelopeEip4844.assert`, `TxEnvelopeEip7702.assert`, and `TxEnvelopeTempo.assert` accepting a `maxPriorityFeePerGas` above a zero `maxFeePerGas`. Their `deserialize` functions now read an empty `maxFeePerGas` as zero when a tip is set, so such a transaction throws `TransactionEnvelope.TipAboveFeeCapError`. Zero fees now show in the error messages.
+
+- [#560](https://github.com/wevm/ox/pull/560) [`ca4d7b7`](https://github.com/wevm/ox/commit/ca4d7b7bc39d8636f9449af54cef0b491e02f93b) Thanks [@jxom](https://github.com/jxom)! - Fixed `TypedData.assert` and `TypedData.validate` accepting invalid struct names, such as `uint7`, `bytes32` or `Foo.Bar`, and invalid field types, such as `uint`, `uint7`, `bytes0` or an undefined struct, including in structs referenced only as array elements. They now throw `TypedData.InvalidStructTypeError` and the new `TypedData.InvalidTypeError`. `TypedData.encodeType` now includes struct names that contain `$`.
+
 ## 1.8.12
 
 ### Patch Changes
