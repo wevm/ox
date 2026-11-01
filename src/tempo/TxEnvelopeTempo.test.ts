@@ -106,6 +106,19 @@ describe('assert', () => {
     )
   })
 
+  test('tip above zero fee cap', () => {
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 1n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+    )
+  })
+
   test('invalid chain id', () => {
     expect(() =>
       TxEnvelopeTempo.assert({
@@ -136,6 +149,44 @@ describe('deserialize', () => {
     const serialized = TxEnvelopeTempo.serialize(transaction)
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized).toEqual(transaction)
+  })
+
+  test('tip above empty fee cap', () => {
+    const serialized = TxEnvelopeTempo.serialize({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxPriorityFeePerGas: 1n,
+    })
+    expect(() =>
+      TxEnvelopeTempo.deserialize(serialized),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+    )
+  })
+
+  test('fee payer', () => {
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
+      format: 'feePayer',
+      sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    })
+
+    expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          },
+        ],
+        "chainId": 1,
+        "feePayerSignature": null,
+        "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "maxFeePerGas": 2000000000n,
+        "maxPriorityFeePerGas": 2000000000n,
+        "nonce": 785n,
+        "nonceKey": 0n,
+        "type": "tempo",
+      }
+    `)
   })
 
   test('minimal', () => {
