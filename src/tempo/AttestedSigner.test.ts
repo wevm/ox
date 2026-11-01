@@ -50,7 +50,7 @@ describe('getBinding', () => {
         slot: 3,
       }),
     ).toMatchInlineSnapshot(
-      `"0x255308a7e2e117a0d2c8cbab8a88016c0e3f2cc6901167728f7df1c19bb4ad44"`,
+      `"0x147af54491e06d6c30794f989a434a888c55d067b347cc11e0d6ea7ce261fa92"`,
     )
   })
 
@@ -68,7 +68,7 @@ describe('getBinding', () => {
         Hex.concat(
           Hex.fromString('tempo:attested-key'),
           Hex.fromNumber(1337, { size: 32 }),
-          '0xA77E570000000000000000000000000000000000',
+          '0x1161000000000000000000000000000000000000',
           policyId,
           '0x03',
           key.x,
@@ -92,7 +92,7 @@ describe('getBinding', () => {
       AttestedSigner.getBinding({ ...base, chainId: 4217 }),
       AttestedSigner.getBinding({
         ...base,
-        registry: '0x1161000000000000000000000000000000000000',
+        registry: '0xA77E570000000000000000000000000000000000',
       }),
       AttestedSigner.getBinding({ ...base, policyId: userTag }),
       AttestedSigner.getBinding({ ...base, slot: 4 }),
@@ -296,7 +296,7 @@ describe('constants', () => {
         "maxKeyLifetime": 604800,
         "maxSignatureSize": 211,
         "maxValidityWindow": 600,
-        "registryAddress": "0xA77E570000000000000000000000000000000000",
+        "registryAddress": "0x1161000000000000000000000000000000000000",
         "schemes": {
           "awsNitro": 1,
           "awsNitroDev": 254,
