@@ -4,15 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    types:
-      [
-        opened,
-        reopened,
-        synchronize,
-        ready_for_review,
-        converted_to_draft,
-        closed,
-      ]
+    types: [opened, reopened, synchronize, closed]
 
 permissions: {} # each job should declare only the permissions it needs
 
@@ -26,7 +18,6 @@ jobs:
       github.repository == 'wevm/ox' && (
         github.event_name == 'push' || (
           github.event.action != 'closed' &&
-          !github.event.pull_request.draft &&
           github.event.pull_request.head.repo.full_name == github.repository &&
           github.event.pull_request.user.type != 'Bot'
         )
@@ -107,8 +98,8 @@ jobs:
       pull-requests: write # comment the prerelease on the pull request
 
     steps:
-      # A rerun or a queued run can start after a newer commit, and a pull request can become a draft first.
-      # Only the current commit of main, or of an open and ready pull request, publishes and moves the dist-tag.
+      # A rerun or a queued run can start after a newer commit, and a pull request can close first.
+      # Only the current commit of main, or of an open pull request (draft or ready), publishes and moves the dist-tag.
       - name: Check commit
         id: current
         env:
@@ -117,13 +108,13 @@ jobs:
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-            current="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST" --jq ".state == \"open\" and (.draft | not) and .head.sha == \"$SHA\"")"
+            current="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST" --jq ".state == \"open\" and .head.sha == \"$SHA\"")"
           else
             current="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq ".sha == \"$SHA\"")"
           fi
           echo "publish=$current" >> "$GITHUB_OUTPUT"
           if [ "$current" != true ]; then
-            echo "Skipped \`$SHA\`, which is not the current commit of main or of an open, ready pull request." >> "$GITHUB_STEP_SUMMARY"
+            echo "Skipped \`$SHA\`, which is not the current commit of main or of an open pull request." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Set up Node
