@@ -1,4 +1,4 @@
-import { AbiItem, AbiParameters, type Address, Bytes, type Hex } from 'ox'
+import { AbiItem, AbiParameters, Address, Bytes, Hex } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 
 import {
@@ -1788,5 +1788,144 @@ describe('zero-width types', () => {
         ),
       ).toEqual(values)
     }
+  })
+})
+
+describe('integer range', () => {
+  test('uint8: max', () => {
+    expect(
+      AbiParameters.decode(
+        AbiParameters.from('uint8'),
+        '0x00000000000000000000000000000000000000000000000000000000000000ff',
+      ),
+    ).toEqual([255])
+  })
+
+  test('uint8: above max', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('uint8'),
+        '0x0000000000000000000000000000000000000000000000000000000000000100',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
+
+  test('int8: -1', () => {
+    expect(
+      AbiParameters.decode(
+        AbiParameters.from('int8'),
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+      ),
+    ).toEqual([-1])
+  })
+
+  test('int8: missing sign extension', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('int8'),
+        '0x0000000000000000000000000000000000000000000000000000000000000080',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+  })
+
+  test('int8: below min', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('int8'),
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-129\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+  })
+
+  test('uint8[]: element above max', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('uint8[]'),
+        '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000100',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
+
+  test('uint16: 2^64', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('uint16'),
+        '0x0000000000000000000000000000000000000000000000010000000000000000',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`18446744073709551616\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)]`,
+    )
+  })
+
+  test('every size: min and max round-trip, out of range throws', () => {
+    for (let size = 8; size <= 256; size += 8) {
+      for (const signed of [false, true]) {
+        const type = (signed ? 'int' : 'uint') + size
+        const parameters = AbiParameters.from(type)
+        const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+        const min = signed ? -max - 1n : 0n
+        const cast = (value: bigint) => (size > 48 ? value : Number(value))
+
+        for (const value of [min, max])
+          expect(
+            AbiParameters.decode(
+              parameters,
+              AbiParameters.encode(parameters, [cast(value)] as never),
+            ),
+          ).toEqual([cast(value)])
+
+        if (size === 256) continue
+        const word = (value: bigint) =>
+          Hex.fromNumber(BigInt.asUintN(256, value), { size: 32 })
+        expect(() => AbiParameters.decode(parameters, word(max + 1n))).toThrow(
+          Hex.IntegerOutOfRangeError,
+        )
+        if (signed)
+          expect(() =>
+            AbiParameters.decode(parameters, word(min - 1n)),
+          ).toThrow(Hex.IntegerOutOfRangeError)
+      }
+    }
+  })
+})
+
+describe('address padding', () => {
+  test('dirty high bytes', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('address'),
+        '0x00000000000000000000000114dc79964da2c08b23698b3d3cc7ca32193d9955',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0x00000000000000000000000114dc79964da2c08b23698b3d3cc7ca32193d9955" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('dirty first byte', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('address'),
+        '0xff000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d9955',
+      ),
+    ).toThrow(Address.InvalidAddressError)
+  })
+
+  test('address[2]: second element dirty', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('address[2]'),
+        '0x00000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d99550000000000000000000000ff14dc79964da2c08b23698b3d3cc7ca32193d9955',
+      ),
+    ).toThrow(Address.InvalidAddressError)
   })
 })
