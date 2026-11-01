@@ -1,5 +1,6 @@
 import {
   Hex,
+  P256,
   PublicKey,
   Rlp,
   Secp256k1,
@@ -9,6 +10,7 @@ import {
 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as AccountConfig from './AccountConfig.js'
+import * as AttestedSigner from './AttestedSigner.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as Period from './Period.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
@@ -670,7 +672,7 @@ describe('fromRpc', () => {
         signature: signature_keychain as never,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`configurable\`, or \`attested\`.]`,
     )
 
     expect(() =>
@@ -678,7 +680,7 @@ describe('fromRpc', () => {
         signature: SignatureEnvelope.serialize(signature_keychain),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`configurable\`, or \`attested\`.]`,
     )
 
     expect(() =>
@@ -687,7 +689,7 @@ describe('fromRpc', () => {
         signature: signature_keychain,
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`configurable\`, or \`attested\`.]`,
     )
   })
 })
@@ -741,7 +743,7 @@ describe('fromRpc', () => {
         signature: SignatureEnvelope.toRpc(signature_keychain),
       } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.]`,
+      `[KeyAuthorization.InvalidSignatureTypeError: Signature type \`keychain\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`configurable\`, or \`attested\`.]`,
     )
   })
 
@@ -2946,5 +2948,56 @@ describe('admin keys (TIP-1049)', () => {
         KeyAuthorization.fromRpc(KeyAuthorization.toRpc(signed)),
       ).toMatchObject({ isAdmin: true, type: 'configurable' })
     })
+  })
+})
+
+// Mirrors the node's attested signers proof of concept (tempoxyz/tempo
+// `exp/attested-signers`): `SignedKeyAuthorization::recover_account` verifies an
+// attested root signature over `KeyAuthorization::signature_hash`, with the
+// fixtures of `crates/primitives/src/transaction/attested.rs` `tests::signed`.
+describe('attested root signature (TIP-1160)', () => {
+  const privateKey = `0x${'11'.repeat(32)}` as const
+  const fields = {
+    policyId: `0x${'aa'.repeat(32)}`,
+    programKey: P256.getPublicKey({ privateKey }),
+    slot: 1,
+    userTag: `0x${'bb'.repeat(32)}`,
+    validUntil: 1_800_000_600,
+  } as const
+  const authorization = KeyAuthorization.from({
+    address: `0x${'22'.repeat(20)}`,
+    chainId: 1337n,
+    type: 'p256',
+  })
+  const payload = KeyAuthorization.getSignPayload(authorization)
+  const { r, s } = P256.sign({
+    payload: AttestedSigner.getSignPayload({ ...fields, payload }),
+    privateKey,
+  })
+  const signed = KeyAuthorization.from(authorization, {
+    signature: SignatureEnvelope.from({ ...fields, signature: { r, s } }),
+  })
+
+  test('serialize', () => {
+    const serialized = KeyAuthorization.serialize(signed)
+    expect(serialized).toMatchInlineSnapshot(
+      `"0xf8ebd982053901942222222222222222222222222222222222222222b8cf06f8cca0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01b8400217e617f0b6443928278f96999e69a23a4f2c152bdf6d6cdf66e5b80282d4ed194a7debcb97712d2dda3ca85aa8765a56f45fc758599652f2897c65306e5794846b49d458b84062262fbb40ef4d8d6d766bf4bf5dcd930856e01ae5333a6df0f219a0721a59545062768c711979686352d5ddc23955127eb172e982341423f6491ecb7832f8b3"`,
+    )
+    expect(KeyAuthorization.deserialize(serialized)).toEqual(signed)
+  })
+
+  test('rpc', () => {
+    const rpc = KeyAuthorization.toRpc(signed)
+    expect(rpc.signature).toEqual(SignatureEnvelope.toRpc(signed.signature))
+    expect(KeyAuthorization.fromRpc(rpc)).toEqual(signed)
+  })
+
+  test('verifies for the attested address', () => {
+    expect(
+      SignatureEnvelope.verify(signed.signature, {
+        address: AttestedSigner.getAddress(fields),
+        payload,
+      }),
+    ).toBe(true)
   })
 })

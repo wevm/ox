@@ -9,6 +9,7 @@ import {
   WebAuthnP256,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
+import * as AttestedSigner from './AttestedSigner.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
@@ -1642,5 +1643,58 @@ describe('validate', () => {
         validAfter: 200,
       }),
     ).toBe(false)
+  })
+})
+
+describe('expiringNonceKey', () => {
+  test('default', () => {
+    expect(TxEnvelopeTempo.expiringNonceKey).toBe(2n ** 256n - 1n)
+  })
+})
+
+// Mirrors the node's attested signers proof of concept (tempoxyz/tempo
+// `exp/attested-signers`): a `TempoSignature::Attested` sender is
+// `attested_address(policy_id, user_tag)`, and the program key signs the
+// attested digest of the transaction sign payload.
+describe('attested signature (TIP-1160)', () => {
+  const privateKey = `0x${'11'.repeat(32)}` as const
+  const fields = {
+    policyId: `0x${'aa'.repeat(32)}`,
+    programKey: P256.getPublicKey({ privateKey }),
+    slot: 1,
+    userTag: `0x${'bb'.repeat(32)}`,
+    validUntil: 1_800_000_600,
+  } as const
+  const transaction = TxEnvelopeTempo.from({
+    calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+    chainId: 1337,
+    maxFeePerGas: Value.fromGwei('20'),
+    nonce: 0n,
+    nonceKey: TxEnvelopeTempo.expiringNonceKey,
+    validBefore: 1_800_000_030,
+  })
+
+  test('serialize and deserialize', () => {
+    const payload = TxEnvelopeTempo.getSignPayload(transaction)
+    const { r, s } = P256.sign({
+      payload: AttestedSigner.getSignPayload({ ...fields, payload }),
+      privateKey,
+    })
+    const signature = SignatureEnvelope.from({
+      ...fields,
+      signature: { r, s },
+    })
+    const serialized = TxEnvelopeTempo.serialize(transaction, { signature })
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
+      ...transaction,
+      from: AttestedSigner.getAddress(fields),
+      signature,
+    })
+    expect(
+      SignatureEnvelope.verify(signature, {
+        address: AttestedSigner.getAddress(fields),
+        payload,
+      }),
+    ).toBe(true)
   })
 })

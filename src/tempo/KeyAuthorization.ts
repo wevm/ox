@@ -91,24 +91,24 @@ export type KeyAuthorization<
 ) &
   (signed extends true
     ? {
-        signature:
-          | SignatureEnvelope.Primitive<bigintType, numberType>
-          | SignatureEnvelope.Configurable<bigintType, numberType>
+        signature: Signature<bigintType, numberType>
       }
     : {
-        signature?:
-          | SignatureEnvelope.Primitive<bigintType, numberType>
-          | SignatureEnvelope.Configurable<bigintType, numberType>
-          | undefined
+        signature?: Signature<bigintType, numberType> | undefined
       })
 
-/** Signature that can authorize an access key. */
+/**
+ * Signature that can authorize an access key: a primitive, configurable
+ * account, or attested (experimental) signature.
+ */
 export type Signature<bigintType = bigint, numberType = number> =
   | SignatureEnvelope.Primitive<bigintType, numberType>
   | SignatureEnvelope.Configurable<bigintType, numberType>
+  | SignatureEnvelope.Attested<bigintType, numberType>
 
 /** RPC-formatted signature that can authorize an access key. */
 export type SignatureRpc =
+  | SignatureEnvelope.AttestedRpc
   | SignatureEnvelope.ConfigurableRpc
   | SignatureEnvelope.PrimitiveRpc
 
@@ -183,6 +183,7 @@ type SignatureValue =
   | SignatureEnvelope.from.ConfigurableFromConfig
   | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
   | PartialBy<SignatureEnvelope.Configurable, 'type'>
+  | PartialBy<SignatureEnvelope.Attested, 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
 
@@ -507,12 +508,8 @@ export declare namespace from {
   type Options<
     signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = {
-    /** The primitive or configurable account signature to attach to the Key Authorization. */
-    signature?:
-      | signature
-      | SignatureEnvelope.Primitive
-      | SignatureEnvelope.Configurable
-      | undefined
+    /** The primitive, configurable account, or attested signature to attach to the Key Authorization. */
+    signature?: signature | Signature | undefined
   }
 
   type ReturnType<
@@ -1000,9 +997,7 @@ export function toRpc(authorization: Signed): Rpc {
       limit: Hex.fromNumber(limit),
       ...(period ? { period: numberToHex(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(signature) as
-      | SignatureEnvelope.PrimitiveRpc
-      | SignatureEnvelope.ConfigurableRpc,
+    signature: SignatureEnvelope.toRpc(signature) as SignatureRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -1230,7 +1225,7 @@ export class InvalidSignatureTypeError extends Error {
   override readonly name = 'KeyAuthorization.InvalidSignatureTypeError'
   constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
     super(
-      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.`,
+      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`configurable\`, or \`attested\`.`,
     )
   }
 }
