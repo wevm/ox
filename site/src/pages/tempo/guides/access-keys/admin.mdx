@@ -1,10 +1,21 @@
 ---
-description: Create account-bound authorizations for unrestricted admin access keys.
+description: Encode and decode TIP-1049 admin access key authorizations, removed at T14 by TIP-1137.
 ---
 
 import { Card, Cards } from 'vocs'
 
 # Admin Access Keys
+
+:::warning
+[TIP-1137](https://tips.sh/1137) removes admin access keys at T14. From T14, a Tempo node rejects
+any key authorization with `isAdmin: true`, and only the root key, or a configurable account's
+owner quorum, may sign a key authorization. Admin keys authorized before T14 act as regular
+access keys without limits.
+
+To give a second device full control on a T14 network, add its key as an owner of a
+[configurable account](/tempo/guides/transaction-envelopes/configurable-accounts) instead. Ox keeps
+encoding and decoding `isAdmin` so pre-T14 history round-trips.
+:::
 
 :::info
 This guide is intended to be low-level. If you are looking for a high-level abstraction, check out
@@ -22,7 +33,7 @@ from being replayed for a different account.
 Treat admin keys as root-equivalent key-management credentials and use scoped access keys for
 routine application activity.
 
-[See TIP-1049](https://tips.sh/1049)
+[See TIP-1049](https://tips.sh/1049) and [TIP-1137](https://tips.sh/1137)
 
 ## Recipes
 
@@ -140,14 +151,14 @@ non-exportable key material, and provision as few admin keys as possible.
 
 ### Use Account Bindings Deliberately
 
-Set `account` with `isAdmin: true` for an admin key or `isAdmin: false` for an account-bound
-non-admin key. When decoding a wire value that contains `account` without `isAdmin`, Ox preserves
-the binding and defaults `isAdmin` to `false`. An `isAdmin` value without `account` is discarded.
+Set `account` without `isAdmin` for an account-bound non-admin key. The node requires `account`,
+when present, to equal the transaction sender. When decoding a wire value that contains `account`
+without `isAdmin`, Ox preserves the binding and leaves `isAdmin` undefined.
 
 ### Confirm Network Support
 
-TIP-1049 activation can differ between Tempo networks. Confirm that the target node accepts admin
-authorizations before relying on them operationally.
+Admin authorizations are valid only from T6 up to, but not including, T14. Confirm the target
+network's hardfork before submitting one; a T14 node rejects it.
 
 ## See More
 
