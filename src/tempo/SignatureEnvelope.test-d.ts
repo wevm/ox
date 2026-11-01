@@ -38,3 +38,35 @@ test('requires config and primitive approvals', () => {
   }
   expectTypeOf(rpc).toEqualTypeOf<Hex.Hex>()
 })
+
+const attested = SignatureEnvelope.from({
+  policyId: `0x${'aa'.repeat(32)}`,
+  programKey: { prefix: 4, x: '0x01', y: '0x02' },
+  signature: { r: '0x01', s: '0x02', yParity: 0 },
+  slot: 1,
+  userTag: `0x${'bb'.repeat(32)}`,
+  validUntil: 1_800_000_600,
+})
+
+test('infers attested signatures', () => {
+  expectTypeOf<
+    SignatureEnvelope.GetType<typeof attested>
+  >().toEqualTypeOf<'attested'>()
+  expectTypeOf(attested.type).toEqualTypeOf<'attested'>()
+  expectTypeOf(
+    SignatureEnvelope.toRpc(attested),
+  ).toEqualTypeOf<SignatureEnvelope.AttestedRpc>()
+  expectTypeOf(
+    SignatureEnvelope.deserialize('0x06'),
+  ).toEqualTypeOf<SignatureEnvelope.SignatureEnvelope>()
+})
+
+test('accepts attested owner approvals', () => {
+  const configurable = SignatureEnvelope.from({
+    ...envelope,
+    signatures: [attested],
+  })
+  expectTypeOf(configurable.signatures).toEqualTypeOf<
+    readonly SignatureEnvelope.OwnerApproval[]
+  >()
+})

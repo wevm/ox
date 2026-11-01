@@ -148,4 +148,6 @@
 - **Type snapshot config** -- `@ark/attest` 0.16 does not follow root project references. Point `ATTEST_CONFIG.tsconfig` at `test/tsconfig.json`.
 - **Node local storage** -- Node 24+ needs a valid `--localstorage-file` for the `@typescript/vfs` dependency used by attest.
 
+- **Experimental APIs** -- mark unstable public API with the TSDoc `@experimental` modifier (allowed by `jsdoc/check-tag-names` in `vite.config.ts`). Attested signers (`AttestedSigner`, `SignatureEnvelope` `attested`/`0x06`) follow TIP-1160/1161 with key slots, `maxKeyLifetime`, and the lifetime-bound binding, and the node's PoC (`tempoxyz/tempo` `exp/attested-signers`, `docs/exp/attested-signers/CONTRACT.md`) where they differ: the registry is `0xA77E57…` (TIP-1161 names `0x1161…`) and scheme `0xfe` is a chain-1337 dev scheme.
+- **Examples check needs linked exports** -- `pnpm zile examples:check` resolves `ox/*` through the `src` export entries that `pnpm dev` writes. After `pnpm install --ignore-scripts`, run `pnpm dev`, then restore the build-only `./_types/*` export it drops before committing.
 - **Frame nonce encodings** -- omitted `nonceKeys` preserves seven-field EIP-8141 encoding; explicit keys, including `[0n]`, select eight-field EIP-8250 encoding. RPC keeps `nonce` as the shared sequence. Infer `eip8141` from either defined `frames` or `nonceKeys`.

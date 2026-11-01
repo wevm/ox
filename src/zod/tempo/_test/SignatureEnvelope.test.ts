@@ -188,3 +188,50 @@ describe('Keychain', () => {
     ).toMatchInlineSnapshot(`true`)
   })
 })
+
+// Node fixture (tempoxyz/tempo `exp/attested-signers`, `attested.rs` `tests::signed`), as
+// `src/tempo/SignatureEnvelope.test.ts` derives it.
+const attestedRpc = {
+  policyId: `0x${'aa'.repeat(32)}`,
+  programKey:
+    '0x0217e617f0b6443928278f96999e69a23a4f2c152bdf6d6cdf66e5b80282d4ed194a7debcb97712d2dda3ca85aa8765a56f45fc758599652f2897c65306e5794',
+  signature:
+    '0xc377749188175be68110ca4583693ce52050e1d84ab6d0308ea063695bdfdbf81aaeb8779f72f84bbf22c9627c8091dd13f64977848992ebd48a7efc5d6baf2d',
+  slot: 1,
+  userTag: `0x${'bb'.repeat(32)}`,
+  validUntil: 1_800_000_600,
+} as const
+
+describe('Attested', () => {
+  test('round-trips the RPC envelope', () => {
+    const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, attestedRpc)
+    expect(decoded).toEqual(core_SignatureEnvelope.fromRpc(attestedRpc))
+    expect(decoded.type).toBe('attested')
+    expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
+      attestedRpc,
+    )
+  })
+
+  test('accepts attested owner approvals', () => {
+    const approval = core_SignatureEnvelope.fromRpc(attestedRpc)
+    expect(
+      z.safeParse(z_SignatureEnvelope.Configurable, {
+        ...envelope,
+        signatures: [approval],
+      }).success,
+    ).toBe(true)
+  })
+
+  test('rejects a slot out of range and a high s', () => {
+    expect(
+      z.safeParse(z_SignatureEnvelope.AttestedRpc, { ...attestedRpc, slot: 8 })
+        .success,
+    ).toBe(false)
+    expect(
+      z.safeParse(z_SignatureEnvelope.AttestedRpc, {
+        ...attestedRpc,
+        signature: `${attestedRpc.signature.slice(0, 66)}${'ff'.repeat(32)}`,
+      }).success,
+    ).toBe(false)
+  })
+})
