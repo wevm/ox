@@ -178,6 +178,14 @@ export function decodeAddress(
 ) {
   const { checksum = false } = options
   const value = cursor.readBytes(32)
+  // An address occupies the low 20 bytes of the word; the high 12 bytes
+  // must be zero padding.
+  for (let i = 0; i < 12; i++)
+    if (value[i] !== 0)
+      throw new Address.InvalidAddressError({
+        address: Hex.fromBytes(value),
+        cause: new Address.InvalidInputError(),
+      })
   const wrap = (address: Hex.Hex) =>
     checksum ? Address.checksum(address) : address
   return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
@@ -185,6 +193,7 @@ export function decodeAddress(
 
 export declare namespace decodeAddress {
   type ErrorType =
+    | Address.InvalidAddressError
     | Hex.fromBytes.ErrorType
     | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
@@ -356,19 +365,28 @@ export function decodeNumber(
 ) {
   const signed = param.type.startsWith('int')
   const size = Number.parseInt(param.type.split('int')[1] || '256', 10)
-  const value = cursor.readBytes(32)
-  return [
-    size > 48
-      ? Bytes.toBigInt(value, { signed })
-      : Bytes.toNumber(value, { signed }),
-    32,
-  ]
+  const value = Bytes.toBigInt(cursor.readBytes(32), { signed })
+  // The word must hold a value that fits the declared size (zero-padded for
+  // unsigned, sign-extended for signed types).
+  if (size < 256) {
+    const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+    const min = signed ? -max - 1n : 0n
+    if (value > max || value < min)
+      throw new Hex.IntegerOutOfRangeError({
+        max: max.toString(),
+        min: min.toString(),
+        signed,
+        size: size / 8,
+        value: value.toString(),
+      })
+  }
+  return [size > 48 ? value : Number(value), 32]
 }
 
 export declare namespace decodeNumber {
   type ErrorType =
-    | Bytes.toNumber.ErrorType
     | Bytes.toBigInt.ErrorType
+    | Hex.IntegerOutOfRangeError
     | Errors.GlobalErrorType
 }
 
