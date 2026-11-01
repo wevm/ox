@@ -11,12 +11,12 @@ runs:
   using: "composite"
   steps:
     - name: Set up foundry
-      uses: foundry-rs/foundry-toolchain@8b0419c685ef46cb79ec93fbdc131174afceb730 # v1.6.0
+      uses: wevm/actions/vendor/foundry-rs/foundry-toolchain/v1.6.0@8963daf30237417f873c8e2f17e3bf9415e3a7b9
       with:
         version: nightly
 
     - name: Set up pnpm
-      uses: wevm/actions/.github/actions/pnpm@f95dc1dadcba18fe3f02b8205e653e98e4a93516
+      uses: wevm/actions/.github/actions/pnpm@8963daf30237417f873c8e2f17e3bf9415e3a7b9
       with:
         node-version: 24.5
         skip-cache: ${{ inputs.skip-cache }}
