@@ -118,8 +118,8 @@ describe('configurable account binding', () => {
   })
 
   test('behavior: accepts unbound configurable grants', () => {
-    // The node binds a root-signed grant to its signer, so only admin-signed
-    // grants need `account` (TIP-1049).
+    // The node binds a grant to its signer, so `account` is optional. From T14
+    // only the root key or owner quorum may sign a grant (TIP-1137).
     const signed = KeyAuthorization.from(
       { address, chainId: 1n, type: 'configurable' },
       { signature: signature_secp256k1 },
@@ -2743,7 +2743,9 @@ describe('witness (TIP-1053)', () => {
   })
 })
 
-describe('admin keys (TIP-1049)', () => {
+// TIP-1137 removes admin keys at T14, but the wire fields are unchanged, so
+// pre-T14 history (T6 to T13) must still encode, decode, and hash.
+describe('historical admin keys (TIP-1049)', () => {
   const account = '0x1111111111111111111111111111111111111111' as const
 
   test('from: preserves isAdmin and account', () => {
@@ -2928,7 +2930,7 @@ describe('admin keys (TIP-1049)', () => {
   })
 
   describe('configurable admin keys', () => {
-    test('behavior: a configurable account may sign or be granted an admin key', () => {
+    test('behavior: round-trips a pre-T14 configurable admin grant', () => {
       const signed = KeyAuthorization.from(
         {
           account: signature_configurable.account,
