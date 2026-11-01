@@ -106,6 +106,19 @@ describe('assert', () => {
     )
   })
 
+  test('tip above zero fee cap', () => {
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 1n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+    )
+  })
+
   test('invalid chain id', () => {
     expect(() =>
       TxEnvelopeTempo.assert({
@@ -136,6 +149,19 @@ describe('deserialize', () => {
     const serialized = TxEnvelopeTempo.serialize(transaction)
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized).toEqual(transaction)
+  })
+
+  test('tip above empty fee cap', () => {
+    const serialized = TxEnvelopeTempo.serialize({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxPriorityFeePerGas: 1n,
+    })
+    expect(() =>
+      TxEnvelopeTempo.deserialize(serialized),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+    )
   })
 
   test('fee payer', () => {
