@@ -71,6 +71,31 @@ export const WebAuthnRpc = z.object({
 /** RPC primitive signature envelope schema. */
 export const PrimitiveRpc = z.union([Secp256k1Rpc, P256Rpc, WebAuthnRpc])
 
+/**
+ * RPC attested signature envelope schema (type `0x06`), as the node serializes it.
+ *
+ * @experimental
+ */
+export const AttestedRpc = z
+  .object({
+    policyId: z_Hex.Hex32,
+    programKey: z_Hex.Hex,
+    signature: z_Hex.Hex,
+    slot: z.number(),
+    userTag: z_Hex.Hex32,
+    validUntil: z.number(),
+  })
+  .check(
+    z.refine((value) => {
+      try {
+        core_SignatureEnvelope.fromRpc(value)
+        return true
+      } catch {
+        return false
+      }
+    }, 'expected valid attested signature'),
+  )
+
 /** RPC keychain signature envelope schema. */
 export const KeychainRpc = z
   .object({
@@ -114,6 +139,7 @@ export const Rpc = z.union([
   WebAuthnRpc,
   KeychainRpc,
   ConfigurableRpc,
+  AttestedRpc,
 ])
 
 /** secp256k1 signature envelope schema. */
@@ -144,6 +170,31 @@ export const WebAuthn = z.object({
 /** Primitive signature envelope schema. */
 export const Primitive = z.union([Secp256k1, P256, WebAuthn])
 
+/**
+ * Attested signature envelope schema (type `0x06`).
+ *
+ * @experimental
+ */
+export const Attested = z
+  .object({
+    policyId: z_Hex.Hex32,
+    programKey: PublicKey,
+    signature: Signature,
+    slot: z.number(),
+    type: z.literal('attested'),
+    userTag: z_Hex.Hex32,
+    validUntil: z.number(),
+  })
+  .check(
+    z.refine(
+      (value) => core_SignatureEnvelope.validate(value),
+      'expected valid attested signature',
+    ),
+  )
+
+/** Configurable account owner approval schema: a primitive or attested signature. */
+export const OwnerApproval = z.union([Secp256k1, P256, WebAuthn, Attested])
+
 /** Keychain signature envelope schema. */
 export const Keychain = z
   .object({
@@ -171,7 +222,7 @@ export const Configurable = z
     config: z_AccountConfig.Config,
     signatures: z.readonly(
       z
-        .array(Primitive)
+        .array(OwnerApproval)
         .check(z.minLength(1), z.maxLength(core_AccountConfig.maxSignatures)),
     ),
     type: z.literal('configurable'),
@@ -191,6 +242,7 @@ export const Domain = z.union([
   WebAuthn,
   Keychain,
   Configurable,
+  Attested,
 ])
 
 /** Codec decoding an RPC signature envelope into a signature envelope. */
@@ -207,6 +259,8 @@ function fromRpc(
   value: core_SignatureEnvelope.SignatureEnvelopeRpc,
 ): core_SignatureEnvelope.SignatureEnvelope {
   if (typeof value === 'string') return core_SignatureEnvelope.fromRpc(value)
+  if ('policyId' in value && value.policyId !== undefined)
+    return core_SignatureEnvelope.fromRpc(value)
   if (value.type === 'secp256k1') {
     const secp256k1 = value as core_SignatureEnvelope.Secp256k1Rpc
     return {
@@ -307,6 +361,11 @@ function toRpc(
   if (value.type === 'configurable')
     return core_SignatureEnvelope.toRpc(
       value as core_SignatureEnvelope.Configurable,
+    )
+
+  if (value.type === 'attested')
+    return core_SignatureEnvelope.toRpc(
+      value as core_SignatureEnvelope.Attested,
     )
 
   const keychain = value as core_SignatureEnvelope.Keychain

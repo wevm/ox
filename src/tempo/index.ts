@@ -54,6 +54,37 @@ export * as AccountOperation from './AccountOperation.js'
  */
 export * as AccountSimulation from './AccountSimulation.js'
 /**
+ * Attested signer utilities (TIP-1159 to TIP-1163). Experimental.
+ *
+ * An attested signer is a program in a trusted execution environment whose
+ * P256 program key the Attested Key Registry precompile records after
+ * verifying an attestation document. The program key signs attested
+ * signatures (type `0x06`) for the address derived from a policy ID and a user
+ * tag. Derives attested addresses, policy IDs, registration bindings, key IDs,
+ * and the digest a program key signs, and exposes the registry ABI and address.
+ *
+ * [TIP-1159](https://tips.sh/1159) · [TIP-1160](https://tips.sh/1160) · [TIP-1161](https://tips.sh/1161)
+ *
+ * @example
+ * ```ts twoslash
+ * import { AttestedSigner } from 'ox/tempo'
+ *
+ * const policyId = AttestedSigner.getPolicyId({
+ *   creator: '0x0101010101010101010101010101010101010101',
+ *   salt: `0x${'55'.repeat(32)}`
+ * })
+ *
+ * const address = AttestedSigner.getAddress({
+ *   policyId,
+ *   userTag: `0x${'bb'.repeat(32)}`
+ * })
+ * ```
+ *
+ * @experimental
+ * @category Reference
+ */
+export * as AttestedSigner from './AttestedSigner.js'
+/**
  * Utilities for Tempo-flavoured EIP-7702 authorizations.
  *
  * Tempo extends EIP-7702 to support more signature types (secp256k1, P256, and WebAuthn),
