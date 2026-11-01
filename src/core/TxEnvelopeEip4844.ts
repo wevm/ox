@@ -274,6 +274,12 @@ export function deserialize(
   )
   if (maxPriorityFeePerGas_ !== undefined)
     transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if (accessList && (accessList as readonly unknown[]).length !== 0)
     transaction.accessList = AccessList.fromTupleList(
       Tx.bytesTreeToHex(accessList as never) as never,

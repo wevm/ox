@@ -214,8 +214,8 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
     })
 
   if (
-    maxPriorityFeePerGas &&
-    maxFeePerGas &&
+    typeof maxPriorityFeePerGas === 'bigint' &&
+    typeof maxFeePerGas === 'bigint' &&
     maxPriorityFeePerGas > maxFeePerGas
   )
     throw new TransactionEnvelope.TipAboveFeeCapError({
@@ -335,6 +335,12 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if (Hex.validate(nonceKey))
     transaction.nonceKey = nonceKey === '0x' ? 0n : BigInt(nonceKey)
   if (Hex.validate(validBefore) && validBefore !== '0x')

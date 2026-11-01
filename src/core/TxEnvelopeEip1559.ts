@@ -77,8 +77,8 @@ export function assert(envelope: PartialBy<TxEnvelopeEip1559, 'type'>) {
   if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
     throw new TransactionEnvelope.FeeCapTooHighError({ feeCap: maxFeePerGas })
   if (
-    maxPriorityFeePerGas &&
-    maxFeePerGas &&
+    typeof maxPriorityFeePerGas === 'bigint' &&
+    typeof maxFeePerGas === 'bigint' &&
     maxPriorityFeePerGas > maxFeePerGas
   )
     throw new TransactionEnvelope.TipAboveFeeCapError({
@@ -182,6 +182,12 @@ export function deserialize(
     Tx.bytesToBigIntOrUndefined(maxPriorityFeePerGas)
   if (maxPriorityFeePerGas_ !== undefined)
     transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if ((accessList as unknown as readonly unknown[]).length !== 0)
     transaction.accessList = AccessList.fromTupleList(
       Tx.bytesTreeToHex(accessList as never) as never,
