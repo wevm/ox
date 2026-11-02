@@ -684,8 +684,40 @@ export function decodeLog<const abi extends Abi.Abi | readonly unknown[]>(
   options?: decodeLog.Options,
 ): decodeLog.ReturnType<decodeLog.ExtractEvent<abi>> {
   const selector = log.topics[0]
+  const abiEvents = (abi as Abi.Abi).filter(
+    (item): item is AbiEvent => item.type === 'event',
+  )
+  // Anonymous events omit the signature topic, so they are never matched by
+  // `topics[0]`.
+  const named = abiEvents.filter((item) => item.anonymous !== true)
+
+  // Nothing in a log identifies an anonymous event, so any log with the same
+  // topic count fits it. Anonymous events are only considered when every
+  // event in the ABI is anonymous. For a mixed ABI, decode with the event
+  // itself through `AbiEvent.decode`.
+  const hasSelectorMatch =
+    selector !== undefined &&
+    named.some((item) => getSelector(item) === selector)
+  if (
+    !hasSelectorMatch &&
+    abiEvents.length > 0 &&
+    abiEvents.every((item) => item.anonymous === true)
+  ) {
+    const candidates = abiEvents.filter(
+      (item) => indexedCount(item) === log.topics.length,
+    )
+    if (candidates.length > 1)
+      throw new AnonymousEventAmbiguityError({ abiEvents: candidates })
+    const abiEvent = candidates[0] as decodeLog.ExtractEvent<abi> | undefined
+    if (abiEvent)
+      return {
+        event: abiEvent,
+        args: decode(abiEvent, log, options),
+      }
+  }
+
   if (!selector) throw new SelectorTopicNotFoundError()
-  const abiEvent = fromAbi(abi, selector) as decodeLog.ExtractEvent<abi>
+  const abiEvent = fromAbi(named, selector) as decodeLog.ExtractEvent<abi>
   return {
     event: abiEvent,
     args: decode(abiEvent, log, options),
@@ -706,6 +738,7 @@ export declare namespace decodeLog {
   }
 
   type ErrorType =
+    | AnonymousEventAmbiguityError
     | decode.ErrorType
     | fromAbi.ErrorType
     | SelectorTopicNotFoundError
@@ -780,13 +813,40 @@ export function extractLogs<
   const abiEvents = (abi as Abi.Abi).filter(
     (item): item is AbiEvent => item.type === 'event',
   )
+  // Nothing in a log identifies an anonymous event, so any log with the same
+  // topic count fits it. Anonymous events are only considered when requested:
+  // `eventName` names one, or every event in the ABI is anonymous. Otherwise a
+  // log from another contract is extracted as the anonymous event.
+  const anonymousEvents = (() => {
+    if (eventName)
+      return abiEvents.filter(
+        (item) => item.anonymous === true && eventName.includes(item.name),
+      )
+    if (abiEvents.every((item) => item.anonymous === true)) return abiEvents
+    return []
+  })()
   const out: extractLogs.ReturnType[] = []
   for (const log of logs) {
     const log_ = formatExtractLog(log)
     const selector = log_.topics[0]
-    if (!selector) continue
 
-    const items = abiEvents.filter((item) => getSelector(item) === selector)
+    const items = (() => {
+      // A signature match wins, so an anonymous event never claims a log
+      // whose signature is known.
+      const bySelector = selector
+        ? abiEvents.filter(
+            (item) => item.anonymous !== true && getSelector(item) === selector,
+          )
+        : []
+      if (bySelector.length > 0) return bySelector
+      // A dynamic ABI value can decode as a static type without throwing, so
+      // several anonymous events with the same topic count are not guessed.
+      const candidates = anonymousEvents.filter(
+        (item) => indexedCount(item) === log_.topics.length,
+      )
+      if (candidates.length === 1) return candidates
+      return []
+    })()
     if (items.length === 0) continue
 
     let event:
@@ -809,7 +869,9 @@ export function extractLogs<
       } catch {}
     }
 
-    if (!event && !strict) {
+    // An anonymous event that fails to decode is not identified, so the
+    // non-strict fallback only applies to a signature match.
+    if (!event && !strict && items[0]!.anonymous !== true) {
       const item = items[0]!
       try {
         event = {
@@ -940,19 +1002,22 @@ function decodeForExtract(
   const { data, topics } = log
   const { strict } = options
 
-  const selector = topics[0]
-  if (selector !== getSelector(abiEvent))
-    throw new SelectorTopicMismatchError({
-      abiEvent,
-      actual: selector,
-      expected: getSelector(abiEvent),
-    })
+  const isAnonymous = abiEvent.anonymous === true
+  if (!isAnonymous) {
+    const selector = topics[0]
+    if (selector !== getSelector(abiEvent))
+      throw new SelectorTopicMismatchError({
+        abiEvent,
+        actual: selector,
+        expected: getSelector(abiEvent),
+      })
+  }
 
   const { inputs } = abiEvent
   const isUnnamed = inputs.some((x) => !('name' in x && x.name))
   const args: any = isUnnamed ? [] : {}
 
-  const argTopics = topics.slice(1)
+  const argTopics = isAnonymous ? topics : topics.slice(1)
   const indexedInputs: [abitype.AbiEventParameter, number][] = []
   const nonIndexedInputs: abitype.AbiEventParameter[] = []
   const missingIndexedInputs: [abitype.AbiEventParameter, number][] = []
@@ -1074,6 +1139,10 @@ function formatExtractLog<const log extends extractLogs.Log>(log: log) {
   }
 }
 
+function indexedCount(abiEvent: AbiEvent) {
+  return abiEvent.inputs.filter((input) => input.indexed).length
+}
+
 function includesArgs(
   abiEvent: AbiEvent,
   args: unknown,
@@ -1082,11 +1151,12 @@ function includesArgs(
 ) {
   try {
     if (!matchArgs) return true
-    // Topics hold the selector, then indexed inputs in order. Non-strict
-    // decoding reads indexed inputs without a topic from data.
+    // Topics hold the selector, then indexed inputs in order. Anonymous events
+    // have no selector topic. Non-strict decoding reads indexed inputs without
+    // a topic from data.
     const topicInputs = abiEvent.inputs
       .filter((input) => input.indexed)
-      .slice(0, topics.length - 1)
+      .slice(0, abiEvent.anonymous === true ? topics.length : topics.length - 1)
     assertMatchingArgs(abiEvent, args, matchArgs, topicInputs)
     return true
   } catch {
@@ -2017,5 +2087,84 @@ export class FilterTypeNotSupportedError extends Errors.BaseError {
   override readonly name = 'AbiEvent.FilterTypeNotSupportedError'
   constructor(type: string) {
     super(`Filter type "${type}" is not supported.`)
+  }
+}
+
+/**
+ * Thrown when a log fits more than one anonymous event in an ABI. An anonymous
+ * log has no selector topic, so anonymous events with the same number of
+ * indexed inputs cannot be told apart.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   {
+ *     anonymous: true,
+ *     inputs: [
+ *       { indexed: true, name: 'from', type: 'address' },
+ *       { name: 'value', type: 'uint256' }
+ *     ],
+ *     name: 'Count',
+ *     type: 'event'
+ *   },
+ *   {
+ *     anonymous: true,
+ *     inputs: [
+ *       { indexed: true, name: 'from', type: 'address' },
+ *       { name: 'note', type: 'string' }
+ *     ],
+ *     name: 'Message',
+ *     type: 'event'
+ *   }
+ * ])
+ *
+ * AbiEvent.decodeLog(abi, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
+ * })
+ * // @error: AbiEvent.AnonymousEventAmbiguityError: Found ambiguous anonymous events for the log.
+ * ```
+ *
+ * ### Solution
+ *
+ * Decode the log with the intended event.
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const count = AbiEvent.from({
+ *   anonymous: true,
+ *   inputs: [
+ *     { indexed: true, name: 'from', type: 'address' },
+ *     { name: 'value', type: 'uint256' }
+ *   ],
+ *   name: 'Count',
+ *   type: 'event'
+ * })
+ *
+ * AbiEvent.decode(count, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
+ * })
+ * ```
+ */
+export class AnonymousEventAmbiguityError extends Errors.BaseError {
+  override readonly name = 'AbiEvent.AnonymousEventAmbiguityError'
+
+  constructor({ abiEvents }: { abiEvents: readonly AbiEvent[] }) {
+    super('Found ambiguous anonymous events for the log.', {
+      metaMessages: [
+        ...abiEvents.map((abiEvent) => `- \`${format(abiEvent)}\``),
+        '',
+        'These events take the same number of indexed topics.',
+        'Decode the log with `AbiEvent.decode` and the intended event.',
+      ],
+    })
   }
 }
