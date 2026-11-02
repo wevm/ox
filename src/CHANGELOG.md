@@ -1,5 +1,19 @@
 # ox
 
+## 0.14.61
+
+### Patch Changes
+
+- [#561](https://github.com/wevm/ox/pull/561) [`f9e8a6e`](https://github.com/wevm/ox/commit/f9e8a6e1ea057f1c597dc809266cd9ae1382f3e2) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.fromAbi` resolving indistinguishable overloads, such as `bytes32` and `bytes`, `uint256` and `int256`, or `uint256[]` and `uint256[2]`, to the last match. It now throws `AbiItem.AmbiguityError`, and a selector selects the overload. An overload matches only an integer in its range or fixed bytes of its size.
+
+- [#559](https://github.com/wevm/ox/pull/559) [`4f5a87a`](https://github.com/wevm/ox/commit/4f5a87ae99e0f34e29da0e81f13bb8ac2aade921) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` accepting `intN`/`uintN` words outside the declared type's range and `address` words with non-zero padding; it now throws `Hex.IntegerOutOfRangeError` or `Address.InvalidAddressError`, matching Solidity's `abi.decode`.
+
+- [#555](https://github.com/wevm/ox/pull/555) [`c18169b`](https://github.com/wevm/ox/commit/c18169b8a7edcd774d7545ba008f6a702e87d816) Thanks [@jxom](https://github.com/jxom)! - Deprecated `KeyAuthorization` `isAdmin` and updated `account` docs for TIP-1137, which removes admin access keys at T14 while keeping their wire encoding decodable.
+
+- [#561](https://github.com/wevm/ox/pull/561) [`f9e8a6e`](https://github.com/wevm/ox/commit/f9e8a6e1ea057f1c597dc809266cd9ae1382f3e2) Thanks [@jxom](https://github.com/jxom)! - Fixed `TxEnvelopeEip1559.assert`, `TxEnvelopeEip4844.assert`, `TxEnvelopeEip7702.assert`, and `TxEnvelopeTempo.assert` accepting a `maxPriorityFeePerGas` above a zero `maxFeePerGas`. Their `deserialize` functions now read an empty `maxFeePerGas` as zero when a tip is set, so such a transaction throws `TransactionEnvelope.TipAboveFeeCapError`. Zero fees now show in the error messages.
+
+- [#561](https://github.com/wevm/ox/pull/561) [`f9e8a6e`](https://github.com/wevm/ox/commit/f9e8a6e1ea057f1c597dc809266cd9ae1382f3e2) Thanks [@jxom](https://github.com/jxom)! - Fixed `TypedData.assert` and `TypedData.validate` accepting invalid struct names, such as `uint7`, `bytes32` or `Foo.Bar`, and invalid field types, such as `uint`, `uint7`, `bytes0` or an undefined struct, including in structs referenced only as array elements. They now throw `TypedData.InvalidStructTypeError` and the new `TypedData.InvalidTypeError`. `TypedData.encodeType` now includes struct names that contain `# ox.
+
 ## 0.14.60
 
 ### Patch Changes
