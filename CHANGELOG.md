@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.14
+
+### Patch Changes
+
+- [#564](https://github.com/wevm/ox/pull/564) [`b03705a`](https://github.com/wevm/ox/commit/b03705a605362b36df1503644626b55fab7b0aea) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.decodeLog` and `AbiEvent.extractLogs` to decode anonymous event logs when every event in the ABI is anonymous or, for `extractLogs`, when `eventName` names the event, throwing `AbiEvent.AnonymousEventAmbiguityError` from `decodeLog` when several anonymous events fit.
+
 ## 1.8.13
 
 ### Patch Changes
