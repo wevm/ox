@@ -82,7 +82,7 @@
     "vp": "catalog:",
     "zile": "catalog:"
   },
-  "packageManager": "pnpm@11.13.1",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": ">=22"
   },
