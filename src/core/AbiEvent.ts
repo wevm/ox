@@ -386,15 +386,21 @@ export function decode(
 
   const { data, topics } = log
 
-  const [selector_, ...argTopics] = topics
+  // Anonymous events omit the selector topic, so every topic is an indexed
+  // input.
+  const isAnonymous = abiEvent.anonymous === true
+  const argTopics = isAnonymous ? topics : topics.slice(1)
 
-  const selector = getSelector(abiEvent)
-  if (selector_ !== selector)
-    throw new SelectorTopicMismatchError({
-      abiEvent,
-      actual: selector_,
-      expected: selector,
-    })
+  if (!isAnonymous) {
+    const selector_ = topics[0]
+    const selector = getSelector(abiEvent)
+    if (selector_ !== selector)
+      throw new SelectorTopicMismatchError({
+        abiEvent,
+        actual: selector_,
+        expected: selector,
+      })
+  }
 
   const { inputs } = abiEvent
   const isUnnamed = inputs?.every((x) => !('name' in x && x.name))
@@ -701,6 +707,10 @@ export function encode(
     }
   }
 
+  // Anonymous events are not identified by a selector topic, so the selector
+  // is not prepended.
+  if (abiEvent.anonymous === true) return { topics }
+
   const selector = (() => {
     if (abiEvent.hash) return abiEvent.hash
     return getSelector(abiEvent)
@@ -726,9 +736,10 @@ export declare namespace encode {
     : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
-    topics: Compute<
-      [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
-    >
+    /** Event topics. Anonymous events have no selector topic. */
+    topics:
+      | Compute<[selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]>
+      | readonly (Hex.Hex | readonly Hex.Hex[] | null)[]
   }
 
   type ErrorType =
