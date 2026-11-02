@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.62
+
+### Patch Changes
+
+- [#565](https://github.com/wevm/ox/pull/565) [`20457a6`](https://github.com/wevm/ox/commit/20457a61f6b768556515314e676551d02e7ba899) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.decode` and `AbiEvent.encode` for anonymous events: `decode` no longer expects a selector topic and reads every topic as an indexed input, and `encode` no longer prepends the selector.
+
 ## 0.14.61
 
 ### Patch Changes
