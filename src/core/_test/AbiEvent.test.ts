@@ -259,6 +259,78 @@ describe('assertArgs', () => {
 })
 
 describe('decode', () => {
+  test('behavior: anonymous event', () => {
+    const abiEvent = AbiEvent.from({
+      anonymous: true,
+      inputs: [
+        { indexed: false, name: 'note', type: 'string' },
+        { indexed: true, name: 'from', type: 'address' },
+        { indexed: true, name: 'id', type: 'uint256' },
+      ],
+      name: 'Message',
+      type: 'event',
+    })
+    const log = {
+      data: AbiParameters.encode([{ type: 'string' }], ['hello']),
+      topics: [
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      ],
+    } as const
+
+    expect(AbiEvent.decode(abiEvent, log)).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "id": 1n,
+        "note": "hello",
+      }
+    `)
+  })
+
+  test('behavior: anonymous event without indexed inputs', () => {
+    const abiEvent = AbiEvent.from({
+      anonymous: true,
+      inputs: [{ indexed: false, name: 'note', type: 'string' }],
+      name: 'Note',
+      type: 'event',
+    })
+
+    expect(
+      AbiEvent.decode(abiEvent, {
+        data: AbiParameters.encode([{ type: 'string' }], ['hello']),
+        topics: [],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "note": "hello",
+      }
+    `)
+  })
+
+  test('error: anonymous event with a missing topic', () => {
+    const abiEvent = AbiEvent.from({
+      anonymous: true,
+      inputs: [
+        { indexed: false, name: 'note', type: 'string' },
+        { indexed: true, name: 'from', type: 'address' },
+        { indexed: true, name: 'id', type: 'uint256' },
+      ],
+      name: 'Message',
+      type: 'event',
+    })
+
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        data: AbiParameters.encode([{ type: 'string' }], ['hello']),
+        topics: [
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiEvent.TopicsMismatchError: Expected a topic for indexed event parameter "id" for "event Message(string note, address indexed from, uint256 indexed id)".]`,
+    )
+  })
+
   test('behavior: named', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -592,6 +664,68 @@ describe('decode', () => {
 })
 
 describe('encode', () => {
+  test('behavior: anonymous event', () => {
+    const abiEvent = AbiEvent.from({
+      anonymous: true,
+      inputs: [
+        { indexed: false, name: 'note', type: 'string' },
+        { indexed: true, name: 'from', type: 'address' },
+        { indexed: true, name: 'id', type: 'uint256' },
+      ],
+      name: 'Message',
+      type: 'event',
+    })
+
+    expect(
+      AbiEvent.encode(abiEvent, {
+        from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        id: 1n,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+        ],
+      }
+    `)
+    expect(AbiEvent.encode(abiEvent)).toMatchInlineSnapshot(`
+      {
+        "topics": [],
+      }
+    `)
+  })
+
+  test('behavior: anonymous event round-trips through decode', () => {
+    const abiEvent = AbiEvent.from({
+      anonymous: true,
+      inputs: [
+        { indexed: false, name: 'note', type: 'string' },
+        { indexed: true, name: 'from', type: 'address' },
+        { indexed: true, name: 'id', type: 'uint256' },
+      ],
+      name: 'Message',
+      type: 'event',
+    })
+    const { topics } = AbiEvent.encode(abiEvent, {
+      from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      id: 1n,
+    })
+
+    expect(
+      AbiEvent.decode(abiEvent, {
+        data: AbiParameters.encode([{ type: 'string' }], ['hello']),
+        topics: topics as readonly Hex.Hex[],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "id": 1n,
+        "note": "hello",
+      }
+    `)
+  })
+
   test('default', () => {
     const transfer = AbiEvent.from('event Transfer()')
     expect(AbiEvent.encode(transfer)).toMatchInlineSnapshot(`
