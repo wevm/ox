@@ -706,6 +706,135 @@ describe('decodeLog', () => {
     `)
   })
 
+  test('behavior: decodes an anonymous event when every event is anonymous', () => {
+    const abi = Abi.from([
+      {
+        anonymous: true,
+        inputs: [{ indexed: true, name: 'from', type: 'address' }],
+        name: 'Ping',
+        type: 'event',
+      },
+      {
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'from', type: 'address' },
+          { indexed: true, name: 'to', type: 'address' },
+        ],
+        name: 'Pair',
+        type: 'event',
+      },
+    ])
+
+    const decoded = AbiEvent.decodeLog(abi, {
+      data: '0x',
+      topics: [
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    })
+
+    expect(decoded.event.name).toMatchInlineSnapshot(`"Ping"`)
+    expect(decoded.args).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+  })
+
+  test('behavior: a selector match wins over an anonymous event', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, uint256 value)',
+    )
+    const abi = [
+      {
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'a', type: 'bytes32' },
+          { indexed: true, name: 'b', type: 'bytes32' },
+        ],
+        name: 'Anon',
+        type: 'event',
+      },
+      transfer,
+    ]
+
+    const decoded = AbiEvent.decodeLog(abi, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    })
+
+    expect(decoded.event.name).toMatchInlineSnapshot(`"Transfer"`)
+  })
+
+  test('error: anonymous events are not matched in a mixed ABI', () => {
+    const abi = [
+      AbiEvent.from('event Transfer(address indexed from, uint256 value)'),
+      AbiEvent.from({
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'a', type: 'address' },
+          { indexed: true, name: 'b', type: 'address' },
+        ],
+        name: 'Anon',
+        type: 'event',
+      }),
+    ]
+
+    expect(() =>
+      AbiEvent.decodeLog(abi, {
+        data: '0x',
+        topics: [
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiItem.NotFoundError: ABI item with name "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac" not found.]`,
+    )
+  })
+
+  test('error: anonymous events with the same topic count', () => {
+    const abi = Abi.from([
+      {
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'from', type: 'address' },
+          { indexed: false, name: 'value', type: 'uint256' },
+        ],
+        name: 'Count',
+        type: 'event',
+      },
+      {
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'from', type: 'address' },
+          { indexed: false, name: 'note', type: 'string' },
+        ],
+        name: 'Message',
+        type: 'event',
+      },
+    ])
+
+    expect(() =>
+      AbiEvent.decodeLog(abi, {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        topics: [
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.AnonymousEventAmbiguityError: Found ambiguous anonymous events for the log.
+
+      - \`event Count(address indexed from, uint256 value)\`
+      - \`event Message(address indexed from, string note)\`
+
+      These events take the same number of indexed topics.
+      Decode the log with \`AbiEvent.decode\` and the intended event.]
+    `)
+  })
+
   test('error: selector topic not found', () => {
     const transfer = AbiEvent.from('event Transfer(address indexed from)')
 
@@ -717,6 +846,115 @@ describe('decodeLog', () => {
 })
 
 describe('extractLogs', () => {
+  test('behavior: anonymous events', () => {
+    const abi = [
+      AbiEvent.from('event Transfer(address indexed from, uint256 value)'),
+      AbiEvent.from({
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'from', type: 'address' },
+          { indexed: true, name: 'to', type: 'address' },
+        ],
+        name: 'Ping',
+        type: 'event',
+      }),
+    ]
+    const transfer = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abi[0]!),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+    const ping = {
+      data: '0x',
+      topics: [
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      ],
+    } as const
+
+    // Without `eventName`, an anonymous event in a mixed ABI is not requested,
+    // so a log with an unknown selector is not extracted as it.
+    expect(AbiEvent.extractLogs(abi, [transfer, ping]).map((x) => x.eventName))
+      .toMatchInlineSnapshot(`
+      [
+        "Transfer",
+      ]
+    `)
+    expect(
+      AbiEvent.extractLogs(abi, [transfer, ping], {
+        eventName: ['Ping', 'Transfer'],
+      }).map((x) => [x.eventName, x.args]),
+    ).toMatchInlineSnapshot(`
+      [
+        [
+          "Transfer",
+          {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "value": 1n,
+          },
+        ],
+        [
+          "Ping",
+          {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          },
+        ],
+      ]
+    `)
+    expect(
+      AbiEvent.extractLogs([abi[1]], [ping], {
+        args: { to: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' },
+      }).map((x) => x.eventName),
+    ).toMatchInlineSnapshot(`
+      [
+        "Ping",
+      ]
+    `)
+  })
+
+  test('behavior: skips logs that fit several anonymous events', () => {
+    const abi = Abi.from([
+      {
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'from', type: 'address' },
+          { indexed: false, name: 'value', type: 'uint256' },
+        ],
+        name: 'Count',
+        type: 'event',
+      },
+      {
+        anonymous: true,
+        inputs: [
+          { indexed: true, name: 'from', type: 'address' },
+          { indexed: false, name: 'note', type: 'string' },
+        ],
+        name: 'Message',
+        type: 'event',
+      },
+    ])
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    expect(AbiEvent.extractLogs(abi, [log])).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(abi, [log], { eventName: 'Count' }).map(
+        (x) => x.eventName,
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "Count",
+      ]
+    `)
+  })
+
   test('behavior: decodes matching logs', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -2215,6 +2453,7 @@ test('exports', () => {
       "SelectorTopicMismatchError",
       "SelectorTopicNotFoundError",
       "FilterTypeNotSupportedError",
+      "AnonymousEventAmbiguityError",
     ]
   `)
 })
