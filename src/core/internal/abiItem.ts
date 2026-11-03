@@ -602,16 +602,14 @@ export function isArgOfType(
           },
         )
 
-      if (integerTypeRegex.test(abiParameterType)) {
+      const integerMatch = integerTypeRegex.exec(abiParameterType)
+      if (integerMatch) {
         if (typeof arg !== 'bigint' && typeof arg !== 'number') return false
         if (typeof arg === 'number' && !Number.isInteger(arg)) return false
 
         // An overload whose integer range excludes the value does not match.
         const signed = abiParameterType.startsWith('int')
-        const bits = Number.parseInt(
-          abiParameterType.replace(/^u?int/, '') || '256',
-          10,
-        )
+        const bits = Number.parseInt(integerMatch[1] ?? '256', 10)
         const max = 2n ** (BigInt(bits) - (signed ? 1n : 0n)) - 1n
         const min = signed ? -max - 1n : 0n
         return arg >= min && arg <= max
