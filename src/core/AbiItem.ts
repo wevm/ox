@@ -4,6 +4,7 @@ import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/abiItem.js'
+import { caches } from './internal/caches.js'
 import type { UnionCompute } from './internal/types.js'
 
 /** Root type for an item on an {@link ox#Abi.Abi}. */
@@ -680,7 +681,14 @@ export function getSignatureHash(
   })()
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex.Hex
-  return Hash.keccak256(Hex.fromString(getSignature(abiItem)))
+  // Keyed by the normalized signature, so equal signatures share one hash
+  // regardless of how the ABI item was written.
+  const signature = getSignature(abiItem)
+  const cached = caches.signatureHash.get(signature)
+  if (cached) return cached
+  const hash = Hash.keccak256(Hex.fromString(signature))
+  caches.signatureHash.set(signature, hash)
+  return hash
 }
 
 export declare namespace getSignatureHash {

@@ -9,6 +9,9 @@ export const exponents = {
   ether: 18,
 } as const
 
+const decimalNumberRegex = /^(-?)([0-9]*)\.?([0-9]*)$/
+const trailingZerosRegex = /(0+)$/
+
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
  *
@@ -36,7 +39,7 @@ export function format(value: bigint, decimals = 0) {
     display.slice(0, display.length - decimals),
     display.slice(display.length - decimals),
   ]
-  fraction = fraction.replace(/(0+)$/, '')
+  fraction = fraction.replace(trailingZerosRegex, '')
   return `${negative ? '-' : ''}${integer || '0'}${
     fraction ? `.${fraction}` : ''
   }`
@@ -111,7 +114,7 @@ export declare namespace formatGwei {
  * @returns The `bigint` representation of the Value.
  */
 export function from(value: string, decimals = 0) {
-  if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
+  if (!decimalNumberRegex.test(value))
     throw new InvalidDecimalNumberError({ value })
 
   let [integer = '', fraction = '0'] = value.split('.')
@@ -120,7 +123,7 @@ export function from(value: string, decimals = 0) {
   if (negative) integer = integer.slice(1)
 
   // trim trailing zeros.
-  fraction = fraction.replace(/(0+)$/, '')
+  fraction = fraction.replace(trailingZerosRegex, '')
 
   // round off if the fraction is larger than the number of decimals.
   if (decimals === 0) {

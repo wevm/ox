@@ -491,6 +491,23 @@ export declare namespace normalizeSignature {
   export type ErrorType = Errors.BaseError | Errors.GlobalErrorType
 }
 
+/**
+ * `(u)int<M>` regex: (un)signed integer type of `M` bits, `0 < M <= 256`,
+ * `M % 8 == 0`. Hoisted to module scope; the prior literal at the call
+ * site was recompiled per overload-resolution iteration.
+ *
+ * @internal
+ */
+const integerTypeRegex =
+  /^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/
+
+/**
+ * `bytes<M>` regex: binary type of `M` bytes, `0 < M <= 32`.
+ *
+ * @internal
+ */
+const fixedBytesTypeRegex = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/
+
 /** @internal */
 export function isArgOfType(
   arg: unknown,
@@ -521,30 +538,20 @@ export function isArgOfType(
           },
         )
 
-      // `(u)int<M>`: (un)signed integer type of `M` bits, `0 < M <= 256`, `M % 8 == 0`
-      // https://regexr.com/6v8hp
-      if (
-        /^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/.test(
-          abiParameterType,
-        )
-      ) {
+      const integerMatch = integerTypeRegex.exec(abiParameterType)
+      if (integerMatch) {
         if (typeof arg !== 'bigint' && typeof arg !== 'number') return false
         if (typeof arg === 'number' && !Number.isInteger(arg)) return false
 
         // An overload whose integer range excludes the value does not match.
         const signed = abiParameterType.startsWith('int')
-        const bits = Number.parseInt(
-          abiParameterType.replace(/^u?int/, '') || '256',
-          10,
-        )
+        const bits = Number.parseInt(integerMatch[1] ?? '256', 10)
         const max = 2n ** (BigInt(bits) - (signed ? 1n : 0n)) - 1n
         const min = signed ? -max - 1n : 0n
         return arg >= min && arg <= max
       }
 
-      // `bytes<M>`: binary type of `M` bytes, `0 < M <= 32`
-      // https://regexr.com/6va55
-      if (/^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/.test(abiParameterType)) {
+      if (fixedBytesTypeRegex.test(abiParameterType)) {
         if (typeof arg !== 'string' && !(arg instanceof Uint8Array))
           return false
         // An overload whose fixed size differs from the value does not match.
