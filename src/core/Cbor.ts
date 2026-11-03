@@ -863,7 +863,7 @@ namespace decodeCursor {
               ? String(key)
               : String(key)
         const value = decodeCursor(cursor)
-        result[keyStr] = value
+        setEntry(result, keyStr, value)
       }
 
       return result
@@ -882,7 +882,7 @@ namespace decodeCursor {
             ? String(key)
             : String(key)
       const value = decodeCursor(cursor)
-      result[keyStr] = value
+      setEntry(result, keyStr, value)
     }
 
     return result
@@ -891,6 +891,24 @@ namespace decodeCursor {
   /** @internal */
   export declare namespace readMap {
     type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+  }
+
+  /** @internal */
+  function setEntry(
+    result: Record<string, unknown>,
+    key: string,
+    value: unknown,
+  ) {
+    // Define `__proto__` as an own property instead of assigning it, which
+    // would replace the prototype of `result` and drop the entry.
+    if (key === '__proto__')
+      Object.defineProperty(result, key, {
+        configurable: true,
+        enumerable: true,
+        value,
+        writable: true,
+      })
+    else result[key] = value
   }
 
   /** @internal */

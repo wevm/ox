@@ -617,6 +617,29 @@ describe('decode', () => {
     expect(decoded).toEqual({ '1': 2 })
   })
 
+  test('map with `__proto__` key', () => {
+    // {"__proto__": {"polluted": true}}
+    const definite = Cbor.decode<Record<string, unknown>>(
+      '0xa1695f5f70726f746f5f5fa168706f6c6c75746564f5',
+    )
+    // {_ "__proto__": {"polluted": true}}
+    const indefinite = Cbor.decode<Record<string, unknown>>(
+      '0xbf695f5f70726f746f5f5fa168706f6c6c75746564f5ff',
+    )
+    for (const decoded of [definite, indefinite]) {
+      expect(Object.getPrototypeOf(decoded)).toBe(Object.prototype)
+      expect(Object.keys(decoded)).toEqual(['__proto__'])
+      expect(decoded.polluted).toBeUndefined()
+      expect(
+        Object.getOwnPropertyDescriptor(decoded, '__proto__')?.value,
+      ).toMatchInlineSnapshot(`
+        {
+          "polluted": true,
+        }
+      `)
+    }
+  })
+
   test('invalid simple value throws', () => {
     // Simple value < 32 (reserved)
     const encoded = Hex.from([0xf8, 0x10]) // Simple value 16
@@ -688,6 +711,7 @@ describe('roundtrip', () => {
     ['object: simple', { a: 1, b: 2 }],
     ['object: nested', { a: 1, b: [2, 3] }],
     ['complex', { a: 'hello', b: [1, 2, { c: true }], d: null }],
+    ['object: `__proto__` key', JSON.parse('{"__proto__":{"a":1},"b":2}')],
   ])('roundtrip: %s', (_, value) => {
     const encoded = Cbor.encode(value)
     const decoded = Cbor.decode(encoded)
