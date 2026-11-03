@@ -14,6 +14,8 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 /** Root type for a Hex string. */
 export type Hex = `0x${string}`
 
+const hexRegex = /^0x[0-9a-fA-F]*$/
+
 /**
  * Asserts if the given value is {@link ox#Hex.Hex}.
  *
@@ -38,7 +40,7 @@ export function assert(
   if (!value) throw new InvalidHexTypeError(value)
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
-    if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
+    if (!hexRegex.test(value)) throw new InvalidHexValueError(value)
   }
   if (!value.startsWith('0x')) throw new InvalidHexValueError(value)
   if (even && value.length % 2 !== 0) throw new InvalidLengthError(value as Hex)

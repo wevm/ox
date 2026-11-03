@@ -23,6 +23,14 @@ export const prefixRegex =
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
 
+// URI validation (see `isUri`).
+const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
+const uriInvalidEscapeRegex = /%[^0-9a-f]/i
+const uriIncompleteEscapeRegex = /%[0-9a-f](:?[^0-9a-f]|$)/i
+const uriSchemeRegex = /^[a-z][a-z0-9+\-.]*$/
+const uriPartsRegex =
+  /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
+
 /** [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields. */
 export type Message = {
   /**
@@ -285,11 +293,11 @@ export function generateNonce(): string {
 // based on https://github.com/ogt/valid-url
 export function isUri(value: string): false | string {
   // check for illegal characters
-  if (/[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i.test(value)) return false
+  if (uriIllegalCharacterRegex.test(value)) return false
 
   // check for hex escapes that aren't complete
-  if (/%[^0-9a-f]/i.test(value)) return false
-  if (/%[0-9a-f](:?[^0-9a-f]|$)/i.test(value)) return false
+  if (uriInvalidEscapeRegex.test(value)) return false
+  if (uriIncompleteEscapeRegex.test(value)) return false
 
   // from RFC 3986
   const splitted = splitUri(value)
@@ -311,7 +319,7 @@ export function isUri(value: string): false | string {
   }
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
-  if (!/^[a-z][a-z0-9+\-.]*$/.test(scheme.toLowerCase())) return false
+  if (!uriSchemeRegex.test(scheme.toLowerCase())) return false
 
   let out = ''
   // re-assemble the URL per section 5.3 in RFC 3986
@@ -327,9 +335,7 @@ export function isUri(value: string): false | string {
 }
 
 function splitUri(value: string) {
-  return value.match(
-    /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/,
-  )!
+  return value.match(uriPartsRegex)!
 }
 
 /**

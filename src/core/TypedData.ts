@@ -892,6 +892,10 @@ export declare namespace encodeField {
     | Errors.GlobalErrorType
 }
 
+const arraySuffixRegex = /(\[[0-9]*\])+$/
+const structNameRegex = /^[A-Za-z0-9_$]+$/
+const solidityTypeNameRegex = /^(u?int|bytes)[0-9]*$/
+
 /** @internal */
 export function findTypeDependencies(
   value: {
@@ -901,7 +905,7 @@ export function findTypeDependencies(
   results: Set<string> = new Set(),
 ): Set<string> {
   const { primaryType: primaryType_, types } = value
-  const primaryType = primaryType_.replace(/(\[[0-9]*\])+$/, '')
+  const primaryType = primaryType_.replace(arraySuffixRegex, '')
   if (results.has(primaryType) || types[primaryType] === undefined)
     return results
 
@@ -919,7 +923,7 @@ export declare namespace findTypeDependencies {
 
 /** @internal */
 function validateField(type: string, types: TypedData) {
-  const baseType = type.replace(/(\[[0-9]*\])+$/, '')
+  const baseType = type.replace(arraySuffixRegex, '')
   if (baseType === 'int' || baseType === 'uint')
     throw new InvalidTypeError({ type })
   // A field type must be a struct defined in `types` or an EIP-712 atomic or
@@ -946,11 +950,11 @@ function validateReference(type: string) {
   // struct such as `intent` or `bytesInfo` is valid, while `uint7` or `bytes33`
   // is rejected, since other implementations parse it as a Solidity type.
   if (
-    !/^[A-Za-z0-9_$]+$/.test(type) ||
+    !structNameRegex.test(type) ||
     type === 'address' ||
     type === 'bool' ||
     type === 'string' ||
-    /^(u?int|bytes)[0-9]*$/.test(type)
+    solidityTypeNameRegex.test(type)
   )
     throw new InvalidStructTypeError({ type })
 }
