@@ -1,5 +1,15 @@
 # ox
 
+## 0.14.62
+
+### Patch Changes
+
+- [#565](https://github.com/wevm/ox/pull/565) [`20457a6`](https://github.com/wevm/ox/commit/20457a61f6b768556515314e676551d02e7ba899) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.decode` and `AbiEvent.encode` for anonymous events: `decode` no longer expects a selector topic and reads every topic as an indexed input, and `encode` no longer prepends the selector.
+
+- [#571](https://github.com/wevm/ox/pull/571) [`4a029cf`](https://github.com/wevm/ox/commit/4a029cf751863c0ecb25669ad7b79f014d54dea3) Thanks [@gakonst](https://github.com/gakonst)! - Improved validation performance in `Hex.assert`, `Value`, `TypedData`, `Siwe.isUri`, and ABI overload resolution by reusing module-level regular expressions instead of recreating them on every call.
+
+- [#571](https://github.com/wevm/ox/pull/571) [`4a029cf`](https://github.com/wevm/ox/commit/4a029cf751863c0ecb25669ad7b79f014d54dea3) Thanks [@gakonst](https://github.com/gakonst)! - Improved `AbiItem.getSignatureHash` and `AbiItem.getSelector` performance, along with the selector lookups in `AbiItem.fromAbi`, `AbiFunction.decodeData`, `AbiEvent.decodeLog` and `AbiEvent.extractLogs`, by caching signature hashes by normalized signature in a bounded cache that `Caches.clear` resets.
+
 ## 0.14.61
 
 ### Patch Changes
