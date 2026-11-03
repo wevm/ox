@@ -26,6 +26,18 @@ export const suffixRegex =
 const siweDateTimeRegex =
   /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/
 
+// URI validation (see `isUri`).
+const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
+const uriInvalidEscapeRegex = /%[^0-9a-f]/i
+const uriIncompleteEscapeRegex = /%[0-9a-f](:?[^0-9a-f]|$)/i
+const uriSchemeRegex = /^[a-z][a-z0-9+\-.]*$/
+const uriPartsRegex =
+  /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
+const authorityHostRegex = /^(?:[a-z0-9._~!$&'()*+,;=:%-]*@)?(.*)$/i
+const authorityIpLiteralRegex = /^\[([^\]]+)\](?::\d*)?$/
+const authorityIpFutureRegex = /^v[0-9a-f]+\.[a-z0-9._~!$&'()*+,;=:-]+$/i
+const authorityRegNameRegex = /^(?:[a-z0-9._~!$&'()*+,;=%-]*)(?::\d*)?$/i
+
 function parseSiweDateTime(value: string): Date {
   const match = value.match(siweDateTimeRegex)
   if (!match) return new Date(Number.NaN)
@@ -315,11 +327,11 @@ export function generateNonce(): string {
 // based on https://github.com/ogt/valid-url
 export function isUri(value: string): false | string {
   // check for illegal characters
-  if (/[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i.test(value)) return false
+  if (uriIllegalCharacterRegex.test(value)) return false
 
   // check for hex escapes that aren't complete
-  if (/%[^0-9a-f]/i.test(value)) return false
-  if (/%[0-9a-f](:?[^0-9a-f]|$)/i.test(value)) return false
+  if (uriInvalidEscapeRegex.test(value)) return false
+  if (uriIncompleteEscapeRegex.test(value)) return false
 
   // from RFC 3986
   const splitted = splitUri(value)
@@ -342,7 +354,7 @@ export function isUri(value: string): false | string {
   }
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
-  if (!/^[a-z][a-z0-9+\-.]*$/.test(scheme.toLowerCase())) return false
+  if (!uriSchemeRegex.test(scheme.toLowerCase())) return false
 
   let out = ''
   // re-assemble the URL per section 5.3 in RFC 3986
@@ -358,12 +370,12 @@ export function isUri(value: string): false | string {
 }
 
 function isAuthority(value: string) {
-  const host = value.match(/^(?:[a-z0-9._~!$&'()*+,;=:%-]*@)?(.*)$/i)?.[1]
+  const host = value.match(authorityHostRegex)?.[1]
   if (host === undefined) return false
 
-  const ipLiteral = host.match(/^\[([^\]]+)\](?::\d*)?$/)?.[1]
+  const ipLiteral = host.match(authorityIpLiteralRegex)?.[1]
   if (ipLiteral) {
-    if (/^v[0-9a-f]+\.[a-z0-9._~!$&'()*+,;=:-]+$/i.test(ipLiteral)) return true
+    if (authorityIpFutureRegex.test(ipLiteral)) return true
     try {
       new URL(`http://[${ipLiteral}]`)
       return true
@@ -372,13 +384,11 @@ function isAuthority(value: string) {
     }
   }
 
-  return /^(?:[a-z0-9._~!$&'()*+,;=%-]*)(?::\d*)?$/i.test(host)
+  return authorityRegNameRegex.test(host)
 }
 
 function splitUri(value: string) {
-  return value.match(
-    /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/,
-  )!
+  return value.match(uriPartsRegex)!
 }
 
 /**

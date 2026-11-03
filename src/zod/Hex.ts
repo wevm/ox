@@ -2,10 +2,12 @@
 import * as core_Hex from '../core/Hex.js'
 import * as z from 'zod/mini'
 
+const hexRegex = /^0x[0-9a-fA-F]*$/
+
 /** Hex string schema. */
 export const Hex = z
   .templateLiteral([z.literal('0x'), z.string()])
-  .check(z.refine((value) => /^0x[0-9a-fA-F]*$/.test(value), 'expected hex'))
+  .check(z.refine((value) => hexRegex.test(value), 'expected hex'))
 
 /** Returns a byte-sized hex string schema. */
 export function sizedHex(size: number) {
