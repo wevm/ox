@@ -5,6 +5,8 @@ import {
   AbiItem,
   AbiParameters,
   Bytes,
+  Caches,
+  Engine,
   type Hex,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
@@ -18,6 +20,7 @@ import {
   isArgOfType,
   normalizeSignature,
 } from '../internal/abiItem.js'
+import { caches } from '../internal/caches.js'
 
 describe('format', () => {
   test('default', () => {
@@ -2490,6 +2493,40 @@ describe('getSignature', () => {
 })
 
 describe('getSignatureHash', () => {
+  test('behavior: caches by normalized signature', () => {
+    Caches.clear()
+    const hash = AbiItem.getSignatureHash('function ownerOf(uint256 tokenId)')
+    expect(
+      AbiItem.getSignatureHash({
+        inputs: [{ name: 'id', type: 'uint256' }],
+        name: 'ownerOf',
+        outputs: [],
+        stateMutability: 'view',
+        type: 'function',
+      }),
+    ).toBe(hash)
+    expect([...caches.signatureHash]).toMatchInlineSnapshot(`
+      [
+        [
+          "ownerOf(uint256)",
+          "0x6352211e6566aa027e75ac9dbf2423197fbd9b82b9d981a3ab367d355866aa1c",
+        ],
+      ]
+    `)
+  })
+
+  test('behavior: recomputes after an engine change', () => {
+    const hash = AbiItem.getSignatureHash('function ownerOf(uint256)')
+    expect(
+      Engine.with({ Hash: { keccak256: () => new Uint8Array(32) } }, () =>
+        AbiItem.getSignatureHash('function ownerOf(uint256)'),
+      ),
+    ).toMatchInlineSnapshot(
+      `"0x0000000000000000000000000000000000000000000000000000000000000000"`,
+    )
+    expect(AbiItem.getSignatureHash('function ownerOf(uint256)')).toBe(hash)
+  })
+
   test('hashes functions', () => {
     expect(AbiItem.getSignatureHash('function ownerOf(uint256)')).toEqual(
       '0x6352211e6566aa027e75ac9dbf2423197fbd9b82b9d981a3ab367d355866aa1c',

@@ -1,5 +1,6 @@
-import { Caches } from 'ox'
+import { AbiItem, Caches } from 'ox'
 import { expect, test } from 'vp/test'
+import { caches } from '../internal/caches.js'
 
 test('exports', () => {
   expect(Object.keys(Caches)).toMatchInlineSnapshot(`
@@ -17,4 +18,12 @@ test('default', () => {
   expect(Caches.checksum.size).toBe(2)
   Caches.clear()
   expect(Caches.checksum.size).toBe(0)
+})
+
+test('behavior: clears signature hashes', () => {
+  Caches.clear()
+  AbiItem.getSignatureHash('function ownerOf(uint256)')
+  expect(caches.signatureHash.size).toBe(1)
+  Caches.clear()
+  expect(caches.signatureHash.size).toBe(0)
 })
