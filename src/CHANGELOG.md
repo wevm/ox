@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.63
+
+### Patch Changes
+
+- [#575](https://github.com/wevm/ox/pull/575) [`d9d63a7`](https://github.com/wevm/ox/commit/d9d63a702d8fa819d49cbf0701951f01627b36ed) Thanks [@jxom](https://github.com/jxom)! - Added `userAddress` to `AccountOperation` transaction operations, so a configurable account acting as an access key (TIP-1111) can collect owner approvals and serialize a keychain V2 envelope for its parent.
+
 ## 0.14.62
 
 ### Patch Changes
