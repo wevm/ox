@@ -1,5 +1,17 @@
 # ox
 
+## 1.8.14
+
+### Patch Changes
+
+- [#576](https://github.com/wevm/ox/pull/576) [`a6af44f`](https://github.com/wevm/ox/commit/a6af44f7e4dee8dee618e09554db06d56cb31c31) Thanks [@jxom](https://github.com/jxom)! - Added `userAddress` to `AccountOperation` transaction operations, so a configurable account acting as an access key (TIP-1111) can collect owner approvals and serialize a keychain V2 envelope for its parent.
+
+- [#564](https://github.com/wevm/ox/pull/564) [`b03705a`](https://github.com/wevm/ox/commit/b03705a605362b36df1503644626b55fab7b0aea) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.decodeLog` and `AbiEvent.extractLogs` to decode anonymous event logs when every event in the ABI is anonymous or, for `extractLogs`, when `eventName` names the event, throwing `AbiEvent.AnonymousEventAmbiguityError` from `decodeLog` when several anonymous events fit.
+
+- [#569](https://github.com/wevm/ox/pull/569) [`7a564af`](https://github.com/wevm/ox/commit/7a564af1ca4038d8b0a1ff9e1fd6637f63a6752b) Thanks [@gakonst](https://github.com/gakonst)! - Improved validation performance in `Hex.assert`, `Value`, `TypedData`, `Siwe.isUri`, ABI overload resolution, and the `ox/zod` hex, address, quantity, and Solidity type schemas by reusing module-level regular expressions instead of recreating them on every call.
+
+- [#570](https://github.com/wevm/ox/pull/570) [`8a9f850`](https://github.com/wevm/ox/commit/8a9f850a5fba1f5d8a3c193f948c1b23f8817d60) Thanks [@gakonst](https://github.com/gakonst)! - Improved `AbiItem.getSignatureHash` and `AbiItem.getSelector` performance, along with the selector lookups in `AbiItem.fromAbi`, `AbiFunction.decodeData`, `AbiEvent.decodeLog` and `AbiEvent.extractLogs`, by caching signature hashes by normalized signature in a bounded cache that `Caches.clear` and engine changes reset.
+
 ## 1.8.13
 
 ### Patch Changes
