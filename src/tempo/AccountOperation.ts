@@ -43,6 +43,12 @@ export type TransactionOperation<quantity = bigint> = Base<quantity> & {
   transactionHash?: Hex.Hex | undefined
   /** Operation kind. */
   type: 'transaction'
+  /**
+   * Parent account when the configurable account signs as its access key
+   * (TIP-1111). The transaction is then sent from it with a keychain V2
+   * signature wrapping the owner quorum.
+   */
+  userAddress?: Address.Address | undefined
 }
 
 /** Account key authorization approval operation. */
@@ -94,6 +100,7 @@ export function getHash(options: getHash.Options): Hex.Hex {
     options.type === 'transaction'
       ? TxEnvelopeTempo.getSignPayload(
           TxEnvelopeTempo.deserialize(options.transaction),
+          { from: options.userAddress },
         )
       : KeyAuthorization_.getSignPayload(
           KeyAuthorization_.deserialize(options.keyAuthorization),
@@ -124,6 +131,8 @@ export declare namespace getHash {
         transaction: TxEnvelopeTempo.Serialized
         /** Operation kind. */
         type: 'transaction'
+        /** Parent account when the configurable account signs as its access key. */
+        userAddress?: Address.Address | undefined
       }
   )
 
@@ -333,17 +342,26 @@ export function serializeTransaction(
     assertApproval(value.account, approval, value.config),
   )
   assertRetainedApprovals(value, approvals)
+  const { userAddress } = value
   const signatures = SignatureEnvelope.sortApprovals({
     account: value.account,
     config: value.config,
-    payload: TxEnvelopeTempo.getSignPayload(envelope),
+    payload: TxEnvelopeTempo.getSignPayload(envelope, { from: userAddress }),
     signatures: approvals,
   })
-  const signature = SignatureEnvelope.from({
+  const configurable = SignatureEnvelope.from({
     account: value.account,
     config: value.config,
     signatures,
   })
+  const signature = userAddress
+    ? SignatureEnvelope.from({
+        inner: configurable,
+        type: 'keychain',
+        userAddress,
+        version: 'v2',
+      })
+    : configurable
   return TxEnvelopeTempo.serialize(
     envelope,
     value.transaction.startsWith(TxEnvelopeTempo.feePayerMagic)
@@ -808,14 +826,27 @@ function assertTransaction(operation: TransactionOperation): void {
     throw new InvalidOperationError({
       reason: 'transaction must not contain an outer sender signature',
     })
+  const { userAddress } = operation
+  if (userAddress !== undefined) {
+    if (!Address.validate(userAddress) || Hex.toBigInt(userAddress) === 0n)
+      throw new InvalidOperationError({ reason: 'userAddress is invalid' })
+    if (userAddress.toLowerCase() === operation.account.toLowerCase())
+      throw new InvalidOperationError({
+        reason: 'a configurable account cannot be its own access key',
+      })
+  }
+  const sender = userAddress ?? operation.account
   if (
     transaction.from &&
-    transaction.from.toLowerCase() !== operation.account.toLowerCase()
+    transaction.from.toLowerCase() !== sender.toLowerCase()
   )
     throw new InvalidOperationError({
       reason: 'transaction sender does not match the operation account',
     })
-  assertOperationHash(operation, TxEnvelopeTempo.getSignPayload(transaction))
+  assertOperationHash(
+    operation,
+    TxEnvelopeTempo.getSignPayload(transaction, { from: userAddress }),
+  )
   const normalized = TxEnvelopeTempo.serialize(
     transaction,
     feePayer
@@ -844,12 +875,14 @@ function assertKeyAuthorization(
     submissionId?: unknown
     transaction?: unknown
     transactionHash?: unknown
+    userAddress?: unknown
   }
   if (
     transactionFields.expiresAt !== undefined ||
     transactionFields.submissionId !== undefined ||
     transactionFields.transaction !== undefined ||
-    transactionFields.transactionHash !== undefined
+    transactionFields.transactionHash !== undefined ||
+    transactionFields.userAddress !== undefined
   )
     throw new InvalidOperationError({
       reason: 'key authorization operations cannot contain transaction fields',
