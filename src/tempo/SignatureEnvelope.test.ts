@@ -11,6 +11,7 @@ import {
 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as AccountConfig from './AccountConfig.js'
+import * as AttestedSigner from './AttestedSigner.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const publicKey = PublicKey.from({
@@ -514,7 +515,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize('0xdeadbeef'),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Configurable)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), 0x05 (Configurable), or 0x06 (Attested)
 
         Serialized: 0xdeadbeef]
       `,
@@ -674,7 +675,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize(unknownType),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Configurable)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), 0x05 (Configurable), or 0x06 (Attested)
 
         Serialized: 0xff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
       `,
@@ -3151,5 +3152,572 @@ describe('configurable vectors', () => {
 
     expect(Hex.size(serialized)).toBe(65)
     expect(SignatureEnvelope.deserialize(serialized).type).toBe('secp256k1')
+  })
+})
+
+// Vectors mirror the node's attested signers proof of concept (tempoxyz/tempo
+// `exp/attested-signers`, `crates/primitives/src/transaction/attested.rs`
+// `tests`): program key `[0x11; 32]`, policy `0xAA…`, user tag `0xBB…`, slot 1,
+// `valid_until` 1,800,000,600, deterministic (RFC 6979) low-s P256 signatures.
+describe('attested', () => {
+  const privateKey = `0x${'11'.repeat(32)}` as const
+  const fields = {
+    policyId: `0x${'aa'.repeat(32)}`,
+    programKey: P256.getPublicKey({ privateKey }),
+    slot: 1,
+    userTag: `0x${'bb'.repeat(32)}`,
+    validUntil: 1_800_000_600,
+  } as const
+  const address = AttestedSigner.getAddress(fields)
+  const payload = `0x${'42'.repeat(32)}` as const
+
+  function sign(
+    payload: Hex.Hex,
+    overrides: Partial<SignatureEnvelope.Attested> = {},
+  ): SignatureEnvelope.Attested {
+    const attested = { ...fields, ...overrides }
+    const { r, s } = P256.sign({
+      payload: AttestedSigner.getSignPayload({ ...attested, payload }),
+      privateKey,
+    })
+    return SignatureEnvelope.from({
+      ...attested,
+      signature: { r, s },
+    }) as SignatureEnvelope.Attested
+  }
+
+  const envelope = sign(payload)
+  const serialized = SignatureEnvelope.serialize(envelope)
+
+  function encode(list: Parameters<typeof Rlp.fromHex>[0]) {
+    return Hex.concat('0x06', Rlp.fromHex(list))
+  }
+  const wire = Rlp.toHex(Hex.slice(serialized, 1)) as Hex.Hex[]
+
+  describe('serialize', () => {
+    // attested.rs `tests::address_and_digest_layout` and `tests::roundtrip_and_recover`:
+    // 207 bytes with a 4-byte `valid_until`.
+    test('default', () => {
+      expect(serialized).toMatchInlineSnapshot(
+        `"0x06f8cca0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01b8400217e617f0b6443928278f96999e69a23a4f2c152bdf6d6cdf66e5b80282d4ed194a7debcb97712d2dda3ca85aa8765a56f45fc758599652f2897c65306e5794846b49d458b840c377749188175be68110ca4583693ce52050e1d84ab6d0308ea063695bdfdbf81aaeb8779f72f84bbf22c9627c8091dd13f64977848992ebd48a7efc5d6baf2d"`,
+      )
+      expect(Hex.size(serialized)).toBe(207)
+      expect(wire).toEqual([
+        fields.policyId,
+        fields.userTag,
+        '0x01',
+        Hex.concat(
+          Hex.fromNumber(fields.programKey.x, { size: 32 }),
+          Hex.fromNumber(fields.programKey.y, { size: 32 }),
+        ),
+        Hex.fromNumber(1_800_000_600),
+        Hex.concat(
+          Hex.fromNumber(envelope.signature.r, { size: 32 }),
+          Hex.fromNumber(envelope.signature.s, { size: 32 }),
+        ),
+      ])
+    })
+
+    test('behavior: slot 0 and validUntil 0 encode as empty strings', () => {
+      const zero = sign(payload, { slot: 0, validUntil: 0 })
+      const [, , slot, , validUntil] = Rlp.toHex(
+        Hex.slice(SignatureEnvelope.serialize(zero), 1),
+      ) as Hex.Hex[]
+      expect({ slot, validUntil }).toMatchInlineSnapshot(`
+        {
+          "slot": "0x",
+          "validUntil": "0x",
+        }
+      `)
+    })
+
+    test('behavior: magic suffix', () => {
+      expect(SignatureEnvelope.serialize(envelope, { magic: true })).toBe(
+        Hex.concat(serialized, SignatureEnvelope.magicBytes),
+      )
+    })
+
+    test('error: out-of-range fields', () => {
+      expect(() =>
+        SignatureEnvelope.serialize({ ...envelope, slot: 8 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidAttestedError: Invalid attested signature: slot must be an integer below 8.]`,
+      )
+      expect(() =>
+        SignatureEnvelope.serialize({
+          ...envelope,
+          signature: {
+            r: envelope.signature.r,
+            s:
+              0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n -
+              envelope.signature.s,
+          },
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidAttestedError: Invalid attested signature: signature s must be low.]`,
+      )
+    })
+  })
+
+  describe('deserialize', () => {
+    test('default', () => {
+      const deserialized = SignatureEnvelope.deserialize(serialized)
+      expect(deserialized).toEqual(envelope)
+      expect(SignatureEnvelope.serialize(deserialized)).toBe(serialized)
+      expect(
+        SignatureEnvelope.deserialize(
+          Hex.concat(serialized, SignatureEnvelope.magicBytes),
+        ),
+      ).toEqual(envelope)
+    })
+
+    // attested.rs `tests::rejects_malformed_encodings`.
+    test('behavior: slots 0 and 7 decode', () => {
+      for (const slot of [0, 7]) {
+        const signed = sign(payload, { slot })
+        expect(
+          SignatureEnvelope.deserialize(SignatureEnvelope.serialize(signed)),
+        ).toEqual(signed)
+      }
+    })
+
+    const [policyId, userTag, slot, programKey, validUntil, signature] =
+      wire as [Hex.Hex, Hex.Hex, Hex.Hex, Hex.Hex, Hex.Hex, Hex.Hex]
+    const s = Hex.toBigInt(Hex.slice(signature, 32))
+    const n =
+      0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
+    const cases = [
+      ['trailing bytes', Hex.concat(serialized, '0x00')],
+      [
+        'a seventh field',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          programKey,
+          validUntil,
+          signature,
+          '0x',
+        ]),
+      ],
+      [
+        'five fields',
+        encode([policyId, userTag, slot, programKey, validUntil]),
+      ],
+      [
+        'a list field',
+        encode([policyId, userTag, [slot], programKey, validUntil, signature]),
+      ],
+      [
+        'a non-canonical RLP length',
+        Hex.concat('0x06f900cc', Hex.slice(serialized, 3)),
+      ],
+      [
+        'a single byte encoded as a string',
+        Hex.concat(
+          '0x06f8cd',
+          Hex.slice(serialized, 3, 69),
+          '0x8101',
+          Hex.slice(serialized, 70),
+        ),
+      ],
+      [
+        'slot 8',
+        encode([policyId, userTag, '0x08', programKey, validUntil, signature]),
+      ],
+      [
+        'a slot with a leading zero',
+        encode([policyId, userTag, '0x00', programKey, validUntil, signature]),
+      ],
+      [
+        'a validUntil with a leading zero',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          programKey,
+          Hex.concat('0x00', validUntil),
+          signature,
+        ]),
+      ],
+      [
+        'a 9-byte validUntil',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          programKey,
+          `0x01${'00'.repeat(8)}`,
+          signature,
+        ]),
+      ],
+      [
+        'a 31-byte policyId',
+        encode([
+          Hex.slice(policyId, 1),
+          userTag,
+          slot,
+          programKey,
+          validUntil,
+          signature,
+        ]),
+      ],
+      [
+        'a 63-byte programKey',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          Hex.slice(programKey, 1),
+          validUntil,
+          signature,
+        ]),
+      ],
+      [
+        'a high s',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          programKey,
+          validUntil,
+          Hex.concat(
+            Hex.slice(signature, 0, 32),
+            Hex.fromNumber(n - s, { size: 32 }),
+          ),
+        ]),
+      ],
+      [
+        'a zero r',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          programKey,
+          validUntil,
+          Hex.concat(Hex.fromNumber(0, { size: 32 }), Hex.slice(signature, 32)),
+        ]),
+      ],
+      [
+        'an r of n',
+        encode([
+          policyId,
+          userTag,
+          slot,
+          programKey,
+          validUntil,
+          Hex.concat(Hex.fromNumber(n, { size: 32 }), Hex.slice(signature, 32)),
+        ]),
+      ],
+    ] as const
+
+    test.each(cases)('error: %s', (_, value) => {
+      expect(() => SignatureEnvelope.deserialize(value)).toThrowError(
+        SignatureEnvelope.InvalidSerializedError,
+      )
+    })
+
+    test('error: messages', () => {
+      expect(
+        cases.map(([name, value]) => {
+          try {
+            SignatureEnvelope.deserialize(value)
+            return `${name}: accepted`
+          } catch (error) {
+            return `${name}: ${(error as Error).message.split('\n')[0]}`
+          }
+        }),
+      ).toMatchInlineSnapshot(`
+        [
+          "trailing bytes: Unable to deserialize signature envelope: invalid attested signature: non-canonical RLP",
+          "a seventh field: Unable to deserialize signature envelope: invalid attested signature: expected a list of exactly six fields",
+          "five fields: Unable to deserialize signature envelope: invalid attested signature: expected a list of exactly six fields",
+          "a list field: Unable to deserialize signature envelope: invalid attested signature: fields must be byte strings",
+          "a non-canonical RLP length: Unable to deserialize signature envelope: invalid attested signature: non-canonical RLP",
+          "a single byte encoded as a string: Unable to deserialize signature envelope: invalid attested signature: non-canonical RLP",
+          "slot 8: Unable to deserialize signature envelope: invalid attested signature: slot must be an integer below 8",
+          "a slot with a leading zero: Unable to deserialize signature envelope: invalid attested signature: slot must be a canonical uint8",
+          "a validUntil with a leading zero: Unable to deserialize signature envelope: invalid attested signature: validUntil must be a canonical uint64",
+          "a 9-byte validUntil: Unable to deserialize signature envelope: invalid attested signature: exceeds 211 bytes",
+          "a 31-byte policyId: Unable to deserialize signature envelope: invalid attested signature: policyId must be 32 bytes",
+          "a 63-byte programKey: Unable to deserialize signature envelope: invalid attested signature: programKey must be 64 bytes",
+          "a high s: Unable to deserialize signature envelope: invalid attested signature: signature s must be low",
+          "a zero r: Unable to deserialize signature envelope: invalid attested signature: signature r and s must be in [1, n - 1]",
+          "an r of n: Unable to deserialize signature envelope: invalid attested signature: signature r and s must be in [1, n - 1]",
+        ]
+      `)
+    })
+
+    test('error: larger than the maximum size', () => {
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          Hex.concat(serialized, Hex.fromNumber(0, { size: 5 })),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: invalid attested signature: exceeds 211 bytes
+
+        Serialized: 0x06f8cca0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01b8400217e617f0b6443928278f96999e69a23a4f2c152bdf6d6cdf66e5b80282d4ed194a7debcb97712d2dda3ca85aa8765a56f45fc758599652f2897c65306e5794846b49d458b840c377749188175be68110ca4583693ce52050e1d84ab6d0308ea063695bdfdbf81aaeb8779f72f84bbf22c9627c8091dd13f64977848992ebd48a7efc5d6baf2d0000000000]
+      `)
+    })
+  })
+
+  describe('from', () => {
+    test('default', () => {
+      expect(SignatureEnvelope.getType(envelope)).toBe('attested')
+      expect(SignatureEnvelope.from(serialized)).toEqual(envelope)
+    })
+
+    test('behavior: detects attested fields with a recovered P256 signature', () => {
+      const signature = P256.sign({
+        payload: AttestedSigner.getSignPayload({ ...fields, payload }),
+        privateKey,
+      })
+      const from = SignatureEnvelope.from({ ...fields, signature })
+      expect(from.type).toBe('attested')
+      expect(SignatureEnvelope.serialize(from)).toBe(serialized)
+    })
+  })
+
+  describe('rpc', () => {
+    // The node serializes `AttestedSignature` untagged, with camelCase fields,
+    // 64-byte hex `programKey` and `signature`, and number `slot` and `validUntil`.
+    test('toRpc', () => {
+      expect(SignatureEnvelope.toRpc(envelope)).toMatchInlineSnapshot(`
+        {
+          "policyId": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "programKey": "0x0217e617f0b6443928278f96999e69a23a4f2c152bdf6d6cdf66e5b80282d4ed194a7debcb97712d2dda3ca85aa8765a56f45fc758599652f2897c65306e5794",
+          "signature": "0xc377749188175be68110ca4583693ce52050e1d84ab6d0308ea063695bdfdbf81aaeb8779f72f84bbf22c9627c8091dd13f64977848992ebd48a7efc5d6baf2d",
+          "slot": 1,
+          "userTag": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "validUntil": 1800000600,
+        }
+      `)
+    })
+
+    test('fromRpc', () => {
+      expect(
+        SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(envelope)),
+      ).toEqual(envelope)
+    })
+
+    test('error: fromRpc rejects a high s', () => {
+      const rpc = SignatureEnvelope.toRpc(envelope)
+      const s = Hex.toBigInt(Hex.slice(rpc.signature, 32))
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          signature: Hex.concat(
+            Hex.slice(rpc.signature, 0, 32),
+            Hex.fromNumber(
+              0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n -
+                s,
+              { size: 32 },
+            ),
+          ),
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidAttestedError: Invalid attested signature: signature s must be low.]`,
+      )
+    })
+  })
+
+  describe('extractAddress', () => {
+    test('default', () => {
+      expect(
+        SignatureEnvelope.extractAddress({ payload, signature: envelope }),
+      ).toBe(address)
+      expect(address).toMatchInlineSnapshot(
+        `"0x8169075568131b8937b140558340450f92bfa9a3"`,
+      )
+    })
+
+    test('error: extractPublicKey has no signer public key', () => {
+      expect(() =>
+        SignatureEnvelope.extractPublicKey({ payload, signature: envelope }),
+      ).toThrowError(SignatureEnvelope.CoercionError)
+    })
+  })
+
+  describe('verify', () => {
+    // attested.rs `tests::roundtrip_and_recover`: recovers for `d`, fails for another digest.
+    test('default', () => {
+      expect(SignatureEnvelope.verify(envelope, { address, payload })).toBe(
+        true,
+      )
+    })
+
+    test('behavior: another payload', () => {
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          address,
+          payload: `0x${'00'.repeat(32)}`,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: another address', () => {
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          address: '0x1111111111111111111111111111111111111111',
+          payload,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: a field the program key did not sign', () => {
+      expect(
+        SignatureEnvelope.verify(
+          { ...envelope, validUntil: envelope.validUntil + 1 },
+          { address, payload },
+        ),
+      ).toBe(false)
+      expect(
+        SignatureEnvelope.verify(
+          { ...envelope, slot: 2 },
+          { address, payload },
+        ),
+      ).toBe(false)
+    })
+
+    test('behavior: an off-curve program key', () => {
+      expect(
+        SignatureEnvelope.verify(
+          {
+            ...envelope,
+            programKey: {
+              ...envelope.programKey,
+              y: (envelope.programKey.y as bigint) ^ 1n,
+            },
+          },
+          { address, payload },
+        ),
+      ).toBe(false)
+    })
+  })
+
+  // attested.rs `tests::tempo_signature_accepts_attested_except_in_keychain`.
+  describe('keychain', () => {
+    test('error: deserialize rejects an attested inner signature', () => {
+      for (const type of ['0x03', '0x04'] as const)
+        expect(() =>
+          SignatureEnvelope.deserialize(
+            Hex.concat(type, `0x${'11'.repeat(20)}`, serialized),
+          ),
+        ).toThrowErrorMatchingInlineSnapshot(
+          `[SignatureEnvelope.InvalidApprovalError: Invalid owner approval: attested signatures cannot sign as access keys.]`,
+        )
+    })
+
+    test('error: serialize rejects an attested inner signature', () => {
+      expect(() =>
+        SignatureEnvelope.serialize({
+          inner: envelope,
+          type: 'keychain',
+          userAddress: `0x${'11'.repeat(20)}`,
+          version: 'v2',
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidApprovalError: Invalid owner approval: attested signatures cannot sign as access keys.]`,
+      )
+    })
+  })
+
+  // attested.rs `tests::configurable_account_carries_attested_approvals`.
+  describe('configurable', () => {
+    const unsigned = sign(`0x${'00'.repeat(32)}`)
+    const config = AccountConfig.from({
+      owners: [{ owner: AttestedSigner.getAddress(unsigned), weight: 1 }],
+      salt: AccountConfig.zeroSalt,
+      threshold: 1,
+    })
+    const account = AccountConfig.getAddress(config)
+    const inner = `0x${'42'.repeat(32)}` as const
+    const digest = AccountConfig.getSignPayload({
+      account,
+      config,
+      payload: inner,
+    })
+    const approval = sign(digest)
+    const configurable = SignatureEnvelope.from({
+      account,
+      config,
+      signatures: [approval],
+    })
+    const bytes = SignatureEnvelope.serialize(configurable)
+
+    test('default', () => {
+      expect(account).toMatchInlineSnapshot(
+        `"0xb6223f9c9ac7f7635c0bef95d302adc9c4ad6c3c"`,
+      )
+      expect(bytes).toMatchInlineSnapshot(
+        `"0x05f9012594b6223f9c9ac7f7635c0bef95d302adc9c4ad6c3cf83ba000000000000000000000000000000000000000000000000000000000000000008001d7d6948169075568131b8937b140558340450f92bfa9a301f8d1b8cf06f8cca0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb01b8400217e617f0b6443928278f96999e69a23a4f2c152bdf6d6cdf66e5b80282d4ed194a7debcb97712d2dda3ca85aa8765a56f45fc758599652f2897c65306e5794846b49d458b8401403b17bc7986949ecce8017edcd3a2a3a78e9191a0d21dbbb4a20e6cd1426da0632f8820403ca7eb464120b2d40746bb2f3a3a94e0cca1641353d012ce4dff3"`,
+      )
+    })
+
+    test('behavior: the approval is the standalone 0x06 encoding as an RLP string', () => {
+      const [, , approvals] = Rlp.toHex(Hex.slice(bytes, 1)) as [
+        Hex.Hex,
+        unknown,
+        Hex.Hex[],
+      ]
+      expect(approvals).toEqual([SignatureEnvelope.serialize(approval)])
+    })
+
+    test('behavior: round trips', () => {
+      expect(SignatureEnvelope.deserialize(bytes)).toEqual(configurable)
+      expect(
+        SignatureEnvelope.fromRpc(SignatureEnvelope.toRpc(configurable)),
+      ).toEqual(configurable)
+    })
+
+    test('behavior: the approval verifies over the owner approval digest', () => {
+      expect(
+        SignatureEnvelope.verify(approval, {
+          address: AttestedSigner.getAddress(approval),
+          payload: digest,
+        }),
+      ).toBe(true)
+      expect(
+        SignatureEnvelope.verify(approval, {
+          address: AttestedSigner.getAddress(approval),
+          payload: inner,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: sortApprovals recovers attested owners', () => {
+      const secp256k1 = SignatureEnvelope.from(
+        Secp256k1.sign({ payload: digest, privateKey: `0x${'22'.repeat(32)}` }),
+      )
+      const sorted = SignatureEnvelope.sortApprovals({
+        account,
+        config,
+        payload: inner,
+        signatures: [approval, secp256k1],
+      })
+      expect(
+        sorted.map((signature) =>
+          SignatureEnvelope.extractAddress({ payload: digest, signature }),
+        ),
+      ).toEqual(
+        [
+          AttestedSigner.getAddress(approval),
+          SignatureEnvelope.extractAddress({
+            payload: digest,
+            signature: secp256k1,
+          }),
+        ].sort((a, b) => (Hex.toBigInt(a) < Hex.toBigInt(b) ? -1 : 1)),
+      )
+    })
+
+    test('error: a configurable delegate keychain signature cannot relay the approval', () => {
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          Hex.concat('0x04', `0x${'11'.repeat(20)}`, bytes),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidApprovalError: Invalid owner approval: attested signatures cannot sign as access keys.]`,
+      )
+    })
   })
 })
