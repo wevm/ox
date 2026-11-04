@@ -388,6 +388,83 @@ describe('serializeKeyAuthorization', () => {
 })
 
 describe('serializeTransaction', () => {
+  test('access key transactions', async () => {
+    const userAddress = '0x4444444444444444444444444444444444444444'
+    const results = []
+    for (const transaction_ of [
+      transaction,
+      TxEnvelopeTempo.serialize(TxEnvelopeTempo.deserialize(transaction), {
+        format: 'feePayer',
+        sender: userAddress,
+      }),
+    ]) {
+      const hash = AccountOperation.getHash({
+        account,
+        config: currentConfig,
+        transaction: transaction_,
+        type: 'transaction',
+        userAddress,
+      })
+      const selection = await AccountOperation.selectApprovals({
+        account,
+        approvals: [
+          signApproval(owners[0]!, hash),
+          signApproval(owners[1]!, hash),
+        ],
+        config: currentConfig,
+        hash,
+      })
+      const operation = AccountOperation.from({
+        account,
+        approvals: selection.approvals,
+        config: currentConfig,
+        createdAt: 1,
+        hash,
+        signatureCount: selection.signatureCount,
+        status: 'pending',
+        threshold: selection.threshold,
+        transaction: transaction_,
+        type: 'transaction',
+        updatedAt: 1,
+        userAddress,
+        weight: selection.weight,
+      })
+      const value = TxEnvelopeTempo.deserialize(
+        AccountOperation.serializeTransaction(operation, {
+          approvals: selection.selectedApprovals,
+        }),
+      )
+      const { signature } = value
+      if (signature?.type !== 'keychain') throw new Error('expected keychain')
+      results.push({
+        from: value.from,
+        innerAccount:
+          signature.inner.type === 'configurable'
+            ? signature.inner.account
+            : undefined,
+        userAddress: signature.userAddress,
+        version: signature.version,
+      })
+    }
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        {
+          "from": "0x4444444444444444444444444444444444444444",
+          "innerAccount": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
+          "userAddress": "0x4444444444444444444444444444444444444444",
+          "version": "v2",
+        },
+        {
+          "from": "0x4444444444444444444444444444444444444444",
+          "innerAccount": "0xb3cc0b31026c7a54a9c45e468c674722c3c5b3b5",
+          "userAddress": "0x4444444444444444444444444444444444444444",
+          "version": "v2",
+        },
+      ]
+    `)
+  })
+
   test('current and initial transactions', async () => {
     const results = []
     for (const applicableConfig of [currentConfig, config]) {
@@ -586,6 +663,45 @@ describe('serializeTransaction', () => {
 })
 
 describe('from', () => {
+  test('error: access key transaction hash without userAddress', () => {
+    const userAddress = '0x4444444444444444444444444444444444444444'
+    const hash = AccountOperation.getHash({
+      account,
+      config: currentConfig,
+      transaction,
+      type: 'transaction',
+      userAddress,
+    })
+    const base = {
+      account,
+      approvals: [],
+      config: currentConfig,
+      createdAt: 1,
+      hash,
+      signatureCount: 0,
+      status: 'pending',
+      threshold: 2,
+      transaction,
+      type: 'transaction',
+      updatedAt: 1,
+      weight: 0,
+    } as const
+
+    expect(() =>
+      AccountOperation.from(base),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AccountOperation.InvalidOperationError: Invalid account operation: hash does not match the operation payload.]`,
+    )
+    expect(() =>
+      AccountOperation.from({ ...base, userAddress: account }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AccountOperation.InvalidOperationError: Invalid account operation: a configurable account cannot be its own access key.]`,
+    )
+    expect(AccountOperation.from({ ...base, userAddress }).userAddress).toBe(
+      userAddress,
+    )
+  })
+
   test('transaction states', () => {
     const pending = AccountOperation.from(transactionPending)
     const submitting = AccountOperation.from({
