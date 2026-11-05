@@ -704,18 +704,42 @@ export declare namespace hash {
  * @param userOperation - The user operation to convert.
  * @returns The init code.
  */
-export function toInitCode(userOperation: Partial<UserOperation>): Hex.Hex {
+export function toInitCode(
+  userOperation: Partial<UserOperation>,
+  options: toInitCode.Options = {},
+): Hex.Hex {
+  const { forHash } = options
   const { authorization, factory, factoryData } = userOperation
   if (
     factory === '0x7702' ||
     factory === '0x7702000000000000000000000000000000000000'
   ) {
+    // Onchain, the EntryPoint detects EIP-7702 by the 20-byte `0x7702` marker
+    // and reads the initialization data from `initCode[20:]`.
+    if (!forHash)
+      return Hex.concat(
+        '0x7702000000000000000000000000000000000000',
+        factoryData ?? '0x',
+      )
+    // For the hash, the EntryPoint replaces the marker with the delegate.
     if (!authorization) return '0x7702000000000000000000000000000000000000'
     const delegation = authorization.address
     return Hex.concat(delegation, factoryData ?? '0x')
   }
   if (!factory) return '0x'
   return Hex.concat(factory, factoryData ?? '0x')
+}
+
+export declare namespace toInitCode {
+  type Options = {
+    /**
+     * Prepares the init code for hashing: replaces the EIP-7702 `0x7702`
+     * marker with the delegate address.
+     */
+    forHash?: boolean | undefined
+  }
+
+  type ErrorType = Hex.concat.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -766,7 +790,7 @@ export function toPacked(
     verificationGasLimit || 0n,
     callGasLimit || 0n,
   )
-  const initCode = toInitCode(userOperation)
+  const initCode = toInitCode(userOperation, { forHash: options.forHash })
   const gasFees = packUint128Pair(
     maxPriorityFeePerGas || 0n,
     maxFeePerGas || 0n,
@@ -806,7 +830,10 @@ export function toPacked(
 export declare namespace toPacked {
   /** Packing options. */
   export type Options = {
-    /** Omits the paymaster signature while retaining its marker. */
+    /**
+     * Prepares for hashing: omits the paymaster signature while retaining its
+     * marker, and replaces the EIP-7702 `initCode` marker with the delegate.
+     */
     forHash?: boolean | undefined
   }
 

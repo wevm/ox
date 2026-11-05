@@ -912,6 +912,48 @@ describe('toPacked', () => {
       ).toMatchInlineSnapshot(`"0x004122e325a297439656"`)
     })
   })
+
+  describe('eip7702', () => {
+    const userOperation = {
+      authorization: {
+        address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+        chainId: 1,
+        nonce: 69n,
+        yParity: 0,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
+      callData: '0xdeadbeef',
+      callGasLimit: 6942069n,
+      factory: '0x7702',
+      factoryData: '0xcafebabe',
+      maxFeePerGas: 69420n,
+      maxPriorityFeePerGas: 69n,
+      nonce: 0n,
+      preVerificationGas: 6942069n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: 6942069n,
+    } as const satisfies UserOperation.UserOperation<'0.8', true>
+
+    test('default: keeps the EntryPoint `0x7702` initCode marker', () => {
+      const packed = UserOperation.toPacked(userOperation)
+      expect(packed.initCode).toMatchInlineSnapshot(
+        `"0x7702000000000000000000000000000000000000cafebabe"`,
+      )
+      expect(UserOperation.fromPacked(packed).factory).toBe(
+        '0x7702000000000000000000000000000000000000',
+      )
+    })
+
+    test('options: forHash', () => {
+      expect(
+        UserOperation.toPacked(userOperation, { forHash: true }).initCode,
+      ).toMatchInlineSnapshot(
+        `"0x9f1fdab6458c5fc642fa0f4c5af7473c46837357cafebabe"`,
+      )
+    })
+  })
 })
 
 describe('toInitCode', () => {
@@ -965,55 +1007,96 @@ describe('toInitCode', () => {
     ).toBe('0x7702000000000000000000000000000000000000')
   })
 
-  test('behavior: EIP-7702 factory with authorization and no factoryData', () => {
+  test('behavior: forHash: EIP-7702 factory with authorization and no factoryData', () => {
+    expect(
+      UserOperation.toInitCode(
+        {
+          factory: '0x7702',
+          factoryData: undefined,
+          authorization: {
+            address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+            chainId: 1,
+            nonce: 69n,
+            yParity: 0,
+            r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+            s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          },
+        },
+        { forHash: true },
+      ),
+    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
+  })
+
+  test('behavior: forHash: EIP-7702 factory with authorization and factoryData', () => {
+    expect(
+      UserOperation.toInitCode(
+        {
+          factory: '0x7702',
+          factoryData: '0xdeadbeef',
+          authorization: {
+            address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+            chainId: 1,
+            nonce: 69n,
+            yParity: 0,
+            r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+            s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          },
+        },
+        { forHash: true },
+      ),
+    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
+  })
+
+  test('behavior: forHash: EIP-7702 factory (full form) with authorization and factoryData', () => {
+    expect(
+      UserOperation.toInitCode(
+        {
+          factory: '0x7702000000000000000000000000000000000000',
+          factoryData: '0xcafebabe',
+          authorization: {
+            address: '0x1234567890123456789012345678901234567890',
+            chainId: 1,
+            nonce: 42n,
+            yParity: 1,
+            r: '0x000000000000000000000000000000000000000000000000000000000000007b',
+            s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
+          },
+        },
+        { forHash: true },
+      ),
+    ).toBe('0x1234567890123456789012345678901234567890cafebabe')
+  })
+
+  test('behavior: EIP-7702 factory with authorization packs the 20-byte marker', () => {
+    const authorization = {
+      address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+      chainId: 1,
+      nonce: 69n,
+      yParity: 0,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+    } as const
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
         factoryData: undefined,
-        authorization: {
-          address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
-          chainId: 1,
-          nonce: 69n,
-          yParity: 0,
-          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-        },
+        authorization,
       }),
-    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
-  })
-
-  test('behavior: EIP-7702 factory with authorization and factoryData', () => {
+    ).toBe('0x7702000000000000000000000000000000000000')
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
         factoryData: '0xdeadbeef',
-        authorization: {
-          address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
-          chainId: 1,
-          nonce: 69n,
-          yParity: 0,
-          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-        },
+        authorization,
       }),
-    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
-  })
-
-  test('behavior: EIP-7702 factory (full form) with authorization and factoryData', () => {
+    ).toBe('0x7702000000000000000000000000000000000000deadbeef')
     expect(
       UserOperation.toInitCode({
         factory: '0x7702000000000000000000000000000000000000',
-        factoryData: '0xcafebabe',
-        authorization: {
-          address: '0x1234567890123456789012345678901234567890',
-          chainId: 1,
-          nonce: 42n,
-          yParity: 1,
-          r: '0x000000000000000000000000000000000000000000000000000000000000007b',
-          s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
-        },
+        factoryData: '0xdeadbeef',
+        authorization,
       }),
-    ).toBe('0x1234567890123456789012345678901234567890cafebabe')
+    ).toBe('0x7702000000000000000000000000000000000000deadbeef')
   })
 })
 
