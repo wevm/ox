@@ -88,24 +88,24 @@ export type KeyAuthorization<
   witness?: Hex.Hex | undefined
 } & (signed extends true
   ? {
-      signature:
-        | SignatureEnvelope.Primitive<numberType>
-        | SignatureEnvelope.Configurable<numberType>
+      signature: Signature<numberType>
     }
   : {
-      signature?:
-        | SignatureEnvelope.Primitive<numberType>
-        | SignatureEnvelope.Configurable<numberType>
-        | undefined
+      signature?: Signature<numberType> | undefined
     })
 
-/** Signature that can authorize an access key. */
+/**
+ * Signature that can authorize an access key: a primitive, configurable
+ * account, or attested (experimental) signature.
+ */
 export type Signature<numberType = number> =
   | SignatureEnvelope.Primitive<numberType>
   | SignatureEnvelope.Configurable<numberType>
+  | SignatureEnvelope.Attested<numberType>
 
 /** RPC-formatted signature that can authorize an access key. */
 export type SignatureRpc =
+  | SignatureEnvelope.AttestedRpc
   | SignatureEnvelope.ConfigurableRpc
   | SignatureEnvelope.PrimitiveRpc
 
@@ -135,8 +135,8 @@ export type Rpc = {
   keyType: SignatureEnvelope.Type | 'configurableAccount'
   /** Token spending limits (`null`/`undefined` = unlimited, `[]` = no spending allowed). */
   limits?: readonly RpcTokenLimit[] | null | undefined
-  /** Primitive or configurable account signature authorizing this key. */
-  signature: SignatureEnvelope.PrimitiveRpc | SignatureEnvelope.ConfigurableRpc
+  /** Primitive, configurable account, or attested signature authorizing this key. */
+  signature: SignatureRpc
   /** Optional 32-byte witness (hex). */
   witness?: Hex.Hex | null | undefined
 }
@@ -171,6 +171,7 @@ type SignatureValue =
   | SignatureEnvelope.from.ConfigurableFromConfig
   | UnionPartialBy<SignatureEnvelope.Primitive, 'prehash' | 'type'>
   | PartialBy<SignatureEnvelope.Configurable, 'type'>
+  | PartialBy<SignatureEnvelope.Attested, 'type'>
   | SignatureEnvelope.Secp256k1Flat
   | SignatureEnvelope.Serialized
 
@@ -498,12 +499,8 @@ export declare namespace from {
   type Options<
     signature extends SignatureValue | undefined = SignatureValue | undefined,
   > = {
-    /** The primitive or configurable account signature to attach to the Key Authorization. */
-    signature?:
-      | signature
-      | SignatureEnvelope.Primitive
-      | SignatureEnvelope.Configurable
-      | undefined
+    /** The primitive, configurable account, or attested signature to attach to the Key Authorization. */
+    signature?: signature | Signature | undefined
   }
 
   type ReturnType<
@@ -517,7 +514,7 @@ export declare namespace from {
             ? {
                 signature: Extract<
                   SignatureEnvelope.from.ReturnValue<signature>,
-                  SignatureEnvelope.Primitive | SignatureEnvelope.Configurable
+                  Signature
                 >
               }
             : {})
@@ -1018,9 +1015,7 @@ export function toRpc(authorization: toRpc.Input): Rpc {
       limit: Quantity.fromNumberish(limit),
       ...(period ? { period: Quantity.fromNumberish(period) } : {}),
     })),
-    signature: SignatureEnvelope.toRpc(signature) as
-      | SignatureEnvelope.PrimitiveRpc
-      | SignatureEnvelope.ConfigurableRpc,
+    signature: SignatureEnvelope.toRpc(signature) as SignatureRpc,
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
     ...(isAdmin ? { isAdmin: true } : {}),
@@ -1219,9 +1214,7 @@ function assertWitness(witness: Hex.Hex): void {
 
 function assertSignature<numberType>(
   signature: SignatureEnvelope.SignatureEnvelope<numberType>,
-): asserts signature is
-  | SignatureEnvelope.Primitive<numberType>
-  | SignatureEnvelope.Configurable<numberType> {
+): asserts signature is Signature<numberType> {
   if (signature.type === 'keychain')
     throw new InvalidSignatureTypeError(signature.type)
 }
@@ -1255,7 +1248,7 @@ export class InvalidSignatureTypeError extends Error {
   override readonly name = 'KeyAuthorization.InvalidSignatureTypeError'
   constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
     super(
-      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.`,
+      `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, \`configurable\`, or \`attested\`.`,
     )
   }
 }
