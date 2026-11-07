@@ -1464,16 +1464,23 @@ describe('encode', () => {
     const event = AbiEvent.from(
       'event Foo(int8 indexed a, uint8 indexed b, bytes4 indexed c)',
     )
-    expect(() => AbiEvent.encode(event, { a: 128n })).toThrowError(
+    expect(() => AbiEvent.encode(event, { a: 128 })).toThrowError(
       Hex.IntegerOutOfRangeError,
     )
-    expect(() => AbiEvent.encode(event, { b: 256n })).toThrowError(
+    expect(() => AbiEvent.encode(event, { b: 256 })).toThrowError(
       Hex.IntegerOutOfRangeError,
     )
     expect(() => AbiEvent.encode(event, { c: '0x0102030405' })).toThrowError(
       AbiParameters.BytesSizeMismatchError,
     )
-    expect(AbiEvent.encode(event, { a: -128n, b: 255n, c: '0x01020304' }))
+    const event32 = AbiEvent.from('event Bar(bytes32 indexed d)')
+    expect(() => AbiEvent.encode(event32, { d: '0x0102' })).toThrowError(
+      AbiParameters.BytesSizeMismatchError,
+    )
+    expect(() =>
+      AbiEvent.encode(event32, { d: `0x${'11'.repeat(31)}` }),
+    ).toThrowError(AbiParameters.BytesSizeMismatchError)
+    expect(AbiEvent.encode(event, { a: -128, b: 255, c: '0x01020304' }))
       .toMatchInlineSnapshot(`
         {
           "topics": [
