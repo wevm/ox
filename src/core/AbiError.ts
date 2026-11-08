@@ -210,14 +210,17 @@ export function decode(
     }
     return parameters as [AbiError, Hex.Hex, decode.Options | undefined]
   })()
-  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
-  if (abiError.inputs?.length === 0) return undefined
+  const { overloads } = abiError as AbiError
 
-  const values = AbiParameters.decode(
-    abiError.inputs,
-    Hex.slice(data, 4),
-    options,
-  )
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
+
+  const item = overloads
+    ? (fromAbi([abiError, ...overloads], data as never) as AbiError)
+    : abiError
+
+  if (item.inputs?.length === 0) return undefined
+
+  const values = AbiParameters.decode(item.inputs, Hex.slice(data, 4), options)
   if (values && Object.keys(values).length === 1) {
     if (Array.isArray(values)) return values[0]
     return Object.values(values)[0]
@@ -239,22 +242,30 @@ export declare namespace decode {
     abiError extends AbiError = AbiError,
     as extends 'Object' | 'Array' = 'Array',
   > = IsNarrowable<abiError, AbiError> extends true
-    ? abiError['inputs'] extends readonly []
-      ? undefined
-      : abiError['inputs'] extends readonly [
-            infer type extends abitype.AbiParameter,
-          ]
-        ? abitype.AbiParameterToPrimitiveType<type>
-        : AbiParameters.decode.ReturnType<
-              abiError['inputs'],
-              as
-            > extends infer types
-          ? types extends readonly []
-            ? undefined
-            : types extends readonly [infer type]
-              ? type
-              : types
-          : never
+    ? // distribute over the error and its overloads
+        | abiError
+        | (abiError['overloads'] extends readonly AbiError[]
+            ? abiError['overloads'][number]
+            : never) extends infer item extends AbiError
+      ? item extends AbiError
+        ? item['inputs'] extends readonly []
+          ? undefined
+          : item['inputs'] extends readonly [
+                infer type extends abitype.AbiParameter,
+              ]
+            ? abitype.AbiParameterToPrimitiveType<type>
+            : AbiParameters.decode.ReturnType<
+                  item['inputs'],
+                  as
+                > extends infer types
+              ? types extends readonly []
+                ? undefined
+                : types extends readonly [infer type]
+                  ? type
+                  : types
+              : never
+        : never
+      : never
     : unknown | readonly unknown[] | undefined
 
   type ErrorType =
