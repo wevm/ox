@@ -1085,6 +1085,74 @@ describe('encode', () => {
     )
   })
 
+  test('behavior: narrow indexed args at their type bounds', () => {
+    const event = AbiEvent.from(
+      'event Foo(int8 indexed a, uint8 indexed b, bytes4 indexed c)',
+    )
+    expect(
+      AbiEvent.encode(event, { a: -128, b: 255, c: '0x01020304' }),
+    ).toMatchInlineSnapshot(`
+        {
+          "topics": [
+            "0xd6e31c53a9a68addf818ebcdb6a5b6f8a18be2d94c1c57fb0f1d4c8014bbbe8c",
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80",
+            "0x00000000000000000000000000000000000000000000000000000000000000ff",
+            "0x0102030400000000000000000000000000000000000000000000000000000000",
+          ],
+        }
+      `)
+    expect(AbiEvent.encode(event, { a: 127, b: 0 })).toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0xd6e31c53a9a68addf818ebcdb6a5b6f8a18be2d94c1c57fb0f1d4c8014bbbe8c",
+          "0x000000000000000000000000000000000000000000000000000000000000007f",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          null,
+        ],
+      }
+    `)
+  })
+
+  test('error: indexed integer out of range', () => {
+    const event = AbiEvent.from('event Foo(int8 indexed a, uint8 indexed b)')
+    expect(() =>
+      AbiEvent.encode(event, { a: 128 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+    expect(() =>
+      AbiEvent.encode(event, { a: -129 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-129\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+    expect(() =>
+      AbiEvent.encode(event, { b: 256 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
+
+  test('error: indexed bytesN size mismatch', () => {
+    const event = AbiEvent.from(
+      'event Foo(bytes4 indexed a, bytes32 indexed b)',
+    )
+    expect(() =>
+      AbiEvent.encode(event, { a: '0x0102030405' }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0102030405" (bytes5) does not match expected size (bytes4).]`,
+    )
+    expect(() =>
+      AbiEvent.encode(event, { a: '0x0102' }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0102" (bytes2) does not match expected size (bytes4).]`,
+    )
+    expect(() =>
+      AbiEvent.encode(event, { b: `0x${'11'.repeat(31)}` }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x11111111111111111111111111111111111111111111111111111111111111" (bytes31) does not match expected size (bytes32).]`,
+    )
+  })
+
   test('behavior: network', async () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',
