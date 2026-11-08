@@ -139,7 +139,7 @@ export type GetType<
  *
  * - **keychain** (type `0x03` V1, `0x04` V2): Access key signature that wraps an inner signature
  *   (secp256k1, p256, or webAuthn). Format: type byte + user_address (20 bytes) + inner signature.
- *   V2 binds the signature to the user account via `keccak256(sigHash || userAddress)`.
+ *   V2 binds the signature to the user account via `keccak256(0x04 || sigHash || userAddress)`.
  *   The protocol validates the access key authorization via the AccountKeychain precompile.
  *
  * - **configurable** (type `0x05`): Configurable account signature carrying the account address,
@@ -181,8 +181,8 @@ export type PrimitiveRpc = OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc>
  * Keychain signature version.
  *
  * - `'v1'`: Legacy format. Inner signature signs the raw `sig_hash` directly. Deprecated at T1C.
- * - `'v2'`: Inner signature signs `keccak256(sig_hash || user_address)`, binding the signature
- *   to the specific user account.
+ * - `'v2'`: Inner signature signs `keccak256(0x04 || sig_hash || user_address)`, binding the
+ *   signature to the specific user account.
  */
 export type KeychainVersion = 'v1' | 'v2'
 
@@ -194,7 +194,7 @@ export type Keychain<bigintType = bigint, numberType = number> = {
   type: 'keychain'
   /** Root account address that this transaction is being executed for */
   userAddress: Address.Address
-  /** Keychain signature version. @default 'v1' */
+  /** Keychain signature version. @default 'v2' */
   version?: KeychainVersion | undefined
 }
 

@@ -1043,6 +1043,18 @@ describe('from', () => {
       expect(envelope.type).toBe('keychain')
     })
 
+    test('behavior: defaults version to v2', () => {
+      const envelope = SignatureEnvelope.from({
+        inner: SignatureEnvelope.from(signature_secp256k1),
+        userAddress: '0x1234567890123456789012345678901234567890',
+      })
+
+      expect(envelope).toMatchObject({ version: 'v2' })
+      expect(
+        Hex.slice(SignatureEnvelope.serialize(envelope), 0, 1),
+      ).toMatchInlineSnapshot(`"0x04"`)
+    })
+
     test('behavior: computes keyId from p256 inner publicKey', () => {
       const envelope = SignatureEnvelope.from({
         userAddress: '0x1234567890123456789012345678901234567890',
