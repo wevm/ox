@@ -1050,6 +1050,68 @@ describe('fromAbi', () => {
     `)
   })
 
+  test('behavior: overloads: string vs bytes', () => {
+    const results = (
+      [
+        ['bytes', 'string'],
+        ['string', 'bytes'],
+      ] as const
+    ).map(([first, second]) => [
+      AbiItem.format(
+        AbiItem.fromAbi(
+          Abi.from([`function foo(${first})`, `function foo(${second})`]),
+          'foo',
+          { args: ['hello'] },
+        ),
+      ),
+      AbiItem.format(
+        AbiItem.fromAbi(
+          Abi.from([`function foo(${first}[])`, `function foo(${second}[])`]),
+          'foo',
+          { args: [['hello', 'world']] },
+        ),
+      ),
+      AbiItem.format(
+        AbiItem.fromAbi(
+          Abi.from([`function foo((${first}))`, `function foo((${second}))`]),
+          'foo',
+          { args: [['hello']] },
+        ),
+      ),
+    ])
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        [
+          "function foo(string)",
+          "function foo(string[])",
+          "function foo((string))",
+        ],
+        [
+          "function foo(string)",
+          "function foo(string[])",
+          "function foo((string))",
+        ],
+      ]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(bytes)', 'function foo(string)']),
+        'foo',
+        { args: ['0x1234'] },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`string\` in \`foo(string)\`, and
+      \`bytes\` in \`foo(bytes)\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+  })
+
   test('behavior: overloads: uint256 vs int256', () => {
     expect(() =>
       AbiItem.fromAbi(
@@ -1556,7 +1618,8 @@ describe('fromAbi', () => {
     { arg: false, abiParameter: { type: 'bool' }, expected: true },
     { arg: 'true', abiParameter: { type: 'bool' }, expected: false },
     // bytes
-    { arg: 'foo', abiParameter: { type: 'bytes' }, expected: true },
+    { arg: 'foo', abiParameter: { type: 'bytes' }, expected: false },
+    { arg: '0x1234', abiParameter: { type: 'bytes' }, expected: true },
     { arg: 'foo', abiParameter: { type: 'bytes32' }, expected: false },
     { arg: '0x1234', abiParameter: { type: 'bytes2' }, expected: true },
     { arg: '0x1234', abiParameter: { type: 'bytes4' }, expected: false },
