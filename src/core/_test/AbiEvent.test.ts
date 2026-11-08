@@ -1845,6 +1845,19 @@ describe('encode', () => {
     `)
   })
 
+  test('behavior: odd-length indexed bytes32 arg', () => {
+    const event = AbiEvent.from('event Foo(bytes32 indexed a)')
+    expect(AbiEvent.encode(event, { a: `0x${'1'.repeat(63)}` }))
+      .toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0x54b5e571557045df8a69633aeac8e206d92b03f48563fab6a430493d299de727",
+          "0x1111111111111111111111111111111111111111111111111111111111111110",
+        ],
+      }
+    `)
+  })
+
   test('error: indexed integer out of range', () => {
     const event = AbiEvent.from('event Foo(int8 indexed a, uint8 indexed b)')
     expect(() =>

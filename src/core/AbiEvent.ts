@@ -66,8 +66,7 @@ function encodePrimitiveTopic(
   if (type.startsWith('bytes') && type.length > 5) {
     if (typeof value !== 'string') return undefined
     // Other sizes go through `AbiParameters.encode`, which checks the length.
-    if (type !== 'bytes32' || Hex.size(value as Hex.Hex) !== 32)
-      return undefined
+    if (type !== 'bytes32' || value.length !== 66) return undefined
     return value as Hex.Hex
   }
   return undefined
