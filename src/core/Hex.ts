@@ -693,6 +693,9 @@ export function toBytes(hex: Hex, options: toBytes.Options = {}): Uint8Array {
   let value = hex
   if (typeof size === 'number') {
     internal.assertSize(value, size)
+    // An odd-length value gets its leading `0` before right-padding, so the
+    // padding lands after the value's bytes instead of between its nibbles.
+    if (value.length % 2) value = `0x0${value.slice(2)}`
     value = padRight(value, size)
   }
   return hexToBytes(value)
