@@ -1,5 +1,41 @@
 # ox
 
+## 0.14.64
+
+### Patch Changes
+
+- [#603](https://github.com/wevm/ox/pull/603) [`0f76422`](https://github.com/wevm/ox/commit/0f76422f8bd6bac17cc0de8fd210ef8f9cb69fd1) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiError.decode` to resolve overloaded errors by the selector in `data` instead of always decoding with the first matching overload.
+
+- [#601](https://github.com/wevm/ox/pull/601) [`354db45`](https://github.com/wevm/ox/commit/354db452bc46f586ca9111faea1c5d904f7f7ca5) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.assertArgs` not matching integer arguments given as a `number` against values decoded as `bigint`, or as a `bigint` against small integers decoded as `number`.
+
+- [#590](https://github.com/wevm/ox/pull/590) [`ed0af24`](https://github.com/wevm/ox/commit/ed0af2456fc3bdbd699976055a1916011fe42c3f) Thanks [@jxom](https://github.com/jxom)! - Fixed `Base32.toBytes` and `Base32.toHex` accepting non-canonical input (non-zero trailing bits or an impossible length) by throwing `Base32.InvalidPaddingError`.
+
+- [#581](https://github.com/wevm/ox/pull/581) [`0dcd096`](https://github.com/wevm/ox/commit/0dcd096c96e59e6c063a91faa71ba40a6c714a54) Thanks [@jxom](https://github.com/jxom)! - Fixed `Cbor.decode` to decode a `__proto__` map key as an own property instead of replacing the prototype of the decoded object.
+
+- [#592](https://github.com/wevm/ox/pull/592) [`867e641`](https://github.com/wevm/ox/commit/867e6419595428875203237488c169622790a83f) Thanks [@jxom](https://github.com/jxom)! - Fixed `Attribution.fromData` to return `undefined` when a codes or CBOR length field claims more bytes than precede it.
+
+- [#585](https://github.com/wevm/ox/pull/585) [`9bc4970`](https://github.com/wevm/ox/commit/9bc49703ced19ae638e658c4e9c0bbf8ef4eb0d6) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toBigInt` and `Hex.toNumber` throwing on odd-length hex with `signed: true`, and `Hex.fromNumber` returning `0x0` for a negative number with `signed: true` and no `size`.
+
+- [#597](https://github.com/wevm/ox/pull/597) [`0253792`](https://github.com/wevm/ox/commit/025379265834dbb9357913a5bedb7cb4a94cc051) Thanks [@jxom](https://github.com/jxom)! - Fixed `Rlp.toBytes` and `Rlp.toHex` to reject non-canonical encodings (a single byte below `0x80` with a length prefix, or a long-form or zero-padded length) with `Rlp.NonCanonicalError`.
+
+- [#601](https://github.com/wevm/ox/pull/601) [`354db45`](https://github.com/wevm/ox/commit/354db452bc46f586ca9111faea1c5d904f7f7ca5) Thanks [@jxom](https://github.com/jxom)! - Fixed `Bytes.fromHex` and `Hex.toBytes` shifting the bytes of odd-length hex values when `size` was specified.
+
+- [#601](https://github.com/wevm/ox/pull/601) [`354db45`](https://github.com/wevm/ox/commit/354db452bc46f586ca9111faea1c5d904f7f7ca5) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` dropping `fetchOptions.headers` supplied as a `Headers` instance or tuple array, and sending both the default and the caller's `Content-Type` when only their casing differed.
+
+- [#601](https://github.com/wevm/ox/pull/601) [`354db45`](https://github.com/wevm/ox/commit/354db452bc46f586ca9111faea1c5d904f7f7ca5) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.validateMessage` accepting a message with a nonce shorter than 8 alphanumeric characters or a version other than `1`, which EIP-4361 does not allow.
+
+- [#601](https://github.com/wevm/ox/pull/601) [`354db45`](https://github.com/wevm/ox/commit/354db452bc46f586ca9111faea1c5d904f7f7ca5) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.fromAbi` throwing `AbiItem.AmbiguityError` for `string` and `bytes` overloads when the argument is a plain string; only hex strings and `Uint8Array` values now match `bytes`.
+
+- [#583](https://github.com/wevm/ox/pull/583) [`e415932`](https://github.com/wevm/ox/commit/e415932fab8d236e180b9610bbf821f8efefd275) Thanks [@jxom](https://github.com/jxom)! - Fixed `Tick.fromPrice` accepting negative prices between -1 and 0 as their positive counterparts instead of throwing `Tick.PriceOutOfBoundsError`.
+
+- [#601](https://github.com/wevm/ox/pull/601) [`354db45`](https://github.com/wevm/ox/commit/354db452bc46f586ca9111faea1c5d904f7f7ca5) Thanks [@jxom](https://github.com/jxom)! - Fixed `TypedData.assert` and `TypedData.validate` (and so `TypedData.getSignPayload` and `TypedData.serialize`) rejecting struct names that contain `:`, such as `HyperliquidTransaction:SendAsset`.
+
+- [#579](https://github.com/wevm/ox/pull/579) [`90b00c7`](https://github.com/wevm/ox/commit/90b00c795da693767034599e490061b388b47261) Thanks [@jxom](https://github.com/jxom)! - Added a `{"type":"module"}` marker to `_types/` so declaration files resolve as ESM under TypeScript `node16` (and `nodenext` before TypeScript 5.8); CommonJS consumers on `node16` should switch to `nodenext` or `bundler` resolution.
+
+- [#594](https://github.com/wevm/ox/pull/594) [`4208467`](https://github.com/wevm/ox/commit/4208467647164df560793dab7405c355608fd25e) Thanks [@jxom](https://github.com/jxom)! - Fixed `UserOperation.toPacked` and `UserOperation.toInitCode` to keep the padded EIP-7702 `0x7702` initCode marker expected by EntryPoint 0.8, using the delegate address only with the new `forHash` option.
+
+- [#599](https://github.com/wevm/ox/pull/599) [`942c3a3`](https://github.com/wevm/ox/commit/942c3a364316b3e9d5020c91a29eab68fec12176) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiFunction.decodeData` returning `undefined` when a function name has a zero-input overload and the calldata targets another overload, by keeping the other overloads on items `fromAbi` resolves without `args`.
+
 ## 0.14.63
 
 ### Patch Changes
