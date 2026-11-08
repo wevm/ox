@@ -134,6 +134,7 @@ export declare namespace decodeRlpCursor {
     | Hex.fromBytes.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
+    | NonCanonicalError
     | Errors.GlobalErrorType
 }
 
@@ -186,7 +187,7 @@ export function readLength(
 
 /** @internal */
 export declare namespace readLength {
-  type ErrorType = Errors.BaseError | Errors.GlobalErrorType
+  type ErrorType = NonCanonicalError | Errors.BaseError | Errors.GlobalErrorType
 }
 
 /** @internal */

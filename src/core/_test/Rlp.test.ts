@@ -353,8 +353,8 @@ describe('non-canonical encoding', () => {
   })
 
   test('single byte >= 0x80 correctly requires a length-1 prefix', () => {
-    expect(Rlp.toHex('0x8180')).toEqual('0x80')
-    expect(Rlp.toHex('0x8185')).toEqual('0x85')
+    expect(Rlp.toHex('0x8180')).toMatchInlineSnapshot(`"0x80"`)
+    expect(Rlp.toHex('0x8185')).toMatchInlineSnapshot(`"0x85"`)
   })
 
   test('long-form length that fits the short form', () => {
