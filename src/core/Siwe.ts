@@ -445,6 +445,11 @@ export function validateMessage(value: validateMessage.Value): boolean {
   if (nonce && message.nonce !== nonce) return false
   if (scheme && message.scheme !== scheme) return false
 
+  // EIP-4361 requires `nonce = 8*( ALPHA / DIGIT )` and `version = "1"`.
+  if (message.nonce !== undefined && !nonceRegex.test(message.nonce))
+    return false
+  if (message.version !== undefined && message.version !== '1') return false
+
   if (message.expirationTime && time >= message.expirationTime) return false
   if (message.notBefore && time < message.notBefore) return false
 
