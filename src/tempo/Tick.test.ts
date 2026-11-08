@@ -115,6 +115,16 @@ describe('fromPrice', () => {
     expect(Tick.fromPrice('  1.0  ')).toBe(0)
     expect(Tick.fromPrice(' 1.001 ')).toBe(100)
   })
+
+  test('throws error when price is negative', () => {
+    expect(() => Tick.fromPrice('-0.999')).toThrowErrorMatchingInlineSnapshot(`
+      [Tick.PriceOutOfBoundsError: Price "-0.999" results in tick -199900 which is out of bounds.
+
+      Tick must be between -2000 and 2000.]
+    `)
+    expect(() => Tick.fromPrice('-0.98')).toThrow(Tick.PriceOutOfBoundsError)
+    expect(() => Tick.fromPrice('-0.99999')).toThrow(Tick.PriceOutOfBoundsError)
+  })
 })
 
 describe('round-trip conversions', () => {
