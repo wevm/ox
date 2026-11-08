@@ -89,6 +89,53 @@ describe('fromHttp', () => {
     expect(blockNumber).toMatchInlineSnapshot(`"eth_accounts"`)
   })
 
+  test('options: fetchOptions (headers)', async () => {
+    const server = await createHttpServer((req, res) => {
+      res.end(
+        JSON.stringify({
+          id: 0,
+          jsonrpc: '2.0',
+          result: [req.headers['content-type'], req.headers['x-custom-header']],
+        }),
+      )
+    })
+
+    const results = []
+    for (const headers of [
+      { 'Content-Type': 'application/json-rpc', 'x-custom-header': 'wagmi' },
+      new Headers({
+        'Content-Type': 'application/json-rpc',
+        'x-custom-header': 'wagmi',
+      }),
+      [
+        ['Content-Type', 'application/json-rpc'],
+        ['x-custom-header', 'wagmi'],
+      ] as [string, string][],
+    ]) {
+      const transport = RpcTransport.fromHttp(server.url, {
+        fetchOptions: { headers },
+      })
+      results.push(await transport.request({ method: 'eth_accounts' }))
+    }
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        [
+          "application/json-rpc",
+          "wagmi",
+        ],
+        [
+          "application/json-rpc",
+          "wagmi",
+        ],
+        [
+          "application/json-rpc",
+          "wagmi",
+        ],
+      ]
+    `)
+  })
+
   test('options: timeout', async () => {
     const server = await createHttpServer(async (_, res) => {
       await setTimeout(100)
