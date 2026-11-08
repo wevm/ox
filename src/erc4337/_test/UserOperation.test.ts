@@ -938,12 +938,26 @@ describe('toPacked', () => {
 
     test('default: keeps the EntryPoint `0x7702` initCode marker', () => {
       const packed = UserOperation.toPacked(userOperation)
-      expect(packed.initCode).toMatchInlineSnapshot(
-        `"0x7702000000000000000000000000000000000000cafebabe"`,
-      )
-      expect(UserOperation.fromPacked(packed).factory).toBe(
-        '0x7702000000000000000000000000000000000000',
-      )
+      expect(packed).toMatchInlineSnapshot(`
+        {
+          "accountGasLimits": "0x0000000000000000000000000069ed750000000000000000000000000069ed75",
+          "callData": "0xdeadbeef",
+          "gasFees": "0x0000000000000000000000000000004500000000000000000000000000010f2c",
+          "initCode": "0x7702000000000000000000000000000000000000cafebabe",
+          "nonce": 0n,
+          "paymasterAndData": "0x",
+          "preVerificationGas": 6942069n,
+          "sender": "0x1234567890123456789012345678901234567890",
+          "signature": "0x",
+        }
+      `)
+      const { factory, factoryData } = UserOperation.fromPacked(packed)
+      expect({ factory, factoryData }).toMatchInlineSnapshot(`
+        {
+          "factory": "0x7702000000000000000000000000000000000000",
+          "factoryData": "0xcafebabe",
+        }
+      `)
     })
 
     test('options: forHash', () => {
@@ -1007,7 +1021,7 @@ describe('toInitCode', () => {
     ).toBe('0x7702000000000000000000000000000000000000')
   })
 
-  test('behavior: forHash: EIP-7702 factory with authorization and no factoryData', () => {
+  test('options: forHash: EIP-7702 factory with authorization and no factoryData', () => {
     expect(
       UserOperation.toInitCode(
         {
@@ -1027,7 +1041,7 @@ describe('toInitCode', () => {
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
   })
 
-  test('behavior: forHash: EIP-7702 factory with authorization and factoryData', () => {
+  test('options: forHash: EIP-7702 factory with authorization and factoryData', () => {
     expect(
       UserOperation.toInitCode(
         {
@@ -1047,7 +1061,7 @@ describe('toInitCode', () => {
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
   })
 
-  test('behavior: forHash: EIP-7702 factory (full form) with authorization and factoryData', () => {
+  test('options: forHash: EIP-7702 factory (full form) with authorization and factoryData', () => {
     expect(
       UserOperation.toInitCode(
         {
