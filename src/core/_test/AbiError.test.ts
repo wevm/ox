@@ -76,6 +76,37 @@ describe('decode', () => {
     expect(decoded).toEqual(1)
   })
 
+  test('behavior: with overloads, resolved by name', () => {
+    const abi = Abi.from([
+      'error Example()',
+      'error Example(uint256 amount)',
+      'error Example(string reason)',
+    ])
+    expect(
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.from('error Example(uint256 amount)'), [5n]),
+      ),
+    ).toEqual(5n)
+    expect(
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.from('error Example(string reason)'), [
+          'denied',
+        ]),
+      ),
+    ).toEqual('denied')
+    expect(
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.from('error Example()')),
+      ),
+    ).toEqual(undefined)
+  })
+
   test('error: invalid data', () => {
     const error = AbiError.from('error Example(uint256 a)')
     expect(() =>
