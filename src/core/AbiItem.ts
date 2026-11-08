@@ -315,10 +315,8 @@ export function fromAbi<
     } as never
 
   let matchedAbiItem: AbiItem | undefined
-  // Tracked separately from `matchedAbiItem`: when `args` isn't supplied, the
-  // first zero-input overload is a provisional pick, not a final resolution
-  // (e.g. `AbiFunction.decodeData` still needs the other overloads to
-  // disambiguate by selector). Returning early here would drop them.
+  // Without `args`, a zero-input overload is the preferred pick, but the other
+  // overloads are still attached so callers can resolve by selector.
   let zeroArgAbiItem: AbiItem | undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue

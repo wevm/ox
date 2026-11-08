@@ -740,15 +740,28 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
-      "inputs": [],
-      "name": "foo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+        "inputs": [],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('overloads: no args', () => {
@@ -759,15 +772,28 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
-      "inputs": [],
-      "name": "foo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+        "inputs": [],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('behavior: overloads: different lengths without abi order define effect', () => {
