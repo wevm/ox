@@ -221,6 +221,12 @@ describe('fromNumber', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
     )
+    expect(() =>
+      // @ts-expect-error `signed` requires `size`.
+      Hex.fromNumber(-1, { signed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Hex.IntegerOutOfRangeError: Number `-1` is not in safe signed integer range (`0` to `9007199254740991`)]',
+    )
   })
 })
 
@@ -403,6 +409,10 @@ describe('toBigInt', () => {
     expect(Hex.toBigInt('0xff81', { signed: true })).toBe(-127n)
     expect(Hex.toBigInt('0x7fff', { signed: true })).toBe(32767n)
     expect(Hex.toBigInt('0x8000', { signed: true })).toBe(-32768n)
+
+    expect(Hex.toBigInt('0xf', { signed: true })).toBe(15n)
+    expect(Hex.toBigInt('0xfff', { signed: true })).toBe(4095n)
+    expect(Hex.toBigInt(Hex.fromNumber(420), { signed: true })).toBe(420n)
 
     expect(
       Hex.toBigInt(
