@@ -442,6 +442,24 @@ describe('fromData', () => {
 
       expect(result).toBeUndefined()
     })
+
+    test('codesLength claims more bytes than are available', () => {
+      // codesLength 0xff with no codes bytes before it
+      const input = '0xff0080218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('codesLength overruns into unrelated leading bytes', () => {
+      // codesLength 0x0a with only 4 bytes before it
+      const input = '0xdeadbeef0a0080218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toBeUndefined()
+    })
   })
 })
 
@@ -768,5 +786,24 @@ describe('schema 2 (CBOR-encoded)', () => {
         expect(parsed).toEqual(attribution)
       },
     )
+
+    test('cborLength field missing', () => {
+      // 18 bytes: one short of the 2-byte cborLength schema 2 needs
+      const input = '0x000280218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('cborLength claims more bytes than are available', () => {
+      // cborLength 0x000c with only the 11-byte `{ a: 'baseapp' }` map before it
+      const input =
+        '0xa161616762617365617070000c0280218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toBeUndefined()
+    })
   })
 })
