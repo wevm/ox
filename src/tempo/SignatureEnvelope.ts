@@ -194,7 +194,7 @@ export type Keychain<bigintType = bigint, numberType = number> = {
   type: 'keychain'
   /** Root account address that this transaction is being executed for */
   userAddress: Address.Address
-  /** Keychain signature version. @default 'v1' */
+  /** Keychain signature version. @default 'v2' */
   version?: KeychainVersion | undefined
 }
 
