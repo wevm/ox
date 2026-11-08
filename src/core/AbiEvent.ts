@@ -160,6 +160,13 @@ export function assertArgs<const abiEvent extends AbiEvent>(
       Solidity.bytesRegex.test(input.type)
     )
       return value.toLowerCase() === arg.toLowerCase()
+    // Small integers decode as numbers, so match a number or bigint either way.
+    if (
+      (typeof value === 'bigint' || Number.isInteger(value)) &&
+      (typeof arg === 'bigint' || Number.isInteger(arg)) &&
+      Solidity.integerRegex.test(input.type)
+    )
+      return BigInt(value as bigint | number) === BigInt(arg as bigint | number)
     return value === arg
   }
 
