@@ -601,18 +601,42 @@ export declare namespace hash {
  * @param userOperation - The user operation to convert.
  * @returns The init code.
  */
-export function toInitCode(userOperation: Partial<UserOperation>): Hex.Hex {
+export function toInitCode(
+  userOperation: Partial<UserOperation>,
+  options: toInitCode.Options = {},
+): Hex.Hex {
+  const { forHash } = options
   const { authorization, factory, factoryData } = userOperation
   if (
     factory === '0x7702' ||
     factory === '0x7702000000000000000000000000000000000000'
   ) {
+    // Onchain, the EntryPoint detects EIP-7702 by the 20-byte `0x7702` marker
+    // and reads the initialization data from `initCode[20:]`.
+    if (!forHash)
+      return Hex.concat(
+        '0x7702000000000000000000000000000000000000',
+        factoryData ?? '0x',
+      )
+    // For the hash, the EntryPoint replaces the marker with the delegate.
     if (!authorization) return '0x7702000000000000000000000000000000000000'
     const delegation = authorization.address
     return Hex.concat(delegation, factoryData ?? '0x')
   }
   if (!factory) return '0x'
   return Hex.concat(factory, factoryData ?? '0x')
+}
+
+export declare namespace toInitCode {
+  type Options = {
+    /**
+     * Prepares the init code for hashing: replaces the EIP-7702 `0x7702`
+     * marker with the delegate address.
+     */
+    forHash?: boolean | undefined
+  }
+
+  type ErrorType = Hex.concat.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -641,6 +665,7 @@ export function toInitCode(userOperation: Partial<UserOperation>): Hex.Hex {
  */
 export function toPacked(
   userOperation: UserOperation<'0.7' | '0.8', true>,
+  options: toPacked.Options = {},
 ): Packed {
   const {
     callGasLimit,
@@ -661,7 +686,7 @@ export function toPacked(
     Hex.padLeft(Hex.fromNumber(verificationGasLimit || 0n), 16),
     Hex.padLeft(Hex.fromNumber(callGasLimit || 0n), 16),
   )
-  const initCode = toInitCode(userOperation)
+  const initCode = toInitCode(userOperation, { forHash: options.forHash })
   const gasFees = Hex.concat(
     Hex.padLeft(Hex.fromNumber(maxPriorityFeePerGas || 0n), 16),
     Hex.padLeft(Hex.fromNumber(maxFeePerGas || 0n), 16),
@@ -690,6 +715,15 @@ export function toPacked(
 }
 
 export declare namespace toPacked {
+  /** Packing options. */
+  export type Options = {
+    /**
+     * Prepares for hashing: replaces the EIP-7702 `initCode` marker with the
+     * delegate.
+     */
+    forHash?: boolean | undefined
+  }
+
   export type ErrorType = Errors.GlobalErrorType
 }
 
@@ -905,7 +939,7 @@ export function toTypedData(
 ): TypedData.Definition<typeof toTypedData.types, 'PackedUserOperation'> {
   const { chainId, entryPointAddress } = options
 
-  const packedUserOp = toPacked(userOperation)
+  const packedUserOp = toPacked(userOperation, { forHash: true })
 
   return {
     domain: {
