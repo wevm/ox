@@ -319,6 +319,8 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
     // Extract codes
     const codesStart = -ercSuffixSize - 2 - codesLength
     const codesEnd = -ercSuffixSize - 2
+    // `Hex.slice` clamps a negative start that runs past the beginning of `data`.
+    if (Hex.size(data) + codesStart < 0) return undefined
     const codesHex = Hex.slice(data, codesStart, codesEnd)
     const codesString = Hex.toString(codesHex)
     const codes = codesString.length > 0 ? codesString.split(',') : []
@@ -340,6 +342,8 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
     // Extract codes
     const codesStart = -ercSuffixSize - 2 - codesLength
     const codesEnd = -ercSuffixSize - 2
+    // `Hex.slice` clamps a negative start that runs past the beginning of `data`.
+    if (Hex.size(data) + codesStart < 0) return undefined
     const codesHex = Hex.slice(data, codesStart, codesEnd)
     const codesString = Hex.toString(codesHex)
     const codes = codesString.length > 0 ? codesString.split(',') : []
@@ -475,16 +479,16 @@ function schema2ToDataSuffix(attribution: AttributionSchemaId2): Hex.Hex {
 
 function schema2FromData(data: Hex.Hex): AttributionSchemaId2 | undefined {
   // cborLength is 2 bytes before schema ID
-  const cborLengthHex = Hex.slice(
-    data,
-    -ercSuffixSize - 1 - 2,
-    -ercSuffixSize - 1,
-  )
+  const cborLengthStart = -ercSuffixSize - 1 - 2
+  const cborLengthEnd = -ercSuffixSize - 1
+  if (Hex.size(data) + cborLengthStart < 0) return undefined
+  const cborLengthHex = Hex.slice(data, cborLengthStart, cborLengthEnd)
   const cborLength = Hex.toNumber(cborLengthHex)
 
   // Extract CBOR data
-  const cborStart = -ercSuffixSize - 1 - 2 - cborLength
-  const cborEnd = -ercSuffixSize - 1 - 2
+  const cborStart = cborLengthStart - cborLength
+  if (Hex.size(data) + cborStart < 0) return undefined
+  const cborEnd = cborLengthStart
   const cborHex = Hex.slice(data, cborStart, cborEnd)
 
   // Decode CBOR
