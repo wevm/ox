@@ -425,7 +425,7 @@ describe('assert', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [TypedData.InvalidStructTypeError: Struct type "address" is invalid.
 
-      Struct type must contain only letters, digits, "_" and "$", and must not be a Solidity type.]
+      Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.]
     `)
   })
   test.each([
@@ -490,7 +490,7 @@ describe('assert', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [TypedData.InvalidStructTypeError: Struct type "bytes32" is invalid.
 
-      Struct type must contain only letters, digits, "_" and "$", and must not be a Solidity type.]
+      Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.]
     `)
   })
 
@@ -1169,6 +1169,21 @@ describe('getSignPayload', () => {
       }),
     ).toMatchInlineSnapshot(
       `"0x97a137d1f96a18c6a214fd8e7b991ed7309ff25f223b68aa63a4670f9838a94a"`,
+    )
+  })
+
+  test('struct type: with colon', () => {
+    expect(
+      TypedData.getSignPayload({
+        domain: { name: 'Domain' },
+        types: {
+          'Order:1': [{ name: 'amount', type: 'uint256' }],
+        },
+        primaryType: 'Order:1',
+        message: { amount: 1n },
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x3465390e0ea754dae581e653862bc7f8b71258ad85150e27ad18d87dd63fe6ab"`,
     )
   })
 })

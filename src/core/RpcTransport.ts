@@ -103,13 +103,21 @@ export function fromHttp<
               fetchOptions?.signal,
               timeout > 0 ? signal : null,
             ].filter((s): s is AbortSignal => Boolean(s))
+            // Merge through `Headers` so `Headers` instances and tuple arrays
+            // keep their entries, and a caller's header replaces the default
+            // whatever its casing.
+            const headers: Record<string, string> = {}
+            for (const source of [
+              { 'Content-Type': 'application/json' },
+              fetchOptions?.headers,
+            ])
+              new Headers(source).forEach((value, key) => {
+                headers[key] = value
+              })
             const init: RequestInit = {
               ...fetchOptions,
               body,
-              headers: {
-                'Content-Type': 'application/json',
-                ...fetchOptions?.headers,
-              },
+              headers,
               method: fetchOptions?.method ?? 'POST',
               signal: (() => {
                 if (signals.length < 2) return signals[0] ?? null

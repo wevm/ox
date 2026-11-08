@@ -5,6 +5,46 @@ import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assertArgs', () => {
+  test('behavior: integer number and bigint arguments', () => {
+    const abiEvent = AbiEvent.from(
+      'event Deposit(uint8 indexed tier, uint256 amount)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: AbiParameters.encode(AbiParameters.from('uint256'), [5n]),
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        AbiParameters.encode(AbiParameters.from('uint8'), [1]),
+      ],
+    })
+
+    AbiEvent.assertArgs(abiEvent, args, { amount: 5, tier: 1n } as never)
+    AbiEvent.assertArgs(abiEvent, args, { amount: [4, 5], tier: [1n] } as never)
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, { tier: 2n } as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Deposit(uint8 indexed tier, uint256 amount)
+      Expected Arguments: 
+        tier:    1
+        amount:  5
+      Given Arguments: 
+        tier:  2]
+    `)
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, { amount: 5.5 } as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Deposit(uint8 indexed tier, uint256 amount)
+      Expected Arguments: 
+        tier:    1
+        amount:  5
+      Given Arguments: 
+        amount:  5.5]
+    `)
+  })
+
   test('behavior: non-indexed `string` and `bytes`', () => {
     const abiEvent = AbiEvent.from(
       'event Message(string indexed topic, string text, bytes data, bytes32 key)',

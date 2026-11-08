@@ -212,14 +212,12 @@ export declare namespace fromBoolean {
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
 
-  let hex = value
+  let hexString = value.slice(2)
+  if (hexString.length % 2) hexString = `0${hexString}`
   if (size) {
     internal_hex.assertSize(value, size)
-    hex = Hex.padRight(value, size)
+    hexString = hexString.padEnd(size * 2, '0')
   }
-
-  let hexString = hex.slice(2) as string
-  if (hexString.length % 2) hexString = `0${hexString}`
 
   const length = hexString.length / 2
   const bytes = new Uint8Array(length)

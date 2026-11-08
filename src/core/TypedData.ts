@@ -758,7 +758,7 @@ export class InvalidStructTypeError extends Errors.BaseError {
   constructor({ type }: { type: string }) {
     super(`Struct type "${type}" is invalid.`, {
       metaMessages: [
-        'Struct type must contain only letters, digits, "_" and "$", and must not be a Solidity type.',
+        'Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.',
       ],
     })
   }
@@ -893,7 +893,7 @@ export declare namespace encodeField {
 }
 
 const arraySuffixRegex = /(\[[0-9]*\])+$/
-const structNameRegex = /^[A-Za-z0-9_$]+$/
+const structNameRegex = /^[A-Za-z0-9_$:]+$/
 const solidityTypeNameRegex = /^(u?int|bytes)[0-9]*$/
 
 /** @internal */
@@ -945,10 +945,11 @@ function isSolidityType(type: string) {
 
 /** @internal */
 function validateReference(type: string) {
-  // Struct type must contain only letters, digits, `_` and `$`, and must not be
-  // a Solidity type, so it cannot shadow a Solidity type or an array of one. A
-  // struct such as `intent` or `bytesInfo` is valid, while `uint7` or `bytes33`
-  // is rejected, since other implementations parse it as a Solidity type.
+  // Struct type must contain only letters, digits, `_`, `$` and `:`, and must
+  // not be a Solidity type, so it cannot shadow a Solidity type or an array of
+  // one. A struct such as `intent` or `bytesInfo` is valid, while `uint7` or
+  // `bytes33` is rejected, since other implementations parse it as a Solidity
+  // type.
   if (
     !structNameRegex.test(type) ||
     type === 'address' ||
