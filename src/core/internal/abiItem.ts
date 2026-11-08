@@ -630,7 +630,8 @@ export function isArgOfType(
           return false
         // An overload whose fixed size differs from the value does not match.
         const bytes = abiParameterType.slice(5)
-        if (!bytes) return true
+        // Dynamic `bytes` is hex or raw bytes. A plain string is only `string`.
+        if (!bytes) return arg instanceof Uint8Array || Hex.validate(arg)
         if (arg instanceof Uint8Array)
           return arg.length === Number.parseInt(bytes, 10)
         if (!Hex.validate(arg)) return false

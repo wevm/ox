@@ -600,6 +600,21 @@ describe('toBytes', () => {
     `)
   })
 
+  test('behavior: odd length with size', () => {
+    expect(Hex.toBytes('0x1', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        1,
+        0,
+      ]
+    `)
+    expect(Hex.toBytes('0xabc', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        10,
+        188,
+      ]
+    `)
+  })
+
   test('error: size overflow', () => {
     expect(() =>
       Hex.toString(Hex.fromBytes(Bytes.fromArray([69, 420]), { size: 64 }), {

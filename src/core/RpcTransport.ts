@@ -116,13 +116,20 @@ export function fromHttp<
               if (typeof AbortSignal.any !== 'function') return signals[0]!
               return AbortSignal.any(signals)
             })()
+            // Merge through `Headers` so a caller's header replaces the default
+            // whatever its casing, and keep a plain object for `fetchFn`.
+            const headers: Record<string, string> = {}
+            for (const source of [
+              { 'Content-Type': 'application/json' },
+              fetchOptions?.headers,
+            ])
+              new Headers(source).forEach((value, key) => {
+                headers[key] = value
+              })
             const init: RequestInit = {
               ...fetchOptions,
               body,
-              headers: {
-                'Content-Type': 'application/json',
-                ...Object.fromEntries(new Headers(fetchOptions?.headers)),
-              },
+              headers,
               method: fetchOptions?.method ?? 'POST',
               signal: composedSignal,
             }
