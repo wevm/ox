@@ -354,10 +354,7 @@ function decodeCodesTail(
 
   const codesEnd = codesLengthStart
   const codesStart = codesEnd - codesLength
-  // `codesStart` is an offset counted back from the end of `data`. `Hex.slice`
-  // doesn't bounds-check a negative start, so a `codesLength` byte that lies
-  // about how much data precedes it would otherwise silently clamp to the
-  // start of `data` instead of being rejected.
+  // `Hex.slice` clamps a negative start that runs past the beginning of `data`.
   if (Hex.size(data) + codesStart < 0) return undefined
   const codesHex = Hex.slice(data, codesStart, codesEnd)
   const codesString = Hex.toString(codesHex)
@@ -483,9 +480,7 @@ function schema2FromData(data: Hex.Hex): AttributionSchemaId2 | undefined {
   const cborLengthHex = Hex.slice(data, cborLengthStart, cborLengthEnd)
   const cborLength = Hex.toNumber(cborLengthHex)
 
-  // Extract CBOR data. As with `decodeCodesTail`, `cborStart` must be
-  // bounds-checked since `Hex.slice` doesn't reject a negative start that
-  // runs past the beginning of `data`.
+  // Extract CBOR data
   const cborStart = cborLengthStart - cborLength
   if (Hex.size(data) + cborStart < 0) return undefined
   const cborEnd = cborLengthStart

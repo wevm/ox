@@ -444,10 +444,7 @@ describe('fromData', () => {
     })
 
     test('codesLength claims more bytes than are available', () => {
-      // codesLength (0xff = 255) + schemaId (0x00) + ERC suffix, with no
-      // actual codes data preceding the length byte. Old code silently
-      // clamped the out-of-bounds slice to an empty read and returned
-      // `{ codes: [], id: 0 }` instead of rejecting the malformed input.
+      // codesLength 0xff with no codes bytes before it
       const input = '0xff0080218021802180218021802180218021'
 
       const result = Attribution.fromData(input)
@@ -456,10 +453,7 @@ describe('fromData', () => {
     })
 
     test('codesLength overruns into unrelated leading bytes', () => {
-      // codesLength (0x0a = 10) claims 10 bytes of codes, but only 4 bytes
-      // (`deadbeef`) precede it. Old code silently truncated the read to
-      // those 4 unrelated bytes and returned a bogus decoded "code" instead
-      // of rejecting the malformed input.
+      // codesLength 0x0a with only 4 bytes before it
       const input = '0xdeadbeef0a0080218021802180218021802180218021'
 
       const result = Attribution.fromData(input)
@@ -793,14 +787,19 @@ describe('schema 2 (CBOR-encoded)', () => {
       },
     )
 
-    test('cborLength claims more bytes than are available (returns undefined, does not throw)', () => {
-      // schemaId (0x02) + ERC suffix, with no room for a 2-byte cborLength
-      // field before it (total size is the schema-0/1 minimum of 18 bytes,
-      // one short of what schema 2 needs). Old code let the out-of-bounds
-      // slice clamp silently, mis-read the length field, and then threw an
-      // uncaught cursor error out of `Cbor.decode` instead of gracefully
-      // returning `undefined` for malformed input.
+    test('cborLength field missing', () => {
+      // 18 bytes: one short of the 2-byte cborLength schema 2 needs
       const input = '0x000280218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('cborLength claims more bytes than are available', () => {
+      // cborLength 0x000c with only the 11-byte `{ a: 'baseapp' }` map before it
+      const input =
+        '0xa161616762617365617070000c0280218021802180218021802180218021'
 
       const result = Attribution.fromData(input)
 
