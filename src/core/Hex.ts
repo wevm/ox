@@ -252,7 +252,9 @@ export function fromNumber(
     maxValue = BigInt(Number.MAX_SAFE_INTEGER)
   }
 
-  const minValue = typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
+  // Negative values need a `size` to encode as two's complement.
+  const minValue =
+    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''
@@ -568,9 +570,7 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
   const value = BigInt(hex)
   if (!signed) return value
 
-  const size = (hex.length - 2) / 2
-
-  const max_unsigned = (1n << (BigInt(size) * 8n)) - 1n
+  const max_unsigned = (1n << (BigInt(size(hex)) * 8n)) - 1n
   const max_signed = max_unsigned >> 1n
 
   if (value <= max_signed) return value
