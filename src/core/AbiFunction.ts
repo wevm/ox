@@ -157,12 +157,12 @@ export function decodeData(
   const { overloads } = abiFunction
 
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
-  if (abiFunction.inputs?.length === 0) return undefined
 
   const item = overloads
     ? fromAbi([abiFunction, ...overloads], data as never)
     : abiFunction
 
+  if (item.inputs.length === 0) return undefined
   if (Hex.size(data) <= 4) return undefined
   return AbiParameters.decode(item.inputs, Hex.slice(data, 4))
 }
@@ -172,15 +172,17 @@ export declare namespace decodeData {
     abiFunction,
     AbiFunction
   > extends true
-    ? abiFunction['inputs'] extends readonly []
-      ? undefined
-      :
-          | AbiParameters_internal.ToPrimitiveTypes<abiFunction['inputs']>
+    ? abiFunction extends AbiFunction
+      ?
+          | (abiFunction['inputs'] extends readonly []
+              ? undefined
+              : AbiParameters_internal.ToPrimitiveTypes<abiFunction['inputs']>)
           | (abiFunction['overloads'] extends readonly AbiFunction[]
               ? AbiParameters_internal.ToPrimitiveTypes<
                   abiFunction['overloads'][number]['inputs']
                 >
               : never)
+      : never
     : unknown
 
   type ErrorType =

@@ -404,6 +404,19 @@ describe('fromAbi', () => {
         "inputs": [],
         "name": "foo",
         "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
       }
@@ -423,6 +436,19 @@ describe('fromAbi', () => {
         "inputs": [],
         "name": "foo",
         "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
       }
@@ -530,6 +556,30 @@ describe('fromAbi', () => {
         "inputs": [],
         "name": "mint",
         "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "mint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+          {
+            "inputs": [
+              {
+                "type": "string",
+              },
+            ],
+            "name": "mint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
       }

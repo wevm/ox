@@ -359,14 +359,14 @@ export function fromAbi<
     } as never
 
   let matchedAbiItem: AbiItem | undefined
+  // Without `args`, a zero-input overload is the preferred pick, but the other
+  // overloads are still attached so callers can resolve by selector.
+  let zeroArgAbiItem: AbiItem | undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
-      if (!abiItem.inputs || abiItem.inputs.length === 0)
-        return {
-          ...abiItem,
-          ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-        } as never
+      if (!zeroArgAbiItem && (!abiItem.inputs || abiItem.inputs.length === 0))
+        zeroArgAbiItem = abiItem
       continue
     }
     if (!abiItem.inputs) continue
@@ -408,8 +408,9 @@ export function fromAbi<
 
   const abiItem = (() => {
     if (matchedAbiItem) return matchedAbiItem
-    const [abiItem, ...overloads] = abiItems
-    return { ...abiItem!, overloads }
+    const chosen = zeroArgAbiItem ?? abiItems[0]
+    const overloads = abiItems.filter((item) => item !== chosen)
+    return { ...chosen!, overloads }
   })()
 
   if (!abiItem) throw new NotFoundError({ name: name as string })

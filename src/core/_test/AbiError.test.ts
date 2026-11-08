@@ -667,26 +667,48 @@ describe('fromAbi', () => {
     const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
     const item = AbiError.fromAbi(abi, 'Foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
-      "inputs": [],
-      "name": "Foo",
-      "type": "error",
-    }
-  `)
+      {
+        "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
+        "inputs": [],
+        "name": "Foo",
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "Foo",
+            "type": "error",
+          },
+        ],
+        "type": "error",
+      }
+    `)
   })
 
   test('overloads: no args', () => {
     const abi = Abi.from(['error Bar()', 'error Foo(uint256)', 'error Foo()'])
     const item = AbiError.fromAbi(abi, 'Foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
-      "inputs": [],
-      "name": "Foo",
-      "type": "error",
-    }
-  `)
+      {
+        "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
+        "inputs": [],
+        "name": "Foo",
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "Foo",
+            "type": "error",
+          },
+        ],
+        "type": "error",
+      }
+    `)
   })
 
   test('behavior: overloads: different types', () => {
@@ -697,13 +719,33 @@ describe('fromAbi', () => {
     ])
     const item = AbiError.fromAbi(abi, 'Mint')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
-      "inputs": [],
-      "name": "Mint",
-      "type": "error",
-    }
-  `)
+      {
+        "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
+        "inputs": [],
+        "name": "Mint",
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "Mint",
+            "type": "error",
+          },
+          {
+            "inputs": [
+              {
+                "type": "string",
+              },
+            ],
+            "name": "Mint",
+            "type": "error",
+          },
+        ],
+        "type": "error",
+      }
+    `)
 
     const item_2 = AbiError.fromAbi(abi, 'Mint', {
       args: [420n],

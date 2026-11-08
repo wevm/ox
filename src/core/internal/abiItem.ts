@@ -52,7 +52,17 @@ export type ExtractForArgs<
                 >
               }
             >
-          : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
+          : readonly [] extends args
+            ? TupleToUnion<abiItems, abi, name, args> extends infer zero
+              ? Compute<
+                  zero & {
+                    readonly overloads: UnionToTuple<
+                      Exclude<abiItems[number], zero>
+                    >
+                  }
+                >
+              : never
+            : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
         : never
       : abiItem
     : never

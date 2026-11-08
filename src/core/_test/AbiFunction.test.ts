@@ -56,6 +56,37 @@ describe('decodeData', () => {
       ),
     ).toEqual(['0xdeadbeef'])
   })
+
+  test('behavior: with overloads, resolved by name (one overload has zero inputs)', () => {
+    const abi = Abi.from([
+      {
+        inputs: [],
+        name: 'deposit',
+        outputs: [],
+        stateMutability: 'payable',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: 'assets', type: 'uint256' }],
+        name: 'deposit',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ])
+
+    const withArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [123n] })
+    const dataWithArgs = AbiFunction.encodeData(withArgs, [123n])
+    // Resolving by name alone (no args) must still disambiguate the
+    // zero-input overload from the one actually encoded in `data`.
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithArgs)).toEqual([123n])
+
+    const withoutArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [] })
+    const dataWithoutArgs = AbiFunction.encodeData(withoutArgs)
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithoutArgs)).toEqual(
+      undefined,
+    )
+  })
 })
 
 describe('decodeResult', () => {
@@ -654,15 +685,28 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
-      "inputs": [],
-      "name": "foo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+        "inputs": [],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('overloads: no args', () => {
@@ -673,15 +717,28 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
-      "inputs": [],
-      "name": "foo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+        "inputs": [],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('behavior: overloads: different lengths without abi order define effect', () => {
@@ -780,15 +837,39 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'mint')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0x1249c58b84ff771f36a0d1d2bf0b42e48832b1567c4213f113d3990903cea57d",
-      "inputs": [],
-      "name": "mint",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0x1249c58b84ff771f36a0d1d2bf0b42e48832b1567c4213f113d3990903cea57d",
+        "inputs": [],
+        "name": "mint",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "mint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+          {
+            "inputs": [
+              {
+                "type": "string",
+              },
+            ],
+            "name": "mint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
 
     const item_2 = AbiFunction.fromAbi(abi, 'mint', {
       args: [420n],
