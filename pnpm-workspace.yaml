@@ -152,8 +152,6 @@ peerDependencyRules:
     vite: '*'
     vitest: '*'
 
-provenance: false
-
 strictPeerDependencies: false
 
 trustPolicy: no-downgrade
