@@ -131,6 +131,17 @@ export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
   '0x76'
 >
 
+/**
+ * Nonce key that marks an expiring nonce transaction (`uint256.max`).
+ *
+ * An expiring nonce transaction has `nonce` `0` and a `validBefore` shortly
+ * after the current time (30 seconds before T11, 300 seconds from T11). The
+ * node replay-protects it by its hash instead of a nonce sequence.
+ *
+ * [TIP-1009](https://tips.sh/1009)
+ */
+export const expiringNonceKey = 2n ** 256n - 1n
+
 export const feePayerMagic = '0x78' as const
 export type FeePayerMagic = typeof feePayerMagic
 
