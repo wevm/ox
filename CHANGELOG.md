@@ -1,5 +1,51 @@
 # ox
 
+## 1.8.14
+
+### Patch Changes
+
+- [#602](https://github.com/wevm/ox/pull/602) [`15ef7a4`](https://github.com/wevm/ox/commit/15ef7a4c57b2bbbbb1839fc508e05c5f3cf9dfc9) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiError.decode` to resolve overloaded errors by the selector in `data` instead of always decoding with the first matching overload.
+
+- [#600](https://github.com/wevm/ox/pull/600) [`8228e04`](https://github.com/wevm/ox/commit/8228e04b6156d507ea0226f22de7a723bcf343bd) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.assertArgs` and `AbiEvent.extractLogs` not matching integer arguments given as a `number` against values decoded as `bigint`, or as a `bigint` against small integers decoded as `number`.
+
+- [#588](https://github.com/wevm/ox/pull/588) [`816729d`](https://github.com/wevm/ox/commit/816729d944f5fc21f79059ba0aa5c782da0fecb5) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.encode` accepting out-of-range values for indexed `intN`/`uintN` (N < 256) and wrong-sized `bytesN` (N < 32) arguments instead of throwing.
+
+- [#576](https://github.com/wevm/ox/pull/576) [`a6af44f`](https://github.com/wevm/ox/commit/a6af44f7e4dee8dee618e09554db06d56cb31c31) Thanks [@jxom](https://github.com/jxom)! - Added `userAddress` to `AccountOperation` transaction operations, so a configurable account acting as an access key (TIP-1111) can collect owner approvals and serialize a keychain V2 envelope for its parent.
+
+- [#564](https://github.com/wevm/ox/pull/564) [`b03705a`](https://github.com/wevm/ox/commit/b03705a605362b36df1503644626b55fab7b0aea) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.decodeLog` and `AbiEvent.extractLogs` to decode anonymous event logs when every event in the ABI is anonymous or, for `extractLogs`, when `eventName` names the event, throwing `AbiEvent.AnonymousEventAmbiguityError` from `decodeLog` when several anonymous events fit.
+
+- [#580](https://github.com/wevm/ox/pull/580) [`b0994e1`](https://github.com/wevm/ox/commit/b0994e11efa93ed500b15adda6fd3846842fc82c) Thanks [@jxom](https://github.com/jxom)! - Fixed `Base32.toBytes` and `Base32.toHex` accepting non-canonical input (non-zero trailing bits or an impossible length) by throwing `Base32.InvalidPaddingError`.
+
+- [#573](https://github.com/wevm/ox/pull/573) [`5ba70c0`](https://github.com/wevm/ox/commit/5ba70c09cc137ec3e0995019f51278c7b58e6600) Thanks [@RaphaelFakhri](https://github.com/RaphaelFakhri)! - Fixed `Cbor.decode` to decode a `__proto__` map key as an own property instead of replacing the prototype of the decoded object.
+
+- [#503](https://github.com/wevm/ox/pull/503) [`97a4cce`](https://github.com/wevm/ox/commit/97a4ccea65002c048185cfaf3c54de88a7b3d02b) Thanks [@ara-stock](https://github.com/ara-stock)! - Fixed `CompactSize.toBytes` and `CompactSize.toHex` silently truncating values larger than `2^64 - 1` instead of throwing.
+
+- [#591](https://github.com/wevm/ox/pull/591) [`401173c`](https://github.com/wevm/ox/commit/401173cd1f0d0359581251ac92169b2fbd239662) Thanks [@jxom](https://github.com/jxom)! - Fixed `Attribution.fromData` to return `undefined` when a codes or CBOR length field claims more bytes than precede it.
+
+- [#584](https://github.com/wevm/ox/pull/584) [`7f37495`](https://github.com/wevm/ox/commit/7f37495e326be9f75f82736d7b425263a6b96997) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toBigInt` and `Hex.toNumber` throwing on odd-length hex with `signed: true`, and `Hex.fromNumber` returning `0x0` for a negative number with `signed: true` and no `size`.
+
+- [#596](https://github.com/wevm/ox/pull/596) [`80d74c1`](https://github.com/wevm/ox/commit/80d74c1e1a62cf50347e3a82a66a9f2b27550bb2) Thanks [@jxom](https://github.com/jxom)! - Fixed `Rlp.toBytes` and `Rlp.toHex` to reject non-canonical encodings (a single byte below `0x80` with a length prefix, or a long-form or zero-padded length) with `Rlp.NonCanonicalError`.
+
+- [#569](https://github.com/wevm/ox/pull/569) [`7a564af`](https://github.com/wevm/ox/commit/7a564af1ca4038d8b0a1ff9e1fd6637f63a6752b) Thanks [@gakonst](https://github.com/gakonst)! - Improved validation performance in `Hex.assert`, `Value`, `TypedData`, `Siwe.isUri`, ABI overload resolution, and the `ox/zod` hex, address, quantity, and Solidity type schemas by reusing module-level regular expressions instead of recreating them on every call.
+
+- [#600](https://github.com/wevm/ox/pull/600) [`8228e04`](https://github.com/wevm/ox/commit/8228e04b6156d507ea0226f22de7a723bcf343bd) Thanks [@jxom](https://github.com/jxom)! - Fixed `Bytes.fromHex` and `Hex.toBytes` shifting the bytes of odd-length hex values when `size` was specified.
+
+- [#600](https://github.com/wevm/ox/pull/600) [`8228e04`](https://github.com/wevm/ox/commit/8228e04b6156d507ea0226f22de7a723bcf343bd) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` sending both the default and the caller's `Content-Type` when `fetchOptions.headers` set it, instead of the caller's value alone.
+
+- [#570](https://github.com/wevm/ox/pull/570) [`8a9f850`](https://github.com/wevm/ox/commit/8a9f850a5fba1f5d8a3c193f948c1b23f8817d60) Thanks [@gakonst](https://github.com/gakonst)! - Improved `AbiItem.getSignatureHash` and `AbiItem.getSelector` performance, along with the selector lookups in `AbiItem.fromAbi`, `AbiFunction.decodeData`, `AbiEvent.decodeLog` and `AbiEvent.extractLogs`, by caching signature hashes by normalized signature in a bounded cache that `Caches.clear` and engine changes reset.
+
+- [#600](https://github.com/wevm/ox/pull/600) [`8228e04`](https://github.com/wevm/ox/commit/8228e04b6156d507ea0226f22de7a723bcf343bd) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.validateMessage` accepting a message with a nonce shorter than 8 alphanumeric characters or a version other than `1`, which EIP-4361 does not allow.
+
+- [#600](https://github.com/wevm/ox/pull/600) [`8228e04`](https://github.com/wevm/ox/commit/8228e04b6156d507ea0226f22de7a723bcf343bd) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiItem.fromAbi` throwing `AbiItem.AmbiguityError` for `string` and `bytes` overloads when the argument is a plain string; only hex strings and `Uint8Array` values now match `bytes`.
+
+- [#582](https://github.com/wevm/ox/pull/582) [`8d042de`](https://github.com/wevm/ox/commit/8d042deb725dd043996d94c82708b006d92ae5e6) Thanks [@jxom](https://github.com/jxom)! - Fixed `Tick.fromPrice` accepting negative prices between -1 and 0 as their positive counterparts instead of throwing `Tick.PriceOutOfBoundsError`.
+
+- [#600](https://github.com/wevm/ox/pull/600) [`8228e04`](https://github.com/wevm/ox/commit/8228e04b6156d507ea0226f22de7a723bcf343bd) Thanks [@jxom](https://github.com/jxom)! - Fixed `TypedData.assert` and `TypedData.validate` (and so `TypedData.getSignPayload` and `TypedData.serialize`) rejecting struct names that contain `:`, such as `HyperliquidTransaction:SendAsset`.
+
+- [#593](https://github.com/wevm/ox/pull/593) [`c370946`](https://github.com/wevm/ox/commit/c370946b7b7b9783cd7a65e347c929a1d36663d9) Thanks [@jxom](https://github.com/jxom)! - Fixed `UserOperation.toPacked` and `UserOperation.toInitCode` to keep the padded EIP-7702 `0x7702` initCode marker expected by EntryPoint 0.8 and 0.9, using the delegate address only with the new `forHash` option.
+
+- [#598](https://github.com/wevm/ox/pull/598) [`b2771c8`](https://github.com/wevm/ox/commit/b2771c8340ff47f82deac9bd4b74bf1a6c9fada1) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiFunction.decodeData` returning `undefined` when a function name has a zero-input overload and the calldata targets another overload, by keeping the other overloads on items `fromAbi` resolves without `args`.
+
 ## 1.8.13
 
 ### Patch Changes
