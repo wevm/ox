@@ -60,6 +60,24 @@ export function assert(value: Unwrapped | Wrapped): void {
       reason: 'key authorization is not signed',
       value,
     })
+  // The discriminants alone don't make an encodable value: require both
+  // constituents to serialize.
+  const reason = (() => {
+    try {
+      SignatureEnvelope.assert(signature.inner)
+      SignatureEnvelope.serialize(signature)
+    } catch {
+      return 'malformed keychain signature'
+    }
+    try {
+      SignatureEnvelope.assert(keyAuthorization.signature)
+      KeyAuthorization.serialize(keyAuthorization)
+    } catch {
+      return 'malformed signed key authorization'
+    }
+    return undefined
+  })()
+  if (reason) throw new InvalidUnwrappedSignatureError({ reason, value })
 }
 
 export declare namespace assert {

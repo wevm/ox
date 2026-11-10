@@ -117,6 +117,29 @@ describe('wrap', () => {
     expect(SignaturePreAuthorized.wrap(unwrapped)).toBe(wrapped)
   })
 
+  test('error: malformed constituents', () => {
+    const { keyAuthorization, signature } =
+      SignaturePreAuthorized.unwrap(vectorWrapped)
+    expect(() =>
+      SignaturePreAuthorized.assert({
+        keyAuthorization: { signature: {} } as never,
+        signature: { inner: { type: 'secp256k1' }, type: 'keychain' } as never,
+      }),
+    ).toThrowError(SignaturePreAuthorized.InvalidUnwrappedSignatureError)
+    expect(() =>
+      SignaturePreAuthorized.assert({
+        keyAuthorization,
+        signature: { ...signature, inner: { type: 'secp256k1' } } as never,
+      }),
+    ).toThrowError(/malformed keychain signature/)
+    expect(() =>
+      SignaturePreAuthorized.assert({
+        keyAuthorization: { ...keyAuthorization, signature: {} } as never,
+        signature,
+      }),
+    ).toThrowError(/malformed signed key authorization/)
+  })
+
   test('error: keychain V1', () => {
     expect(() =>
       SignaturePreAuthorized.wrap({
