@@ -375,6 +375,8 @@ function assertMatchingArgs(
  *
  * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(decode:function)}:
  *
+ * When the ABI holds several events with that name, the overload is resolved from the selector in `topics[0]`.
+ *
  * ```ts twoslash
  * // @noErrors
  * import { Abi, AbiEvent } from 'ox'
@@ -492,7 +494,7 @@ export function decode(
         options?: decode.Options | undefined,
       ]
 ): decode.ReturnType {
-  const [abiEvent, log, options] = (() => {
+  const [abiEvent_, log, options] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name, log, options] = parameters as [
         Abi.Abi | readonly unknown[],
@@ -511,6 +513,20 @@ export function decode(
   })()
 
   const { data, topics } = log
+
+  // An event extracted by name carries its other overloads, and `topics[0]`
+  // holds the selector of the overload that was emitted. Anonymous overloads
+  // omit the selector topic, so they are never matched by it.
+  const abiEvent = (() => {
+    const { overloads } = abiEvent_ as AbiEvent
+    if (!overloads) return abiEvent_
+    const selector = topics[0]
+    return (
+      [abiEvent_, ...overloads].find(
+        (item) => item.anonymous !== true && getSelector(item) === selector,
+      ) ?? abiEvent_
+    )
+  })()
 
   const isAnonymous = abiEvent.anonymous === true
   const argTopics = isAnonymous ? [...topics] : topics.slice(1)
@@ -637,12 +653,20 @@ export declare namespace decode {
 
   type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
     IsNarrowable<abiEvent, AbiEvent> extends true
-      ? abiEvent['inputs'] extends readonly []
-        ? undefined
-        : internal.ParametersToPrimitiveTypes<
-            abiEvent['inputs'],
-            { EnableUnion: false; IndexedOnly: false; Required: true }
-          >
+      ? // distribute over the event and its overloads
+          | abiEvent
+          | (abiEvent['overloads'] extends readonly AbiEvent[]
+              ? abiEvent['overloads'][number]
+              : never) extends infer item extends AbiEvent
+        ? item extends AbiEvent
+          ? item['inputs'] extends readonly []
+            ? undefined
+            : internal.ParametersToPrimitiveTypes<
+                item['inputs'],
+                { EnableUnion: false; IndexedOnly: false; Required: true }
+              >
+          : never
+        : never
       : unknown
 
   type ErrorType =
