@@ -1,4 +1,4 @@
-import { Hex, Signature } from 'ox'
+import { AbiParameters, Hash, Hex, Signature } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { describe, expect, test } from 'vp/test'
 
@@ -550,6 +550,64 @@ describe('hash', () => {
       ).toMatchInlineSnapshot(
         `"0x46c1d51e831d50c1a93135f026a7d3f1921ed66e9c81da723dd3817a49f01bc1"`,
       )
+    })
+
+    test('args: factory without factoryData', () => {
+      const userOperation = {
+        callData: '0x',
+        callGasLimit: 6942069n,
+        factory: '0x1234567890123456789012345678901234567890',
+        maxFeePerGas: 69420n,
+        maxPriorityFeePerGas: 69n,
+        nonce: 0n,
+        preVerificationGas: 6942069n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 6942069n,
+      } as const
+      const options = {
+        chainId: 1,
+        entryPointAddress: '0x1234567890123456789012345678901234567890',
+        entryPointVersion: '0.7',
+      } as const
+
+      // EntryPoint 0.7 `getUserOpHash` over the packed user operation.
+      const packed = UserOperation.toPacked(userOperation)
+      expect(packed.initCode).toBe(userOperation.factory)
+      const expected = Hash.keccak256(
+        AbiParameters.encode(AbiParameters.from('bytes32, address, uint256'), [
+          Hash.keccak256(
+            AbiParameters.encode(
+              AbiParameters.from(
+                'address, uint256, bytes32, bytes32, bytes32, uint256, bytes32, bytes32',
+              ),
+              [
+                packed.sender,
+                packed.nonce,
+                Hash.keccak256(packed.initCode),
+                Hash.keccak256(packed.callData),
+                packed.accountGasLimits,
+                packed.preVerificationGas,
+                packed.gasFees,
+                Hash.keccak256(packed.paymasterAndData),
+              ],
+            ),
+          ),
+          options.entryPointAddress,
+          BigInt(options.chainId),
+        ]),
+      )
+      expect(expected).toMatchInlineSnapshot(
+        `"0x3990ff4fd5d4f830db9a8a7b75c4c20107d60a58d3819caea8eab03d03fe6ae6"`,
+      )
+
+      expect(UserOperation.hash(userOperation, options)).toBe(expected)
+      expect(
+        UserOperation.hash({ ...userOperation, factoryData: '0x' }, options),
+      ).toBe(expected)
+      expect(
+        UserOperation.hash(UserOperation.fromPacked(packed), options),
+      ).toBe(expected)
     })
 
     test('args: paymaster', () => {
