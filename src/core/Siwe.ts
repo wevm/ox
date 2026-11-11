@@ -23,6 +23,9 @@ export const prefixRegex =
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
 
+// Matches `suffixRegex` from the start of the input to its end.
+const anchoredSuffixRegex = new RegExp(`^(?:${suffixRegex.source})$`)
+
 // URI validation (see `isUri`).
 const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
 const uriInvalidEscapeRegex = /%[^0-9a-f]/i
@@ -350,6 +353,10 @@ function splitUri(value: string) {
 /**
  * [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) formatted message into message fields object.
  *
+ * The message can be the prefix (up to the statement), the suffix (from `URI`), or both.
+ * Returns an empty object when the message has any other text, such as fields that are
+ * out of order or text after the last field.
+ *
  * @example
  * ```ts twoslash
  * import { Siwe } from 'ox'
@@ -380,13 +387,23 @@ function splitUri(value: string) {
  * @returns Message fields object.
  */
 export function parseMessage(message: string): ExactPartial<Message> {
-  const { scheme, statement, ...prefix } = (message.match(prefixRegex)
-    ?.groups ?? {}) as {
+  const prefixMatch = message.match(prefixRegex)
+  const { scheme, statement, ...prefix } = (prefixMatch?.groups ?? {}) as {
     address: Address.Address
     domain: string
     scheme?: string
     statement?: string
   }
+  // The suffix starts where the prefix ends. Without a statement, the prefix
+  // is followed by one more line feed (as `createMessage` emits) or by none.
+  const rest = (() => {
+    const rest = message.slice(prefixMatch?.[0].length ?? 0)
+    if (prefixMatch && statement === undefined && rest.startsWith('\n'))
+      return rest.slice(1)
+    return rest
+  })()
+  const suffixMatch = rest.match(anchoredSuffixRegex)
+  if (rest && !suffixMatch) return {}
   const {
     chainId,
     expirationTime,
@@ -395,7 +412,7 @@ export function parseMessage(message: string): ExactPartial<Message> {
     requestId,
     resources: resources_,
     ...suffix
-  } = (message.match(suffixRegex)?.groups ?? {}) as {
+  } = (suffixMatch?.groups ?? {}) as {
     chainId: string
     expirationTime?: string
     issuedAt?: string
