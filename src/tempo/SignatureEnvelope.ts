@@ -27,6 +27,12 @@ const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
 const serializedConfigurableType = '0x05'
 
+/**
+ * Maximum WebAuthn signature size in bytes, excluding the type identifier
+ * (Tempo's `MAX_WEBAUTHN_SIGNATURE_LENGTH`).
+ */
+const maxWebAuthnSize = 2048
+
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
   '0x7777777777777777777777777777777777777777777777777777777777777777' // 32 "T"s
@@ -618,9 +624,15 @@ function deserialize_(value: Serialized): SignatureEnvelope {
   if (typeId === serializedWebAuthnType) {
     // WebAuthn: variable (webauthnData) + 32 (r) + 32 (s) + 32 (pubKeyX) + 32 (pubKeyY)
     // Minimum: 128 bytes (at least some authenticator data + signature components)
+    // Maximum: 2048 bytes
     if (dataSize < 128)
       throw new InvalidSerializedError({
         reason: `Invalid WebAuthn signature envelope size: expected at least 128 bytes, got ${dataSize} bytes`,
+        serialized,
+      })
+    if (dataSize > maxWebAuthnSize)
+      throw new InvalidSerializedError({
+        reason: `Invalid WebAuthn signature envelope size: expected at most ${maxWebAuthnSize} bytes, got ${dataSize} bytes`,
         serialized,
       })
 
@@ -1074,6 +1086,13 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
   if (envelope.type === 'webAuthn') {
     const webauthnData = envelope.webauthnData
     const webauthnDataSize = Hex.size(webauthnData)
+
+    // The signature and public key take 128 bytes of the maximum size.
+    if (webauthnDataSize > maxWebAuthnSize - 128)
+      throw new InvalidSerializedError({
+        reason: `Invalid WebAuthn data size: expected at most ${maxWebAuthnSize - 128} bytes, got ${webauthnDataSize} bytes`,
+        serialized: webauthnData,
+      })
 
     // Parse webauthnData into authenticatorData and clientDataJSON
     let authenticatorData: Hex.Hex | undefined

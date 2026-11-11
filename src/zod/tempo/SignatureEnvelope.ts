@@ -65,7 +65,13 @@ export const WebAuthnRpc = z.object({
   r: z_Hex.Hex,
   s: z_Hex.Hex,
   type: z.literal('webAuthn'),
-  webauthnData: z_Hex.Hex,
+  // 2048-byte WebAuthn signature limit minus the 128-byte signature and public key.
+  webauthnData: z_Hex.Hex.check(
+    z.refine(
+      (value) => core_Hex.size(value) <= 1920,
+      'expected at most 1920 bytes',
+    ),
+  ),
 })
 
 /** RPC primitive signature envelope schema. */
