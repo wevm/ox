@@ -326,6 +326,75 @@ describe('fromTuple', () => {
       `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
     )
   })
+
+  test('behavior: round trip', () => {
+    const unsigned = [
+      '0x1',
+      '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      '0x3',
+    ] as const satisfies Authorization.Tuple
+    const signed = [
+      ...unsigned,
+      '0x01',
+      '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+      '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+    ] as const satisfies Authorization.Tuple
+    expect(Authorization.toTuple(Authorization.fromTuple(unsigned))).toEqual(
+      unsigned,
+    )
+    expect(Authorization.toTuple(Authorization.fromTuple(signed))).toEqual(
+      signed,
+    )
+  })
+
+  test('error: 4 fields', () => {
+    expect(() =>
+      Authorization.fromTuple([
+        '0x01',
+        '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        '0x03',
+        '0x01',
+      ] as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Authorization.InvalidError: Invalid authorization.
+
+      Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].]
+    `)
+  })
+
+  test('error: 5 fields', () => {
+    expect(() =>
+      Authorization.fromTuple([
+        '0x01',
+        '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        '0x03',
+        '0x01',
+        '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+      ] as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Authorization.InvalidError: Invalid authorization.
+
+      Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].]
+    `)
+  })
+
+  test('error: 7 fields', () => {
+    expect(() =>
+      Authorization.fromTuple([
+        '0x01',
+        '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        '0x03',
+        '0x01',
+        '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+        '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+        '0xdeadbeef',
+      ] as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Authorization.InvalidError: Invalid authorization.
+
+      Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].]
+    `)
+  })
 })
 
 describe('fromTupleList', () => {
@@ -811,6 +880,7 @@ test('exports', () => {
       "toRpcList",
       "toTuple",
       "toTupleList",
+      "InvalidError",
     ]
   `)
 })
