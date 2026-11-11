@@ -552,6 +552,7 @@ export declare namespace encodeParameters {
     | AbiParameters.InvalidTypeError
     | Address.assert.ErrorType
     | Hex.IntegerOutOfRangeError
+    | Hex.InvalidLengthError
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
@@ -750,6 +751,9 @@ function measureParameter(
         expectedSize: parameter.size,
         value: value_,
       })
+    // An unpaired nibble has no byte to belong to, so reject it instead of
+    // guessing which half of a byte it is.
+    if (value_.length % 2 !== 0) throw new Hex.InvalidLengthError(value_)
     if (parameter.size !== null) return 32
     return 32 + Math.ceil(size / 32) * 32
   }
