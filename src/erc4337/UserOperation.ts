@@ -500,7 +500,7 @@ export function hash<
         Hex.padLeft(Hex.fromNumber(maxFeePerGas), 16),
       )
       const initCode_hashed = Hash.keccak256(
-        factory && factoryData ? Hex.concat(factory, factoryData) : '0x',
+        toInitCode({ factory, factoryData }),
       )
       const paymasterAndData_hashed = Hash.keccak256(
         paymaster
