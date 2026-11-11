@@ -1,4 +1,5 @@
-import { Execute } from 'ox/erc7821'
+import { AbiFunction, AbiParameters } from 'ox'
+import { Calls, Execute } from 'ox/erc7821'
 import { describe, expect, test } from 'vp/test'
 
 describe('encodeData', () => {
@@ -250,6 +251,117 @@ describe('decodeData', () => {
     const result = Execute.decodeData(encoded)
 
     expect(result).toEqual({ calls })
+  })
+
+  test('behavior: ignores reserved and unused mode bytes', () => {
+    const calls = [
+      {
+        data: '0xdeadbeef',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
+        value: 1n,
+      },
+    ] as const
+    const opData = '0x1234567890abcdef' as const
+
+    // Bytes [2..5] are reserved by ERC-7579 and bytes [10..31] are unused.
+    expect(
+      Execute.decodeData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0x0100deadbeef00000000ffffffffffffffffffffffffffffffffffffffffffff',
+          Calls.encode(calls),
+        ]),
+      ),
+    ).toEqual({ calls })
+    expect(
+      Execute.decodeData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0x0100deadbeef78210001ffffffffffffffffffffffffffffffffffffffffffff',
+          Calls.encode(calls, { opData }),
+        ]),
+      ),
+    ).toEqual({ calls, opData })
+  })
+
+  test('error: batch of batches mode', () => {
+    const executionData = Calls.encode(
+      [
+        {
+          data: '0xdeadbeef',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
+          value: 1n,
+        },
+      ],
+      { opData: '0x1234567890abcdef' },
+    )
+
+    expect(() =>
+      Execute.decodeData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          Execute.mode.batchOfBatches,
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0x0100000000007821000200000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`default\`, \`opData\`.]
+    `)
+    expect(() =>
+      Execute.decodeData(Execute.encodeBatchOfBatchesData([])),
+    ).toThrow(Execute.UnsupportedModeError)
+  })
+
+  test('error: unknown mode', () => {
+    const executionData = Calls.encode(
+      [
+        {
+          data: '0xdeadbeef',
+          to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
+          value: 1n,
+        },
+      ],
+      { opData: '0x1234567890abcdef' },
+    )
+
+    // Unknown call type.
+    expect(() =>
+      Execute.decodeData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0xff00000000000000000000000000000000000000000000000000000000000000',
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0xff00000000000000000000000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`default\`, \`opData\`.]
+    `)
+    // Unknown execution type.
+    expect(() =>
+      Execute.decodeData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0x0101000000007821000100000000000000000000000000000000000000000000',
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0x0101000000007821000100000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`default\`, \`opData\`.]
+    `)
+    // Unknown mode selector.
+    expect(() =>
+      Execute.decodeData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0x0100000000007821000300000000000000000000000000000000000000000000',
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0x0100000000007821000300000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`default\`, \`opData\`.]
+    `)
   })
 
   test('error: selector mismatch', () => {
@@ -557,6 +669,84 @@ describe('decodeBatchOfBatchesData', () => {
     const result = Execute.decodeBatchOfBatchesData(encoded)
 
     expect(result).toEqual(batches)
+  })
+
+  test('behavior: ignores reserved and unused mode bytes', () => {
+    const batches = [
+      {
+        calls: [
+          {
+            data: '0xdeadbeef',
+            to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
+            value: 1n,
+          },
+        ],
+      },
+    ] as const
+
+    const executionData = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+      [Calls.encode(batches[0].calls)],
+    ])
+
+    // Bytes [2..5] are reserved by ERC-7579 and bytes [10..31] are unused.
+    expect(
+      Execute.decodeBatchOfBatchesData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0x0100deadbeef78210002ffffffffffffffffffffffffffffffffffffffffffff',
+          executionData,
+        ]),
+      ),
+    ).toEqual(batches)
+  })
+
+  test('error: single batch mode', () => {
+    const executionData = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+      [],
+    ])
+
+    expect(() =>
+      Execute.decodeBatchOfBatchesData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          Execute.mode.default,
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0x0100000000000000000000000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`batchOfBatches\`.]
+    `)
+    expect(() =>
+      Execute.decodeBatchOfBatchesData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          Execute.mode.opData,
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0x0100000000007821000100000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`batchOfBatches\`.]
+    `)
+  })
+
+  test('error: unknown mode', () => {
+    const executionData = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+      [],
+    ])
+
+    expect(() =>
+      Execute.decodeBatchOfBatchesData(
+        AbiFunction.encodeData(Execute.abiFunction, [
+          '0xff00000000000000000000000000000000000000000000000000000000000000',
+          executionData,
+        ]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Execute.UnsupportedModeError: Execution mode \`0xff00000000000000000000000000000000000000000000000000000000000000\` is not supported.
+
+      Supported modes: \`batchOfBatches\`.]
+    `)
   })
 
   test('error: selector mismatch', () => {
