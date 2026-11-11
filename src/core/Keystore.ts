@@ -551,7 +551,7 @@ export class InvalidKeySizeError extends Errors.BaseError {
 }
 
 export declare namespace InvalidKeySizeError {
-  /** Options for {@link ox#Keystore.InvalidKeySizeError}. */
+  /** Options for `Keystore.InvalidKeySizeError`. */
   type Options = {
     /** Received key size. */
     size: number
