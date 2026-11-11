@@ -813,7 +813,7 @@ describe('serialize', () => {
       value: BigInt('0x0'),
     })
     expect(serialized).toEqual(
-      '0xe280808305208094c00000000000000000000000000000000000000080808284d88080',
+      '0xe280808305208094c00000000000000000000000000000000000000080808284f38080',
     )
   })
 
@@ -832,6 +832,84 @@ describe('serialize', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       '[Signature.InvalidVError: Value `29` is an invalid v value. v must be 27, 28 or >=35.]',
     )
+  })
+
+  describe('v + chainId', () => {
+    const signed = {
+      ...transaction,
+      chainId: 1,
+      r: 0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fen,
+      s: 0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fen,
+    } as const
+
+    test('behavior: v as parity', () => {
+      expect(
+        [0, 1, 27, 28, 37, 38].map((v) => {
+          const { chainId, v: v_ } = TxEnvelopeLegacy.deserialize(
+            TxEnvelopeLegacy.serialize({ ...signed, v }),
+          )
+          return { chainId, v: v_ }
+        }),
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "chainId": 1,
+            "v": 37,
+          },
+          {
+            "chainId": 1,
+            "v": 38,
+          },
+          {
+            "chainId": 1,
+            "v": 37,
+          },
+          {
+            "chainId": 1,
+            "v": 38,
+          },
+          {
+            "chainId": 1,
+            "v": 37,
+          },
+          {
+            "chainId": 1,
+            "v": 38,
+          },
+        ]
+      `)
+    })
+
+    test('error: v encodes another chain', () => {
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 40 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 35 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, chainId: 17000, v: 37 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.InvalidChainIdError: Chain ID "17000" is invalid.]`,
+      )
+    })
+
+    test('error: invalid v', () => {
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 29 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Signature.InvalidVError: Value \`29\` is an invalid v value. v must be 27, 28 or >=35.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 2 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Signature.InvalidVError: Value \`2\` is an invalid v value. v must be 27, 28 or >=35.]`,
+      )
+    })
   })
 })
 
