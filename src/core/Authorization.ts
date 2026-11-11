@@ -187,7 +187,7 @@ export function fromRpc(authorization: Rpc): Signed {
 
   return {
     address,
-    chainId: Number(chainId),
+    chainId: Hex.toNumber(chainId),
     nonce: BigInt(nonce),
     ...signature,
   }
@@ -279,7 +279,7 @@ export function fromTuple<const tuple extends Tuple>(
   const [chainId, address, nonce, yParity, r, s] = tuple
   let args = {
     address,
-    chainId: chainId === '0x' ? 0 : Number(chainId),
+    chainId: chainId === '0x' ? 0 : Hex.toNumber(chainId),
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
   }
   if (yParity && r && s) {

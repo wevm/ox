@@ -174,6 +174,36 @@ describe('fromRpc', () => {
     `)
   })
 
+  test('error: chainId above safe integer range', () => {
+    expect(() =>
+      Authorization.fromRpc({
+        address: '0x0000000000000000000000000000000000000000',
+        chainId: '0x20000000000001',
+        nonce: '0x1',
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        yParity: '0x0',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+  })
+
+  test('error: chainId empty quantity', () => {
+    expect(() =>
+      Authorization.fromRpc({
+        address: '0x0000000000000000000000000000000000000000',
+        chainId: '0x',
+        nonce: '0x1',
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        yParity: '0x0',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`NaN\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+  })
+
   test('error: yParity above 2**8 - 1', () => {
     expect(() =>
       Authorization.fromRpc({
@@ -265,6 +295,36 @@ describe('fromTuple', () => {
         "nonce": 0n,
       }
     `)
+  })
+
+  test('behavior: chainId at safe integer limit', () => {
+    const tuple = [
+      '0x1fffffffffffff',
+      '0x0000000000000000000000000000000000000000',
+      '0x3',
+    ] as const satisfies Authorization.Tuple
+    const authorization = Authorization.fromTuple(tuple)
+    expect(authorization).toMatchInlineSnapshot(`
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 9007199254740991,
+        "nonce": 3n,
+      }
+    `)
+    expect(Authorization.toTuple(authorization)).toEqual(tuple)
+  })
+
+  test('error: chainId above safe integer range', () => {
+    const tuple = [
+      '0x20000000000001',
+      '0x0000000000000000000000000000000000000000',
+      '0x3',
+    ] as const satisfies Authorization.Tuple
+    expect(() =>
+      Authorization.fromTuple(tuple),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
   })
 
   test('behavior: signature', () => {

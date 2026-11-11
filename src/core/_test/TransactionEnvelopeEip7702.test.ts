@@ -324,6 +324,36 @@ describe('deserialize', () => {
       )
     })
 
+    test('authorization chainId above safe integer range', () => {
+      expect(() =>
+        TxEnvelopeEip7702.deserialize(
+          `0x04${Rlp.fromHex([
+            Hex.fromNumber(1), // chainId
+            '0x', // nonce
+            Hex.fromNumber(1), // maxPriorityFeePerGas
+            Hex.fromNumber(1), // maxFeePerGas
+            Hex.fromNumber(1), // gas
+            '0x0000000000000000000000000000000000000000', // to
+            '0x', // value
+            '0x', // data
+            [], // accessList
+            [
+              [
+                '0x20000000000001',
+                '0x0000000000000000000000000000000000000000',
+                '0x01',
+                '0x',
+                '0x01',
+                '0x02',
+              ],
+            ], // authorizationList
+          ]).slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+      )
+    })
+
     test('invalid access list (invalid address)', () => {
       expect(() =>
         TxEnvelopeEip7702.deserialize(
