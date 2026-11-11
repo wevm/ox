@@ -831,6 +831,11 @@
       "types": "./dist/tempo/SignatureEnvelope.d.ts",
       "default": "./dist/tempo/SignatureEnvelope.js"
     },
+    "./tempo/SignaturePreAuthorized": {
+      "src": "./src/tempo/SignaturePreAuthorized.ts",
+      "types": "./dist/tempo/SignaturePreAuthorized.d.ts",
+      "default": "./dist/tempo/SignaturePreAuthorized.js"
+    },
     "./tempo/Tick": {
       "src": "./src/tempo/Tick.ts",
       "types": "./dist/tempo/Tick.d.ts",

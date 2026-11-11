@@ -318,6 +318,32 @@ export * as RpcSchemaTempo from './RpcSchemaTempo.js'
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
 /**
+ * Pre-authorized access key signature utilities (TIP-1165).
+ *
+ * A pre-authorized signature bundles an access key's V2 keychain signature with
+ * the root key's signed key authorization, followed by a 32-byte magic suffix.
+ * Offchain verifiers use it to accept signatures from an access key that is
+ * authorized but not yet registered onchain.
+ *
+ * [TIP-1165](https://tips.sh/1165)
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { SignaturePreAuthorized } from 'ox/tempo'
+ *
+ * const wrapped = SignaturePreAuthorized.wrap({
+ *   keyAuthorization,
+ *   signature
+ * })
+ * const { keyAuthorization, signature } =
+ *   SignaturePreAuthorized.unwrap(wrapped)
+ * ```
+ *
+ * @category Reference
+ */
+export * as SignaturePreAuthorized from './SignaturePreAuthorized.js'
+/**
  * Tick-based pricing utilities for DEX price conversions.
  *
  * Prices on Tempo's stablecoin DEX are discretized into integer ticks with a tick size of 0.1 bps

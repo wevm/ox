@@ -39,6 +39,8 @@ export async function createServer(options: createServer.Options = {}) {
   const args = {
     blockTime: '2ms',
     chain: options.chain,
+    // Tempo removed `--engine.legacy-state-root`, which prool passes by default.
+    engine: { legacyStateRoot: undefined },
     log: import.meta.env.VITE_TEMPO_LOG,
     port: serverPort,
   } satisfies Instance.tempo.Parameters
