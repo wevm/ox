@@ -245,7 +245,7 @@ describe('behavior: configurable accounts', () => {
         ...signature,
         signatures: signature.signatures.slice(0, 1),
       }),
-    ).rejects.toThrow(/threshold|weight|quorum/)
+    ).rejects.toThrow('invalid transaction signature')
     expect((await submit(tx, signature)).status).toMatchInlineSnapshot(
       '"success"',
     )

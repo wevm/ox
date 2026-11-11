@@ -1,10 +1,6 @@
 import { basename, dirname, join } from 'node:path'
 import { defineConfig } from 'vp'
 import { playwright } from 'vp/test/browser-playwright'
-import {
-  port as tempoConfigurableAccountsPort,
-  tag as tempoConfigurableAccountsTag,
-} from './test/tempo/configurableAccounts.js'
 
 const root = import.meta.dirname
 
@@ -198,28 +194,13 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'tempo',
-          include: ['src/tempo/e2e.test.ts'],
+          include: [
+            'src/tempo/e2e.test.ts',
+            'src/tempo/configurableAccounts.e2e.test.ts',
+          ],
           setupFiles: [join(root, 'test/tempo/setup.ts')],
           globalSetup: [join(root, 'test/tempo/setup.global.ts')],
           hookTimeout: 60_000,
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'tempo-configurable-accounts',
-          include: ['src/tempo/configurableAccounts.e2e.test.ts'],
-          setupFiles: [join(root, 'test/tempo/setup.ts')],
-          globalSetup: [
-            join(root, 'test/tempo/setup.global.configurableAccounts.ts'),
-          ],
-          hookTimeout: 60_000,
-          env: {
-            VITE_TEMPO_ENV: 'localnet',
-            VITE_TEMPO_PORT: String(tempoConfigurableAccountsPort),
-            VITE_TEMPO_RPC_URL: '',
-            VITE_TEMPO_TAG: tempoConfigurableAccountsTag,
-          },
         },
       },
       {

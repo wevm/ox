@@ -19,13 +19,12 @@ export const rpcUrl = (() => {
   return `http://localhost:${port}/${id}`
 })()
 
-export async function createServer(options: createServer.Options = {}) {
-  const serverPort = options.port ?? port
+export async function createServer() {
   const tag = await (async () => {
     // Default to `edge` which tracks `tempoxyz/tempo` main and includes
     // unreleased features the tests depend on (e.g. TIP-1049 admin keys).
     // The `latest` tag lags behind released versions.
-    const envTag = options.tag ?? import.meta.env.VITE_TEMPO_TAG ?? 'edge'
+    const envTag = import.meta.env.VITE_TEMPO_TAG ?? 'edge'
     if (!envTag.startsWith('http')) return envTag
 
     const transport = RpcTransport.fromHttp(envTag)
@@ -38,11 +37,10 @@ export async function createServer(options: createServer.Options = {}) {
 
   const args = {
     blockTime: '2ms',
-    chain: options.chain,
     // Tempo removed `--engine.legacy-state-root`, which prool passes by default.
     engine: { legacyStateRoot: undefined },
     log: import.meta.env.VITE_TEMPO_LOG,
-    port: serverPort,
+    port,
   } satisfies Instance.tempo.Parameters
 
   return Server.create({
@@ -52,14 +50,6 @@ export async function createServer(options: createServer.Options = {}) {
           image: `ghcr.io/tempoxyz/tempo:${tag}`,
         })
       : Instance.tempo(args),
-    port: serverPort,
+    port,
   })
-}
-
-export declare namespace createServer {
-  export type Options = {
-    chain?: string | undefined
-    port?: number | undefined
-    tag?: string | undefined
-  }
 }
