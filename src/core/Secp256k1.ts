@@ -2,6 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Entropy from './internal/entropy.js'
 import * as keyDerivation from './internal/keyDerivation.js'
@@ -502,7 +503,10 @@ export function verify(options: verify.Options): boolean {
   if (options.address)
     return Address.isEqual(
       options.address,
-      recoverAddress({ payload, signature: options.signature }),
+      recoverAddress({
+        payload: hash === true ? Hash.sha256(payload) : payload,
+        signature: options.signature,
+      }),
     )
   return secp256k1.verify(
     options.signature,
