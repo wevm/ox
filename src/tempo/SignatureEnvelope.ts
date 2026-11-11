@@ -326,7 +326,7 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    assertKeychainVersion(keychain)
+    assertKeychainInner(keychain)
     assert(keychain.inner)
     return
   }
@@ -351,11 +351,13 @@ export declare namespace assert {
     | Errors.GlobalErrorType
 }
 
-function assertKeychainVersion(keychain: Keychain): void {
-  if (keychain.version !== 'v1') return
-  let inner = keychain.inner
-  while (getType(inner) === 'keychain') inner = (inner as Keychain).inner
-  if (getType(inner) === 'configurable')
+function assertKeychainInner(keychain: Keychain): void {
+  const type = getType(keychain.inner)
+  if (type === 'keychain')
+    throw new InvalidApprovalError({
+      reason: 'keychain signatures cannot wrap a keychain signature',
+    })
+  if (keychain.version === 'v1' && type === 'configurable')
     throw new InvalidApprovalError({
       reason: 'configurable access keys require keychain V2',
     })
@@ -674,11 +676,22 @@ function deserialize_(value: Serialized): SignatureEnvelope {
     typeId === serializedKeychainV2Type
   ) {
     const userAddress = Hex.slice(data, 0, 20)
-    const inner = deserialize_(Hex.slice(data, 20))
+    const inner = Hex.slice(data, 20)
+    // Reject nested keychains before decoding their contents.
+    if (
+      Hex.size(inner) !== 65 &&
+      [serializedKeychainType, serializedKeychainV2Type].includes(
+        Hex.slice(inner, 0, 1),
+      )
+    )
+      throw new InvalidSerializedError({
+        reason: 'keychain signatures cannot wrap a keychain signature',
+        serialized,
+      })
 
     const envelope = {
       userAddress,
-      inner,
+      inner: deserialize_(inner),
       type: 'keychain',
       version: typeId === serializedKeychainV2Type ? 'v2' : 'v1',
     } satisfies Keychain
@@ -1109,10 +1122,20 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     ('userAddress' in envelope && 'signature' in envelope)
   ) {
     const keychain = envelope as KeychainRpc
+    const { signature } = keychain
+    // Reject nested keychains before decoding their contents.
+    if (
+      typeof signature === 'object' &&
+      (signature.type === 'keychain' ||
+        ('userAddress' in signature && 'signature' in signature))
+    )
+      throw new InvalidApprovalError({
+        reason: 'keychain signatures cannot wrap a keychain signature',
+      })
     const result = {
       type: 'keychain',
       userAddress: keychain.userAddress,
-      inner: fromRpc(keychain.signature),
+      inner: fromRpc(signature),
       ...(keychain.keyId ? { keyId: keychain.keyId } : {}),
       ...(keychain.version ? { version: keychain.version } : {}),
     } satisfies Keychain
@@ -1455,7 +1478,7 @@ export function toRpc<const envelope extends toRpc.Input>(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    assertKeychainVersion(keychain)
+    assertKeychainInner(keychain)
     return {
       type: 'keychain',
       userAddress: keychain.userAddress,
