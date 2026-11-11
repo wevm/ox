@@ -304,6 +304,20 @@ describe('behavior: BE/BS flag consistency', () => {
     })
 
     expect(result.backedUp).toBe(false)
+    expect(result.deviceType).toBe('multiDevice')
+  })
+
+  test('accepts BE + BS both not set', () => {
+    const { credential, challenge } = buildPackedCredential({ flag: 0x45 })
+
+    const result = Registration.verify({
+      credential,
+      challenge,
+      origin: window.location.origin,
+      rpId,
+    })
+
+    expect(result.backedUp).toBe(false)
     expect(result.deviceType).toBe('singleDevice')
   })
 })
