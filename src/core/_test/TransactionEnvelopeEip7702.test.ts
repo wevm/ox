@@ -453,6 +453,109 @@ describe('deserialize', () => {
       Missing Attributes: r, s]
     `)
     })
+
+    describe('authorization tuple length', () => {
+      const address = '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      const r =
+        '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'
+      const s =
+        '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
+
+      const serialize = (authorization: readonly Hex.Hex[]) =>
+        `0x04${Rlp.fromHex([
+          '0x01', // chainId
+          '0x', // nonce
+          '0x01', // maxPriorityFeePerGas
+          '0x01', // maxFeePerGas
+          '0x01', // gas
+          '0x0000000000000000000000000000000000000000', // to
+          '0x', // value
+          '0x', // data
+          [], // accessList
+          [authorization], // authorizationList
+          '0x', // yParity
+          '0x01', // r
+          '0x02', // s
+        ]).slice(2)}` as const
+
+      test('6 fields round trip', () => {
+        const serialized = serialize(['0x01', address, '0x03', '0x01', r, s])
+        expect(
+          TxEnvelopeEip7702.serialize(
+            TxEnvelopeEip7702.deserialize(serialized),
+          ),
+        ).toBe(serialized)
+      })
+
+      test('3 fields', () => {
+        expect(() =>
+          TxEnvelopeEip7702.deserialize(serialize(['0x01', address, '0x03'])),
+        ).toThrowErrorMatchingInlineSnapshot(`
+          [Authorization.InvalidError: Invalid authorization.
+
+          Details: Expected [chainId, address, nonce, yParity, r, s].]
+        `)
+      })
+
+      test('4 fields', () => {
+        expect(() =>
+          TxEnvelopeEip7702.deserialize(
+            serialize(['0x01', address, '0x03', '0x01']),
+          ),
+        ).toThrowErrorMatchingInlineSnapshot(`
+          [Authorization.InvalidError: Invalid authorization.
+
+          Details: Expected [chainId, address, nonce, yParity, r, s].]
+        `)
+      })
+
+      test('5 fields', () => {
+        expect(() =>
+          TxEnvelopeEip7702.deserialize(
+            serialize(['0x01', address, '0x03', '0x01', r]),
+          ),
+        ).toThrowErrorMatchingInlineSnapshot(`
+          [Authorization.InvalidError: Invalid authorization.
+
+          Details: Expected [chainId, address, nonce, yParity, r, s].]
+        `)
+      })
+
+      test('7 fields', () => {
+        expect(() =>
+          TxEnvelopeEip7702.deserialize(
+            serialize(['0x01', address, '0x03', '0x01', r, s, '0xdeadbeef']),
+          ),
+        ).toThrowErrorMatchingInlineSnapshot(`
+          [Authorization.InvalidError: Invalid authorization.
+
+          Details: Expected [chainId, address, nonce, yParity, r, s].]
+        `)
+      })
+
+      test('not a list', () => {
+        expect(() =>
+          TxEnvelopeEip7702.deserialize(
+            `0x04${Rlp.fromHex([
+              '0x01', // chainId
+              '0x', // nonce
+              '0x01', // maxPriorityFeePerGas
+              '0x01', // maxFeePerGas
+              '0x01', // gas
+              '0x0000000000000000000000000000000000000000', // to
+              '0x', // value
+              '0x', // data
+              [], // accessList
+              ['0x010203040506'], // authorizationList
+            ]).slice(2)}`,
+          ),
+        ).toThrowErrorMatchingInlineSnapshot(`
+          [Authorization.InvalidError: Invalid authorization.
+
+          Details: Expected [chainId, address, nonce, yParity, r, s].]
+        `)
+      })
+    })
   })
 })
 
