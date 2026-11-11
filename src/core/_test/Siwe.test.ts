@@ -402,6 +402,29 @@ describe('createMessage', () => {
   `)
   })
 
+  test('behavior: invalid requestId', () => {
+    expect(() =>
+      Siwe.createMessage({ ...message, requestId: 'foo\nbar' }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "requestId".
+
+      - Request ID must not include '\\n' or '\\r'.
+
+      Provided value: foo
+      bar]
+    `)
+    expect(() =>
+      Siwe.createMessage({ ...message, requestId: 'foo\rbar' }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "requestId".
+
+      - Request ID must not include '\\n' or '\\r'.
+
+      Provided value: foo
+      bar]
+    `)
+  })
+
   test('behavior: invalid resources', () => {
     expect(() =>
       Siwe.createMessage({
