@@ -1,4 +1,5 @@
 import * as AbiFunction from '../core/AbiFunction.js'
+import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import { AbiParameters } from '../index.js'
 import * as Calls from './Calls.js'
@@ -42,6 +43,10 @@ export const mode = {
 /**
  * Decodes calls from ERC-7821 `execute` function data.
  *
+ * Decodes the single batch modes only (`mode.default` and `mode.opData`). Throws
+ * {@link ox#Execute.UnsupportedModeError} for the "batch of batches" mode (use
+ * {@link ox#Execute.decodeBatchOfBatchesData} instead) and for unknown modes.
+ *
  * @example
  * ```ts twoslash
  * import { Execute } from 'ox/erc7821'
@@ -57,7 +62,13 @@ export function decodeData(data: Hex.Hex): decodeData.ReturnType {
     Hex.Hex,
     Hex.Hex,
   ]
-  return Calls.decode(executionData, { opData: m !== mode.default })
+  const name = getModeName(m)
+  if (name !== 'default' && name !== 'opData')
+    throw new UnsupportedModeError({
+      mode: m,
+      supported: ['default', 'opData'],
+    })
+  return Calls.decode(executionData, { opData: name === 'opData' })
 }
 
 export declare namespace decodeData {
@@ -65,10 +76,14 @@ export declare namespace decodeData {
     calls: Call[]
     opData?: Hex.Hex | undefined
   }
+
+  type ErrorType = UnsupportedModeError | Errors.GlobalErrorType
 }
 
 /**
  * Decodes batches from ERC-7821 `execute` function data in "batch of batches" mode.
+ *
+ * Throws {@link ox#Execute.UnsupportedModeError} for any other mode.
  *
  * @example
  * ```ts twoslash
@@ -83,10 +98,12 @@ export declare namespace decodeData {
 export function decodeBatchOfBatchesData(
   data: Hex.Hex,
 ): decodeBatchOfBatchesData.ReturnType {
-  const [, executionData] = AbiFunction.decodeData(abiFunction, data) as [
+  const [m, executionData] = AbiFunction.decodeData(abiFunction, data) as [
     Hex.Hex,
     Hex.Hex,
   ]
+  if (getModeName(m) !== 'batchOfBatches')
+    throw new UnsupportedModeError({ mode: m, supported: ['batchOfBatches'] })
 
   const [encodedBatches] = AbiParameters.decode(
     batchesParameters,
@@ -112,6 +129,8 @@ export function decodeBatchOfBatchesData(
 
 export declare namespace decodeBatchOfBatchesData {
   type ReturnType = Batch[]
+
+  type ErrorType = UnsupportedModeError | Errors.GlobalErrorType
 }
 
 /**
@@ -194,4 +213,66 @@ export declare namespace encodeData {
   type Options = {
     opData?: Hex.Hex | undefined
   }
+}
+
+/**
+ * Thrown when the mode of ERC-7821 `execute` function data is not supported by the decoder.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Execute } from 'ox/erc7821'
+ *
+ * const data = Execute.encodeBatchOfBatchesData([
+ *   {
+ *     calls: [
+ *       {
+ *         data: '0xcafebabe',
+ *         to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+ *         value: 1n
+ *       }
+ *     ]
+ *   }
+ * ])
+ *
+ * Execute.decodeData(data)
+ * // @error: Execute.UnsupportedModeError: Execution mode `0x0100000000007821000200000000000000000000000000000000000000000000` is not supported.
+ * ```
+ */
+export class UnsupportedModeError extends Errors.BaseError {
+  override readonly name = 'Execute.UnsupportedModeError'
+
+  constructor({ mode, supported }: UnsupportedModeError.Options) {
+    super(`Execution mode \`${mode}\` is not supported.`, {
+      metaMessages: [
+        `Supported modes: ${supported.map((name) => `\`${name}\``).join(', ')}.`,
+      ],
+    })
+  }
+}
+
+export declare namespace UnsupportedModeError {
+  /** Options for {@link ox#Execute.UnsupportedModeError}. */
+  type Options = {
+    /** Mode of the `execute` function data. */
+    mode: Hex.Hex
+    /** Names of the modes (keys of `Execute.mode`) the decoder supports. */
+    supported: readonly (keyof typeof mode)[]
+  }
+}
+
+/**
+ * Identifies an ERC-7821 execution mode the way the reference implementation
+ * (`_executionModeId`) does. Bytes `[0..1]` (call type and execution type) and
+ * bytes `[6..9]` (mode selector) identify the mode. Bytes `[2..5]` (reserved by
+ * ERC-7579) and bytes `[10..31]` (unused) are ignored.
+ *
+ * @internal
+ */
+function getModeName(m: Hex.Hex): keyof typeof mode | undefined {
+  if (Hex.slice(m, 0, 2) !== '0x0100') return undefined
+  const selector = Hex.slice(m, 6, 10)
+  if (selector === '0x00000000') return 'default'
+  if (selector === '0x78210001') return 'opData'
+  if (selector === '0x78210002') return 'batchOfBatches'
+  return undefined
 }
