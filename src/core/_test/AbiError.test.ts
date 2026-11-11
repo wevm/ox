@@ -104,6 +104,111 @@ describe('decode', () => {
     )
   })
 
+  test('behavior: solidity `Panic`', () => {
+    const data =
+      '0x4e487b710000000000000000000000000000000000000000000000000000000000000011'
+    expect(AbiError.decode(AbiError.solidityPanic, data)).toMatchInlineSnapshot(
+      `17`,
+    )
+    expect(
+      AbiError.decode(Abi.from(['error Paused()']), 'Panic', data),
+    ).toMatchInlineSnapshot(`17`)
+    expect(
+      AbiError.decode(
+        AbiError.solidityPanic,
+        AbiError.encode(AbiError.solidityPanic, [17]),
+      ),
+    ).toMatchInlineSnapshot(`17`)
+  })
+
+  test('behavior: uppercase data', () => {
+    const error = AbiError.from('error Unauthorized(address account)')
+    expect(
+      AbiError.decode(
+        error,
+        '0x8E4A23D6000000000000000000000000D8DA6BF26964AF9D7EED9E03E53415D37AA96045',
+      ),
+    ).toMatchInlineSnapshot(`"0xd8da6bf26964af9d7eed9e03e53415d37aa96045"`)
+  })
+
+  test('error: selector mismatch', () => {
+    const abi = Abi.from([
+      'error InsufficientAllowance(uint256 available, uint256 required)',
+      'error InsufficientBalance(uint256 available, uint256 required)',
+      'error Paused()',
+    ])
+    const data = AbiError.encode(
+      AbiError.fromAbi(abi, 'InsufficientAllowance'),
+      [1n, 2n],
+    )
+
+    expect(() =>
+      AbiError.decode(AbiError.fromAbi(abi, 'InsufficientBalance'), data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0xcf479181".
+
+      Error: error InsufficientBalance(uint256 available, uint256 required)
+      Selector: 0xcf479181]
+    `)
+    expect(() =>
+      AbiError.decode(abi, 'InsufficientBalance', data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0xcf479181".
+
+      Error: error InsufficientBalance(uint256 available, uint256 required)
+      Selector: 0xcf479181]
+    `)
+    expect(() =>
+      AbiError.decode(abi, 'Paused', data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0x9e87fac8".
+
+      Error: error Paused()
+      Selector: 0x9e87fac8]
+    `)
+    expect(() =>
+      AbiError.decode(AbiError.solidityError, data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0x08c379a0".
+
+      Error: error Error(string message)
+      Selector: 0x08c379a0]
+    `)
+  })
+
+  test('error: selector mismatch, with overloads', () => {
+    const abi = Abi.from([
+      'error Example()',
+      'error Example(uint256 amount)',
+      'error Other(uint256 amount)',
+    ])
+
+    expect(() =>
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.fromAbi(abi, 'Other'), [1n]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x42d43c87" does not match the expected selector "0xb085b9a5".
+
+      Error: error Example()
+      Selector: 0xb085b9a5]
+    `)
+    expect(() =>
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.solidityError, ['denied']),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x08c379a0" does not match the expected selector "0xb085b9a5".
+
+      Error: error Example()
+      Selector: 0xb085b9a5]
+    `)
+  })
+
   describe('behavior: network', async () => {
     const hash = await anvilMainnet.request({
       method: 'eth_sendTransaction',
@@ -312,7 +417,7 @@ describe('decode', () => {
       'error InvalidSignature(uint r, uint s, uint8 yParity)',
     ])
     const data =
-      '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+      '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
 
     // Test both overload patterns
     const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
@@ -328,7 +433,7 @@ describe('decode', () => {
       'error InvalidSignature(uint r, uint s, uint8 yParity)',
     ])
     const data =
-      '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+      '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
 
     // Test both overload patterns with options
     const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
@@ -1054,6 +1159,7 @@ test('exports', () => {
       "solidityErrorSelector",
       "solidityPanic",
       "solidityPanicSelector",
+      "SelectorMismatchError",
     ]
   `)
 })

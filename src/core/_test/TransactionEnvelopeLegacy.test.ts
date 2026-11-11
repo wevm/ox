@@ -295,6 +295,35 @@ describe('deserialize', () => {
       }
     `)
     })
+
+    test('largest safe v', () => {
+      const serialized = Rlp.fromHex([
+        '0x01', // nonce
+        '0x02', // gasPrice
+        '0x5208', // gas
+        '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // to
+        '0x03', // value
+        '0x', // data
+        Hex.fromNumber(Number.MAX_SAFE_INTEGER), // v
+        `0x${'ff'.repeat(32)}`, // r
+        `0x${'ff'.repeat(32)}`, // s
+      ])
+      expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
+        {
+          "chainId": 4503599627370478,
+          "gas": 21000n,
+          "gasPrice": 2n,
+          "nonce": 1n,
+          "r": 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+          "s": 115792089237316195423570985008687907853269984665640564039457584007913129639935n,
+          "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          "type": "legacy",
+          "v": 9007199254740991,
+          "value": 3n,
+          "yParity": 0,
+        }
+      `)
+    })
   })
 
   describe('errors', () => {
@@ -391,6 +420,149 @@ describe('deserialize', () => {
         ),
       ).toThrowErrorMatchingInlineSnapshot(
         '[Signature.InvalidVError: Value `35` is an invalid v value. v must be 27, 28 or >=35.]',
+      )
+    })
+
+    const fields = [
+      '0x01', // nonce
+      '0x02', // gasPrice
+      '0x5208', // gas
+      '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // to
+      '0x03', // value
+      '0x', // data
+    ] as const
+    const word =
+      '0x1111111111111111111111111111111111111111111111111111111111111111'
+
+    test('unsigned: invalid `to`', () => {
+      const to = '0x11111111111111111111111111111111111111'
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex(['0x01', '0x02', '0x5208', to, '0x03', '0x']),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [Address.InvalidAddressError: Address "0x11111111111111111111111111111111111111" is invalid.
+
+        Details: Address is not a 20 byte (40 hexadecimal character) value.]
+      `)
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([
+            '0x01',
+            '0x02',
+            '0x5208',
+            to,
+            '0x03',
+            '0x',
+            '0x01',
+            '0x',
+            '0x',
+          ]),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [Address.InvalidAddressError: Address "0x11111111111111111111111111111111111111" is invalid.
+
+        Details: Address is not a 20 byte (40 hexadecimal character) value.]
+      `)
+    })
+
+    test('gasPrice longer than 32 bytes', () => {
+      const gasPrice = `0x01${'00'.repeat(32)}` as const
+      const [nonce, , ...rest] = fields
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(Rlp.fromHex([nonce, gasPrice, ...rest])),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.GasPriceTooHighError: The gas price (\`gasPrice\`) cannot be higher than the maximum allowed value (2^256-1).]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([nonce, gasPrice, ...rest, '0x25', word, word]),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.GasPriceTooHighError: The gas price (\`gasPrice\`) cannot be higher than the maximum allowed value (2^256-1).]`,
+      )
+    })
+
+    test('r or s longer than 32 bytes', () => {
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([...fields, '0x25', `${word}11`, word]),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Signature.InvalidRError: Value \`0x111111111111111111111111111111111111111111111111111111111111111111\` is an invalid r value. r must be a positive integer less than 2^256.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([...fields, '0x25', word, `${word}11`]),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Signature.InvalidSError: Value \`0x111111111111111111111111111111111111111111111111111111111111111111\` is an invalid s value. s must be a positive integer less than 2^256.]`,
+      )
+    })
+
+    test('list in place of a field', () => {
+      const signed = [...fields, '0x25', word, word] as const
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([['0x01', '0x02'], ...fields.slice(1)]),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
+
+        Serialized Transaction: "0xdec20102028252089470997970c51812dc3a010c7d01b50e0d17dc79c80380"]
+      `)
+      for (const tuple of [fields, signed])
+        for (let i = 0; i < tuple.length; i++)
+          expect(() =>
+            TxEnvelopeLegacy.deserialize(
+              Rlp.fromHex(tuple.map((x, j) => (i === j ? [x] : x))),
+            ),
+          ).toThrowError(
+            'Invalid serialized transaction of type "legacy" was provided.',
+          )
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(Rlp.fromHex([...fields, '0x25', [], []])),
+      ).toThrowError(
+        'Invalid serialized transaction of type "legacy" was provided.',
+      )
+    })
+
+    test('byte string in place of the list', () => {
+      expect(() =>
+        TxEnvelopeLegacy.deserialize('0x82abcd'),
+      ).toThrowErrorMatchingInlineSnapshot(`
+          [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
+
+          Serialized Transaction: "0x82abcd"]
+        `)
+    })
+
+    test('v above the safe integer range', () => {
+      // 2^53 + 15
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([...fields, '0x2000000000000f', word, word]),
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
+
+        Serialized Transaction: "0xf86601028252089470997970c51812dc3a010c7d01b50e0d17dc79c80380872000000000000fa01111111111111111111111111111111111111111111111111111111111111111a01111111111111111111111111111111111111111111111111111111111111111"]
+      `)
+      // 2^53 + 1 (unsigned)
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([...fields, '0x20000000000001', '0x', '0x']),
+        ),
+      ).toThrowError(
+        'Invalid serialized transaction of type "legacy" was provided.',
+      )
+      // 2^1100
+      expect(() =>
+        TxEnvelopeLegacy.deserialize(
+          Rlp.fromHex([...fields, `0x10${'00'.repeat(137)}`, word, word]),
+        ),
+      ).toThrowError(
+        'Invalid serialized transaction of type "legacy" was provided.',
       )
     })
   })
@@ -536,6 +708,50 @@ describe('hash', () => {
     expect(hash).toMatchInlineSnapshot(
       `"0x5e427e088ae00b084b41e198c52440aa43b2d6f8f1f01246fd25d4e9b6ebfdab"`,
     )
+  })
+
+  test('options: presign: chain ID carried by `v`', () => {
+    const unsigned = {
+      gas: 21000n,
+      gasPrice: 1000000000n,
+      nonce: 665n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000000000000000000n,
+    } as const
+    const payload = TxEnvelopeLegacy.getSignPayload(
+      TxEnvelopeLegacy.from({ ...unsigned, chainId: 1 }),
+    )
+    const { r, s, yParity } = Secp256k1.sign({
+      payload,
+      privateKey: accounts[0].privateKey,
+    })
+
+    // EIP-155 `v`, no `chainId`
+    const envelope = TxEnvelopeLegacy.from({
+      ...unsigned,
+      r,
+      s,
+      v: 37 + yParity,
+    })
+    expect(
+      TxEnvelopeLegacy.hash(envelope, { presign: true }),
+    ).toMatchInlineSnapshot(
+      `"0x4c1dec0d90aa1a17cb0aa735b5550e43a1bd27cd1cacb8987522576fa6220e46"`,
+    )
+    expect(TxEnvelopeLegacy.hash(envelope, { presign: true })).toBe(payload)
+    expect(TxEnvelopeLegacy.getSignPayload(envelope)).toBe(
+      TxEnvelopeLegacy.getSignPayload(
+        TxEnvelopeLegacy.deserialize(TxEnvelopeLegacy.serialize(envelope)),
+      ),
+    )
+
+    // pre-EIP-155 `v`, no `chainId`
+    expect(
+      TxEnvelopeLegacy.hash(
+        TxEnvelopeLegacy.from({ ...unsigned, r, s, v: 27 + yParity }),
+        { presign: true },
+      ),
+    ).toBe(TxEnvelopeLegacy.getSignPayload(TxEnvelopeLegacy.from(unsigned)))
   })
 })
 
@@ -841,7 +1057,7 @@ describe('serialize', () => {
       value: BigInt('0x0'),
     })
     expect(serialized).toEqual(
-      '0xe280808305208094c00000000000000000000000000000000000000080808284d88080',
+      '0xe280808305208094c00000000000000000000000000000000000000080808284f38080',
     )
   })
 
@@ -860,6 +1076,84 @@ describe('serialize', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       '[Signature.InvalidVError: Value `29` is an invalid v value. v must be 27, 28 or >=35.]',
     )
+  })
+
+  describe('v + chainId', () => {
+    const signed = {
+      ...transaction,
+      chainId: 1,
+      r: 0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fen,
+      s: 0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fen,
+    } as const
+
+    test('behavior: v as parity', () => {
+      expect(
+        [0, 1, 27, 28, 37, 38].map((v) => {
+          const { chainId, v: v_ } = TxEnvelopeLegacy.deserialize(
+            TxEnvelopeLegacy.serialize({ ...signed, v }),
+          )
+          return { chainId, v: v_ }
+        }),
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "chainId": 1,
+            "v": 37,
+          },
+          {
+            "chainId": 1,
+            "v": 38,
+          },
+          {
+            "chainId": 1,
+            "v": 37,
+          },
+          {
+            "chainId": 1,
+            "v": 38,
+          },
+          {
+            "chainId": 1,
+            "v": 37,
+          },
+          {
+            "chainId": 1,
+            "v": 38,
+          },
+        ]
+      `)
+    })
+
+    test('error: v encodes another chain', () => {
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 40 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 35 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, chainId: 17000, v: 37 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.InvalidChainIdError: Chain ID "17000" is invalid.]`,
+      )
+    })
+
+    test('error: invalid v', () => {
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 29 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Signature.InvalidVError: Value \`29\` is an invalid v value. v must be 27, 28 or >=35.]`,
+      )
+      expect(() =>
+        TxEnvelopeLegacy.serialize({ ...signed, v: 2 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Signature.InvalidVError: Value \`2\` is an invalid v value. v must be 27, 28 or >=35.]`,
+      )
+    })
   })
 })
 

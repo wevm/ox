@@ -251,6 +251,19 @@ describe('decodeData', () => {
 
     expect(result).toEqual({ calls })
   })
+
+  test('error: selector mismatch', () => {
+    expect(() =>
+      Execute.decodeData(
+        '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xe9ae5c53".
+
+      Function: function execute(bytes32 mode, bytes executionData) payable
+      Selector: 0xe9ae5c53]
+    `)
+  })
 })
 
 describe('encodeBatchOfBatchesData', () => {
@@ -544,5 +557,18 @@ describe('decodeBatchOfBatchesData', () => {
     const result = Execute.decodeBatchOfBatchesData(encoded)
 
     expect(result).toEqual(batches)
+  })
+
+  test('error: selector mismatch', () => {
+    expect(() =>
+      Execute.decodeBatchOfBatchesData(
+        '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xe9ae5c53".
+
+      Function: function execute(bytes32 mode, bytes executionData) payable
+      Selector: 0xe9ae5c53]
+    `)
   })
 })

@@ -87,6 +87,80 @@ describe('decodeData', () => {
       undefined,
     )
   })
+
+  test('behavior: uppercase data', () => {
+    const approve = AbiFunction.from(
+      'function approve(address spender, uint256 amount)',
+    )
+    expect(
+      AbiFunction.decodeData(
+        approve,
+        '0x095EA7B3000000000000000000000000D8DA6BF26964AF9D7EED9E03E53415D37AA960450000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        1n,
+      ]
+    `)
+  })
+
+  test('error: selector mismatch', () => {
+    const abi = Abi.from([
+      'function approve(address spender, uint256 amount)',
+      'function pause()',
+      'function transfer(address to, uint256 amount)',
+    ])
+    const data = AbiFunction.encodeData(AbiFunction.fromAbi(abi, 'approve'), [
+      address.vitalik,
+      1n,
+    ])
+
+    expect(() =>
+      AbiFunction.decodeData(AbiFunction.fromAbi(abi, 'transfer'), data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xa9059cbb".
+
+      Function: function transfer(address to, uint256 amount)
+      Selector: 0xa9059cbb]
+    `)
+    expect(() =>
+      AbiFunction.decodeData(abi, 'transfer', data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xa9059cbb".
+
+      Function: function transfer(address to, uint256 amount)
+      Selector: 0xa9059cbb]
+    `)
+    expect(() =>
+      AbiFunction.decodeData(abi, 'pause', data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0x8456cb59".
+
+      Function: function pause()
+      Selector: 0x8456cb59]
+    `)
+  })
+
+  test('error: selector mismatch, with overloads', () => {
+    const abi = Abi.from([
+      'function deposit()',
+      'function deposit(uint256 assets)',
+      'function withdraw(uint256 assets)',
+    ])
+    const data = AbiFunction.encodeData(AbiFunction.fromAbi(abi, 'withdraw'), [
+      1n,
+    ])
+
+    expect(() =>
+      AbiFunction.decodeData(abi, 'deposit', data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x2e1a7d4d" does not match the expected selector "0xd0e30db0".
+
+      Function: function deposit()
+      Selector: 0xd0e30db0]
+    `)
+  })
 })
 
 describe('decodeResult', () => {
@@ -1307,6 +1381,7 @@ test('exports', () => {
       "from",
       "fromAbi",
       "getSelector",
+      "SelectorMismatchError",
     ]
   `)
 })

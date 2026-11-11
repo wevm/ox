@@ -183,10 +183,17 @@ export function deserialize(
     transaction.maxFeePerGas = 0n
   if (accessList!.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as never)
-  if (authorizationList !== '0x')
+  if (authorizationList !== '0x') {
+    // A transaction holds signed authorizations only.
+    for (const tuple of authorizationList as never as readonly unknown[])
+      if (!Array.isArray(tuple) || tuple.length !== 6)
+        throw new Authorization.InvalidError(
+          'Expected [chainId, address, nonce, yParity, r, s].',
+        )
     transaction.authorizationList = Authorization.fromTupleList(
       authorizationList as never,
     )
+  }
 
   const signature =
     r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
@@ -202,7 +209,7 @@ export function deserialize(
 }
 
 export declare namespace deserialize {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Authorization.InvalidError | Errors.GlobalErrorType
 }
 
 /**
