@@ -1558,6 +1558,56 @@ test('data size too small', () => {
   `)
 })
 
+test('data size too small: fixed-size bytes', () => {
+  expect(
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef00000000000000000000000000000000000000000000000000000000',
+    ),
+  ).toMatchInlineSnapshot(`
+    [
+      1n,
+      "0xdeadbeef",
+    ]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 36 bytes is too small for given parameters.
+
+    Params: (uint256, bytes4)
+    Data:   0x0000000000000000000000000000000000000000000000000000000000000001deadbeef (36 bytes)]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[2]'),
+      '0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 36 bytes is too small for given parameters.
+
+    Params: (bytes4[2])
+    Data:   0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe (36 bytes)]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[]'),
+      '0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 68 bytes is too small for given parameters.
+
+    Params: (bytes4[])
+    Data:   0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef (68 bytes)]
+  `)
+})
+
 test('invalid type', () => {
   expect(() =>
     AbiParameters.decode(
