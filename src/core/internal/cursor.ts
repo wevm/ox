@@ -8,10 +8,15 @@ export type Cursor = {
   position: number
   /** Lazy: only allocated when slow-path tracking kicks in. */
   positionReadCount: Map<number, number> | undefined
+  /** Total number of bytes read. */
+  readSize: number
+  /** Maximum total number of bytes that can be read. */
+  readSizeLimit: number
   recursiveReadCount: number
   recursiveReadLimit: number
   remaining: number
   assertReadLimit(position?: number): void
+  assertReadSize(length: number): void
   assertPosition(position: number): void
   decrementPosition(offset: number): void
   getReadCount(position?: number): number
@@ -43,6 +48,8 @@ const staticCursor: Cursor = {
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,
   positionReadCount: undefined,
+  readSize: 0,
+  readSizeLimit: Number.POSITIVE_INFINITY,
   recursiveReadCount: 0,
   recursiveReadLimit: Number.POSITIVE_INFINITY,
   assertReadLimit() {
@@ -50,6 +57,14 @@ const staticCursor: Cursor = {
       throw new RecursiveReadLimitExceededError({
         count: this.recursiveReadCount + 1,
         limit: this.recursiveReadLimit,
+      })
+  },
+  assertReadSize(length) {
+    this.readSize += length
+    if (this.readSize > this.readSizeLimit)
+      throw new ReadSizeLimitExceededError({
+        limit: this.readSizeLimit,
+        size: this.readSize,
       })
   },
   assertPosition(position) {
@@ -142,6 +157,7 @@ const staticCursor: Cursor = {
     this.assertReadLimit()
     this._touch()
     const value = this.inspectByte()
+    this.assertReadSize(1)
     this.position++
     return value
   },
@@ -149,6 +165,7 @@ const staticCursor: Cursor = {
     this.assertReadLimit()
     this._touch()
     const value = this.inspectBytes(length)
+    this.assertReadSize(length)
     this.position += size ?? length
     return value
   },
@@ -156,6 +173,7 @@ const staticCursor: Cursor = {
     this.assertReadLimit()
     this._touch()
     const value = this.inspectUint8()
+    this.assertReadSize(1)
     this.position += 1
     return value
   },
@@ -163,6 +181,7 @@ const staticCursor: Cursor = {
     this.assertReadLimit()
     this._touch()
     const value = this.inspectUint16()
+    this.assertReadSize(2)
     this.position += 2
     return value
   },
@@ -170,6 +189,7 @@ const staticCursor: Cursor = {
     this.assertReadLimit()
     this._touch()
     const value = this.inspectUint24()
+    this.assertReadSize(3)
     this.position += 3
     return value
   },
@@ -177,6 +197,7 @@ const staticCursor: Cursor = {
     this.assertReadLimit()
     this._touch()
     const value = this.inspectUint32()
+    this.assertReadSize(4)
     this.position += 4
     return value
   },
@@ -212,6 +233,10 @@ export function create(
   )
   cursor.positionReadCount = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
+  // `recursiveReadLimit` allows one read per position plus that many repeated
+  // reads. Allow as many bytes as that number of 32-byte reads, so that reads
+  // of any length are bounded by the size of the data as well.
+  cursor.readSizeLimit = 32 * (bytes.length + recursiveReadLimit)
   return cursor
 }
 
@@ -238,6 +263,17 @@ export class PositionOutOfBoundsError extends Errors.BaseError {
   constructor({ length, position }: { length: number; position: number }) {
     super(
       `Position \`${position}\` is out of bounds (\`0 < position < ${length}\`).`,
+    )
+  }
+}
+
+/** @internal */
+export class ReadSizeLimitExceededError extends Errors.BaseError {
+  override readonly name = 'Cursor.ReadSizeLimitExceededError'
+
+  constructor({ limit, size }: { limit: number; size: number }) {
+    super(
+      `Read size limit of \`${limit}\` bytes exceeded (read size: \`${size}\` bytes).`,
     )
   }
 }
