@@ -217,7 +217,10 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   if (feeToken) Address.assert(feeToken, { strict: false })
 
   // Validate chain ID
-  if (chainId <= 0)
+  if (
+    typeof chainId !== 'undefined' &&
+    (!Number.isSafeInteger(chainId) || chainId <= 0)
+  )
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
 
   // Validate max fee per gas
