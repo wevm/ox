@@ -1,6 +1,6 @@
 // Vectors from https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 
-import { Bytes, Keystore } from 'ox'
+import { Bytes, Hex, Keystore } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 describe('encrypt/decrypt', () => {
@@ -319,6 +319,70 @@ describe('encrypt/decrypt', () => {
 
     const decrypted = Keystore.decrypt(encrypted, key())
     expect(decrypted).toEqual(secret)
+  })
+
+  test('behavior: key longer than 32 bytes', () => {
+    const [key, opts] = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+    })
+    const longKey = Hex.concat(key(), '0xdeadbeef')
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = Keystore.encrypt(secret, longKey, { ...opts, id: 'id' })
+    expect(encrypted).toEqual(
+      Keystore.encrypt(secret, key(), { ...opts, id: 'id' }),
+    )
+    expect(Keystore.decrypt(encrypted, longKey)).toEqual(secret)
+  })
+
+  test('error: key shorter than 32 bytes', () => {
+    const [key, opts] = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+    })
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+    const encrypted = Keystore.encrypt(secret, key(), opts)
+
+    expect(() =>
+      Keystore.encrypt(secret, Hex.slice(key(), 0, 17), opts),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 17 bytes.]`,
+    )
+    expect(() =>
+      Keystore.encrypt(secret, Hex.slice(key(), 0, 31), opts),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 31 bytes.]`,
+    )
+    expect(() =>
+      Keystore.encrypt(secret, () => Hex.slice(key(), 0, 31), opts),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 31 bytes.]`,
+    )
+
+    expect(() =>
+      Keystore.decrypt(encrypted, Hex.slice(key(), 0, 17)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 17 bytes.]`,
+    )
+    expect(() =>
+      Keystore.decrypt(encrypted, Hex.slice(key(), 0, 31)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 31 bytes.]`,
+    )
+    expect(() =>
+      Keystore.decrypt(encrypted, () => Hex.slice(key(), 0, 31)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 31 bytes.]`,
+    )
   })
 })
 
