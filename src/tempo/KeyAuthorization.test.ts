@@ -198,6 +198,44 @@ describe('from', () => {
     }).toEqual(limitsVectors)
   })
 
+  test('error: rejects recipients without a selector', () => {
+    const base = { address, chainId: 4217n, type: 'secp256k1' } as const
+    const recipients = ['0x1111111111111111111111111111111111111111'] as const
+    expect(() =>
+      KeyAuthorization.from({
+        ...base,
+        scopes: [{ address: token, recipients }],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+    expect(() =>
+      KeyAuthorization.from({
+        ...base,
+        scopes: [
+          { address: token, selector: 'transfer(address,uint256)' },
+          { address: token, recipients },
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+    expect(
+      KeyAuthorization.from({
+        ...base,
+        scopes: [{ address: token, recipients: [] }],
+      }).scopes,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "address": "0x20c0000000000000000000000000000000000001",
+          "recipients": [],
+          "selector": undefined,
+        },
+      ]
+    `)
+  })
+
   test('accepts configurable grants and delegates', () => {
     const signed = KeyAuthorization.from(
       {
@@ -1488,6 +1526,25 @@ describe('serialize', () => {
 })
 
 describe('toRpc', () => {
+  test('error: rejects recipients without a selector', () => {
+    expect(() =>
+      KeyAuthorization.toRpc({
+        address,
+        chainId: 4217n,
+        scopes: [
+          {
+            address: token,
+            recipients: ['0x1111111111111111111111111111111111111111'],
+          },
+        ],
+        signature: SignatureEnvelope.from(signature_secp256k1),
+        type: 'secp256k1',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+  })
+
   test('behavior: configurable key type uses the RPC configurableAccount key type', () => {
     const authorization = KeyAuthorization.from(
       { account: address, address, chainId: 1n, type: 'configurable' },
@@ -1770,6 +1827,40 @@ describe('toRpc', () => {
 })
 
 describe('toTuple', () => {
+  test('error: rejects recipients without a selector', () => {
+    const authorization = {
+      address,
+      chainId: 4217n,
+      scopes: [
+        {
+          address: token,
+          recipients: ['0x1111111111111111111111111111111111111111'],
+        },
+      ],
+      type: 'secp256k1',
+    } as const
+    expect(() =>
+      KeyAuthorization.toTuple(authorization),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+    expect(() =>
+      KeyAuthorization.getSignPayload(authorization),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+    expect(() =>
+      KeyAuthorization.hash(authorization),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+    expect(() =>
+      KeyAuthorization.serialize(authorization),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidScopeError: Scope for \`0x20c0000000000000000000000000000000000001\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.]`,
+    )
+  })
+
   test('behavior: round-trips Tempo node limits encoding', () => {
     for (const { hash, rlp } of Object.values(limitsVectors)) {
       const authorization = KeyAuthorization.fromTuple([
