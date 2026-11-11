@@ -66,6 +66,50 @@ describe('assert', () => {
     )
   })
 
+  test('invalid validity bound', () => {
+    const envelope = {
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+    } as const
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        validAfter: '0x6553f100' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validAfter ("0x6553f100") must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, validBefore: -1 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (-1) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, validAfter: 1.5 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validAfter (1.5) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        validBefore: Number.MAX_SAFE_INTEGER + 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (9007199254740992) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, validAfter: 0, validBefore: 1 }),
+    ).not.toThrow()
+  })
+
   test('invalid call address', () => {
     expect(() =>
       TxEnvelopeTempo.assert({
@@ -849,6 +893,19 @@ describe('from', () => {
     }
   })
 
+  test('invalid validity bound', () => {
+    expect(() =>
+      TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        validAfter: 1700000000n as never,
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+  })
+
   test('options: signature', () => {
     const envelope = TxEnvelopeTempo.from(
       {
@@ -1047,6 +1104,40 @@ describe('serialize', () => {
     const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76d101808080c4c3808080c0808080808080c0"`,
+    )
+  })
+
+  test('validBefore and validAfter', () => {
+    const transaction = {
+      chainId: 1,
+      calls: [{}],
+      nonce: 0n,
+    } as const
+    expect(
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        validAfter: 1700000000,
+        validBefore: 1700003600,
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x76d901808080c4c3808080c08080846553ff10846553f1008080c0"`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        validAfter: 1700000000n as never,
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        validBefore: '0x6553ff10' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore ("0x6553ff10") must be a non-negative safe integer number.]`,
     )
   })
 
@@ -1602,6 +1693,23 @@ describe('hash', () => {
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
     )
   })
+
+  test('invalid validity bound', () => {
+    expect(() =>
+      TxEnvelopeTempo.hash(
+        {
+          calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+          chainId: 1,
+          nonce: 0n,
+          type: 'tempo',
+          validBefore: 1700003600n as never,
+        },
+        { presign: true },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+  })
 })
 
 describe('encodeForSigning', () => {
@@ -1678,6 +1786,20 @@ describe('getSignPayload', () => {
     })
     expect(TxEnvelopeTempo.getSignPayload(transaction)).toMatchInlineSnapshot(
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
+    )
+  })
+
+  test('invalid validity bound', () => {
+    expect(() =>
+      TxEnvelopeTempo.getSignPayload({
+        calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+        chainId: 1,
+        nonce: 0n,
+        type: 'tempo',
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
     )
   })
 })
@@ -1770,6 +1892,17 @@ describe('validate', () => {
         chainId: 1,
         validBefore: 100,
         validAfter: 200,
+      }),
+    ).toBe(false)
+  })
+
+  test('invalid (validity bound)', () => {
+    expect(
+      TxEnvelopeTempo.validate({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        validBefore: 100n as never,
+        validAfter: 200n as never,
       }),
     ).toBe(false)
   })

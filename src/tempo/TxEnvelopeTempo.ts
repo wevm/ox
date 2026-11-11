@@ -184,6 +184,18 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   // Calls must not be empty
   if (!calls || calls.length === 0) throw new CallsEmptyError()
 
+  // validBefore and validAfter must be non-negative safe integers if set
+  for (const [name, value] of [
+    ['validBefore', validBefore],
+    ['validAfter', validAfter],
+  ] as const)
+    if (
+      value !== undefined &&
+      value !== null &&
+      !(Number.isSafeInteger(value) && value >= 0)
+    )
+      throw new InvalidValidityBoundError({ name, value })
+
   // validBefore must be greater than validAfter if both are set
   if (
     typeof validBefore === 'number' &&
@@ -233,6 +245,7 @@ export declare namespace assert {
   type ErrorType =
     | Address.assert.ErrorType
     | CallsEmptyError
+    | InvalidValidityBoundError
     | InvalidValidityWindowError
     | Signature.assert.ErrorType
     | Errors.GlobalErrorType
@@ -1140,6 +1153,46 @@ export class CallsEmptyError extends Errors.BaseError {
   override readonly name = 'TxEnvelopeTempo.CallsEmptyError'
   constructor() {
     super('Calls list cannot be empty.')
+  }
+}
+
+/**
+ * Thrown when validBefore or validAfter is not a non-negative safe integer number.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * TxEnvelopeTempo.assert({
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
+ *   chainId: 1,
+ *   validBefore: -1
+ * })
+ * // @error: TxEnvelopeTempo.InvalidValidityBoundError: validBefore (-1) must be a non-negative safe integer number.
+ * ```
+ */
+export class InvalidValidityBoundError extends Errors.BaseError {
+  override readonly name = 'TxEnvelopeTempo.InvalidValidityBoundError'
+  constructor({
+    name,
+    value,
+  }: {
+    name: 'validAfter' | 'validBefore'
+    value: unknown
+  }) {
+    const value_ = (() => {
+      if (typeof value === 'bigint') return `${value}n`
+      if (typeof value === 'string') return `"${value}"`
+      return String(value)
+    })()
+    super(`${name} (${value_}) must be a non-negative safe integer number.`)
   }
 }
 
