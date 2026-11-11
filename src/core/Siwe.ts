@@ -245,6 +245,15 @@ export function createMessage(value: Message): string {
           `Provided value: ${statement}`,
         ],
       })
+    if (requestId && /[\n\r]/.test(requestId))
+      throw new InvalidMessageFieldError({
+        field: 'requestId',
+        metaMessages: [
+          "- Request ID must not include '\\n' or '\\r'.",
+          '',
+          `Provided value: ${requestId}`,
+        ],
+      })
   }
 
   // Construct message
