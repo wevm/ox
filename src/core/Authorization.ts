@@ -183,7 +183,7 @@ export function fromRpc(authorization: Rpc): Signed {
 
   return {
     address,
-    chainId: Number(chainId),
+    chainId: toChainId(chainId),
     nonce: BigInt(nonce),
     ...signature,
   }
@@ -273,7 +273,7 @@ export function fromTuple<const tuple extends Tuple>(
   const [chainId, address, nonce, yParity, r, s] = tuple
   let args = {
     address,
-    chainId: chainId === '0x' ? 0 : Number(chainId),
+    chainId: chainId === '0x' ? 0 : toChainId(chainId),
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
   }
   if (yParity && r && s) {
@@ -644,6 +644,19 @@ export declare namespace toTupleList {
   >
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+// Converts an EIP-7702 authorization `chainId` to a number, and asserts that
+// it is a safe integer.
+function toChainId(chainId: Hex.Hex) {
+  const value = Number(chainId)
+  if (Number.isSafeInteger(value)) return value
+  throw new Hex.IntegerOutOfRangeError({
+    max: `${Number.MAX_SAFE_INTEGER}`,
+    min: '0',
+    signed: false,
+    value: `${value}`,
+  })
 }
 
 // Asserts that an EIP-7702 authorization `yParity` fits in one byte.
