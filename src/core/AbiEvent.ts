@@ -191,9 +191,7 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
-  }
-
-  if (
+  } else if (
     typeof args === 'object' &&
     !Array.isArray(args) &&
     typeof matchArgs === 'object' &&
@@ -201,7 +199,10 @@ export function assertArgs<const abiEvent extends AbiEvent>(
   )
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
-      const input = abiEvent.inputs.find((input) => input.name === key)
+      // `decode` keys an unnamed input by its index.
+      const input = abiEvent.inputs.find(
+        (input, index) => (input.name || `${index}`) === key,
+      )
       if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
@@ -216,6 +217,20 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
+  // Positional and keyed arguments cannot be compared with each other. A
+  // filter without values matches any arguments.
+  else if (
+    typeof matchArgs === 'object' &&
+    matchArgs !== null &&
+    Object.values(matchArgs).some(
+      (value) => value !== null && value !== undefined,
+    )
+  )
+    throw new ArgsMismatchError({
+      abiEvent,
+      expected: args,
+      given: matchArgs,
+    })
 }
 
 export declare namespace assertArgs {

@@ -198,6 +198,104 @@ describe('assertArgs', () => {
   `)
   })
 
+  test('behavior: named + unnamed inputs', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    AbiEvent.assertArgs(abiEvent, args, {
+      1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      2: 1n,
+      from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+    })
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, {
+        1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed, uint256)
+      Expected Arguments: 
+        1:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        2:     1
+        from:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+      Given Arguments: 
+        1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+  })
+
+  test('error: args mismatch, positional and keyed', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    expect(() =>
+      // @ts-expect-error
+      AbiEvent.assertArgs(abiEvent, args, [
+        '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+        to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        value:  1
+      Given Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+    expect(() =>
+      AbiEvent.assertArgs(
+        abiEvent,
+        [
+          '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          1n,
+        ],
+        { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac' },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+        1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        2:  1
+      Given Arguments: 
+        from:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+  })
+
+  test('behavior: filter without values', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const args = [
+      '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      1n,
+    ]
+    AbiEvent.assertArgs(abiEvent, args, {})
+    AbiEvent.assertArgs(abiEvent, args, { from: undefined, to: null })
+  })
+
   test('error: args mismatch, string', () => {
     const abiEvent = AbiEvent.from('event Transfer(string indexed a)')
     const args = AbiEvent.decode(abiEvent, {
