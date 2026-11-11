@@ -129,6 +129,50 @@ describe('assert', () => {
       `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
     )
   })
+
+  test('invalid fee payer signature', () => {
+    const envelope = {
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+    } as const
+    const feePayerSignature = {
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+    } as const
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: { ...feePayerSignature, yParity: 2 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: { ...feePayerSignature, yParity: 27 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`27\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: feePayerSignature as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.MissingPropertiesError: Signature \`{"r":"0x0000000000000000000000000000000000000000000000000000000000000001","s":"0x0000000000000000000000000000000000000000000000000000000000000001"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: { ...feePayerSignature, yParity: 1 },
+      }),
+    ).not.toThrow()
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, feePayerSignature: null }),
+    ).not.toThrow()
+  })
 })
 
 describe('deserialize', () => {
@@ -945,6 +989,23 @@ describe('from', () => {
       }
     `)
   })
+
+  test('invalid fee payer signature', () => {
+    expect(() =>
+      TxEnvelopeTempo.from({
+        calls: [{}],
+        chainId: 1,
+        feePayerSignature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          yParity: 2,
+        },
+        nonce: 0n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
 })
 
 describe('serialize', () => {
@@ -1341,6 +1402,47 @@ describe('serialize', () => {
     )
   })
 
+  test('with feePayerSignature (invalid yParity)', () => {
+    const transaction = {
+      calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+      chainId: 1,
+      nonce: 0n,
+    } as const
+    const feePayerSignature = {
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+    } as const
+    expect(
+      TxEnvelopeTempo.serialize(transaction, {
+        feePayerSignature: { ...feePayerSignature, yParity: 1 },
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x76e801808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c08080808080c3010101c0"`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize(transaction, {
+        feePayerSignature: { ...feePayerSignature, yParity: 2 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize(transaction, {
+        feePayerSignature: { ...feePayerSignature, yParity: 27 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`27\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        feePayerSignature: { ...feePayerSignature, yParity: 2 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
+
   test('format: feePayer', () => {
     const transaction = TxEnvelopeTempo.from({
       chainId: 1,
@@ -1464,6 +1566,24 @@ describe('hash', () => {
         `"0x04ad27d1607bc3fc37445724d8864b0843f88008bafd818814474e5ee94647eb"`,
       )
     })
+  })
+
+  test('invalid fee payer signature', () => {
+    expect(() =>
+      TxEnvelopeTempo.hash({
+        calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+        chainId: 1,
+        feePayerSignature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          yParity: 2,
+        },
+        nonce: 0n,
+        type: 'tempo',
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
   })
 
   test('presign', () => {
@@ -1625,6 +1745,20 @@ describe('validate', () => {
       TxEnvelopeTempo.validate({
         calls: [],
         chainId: 1,
+      }),
+    ).toBe(false)
+  })
+
+  test('invalid (fee payer signature)', () => {
+    expect(
+      TxEnvelopeTempo.validate({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        feePayerSignature: {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          yParity: 2,
+        },
       }),
     ).toBe(false)
   })
