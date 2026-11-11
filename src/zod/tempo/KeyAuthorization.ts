@@ -63,11 +63,18 @@ export const TokenLimitToRpc = z.object({
 })
 
 /** Call scope schema. */
-export const Scope = z.object({
-  address: z_Address.Address,
-  recipients: z.optional(z.readonly(z.array(z_Address.Address))),
-  selector: z.optional(z.union([z_Hex.Hex, z.string()])),
-})
+export const Scope = z
+  .object({
+    address: z_Address.Address,
+    recipients: z.optional(z.readonly(z.array(z_Address.Address))),
+    selector: z.optional(z.union([z_Hex.Hex, z.string()])),
+  })
+  .check(
+    z.refine(
+      (value) => Boolean(value.selector) || !value.recipients?.length,
+      'recipients require a selector',
+    ),
+  )
 
 const domainShape = {
   address: z_Address.Address,
