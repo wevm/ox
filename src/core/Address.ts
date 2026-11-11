@@ -181,7 +181,22 @@ export declare namespace from {
  * // @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
  * ```
  *
- * @param publicKey - The ECDSA public key to convert to an {@link ox#Address.Address}.
+ * @example
+ * ### Compressed Public Keys
+ *
+ * The address is derived from both coordinates, so a compressed public key throws.
+ *
+ * ```ts twoslash
+ * import { Address, PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.from(
+ *   '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75'
+ * )
+ * const address = Address.fromPublicKey(publicKey)
+ * // @error: PublicKey.InvalidPrefixError: Prefix "3" is invalid.
+ * ```
+ *
+ * @param publicKey - The uncompressed ECDSA public key to convert to an {@link ox#Address.Address}.
  * @param options - Conversion options.
  * @returns The {@link ox#Address.Address} corresponding to the public key.
  */
@@ -189,6 +204,7 @@ export function fromPublicKey(
   publicKey: PublicKey.PublicKey,
   options: fromPublicKey.Options = {},
 ): Address {
+  PublicKey.assert(publicKey, { compressed: false })
   const address = Hash.keccak256(
     `0x${PublicKey.toHex(publicKey).slice(4)}`,
   ).substring(26)
@@ -207,6 +223,7 @@ export declare namespace fromPublicKey {
 
   type ErrorType =
     | Hash.keccak256.ErrorType
+    | PublicKey.assert.ErrorType
     | PublicKey.toHex.ErrorType
     | Errors.GlobalErrorType
 }
