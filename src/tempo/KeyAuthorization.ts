@@ -291,6 +291,7 @@ export type Scope<addressType = Address.Address> = {
    * - `[...]` = only listed recipients allowed
    *
    * Only valid for constrained selectors: `transfer`, `approve`, `transferWithMemo`.
+   * A non-empty list requires `selector`.
    */
   recipients?: readonly addressType[] | undefined
   /** Function selector or human-readable ABI signature. */
@@ -477,6 +478,7 @@ export function from<
   }
   if (auth.witness !== undefined) assertWitness(auth.witness)
   if (auth.signature) assertSignature(auth.signature)
+  if (auth.scopes) assertScopes(auth.scopes)
   const resolved = {
     ...auth,
     ...(auth.account !== undefined
@@ -552,7 +554,10 @@ export declare namespace from {
         >
   >
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidScopeError
+    | InvalidSignatureTypeError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -987,6 +992,7 @@ export function toRpc(authorization: Signed): Rpc {
   // Group flat scopes by address into nested allowedCalls wire format
   const allowedCalls = (() => {
     if (!scopes) return undefined
+    assertScopes(scopes)
     const grouped = new Map<string, RpcSelectorRule[]>()
     for (const scope of scopes) {
       const key = scope.address as string
@@ -1031,7 +1037,10 @@ export function toRpc(authorization: Signed): Rpc {
 }
 
 export declare namespace toRpc {
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidScopeError
+    | InvalidSignatureTypeError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -1108,6 +1117,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // Group flat scopes by address for wire format
   const callsValue = (() => {
     if (!scopes) return undefined
+    assertScopes(scopes)
     const grouped = new Map<
       string,
       [Hex.Hex, (readonly Address.Address[])[]][]
@@ -1177,7 +1187,10 @@ export declare namespace toTuple {
   type ReturnType<authorization extends KeyAuthorization = KeyAuthorization> =
     Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
 
-  type ErrorType = InvalidSignatureTypeError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidScopeError
+    | InvalidSignatureTypeError
+    | Errors.GlobalErrorType
 }
 
 function bigintToHex(value: bigint): Hex.Hex {
@@ -1213,6 +1226,12 @@ function resolveSelector(
 
 function assertWitness(witness: Hex.Hex): void {
   if (Hex.size(witness) !== 32) throw new InvalidWitnessSizeError(witness)
+}
+
+function assertScopes(scopes: readonly Scope[]): void {
+  for (const scope of scopes)
+    if (!scope.selector && scope.recipients && scope.recipients.length > 0)
+      throw new InvalidScopeError(scope)
 }
 
 function assertSignature<bigintType, numberType>(
@@ -1252,6 +1271,16 @@ export class InvalidSignatureTypeError extends Error {
   constructor(type: SignatureEnvelope.SignatureEnvelope['type']) {
     super(
       `Signature type \`${type}\` is invalid for key authorizations; expected \`secp256k1\`, \`p256\`, \`webAuthn\`, or \`configurable\`.`,
+    )
+  }
+}
+
+/** Thrown when a call scope has a recipient allowlist but no selector. */
+export class InvalidScopeError extends Error {
+  override readonly name = 'KeyAuthorization.InvalidScopeError'
+  constructor(scope: Scope) {
+    super(
+      `Scope for \`${scope.address}\` has \`recipients\` but no \`selector\`; a recipient allowlist requires a selector.`,
     )
   }
 }
