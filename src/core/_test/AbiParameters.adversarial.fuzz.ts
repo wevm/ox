@@ -22,6 +22,7 @@ const allowedErrorNames = new Set<string>([
   'BaseError',
   'Cursor.PositionOutOfBoundsError',
   'Cursor.NegativeOffsetError',
+  'Cursor.ReadSizeLimitExceededError',
   'Cursor.RecursiveReadLimitExceededError',
   'Hex.InvalidHexValueError',
   'Hex.InvalidLengthError',
