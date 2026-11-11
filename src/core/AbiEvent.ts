@@ -75,7 +75,9 @@ function encodePrimitiveTopic(
 /**
  * Decodes a primitive (32-byte) indexed event topic directly to a
  * primitive value, skipping the `AbiParameters.decode` round-trip.
- * Returns a `[value]` tuple on hit, or `undefined` on miss.
+ * Returns a `[value]` tuple on hit, or `undefined` on miss. A topic that
+ * is not a canonical 32-byte word for the type is a miss, so that
+ * `AbiParameters.decode` validates (and rejects) it.
  *
  * @internal
  */
@@ -84,27 +86,44 @@ function decodePrimitiveTopic(
   topic: Hex.Hex,
   options: decode.Options = {},
 ): [value: unknown] | undefined {
+  // A topic is a 32-byte word (`0x` + 64 hex).
+  if (topic.length !== 66) return undefined
   if (type === 'address') {
-    // Trailing 20 bytes; topic is always 66 chars (`0x` + 64 hex).
+    // The high 12 bytes must be zero padding.
+    if (!topic.startsWith('0x000000000000000000000000')) return undefined
     const address = `0x${topic.slice(26)}` as Address.Address
     return [
       options.checksumAddress === false ? address : Address.checksum(address),
     ]
   }
   if (type === 'bool') {
-    // Last byte determines truthiness (Solidity left-pads booleans).
-    return [topic.charCodeAt(65) === 49 /* '1' */]
+    // The whole word must be `0` or `1`.
+    if (
+      topic ===
+      '0x0000000000000000000000000000000000000000000000000000000000000000'
+    )
+      return [false]
+    if (
+      topic ===
+      '0x0000000000000000000000000000000000000000000000000000000000000001'
+    )
+      return [true]
+    return undefined
   }
   if (type.startsWith('uint') || type.startsWith('int')) {
     const signed = type[0] === 'i'
     const sizeStr = signed ? type.slice(3) : type.slice(4)
     const size = sizeStr === '' ? 256 : Number(sizeStr)
     if (!Number.isFinite(size)) return undefined
-    const big =
-      size > 48
-        ? Hex.toBigInt(topic, { signed })
-        : Hex.toNumber(topic, { signed })
-    return [big]
+    const value = Hex.toBigInt(topic, { signed })
+    // The word must hold a value that fits the declared size (zero-padded
+    // for unsigned, sign-extended for signed types).
+    if (size < 256) {
+      const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+      const min = signed ? -max - 1n : 0n
+      if (value > max || value < min) return undefined
+    }
+    return [size > 48 ? value : Number(value)]
   }
   if (type.startsWith('bytes') && type.length > 5) {
     const sizeStr = type.slice(5)
