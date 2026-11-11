@@ -287,6 +287,15 @@ export * as RpcSchemaTempo from './RpcSchemaTempo.js'
  * @category Reference
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
+
+/**
+ * Utilities for [TIP-1165](https://tips.sh/1165) pre-authorized access key signatures: a keychain
+ * signature bundled with the signed key authorization for its access key, so verifiers can accept
+ * it before the access key is registered onchain.
+ *
+ * @category Reference
+ */
+export * as SignaturePreAuthorized from './SignaturePreAuthorized.js'
 /**
  * Tempo address encoding/decoding utilities for human-readable addresses.
  *
