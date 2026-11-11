@@ -1530,6 +1530,47 @@ test('data size too small', () => {
   )
 })
 
+test('data size too small: fixed-size bytes', () => {
+  expect(
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef00000000000000000000000000000000000000000000000000000000',
+    ),
+  ).toMatchInlineSnapshot(`
+    [
+      1n,
+      "0xdeadbeef",
+    ]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Cursor.PositionOutOfBoundsError: Position \`63\` is out of bounds (\`0 < position < 36\`).]`,
+  )
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[2]'),
+      '0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Cursor.PositionOutOfBoundsError: Position \`63\` is out of bounds (\`0 < position < 36\`).]`,
+  )
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[]'),
+      '0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Cursor.PositionOutOfBoundsError: Position \`95\` is out of bounds (\`0 < position < 68\`).]`,
+  )
+})
+
 test('invalid type', () => {
   expect(() =>
     AbiParameters.decode(
