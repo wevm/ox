@@ -1,4 +1,4 @@
-import { Abi, AbiEvent, AbiParameters, Hash, Hex } from 'ox'
+import { Abi, AbiEvent, AbiParameters, Address, Hash, Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
@@ -214,6 +214,104 @@ describe('assertArgs', () => {
       Given Arguments: 
         0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad]
     `)
+  })
+
+  test('behavior: named + unnamed inputs', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    AbiEvent.assertArgs(abiEvent, args, {
+      1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      2: 1n,
+      from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+    })
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, {
+        1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed, uint256)
+      Expected Arguments: 
+        1:     0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad
+        2:     1
+        from:  0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+      Given Arguments: 
+        1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+  })
+
+  test('error: args mismatch, positional and keyed', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    expect(() =>
+      // @ts-expect-error
+      AbiEvent.assertArgs(abiEvent, args, [
+        '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        from:   0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        to:     0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad
+        value:  1
+      Given Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+    expect(() =>
+      AbiEvent.assertArgs(
+        abiEvent,
+        [
+          '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          1n,
+        ],
+        { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac' },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+        1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        2:  1
+      Given Arguments: 
+        from:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+  })
+
+  test('behavior: filter without values', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const args = [
+      '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      1n,
+    ]
+    AbiEvent.assertArgs(abiEvent, args, {})
+    AbiEvent.assertArgs(abiEvent, args, { from: undefined, to: null })
   })
 
   test('error: args mismatch, string', () => {
@@ -613,6 +711,161 @@ describe('decode', () => {
     )
   })
 
+  test('behavior: canonical indexed `address`, `bool`, `intN` and `uintN` topics', () => {
+    const abiEvent = AbiEvent.from(
+      'event Foo(address indexed a, bool indexed b, int8 indexed c, uint8 d)',
+    )
+    expect(
+      AbiEvent.decode(abiEvent, {
+        data: '0x00000000000000000000000000000000000000000000000000000000000000ff',
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "a": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "b": true,
+        "c": -128,
+        "d": 255,
+      }
+    `)
+
+    const abiEvent_2 = AbiEvent.from(
+      'event Foo(bool indexed a, uint8 indexed b, int256 indexed c)',
+    )
+    expect(
+      AbiEvent.decode(abiEvent_2, {
+        topics: [
+          AbiEvent.getSelector(abiEvent_2),
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x00000000000000000000000000000000000000000000000000000000000000ff',
+          '0x8000000000000000000000000000000000000000000000000000000000000000',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "a": false,
+        "b": 255,
+        "c": -57896044618658097711785492504343953926634992332820282019728792003956564819968n,
+      }
+    `)
+  })
+
+  test('error: non-canonical indexed `address` topic', () => {
+    const abiEvent = AbiEvent.from('event Foo(address indexed a)')
+    const topic =
+      '0xdeadbeef0000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+
+    expect(() =>
+      AbiParameters.decode([{ type: 'address' }], topic),
+    ).toThrowError(Address.InvalidAddressError)
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [AbiEvent.getSelector(abiEvent), topic],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xdeadbeef0000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('error: non-canonical indexed `bool` topic', () => {
+    const abiEvent = AbiEvent.from('event Foo(bool indexed a)')
+
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x0000000000000000000000000000000000000000000000000000000000000002',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Bytes.InvalidBytesBooleanError: Bytes value \`2\` is not a valid boolean.
+
+      The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
+    `)
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x0000000000000000000000000000000000000000000000000000000000000011',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Bytes.InvalidBytesBooleanError: Bytes value \`17\` is not a valid boolean.
+
+      The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
+    `)
+  })
+
+  test('error: indexed `intN` and `uintN` topics out of range', () => {
+    const uint8 = AbiEvent.from('event Foo(uint8 indexed a)')
+    expect(() =>
+      AbiEvent.decode(uint8, {
+        topics: [
+          AbiEvent.getSelector(uint8),
+          '0x0000000000000000000000000000000000000000000000000000000000000100',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+
+    const int8 = AbiEvent.from('event Foo(int8 indexed a)')
+    expect(() =>
+      AbiEvent.decode(int8, {
+        topics: [
+          AbiEvent.getSelector(int8),
+          '0x0000000000000000000000000000000000000000000000000000000000000080',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+    expect(() =>
+      AbiEvent.decode(int8, {
+        topics: [
+          AbiEvent.getSelector(int8),
+          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-129\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+
+    const uint64 = AbiEvent.from('event Foo(uint64 indexed a)')
+    expect(() =>
+      AbiEvent.decode(uint64, {
+        topics: [
+          AbiEvent.getSelector(uint64),
+          '0x8000000000000000000000000000000000000000000000000000000000000000',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`57896044618658097711785492504343953926634992332820282019728792003956564819968\` is not in safe 64-bit unsigned integer range (\`0\` to \`18446744073709551615\`)]`,
+    )
+  })
+
+  test('error: indexed topic shorter than 32 bytes', () => {
+    const abiEvent = AbiEvent.from('event Foo(uint256 indexed a)')
+
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [AbiEvent.getSelector(abiEvent), '0x01'],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiParameters.DataSizeTooSmallError: Data size of 1 bytes is too small for given parameters.
+
+      Params: (uint256 indexed a)
+      Data:   0x01 (1 bytes)]
+    `)
+  })
+
   test('error: event selector topic mismatch', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, bool sender)',
@@ -717,6 +970,127 @@ describe('decode', () => {
         "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
         "value": 1n,
       }
+    `)
+  })
+
+  test('behavior: with overloads, zero-input and named', () => {
+    const abi = Abi.from(['event Foo()', 'event Foo(address indexed who)'])
+    const log = {
+      topics: [
+        AbiEvent.getSelector('event Foo(address indexed who)'),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    expect(AbiEvent.decode(abi, 'Foo', log)).toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(AbiEvent.decode(AbiEvent.fromAbi(abi, 'Foo'), log))
+      .toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(
+      AbiEvent.decode(abi, 'Foo', {
+        topics: [AbiEvent.getSelector('event Foo()')],
+      }),
+    ).toMatchInlineSnapshot(`undefined`)
+  })
+
+  test('behavior: with overloads, anonymous and named', () => {
+    const abi = Abi.from([
+      { anonymous: true, inputs: [], name: 'Foo', type: 'event' },
+      {
+        inputs: [{ indexed: true, name: 'who', type: 'address' }],
+        name: 'Foo',
+        type: 'event',
+      },
+    ])
+    const log = {
+      topics: [
+        AbiEvent.getSelector('event Foo(address indexed who)'),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    expect(AbiEvent.decode(abi, 'Foo', log)).toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(AbiEvent.decode(AbiEvent.fromAbi(abi, 'Foo'), log))
+      .toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    // Without a selector match, the log decodes with the event picked by name.
+    expect(AbiEvent.decode(abi, 'Foo', { topics: [] })).toMatchInlineSnapshot(
+      `undefined`,
+    )
+  })
+
+  test('behavior: with overloads, two named', () => {
+    const abi = Abi.from([
+      'event Deposit(address indexed who, uint256 amount)',
+      'event Deposit(address indexed who, uint256 amount, bytes32 indexed ref)',
+    ])
+    const [deposit, depositWithRef] = abi
+
+    expect(
+      AbiEvent.decode(abi, 'Deposit', {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        topics: [
+          AbiEvent.getSelector(depositWithRef),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x1111111111111111111111111111111111111111111111111111111111111111',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "amount": 5n,
+        "ref": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(
+      AbiEvent.decode(abi, 'Deposit', {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        topics: [
+          AbiEvent.getSelector(deposit),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "amount": 5n,
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+  })
+
+  test('error: with overloads, selector topic matches no overload', () => {
+    const abi = Abi.from([
+      'event Deposit(address indexed who, uint256 amount)',
+      'event Deposit(address indexed who, uint256 amount, bytes32 indexed ref)',
+    ])
+
+    expect(() =>
+      AbiEvent.decode(abi, 'Deposit', {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        topics: [
+          '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.SelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c".
+
+      Event: event Deposit(address indexed who, uint256 amount)
+      Selector: 0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c]
     `)
   })
 })
@@ -1073,6 +1447,67 @@ describe('extractLogs', () => {
     expect(decoded).toMatchInlineSnapshot(`[]`)
   })
 
+  test('behavior: skips logs with non-canonical indexed topics', () => {
+    const abi = Abi.from([
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+      'event Paused(bool indexed paused)',
+      'event Count(uint8 indexed count)',
+    ])
+    const [transfer, paused, count] = abi
+    const logs = [
+      {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        topics: [
+          AbiEvent.getSelector(transfer),
+          '0xdeadbeef0000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      },
+      {
+        data: '0x',
+        topics: [
+          AbiEvent.getSelector(paused),
+          '0x0000000000000000000000000000000000000000000000000000000000000002',
+        ],
+      },
+      {
+        data: '0x',
+        topics: [
+          AbiEvent.getSelector(count),
+          '0x0000000000000000000000000000000000000000000000000000000000000100',
+        ],
+      },
+    ] as const
+
+    expect(AbiEvent.extractLogs(abi, logs)).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(abi, logs, {
+        args: { paused: false },
+        eventName: 'Paused',
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(abi, logs, { strict: false }).map(
+        ({ args, eventName }) => ({ args, eventName }),
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {},
+          "eventName": "Transfer",
+        },
+        {
+          "args": {},
+          "eventName": "Paused",
+        },
+        {
+          "args": {},
+          "eventName": "Count",
+        },
+      ]
+    `)
+  })
+
   test('behavior: filters by event name', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -1349,6 +1784,118 @@ describe('extractLogs', () => {
         },
       ]
     `)
+  })
+
+  test('behavior: filters by arguments of named + unnamed inputs', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([transfer], [log], {
+        args: { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad' },
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([transfer], [log], {
+        args: { 1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac' },
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([transfer], [log], {
+        args: {
+          1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          2: 1n,
+          from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        },
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "1": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "2": 1n,
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "eventName": "Transfer",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: non-strict mode keys named + unnamed inputs like `decode`', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const selector = AbiEvent.getSelector(transfer)
+    const from =
+      '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+    const logs = [
+      // The second indexed input is read from data.
+      {
+        data: '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad0000000000000000000000000000000000000000000000000000000000000001',
+        topics: [selector, from],
+      },
+      // The topic does not decode as an address.
+      { data: '0x', topics: [selector, '0xdead'] },
+    ] as const
+
+    expect(
+      AbiEvent.extractLogs([transfer], logs, { strict: false }).map(
+        (log) => log.args,
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "1": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+          "2": 1n,
+          "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        },
+        {},
+      ]
+    `)
+    expect(
+      AbiEvent.extractLogs([transfer], logs, {
+        args: { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad' },
+        strict: false,
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+  })
+
+  test('behavior: positional and keyed arguments do not match', () => {
+    const named = AbiEvent.from('event Transfer(address indexed from)')
+    const unnamed = AbiEvent.from('event Transfer(address indexed)')
+    const topic =
+      '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+
+    expect(
+      AbiEvent.extractLogs(
+        [named] as readonly unknown[],
+        [{ data: '0x', topics: [AbiEvent.getSelector(named), topic] }],
+        { args: ['0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad'] },
+      ),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(
+        [unnamed] as readonly unknown[],
+        [{ data: '0x', topics: [AbiEvent.getSelector(unnamed), topic] }],
+        { args: { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad' } },
+      ),
+    ).toMatchInlineSnapshot(`[]`)
   })
 
   test('behavior: filters by non-indexed `bytes` and `bytes32` arguments in either case', () => {
@@ -1905,16 +2452,21 @@ describe('encode', () => {
     `)
   })
 
-  test('behavior: odd-length indexed bytes32 arg', () => {
-    const event = AbiEvent.from('event Foo(bytes32 indexed a)')
-    expect(AbiEvent.encode(event, { a: `0x${'1'.repeat(63)}` }))
-      .toMatchInlineSnapshot(`
-      {
-        "topics": [
-          "0x54b5e571557045df8a69633aeac8e206d92b03f48563fab6a430493d299de727",
-          "0x1111111111111111111111111111111111111111111111111111111111111110",
-        ],
-      }
+  test('error: odd-length indexed bytesN arg', () => {
+    const event = AbiEvent.from(
+      'event Foo(bytes4 indexed a, bytes32 indexed b)',
+    )
+    expect(() => AbiEvent.encode(event, { a: '0x1234567' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x1234567"\` is an odd length (7 nibbles).
+
+      It must be an even length.]
+    `)
+    expect(() => AbiEvent.encode(event, { b: `0x${'1'.repeat(63)}` }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x111111111111111111111111111111111111111111111111111111111111111"\` is an odd length (63 nibbles).
+
+      It must be an even length.]
     `)
   })
 

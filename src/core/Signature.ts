@@ -72,7 +72,10 @@ export function assert(
     throw new MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
     throw new MissingPropertiesError({ signature })
-  if (recovered && typeof signature.yParity === 'undefined')
+  if (
+    recovered &&
+    (signature.yParity === undefined || signature.yParity === null)
+  )
     throw new MissingPropertiesError({ signature })
   try {
     const r = BigInt(signature.r)
@@ -89,7 +92,7 @@ export function assert(
     throw new InvalidSError({ value: signature.s })
   }
   if (
-    typeof signature.yParity === 'number' &&
+    signature.yParity !== undefined &&
     signature.yParity !== 0 &&
     signature.yParity !== 1
   )
@@ -867,6 +870,7 @@ export declare namespace toRpc {
  * @returns The {@link ox#Signature.Tuple}.
  */
 export function toTuple(signature: Signature): Tuple {
+  assert(signature, { recovered: true })
   const { r, s, yParity } = signature
 
   // RLP wants minimal-length big-endian; strip leading zero nibbles from the
@@ -875,7 +879,7 @@ export function toTuple(signature: Signature): Tuple {
 }
 
 export declare namespace toTuple {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
 
 /**

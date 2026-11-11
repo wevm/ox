@@ -453,6 +453,20 @@ describe('assert', () => {
       expect(() => SignatureEnvelope.assert(signatureWithoutType)).not.toThrow()
     })
 
+    test('error: throws on keychain inner signature', () => {
+      for (const version of ['v1', 'v2'] as const)
+        expect(() =>
+          SignatureEnvelope.assert({
+            inner: signature_keychain_secp256k1,
+            type: 'keychain',
+            userAddress: '0x1234567890123456789012345678901234567890',
+            version,
+          }),
+        ).toThrowErrorMatchingInlineSnapshot(
+          `[SignatureEnvelope.InvalidApprovalError: Invalid owner approval: keychain signatures cannot wrap a keychain signature.]`,
+        )
+    })
+
     test('error: throws on invalid inner signature', () => {
       expect(() =>
         SignatureEnvelope.assert({
@@ -486,6 +500,23 @@ describe('assert', () => {
       } as any),
     ).toThrowErrorMatchingInlineSnapshot(
       `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"r":"0x0000000000000000000000000000000000000000000000000000000000000000","s":"0x0000000000000000000000000000000000000000000000000000000000000000"}\`) to a valid signature envelope.]`,
+    )
+  })
+
+  test('error: throws on unsupported type', () => {
+    expect(() =>
+      SignatureEnvelope.assert({ type: 'webauthn' } as any),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"type":"webauthn"}\`) to a valid signature envelope.]`,
+    )
+    expect(() =>
+      SignatureEnvelope.assert({
+        inner: { type: 'bogus' },
+        type: 'keychain',
+        userAddress: '0x1234567890123456789012345678901234567890',
+      } as any),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"type":"bogus"}\`) to a valid signature envelope.]`,
     )
   })
 })
@@ -662,6 +693,42 @@ describe('deserialize', () => {
       )
     })
 
+    test('error: throws on WebAuthn signature above the maximum size', () => {
+      const authenticatorData = `0x${'00'.repeat(37)}` as const
+      // 37 (authenticatorData) + 1883 (clientDataJSON) + 128 = 2048 bytes
+      const max = {
+        ...signature_webauthn,
+        metadata: {
+          authenticatorData,
+          clientDataJSON: JSON.stringify({ challenge: 'a'.repeat(1867) }),
+        },
+      }
+      const serialized = SignatureEnvelope.serialize(max)
+      expect(Hex.size(serialized)).toMatchInlineSnapshot(`2049`)
+      expect(SignatureEnvelope.deserialize(serialized)).toMatchObject({
+        metadata: max.metadata,
+      })
+
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          SignatureEnvelope.serialize({
+            ...max,
+            metadata: {
+              authenticatorData,
+              clientDataJSON: JSON.stringify({ challenge: 'a'.repeat(1868) }),
+            },
+          }),
+        ),
+      ).toThrow(
+        'Invalid WebAuthn signature envelope size: expected at most 2048 bytes, got 2049 bytes',
+      )
+      expect(() =>
+        SignatureEnvelope.deserialize(`0x02${'41'.repeat(40_000)}`),
+      ).toThrow(
+        'Invalid WebAuthn signature envelope size: expected at most 2048 bytes, got 40000 bytes',
+      )
+    })
+
     test('error: throws on invalid clientDataJSON', () => {
       // Create a signature with invalid JSON (not properly formatted)
       const invalidMetadata = {
@@ -781,6 +848,48 @@ describe('deserialize', () => {
         inner: SignatureEnvelope.from(signature_secp256k1),
         type: 'keychain',
       })
+    })
+
+    test('behavior: deserializes 65-byte inner starting with a keychain type as secp256k1', () => {
+      const userAddress = '0x1234567890123456789012345678901234567890'
+      const inner = `0x03${'11'.repeat(31)}${'22'.repeat(32)}1b` as const
+      expect(
+        SignatureEnvelope.deserialize(Hex.concat('0x04', userAddress, inner)),
+      ).toMatchInlineSnapshot(`
+        {
+          "inner": {
+            "signature": {
+              "r": "0x0311111111111111111111111111111111111111111111111111111111111111",
+              "s": "0x2222222222222222222222222222222222222222222222222222222222222222",
+              "yParity": 0,
+            },
+            "type": "secp256k1",
+          },
+          "type": "keychain",
+          "userAddress": "0x1234567890123456789012345678901234567890",
+          "version": "v2",
+        }
+      `)
+    })
+
+    test('error: throws on keychain inner signature', () => {
+      const userAddress = '0x1234567890123456789012345678901234567890'
+      const inner = SignatureEnvelope.serialize(signature_keychain_secp256k1)
+      for (const typeId of ['0x03', '0x04'] as const)
+        expect(() =>
+          SignatureEnvelope.deserialize(Hex.concat(typeId, userAddress, inner)),
+        ).toThrow(
+          'Unable to deserialize signature envelope: keychain signatures cannot wrap a keychain signature',
+        )
+
+      // 2000 nested keychains
+      const nested = Hex.concat(
+        `0x${`03${userAddress.slice(2)}`.repeat(2000)}`,
+        Signature.toHex(signature_secp256k1),
+      )
+      expect(() => SignatureEnvelope.deserialize(nested)).toThrow(
+        SignatureEnvelope.InvalidSerializedError,
+      )
     })
 
     test('error: throws on invalid keychain signature length', () => {
@@ -1931,6 +2040,17 @@ describe('validate', () => {
     expect(SignatureEnvelope.validate({} as any)).toBe(false)
   })
 
+  test('behavior: returns false for unsupported type', () => {
+    expect(SignatureEnvelope.validate({ type: 'webauthn' } as any)).toBe(false)
+    expect(
+      SignatureEnvelope.validate({
+        inner: { type: 'bogus' },
+        type: 'keychain',
+        userAddress: '0x1234567890123456789012345678901234567890',
+      } as any),
+    ).toBe(false)
+  })
+
   test('behavior: returns false for incomplete signature', () => {
     expect(
       SignatureEnvelope.validate({
@@ -2319,6 +2439,49 @@ describe('fromRpc', () => {
         type: 'webAuthn',
       })
     })
+
+    test('error: throws on WebAuthn data above the maximum size', () => {
+      const rpc = {
+        pubKeyX: publicKey.x,
+        pubKeyY: publicKey.y,
+        r: p256Signature.r,
+        s: p256Signature.s,
+        type: 'webAuthn',
+      } as const
+      const authenticatorData = `0x${'00'.repeat(37)}` as const
+      const clientDataJSON = JSON.stringify({ challenge: 'a'.repeat(1867) })
+
+      // 37 (authenticatorData) + 1883 (clientDataJSON) = 1920 bytes
+      expect(
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          webauthnData: Hex.concat(
+            authenticatorData,
+            Hex.fromString(clientDataJSON),
+          ),
+        }),
+      ).toMatchObject({ metadata: { authenticatorData, clientDataJSON } })
+
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          webauthnData: Hex.concat(
+            authenticatorData,
+            Hex.fromString(JSON.stringify({ challenge: 'a'.repeat(1868) })),
+          ),
+        }),
+      ).toThrow(
+        'Invalid WebAuthn data size: expected at most 1920 bytes, got 1921 bytes',
+      )
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          webauthnData: `0x${'41'.repeat(40_000)}`,
+        }),
+      ).toThrow(
+        'Invalid WebAuthn data size: expected at most 1920 bytes, got 40000 bytes',
+      )
+    })
   })
 
   describe('keychain', () => {
@@ -2448,6 +2611,36 @@ describe('fromRpc', () => {
       const envelope = SignatureEnvelope.fromRpc(rpc)
 
       expect(envelope.keyId).toBe('0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c')
+    })
+
+    test('error: throws on keychain inner signature', () => {
+      const inner = {
+        signature: {
+          r: '0xa2bb71146c20ce932456c043ebb2973ed205e07cd32c35a60bdefca1285fd132',
+          s: '0x7cba10692bccdbfba9a215418443c2903dbee6fe5cb55c91172e47efc607840e',
+          type: 'secp256k1',
+          yParity: '0x1',
+        },
+        userAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      } as const
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          signature: { ...inner, type: 'keychain' },
+          type: 'keychain',
+          userAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidApprovalError: Invalid owner approval: keychain signatures cannot wrap a keychain signature.]`,
+      )
+      // inner keychain without an explicit type
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          signature: inner as never,
+          type: 'keychain',
+          userAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+          version: 'v1',
+        }),
+      ).toThrow(SignatureEnvelope.InvalidApprovalError)
     })
   })
 })
@@ -3034,18 +3227,21 @@ describe('configurable', () => {
       }),
     ).toThrowError(SignatureEnvelope.InvalidApprovalError)
   })
-  test('rejects V1 wrappers around recursively nested configurable delegates', () => {
-    let inner: SignatureEnvelope.SignatureEnvelope = envelope
-    for (let depth = 0; depth < 3; depth++) {
-      inner = { inner, type: 'keychain', userAddress: account, version: 'v2' }
-      const valid: SignatureEnvelope.Keychain = {
+  test('rejects keychain wrappers around keychain-wrapped configurable delegates', () => {
+    const inner: SignatureEnvelope.Keychain = {
+      inner: envelope,
+      type: 'keychain',
+      userAddress: account,
+      version: 'v2',
+    }
+    expect(SignatureEnvelope.validate(inner)).toBe(true)
+    for (const version of ['v1', 'v2'] as const) {
+      const invalid: SignatureEnvelope.Keychain = {
         inner,
         type: 'keychain',
         userAddress: account,
-        version: 'v2',
+        version,
       }
-      const invalid = { ...valid, version: 'v1' } as const
-      expect(SignatureEnvelope.validate(valid)).toBe(true)
       expect(SignatureEnvelope.validate(invalid)).toBe(false)
       expect(() => SignatureEnvelope.serialize(invalid)).toThrowError(
         SignatureEnvelope.InvalidApprovalError,
@@ -3057,32 +3253,20 @@ describe('configurable', () => {
         SignatureEnvelope.fromRpc({
           type: 'keychain',
           userAddress: account,
-          version: 'v1',
+          version,
           signature: SignatureEnvelope.toRpc(inner),
         }),
       ).toThrowError(SignatureEnvelope.InvalidApprovalError)
       expect(() =>
         SignatureEnvelope.deserialize(
-          Hex.concat('0x03', account, SignatureEnvelope.serialize(inner)),
+          Hex.concat(
+            version === 'v1' ? '0x03' : '0x04',
+            account,
+            SignatureEnvelope.serialize(inner),
+          ),
         ),
-      ).toThrowError(SignatureEnvelope.InvalidApprovalError)
-      expect(() =>
-        SignatureEnvelope.serialize({ ...valid, inner: invalid }),
-      ).toThrowError(SignatureEnvelope.InvalidApprovalError)
+      ).toThrowError(SignatureEnvelope.InvalidSerializedError)
     }
-    expect(
-      SignatureEnvelope.validate({
-        inner: {
-          inner: primitive,
-          type: 'keychain',
-          userAddress: account,
-          version: 'v2',
-        },
-        type: 'keychain',
-        userAddress: account,
-        version: 'v1',
-      }),
-    ).toBe(true)
   })
   test('RPC rejects 64-byte values that resemble primitive signatures', () => {
     expect(() =>

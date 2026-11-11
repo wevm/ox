@@ -174,6 +174,36 @@ describe('fromRpc', () => {
     `)
   })
 
+  test('error: chainId above safe integer range', () => {
+    expect(() =>
+      Authorization.fromRpc({
+        address: '0x0000000000000000000000000000000000000000',
+        chainId: '0x20000000000001',
+        nonce: '0x1',
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        yParity: '0x0',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+  })
+
+  test('error: chainId empty quantity', () => {
+    expect(() =>
+      Authorization.fromRpc({
+        address: '0x0000000000000000000000000000000000000000',
+        chainId: '0x',
+        nonce: '0x1',
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        yParity: '0x0',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`NaN\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+  })
+
   test('error: yParity above 2**8 - 1', () => {
     expect(() =>
       Authorization.fromRpc({
@@ -267,6 +297,36 @@ describe('fromTuple', () => {
     `)
   })
 
+  test('behavior: chainId at safe integer limit', () => {
+    const tuple = [
+      '0x1fffffffffffff',
+      '0x0000000000000000000000000000000000000000',
+      '0x3',
+    ] as const satisfies Authorization.Tuple
+    const authorization = Authorization.fromTuple(tuple)
+    expect(authorization).toMatchInlineSnapshot(`
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 9007199254740991,
+        "nonce": 3n,
+      }
+    `)
+    expect(Authorization.toTuple(authorization)).toEqual(tuple)
+  })
+
+  test('error: chainId above safe integer range', () => {
+    const tuple = [
+      '0x20000000000001',
+      '0x0000000000000000000000000000000000000000',
+      '0x3',
+    ] as const satisfies Authorization.Tuple
+    expect(() =>
+      Authorization.fromTuple(tuple),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+  })
+
   test('behavior: signature', () => {
     const tuple = [
       '0x1',
@@ -325,6 +385,75 @@ describe('fromTuple', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
     )
+  })
+
+  test('behavior: round trip', () => {
+    const unsigned = [
+      '0x1',
+      '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      '0x3',
+    ] as const satisfies Authorization.Tuple
+    const signed = [
+      ...unsigned,
+      '0x01',
+      '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+      '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+    ] as const satisfies Authorization.Tuple
+    expect(Authorization.toTuple(Authorization.fromTuple(unsigned))).toEqual(
+      unsigned,
+    )
+    expect(Authorization.toTuple(Authorization.fromTuple(signed))).toEqual(
+      signed,
+    )
+  })
+
+  test('error: 4 fields', () => {
+    expect(() =>
+      Authorization.fromTuple([
+        '0x01',
+        '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        '0x03',
+        '0x01',
+      ] as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Authorization.InvalidError: Invalid authorization.
+
+      Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].]
+    `)
+  })
+
+  test('error: 5 fields', () => {
+    expect(() =>
+      Authorization.fromTuple([
+        '0x01',
+        '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        '0x03',
+        '0x01',
+        '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+      ] as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Authorization.InvalidError: Invalid authorization.
+
+      Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].]
+    `)
+  })
+
+  test('error: 7 fields', () => {
+    expect(() =>
+      Authorization.fromTuple([
+        '0x01',
+        '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        '0x03',
+        '0x01',
+        '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+        '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+        '0xdeadbeef',
+      ] as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Authorization.InvalidError: Invalid authorization.
+
+      Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].]
+    `)
   })
 })
 
@@ -811,6 +940,7 @@ test('exports', () => {
       "toRpcList",
       "toTuple",
       "toTupleList",
+      "InvalidError",
     ]
   `)
 })

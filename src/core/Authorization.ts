@@ -1,5 +1,5 @@
 import type * as Address from './Address.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
@@ -187,7 +187,7 @@ export function fromRpc(authorization: Rpc): Signed {
 
   return {
     address,
-    chainId: Number(chainId),
+    chainId: Hex.toNumber(chainId),
     nonce: BigInt(nonce),
     ...signature,
   }
@@ -276,10 +276,14 @@ export declare namespace fromRpcList {
 export function fromTuple<const tuple extends Tuple>(
   tuple: tuple,
 ): fromTuple.ReturnType<tuple> {
+  if (tuple.length !== 3 && tuple.length !== 6)
+    throw new InvalidError(
+      'Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].',
+    )
   const [chainId, address, nonce, yParity, r, s] = tuple
   let args = {
     address,
-    chainId: chainId === '0x' ? 0 : Number(chainId),
+    chainId: chainId === '0x' ? 0 : Hex.toNumber(chainId),
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
   }
   if (yParity && r && s) {
@@ -302,7 +306,7 @@ export declare namespace fromTuple {
     Authorization<authorization extends Tuple<true> ? true : false>
   >
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidError | Errors.GlobalErrorType
 }
 
 /**
@@ -692,4 +696,30 @@ function assertYParity(yParity: number) {
     size: 1,
     value: `${yParity}`,
   })
+}
+
+/**
+ * Thrown when an EIP-7702 Authorization tuple is structurally invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Authorization } from 'ox'
+ *
+ * Authorization.fromTuple([
+ *   '0x1',
+ *   '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   '0x3',
+ *   '0x1'
+ * ])
+ * // @error: Authorization.InvalidError: Invalid authorization.
+ * // @error: Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].
+ * ```
+ */
+export class InvalidError extends Errors.BaseError {
+  override readonly name = 'Authorization.InvalidError'
+
+  constructor(details: string) {
+    super('Invalid authorization.', { details })
+  }
 }

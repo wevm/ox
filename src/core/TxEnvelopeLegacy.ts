@@ -114,7 +114,12 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Bytes.Bytes[]
 
-  if (!(tuple.length === 6 || tuple.length === 9))
+  if (
+    !Array.isArray(tuple) ||
+    !(tuple.length === 6 || tuple.length === 9) ||
+    // Every field is a byte string, never a nested list.
+    tuple.some((item) => !(item instanceof Uint8Array))
+  )
     throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         nonce,
@@ -147,17 +152,45 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
   if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
   const value_ = Tx.bytesToBigIntOrUndefined(value)
   if (value_ !== undefined) transaction.value = value_
+  // `gasPrice`, `r` and `s` are bounded by byte length, so that an oversized
+  // value is rejected before it is converted.
+  if ((gasPrice as Bytes.Bytes).length > 32)
+    throw new TransactionEnvelope.GasPriceTooHighError()
   const gasPrice_ = Tx.bytesToBigIntOrUndefined(gasPrice)
   if (gasPrice_ !== undefined) transaction.gasPrice = gasPrice_
 
-  if (tuple.length === 6) return transaction
+  if (tuple.length === 6) {
+    assert(transaction)
+    return transaction
+  }
 
-  const chainIdOrV = Tx.bytesToNumberOrUndefined(chainIdOrV_) ?? 0
+  // `chainId` and `yParity` are derived from `v` as a number, so `v` must be a
+  // safe integer (which fits in 7 bytes).
+  const chainIdOrV =
+    (chainIdOrV_ as Bytes.Bytes).length > 7
+      ? Number.NaN
+      : (Tx.bytesToNumberOrUndefined(chainIdOrV_) ?? 0)
+  if (!Number.isSafeInteger(chainIdOrV))
+    throw new TransactionEnvelope.InvalidSerializedError({
+      attributes: {},
+      serialized,
+      type,
+    })
 
   if ((s as Bytes.Bytes).length === 0 && (r as Bytes.Bytes).length === 0) {
     if (chainIdOrV > 0) transaction.chainId = Number(chainIdOrV)
+    assert(transaction)
     return transaction
   }
+
+  if ((r as Bytes.Bytes).length > 32)
+    throw new Signature.InvalidRError({
+      value: Tx.bytesToHex(r as Bytes.Bytes),
+    })
+  if ((s as Bytes.Bytes).length > 32)
+    throw new Signature.InvalidSError({
+      value: Tx.bytesToHex(s as Bytes.Bytes),
+    })
 
   const v = chainIdOrV
   const chainId: number | undefined = Math.floor((v - 35) / 2)
@@ -396,11 +429,18 @@ export function hash<presign extends boolean = false>(
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
+  const { chainId, v } = envelope
   return Hash.keccak256(
     serialize({
       ...envelope,
       ...(presign
         ? {
+            // An EIP-155 `v` carries the chain ID when `chainId` is absent.
+            chainId:
+              chainId ??
+              (typeof v === 'number' && v >= 37
+                ? Math.floor((v - 35) / 2)
+                : undefined),
             r: undefined,
             s: undefined,
             yParity: undefined,
@@ -512,15 +552,23 @@ export function serialize(
 
   if (signature) {
     const v = (() => {
+      // EIP-155 (explicit chainId)
+      if (chainId > 0) {
+        if (signature.v >= 35) {
+          // `v` must encode the same chain as `chainId`.
+          if (Math.floor((signature.v - 35) / 2) !== chainId)
+            throw new TransactionEnvelope.InvalidChainIdError({ chainId })
+          return signature.v
+        }
+        return chainId * 2 + 35 + Signature.vToYParity(signature.v)
+      }
+
       // EIP-155 (inferred chainId)
       if (signature.v >= 35) {
         const inferredChainId = Math.floor((signature.v - 35) / 2)
         if (inferredChainId > 0) return signature.v
         return 27 + (signature.v === 35 ? 0 : 1)
       }
-
-      // EIP-155 (explicit chainId)
-      if (chainId > 0) return chainId * 2 + 35 + signature.v - 27
 
       // Pre-EIP-155 (no chainId)
       const v = 27 + (signature.v === 27 ? 0 : 1)

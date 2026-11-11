@@ -75,7 +75,9 @@ function encodePrimitiveTopic(
 /**
  * Decodes a primitive (32-byte) indexed event topic directly to a
  * primitive value, skipping the `AbiParameters.decode` round-trip.
- * Returns a `[value]` tuple on hit, or `undefined` on miss.
+ * Returns a `[value]` tuple on hit, or `undefined` on miss. A topic that
+ * is not a canonical 32-byte word for the type is a miss, so that
+ * `AbiParameters.decode` validates (and rejects) it.
  *
  * @internal
  */
@@ -84,27 +86,44 @@ function decodePrimitiveTopic(
   topic: Hex.Hex,
   options: decode.Options = {},
 ): [value: unknown] | undefined {
+  // A topic is a 32-byte word (`0x` + 64 hex).
+  if (topic.length !== 66) return undefined
   if (type === 'address') {
-    // Trailing 20 bytes; topic is always 66 chars (`0x` + 64 hex).
+    // The high 12 bytes must be zero padding.
+    if (!topic.startsWith('0x000000000000000000000000')) return undefined
     const address = `0x${topic.slice(26)}` as Address.Address
     return [
       options.checksumAddress === false ? address : Address.checksum(address),
     ]
   }
   if (type === 'bool') {
-    // Last byte determines truthiness (Solidity left-pads booleans).
-    return [topic.charCodeAt(65) === 49 /* '1' */]
+    // The whole word must be `0` or `1`.
+    if (
+      topic ===
+      '0x0000000000000000000000000000000000000000000000000000000000000000'
+    )
+      return [false]
+    if (
+      topic ===
+      '0x0000000000000000000000000000000000000000000000000000000000000001'
+    )
+      return [true]
+    return undefined
   }
   if (type.startsWith('uint') || type.startsWith('int')) {
     const signed = type[0] === 'i'
     const sizeStr = signed ? type.slice(3) : type.slice(4)
     const size = sizeStr === '' ? 256 : Number(sizeStr)
     if (!Number.isFinite(size)) return undefined
-    const big =
-      size > 48
-        ? Hex.toBigInt(topic, { signed })
-        : Hex.toNumber(topic, { signed })
-    return [big]
+    const value = Hex.toBigInt(topic, { signed })
+    // The word must hold a value that fits the declared size (zero-padded
+    // for unsigned, sign-extended for signed types).
+    if (size < 256) {
+      const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+      const min = signed ? -max - 1n : 0n
+      if (value > max || value < min) return undefined
+    }
+    return [size > 48 ? value : Number(value)]
   }
   if (type.startsWith('bytes') && type.length > 5) {
     const sizeStr = type.slice(5)
@@ -306,9 +325,7 @@ function assertMatchingArgs(
           given: matchArgs,
         })
     }
-  }
-
-  if (
+  } else if (
     typeof args === 'object' &&
     !Array.isArray(args) &&
     typeof matchArgs === 'object' &&
@@ -316,7 +333,10 @@ function assertMatchingArgs(
   )
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
-      const input = abiEvent.inputs.find((input) => input.name === key)
+      // `decode` keys an unnamed input by its index.
+      const input = abiEvent.inputs.find(
+        (input, index) => (input.name || `${index}`) === key,
+      )
       if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
@@ -331,6 +351,20 @@ function assertMatchingArgs(
           given: matchArgs,
         })
     }
+  // Positional and keyed arguments cannot be compared with each other. A
+  // filter without values matches any arguments.
+  else if (
+    typeof matchArgs === 'object' &&
+    matchArgs !== null &&
+    Object.values(matchArgs).some(
+      (value) => value !== null && value !== undefined,
+    )
+  )
+    throw new ArgsMismatchError({
+      abiEvent,
+      expected: args,
+      given: matchArgs,
+    })
 }
 
 /**
@@ -374,6 +408,8 @@ function assertMatchingArgs(
  * ### ABI-shorthand
  *
  * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(decode:function)}:
+ *
+ * When the ABI holds several events with that name, the overload is resolved from the selector in `topics[0]`.
  *
  * ```ts twoslash
  * // @noErrors
@@ -492,7 +528,7 @@ export function decode(
         options?: decode.Options | undefined,
       ]
 ): decode.ReturnType {
-  const [abiEvent, log, options] = (() => {
+  const [abiEvent_, log, options] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name, log, options] = parameters as [
         Abi.Abi | readonly unknown[],
@@ -511,6 +547,20 @@ export function decode(
   })()
 
   const { data, topics } = log
+
+  // An event extracted by name carries its other overloads, and `topics[0]`
+  // holds the selector of the overload that was emitted. Anonymous overloads
+  // omit the selector topic, so they are never matched by it.
+  const abiEvent = (() => {
+    const { overloads } = abiEvent_ as AbiEvent
+    if (!overloads) return abiEvent_
+    const selector = topics[0]
+    return (
+      [abiEvent_, ...overloads].find(
+        (item) => item.anonymous !== true && getSelector(item) === selector,
+      ) ?? abiEvent_
+    )
+  })()
 
   const isAnonymous = abiEvent.anonymous === true
   const argTopics = isAnonymous ? [...topics] : topics.slice(1)
@@ -637,12 +687,20 @@ export declare namespace decode {
 
   type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
     IsNarrowable<abiEvent, AbiEvent> extends true
-      ? abiEvent['inputs'] extends readonly []
-        ? undefined
-        : internal.ParametersToPrimitiveTypes<
-            abiEvent['inputs'],
-            { EnableUnion: false; IndexedOnly: false; Required: true }
-          >
+      ? // distribute over the event and its overloads
+          | abiEvent
+          | (abiEvent['overloads'] extends readonly AbiEvent[]
+              ? abiEvent['overloads'][number]
+              : never) extends infer item extends AbiEvent
+        ? item extends AbiEvent
+          ? item['inputs'] extends readonly []
+            ? undefined
+            : internal.ParametersToPrimitiveTypes<
+                item['inputs'],
+                { EnableUnion: false; IndexedOnly: false; Required: true }
+              >
+          : never
+        : never
       : unknown
 
   type ErrorType =
@@ -892,7 +950,7 @@ export function extractLogs<
           event: item,
         }
       } catch {
-        const isUnnamed = item.inputs.some((x) => !('name' in x && x.name))
+        const isUnnamed = item.inputs.every((x) => !('name' in x && x.name))
         event = {
           args: isUnnamed ? [] : {},
           event: item,
@@ -1024,17 +1082,19 @@ function decodeForExtract(
   }
 
   const { inputs } = abiEvent
-  const isUnnamed = inputs.some((x) => !('name' in x && x.name))
+  // Matches `decode`: positional when every input is unnamed, otherwise keyed
+  // by name, or by index for an unnamed input.
+  const isUnnamed = inputs.every((x) => !('name' in x && x.name))
   const args: any = isUnnamed ? [] : {}
 
   const argTopics = isAnonymous ? topics : topics.slice(1)
   const indexedInputs: [abitype.AbiEventParameter, number][] = []
-  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedInputs: [abitype.AbiEventParameter, number][] = []
   const missingIndexedInputs: [abitype.AbiEventParameter, number][] = []
   for (let i = 0; i < inputs.length; i++) {
     const input = inputs[i]!
     if ('indexed' in input && input.indexed) indexedInputs.push([input, i])
-    else nonIndexedInputs.push(input)
+    else nonIndexedInputs.push([input, i])
   }
 
   for (let i = 0; i < indexedInputs.length; i++) {
@@ -1054,9 +1114,10 @@ function decodeForExtract(
     })
   }
 
-  const inputsToDecode = strict
+  const dataInputs = strict
     ? nonIndexedInputs
-    : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs]
+    : [...missingIndexedInputs, ...nonIndexedInputs]
+  const inputsToDecode = dataInputs.map(([param]) => param)
 
   if (inputsToDecode.length > 0) {
     if (data && data !== '0x') {
@@ -1064,25 +1125,9 @@ function decodeForExtract(
         const decodedData = AbiParameters.decode(inputsToDecode, data, {
           checksumAddress: options.checksumAddress,
         })
-        if (decodedData) {
-          let dataIndex = 0
-          if (!strict) {
-            for (const [param, index] of missingIndexedInputs) {
-              args[isUnnamed ? index : param.name || index] =
-                decodedData[dataIndex++]
-            }
-          }
-          if (isUnnamed) {
-            for (let i = 0; i < inputs.length; i++)
-              if (args[i] === undefined && dataIndex < decodedData.length)
-                args[i] = decodedData[dataIndex++]
-          } else {
-            for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const input = nonIndexedInputs[i]!
-              args[input.name!] = decodedData[dataIndex++]
-            }
-          }
-        }
+        if (decodedData)
+          for (const [i, [param, index]] of dataInputs.entries())
+            args[isUnnamed ? index : param.name || index] = decodedData[i]
       } catch (err) {
         if (strict) {
           if (

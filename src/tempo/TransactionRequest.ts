@@ -123,8 +123,11 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (request.signature)
     request_.signature = SignatureEnvelope.fromRpc(request.signature)
-  if (request.feePayerSignature)
-    request_.feePayerSignature = Signature.fromRpc(request.feePayerSignature)
+  if (request.feePayerSignature) {
+    const feePayerSignature = Signature.fromRpc(request.feePayerSignature)
+    Signature.assert(feePayerSignature, { recovered: true })
+    request_.feePayerSignature = feePayerSignature
+  }
   if (request.calls)
     request_.calls = request.calls.map((call) => {
       const mapped: Call<bigint> = {
@@ -170,6 +173,8 @@ export declare namespace fromRpc {
     | Hex.toNumber.ErrorType
     | Hex.toBigInt.ErrorType
     | AccountSimulation.fromRpc.ErrorType
+    | Signature.assert.ErrorType
+    | Signature.fromRpc.ErrorType
     | Errors.GlobalErrorType
 }
 
