@@ -23,6 +23,34 @@ describe('assert', () => {
     )
   })
 
+  test('invalid chainId (not a positive safe integer)', () => {
+    expect(() =>
+      TxEnvelopeLegacy.assert({ chainId: Number.NaN }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "NaN" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeLegacy.assert({ chainId: 1.5 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1.5" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeLegacy.assert({ chainId: Number.MAX_SAFE_INTEGER + 1 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "9007199254740992" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeLegacy.assert({ chainId: '1' as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeLegacy.assert({ chainId: 1n as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+  })
+
   test('invalid address', () => {
     expect(() => TxEnvelopeLegacy.assert({ to: '0x123', chainId: 1 }))
       .toThrowErrorMatchingInlineSnapshot(`
