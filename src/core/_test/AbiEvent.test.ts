@@ -719,6 +719,127 @@ describe('decode', () => {
       }
     `)
   })
+
+  test('behavior: with overloads, zero-input and named', () => {
+    const abi = Abi.from(['event Foo()', 'event Foo(address indexed who)'])
+    const log = {
+      topics: [
+        AbiEvent.getSelector('event Foo(address indexed who)'),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    expect(AbiEvent.decode(abi, 'Foo', log)).toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(AbiEvent.decode(AbiEvent.fromAbi(abi, 'Foo'), log))
+      .toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(
+      AbiEvent.decode(abi, 'Foo', {
+        topics: [AbiEvent.getSelector('event Foo()')],
+      }),
+    ).toMatchInlineSnapshot(`undefined`)
+  })
+
+  test('behavior: with overloads, anonymous and named', () => {
+    const abi = Abi.from([
+      { anonymous: true, inputs: [], name: 'Foo', type: 'event' },
+      {
+        inputs: [{ indexed: true, name: 'who', type: 'address' }],
+        name: 'Foo',
+        type: 'event',
+      },
+    ])
+    const log = {
+      topics: [
+        AbiEvent.getSelector('event Foo(address indexed who)'),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    expect(AbiEvent.decode(abi, 'Foo', log)).toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(AbiEvent.decode(AbiEvent.fromAbi(abi, 'Foo'), log))
+      .toMatchInlineSnapshot(`
+      {
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    // Without a selector match, the log decodes with the event picked by name.
+    expect(AbiEvent.decode(abi, 'Foo', { topics: [] })).toMatchInlineSnapshot(
+      `undefined`,
+    )
+  })
+
+  test('behavior: with overloads, two named', () => {
+    const abi = Abi.from([
+      'event Deposit(address indexed who, uint256 amount)',
+      'event Deposit(address indexed who, uint256 amount, bytes32 indexed ref)',
+    ])
+    const [deposit, depositWithRef] = abi
+
+    expect(
+      AbiEvent.decode(abi, 'Deposit', {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        topics: [
+          AbiEvent.getSelector(depositWithRef),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x1111111111111111111111111111111111111111111111111111111111111111',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "amount": 5n,
+        "ref": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+    expect(
+      AbiEvent.decode(abi, 'Deposit', {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        topics: [
+          AbiEvent.getSelector(deposit),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "amount": 5n,
+        "who": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
+  })
+
+  test('error: with overloads, selector topic matches no overload', () => {
+    const abi = Abi.from([
+      'event Deposit(address indexed who, uint256 amount)',
+      'event Deposit(address indexed who, uint256 amount, bytes32 indexed ref)',
+    ])
+
+    expect(() =>
+      AbiEvent.decode(abi, 'Deposit', {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000005',
+        topics: [
+          '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.SelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c".
+
+      Event: event Deposit(address indexed who, uint256 amount)
+      Selector: 0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c]
+    `)
+  })
 })
 
 describe('decodeLog', () => {
