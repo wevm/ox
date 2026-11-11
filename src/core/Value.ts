@@ -161,6 +161,8 @@ export declare namespace from {
 /**
  * Removes trailing zeros with a backward scan, which stays linear in the
  * length of the value.
+ *
+ * @internal
  */
 function trimTrailingZeros(value: string): string {
   let end = value.length
