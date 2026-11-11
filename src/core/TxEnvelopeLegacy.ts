@@ -530,15 +530,23 @@ export function serialize(
 
   if (signature) {
     const v = (() => {
+      // EIP-155 (explicit chainId)
+      if (chainId > 0) {
+        if (signature.v >= 35) {
+          // `v` must encode the same chain as `chainId`.
+          if (Math.floor((signature.v - 35) / 2) !== chainId)
+            throw new TransactionEnvelope.InvalidChainIdError({ chainId })
+          return signature.v
+        }
+        return chainId * 2 + 35 + Signature.vToYParity(signature.v)
+      }
+
       // EIP-155 (inferred chainId)
       if (signature.v >= 35) {
         const inferredChainId = Math.floor((signature.v - 35) / 2)
         if (inferredChainId > 0) return signature.v
         return 27 + (signature.v === 35 ? 0 : 1)
       }
-
-      // EIP-155 (explicit chainId)
-      if (chainId > 0) return chainId * 2 + 35 + signature.v - 27
 
       // Pre-EIP-155 (no chainId)
       const v = 27 + (signature.v === 27 ? 0 : 1)
