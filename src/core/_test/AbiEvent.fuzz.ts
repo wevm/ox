@@ -244,7 +244,7 @@ describe('extractLogs', () => {
 
       const extracted = AbiEvent.extractLogs([value.abiEvent], [log])
 
-      const array = value.inputs.some((input) => !input.name)
+      const array = value.inputs.every((input) => !input.name)
       expect(extracted.map((x) => [x.eventName, lowercase(x.args)])).toEqual([
         [value.abiEvent.name, lowercase(expectedArgs(value, array))],
       ])

@@ -216,6 +216,104 @@ describe('assertArgs', () => {
     `)
   })
 
+  test('behavior: named + unnamed inputs', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    AbiEvent.assertArgs(abiEvent, args, {
+      1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      2: 1n,
+      from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+    })
+    expect(() =>
+      AbiEvent.assertArgs(abiEvent, args, {
+        1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed, uint256)
+      Expected Arguments: 
+        1:     0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad
+        2:     1
+        from:  0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+      Given Arguments: 
+        1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+  })
+
+  test('error: args mismatch, positional and keyed', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const args = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(abiEvent),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    expect(() =>
+      // @ts-expect-error
+      AbiEvent.assertArgs(abiEvent, args, [
+        '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        from:   0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        to:     0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad
+        value:  1
+      Given Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+    expect(() =>
+      AbiEvent.assertArgs(
+        abiEvent,
+        [
+          '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          1n,
+        ],
+        { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac' },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+        1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        2:  1
+      Given Arguments: 
+        from:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac]
+    `)
+  })
+
+  test('behavior: filter without values', () => {
+    const abiEvent = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const args = [
+      '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      1n,
+    ]
+    AbiEvent.assertArgs(abiEvent, args, {})
+    AbiEvent.assertArgs(abiEvent, args, { from: undefined, to: null })
+  })
+
   test('error: args mismatch, string', () => {
     const abiEvent = AbiEvent.from('event Transfer(string indexed a)')
     const args = AbiEvent.decode(abiEvent, {
@@ -1349,6 +1447,118 @@ describe('extractLogs', () => {
         },
       ]
     `)
+  })
+
+  test('behavior: filters by arguments of named + unnamed inputs', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    } as const
+
+    expect(
+      AbiEvent.extractLogs([transfer], [log], {
+        args: { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad' },
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([transfer], [log], {
+        args: { 1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac' },
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs([transfer], [log], {
+        args: {
+          1: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+          2: 1n,
+          from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        },
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "1": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+            "2": 1n,
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          },
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "eventName": "Transfer",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('behavior: non-strict mode keys named + unnamed inputs like `decode`', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed, uint256)',
+    )
+    const selector = AbiEvent.getSelector(transfer)
+    const from =
+      '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+    const logs = [
+      // The second indexed input is read from data.
+      {
+        data: '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad0000000000000000000000000000000000000000000000000000000000000001',
+        topics: [selector, from],
+      },
+      // The topic does not decode as an address.
+      { data: '0x', topics: [selector, '0xdead'] },
+    ] as const
+
+    expect(
+      AbiEvent.extractLogs([transfer], logs, { strict: false }).map(
+        (log) => log.args,
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "1": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
+          "2": 1n,
+          "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        },
+        {},
+      ]
+    `)
+    expect(
+      AbiEvent.extractLogs([transfer], logs, {
+        args: { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad' },
+        strict: false,
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+  })
+
+  test('behavior: positional and keyed arguments do not match', () => {
+    const named = AbiEvent.from('event Transfer(address indexed from)')
+    const unnamed = AbiEvent.from('event Transfer(address indexed)')
+    const topic =
+      '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+
+    expect(
+      AbiEvent.extractLogs(
+        [named] as readonly unknown[],
+        [{ data: '0x', topics: [AbiEvent.getSelector(named), topic] }],
+        { args: ['0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad'] },
+      ),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(
+        [unnamed] as readonly unknown[],
+        [{ data: '0x', topics: [AbiEvent.getSelector(unnamed), topic] }],
+        { args: { from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad' } },
+      ),
+    ).toMatchInlineSnapshot(`[]`)
   })
 
   test('behavior: filters by non-indexed `bytes` and `bytes32` arguments in either case', () => {

@@ -306,9 +306,7 @@ function assertMatchingArgs(
           given: matchArgs,
         })
     }
-  }
-
-  if (
+  } else if (
     typeof args === 'object' &&
     !Array.isArray(args) &&
     typeof matchArgs === 'object' &&
@@ -316,7 +314,10 @@ function assertMatchingArgs(
   )
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
-      const input = abiEvent.inputs.find((input) => input.name === key)
+      // `decode` keys an unnamed input by its index.
+      const input = abiEvent.inputs.find(
+        (input, index) => (input.name || `${index}`) === key,
+      )
       if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
@@ -331,6 +332,20 @@ function assertMatchingArgs(
           given: matchArgs,
         })
     }
+  // Positional and keyed arguments cannot be compared with each other. A
+  // filter without values matches any arguments.
+  else if (
+    typeof matchArgs === 'object' &&
+    matchArgs !== null &&
+    Object.values(matchArgs).some(
+      (value) => value !== null && value !== undefined,
+    )
+  )
+    throw new ArgsMismatchError({
+      abiEvent,
+      expected: args,
+      given: matchArgs,
+    })
 }
 
 /**
@@ -892,7 +907,7 @@ export function extractLogs<
           event: item,
         }
       } catch {
-        const isUnnamed = item.inputs.some((x) => !('name' in x && x.name))
+        const isUnnamed = item.inputs.every((x) => !('name' in x && x.name))
         event = {
           args: isUnnamed ? [] : {},
           event: item,
@@ -1024,17 +1039,19 @@ function decodeForExtract(
   }
 
   const { inputs } = abiEvent
-  const isUnnamed = inputs.some((x) => !('name' in x && x.name))
+  // Matches `decode`: positional when every input is unnamed, otherwise keyed
+  // by name, or by index for an unnamed input.
+  const isUnnamed = inputs.every((x) => !('name' in x && x.name))
   const args: any = isUnnamed ? [] : {}
 
   const argTopics = isAnonymous ? topics : topics.slice(1)
   const indexedInputs: [abitype.AbiEventParameter, number][] = []
-  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedInputs: [abitype.AbiEventParameter, number][] = []
   const missingIndexedInputs: [abitype.AbiEventParameter, number][] = []
   for (let i = 0; i < inputs.length; i++) {
     const input = inputs[i]!
     if ('indexed' in input && input.indexed) indexedInputs.push([input, i])
-    else nonIndexedInputs.push(input)
+    else nonIndexedInputs.push([input, i])
   }
 
   for (let i = 0; i < indexedInputs.length; i++) {
@@ -1054,9 +1071,10 @@ function decodeForExtract(
     })
   }
 
-  const inputsToDecode = strict
+  const dataInputs = strict
     ? nonIndexedInputs
-    : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs]
+    : [...missingIndexedInputs, ...nonIndexedInputs]
+  const inputsToDecode = dataInputs.map(([param]) => param)
 
   if (inputsToDecode.length > 0) {
     if (data && data !== '0x') {
@@ -1064,25 +1082,9 @@ function decodeForExtract(
         const decodedData = AbiParameters.decode(inputsToDecode, data, {
           checksumAddress: options.checksumAddress,
         })
-        if (decodedData) {
-          let dataIndex = 0
-          if (!strict) {
-            for (const [param, index] of missingIndexedInputs) {
-              args[isUnnamed ? index : param.name || index] =
-                decodedData[dataIndex++]
-            }
-          }
-          if (isUnnamed) {
-            for (let i = 0; i < inputs.length; i++)
-              if (args[i] === undefined && dataIndex < decodedData.length)
-                args[i] = decodedData[dataIndex++]
-          } else {
-            for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const input = nonIndexedInputs[i]!
-              args[input.name!] = decodedData[dataIndex++]
-            }
-          }
-        }
+        if (decodedData)
+          for (const [i, [param, index]] of dataInputs.entries())
+            args[isUnnamed ? index : param.name || index] = decodedData[i]
       } catch (err) {
         if (strict) {
           if (
