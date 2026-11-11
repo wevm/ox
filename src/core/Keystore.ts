@@ -9,7 +9,7 @@ import {
 } from '@noble/hashes/scrypt'
 import { sha256 } from '@noble/hashes/sha2'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
@@ -92,7 +92,7 @@ export type ScryptDeriveOpts = BaseDeriveOpts<
  * ```
  *
  * @param keystore - JSON keystore.
- * @param key - Key to use for decryption.
+ * @param key - Key to use for decryption. Must contain at least 32 bytes; the first 32 bytes are used.
  * @param options - Decryption options.
  * @returns Decrypted private key.
  */
@@ -103,6 +103,7 @@ export function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): decrypt.ReturnType<as> {
   const { as = 'Hex' } = options
   const key_ = Bytes.from(typeof key === 'function' ? key() : key)
+  if (key_.length < 32) throw new InvalidKeySizeError({ size: key_.length })
 
   const encKey = Bytes.slice(key_, 0, 16)
   const macKey = Bytes.slice(key_, 16, 32)
@@ -131,6 +132,8 @@ export declare namespace decrypt {
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (as extends 'Hex' ? Hex.Hex : never)
     | (as extends 'Bytes' ? Bytes.Bytes : never)
+
+  type ErrorType = InvalidKeySizeError | Errors.GlobalErrorType
 }
 
 /**
@@ -175,7 +178,7 @@ export declare namespace decrypt {
  * ```
  *
  * @param privateKey - Private key to encrypt.
- * @param key - Key to use for encryption.
+ * @param key - Key to use for encryption. Must contain at least 32 bytes; the first 32 bytes are used.
  * @param options - Encryption options.
  * @returns Encrypted keystore.
  */
@@ -187,6 +190,7 @@ export function encrypt(
   const { id = crypto.randomUUID(), kdf, kdfparams, iv } = options
 
   const key_ = Bytes.from(typeof key === 'function' ? key() : key)
+  if (key_.length < 32) throw new InvalidKeySizeError({ size: key_.length })
   const value_ = Bytes.from(privateKey)
 
   const encKey = Bytes.slice(key_, 0, 16)
@@ -214,6 +218,8 @@ export declare namespace encrypt {
     /** UUID. */
     id?: string | undefined
   }
+
+  type ErrorType = InvalidKeySizeError | Errors.GlobalErrorType
 }
 
 /**
@@ -518,6 +524,37 @@ export declare namespace toKeyAsync {
   type Options = {
     /** Password to derive key from. */
     password: string
+  }
+}
+
+/**
+ * Thrown when a key contains fewer than 32 bytes.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Keystore } from 'ox'
+ *
+ * const [, opts] = Keystore.pbkdf2({
+ *   password: 'testpassword'
+ * })
+ *
+ * Keystore.encrypt('0x01', '0x0123456789abcdef', opts)
+ * // @error: Keystore.InvalidKeySizeError: Key must contain at least 32 bytes. Received 8 bytes.
+ * ```
+ */
+export class InvalidKeySizeError extends Errors.BaseError {
+  override readonly name = 'Keystore.InvalidKeySizeError'
+
+  constructor(options: InvalidKeySizeError.Options) {
+    super(`Key must contain at least 32 bytes. Received ${options.size} bytes.`)
+  }
+}
+
+export declare namespace InvalidKeySizeError {
+  /** Options for `Keystore.InvalidKeySizeError`. */
+  type Options = {
+    /** Received key size. */
+    size: number
   }
 }
 
