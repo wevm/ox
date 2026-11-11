@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vp/test'
+import * as core_Hex from '../../../core/Hex.js'
 import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as z_SignatureEnvelope from '../SignatureEnvelope.js'
 import * as z from 'zod/mini'
@@ -47,6 +48,42 @@ describe('SignatureEnvelope', () => {
     expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, p256)).toEqual(
       core_SignatureEnvelope.fromRpc(p256),
     )
+  })
+
+  test('rejects WebAuthn data above the maximum size', () => {
+    const webAuthn = {
+      pubKeyX: p256.pubKeyX,
+      pubKeyY: p256.pubKeyY,
+      r: p256.r,
+      s: p256.s,
+      type: 'webAuthn',
+    } as const
+    // 37 (authenticatorData) + 16 + length (clientDataJSON) bytes
+    const webauthnData = (length: number) =>
+      core_Hex.concat(
+        `0x${'00'.repeat(37)}`,
+        core_Hex.fromString(JSON.stringify({ challenge: 'a'.repeat(length) })),
+      )
+    const max = { ...webAuthn, webauthnData: webauthnData(1867) }
+    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, max)).toEqual(
+      core_SignatureEnvelope.fromRpc(max),
+    )
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...webAuthn,
+        webauthnData: webauthnData(1868),
+      }).error?.issues,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "custom",
+          "message": "expected at most 1920 bytes",
+          "path": [
+            "webauthnData",
+          ],
+        },
+      ]
+    `)
   })
 
   test('decodes a recursive keychain envelope', () => {
