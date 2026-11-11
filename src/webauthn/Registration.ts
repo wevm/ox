@@ -30,7 +30,9 @@ export type Response<serialized extends boolean = false> = {
   credential: Credential_.Credential<serialized>
   counter: number
   userVerified?: true | undefined
+  /** Whether the credential is currently backed up (BS flag). */
   backedUp?: boolean | undefined
+  /** `'multiDevice'` if the credential is backup eligible (BE flag), otherwise `'singleDevice'`. */
   deviceType?: 'multiDevice' | 'singleDevice' | undefined
 }
 
@@ -747,12 +749,8 @@ export function verify(options: verify.Options): verify.ReturnType {
     },
     counter,
     ...(uv ? { userVerified: true as const } : {}),
-    ...(be ? { backedUp: bs } : {}),
-    ...(be
-      ? {
-          deviceType: bs ? ('multiDevice' as const) : ('singleDevice' as const),
-        }
-      : {}),
+    backedUp: bs,
+    deviceType: be ? 'multiDevice' : 'singleDevice',
   }
 }
 
