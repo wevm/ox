@@ -680,6 +680,24 @@ describe('domainSeparator', () => {
       `"0x2fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413"`,
     )
   })
+
+  test('behavior: string chainId', () => {
+    const domain = {
+      name: 'Ether Mail',
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+    } as const
+
+    expect(
+      TypedData.domainSeparator({ ...domain, chainId: 1 }),
+    ).toMatchInlineSnapshot(
+      `"0xcbea6135f3930521627c49608c80b1e98ac5e9966ebf71d0d52f39fa5acc7a58"`,
+    )
+    expect(
+      TypedData.domainSeparator({ ...domain, chainId: '1' } as never),
+    ).toMatchInlineSnapshot(
+      `"0xcbea6135f3930521627c49608c80b1e98ac5e9966ebf71d0d52f39fa5acc7a58"`,
+    )
+  })
 })
 
 describe('encode', () => {
@@ -980,6 +998,58 @@ describe('extractEip712DomainTypes', () => {
       ]
     `)
   })
+
+  test('behavior: string chainId', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({
+        chainId: '1',
+        name: 'Ether Mail',
+      } as never),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "name",
+          "type": "string",
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+        },
+      ]
+    `)
+  })
+
+  test('behavior: empty verifyingContract and salt', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({
+        salt: '',
+        verifyingContract: '',
+      } as never),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "verifyingContract",
+          "type": "address",
+        },
+        {
+          "name": "salt",
+          "type": "bytes32",
+        },
+      ]
+    `)
+  })
+
+  test('behavior: null and undefined fields are omitted', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({
+        chainId: undefined,
+        name: null,
+        salt: undefined,
+        verifyingContract: null,
+        version: undefined,
+      } as never),
+    ).toMatchInlineSnapshot(`[]`)
+  })
 })
 
 describe('getSignPayload', () => {
@@ -1079,6 +1149,97 @@ describe('getSignPayload', () => {
     const hashWithBigint = TypedData.getSignPayload(typedDataWithBigintChainId)
 
     expect(hashWithNumber).toBe(hashWithBigint)
+  })
+
+  test('domain: string chainId produces same hash as number chainId', () => {
+    const value = {
+      domain: {
+        chainId: 1,
+        name: 'Ether Mail',
+        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+      },
+      message: { contents: 'Hello, Bob!' },
+      primaryType: 'Mail',
+      types: { Mail: [{ name: 'contents', type: 'string' }] },
+    } as const
+    const { chainId: _, ...domain } = value.domain
+
+    expect(TypedData.getSignPayload(value)).toMatchInlineSnapshot(
+      `"0x653cec21fbc0c9034d94bc61d4d36850d0455272dcec0d1655a008c81193701f"`,
+    )
+    expect(
+      TypedData.getSignPayload({
+        ...value,
+        domain: { ...domain, chainId: '1' },
+      } as never),
+    ).toMatchInlineSnapshot(
+      `"0x653cec21fbc0c9034d94bc61d4d36850d0455272dcec0d1655a008c81193701f"`,
+    )
+    expect(
+      TypedData.getSignPayload({
+        ...value,
+        domain: { ...domain, chainId: '0x1' },
+      } as never),
+    ).toMatchInlineSnapshot(
+      `"0x653cec21fbc0c9034d94bc61d4d36850d0455272dcec0d1655a008c81193701f"`,
+    )
+    expect(
+      TypedData.getSignPayload({ ...value, domain }),
+    ).toMatchInlineSnapshot(
+      `"0xa892aed0abd1aabdd57495f612097d467c47042ae2dbe1a98be9c5291eee51fb"`,
+    )
+  })
+
+  test('domain: string chainId survives a serialize round trip', () => {
+    const value = {
+      domain: { chainId: 1n, name: 'Ether Mail' },
+      message: { contents: 'Hello, Bob!' },
+      primaryType: 'Mail',
+      types: { Mail: [{ name: 'contents', type: 'string' }] },
+    } as const
+
+    expect(
+      TypedData.getSignPayload(JSON.parse(TypedData.serialize(value))),
+    ).toBe(TypedData.getSignPayload(value))
+  })
+
+  test('domain: non-numeric string chainId', () => {
+    expect(() =>
+      TypedData.getSignPayload({
+        domain: { chainId: 'abc', name: 'Ether Mail' },
+        message: { contents: 'Hello, Bob!' },
+        primaryType: 'Mail',
+        types: { Mail: [{ name: 'contents', type: 'string' }] },
+      } as never),
+    ).toThrow(SyntaxError)
+  })
+
+  test('domain: empty verifyingContract', () => {
+    expect(() =>
+      TypedData.getSignPayload({
+        domain: { name: 'Ether Mail', verifyingContract: '' },
+        message: { contents: 'Hello, Bob!' },
+        primaryType: 'Mail',
+        types: { Mail: [{ name: 'contents', type: 'string' }] },
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('domain: empty salt', () => {
+    expect(() =>
+      TypedData.getSignPayload({
+        domain: { name: 'Ether Mail', salt: '' },
+        message: { contents: 'Hello, Bob!' },
+        primaryType: 'Mail',
+        types: { Mail: [{ name: 'contents', type: 'string' }] },
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TypedData.BytesSizeMismatchError: Expected bytes32, got bytes-1.]`,
+    )
   })
 
   test('minimal valid typed message', () => {
