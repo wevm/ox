@@ -225,6 +225,15 @@ describe('encode', () => {
     expect(() => Cbor.encode(num)).toThrow(Cbor.NumberTooLargeError)
   })
 
+  test('number too large error names the encodable range', () => {
+    expect(() => Cbor.encode(0x100000000)).toThrow(
+      'Number is outside the encodable integer range (-4294967296 to 4294967295): 4294967296',
+    )
+    expect(() => Cbor.encode(-0x100000001)).toThrow(
+      'Number is outside the encodable integer range (-4294967296 to 4294967295): -4294967297',
+    )
+  })
+
   test('bigint throws', () => {
     expect(() => Cbor.encode(BigInt(42))).toThrow(Cbor.UnsupportedBigIntError)
   })
