@@ -41,8 +41,8 @@ export const mode = {
  * Decodes calls from ERC-7821 `execute` function data.
  *
  * Decodes the single batch modes only (`mode.default` and `mode.opData`). Throws
- * {@link ox#Execute.UnsupportedModeError} for the "batch of batches" mode (use
- * {@link ox#Execute.decodeBatchOfBatchesData} instead) and for unknown modes.
+ * `Execute.UnsupportedModeError` for the "batch of batches" mode (use
+ * `Execute.decodeBatchOfBatchesData` instead) and for unknown modes.
  *
  * @example
  * ```ts twoslash
@@ -80,7 +80,7 @@ export declare namespace decodeData {
 /**
  * Decodes batches from ERC-7821 `execute` function data in "batch of batches" mode.
  *
- * Throws {@link ox#Execute.UnsupportedModeError} for any other mode.
+ * Throws `Execute.UnsupportedModeError` for any other mode.
  *
  * @example
  * ```ts twoslash
@@ -251,7 +251,7 @@ export class UnsupportedModeError extends Errors.BaseError {
 }
 
 export declare namespace UnsupportedModeError {
-  /** Options for {@link ox#Execute.UnsupportedModeError}. */
+  /** Options for `Execute.UnsupportedModeError`. */
   type Options = {
     /** Mode of the `execute` function data. */
     mode: Hex.Hex
