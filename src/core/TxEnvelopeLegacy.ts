@@ -111,7 +111,12 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Bytes.Bytes[]
 
-  if (!(tuple.length === 6 || tuple.length === 9))
+  if (
+    !Array.isArray(tuple) ||
+    !(tuple.length === 6 || tuple.length === 9) ||
+    // Every field is a byte string, never a nested list.
+    tuple.some((item) => !(item instanceof Uint8Array))
+  )
     throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         nonce,
@@ -144,17 +149,45 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
   if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
   const value_ = Tx.bytesToBigIntOrUndefined(value)
   if (value_ !== undefined) transaction.value = value_
+  // `gasPrice`, `r` and `s` are bounded by byte length, so that an oversized
+  // value is rejected before it is converted.
+  if ((gasPrice as Bytes.Bytes).length > 32)
+    throw new TransactionEnvelope.GasPriceTooHighError()
   const gasPrice_ = Tx.bytesToBigIntOrUndefined(gasPrice)
   if (gasPrice_ !== undefined) transaction.gasPrice = gasPrice_
 
-  if (tuple.length === 6) return transaction
+  if (tuple.length === 6) {
+    assert(transaction)
+    return transaction
+  }
 
-  const chainIdOrV = Tx.bytesToNumberOrUndefined(chainIdOrV_) ?? 0
+  // `chainId` and `yParity` are derived from `v` as a number, so `v` must be a
+  // safe integer (which fits in 7 bytes).
+  const chainIdOrV =
+    (chainIdOrV_ as Bytes.Bytes).length > 7
+      ? Number.NaN
+      : (Tx.bytesToNumberOrUndefined(chainIdOrV_) ?? 0)
+  if (!Number.isSafeInteger(chainIdOrV))
+    throw new TransactionEnvelope.InvalidSerializedError({
+      attributes: {},
+      serialized,
+      type,
+    })
 
   if ((s as Bytes.Bytes).length === 0 && (r as Bytes.Bytes).length === 0) {
     if (chainIdOrV > 0) transaction.chainId = Number(chainIdOrV)
+    assert(transaction)
     return transaction
   }
+
+  if ((r as Bytes.Bytes).length > 32)
+    throw new Signature.InvalidRError({
+      value: Tx.bytesToHex(r as Bytes.Bytes),
+    })
+  if ((s as Bytes.Bytes).length > 32)
+    throw new Signature.InvalidSError({
+      value: Tx.bytesToHex(s as Bytes.Bytes),
+    })
 
   const v = chainIdOrV
   const chainId: number | undefined = Math.floor((v - 35) / 2)
