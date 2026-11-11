@@ -307,7 +307,7 @@ export type Type = (typeof types)[number]
  * ```
  *
  * @param envelope - The signature envelope to assert.
- * @throws `CoercionError` if the envelope type cannot be determined.
+ * @throws `CoercionError` if the envelope type cannot be determined or is not supported.
  */
 export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
   const type = getType(envelope)
@@ -372,6 +372,8 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     assertConfigurable(configurable)
     return
   }
+
+  throw new CoercionError({ envelope })
 }
 
 export declare namespace assert {
