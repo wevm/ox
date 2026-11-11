@@ -426,11 +426,18 @@ export function hash<presign extends boolean = false>(
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
+  const { chainId, v } = envelope
   return Hash.keccak256(
     serialize({
       ...envelope,
       ...(presign
         ? {
+            // An EIP-155 `v` carries the chain ID when `chainId` is absent.
+            chainId:
+              chainId ??
+              (typeof v === 'number' && v >= 37
+                ? Math.floor((v - 35) / 2)
+                : undefined),
             r: undefined,
             s: undefined,
             yParity: undefined,
