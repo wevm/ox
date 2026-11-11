@@ -509,6 +509,50 @@ describe('hash', () => {
       `"0x5e427e088ae00b084b41e198c52440aa43b2d6f8f1f01246fd25d4e9b6ebfdab"`,
     )
   })
+
+  test('options: presign: chain ID carried by `v`', () => {
+    const unsigned = {
+      gas: 21000n,
+      gasPrice: 1000000000n,
+      nonce: 665n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000000000000000000n,
+    } as const
+    const payload = TxEnvelopeLegacy.getSignPayload(
+      TxEnvelopeLegacy.from({ ...unsigned, chainId: 1 }),
+    )
+    const { r, s, yParity } = Secp256k1.sign({
+      payload,
+      privateKey: accounts[0].privateKey,
+    })
+
+    // EIP-155 `v`, no `chainId`
+    const envelope = TxEnvelopeLegacy.from({
+      ...unsigned,
+      r,
+      s,
+      v: 37 + yParity,
+    })
+    expect(
+      TxEnvelopeLegacy.hash(envelope, { presign: true }),
+    ).toMatchInlineSnapshot(
+      `"0x4c1dec0d90aa1a17cb0aa735b5550e43a1bd27cd1cacb8987522576fa6220e46"`,
+    )
+    expect(TxEnvelopeLegacy.hash(envelope, { presign: true })).toBe(payload)
+    expect(TxEnvelopeLegacy.getSignPayload(envelope)).toBe(
+      TxEnvelopeLegacy.getSignPayload(
+        TxEnvelopeLegacy.deserialize(TxEnvelopeLegacy.serialize(envelope)),
+      ),
+    )
+
+    // pre-EIP-155 `v`, no `chainId`
+    expect(
+      TxEnvelopeLegacy.hash(
+        TxEnvelopeLegacy.from({ ...unsigned, r, s, v: 27 + yParity }),
+        { presign: true },
+      ),
+    ).toBe(TxEnvelopeLegacy.getSignPayload(TxEnvelopeLegacy.from(unsigned)))
+  })
 })
 
 describe('serialize', () => {
