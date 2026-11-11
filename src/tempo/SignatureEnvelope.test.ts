@@ -488,6 +488,23 @@ describe('assert', () => {
       `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"r":"0x0000000000000000000000000000000000000000000000000000000000000000","s":"0x0000000000000000000000000000000000000000000000000000000000000000"}\`) to a valid signature envelope.]`,
     )
   })
+
+  test('error: throws on unsupported type', () => {
+    expect(() =>
+      SignatureEnvelope.assert({ type: 'webauthn' } as any),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"type":"webauthn"}\`) to a valid signature envelope.]`,
+    )
+    expect(() =>
+      SignatureEnvelope.assert({
+        inner: { type: 'bogus' },
+        type: 'keychain',
+        userAddress: '0x1234567890123456789012345678901234567890',
+      } as any),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"type":"bogus"}\`) to a valid signature envelope.]`,
+    )
+  })
 })
 
 describe('deserialize', () => {
@@ -1929,6 +1946,17 @@ describe('validate', () => {
 
   test('behavior: returns false for invalid envelope', () => {
     expect(SignatureEnvelope.validate({} as any)).toBe(false)
+  })
+
+  test('behavior: returns false for unsupported type', () => {
+    expect(SignatureEnvelope.validate({ type: 'webauthn' } as any)).toBe(false)
+    expect(
+      SignatureEnvelope.validate({
+        inner: { type: 'bogus' },
+        type: 'keychain',
+        userAddress: '0x1234567890123456789012345678901234567890',
+      } as any),
+    ).toBe(false)
   })
 
   test('behavior: returns false for incomplete signature', () => {
