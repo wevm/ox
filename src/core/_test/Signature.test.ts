@@ -92,6 +92,54 @@ describe('assert', () => {
       '[Signature.InvalidSError: Value `0x10000000000000000000000000000000000000000000000000000000000000000` is an invalid s value. s must be a positive integer less than 2^256.]',
     )
   })
+
+  test('error: yParity that is not exactly 0 or 1', () => {
+    const r =
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
+    const s =
+      '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
+
+    expect(() =>
+      Signature.assert({ r, s, yParity: '0x1' as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`0x1\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.assert({ r, s, yParity: 1n as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`1\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.assert({ r, s, yParity: true as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`true\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.assert({ r, s, yParity: null as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`null\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.assert({ r, s, yParity: {} as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`[object Object]\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
+
+  test('options: recovered: null yParity is missing', () => {
+    expect(() =>
+      Signature.assert(
+        {
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          yParity: null as never,
+        },
+        { recovered: true },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.MissingPropertiesError: Signature \`{"r":"0x0000000000000000000000000000000000000000000000000000000000000000","s":"0x0000000000000000000000000000000000000000000000000000000000000000","yParity":null}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+    )
+  })
 })
 
 describe('fromHex', () => {
@@ -994,6 +1042,34 @@ describe('toTuple', () => {
     ]
   `)
   })
+
+  test('error: yParity that is not exactly 0 or 1', () => {
+    const r =
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
+    const s =
+      '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
+
+    expect(() =>
+      Signature.toTuple({ r, s, yParity: 27 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`27\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.toTuple({ r, s, yParity: 27n as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`27\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.toTuple({ r, s, yParity: '0x0' as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`0x0\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      Signature.toTuple({ r, s } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.MissingPropertiesError: Signature \`{"r":"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf","s":"0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+    )
+  })
 })
 
 describe('validate', () => {
@@ -1012,6 +1088,32 @@ describe('validate', () => {
         yParity: 0,
       }),
     ).toBe(false)
+  })
+
+  test('behavior: yParity that is not exactly 0 or 1', () => {
+    const r =
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
+    const s =
+      '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
+
+    expect(
+      [2, '0x5', 2n, 27n, true, null, {}].map((yParity) =>
+        Signature.validate({ r, s, yParity: yParity as never }),
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+      ]
+    `)
+    expect(
+      Signature.validate({ r, s, yParity: null as never }, { recovered: true }),
+    ).toMatchInlineSnapshot(`false`)
   })
 })
 

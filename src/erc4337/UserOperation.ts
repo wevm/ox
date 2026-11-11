@@ -612,10 +612,9 @@ export function hash<
         callGasLimit,
       )
       const gasFees = packUint128Pair(maxPriorityFeePerGas, maxFeePerGas)
-      const initCode_hashed =
-        factory && factoryData
-          ? Hash.keccak256(Hex.concat(factory, factoryData))
-          : EMPTY_KECCAK
+      const initCode_hashed = Hash.keccak256(
+        toInitCode({ factory, factoryData }),
+      )
       const paymasterAndData_hashed = paymaster
         ? Hash.keccak256(
             Hex.concat(

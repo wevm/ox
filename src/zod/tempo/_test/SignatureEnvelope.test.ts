@@ -143,7 +143,7 @@ describe('SignatureEnvelope', () => {
 })
 
 describe('Keychain', () => {
-  test('rejects V1 wrappers with nested configurable delegates', () => {
+  test('rejects keychain wrappers around keychain-wrapped configurable delegates', () => {
     const inner = {
       inner: envelope,
       type: 'keychain',
@@ -179,12 +179,12 @@ describe('Keychain', () => {
         ...value,
         version: 'v2',
       }).success,
-    ).toMatchInlineSnapshot(`true`)
+    ).toMatchInlineSnapshot(`false`)
     expect(
       z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
         ...rpc,
         version: 'v2',
       }).success,
-    ).toMatchInlineSnapshot(`true`)
+    ).toMatchInlineSnapshot(`false`)
   })
 })

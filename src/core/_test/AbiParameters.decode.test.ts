@@ -1558,6 +1558,56 @@ test('data size too small', () => {
   `)
 })
 
+test('data size too small: fixed-size bytes', () => {
+  expect(
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef00000000000000000000000000000000000000000000000000000000',
+    ),
+  ).toMatchInlineSnapshot(`
+    [
+      1n,
+      "0xdeadbeef",
+    ]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 36 bytes is too small for given parameters.
+
+    Params: (uint256, bytes4)
+    Data:   0x0000000000000000000000000000000000000000000000000000000000000001deadbeef (36 bytes)]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[2]'),
+      '0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 36 bytes is too small for given parameters.
+
+    Params: (bytes4[2])
+    Data:   0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe (36 bytes)]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[]'),
+      '0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 68 bytes is too small for given parameters.
+
+    Params: (bytes4[])
+    Data:   0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef (68 bytes)]
+  `)
+})
+
 test('invalid type', () => {
   expect(() =>
     AbiParameters.decode(
@@ -1800,6 +1850,66 @@ test('recursive 2', () => {
   ).toThrowErrorMatchingInlineSnapshot(
     '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
+})
+
+describe('read size', () => {
+  test('behavior: parameters sharing one tail', () => {
+    expect(
+      AbiParameters.decode(
+        AbiParameters.from('bytes, string, bytes'),
+        Hex.concat(
+          '0x0000000000000000000000000000000000000000000000000000000000000060', // ptr
+          '0x0000000000000000000000000000000000000000000000000000000000000060', // same ptr
+          '0x0000000000000000000000000000000000000000000000000000000000000060', // same ptr
+          '0x0000000000000000000000000000000000000000000000000000000000000004', // len=4
+          '0x7761676d00000000000000000000000000000000000000000000000000000000',
+        ),
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "0x7761676d",
+        "wagm",
+        "0x7761676d",
+      ]
+    `)
+  })
+
+  test('behavior: array elements sharing one tail', () => {
+    const length = 1_000
+    const tail = Hex.fromBytes(new Uint8Array(256).fill(0xab))
+    // Each element points at the tail that follows the offsets.
+    const offset = Hex.fromNumber(32 * length, { size: 32 })
+    const data = Hex.concat(
+      Hex.fromNumber(32, { size: 32 }), // ptr
+      Hex.fromNumber(length, { size: 32 }), // len
+      ...Array.from({ length }, () => offset),
+      Hex.fromNumber(256, { size: 32 }), // len of tail
+      tail,
+    )
+    const [value] = AbiParameters.decode(AbiParameters.from('bytes[]'), data)
+    expect(value).toEqual(Array.from({ length }, () => tail))
+  })
+
+  test('error: array elements with overlapping tails', () => {
+    // Each element starts 33 bytes after the previous one and runs to the end
+    // of the data.
+    const length = 512
+    const start = 64 + 32 * length
+    const data = new Uint8Array(start + 33 * length)
+    const view = new DataView(data.buffer)
+    view.setUint32(28, 32) // ptr
+    view.setUint32(60, length) // len
+    for (let i = 0; i < length; i++) {
+      const position = start + 33 * i
+      view.setUint32(64 + 32 * i + 28, position - 64)
+      view.setUint32(position + 28, data.length - position - 32)
+    }
+    expect(() =>
+      AbiParameters.decode(AbiParameters.from('bytes[]'), data),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`1329152\` bytes exceeded (read size: \`1335257\` bytes).]`,
+    )
+  })
 })
 
 describe('zero-width types', () => {

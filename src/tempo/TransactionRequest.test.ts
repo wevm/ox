@@ -186,6 +186,36 @@ describe('fromRpc', () => {
     const request = TransactionRequest.fromRpc({})
     expect(request).toMatchInlineSnapshot('{}')
   })
+
+  test('behavior: fee payer signature', () => {
+    const feePayerSignature = {
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000001',
+    } as const
+    expect(
+      TransactionRequest.fromRpc({
+        feePayerSignature: { ...feePayerSignature, yParity: '0x1' },
+        type: '0x76',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "feePayerSignature": {
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "yParity": 1,
+        },
+        "type": "tempo",
+      }
+    `)
+    expect(() =>
+      TransactionRequest.fromRpc({
+        feePayerSignature: { ...feePayerSignature, yParity: '0x2' },
+        type: '0x76',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
 })
 
 describe('toRpc', () => {

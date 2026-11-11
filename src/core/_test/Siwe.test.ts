@@ -442,6 +442,27 @@ describe('createMessage', () => {
   `)
   })
 
+  test('behavior: invalid requestId', () => {
+    expect(() => Siwe.createMessage({ ...message, requestId: 'foo\nbar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "requestId".
+
+      - Request ID must not include '\\n' or '\\r'.
+
+      Provided value: foo
+      bar]
+    `)
+    expect(() => Siwe.createMessage({ ...message, requestId: 'foo\rbar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "requestId".
+
+      - Request ID must not include '\\n' or '\\r'.
+
+      Provided value: foo
+      bar]
+    `)
+  })
+
   test('behavior: invalid resources', () => {
     expect(() =>
       Siwe.createMessage({
@@ -1013,6 +1034,76 @@ Request ID: 123e4567-e89b-12d3-a456-426614174000`
     const parsed = Siwe.parseMessage(message)
     expect(parsed).toMatchInlineSnapshot('{}')
   })
+
+  test.each([
+    {
+      name: 'expirationTime after notBefore',
+      tail: '\nNot Before: 2023-02-01T00:00:00.000Z\nExpiration Time: 2023-03-01T00:00:00.000Z',
+    },
+    {
+      name: 'expirationTime after requestId',
+      tail: '\nRequest ID: foo\nExpiration Time: 2023-03-01T00:00:00.000Z',
+    },
+    {
+      name: 'notBefore after resources',
+      tail: '\nResources:\n- https://example.com/foo\nNot Before: 2023-02-01T00:00:00.000Z',
+    },
+    {
+      name: 'blank line before expirationTime',
+      tail: '\n\nExpiration Time: 2023-03-01T00:00:00.000Z',
+    },
+    {
+      name: 'unknown field label',
+      tail: '\nExpiration  Time: 2023-03-01T00:00:00.000Z',
+    },
+    { name: 'trailing line feed', tail: '\n' },
+  ])('behavior: text after the suffix ($name)', ({ tail }) => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+I accept the ExampleOrg Terms of Service: https://example.com/tos
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z`
+    expect(Siwe.parseMessage(message + tail)).toEqual({})
+  })
+
+  test('behavior: text between the prefix and the suffix', () => {
+    const message = `example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+I accept the ExampleOrg Terms of Service: https://example.com/tos
+
+foo
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z`
+    expect(Siwe.parseMessage(message)).toMatchInlineSnapshot('{}')
+  })
+
+  test('behavior: text before the suffix without a prefix', () => {
+    const message = `foo
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z`
+    expect(Siwe.parseMessage(message)).toMatchInlineSnapshot('{}')
+  })
+
+  test(
+    'behavior: long message of repeated field labels',
+    { timeout: 5_000 },
+    () => {
+      const message = 'URI: '.repeat(60_000)
+      expect(Siwe.parseMessage(message)).toMatchInlineSnapshot('{}')
+    },
+  )
 })
 
 describe('validateMessage', () => {
@@ -1128,6 +1219,38 @@ Issued At: 2023-02-01T00:00:00.000Z`)
           expirationTime: new Date(Date.UTC(2024, 1, 1)),
         },
         time: new Date(Date.UTC(2025, 1, 1)),
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: parsed message with expirationTime out of order', () => {
+    const message = Siwe.createMessage({
+      address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+      chainId: 1,
+      domain: 'example.com',
+      issuedAt: new Date(Date.UTC(2024, 0, 1)),
+      nonce: 'foobarbaz',
+      uri: 'https://example.com/path',
+      version: '1',
+    })
+    const time = new Date(Date.UTC(2025, 1, 1))
+    expect(
+      Siwe.validateMessage({ message: Siwe.parseMessage(message), time }),
+    ).toBeTruthy()
+    expect(
+      Siwe.validateMessage({
+        message: Siwe.parseMessage(
+          `${message}\nExpiration Time: 2024-02-01T00:00:00.000Z`,
+        ),
+        time,
+      }),
+    ).toBeFalsy()
+    expect(
+      Siwe.validateMessage({
+        message: Siwe.parseMessage(
+          `${message}\nNot Before: 2024-01-01T00:00:00.000Z\nExpiration Time: 2024-02-01T00:00:00.000Z`,
+        ),
+        time,
       }),
     ).toBeFalsy()
   })

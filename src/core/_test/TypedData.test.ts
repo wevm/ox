@@ -200,6 +200,23 @@ describe('assert', () => {
     )
   })
 
+  test('bytes odd length', () => {
+    expect(() =>
+      TypedData.assert({
+        message: { hash: '0x123' },
+        primaryType: 'Foo',
+        types: {
+          EIP712Domain: [],
+          Foo: [{ name: 'hash', type: 'bytes2' }],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+      It must be an even length.]
+    `)
+  })
+
   test('domain: invalid', () => {
     expect(() =>
       TypedData.assert({
