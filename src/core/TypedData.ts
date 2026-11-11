@@ -375,6 +375,8 @@ export declare namespace encodeType {
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
  *
+ * A field is part of the schema when it is present on the domain (not `undefined` or `null`).
+ *
  * @example
  * ```ts twoslash
  * import { TypedData } from 'ox'
@@ -400,18 +402,14 @@ export function extractEip712DomainTypes(
   domain: Domain | undefined,
 ): Parameter[] {
   return [
-    typeof domain?.name === 'string' && { name: 'name', type: 'string' },
-    typeof domain?.version === 'string' && { name: 'version', type: 'string' },
-    (typeof domain?.chainId === 'number' ||
-      typeof domain?.chainId === 'bigint') && {
-      name: 'chainId',
-      type: 'uint256',
-    },
-    domain?.verifyingContract && {
+    domain?.name != null && { name: 'name', type: 'string' },
+    domain?.version != null && { name: 'version', type: 'string' },
+    domain?.chainId != null && { name: 'chainId', type: 'uint256' },
+    domain?.verifyingContract != null && {
       name: 'verifyingContract',
       type: 'address',
     },
-    domain?.salt && { name: 'salt', type: 'bytes32' },
+    domain?.salt != null && { name: 'salt', type: 'bytes32' },
   ].filter(Boolean) as Parameter[]
 }
 
