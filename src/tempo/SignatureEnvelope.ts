@@ -27,6 +27,12 @@ const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
 const serializedConfigurableType = '0x05'
 
+/**
+ * Maximum WebAuthn signature size in bytes, excluding the type identifier
+ * (Tempo's `MAX_WEBAUTHN_SIGNATURE_LENGTH`).
+ */
+const maxWebAuthnSize = 2048
+
 type EnvelopeOneOf<
   union extends object,
   keys extends PropertyKey,
@@ -307,7 +313,7 @@ export type Type = (typeof types)[number]
  * ```
  *
  * @param envelope - The signature envelope to assert.
- * @throws `CoercionError` if the envelope type cannot be determined.
+ * @throws `CoercionError` if the envelope type cannot be determined or is not supported.
  */
 export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
   const type = getType(envelope)
@@ -362,7 +368,7 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    assertKeychainVersion(keychain)
+    assertKeychainInner(keychain)
     assert(keychain.inner)
     return
   }
@@ -372,6 +378,8 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     assertConfigurable(configurable)
     return
   }
+
+  throw new CoercionError({ envelope })
 }
 
 export declare namespace assert {
@@ -385,11 +393,13 @@ export declare namespace assert {
     | Errors.GlobalErrorType
 }
 
-function assertKeychainVersion(keychain: Keychain): void {
-  if (keychain.version !== 'v1') return
-  let inner = keychain.inner
-  while (getType(inner) === 'keychain') inner = (inner as Keychain).inner
-  if (getType(inner) === 'configurable')
+function assertKeychainInner(keychain: Keychain): void {
+  const type = getType(keychain.inner)
+  if (type === 'keychain')
+    throw new InvalidApprovalError({
+      reason: 'keychain signatures cannot wrap a keychain signature',
+    })
+  if (keychain.version === 'v1' && type === 'configurable')
     throw new InvalidApprovalError({
       reason: 'configurable access keys require keychain V2',
     })
@@ -642,9 +652,15 @@ function deserialize_(value: Serialized): SignatureEnvelope {
   if (typeId === serializedWebAuthnType) {
     // WebAuthn: variable (webauthnData) + 32 (r) + 32 (s) + 32 (pubKeyX) + 32 (pubKeyY)
     // Minimum: 128 bytes (at least some authenticator data + signature components)
+    // Maximum: 2048 bytes
     if (dataSize < 128)
       throw new InvalidSerializedError({
         reason: `Invalid WebAuthn signature envelope size: expected at least 128 bytes, got ${dataSize} bytes`,
+        serialized,
+      })
+    if (dataSize > maxWebAuthnSize)
+      throw new InvalidSerializedError({
+        reason: `Invalid WebAuthn signature envelope size: expected at most ${maxWebAuthnSize} bytes, got ${dataSize} bytes`,
         serialized,
       })
 
@@ -708,11 +724,22 @@ function deserialize_(value: Serialized): SignatureEnvelope {
     typeId === serializedKeychainV2Type
   ) {
     const userAddress = Hex.slice(data, 0, 20)
-    const inner = deserialize_(Hex.slice(data, 20))
+    const inner = Hex.slice(data, 20)
+    // Reject nested keychains before decoding their contents.
+    if (
+      Hex.size(inner) !== 65 &&
+      [serializedKeychainType, serializedKeychainV2Type].includes(
+        Hex.slice(inner, 0, 1),
+      )
+    )
+      throw new InvalidSerializedError({
+        reason: 'keychain signatures cannot wrap a keychain signature',
+        serialized,
+      })
 
     const envelope = {
       userAddress,
-      inner,
+      inner: deserialize_(inner),
       type: 'keychain',
       version: typeId === serializedKeychainV2Type ? 'v2' : 'v1',
     } satisfies Keychain
@@ -1079,6 +1106,13 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     const webauthnData = envelope.webauthnData
     const webauthnDataSize = Hex.size(webauthnData)
 
+    // The signature and public key take 128 bytes of the maximum size.
+    if (webauthnDataSize > maxWebAuthnSize - 128)
+      throw new InvalidSerializedError({
+        reason: `Invalid WebAuthn data size: expected at most ${maxWebAuthnSize - 128} bytes, got ${webauthnDataSize} bytes`,
+        serialized: webauthnData,
+      })
+
     // Parse webauthnData into authenticatorData and clientDataJSON
     let authenticatorData: Hex.Hex | undefined
     let clientDataJSON: string | undefined
@@ -1126,10 +1160,20 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     ('userAddress' in envelope && 'signature' in envelope)
   ) {
     const keychain = envelope as KeychainRpc
+    const { signature } = keychain
+    // Reject nested keychains before decoding their contents.
+    if (
+      typeof signature === 'object' &&
+      (signature.type === 'keychain' ||
+        ('userAddress' in signature && 'signature' in signature))
+    )
+      throw new InvalidApprovalError({
+        reason: 'keychain signatures cannot wrap a keychain signature',
+      })
     const result = {
       type: 'keychain',
       userAddress: keychain.userAddress,
-      inner: fromRpc(keychain.signature),
+      inner: fromRpc(signature),
       ...(keychain.keyId ? { keyId: keychain.keyId } : {}),
       ...(keychain.version ? { version: keychain.version } : {}),
     } satisfies Keychain
@@ -1460,7 +1504,7 @@ export function toRpc<const envelope extends toRpc.Input>(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    assertKeychainVersion(keychain)
+    assertKeychainInner(keychain)
     return {
       type: 'keychain',
       userAddress: keychain.userAddress,

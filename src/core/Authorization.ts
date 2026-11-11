@@ -1,5 +1,5 @@
 import type * as Address from './Address.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import type { Compute, Mutable, Undefined } from './internal/types.js'
@@ -183,7 +183,7 @@ export function fromRpc(authorization: Rpc): Signed {
 
   return {
     address,
-    chainId: Number(chainId),
+    chainId: toChainId(chainId),
     nonce: BigInt(nonce),
     ...signature,
   }
@@ -270,10 +270,14 @@ export declare namespace fromRpcList {
 export function fromTuple<const tuple extends Tuple>(
   tuple: tuple,
 ): fromTuple.ReturnType<tuple> {
+  if (tuple.length !== 3 && tuple.length !== 6)
+    throw new InvalidError(
+      'Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].',
+    )
   const [chainId, address, nonce, yParity, r, s] = tuple
   let args = {
     address,
-    chainId: chainId === '0x' ? 0 : Number(chainId),
+    chainId: chainId === '0x' ? 0 : toChainId(chainId),
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
   }
   if (yParity && r && s) {
@@ -296,7 +300,7 @@ export declare namespace fromTuple {
     Authorization<authorization extends Tuple<true> ? true : false>
   >
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidError | Errors.GlobalErrorType
 }
 
 /**
@@ -646,6 +650,19 @@ export declare namespace toTupleList {
   type ErrorType = Errors.GlobalErrorType
 }
 
+// Converts an EIP-7702 authorization `chainId` to a number, and asserts that
+// it is a safe integer.
+function toChainId(chainId: Hex.Hex) {
+  const value = Number(chainId)
+  if (Number.isSafeInteger(value)) return value
+  throw new Hex.IntegerOutOfRangeError({
+    max: `${Number.MAX_SAFE_INTEGER}`,
+    min: '0',
+    signed: false,
+    value: `${value}`,
+  })
+}
+
 // Asserts that an EIP-7702 authorization `yParity` fits in one byte.
 function assertYParity(yParity: number) {
   if (Number.isInteger(yParity) && yParity >= 0 && yParity < 256) return
@@ -656,4 +673,30 @@ function assertYParity(yParity: number) {
     size: 1,
     value: `${yParity}`,
   })
+}
+
+/**
+ * Thrown when an EIP-7702 Authorization tuple is structurally invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Authorization } from 'ox'
+ *
+ * Authorization.fromTuple([
+ *   '0x1',
+ *   '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   '0x3',
+ *   '0x1'
+ * ])
+ * // @error: Authorization.InvalidError: Invalid authorization.
+ * // @error: Details: Expected [chainId, address, nonce] or [chainId, address, nonce, yParity, r, s].
+ * ```
+ */
+export class InvalidError extends Errors.BaseError {
+  override readonly name = 'Authorization.InvalidError'
+
+  constructor(details: string) {
+    super('Invalid authorization.', { details })
+  }
 }

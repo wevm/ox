@@ -2,7 +2,7 @@ import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as AbiItem from './AbiItem.js'
 import * as AbiParameters from './AbiParameters.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiFunction.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
@@ -158,9 +158,17 @@ export function decodeData(
 
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
 
-  const item = overloads
-    ? fromAbi([abiFunction, ...overloads], data as never)
-    : abiFunction
+  // Hex is case-insensitive. Selectors are lowercase.
+  const selector = Hex.slice(data, 0, 4).toLowerCase() as Hex.Hex
+  const item = [abiFunction, ...(overloads ?? [])].find(
+    (item) => getSelector(item) === selector,
+  )
+  if (!item)
+    throw new SelectorMismatchError({
+      abiFunction,
+      actual: selector,
+      expected: getSelector(abiFunction),
+    })
 
   if (item.inputs.length === 0) return undefined
   if (Hex.size(data) <= 4) return undefined
@@ -187,9 +195,11 @@ export declare namespace decodeData {
 
   type ErrorType =
     | fromAbi.ErrorType
+    | getSelector.ErrorType
     | AbiParameters.decode.ErrorType
     | Hex.size.ErrorType
     | Hex.slice.ErrorType
+    | SelectorMismatchError
     | Errors.GlobalErrorType
 }
 
@@ -1054,4 +1064,66 @@ export function getSelector(abiItem: string | AbiFunction): Hex.Hex {
 
 export declare namespace getSelector {
   type ErrorType = AbiItem.getSelector.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Thrown when the selector of the provided data does not match the selector of the function, or of one of its overloads.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { AbiFunction } from 'ox'
+ *
+ * const transfer = AbiFunction.from(
+ *   'function transfer(address to, uint256 amount)'
+ * )
+ *
+ * AbiFunction.decodeData(
+ *   transfer,
+ *   '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001'
+ * )
+ * // @error: AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xa9059cbb".
+ * // @error: Function: function transfer(address to, uint256 amount)
+ * // @error: Selector: 0xa9059cbb
+ * ```
+ *
+ * ### Solution
+ *
+ * Ensure that the data was encoded for the function.
+ *
+ * ```ts twoslash
+ * import { AbiFunction } from 'ox'
+ *
+ * const transfer = AbiFunction.from(
+ *   'function transfer(address to, uint256 amount)'
+ * )
+ *
+ * AbiFunction.decodeData(
+ *   transfer,
+ *   '0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001'
+ * )
+ * ```
+ */
+export class SelectorMismatchError extends Errors.BaseError {
+  override readonly name = 'AbiFunction.SelectorMismatchError'
+
+  constructor({
+    abiFunction,
+    actual,
+    expected,
+  }: {
+    abiFunction: AbiFunction
+    actual: Hex.Hex
+    expected: Hex.Hex
+  }) {
+    super(
+      `Selector "${actual}" does not match the expected selector "${expected}".`,
+      {
+        metaMessages: [
+          `Function: ${format(abiFunction)}`,
+          `Selector: ${expected}`,
+        ],
+      },
+    )
+  }
 }

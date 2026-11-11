@@ -191,9 +191,7 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
-  }
-
-  if (
+  } else if (
     typeof args === 'object' &&
     !Array.isArray(args) &&
     typeof matchArgs === 'object' &&
@@ -201,7 +199,10 @@ export function assertArgs<const abiEvent extends AbiEvent>(
   )
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
-      const input = abiEvent.inputs.find((input) => input.name === key)
+      // `decode` keys an unnamed input by its index.
+      const input = abiEvent.inputs.find(
+        (input, index) => (input.name || `${index}`) === key,
+      )
       if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
@@ -216,6 +217,20 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
+  // Positional and keyed arguments cannot be compared with each other. A
+  // filter without values matches any arguments.
+  else if (
+    typeof matchArgs === 'object' &&
+    matchArgs !== null &&
+    Object.values(matchArgs).some(
+      (value) => value !== null && value !== undefined,
+    )
+  )
+    throw new ArgsMismatchError({
+      abiEvent,
+      expected: args,
+      given: matchArgs,
+    })
 }
 
 export declare namespace assertArgs {
@@ -268,6 +283,8 @@ export declare namespace assertArgs {
  * ### ABI-shorthand
  *
  * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(decode:function)}:
+ *
+ * When the ABI holds several events with that name, the overload is resolved from the selector in `topics[0]`.
  *
  * ```ts twoslash
  * // @noErrors
@@ -379,7 +396,7 @@ export function decode(
       ]
     | [abiEvent: AbiEvent, log: decode.Log]
 ): decode.ReturnType {
-  const [abiEvent, log] = (() => {
+  const [abiEvent_, log] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name, log] = parameters as [
         Abi.Abi | readonly unknown[],
@@ -392,6 +409,20 @@ export function decode(
   })()
 
   const { data, topics } = log
+
+  // An event extracted by name carries its other overloads, and `topics[0]`
+  // holds the selector of the overload that was emitted. Anonymous overloads
+  // omit the selector topic, so they are never matched by it.
+  const abiEvent = (() => {
+    const { overloads } = abiEvent_ as AbiEvent
+    if (!overloads) return abiEvent_
+    const selector = topics[0]
+    return (
+      [abiEvent_, ...overloads].find(
+        (item) => item.anonymous !== true && getSelector(item) === selector,
+      ) ?? abiEvent_
+    )
+  })()
 
   // Anonymous events omit the selector topic, so every topic is an indexed
   // input.
@@ -488,12 +519,20 @@ export declare namespace decode {
     abiEvent,
     AbiEvent
   > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? undefined
-      : internal.ParametersToPrimitiveTypes<
-          abiEvent['inputs'],
-          { EnableUnion: false; IndexedOnly: false; Required: true }
-        >
+    ? // distribute over the event and its overloads
+        | abiEvent
+        | (abiEvent['overloads'] extends readonly AbiEvent[]
+            ? abiEvent['overloads'][number]
+            : never) extends infer item extends AbiEvent
+      ? item extends AbiEvent
+        ? item['inputs'] extends readonly []
+          ? undefined
+          : internal.ParametersToPrimitiveTypes<
+              item['inputs'],
+              { EnableUnion: false; IndexedOnly: false; Required: true }
+            >
+        : never
+      : never
     : unknown
 
   type ErrorType =

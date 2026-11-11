@@ -280,8 +280,9 @@ export function decodeBytes(
     return [Hex.fromBytes(data), 32]
   }
 
-  const value = Hex.fromBytes(cursor.readBytes(Number.parseInt(size, 10), 32))
-  return [value, 32]
+  // Read the whole slot so that a slot cut short of its padding is out of bounds.
+  const word = cursor.readBytes(32)
+  return [Hex.fromBytes(word.subarray(0, Number.parseInt(size, 10))), 32]
 }
 
 export declare namespace decodeBytes {
@@ -664,6 +665,9 @@ export function encodeBytes(
   const [, parametersize] = type.split('bytes')
   const bytesSize = Hex.size(value)
   if (!parametersize) {
+    // An unpaired nibble has no byte to belong to, so reject it instead of
+    // guessing which half of a byte it is.
+    if (value.length % 2 !== 0) throw new Hex.InvalidLengthError(value)
     let value_ = value
     // If the size is not divisible by 32 bytes, pad the end
     // with empty bytes to the ceiling 32 bytes.
@@ -682,12 +686,14 @@ export function encodeBytes(
       expectedSize: Number.parseInt(parametersize, 10),
       value,
     })
+  if (value.length % 2 !== 0) throw new Hex.InvalidLengthError(value)
   return { dynamic: false, encoded: Hex.padRight(value) }
 }
 
 /** @internal */
 export declare namespace encodeBytes {
   type ErrorType =
+    | Hex.InvalidLengthError
     | Hex.padLeft.ErrorType
     | Hex.padRight.ErrorType
     | Hex.fromNumber.ErrorType
