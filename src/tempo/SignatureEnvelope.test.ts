@@ -677,6 +677,42 @@ describe('deserialize', () => {
       )
     })
 
+    test('error: throws on WebAuthn signature above the maximum size', () => {
+      const authenticatorData = `0x${'00'.repeat(37)}` as const
+      // 37 (authenticatorData) + 1883 (clientDataJSON) + 128 = 2048 bytes
+      const max = {
+        ...signature_webauthn,
+        metadata: {
+          authenticatorData,
+          clientDataJSON: JSON.stringify({ challenge: 'a'.repeat(1867) }),
+        },
+      }
+      const serialized = SignatureEnvelope.serialize(max)
+      expect(Hex.size(serialized)).toMatchInlineSnapshot(`2049`)
+      expect(SignatureEnvelope.deserialize(serialized)).toMatchObject({
+        metadata: max.metadata,
+      })
+
+      expect(() =>
+        SignatureEnvelope.deserialize(
+          SignatureEnvelope.serialize({
+            ...max,
+            metadata: {
+              authenticatorData,
+              clientDataJSON: JSON.stringify({ challenge: 'a'.repeat(1868) }),
+            },
+          }),
+        ),
+      ).toThrow(
+        'Invalid WebAuthn signature envelope size: expected at most 2048 bytes, got 2049 bytes',
+      )
+      expect(() =>
+        SignatureEnvelope.deserialize(`0x02${'41'.repeat(40_000)}`),
+      ).toThrow(
+        'Invalid WebAuthn signature envelope size: expected at most 2048 bytes, got 40000 bytes',
+      )
+    })
+
     test('error: throws on invalid clientDataJSON', () => {
       // Create a signature with invalid JSON (not properly formatted)
       const invalidMetadata = {
@@ -2378,6 +2414,49 @@ describe('fromRpc', () => {
         },
         type: 'webAuthn',
       })
+    })
+
+    test('error: throws on WebAuthn data above the maximum size', () => {
+      const rpc = {
+        pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
+        pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
+        r: Hex.fromNumber(p256Signature.r, { size: 32 }),
+        s: Hex.fromNumber(p256Signature.s, { size: 32 }),
+        type: 'webAuthn',
+      } as const
+      const authenticatorData = `0x${'00'.repeat(37)}` as const
+      const clientDataJSON = JSON.stringify({ challenge: 'a'.repeat(1867) })
+
+      // 37 (authenticatorData) + 1883 (clientDataJSON) = 1920 bytes
+      expect(
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          webauthnData: Hex.concat(
+            authenticatorData,
+            Hex.fromString(clientDataJSON),
+          ),
+        }),
+      ).toMatchObject({ metadata: { authenticatorData, clientDataJSON } })
+
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          webauthnData: Hex.concat(
+            authenticatorData,
+            Hex.fromString(JSON.stringify({ challenge: 'a'.repeat(1868) })),
+          ),
+        }),
+      ).toThrow(
+        'Invalid WebAuthn data size: expected at most 1920 bytes, got 1921 bytes',
+      )
+      expect(() =>
+        SignatureEnvelope.fromRpc({
+          ...rpc,
+          webauthnData: `0x${'41'.repeat(40_000)}`,
+        }),
+      ).toThrow(
+        'Invalid WebAuthn data size: expected at most 1920 bytes, got 40000 bytes',
+      )
     })
   })
 
