@@ -178,6 +178,7 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   const {
     calls,
     chainId,
+    feePayerSignature,
     maxFeePerGas,
     maxPriorityFeePerGas,
     validBefore,
@@ -223,6 +224,10 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
       maxFeePerGas,
       maxPriorityFeePerGas,
     })
+
+  // Validate fee payer signature
+  if (feePayerSignature)
+    Signature.assert(feePayerSignature, { recovered: true })
 }
 
 export declare namespace assert {
@@ -230,6 +235,7 @@ export declare namespace assert {
     | Address.assert.ErrorType
     | CallsEmptyError
     | InvalidValidityWindowError
+    | Signature.assert.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -708,6 +714,7 @@ export function serialize(
     // No fee payer involvement — omit from the envelope.
     if (!feePayerSignature) return '0x'
     // Fee payer has signed — encode the signature as an RLP tuple.
+    Signature.assert(feePayerSignature, { recovered: true })
     return Signature.toTuple(feePayerSignature)
   })()
 
