@@ -1193,6 +1193,26 @@ describe('encode', () => {
     )
   })
 
+  test('error: odd-length indexed bytesN arg', () => {
+    const event = AbiEvent.from(
+      'event Foo(bytes4 indexed a, bytes32 indexed b)',
+    )
+    expect(() =>
+      AbiEvent.encode(event, { a: '0x1234567' }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x1234567"\` is an odd length (7 nibbles).
+
+      It must be an even length.]
+    `)
+    expect(() =>
+      AbiEvent.encode(event, { b: `0x${'1'.repeat(63)}` }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x111111111111111111111111111111111111111111111111111111111111111"\` is an odd length (63 nibbles).
+
+      It must be an even length.]
+    `)
+  })
+
   test('behavior: network', async () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, uint256 value)',

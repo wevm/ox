@@ -146,6 +146,8 @@ export function assert<
             expectedSize: Number.parseInt(size, 10),
             givenSize: Hex.size(value as Hex.Hex),
           })
+        if (size && (value as Hex.Hex).length % 2 !== 0)
+          throw new Hex.InvalidLengthError(value as Hex.Hex)
       }
 
       if (Object.hasOwn(types, type))
@@ -184,6 +186,7 @@ export declare namespace assert {
     | InvalidPrimaryTypeError
     | InvalidStructTypeError
     | InvalidTypeError
+    | Hex.InvalidLengthError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
