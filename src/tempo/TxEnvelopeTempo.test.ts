@@ -129,6 +129,49 @@ describe('assert', () => {
       `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
     )
   })
+
+  test('invalid chain id (not a positive safe integer)', () => {
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: Number.NaN,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "NaN" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1.5,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1.5" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: Number.MAX_SAFE_INTEGER + 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "9007199254740992" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: '1' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+  })
 })
 
 describe('deserialize', () => {

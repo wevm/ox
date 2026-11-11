@@ -66,7 +66,10 @@ export type Type = typeof type
  */
 export function assert(envelope: PartialBy<TxEnvelopeEip2930, 'type'>) {
   const { chainId, gasPrice, to } = envelope
-  if (chainId <= 0)
+  if (
+    typeof chainId !== 'undefined' &&
+    (!Number.isSafeInteger(chainId) || chainId <= 0)
+  )
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
   if (to) Address.assert(to, { strict: false })
   if (gasPrice && BigInt(gasPrice) > 2n ** 256n - 1n)
