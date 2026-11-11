@@ -1,4 +1,4 @@
-import { Abi, AbiEvent, AbiParameters, Hash, Hex } from 'ox'
+import { Abi, AbiEvent, AbiParameters, Address, Hash, Hex } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
@@ -711,6 +711,161 @@ describe('decode', () => {
     )
   })
 
+  test('behavior: canonical indexed `address`, `bool`, `intN` and `uintN` topics', () => {
+    const abiEvent = AbiEvent.from(
+      'event Foo(address indexed a, bool indexed b, int8 indexed c, uint8 d)',
+    )
+    expect(
+      AbiEvent.decode(abiEvent, {
+        data: '0x00000000000000000000000000000000000000000000000000000000000000ff',
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "a": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "b": true,
+        "c": -128,
+        "d": 255,
+      }
+    `)
+
+    const abiEvent_2 = AbiEvent.from(
+      'event Foo(bool indexed a, uint8 indexed b, int256 indexed c)',
+    )
+    expect(
+      AbiEvent.decode(abiEvent_2, {
+        topics: [
+          AbiEvent.getSelector(abiEvent_2),
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x00000000000000000000000000000000000000000000000000000000000000ff',
+          '0x8000000000000000000000000000000000000000000000000000000000000000',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "a": false,
+        "b": 255,
+        "c": -57896044618658097711785492504343953926634992332820282019728792003956564819968n,
+      }
+    `)
+  })
+
+  test('error: non-canonical indexed `address` topic', () => {
+    const abiEvent = AbiEvent.from('event Foo(address indexed a)')
+    const topic =
+      '0xdeadbeef0000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+
+    expect(() =>
+      AbiParameters.decode([{ type: 'address' }], topic),
+    ).toThrowError(Address.InvalidAddressError)
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [AbiEvent.getSelector(abiEvent), topic],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xdeadbeef0000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('error: non-canonical indexed `bool` topic', () => {
+    const abiEvent = AbiEvent.from('event Foo(bool indexed a)')
+
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x0000000000000000000000000000000000000000000000000000000000000002',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Bytes.InvalidBytesBooleanError: Bytes value \`2\` is not a valid boolean.
+
+      The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
+    `)
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x0000000000000000000000000000000000000000000000000000000000000011',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Bytes.InvalidBytesBooleanError: Bytes value \`17\` is not a valid boolean.
+
+      The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
+    `)
+  })
+
+  test('error: indexed `intN` and `uintN` topics out of range', () => {
+    const uint8 = AbiEvent.from('event Foo(uint8 indexed a)')
+    expect(() =>
+      AbiEvent.decode(uint8, {
+        topics: [
+          AbiEvent.getSelector(uint8),
+          '0x0000000000000000000000000000000000000000000000000000000000000100',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+
+    const int8 = AbiEvent.from('event Foo(int8 indexed a)')
+    expect(() =>
+      AbiEvent.decode(int8, {
+        topics: [
+          AbiEvent.getSelector(int8),
+          '0x0000000000000000000000000000000000000000000000000000000000000080',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+    expect(() =>
+      AbiEvent.decode(int8, {
+        topics: [
+          AbiEvent.getSelector(int8),
+          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-129\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+
+    const uint64 = AbiEvent.from('event Foo(uint64 indexed a)')
+    expect(() =>
+      AbiEvent.decode(uint64, {
+        topics: [
+          AbiEvent.getSelector(uint64),
+          '0x8000000000000000000000000000000000000000000000000000000000000000',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`57896044618658097711785492504343953926634992332820282019728792003956564819968\` is not in safe 64-bit unsigned integer range (\`0\` to \`18446744073709551615\`)]`,
+    )
+  })
+
+  test('error: indexed topic shorter than 32 bytes', () => {
+    const abiEvent = AbiEvent.from('event Foo(uint256 indexed a)')
+
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [AbiEvent.getSelector(abiEvent), '0x01'],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiParameters.DataSizeTooSmallError: Data size of 1 bytes is too small for given parameters.
+
+      Params: (uint256 indexed a)
+      Data:   0x01 (1 bytes)]
+    `)
+  })
+
   test('error: event selector topic mismatch', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, bool sender)',
@@ -1290,6 +1445,67 @@ describe('extractLogs', () => {
     )
 
     expect(decoded).toMatchInlineSnapshot(`[]`)
+  })
+
+  test('behavior: skips logs with non-canonical indexed topics', () => {
+    const abi = Abi.from([
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+      'event Paused(bool indexed paused)',
+      'event Count(uint8 indexed count)',
+    ])
+    const [transfer, paused, count] = abi
+    const logs = [
+      {
+        data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        topics: [
+          AbiEvent.getSelector(transfer),
+          '0xdeadbeef0000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        ],
+      },
+      {
+        data: '0x',
+        topics: [
+          AbiEvent.getSelector(paused),
+          '0x0000000000000000000000000000000000000000000000000000000000000002',
+        ],
+      },
+      {
+        data: '0x',
+        topics: [
+          AbiEvent.getSelector(count),
+          '0x0000000000000000000000000000000000000000000000000000000000000100',
+        ],
+      },
+    ] as const
+
+    expect(AbiEvent.extractLogs(abi, logs)).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(abi, logs, {
+        args: { paused: false },
+        eventName: 'Paused',
+      }),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      AbiEvent.extractLogs(abi, logs, { strict: false }).map(
+        ({ args, eventName }) => ({ args, eventName }),
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {},
+          "eventName": "Transfer",
+        },
+        {
+          "args": {},
+          "eventName": "Paused",
+        },
+        {
+          "args": {},
+          "eventName": "Count",
+        },
+      ]
+    `)
   })
 
   test('behavior: filters by event name', () => {
