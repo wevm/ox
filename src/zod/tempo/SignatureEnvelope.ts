@@ -40,13 +40,24 @@ const Signature = z.object({
 })
 
 /** RPC secp256k1 signature envelope schema. */
-export const Secp256k1Rpc = z.object({
-  r: z_Hex.Hex,
-  s: z_Hex.Hex,
-  type: z.literal('secp256k1'),
-  v: z.optional(z_Hex.Hex),
-  yParity: z.optional(z_Hex.Hex),
-})
+export const Secp256k1Rpc = z
+  .object({
+    r: z_Hex.Hex,
+    s: z_Hex.Hex,
+    type: z.literal('secp256k1'),
+    v: z.optional(z_Hex.Hex),
+    yParity: z.optional(z_Hex.Hex),
+  })
+  .check(
+    z.refine((value) => {
+      try {
+        toYParity(value.v, value.yParity)
+        return true
+      } catch {
+        return false
+      }
+    }, 'expected yParity or supported v'),
+  )
 
 /** RPC P256 signature envelope schema. */
 export const P256Rpc = z.object({
@@ -324,14 +335,12 @@ function toYParity(
   v: core_Hex.Hex | undefined,
   yParity: core_Hex.Hex | undefined,
 ) {
-  const v_ = v ? Number(v) : undefined
-  let yParity_ = yParity ? Number(yParity) : undefined
-  if (typeof v_ === 'number' && typeof yParity_ !== 'number') {
-    if (v_ === 0 || v_ === 27) yParity_ = 0
-    else if (v_ === 1 || v_ === 28) yParity_ = 1
-    else if (v_ >= 35) yParity_ = v_ % 2 === 0 ? 1 : 0
-  }
-  return yParity_ as 0 | 1
+  if (yParity) return Number(yParity) as 0 | 1
+  const v_ = v && v !== '0x' ? BigInt(v) : undefined
+  if (v_ === 0n || v_ === 27n) return 0
+  if (v_ === 1n || v_ === 28n) return 1
+  if (typeof v_ === 'bigint' && v_ >= 35n) return v_ % 2n === 0n ? 1 : 0
+  throw new Error('Unable to derive yParity: expected yParity or supported v')
 }
 
 /** Parses concatenated WebAuthn metadata into its component parts. */
