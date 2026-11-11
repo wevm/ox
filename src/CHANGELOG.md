@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.65
+
+### Patch Changes
+
+- [#607](https://github.com/wevm/ox/pull/607) [`d4966d7`](https://github.com/wevm/ox/commit/d4966d7fdb2fdf3b7ff83edfc9441dfaa6dafef2) Thanks [@jxom](https://github.com/jxom)! - Added `SignaturePreAuthorized` to `ox/tempo` for [TIP-1165](https://tips.sh/1165) pre-authorized access key signatures: `wrap`, `unwrap`, `from`, `assert` and `validate`.
+
 ## 0.14.64
 
 ### Patch Changes
