@@ -19,6 +19,7 @@ import * as Signature from '../core/Signature.js'
 import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as AccountConfig from './AccountConfig.js'
+import * as WebauthnData from './internal/webauthnData.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'
@@ -669,24 +670,8 @@ function deserialize_(value: Serialized): SignatureEnvelope {
 
     // Parse webauthnData into authenticatorData and clientDataJSON
     // According to the Rust code, it's authenticatorData || clientDataJSON
-    // We need to find the split point (minimum authenticatorData is 37 bytes)
-    let authenticatorData: Hex.Hex | undefined
-    let clientDataJSON: string | undefined
-
-    // Try to find the JSON start (clientDataJSON should start with '{')
-    for (let split = 37; split < webauthnDataSize; split++) {
-      const potentialJson = Hex.toString(Hex.slice(webauthnData, split))
-      if (potentialJson.startsWith('{') && potentialJson.endsWith('}')) {
-        try {
-          JSON.parse(potentialJson)
-          authenticatorData = Hex.slice(webauthnData, 0, split)
-          clientDataJSON = potentialJson
-          break
-        } catch {}
-      }
-    }
-
-    if (!authenticatorData || !clientDataJSON)
+    const metadata = WebauthnData.split(webauthnData)
+    if (!metadata)
       throw new InvalidSerializedError({
         reason:
           'Unable to parse WebAuthn metadata: could not extract valid authenticatorData and clientDataJSON',
@@ -703,10 +688,7 @@ function deserialize_(value: Serialized): SignatureEnvelope {
           Hex.slice(data, webauthnDataSize + 96, webauthnDataSize + 128),
         ),
       },
-      metadata: {
-        authenticatorData,
-        clientDataJSON,
-      },
+      metadata,
       signature: {
         r: Hex.toBigInt(
           Hex.slice(data, webauthnDataSize, webauthnDataSize + 32),
@@ -1114,23 +1096,8 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       })
 
     // Parse webauthnData into authenticatorData and clientDataJSON
-    let authenticatorData: Hex.Hex | undefined
-    let clientDataJSON: string | undefined
-
-    // Try to find the JSON start (clientDataJSON should start with '{')
-    for (let split = 37; split < webauthnDataSize; split++) {
-      const potentialJson = Hex.toString(Hex.slice(webauthnData, split))
-      if (potentialJson.startsWith('{') && potentialJson.endsWith('}')) {
-        try {
-          JSON.parse(potentialJson)
-          authenticatorData = Hex.slice(webauthnData, 0, split)
-          clientDataJSON = potentialJson
-          break
-        } catch {}
-      }
-    }
-
-    if (!authenticatorData || !clientDataJSON)
+    const metadata = WebauthnData.split(webauthnData)
+    if (!metadata)
       throw new InvalidSerializedError({
         reason:
           'Unable to parse WebAuthn metadata: could not extract valid authenticatorData and clientDataJSON',
@@ -1138,10 +1105,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       })
 
     return {
-      metadata: {
-        authenticatorData,
-        clientDataJSON,
-      },
+      metadata,
       publicKey: {
         prefix: 4,
         x: Hex.toBigInt(envelope.pubKeyX),
