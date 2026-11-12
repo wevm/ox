@@ -20,6 +20,8 @@ const quote = 0x22
  * @param webauthnData - The concatenated WebAuthn data.
  * @returns The parts, or `undefined` when the data does not end with a JSON
  * object that starts at or after byte 37.
+ *
+ * @internal
  */
 export function split(webauthnData: Hex.Hex): split.ReturnType | undefined {
   if (Hex.size(webauthnData) <= minAuthenticatorDataSize) return undefined
@@ -45,6 +47,7 @@ export function split(webauthnData: Hex.Hex): split.ReturnType | undefined {
   }
 }
 
+/** @internal */
 export declare namespace split {
   type ReturnType = {
     /** Authenticator data. */
@@ -59,6 +62,8 @@ export declare namespace split {
  * or returns `-1`. Scans bytes rather than characters: UTF-8 never encodes a
  * multi-byte character with an ASCII byte, so each structural byte is a
  * structural character.
+ *
+ * @internal
  */
 function objectStart(bytes: Bytes.Bytes) {
   if (bytes[bytes.length - 1] !== closeBrace) return -1
