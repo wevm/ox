@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.67
+
+### Patch Changes
+
+- [#677](https://github.com/wevm/ox/pull/677) [`6f3ff8c`](https://github.com/wevm/ox/commit/6f3ff8c2a1c54fd6300e885ffca1ab5a1cd29b5b) Thanks [@jxom](https://github.com/jxom)! - Fixed `SignatureEnvelope.deserialize` and `SignatureEnvelope.fromRpc` in `ox/tempo` to split WebAuthn data into `authenticatorData` and `clientDataJSON` in time linear in its size instead of quadratic.
+
 ## 0.14.66
 
 ### Patch Changes
