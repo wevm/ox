@@ -168,7 +168,7 @@ export class NumberTooLargeError extends Errors.BaseError {
 
   constructor({ number }: { number: string }) {
     super(
-      `Number exceeds maximum safe integer (${Number.MAX_SAFE_INTEGER}): ${number}`,
+      `Number is outside the encodable integer range (-4294967296 to 4294967295): ${number}`,
     )
   }
 }
