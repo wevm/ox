@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vp/test'
+import { describe, expect, onTestFinished, test, vi } from 'vp/test'
 import * as core_Hex from '../../../core/Hex.js'
 import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as z_SignatureEnvelope from '../SignatureEnvelope.js'
@@ -84,6 +84,42 @@ describe('SignatureEnvelope', () => {
         },
       ]
     `)
+  })
+
+  test('decodes and parses WebAuthn data at most once', () => {
+    // Each opening brace starts an object that only fails to parse past its
+    // end, so a search that tries every split offset reads all of it each time.
+    const clientDataJSON = `${'{"a":'.repeat(313)}${'}'.repeat(313)}`
+    const webAuthn = {
+      pubKeyX: p256.pubKeyX,
+      pubKeyY: p256.pubKeyY,
+      r: p256.r,
+      s: p256.s,
+      type: 'webAuthn',
+      webauthnData: core_Hex.concat(
+        `0x${'00'.repeat(37)}`,
+        core_Hex.fromString(clientDataJSON),
+      ),
+    } as const
+
+    const decode = vi.spyOn(TextDecoder.prototype, 'decode')
+    const parse = vi.spyOn(JSON, 'parse')
+    onTestFinished(() => {
+      vi.restoreAllMocks()
+    })
+
+    expect(() =>
+      z.decode(z_SignatureEnvelope.SignatureEnvelope, webAuthn),
+    ).toThrow('Unable to parse WebAuthn metadata')
+    expect(
+      decode.mock.calls.reduce(
+        (size, [input]) => size + (input?.byteLength ?? 0),
+        0,
+      ),
+    ).toBeLessThanOrEqual(clientDataJSON.length)
+    expect(
+      parse.mock.calls.reduce((size, [text]) => size + text.length, 0),
+    ).toBeLessThanOrEqual(clientDataJSON.length)
   })
 
   test('decodes a recursive keychain envelope', () => {
