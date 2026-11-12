@@ -9,7 +9,7 @@ import {
   WebAuthnP256,
   WebCryptoP256,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, onTestFinished, test, vi } from 'vitest'
 import * as AccountConfig from './AccountConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -733,6 +733,58 @@ describe('deserialize', () => {
         Serialized: 0x02000000000000000000000000000000000000000000000000000000000000000000000000006e6f742d76616c69642d6a736f6eccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0]
       `,
       )
+    })
+
+    test('behavior: splits webauthnData at the object that ends it', () => {
+      const metadata = {
+        // Ends with bytes that look like the start of a JSON object.
+        authenticatorData: Hex.concat(
+          signature_webauthn.metadata.authenticatorData,
+          Hex.fromString('{"a":"}\\'),
+        ),
+        // Braces, an escaped quote and an escaped backslash inside strings.
+        clientDataJSON: JSON.stringify({
+          challenge: '{"}\\',
+          nested: { origin: '\\"' },
+        }),
+      }
+      expect(
+        SignatureEnvelope.deserialize(
+          SignatureEnvelope.serialize({ ...signature_webauthn, metadata }),
+        ),
+      ).toMatchObject({ metadata })
+    })
+
+    test('behavior: decodes and parses webauthnData at most once', () => {
+      // Each opening brace starts an object that only fails to parse past its
+      // end, so a search that tries every split offset reads all of it each time.
+      const clientDataJSON = `${'{"a":'.repeat(313)}${'}'.repeat(313)}`
+      const serialized = SignatureEnvelope.serialize({
+        ...signature_webauthn,
+        metadata: {
+          authenticatorData: `0x${'00'.repeat(37)}` as const,
+          clientDataJSON,
+        },
+      })
+
+      const decode = vi.spyOn(TextDecoder.prototype, 'decode')
+      const parse = vi.spyOn(JSON, 'parse')
+      onTestFinished(() => {
+        vi.restoreAllMocks()
+      })
+
+      expect(() => SignatureEnvelope.deserialize(serialized)).toThrow(
+        'Unable to parse WebAuthn metadata',
+      )
+      expect(
+        decode.mock.calls.reduce(
+          (size, [input]) => size + (input?.byteLength ?? 0),
+          0,
+        ),
+      ).toBeLessThanOrEqual(clientDataJSON.length)
+      expect(
+        parse.mock.calls.reduce((size, [text]) => size + text.length, 0),
+      ).toBeLessThanOrEqual(clientDataJSON.length)
     })
 
     test('error: throws on unknown type identifier', () => {
@@ -2414,6 +2466,42 @@ describe('fromRpc', () => {
         },
         type: 'webAuthn',
       })
+    })
+
+    test('behavior: decodes and parses webauthnData at most once', () => {
+      // Each opening brace starts an object that only fails to parse past its
+      // end, so a search that tries every split offset reads all of it each time.
+      const clientDataJSON = `${'{"a":'.repeat(313)}${'}'.repeat(313)}`
+      const rpc = {
+        pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
+        pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
+        r: Hex.fromNumber(p256Signature.r, { size: 32 }),
+        s: Hex.fromNumber(p256Signature.s, { size: 32 }),
+        type: 'webAuthn',
+        webauthnData: Hex.concat(
+          `0x${'00'.repeat(37)}`,
+          Hex.fromString(clientDataJSON),
+        ),
+      } as const
+
+      const decode = vi.spyOn(TextDecoder.prototype, 'decode')
+      const parse = vi.spyOn(JSON, 'parse')
+      onTestFinished(() => {
+        vi.restoreAllMocks()
+      })
+
+      expect(() => SignatureEnvelope.fromRpc(rpc)).toThrow(
+        'Unable to parse WebAuthn metadata',
+      )
+      expect(
+        decode.mock.calls.reduce(
+          (size, [input]) => size + (input?.byteLength ?? 0),
+          0,
+        ),
+      ).toBeLessThanOrEqual(clientDataJSON.length)
+      expect(
+        parse.mock.calls.reduce((size, [text]) => size + text.length, 0),
+      ).toBeLessThanOrEqual(clientDataJSON.length)
     })
 
     test('error: throws on WebAuthn data above the maximum size', () => {
