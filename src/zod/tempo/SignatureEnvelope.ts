@@ -2,6 +2,7 @@
 import * as core_SignatureEnvelope from '../../tempo/SignatureEnvelope.js'
 import * as core_Hex from '../../core/Hex.js'
 import * as core_AccountConfig from '../../tempo/AccountConfig.js'
+import * as core_WebauthnData from '../../tempo/internal/webauthnData.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
 import * as z_AccountConfig from './AccountConfig.js'
@@ -351,20 +352,10 @@ function toYParity(
 
 /** Parses concatenated WebAuthn metadata into its component parts. */
 function parseWebauthnData(webauthnData: core_Hex.Hex) {
-  const size = core_Hex.size(webauthnData)
-  for (let split = 37; split < size; split++) {
-    const potentialJson = core_Hex.toString(core_Hex.slice(webauthnData, split))
-    if (potentialJson.startsWith('{') && potentialJson.endsWith('}')) {
-      try {
-        JSON.parse(potentialJson)
-        return {
-          authenticatorData: core_Hex.slice(webauthnData, 0, split),
-          clientDataJSON: potentialJson,
-        }
-      } catch {}
-    }
-  }
-  throw new Error(
-    'Unable to parse WebAuthn metadata: could not extract valid authenticatorData and clientDataJSON',
-  )
+  const metadata = core_WebauthnData.split(webauthnData)
+  if (!metadata)
+    throw new Error(
+      'Unable to parse WebAuthn metadata: could not extract valid authenticatorData and clientDataJSON',
+    )
+  return metadata
 }
