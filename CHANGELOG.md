@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.18
+
+### Patch Changes
+
+- [#675](https://github.com/wevm/ox/pull/675) [`9d8389c`](https://github.com/wevm/ox/commit/9d8389c45477a46dcdae8876af57e87793fb34cc) Thanks [@pucedoteth](https://github.com/pucedoteth)! - Fixed the `Cbor.NumberTooLargeError` message to state the integer range `Cbor.encode` supports (`-4294967296` to `4294967295`) instead of `Number.MAX_SAFE_INTEGER`.
+
 ## 1.8.17
 
 ### Patch Changes
