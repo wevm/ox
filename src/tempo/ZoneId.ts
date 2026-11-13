@@ -13,6 +13,9 @@ const chainIdConfig = {
 
 const defaultSourceId = 4_217
 
+/** Chain IDs at or above this value carry their source chain ID in the high 32 bits. */
+const genericChainIdBase = 2 ** 32
+
 /**
  * Base offset for deriving Presto zone chain IDs.
  */
@@ -24,7 +27,9 @@ export type SourceId = keyof typeof chainIdConfig
 /**
  * Derives a zone ID from a zone chain ID.
  *
- * Zone chain IDs use the base assigned to their Tempo source chain.
+ * Zone chain IDs use the base assigned to their Tempo source chain. Zones of other Tempo chains
+ * (such as devnets) encode the source chain ID in the high 32 bits and the zone ID in the low 32
+ * bits, so the zone ID is read from the chain ID alone.
  *
  * @example
  * ```ts twoslash
@@ -42,6 +47,7 @@ export function fromChainId(
   chainId: number,
   sourceId: SourceId = defaultSourceId,
 ): number {
+  if (chainId >= genericChainIdBase) return chainId % genericChainIdBase
   return chainId - getChainIdConfig(sourceId).base
 }
 
