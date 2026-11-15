@@ -745,12 +745,13 @@ export declare namespace trimRight {
  * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
 export function validate(value: unknown): value is Bytes {
-  try {
-    assert(value)
-    return true
-  } catch {
-    return false
-  }
+  // The checks `assert` makes, without building and catching an error.
+  if (value instanceof Uint8Array) return true
+  if (!value || typeof value !== 'object') return false
+  if (!('BYTES_PER_ELEMENT' in value)) return false
+  return (
+    value.BYTES_PER_ELEMENT === 1 && value.constructor?.name === 'Uint8Array'
+  )
 }
 
 export declare namespace validate {

@@ -829,12 +829,12 @@ export function validate(
   options: validate.Options = {},
 ): value is Hex {
   const { even = false, strict = false } = options
-  try {
-    assert(value, { even, strict })
-    return true
-  } catch {
-    return false
-  }
+  // The checks `assert` makes, without building and catching an error.
+  if (typeof value !== 'string') return false
+  if (strict && !hexRegex.test(value)) return false
+  if (!value.startsWith('0x')) return false
+  if (even && value.length % 2 !== 0) return false
+  return true
 }
 
 export declare namespace validate {

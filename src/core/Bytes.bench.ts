@@ -129,3 +129,13 @@ describe('Bytes.padLeft', () => {
     Bytes.padLeft(small.subarray(0, 1), 32)
   })
 })
+
+describe('Bytes.validate', () => {
+  bench('valid', () => {
+    Bytes.validate(small)
+  })
+
+  bench('invalid', () => {
+    Bytes.validate('0xdeadbeef')
+  })
+})
