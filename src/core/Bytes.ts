@@ -748,10 +748,16 @@ export function validate(value: unknown): value is Bytes {
   // The checks `assert` makes, without building and catching an error.
   if (value instanceof Uint8Array) return true
   if (!value || typeof value !== 'object') return false
-  if (!('BYTES_PER_ELEMENT' in value)) return false
-  return (
-    value.BYTES_PER_ELEMENT === 1 && value.constructor?.name === 'Uint8Array'
-  )
+  // A Proxy or getter can throw from these reads; that is invalid input too.
+  try {
+    return (
+      'BYTES_PER_ELEMENT' in value &&
+      value.BYTES_PER_ELEMENT === 1 &&
+      value.constructor.name === 'Uint8Array'
+    )
+  } catch {
+    return false
+  }
 }
 
 export declare namespace validate {
