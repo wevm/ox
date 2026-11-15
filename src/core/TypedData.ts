@@ -5,6 +5,7 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import { caches } from './internal/caches.js'
 import type { Compute } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
@@ -819,8 +820,14 @@ export function hashType(value: {
   types: TypedData
 }): Hex.Hex {
   const { primaryType, types } = value
-  const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  return Hash.keccak256(encodedHashType)
+  // Keyed by the encoded type, so equal struct definitions share one hash
+  // across calls, whichever object their types came from.
+  const type = encodeType({ primaryType, types })
+  const cached = caches.typeHash.get(type)
+  if (cached) return cached
+  const hash = Hash.keccak256(Hex.fromString(type))
+  caches.typeHash.set(type, hash)
+  return hash
 }
 
 /** @internal */
