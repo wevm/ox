@@ -206,7 +206,7 @@
     "wasm/vendor/mldsa-native/LICENSE"
   ],
   "dependencies": {
-    "@adraffy/ens-normalize": "^1.11.0",
+    "@adraffy/ens-normalize.ts": "^1.0.0",
     "@noble/ciphers": "^2.2.0",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",

@@ -1,4 +1,4 @@
-import { ens_normalize } from '@adraffy/ens-normalize'
+import { ensNormalize } from '@adraffy/ens-normalize.ts'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
@@ -98,7 +98,7 @@ export declare namespace namehash {
  * @returns Normalized ENS name.
  */
 export function normalize(name: string): string {
-  return ens_normalize(name)
+  return ensNormalize(name)
 }
 
 export declare namespace normalize {
