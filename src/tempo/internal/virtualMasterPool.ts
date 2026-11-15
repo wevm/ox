@@ -26,7 +26,7 @@ export type Pool = {
   ): { postMessage(data: unknown): void; terminate(): void }
 }
 
-let cachedPool: Pool | undefined
+let cachedPool: Promise<Pool | undefined> | undefined
 
 /**
  * Whether the current runtime is Node.js.
@@ -42,9 +42,15 @@ const isNode =
  *
  * @internal
  */
-export async function resolve(): Promise<Pool | undefined> {
-  if (cachedPool) return cachedPool
-  cachedPool = isNode ? await resolveNode() : await resolveBrowser()
+export function resolve(): Promise<Pool | undefined> {
+  // The promise is cached rather than its result, so calls made while the
+  // pool resolves share it instead of each building a pool (and, in browsers,
+  // a Blob URL that is never revoked). A failed attempt is discarded so a
+  // later call can retry.
+  cachedPool ??= (isNode ? resolveNode() : resolveBrowser()).catch((error) => {
+    cachedPool = undefined
+    throw error
+  })
   return cachedPool
 }
 
@@ -55,8 +61,10 @@ export async function resolve(): Promise<Pool | undefined> {
  */
 export async function resolveNode(): Promise<Pool | undefined> {
   const id = 'node:worker_threads'
-  const { Worker } = await import(id)
-  const { wasmBase64 } = await import('./mine.wasm.js')
+  const [{ Worker }, { wasmBase64 }] = await Promise.all([
+    import(id),
+    import('./mine.wasm.js'),
+  ])
   const workerSource = getNodeWorkerSource()
 
   return {
