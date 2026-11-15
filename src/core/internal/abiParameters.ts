@@ -188,14 +188,14 @@ export function decodeAddress(
       })
   const wrap = (address: Hex.Hex) =>
     checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
+  // A view, not a copy: it is hex-encoded at once and never escapes.
+  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
     | Address.InvalidAddressError
     | Hex.fromBytes.ErrorType
-    | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -364,8 +364,13 @@ export function decodeNumber(
   cursor: Cursor.Cursor,
   param: AbiParameters.Parameter,
 ) {
-  const signed = param.type.startsWith('int')
-  const size = Number.parseInt(param.type.split('int')[1] || '256', 10)
+  const { type } = param
+  // `uint256` is the common case: skip parsing its sign and size.
+  const signed = type !== 'uint256' && type.startsWith('int')
+  const size =
+    type === 'uint256'
+      ? 256
+      : Number.parseInt(type.split('int')[1] || '256', 10)
   const value = Bytes.toBigInt(cursor.readBytes(32), { signed })
   // The word must hold a value that fits the declared size (zero-padded for
   // unsigned, sign-extended for signed types).
@@ -971,6 +976,9 @@ function toNibble(code: number): number {
 export function getArrayComponents(
   type: string,
 ): [length: number | null, innerType: string] | undefined {
+  // Only a type ending in `]` can match, so skip the regex for the element
+  // types (`uint256`, `address`, ...) that decoding checks once per value.
+  if (type.charCodeAt(type.length - 1) !== 93 /* ] */) return undefined
   const matches = arraySuffixRegex.exec(type)
   return matches
     ? // Return `null` if the array is dynamic.

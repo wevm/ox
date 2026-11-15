@@ -681,4 +681,19 @@ describe('args: recursiveReadLimit', () => {
       '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `2` exceeded (recursive read count: `3`).]',
     )
   })
+
+  test('behavior: repeated reads at an unaligned position', () => {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
+      recursiveReadLimit: 2,
+    })
+
+    for (let i = 0; i < 3; i++) {
+      cursor.setPosition(37)
+      cursor.readBytes(10)
+    }
+    cursor.setPosition(37)
+    expect(() => cursor.readBytes(10)).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.RecursiveReadLimitExceededError: Recursive read limit of \`2\` exceeded (recursive read count: \`3\`).]`,
+    )
+  })
 })
