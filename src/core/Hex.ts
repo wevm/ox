@@ -5,11 +5,15 @@ import * as internal_bytes from './internal/bytes.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
+const decoder = /*#__PURE__*/ new TextDecoder()
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
+
+const nativeToHex =
+  typeof (Uint8Array.prototype as { toHex?: unknown }).toHex === 'function'
 
 /** Root type for a Hex string. */
 export type Hex = `0x${string}`
@@ -80,7 +84,14 @@ export declare namespace assert {
  * @returns The concatenated {@link ox#Hex.Hex} value.
  */
 export function concat(...values: readonly Hex[]): Hex {
-  return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
+  let hex = '0x'
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i]!
+    // Same result as `value.replace('0x', '')`, without a search when the
+    // prefix is present.
+    hex += value.startsWith('0x') ? value.slice(2) : value.replace('0x', '')
+  }
+  return hex as Hex
 }
 
 export declare namespace concat {
@@ -196,7 +207,11 @@ export function fromBytes(
   options: fromBytes.Options = {},
 ): Hex {
   let string = ''
-  for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
+  // Native `Uint8Array.prototype.toHex` is several times faster, and returns a
+  // flat string rather than a rope of concatenated pairs.
+  if (nativeToHex && value instanceof Uint8Array)
+    string = (value as Uint8Array & { toHex(): string }).toHex()
+  else for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
   const hex = `0x${string}` as const
 
   if (typeof options.size === 'number') {
@@ -241,6 +256,19 @@ export function fromNumber(
   options: fromNumber.Options = {},
 ): Hex {
   const { signed, size } = options
+
+  // An unsigned safe integer is in range when there is no `size` or the size
+  // exceeds 6 bytes, so it skips the `bigint` range check.
+  if (
+    typeof value === 'number' &&
+    !signed &&
+    Number.isSafeInteger(value) &&
+    value >= 0 &&
+    (!size || size > 6)
+  ) {
+    const hex = `0x${value.toString(16)}` as Hex
+    return size ? padLeft(hex, size) : hex
+  }
 
   const value_ = BigInt(value)
 
@@ -455,9 +483,9 @@ export function slice(
 ): Hex {
   const { strict } = options
   internal.assertStartOffset(value, start)
-  const value_ = `0x${value
-    .replace('0x', '')
-    .slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
+  const value_ = `0x${(
+    value.startsWith('0x') ? value.slice(2) : value.replace('0x', '')
+  ).slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
   if (strict) internal.assertEndOffset(value_, start, end)
   return value_
 }
@@ -713,7 +741,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
     internal_bytes.assertSize(bytes, size)
     bytes = Bytes.trimRight(bytes)
   }
-  return new TextDecoder().decode(bytes)
+  return decoder.decode(bytes)
 }
 
 export declare namespace toString {
@@ -752,12 +780,12 @@ export function validate(
   options: validate.Options = {},
 ): value is Hex {
   const { even = false, strict = false } = options
-  try {
-    assert(value, { even, strict })
-    return true
-  } catch {
-    return false
-  }
+  // Mirrors `assert` without constructing and catching an error.
+  if (!value || typeof value !== 'string') return false
+  if (strict && !hexRegex.test(value)) return false
+  if (!value.startsWith('0x')) return false
+  if (even && value.length % 2 !== 0) return false
+  return true
 }
 
 export declare namespace validate {

@@ -792,3 +792,61 @@ describe('Seaport function', () => {
     )
   })
 })
+
+describe('ABI round trip (dynamic)', () => {
+  const parameters = [
+    { name: 'owner', type: 'address' },
+    { name: 'flag', type: 'bool' },
+    { name: 'amounts', type: 'uint256[]' },
+    { name: 'name', type: 'string' },
+    { name: 'data', type: 'bytes' },
+    { name: 'id', type: 'bytes32' },
+    { name: 'delta', type: 'int128' },
+  ] as const
+  const values = [
+    address.vitalik,
+    true,
+    [1n, 2n, 3n, 420n, 69n, 1_000_000_000_000_000_000n],
+    'Hello world, this is a reasonably long string.',
+    '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+    -420n,
+  ] as const
+  const encoded = encode(parameters, values)
+
+  bench('ox: `AbiParameters.encode`', () => {
+    encode(parameters, values)
+  })
+
+  bench('ox: `AbiParameters.decode`', () => {
+    decode(parameters, encoded)
+  })
+})
+
+describe('ABI encode (long string)', () => {
+  const parameters = [{ type: 'string' }] as const
+  const values = ['Hello world. '.repeat(1_000)] as const
+
+  bench('ox: `AbiParameters.encode`', () => {
+    encode(parameters, values)
+  })
+})
+
+describe('ABI decode (arrays)', () => {
+  const uints = encode(
+    [{ type: 'uint256[]' }],
+    [Array.from({ length: 1_000 }, (_, i) => BigInt(i) * 1_000_000_007n)],
+  )
+  const addresses = encode(
+    [{ type: 'address[]' }],
+    [Array.from({ length: 100 }, () => address.vitalik)],
+  )
+
+  bench('ox: `uint256[1000]`', () => {
+    decode([{ type: 'uint256[]' }], uints)
+  })
+
+  bench('ox: `address[100]`', () => {
+    decode([{ type: 'address[]' }], addresses)
+  })
+})

@@ -67,7 +67,9 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   if (size === 0) return hex_
 
-  const hex = hex_.replace('0x', '')
+  // Same result as `hex_.replace('0x', '')`, without a search when the prefix
+  // is present.
+  const hex = hex_.startsWith('0x') ? hex_.slice(2) : hex_.replace('0x', '')
   if (hex.length > size * 2)
     throw new Hex.SizeExceedsPaddingSizeError({
       size: Math.ceil(hex.length / 2),
@@ -94,11 +96,11 @@ export function trim(
 ): trim.ReturnType {
   const { dir = 'left' } = options
 
-  let data = value.replace('0x', '')
+  let data = value.startsWith('0x') ? value.slice(2) : value.replace('0x', '')
 
   let sliceLength = 0
   for (let i = 0; i < data.length - 1; i++) {
-    if (data[dir === 'left' ? i : data.length - i - 1]!.toString() === '0')
+    if (data.charCodeAt(dir === 'left' ? i : data.length - i - 1) === 48)
       sliceLength++
     else break
   }

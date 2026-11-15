@@ -124,14 +124,13 @@ export function decodeAddress(
       })
   const wrap = (address: Hex.Hex) =>
     checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
+  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
     | Address.InvalidAddressError
     | Hex.fromBytes.ErrorType
-    | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -297,8 +296,13 @@ export function decodeNumber(
   cursor: Cursor.Cursor,
   param: AbiParameters.Parameter,
 ) {
-  const signed = param.type.startsWith('int')
-  const size = Number.parseInt(param.type.split('int')[1] || '256', 10)
+  const { type } = param
+  // `uint256` is the common case: skip parsing its sign and size.
+  const signed = type !== 'uint256' && type.startsWith('int')
+  const size =
+    type === 'uint256'
+      ? 256
+      : Number.parseInt(type.split('int')[1] || '256', 10)
   const value = Bytes.toBigInt(cursor.readBytes(32), { signed })
   // The word must hold a value that fits the declared size (zero-padded for
   // unsigned, sign-extended for signed types).
@@ -820,6 +824,8 @@ export declare namespace encodeTuple {
 export function getArrayComponents(
   type: string,
 ): [length: number | null, innerType: string] | undefined {
+  // Only array types end with `]`, so skip the regex for every other type.
+  if (type.charCodeAt(type.length - 1) !== 93) return undefined
   const matches = type.match(/^(.*)\[(\d+)?\]$/)
   return matches
     ? // Return `null` if the array is dynamic.

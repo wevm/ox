@@ -65,25 +65,20 @@ export declare namespace assertEndOffset {
     | Errors.GlobalErrorType
 }
 
-/** @internal */
-export const charCodeMap = {
-  zero: 48,
-  nine: 57,
-  A: 65,
-  F: 70,
-  a: 97,
-  f: 102,
-} as const
+/** Nibble value of each ASCII hex digit, or `-1` for any other character. */
+const base16 = /*#__PURE__*/ (() => {
+  const table = new Int8Array(128).fill(-1)
+  for (let i = 0; i < 10; i++) table[48 + i] = i
+  for (let i = 0; i < 6; i++) {
+    table[65 + i] = 10 + i
+    table[97 + i] = 10 + i
+  }
+  return table
+})()
 
 /** @internal */
 export function charCodeToBase16(char: number) {
-  if (char >= charCodeMap.zero && char <= charCodeMap.nine)
-    return char - charCodeMap.zero
-  if (char >= charCodeMap.A && char <= charCodeMap.F)
-    return char - (charCodeMap.A - 10)
-  if (char >= charCodeMap.a && char <= charCodeMap.f)
-    return char - (charCodeMap.a - 10)
-  return undefined
+  return char < 128 ? base16[char]! : -1
 }
 
 /** @internal */
@@ -97,11 +92,7 @@ export function pad(bytes: Bytes.Bytes, options: pad.Options = {}) {
       type: 'Bytes',
     })
   const paddedBytes = new Uint8Array(size)
-  for (let i = 0; i < size; i++) {
-    const padEnd = dir === 'right'
-    paddedBytes[padEnd ? i : size - i - 1] =
-      bytes[padEnd ? i : bytes.length - i - 1]!
-  }
+  paddedBytes.set(bytes, dir === 'right' ? 0 : size - bytes.length)
   return paddedBytes
 }
 
@@ -128,8 +119,7 @@ export function trim(
 
   let sliceLength = 0
   for (let i = 0; i < data.length - 1; i++) {
-    if (data[dir === 'left' ? i : data.length - i - 1]!.toString() === '0')
-      sliceLength++
+    if (data[dir === 'left' ? i : data.length - i - 1] === 0) sliceLength++
     else break
   }
   data =

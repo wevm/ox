@@ -211,27 +211,42 @@ export declare namespace fromBoolean {
  */
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
+  if (size) internal_hex.assertSize(value, size)
 
-  let hexString = value.slice(2)
-  if (hexString.length % 2) hexString = `0${hexString}`
-  if (size) {
-    internal_hex.assertSize(value, size)
-    hexString = hexString.padEnd(size * 2, '0')
+  // Read nibbles straight from `value`, without slicing or padding a copy of
+  // it. An odd number of nibbles reads as if it had a leading zero.
+  const odd = value.length % 2
+  const length = Math.max(0, value.length - 2 + odd) / 2
+  const bytes = new Uint8Array(Math.max(size || 0, length))
+  let index = 0
+  let j = 2
+  if (odd && length) {
+    const nibble = internal.charCodeToBase16(value.charCodeAt(j++))
+    if (nibble < 0) throw invalidByteSequence(value, size, index)
+    bytes[index++] = nibble
   }
-
-  const length = hexString.length / 2
-  const bytes = new Uint8Array(length)
-  for (let index = 0, j = 0; index < length; index++) {
-    const nibbleLeft = internal.charCodeToBase16(hexString.charCodeAt(j++))
-    const nibbleRight = internal.charCodeToBase16(hexString.charCodeAt(j++))
-    if (nibbleLeft === undefined || nibbleRight === undefined) {
-      throw new Errors.BaseError(
-        `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
-      )
-    }
+  for (; index < length; index++) {
+    const nibbleLeft = internal.charCodeToBase16(value.charCodeAt(j++))
+    const nibbleRight = internal.charCodeToBase16(value.charCodeAt(j++))
+    if ((nibbleLeft | nibbleRight) < 0)
+      throw invalidByteSequence(value, size, index)
     bytes[index] = (nibbleLeft << 4) | nibbleRight
   }
   return bytes
+}
+
+/** Builds the error for an invalid hex digit in the byte at `index`. */
+function invalidByteSequence(
+  value: Hex.Hex,
+  size: number | undefined,
+  index: number,
+) {
+  let hexString = value.slice(2)
+  if (hexString.length % 2) hexString = `0${hexString}`
+  if (size) hexString = hexString.padEnd(size * 2, '0')
+  return new Errors.BaseError(
+    `Invalid byte sequence ("${hexString.slice(index * 2, index * 2 + 2)}" in "${hexString}").`,
+  )
 }
 
 export declare namespace fromHex {
@@ -523,6 +538,17 @@ export declare namespace slice {
 export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
   const { size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
+  // An unsigned value of up to 6 significant bytes (most ABI words hold small
+  // values) is built as a number and converted once, skipping the hex string.
+  if (!options.signed && typeof size === 'undefined' && bytes.length > 0) {
+    let i = 0
+    while (i < bytes.length && bytes[i] === 0) i++
+    if (bytes.length - i <= 6) {
+      let value = 0
+      for (; i < bytes.length; i++) value = value * 256 + bytes[i]!
+      return BigInt(value)
+    }
+  }
   const hex = Hex.fromBytes(bytes, options)
   return Hex.toBigInt(hex, options)
 }
@@ -743,6 +769,8 @@ export declare namespace trimRight {
  * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
 export function validate(value: unknown): value is Bytes {
+  // Reject non-objects up front, without constructing and catching an error.
+  if (!value || typeof value !== 'object') return false
   try {
     assert(value)
     return true

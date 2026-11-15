@@ -15,7 +15,7 @@ export class LruMap<value = unknown> extends Map<string, value> {
   override get(key: string) {
     const value = super.get(key)
 
-    if (super.has(key) && value !== undefined) {
+    if (value !== undefined) {
       this.delete(key)
       super.set(key, value)
     }
