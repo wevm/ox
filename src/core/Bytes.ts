@@ -746,10 +746,11 @@ export declare namespace trimRight {
  */
 export function validate(value: unknown): value is Bytes {
   // The checks `assert` makes, without building and catching an error.
-  if (value instanceof Uint8Array) return true
   if (!value || typeof value !== 'object') return false
-  // A Proxy or getter can throw from these reads; that is invalid input too.
+  // A revoked Proxy, or a trap or getter, can throw from these checks; that
+  // is invalid input too.
   try {
+    if (value instanceof Uint8Array) return true
     return (
       'BYTES_PER_ELEMENT' in value &&
       value.BYTES_PER_ELEMENT === 1 &&
