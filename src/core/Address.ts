@@ -85,7 +85,16 @@ export function checksum(address: string): Address {
 
   assert(address, { strict: false })
 
+  // The checksum depends only on the lowercase address, so every casing of an
+  // address shares the result computed for the lowercase form.
   const hexAddress = address.substring(2).toLowerCase()
+  const key = `0x${hexAddress}`
+  const cached = Caches.checksum.get(key)
+  if (cached !== undefined) {
+    Caches.checksum.set(address, cached)
+    return cached
+  }
+
   const hash = Hash.keccak256(Bytes.fromString(hexAddress), { as: 'Bytes' })
 
   const characters = hexAddress.split('')
@@ -99,7 +108,8 @@ export function checksum(address: string): Address {
   }
 
   const result = `0x${characters.join('')}` as const
-  Caches.checksum.set(address, result)
+  Caches.checksum.set(key, result)
+  if (key !== address) Caches.checksum.set(address, result)
   return result
 }
 
