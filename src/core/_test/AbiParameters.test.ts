@@ -244,6 +244,23 @@ describe('encodePacked', () => {
     )
   })
 
+  test('error: odd-length bytes', () => {
+    expect(() =>
+      AbiParameters.encodePacked(['bytes', 'uint8'], ['0x123', 1]),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+      It must be an even length.]
+    `)
+    expect(() =>
+      AbiParameters.encodePacked(['bytes[]'], [['0x0123', '0x123']]),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+      It must be an even length.]
+    `)
+  })
+
   test('error: unsupported type', () => {
     expect(
       // @ts-expect-error
