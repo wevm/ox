@@ -106,10 +106,14 @@ export declare namespace toBytes {
  * @returns The decoded hex string.
  */
 export function toHex(value: string): Hex.Hex {
-  let integer = BigInt(0)
+  let integer = 0n
   let pad = 0
   let checkPad = true
 
+  // Accumulate up to nine digits as a number, since 58^9 is below 2^53, and
+  // fold each chunk into the BigInt at once.
+  let chunk = 0
+  let chunkBase = 1
   for (let i = 0; i < value.length; i++) {
     const char = value[i]!
 
@@ -118,12 +122,19 @@ export function toHex(value: string): Hex.Hex {
     else checkPad = false
 
     // check for invalid characters
-    if (typeof internal.alphabetToInteger[char] !== 'bigint')
+    const digit = internal.alphabetToInteger[char]
+    if (typeof digit !== 'bigint')
       throw new Error('invalid base58 character: ' + char)
 
-    integer = integer * 58n
-    integer = integer + internal.alphabetToInteger[char]!
+    chunk = chunk * 58 + Number(digit)
+    chunkBase *= 58
+    if (chunkBase === 7_427_658_739_644_928) {
+      integer = integer * 7_427_658_739_644_928n + BigInt(chunk)
+      chunk = 0
+      chunkBase = 1
+    }
   }
+  if (chunkBase > 1) integer = integer * BigInt(chunkBase) + BigInt(chunk)
 
   if (!pad) return `0x${integer.toString(16)}` as Hex.Hex
   return `0x${'0'.repeat(pad * 2)}${integer.toString(16)}` as Hex.Hex
