@@ -235,7 +235,7 @@ export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   return bytes
 }
 
-/** Builds the error for an invalid hex digit in the byte at `index`. */
+// Builds the error for an invalid hex digit in the byte at `index`.
 function invalidByteSequence(
   value: Hex.Hex,
   size: number | undefined,
