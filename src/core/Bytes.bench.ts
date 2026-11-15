@@ -21,6 +21,8 @@ const bytes32 = (() => {
   return b
 })()
 const bytes32Zero = new Uint8Array(32)
+const bytes32Small = Bytes.fromNumber(1_234_567n, { size: 32 })
+const bytes32Wei = Bytes.fromNumber(42n * 10n ** 18n, { size: 32 })
 
 describe('Bytes.fromHex', () => {
   bench('32 bytes', () => {
@@ -104,6 +106,14 @@ describe('Bytes.toBigInt', () => {
 
   bench('32 bytes (zero)', () => {
     Bytes.toBigInt(bytes32Zero)
+  })
+
+  bench('32 bytes (small value)', () => {
+    Bytes.toBigInt(bytes32Small)
+  })
+
+  bench('32 bytes (wei value)', () => {
+    Bytes.toBigInt(bytes32Wei)
   })
 
   bench('32 bytes, size: 32', () => {
