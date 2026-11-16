@@ -523,8 +523,12 @@ export function toRpc<pending extends boolean = false>(
     )
   if (typeof transaction.r === 'string') rpc.r = transaction.r
   if (typeof transaction.s === 'string') rpc.s = transaction.s
+  // Legacy EIP-155 `v` is unsized; typed transactions keep a single byte.
   if (transaction.v !== undefined)
-    rpc.v = Quantity.fromNumberish(transaction.v, { size: 1 })
+    rpc.v =
+      transaction.type === 'legacy'
+        ? Quantity.fromNumberish(transaction.v)
+        : Quantity.fromNumberish(transaction.v, { size: 1 })
   if (transaction.yParity !== undefined)
     rpc.yParity = Quantity.fromNumberish(transaction.yParity)
 
