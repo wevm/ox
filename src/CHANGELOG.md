@@ -1,5 +1,41 @@
 # ox
 
+## 0.14.68
+
+### Patch Changes
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` to throw `AbiParameters.BytesSizeMismatchError` when a `bytesN` value has non-zero padding, and `AbiEvent.decode` to throw `AbiEvent.TopicSizeMismatchError` when a topic for a statically typed indexed parameter is not 32 bytes.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Changed `Address.assert` and `Address.validate` to reject values that are not strings. Before, `strict: false` coerced them to strings, and strict mode threw a `TypeError` from `assert`.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `Cbor.decode` to throw `Cbor.DepthLimitExceededError` when values nest deeper than 1024 instead of overflowing the stack.
+
+- [#684](https://github.com/wevm/ox/pull/684) [`0911585`](https://github.com/wevm/ox/commit/0911585b69680f0d13b1ee1aa3e935c595c4f824) Thanks [@jxom](https://github.com/jxom)! - Improved `Address.checksum` to compute the checksum once for every casing of an address and cache it only under the lowercase address, and fixed the cache to refresh an entry on write and to evict an empty-string key.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Improved the performance of `Rlp` encoding and decoding, transaction envelope serialization, `AbiParameters.encode`, ABI decoding of full `uint256` words, `AbiEvent.decode`, `Json.parse`, `Hex.fromNumber` for bigints, signed `Hex.toBigInt`, and `Address.validate`.
+
+- [#684](https://github.com/wevm/ox/pull/684) [`0911585`](https://github.com/wevm/ox/commit/0911585b69680f0d13b1ee1aa3e935c595c4f824) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.encodePacked` to throw `Hex.InvalidLengthError` for `bytes` hex values with an odd number of digits instead of returning misaligned data.
+
+- [#684](https://github.com/wevm/ox/pull/684) [`0911585`](https://github.com/wevm/ox/commit/0911585b69680f0d13b1ee1aa3e935c595c4f824) Thanks [@jxom](https://github.com/jxom)! - Fixed `SignatureErc6492.universalSignatureValidatorBytecode` to return `false` when `ecrecover` yields the zero address, so a malformed signature no longer verifies for the zero address.
+
+- [#687](https://github.com/wevm/ox/pull/687) [`d693734`](https://github.com/wevm/ox/commit/d693734c09d26cbf3da669d39ef693f4b2084e34) Thanks [@jxom](https://github.com/jxom)! - Fixed `Blobs.to` truncating multi-blob payloads when a non-final blob contained a `0x80` byte.
+
+- [#687](https://github.com/wevm/ox/pull/687) [`d693734`](https://github.com/wevm/ox/commit/d693734c09d26cbf3da669d39ef693f4b2084e34) Thanks [@jxom](https://github.com/jxom)! - Improved the speed and memory use of `Hex` and `Bytes` conversions, ABI decoding, `Blobs.from`, `Blobs.to`, `Base58`, and `TypedData` hashing, and made `Hex.validate`, `Bytes.validate`, and `Address.validate` return `false` without constructing an error.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toNumber` and `Bytes.toNumber` to throw `Hex.IntegerOutOfRangeError` instead of returning a rounded number or `NaN` when the value is not a safe integer.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.HttpError` to show a request body that is already a string without encoding it twice.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `Json.parse` to keep a string that ends in `#__bigint` but is not a bigint as a string instead of throwing.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `Rlp.toBytes` and `Rlp.toHex`, and so every `TxEnvelope*.deserialize`, to throw `Rlp.TrailingBytesError` on bytes after the item, `Rlp.ListBoundaryExceededError` when an item overruns its list, and `Rlp.DepthLimitExceededError` when lists nest deeper than 1024. `TxEnvelopeTempo.deserialize` still accepts a signed transaction followed by `sender ‖ 0xfeefeefeefee`, as passed to a fee payer.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.generateNonce` to draw every nonce from `crypto.getRandomValues` instead of a sliding window over a `Math.random` buffer that made consecutive nonces share 95 of 96 characters.
+
+- [#688](https://github.com/wevm/ox/pull/688) [`af9a628`](https://github.com/wevm/ox/commit/af9a628126d4212d2d8ba55e2eaee292bfe61357) Thanks [@jxom](https://github.com/jxom)! - Fixed `Transaction`, `TransactionReceipt`, `TransactionRequest` and `TypedData` to look up untrusted type names such as `"constructor"` only among their own keys, and `TransactionReceipt` and `FrameReceipt` to do the same for statuses, instead of the object prototype.
+
+- [#682](https://github.com/wevm/ox/pull/682) [`4c0eb9f`](https://github.com/wevm/ox/commit/4c0eb9fc435f69795fd27bf685e67d75eb879042) Thanks [@bdchatham](https://github.com/bdchatham)! - Fixed `ZoneId.fromChainId` for zones of Tempo chains other than mainnet and Moderato, whose chain IDs carry the source chain ID in the high 32 bits and the zone ID in the low 32 bits.
+
 ## 0.14.67
 
 ### Patch Changes
