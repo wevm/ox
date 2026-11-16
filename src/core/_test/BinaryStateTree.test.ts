@@ -180,3 +180,38 @@ describe('insert', () => {
     )
   })
 })
+
+describe('merkelize', () => {
+  test('behavior: single zero value', () => {
+    const tree = BinaryStateTree.create()
+    BinaryStateTree.insert(
+      tree,
+      Bytes.fromHex(('0x' + '00'.repeat(32)) as Hex.Hex),
+      Bytes.fromHex(('0x' + '00'.repeat(32)) as Hex.Hex),
+    )
+    expect(
+      Hex.fromBytes(BinaryStateTree.merkelize(tree)),
+    ).toMatchInlineSnapshot(
+      `"0x03ecb31f2982654be96b0ced7a59db5e056a1511f6a01b7a6dab182a79ab3a83"`,
+    )
+  })
+
+  test('behavior: zero value next to non-zero value', () => {
+    const tree = BinaryStateTree.create()
+    BinaryStateTree.insert(
+      tree,
+      Bytes.fromHex(('0x' + '00'.repeat(32)) as Hex.Hex),
+      Bytes.fromHex(('0x' + '00'.repeat(32)) as Hex.Hex),
+    )
+    BinaryStateTree.insert(
+      tree,
+      Bytes.fromHex(('0x' + '00'.repeat(31) + '01') as Hex.Hex),
+      Bytes.fromHex(('0x' + '01'.repeat(32)) as Hex.Hex),
+    )
+    expect(
+      Hex.fromBytes(BinaryStateTree.merkelize(tree)),
+    ).toMatchInlineSnapshot(
+      `"0x8b1fd0f39922fc0fe0633c4bb9bfe5cc92aabf717313fe0cdc6e985f0a5cb8c1"`,
+    )
+  })
+})
