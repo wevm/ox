@@ -348,6 +348,16 @@ describe('static', () => {
         `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef" (bytes44) does not match expected size (bytes8).]`,
       )
     })
+
+    test('error: invalid hex', () => {
+      expect(() =>
+        AbiParameters.encode([{ type: 'bytes8' }], ['0x0123456789abcdeg']),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [Hex.InvalidHexValueError: Value \`0x0123456789abcdeg\` is an invalid hex value.
+
+        Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+      `)
+    })
   })
 
   describe('bytes16', () => {

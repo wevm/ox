@@ -1,5 +1,4 @@
 import * as Errors from '../../Errors.js'
-import { bytesToHex } from './hex.js'
 
 /**
  * Decodes a big-endian unsigned `Uint8Array` into a `bigint`. When `signed` is
@@ -10,36 +9,34 @@ import { bytesToHex } from './hex.js'
 export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
   const len = value.length
   if (len === 0) return 0n
+  // Two's complement of the unsigned value, without the hex round-trip.
+  if (signed) return BigInt.asIntN(len * 8, bytesToBigInt(value))
 
-  // Fast path: unsigned big-endian read using DataView for 8-byte chunks,
-  // skipping the hex round-trip.
-  if (!signed) {
-    let val = 0n
-    let i = 0
-    if (len >= 8) {
-      const view = new DataView(value.buffer, value.byteOffset, len)
-      const tail = len & 7
-      const fullEnd = len - tail
-      while (i < fullEnd) {
-        val = (val << 64n) | view.getBigUint64(i, false)
-        i += 8
-      }
-    }
-    while (i < len) {
-      val = (val << 8n) | BigInt(value[i]!)
-      i++
-    }
-    return val
+  // Skip leading zeros first: ABI words are 32 bytes but usually hold small
+  // values, which then fit a Number and skip the BigInt arithmetic.
+  let i = 0
+  while (i < len && value[i] === 0) i++
+  if (len - i <= 6) {
+    let n = 0
+    for (; i < len; i++) n = n * 256 + value[i]!
+    return BigInt(n)
   }
 
-  // Signed: BigInt parses hex strings faster than the per-byte loop for
-  // > 8-byte inputs in V8/JSC, so route through `bytesToHex`.
-  const hex = bytesToHex(value)
-  const n = hex === '0x' ? 0n : BigInt(hex)
-  const max_unsigned = 1n << (BigInt(len) * 8n)
-  const max_signed = max_unsigned >> 1n
-  if (n < max_signed) return n
-  return n - max_unsigned
+  // Unsigned big-endian read using DataView for 8-byte chunks.
+  let val = 0n
+  const fullEnd = len - ((len - i) & 7)
+  if (i < fullEnd) {
+    const view = new DataView(value.buffer, value.byteOffset, len)
+    while (i < fullEnd) {
+      val = (val << 64n) | view.getBigUint64(i, false)
+      i += 8
+    }
+  }
+  while (i < len) {
+    val = (val << 8n) | BigInt(value[i]!)
+    i++
+  }
+  return val
 }
 
 /**
@@ -49,11 +46,16 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
  * @internal
  */
 export function bytesToSafeNumber(value: Uint8Array, signed?: boolean): number {
-  if (!signed && value.length <= 6) {
+  if (!signed) {
     // Small unsigned values fit in a number directly without BigInt round-trip.
-    let n = 0
-    for (let i = 0; i < value.length; i++) n = n * 256 + value[i]!
-    return n
+    const length = value.length
+    let i = 0
+    while (i < length && value[i] === 0) i++
+    if (length - i <= 6) {
+      let n = 0
+      for (; i < length; i++) n = n * 256 + value[i]!
+      return n
+    }
   }
   const big = bytesToBigInt(value, signed)
   const num = Number(big)

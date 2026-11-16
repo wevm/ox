@@ -322,13 +322,14 @@ describe('encodeData', () => {
     )
   })
 
-  test('behavior: malformed bytes compatibility', () => {
+  test('error: malformed bytes', () => {
     const abiFunction = AbiFunction.from('function foo(bytes)')
-    expect(
-      AbiFunction.encodeData(abiFunction, ['0xzz11']),
-    ).toMatchInlineSnapshot(
-      `"0x30c8d1da00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002zz11000000000000000000000000000000000000000000000000000000000000"`,
-    )
+    expect(() => AbiFunction.encodeData(abiFunction, ['0xzz11']))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidHexValueError: Value \`0xzz11\` is an invalid hex value.
+
+      Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+    `)
   })
 
   test('behavior: with overloads', () => {

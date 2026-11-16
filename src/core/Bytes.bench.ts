@@ -21,6 +21,12 @@ const bytes32 = (() => {
   return b
 })()
 const bytes32Zero = new Uint8Array(32)
+const bytes32Small = (() => {
+  const b = new Uint8Array(32)
+  b[30] = 0x01
+  b[31] = 0xa4
+  return b
+})()
 
 describe('Bytes.fromHex', () => {
   bench('32 bytes', () => {
@@ -108,6 +114,20 @@ describe('Bytes.toBigInt', () => {
 
   bench('32 bytes, size: 32', () => {
     Bytes.toBigInt(bytes32, { size: 32 })
+  })
+
+  bench('32-byte word holding a small value', () => {
+    Bytes.toBigInt(bytes32Small)
+  })
+
+  bench('32 bytes, signed', () => {
+    Bytes.toBigInt(bytes32, { signed: true })
+  })
+})
+
+describe('Bytes.toNumber', () => {
+  bench('32-byte word holding a small value', () => {
+    Bytes.toNumber(bytes32Small)
   })
 })
 

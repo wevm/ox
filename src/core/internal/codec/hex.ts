@@ -8,8 +8,12 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
 
-// Char-code → 4-bit nibble lookup table. Sentinel `0xff` = invalid.
-const nibbleTable = /*#__PURE__*/ (() => {
+/**
+ * Char-code → 4-bit nibble lookup table. Sentinel `0xff` = invalid.
+ *
+ * @internal
+ */
+export const nibbleTable = /*#__PURE__*/ (() => {
   const table = new Uint8Array(256).fill(0xff)
   for (let i = 0; i < 10; i++) table[48 + i] = i // '0'-'9'
   for (let i = 0; i < 6; i++) {
@@ -178,6 +182,27 @@ export function hexToBytesLoop(value: string, length: number): Uint8Array {
   if (invalid & 0x80) throw new InvalidHexValueError(value)
   return out
 }
+
+/**
+ * Throws exactly what {@link hexToBytes} throws for `value`, without decoding
+ * it, for callers that read the hex string directly.
+ *
+ * @internal
+ */
+export function assertHexBytes(value: string): void {
+  if (
+    typeof value !== 'string' ||
+    value.length < 2 ||
+    value.charCodeAt(0) !== 48 /* '0' */ ||
+    value.charCodeAt(1) !== 120 /* 'x' */
+  )
+    throw new InvalidHexValueError(value)
+  if (((value.length - 2) & 1) !== 0) throw new InvalidLengthError(value as Hex)
+  // A regular expression scans about twice as fast as a lookup-table loop.
+  if (!hexRegex.test(value)) throw new InvalidHexValueError(value)
+}
+
+const hexRegex = /^0x[0-9a-fA-F]*$/
 
 /** @internal */
 export function charCodeToBase16(char: number): number | undefined {

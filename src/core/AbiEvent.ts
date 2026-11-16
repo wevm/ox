@@ -30,6 +30,9 @@ export type AbiEvent = abitype.AbiEvent & {
  */
 const arraySuffixRegex = /^(.*)\[(\d+)?\]$/
 
+/** Matches a 32-byte topic word. */
+const topicRegex = /^0x[0-9a-fA-F]{64}$/
+
 /**
  * Encodes a primitive (32-byte) indexed event topic directly to a
  * left-padded 32-byte hex word, skipping the `AbiParameters.encode`
@@ -92,9 +95,10 @@ function decodePrimitiveTopic(
     // The high 12 bytes must be zero padding.
     if (!topic.startsWith('0x000000000000000000000000')) return undefined
     const address = `0x${topic.slice(26)}` as Address.Address
-    return [
-      options.checksumAddress === false ? address : Address.checksum(address),
-    ]
+    // `Address.checksum` rejects an invalid address itself.
+    if (options.checksumAddress !== false) return [Address.checksum(address)]
+    Address.assert(address, { strict: false })
+    return [address]
   }
   if (type === 'bool') {
     // The whole word must be `0` or `1`.
@@ -129,8 +133,15 @@ function decodePrimitiveTopic(
     const sizeStr = type.slice(5)
     const size = Number(sizeStr)
     if (!Number.isFinite(size)) return undefined
-    // Take leading `size` bytes of the 32-byte topic.
-    return [`0x${topic.slice(2, 2 + size * 2)}` as Hex.Hex]
+    // Anything but hex takes the `AbiParameters.decode` path, which reports
+    // the error.
+    if (!topicRegex.test(topic)) return undefined
+    // Take leading `size` bytes of the 32-byte topic. The rest must be zero
+    // padding.
+    const end = 2 + size * 2
+    for (let i = end; i < 66; i++)
+      if (topic.charCodeAt(i) !== 48) return undefined
+    return [`0x${topic.slice(2, end)}` as Hex.Hex]
   }
   return undefined
 }
@@ -609,23 +620,11 @@ export function decode(
         abiEvent,
         param: param as abitype.AbiParameter & { indexed: boolean },
       })
-    args[isUnnamed ? index : param.name || index] = (() => {
-      const t = param.type
-      if (
-        t === 'string' ||
-        t === 'bytes' ||
-        t === 'tuple' ||
-        arraySuffixRegex.test(t)
-      )
-        return topic
-      // Fast path: 32-byte primitive (`address`, `bool`, `uintN`,
-      // `intN`, `bytesN`). Reads the topic word directly without
-      // allocating a `Cursor` or running `Bytes.fromHex`.
-      const fast = decodePrimitiveTopic(t, topic, options)
-      if (fast) return fast[0]
-      const decoded = AbiParameters.decode([param], topic, options) || []
-      return decoded[0]
-    })()
+    args[isUnnamed ? index : param.name || index] = decodeTopic(
+      param,
+      topic,
+      options,
+    )
   }
 
   // Decode data (non-indexed args).
@@ -707,6 +706,7 @@ export declare namespace decode {
     | AbiParameters.decode.ErrorType
     | getSelector.ErrorType
     | DataMismatchError
+    | Hex.SizeOverflowError
     | SelectorTopicMismatchError
     | TopicsMismatchError
     | Errors.GlobalErrorType
@@ -1159,7 +1159,7 @@ function decodeForExtract(
 function decodeTopic(
   param: abitype.AbiEventParameter,
   topic: Hex.Hex,
-  options: decode.Options,
+  options: decode.Options = {},
 ) {
   const type = param.type
   if (
@@ -1169,8 +1169,15 @@ function decodeTopic(
     arraySuffixRegex.test(type)
   )
     return topic
+  // Fast path: 32-byte primitive (`address`, `bool`, `uintN`, `intN`,
+  // `bytesN`). Reads the topic word directly without allocating a `Cursor` or
+  // running `Bytes.fromHex`.
   const fast = decodePrimitiveTopic(type, topic, options)
   if (fast) return fast[0]
+  // A value topic is exactly one word; `AbiParameters.decode` would ignore
+  // the bytes past it.
+  if (topic.length > 66)
+    throw new Hex.SizeOverflowError({ givenSize: Hex.size(topic), maxSize: 32 })
   const decoded = AbiParameters.decode([param], topic, options) || []
   return decoded[0]
 }

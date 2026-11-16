@@ -4,10 +4,16 @@ import * as Errors from '../Errors.js'
 /** @internal */
 export type Cursor = {
   bytes: Bytes
-  dataView: DataView
+  /** Lazy: created on first access, since most cursors never use it. */
+  readonly dataView: DataView
+  /** Backing field of `dataView`. */
+  _dataView: DataView | undefined
   position: number
-  /** Lazy: only allocated when slow-path tracking kicks in. */
-  positionReadCount: Map<number, number> | undefined
+  /**
+   * Bitset of positions read so far, one bit per byte in 30-bit words. Lazy:
+   * only allocated when the recursive read limit is finite.
+   */
+  readPositions: number[] | undefined
   /** Total number of bytes read. */
   readSize: number
   /** Maximum total number of bytes that can be read. */
@@ -19,7 +25,6 @@ export type Cursor = {
   assertReadSize(length: number): void
   assertPosition(position: number): void
   decrementPosition(offset: number): void
-  getReadCount(position?: number): number
   incrementPosition(offset: number): void
   inspectByte(position?: number): Bytes[number]
   inspectBytes(length: number, position?: number): Bytes
@@ -45,9 +50,16 @@ export type Cursor = {
 
 const staticCursor: Cursor = {
   bytes: new Uint8Array(),
-  dataView: new DataView(new ArrayBuffer(0)),
+  get dataView() {
+    return (this._dataView ??= new DataView(
+      this.bytes.buffer,
+      this.bytes.byteOffset,
+      this.bytes.byteLength,
+    ))
+  },
+  _dataView: undefined,
   position: 0,
-  positionReadCount: undefined,
+  readPositions: undefined,
   readSize: 0,
   readSizeLimit: Number.POSITIVE_INFINITY,
   recursiveReadCount: 0,
@@ -79,9 +91,6 @@ const staticCursor: Cursor = {
     const position = this.position - offset
     this.assertPosition(position)
     this.position = position
-  },
-  getReadCount(position) {
-    return this.positionReadCount?.get(position || this.position) || 0
   },
   incrementPosition(offset) {
     if (offset < 0) throw new NegativeOffsetError({ offset })
@@ -212,10 +221,18 @@ const staticCursor: Cursor = {
   },
   _touch() {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
-    const map = (this.positionReadCount ??= new Map())
-    const count = map.get(this.position) || 0
-    map.set(this.position, count + 1)
-    if (count > 0) this.recursiveReadCount++
+    // Words of 30 bits stay small integers, so a plain array holds them. A
+    // typed array over 64 bytes is allocated off-heap, which costs more than
+    // decoding a short payload. Reads stop at the end of the data, so a bit
+    // per byte plus one covers every position a read starts from.
+    // oxlint-disable-next-line unicorn/no-new-array -- `Array.from({ length })` is about 20 times slower to fill.
+    const positions = (this.readPositions ??= new Array<number>(
+      Math.floor(this.bytes.length / 30) + 1,
+    ).fill(0))
+    const index = Math.floor(this.position / 30)
+    const bit = 1 << (this.position - index * 30)
+    if (positions[index]! & bit) this.recursiveReadCount++
+    else positions[index]! |= bit
   },
 }
 
@@ -226,17 +243,14 @@ export function create(
 ): Cursor {
   const cursor: Cursor = Object.create(staticCursor)
   cursor.bytes = bytes
-  cursor.dataView = new DataView(
-    bytes.buffer,
-    bytes.byteOffset,
-    bytes.byteLength,
-  )
-  cursor.positionReadCount = undefined
+  cursor._dataView = undefined
+  cursor.readPositions = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
-  // `recursiveReadLimit` allows one read per position plus that many repeated
-  // reads. Allow as many bytes as that number of 32-byte reads, so that reads
-  // of any length are bounded by the size of the data as well.
-  cursor.readSizeLimit = 32 * (bytes.length + recursiveReadLimit)
+  // A well-formed payload reads each byte once. Allow twice that, plus as many
+  // bytes as `recursiveReadLimit` repeated 32-byte reads, so that offsets
+  // pointing many times at one region cannot make the decoded output many
+  // times larger than the data.
+  cursor.readSizeLimit = 2 * bytes.length + 32 * recursiveReadLimit
   return cursor
 }
 
