@@ -508,6 +508,7 @@ describe('toRpc', () => {
         "parentBeaconBlockRoot": undefined,
         "parentHash": "0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "requestsHash": undefined,
         "sealFields": [
           "0x0000000000000000000000000000000000000000000000000000000000000000",
           "0x0000000000000000",
@@ -715,6 +716,7 @@ describe('toRpc', () => {
         "parentBeaconBlockRoot": undefined,
         "parentHash": "0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "requestsHash": undefined,
         "sealFields": [
           "0x0000000000000000000000000000000000000000000000000000000000000000",
           "0x0000000000000000",
@@ -733,6 +735,58 @@ describe('toRpc', () => {
         "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
       }
     `)
+  })
+
+  test('behavior: requestsHash', () => {
+    // Mainnet block 26428234 (post-Prague), trimmed to one transaction and one withdrawal.
+    const rpc = {
+      baseFeePerGas: '0x3b8ea6e7',
+      blobGasUsed: '0x2a0000',
+      difficulty: '0x0',
+      excessBlobGas: '0xc514585',
+      extraData: '0x546974616e2028746974616e6275696c6465722e78797a29',
+      gasLimit: '0x3938700',
+      gasUsed: '0x23a6eaa',
+      hash: '0xc0177acc8fe87d5eba942ebc003ffa8064ec63eec83ec5ded6b98d53dff487e2',
+      logsBloom:
+        '0xfee7fd7ef5fa1cfde8ea756da7dffda6dbfdf3fabfb09971efbbcffd765fffcfbc2f527af3fe2eef4b3befdce177b13fdb7beffffedfeffdf7971ffec7efaa86fc8d3feb96eceb7efdea777abaeff5ff46fdf1fdf3dfedff71d25a7fb0feb5ca3c4cc45fbb7ebb13df9f9bc536416fedfa5df5bfaddff7b25e85ce9e45effe69abe8bf6dfc5ab86fe5fdf76d0ef37bf7f331858ff70fffbffcafea5777de35d97feffbf3fdddfefefa397fee9f4bfdd477d67f77b179ae59ffeff62d4b8cfbf1ce5b7c57e7d9cbf7f29e7f32f7df78db759cabf6e7aca3dcf91737afde697ad6fddf7d6b8f77f9efb7ccfeef9baeb9eccdff553fbdebed431fa96e7fe566cee7',
+      miner: '0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97',
+      mixHash:
+        '0x476de780f38343d977f060944820a57667e21e2e3eed284dbc0f0f45cb999f23',
+      nonce: '0x0000000000000000',
+      number: '0x193434a',
+      parentBeaconBlockRoot:
+        '0x645e5dd10df2fdcfceedcd462666cedd03117e061c9272187521b9d5dea80174',
+      parentHash:
+        '0xe350f46ce9c96bcb3a2f2a8a47b205b1e5afc4cd9d01872948636285a81c0554',
+      receiptsRoot:
+        '0x3a9b4be502301b9379d07b5e23519dd572180336ac427097476f2690d92c3dcd',
+      requestsHash:
+        '0x6bb55db879cfce5155bbf84c5036f07cd6692ce4a23929423f84a88cd2e9701c',
+      sha3Uncles:
+        '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+      size: '0x27ce4',
+      stateRoot:
+        '0x5aa416b56ad1464a1a88e38f7127b8f181319475911abb0f73a401f44392e532',
+      timestamp: '0x6afb1517',
+      transactions: [
+        '0x955efe228355dc2fedba87f948c28f79c591ede57eeffef5fdd7ae66650c32cd',
+      ],
+      transactionsRoot:
+        '0xc0f6df9afa194592d42a662a6ed63ed2685496ecfab488aa4e38e3d6224bb3d6',
+      uncles: [],
+      withdrawals: [
+        {
+          address: '0xb9d7934878b5fb9610b3fe8a5e441e8fad7e293f',
+          amount: '0xbe7483',
+          index: '0x8f5478b',
+          validatorIndex: '0x22db72',
+        },
+      ],
+      withdrawalsRoot:
+        '0xaeb0321b253d63f458b83a49fedbb1af38821135acd64df5c3c41841ec4cbdc7',
+    } as const
+    expect(Block.toRpc(Block.fromRpc(rpc))).toEqual(rpc)
   })
 })
 
