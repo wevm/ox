@@ -12,8 +12,9 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
 
-const nativeToHex =
-  typeof (Uint8Array.prototype as { toHex?: unknown }).toHex === 'function'
+// Taken from the prototype once, and called on the value, so that an instance
+// or subclass defining its own `toHex` can't change the result.
+const nativeToHex = (Uint8Array.prototype as { toHex?: () => string }).toHex
 
 /** Root type for a Hex string. */
 export type Hex = `0x${string}`
@@ -209,9 +210,11 @@ export function fromBytes(
   let string = ''
   // Native `Uint8Array.prototype.toHex` is several times faster, and returns a
   // flat string rather than a rope of concatenated pairs.
-  if (nativeToHex && value instanceof Uint8Array)
-    string = (value as Uint8Array & { toHex(): string }).toHex()
-  else for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
+  // Empty values (including detached or out-of-bounds views, whose length is
+  // 0) skip it, since it throws on those.
+  if (typeof nativeToHex === 'function' && value instanceof Uint8Array) {
+    if (value.length > 0) string = nativeToHex.call(value)
+  } else for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
   const hex = `0x${string}` as const
 
   if (typeof options.size === 'number') {

@@ -814,6 +814,9 @@ export declare namespace encodeData {
     | Errors.GlobalErrorType
 }
 
+/** Longest encoded type kept in the type-hash cache. */
+const typeHashCacheMaxLength = 4_096
+
 /** @internal */
 export function hashType(value: {
   primaryType: string
@@ -826,7 +829,9 @@ export function hashType(value: {
   const cached = caches.typeHash.get(type)
   if (cached) return cached
   const hash = Hash.keccak256(Hex.fromString(type))
-  caches.typeHash.set(type, hash)
+  // The cache is bounded by entries, not bytes, so only cache encoded types of
+  // ordinary size: retained memory then stays bounded whatever types are passed.
+  if (type.length <= typeHashCacheMaxLength) caches.typeHash.set(type, hash)
   return hash
 }
 

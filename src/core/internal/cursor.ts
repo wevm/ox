@@ -221,14 +221,22 @@ const staticCursor: Cursor = {
       else reads.add(position)
       return
     }
-    // One bit per 32-byte word, so the set is 1/256 the size of the data.
-    const reads = (this.alignedReads ??= new Uint8Array(
-      (this.bytes.length >> 8) + 1,
-    ))
+    // One bit per 32-byte word, so the set is at most 1/256 the size of the
+    // data. It grows with the furthest word read rather than being sized to
+    // the whole input up front. Plain arithmetic rather than bitwise operators
+    // on lengths and positions, which would coerce them to 32-bit integers.
     const word = position / 32
-    const bit = 1 << (word & 7)
-    if (reads[word >> 3]! & bit) this.recursiveReadCount++
-    else reads[word >> 3]! |= bit
+    const index = Math.floor(word / 8)
+    let reads = this.alignedReads
+    if (!reads || index >= reads.length) {
+      const max = Math.floor(this.bytes.length / 256) + 1
+      const next = new Uint8Array(Math.min(max, Math.max(64, (index + 1) * 2)))
+      if (reads) next.set(reads)
+      reads = this.alignedReads = next
+    }
+    const bit = 1 << (word % 8)
+    if (reads[index]! & bit) this.recursiveReadCount++
+    else reads[index]! |= bit
   },
 }
 

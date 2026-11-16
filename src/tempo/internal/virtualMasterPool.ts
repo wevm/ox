@@ -45,13 +45,21 @@ const isNode =
 export function resolve(): Promise<Pool | undefined> {
   // The promise is cached rather than its result, so calls made while the
   // pool resolves share it instead of each building a pool (and, in browsers,
-  // a Blob URL that is never revoked). A failed attempt is discarded so a
-  // later call can retry.
-  cachedPool ??= (isNode ? resolveNode() : resolveBrowser()).catch((error) => {
-    cachedPool = undefined
-    throw error
-  })
-  return cachedPool
+  // a Blob URL that is never revoked). A failed attempt, or one that found no
+  // pool, is discarded so a later call can retry.
+  if (cachedPool) return cachedPool
+  const promise = (isNode ? resolveNode() : resolveBrowser()).then(
+    (pool) => {
+      if (!pool && cachedPool === promise) cachedPool = undefined
+      return pool
+    },
+    (error) => {
+      if (cachedPool === promise) cachedPool = undefined
+      throw error
+    },
+  )
+  cachedPool = promise
+  return promise
 }
 
 /**
