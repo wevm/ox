@@ -618,6 +618,58 @@ describe('deserialize', () => {
     expect(deserialized.feePayerSignature).toEqual(feePayerSig)
   })
 
+  describe('sender marker', () => {
+    const signed = TxEnvelopeTempo.serialize(
+      { ...transaction, feePayerSignature: null },
+      {
+        signature: Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload({
+            ...transaction,
+            feePayerSignature: null,
+          }),
+          privateKey,
+        }),
+      },
+    )
+
+    test('ignores sender and marker after the list', () => {
+      const serialized = Hex.concat(
+        signed,
+        address,
+        '0xfeefeefeefee',
+      ) as TxEnvelopeTempo.Serialized
+      expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
+        TxEnvelopeTempo.deserialize(signed),
+      )
+    })
+
+    test('behavior: marker after other trailing bytes', () => {
+      const serialized = Hex.concat(
+        signed,
+        '0x00',
+        address,
+        '0xfeefeefeefee',
+      ) as TxEnvelopeTempo.Serialized
+      expect(() =>
+        TxEnvelopeTempo.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`27\` trailing bytes remain.]`,
+      )
+    })
+
+    test('behavior: marker without a sender', () => {
+      const serialized = Hex.concat(
+        signed,
+        '0xfeefeefeefee',
+      ) as TxEnvelopeTempo.Serialized
+      expect(() =>
+        TxEnvelopeTempo.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`6\` trailing bytes remain.]`,
+      )
+    })
+  })
+
   test('feePayerSignature null', () => {
     const transaction_feePayer = TxEnvelopeTempo.from({
       ...transaction,

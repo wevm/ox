@@ -193,10 +193,13 @@ export function fromRpc<
 ): transaction extends Rpc<pending> ? Transaction<pending> : null {
   if (!transaction) return null as never
 
-  // Leave out `aaAuthorizationList` rather than deleting it afterwards.
-  const { aaAuthorizationList, ...rest } = transaction
+  // Leave out `aaAuthorizationList` rather than deleting it afterwards, and
+  // only copy the transaction when it is present.
+  const { aaAuthorizationList } = transaction
   const transaction_ = ox_Transaction.fromRpc(
-    (aaAuthorizationList ? rest : transaction) as ox_Transaction.Rpc<pending>,
+    (aaAuthorizationList
+      ? (({ aaAuthorizationList: _, ...rest }) => rest)(transaction)
+      : transaction) as ox_Transaction.Rpc<pending>,
   ) as Transaction<pending>
 
   transaction_.type = Object.hasOwn(fromRpcType, transaction.type)

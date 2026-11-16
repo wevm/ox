@@ -30,6 +30,20 @@ describe('assert', () => {
   `)
   })
 
+  test('empty versioned hash', () => {
+    expect(() =>
+      TxEnvelopeEip4844.assert({
+        blobVersionedHashes: ['0x'],
+        chainId: 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Blobs.InvalidVersionedHashSizeError: Versioned hash "0x" size is invalid.
+
+      Expected: 32
+      Received: 0]
+    `)
+  })
+
   test('invalid blob version', () => {
     expect(() =>
       TxEnvelopeEip4844.assert({

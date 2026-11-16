@@ -1,5 +1,6 @@
 import * as AccessList from '../core/AccessList.js'
 import * as Address from '../core/Address.js'
+import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -276,7 +277,9 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.toHex(
+    withoutSenderMarker(Hex.slice(serialized, 1)),
+  )
 
   const [
     chainId,
@@ -433,6 +436,31 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
 
 export declare namespace deserialize {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/** Bytes after the RLP list in `rlp ‖ sender ‖ 0xfeefeefeefee`. */
+const senderMarkerSize = 20 + 6
+
+/**
+ * Removes the `sender ‖ 0xfeefeefeefee` that follows the RLP list when a signed
+ * transaction is passed to a fee payer (e.g. by viem). The suffix is removed
+ * only when the list ends exactly before it, so any other trailing bytes are
+ * still rejected by `Rlp.toHex`.
+ */
+function withoutSenderMarker(payload: Hex.Hex): Hex.Hex {
+  const size = Hex.size(payload)
+  if (size <= senderMarkerSize) return payload
+  if (payload.slice(-12).toLowerCase() !== 'feefeefeefee') return payload
+
+  // Read the list header (a prefix and up to 4 length bytes).
+  const header = Bytes.fromHex(Hex.slice(payload, 0, 5))
+  const prefix = header[0]!
+  if (prefix < 0xc0) return payload
+  const cursor = { bytes: header, position: 1 }
+  const length = Rlp.readLength(cursor, prefix, 0xc0)
+  if (cursor.position + length + senderMarkerSize !== size) return payload
+
+  return Hex.slice(payload, 0, -senderMarkerSize)
 }
 
 /**
