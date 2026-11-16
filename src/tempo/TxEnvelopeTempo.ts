@@ -388,13 +388,13 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     feePayerSignatureOrSender !== '0x' &&
     feePayerSignatureOrSender !== undefined
   ) {
-    if (
-      feePayerSignatureOrSender === '0x00' ||
+    // A fee payer signature is a tuple, while a sender is an address string.
+    const sender =
+      typeof feePayerSignatureOrSender === 'string' &&
       Address.validate(feePayerSignatureOrSender)
-    ) {
+    if (feePayerSignatureOrSender === '0x00' || sender) {
       transaction.feePayerSignature = null
-      if (Address.validate(feePayerSignatureOrSender))
-        transaction.from = feePayerSignatureOrSender
+      if (sender) transaction.from = feePayerSignatureOrSender
     } else
       transaction.feePayerSignature = Signature.fromTuple(
         feePayerSignatureOrSender as never,
