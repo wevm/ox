@@ -151,7 +151,7 @@ export function decodeArray(
   // Note: zero-length fixed arrays (`T[0]`) are not dynamic.
   if (length === null) {
     // Dealing with a dynamic type, so get the offset of the array data.
-    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = toOffset(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
@@ -159,7 +159,7 @@ export function decodeArray(
 
     // Get the length of the array from the offset.
     cursor.setPosition(start)
-    const length = Bytes.toNumber(cursor.readBytes(sizeOfLength))
+    const length = toOffset(cursor.readBytes(sizeOfLength))
 
     // Check if the array has any dynamic children.
     const dynamicChild = hasDynamicChild(param)
@@ -194,7 +194,7 @@ export function decodeArray(
   // we need to decode the offset of the array data.
   if (hasDynamicChild(param)) {
     // Dealing with dynamic types, so get the offset of the array data.
-    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = toOffset(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
@@ -237,7 +237,7 @@ export function decodeArray(
 }
 
 export declare namespace decodeArray {
-  type ErrorType = Bytes.toNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -258,12 +258,12 @@ export function decodeBytes(
   const [_, size] = param.type.split('bytes')
   if (!size) {
     // Dealing with dynamic types, so get the offset of the bytes data.
-    const offset = Bytes.toNumber(cursor.readBytes(32))
+    const offset = toOffset(cursor.readBytes(32))
 
     // Set position of the cursor to start of bytes data.
     cursor.setPosition(staticPosition + offset)
 
-    const length = Bytes.toNumber(cursor.readBytes(32))
+    const length = toOffset(cursor.readBytes(32))
 
     // If there is no length, we have zero data.
     if (length === 0) {
@@ -357,7 +357,7 @@ export function decodeTuple(
   // tuple data.
   if (hasDynamicChild(param)) {
     // Dealing with dynamic types, so get the offset of the tuple data.
-    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = toOffset(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of referencing slot + offset.
     const start = staticPosition + offset
@@ -393,7 +393,7 @@ export function decodeTuple(
 }
 
 export declare namespace decodeTuple {
-  type ErrorType = Bytes.toNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -402,13 +402,13 @@ export function decodeString(
   { staticPosition }: { staticPosition: number },
 ) {
   // Get offset to start of string data.
-  const offset = Bytes.toNumber(cursor.readBytes(32))
+  const offset = toOffset(cursor.readBytes(32))
 
   // Start is the static position of current slot + offset.
   const start = staticPosition + offset
   cursor.setPosition(start)
 
-  const length = Bytes.toNumber(cursor.readBytes(32))
+  const length = toOffset(cursor.readBytes(32))
 
   // If there is no length, we have zero data (empty string).
   if (length === 0) {
@@ -427,7 +427,6 @@ export function decodeString(
 
 export declare namespace decodeString {
   type ErrorType =
-    | Bytes.toNumber.ErrorType
     | Bytes.toString.ErrorType
     | Bytes.trimLeft.ErrorType
     | Errors.GlobalErrorType
@@ -853,4 +852,20 @@ export function hasDynamicChild(param: AbiParameters.Parameter) {
     return true
 
   return false
+}
+
+/**
+ * Reads an offset or length word as a number. Like `Bytes.toNumber` before it
+ * checked for safe integers, values above 6 bytes stay lossy, so that the
+ * cursor reports them as out of bounds.
+ *
+ * @internal
+ */
+function toOffset(word: Bytes.Bytes): number {
+  let i = 0
+  while (i < 26 && word[i] === 0) i++
+  if (i < 26) return Number(Hex.fromBytes(word))
+  let value = 0
+  for (; i < 32; i++) value = value * 256 + word[i]!
+  return value
 }

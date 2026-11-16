@@ -707,6 +707,23 @@ describe('toNumber', () => {
       '[Hex.SizeOverflowError: Size cannot exceed `32` bytes. Given size: `64` bytes.]',
     )
   })
+
+  test('error: not a safe integer', () => {
+    expect(Hex.toNumber('0x1fffffffffffff')).toBe(Number.MAX_SAFE_INTEGER)
+    expect(() =>
+      Hex.toNumber('0x20000000000001'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+    expect(() => Hex.toNumber('0x')).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`NaN\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+    expect(() =>
+      Hex.toNumber(`0x8${'0'.repeat(63)}`, { signed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-5.78960446186581e+76\` is not in safe signed integer range (\`-9007199254740991\` to \`9007199254740991\`)]`,
+    )
+  })
 })
 
 describe('toString', () => {

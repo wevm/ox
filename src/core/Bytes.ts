@@ -640,6 +640,8 @@ export declare namespace toHex {
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a number.
  *
+ * Throws `Hex.IntegerOutOfRangeError` when the value is not a safe integer. Use `toBigInt` for larger values.
+ *
  * @example
  * ```ts twoslash
  * import { Bytes } from 'ox'
