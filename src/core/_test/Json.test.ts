@@ -141,6 +141,16 @@ describe('Json.parse', () => {
   })
 })
 
+describe('Json.parse behavior', () => {
+  test('behavior: escaped bigint marker', () => {
+    expect(Json.parse('{"a":"\\u0036\\u0039#__bigint"}')).toEqual({ a: 69n })
+  })
+
+  test('behavior: untrusted string that is not a bigint', () => {
+    expect(Json.parse('{"a":"x#__bigint"}')).toEqual({ a: 'x#__bigint' })
+  })
+})
+
 describe('Json.stringify', () => {
   test('default', () => {
     const value = {

@@ -81,10 +81,23 @@ export function parse(
   string: string,
   reviver?: ((this: any, key: string, value: any) => any) | undefined,
 ) {
+  // Without a reviver, text that cannot hold the bigint marker (neither
+  // literally nor through a `\u` escape) parses without the reviver wrapper.
+  if (
+    typeof reviver !== 'function' &&
+    typeof string === 'string' &&
+    !string.includes(bigIntSuffix) &&
+    !string.includes('\\u')
+  )
+    return JSON.parse(string)
   return JSON.parse(string, (key, value_) => {
     const value = value_
     if (typeof value === 'string' && value.endsWith(bigIntSuffix))
-      return BigInt(value.slice(0, -bigIntSuffix.length))
+      try {
+        return BigInt(value.slice(0, -bigIntSuffix.length))
+      } catch {
+        // Not a bigint marker (e.g. untrusted text), so keep the string.
+      }
     return typeof reviver === 'function' ? reviver(key, value) : value
   })
 }
