@@ -224,7 +224,7 @@ describe('fromHttp', () => {
 
       Status: 400
       URL: https://oxlib.sh/rpc
-      Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
+      Body: {"id":0,"method":"eth_accounts","jsonrpc":"2.0"}
 
       Details: Bad Request]
     `)
@@ -244,7 +244,7 @@ describe('fromHttp', () => {
 
       Status: 400
       URL: https://oxlib.sh/rpc
-      Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
+      Body: {"id":0,"method":"eth_accounts","jsonrpc":"2.0"}
 
       Details: bad]
     `)
@@ -315,6 +315,19 @@ describe('fromHttp', () => {
       Object.defineProperty(AbortSignal, 'any', descriptor)
       await server.close()
     }
+  })
+
+  test('behavior: timeout rejects when `fetchFn` ignores the signal', async () => {
+    const transport = RpcTransport.fromHttp('https://example.com', {
+      fetchFn: () => new Promise<Response>(() => {}),
+      timeout: 50,
+    })
+
+    await expect(() =>
+      transport.request({ method: 'eth_accounts' }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Promise.TimeoutError: Operation timed out.]`,
+    )
   })
 
   test('behavior: timeout covers a response body that stalls after its headers', async () => {

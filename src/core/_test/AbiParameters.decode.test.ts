@@ -136,6 +136,17 @@ describe('static', () => {
       assertType<readonly [Hex.Hex]>(result)
       expect(result).toEqual(['0x0123456789abcdef'])
     })
+
+    test('error: non-zero padding', () => {
+      expect(() =>
+        AbiParameters.decode(
+          AbiParameters.from('bytes8'),
+          '0x0123456789abcdef000000000000000000000000000000000000000000000001',
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0123456789abcdef000000000000000000000000000000000000000000000001" (bytes32) does not match expected size (bytes8).]`,
+      )
+    })
   })
 
   describe('bytes16', () => {
@@ -1890,6 +1901,28 @@ describe('read size', () => {
     expect(value).toEqual(Array.from({ length }, () => tail))
   })
 
+  test('error: array elements sharing one large tail', () => {
+    // 33 elements point at one 64 KiB tail, so the decoded value would be
+    // 33 times the size of the data.
+    const length = 33
+    const tail = Hex.fromBytes(new Uint8Array(65_536).fill(0xab))
+    const data = Hex.concat(
+      Hex.fromNumber(32, { size: 32 }), // ptr
+      Hex.fromNumber(length, { size: 32 }), // len
+      ...Array.from({ length }, () =>
+        Hex.fromNumber(32 * length, { size: 32 }),
+      ),
+      Hex.fromNumber(65_536, { size: 32 }), // len of tail
+      tail,
+    )
+    expect(Hex.size(data)).toMatchInlineSnapshot(`66688`)
+    expect(() =>
+      AbiParameters.decode(AbiParameters.from('bytes[]'), data),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`395520\` bytes exceeded (read size: \`459264\` bytes).]`,
+    )
+  })
+
   test('error: array elements with overlapping tails', () => {
     // Each element starts 33 bytes after the previous one and runs to the end
     // of the data.
@@ -1907,7 +1940,7 @@ describe('read size', () => {
     expect(() =>
       AbiParameters.decode(AbiParameters.from('bytes[]'), data),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`1329152\` bytes exceeded (read size: \`1335257\` bytes).]`,
+      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`328832\` bytes exceeded (read size: \`332354\` bytes).]`,
     )
   })
 })

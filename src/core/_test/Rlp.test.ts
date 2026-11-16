@@ -157,6 +157,70 @@ describe('Rlp.to', () => {
     expect(Rlp.toHex(rlpBytes)).toEqual('0x')
   })
 
+  test('behavior: hex leaves of a hex input', () => {
+    // Short and long leaves, nested, in short and long (> 4096 hex
+    // characters) inputs.
+    for (const length of [32, 4_096]) {
+      const value = [
+        '0x0a',
+        '0x',
+        `0x${'ab'.repeat(20)}`,
+        [[`0x${'cd'.repeat(length)}`], '0x7f', '0x80'],
+        `0x${'ef'.repeat(56)}`,
+      ] as const
+      const encoded = Rlp.fromHex(value as never)
+      expect(Rlp.toHex(encoded)).toEqual(value)
+      // Leaves are lowercase, as `Hex.fromBytes` writes them.
+      expect(Rlp.toHex(`0x${encoded.slice(2).toUpperCase()}`)).toEqual(value)
+    }
+  })
+
+  test('behavior: hex input decodes and fails like byte input', () => {
+    // Decoding to bytes always goes through `Bytes.fromHex` and the cursor,
+    // which short hex input to hex skips.
+    const toHex = (value: unknown): unknown =>
+      Array.isArray(value) ? value.map(toHex) : Hex.fromBytes(value as never)
+    const outcome = (fn: () => unknown) => {
+      try {
+        return { value: fn() }
+      } catch (error) {
+        return {
+          error: `${(error as Error).name}: ${(error as Error).message}`,
+        }
+      }
+    }
+    for (const value of [
+      '0x',
+      '0x00',
+      '0x7F',
+      '0x8180',
+      '0xC88363617483646F67',
+      '0xc0',
+      '0xzz',
+      '0x8',
+      '0x0\u0130',
+      '0x82',
+      '0x8201',
+      '0xb8',
+      '0xb801ff',
+      '0xb838',
+      '0xb90001',
+      '0xbc',
+      '0x8100',
+      '0x817f',
+      '0xc20102',
+      '0xc1c0c0',
+      '0xc3010203ff',
+      '0xc28201',
+      '0xff',
+      '0x0101',
+      `0x${'c1'.repeat(1_025)}`,
+    ] as const)
+      expect(outcome(() => Rlp.toHex(value as Hex.Hex))).toEqual(
+        outcome(() => toHex(Rlp.toBytes(value as Hex.Hex))),
+      )
+  })
+
   describe('prefix < 0x80', () => {
     test('bytes -> bytes', () => {
       expect(Rlp.toBytes(Rlp.fromBytes(Bytes.fromHex('0x00')))).toEqual(

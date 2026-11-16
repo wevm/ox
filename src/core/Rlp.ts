@@ -2,11 +2,19 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal_bytes from './internal/bytes.js'
+import { assertHexBytes, nibbleTable } from './internal/codec/hex.js'
 import * as Cursor from './internal/cursor.js'
 import type { ExactPartial, RecursiveArray } from './internal/types.js'
 
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
+
+/**
+ * Hex input length up to which decoded hex leaves are sliced from the input. A
+ * sliced string keeps its whole parent alive, so this bounds what one kept leaf
+ * can retain.
+ */
+const sliceMaxLength = 4_096
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
@@ -62,6 +70,16 @@ export function to<
   to extends 'Hex' | 'Bytes',
 >(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
+
+  // Hex in and out: read a short input straight from the string, skipping the
+  // byte copy. A long input pays a JavaScript scan to validate it, which costs
+  // more than `Bytes.fromHex`, and leaves sliced from it would keep it alive.
+  if (
+    typeof value === 'string' &&
+    to_ === 'Hex' &&
+    value.length <= sliceMaxLength
+  )
+    return decodeHex(value) as to.ReturnType<to>
 
   const bytes =
     typeof value === 'string' ? Bytes.fromHex(value) : (value as Bytes.Bytes)
@@ -155,7 +173,10 @@ export declare namespace decodeRlpCursor {
 
 /** @internal */
 export function readLength(
-  cursor: Cursor.Cursor,
+  cursor: Pick<
+    Cursor.Cursor,
+    'readUint8' | 'readUint16' | 'readUint24' | 'readUint32'
+  >,
   prefix: number,
   offset: number,
 ) {
@@ -231,6 +252,123 @@ export declare namespace readList {
     | DepthLimitExceededError
     | ListBoundaryExceededError
     | Errors.GlobalErrorType
+}
+
+type HexReader = {
+  /** Byte length of the input. */
+  length: number
+  /** Position in bytes. */
+  position: number
+  readUint8(): number
+  readUint16(): number
+  readUint24(): number
+  readUint32(): number
+  /** Lowercase hex input. */
+  source: string
+}
+
+/**
+ * Decodes a hex RLP value straight from its string, slicing leaves out of it.
+ * Mirrors `Bytes.fromHex` followed by {@link decodeRlpCursor}, including the
+ * cursor's bounds errors.
+ *
+ * @internal
+ */
+function decodeHex(value: Hex.Hex): RecursiveArray<Hex.Hex> {
+  assertHexBytes(value)
+  const length = (value.length - 2) / 2
+  if (length === 0) return '0x'
+  const reader: HexReader = {
+    length,
+    position: 0,
+    readUint8() {
+      return readHexUint(this, 1)
+    },
+    readUint16() {
+      return readHexUint(this, 2)
+    },
+    readUint24() {
+      return readHexUint(this, 3)
+    },
+    readUint32() {
+      return readHexUint(this, 4)
+    },
+    source: value.toLowerCase(),
+  }
+  const result = decodeHexItem(reader, 0)
+  // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
+  if (reader.position < length)
+    throw new TrailingBytesError({ count: length - reader.position })
+  return result
+}
+
+function decodeHexItem(
+  reader: HexReader,
+  depth: number,
+): RecursiveArray<Hex.Hex> {
+  if (depth >= depthLimit)
+    throw new DepthLimitExceededError({ limit: depthLimit })
+
+  const prefix = reader.readUint8()
+  if (prefix < 0x80) reader.position--
+
+  // bytes
+  if (prefix < 0xc0) {
+    const length = readLength(reader, prefix, 0x80)
+    const start = reader.position
+    assertHexPosition(reader, start + length - 1)
+    reader.position += length
+    const first = length === 1 ? readSourceByte(reader.source, start) : 0
+    // See `decodeRlpCursor`.
+    if (prefix >= 0x80 && length === 1 && first < 0x80)
+      throw new NonCanonicalError({
+        reason: `single byte \`0x${first.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
+      })
+    return `0x${reader.source.slice(2 + start * 2, 2 + reader.position * 2)}`
+  }
+
+  // list
+  const length = readLength(reader, prefix, 0xc0)
+  const position = reader.position
+  const value: RecursiveArray<Hex.Hex>[] = []
+  while (reader.position - position < length)
+    value.push(decodeHexItem(reader, depth + 1))
+  // Items must consume exactly the declared list length.
+  if (reader.position - position !== length)
+    throw new ListBoundaryExceededError({
+      consumed: reader.position - position,
+      declared: length,
+    })
+  return value as RecursiveArray<Hex.Hex>
+}
+
+/**
+ * Throws the cursor's error for reading past the end of the input.
+ *
+ * @internal
+ */
+function assertHexPosition(reader: HexReader, position: number) {
+  if (position > reader.length - 1)
+    throw new Cursor.PositionOutOfBoundsError({
+      length: reader.length,
+      position,
+    })
+}
+
+function readHexUint(reader: HexReader, size: number): number {
+  assertHexPosition(reader, reader.position + size - 1)
+  let value = 0
+  for (let i = 0; i < size; i++)
+    value = value * 256 + readSourceByte(reader.source, reader.position++)
+  return value
+}
+
+function readSourceByte(source: string, position: number): number {
+  const i = 2 + position * 2
+  return (
+    (nibbleTable[source.charCodeAt(i)]! << 4) |
+    nibbleTable[source.charCodeAt(i + 1)]!
+  )
 }
 
 /**

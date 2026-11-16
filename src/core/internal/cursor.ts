@@ -4,7 +4,10 @@ import * as Errors from '../Errors.js'
 /** @internal */
 export type Cursor = {
   bytes: Bytes
-  dataView: DataView
+  /** Lazy: created on first access, since most cursors never use it. */
+  readonly dataView: DataView
+  /** Backing field of `dataView`. */
+  _dataView: DataView | undefined
   position: number
   /**
    * Positions read so far, so a repeated read can be counted. Word-aligned
@@ -49,7 +52,14 @@ export type Cursor = {
 
 const staticCursor: Cursor = {
   bytes: new Uint8Array(),
-  dataView: new DataView(new ArrayBuffer(0)),
+  get dataView() {
+    return (this._dataView ??= new DataView(
+      this.bytes.buffer,
+      this.bytes.byteOffset,
+      this.bytes.byteLength,
+    ))
+  },
+  _dataView: undefined,
   position: 0,
   alignedReads: undefined,
   unalignedReads: undefined,
@@ -247,18 +257,15 @@ export function create(
 ): Cursor {
   const cursor: Cursor = Object.create(staticCursor)
   cursor.bytes = bytes
-  cursor.dataView = new DataView(
-    bytes.buffer,
-    bytes.byteOffset,
-    bytes.byteLength,
-  )
+  cursor._dataView = undefined
   cursor.alignedReads = undefined
   cursor.unalignedReads = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
-  // `recursiveReadLimit` allows one read per position plus that many repeated
-  // reads. Allow as many bytes as that number of 32-byte reads, so that reads
-  // of any length are bounded by the size of the data as well.
-  cursor.readSizeLimit = 32 * (bytes.length + recursiveReadLimit)
+  // A well-formed payload reads each byte once. Allow twice that, plus as many
+  // bytes as `recursiveReadLimit` repeated 32-byte reads (256 KiB by default),
+  // so that offsets pointing many times at one region can add at most that
+  // fixed amount to the decoded output, whatever the size of the data.
+  cursor.readSizeLimit = 2 * bytes.length + 32 * recursiveReadLimit
   return cursor
 }
 

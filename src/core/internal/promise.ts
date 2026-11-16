@@ -5,9 +5,12 @@ export function withTimeout<data>(
   fn: withTimeout.Fn<data>,
   options: withTimeout.Options,
 ): Promise<data> {
-  const { errorInstance = new TimeoutError(), timeout, signal } = options
+  const { timeout, signal } = options
   // Fast path: no timeout, skip allocating Promise wrapper and AbortController.
   if (!(timeout > 0)) return fn({ signal: null })
+  // Built only on timeout: an error captures a stack trace, which costs more
+  // than the request bookkeeping around it.
+  const error = () => options.errorInstance ?? new TimeoutError()
   return new Promise((resolve, reject) => {
     void (async () => {
       let timeoutId: any
@@ -16,13 +19,16 @@ export function withTimeout<data>(
       try {
         timeoutId = setTimeout(() => {
           timedOut = true
-          if (controller) controller.abort()
-          else reject(errorInstance)
+          controller?.abort()
+          // Reject as well as abort: `fn` may ignore the signal and never
+          // settle.
+          reject(error())
         }, timeout)
         resolve(await fn({ signal: controller?.signal ?? null }))
       } catch (err) {
-        if (timedOut || (err as Error)?.name === 'AbortError')
-          reject(errorInstance)
+        // A timeout has rejected already.
+        if (timedOut) return
+        if ((err as Error)?.name === 'AbortError') reject(error())
         else reject(err)
       } finally {
         clearTimeout(timeoutId)

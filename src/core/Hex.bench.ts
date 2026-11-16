@@ -97,6 +97,9 @@ describe('Hex.toBigInt', () => {
   bench('32 bytes', () => {
     Hex.toBigInt(smallHex)
   })
+  bench('32 bytes, signed', () => {
+    Hex.toBigInt(hex32, { signed: true })
+  })
 })
 
 describe('Hex.padLeft', () => {

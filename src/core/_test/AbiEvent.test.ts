@@ -866,6 +866,89 @@ describe('decode', () => {
     `)
   })
 
+  test('error: indexed topic longer than 32 bytes', () => {
+    const abiEvent = AbiEvent.from('event Foo(address indexed a)')
+
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac00',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`33\` bytes.]`,
+    )
+  })
+
+  test('error: indexed `address` topic with invalid characters', () => {
+    const abiEvent = AbiEvent.from('event Foo(address indexed a)')
+    const topic =
+      '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678zz'
+
+    expect(() =>
+      AbiEvent.decode(
+        abiEvent,
+        { topics: [AbiEvent.getSelector(abiEvent), topic] },
+        { checksumAddress: false },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eedd10cabab0813678zz" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [AbiEvent.getSelector(abiEvent), topic],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eedd10cabab0813678zz" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('error: non-canonical indexed `bytesN` topics', () => {
+    const abiEvent = AbiEvent.from('event Foo(bytes4 indexed a)')
+
+    expect(
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0xdeadbeef00000000000000000000000000000000000000000000000000000000',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "a": "0xdeadbeef",
+      }
+    `)
+    expect(() =>
+      AbiEvent.decode(abiEvent, {
+        topics: [
+          AbiEvent.getSelector(abiEvent),
+          '0xdeadbeef00000000000000000000000000000000000000000000000000000001',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiParameters.BytesSizeMismatchError: Size of bytes "0xdeadbeef00000000000000000000000000000000000000000000000000000001" (bytes32) does not match expected size (bytes4).]`,
+    )
+
+    const bytes32 = AbiEvent.from('event Foo(bytes32 indexed a)')
+    expect(() =>
+      AbiEvent.decode(bytes32, {
+        topics: [
+          AbiEvent.getSelector(bytes32),
+          '0xdeadbeef000000000000000000000000000000000000000000000000000000zz',
+        ],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidHexValueError: Value \`0xdeadbeef000000000000000000000000000000000000000000000000000000zz\` is an invalid hex value.
+
+      Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+    `)
+  })
+
   test('error: event selector topic mismatch', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed from, address indexed to, bool sender)',

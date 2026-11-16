@@ -33,9 +33,25 @@ const transferFromEncoded = AbiFunction.encodeData(
   transferFromArgs,
 )
 
+// A plain ABI item, as found in a JSON ABI, carries no precomputed `hash`.
+const transferItem = {
+  inputs: [
+    { name: 'to', type: 'address' },
+    { name: 'amount', type: 'uint256' },
+  ],
+  name: 'transfer',
+  outputs: [{ type: 'bool' }],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const
+
 describe('AbiFunction.encodeData', () => {
   bench('erc20.transfer', () => {
     AbiFunction.encodeData(transferFn, transferArgs)
+  })
+
+  bench('erc20.transfer (plain ABI item)', () => {
+    AbiFunction.encodeData(transferItem, transferArgs)
   })
 
   bench('erc20.transferFrom', () => {

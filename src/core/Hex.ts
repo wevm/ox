@@ -82,9 +82,9 @@ export declare namespace assert {
 export function concat(...values: readonly Hex[]): Hex {
   if (values.length === 0) return '0x'
   if (values.length === 1) return values[0]!
-  if (values.length === 2)
-    return `0x${(values[0] as string).slice(2)}${(values[1] as string).slice(2)}` as Hex
-  return `0x${values.reduce((hex, value) => hex + value.replace('0x', ''), '')}`
+  let hex = '0x'
+  for (let i = 0; i < values.length; i++) hex += values[i]!.slice(2)
+  return hex as Hex
 }
 
 export declare namespace concat {
@@ -253,27 +253,29 @@ export function fromNumber(
 ): Hex {
   const { signed, size } = options
 
-  // Safe-integer unsigned fast path: skip BigInt conversion entirely.
+  // Unsigned fast path: a value fits `size` bytes exactly when its hex has at
+  // most `size * 2` digits, so the bound needs no BigInt arithmetic. Sizes
+  // that are not integers take the general path, which rejects them.
   if (
     !signed &&
-    typeof value === 'number' &&
-    value >= 0 &&
-    Number.isSafeInteger(value)
+    (typeof value === 'bigint'
+      ? value >= 0n
+      : value >= 0 && Number.isSafeInteger(value)) &&
+    (!size || Number.isInteger(size))
   ) {
-    if (size) {
-      const maxValue = 2n ** (BigInt(size) * 8n) - 1n
-      if (BigInt(value) > maxValue)
-        throw new IntegerOutOfRangeError({
-          max: `${maxValue}`,
-          min: '0',
-          signed: false,
-          size,
-          value: `${value}`,
-        })
-      const hex = `0x${value.toString(16)}` as Hex
-      return padLeft(hex, size)
+    const hex = value.toString(16)
+    if (!size) return `0x${hex}`
+    if (hex.length > size * 2) {
+      const suffix = typeof value === 'bigint' ? 'n' : ''
+      throw new IntegerOutOfRangeError({
+        max: `${2n ** (BigInt(size) * 8n) - 1n}${suffix}`,
+        min: `0${suffix}`,
+        signed,
+        size,
+        value: `${value}${suffix}`,
+      })
     }
-    return `0x${value.toString(16)}` as Hex
+    return `0x${hex.padStart(size * 2, '0')}`
   }
 
   const value_ = BigInt(value)
@@ -612,12 +614,7 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
 
   const value = BigInt(hex)
   if (!signed) return value
-
-  const max_unsigned = (1n << (BigInt(size(hex)) * 8n)) - 1n
-  const max_signed = max_unsigned >> 1n
-
-  if (value <= max_signed) return value
-  return value - max_unsigned - 1n
+  return BigInt.asIntN(size(hex) * 8, value)
 }
 
 export declare namespace toBigInt {

@@ -642,13 +642,22 @@ export function getSignatureHash(
   })()
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex.Hex
+  // Keyed by the item itself first, which skips formatting and normalizing the
+  // signature on every call. ABI items are treated as immutable here: an item
+  // mutated after it was hashed keeps its first hash.
+  if (typeof abiItem === 'object') {
+    const cached = caches.signatureHashByItem.get(abiItem)
+    if (cached) return cached
+  }
   // Keyed by the normalized signature, so equal signatures share one hash
   // regardless of how the ABI item was written.
   const signature = getSignature(abiItem)
-  const cached = caches.signatureHash.get(signature)
-  if (cached) return cached
-  const hash = Hash.keccak256(Hex.fromString(signature))
-  caches.signatureHash.set(signature, hash)
+  let hash = caches.signatureHash.get(signature)
+  if (!hash) {
+    hash = Hash.keccak256(Hex.fromString(signature))
+    caches.signatureHash.set(signature, hash)
+  }
+  if (typeof abiItem === 'object') caches.signatureHashByItem.set(abiItem, hash)
   return hash
 }
 
