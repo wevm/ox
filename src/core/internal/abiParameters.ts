@@ -183,14 +183,14 @@ export function decodeAddress(
       })
   const wrap = (address: Hex.Hex) =>
     checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
+  // A view, not a copy: it is hex-encoded at once and never escapes.
+  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
     | Address.InvalidAddressError
     | Hex.fromBytes.ErrorType
-    | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -1005,6 +1005,9 @@ function writeWord(
 export function getArrayComponents(
   type: string,
 ): [length: number | null, innerType: string] | undefined {
+  // Only a type ending in `]` can match, so skip the regex for the element
+  // types (`uint256`, `address`, ...) that decoding checks once per value.
+  if (type.charCodeAt(type.length - 1) !== 93 /* ] */) return undefined
   const matches = arraySuffixRegex.exec(type)
   return matches
     ? // Return `null` if the array is dynamic.

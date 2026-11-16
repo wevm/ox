@@ -9,5 +9,6 @@ import { BoundedMap, weakCache } from './lru.js'
 export const caches = {
   checksum: /*#__PURE__*/ new BoundedMap<Address.Address>(32_768),
   signatureHash: /*#__PURE__*/ new BoundedMap<Hex.Hex>(8_192),
+  typeHash: /*#__PURE__*/ new BoundedMap<Hex.Hex>(1_024),
   signatureHashByItem: /*#__PURE__*/ weakCache<object, Hex.Hex>(),
 }

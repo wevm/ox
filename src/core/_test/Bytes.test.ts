@@ -1371,6 +1371,21 @@ describe('toBigInt', () => {
     ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
   })
 
+  test('behavior: zero-padded values', () => {
+    for (const value of [
+      0n,
+      2n ** 48n - 1n,
+      2n ** 48n,
+      2n ** 64n - 1n,
+      2n ** 64n,
+      2n ** 72n + 1n,
+      2n ** 200n + 12345n,
+      2n ** 256n - 1n,
+    ])
+      for (const size of [32, 33, 40, 47])
+        expect(Bytes.toBigInt(Bytes.fromNumber(value, { size }))).toBe(value)
+  })
+
   test('behavior: values wider than 64 bytes', () => {
     const ones = new Uint8Array(65).fill(0xff)
     expect(Bytes.toBigInt(ones)).toEqual((1n << 520n) - 1n)

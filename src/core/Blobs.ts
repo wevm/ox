@@ -3,7 +3,6 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import * as Cursor from './internal/cursor.js'
 import type { Compute } from './internal/types.js'
 import * as Kzg from './Kzg.js'
 
@@ -290,43 +289,40 @@ export function from<
       size: size_,
     })
 
-  const blobs = []
+  const blobs: Bytes.Bytes[] = []
 
   let active = true
   let position = 0
   while (active) {
-    const blob = Cursor.create(new Uint8Array(bytesPerBlob))
+    const blob = new Uint8Array(bytesPerBlob)
 
-    let size = 0
-    while (size < fieldElementsPerBlob) {
-      const bytes = data_.slice(position, position + (bytesPerFieldElement - 1))
+    // Each field element is a zero byte, so it doesn't overflow the BLS
+    // modulus, followed by 31 data bytes. The zero byte is already in place.
+    // Copying byte by byte beats a `subarray` view plus `set` at this size, and
+    // allocates nothing.
+    for (
+      let offset = 1;
+      offset < bytesPerBlob;
+      offset += bytesPerFieldElement
+    ) {
+      const length = Math.min(31, size_ - position)
+      for (let i = 0; i < length; i++) blob[offset + i] = data_[position + i]!
 
-      // Push a zero byte so the field element doesn't overflow the BLS modulus.
-      blob.pushByte(0x00)
-
-      // Push the current segment of data bytes.
-      blob.pushBytes(bytes)
-
-      // If we detect that the current segment of data bytes is less than 31 bytes,
-      // we can stop processing and push a terminator byte to indicate the end of the blob.
-      if (bytes.length < 31) {
-        blob.pushByte(0x80)
+      // A segment shorter than 31 bytes ends the data: push a terminator byte
+      // to mark it.
+      if (length < 31) {
+        blob[offset + length] = 0x80
         active = false
         break
       }
 
-      size++
       position += 31
     }
 
     blobs.push(blob)
   }
 
-  return (
-    as === 'Bytes'
-      ? blobs.map((x) => x.bytes)
-      : blobs.map((x) => Hex.fromBytes(x.bytes))
-  ) as never
+  return (as === 'Bytes' ? blobs : blobs.map((x) => Hex.fromBytes(x))) as never
 }
 
 export declare namespace from {
@@ -344,7 +340,6 @@ export declare namespace from {
     | EmptyBlobError
     | Bytes.fromHex.ErrorType
     | Hex.fromBytes.ErrorType
-    | Cursor.create.ErrorType
     | Bytes.size.ErrorType
     | Errors.GlobalErrorType
 }
@@ -394,39 +389,37 @@ export function to<
       : blobs
   ) as Bytes.Bytes[]
 
-  const length = blobs_.reduce((length, blob) => length + blob.length, 0)
-  const data = Cursor.create(new Uint8Array(length))
-  let active = true
+  // Only the final blob contains a terminator: the last `0x80` byte in it, when
+  // that byte is data rather than the zero byte leading a field element.
+  // Preceding blobs contain only data.
+  const last = blobs_[blobs_.length - 1]
+  const terminator = last ? last.lastIndexOf(0x80) : -1
+  const lastEnd =
+    terminator % bytesPerFieldElement > 0 ? terminator : (last?.length ?? 0)
 
-  for (const [index, blob] of blobs_.entries()) {
-    const cursor = Cursor.create(blob)
-    // Only the final blob contains a terminator; preceding blobs contain only data.
-    const isLastBlob = index === blobs_.length - 1
-    while (active && cursor.position < blob.length) {
-      // First byte will be a zero 0x00 byte – we can skip.
-      cursor.incrementPosition(1)
+  // Each field element contributes all of its bytes but the leading zero byte.
+  const dataSize = (end: number) =>
+    Math.floor(end / bytesPerFieldElement) * 31 +
+    Math.max(0, (end % bytesPerFieldElement) - 1)
 
-      let consume = 31
-      if (blob.length - cursor.position < 31)
-        consume = blob.length - cursor.position
+  let length = dataSize(lastEnd)
+  for (let index = 0; index < blobs_.length - 1; index++)
+    length += dataSize(blobs_[index]!.length)
 
-      for (let i = 0; i < consume; i++) {
-        const byte = cursor.readByte()
-        const isTerminator =
-          isLastBlob &&
-          byte === 0x80 &&
-          !cursor.inspectBytes(cursor.remaining).includes(0x80)
-        if (isTerminator) {
-          active = false
-          break
-        }
-        data.pushByte(byte)
-      }
+  const data = new Uint8Array(length)
+  let position = 0
+  for (let index = 0; index < blobs_.length; index++) {
+    const blob = blobs_[index]!
+    const end = index === blobs_.length - 1 ? lastEnd : blob.length
+    // Skip the zero byte leading each field element. Copying byte by byte
+    // beats a `subarray` view plus `set` for 31 bytes, and allocates nothing.
+    for (let offset = 1; offset < end; offset += bytesPerFieldElement) {
+      const stop = Math.min(offset + 31, end)
+      for (let i = offset; i < stop; i++) data[position++] = blob[i]!
     }
   }
 
-  const trimmedData = data.bytes.slice(0, data.position)
-  return (to_ === 'Hex' ? Hex.fromBytes(trimmedData) : trimmedData) as never
+  return (to_ === 'Hex' ? Hex.fromBytes(data) : data) as never
 }
 
 export declare namespace to {
@@ -437,7 +430,6 @@ export declare namespace to {
   type ErrorType =
     | Hex.fromBytes.ErrorType
     | Bytes.fromHex.ErrorType
-    | Cursor.create.ErrorType
     | Errors.GlobalErrorType
 }
 

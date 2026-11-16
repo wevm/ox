@@ -121,4 +121,18 @@ describe('Hex.validate (strict)', () => {
   bench('256 bytes', () => {
     Hex.validate(mediumHex, { strict: true })
   })
+
+  bench('invalid', () => {
+    Hex.validate('0xzz', { strict: true })
+  })
+})
+
+describe('Hex.validate', () => {
+  bench('valid', () => {
+    Hex.validate(smallHex)
+  })
+
+  bench('invalid (no prefix)', () => {
+    Hex.validate('deadbeef')
+  })
 })

@@ -10,11 +10,12 @@ export type Cursor = {
   _dataView: DataView | undefined
   position: number
   /**
-   * Bitset of positions read so far, one bit per byte in 30-bit words. Lazy:
-   * only allocated when the recursive read limit is finite, and grown as
-   * reads reach further positions.
+   * Positions read so far, so a repeated read can be counted. Word-aligned
+   * positions, where ABI data is read, go in a bit set with one bit per 32
+   * bytes; other positions go in a set. Both are allocated on first use.
    */
-  readPositions: number[] | undefined
+  alignedReads: Uint8Array | undefined
+  unalignedReads: Set<number> | undefined
   /** Total number of bytes read. */
   readSize: number
   /** Maximum total number of bytes that can be read. */
@@ -60,7 +61,8 @@ const staticCursor: Cursor = {
   },
   _dataView: undefined,
   position: 0,
-  readPositions: undefined,
+  alignedReads: undefined,
+  unalignedReads: undefined,
   readSize: 0,
   readSizeLimit: Number.POSITIVE_INFINITY,
   recursiveReadCount: 0,
@@ -222,16 +224,29 @@ const staticCursor: Cursor = {
   },
   _touch() {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
-    // Words of 30 bits stay small integers, so a plain array holds them. A
-    // typed array over 64 bytes is allocated off-heap, which costs more than
-    // decoding a short payload. It grows to the furthest position read rather
-    // than the length of the data, which may hold far more than is decoded.
-    const positions = (this.readPositions ??= [])
-    const index = Math.floor(this.position / 30)
-    while (positions.length <= index) positions.push(0)
-    const bit = 1 << (this.position - index * 30)
-    if (positions[index]! & bit) this.recursiveReadCount++
-    else positions[index]! |= bit
+    const { position } = this
+    if (position % 32 !== 0 || position > this.bytes.length) {
+      const reads = (this.unalignedReads ??= new Set())
+      if (reads.has(position)) this.recursiveReadCount++
+      else reads.add(position)
+      return
+    }
+    // One bit per 32-byte word, so the set is 1/256 the size of the data. It
+    // is sized from the data's length at the time of the read, so a resizable
+    // buffer that grows while decoding still has every read counted.
+    const word = position / 32
+    const index = Math.floor(word / 8)
+    let reads = this.alignedReads
+    if (!reads || index >= reads.length) {
+      const grown = new Uint8Array(
+        Math.max(Math.floor(this.bytes.length / 256) + 1, index + 1),
+      )
+      if (reads) grown.set(reads)
+      reads = this.alignedReads = grown
+    }
+    const bit = 1 << (word & 7)
+    if (reads[index]! & bit) this.recursiveReadCount++
+    else reads[index]! |= bit
   },
 }
 
@@ -243,7 +258,8 @@ export function create(
   const cursor: Cursor = Object.create(staticCursor)
   cursor.bytes = bytes
   cursor._dataView = undefined
-  cursor.readPositions = undefined
+  cursor.alignedReads = undefined
+  cursor.unalignedReads = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
   // A well-formed payload reads each byte once. Allow twice that, plus as many
   // bytes as `recursiveReadLimit` repeated 32-byte reads (256 KiB by default),
