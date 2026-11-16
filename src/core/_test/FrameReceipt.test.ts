@@ -46,6 +46,20 @@ describe('fromRpc', () => {
       status: expected,
     })
   })
+
+  test('behavior: status named after an Object.prototype key', () => {
+    const receipt = FrameReceipt.fromRpc({
+      executionGasUsed: '0x1',
+      gasUsed: '0x1',
+      logs: [],
+      stateGasUsed: '0x0',
+      status: 'toString' as never,
+    })
+    expect(receipt.status).toBeUndefined()
+    expect(
+      FrameReceipt.toRpc({ ...receipt, status: 'toString' as never }).status,
+    ).toBeUndefined()
+  })
 })
 
 describe('toRpc', () => {

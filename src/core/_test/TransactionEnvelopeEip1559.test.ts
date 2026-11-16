@@ -96,6 +96,15 @@ describe('deserialize', () => {
     maxPriorityFeePerGas: Value.fromGwei('2'),
   })
 
+  test('error: trailing bytes', () => {
+    const serialized = TxEnvelopeEip1559.serialize(transaction)
+    expect(() =>
+      TxEnvelopeEip1559.deserialize(`${serialized}ff`),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
+    )
+  })
+
   test('default', () => {
     const serialized = TxEnvelopeEip1559.serialize(transaction)
     const deserialized = TxEnvelopeEip1559.deserialize(serialized)

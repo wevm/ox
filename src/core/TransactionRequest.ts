@@ -114,9 +114,11 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.nonceKeys = FrameNonce.fromRpc(request.nonceKeys, request.nonce)
   if (typeof request.type !== 'undefined')
     request_.type =
-      Transaction.fromRpcType[
-        request.type as keyof typeof Transaction.fromRpcType
-      ] || request.type
+      (Object.hasOwn(Transaction.fromRpcType, request.type) &&
+        Transaction.fromRpcType[
+          request.type as keyof typeof Transaction.fromRpcType
+        ]) ||
+      request.type
   if (typeof request.value !== 'undefined')
     request_.value = Hex.toBigInt(request.value)
 
@@ -222,9 +224,11 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (typeof request.to !== 'undefined') request_rpc.to = request.to
   if (typeof request.type !== 'undefined')
     request_rpc.type =
-      Transaction.toRpcType[
-        request.type as keyof typeof Transaction.toRpcType
-      ] || request.type
+      (Object.hasOwn(Transaction.toRpcType, request.type) &&
+        Transaction.toRpcType[
+          request.type as keyof typeof Transaction.toRpcType
+        ]) ||
+      request.type
   if (typeof request.value !== 'undefined')
     request_rpc.value = Hex.fromNumber(request.value)
 

@@ -1,4 +1,4 @@
-import { Hash, Hex, TypedData } from 'ox'
+import { AbiParameters, Hash, Hex, TypedData } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as typedData from '../../../test/constants/typedData.js'
 import { caches } from '../internal/caches.js'
@@ -1419,6 +1419,19 @@ describe('hashStruct', () => {
       `"0xc52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e"`,
     )
   })
+
+  test.each(['constructor', 'toString', '__proto__'])(
+    'error: field type %s is not looked up on the prototype',
+    (type) => {
+      expect(() =>
+        TypedData.hashStruct({
+          data: { foo: '0x' },
+          primaryType: 'Foo',
+          types: { Foo: [{ name: 'foo', type }] },
+        }),
+      ).toThrowError(AbiParameters.InvalidTypeError)
+    },
+  )
 })
 
 describe('serialize', () => {

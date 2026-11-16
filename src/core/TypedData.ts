@@ -170,7 +170,8 @@ export function assert<
 
   // Validate message types.
   if (primaryType !== 'EIP712Domain') {
-    if (types[primaryType]) validateData(types[primaryType], message)
+    if (Object.hasOwn(types, primaryType) && types[primaryType])
+      validateData(types[primaryType], message)
     else throw new InvalidPrimaryTypeError({ primaryType, types })
   }
 }
@@ -356,7 +357,7 @@ export function encodeType(value: encodeType.Value): string {
 
   const deps = [primaryType, ...Array.from(unsortedDeps).sort()]
   for (const type of deps) {
-    result += `${type}(${(types[type] ?? [])
+    result += `${type}(${((Object.hasOwn(types, type) && types[type]) || [])
       .map(({ name, type: t }) => `${t} ${name}`)
       .join(',')})`
   }
@@ -645,7 +646,7 @@ export function serialize<
 
   const message = (() => {
     if (primaryType === 'EIP712Domain') return undefined
-    if (!types[primaryType]) return {}
+    if (!Object.hasOwn(types, primaryType) || !types[primaryType]) return {}
     return normalizeData(types[primaryType], message_)
   })()
 
@@ -791,7 +792,8 @@ export function encodeData(value: {
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
   const encodedValues: unknown[] = [hashType({ primaryType, types })]
 
-  for (const field of types[primaryType] ?? []) {
+  const fields = (Object.hasOwn(types, primaryType) && types[primaryType]) || []
+  for (const field of fields) {
     const [type, value] = encodeField({
       types,
       name: field.name,
@@ -853,7 +855,7 @@ export function encodeField(properties: {
 }): [type: AbiParameters.Parameter, value: Hex.Hex] {
   let { types, name, type, value } = properties
 
-  if (types[type] !== undefined)
+  if (Object.hasOwn(types, type) && types[type] !== undefined)
     return [
       { type: 'bytes32' },
       Hash.keccak256(encodeData({ data: value, primaryType: type, types })),
@@ -919,7 +921,11 @@ export function findTypeDependencies(
 ): Set<string> {
   const { primaryType: primaryType_, types } = value
   const primaryType = primaryType_.replace(arraySuffixRegex, '')
-  if (results.has(primaryType) || types[primaryType] === undefined)
+  if (
+    results.has(primaryType) ||
+    !Object.hasOwn(types, primaryType) ||
+    types[primaryType] === undefined
+  )
     return results
 
   results.add(primaryType)

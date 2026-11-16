@@ -78,7 +78,9 @@ export function fromRpc(receipt: Rpc): FrameReceipt {
     gasUsed: Hex.toBigInt(receipt.gasUsed),
     logs: receipt.logs,
     stateGasUsed: Hex.toBigInt(receipt.stateGasUsed),
-    status: fromRpcStatus[receipt.status],
+    status: Object.hasOwn(fromRpcStatus, receipt.status)
+      ? fromRpcStatus[receipt.status]
+      : (undefined as never),
   }
 }
 
@@ -114,7 +116,9 @@ export function toRpc(receipt: toRpc.Input): Rpc {
     gasUsed: Quantity.fromNumberish(receipt.gasUsed),
     logs: receipt.logs,
     stateGasUsed: Quantity.fromNumberish(receipt.stateGasUsed),
-    status: toRpcStatus[receipt.status],
+    status: Object.hasOwn(toRpcStatus, receipt.status)
+      ? toRpcStatus[receipt.status]
+      : (undefined as never),
   }
 }
 

@@ -609,6 +609,44 @@ describe('decode', () => {
     )
   })
 
+  test('error: topic is not 32 bytes', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 indexed value)',
+    )
+    const topics = [
+      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
+      '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      '0x0000000000000000000000000000000000000000000000000de0b6b3a7640000',
+    ] as const
+
+    expect(AbiEvent.decode(transfer, { topics })).toMatchInlineSnapshot(`
+      {
+        "from": "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "value": 1000000000000000000n,
+      }
+    `)
+    expect(() =>
+      AbiEvent.decode(transfer, {
+        topics: [topics[0], topics[1], `${topics[2]}00`, topics[3]],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.TopicSizeMismatchError: Topic for indexed event parameter "to" of "event Transfer(address indexed from, address indexed to, uint256 indexed value)" must be 32 bytes.
+
+      Topic: 0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb9226600 (33 bytes)]
+    `)
+    expect(() =>
+      AbiEvent.decode(transfer, {
+        topics: [topics[0], topics[1], topics[2], '0x01'],
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.TopicSizeMismatchError: Topic for indexed event parameter "value" of "event Transfer(address indexed from, address indexed to, uint256 indexed value)" must be 32 bytes.
+
+      Topic: 0x01 (1 bytes)]
+    `)
+  })
+
   test('error: topics mismatch, unnamed', () => {
     const transfer = AbiEvent.from(
       'event Transfer(address indexed, address, uint256 indexed)',
@@ -2107,6 +2145,7 @@ test('exports', () => {
       "InputNotFoundError",
       "DataMismatchError",
       "TopicsMismatchError",
+      "TopicSizeMismatchError",
       "SelectorTopicMismatchError",
       "FilterTypeNotSupportedError",
     ]

@@ -36,3 +36,23 @@ test('update touched keys', () => {
   expect(cache.has('c')).toBe(false)
   expect(cache.has('d')).toBe(true)
 })
+
+test('behavior: set refreshes an existing key', () => {
+  const cache = new LruMap(3)
+  cache.set('a', 1)
+  cache.set('b', 2)
+  cache.set('c', 3)
+  cache.set('a', 4)
+  cache.set('d', 5)
+  expect(cache.get('a')).toBe(4)
+  expect(cache.has('b')).toBe(false)
+})
+
+test('behavior: evicts an empty-string key', () => {
+  const cache = new LruMap(2)
+  cache.set('', 1)
+  cache.set('b', 2)
+  cache.set('c', 3)
+  expect(cache.size).toBe(2)
+  expect(cache.has('')).toBe(false)
+})

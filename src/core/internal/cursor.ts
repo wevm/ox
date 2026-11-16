@@ -49,7 +49,16 @@ export type Cursor = {
 
 const staticCursor: Cursor = {
   bytes: new Uint8Array(),
-  dataView: new DataView(new ArrayBuffer(0)),
+  // Lazy: most cursors (e.g. ABI decoding) never read through a `DataView`.
+  get dataView() {
+    const dataView = new DataView(
+      this.bytes.buffer,
+      this.bytes.byteOffset,
+      this.bytes.byteLength,
+    )
+    Object.defineProperty(this, 'dataView', { value: dataView })
+    return dataView
+  },
   position: 0,
   alignedReads: undefined,
   unalignedReads: undefined,
@@ -247,11 +256,6 @@ export function create(
 ): Cursor {
   const cursor: Cursor = Object.create(staticCursor)
   cursor.bytes = bytes
-  cursor.dataView = new DataView(
-    bytes.buffer,
-    bytes.byteOffset,
-    bytes.byteLength,
-  )
   cursor.alignedReads = undefined
   cursor.unalignedReads = undefined
   cursor.recursiveReadLimit = recursiveReadLimit

@@ -1,7 +1,7 @@
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 import type { ExactPartial } from './internal/types.js'
-import { uid } from './internal/uid.js'
 
 export const domainRegex =
   /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+(?:[a-zA-Z]{2,63}|[xX][nN]--[a-zA-Z0-9-]{0,58}[a-zA-Z0-9])(:[0-9]{1,5})?$/
@@ -285,7 +285,7 @@ export declare namespace createMessage {
  * @returns Random nonce.
  */
 export function generateNonce(): string {
-  return uid(96)
+  return Hex.random(48).slice(2)
 }
 
 /**

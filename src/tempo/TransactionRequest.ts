@@ -102,9 +102,11 @@ export function fromRpc(request: Rpc): TransactionRequest {
 
   if (typeof request.type !== 'undefined')
     request_.type =
-      Transaction.fromRpcType[
-        request.type as keyof typeof Transaction.fromRpcType
-      ] || request_.type
+      (Object.hasOwn(Transaction.fromRpcType, request.type) &&
+        Transaction.fromRpcType[
+          request.type as keyof typeof Transaction.fromRpcType
+        ]) ||
+      request_.type
 
   if (request.authorizationList)
     request_.authorizationList = AuthorizationTempo.fromRpcList(
@@ -208,10 +210,31 @@ export declare namespace fromRpc {
  * @returns An RPC request.
  */
 export function toRpc(request: TransactionRequest): Rpc {
-  const request_rpc = ox_TransactionRequest.toRpc({
-    ...request,
-    authorizationList: undefined,
-  }) as Rpc
+  const tempo =
+    typeof request.accountSimulation !== 'undefined' ||
+    typeof request.calls !== 'undefined' ||
+    typeof request.feePayer !== 'undefined' ||
+    typeof request.feeToken !== 'undefined' ||
+    typeof request.keyAuthorization !== 'undefined' ||
+    typeof request.nonceKey !== 'undefined' ||
+    typeof request.validBefore !== 'undefined' ||
+    typeof request.validAfter !== 'undefined' ||
+    request.type === 'tempo'
+
+  // A Tempo request carries `data`, `to` and `value` in `calls`, so leave
+  // them out rather than deleting them afterwards.
+  const request_rpc = ox_TransactionRequest.toRpc(
+    tempo
+      ? {
+          ...request,
+          authorizationList: undefined,
+          data: undefined,
+          input: undefined,
+          to: undefined,
+          value: undefined,
+        }
+      : { ...request, authorizationList: undefined },
+  ) as Rpc
 
   if (request.authorizationList)
     request_rpc.authorizationList = AuthorizationTempo.toRpcList(
@@ -258,23 +281,7 @@ export function toRpc(request: TransactionRequest): Rpc {
   })()
   if (nonceKey) request_rpc.nonceKey = nonceKey
 
-  if (
-    typeof request.accountSimulation !== 'undefined' ||
-    typeof request.calls !== 'undefined' ||
-    typeof request.feePayer !== 'undefined' ||
-    typeof request.feeToken !== 'undefined' ||
-    typeof request.keyAuthorization !== 'undefined' ||
-    typeof request.nonceKey !== 'undefined' ||
-    typeof request.validBefore !== 'undefined' ||
-    typeof request.validAfter !== 'undefined' ||
-    request.type === 'tempo'
-  ) {
-    request_rpc.type = Transaction.toRpcType.tempo
-    delete request_rpc.data
-    delete request_rpc.input
-    delete request_rpc.to
-    delete request_rpc.value
-  }
+  if (tempo) request_rpc.type = Transaction.toRpcType.tempo
 
   return request_rpc
 }

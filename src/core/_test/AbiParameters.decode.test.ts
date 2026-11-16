@@ -126,6 +126,17 @@ describe('static', () => {
       assertType<readonly [Hex.Hex]>(result)
       expect(result).toEqual(['0x0123456789abcdef'])
     })
+
+    test('error: non-zero padding', () => {
+      expect(() =>
+        AbiParameters.decode(
+          AbiParameters.from('bytes8'),
+          '0x0123456789abcdef000000000000000000000000000000000000000000000001',
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0123456789abcdef000000000000000000000000000000000000000000000001" (bytes32) does not match expected size (bytes8).]`,
+      )
+    })
   })
 
   describe('bytes16', () => {
@@ -2029,4 +2040,22 @@ describe('address padding', () => {
       ),
     ).toThrow(Address.InvalidAddressError)
   })
+})
+
+test('behavior: offsets and lengths beyond a safe integer are out of bounds', () => {
+  for (const word of ['ff'.repeat(32), `${'00'.repeat(25)}20000000000001`])
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('bytes'),
+        `0x${word}${'00'.repeat(32)}`,
+      ),
+    ).toThrowError(/^Position `[\d.e+]+` is out of bounds/)
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('string'),
+      `0x${'00'.repeat(31)}20${'ff'.repeat(32)}`,
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Cursor.PositionOutOfBoundsError: Position \`1.157920892373162e+77\` is out of bounds (\`0 < position < 64\`).]`,
+  )
 })

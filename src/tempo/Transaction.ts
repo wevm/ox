@@ -193,18 +193,22 @@ export function fromRpc<
 ): transaction extends Rpc<pending> ? Transaction<pending> : null {
   if (!transaction) return null as never
 
+  // Leave out `aaAuthorizationList` rather than deleting it afterwards, and
+  // only copy the transaction when it is present.
+  const { aaAuthorizationList } = transaction
   const transaction_ = ox_Transaction.fromRpc(
-    transaction as ox_Transaction.Rpc<pending>,
+    (aaAuthorizationList
+      ? (({ aaAuthorizationList: _, ...rest }) => rest)(transaction)
+      : transaction) as ox_Transaction.Rpc<pending>,
   ) as Transaction<pending>
 
-  transaction_.type = fromRpcType[transaction.type as keyof typeof fromRpcType]
+  transaction_.type = Object.hasOwn(fromRpcType, transaction.type)
+    ? fromRpcType[transaction.type as keyof typeof fromRpcType]
+    : (undefined as never)
 
-  if (transaction.aaAuthorizationList) {
-    transaction_.authorizationList = AuthorizationTempo.fromRpcList(
-      transaction.aaAuthorizationList,
-    )
-    delete (transaction_ as any).aaAuthorizationList
-  }
+  if (aaAuthorizationList)
+    transaction_.authorizationList =
+      AuthorizationTempo.fromRpcList(aaAuthorizationList)
   if (transaction.calls)
     transaction_.calls = transaction.calls.map((call) => ({
       to: call.to,
@@ -297,7 +301,9 @@ export function toRpc<pending extends boolean = false>(
     transaction as ox_Transaction.Transaction<pending>,
   ) as Rpc<pending>
 
-  rpc.type = toRpcType[transaction.type as keyof typeof toRpcType]
+  rpc.type = Object.hasOwn(toRpcType, transaction.type)
+    ? toRpcType[transaction.type as keyof typeof toRpcType]
+    : (undefined as never)
 
   if (transaction.authorizationList)
     rpc.aaAuthorizationList = AuthorizationTempo.toRpcList(

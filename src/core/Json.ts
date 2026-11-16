@@ -2,6 +2,9 @@ import type * as Errors from './Errors.js'
 
 const bigIntSuffix = '#__bigint'
 
+/** Text `BigInt` accepts once surrounding whitespace is trimmed. */
+const bigIntPattern = /^(?:[+-]?\d+|0[bB][01]+|0[oO][0-7]+|0[xX][\da-fA-F]+)?$/
+
 /**
  * Serializes a value to a canonical JSON string as defined by
  * [RFC 8785 (JSON Canonicalization Scheme)](https://www.rfc-editor.org/rfc/rfc8785).
@@ -81,10 +84,28 @@ export function parse(
   string: string,
   reviver?: ((this: any, key: string, value: any) => any) | undefined,
 ) {
+  // Without a reviver, text that cannot hold the bigint marker (neither
+  // literally nor through a `\u` escape) parses without the reviver wrapper.
+  if (
+    typeof reviver !== 'function' &&
+    typeof string === 'string' &&
+    !string.includes(bigIntSuffix) &&
+    !string.includes('\\u')
+  )
+    return JSON.parse(string)
   return JSON.parse(string, (key, value_) => {
     const value = value_
-    if (typeof value === 'string' && value.endsWith(bigIntSuffix))
-      return BigInt(value.slice(0, -bigIntSuffix.length))
+    if (typeof value === 'string' && value.endsWith(bigIntSuffix)) {
+      // Check the text before calling `BigInt`, so that a string that is not
+      // a bigint (e.g. untrusted text) is kept without throwing and catching.
+      const text = value.slice(0, -bigIntSuffix.length).trim()
+      if (bigIntPattern.test(text))
+        try {
+          return BigInt(text)
+        } catch {
+          // Too large for a bigint, so keep the string.
+        }
+    }
     return typeof reviver === 'function' ? reviver(key, value) : value
   })
 }

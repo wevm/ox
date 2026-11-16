@@ -141,6 +141,51 @@ describe('Json.parse', () => {
   })
 })
 
+describe('Json.parse behavior', () => {
+  test('behavior: escaped bigint marker', () => {
+    expect(Json.parse('{"a":"\\u0036\\u0039#__bigint"}')).toEqual({ a: 69n })
+  })
+
+  test('behavior: untrusted string that is not a bigint', () => {
+    expect(Json.parse('{"a":"x#__bigint"}')).toEqual({ a: 'x#__bigint' })
+  })
+
+  test('behavior: marker text is read as `BigInt` reads it', () => {
+    const texts = [
+      '',
+      ' 12 ',
+      '\t-5\n',
+      '+5',
+      '0x1f',
+      '0X1F',
+      '0b101',
+      '0o17',
+      '-0x1',
+      '+0b1',
+      '0x',
+      '1_000',
+      '1e3',
+      '1.5',
+      '1n',
+      '0o8',
+      '-',
+      'x',
+    ]
+    for (const text of texts) {
+      const expected = (() => {
+        try {
+          return BigInt(text)
+        } catch {
+          return `${text}#__bigint`
+        }
+      })()
+      expect(Json.parse(JSON.stringify([`${text}#__bigint`]))).toEqual([
+        expected,
+      ])
+    }
+  })
+})
+
 describe('Json.stringify', () => {
   test('default', () => {
     const value = {

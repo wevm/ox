@@ -4,6 +4,9 @@ import * as Hex from './Hex.js'
 import * as Cursor from './internal/cursor.js'
 import type { ExactPartial, RecursiveArray } from './internal/types.js'
 
+/** Maximum nesting depth permitted when decoding an RLP value. */
+const depthLimit = 1_024
+
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
@@ -68,10 +71,12 @@ export function to<
     return value as Bytes.Bytes
   })()
 
-  const cursor = Cursor.create(bytes, {
-    recursiveReadLimit: Number.POSITIVE_INFINITY,
-  })
-  const result = decodeRlpCursor(cursor, to_)
+  const state: State = { bytes, position: 0 }
+  const result = decodeRlpCursor(state, to_)
+
+  // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
+  if (state.position < bytes.length)
+    throw new TrailingBytesError({ count: bytes.length - state.position })
 
   return result as to.ReturnType<to>
 }
@@ -85,46 +90,65 @@ export declare namespace to {
   type ErrorType =
     | Bytes.fromHex.ErrorType
     | decodeRlpCursor.ErrorType
-    | Cursor.create.ErrorType
     | Hex.InvalidLengthError
+    | TrailingBytesError
     | Errors.GlobalErrorType
 }
 
-/** @internal */
+/**
+ * Decoder position over the encoded bytes. A `Cursor` satisfies it, but the
+ * decoder only reads `bytes` and moves `position`.
+ *
+ * @internal
+ */
+type State = Pick<Cursor.Cursor, 'bytes' | 'position'>
 
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
-  cursor: Cursor.Cursor,
+  cursor: State,
   to: to | 'Hex' | 'Bytes' | undefined = 'Hex',
+  depth = 0,
 ): decodeRlpCursor.ReturnType<to> {
-  if (cursor.bytes.length === 0)
+  if (depth >= depthLimit)
+    throw new DepthLimitExceededError({ limit: depthLimit })
+
+  const { bytes } = cursor
+  if (bytes.length === 0)
     return (
-      to === 'Hex' ? Hex.fromBytes(cursor.bytes) : cursor.bytes
+      to === 'Hex' ? Hex.fromBytes(bytes) : bytes
     ) as decodeRlpCursor.ReturnType<to>
 
-  const prefix = cursor.readByte()
-  if (prefix < 0x80) cursor.decrementPosition(1)
+  assertPosition(bytes, cursor.position)
+  const prefix = bytes[cursor.position]!
+  if (prefix >= 0x80) cursor.position++
 
   // bytes
   if (prefix < 0xc0) {
     const length = readLength(cursor, prefix, 0x80)
-    const bytes = cursor.readBytes(length)
+    if (length > 0) assertPosition(bytes, cursor.position + length - 1)
+    const data = bytes.subarray(cursor.position, cursor.position + length)
+    cursor.position += length
     // A single byte below `0x80` must be its own encoding (no length
     // prefix); wrapping it in an explicit one-byte-length prefix is a
     // non-canonical alternate encoding of the same value (Yellow Paper,
     // Appendix B).
-    if (prefix >= 0x80 && length === 1 && bytes[0]! < 0x80)
+    if (prefix >= 0x80 && length === 1 && data[0]! < 0x80)
       throw new NonCanonicalError({
-        reason: `single byte \`0x${bytes[0]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
+        reason: `single byte \`0x${data[0]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
       })
     return (
-      to === 'Hex' ? Hex.fromBytes(bytes) : bytes
+      to === 'Hex' ? Hex.fromBytes(data) : data
     ) as decodeRlpCursor.ReturnType<to>
   }
 
   // list
   const length = readLength(cursor, prefix, 0xc0)
-  return readList(cursor, length, to) as {} as decodeRlpCursor.ReturnType<to>
+  return readList(
+    cursor,
+    length,
+    to,
+    depth + 1,
+  ) as {} as decodeRlpCursor.ReturnType<to>
 }
 
 /** @internal */
@@ -134,16 +158,14 @@ export declare namespace decodeRlpCursor {
     | Hex.fromBytes.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
+    | Cursor.PositionOutOfBoundsError
+    | DepthLimitExceededError
     | NonCanonicalError
     | Errors.GlobalErrorType
 }
 
 /** @internal */
-export function readLength(
-  cursor: Cursor.Cursor,
-  prefix: number,
-  offset: number,
-) {
+export function readLength(cursor: State, prefix: number, offset: number) {
   if (offset === 0x80 && prefix < 0x80) return 1
   if (prefix <= offset + 55) return prefix - offset
   // Long-form lengths must use the minimal number of length-bytes: a value
@@ -151,7 +173,7 @@ export function readLength(
   // a longer form is a non-canonical alternate encoding of the same value
   // (Yellow Paper, Appendix B).
   if (prefix === offset + 55 + 1) {
-    const length = cursor.readUint8()
+    const length = readUint(cursor, 1)
     if (length <= 55)
       throw new NonCanonicalError({
         reason: `length \`${length}\` fits in the short form and must not use a one-byte length prefix`,
@@ -159,7 +181,7 @@ export function readLength(
     return length
   }
   if (prefix === offset + 55 + 2) {
-    const length = cursor.readUint16()
+    const length = readUint(cursor, 2)
     if (length <= 0xff)
       throw new NonCanonicalError({
         reason: `length \`${length}\` fits in fewer length-bytes and must not use a two-byte length prefix`,
@@ -167,7 +189,7 @@ export function readLength(
     return length
   }
   if (prefix === offset + 55 + 3) {
-    const length = cursor.readUint24()
+    const length = readUint(cursor, 3)
     if (length <= 0xffff)
       throw new NonCanonicalError({
         reason: `length \`${length}\` fits in fewer length-bytes and must not use a three-byte length prefix`,
@@ -175,7 +197,7 @@ export function readLength(
     return length
   }
   if (prefix === offset + 55 + 4) {
-    const length = cursor.readUint32()
+    const length = readUint(cursor, 4)
     if (length <= 0xffffff)
       throw new NonCanonicalError({
         reason: `length \`${length}\` fits in fewer length-bytes and must not use a four-byte length prefix`,
@@ -187,30 +209,57 @@ export function readLength(
 
 /** @internal */
 export declare namespace readLength {
-  type ErrorType = NonCanonicalError | Errors.BaseError | Errors.GlobalErrorType
+  type ErrorType =
+    | Cursor.PositionOutOfBoundsError
+    | NonCanonicalError
+    | Errors.BaseError
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
 export function readList<to extends 'Hex' | 'Bytes'>(
-  cursor: Cursor.Cursor,
+  cursor: State,
   length: number,
   to: to | 'Hex' | 'Bytes',
+  depth = 0,
 ) {
   const position = cursor.position
   const value: decodeRlpCursor.ReturnType<to>[] = []
   while (cursor.position - position < length)
-    value.push(decodeRlpCursor(cursor, to))
+    value.push(decodeRlpCursor(cursor, to, depth))
+  // Items must consume exactly the declared list length.
+  if (cursor.position - position !== length)
+    throw new ListBoundaryExceededError({
+      consumed: cursor.position - position,
+      declared: length,
+    })
   return value
 }
 
 /** @internal */
 export declare namespace readList {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | DepthLimitExceededError
+    | ListBoundaryExceededError
+    | Errors.GlobalErrorType
 }
 
-type Encodable = {
-  length: number
-  encode(cursor: Cursor.Cursor): void
+function assertPosition(bytes: Bytes.Bytes, position: number) {
+  if (position < 0 || position > bytes.length - 1)
+    throw new Cursor.PositionOutOfBoundsError({
+      length: bytes.length,
+      position,
+    })
+}
+
+// Reads a big-endian unsigned integer of up to 4 bytes.
+function readUint(cursor: State, size: number) {
+  const { bytes, position } = cursor
+  assertPosition(bytes, position + size - 1)
+  let value = 0
+  for (let i = 0; i < size; i++) value = value * 256 + bytes[position + i]!
+  cursor.position += size
+  return value
 }
 
 /**
@@ -237,12 +286,15 @@ export function from<as extends 'Hex' | 'Bytes'>(
 ): from.ReturnType<as> {
   const { as } = options
 
-  const encodable = getEncodable(value)
-  const cursor = Cursor.create(new Uint8Array(encodable.length))
-  encodable.encode(cursor)
+  // Two passes without a per-node closure tree: `measure` decodes leaves and
+  // records list body lengths in visit order, and `write` reads both back in
+  // the same order into a pre-sized buffer.
+  const ctx: EncodeContext = { bodies: [], leaves: [] }
+  const bytes = new Uint8Array(measure(value, ctx))
+  write(value, bytes, ctx, { body: 0, leaf: 0, offset: 0 })
 
-  if (as === 'Hex') return Hex.fromBytes(cursor.bytes) as from.ReturnType<as>
-  return cursor.bytes as from.ReturnType<as>
+  if (as === 'Hex') return Hex.fromBytes(bytes) as from.ReturnType<as>
+  return bytes as from.ReturnType<as>
 }
 
 export declare namespace from {
@@ -256,7 +308,6 @@ export declare namespace from {
     | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
-    | Cursor.create.ErrorType
     | Hex.fromBytes.ErrorType
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
@@ -332,71 +383,77 @@ export declare namespace fromHex {
 // Internal
 /////////////////////////////////////////////////////////////////////////////////
 
-function getEncodable(
-  bytes: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
-): Encodable {
-  if (Array.isArray(bytes))
-    return getEncodableList(bytes.map((x) => getEncodable(x)))
-  return getEncodableBytes(bytes as any)
+type EncodeContext = {
+  /** Body length of each list, in visit order. */
+  bodies: number[]
+  /** Bytes of each leaf, in visit order. */
+  leaves: Bytes.Bytes[]
 }
 
-function getEncodableList(list: Encodable[]): Encodable {
-  const bodyLength = list.reduce((acc, x) => acc + x.length, 0)
-
-  const sizeOfBodyLength = getSizeOfLength(bodyLength)
-  const length = (() => {
+function measure(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  ctx: EncodeContext,
+): number {
+  if (Array.isArray(value)) {
+    // Reserve this list's slot before its children's, in visit order.
+    const index = ctx.bodies.length
+    ctx.bodies.push(0)
+    let bodyLength = 0
+    for (let i = 0; i < value.length; i++) bodyLength += measure(value[i], ctx)
+    ctx.bodies[index] = bodyLength
     if (bodyLength <= 55) return 1 + bodyLength
-    return 1 + sizeOfBodyLength + bodyLength
-  })()
-
-  return {
-    length,
-    encode(cursor: Cursor.Cursor) {
-      if (bodyLength <= 55) {
-        cursor.pushByte(0xc0 + bodyLength)
-      } else {
-        cursor.pushByte(0xc0 + 55 + sizeOfBodyLength)
-        if (sizeOfBodyLength === 1) cursor.pushUint8(bodyLength)
-        else if (sizeOfBodyLength === 2) cursor.pushUint16(bodyLength)
-        else if (sizeOfBodyLength === 3) cursor.pushUint24(bodyLength)
-        else cursor.pushUint32(bodyLength)
-      }
-      for (const { encode } of list) {
-        encode(cursor)
-      }
-    },
+    return 1 + getSizeOfLength(bodyLength) + bodyLength
   }
+
+  const bytes =
+    typeof value === 'string'
+      ? Bytes.fromHex(value as Hex.Hex)
+      : (value as Bytes.Bytes)
+  ctx.leaves.push(bytes)
+  const sizeOfBytesLength = getSizeOfLength(bytes.length)
+  if (bytes.length === 1 && bytes[0]! < 0x80) return 1
+  if (bytes.length <= 55) return 1 + bytes.length
+  return 1 + sizeOfBytesLength + bytes.length
 }
 
-function getEncodableBytes(bytesOrHex: Bytes.Bytes | Hex.Hex): Encodable {
-  const bytes =
-    typeof bytesOrHex === 'string' ? Bytes.fromHex(bytesOrHex) : bytesOrHex
-
-  const sizeOfBytesLength = getSizeOfLength(bytes.length)
-  const length = (() => {
-    if (bytes.length === 1 && bytes[0]! < 0x80) return 1
-    if (bytes.length <= 55) return 1 + bytes.length
-    return 1 + sizeOfBytesLength + bytes.length
-  })()
-
-  return {
-    length,
-    encode(cursor: Cursor.Cursor) {
-      if (bytes.length === 1 && bytes[0]! < 0x80) {
-        cursor.pushBytes(bytes)
-      } else if (bytes.length <= 55) {
-        cursor.pushByte(0x80 + bytes.length)
-        cursor.pushBytes(bytes)
-      } else {
-        cursor.pushByte(0x80 + 55 + sizeOfBytesLength)
-        if (sizeOfBytesLength === 1) cursor.pushUint8(bytes.length)
-        else if (sizeOfBytesLength === 2) cursor.pushUint16(bytes.length)
-        else if (sizeOfBytesLength === 3) cursor.pushUint24(bytes.length)
-        else cursor.pushUint32(bytes.length)
-        cursor.pushBytes(bytes)
-      }
-    },
+function write(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  out: Bytes.Bytes,
+  ctx: EncodeContext,
+  state: { body: number; leaf: number; offset: number },
+) {
+  if (Array.isArray(value)) {
+    writePrefix(out, state, 0xc0, ctx.bodies[state.body++]!)
+    for (let i = 0; i < value.length; i++) write(value[i], out, ctx, state)
+    return
   }
+
+  const bytes = ctx.leaves[state.leaf++]!
+  if (bytes.length === 1 && bytes[0]! < 0x80) {
+    out[state.offset++] = bytes[0]!
+    return
+  }
+  writePrefix(out, state, 0x80, bytes.length)
+  out.set(bytes, state.offset)
+  state.offset += bytes.length
+}
+
+function writePrefix(
+  out: Bytes.Bytes,
+  state: { offset: number },
+  offset: number,
+  length: number,
+) {
+  if (length <= 55) {
+    out[state.offset++] = offset + length
+    return
+  }
+  const size = getSizeOfLength(length)
+  out[state.offset++] = offset + 55 + size
+  // Big-endian length in `size` bytes.
+  for (let i = size - 1, n = length; i >= 0; i--, n = Math.floor(n / 256))
+    out[state.offset + i] = n % 256
+  state.offset += size
 }
 
 function getSizeOfLength(length: number) {
@@ -405,6 +462,39 @@ function getSizeOfLength(length: number) {
   if (length <= 0xff_ff_ff) return 3
   if (length <= 0xff_ff_ff_ff) return 4
   throw new Errors.BaseError('Length is too large.')
+}
+
+/** Thrown when an RLP value nests deeper than the decode depth limit. */
+export class DepthLimitExceededError extends Errors.BaseError {
+  override readonly name = 'Rlp.DepthLimitExceededError'
+
+  constructor({ limit }: { limit: number }) {
+    super(`RLP depth limit of \`${limit}\` exceeded.`)
+  }
+}
+
+/** Thrown when RLP list items overrun the list's declared length. */
+export class ListBoundaryExceededError extends Errors.BaseError {
+  override readonly name = 'Rlp.ListBoundaryExceededError'
+
+  constructor({ consumed, declared }: { consumed: number; declared: number }) {
+    super(
+      `RLP list items consumed \`${consumed}\` bytes but the list declared a length of \`${declared}\`.`,
+    )
+  }
+}
+
+/** Thrown when an RLP payload contains bytes after the decoded item. */
+export class TrailingBytesError extends Errors.BaseError {
+  override readonly name = 'Rlp.TrailingBytesError'
+
+  constructor({ count }: { count: number }) {
+    super(
+      `RLP payload encodes a single item, but \`${count}\` trailing ${
+        count === 1 ? 'byte remains' : 'bytes remain'
+      }.`,
+    )
+  }
 }
 
 /** Thrown when an RLP payload uses a non-canonical alternate encoding of a value. */
