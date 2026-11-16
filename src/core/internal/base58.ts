@@ -72,7 +72,7 @@ export const alphabetToInteger = /* __PURE__ */ Object.freeze<
 
 /** @internal */
 export function from(value: Hex.Hex | Bytes.Bytes) {
-  let bytes = Bytes.from(value)
+  const bytes = Bytes.from(value)
 
   let integer = (() => {
     let hex = value
@@ -80,19 +80,24 @@ export function from(value: Hex.Hex | Bytes.Bytes) {
     return BigInt(hex as string)
   })()
 
+  // Divide by 58^9, the largest power of 58 below 2^53, so each BigInt
+  // division yields nine digits that number arithmetic can split.
   let result = ''
   while (integer > 0n) {
-    const remainder = Number(integer % 58n)
-    integer = integer / 58n
-    result = integerToAlphabet[remainder] + result
+    let remainder = Number(integer % 7_427_658_739_644_928n)
+    integer /= 7_427_658_739_644_928n
+    // Every chunk but the most significant one is zero-padded to nine digits.
+    for (let i = 0; i < 9 && (remainder > 0 || integer > 0n); i++) {
+      result = integerToAlphabet[remainder % 58] + result
+      remainder = Math.floor(remainder / 58)
+    }
   }
 
-  while (bytes.length > 1 && bytes[0] === 0) {
-    result = '1' + result
-    bytes = bytes.slice(1)
-  }
+  // Count leading zero bytes (all but the last byte) without copying.
+  let zeros = 0
+  while (zeros < bytes.length - 1 && bytes[zeros] === 0) zeros++
 
-  return result
+  return '1'.repeat(zeros) + result
 }
 
 /** @internal */

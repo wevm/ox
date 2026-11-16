@@ -81,7 +81,8 @@ export declare namespace assert {
  * @returns The checksummed address.
  */
 export function checksum(address: string): Address {
-  if (Caches.checksum.has(address)) return Caches.checksum.get(address)!
+  const hit = Caches.checksum.get(address)
+  if (hit !== undefined) return hit
 
   assert(address, { strict: false })
 
@@ -305,6 +306,13 @@ export function validate(
   options: validate.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
+  // Mirrors `assert` for strings without constructing and catching an error.
+  // Other values keep going through `assert`, which may coerce them.
+  if (typeof address === 'string') {
+    if (!addressRegex.test(address)) return false
+    if (!strict || address.toLowerCase() === address) return true
+    return checksum(address) === address
+  }
   try {
     assert(address, { strict })
     return true

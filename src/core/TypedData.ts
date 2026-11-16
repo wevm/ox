@@ -5,6 +5,7 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import { caches } from './internal/caches.js'
 import type { Compute } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
@@ -813,14 +814,25 @@ export declare namespace encodeData {
     | Errors.GlobalErrorType
 }
 
+/** Longest encoded type kept in the type-hash cache. */
+const typeHashCacheMaxLength = 4_096
+
 /** @internal */
 export function hashType(value: {
   primaryType: string
   types: TypedData
 }): Hex.Hex {
   const { primaryType, types } = value
-  const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  return Hash.keccak256(encodedHashType)
+  // Keyed by the encoded type, so equal struct definitions share one hash
+  // across calls, whichever object their types came from.
+  const type = encodeType({ primaryType, types })
+  const cached = caches.typeHash.get(type)
+  if (cached) return cached
+  const hash = Hash.keccak256(Hex.fromString(type))
+  // The cache is bounded by entries, not bytes, so only cache encoded types of
+  // ordinary size: retained memory then stays bounded whatever types are passed.
+  if (type.length <= typeHashCacheMaxLength) caches.typeHash.set(type, hash)
+  return hash
 }
 
 /** @internal */

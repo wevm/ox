@@ -109,6 +109,28 @@ describe('fromBytes', () => {
     ).toMatchInlineSnapshot('"0x48656c6c6f20576f726c6421"')
   })
 
+  test('behavior: ignores an instance `toHex`', () => {
+    const bytes = new Uint8Array([1, 2, 3]) as Uint8Array & {
+      toHex: () => string
+    }
+    bytes.toHex = () => 'deadbeef'
+    expect(Hex.fromBytes(bytes)).toBe('0x010203')
+
+    class Custom extends Uint8Array {
+      toHex() {
+        return 'deadbeef'
+      }
+    }
+    expect(Hex.fromBytes(new Custom([1, 2, 3]))).toBe('0x010203')
+  })
+
+  test('behavior: detached view', () => {
+    const buffer = new ArrayBuffer(4)
+    const bytes = new Uint8Array(buffer)
+    ;(buffer as ArrayBuffer & { transfer(): ArrayBuffer }).transfer()
+    expect(Hex.fromBytes(bytes)).toBe('0x')
+  })
+
   test('args: size', () => {
     expect(
       Hex.fromBytes(

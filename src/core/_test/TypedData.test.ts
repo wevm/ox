@@ -1,6 +1,7 @@
-import { Hex, TypedData } from 'ox'
+import { Hash, Hex, TypedData } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as typedData from '../../../test/constants/typedData.js'
+import { caches } from '../internal/caches.js'
 
 describe('assert', () => {
   test('default', () => {
@@ -1375,6 +1376,33 @@ describe('hashDomain', () => {
       }),
     ).toMatchInlineSnapshot(
       `"0x2fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413"`,
+    )
+  })
+})
+
+describe('hashType', () => {
+  test('behavior: caches ordinary types', () => {
+    caches.typeHash.clear()
+    const types = { Mail: [{ name: 'contents', type: 'string' }] } as const
+    const hash = TypedData.hashType({ primaryType: 'Mail', types })
+    expect(caches.typeHash.size).toBe(1)
+    expect(TypedData.hashType({ primaryType: 'Mail', types })).toBe(hash)
+  })
+
+  test('behavior: does not cache very long types', () => {
+    caches.typeHash.clear()
+    const types = {
+      Big: Array.from({ length: 500 }, (_, i) => ({
+        name: `field_${i}`,
+        type: 'uint256',
+      })),
+    }
+    const hash = TypedData.hashType({ primaryType: 'Big', types })
+    expect(caches.typeHash.size).toBe(0)
+    expect(hash).toBe(
+      Hash.keccak256(
+        Hex.fromString(TypedData.encodeType({ primaryType: 'Big', types })),
+      ),
     )
   })
 })

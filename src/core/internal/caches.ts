@@ -9,4 +9,5 @@ import { LruMap } from './lru.js'
 export const caches = {
   checksum: /*#__PURE__*/ new LruMap<Address.Address>(8192),
   signatureHash: /*#__PURE__*/ new LruMap<Hex.Hex>(8192),
+  typeHash: /*#__PURE__*/ new LruMap<Hex.Hex>(1024),
 }
