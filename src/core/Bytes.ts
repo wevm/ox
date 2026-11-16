@@ -745,9 +745,17 @@ export declare namespace trimRight {
  * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
 export function validate(value: unknown): value is Bytes {
+  // The checks `assert` makes, without building and catching an error.
+  if (!value || typeof value !== 'object') return false
+  // A revoked Proxy, or a trap or getter, can throw from these checks; that
+  // is invalid input too.
   try {
-    assert(value)
-    return true
+    if (value instanceof Uint8Array) return true
+    return (
+      'BYTES_PER_ELEMENT' in value &&
+      value.BYTES_PER_ELEMENT === 1 &&
+      value.constructor.name === 'Uint8Array'
+    )
   } catch {
     return false
   }

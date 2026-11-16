@@ -1,6 +1,7 @@
 import { Hex, TypedData } from 'ox'
 import { describe, expect, test } from 'vp/test'
 import * as typedData from '../../../test/constants/typedData.js'
+import { caches } from '../internal/caches.js'
 
 describe('assert', () => {
   test('default', () => {
@@ -1485,6 +1486,24 @@ describe('hashStruct', () => {
         typeHashes,
       }),
     ).toBe(hash)
+  })
+
+  test('behavior: long encoded types are not kept in the global cache', () => {
+    caches.typeHash.clear()
+    const fields = Array.from({ length: 300 }, (_, i) => ({
+      name: 'field' + i,
+      type: 'uint256',
+    }))
+    const data = Object.fromEntries(fields.map(({ name }) => [name, 1n]))
+    TypedData.hashStruct({ data, primaryType: 'Long', types: { Long: fields } })
+    expect(caches.typeHash.size).toBe(0)
+
+    TypedData.hashStruct({
+      ...typedData.basic,
+      primaryType: 'Mail',
+      data: typedData.basic.message,
+    })
+    expect(caches.typeHash.size).toBeGreaterThan(0)
   })
 })
 

@@ -14,20 +14,24 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
   // Fast path: unsigned big-endian read using DataView for 8-byte chunks,
   // skipping the hex round-trip.
   if (!signed) {
-    let val = 0n
+    // A value of up to 6 significant bytes (most ABI words hold small values)
+    // is built as a number and converted once, instead of shifting chunks.
     let i = 0
-    if (len >= 8) {
-      const view = new DataView(value.buffer, value.byteOffset, len)
-      const tail = len & 7
-      const fullEnd = len - tail
-      while (i < fullEnd) {
-        val = (val << 64n) | view.getBigUint64(i, false)
-        i += 8
-      }
+    while (i < len && value[i] === 0) i++
+    if (len - i <= 6) {
+      let n = 0
+      for (; i < len; i++) n = n * 256 + value[i]!
+      return BigInt(n)
     }
-    while (i < len) {
-      val = (val << 8n) | BigInt(value[i]!)
-      i++
+
+    // Continue from the first significant byte: read the bytes that don't
+    // fill a chunk first, then the rest in 8-byte chunks.
+    let val = 0n
+    const head = i + ((len - i) & 7)
+    for (; i < head; i++) val = (val << 8n) | BigInt(value[i]!)
+    if (i < len) {
+      const view = new DataView(value.buffer, value.byteOffset, len)
+      for (; i < len; i += 8) val = (val << 64n) | view.getBigUint64(i, false)
     }
     return val
   }

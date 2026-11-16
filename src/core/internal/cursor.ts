@@ -6,8 +6,13 @@ export type Cursor = {
   bytes: Bytes
   dataView: DataView
   position: number
-  /** Lazy: only allocated when slow-path tracking kicks in. */
-  positionReadCount: Map<number, number> | undefined
+  /**
+   * Positions read so far, so a repeated read can be counted. Word-aligned
+   * positions, where ABI data is read, go in a bit set with one bit per 32
+   * bytes; other positions go in a set. Both are allocated on first use.
+   */
+  alignedReads: Uint8Array | undefined
+  unalignedReads: Set<number> | undefined
   /** Total number of bytes read. */
   readSize: number
   /** Maximum total number of bytes that can be read. */
@@ -19,7 +24,6 @@ export type Cursor = {
   assertReadSize(length: number): void
   assertPosition(position: number): void
   decrementPosition(offset: number): void
-  getReadCount(position?: number): number
   incrementPosition(offset: number): void
   inspectByte(position?: number): Bytes[number]
   inspectBytes(length: number, position?: number): Bytes
@@ -47,7 +51,8 @@ const staticCursor: Cursor = {
   bytes: new Uint8Array(),
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,
-  positionReadCount: undefined,
+  alignedReads: undefined,
+  unalignedReads: undefined,
   readSize: 0,
   readSizeLimit: Number.POSITIVE_INFINITY,
   recursiveReadCount: 0,
@@ -79,9 +84,6 @@ const staticCursor: Cursor = {
     const position = this.position - offset
     this.assertPosition(position)
     this.position = position
-  },
-  getReadCount(position) {
-    return this.positionReadCount?.get(position || this.position) || 0
   },
   incrementPosition(offset) {
     if (offset < 0) throw new NegativeOffsetError({ offset })
@@ -212,10 +214,29 @@ const staticCursor: Cursor = {
   },
   _touch() {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
-    const map = (this.positionReadCount ??= new Map())
-    const count = map.get(this.position) || 0
-    map.set(this.position, count + 1)
-    if (count > 0) this.recursiveReadCount++
+    const { position } = this
+    if (position % 32 !== 0 || position > this.bytes.length) {
+      const reads = (this.unalignedReads ??= new Set())
+      if (reads.has(position)) this.recursiveReadCount++
+      else reads.add(position)
+      return
+    }
+    // One bit per 32-byte word, so the set is 1/256 the size of the data. It
+    // is sized from the data's length at the time of the read, so a resizable
+    // buffer that grows while decoding still has every read counted.
+    const word = position / 32
+    const index = Math.floor(word / 8)
+    let reads = this.alignedReads
+    if (!reads || index >= reads.length) {
+      const grown = new Uint8Array(
+        Math.max(Math.floor(this.bytes.length / 256) + 1, index + 1),
+      )
+      if (reads) grown.set(reads)
+      reads = this.alignedReads = grown
+    }
+    const bit = 1 << (word & 7)
+    if (reads[index]! & bit) this.recursiveReadCount++
+    else reads[index]! |= bit
   },
 }
 
@@ -231,7 +252,8 @@ export function create(
     bytes.byteOffset,
     bytes.byteLength,
   )
-  cursor.positionReadCount = undefined
+  cursor.alignedReads = undefined
+  cursor.unalignedReads = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
   // `recursiveReadLimit` allows one read per position plus that many repeated
   // reads. Allow as many bytes as that number of 32-byte reads, so that reads

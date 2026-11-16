@@ -1,4 +1,5 @@
 import { bench, describe } from 'vp/test'
+import * as VirtualMasterPool from './internal/virtualMasterPool.js'
 import * as VirtualMaster from './VirtualMaster.js'
 
 const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' as const
@@ -38,5 +39,11 @@ describe('VirtualMaster.validateSalt', () => {
 
   bench('invalid salt', () => {
     VirtualMaster.validateSalt({ address, salt: 0n })
+  })
+})
+
+describe('VirtualMasterPool.resolveNode', () => {
+  bench('default', async () => {
+    await VirtualMasterPool.resolveNode()
   })
 })
