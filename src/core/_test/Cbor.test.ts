@@ -519,6 +519,23 @@ describe('decode', () => {
     expect(() => Cbor.decode('0x123')).toThrow()
   })
 
+  test('error: nesting deeper than the depth limit', () => {
+    // `0x81` opens a one-element array.
+    expect(
+      Cbor.decode(new Uint8Array([...new Uint8Array(1_023).fill(0x81), 0x01])),
+    ).toBeDefined()
+    expect(() =>
+      Cbor.decode(new Uint8Array([...new Uint8Array(1_024).fill(0x81), 0x01])),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cbor.DepthLimitExceededError: CBOR depth limit of \`1024\` exceeded.]`,
+    )
+    expect(() =>
+      Cbor.decode(new Uint8Array(100_000).fill(0x81)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cbor.DepthLimitExceededError: CBOR depth limit of \`1024\` exceeded.]`,
+    )
+  })
+
   test('large string (> 0xffff)', () => {
     const str = 'a'.repeat(0x10000)
     const encoded = Cbor.encode(str)
