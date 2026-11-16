@@ -107,6 +107,11 @@ export declare namespace decodeParameter {
 const sizeOfLength = 32
 const sizeOfOffset = 32
 
+const arrayRegex = /^(.*)\[(\d+)?\]$/
+
+/** `[max, min]` of each integer type, keyed by `size` and `signed`. */
+const integerBounds = new Map<number, readonly [max: bigint, min: bigint]>()
+
 /** @internal */
 export function decodeAddress(
   cursor: Cursor.Cursor,
@@ -573,7 +578,7 @@ export function encode(preparedParameters: PreparedParameter[]): Hex.Hex {
   }
 
   // 3. Concatenate static and dynamic parts.
-  return Hex.concat(...staticParameters, ...dynamicParameters)
+  return join(staticParameters, dynamicParameters)
 }
 
 /** @internal */
@@ -655,7 +660,7 @@ export function encodeArray<const parameter extends AbiParameters.Parameter>(
   }
   return {
     dynamic: false,
-    encoded: Hex.concat(...preparedParameters.map(({ encoded }) => encoded)),
+    encoded: join(preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
@@ -736,8 +741,7 @@ export function encodeNumber(
   { signed, size }: { signed: boolean; size: number },
 ): PreparedParameter {
   if (typeof size === 'number') {
-    const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
-    const min = signed ? -max - 1n : 0n
+    const [max, min] = getIntegerBounds(signed, size)
     if (value > max || value < min)
       throw new Hex.IntegerOutOfRangeError({
         max: max.toString(),
@@ -819,7 +823,7 @@ export function encodeTuple<
     dynamic,
     encoded: dynamic
       ? encode(preparedParameters)
-      : Hex.concat(...preparedParameters.map(({ encoded }) => encoded)),
+      : join(preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
@@ -834,7 +838,7 @@ export function getArrayComponents(
 ): [length: number | null, innerType: string] | undefined {
   // Only array types end with `]`, so skip the regex for every other type.
   if (type.charCodeAt(type.length - 1) !== 93) return undefined
-  const matches = type.match(/^(.*)\[(\d+)?\]$/)
+  const matches = type.match(arrayRegex)
   return matches
     ? // Return `null` if the array is dynamic.
       [matches[2]! ? Number(matches[2]!) : null, matches[1]!]
@@ -861,6 +865,31 @@ export function hasDynamicChild(param: AbiParameters.Parameter) {
     return true
 
   return false
+}
+
+/** @internal */
+function getIntegerBounds(signed: boolean, size: number) {
+  const key = size * 2 + (signed ? 1 : 0)
+  let bounds = integerBounds.get(key)
+  if (!bounds) {
+    const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
+    bounds = [max, signed ? -max - 1n : 0n]
+    integerBounds.set(key, bounds)
+  }
+  return bounds
+}
+
+/**
+ * Concatenates encoded parts with a single join, so that arrays of any length
+ * avoid spreading into `Hex.concat`.
+ *
+ * @internal
+ */
+function join(...lists: readonly (readonly Hex.Hex[])[]): Hex.Hex {
+  const parts: string[] = []
+  for (const list of lists)
+    for (let i = 0; i < list.length; i++) parts.push(list[i]!.slice(2))
+  return `0x${parts.join('')}`
 }
 
 /**

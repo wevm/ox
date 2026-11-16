@@ -548,6 +548,16 @@ export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
       for (; i < bytes.length; i++) value = value * 256 + bytes[i]!
       return BigInt(value)
     }
+    // A full word reads as four 64-bit halves, skipping the hex string.
+    if (bytes.length === 32 && bytes instanceof Uint8Array) {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, 32)
+      return (
+        (view.getBigUint64(0) << 192n) |
+        (view.getBigUint64(8) << 128n) |
+        (view.getBigUint64(16) << 64n) |
+        view.getBigUint64(24)
+      )
+    }
   }
   const hex = Hex.fromBytes(bytes, options)
   return Hex.toBigInt(hex, options)
@@ -653,6 +663,17 @@ export declare namespace toHex {
 export function toNumber(bytes: Bytes, options: toNumber.Options = {}): number {
   const { size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
+  if (!options.signed && size === undefined && bytes.length > 0) {
+    const length = bytes.length
+    let i = 0
+    while (i < length && bytes[i] === 0) i++
+    // Up to 6 bytes (48 bits) accumulate exactly as a number.
+    if (length - i <= 6) {
+      let value = 0
+      for (; i < length; i++) value = value * 256 + bytes[i]!
+      return value
+    }
+  }
   const hex = Hex.fromBytes(bytes, options)
   return Hex.toNumber(hex, options)
 }

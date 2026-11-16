@@ -260,6 +260,14 @@ export function fromNumber(
 ): Hex {
   const { signed, size } = options
 
+  // A non-negative `bigint` that fits `size` skips the range check too.
+  if (typeof value === 'bigint' && !signed && value >= 0n) {
+    const hex = value.toString(16)
+    if (!size) return `0x${hex}`
+    if (Number.isSafeInteger(size) && size > 0 && hex.length <= size * 2)
+      return `0x${hex.padStart(size * 2, '0')}`
+  }
+
   // An unsigned safe integer is in range when there is no `size` or the size
   // exceeds 6 bytes, so it skips the `bigint` range check.
   if (
@@ -273,6 +281,16 @@ export function fromNumber(
     return size ? padLeft(hex, size) : hex
   }
 
+  return fromNumberChecked(value, signed, size)
+}
+
+// The range-checked path of `fromNumber`, kept separate so that `fromNumber`
+// stays small enough to inline.
+function fromNumberChecked(
+  value: number | bigint,
+  signed: boolean | undefined,
+  size: number | undefined,
+): Hex {
   const value_ = BigInt(value)
 
   let maxValue: bigint | number | undefined
@@ -299,7 +317,7 @@ export function fromNumber(
   }
 
   const stringValue = (
-    signed && value_ < 0 ? BigInt.asUintN(size * 8, BigInt(value_)) : value_
+    signed && value_ < 0 ? BigInt.asUintN(size! * 8, BigInt(value_)) : value_
   ).toString(16)
 
   const hex = `0x${stringValue}` as Hex
@@ -600,12 +618,7 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
 
   const value = BigInt(hex)
   if (!signed) return value
-
-  const max_unsigned = (1n << (BigInt(size(hex)) * 8n)) - 1n
-  const max_signed = max_unsigned >> 1n
-
-  if (value <= max_signed) return value
-  return value - max_unsigned - 1n
+  return BigInt.asIntN(size(hex) * 8, value)
 }
 
 export declare namespace toBigInt {

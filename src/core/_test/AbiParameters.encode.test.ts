@@ -2058,3 +2058,14 @@ describe('zero-width types', () => {
     )
   })
 })
+
+test('behavior: long arrays', () => {
+  const values = Array.from({ length: 200_000 }, (_, i) => BigInt(i))
+  const encoded = AbiParameters.encode(AbiParameters.from('uint256[]'), [
+    values,
+  ])
+  expect(encoded.length).toBe(2 + 64 * (values.length + 2))
+  expect(encoded.slice(-64)).toBe(
+    (values.length - 1).toString(16).padStart(64, '0'),
+  )
+})
