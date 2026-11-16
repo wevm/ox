@@ -441,12 +441,10 @@ export declare namespace deserialize {
 /** Bytes after the RLP list in `rlp ‖ sender ‖ 0xfeefeefeefee`. */
 const senderMarkerSize = 20 + 6
 
-/**
- * Removes the `sender ‖ 0xfeefeefeefee` that follows the RLP list when a signed
- * transaction is passed to a fee payer (e.g. by viem). The suffix is removed
- * only when the list ends exactly before it, so any other trailing bytes are
- * still rejected by `Rlp.toHex`.
- */
+// Removes the `sender ‖ 0xfeefeefeefee` that follows the RLP list when a signed
+// transaction is passed to a fee payer (e.g. by viem). The suffix is removed
+// only when the list ends exactly before it, so any other trailing bytes are
+// still rejected by `Rlp.toHex`.
 function withoutSenderMarker(payload: Hex.Hex): Hex.Hex {
   const size = Hex.size(payload)
   if (size <= senderMarkerSize) return payload
