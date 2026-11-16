@@ -220,14 +220,14 @@ describe('fromHttp', () => {
     await expect(() =>
       transport.request({ method: 'eth_accounts' }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(`
-    [RpcTransport.HttpError: HTTP request failed.
+      [RpcTransport.HttpError: HTTP request failed.
 
-    Status: 400
-    URL: https://oxlib.sh/rpc
-    Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
+      Status: 400
+      URL: https://oxlib.sh/rpc
+      Body: {"id":0,"method":"eth_accounts","jsonrpc":"2.0"}
 
-    Details: Bad Request]
-  `)
+      Details: Bad Request]
+    `)
   })
 
   test('behavior: http error + response', async () => {
@@ -241,14 +241,14 @@ describe('fromHttp', () => {
     await expect(() =>
       transport.request({ method: 'eth_accounts' }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(`
-    [RpcTransport.HttpError: HTTP request failed.
+      [RpcTransport.HttpError: HTTP request failed.
 
-    Status: 400
-    URL: https://oxlib.sh/rpc
-    Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
+      Status: 400
+      URL: https://oxlib.sh/rpc
+      Body: {"id":0,"method":"eth_accounts","jsonrpc":"2.0"}
 
-    Details: "bad"]
-  `)
+      Details: "bad"]
+    `)
   })
 
   test('behavior: malformed text response', async () => {

@@ -202,7 +202,10 @@ export class HttpError extends Errors.BaseError {
       metaMessages: [
         `Status: ${response.status}`,
         `URL: ${getUrl(url)}`,
-        body ? `Body: ${JSON.stringify(body)}` : undefined,
+        // The request body is usually already JSON.
+        body
+          ? `Body: ${typeof body === 'string' ? body : JSON.stringify(body)}`
+          : undefined,
       ],
     })
   }
