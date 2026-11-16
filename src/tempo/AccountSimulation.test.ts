@@ -79,7 +79,7 @@ describe('fromRpc', () => {
     expect(() =>
       AccountSimulation.fromRpc({ ...rpc, config: `${config}00` }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: noncanonical config encoding.]`,
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
     )
   })
 
