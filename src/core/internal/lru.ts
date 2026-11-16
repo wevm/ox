@@ -28,18 +28,17 @@ export class BoundedMap<value = unknown> extends Map<string, value> {
  *
  * @internal
  */
-export class WeakCache<key extends object, value> {
-  map = new WeakMap<key, value>()
-
-  clear() {
-    this.map = new WeakMap()
-  }
-
-  get(key: key) {
-    return this.map.get(key)
-  }
-
-  set(key: key, value: value) {
-    this.map.set(key, value)
+export function weakCache<key extends object, value>() {
+  let map = new WeakMap<key, value>()
+  return {
+    clear() {
+      map = new WeakMap()
+    },
+    get(key: key) {
+      return map.get(key)
+    },
+    set(key: key, value: value) {
+      map.set(key, value)
+    },
   }
 }
