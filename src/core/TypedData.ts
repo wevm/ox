@@ -915,6 +915,9 @@ export declare namespace encodeData {
     | Errors.GlobalErrorType
 }
 
+/** Longest encoded type, in characters, whose hash is kept in the cache. */
+const maxCachedTypeLength = 4_096
+
 /** @internal */
 export function hashType(value: {
   primaryType: string
@@ -930,7 +933,9 @@ export function hashType(value: {
   let hash = caches.typeHash.get(type)
   if (!hash) {
     hash = Hash.keccak256(Hex.fromString(type))
-    caches.typeHash.set(type, hash)
+    // Only short encoded types are cached, so the cache's memory is bounded
+    // by its entry count rather than by the size of the types it was given.
+    if (type.length <= maxCachedTypeLength) caches.typeHash.set(type, hash)
   }
   typeHashes?.set(primaryType, hash)
   return hash

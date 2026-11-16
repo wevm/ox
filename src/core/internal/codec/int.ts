@@ -24,20 +24,14 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
       return BigInt(n)
     }
 
+    // Continue from the first significant byte: read the bytes that don't
+    // fill a chunk first, then the rest in 8-byte chunks.
     let val = 0n
-    i = 0
-    if (len >= 8) {
+    const head = i + ((len - i) & 7)
+    for (; i < head; i++) val = (val << 8n) | BigInt(value[i]!)
+    if (i < len) {
       const view = new DataView(value.buffer, value.byteOffset, len)
-      const tail = len & 7
-      const fullEnd = len - tail
-      while (i < fullEnd) {
-        val = (val << 64n) | view.getBigUint64(i, false)
-        i += 8
-      }
-    }
-    while (i < len) {
-      val = (val << 8n) | BigInt(value[i]!)
-      i++
+      for (; i < len; i += 8) val = (val << 64n) | view.getBigUint64(i, false)
     }
     return val
   }

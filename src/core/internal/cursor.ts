@@ -221,14 +221,22 @@ const staticCursor: Cursor = {
       else reads.add(position)
       return
     }
-    // One bit per 32-byte word, so the set is 1/256 the size of the data.
-    const reads = (this.alignedReads ??= new Uint8Array(
-      (this.bytes.length >> 8) + 1,
-    ))
+    // One bit per 32-byte word, so the set is 1/256 the size of the data. It
+    // is sized from the data's length at the time of the read, so a resizable
+    // buffer that grows while decoding still has every read counted.
     const word = position / 32
+    const index = Math.floor(word / 8)
+    let reads = this.alignedReads
+    if (!reads || index >= reads.length) {
+      const grown = new Uint8Array(
+        Math.max(Math.floor(this.bytes.length / 256) + 1, index + 1),
+      )
+      if (reads) grown.set(reads)
+      reads = this.alignedReads = grown
+    }
     const bit = 1 << (word & 7)
-    if (reads[word >> 3]! & bit) this.recursiveReadCount++
-    else reads[word >> 3]! |= bit
+    if (reads[index]! & bit) this.recursiveReadCount++
+    else reads[index]! |= bit
   },
 }
 
