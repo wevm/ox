@@ -1,4 +1,4 @@
-import { AbiItem, Caches } from 'ox'
+import { AbiItem, Caches, Engine } from 'ox'
 import { expect, test } from 'vp/test'
 import { caches } from '../internal/caches.js'
 
@@ -26,4 +26,23 @@ test('behavior: clears signature hashes', () => {
   expect(caches.signatureHash.size).toBe(1)
   Caches.clear()
   expect(caches.signatureHash.size).toBe(0)
+})
+
+test('behavior: an engine change re-derives ABI item signature hashes', () => {
+  const abiItem = {
+    inputs: [{ type: 'uint256' }],
+    name: 'ownerOf',
+    outputs: [],
+    stateMutability: 'view',
+    type: 'function',
+  } as const
+  const hash = AbiItem.getSignatureHash(abiItem)
+  expect(
+    Engine.with({ Hash: { keccak256: () => new Uint8Array(32) } }, () =>
+      AbiItem.getSignatureHash(abiItem),
+    ),
+  ).toMatchInlineSnapshot(
+    `"0x0000000000000000000000000000000000000000000000000000000000000000"`,
+  )
+  expect(AbiItem.getSignatureHash(abiItem)).toBe(hash)
 })

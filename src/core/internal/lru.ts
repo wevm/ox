@@ -20,3 +20,26 @@ export class BoundedMap<value = unknown> extends Map<string, value> {
     return super.set(key, value)
   }
 }
+
+/**
+ * Cache keyed by object identity. Entries live as long as their key, and
+ * `clear` drops them all by swapping in a new `WeakMap`, which has no `clear`
+ * of its own.
+ *
+ * @internal
+ */
+export class WeakCache<key extends object, value> {
+  map = new WeakMap<key, value>()
+
+  clear() {
+    this.map = new WeakMap()
+  }
+
+  get(key: key) {
+    return this.map.get(key)
+  }
+
+  set(key: key, value: value) {
+    this.map.set(key, value)
+  }
+}
