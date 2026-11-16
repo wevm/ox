@@ -1371,6 +1371,24 @@ describe('toBigInt', () => {
     ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
   })
 
+  test('behavior: values wider than 64 bytes', () => {
+    const ones = new Uint8Array(65).fill(0xff)
+    expect(Bytes.toBigInt(ones)).toEqual((1n << 520n) - 1n)
+    expect(Bytes.toBigInt(ones, { signed: true })).toEqual(-1n)
+
+    const high = new Uint8Array(65)
+    high[0] = 0x80
+    expect(Bytes.toBigInt(high)).toEqual(1n << 519n)
+    expect(Bytes.toBigInt(high, { signed: true })).toEqual(-(1n << 519n))
+
+    // Leading zeros, read from an offset into a larger buffer.
+    const padded = new Uint8Array(101).fill(0x01).subarray(1)
+    padded.fill(0, 0, 20)
+    expect(Bytes.toBigInt(padded, { signed: true })).toEqual(
+      BigInt(`0x${'01'.repeat(80)}`),
+    )
+  })
+
   test('args: size', () => {
     expect(
       Bytes.toBigInt(Bytes.fromNumber(420n, { size: 32 }), {

@@ -84,7 +84,10 @@ export function fromRpc(receipt: Rpc): FrameReceipt {
     gasUsed: Hex.toBigInt(receipt.gasUsed),
     logs: receipt.logs,
     stateGasUsed: Hex.toBigInt(receipt.stateGasUsed),
-    status: fromRpcStatus[receipt.status],
+    // Own keys only: an inherited one such as `__proto__` is not a status.
+    status: Object.hasOwn(fromRpcStatus, receipt.status)
+      ? fromRpcStatus[receipt.status]
+      : (undefined as never),
   }
 }
 

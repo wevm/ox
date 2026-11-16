@@ -23,6 +23,14 @@ const rpc = {
 } as const satisfies TransactionReceipt.Rpc
 
 describe('fromRpc', () => {
+  test('behavior: unknown type named like an `Object.prototype` key', () => {
+    for (const type of ['toString', '__proto__'])
+      expect(
+        TransactionReceipt.fromRpc({ ...rpc, type } as TransactionReceipt.Rpc)
+          .type,
+      ).toBe(type)
+  })
+
   test('default', () => {
     const receipt = TransactionReceipt.fromRpc(rpc)
     expect(receipt).toMatchInlineSnapshot(`

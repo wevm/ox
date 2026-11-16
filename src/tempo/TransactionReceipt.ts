@@ -124,7 +124,10 @@ export function fromRpc<const receipt extends Rpc | null>(
   if (!decoded) return null as never
   return {
     ...decoded,
-    type: (fromRpcType as any)[receipt!.type] ?? receipt!.type,
+    // Own keys only: an inherited one such as `toString` is not a type.
+    type: Object.hasOwn(fromRpcType, receipt!.type)
+      ? fromRpcType[receipt!.type as keyof typeof fromRpcType]
+      : receipt!.type,
   } as never
 }
 

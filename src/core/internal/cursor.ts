@@ -11,7 +11,8 @@ export type Cursor = {
   position: number
   /**
    * Bitset of positions read so far, one bit per byte in 30-bit words. Lazy:
-   * only allocated when the recursive read limit is finite.
+   * only allocated when the recursive read limit is finite, and grown as
+   * reads reach further positions.
    */
   readPositions: number[] | undefined
   /** Total number of bytes read. */
@@ -223,13 +224,11 @@ const staticCursor: Cursor = {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
     // Words of 30 bits stay small integers, so a plain array holds them. A
     // typed array over 64 bytes is allocated off-heap, which costs more than
-    // decoding a short payload. Reads stop at the end of the data, so a bit
-    // per byte plus one covers every position a read starts from.
-    // oxlint-disable-next-line unicorn/no-new-array -- `Array.from({ length })` is about 20 times slower to fill.
-    const positions = (this.readPositions ??= new Array<number>(
-      Math.floor(this.bytes.length / 30) + 1,
-    ).fill(0))
+    // decoding a short payload. It grows to the furthest position read rather
+    // than the length of the data, which may hold far more than is decoded.
+    const positions = (this.readPositions ??= [])
     const index = Math.floor(this.position / 30)
+    while (positions.length <= index) positions.push(0)
     const bit = 1 << (this.position - index * 30)
     if (positions[index]! & bit) this.recursiveReadCount++
     else positions[index]! |= bit
@@ -247,9 +246,9 @@ export function create(
   cursor.readPositions = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
   // A well-formed payload reads each byte once. Allow twice that, plus as many
-  // bytes as `recursiveReadLimit` repeated 32-byte reads, so that offsets
-  // pointing many times at one region cannot make the decoded output many
-  // times larger than the data.
+  // bytes as `recursiveReadLimit` repeated 32-byte reads (256 KiB by default),
+  // so that offsets pointing many times at one region can add at most that
+  // fixed amount to the decoded output, whatever the size of the data.
   cursor.readSizeLimit = 2 * bytes.length + 32 * recursiveReadLimit
   return cursor
 }

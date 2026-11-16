@@ -1,4 +1,14 @@
 import * as Errors from '../../Errors.js'
+import { bytesToHex } from './hex.js'
+
+/**
+ * Significant byte count up to which {@link bytesToBigInt} shifts 8-byte chunks
+ * into the result. Each shift copies the result so far, so the loop is
+ * quadratic, and parsing hex overtakes it past 64 bytes on Node 24 and Bun.
+ *
+ * @internal
+ */
+const shiftMaxBytes = 64
 
 /**
  * Decodes a big-endian unsigned `Uint8Array` into a `bigint`. When `signed` is
@@ -21,6 +31,7 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
     for (; i < len; i++) n = n * 256 + value[i]!
     return BigInt(n)
   }
+  if (len - i > shiftMaxBytes) return BigInt(bytesToHex(value))
 
   // Unsigned big-endian read using DataView for 8-byte chunks.
   let val = 0n

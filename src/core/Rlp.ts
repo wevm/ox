@@ -10,10 +10,11 @@ import type { ExactPartial, RecursiveArray } from './internal/types.js'
 const depthLimit = 1_024
 
 /**
- * Hex input length up to which decoded hex leaves are always sliced from the
- * input. Bounds what one kept leaf can retain of a short input.
+ * Hex input length up to which decoded hex leaves are sliced from the input. A
+ * sliced string keeps its whole parent alive, so this bounds what one kept leaf
+ * can retain.
  */
-const sliceAlwaysMaxLength = 4_096
+const sliceMaxLength = 4_096
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
@@ -72,11 +73,11 @@ export function to<
 
   // Hex in and out: read a short input straight from the string, skipping the
   // byte copy. A long input pays a JavaScript scan to validate it, which costs
-  // more than `Bytes.fromHex`.
+  // more than `Bytes.fromHex`, and leaves sliced from it would keep it alive.
   if (
     typeof value === 'string' &&
     to_ === 'Hex' &&
-    value.length <= sliceAlwaysMaxLength
+    value.length <= sliceMaxLength
   )
     return decodeHex(value) as to.ReturnType<to>
 
@@ -86,12 +87,7 @@ export function to<
   const cursor = Cursor.create(bytes, {
     recursiveReadLimit: Number.POSITIVE_INFINITY,
   })
-  // Hex in and out: slice leaves from the input instead of re-encoding their
-  // bytes. `Bytes.fromHex` has validated it, and lowercasing matches the
-  // output of `Hex.fromBytes`.
-  const source =
-    typeof value === 'string' && to_ === 'Hex' ? value.toLowerCase() : undefined
-  const result = decodeRlpCursor(cursor, to_, 0, source)
+  const result = decodeRlpCursor(cursor, to_)
 
   // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
   if (cursor.position < cursor.bytes.length)
@@ -124,7 +120,6 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
   cursor: Cursor.Cursor,
   to: to | 'Hex' | 'Bytes' | undefined = 'Hex',
   depth = 0,
-  source?: string,
 ): decodeRlpCursor.ReturnType<to> {
   if (depth >= depthLimit)
     throw new DepthLimitExceededError({ limit: depthLimit })
@@ -149,17 +144,9 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
       throw new NonCanonicalError({
         reason: `single byte \`0x${bytes[0]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
       })
-    if (to !== 'Hex') return bytes as decodeRlpCursor.ReturnType<to>
-    // A sliced string keeps its whole parent alive, so slice only where that
-    // retains little: from short inputs, or for leaves that are at least an
-    // eighth of the input (such as blobs).
-    if (
-      source === undefined ||
-      (source.length > sliceAlwaysMaxLength && length * 16 < source.length)
-    )
-      return Hex.fromBytes(bytes) as decodeRlpCursor.ReturnType<to>
-    const end = 2 + cursor.position * 2
-    return `0x${source.slice(end - length * 2, end)}` as decodeRlpCursor.ReturnType<to>
+    return (
+      to === 'Hex' ? Hex.fromBytes(bytes) : bytes
+    ) as decodeRlpCursor.ReturnType<to>
   }
 
   // list
@@ -169,7 +156,6 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
     length,
     to,
     depth + 1,
-    source,
   ) as {} as decodeRlpCursor.ReturnType<to>
 }
 
@@ -246,12 +232,11 @@ export function readList<to extends 'Hex' | 'Bytes'>(
   length: number,
   to: to | 'Hex' | 'Bytes',
   depth = 0,
-  source?: string,
 ) {
   const position = cursor.position
   const value: decodeRlpCursor.ReturnType<to>[] = []
   while (cursor.position - position < length)
-    value.push(decodeRlpCursor(cursor, to, depth, source))
+    value.push(decodeRlpCursor(cursor, to, depth))
   // Items must consume exactly the declared list length.
   if (cursor.position - position !== length)
     throw new ListBoundaryExceededError({
