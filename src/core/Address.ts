@@ -3,9 +3,8 @@ import * as Bytes from './Bytes.js'
 import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
+import * as internal from './internal/address.js'
 import * as PublicKey from './PublicKey.js'
-
-const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /** Root type for Address. */
 export type Address = abitype_Address
@@ -37,20 +36,19 @@ export function assert(
 ): asserts value is Address {
   const { strict = true } = options
 
-  if (!addressRegex.test(value))
+  const kind = internal.classify(value)
+  if (kind === 0)
     throw new InvalidAddressError({
       address: value,
       cause: new InvalidInputError(),
     })
 
-  if (strict) {
-    if (value.toLowerCase() === value) return
-    if (checksum(value as Address) !== value)
-      throw new InvalidAddressError({
-        address: value,
-        cause: new InvalidChecksumError(),
-      })
-  }
+  // Lowercase inputs are exempt from checksum verification.
+  if (strict && kind === 2 && checksum(value as Address) !== value)
+    throw new InvalidAddressError({
+      address: value,
+      cause: new InvalidChecksumError(),
+    })
 }
 
 export declare namespace assert {
@@ -81,21 +79,20 @@ export declare namespace assert {
  * @returns The checksummed address.
  */
 export function checksum(address: string): Address {
-  const hit = Caches.checksum.get(address)
-  if (hit !== undefined) return hit
+  // The checksum depends only on the lowercase address, so every casing of an
+  // address shares one cache entry, keyed by the lowercase form.
+  const direct = Caches.checksum.get(address)
+  if (direct !== undefined) return direct
 
   assert(address, { strict: false })
 
-  // The checksum depends only on the lowercase address, so every casing of an
-  // address shares the result computed for the lowercase form.
-  const hexAddress = address.substring(2).toLowerCase()
-  const key = `0x${hexAddress}`
-  const cached = Caches.checksum.get(key)
-  if (cached !== undefined) {
-    Caches.checksum.set(address, cached)
-    return cached
+  const key = address.toLowerCase()
+  if (key !== address) {
+    const cached = Caches.checksum.get(key)
+    if (cached !== undefined) return cached
   }
 
+  const hexAddress = key.substring(2)
   const hash = Hash.keccak256(Bytes.fromString(hexAddress), { as: 'Bytes' })
 
   const characters = hexAddress.split('')
@@ -110,7 +107,6 @@ export function checksum(address: string): Address {
 
   const result = `0x${characters.join('')}` as const
   Caches.checksum.set(key, result)
-  if (key !== address) Caches.checksum.set(address, result)
   return result
 }
 
@@ -306,19 +302,10 @@ export function validate(
   options: validate.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
-  // Mirrors `assert` for strings without constructing and catching an error.
-  // Other values keep going through `assert`, which may coerce them.
-  if (typeof address === 'string') {
-    if (!addressRegex.test(address)) return false
-    if (!strict || address.toLowerCase() === address) return true
-    return checksum(address) === address
-  }
-  try {
-    assert(address, { strict })
-    return true
-  } catch {
-    return false
-  }
+  const kind = internal.classify(address)
+  if (kind === 0) return false
+  if (!strict || kind === 1) return true
+  return checksum(address as Address) === address
 }
 
 export declare namespace validate {

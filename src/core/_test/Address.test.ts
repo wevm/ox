@@ -1,4 +1,4 @@
-import { Address, PublicKey } from 'ox'
+import { Address, Caches, PublicKey } from 'ox'
 import { describe, expect, expectTypeOf, test } from 'vitest'
 
 test('exports', () => {
@@ -92,6 +92,17 @@ describe('Address.checksum', () => {
     expect(
       Address.checksum('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
     ).toMatchInlineSnapshot(`"0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"`)
+  })
+
+  test('behavior: caches every casing under one entry', () => {
+    Caches.clear()
+    const lower = '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+    const checksummed = Address.checksum(lower)
+    expect(Address.checksum(lower.toUpperCase().replace('0X', '0x'))).toBe(
+      checksummed,
+    )
+    expect(Address.checksum(checksummed)).toBe(checksummed)
+    expect([...Caches.checksum.keys()]).toEqual([lower])
   })
 })
 
@@ -259,6 +270,16 @@ describe('Address.validate', () => {
     expect(
       Address.validate('a5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
     ).toBeFalsy()
+  })
+
+  test('behavior: rejects values that are not strings', () => {
+    const address = {
+      toString: () => '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
+    } as never
+    expect(Address.validate(address, { strict: false })).toBe(false)
+    expect(() => Address.assert(address, { strict: false })).toThrowError(
+      Address.InvalidAddressError,
+    )
   })
 })
 
