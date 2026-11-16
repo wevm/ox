@@ -500,6 +500,14 @@ describe('generateNonce', () => {
     const nonce = Siwe.generateNonce()
     expect(nonce.length).toMatchInlineSnapshot('96')
   })
+
+  test('behavior: consecutive nonces are independent', () => {
+    const a = Siwe.generateNonce()
+    const b = Siwe.generateNonce()
+    expect(a).toMatch(/^[0-9a-f]{96}$/)
+    // A sliding window over one buffer would make `b` start with `a.slice(1)`.
+    expect(b.startsWith(a.slice(1, 9))).toBe(false)
+  })
 })
 
 describe('isUri', () => {
