@@ -102,9 +102,11 @@ export function fromRpc(request: Rpc): TransactionRequest {
 
   if (typeof request.type !== 'undefined')
     request_.type =
-      Transaction.fromRpcType[
-        request.type as keyof typeof Transaction.fromRpcType
-      ] || request_.type
+      (Object.hasOwn(Transaction.fromRpcType, request.type) &&
+        Transaction.fromRpcType[
+          request.type as keyof typeof Transaction.fromRpcType
+        ]) ||
+      request_.type
 
   if (request.authorizationList)
     request_.authorizationList = AuthorizationTempo.fromRpcList(

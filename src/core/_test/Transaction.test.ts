@@ -1098,6 +1098,33 @@ describe('fromRpc', () => {
   })
 })
 
+describe('fromRpc behavior', () => {
+  test('behavior: unknown type named after an Object.prototype key', () => {
+    const transaction = Transaction.fromRpc({
+      hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      nonce: '0x357',
+      blockHash:
+        '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+      blockNumber: '0x12f296f',
+      transactionIndex: '0x2',
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+      value: '0x0',
+      gas: '0x43f5d',
+      gasPrice: '0x2ca6ae494',
+      input: '0x',
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      v: '0x0',
+      yParity: '0x0',
+      chainId: '0x1',
+      type: 'constructor' as never,
+    })
+    expect(transaction.type).toBe('constructor')
+    expect(Transaction.toRpc(transaction).type).toBe('constructor')
+  })
+})
+
 describe('toRpc', () => {
   describe('legacy', () => {
     test('default', () => {

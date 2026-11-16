@@ -268,7 +268,10 @@ export function fromRpc<const receipt extends Rpc | null>(
     logs: receipt.logs.map((log) => Log.fromRpc(log, { pending: false })),
     status: fromRpcStatus[receipt.status],
     transactionIndex: Number(receipt.transactionIndex ?? 0),
-    type: (fromRpcType as any)[receipt.type] || receipt.type,
+    type:
+      (Object.hasOwn(fromRpcType, receipt.type) &&
+        (fromRpcType as any)[receipt.type]) ||
+      receipt.type,
   } as never
 }
 
@@ -358,7 +361,9 @@ export function toRpc(receipt: TransactionReceipt): Rpc {
     to: receipt.to,
     transactionHash: receipt.transactionHash,
     transactionIndex: Hex.fromNumber(receipt.transactionIndex),
-    type: (toRpcType as any)[receipt.type] ?? receipt.type,
+    type: Object.hasOwn(toRpcType, receipt.type)
+      ? (toRpcType as any)[receipt.type]
+      : receipt.type,
   }
 }
 

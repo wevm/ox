@@ -197,7 +197,9 @@ export function fromRpc<
     transaction as ox_Transaction.Rpc<pending>,
   ) as Transaction<pending>
 
-  transaction_.type = fromRpcType[transaction.type as keyof typeof fromRpcType]
+  transaction_.type = Object.hasOwn(fromRpcType, transaction.type)
+    ? fromRpcType[transaction.type as keyof typeof fromRpcType]
+    : (undefined as never)
 
   if (transaction.aaAuthorizationList) {
     transaction_.authorizationList = AuthorizationTempo.fromRpcList(
@@ -297,7 +299,9 @@ export function toRpc<pending extends boolean = false>(
     transaction as ox_Transaction.Transaction<pending>,
   ) as Rpc<pending>
 
-  rpc.type = toRpcType[transaction.type as keyof typeof toRpcType]
+  rpc.type = Object.hasOwn(toRpcType, transaction.type)
+    ? toRpcType[transaction.type as keyof typeof toRpcType]
+    : (undefined as never)
 
   if (transaction.authorizationList)
     rpc.aaAuthorizationList = AuthorizationTempo.toRpcList(
