@@ -687,6 +687,22 @@ describe('decode', () => {
   })
 })
 
+describe('decode depth limit', () => {
+  test('decodes up to the depth limit', () => {
+    // 1023 nested one-element arrays around `0`.
+    const bytes = new Uint8Array(1024).fill(0x81)
+    bytes[1023] = 0
+    expect(() => Cbor.decode(bytes)).not.toThrow()
+  })
+
+  test('throws when the depth limit is exceeded', () => {
+    const bytes = new Uint8Array(100_000).fill(0x81)
+    expect(() => Cbor.decode(bytes)).toThrowErrorMatchingInlineSnapshot(
+      `[Cbor.DepthLimitExceededError: CBOR depth limit of \`1024\` exceeded.]`,
+    )
+  })
+})
+
 describe('roundtrip', () => {
   test.each([
     ['number: 0', 0],
