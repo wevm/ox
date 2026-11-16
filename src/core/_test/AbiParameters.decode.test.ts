@@ -126,6 +126,17 @@ describe('static', () => {
       assertType<readonly [Hex.Hex]>(result)
       expect(result).toEqual(['0x0123456789abcdef'])
     })
+
+    test('error: non-zero padding', () => {
+      expect(() =>
+        AbiParameters.decode(
+          AbiParameters.from('bytes8'),
+          '0x0123456789abcdef000000000000000000000000000000000000000000000001',
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0123456789abcdef000000000000000000000000000000000000000000000001" (bytes32) does not match expected size (bytes8).]`,
+      )
+    })
   })
 
   describe('bytes16', () => {

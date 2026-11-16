@@ -14,6 +14,9 @@ import { prettyPrint } from './internal/errors.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 import * as Solidity from './Solidity.js'
 
+const addressTopicPrefix = '0x000000000000000000000000'
+const topicRegex = /^0x[0-9a-fA-F]{64}$/
+
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype.AbiEvent & {
   hash?: Hex.Hex | undefined
@@ -463,6 +466,22 @@ export function decode(
         param.type.match(/^(.*)\[(\d+)?\]$/)
       )
         return topic
+      // A topic is a single 32-byte word.
+      if (topic.length !== 66)
+        throw new TopicSizeMismatchError({
+          abiEvent,
+          param: param as abitype.AbiParameter & { indexed: boolean },
+          topic,
+        })
+      // Read common canonical words directly. Anything else (including a
+      // non-zero address padding) is left to `AbiParameters.decode`.
+      if (topicRegex.test(topic)) {
+        if (param.type === 'address' && topic.startsWith(addressTopicPrefix))
+          return `0x${topic.slice(26).toLowerCase()}`
+        if (param.type === 'uint256' || param.type === 'uint')
+          return BigInt(topic)
+        if (param.type === 'bytes32') return topic.toLowerCase()
+      }
       const decoded = AbiParameters.decode([param], topic) || []
       return decoded[0]
     })()
@@ -540,6 +559,7 @@ export declare namespace decode {
     | getSelector.ErrorType
     | DataMismatchError
     | SelectorTopicMismatchError
+    | TopicSizeMismatchError
     | TopicsMismatchError
     | Errors.GlobalErrorType
 }
@@ -1375,6 +1395,58 @@ export class TopicsMismatchError extends Errors.BaseError {
     )
 
     this.abiEvent = abiEvent
+  }
+}
+
+/**
+ * Thrown when a topic for an indexed event parameter is not a 32-byte word.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * )
+ *
+ * AbiEvent.decode(transfer, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb9226600',
+ *   ],
+ * })
+ * // @error: AbiEvent.TopicSizeMismatchError: Topic for indexed event parameter "to" of "event Transfer(address indexed from, address indexed to, uint256 value)" must be 32 bytes.
+ * // @error: Topic: 0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb9226600 (33 bytes)
+ * ```
+ */
+export class TopicSizeMismatchError extends Errors.BaseError {
+  override readonly name = 'AbiEvent.TopicSizeMismatchError'
+
+  abiEvent: AbiEvent
+  topic: Hex.Hex
+
+  constructor({
+    abiEvent,
+    param,
+    topic,
+  }: {
+    abiEvent: AbiEvent
+    param: abitype.AbiParameter & { indexed: boolean }
+    topic: Hex.Hex
+  }) {
+    super(
+      `Topic for indexed event parameter${
+        param.name ? ` "${param.name}"` : ''
+      } of "${format(abiEvent)}" must be 32 bytes.`,
+      {
+        metaMessages: [`Topic: ${topic} (${Hex.size(topic)} bytes)`],
+      },
+    )
+
+    this.abiEvent = abiEvent
+    this.topic = topic
   }
 }
 

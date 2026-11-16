@@ -281,13 +281,22 @@ export function decodeBytes(
 
   // Read the whole slot so that a slot cut short of its padding is out of bounds.
   const word = cursor.readBytes(32)
-  return [Hex.fromBytes(word.subarray(0, Number.parseInt(size, 10))), 32]
+  const size_ = Number.parseInt(size, 10)
+  // The value occupies the high `size` bytes of the word; the rest must be
+  // zero padding.
+  for (let i = size_; i < 32; i++)
+    if (word[i] !== 0)
+      throw new AbiParameters.BytesSizeMismatchError({
+        expectedSize: size_,
+        value: Hex.fromBytes(word),
+      })
+  return [Hex.fromBytes(word.subarray(0, size_)), 32]
 }
 
 export declare namespace decodeBytes {
   type ErrorType =
+    | AbiParameters.BytesSizeMismatchError
     | Hex.fromBytes.ErrorType
-    | Bytes.toNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
