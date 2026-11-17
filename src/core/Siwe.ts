@@ -359,7 +359,7 @@ export function isUri(value: string): false | string {
   // if authority is present, the path must be empty or begin with a /
   if (authority?.length) {
     if (!(path.length === 0 || path.startsWith('/'))) return false
-    if (path.length === 0 && !isAuthority(authority)) return false
+    if (!isAuthority(authority)) return false
   } else {
     // if authority is not present, the path must not start with //
     if (path.startsWith('//')) return false
