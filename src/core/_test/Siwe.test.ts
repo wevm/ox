@@ -492,6 +492,10 @@ describe('createMessage', () => {
     // 63 octets: "xn--" plus 59 LDH characters.
     `example.xn--${'a'.repeat(59)}`,
     `example.${'a'.repeat(63)}`,
+    '[::cafe]',
+    '[::1]:3000',
+    '[2001:db8::1]:443',
+    '[v1.fe]',
   ])('valid domain `%s`', (domain) => {
     expect(
       Siwe.createMessage({
@@ -517,6 +521,12 @@ describe('createMessage', () => {
     // 64 octets: one past the maximum label length.
     `example.xn--${'a'.repeat(60)}`,
     `example.${'a'.repeat(64)}`,
+    '[::1',
+    '[zzz]',
+    '[::300.0.0.0]',
+    '[::1]:123456',
+    'user@[::1]',
+    '[::\t1]',
   ])('invalid domain `%s`', (domain) => {
     expect(() =>
       Siwe.createMessage({
@@ -684,6 +694,22 @@ Nonce: foobarbaz
 Issued At: 2023-02-01T00:00:00.000Z`
     const parsed = Siwe.parseMessage(message)
     expect(parsed.domain).toMatchInlineSnapshot(`"example.com:8080"`)
+  })
+
+  test('behavior: ip literal domain', () => {
+    // https://github.com/spruceid/siwe/blob/main/test/parsing_positive.json
+    const message = `[::cafe] wants you to sign in with your Ethereum account:
+0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+
+
+URI: https://service.org/login
+Version: 1
+Chain ID: 1
+Nonce: 32891757
+Issued At: 2021-09-30T16:25:24.000Z`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.domain).toMatchInlineSnapshot(`"[::cafe]"`)
+    expect(Siwe.createMessage(parsed as Siwe.Message)).toBe(message)
   })
 
   test('behavior: with statement', () => {
