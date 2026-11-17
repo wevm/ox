@@ -337,9 +337,9 @@ importers:
 
   .:
     dependencies:
-      '@adraffy/ens-normalize':
-        specifier: ^1.11.0
-        version: 1.11.1
+      '@adraffy/ens-normalize.ts':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@noble/ciphers':
         specifier: ^2.2.0
         version: 2.2.0
@@ -545,6 +545,9 @@ importers:
         version: 5.5.4
 
 packages:
+
+  '@adraffy/ens-normalize.ts@1.0.0':
+    resolution: {integrity: sha512-h8evxuKmCzKDZfpAJu5flJqh38HWuzIe3mGtFzHTTgE+8pgzMV5/hXmIvDq9mikQ3PttZfkYifkxdAF6iauy5A==}
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
@@ -6388,6 +6391,8 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@adraffy/ens-normalize.ts@1.0.0': {}
 
   '@adraffy/ens-normalize@1.11.1': {}
 
