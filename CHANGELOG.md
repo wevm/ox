@@ -1,5 +1,41 @@
 # ox
 
+## 1.8.18
+
+### Patch Changes
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` and `AbiEvent.decode` to throw `AbiParameters.BytesSizeMismatchError` for `bytesN` values whose padding bytes are not zero.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Tightened the `AbiParameters.decode` read size limit from 32 bytes per byte of data to two, keeping the allowance of 32 bytes per allowed repeated read (256 KiB by default), so that offsets pointing many times at one region can add at most that fixed allowance to the decoded value rather than up to 32 times the data size.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.encode` and the ABI encoders built on it to throw `Hex.InvalidHexValueError` for `bytes` values containing non-hex characters instead of copying those characters into the output.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.decode`, `AbiEvent.decodeLog` and `AbiEvent.extractLogs` to reject indexed value topics longer than 32 bytes (`Hex.SizeOverflowError`), `address` topics with non-hex characters when decoded with `checksumAddress: false` (`Address.InvalidAddressError`, as with checksumming), and `bytesN` topics with non-hex characters (`Hex.InvalidHexValueError`).
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Cached `AbiItem.getSignatureHash` and the selectors derived from it per ABI item object, which speeds up `AbiEvent.decodeLog` and encoding with plain ABI items, so an item mutated after it was first hashed keeps its first hash until `Caches.clear` runs.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Added `Cbor.DepthLimitExceededError`, which `Cbor.decode` throws for values nested more than 1024 levels deep instead of overflowing the stack.
+
+- [#675](https://github.com/wevm/ox/pull/675) [`9d8389c`](https://github.com/wevm/ox/commit/9d8389c45477a46dcdae8876af57e87793fb34cc) Thanks [@pucedoteth](https://github.com/pucedoteth)! - Fixed the `Cbor.NumberTooLargeError` message to state the integer range `Cbor.encode` supports (`-4294967296` to `4294967295`) instead of `Number.MAX_SAFE_INTEGER`.
+
+- [#683](https://github.com/wevm/ox/pull/683) [`7421689`](https://github.com/wevm/ox/commit/7421689c995589451e222042d6752d4cabbf7463) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.encodePacked` to throw `Hex.InvalidLengthError` for `bytes` hex values with an odd number of digits instead of returning misaligned data.
+
+- [#697](https://github.com/wevm/ox/pull/697) [`be605c1`](https://github.com/wevm/ox/commit/be605c10229dfb21c47ea254d09a6f07fa5f81bc) Thanks [@adraffy](https://github.com/adraffy)! - Switched `Ens.normalize` from `@adraffy/ens-normalize` to `@adraffy/ens-normalize.ts`. Output and error messages are unchanged. The new package is smaller, and normalizing names with emoji no longer fails on Hermes (React Native).
+
+- [#683](https://github.com/wevm/ox/pull/683) [`7421689`](https://github.com/wevm/ox/commit/7421689c995589451e222042d6752d4cabbf7463) Thanks [@jxom](https://github.com/jxom)! - Fixed `SignatureErc6492.universalSignatureValidatorBytecode` to return `false` when `ecrecover` yields the zero address, so a malformed signature no longer verifies for the zero address.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Changed `Hex.concat` to drop the first two characters of every value, as it already did when given two values, instead of removing the first `0x` found anywhere in each value.
+
+- [#686](https://github.com/wevm/ox/pull/686) [`93361ec`](https://github.com/wevm/ox/commit/93361ec5a90899332a7091d600fedfc9324ef829) Thanks [@jxom](https://github.com/jxom)! - Improved performance and memory use of `Blobs.from`, `Blobs.to`, `AbiParameters.decode`, `Bytes.toBigInt`, `TypedData` hashing (type hashes are now cached), `Base58` encoding and decoding, `Hex.validate` and `Bytes.validate` (which no longer throw and catch internally), and concurrent `VirtualMaster.mineSaltAsync` worker pool setup.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.HttpError` to show a string request body as is instead of JSON-encoding it a second time.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Fixed `Transaction.fromRpc`, `TransactionReceipt.fromRpc` (including its frame receipts and the `ox/tempo` variant) and `FrameReceipt.fromRpc` to map only known types and statuses, so that values such as `constructor`, `toString` or `__proto__` no longer resolve to `Object.prototype` members.
+
+- [#689](https://github.com/wevm/ox/pull/689) [`03aeea3`](https://github.com/wevm/ox/commit/03aeea347bdf132ee44fc073e92064e4c0cd6410) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` to reject with `Promise.TimeoutError` when the timeout elapses even if a custom `fetchFn` ignores the abort signal.
+
+- [#681](https://github.com/wevm/ox/pull/681) [`9602044`](https://github.com/wevm/ox/commit/960204486690afb751328c46d3d73ff3da1d01e0) Thanks [@bdchatham](https://github.com/bdchatham)! - Fixed `ZoneId.fromChainId` for zones of Tempo chains other than mainnet and Moderato, whose chain IDs carry the source chain ID in the high 32 bits and the zone ID in the low 32 bits.
+
 ## 1.8.17
 
 ### Patch Changes
