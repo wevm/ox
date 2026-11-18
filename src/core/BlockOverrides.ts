@@ -1,5 +1,5 @@
 import type * as Address from './Address.js'
-import type * as Hex from './Hex.js'
+import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
 import * as Withdrawal from './Withdrawal.js'
 
@@ -126,7 +126,10 @@ export function toRpc(blockOverrides: toRpc.Input): Rpc {
   if (blockOverrides.number !== undefined)
     rpc.number = Quantity.fromNumberish(blockOverrides.number)
   if (blockOverrides.prevRandao !== undefined)
-    rpc.prevRandao = Quantity.fromNumberish(blockOverrides.prevRandao)
+    rpc.prevRandao = Hex.padLeft(
+      Quantity.fromNumberish(blockOverrides.prevRandao),
+      32,
+    )
   if (blockOverrides.time !== undefined)
     rpc.time = Quantity.fromNumberish(blockOverrides.time)
   if (blockOverrides.withdrawals !== undefined)

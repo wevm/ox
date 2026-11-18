@@ -88,7 +88,7 @@ describe('toRpc', () => {
         "feeRecipient": "0x0000000000000000000000000000000000000000",
         "gasLimit": "0x4",
         "number": "0x5",
-        "prevRandao": "0x6",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000006",
         "time": "0x1234567890",
         "withdrawals": [
           {
@@ -156,5 +156,18 @@ describe('toRpc', () => {
 
     expect(fromBigint).toEqual(fromNumber)
     expect(fromBigint).toEqual(fromHex)
+  })
+
+  test('behavior: prevRandao is a 32-byte hash', () => {
+    expect(BlockOverrides.toRpc({ prevRandao: 6n })).toMatchInlineSnapshot(`
+      {
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      }
+    `)
+    expect(BlockOverrides.toRpc({ prevRandao: '0x6' })).toMatchInlineSnapshot(`
+      {
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      }
+    `)
   })
 })
