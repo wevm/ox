@@ -56,4 +56,16 @@ describe('Signature', () => {
     ).toBe(false)
     expect(z.safeDecode(z_Signature.Tuple, ['0x2', r, s]).success).toBe(false)
   })
+
+  test('decodes legacy signatures with EIP-155 v above 255', () => {
+    // Polygon (chain ID 137): v = 137 * 2 + 35 + 1 = 310.
+    expect(z.decode(z_Signature.Legacy, { r, s, v: '0x136' }))
+      .toMatchInlineSnapshot(`
+        {
+          "r": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "s": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "v": 310,
+        }
+      `)
+  })
 })
