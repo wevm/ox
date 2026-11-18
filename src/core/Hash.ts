@@ -261,7 +261,7 @@ export declare namespace blake3 {
  * import { Hash, Hex } from 'ox'
  *
  * Hash.keccak256(Hex.fromString('hello world'))
- * // @log: '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
+ * // @log: '0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad'
  * ```
  *
  * @example
