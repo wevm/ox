@@ -15,9 +15,8 @@ export const nonceRegex = /^[a-zA-Z0-9]{8,}$/
 
 export const schemeRegex = /^([a-zA-Z][a-zA-Z0-9+\-.]*)$/
 
-// https://regexr.com/80gdj
 export const prefixRegex =
-  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+\-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
+  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+\-.]*):\/\/)?(?<domain>(?:\[[^\]\s@[]+\]|[a-zA-Z0-9+-.]*)(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
 
 // https://regexr.com/80gf9
 export const suffixRegex =
@@ -25,6 +24,11 @@ export const suffixRegex =
 
 // Matches `suffixRegex` from the start of the input to its end.
 const anchoredSuffixRegex = new RegExp(`^(?:${suffixRegex.source})$`)
+
+// An IP literal (IPv6 or IPvFuture) `domain` with an optional port. The
+// literal itself is checked by `isAuthority`. `@` and `[` are excluded so a
+// userinfo authority such as `[evil.com@[::1]` cannot pass as a literal.
+const domainIpLiteralRegex = /^\[[^\]\s@[]+\](?::[0-9]{1,5})?$/
 
 // URI validation (see `isUri`).
 const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
@@ -155,7 +159,8 @@ export function createMessage(value: Message): string {
       !(
         domainRegex.test(domain) ||
         ipRegex.test(domain) ||
-        localhostRegex.test(domain)
+        localhostRegex.test(domain) ||
+        (domainIpLiteralRegex.test(domain) && isAuthority(domain))
       )
     )
       throw new InvalidMessageFieldError({
