@@ -1,4 +1,4 @@
-import { Bytes } from '../../index.js'
+import * as Bytes from '../Bytes.js'
 import * as Ens from '../Ens.js'
 import type * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
