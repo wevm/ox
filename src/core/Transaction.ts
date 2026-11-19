@@ -498,8 +498,12 @@ export function toRpc<pending extends boolean = false>(
     rpc.r = Hex.fromNumber(transaction.r, { size: 32 })
   if (typeof transaction.s === 'bigint')
     rpc.s = Hex.fromNumber(transaction.s, { size: 32 })
+  // Legacy EIP-155 `v` is unsized; typed transactions keep a single byte.
   if (typeof transaction.v === 'number')
-    rpc.v = Hex.fromNumber(transaction.v, { size: 1 })
+    rpc.v =
+      transaction.type === 'legacy'
+        ? Hex.fromNumber(transaction.v)
+        : Hex.fromNumber(transaction.v, { size: 1 })
   if (typeof transaction.yParity === 'number')
     rpc.yParity = transaction.yParity === 0 ? '0x0' : '0x1'
 
