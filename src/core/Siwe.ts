@@ -13,11 +13,11 @@ export const localhostRegex = /^localhost(:[0-9]{1,5})?$/
 
 export const nonceRegex = /^[a-zA-Z0-9]{8,}$/
 
-export const schemeRegex = /^([a-zA-Z][a-zA-Z0-9+-.]*)$/
+export const schemeRegex = /^([a-zA-Z][a-zA-Z0-9+\-.]*)$/
 
 // https://regexr.com/80gdj
 export const prefixRegex =
-  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
+  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+\-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
 
 // https://regexr.com/80gf9
 export const suffixRegex =
@@ -205,11 +205,12 @@ export function createMessage(value: Message): string {
         ],
       })
     const statement = value.statement
-    if (statement?.includes('\n'))
+    // `parseMessage` reads the statement with `.`, which stops at these.
+    if (statement && /[\n\r\u2028\u2029]/.test(statement))
       throw new InvalidMessageFieldError({
         field: 'statement',
         metaMessages: [
-          "- Statement must not include '\\n'.",
+          "- Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').",
           '',
           `Provided value: ${statement}`,
         ],

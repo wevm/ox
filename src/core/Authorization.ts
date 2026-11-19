@@ -497,6 +497,9 @@ export function toRpc(authorization: Signed): Rpc {
     chainId: Hex.fromNumber(chainId),
     nonce: Hex.fromNumber(nonce),
     ...Signature.toRpc(signature),
+    // `r` and `s` are `uint256` quantities over RPC, so drop leading zeros.
+    r: Hex.fromNumber(signature.r),
+    s: Hex.fromNumber(signature.s),
     // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
     // encode `yParity` as is instead of the 0 or 1 of `Signature.toRpc`.
     yParity: Hex.fromNumber(signature.yParity),

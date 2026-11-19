@@ -1209,7 +1209,7 @@ describe('toRpc', () => {
           "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
           "transactionIndex": "0x2",
           "type": "0x0",
-          "v": "0x00",
+          "v": "0x0",
           "value": "0x0",
           "yParity": "0x0",
         }
@@ -1257,11 +1257,41 @@ describe('toRpc', () => {
           "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
           "transactionIndex": null,
           "type": "0x0",
-          "v": "0x00",
+          "v": "0x0",
           "value": "0xde0b6b3a7640000",
           "yParity": "0x0",
         }
       `)
+    })
+
+    test('behavior: eip-155 v above 255', () => {
+      // Polygon (chain ID 137) legacy transaction: `v = 137 * 2 + 35 + 1`.
+      const rpc = {
+        blockHash:
+          '0x330e81a536bc43032035e696a9e5c88630d23e67b12051c0b620b350fbedd63a',
+        blockNumber: '0x5ce8dff',
+        chainId: '0x89',
+        from: '0x58a62fbc2cd2353678784c08cccd73b0dc6d0486',
+        gas: '0xaae60',
+        gasPrice: '0xc23b0a3d0f',
+        hash: '0xfa6c61184fac71fe4caa776aaaac01e73733c797933030ce89cee596f3a63d5d',
+        input: '0xcf1393d9',
+        nonce: '0xa7d2',
+        r: '0xf998579579c97427c7a29412c659b27f31c1e59d27c7a9fbb6feb0b3bb379314',
+        s: '0x2bf54bfd95b30c1390c10cfaccb50b069fff7bee0a89a9234ab7dc06786bb73a',
+        to: '0x5c8138fa7d7a9c1e313931ad44a13969d05e3274',
+        transactionIndex: '0x1',
+        type: '0x0',
+        v: '0x136',
+        value: '0x0',
+      } as const
+      const transaction = Transaction.fromRpc(rpc) as Transaction.Legacy
+      const { yParity, ...rest } = Transaction.toRpc({
+        ...transaction,
+        v: 310,
+      }) as Transaction.LegacyRpc
+      expect(yParity).toBe('0x1')
+      expect(rest).toEqual(rpc)
     })
   })
 
