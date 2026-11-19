@@ -663,6 +663,31 @@ describe('isUri', () => {
     expect(Siwe.isUri(uri)).toBe(false)
   })
 
+  test('behavior: authority variants with path', () => {
+    expect([
+      Siwe.isUri('https://[2001:db8::1]/login'),
+      Siwe.isUri('https://user:pass@example.com:8080/login'),
+      Siwe.isUri('foo://[v1.fe]/p'),
+    ]).toMatchInlineSnapshot(`
+      [
+        "https://[2001:db8::1]/login",
+        "https://user:pass@example.com:8080/login",
+        "foo://[v1.fe]/p",
+      ]
+    `)
+  })
+
+  test.each([
+    // https://github.com/spruceid/siwe/blob/main/test/invalid_uris.json
+    'uri://[::0.0.0.256]/p/path',
+    'uri://[::300.0.0.0]/p/path',
+    'https://example.com:bad/login',
+    'https://[:::]/login',
+    'https://[::1/login',
+  ])('behavior: invalid authority with path `%s`', (uri) => {
+    expect(Siwe.isUri(uri)).toBe(false)
+  })
+
   test('behavior: check for illegal characters', () => {
     expect(Siwe.isUri('^')).toBeFalsy()
   })
