@@ -744,7 +744,7 @@ describe('static', () => {
               type: 'tuple',
             },
           ],
-          [[69, ['0x123', '0x456']]],
+          [[69, ['0x1230', '0x4560']]],
         ),
       ).toMatchInlineSnapshot(
         '"0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004500000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000002123000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024560000000000000000000000000000000000000000000000000000000000000"',
@@ -1825,6 +1825,33 @@ test('invalid bytes', () => {
   )
 })
 
+test('odd-length bytes', () => {
+  expect(() =>
+    AbiParameters.encode([{ name: 'x', type: 'bytes2' }], ['0x123']),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+    It must be an even length.]
+  `)
+  expect(() =>
+    AbiParameters.encode([{ name: 'x', type: 'bytes' }], ['0x123']),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+    It must be an even length.]
+  `)
+  expect(() =>
+    AbiParameters.encode(
+      [{ name: 'x', type: 'bytes2[]' }],
+      [['0x0123', '0x123']],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+    It must be an even length.]
+  `)
+})
+
 test('integer out of range', () => {
   expect(() =>
     AbiParameters.encode(
@@ -2030,4 +2057,15 @@ describe('zero-width types', () => {
       '0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000003',
     )
   })
+})
+
+test('behavior: long arrays', () => {
+  const values = Array.from({ length: 200_000 }, (_, i) => BigInt(i))
+  const encoded = AbiParameters.encode(AbiParameters.from('uint256[]'), [
+    values,
+  ])
+  expect(encoded.length).toBe(2 + 64 * (values.length + 2))
+  expect(encoded.slice(-64)).toBe(
+    (values.length - 1).toString(16).padStart(64, '0'),
+  )
 })

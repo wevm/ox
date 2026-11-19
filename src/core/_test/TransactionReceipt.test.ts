@@ -263,6 +263,34 @@ describe('fromRpc', () => {
       }
     `)
   })
+
+  test('behavior: status named after an Object.prototype key', () => {
+    const receipt = TransactionReceipt.fromRpc({
+      blockHash:
+        '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+      blockNumber: '0x12f296f',
+      contractAddress: null,
+      cumulativeGasUsed: '0x82515',
+      effectiveGasPrice: '0x21c2f6c09',
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      gasUsed: '0x2abba',
+      logs: [],
+      logsBloom: '0x',
+      status: 'constructor' as never,
+      to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+      transactionHash:
+        '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      transactionIndex: '0x2',
+      type: '0x2',
+    })
+    expect(receipt.status).toBeUndefined()
+    expect(
+      TransactionReceipt.toRpc({
+        ...receipt,
+        status: 'constructor' as never,
+      }).status,
+    ).toBeUndefined()
+  })
 })
 
 describe('toRpc', () => {

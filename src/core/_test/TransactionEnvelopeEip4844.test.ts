@@ -30,6 +30,20 @@ describe('assert', () => {
   `)
   })
 
+  test('empty versioned hash', () => {
+    expect(() =>
+      TxEnvelopeEip4844.assert({
+        blobVersionedHashes: ['0x'],
+        chainId: 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Blobs.InvalidVersionedHashSizeError: Versioned hash "0x" size is invalid.
+
+      Expected: 32
+      Received: 0]
+    `)
+  })
+
   test('invalid blob version', () => {
     expect(() =>
       TxEnvelopeEip4844.assert({
@@ -165,6 +179,19 @@ describe('deserialize', () => {
   })
 
   describe('errors', () => {
+    test('tip above empty fee cap', () => {
+      const serialized = TxEnvelopeEip4844.serialize({
+        blobVersionedHashes,
+        chainId: 1,
+        maxPriorityFeePerGas: 1n,
+      })
+      expect(() =>
+        TxEnvelopeEip4844.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+      )
+    })
+
     test('invalid access list (invalid address)', () => {
       expect(() =>
         TxEnvelopeEip4844.deserialize(

@@ -79,9 +79,9 @@ export function assert(envelope: PartialBy<TxEnvelopeEip4844, 'type'>) {
       throw new Blobs.EmptyBlobVersionedHashesError()
     for (const hash of blobVersionedHashes) {
       const size = Hex.size(hash)
-      const version = Hex.toNumber(Hex.slice(hash, 0, 1))
       if (size !== 32)
         throw new Blobs.InvalidVersionedHashSizeError({ hash, size })
+      const version = Hex.toNumber(Hex.slice(hash, 0, 1))
       if (version !== Kzg.versionedHashVersion)
         throw new Blobs.InvalidVersionedHashVersionError({
           hash,
@@ -201,6 +201,12 @@ export function deserialize(
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if (accessList?.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as any)
   if (blobs && commitments && proofs)

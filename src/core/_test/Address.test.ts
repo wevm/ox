@@ -1,4 +1,4 @@
-import { Address, PublicKey } from 'ox'
+import { Address, Caches, PublicKey } from 'ox'
 import { describe, expect, expectTypeOf, test } from 'vitest'
 
 test('exports', () => {
@@ -93,6 +93,17 @@ describe('Address.checksum', () => {
       Address.checksum('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
     ).toMatchInlineSnapshot(`"0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC"`)
   })
+
+  test('behavior: caches every casing under one entry', () => {
+    Caches.clear()
+    const lower = '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+    const checksummed = Address.checksum(lower)
+    expect(Address.checksum(lower.toUpperCase().replace('0X', '0x'))).toBe(
+      checksummed,
+    )
+    expect(Address.checksum(checksummed)).toBe(checksummed)
+    expect([...Caches.checksum.keys()]).toEqual([lower])
+  })
 })
 
 describe('Address.from', () => {
@@ -149,6 +160,42 @@ describe('Address.fromPublicKey', () => {
         { checksum: true },
       ),
     ).toEqual('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
+  })
+
+  test('error: compressed public key', () => {
+    const publicKey = PublicKey.from(
+      '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+    )
+
+    expect(() =>
+      Address.fromPublicKey(PublicKey.compress(publicKey) as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidPrefixError: Prefix "3" is invalid.
+
+      Details: Prefix must be 4 for uncompressed public keys.]
+    `)
+    expect(() =>
+      Address.fromPublicKey(
+        PublicKey.from(
+          '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+        ),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidPrefixError: Prefix "3" is invalid.
+
+      Details: Prefix must be 4 for uncompressed public keys.]
+    `)
+    expect(() =>
+      Address.fromPublicKey(
+        PublicKey.from(
+          '0x028318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+        ),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidPrefixError: Prefix "2" is invalid.
+
+      Details: Prefix must be 4 for uncompressed public keys.]
+    `)
   })
 })
 
@@ -223,6 +270,16 @@ describe('Address.validate', () => {
     expect(
       Address.validate('a5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
     ).toBeFalsy()
+  })
+
+  test('behavior: rejects values that are not strings', () => {
+    const address = {
+      toString: () => '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
+    } as never
+    expect(Address.validate(address, { strict: false })).toBe(false)
+    expect(() => Address.assert(address, { strict: false })).toThrowError(
+      Address.InvalidAddressError,
+    )
   })
 })
 

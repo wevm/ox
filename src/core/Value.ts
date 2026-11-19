@@ -9,6 +9,8 @@ export const exponents = {
   ether: 18,
 } as const
 
+const decimalNumberRegex = /^(-?)([0-9]*)\.?([0-9]*)$/
+
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
  *
@@ -36,7 +38,7 @@ export function format(value: bigint, decimals = 0) {
     display.slice(0, display.length - decimals),
     display.slice(display.length - decimals),
   ]
-  fraction = fraction.replace(/(0+)$/, '')
+  fraction = trimTrailingZeros(fraction)
   return `${negative ? '-' : ''}${integer || '0'}${
     fraction ? `.${fraction}` : ''
   }`
@@ -111,7 +113,7 @@ export declare namespace formatGwei {
  * @returns The `bigint` representation of the Value.
  */
 export function from(value: string, decimals = 0) {
-  if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
+  if (!decimalNumberRegex.test(value))
     throw new InvalidDecimalNumberError({ value })
 
   let [integer = '', fraction = '0'] = value.split('.')
@@ -120,7 +122,7 @@ export function from(value: string, decimals = 0) {
   if (negative) integer = integer.slice(1)
 
   // trim trailing zeros.
-  fraction = fraction.replace(/(0+)$/, '')
+  fraction = trimTrailingZeros(fraction)
 
   // round off if the fraction is larger than the number of decimals.
   if (decimals === 0) {
@@ -154,6 +156,18 @@ export function from(value: string, decimals = 0) {
 
 export declare namespace from {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Removes trailing zeros with a backward scan, which stays linear in the
+ * length of the value.
+ *
+ * @internal
+ */
+function trimTrailingZeros(value: string): string {
+  let end = value.length
+  while (end > 0 && value.charCodeAt(end - 1) === 48) end--
+  return value.slice(0, end)
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   AbiItem,
   AbiParameters,
   Bytes,
+  Caches,
   type Hex,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
@@ -18,6 +19,7 @@ import {
   isArgOfType,
   normalizeSignature,
 } from '../internal/abiItem.js'
+import { caches } from '../internal/caches.js'
 
 describe('format', () => {
   test('default', () => {
@@ -402,6 +404,19 @@ describe('fromAbi', () => {
         "inputs": [],
         "name": "foo",
         "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
       }
@@ -421,6 +436,19 @@ describe('fromAbi', () => {
         "inputs": [],
         "name": "foo",
         "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
       }
@@ -528,6 +556,30 @@ describe('fromAbi', () => {
         "inputs": [],
         "name": "mint",
         "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "mint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+          {
+            "inputs": [
+              {
+                "type": "string",
+              },
+            ],
+            "name": "mint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
       }
@@ -1025,7 +1077,263 @@ describe('fromAbi', () => {
     `)
   })
 
+  test('behavior: overloads: bytes32 vs bytes', () => {
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from([
+          'function isValidSignature(bytes32 hash, bytes signature)',
+          'function isValidSignature(bytes data, bytes signature)',
+        ]),
+        'isValidSignature',
+        {
+          args: [
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+            '0x1234',
+          ],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`bytes\` in \`isValidSignature(bytes,bytes)\`, and
+      \`bytes32\` in \`isValidSignature(bytes32,bytes)\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+  })
+
+  test('behavior: overloads: string vs bytes', () => {
+    const results = (
+      [
+        ['bytes', 'string'],
+        ['string', 'bytes'],
+      ] as const
+    ).map(([first, second]) => [
+      AbiItem.format(
+        AbiItem.fromAbi(
+          Abi.from([`function foo(${first})`, `function foo(${second})`]),
+          'foo',
+          { args: ['hello'] },
+        ),
+      ),
+      AbiItem.format(
+        AbiItem.fromAbi(
+          Abi.from([`function foo(${first}[])`, `function foo(${second}[])`]),
+          'foo',
+          { args: [['hello', 'world']] },
+        ),
+      ),
+      AbiItem.format(
+        AbiItem.fromAbi(
+          Abi.from([`function foo((${first}))`, `function foo((${second}))`]),
+          'foo',
+          { args: [['hello']] },
+        ),
+      ),
+    ])
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        [
+          "function foo(string)",
+          "function foo(string[])",
+          "function foo((string))",
+        ],
+        [
+          "function foo(string)",
+          "function foo(string[])",
+          "function foo((string))",
+        ],
+      ]
+    `)
+
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(bytes)', 'function foo(string)']),
+        'foo',
+        { args: ['0x1234'] },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`string\` in \`foo(string)\`, and
+      \`bytes\` in \`foo(bytes)\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+  })
+
+  test('behavior: overloads: uint256 vs int256', () => {
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(uint256 x)', 'function foo(int256 x)']),
+        'foo',
+        { args: [1n] },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`int256\` in \`foo(int256)\`, and
+      \`uint256\` in \`foo(uint256)\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(
+      AbiItem.fromAbi(
+        Abi.from(['function foo(uint256 x)', 'function foo(int256 x)']),
+        'foo',
+        { args: [-1n] },
+      ).inputs,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "x",
+          "type": "int256",
+        },
+      ]
+    `)
+  })
+
+  test('behavior: overloads: uint256[] vs uint256[2]', () => {
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from(['function foo(uint256[] x)', 'function foo(uint256[2] x)']),
+        'foo',
+        { args: [[1n, 1n]] },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`uint256[2]\` in \`foo(uint256[2])\`, and
+      \`uint256[]\` in \`foo(uint256[])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+
+    expect(
+      AbiItem.fromAbi(
+        Abi.from(['function foo(uint256[] x)', 'function foo(uint256[2] x)']),
+        'foo',
+        { args: [[1n, 1n, 1n]] },
+      ).inputs,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "x",
+          "type": "uint256[]",
+        },
+      ]
+    `)
+  })
+
+  test('behavior: overloads: uint256[2][] vs uint256[][2]', () => {
+    expect(() =>
+      AbiItem.fromAbi(
+        Abi.from([
+          'function foo(uint256[2][] x)',
+          'function foo(uint256[][2] x)',
+        ]),
+        'foo',
+        {
+          args: [
+            [
+              [1n, 1n],
+              [1n, 1n],
+            ],
+          ],
+        },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
+
+      \`uint256[]\` in \`foo(uint256[][2])\`, and
+      \`uint256[2]\` in \`foo(uint256[2][])\`
+
+      These types encode differently and cannot be distinguished at runtime.
+      Remove one of the ambiguous items in the ABI.]
+    `)
+  })
+
+  test('behavior: overloads: selector chooses one of two matches', () => {
+    expect(
+      AbiItem.fromAbi(
+        Abi.from([
+          'function isValidSignature(bytes32 hash, bytes signature)',
+          'function isValidSignature(bytes data, bytes signature)',
+        ]),
+        '0x1626ba7e',
+        {
+          args: [
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+            '0x1234',
+          ],
+        },
+      ).inputs,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "hash",
+          "type": "bytes32",
+        },
+        {
+          "name": "signature",
+          "type": "bytes",
+        },
+      ]
+    `)
+  })
+
   describe('getAmbiguousTypes', () => {
+    test('bytes', () => {
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('bytes32'),
+          AbiParameters.from('bytes'),
+          [
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+          ],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "bytes32",
+          "bytes",
+        ]
+      `)
+    })
+
+    test('integers', () => {
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('uint256'),
+          AbiParameters.from('int256'),
+          [1n],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "uint256",
+          "int256",
+        ]
+      `)
+
+      expect(
+        getAmbiguousTypes(
+          AbiParameters.from('uint256'),
+          AbiParameters.from('uint128'),
+          [69420n],
+        ),
+      ).toMatchInlineSnapshot(`
+        [
+          "uint256",
+          "uint128",
+        ]
+      `)
+    })
+
     test('string/address', () => {
       expect(
         getAmbiguousTypes(
@@ -1167,7 +1475,7 @@ describe('fromAbi', () => {
       expect(
         getAmbiguousTypes(
           AbiParameters.from('uint256, (address)'),
-          AbiParameters.from('uint128, (bytes20)'),
+          AbiParameters.from('uint256, (bytes20)'),
           [69420n, ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
         ),
       ).toMatchInlineSnapshot(`
@@ -1179,7 +1487,7 @@ describe('fromAbi', () => {
       expect(
         getAmbiguousTypes(
           AbiParameters.from('uint256, (string, (address))'),
-          AbiParameters.from('uint128, (string, (bytes20))'),
+          AbiParameters.from('uint256, (string, (bytes20))'),
           [69420n, ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']]],
         ),
       ).toMatchInlineSnapshot(`
@@ -1191,7 +1499,7 @@ describe('fromAbi', () => {
       expect(
         getAmbiguousTypes(
           AbiParameters.from('uint256, (string, (address, bytes))'),
-          AbiParameters.from('uint128, (string, (bytes20, address))'),
+          AbiParameters.from('uint256, (string, (bytes20, address))'),
           [
             123n,
             [
@@ -1363,8 +1671,21 @@ describe('fromAbi', () => {
     { arg: false, abiParameter: { type: 'bool' }, expected: true },
     { arg: 'true', abiParameter: { type: 'bool' }, expected: false },
     // bytes
-    { arg: 'foo', abiParameter: { type: 'bytes' }, expected: true },
-    { arg: 'foo', abiParameter: { type: 'bytes32' }, expected: true },
+    { arg: 'foo', abiParameter: { type: 'bytes' }, expected: false },
+    { arg: '0x1234', abiParameter: { type: 'bytes' }, expected: true },
+    { arg: 'foo', abiParameter: { type: 'bytes32' }, expected: false },
+    { arg: '0x1234', abiParameter: { type: 'bytes2' }, expected: true },
+    { arg: '0x1234', abiParameter: { type: 'bytes4' }, expected: false },
+    {
+      arg: Bytes.fromString('foo'),
+      abiParameter: { type: 'bytes3' },
+      expected: true,
+    },
+    {
+      arg: Bytes.fromString('foo'),
+      abiParameter: { type: 'bytes4' },
+      expected: false,
+    },
     {
       arg: Bytes.fromString('foo'),
       abiParameter: { type: 'bytes' },
@@ -1381,10 +1702,42 @@ describe('fromAbi', () => {
     { arg: 1, abiParameter: { type: 'uint' }, expected: true },
     { arg: 1n, abiParameter: { type: 'uint' }, expected: true },
     { arg: 1n, abiParameter: { type: 'uint' }, expected: true },
+    { arg: 2n ** 256n - 1n, abiParameter: { type: 'uint' }, expected: true },
+    { arg: 2n ** 256n, abiParameter: { type: 'uint' }, expected: false },
+    { arg: -(2n ** 255n), abiParameter: { type: 'int' }, expected: true },
+    { arg: 2n ** 255n, abiParameter: { type: 'int' }, expected: false },
     { arg: 1, abiParameter: { type: 'int256' }, expected: true },
     { arg: 1, abiParameter: { type: 'uint256' }, expected: true },
     { arg: 1, abiParameter: { type: 'int69' }, expected: false },
     { arg: 1, abiParameter: { type: 'uint69' }, expected: false },
+    { arg: -129, abiParameter: { type: 'int8' }, expected: false },
+    { arg: -128, abiParameter: { type: 'int8' }, expected: true },
+    { arg: 127, abiParameter: { type: 'int8' }, expected: true },
+    { arg: 128, abiParameter: { type: 'int8' }, expected: false },
+    { arg: -1n, abiParameter: { type: 'uint8' }, expected: false },
+    { arg: 0n, abiParameter: { type: 'uint8' }, expected: true },
+    { arg: 255n, abiParameter: { type: 'uint8' }, expected: true },
+    { arg: 256n, abiParameter: { type: 'uint8' }, expected: false },
+    { arg: 2n ** 256n - 1n, abiParameter: { type: 'uint256' }, expected: true },
+    { arg: 2n ** 256n, abiParameter: { type: 'uint256' }, expected: false },
+    { arg: -(2n ** 255n), abiParameter: { type: 'int256' }, expected: true },
+    {
+      arg: -(2n ** 255n) - 1n,
+      abiParameter: { type: 'int256' },
+      expected: false,
+    },
+    { arg: Number.NaN, abiParameter: { type: 'uint256' }, expected: false },
+    {
+      arg: Number.POSITIVE_INFINITY,
+      abiParameter: { type: 'uint256' },
+      expected: false,
+    },
+    { arg: 1.5, abiParameter: { type: 'uint256' }, expected: false },
+    {
+      arg: Number.MAX_SAFE_INTEGER + 1,
+      abiParameter: { type: 'uint256' },
+      expected: true,
+    },
     // string
     { arg: 'foo', abiParameter: { type: 'string' }, expected: true },
     { arg: 1, abiParameter: { type: 'string' }, expected: false },
@@ -2256,6 +2609,28 @@ describe('getSignature', () => {
 })
 
 describe('getSignatureHash', () => {
+  test('behavior: caches by normalized signature', () => {
+    Caches.clear()
+    const hash = AbiItem.getSignatureHash('function ownerOf(uint256 tokenId)')
+    expect(
+      AbiItem.getSignatureHash({
+        inputs: [{ name: 'id', type: 'uint256' }],
+        name: 'ownerOf',
+        outputs: [],
+        stateMutability: 'view',
+        type: 'function',
+      }),
+    ).toBe(hash)
+    expect([...caches.signatureHash]).toMatchInlineSnapshot(`
+      [
+        [
+          "ownerOf(uint256)",
+          "0x6352211e6566aa027e75ac9dbf2423197fbd9b82b9d981a3ab367d355866aa1c",
+        ],
+      ]
+    `)
+  })
+
   test('hashes functions', () => {
     expect(AbiItem.getSignatureHash('function ownerOf(uint256)')).toEqual(
       '0x6352211e6566aa027e75ac9dbf2423197fbd9b82b9d981a3ab367d355866aa1c',

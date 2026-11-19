@@ -617,6 +617,29 @@ describe('decode', () => {
     expect(decoded).toEqual({ '1': 2 })
   })
 
+  test('map with `__proto__` key', () => {
+    // {"__proto__": {"polluted": true}}
+    const definite = Cbor.decode<Record<string, unknown>>(
+      '0xa1695f5f70726f746f5f5fa168706f6c6c75746564f5',
+    )
+    // {_ "__proto__": {"polluted": true}}
+    const indefinite = Cbor.decode<Record<string, unknown>>(
+      '0xbf695f5f70726f746f5f5fa168706f6c6c75746564f5ff',
+    )
+    for (const decoded of [definite, indefinite]) {
+      expect(Object.getPrototypeOf(decoded)).toBe(Object.prototype)
+      expect(Object.keys(decoded)).toEqual(['__proto__'])
+      expect(decoded.polluted).toBeUndefined()
+      expect(
+        Object.getOwnPropertyDescriptor(decoded, '__proto__')?.value,
+      ).toMatchInlineSnapshot(`
+        {
+          "polluted": true,
+        }
+      `)
+    }
+  })
+
   test('invalid simple value throws', () => {
     // Simple value < 32 (reserved)
     const encoded = Hex.from([0xf8, 0x10]) // Simple value 16
@@ -664,6 +687,22 @@ describe('decode', () => {
   })
 })
 
+describe('decode depth limit', () => {
+  test('decodes up to the depth limit', () => {
+    // 1023 nested one-element arrays around `0`.
+    const bytes = new Uint8Array(1024).fill(0x81)
+    bytes[1023] = 0
+    expect(() => Cbor.decode(bytes)).not.toThrow()
+  })
+
+  test('throws when the depth limit is exceeded', () => {
+    const bytes = new Uint8Array(100_000).fill(0x81)
+    expect(() => Cbor.decode(bytes)).toThrowErrorMatchingInlineSnapshot(
+      `[Cbor.DepthLimitExceededError: CBOR depth limit of \`1024\` exceeded.]`,
+    )
+  })
+})
+
 describe('roundtrip', () => {
   test.each([
     ['number: 0', 0],
@@ -688,6 +727,7 @@ describe('roundtrip', () => {
     ['object: simple', { a: 1, b: 2 }],
     ['object: nested', { a: 1, b: [2, 3] }],
     ['complex', { a: 'hello', b: [1, 2, { c: true }], d: null }],
+    ['object: `__proto__` key', JSON.parse('{"__proto__":{"a":1},"b":2}')],
   ])('roundtrip: %s', (_, value) => {
     const encoded = Cbor.encode(value)
     const decoded = Cbor.decode(encoded)

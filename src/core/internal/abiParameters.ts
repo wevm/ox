@@ -107,6 +107,11 @@ export declare namespace decodeParameter {
 const sizeOfLength = 32
 const sizeOfOffset = 32
 
+const arrayRegex = /^(.*)\[(\d+)?\]$/
+
+/** `[max, min]` of each integer type, keyed by `size` and `signed`. */
+const integerBounds = new Map<number, readonly [max: bigint, min: bigint]>()
+
 /** @internal */
 export function decodeAddress(
   cursor: Cursor.Cursor,
@@ -114,15 +119,23 @@ export function decodeAddress(
 ) {
   const { checksum = false } = options
   const value = cursor.readBytes(32)
+  // An address occupies the low 20 bytes of the word; the high 12 bytes
+  // must be zero padding.
+  for (let i = 0; i < 12; i++)
+    if (value[i] !== 0)
+      throw new Address.InvalidAddressError({
+        address: Hex.fromBytes(value),
+        cause: new Address.InvalidInputError(),
+      })
   const wrap = (address: Hex.Hex) =>
     checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
+  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
+    | Address.InvalidAddressError
     | Hex.fromBytes.ErrorType
-    | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -143,7 +156,7 @@ export function decodeArray(
   // Note: zero-length fixed arrays (`T[0]`) are not dynamic.
   if (length === null) {
     // Dealing with a dynamic type, so get the offset of the array data.
-    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = toOffset(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
@@ -151,7 +164,7 @@ export function decodeArray(
 
     // Get the length of the array from the offset.
     cursor.setPosition(start)
-    const length = Bytes.toNumber(cursor.readBytes(sizeOfLength))
+    const length = toOffset(cursor.readBytes(sizeOfLength))
 
     // Check if the array has any dynamic children.
     const dynamicChild = hasDynamicChild(param)
@@ -186,7 +199,7 @@ export function decodeArray(
   // we need to decode the offset of the array data.
   if (hasDynamicChild(param)) {
     // Dealing with dynamic types, so get the offset of the array data.
-    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = toOffset(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
@@ -229,7 +242,7 @@ export function decodeArray(
 }
 
 export declare namespace decodeArray {
-  type ErrorType = Bytes.toNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -250,12 +263,12 @@ export function decodeBytes(
   const [_, size] = param.type.split('bytes')
   if (!size) {
     // Dealing with dynamic types, so get the offset of the bytes data.
-    const offset = Bytes.toNumber(cursor.readBytes(32))
+    const offset = toOffset(cursor.readBytes(32))
 
     // Set position of the cursor to start of bytes data.
     cursor.setPosition(staticPosition + offset)
 
-    const length = Bytes.toNumber(cursor.readBytes(32))
+    const length = toOffset(cursor.readBytes(32))
 
     // If there is no length, we have zero data.
     if (length === 0) {
@@ -271,14 +284,24 @@ export function decodeBytes(
     return [Hex.fromBytes(data), 32]
   }
 
-  const value = Hex.fromBytes(cursor.readBytes(Number.parseInt(size, 10), 32))
-  return [value, 32]
+  // Read the whole slot so that a slot cut short of its padding is out of bounds.
+  const word = cursor.readBytes(32)
+  const size_ = Number.parseInt(size, 10)
+  // The value occupies the high `size` bytes of the word; the rest must be
+  // zero padding.
+  for (let i = size_; i < 32; i++)
+    if (word[i] !== 0)
+      throw new AbiParameters.BytesSizeMismatchError({
+        expectedSize: size_,
+        value: Hex.fromBytes(word),
+      })
+  return [Hex.fromBytes(word.subarray(0, size_)), 32]
 }
 
 export declare namespace decodeBytes {
   type ErrorType =
+    | AbiParameters.BytesSizeMismatchError
     | Hex.fromBytes.ErrorType
-    | Bytes.toNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -287,21 +310,35 @@ export function decodeNumber(
   cursor: Cursor.Cursor,
   param: AbiParameters.Parameter,
 ) {
-  const signed = param.type.startsWith('int')
-  const size = Number.parseInt(param.type.split('int')[1] || '256', 10)
-  const value = cursor.readBytes(32)
-  return [
-    size > 48
-      ? Bytes.toBigInt(value, { signed })
-      : Bytes.toNumber(value, { signed }),
-    32,
-  ]
+  const { type } = param
+  // `uint256` is the common case: skip parsing its sign and size.
+  const signed = type !== 'uint256' && type.startsWith('int')
+  const size =
+    type === 'uint256'
+      ? 256
+      : Number.parseInt(type.split('int')[1] || '256', 10)
+  const value = Bytes.toBigInt(cursor.readBytes(32), { signed })
+  // The word must hold a value that fits the declared size (zero-padded for
+  // unsigned, sign-extended for signed types).
+  if (size < 256) {
+    const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+    const min = signed ? -max - 1n : 0n
+    if (value > max || value < min)
+      throw new Hex.IntegerOutOfRangeError({
+        max: max.toString(),
+        min: min.toString(),
+        signed,
+        size: size / 8,
+        value: value.toString(),
+      })
+  }
+  return [size > 48 ? value : Number(value), 32]
 }
 
 export declare namespace decodeNumber {
   type ErrorType =
-    | Bytes.toNumber.ErrorType
     | Bytes.toBigInt.ErrorType
+    | Hex.IntegerOutOfRangeError
     | Errors.GlobalErrorType
 }
 
@@ -334,7 +371,7 @@ export function decodeTuple(
   // tuple data.
   if (hasDynamicChild(param)) {
     // Dealing with dynamic types, so get the offset of the tuple data.
-    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = toOffset(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of referencing slot + offset.
     const start = staticPosition + offset
@@ -370,7 +407,7 @@ export function decodeTuple(
 }
 
 export declare namespace decodeTuple {
-  type ErrorType = Bytes.toNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -379,13 +416,13 @@ export function decodeString(
   { staticPosition }: { staticPosition: number },
 ) {
   // Get offset to start of string data.
-  const offset = Bytes.toNumber(cursor.readBytes(32))
+  const offset = toOffset(cursor.readBytes(32))
 
   // Start is the static position of current slot + offset.
   const start = staticPosition + offset
   cursor.setPosition(start)
 
-  const length = Bytes.toNumber(cursor.readBytes(32))
+  const length = toOffset(cursor.readBytes(32))
 
   // If there is no length, we have zero data (empty string).
   if (length === 0) {
@@ -404,7 +441,6 @@ export function decodeString(
 
 export declare namespace decodeString {
   type ErrorType =
-    | Bytes.toNumber.ErrorType
     | Bytes.toString.ErrorType
     | Bytes.trimLeft.ErrorType
     | Errors.GlobalErrorType
@@ -542,7 +578,7 @@ export function encode(preparedParameters: PreparedParameter[]): Hex.Hex {
   }
 
   // 3. Concatenate static and dynamic parts.
-  return Hex.concat(...staticParameters, ...dynamicParameters)
+  return join(staticParameters, dynamicParameters)
 }
 
 /** @internal */
@@ -624,7 +660,7 @@ export function encodeArray<const parameter extends AbiParameters.Parameter>(
   }
   return {
     dynamic: false,
-    encoded: Hex.concat(...preparedParameters.map(({ encoded }) => encoded)),
+    encoded: join(preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
@@ -646,6 +682,9 @@ export function encodeBytes(
   const [, parametersize] = type.split('bytes')
   const bytesSize = Hex.size(value)
   if (!parametersize) {
+    // An unpaired nibble has no byte to belong to, so reject it instead of
+    // guessing which half of a byte it is.
+    if (value.length % 2 !== 0) throw new Hex.InvalidLengthError(value)
     let value_ = value
     // If the size is not divisible by 32 bytes, pad the end
     // with empty bytes to the ceiling 32 bytes.
@@ -664,12 +703,14 @@ export function encodeBytes(
       expectedSize: Number.parseInt(parametersize, 10),
       value,
     })
+  if (value.length % 2 !== 0) throw new Hex.InvalidLengthError(value)
   return { dynamic: false, encoded: Hex.padRight(value) }
 }
 
 /** @internal */
 export declare namespace encodeBytes {
   type ErrorType =
+    | Hex.InvalidLengthError
     | Hex.padLeft.ErrorType
     | Hex.padRight.ErrorType
     | Hex.fromNumber.ErrorType
@@ -700,8 +741,7 @@ export function encodeNumber(
   { signed, size }: { signed: boolean; size: number },
 ): PreparedParameter {
   if (typeof size === 'number') {
-    const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
-    const min = signed ? -max - 1n : 0n
+    const [max, min] = getIntegerBounds(signed, size)
     if (value > max || value < min)
       throw new Hex.IntegerOutOfRangeError({
         max: max.toString(),
@@ -783,7 +823,7 @@ export function encodeTuple<
     dynamic,
     encoded: dynamic
       ? encode(preparedParameters)
-      : Hex.concat(...preparedParameters.map(({ encoded }) => encoded)),
+      : join(preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
@@ -796,7 +836,9 @@ export declare namespace encodeTuple {
 export function getArrayComponents(
   type: string,
 ): [length: number | null, innerType: string] | undefined {
-  const matches = type.match(/^(.*)\[(\d+)?\]$/)
+  // Only array types end with `]`, so skip the regex for every other type.
+  if (type.charCodeAt(type.length - 1) !== 93) return undefined
+  const matches = type.match(arrayRegex)
   return matches
     ? // Return `null` if the array is dynamic.
       [matches[2]! ? Number(matches[2]!) : null, matches[1]!]
@@ -823,4 +865,45 @@ export function hasDynamicChild(param: AbiParameters.Parameter) {
     return true
 
   return false
+}
+
+/** @internal */
+function getIntegerBounds(signed: boolean, size: number) {
+  const key = size * 2 + (signed ? 1 : 0)
+  let bounds = integerBounds.get(key)
+  if (!bounds) {
+    const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
+    bounds = [max, signed ? -max - 1n : 0n]
+    integerBounds.set(key, bounds)
+  }
+  return bounds
+}
+
+/**
+ * Concatenates encoded parts with a single join, so that arrays of any length
+ * avoid spreading into `Hex.concat`.
+ *
+ * @internal
+ */
+function join(...lists: readonly (readonly Hex.Hex[])[]): Hex.Hex {
+  const parts: string[] = []
+  for (const list of lists)
+    for (let i = 0; i < list.length; i++) parts.push(list[i]!.slice(2))
+  return `0x${parts.join('')}`
+}
+
+/**
+ * Reads an offset or length word as a number. Like `Bytes.toNumber` before it
+ * checked for safe integers, values above 6 bytes stay lossy, so that the
+ * cursor reports them as out of bounds.
+ *
+ * @internal
+ */
+function toOffset(word: Bytes.Bytes): number {
+  let i = 0
+  while (i < 26 && word[i] === 0) i++
+  if (i < 26) return Number(Hex.fromBytes(word))
+  let value = 0
+  for (; i < 32; i++) value = value * 256 + word[i]!
+  return value
 }

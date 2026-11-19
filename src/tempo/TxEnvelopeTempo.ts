@@ -1,5 +1,6 @@
 import * as AccessList from '../core/AccessList.js'
 import * as Address from '../core/Address.js'
+import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -189,6 +190,7 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   const {
     calls,
     chainId,
+    feePayerSignature,
     maxFeePerGas,
     maxPriorityFeePerGas,
     validBefore,
@@ -197,6 +199,18 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
 
   // Calls must not be empty
   if (!calls || calls.length === 0) throw new CallsEmptyError()
+
+  // validBefore and validAfter must be non-negative safe integers if set
+  for (const [name, value] of [
+    ['validBefore', validBefore],
+    ['validAfter', validAfter],
+  ] as const)
+    if (
+      value !== undefined &&
+      value !== null &&
+      !(Number.isSafeInteger(value) && value >= 0)
+    )
+      throw new InvalidValidityBoundError({ name, value })
 
   // validBefore must be greater than validAfter if both are set
   if (
@@ -216,7 +230,10 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
       if (call.to) Address.assert(call.to, { strict: false })
 
   // Validate chain ID
-  if (chainId <= 0)
+  if (
+    typeof chainId !== 'undefined' &&
+    (!Number.isSafeInteger(chainId) || chainId <= 0)
+  )
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
 
   // Validate max fee per gas
@@ -226,21 +243,27 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
     })
 
   if (
-    maxPriorityFeePerGas &&
-    maxFeePerGas &&
+    typeof maxPriorityFeePerGas === 'bigint' &&
+    typeof maxFeePerGas === 'bigint' &&
     maxPriorityFeePerGas > maxFeePerGas
   )
     throw new TransactionEnvelope.TipAboveFeeCapError({
       maxFeePerGas,
       maxPriorityFeePerGas,
     })
+
+  // Validate fee payer signature
+  if (feePayerSignature)
+    Signature.assert(feePayerSignature, { recovered: true })
 }
 
 export declare namespace assert {
   type ErrorType =
     | Address.assert.ErrorType
     | CallsEmptyError
+    | InvalidValidityBoundError
     | InvalidValidityWindowError
+    | Signature.assert.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -265,7 +288,9 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.toHex(
+    withoutSenderMarker(Hex.slice(serialized, 1)),
+  )
 
   const [
     chainId,
@@ -337,6 +362,12 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if (Hex.validate(nonceKey))
     transaction.nonceKey = nonceKey === '0x' ? 0n : BigInt(nonceKey)
   if (Hex.validate(validBefore) && validBefore !== '0x')
@@ -371,13 +402,13 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     feePayerSignatureOrSender !== '0x' &&
     feePayerSignatureOrSender !== undefined
   ) {
-    if (
-      feePayerSignatureOrSender === '0x00' ||
+    // A fee payer signature is a tuple, while a sender is an address string.
+    const sender =
+      typeof feePayerSignatureOrSender === 'string' &&
       Address.validate(feePayerSignatureOrSender)
-    ) {
+    if (feePayerSignatureOrSender === '0x00' || sender) {
       transaction.feePayerSignature = null
-      if (Address.validate(feePayerSignatureOrSender))
-        transaction.from = feePayerSignatureOrSender
+      if (sender) transaction.from = feePayerSignatureOrSender
     } else
       transaction.feePayerSignature = Signature.fromTuple(
         feePayerSignatureOrSender as never,
@@ -416,6 +447,29 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
 
 export declare namespace deserialize {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/** Bytes after the RLP list in `rlp ‖ sender ‖ 0xfeefeefeefee`. */
+const senderMarkerSize = 20 + 6
+
+// Removes the `sender ‖ 0xfeefeefeefee` that follows the RLP list when a signed
+// transaction is passed to a fee payer (e.g. by viem). The suffix is removed
+// only when the list ends exactly before it, so any other trailing bytes are
+// still rejected by `Rlp.toHex`.
+function withoutSenderMarker(payload: Hex.Hex): Hex.Hex {
+  const size = Hex.size(payload)
+  if (size <= senderMarkerSize) return payload
+  if (payload.slice(-12).toLowerCase() !== 'feefeefeefee') return payload
+
+  // Read the list header (a prefix and up to 4 length bytes).
+  const header = Bytes.fromHex(Hex.slice(payload, 0, 5))
+  const prefix = header[0]!
+  if (prefix < 0xc0) return payload
+  const cursor = { bytes: header, position: 1 }
+  const length = Rlp.readLength(cursor, prefix, 0xc0)
+  if (cursor.position + length + senderMarkerSize !== size) return payload
+
+  return Hex.slice(payload, 0, -senderMarkerSize)
 }
 
 /**
@@ -713,6 +767,7 @@ export function serialize(
     // No fee payer involvement — omit from the envelope.
     if (!feePayerSignature) return '0x'
     // Fee payer has signed — encode the signature as an RLP tuple.
+    Signature.assert(feePayerSignature, { recovered: true })
     return Signature.toTuple(feePayerSignature)
   })()
 
@@ -1075,6 +1130,46 @@ export class CallsEmptyError extends Errors.BaseError {
   override readonly name = 'TxEnvelopeTempo.CallsEmptyError'
   constructor() {
     super('Calls list cannot be empty.')
+  }
+}
+
+/**
+ * Thrown when validBefore or validAfter is not a non-negative safe integer number.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * TxEnvelopeTempo.assert({
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
+ *   chainId: 1,
+ *   validBefore: -1
+ * })
+ * // @error: TxEnvelopeTempo.InvalidValidityBoundError: validBefore (-1) must be a non-negative safe integer number.
+ * ```
+ */
+export class InvalidValidityBoundError extends Errors.BaseError {
+  override readonly name = 'TxEnvelopeTempo.InvalidValidityBoundError'
+  constructor({
+    name,
+    value,
+  }: {
+    name: 'validAfter' | 'validBefore'
+    value: unknown
+  }) {
+    const value_ = (() => {
+      if (typeof value === 'bigint') return `${value}n`
+      if (typeof value === 'string') return `"${value}"`
+      return String(value)
+    })()
+    super(`${name} (${value_}) must be a non-negative safe integer number.`)
   }
 }
 

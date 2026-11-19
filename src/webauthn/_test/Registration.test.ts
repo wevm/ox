@@ -968,6 +968,66 @@ describe('verify', () => {
     ).toThrow('Backup state (BS) flag is set but backup eligibility (BE)')
   })
 
+  test('behavior: BE flag not set', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential({
+      flag: 0x45,
+    }) // UP + UV + AT
+
+    const { backedUp, deviceType } = Registration.verify({
+      credential,
+      challenge,
+      origin,
+      rpId,
+    })
+
+    expect({ backedUp, deviceType }).toMatchInlineSnapshot(`
+      {
+        "backedUp": false,
+        "deviceType": "singleDevice",
+      }
+    `)
+  })
+
+  test('behavior: BE flag set without BS flag', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential({
+      flag: 0x4d,
+    }) // UP + UV + AT + BE
+
+    const { backedUp, deviceType } = Registration.verify({
+      credential,
+      challenge,
+      origin,
+      rpId,
+    })
+
+    expect({ backedUp, deviceType }).toMatchInlineSnapshot(`
+      {
+        "backedUp": false,
+        "deviceType": "multiDevice",
+      }
+    `)
+  })
+
+  test('behavior: BE + BS flags set', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential({
+      flag: 0x5d,
+    }) // UP + UV + AT + BE + BS
+
+    const { backedUp, deviceType } = Registration.verify({
+      credential,
+      challenge,
+      origin,
+      rpId,
+    })
+
+    expect({ backedUp, deviceType }).toMatchInlineSnapshot(`
+      {
+        "backedUp": true,
+        "deviceType": "multiDevice",
+      }
+    `)
+  })
+
   test('error: credential ID mismatch', async () => {
     const { credential, challenge, origin, rpId } = await mockCreateCredential()
 

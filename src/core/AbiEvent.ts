@@ -14,6 +14,9 @@ import { prettyPrint } from './internal/errors.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 import * as Solidity from './Solidity.js'
 
+const addressTopicPrefix = '0x000000000000000000000000'
+const topicRegex = /^0x[0-9a-fA-F]{64}$/
+
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype.AbiEvent & {
   hash?: Hex.Hex | undefined
@@ -160,6 +163,13 @@ export function assertArgs<const abiEvent extends AbiEvent>(
       Solidity.bytesRegex.test(input.type)
     )
       return value.toLowerCase() === arg.toLowerCase()
+    // Small integers decode as numbers, so match a number or bigint either way.
+    if (
+      (typeof value === 'bigint' || Number.isInteger(value)) &&
+      (typeof arg === 'bigint' || Number.isInteger(arg)) &&
+      Solidity.integerRegex.test(input.type)
+    )
+      return BigInt(value as bigint | number) === BigInt(arg as bigint | number)
     return value === arg
   }
 
@@ -184,9 +194,7 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
-  }
-
-  if (
+  } else if (
     typeof args === 'object' &&
     !Array.isArray(args) &&
     typeof matchArgs === 'object' &&
@@ -194,7 +202,10 @@ export function assertArgs<const abiEvent extends AbiEvent>(
   )
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
-      const input = abiEvent.inputs.find((input) => input.name === key)
+      // `decode` keys an unnamed input by its index.
+      const input = abiEvent.inputs.find(
+        (input, index) => (input.name || `${index}`) === key,
+      )
       if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
@@ -209,6 +220,20 @@ export function assertArgs<const abiEvent extends AbiEvent>(
           given: matchArgs,
         })
     }
+  // Positional and keyed arguments cannot be compared with each other. A
+  // filter without values matches any arguments.
+  else if (
+    typeof matchArgs === 'object' &&
+    matchArgs !== null &&
+    Object.values(matchArgs).some(
+      (value) => value !== null && value !== undefined,
+    )
+  )
+    throw new ArgsMismatchError({
+      abiEvent,
+      expected: args,
+      given: matchArgs,
+    })
 }
 
 export declare namespace assertArgs {
@@ -261,6 +286,8 @@ export declare namespace assertArgs {
  * ### ABI-shorthand
  *
  * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(decode:function)}:
+ *
+ * When the ABI holds several events with that name, the overload is resolved from the selector in `topics[0]`.
  *
  * ```ts twoslash
  * // @noErrors
@@ -372,7 +399,7 @@ export function decode(
       ]
     | [abiEvent: AbiEvent, log: decode.Log]
 ): decode.ReturnType {
-  const [abiEvent, log] = (() => {
+  const [abiEvent_, log] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name, log] = parameters as [
         Abi.Abi | readonly unknown[],
@@ -386,15 +413,35 @@ export function decode(
 
   const { data, topics } = log
 
-  const [selector_, ...argTopics] = topics
+  // An event extracted by name carries its other overloads, and `topics[0]`
+  // holds the selector of the overload that was emitted. Anonymous overloads
+  // omit the selector topic, so they are never matched by it.
+  const abiEvent = (() => {
+    const { overloads } = abiEvent_ as AbiEvent
+    if (!overloads) return abiEvent_
+    const selector = topics[0]
+    return (
+      [abiEvent_, ...overloads].find(
+        (item) => item.anonymous !== true && getSelector(item) === selector,
+      ) ?? abiEvent_
+    )
+  })()
 
-  const selector = getSelector(abiEvent)
-  if (selector_ !== selector)
-    throw new SelectorTopicMismatchError({
-      abiEvent,
-      actual: selector_,
-      expected: selector,
-    })
+  // Anonymous events omit the selector topic, so every topic is an indexed
+  // input.
+  const isAnonymous = abiEvent.anonymous === true
+  const argTopics = isAnonymous ? topics : topics.slice(1)
+
+  if (!isAnonymous) {
+    const selector_ = topics[0]
+    const selector = getSelector(abiEvent)
+    if (selector_ !== selector)
+      throw new SelectorTopicMismatchError({
+        abiEvent,
+        actual: selector_,
+        expected: selector,
+      })
+  }
 
   const { inputs } = abiEvent
   const isUnnamed = inputs?.every((x) => !('name' in x && x.name))
@@ -419,6 +466,22 @@ export function decode(
         param.type.match(/^(.*)\[(\d+)?\]$/)
       )
         return topic
+      // A topic is a single 32-byte word.
+      if (topic.length !== 66)
+        throw new TopicSizeMismatchError({
+          abiEvent,
+          param: param as abitype.AbiParameter & { indexed: boolean },
+          topic,
+        })
+      // Read common canonical words directly. Anything else (including a
+      // non-zero address padding) is left to `AbiParameters.decode`.
+      if (topicRegex.test(topic)) {
+        if (param.type === 'address' && topic.startsWith(addressTopicPrefix))
+          return `0x${topic.slice(26).toLowerCase()}`
+        if (param.type === 'uint256' || param.type === 'uint')
+          return BigInt(topic)
+        if (param.type === 'bytes32') return topic.toLowerCase()
+      }
       const decoded = AbiParameters.decode([param], topic) || []
       return decoded[0]
     })()
@@ -475,12 +538,20 @@ export declare namespace decode {
     abiEvent,
     AbiEvent
   > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? undefined
-      : internal.ParametersToPrimitiveTypes<
-          abiEvent['inputs'],
-          { EnableUnion: false; IndexedOnly: false; Required: true }
-        >
+    ? // distribute over the event and its overloads
+        | abiEvent
+        | (abiEvent['overloads'] extends readonly AbiEvent[]
+            ? abiEvent['overloads'][number]
+            : never) extends infer item extends AbiEvent
+      ? item extends AbiEvent
+        ? item['inputs'] extends readonly []
+          ? undefined
+          : internal.ParametersToPrimitiveTypes<
+              item['inputs'],
+              { EnableUnion: false; IndexedOnly: false; Required: true }
+            >
+        : never
+      : never
     : unknown
 
   type ErrorType =
@@ -488,6 +559,7 @@ export declare namespace decode {
     | getSelector.ErrorType
     | DataMismatchError
     | SelectorTopicMismatchError
+    | TopicSizeMismatchError
     | TopicsMismatchError
     | Errors.GlobalErrorType
 }
@@ -701,6 +773,10 @@ export function encode(
     }
   }
 
+  // Anonymous events are not identified by a selector topic, so the selector
+  // is not prepended.
+  if (abiEvent.anonymous === true) return { topics }
+
   const selector = (() => {
     if (abiEvent.hash) return abiEvent.hash
     return getSelector(abiEvent)
@@ -726,9 +802,10 @@ export declare namespace encode {
     : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
-    topics: Compute<
-      [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
-    >
+    /** Event topics. Anonymous events have no selector topic. */
+    topics:
+      | Compute<[selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]>
+      | readonly (Hex.Hex | readonly Hex.Hex[] | null)[]
   }
 
   type ErrorType =
@@ -1318,6 +1395,58 @@ export class TopicsMismatchError extends Errors.BaseError {
     )
 
     this.abiEvent = abiEvent
+  }
+}
+
+/**
+ * Thrown when a topic for an indexed event parameter is not a 32-byte word.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * )
+ *
+ * AbiEvent.decode(transfer, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb9226600',
+ *   ],
+ * })
+ * // @error: AbiEvent.TopicSizeMismatchError: Topic for indexed event parameter "to" of "event Transfer(address indexed from, address indexed to, uint256 value)" must be 32 bytes.
+ * // @error: Topic: 0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb9226600 (33 bytes)
+ * ```
+ */
+export class TopicSizeMismatchError extends Errors.BaseError {
+  override readonly name = 'AbiEvent.TopicSizeMismatchError'
+
+  abiEvent: AbiEvent
+  topic: Hex.Hex
+
+  constructor({
+    abiEvent,
+    param,
+    topic,
+  }: {
+    abiEvent: AbiEvent
+    param: abitype.AbiParameter & { indexed: boolean }
+    topic: Hex.Hex
+  }) {
+    super(
+      `Topic for indexed event parameter${
+        param.name ? ` "${param.name}"` : ''
+      } of "${format(abiEvent)}" must be 32 bytes.`,
+      {
+        metaMessages: [`Topic: ${topic} (${Hex.size(topic)} bytes)`],
+      },
+    )
+
+    this.abiEvent = abiEvent
+    this.topic = topic
   }
 }
 

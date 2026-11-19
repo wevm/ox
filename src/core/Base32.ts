@@ -71,7 +71,7 @@ export declare namespace fromHex {
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toBytes('qqsa0')
+ * const value = Base32.toBytes('qrlsq')
  * ```
  *
  * @param value - The Base32 encoded string.
@@ -96,11 +96,16 @@ export function toBytes(value: string): Bytes.Bytes {
       bytes.push((acc >>> bits) & 0xff)
     }
   }
+  // Reject leftover bits that do not fill a whole symbol, or that are non-zero.
+  if (bits >= 5 || acc & ((1 << bits) - 1)) throw new InvalidPaddingError()
   return new Uint8Array(bytes)
 }
 
 export declare namespace toBytes {
-  type ErrorType = InvalidCharacterError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidCharacterError
+    | InvalidPaddingError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -110,7 +115,7 @@ export declare namespace toBytes {
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toHex('qqsa0')
+ * const value = Base32.toHex('qrlsq')
  * ```
  *
  * @param value - The Base32 encoded string.
@@ -130,5 +135,14 @@ export class InvalidCharacterError extends Errors.BaseError {
 
   constructor({ character }: { character: string }) {
     super(`Invalid bech32 base32 character: "${character}".`)
+  }
+}
+
+/** Thrown when a Base32 string contains non-canonical (non-zero) trailing bits. */
+export class InvalidPaddingError extends Errors.BaseError {
+  override readonly name = 'Base32.InvalidPaddingError'
+
+  constructor() {
+    super('Non-canonical trailing bits in Base32 input.')
   }
 }

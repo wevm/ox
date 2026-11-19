@@ -67,6 +67,50 @@ describe('assert', () => {
     )
   })
 
+  test('invalid validity bound', () => {
+    const envelope = {
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+    } as const
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        validAfter: '0x6553f100' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validAfter ("0x6553f100") must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, validBefore: -1 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (-1) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, validAfter: 1.5 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validAfter (1.5) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        validBefore: Number.MAX_SAFE_INTEGER + 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (9007199254740992) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, validAfter: 0, validBefore: 1 }),
+    ).not.toThrow()
+  })
+
   test('invalid call address', () => {
     expect(() =>
       TxEnvelopeTempo.assert({
@@ -107,6 +151,19 @@ describe('assert', () => {
     )
   })
 
+  test('tip above zero fee cap', () => {
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 1n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+    )
+  })
+
   test('invalid chain id', () => {
     expect(() =>
       TxEnvelopeTempo.assert({
@@ -116,6 +173,93 @@ describe('assert', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
     )
+  })
+
+  test('invalid chain id (not a positive safe integer)', () => {
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: Number.NaN,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "NaN" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1.5,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1.5" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: Number.MAX_SAFE_INTEGER + 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "9007199254740992" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: '1' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+  })
+
+  test('invalid fee payer signature', () => {
+    const envelope = {
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+    } as const
+    const feePayerSignature = {
+      r: 1n,
+      s: 1n,
+    } as const
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: { ...feePayerSignature, yParity: 2 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: { ...feePayerSignature, yParity: 27 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`27\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: feePayerSignature as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.MissingPropertiesError: Signature \`{"r":"1#__bigint","s":"1#__bigint"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.assert({
+        ...envelope,
+        feePayerSignature: { ...feePayerSignature, yParity: 1 },
+      }),
+    ).not.toThrow()
+    expect(() =>
+      TxEnvelopeTempo.assert({ ...envelope, feePayerSignature: null }),
+    ).not.toThrow()
   })
 })
 
@@ -137,6 +281,44 @@ describe('deserialize', () => {
     const serialized = TxEnvelopeTempo.serialize(transaction)
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized).toEqual(transaction)
+  })
+
+  test('tip above empty fee cap', () => {
+    const serialized = TxEnvelopeTempo.serialize({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxPriorityFeePerGas: 1n,
+    })
+    expect(() =>
+      TxEnvelopeTempo.deserialize(serialized),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+    )
+  })
+
+  test('fee payer', () => {
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
+      format: 'feePayer',
+      sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    })
+
+    expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+          },
+        ],
+        "chainId": 1,
+        "feePayerSignature": null,
+        "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "maxFeePerGas": 2000000000n,
+        "maxPriorityFeePerGas": 2000000000n,
+        "nonce": 785n,
+        "nonceKey": 0n,
+        "type": "tempo",
+      }
+    `)
   })
 
   test('minimal', () => {
@@ -435,6 +617,58 @@ describe('deserialize', () => {
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.from).toBe(address)
     expect(deserialized.feePayerSignature).toEqual(feePayerSig)
+  })
+
+  describe('sender marker', () => {
+    const signed = TxEnvelopeTempo.serialize(
+      { ...transaction, feePayerSignature: null },
+      {
+        signature: Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload({
+            ...transaction,
+            feePayerSignature: null,
+          }),
+          privateKey,
+        }),
+      },
+    )
+
+    test('ignores sender and marker after the list', () => {
+      const serialized = Hex.concat(
+        signed,
+        address,
+        '0xfeefeefeefee',
+      ) as TxEnvelopeTempo.Serialized
+      expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
+        TxEnvelopeTempo.deserialize(signed),
+      )
+    })
+
+    test('behavior: marker after other trailing bytes', () => {
+      const serialized = Hex.concat(
+        signed,
+        '0x00',
+        address,
+        '0xfeefeefeefee',
+      ) as TxEnvelopeTempo.Serialized
+      expect(() =>
+        TxEnvelopeTempo.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`27\` trailing bytes remain.]`,
+      )
+    })
+
+    test('behavior: marker without a sender', () => {
+      const serialized = Hex.concat(
+        signed,
+        '0xfeefeefeefee',
+      ) as TxEnvelopeTempo.Serialized
+      expect(() =>
+        TxEnvelopeTempo.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`6\` trailing bytes remain.]`,
+      )
+    })
   })
 
   test('feePayerSignature null', () => {
@@ -768,6 +1002,19 @@ describe('from', () => {
     expect(envelope.from).toBe(Address.checksum(hexAddr))
   })
 
+  test('invalid validity bound', () => {
+    expect(() =>
+      TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        validAfter: 1700000000n as never,
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+  })
+
   test('options: signature', () => {
     const envelope = TxEnvelopeTempo.from(
       {
@@ -904,6 +1151,23 @@ describe('from', () => {
       }
     `)
   })
+
+  test('invalid fee payer signature', () => {
+    expect(() =>
+      TxEnvelopeTempo.from({
+        calls: [{}],
+        chainId: 1,
+        feePayerSignature: {
+          r: 1n,
+          s: 1n,
+          yParity: 2,
+        },
+        nonce: 0n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
 })
 
 describe('serialize', () => {
@@ -945,6 +1209,40 @@ describe('serialize', () => {
     const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76d101808080c4c3808080c0808080808080c0"`,
+    )
+  })
+
+  test('validBefore and validAfter', () => {
+    const transaction = {
+      chainId: 1,
+      calls: [{}],
+      nonce: 0n,
+    } as const
+    expect(
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        validAfter: 1700000000,
+        validBefore: 1700003600,
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x76d901808080c4c3808080c08080846553ff10846553f1008080c0"`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        validAfter: 1700000000n as never,
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        validBefore: '0x6553ff10' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore ("0x6553ff10") must be a non-negative safe integer number.]`,
     )
   })
 
@@ -1300,6 +1598,47 @@ describe('serialize', () => {
     )
   })
 
+  test('with feePayerSignature (invalid yParity)', () => {
+    const transaction = {
+      calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+      chainId: 1,
+      nonce: 0n,
+    } as const
+    const feePayerSignature = {
+      r: 1n,
+      s: 1n,
+    } as const
+    expect(
+      TxEnvelopeTempo.serialize(transaction, {
+        feePayerSignature: { ...feePayerSignature, yParity: 1 },
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x76e801808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c08080808080c3010101c0"`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize(transaction, {
+        feePayerSignature: { ...feePayerSignature, yParity: 2 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize(transaction, {
+        feePayerSignature: { ...feePayerSignature, yParity: 27 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`27\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+    expect(() =>
+      TxEnvelopeTempo.serialize({
+        ...transaction,
+        feePayerSignature: { ...feePayerSignature, yParity: 2 },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
+
   test('format: feePayer', () => {
     const transaction = TxEnvelopeTempo.from({
       chainId: 1,
@@ -1425,6 +1764,24 @@ describe('hash', () => {
     })
   })
 
+  test('invalid fee payer signature', () => {
+    expect(() =>
+      TxEnvelopeTempo.hash({
+        calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+        chainId: 1,
+        feePayerSignature: {
+          r: 1n,
+          s: 1n,
+          yParity: 2,
+        },
+        nonce: 0n,
+        type: 'tempo',
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Signature.InvalidYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
+    )
+  })
+
   test('presign', () => {
     const transaction = TxEnvelopeTempo.from({
       chainId: 1,
@@ -1439,6 +1796,23 @@ describe('hash', () => {
       TxEnvelopeTempo.hash(transaction, { presign: true }),
     ).toMatchInlineSnapshot(
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
+    )
+  })
+
+  test('invalid validity bound', () => {
+    expect(() =>
+      TxEnvelopeTempo.hash(
+        {
+          calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+          chainId: 1,
+          nonce: 0n,
+          type: 'tempo',
+          validBefore: 1700003600n as never,
+        },
+        { presign: true },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
     )
   })
 })
@@ -1542,6 +1916,20 @@ describe('getSignPayload', () => {
     })
     expect(hashTempo).toBe(hashHex)
   })
+
+  test('invalid validity bound', () => {
+    expect(() =>
+      TxEnvelopeTempo.getSignPayload({
+        calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+        chainId: 1,
+        nonce: 0n,
+        type: 'tempo',
+        validBefore: 1700003600n as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.InvalidValidityBoundError: validBefore (1700003600n) must be a non-negative safe integer number.]`,
+    )
+  })
 })
 
 describe('getFeePayerSignPayload', () => {
@@ -1634,6 +2022,20 @@ describe('validate', () => {
     ).toBe(false)
   })
 
+  test('invalid (fee payer signature)', () => {
+    expect(
+      TxEnvelopeTempo.validate({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        feePayerSignature: {
+          r: 1n,
+          s: 1n,
+          yParity: 2,
+        },
+      }),
+    ).toBe(false)
+  })
+
   test('invalid (validity window)', () => {
     expect(
       TxEnvelopeTempo.validate({
@@ -1641,6 +2043,17 @@ describe('validate', () => {
         chainId: 1,
         validBefore: 100,
         validAfter: 200,
+      }),
+    ).toBe(false)
+  })
+
+  test('invalid (validity bound)', () => {
+    expect(
+      TxEnvelopeTempo.validate({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId: 1,
+        validBefore: 100n as never,
+        validAfter: 200n as never,
       }),
     ).toBe(false)
   })

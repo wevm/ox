@@ -73,7 +73,7 @@ export class FeeCapTooHighError extends Errors.BaseError {
   } = {}) {
     super(
       `The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\`${
-        feeCap ? ` = ${Value.formatGwei(feeCap)} gwei` : ''
+        typeof feeCap === 'bigint' ? ` = ${Value.formatGwei(feeCap)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -193,11 +193,13 @@ export class TipAboveFeeCapError extends Errors.BaseError {
     super(
       [
         `The provided tip (\`maxPriorityFeePerGas\`${
-          maxPriorityFeePerGas
+          typeof maxPriorityFeePerGas === 'bigint'
             ? ` = ${Value.formatGwei(maxPriorityFeePerGas)} gwei`
             : ''
         }) cannot be higher than the fee cap (\`maxFeePerGas\`${
-          maxFeePerGas ? ` = ${Value.formatGwei(maxFeePerGas)} gwei` : ''
+          typeof maxFeePerGas === 'bigint'
+            ? ` = ${Value.formatGwei(maxFeePerGas)} gwei`
+            : ''
         }).`,
       ].join('\n'),
     )

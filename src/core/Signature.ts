@@ -72,14 +72,17 @@ export function assert(
     throw new MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
     throw new MissingPropertiesError({ signature })
-  if (recovered && typeof signature.yParity === 'undefined')
+  if (
+    recovered &&
+    (signature.yParity === undefined || signature.yParity === null)
+  )
     throw new MissingPropertiesError({ signature })
   if (signature.r < 0n || signature.r > Solidity.maxUint256)
     throw new InvalidRError({ value: signature.r })
   if (signature.s < 0n || signature.s > Solidity.maxUint256)
     throw new InvalidSError({ value: signature.s })
   if (
-    typeof signature.yParity === 'number' &&
+    signature.yParity !== undefined &&
     signature.yParity !== 0 &&
     signature.yParity !== 1
   )
@@ -672,6 +675,7 @@ export declare namespace toRpc {
  * @returns The {@link ox#Signature.Tuple}.
  */
 export function toTuple(signature: Signature): Tuple {
+  assert(signature, { recovered: true })
   const { r, s, yParity } = signature
 
   return [
@@ -683,6 +687,7 @@ export function toTuple(signature: Signature): Tuple {
 
 export declare namespace toTuple {
   type ErrorType =
+    | assert.ErrorType
     | Hex.trimLeft.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType

@@ -2,6 +2,8 @@ import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
 import * as Quantity from './quantity.js'
 
+const quantityRegex = /^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$/
+
 /**
  * Asserts keyed nonce constraints.
  * @internal
@@ -36,10 +38,7 @@ export function fromRpc(
 ): readonly bigint[] {
   if (!Array.isArray(keys)) throw new InvalidError('Expected a nonce key list.')
   const integer = (value: Hex.Hex): bigint => {
-    if (
-      typeof value !== 'string' ||
-      !/^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$/.test(value)
-    )
+    if (typeof value !== 'string' || !quantityRegex.test(value))
       throw new InvalidError('Expected a canonical RPC nonce quantity.')
     return Hex.toBigInt(value)
   }

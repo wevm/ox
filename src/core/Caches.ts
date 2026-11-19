@@ -1,9 +1,4 @@
-import type * as Address from './Address.js'
-import { LruMap } from './internal/lru.js'
-
-const caches = {
-  checksum: /*#__PURE__*/ new LruMap<Address.Address>(8192),
-}
+import { caches } from './internal/caches.js'
 
 export const checksum = caches.checksum
 

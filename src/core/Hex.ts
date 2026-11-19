@@ -5,14 +5,21 @@ import * as internal_bytes from './internal/bytes.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
+const decoder = /*#__PURE__*/ new TextDecoder()
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
 
+// Taken from the prototype once, and called on the value, so that an instance
+// or subclass defining its own `toHex` can't change the result.
+const nativeToHex = (Uint8Array.prototype as { toHex?: () => string }).toHex
+
 /** Root type for a Hex string. */
 export type Hex = `0x${string}`
+
+const hexRegex = /^0x[0-9a-fA-F]*$/
 
 /**
  * Asserts if the given value is {@link ox#Hex.Hex}.
@@ -38,7 +45,7 @@ export function assert(
   if (!value) throw new InvalidHexTypeError(value)
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
-    if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
+    if (!hexRegex.test(value)) throw new InvalidHexValueError(value)
   }
   if (!value.startsWith('0x')) throw new InvalidHexValueError(value)
   if (even && value.length % 2 !== 0) throw new InvalidLengthError(value as Hex)
@@ -78,7 +85,14 @@ export declare namespace assert {
  * @returns The concatenated {@link ox#Hex.Hex} value.
  */
 export function concat(...values: readonly Hex[]): Hex {
-  return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
+  let hex = '0x'
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i]!
+    // Same result as `value.replace('0x', '')`, without a search when the
+    // prefix is present.
+    hex += value.startsWith('0x') ? value.slice(2) : value.replace('0x', '')
+  }
+  return hex as Hex
 }
 
 export declare namespace concat {
@@ -194,7 +208,13 @@ export function fromBytes(
   options: fromBytes.Options = {},
 ): Hex {
   let string = ''
-  for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
+  // Native `Uint8Array.prototype.toHex` is several times faster, and returns a
+  // flat string rather than a rope of concatenated pairs.
+  // Empty values (including detached or out-of-bounds views, whose length is
+  // 0) skip it, since it throws on those.
+  if (typeof nativeToHex === 'function' && value instanceof Uint8Array) {
+    if (value.length > 0) string = nativeToHex.call(value)
+  } else for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
   const hex = `0x${string}` as const
 
   if (typeof options.size === 'number') {
@@ -240,6 +260,37 @@ export function fromNumber(
 ): Hex {
   const { signed, size } = options
 
+  // A non-negative `bigint` that fits `size` skips the range check too.
+  if (typeof value === 'bigint' && !signed && value >= 0n) {
+    const hex = value.toString(16)
+    if (!size) return `0x${hex}`
+    if (Number.isSafeInteger(size) && size > 0 && hex.length <= size * 2)
+      return `0x${hex.padStart(size * 2, '0')}`
+  }
+
+  // An unsigned safe integer is in range when there is no `size` or the size
+  // exceeds 6 bytes, so it skips the `bigint` range check.
+  if (
+    typeof value === 'number' &&
+    !signed &&
+    Number.isSafeInteger(value) &&
+    value >= 0 &&
+    (!size || size > 6)
+  ) {
+    const hex = `0x${value.toString(16)}` as Hex
+    return size ? padLeft(hex, size) : hex
+  }
+
+  return fromNumberChecked(value, signed, size)
+}
+
+// The range-checked path of `fromNumber`, kept separate so that `fromNumber`
+// stays small enough to inline.
+function fromNumberChecked(
+  value: number | bigint,
+  signed: boolean | undefined,
+  size: number | undefined,
+): Hex {
   const value_ = BigInt(value)
 
   let maxValue: bigint | number | undefined
@@ -250,7 +301,9 @@ export function fromNumber(
     maxValue = BigInt(Number.MAX_SAFE_INTEGER)
   }
 
-  const minValue = typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
+  // Negative values need a `size` to encode as two's complement.
+  const minValue =
+    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''
@@ -264,7 +317,7 @@ export function fromNumber(
   }
 
   const stringValue = (
-    signed && value_ < 0 ? BigInt.asUintN(size * 8, BigInt(value_)) : value_
+    signed && value_ < 0 ? BigInt.asUintN(size! * 8, BigInt(value_)) : value_
   ).toString(16)
 
   const hex = `0x${stringValue}` as Hex
@@ -451,9 +504,9 @@ export function slice(
 ): Hex {
   const { strict } = options
   internal.assertStartOffset(value, start)
-  const value_ = `0x${value
-    .replace('0x', '')
-    .slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
+  const value_ = `0x${(
+    value.startsWith('0x') ? value.slice(2) : value.replace('0x', '')
+  ).slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
   if (strict) internal.assertEndOffset(value_, start, end)
   return value_
 }
@@ -565,14 +618,7 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
 
   const value = BigInt(hex)
   if (!signed) return value
-
-  const size = (hex.length - 2) / 2
-
-  const max_unsigned = (1n << (BigInt(size) * 8n)) - 1n
-  const max_signed = max_unsigned >> 1n
-
-  if (value <= max_signed) return value
-  return value - max_unsigned - 1n
+  return BigInt.asIntN(size(hex) * 8, value)
 }
 
 export declare namespace toBigInt {
@@ -656,6 +702,8 @@ export declare namespace toBytes {
 /**
  * Decodes a {@link ox#Hex.Hex} value into a number.
  *
+ * Throws `Hex.IntegerOutOfRangeError` when the value is not a safe integer. Use `toBigInt` for larger values.
+ *
  * @example
  * ```ts twoslash
  * import { Hex } from 'ox'
@@ -673,14 +721,25 @@ export declare namespace toBytes {
  */
 export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
   const { signed, size } = options
-  if (!signed && !size) return Number(hex)
-  return Number(toBigInt(hex, options))
+  const value = !signed && !size ? Number(hex) : Number(toBigInt(hex, options))
+  if (!Number.isSafeInteger(value))
+    throw new IntegerOutOfRangeError({
+      max: `${Number.MAX_SAFE_INTEGER}`,
+      min: signed ? `${Number.MIN_SAFE_INTEGER}` : '0',
+      signed,
+      size,
+      value: `${value}`,
+    })
+  return value
 }
 
 export declare namespace toNumber {
   type Options = toBigInt.Options
 
-  type ErrorType = toBigInt.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | toBigInt.ErrorType
+    | IntegerOutOfRangeError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -711,7 +770,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
     internal_bytes.assertSize(bytes, size)
     bytes = Bytes.trimRight(bytes)
   }
-  return new TextDecoder().decode(bytes)
+  return decoder.decode(bytes)
 }
 
 export declare namespace toString {
@@ -750,12 +809,12 @@ export function validate(
   options: validate.Options = {},
 ): value is Hex {
   const { even = false, strict = false } = options
-  try {
-    assert(value, { even, strict })
-    return true
-  } catch {
-    return false
-  }
+  // Mirrors `assert` without constructing and catching an error.
+  if (!value || typeof value !== 'string') return false
+  if (strict && !hexRegex.test(value)) return false
+  if (!value.startsWith('0x')) return false
+  if (even && value.length % 2 !== 0) return false
+  return true
 }
 
 export declare namespace validate {

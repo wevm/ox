@@ -5,6 +5,7 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import { caches } from './internal/caches.js'
 import type { Compute } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
@@ -146,15 +147,20 @@ export function assert<
             expectedSize: Number.parseInt(size, 10),
             givenSize: Hex.size(value as Hex.Hex),
           })
+        if (size && (value as Hex.Hex).length % 2 !== 0)
+          throw new Hex.InvalidLengthError(value as Hex.Hex)
       }
 
-      const struct = types[type]
-      if (struct) {
-        validateReference(type)
-        validateData(struct, value as Record<string, unknown>)
-      }
+      if (Object.hasOwn(types, type))
+        validateData(types[type]!, value as Record<string, unknown>)
     }
   }
+
+  // Validate struct types and their field types, including structs that are
+  // only referenced as array elements.
+  for (const type of Object.keys(types)) validateReference(type)
+  for (const struct of Object.values(types))
+    for (const field of struct ?? []) validateField(field.type, types)
 
   // Validate domain types.
   if (types.EIP712Domain && domain) {
@@ -164,7 +170,8 @@ export function assert<
 
   // Validate message types.
   if (primaryType !== 'EIP712Domain') {
-    if (types[primaryType]) validateData(types[primaryType], message)
+    if (Object.hasOwn(types, primaryType) && types[primaryType])
+      validateData(types[primaryType], message)
     else throw new InvalidPrimaryTypeError({ primaryType, types })
   }
 }
@@ -179,6 +186,9 @@ export declare namespace assert {
     | Address.InvalidAddressError
     | BytesSizeMismatchError
     | InvalidPrimaryTypeError
+    | InvalidStructTypeError
+    | InvalidTypeError
+    | Hex.InvalidLengthError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
@@ -347,7 +357,7 @@ export function encodeType(value: encodeType.Value): string {
 
   const deps = [primaryType, ...Array.from(unsortedDeps).sort()]
   for (const type of deps) {
-    result += `${type}(${(types[type] ?? [])
+    result += `${type}(${((Object.hasOwn(types, type) && types[type]) || [])
       .map(({ name, type: t }) => `${t} ${name}`)
       .join(',')})`
   }
@@ -366,6 +376,8 @@ export declare namespace encodeType {
 
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
+ *
+ * A field is part of the schema when it is present on the domain (not `undefined` or `null`).
  *
  * @example
  * ```ts twoslash
@@ -392,18 +404,14 @@ export function extractEip712DomainTypes(
   domain: Domain | undefined,
 ): Parameter[] {
   return [
-    typeof domain?.name === 'string' && { name: 'name', type: 'string' },
-    typeof domain?.version === 'string' && { name: 'version', type: 'string' },
-    (typeof domain?.chainId === 'number' ||
-      typeof domain?.chainId === 'bigint') && {
-      name: 'chainId',
-      type: 'uint256',
-    },
-    domain?.verifyingContract && {
+    domain?.name != null && { name: 'name', type: 'string' },
+    domain?.version != null && { name: 'version', type: 'string' },
+    domain?.chainId != null && { name: 'chainId', type: 'uint256' },
+    domain?.verifyingContract != null && {
       name: 'verifyingContract',
       type: 'address',
     },
-    domain?.salt && { name: 'salt', type: 'bytes32' },
+    domain?.salt != null && { name: 'salt', type: 'bytes32' },
   ].filter(Boolean) as Parameter[]
 }
 
@@ -638,7 +646,7 @@ export function serialize<
 
   const message = (() => {
     if (primaryType === 'EIP712Domain') return undefined
-    if (!types[primaryType]) return {}
+    if (!Object.hasOwn(types, primaryType) || !types[primaryType]) return {}
     return normalizeData(types[primaryType], message_)
   })()
 
@@ -752,7 +760,24 @@ export class InvalidStructTypeError extends Errors.BaseError {
 
   constructor({ type }: { type: string }) {
     super(`Struct type "${type}" is invalid.`, {
-      metaMessages: ['Struct type must not be a Solidity type.'],
+      metaMessages: [
+        'Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.',
+      ],
+    })
+  }
+}
+
+/** Thrown when a field type is not a valid EIP-712 type. */
+export class InvalidTypeError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidTypeError'
+
+  constructor({ type }: { type: string }) {
+    // Suggest the canonical type only for the `int`/`uint` aliases.
+    const isAlias = /^u?int(\[[0-9]*\])*$/.test(type)
+    super(`Type "${type}" is not a valid EIP-712 type.`, {
+      metaMessages: isAlias
+        ? [`Use "${type.replace(/^(u?int)/, '$&256')}" instead.`]
+        : undefined,
     })
   }
 }
@@ -767,7 +792,8 @@ export function encodeData(value: {
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
   const encodedValues: unknown[] = [hashType({ primaryType, types })]
 
-  for (const field of types[primaryType] ?? []) {
+  const fields = (Object.hasOwn(types, primaryType) && types[primaryType]) || []
+  for (const field of fields) {
     const [type, value] = encodeField({
       types,
       name: field.name,
@@ -790,14 +816,25 @@ export declare namespace encodeData {
     | Errors.GlobalErrorType
 }
 
+/** Longest encoded type kept in the type-hash cache. */
+const typeHashCacheMaxLength = 4_096
+
 /** @internal */
 export function hashType(value: {
   primaryType: string
   types: TypedData
 }): Hex.Hex {
   const { primaryType, types } = value
-  const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  return Hash.keccak256(encodedHashType)
+  // Keyed by the encoded type, so equal struct definitions share one hash
+  // across calls, whichever object their types came from.
+  const type = encodeType({ primaryType, types })
+  const cached = caches.typeHash.get(type)
+  if (cached) return cached
+  const hash = Hash.keccak256(Hex.fromString(type))
+  // The cache is bounded by entries, not bytes, so only cache encoded types of
+  // ordinary size: retained memory then stays bounded whatever types are passed.
+  if (type.length <= typeHashCacheMaxLength) caches.typeHash.set(type, hash)
+  return hash
 }
 
 /** @internal */
@@ -818,7 +855,7 @@ export function encodeField(properties: {
 }): [type: AbiParameters.Parameter, value: Hex.Hex] {
   let { types, name, type, value } = properties
 
-  if (types[type] !== undefined)
+  if (Object.hasOwn(types, type) && types[type] !== undefined)
     return [
       { type: 'bytes32' },
       Hash.keccak256(encodeData({ data: value, primaryType: type, types })),
@@ -870,6 +907,10 @@ export declare namespace encodeField {
     | Errors.GlobalErrorType
 }
 
+const arraySuffixRegex = /(\[[0-9]*\])+$/
+const structNameRegex = /^[A-Za-z0-9_$:]+$/
+const solidityTypeNameRegex = /^(u?int|bytes)[0-9]*$/
+
 /** @internal */
 export function findTypeDependencies(
   value: {
@@ -879,9 +920,12 @@ export function findTypeDependencies(
   results: Set<string> = new Set(),
 ): Set<string> {
   const { primaryType: primaryType_, types } = value
-  const match = primaryType_.match(/^\w*/u)
-  const primaryType = match?.[0]!
-  if (results.has(primaryType) || types[primaryType] === undefined)
+  const primaryType = primaryType_.replace(arraySuffixRegex, '')
+  if (
+    results.has(primaryType) ||
+    !Object.hasOwn(types, primaryType) ||
+    types[primaryType] === undefined
+  )
     return results
 
   results.add(primaryType)
@@ -897,15 +941,40 @@ export declare namespace findTypeDependencies {
 }
 
 /** @internal */
-function validateReference(type: string) {
-  // Struct type must not be a Solidity type.
-  if (
+function validateField(type: string, types: TypedData) {
+  const baseType = type.replace(arraySuffixRegex, '')
+  if (baseType === 'int' || baseType === 'uint')
+    throw new InvalidTypeError({ type })
+  // A field type must be a struct defined in `types` or an EIP-712 atomic or
+  // dynamic type, so a type such as `uint7` or `bytes0` is not hashed.
+  if (!Object.hasOwn(types, baseType) && !isSolidityType(baseType))
+    throw new InvalidTypeError({ type })
+}
+
+/** @internal */
+function isSolidityType(type: string) {
+  return (
     type === 'address' ||
     type === 'bool' ||
     type === 'string' ||
-    type.startsWith('bytes') ||
-    type.startsWith('uint') ||
-    type.startsWith('int')
+    Solidity.bytesRegex.test(type) ||
+    Solidity.integerRegex.test(type)
+  )
+}
+
+/** @internal */
+function validateReference(type: string) {
+  // Struct type must contain only letters, digits, `_`, `$` and `:`, and must
+  // not be a Solidity type, so it cannot shadow a Solidity type or an array of
+  // one. A struct such as `intent` or `bytesInfo` is valid, while `uint7` or
+  // `bytes33` is rejected, since other implementations parse it as a Solidity
+  // type.
+  if (
+    !structNameRegex.test(type) ||
+    type === 'address' ||
+    type === 'bool' ||
+    type === 'string' ||
+    solidityTypeNameRegex.test(type)
   )
     throw new InvalidStructTypeError({ type })
 }

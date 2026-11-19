@@ -27,11 +27,51 @@ describe('assert', () => {
     )
   })
 
+  test('tip higher than zero fee cap', () => {
+    expect(() =>
+      TxEnvelopeEip1559.assert({
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 1n,
+        chainId: 1,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[TransactionEnvelope.TipAboveFeeCapError: The provided tip (`maxPriorityFeePerGas` = 0.000000001 gwei) cannot be higher than the fee cap (`maxFeePerGas` = 0 gwei).]',
+    )
+  })
+
   test('invalid chainId', () => {
     expect(() =>
       TxEnvelopeEip1559.assert({ chainId: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
+    )
+  })
+
+  test('invalid chainId (not a positive safe integer)', () => {
+    expect(() =>
+      TxEnvelopeEip1559.assert({ chainId: Number.NaN }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "NaN" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeEip1559.assert({ chainId: 1.5 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1.5" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeEip1559.assert({ chainId: Number.MAX_SAFE_INTEGER + 1 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "9007199254740992" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeEip1559.assert({ chainId: '1' as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
+    )
+    expect(() =>
+      TxEnvelopeEip1559.assert({ chainId: 1n as never }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "1" is invalid.]`,
     )
   })
 
@@ -54,6 +94,15 @@ describe('deserialize', () => {
     chainId: 1,
     maxFeePerGas: Value.fromGwei('2'),
     maxPriorityFeePerGas: Value.fromGwei('2'),
+  })
+
+  test('error: trailing bytes', () => {
+    const serialized = TxEnvelopeEip1559.serialize(transaction)
+    expect(() =>
+      TxEnvelopeEip1559.deserialize(`${serialized}ff`),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.TrailingBytesError: RLP payload encodes a single item, but \`1\` trailing byte remains.]`,
+    )
   })
 
   test('default', () => {
@@ -226,6 +275,18 @@ describe('deserialize', () => {
   })
 
   describe('errors', () => {
+    test('tip above empty fee cap', () => {
+      const serialized = TxEnvelopeEip1559.serialize({
+        chainId: 1,
+        maxPriorityFeePerGas: 1n,
+      })
+      expect(() =>
+        TxEnvelopeEip1559.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+      )
+    })
+
     test('invalid access list (invalid address)', () => {
       expect(() =>
         TxEnvelopeEip1559.deserialize(

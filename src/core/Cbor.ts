@@ -3,6 +3,9 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Cursor from './internal/cursor.js'
 
+/** Maximum nesting depth permitted when decoding a CBOR value. */
+const depthLimit = 1_024
+
 /**
  * Encodes a value into CBOR (Concise Binary Object Representation) format.
  *
@@ -104,6 +107,15 @@ export declare namespace decode {
     | Hex.InvalidLengthError
     | decodeCursor.ErrorType
     | Errors.GlobalErrorType
+}
+
+/** Thrown when a CBOR value nests deeper than the decode depth limit. */
+export class DepthLimitExceededError extends Errors.BaseError {
+  override readonly name = 'Cbor.DepthLimitExceededError'
+
+  constructor({ limit }: { limit: number }) {
+    super(`CBOR depth limit of \`${limit}\` exceeded.`)
+  }
 }
 
 export class InvalidMajorTypeError extends Errors.BaseError {
@@ -617,7 +629,10 @@ namespace getEncodable {
 
 /** @internal */
 // biome-ignore lint/correctness/noUnusedVariables: _
-function decodeCursor(cursor: Cursor.Cursor): unknown {
+function decodeCursor(cursor: Cursor.Cursor, depth = 0): unknown {
+  if (depth >= depthLimit)
+    throw new DepthLimitExceededError({ limit: depthLimit })
+
   const initialByte = cursor.readUint8()
   const majorType = initialByte >> 5
   const additionalInfo = initialByte & 0b00011111
@@ -633,19 +648,19 @@ function decodeCursor(cursor: Cursor.Cursor): unknown {
 
     // Major type 2: Byte string
     case 2:
-      return decodeCursor.readByteString(cursor, additionalInfo)
+      return decodeCursor.readByteString(cursor, additionalInfo, depth + 1)
 
     // Major type 3: Text string
     case 3:
-      return decodeCursor.readTextString(cursor, additionalInfo)
+      return decodeCursor.readTextString(cursor, additionalInfo, depth + 1)
 
     // Major type 4: Array
     case 4:
-      return decodeCursor.readArray(cursor, additionalInfo)
+      return decodeCursor.readArray(cursor, additionalInfo, depth + 1)
 
     // Major type 5: Map
     case 5:
-      return decodeCursor.readMap(cursor, additionalInfo)
+      return decodeCursor.readMap(cursor, additionalInfo, depth + 1)
 
     // Major type 6: Tagged data (not yet supported)
     case 6:
@@ -663,6 +678,7 @@ function decodeCursor(cursor: Cursor.Cursor): unknown {
 /** @internal */
 namespace decodeCursor {
   export type ErrorType =
+    | DepthLimitExceededError
     | readUnsignedInteger.ErrorType
     | readNegativeInteger.ErrorType
     | readByteString.ErrorType
@@ -724,6 +740,7 @@ namespace decodeCursor {
   export function readByteString(
     cursor: Cursor.Cursor,
     additionalInfo: number,
+    depth = 0,
   ): Bytes.Bytes {
     // Indefinite-length byte string
     if (additionalInfo === 31) {
@@ -736,7 +753,7 @@ namespace decodeCursor {
           cursor.readUint8() // consume the break byte
           break
         }
-        const chunk = decodeCursor(cursor) as Bytes.Bytes
+        const chunk = decodeCursor(cursor, depth) as Bytes.Bytes
         if (!(chunk instanceof Uint8Array))
           throw new InvalidIndefiniteLengthChunkError({ type: 'byte string' })
         chunks.push(chunk)
@@ -769,6 +786,7 @@ namespace decodeCursor {
   export function readTextString(
     cursor: Cursor.Cursor,
     additionalInfo: number,
+    depth = 0,
   ): string {
     // Indefinite-length text string
     if (additionalInfo === 31) {
@@ -780,7 +798,7 @@ namespace decodeCursor {
           cursor.readUint8() // consume the break byte
           break
         }
-        const chunk = decodeCursor(cursor)
+        const chunk = decodeCursor(cursor, depth)
         if (typeof chunk !== 'string')
           throw new InvalidIndefiniteLengthChunkError({ type: 'text string' })
         chunks.push(chunk)
@@ -807,6 +825,7 @@ namespace decodeCursor {
   export function readArray(
     cursor: Cursor.Cursor,
     additionalInfo: number,
+    depth = 0,
   ): unknown[] {
     // Indefinite-length array
     if (additionalInfo === 31) {
@@ -818,7 +837,7 @@ namespace decodeCursor {
           cursor.readUint8() // consume the break byte
           break
         }
-        result.push(decodeCursor(cursor))
+        result.push(decodeCursor(cursor, depth))
       }
 
       return result
@@ -828,7 +847,7 @@ namespace decodeCursor {
     const result: unknown[] = []
 
     for (let i = 0; i < length; i++) {
-      result.push(decodeCursor(cursor))
+      result.push(decodeCursor(cursor, depth))
     }
 
     return result
@@ -843,6 +862,7 @@ namespace decodeCursor {
   export function readMap(
     cursor: Cursor.Cursor,
     additionalInfo: number,
+    depth = 0,
   ): Record<string, unknown> {
     // Indefinite-length map
     if (additionalInfo === 31) {
@@ -854,7 +874,7 @@ namespace decodeCursor {
           cursor.readUint8() // consume the break byte
           break
         }
-        const key = decodeCursor(cursor)
+        const key = decodeCursor(cursor, depth)
         // Support both string and number keys (for COSE_Key with integer keys)
         const keyStr =
           typeof key === 'string'
@@ -862,8 +882,8 @@ namespace decodeCursor {
             : typeof key === 'number'
               ? String(key)
               : String(key)
-        const value = decodeCursor(cursor)
-        result[keyStr] = value
+        const value = decodeCursor(cursor, depth)
+        setEntry(result, keyStr, value)
       }
 
       return result
@@ -873,7 +893,7 @@ namespace decodeCursor {
     const result: Record<string, unknown> = {}
 
     for (let i = 0; i < length; i++) {
-      const key = decodeCursor(cursor)
+      const key = decodeCursor(cursor, depth)
       // Support both string and number keys (for COSE_Key with integer keys)
       const keyStr =
         typeof key === 'string'
@@ -881,8 +901,8 @@ namespace decodeCursor {
           : typeof key === 'number'
             ? String(key)
             : String(key)
-      const value = decodeCursor(cursor)
-      result[keyStr] = value
+      const value = decodeCursor(cursor, depth)
+      setEntry(result, keyStr, value)
     }
 
     return result
@@ -891,6 +911,24 @@ namespace decodeCursor {
   /** @internal */
   export declare namespace readMap {
     type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+  }
+
+  /** @internal */
+  function setEntry(
+    result: Record<string, unknown>,
+    key: string,
+    value: unknown,
+  ) {
+    // Define `__proto__` as an own property instead of assigning it, which
+    // would replace the prototype of `result` and drop the entry.
+    if (key === '__proto__')
+      Object.defineProperty(result, key, {
+        configurable: true,
+        enumerable: true,
+        value,
+        writable: true,
+      })
+    else result[key] = value
   }
 
   /** @internal */

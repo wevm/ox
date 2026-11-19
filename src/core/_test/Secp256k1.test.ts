@@ -551,6 +551,42 @@ describe('verify', () => {
       Secp256k1.verify({ hash: true, publicKey, payload, signature: { r, s } }),
     ).toBe(true)
   })
+
+  test('options: hash w/ address', () => {
+    const payload = '0xdeadbeef'
+    const publicKey = Secp256k1.getPublicKey({ privateKey })
+
+    // Signature over `sha256(payload)`.
+    {
+      const signature = Secp256k1.sign({ hash: true, payload, privateKey })
+      expect(
+        Secp256k1.verify({ address, hash: true, payload, signature }),
+      ).toBe(true)
+      expect(
+        Secp256k1.verify({
+          address,
+          hash: true,
+          payload: Bytes.fromHex(payload),
+          signature,
+        }),
+      ).toBe(true)
+      expect(
+        Secp256k1.verify({ hash: true, payload, publicKey, signature }),
+      ).toBe(true)
+      expect(Secp256k1.verify({ address, payload, signature })).toBe(false)
+    }
+
+    // Signature over the payload itself.
+    {
+      const signature = Secp256k1.sign({ payload, privateKey })
+      expect(
+        Secp256k1.verify({ address, hash: true, payload, signature }),
+      ).toBe(false)
+      expect(
+        Secp256k1.verify({ hash: true, payload, publicKey, signature }),
+      ).toBe(false)
+    }
+  })
 })
 
 test('exports', () => {

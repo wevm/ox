@@ -45,7 +45,7 @@ jobs:
 
       - name: Create version pull request
         id: changesets
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
+        uses: wevm/actions/vendor/changesets/action/ox@8963daf30237417f873c8e2f17e3bf9415e3a7b9 # upstream v1.5.3
         with:
           title: 'chore: version packages'
           commit: 'chore: version packages'
@@ -76,7 +76,7 @@ jobs:
           skip-cache: true # avoid cache poisoning attacks
 
       - name: Publish to npm
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
+        uses: wevm/actions/vendor/changesets/action/ox@8963daf30237417f873c8e2f17e3bf9415e3a7b9 # upstream v1.5.3
         with:
           createGithubReleases: true
           publish: pnpm changeset:publish:v0

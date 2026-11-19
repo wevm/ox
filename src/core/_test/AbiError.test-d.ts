@@ -1,4 +1,4 @@
-import { AbiError } from 'ox'
+import { Abi, AbiError } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 
 describe('AbiError.decode', () => {
@@ -34,6 +34,16 @@ describe('AbiError.decode', () => {
     const error = AbiError.from('error Example(uint8 yParity)')
     const decoded = AbiError.decode(error, '0x', { as: 'Object' })
     expectTypeOf(decoded).toEqualTypeOf<number>()
+  })
+
+  test('behavior: with overloads', () => {
+    const abi = Abi.from([
+      'error Example()',
+      'error Example(uint256 amount)',
+      'error Example(string reason)',
+    ])
+    const decoded = AbiError.decode(abi, 'Example', '0x')
+    expectTypeOf(decoded).toEqualTypeOf<bigint | string | undefined>()
   })
 
   test('not narrowable', () => {

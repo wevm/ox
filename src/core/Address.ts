@@ -3,9 +3,8 @@ import * as Bytes from './Bytes.js'
 import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
+import * as internal from './internal/address.js'
 import * as PublicKey from './PublicKey.js'
-
-const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /** Root type for Address. */
 export type Address = abitype_Address
@@ -37,20 +36,19 @@ export function assert(
 ): asserts value is Address {
   const { strict = true } = options
 
-  if (!addressRegex.test(value))
+  const kind = internal.classify(value)
+  if (kind === 0)
     throw new InvalidAddressError({
       address: value,
       cause: new InvalidInputError(),
     })
 
-  if (strict) {
-    if (value.toLowerCase() === value) return
-    if (checksum(value as Address) !== value)
-      throw new InvalidAddressError({
-        address: value,
-        cause: new InvalidChecksumError(),
-      })
-  }
+  // Lowercase inputs are exempt from checksum verification.
+  if (strict && kind === 2 && checksum(value as Address) !== value)
+    throw new InvalidAddressError({
+      address: value,
+      cause: new InvalidChecksumError(),
+    })
 }
 
 export declare namespace assert {
@@ -81,11 +79,20 @@ export declare namespace assert {
  * @returns The checksummed address.
  */
 export function checksum(address: string): Address {
-  if (Caches.checksum.has(address)) return Caches.checksum.get(address)!
+  // The checksum depends only on the lowercase address, so every casing of an
+  // address shares one cache entry, keyed by the lowercase form.
+  const direct = Caches.checksum.get(address)
+  if (direct !== undefined) return direct
 
   assert(address, { strict: false })
 
-  const hexAddress = address.substring(2).toLowerCase()
+  const key = address.toLowerCase()
+  if (key !== address) {
+    const cached = Caches.checksum.get(key)
+    if (cached !== undefined) return cached
+  }
+
+  const hexAddress = key.substring(2)
   const hash = Hash.keccak256(Bytes.fromString(hexAddress), { as: 'Bytes' })
 
   const characters = hexAddress.split('')
@@ -99,7 +106,7 @@ export function checksum(address: string): Address {
   }
 
   const result = `0x${characters.join('')}` as const
-  Caches.checksum.set(address, result)
+  Caches.checksum.set(key, result)
   return result
 }
 
@@ -181,7 +188,22 @@ export declare namespace from {
  * // @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
  * ```
  *
- * @param publicKey - The ECDSA public key to convert to an {@link ox#Address.Address}.
+ * @example
+ * ### Compressed Public Keys
+ *
+ * The address is derived from both coordinates, so a compressed public key throws.
+ *
+ * ```ts twoslash
+ * import { Address, PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.from(
+ *   '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75'
+ * )
+ * const address = Address.fromPublicKey(publicKey)
+ * // @error: PublicKey.InvalidPrefixError: Prefix "3" is invalid.
+ * ```
+ *
+ * @param publicKey - The uncompressed ECDSA public key to convert to an {@link ox#Address.Address}.
  * @param options - Conversion options.
  * @returns The {@link ox#Address.Address} corresponding to the public key.
  */
@@ -189,6 +211,7 @@ export function fromPublicKey(
   publicKey: PublicKey.PublicKey,
   options: fromPublicKey.Options = {},
 ): Address {
+  PublicKey.assert(publicKey, { compressed: false })
   const address = Hash.keccak256(
     `0x${PublicKey.toHex(publicKey).slice(4)}`,
   ).substring(26)
@@ -207,6 +230,7 @@ export declare namespace fromPublicKey {
 
   type ErrorType =
     | Hash.keccak256.ErrorType
+    | PublicKey.assert.ErrorType
     | PublicKey.toHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -278,12 +302,10 @@ export function validate(
   options: validate.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
-  try {
-    assert(address, { strict })
-    return true
-  } catch {
-    return false
-  }
+  const kind = internal.classify(address)
+  if (kind === 0) return false
+  if (!strict || kind === 1) return true
+  return checksum(address as Address) === address
 }
 
 export declare namespace validate {

@@ -389,8 +389,9 @@ export function fromRpc<
   if (transaction.maxPriorityFeePerGas)
     transaction_.maxPriorityFeePerGas = BigInt(transaction.maxPriorityFeePerGas)
   if (transaction.type)
-    transaction_.type =
-      (fromRpcType as any)[transaction.type] ?? transaction.type
+    transaction_.type = Object.hasOwn(fromRpcType, transaction.type)
+      ? (fromRpcType as any)[transaction.type]
+      : transaction.type
   if (signature) transaction_.v = Signature.yParityToV(signature.yParity)
 
   return transaction_ as never
@@ -467,7 +468,9 @@ export function toRpc<pending extends boolean = false>(
   rpc.transactionIndex = transaction.transactionIndex
     ? Hex.fromNumber(transaction.transactionIndex)
     : null
-  rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
+  rpc.type = Object.hasOwn(toRpcType, transaction.type)
+    ? (toRpcType as any)[transaction.type]
+    : transaction.type
   rpc.value = Hex.fromNumber(transaction.value ?? 0n)
 
   if (transaction.type === 'eip8141' && transaction.nonceKeys !== undefined)

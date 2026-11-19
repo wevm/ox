@@ -5,7 +5,7 @@ export function withTimeout<data>(
   fn: withTimeout.Fn<data>,
   options: withTimeout.Options,
 ): Promise<data> {
-  const { errorInstance = new TimeoutError(), timeout, signal } = options
+  const { errorInstance, timeout, signal } = options
   return new Promise((resolve, reject) => {
     ;(async () => {
       let timeoutId: any
@@ -16,12 +16,14 @@ export function withTimeout<data>(
             if (signal) {
               controller.abort()
             } else {
-              reject(errorInstance)
+              reject(errorInstance ?? new TimeoutError())
             }
           }, timeout) as any
         resolve(await fn({ signal: controller.signal }))
       } catch (err) {
-        if ((err as Error)?.name === 'AbortError') reject(errorInstance)
+        // Only build the error once the request has timed out.
+        if ((err as Error)?.name === 'AbortError')
+          reject(errorInstance ?? new TimeoutError())
         reject(err)
       } finally {
         clearTimeout(timeoutId)

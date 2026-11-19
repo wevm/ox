@@ -68,14 +68,17 @@ export type Type = typeof type
  */
 export function assert(envelope: PartialBy<TxEnvelopeEip1559, 'type'>) {
   const { chainId, maxPriorityFeePerGas, maxFeePerGas, to } = envelope
-  if (chainId <= 0)
+  if (
+    typeof chainId !== 'undefined' &&
+    (!Number.isSafeInteger(chainId) || chainId <= 0)
+  )
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
   if (to) Address.assert(to, { strict: false })
   if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
     throw new TransactionEnvelope.FeeCapTooHighError({ feeCap: maxFeePerGas })
   if (
-    maxPriorityFeePerGas &&
-    maxFeePerGas &&
+    typeof maxPriorityFeePerGas === 'bigint' &&
+    typeof maxFeePerGas === 'bigint' &&
     maxPriorityFeePerGas > maxFeePerGas
   )
     throw new TransactionEnvelope.TipAboveFeeCapError({
@@ -172,6 +175,12 @@ export function deserialize(
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if (accessList!.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as any)
 

@@ -44,6 +44,14 @@ describe('format', () => {
       ),
     ).toMatchInlineSnapshot('"-6942123123123069420.1234544444678912345"')
   })
+
+  test(
+    'behavior: long run of zeros before a non-zero digit',
+    { timeout: 5_000 },
+    () => {
+      expect(Value.format(1n, 200_001)).toBe(`0.${'0'.repeat(200_000)}1`)
+    },
+  )
 })
 
 describe('formatEther', () => {
@@ -401,6 +409,19 @@ describe('from', () => {
       '69590000024n',
     )
   })
+
+  test(
+    'behavior: long run of zeros before a non-zero digit',
+    { timeout: 5_000 },
+    () => {
+      expect(Value.from(`0.${'0'.repeat(200_000)}1`, 18)).toMatchInlineSnapshot(
+        '0n',
+      )
+      expect(Value.from(`1.5${'0'.repeat(200_000)}`, 18)).toMatchInlineSnapshot(
+        '1500000000000000000n',
+      )
+    },
+  )
 
   test('error: invalid decimal number', () => {
     expect(() =>

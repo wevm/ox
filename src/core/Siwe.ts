@@ -1,7 +1,7 @@
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 import type { ExactPartial } from './internal/types.js'
-import { uid } from './internal/uid.js'
 
 export const domainRegex =
   /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+(?:[a-zA-Z]{2,63}|[xX][nN]--[a-zA-Z0-9-]{0,58}[a-zA-Z0-9])(:[0-9]{1,5})?$/
@@ -22,6 +22,17 @@ export const prefixRegex =
 // https://regexr.com/80gf9
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
+
+// Matches `suffixRegex` from the start of the input to its end.
+const anchoredSuffixRegex = new RegExp(`^(?:${suffixRegex.source})$`)
+
+// URI validation (see `isUri`).
+const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
+const uriInvalidEscapeRegex = /%[^0-9a-f]/i
+const uriIncompleteEscapeRegex = /%[0-9a-f](:?[^0-9a-f]|$)/i
+const uriSchemeRegex = /^[a-z][a-z0-9+\-.]*$/
+const uriPartsRegex =
+  /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
 
 /** [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields. */
 export type Message = {
@@ -203,6 +214,15 @@ export function createMessage(value: Message): string {
           `Provided value: ${statement}`,
         ],
       })
+    if (requestId && /[\n\r]/.test(requestId))
+      throw new InvalidMessageFieldError({
+        field: 'requestId',
+        metaMessages: [
+          "- Request ID must not include '\\n' or '\\r'.",
+          '',
+          `Provided value: ${requestId}`,
+        ],
+      })
   }
 
   // Construct message
@@ -265,7 +285,7 @@ export declare namespace createMessage {
  * @returns Random nonce.
  */
 export function generateNonce(): string {
-  return uid(96)
+  return Hex.random(48).slice(2)
 }
 
 /**
@@ -285,11 +305,11 @@ export function generateNonce(): string {
 // based on https://github.com/ogt/valid-url
 export function isUri(value: string): false | string {
   // check for illegal characters
-  if (/[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i.test(value)) return false
+  if (uriIllegalCharacterRegex.test(value)) return false
 
   // check for hex escapes that aren't complete
-  if (/%[^0-9a-f]/i.test(value)) return false
-  if (/%[0-9a-f](:?[^0-9a-f]|$)/i.test(value)) return false
+  if (uriInvalidEscapeRegex.test(value)) return false
+  if (uriIncompleteEscapeRegex.test(value)) return false
 
   // from RFC 3986
   const splitted = splitUri(value)
@@ -311,7 +331,7 @@ export function isUri(value: string): false | string {
   }
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
-  if (!/^[a-z][a-z0-9+\-.]*$/.test(scheme.toLowerCase())) return false
+  if (!uriSchemeRegex.test(scheme.toLowerCase())) return false
 
   let out = ''
   // re-assemble the URL per section 5.3 in RFC 3986
@@ -327,13 +347,15 @@ export function isUri(value: string): false | string {
 }
 
 function splitUri(value: string) {
-  return value.match(
-    /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/,
-  )!
+  return value.match(uriPartsRegex)!
 }
 
 /**
  * [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) formatted message into message fields object.
+ *
+ * The message can be the prefix (up to the statement), the suffix (from `URI`), or both.
+ * Returns an empty object when the message has any other text, such as fields that are
+ * out of order or text after the last field.
  *
  * @example
  * ```ts twoslash
@@ -365,13 +387,23 @@ function splitUri(value: string) {
  * @returns Message fields object.
  */
 export function parseMessage(message: string): ExactPartial<Message> {
-  const { scheme, statement, ...prefix } = (message.match(prefixRegex)
-    ?.groups ?? {}) as {
+  const prefixMatch = message.match(prefixRegex)
+  const { scheme, statement, ...prefix } = (prefixMatch?.groups ?? {}) as {
     address: Address.Address
     domain: string
     scheme?: string
     statement?: string
   }
+  // The suffix starts where the prefix ends. Without a statement, the prefix
+  // is followed by one more line feed (as `createMessage` emits) or by none.
+  const rest = (() => {
+    const rest = message.slice(prefixMatch?.[0].length ?? 0)
+    if (prefixMatch && statement === undefined && rest.startsWith('\n'))
+      return rest.slice(1)
+    return rest
+  })()
+  const suffixMatch = rest.match(anchoredSuffixRegex)
+  if (rest && !suffixMatch) return {}
   const {
     chainId,
     expirationTime,
@@ -380,7 +412,7 @@ export function parseMessage(message: string): ExactPartial<Message> {
     requestId,
     resources: resources_,
     ...suffix
-  } = (message.match(suffixRegex)?.groups ?? {}) as {
+  } = (suffixMatch?.groups ?? {}) as {
     chainId: string
     expirationTime?: string
     issuedAt?: string
@@ -438,6 +470,11 @@ export function validateMessage(value: validateMessage.Value): boolean {
   if (domain && message.domain !== domain) return false
   if (nonce && message.nonce !== nonce) return false
   if (scheme && message.scheme !== scheme) return false
+
+  // EIP-4361 requires `nonce = 8*( ALPHA / DIGIT )` and `version = "1"`.
+  if (message.nonce !== undefined && !nonceRegex.test(message.nonce))
+    return false
+  if (message.version !== undefined && message.version !== '1') return false
 
   if (message.expirationTime && time >= message.expirationTime) return false
   if (message.notBefore && time < message.notBefore) return false

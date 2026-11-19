@@ -109,6 +109,28 @@ describe('fromBytes', () => {
     ).toMatchInlineSnapshot('"0x48656c6c6f20576f726c6421"')
   })
 
+  test('behavior: ignores an instance `toHex`', () => {
+    const bytes = new Uint8Array([1, 2, 3]) as Uint8Array & {
+      toHex: () => string
+    }
+    bytes.toHex = () => 'deadbeef'
+    expect(Hex.fromBytes(bytes)).toBe('0x010203')
+
+    class Custom extends Uint8Array {
+      toHex() {
+        return 'deadbeef'
+      }
+    }
+    expect(Hex.fromBytes(new Custom([1, 2, 3]))).toBe('0x010203')
+  })
+
+  test('behavior: detached view', () => {
+    const buffer = new ArrayBuffer(4)
+    const bytes = new Uint8Array(buffer)
+    ;(buffer as ArrayBuffer & { transfer(): ArrayBuffer }).transfer()
+    expect(Hex.fromBytes(bytes)).toBe('0x')
+  })
+
   test('args: size', () => {
     expect(
       Hex.fromBytes(
@@ -221,6 +243,12 @@ describe('fromNumber', () => {
       Hex.fromNumber(-32769, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
+    )
+    expect(() =>
+      // @ts-expect-error `signed` requires `size`.
+      Hex.fromNumber(-1, { signed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Hex.IntegerOutOfRangeError: Number `-1` is not in safe signed integer range (`0` to `9007199254740991`)]',
     )
   })
 })
@@ -404,6 +432,10 @@ describe('toBigInt', () => {
     expect(Hex.toBigInt('0xff81', { signed: true })).toBe(-127n)
     expect(Hex.toBigInt('0x7fff', { signed: true })).toBe(32767n)
     expect(Hex.toBigInt('0x8000', { signed: true })).toBe(-32768n)
+
+    expect(Hex.toBigInt('0xf', { signed: true })).toBe(15n)
+    expect(Hex.toBigInt('0xfff', { signed: true })).toBe(4095n)
+    expect(Hex.toBigInt(Hex.fromNumber(420), { signed: true })).toBe(420n)
 
     expect(
       Hex.toBigInt(
@@ -591,6 +623,21 @@ describe('toBytes', () => {
     `)
   })
 
+  test('behavior: odd length with size', () => {
+    expect(Hex.toBytes('0x1', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        1,
+        0,
+      ]
+    `)
+    expect(Hex.toBytes('0xabc', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        10,
+        188,
+      ]
+    `)
+  })
+
   test('error: size overflow', () => {
     expect(() =>
       Hex.toString(Hex.fromBytes(Bytes.fromArray([69, 420]), { size: 64 }), {
@@ -658,6 +705,23 @@ describe('toNumber', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Hex.SizeOverflowError: Size cannot exceed `32` bytes. Given size: `64` bytes.]',
+    )
+  })
+
+  test('error: not a safe integer', () => {
+    expect(Hex.toNumber('0x1fffffffffffff')).toBe(Number.MAX_SAFE_INTEGER)
+    expect(() =>
+      Hex.toNumber('0x20000000000001'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+    expect(() => Hex.toNumber('0x')).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`NaN\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
+    )
+    expect(() =>
+      Hex.toNumber(`0x8${'0'.repeat(63)}`, { signed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-5.78960446186581e+76\` is not in safe signed integer range (\`-9007199254740991\` to \`9007199254740991\`)]`,
     )
   })
 })

@@ -13,6 +13,17 @@ describe('fromChainId', () => {
     )
   })
 
+  test('other source chains', () => {
+    // Source chain 31318, zone 1: 31318 * 2^32 + 1.
+    expect(ZoneId.fromChainId(134_509_785_776_129)).toMatchInlineSnapshot(`1`)
+    expect(
+      ZoneId.fromChainId(134_509_785_776_129, 42_431),
+    ).toMatchInlineSnapshot(`1`)
+    expect(ZoneId.fromChainId(2 ** 32 + 4_294_967_295)).toMatchInlineSnapshot(
+      `4294967295`,
+    )
+  })
+
   test('unsupported source id', () => {
     expect(() =>
       // @ts-expect-error Unsupported source ID.

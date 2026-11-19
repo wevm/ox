@@ -297,6 +297,21 @@ describe('fromHex', () => {
     )
   })
 
+  test('behavior: odd length with size', () => {
+    expect(Bytes.fromHex('0x1', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        1,
+        0,
+      ]
+    `)
+    expect(Bytes.fromHex('0xabc', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        10,
+        188,
+      ]
+    `)
+  })
+
   test('error: size overflow', () => {
     expect(() =>
       Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 8 }),

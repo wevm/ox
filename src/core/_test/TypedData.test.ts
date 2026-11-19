@@ -1,6 +1,7 @@
-import { Hex, TypedData } from 'ox'
+import { AbiParameters, Hash, Hex, TypedData } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as typedData from '../../../test/constants/typedData.js'
+import { caches } from '../internal/caches.js'
 
 describe('assert', () => {
   test('default', () => {
@@ -198,6 +199,23 @@ describe('assert', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       '[TypedData.BytesSizeMismatchError: Expected bytes32, got bytes20.]',
     )
+  })
+
+  test('bytes odd length', () => {
+    expect(() =>
+      TypedData.assert({
+        message: { hash: '0x123' },
+        primaryType: 'Foo',
+        types: {
+          EIP712Domain: [],
+          Foo: [{ name: 'hash', type: 'bytes2' }],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+      It must be an even length.]
+    `)
   })
 
   test('domain: invalid', () => {
@@ -425,9 +443,164 @@ describe('assert', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [TypedData.InvalidStructTypeError: Struct type "address" is invalid.
 
-      Struct type must not be a Solidity type.]
+      Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.]
     `)
   })
+  test.each([
+    '1Order',
+    '_Order',
+    'bytesInfo',
+    'Foo$Bar',
+    'intent',
+    'interval',
+    'uintPair',
+  ])('struct type: %s', (type) => {
+    TypedData.assert({
+      types: {
+        Order: [{ name: 'inner', type }],
+        [type]: [{ name: 'amount', type: 'uint256' }],
+      },
+      primaryType: 'Order',
+      message: { inner: { amount: 1n } },
+    } as any)
+  })
+
+  test.each([
+    'address',
+    'bool',
+    'bytes',
+    'bytes32',
+    'bytes32[]',
+    'bytes33',
+    'Foo.Bar',
+    'int',
+    'int8',
+    'int8[2]',
+    'string',
+    'uint',
+    'uint256',
+    'uint256 ',
+    'uint256[]',
+    'uint7',
+  ])('invalid struct type: %s', (type) => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Order: [{ name: 'inner', type }],
+          [type]: [{ name: 'amount', type: 'uint256' }],
+        },
+        primaryType: 'Order',
+        message: { inner: { amount: 1n } },
+      } as any),
+    ).toThrowError(`Struct type "${type}" is invalid.`)
+  })
+
+  test('invalid struct type: array element', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Message: [{ name: 'contents', type: 'bytes32[]' }],
+          bytes32: [],
+        },
+        primaryType: 'Message',
+        message: { contents: [Hex.padLeft('0x11', 32)] },
+      } as any),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidStructTypeError: Struct type "bytes32" is invalid.
+
+      Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.]
+    `)
+  })
+
+  test.each([
+    'bytes0',
+    'bytes33',
+    'int0',
+    'int7',
+    'uint08',
+    'uint7',
+    'uint7[]',
+    'uint264',
+    'uint264[2]',
+  ])('invalid type: %s', (type) => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Message: [{ name: 'amount', type }],
+        },
+        primaryType: 'Message',
+        message: {
+          amount: type.includes('[')
+            ? [1n, 2n]
+            : type.startsWith('bytes')
+              ? '0x'
+              : 1n,
+        },
+      } as any),
+    ).toThrowError(`Type "${type}" is not a valid EIP-712 type.`)
+  })
+
+  test('invalid type: alias', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Message: [{ name: 'amount', type: 'uint' }],
+        },
+        primaryType: 'Message',
+        message: { amount: 1n },
+      } as any),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TypedData.InvalidTypeError: Type "uint" is not a valid EIP-712 type.
+
+      Use "uint256" instead.]
+    `)
+  })
+
+  test('invalid type: undefined struct', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Mail: [{ name: 'from', type: 'Person' }],
+        },
+        primaryType: 'Mail',
+        message: { from: { name: 'Cow' } },
+      } as any),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TypedData.InvalidTypeError: Type "Person" is not a valid EIP-712 type.]`,
+    )
+  })
+
+  test.each(['bytes0', 'Foo', 'uint', 'uint7', 'uint7[]'])(
+    'invalid type in array element struct: %s',
+    (type) => {
+      for (const to of ['Person[]', 'Person[][]', 'Person[2]'])
+        expect(() =>
+          TypedData.assert({
+            types: {
+              Mail: [{ name: 'to', type: to }],
+              Person: [{ name: 'x', type }],
+            },
+            primaryType: 'Mail',
+            message: { to: [] },
+          } as any),
+        ).toThrowError(`Type "${type}" is not a valid EIP-712 type.`)
+    },
+  )
+
+  test.each(['__proto__', 'constructor', 'hasOwnProperty', 'toString'])(
+    'invalid type: %s',
+    (type) => {
+      expect(() =>
+        TypedData.assert({
+          types: {
+            Message: [{ name: 'value', type }],
+          },
+          primaryType: 'Message',
+          message: { value: {} },
+        } as any),
+      ).toThrowError(`Type "${type}" is not a valid EIP-712 type.`)
+    },
+  )
 })
 
 describe('domainSeparator', () => {
@@ -436,6 +609,24 @@ describe('domainSeparator', () => {
       TypedData.domainSeparator(typedData.basic.domain),
     ).toMatchInlineSnapshot(
       `"0x2fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413"`,
+    )
+  })
+
+  test('behavior: string chainId', () => {
+    const domain = {
+      name: 'Ether Mail',
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+    } as const
+
+    expect(
+      TypedData.domainSeparator({ ...domain, chainId: 1 }),
+    ).toMatchInlineSnapshot(
+      `"0xcbea6135f3930521627c49608c80b1e98ac5e9966ebf71d0d52f39fa5acc7a58"`,
+    )
+    expect(
+      TypedData.domainSeparator({ ...domain, chainId: '1' } as never),
+    ).toMatchInlineSnapshot(
+      `"0xcbea6135f3930521627c49608c80b1e98ac5e9966ebf71d0d52f39fa5acc7a58"`,
     )
   })
 })
@@ -739,6 +930,58 @@ describe('extractEip712DomainTypes', () => {
       ]
     `)
   })
+
+  test('behavior: string chainId', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({
+        chainId: '1',
+        name: 'Ether Mail',
+      } as never),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "name",
+          "type": "string",
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+        },
+      ]
+    `)
+  })
+
+  test('behavior: empty verifyingContract and salt', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({
+        salt: '',
+        verifyingContract: '',
+      } as never),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "verifyingContract",
+          "type": "address",
+        },
+        {
+          "name": "salt",
+          "type": "bytes32",
+        },
+      ]
+    `)
+  })
+
+  test('behavior: null and undefined fields are omitted', () => {
+    expect(
+      TypedData.extractEip712DomainTypes({
+        chainId: undefined,
+        name: null,
+        salt: undefined,
+        verifyingContract: null,
+        version: undefined,
+      } as never),
+    ).toMatchInlineSnapshot(`[]`)
+  })
 })
 
 describe('getSignPayload', () => {
@@ -838,6 +1081,97 @@ describe('getSignPayload', () => {
     const hashWithBigint = TypedData.getSignPayload(typedDataWithBigintChainId)
 
     expect(hashWithNumber).toBe(hashWithBigint)
+  })
+
+  test('domain: string chainId produces same hash as number chainId', () => {
+    const value = {
+      domain: {
+        chainId: 1,
+        name: 'Ether Mail',
+        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+      },
+      message: { contents: 'Hello, Bob!' },
+      primaryType: 'Mail',
+      types: { Mail: [{ name: 'contents', type: 'string' }] },
+    } as const
+    const { chainId: _, ...domain } = value.domain
+
+    expect(TypedData.getSignPayload(value)).toMatchInlineSnapshot(
+      `"0x653cec21fbc0c9034d94bc61d4d36850d0455272dcec0d1655a008c81193701f"`,
+    )
+    expect(
+      TypedData.getSignPayload({
+        ...value,
+        domain: { ...domain, chainId: '1' },
+      } as never),
+    ).toMatchInlineSnapshot(
+      `"0x653cec21fbc0c9034d94bc61d4d36850d0455272dcec0d1655a008c81193701f"`,
+    )
+    expect(
+      TypedData.getSignPayload({
+        ...value,
+        domain: { ...domain, chainId: '0x1' },
+      } as never),
+    ).toMatchInlineSnapshot(
+      `"0x653cec21fbc0c9034d94bc61d4d36850d0455272dcec0d1655a008c81193701f"`,
+    )
+    expect(
+      TypedData.getSignPayload({ ...value, domain }),
+    ).toMatchInlineSnapshot(
+      `"0xa892aed0abd1aabdd57495f612097d467c47042ae2dbe1a98be9c5291eee51fb"`,
+    )
+  })
+
+  test('domain: string chainId survives a serialize round trip', () => {
+    const value = {
+      domain: { chainId: 1n, name: 'Ether Mail' },
+      message: { contents: 'Hello, Bob!' },
+      primaryType: 'Mail',
+      types: { Mail: [{ name: 'contents', type: 'string' }] },
+    } as const
+
+    expect(
+      TypedData.getSignPayload(JSON.parse(TypedData.serialize(value))),
+    ).toBe(TypedData.getSignPayload(value))
+  })
+
+  test('domain: non-numeric string chainId', () => {
+    expect(() =>
+      TypedData.getSignPayload({
+        domain: { chainId: 'abc', name: 'Ether Mail' },
+        message: { contents: 'Hello, Bob!' },
+        primaryType: 'Mail',
+        types: { Mail: [{ name: 'contents', type: 'string' }] },
+      } as never),
+    ).toThrow(SyntaxError)
+  })
+
+  test('domain: empty verifyingContract', () => {
+    expect(() =>
+      TypedData.getSignPayload({
+        domain: { name: 'Ether Mail', verifyingContract: '' },
+        message: { contents: 'Hello, Bob!' },
+        primaryType: 'Mail',
+        types: { Mail: [{ name: 'contents', type: 'string' }] },
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('domain: empty salt', () => {
+    expect(() =>
+      TypedData.getSignPayload({
+        domain: { name: 'Ether Mail', salt: '' },
+        message: { contents: 'Hello, Bob!' },
+        primaryType: 'Mail',
+        types: { Mail: [{ name: 'contents', type: 'string' }] },
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TypedData.BytesSizeMismatchError: Expected bytes32, got bytes-1.]`,
+    )
   })
 
   test('minimal valid typed message', () => {
@@ -985,6 +1319,52 @@ describe('getSignPayload', () => {
       `"0xd2669f23b7849020ad41bcbff5b51372793f91320e0f901641945568ed7322be"`,
     )
   })
+  test('struct type: prefixed by a Solidity type', () => {
+    expect(
+      TypedData.getSignPayload({
+        domain: { name: 'Domain' },
+        types: {
+          Message: [{ name: 'intent', type: 'intent' }],
+          intent: [{ name: 'amount', type: 'uint256' }],
+        },
+        primaryType: 'Message',
+        message: { intent: { amount: 1n } },
+      }),
+    ).toMatchInlineSnapshot(
+      `"0xcbeb995e95e87817f47e51736d0e5825644055cbcad196c2b26449ad78fd87ee"`,
+    )
+  })
+
+  test('struct type: with $', () => {
+    expect(
+      TypedData.getSignPayload({
+        domain: { name: 'Domain' },
+        types: {
+          Message: [{ name: 'order', type: 'Order$1' }],
+          Order$1: [{ name: 'amount', type: 'uint256' }],
+        },
+        primaryType: 'Message',
+        message: { order: { amount: 1n } },
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x97a137d1f96a18c6a214fd8e7b991ed7309ff25f223b68aa63a4670f9838a94a"`,
+    )
+  })
+
+  test('struct type: with colon', () => {
+    expect(
+      TypedData.getSignPayload({
+        domain: { name: 'Domain' },
+        types: {
+          'Order:1': [{ name: 'amount', type: 'uint256' }],
+        },
+        primaryType: 'Order:1',
+        message: { amount: 1n },
+      }),
+    ).toMatchInlineSnapshot(
+      `"0x3465390e0ea754dae581e653862bc7f8b71258ad85150e27ad18d87dd63fe6ab"`,
+    )
+  })
 })
 
 describe('hashDomain', () => {
@@ -996,6 +1376,33 @@ describe('hashDomain', () => {
       }),
     ).toMatchInlineSnapshot(
       `"0x2fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413"`,
+    )
+  })
+})
+
+describe('hashType', () => {
+  test('behavior: caches ordinary types', () => {
+    caches.typeHash.clear()
+    const types = { Mail: [{ name: 'contents', type: 'string' }] } as const
+    const hash = TypedData.hashType({ primaryType: 'Mail', types })
+    expect(caches.typeHash.size).toBe(1)
+    expect(TypedData.hashType({ primaryType: 'Mail', types })).toBe(hash)
+  })
+
+  test('behavior: does not cache very long types', () => {
+    caches.typeHash.clear()
+    const types = {
+      Big: Array.from({ length: 500 }, (_, i) => ({
+        name: `field_${i}`,
+        type: 'uint256',
+      })),
+    }
+    const hash = TypedData.hashType({ primaryType: 'Big', types })
+    expect(caches.typeHash.size).toBe(0)
+    expect(hash).toBe(
+      Hash.keccak256(
+        Hex.fromString(TypedData.encodeType({ primaryType: 'Big', types })),
+      ),
     )
   })
 })
@@ -1012,6 +1419,19 @@ describe('hashStruct', () => {
       `"0xc52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e"`,
     )
   })
+
+  test.each(['constructor', 'toString', '__proto__'])(
+    'error: field type %s is not looked up on the prototype',
+    (type) => {
+      expect(() =>
+        TypedData.hashStruct({
+          data: { foo: '0x' },
+          primaryType: 'Foo',
+          types: { Foo: [{ name: 'foo', type }] },
+        }),
+      ).toThrowError(AbiParameters.InvalidTypeError)
+    },
+  )
 })
 
 describe('serialize', () => {
@@ -1518,6 +1938,7 @@ test('exports', () => {
       "InvalidDomainError",
       "InvalidPrimaryTypeError",
       "InvalidStructTypeError",
+      "InvalidTypeError",
       "encodeData",
       "hashType",
       "encodeField",

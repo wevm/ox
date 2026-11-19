@@ -74,6 +74,17 @@ describe('fromAbi', () => {
     readonly stateMutability: "nonpayable"
     readonly inputs: readonly []
     readonly outputs: readonly []
+    readonly overloads: [
+      {
+        readonly name: "foo"
+        readonly type: "function"
+        readonly stateMutability: "nonpayable"
+        readonly inputs: readonly [
+          { readonly type: "uint256" }
+        ]
+        readonly outputs: readonly []
+      }
+    ]
   }`)
   })
 
