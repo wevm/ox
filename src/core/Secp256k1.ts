@@ -635,7 +635,10 @@ export function verify(options: verify.Options): boolean {
   if (options.address)
     return Address.isEqual(
       options.address,
-      recoverAddress({ payload, signature: options.signature }),
+      recoverAddress({
+        payload: hash === true ? Hash.sha256(payload) : payload,
+        signature: options.signature,
+      }),
     )
   const sig = normalizeSignature(options.signature)
   return engine.verify(

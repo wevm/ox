@@ -2,7 +2,7 @@ import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as AbiItem from './AbiItem.js'
 import * as AbiParameters from './AbiParameters.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
@@ -45,7 +45,7 @@ export function decode<
  *
  * const value = AbiError.decode(
  *   error,
- *   '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ *   '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
  * )
  * // @log: [420n, 69n, 1]
  * ```
@@ -60,7 +60,7 @@ export function decode<
  * const abi = Abi.from([...]) // [!code hl]
  * const error = AbiError.fromAbi(abi, 'InvalidSignature') // [!code hl]
  *
- * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
+ * const value = AbiError.decode(error, '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
  * // @log: [420n, 69n, 1]
  * ```
  *
@@ -71,7 +71,7 @@ export function decode<
  * // @noErrors
  * import { Abi, AbiError } from 'ox'
  *
- * const data = '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ * const data = '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
  *
  * const abi = Abi.from([...])
  * const error = AbiError.fromAbi(abi, data) // [!code hl]
@@ -216,14 +216,29 @@ export function decode(
     }
     return parameters as [AbiError, Hex.Hex, decode.Options | undefined]
   })()
-  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
-  if (abiError.inputs?.length === 0) return undefined
+  const { overloads } = abiError as AbiError
 
-  const values = AbiParameters.decode(
-    abiError.inputs,
-    Hex.slice(data, 4),
-    options,
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
+
+  // Hex is case-insensitive. Selectors are lowercase.
+  const selector = Hex.slice(data, 0, 4).toLowerCase() as Hex.Hex
+  const item = [abiError, ...(overloads ?? [])].find(
+    (item) =>
+      getSelector(item) === selector ||
+      // `solidityPanic` declares `uint8` so that the code decodes as a number.
+      // Solidity encodes it as `Panic(uint256)`.
+      (item === solidityPanic && selector === solidityPanicSelector),
   )
+  if (!item)
+    throw new SelectorMismatchError({
+      abiError,
+      actual: selector,
+      expected: getSelector(abiError),
+    })
+
+  if (item.inputs?.length === 0) return undefined
+
+  const values = AbiParameters.decode(item.inputs, Hex.slice(data, 4), options)
   if (values && Object.keys(values).length === 1) {
     if (Array.isArray(values)) return values[0]
     return Object.values(values)[0]
@@ -252,28 +267,39 @@ export declare namespace decode {
     as extends 'Object' | 'Array' = 'Array',
   > =
     IsNarrowable<abiError, AbiError> extends true
-      ? abiError['inputs'] extends readonly []
-        ? undefined
-        : abiError['inputs'] extends readonly [
-              infer type extends abitype.AbiParameter,
-            ]
-          ? abitype.AbiParameterToPrimitiveType<type>
-          : AbiParameters.decode.ReturnType<
-                abiError['inputs'],
-                as
-              > extends infer types
-            ? types extends readonly []
-              ? undefined
-              : types extends readonly [infer type]
-                ? type
-                : types
-            : never
+      ? // distribute over the error and its overloads
+          | abiError
+          | (abiError['overloads'] extends readonly AbiError[]
+              ? abiError['overloads'][number]
+              : never) extends infer item extends AbiError
+        ? item extends AbiError
+          ? item['inputs'] extends readonly []
+            ? undefined
+            : item['inputs'] extends readonly [
+                  infer type extends abitype.AbiParameter,
+                ]
+              ? abitype.AbiParameterToPrimitiveType<type>
+              : AbiParameters.decode.ReturnType<
+                    item['inputs'],
+                    as
+                  > extends infer types
+                ? types extends readonly []
+                  ? undefined
+                  : types extends readonly [infer type]
+                    ? type
+                    : types
+                : never
+          : never
+        : never
       : unknown | readonly unknown[] | undefined
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
+    | getSelector.ErrorType
     | Hex.size.ErrorType
+    | Hex.slice.ErrorType
     | typeof AbiItem.InvalidSelectorSizeError
+    | SelectorMismatchError
     | Errors.GlobalErrorType
 }
 
@@ -290,7 +316,7 @@ export declare namespace decode {
  *
  * const { error, args } = AbiError.extract(
  *   abi,
- *   '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ *   '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
  * )
  * // @log: {
  * // @log:   error: { name: 'InvalidSignature', type: 'error', ... },
@@ -834,3 +860,62 @@ export type ExtractNames<abi extends Abi.Abi> =
   | abitype.ExtractAbiErrorNames<abi>
   | 'Panic'
   | 'Error'
+
+/**
+ * Thrown when the selector of the provided data does not match the selector of the error, or of one of its overloads.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { AbiError } from 'ox'
+ *
+ * const error = AbiError.from(
+ *   'error Unauthorized(address account)'
+ * )
+ *
+ * AbiError.decode(
+ *   error,
+ *   '0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004626f6f6d00000000000000000000000000000000000000000000000000000000'
+ * )
+ * // @error: AbiError.SelectorMismatchError: Selector "0x08c379a0" does not match the expected selector "0x8e4a23d6".
+ * // @error: Error: error Unauthorized(address account)
+ * // @error: Selector: 0x8e4a23d6
+ * ```
+ *
+ * ### Solution
+ *
+ * Ensure that the data was encoded for the error, or use {@link ox#AbiError.(extract:function)} to resolve the error from the data.
+ *
+ * ```ts twoslash
+ * import { AbiError } from 'ox'
+ *
+ * const error = AbiError.from(
+ *   'error Unauthorized(address account)'
+ * )
+ *
+ * AbiError.decode(
+ *   error,
+ *   '0x8e4a23d6000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045'
+ * )
+ * ```
+ */
+export class SelectorMismatchError extends Errors.BaseError {
+  override readonly name = 'AbiError.SelectorMismatchError'
+
+  constructor({
+    abiError,
+    actual,
+    expected,
+  }: {
+    abiError: AbiError
+    actual: Hex.Hex
+    expected: Hex.Hex
+  }) {
+    super(
+      `Selector "${actual}" does not match the expected selector "${expected}".`,
+      {
+        metaMessages: [`Error: ${format(abiError)}`, `Selector: ${expected}`],
+      },
+    )
+  }
+}

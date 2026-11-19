@@ -66,6 +66,20 @@ describe('decodeData', () => {
       ),
     ).type.toString.snap('readonly [bigint] | readonly [`0x${string}`]')
   })
+
+  test('behavior: with overloads, one with zero inputs', () => {
+    const abi = Abi.from([
+      'function deposit()',
+      'function deposit(uint256 assets)',
+    ])
+    attest(
+      AbiFunction.decodeData(
+        abi,
+        'deposit',
+        '0xb6b55f25000000000000000000000000000000000000000000000000000000000000007b',
+      ),
+    ).type.toString.snap('readonly [bigint] | undefined')
+  })
 })
 
 describe('decodeResult', () => {
@@ -222,6 +236,17 @@ describe('fromAbi', () => {
   readonly stateMutability: "nonpayable"
   readonly inputs: readonly []
   readonly outputs: readonly []
+  readonly overloads: [
+    {
+      readonly name: "foo"
+      readonly type: "function"
+      readonly stateMutability: "nonpayable"
+      readonly inputs: readonly [
+        { readonly type: "uint256" }
+      ]
+      readonly outputs: readonly []
+    }
+  ]
 }`)
   })
 

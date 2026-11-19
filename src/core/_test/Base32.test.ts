@@ -44,6 +44,22 @@ describe('toBytes', () => {
       `[Base32.InvalidCharacterError: Invalid bech32 base32 character: "b".]`,
     )
   })
+
+  test('error: non-zero trailing bits', () => {
+    // `qrlsq` encodes 0x00ff00; `qrlsp` sets a trailing bit below the byte boundary.
+    expect(() => Base32.toBytes('qrlsp')).toThrowErrorMatchingInlineSnapshot(
+      `[Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.]`,
+    )
+  })
+
+  test('error: invalid length', () => {
+    expect(() => Base32.toBytes('q')).toThrowErrorMatchingInlineSnapshot(
+      `[Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.]`,
+    )
+    expect(() => Base32.toBytes('qqq')).toThrowErrorMatchingInlineSnapshot(
+      `[Base32.InvalidPaddingError: Non-canonical trailing bits in Base32 input.]`,
+    )
+  })
 })
 
 describe('toHex', () => {

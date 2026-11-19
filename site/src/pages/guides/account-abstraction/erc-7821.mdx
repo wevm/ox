@@ -97,7 +97,8 @@ const { calls, opData } = Execute.decodeData(data) // [!code hl]
 ```
 
 For the "batch of batches" mode, use `Execute.decodeBatchOfBatchesData` (and
-`Execute.encodeBatchOfBatchesData` to produce it).
+`Execute.encodeBatchOfBatchesData` to produce it). Each decoder throws
+`Execute.UnsupportedModeError` when the calldata's mode is not one it decodes.
 
 ## Best Practices
 

@@ -46,6 +46,19 @@ describe('fromRpc', () => {
       status: expected,
     })
   })
+
+  test('behavior: unknown status named like an `Object.prototype` key', () => {
+    for (const status of ['__proto__', 'constructor', 'toString'])
+      expect(
+        FrameReceipt.fromRpc({
+          executionGasUsed: '0x0',
+          gasUsed: '0x0',
+          logs: [],
+          stateGasUsed: '0x0',
+          status: status as never,
+        }).status,
+      ).toBeUndefined()
+  })
 })
 
 describe('toRpc', () => {

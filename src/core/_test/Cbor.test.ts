@@ -225,6 +225,15 @@ describe('encode', () => {
     expect(() => Cbor.encode(num)).toThrow(Cbor.NumberTooLargeError)
   })
 
+  test('number too large error names the encodable range', () => {
+    expect(() => Cbor.encode(0x100000000)).toThrow(
+      'Number is outside the encodable integer range (-4294967296 to 4294967295): 4294967296',
+    )
+    expect(() => Cbor.encode(-0x100000001)).toThrow(
+      'Number is outside the encodable integer range (-4294967296 to 4294967295): -4294967297',
+    )
+  })
+
   test('bigint throws', () => {
     expect(() => Cbor.encode(BigInt(42))).toThrow(Cbor.UnsupportedBigIntError)
   })
@@ -510,6 +519,23 @@ describe('decode', () => {
     expect(() => Cbor.decode('0x123')).toThrow()
   })
 
+  test('error: nesting deeper than the depth limit', () => {
+    // `0x81` opens a one-element array.
+    expect(
+      Cbor.decode(new Uint8Array([...new Uint8Array(1_023).fill(0x81), 0x01])),
+    ).toBeDefined()
+    expect(() =>
+      Cbor.decode(new Uint8Array([...new Uint8Array(1_024).fill(0x81), 0x01])),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cbor.DepthLimitExceededError: CBOR depth limit of \`1024\` exceeded.]`,
+    )
+    expect(() =>
+      Cbor.decode(new Uint8Array(100_000).fill(0x81)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cbor.DepthLimitExceededError: CBOR depth limit of \`1024\` exceeded.]`,
+    )
+  })
+
   test('large string (> 0xffff)', () => {
     const str = 'a'.repeat(0x10000)
     const encoded = Cbor.encode(str)
@@ -617,6 +643,28 @@ describe('decode', () => {
     expect(decoded).toEqual({ '1': 2 })
   })
 
+  test('map with `__proto__` key', () => {
+    // {"__proto__": {"polluted": true}}
+    const definite = Cbor.decode<Record<string, unknown>>(
+      '0xa1695f5f70726f746f5f5fa168706f6c6c75746564f5',
+    )
+    // {_ "__proto__": {"polluted": true}}
+    const indefinite = Cbor.decode<Record<string, unknown>>(
+      '0xbf695f5f70726f746f5f5fa168706f6c6c75746564f5ff',
+    )
+    for (const decoded of [definite, indefinite]) {
+      expect(Object.getPrototypeOf(decoded)).toBe(Object.prototype)
+      expect(Object.keys(decoded)).toEqual(['__proto__'])
+      expect(decoded.polluted).toBeUndefined()
+      expect(Object.getOwnPropertyDescriptor(decoded, '__proto__')?.value)
+        .toMatchInlineSnapshot(`
+        {
+          "polluted": true,
+        }
+      `)
+    }
+  })
+
   test('invalid simple value throws', () => {
     // Simple value < 32 (reserved)
     const encoded = Hex.from([0xf8, 0x10]) // Simple value 16
@@ -688,6 +736,7 @@ describe('roundtrip', () => {
     ['object: simple', { a: 1, b: 2 }],
     ['object: nested', { a: 1, b: [2, 3] }],
     ['complex', { a: 'hello', b: [1, 2, { c: true }], d: null }],
+    ['object: `__proto__` key', JSON.parse('{"__proto__":{"a":1},"b":2}')],
   ])('roundtrip: %s', (_, value) => {
     const encoded = Cbor.encode(value)
     const decoded = Cbor.decode(encoded)

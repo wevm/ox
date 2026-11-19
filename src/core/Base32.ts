@@ -62,7 +62,7 @@ export declare namespace fromHex {
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toBytes('qqsa0')
+ * const value = Base32.toBytes('qrlsq')
  * ```
  *
  * @param value - The Base32 encoded string.
@@ -91,11 +91,16 @@ export function toBytes(value: string): Bytes.Bytes {
       bytes[n++] = (acc >>> bits) & 0xff
     }
   }
+  // Reject leftover bits that do not fill a whole symbol, or that are non-zero.
+  if (bits >= 5 || acc & ((1 << bits) - 1)) throw new InvalidPaddingError()
   return bytes.subarray(0, n)
 }
 
 export declare namespace toBytes {
-  type ErrorType = InvalidCharacterError | Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidCharacterError
+    | InvalidPaddingError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -105,7 +110,7 @@ export declare namespace toBytes {
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toHex('qqsa0')
+ * const value = Base32.toHex('qrlsq')
  * ```
  *
  * @param value - The Base32 encoded string.

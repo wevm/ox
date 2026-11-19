@@ -10,6 +10,7 @@ import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
 import { bytesRegex, integerRegex } from '../Solidity.js'
+import { nibbleTable } from './codec/hex.js'
 import { encoder } from './codec/utf8.js'
 import type * as Cursor from './cursor.js'
 import type { Compute, IsNarrowable, UnionToIntersection } from './types.js'
@@ -65,14 +66,8 @@ type MeasureContext = {
   checksumAddress: boolean
 }
 
-type HexPatch = {
-  offset: number
-  value: string
-}
-
 type WriteContext = {
   bytes: Bytes.Bytes
-  patches: HexPatch[]
   view: DataView
 }
 
@@ -178,15 +173,24 @@ export function decodeAddress(
 ) {
   const { checksum = false } = options
   const value = cursor.readBytes(32)
+  // An address occupies the low 20 bytes of the word; the high 12 bytes
+  // must be zero padding.
+  for (let i = 0; i < 12; i++)
+    if (value[i] !== 0)
+      throw new Address.InvalidAddressError({
+        address: Hex.fromBytes(value),
+        cause: new Address.InvalidInputError(),
+      })
   const wrap = (address: Hex.Hex) =>
     checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
+  // A view, not a copy: it is hex-encoded at once and never escapes.
+  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
+    | Address.InvalidAddressError
     | Hex.fromBytes.ErrorType
-    | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -219,6 +223,7 @@ export function decodeArray(
 
     // Check if the array has any dynamic children.
     const dynamicChild = hasDynamicChild(param)
+    const decode = getDecoder(param, checksumAddress)
 
     let consumed = 0
     const value: unknown[] = []
@@ -226,10 +231,7 @@ export function decodeArray(
       // If any of the children is dynamic, then all elements will be offset pointer, thus size of one slot (32 bytes).
       // Otherwise, elements will be the size of their encoding (consumed bytes).
       cursor.setPosition(startOfData + (dynamicChild ? i * 32 : consumed))
-      const [data, consumed_] = decodeParameter(cursor, param, {
-        checksumAddress,
-        staticPosition: startOfData,
-      })
+      const [data, consumed_] = decode(cursor, startOfData)
       consumed += consumed_
       value.push(data)
       // Charge zero-width elements against the read limit to bound work
@@ -255,14 +257,12 @@ export function decodeArray(
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
 
+    const decode = getDecoder(param, checksumAddress)
     const value: unknown[] = []
     for (let i = 0; i < length; ++i) {
       // Move cursor along to the next slot (next offset pointer).
       cursor.setPosition(start + i * 32)
-      const [data] = decodeParameter(cursor, param, {
-        checksumAddress,
-        staticPosition: start,
-      })
+      const [data] = decode(cursor, start)
       value.push(data)
     }
 
@@ -276,13 +276,11 @@ export function decodeArray(
 
   // If the length of the array is known in advance and the array is deeply static,
   // then we can just decode each element in sequence.
+  const decode = getDecoder(param, checksumAddress)
   let consumed = 0
   const value: unknown[] = []
   for (let i = 0; i < length; ++i) {
-    const [data, consumed_] = decodeParameter(cursor, param, {
-      checksumAddress,
-      staticPosition: staticPosition + consumed,
-    })
+    const [data, consumed_] = decode(cursor, staticPosition + consumed)
     consumed += consumed_
     value.push(data)
     // Charge zero-width elements against the read limit to bound work
@@ -338,12 +336,23 @@ export function decodeBytes(
     return [Hex.fromBytes(data), 32]
   }
 
-  const value = Hex.fromBytes(cursor.readBytes(Number.parseInt(size, 10), 32))
-  return [value, 32]
+  // Read the whole slot so that a slot cut short of its padding is out of bounds.
+  const word = cursor.readBytes(32)
+  const size_ = Number.parseInt(size, 10)
+  // The value occupies the high `size` bytes of the word; the rest must be
+  // zero padding.
+  for (let i = size_; i < 32; i++)
+    if (word[i] !== 0)
+      throw new AbiParameters.BytesSizeMismatchError({
+        expectedSize: size_,
+        value: Hex.fromBytes(word),
+      })
+  return [Hex.fromBytes(word.subarray(0, size_)), 32]
 }
 
 export declare namespace decodeBytes {
   type ErrorType =
+    | AbiParameters.BytesSizeMismatchError
     | Hex.fromBytes.ErrorType
     | Bytes.toNumber.ErrorType
     | Errors.GlobalErrorType
@@ -354,22 +363,73 @@ export function decodeNumber(
   cursor: Cursor.Cursor,
   param: AbiParameters.Parameter,
 ) {
-  const signed = param.type.startsWith('int')
-  const size = Number.parseInt(param.type.split('int')[1] || '256', 10)
-  const value = cursor.readBytes(32)
-  return [
-    size > 48
-      ? Bytes.toBigInt(value, { signed })
-      : Bytes.toNumber(value, { signed }),
-    32,
-  ]
+  return decodeInteger(cursor, getInteger(param.type))
 }
 
 export declare namespace decodeNumber {
   type ErrorType =
-    | Bytes.toNumber.ErrorType
     | Bytes.toBigInt.ErrorType
+    | Hex.IntegerOutOfRangeError
     | Errors.GlobalErrorType
+}
+
+type Integer = {
+  max: bigint
+  min: bigint
+  signed: boolean
+  size: number
+}
+
+/** Parses an integer type and its bounds, once per type rather than per value. */
+function getInteger(type: string): Integer {
+  const signed = type.startsWith('int')
+  const size = Number.parseInt(type.split('int')[1] || '256', 10)
+  if (!(size < 256)) return { max: 0n, min: 0n, signed, size }
+  const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+  return { max, min: signed ? -max - 1n : 0n, signed, size }
+}
+
+function decodeInteger(cursor: Cursor.Cursor, integer: Integer) {
+  const { max, min, signed, size } = integer
+  const value = Bytes.toBigInt(cursor.readBytes(32), { signed })
+  // The word must hold a value that fits the declared size (zero-padded for
+  // unsigned, sign-extended for signed types).
+  if (size < 256 && (value > max || value < min))
+    throw new Hex.IntegerOutOfRangeError({
+      max: max.toString(),
+      min: min.toString(),
+      signed,
+      size: size / 8,
+      value: value.toString(),
+    })
+  return [size > 48 ? value : Number(value), 32]
+}
+
+/**
+ * Resolves how to decode a parameter once, so that the elements of an array
+ * do not each re-parse its type. Types other than `address`, `bool` and
+ * integers go through `decodeParameter`.
+ */
+function getDecoder(
+  param: AbiParameters.Parameter,
+  checksumAddress: boolean | undefined,
+): (
+  cursor: Cursor.Cursor,
+  staticPosition: number,
+) => ReturnType<typeof decodeParameter> {
+  const { type } = param
+  if (type === 'address')
+    return (cursor) => decodeAddress(cursor, { checksum: checksumAddress })
+  if (type === 'bool') return decodeBool
+  if (
+    (type.startsWith('uint') || type.startsWith('int')) &&
+    !getArrayComponents(type)
+  ) {
+    const integer = getInteger(type)
+    return (cursor) => decodeInteger(cursor, integer)
+  }
+  return (cursor, staticPosition) =>
+    decodeParameter(cursor, param, { checksumAddress, staticPosition })
 }
 
 /** @internal */
@@ -502,21 +562,13 @@ export function encodeParameters(
   const bytes = new Uint8Array(prefixSize + size)
   const writer: WriteContext = {
     bytes,
-    patches: [],
     view: new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength),
   }
 
   if (prefix) writeHex(writer, 0, prefix)
   writeParameters(writer, prefixSize, compiled, values)
 
-  let data = Hex.fromBytes(bytes)
-  for (let i = 0; i < writer.patches.length; i++) {
-    const patch = writer.patches[i]!
-    const start = 2 + patch.offset * 2
-    data =
-      `${data.slice(0, start)}${patch.value}${data.slice(start + patch.value.length)}` as Hex.Hex
-  }
-  return data
+  return Hex.fromBytes(bytes)
 }
 
 export declare namespace encodeParameters {
@@ -533,6 +585,8 @@ export declare namespace encodeParameters {
     | AbiParameters.InvalidTypeError
     | Address.assert.ErrorType
     | Hex.IntegerOutOfRangeError
+    | Hex.InvalidHexValueError
+    | Hex.InvalidLengthError
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
@@ -731,6 +785,9 @@ function measureParameter(
         expectedSize: parameter.size,
         value: value_,
       })
+    // An unpaired nibble has no byte to belong to, so reject it instead of
+    // guessing which half of a byte it is.
+    if (value_.length % 2 !== 0) throw new Hex.InvalidLengthError(value_)
     if (parameter.size !== null) return 32
     return 32 + Math.ceil(size / 32) * 32
   }
@@ -783,18 +840,6 @@ function getUtf8Size(value: string): number {
 function normalizeString(value: unknown): string {
   if (value === undefined) return ''
   return `${value}`
-}
-
-function isWritableHex(value: Hex.Hex): boolean {
-  if (
-    typeof value !== 'string' ||
-    value.charCodeAt(0) !== 48 ||
-    value.charCodeAt(1) !== 120
-  )
-    return false
-  for (let i = 2; i < value.length; i++)
-    if (toNibble(value.charCodeAt(i)) === -1) return false
-  return true
 }
 
 function writeParameters(
@@ -899,18 +944,36 @@ function writeHex(
   offset: number,
   value: Hex.Hex,
 ): number {
-  if (!isWritableHex(value)) {
-    const patch = value.slice(2)
-    context.patches.push({ offset, value: patch })
-    return offset + Math.ceil(patch.length / 2)
-  }
+  if (
+    typeof value !== 'string' ||
+    value.charCodeAt(0) !== 48 ||
+    value.charCodeAt(1) !== 120
+  )
+    throw new Hex.InvalidHexValueError(value)
 
+  // Validate and write in one pass. A valid nibble is at most `0x0f`, so only
+  // the `0xff` sentinel sets bit 7; one check after the loop covers every
+  // character. `nibbleTable` only spans Latin-1, so a code unit above it reads
+  // `undefined` and is mapped to the sentinel.
+  const { bytes } = context
+  // A local reference: some module transforms turn every read of an imported
+  // binding into a property lookup, which would land in the hot loop.
+  const table = nibbleTable
+  const length = value.length
+  let invalid = 0
   let i = 2
-  for (; i + 1 < value.length; i += 2)
-    context.bytes[offset++] =
-      (toNibble(value.charCodeAt(i)) << 4) | toNibble(value.charCodeAt(i + 1))
-  if (i < value.length)
-    context.bytes[offset++] = toNibble(value.charCodeAt(i)) << 4
+  for (; i + 1 < length; i += 2) {
+    const hi = table[value.charCodeAt(i)] ?? 0xff
+    const lo = table[value.charCodeAt(i + 1)] ?? 0xff
+    invalid |= hi | lo
+    bytes[offset++] = (hi << 4) | lo
+  }
+  if (i < length) {
+    const hi = table[value.charCodeAt(i)] ?? 0xff
+    invalid |= hi
+    bytes[offset++] = hi << 4
+  }
+  if (invalid & 0x80) throw new Hex.InvalidHexValueError(value)
   return offset
 }
 
@@ -929,25 +992,22 @@ function writeWord(
   }
 
   const hex = value_.toString(16)
+  const table = nibbleTable
   let cursor = offset + 32 - Math.ceil(hex.length / 2)
   let i = hex.length % 2
-  if (i === 1) context.bytes[cursor++] = toNibble(hex.charCodeAt(0))
+  if (i === 1) context.bytes[cursor++] = table[hex.charCodeAt(0)]!
   for (; i < hex.length; i += 2)
     context.bytes[cursor++] =
-      (toNibble(hex.charCodeAt(i)) << 4) | toNibble(hex.charCodeAt(i + 1))
-}
-
-function toNibble(code: number): number {
-  if (code >= 48 && code <= 57) return code - 48
-  if (code >= 65 && code <= 70) return code - 55
-  if (code >= 97 && code <= 102) return code - 87
-  return -1
+      (table[hex.charCodeAt(i)]! << 4) | table[hex.charCodeAt(i + 1)]!
 }
 
 /** @internal */
 export function getArrayComponents(
   type: string,
 ): [length: number | null, innerType: string] | undefined {
+  // Only a type ending in `]` can match, so skip the regex for the element
+  // types (`uint256`, `address`, ...) that decoding checks once per value.
+  if (type.charCodeAt(type.length - 1) !== 93 /* ] */) return undefined
   const matches = arraySuffixRegex.exec(type)
   return matches
     ? // Return `null` if the array is dynamic.

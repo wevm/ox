@@ -97,6 +97,9 @@ describe('Hex.toBigInt', () => {
   bench('32 bytes', () => {
     Hex.toBigInt(smallHex)
   })
+  bench('32 bytes, signed', () => {
+    Hex.toBigInt(hex32, { signed: true })
+  })
 })
 
 describe('Hex.padLeft', () => {
@@ -117,5 +120,19 @@ describe('Hex.fromString', () => {
 describe('Hex.validate (strict)', () => {
   bench('256 bytes', () => {
     Hex.validate(mediumHex, { strict: true })
+  })
+
+  bench('invalid', () => {
+    Hex.validate('0xzz', { strict: true })
+  })
+})
+
+describe('Hex.validate', () => {
+  bench('valid', () => {
+    Hex.validate(smallHex)
+  })
+
+  bench('invalid (no prefix)', () => {
+    Hex.validate('deadbeef')
   })
 })

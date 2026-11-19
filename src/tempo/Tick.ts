@@ -101,14 +101,16 @@ export function fromPrice(price: fromPrice.Price): fromPrice.ReturnType {
     throw new InvalidPriceFormatError({ price })
 
   // Parse price using string manipulation to avoid float precision issues
-  const [w, d = '0'] = priceStr.split('.')
+  const negative = priceStr.startsWith('-')
+  const [w, d = '0'] = (negative ? priceStr.slice(1) : priceStr).split('.')
   const whole = BigInt(w!)
 
   // Pad or truncate decimal to exactly 5 digits
   const decimal = BigInt(d.padEnd(5, '0').slice(0, 5))
 
-  // Calculate price
-  const priceInt = whole * BigInt(priceScale) + decimal
+  // Calculate price, applying the sign last since `BigInt('-0')` is `0n`
+  const priceInt =
+    (negative ? -1n : 1n) * (whole * BigInt(priceScale) + decimal)
 
   // Calculate tick
   const tick = Number(priceInt - BigInt(priceScale))

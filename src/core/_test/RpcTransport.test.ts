@@ -89,6 +89,53 @@ describe('fromHttp', () => {
     expect(blockNumber).toMatchInlineSnapshot(`"eth_accounts"`)
   })
 
+  test('options: fetchOptions (headers)', async () => {
+    const server = await createHttpServer((req, res) => {
+      res.end(
+        JSON.stringify({
+          id: 0,
+          jsonrpc: '2.0',
+          result: [req.headers['content-type'], req.headers['x-custom-header']],
+        }),
+      )
+    })
+
+    const results = []
+    for (const headers of [
+      { 'Content-Type': 'application/json-rpc', 'x-custom-header': 'wagmi' },
+      new Headers({
+        'Content-Type': 'application/json-rpc',
+        'x-custom-header': 'wagmi',
+      }),
+      [
+        ['Content-Type', 'application/json-rpc'],
+        ['x-custom-header', 'wagmi'],
+      ] as [string, string][],
+    ]) {
+      const transport = RpcTransport.fromHttp(server.url, {
+        fetchOptions: { headers },
+      })
+      results.push(await transport.request({ method: 'eth_accounts' }))
+    }
+
+    expect(results).toMatchInlineSnapshot(`
+      [
+        [
+          "application/json-rpc",
+          "wagmi",
+        ],
+        [
+          "application/json-rpc",
+          "wagmi",
+        ],
+        [
+          "application/json-rpc",
+          "wagmi",
+        ],
+      ]
+    `)
+  })
+
   test('options: timeout', async () => {
     const server = await createHttpServer(async (_, res) => {
       await setTimeout(100)
@@ -177,7 +224,7 @@ describe('fromHttp', () => {
 
       Status: 400
       URL: https://oxlib.sh/rpc
-      Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
+      Body: {"id":0,"method":"eth_accounts","jsonrpc":"2.0"}
 
       Details: Bad Request]
     `)
@@ -197,7 +244,7 @@ describe('fromHttp', () => {
 
       Status: 400
       URL: https://oxlib.sh/rpc
-      Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
+      Body: {"id":0,"method":"eth_accounts","jsonrpc":"2.0"}
 
       Details: bad]
     `)
@@ -268,6 +315,19 @@ describe('fromHttp', () => {
       Object.defineProperty(AbortSignal, 'any', descriptor)
       await server.close()
     }
+  })
+
+  test('behavior: timeout rejects when `fetchFn` ignores the signal', async () => {
+    const transport = RpcTransport.fromHttp('https://example.com', {
+      fetchFn: () => new Promise<Response>(() => {}),
+      timeout: 50,
+    })
+
+    await expect(() =>
+      transport.request({ method: 'eth_accounts' }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Promise.TimeoutError: Operation timed out.]`,
+    )
   })
 
   test('behavior: timeout covers a response body that stalls after its headers', async () => {

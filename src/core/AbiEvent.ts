@@ -30,6 +30,9 @@ export type AbiEvent = abitype.AbiEvent & {
  */
 const arraySuffixRegex = /^(.*)\[(\d+)?\]$/
 
+/** Matches a 32-byte topic word. */
+const topicRegex = /^0x[0-9a-fA-F]{64}$/
+
 /**
  * Encodes a primitive (32-byte) indexed event topic directly to a
  * left-padded 32-byte hex word, skipping the `AbiParameters.encode`
@@ -58,13 +61,16 @@ function encodePrimitiveTopic(
     const signed = type[0] === 'i'
     const sizeStr = signed ? type.slice(3) : type.slice(4)
     const size = sizeStr === '' ? 256 : Number(sizeStr)
-    if (!Number.isFinite(size)) return undefined
+    // Narrower widths go through `AbiParameters.encode`, which range-checks them.
+    if (size !== 256) return undefined
     return Hex.fromNumber(value as number | bigint, { size: 32, signed })
   }
-  // `bytesN` (fixed): right-pad to 32 bytes.
+  // `bytesN` (fixed): a 32-byte `bytes32` is already its own topic.
   if (type.startsWith('bytes') && type.length > 5) {
     if (typeof value !== 'string') return undefined
-    return Hex.padRight(value as Hex.Hex, 32)
+    // Other sizes go through `AbiParameters.encode`, which checks the length.
+    if (type !== 'bytes32' || value.length !== 66) return undefined
+    return value as Hex.Hex
   }
   return undefined
 }
@@ -72,7 +78,9 @@ function encodePrimitiveTopic(
 /**
  * Decodes a primitive (32-byte) indexed event topic directly to a
  * primitive value, skipping the `AbiParameters.decode` round-trip.
- * Returns a `[value]` tuple on hit, or `undefined` on miss.
+ * Returns a `[value]` tuple on hit, or `undefined` on miss. A topic that
+ * is not a canonical 32-byte word for the type is a miss, so that
+ * `AbiParameters.decode` validates (and rejects) it.
  *
  * @internal
  */
@@ -81,34 +89,59 @@ function decodePrimitiveTopic(
   topic: Hex.Hex,
   options: decode.Options = {},
 ): [value: unknown] | undefined {
+  // A topic is a 32-byte word (`0x` + 64 hex).
+  if (topic.length !== 66) return undefined
   if (type === 'address') {
-    // Trailing 20 bytes; topic is always 66 chars (`0x` + 64 hex).
+    // The high 12 bytes must be zero padding.
+    if (!topic.startsWith('0x000000000000000000000000')) return undefined
     const address = `0x${topic.slice(26)}` as Address.Address
-    return [
-      options.checksumAddress === false ? address : Address.checksum(address),
-    ]
+    // `Address.checksum` rejects an invalid address itself.
+    if (options.checksumAddress !== false) return [Address.checksum(address)]
+    Address.assert(address, { strict: false })
+    return [address]
   }
   if (type === 'bool') {
-    // Last byte determines truthiness (Solidity left-pads booleans).
-    return [topic.charCodeAt(65) === 49 /* '1' */]
+    // The whole word must be `0` or `1`.
+    if (
+      topic ===
+      '0x0000000000000000000000000000000000000000000000000000000000000000'
+    )
+      return [false]
+    if (
+      topic ===
+      '0x0000000000000000000000000000000000000000000000000000000000000001'
+    )
+      return [true]
+    return undefined
   }
   if (type.startsWith('uint') || type.startsWith('int')) {
     const signed = type[0] === 'i'
     const sizeStr = signed ? type.slice(3) : type.slice(4)
     const size = sizeStr === '' ? 256 : Number(sizeStr)
     if (!Number.isFinite(size)) return undefined
-    const big =
-      size > 48
-        ? Hex.toBigInt(topic, { signed })
-        : Hex.toNumber(topic, { signed })
-    return [big]
+    const value = Hex.toBigInt(topic, { signed })
+    // The word must hold a value that fits the declared size (zero-padded
+    // for unsigned, sign-extended for signed types).
+    if (size < 256) {
+      const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+      const min = signed ? -max - 1n : 0n
+      if (value > max || value < min) return undefined
+    }
+    return [size > 48 ? value : Number(value)]
   }
   if (type.startsWith('bytes') && type.length > 5) {
     const sizeStr = type.slice(5)
     const size = Number(sizeStr)
     if (!Number.isFinite(size)) return undefined
-    // Take leading `size` bytes of the 32-byte topic.
-    return [`0x${topic.slice(2, 2 + size * 2)}` as Hex.Hex]
+    // Anything but hex takes the `AbiParameters.decode` path, which reports
+    // the error.
+    if (!topicRegex.test(topic)) return undefined
+    // Take leading `size` bytes of the 32-byte topic. The rest must be zero
+    // padding.
+    const end = 2 + size * 2
+    for (let i = end; i < 66; i++)
+      if (topic.charCodeAt(i) !== 48) return undefined
+    return [`0x${topic.slice(2, end)}` as Hex.Hex]
   }
   return undefined
 }
@@ -272,6 +305,13 @@ function assertMatchingArgs(
       Solidity.bytesRegex.test(input.type)
     )
       return value.toLowerCase() === arg.toLowerCase()
+    // Small integers decode as numbers, so match a number or bigint either way.
+    if (
+      (typeof value === 'bigint' || Number.isInteger(value)) &&
+      (typeof arg === 'bigint' || Number.isInteger(arg)) &&
+      Solidity.integerRegex.test(input.type)
+    )
+      return BigInt(value as bigint | number) === BigInt(arg as bigint | number)
     return value === arg
   }
 
@@ -296,9 +336,7 @@ function assertMatchingArgs(
           given: matchArgs,
         })
     }
-  }
-
-  if (
+  } else if (
     typeof args === 'object' &&
     !Array.isArray(args) &&
     typeof matchArgs === 'object' &&
@@ -306,7 +344,10 @@ function assertMatchingArgs(
   )
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
-      const input = abiEvent.inputs.find((input) => input.name === key)
+      // `decode` keys an unnamed input by its index.
+      const input = abiEvent.inputs.find(
+        (input, index) => (input.name || `${index}`) === key,
+      )
       if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
@@ -321,6 +362,20 @@ function assertMatchingArgs(
           given: matchArgs,
         })
     }
+  // Positional and keyed arguments cannot be compared with each other. A
+  // filter without values matches any arguments.
+  else if (
+    typeof matchArgs === 'object' &&
+    matchArgs !== null &&
+    Object.values(matchArgs).some(
+      (value) => value !== null && value !== undefined,
+    )
+  )
+    throw new ArgsMismatchError({
+      abiEvent,
+      expected: args,
+      given: matchArgs,
+    })
 }
 
 /**
@@ -364,6 +419,8 @@ function assertMatchingArgs(
  * ### ABI-shorthand
  *
  * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(decode:function)}:
+ *
+ * When the ABI holds several events with that name, the overload is resolved from the selector in `topics[0]`.
  *
  * ```ts twoslash
  * // @noErrors
@@ -482,7 +539,7 @@ export function decode(
         options?: decode.Options | undefined,
       ]
 ): decode.ReturnType {
-  const [abiEvent, log, options] = (() => {
+  const [abiEvent_, log, options] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name, log, options] = parameters as [
         Abi.Abi | readonly unknown[],
@@ -501,6 +558,20 @@ export function decode(
   })()
 
   const { data, topics } = log
+
+  // An event extracted by name carries its other overloads, and `topics[0]`
+  // holds the selector of the overload that was emitted. Anonymous overloads
+  // omit the selector topic, so they are never matched by it.
+  const abiEvent = (() => {
+    const { overloads } = abiEvent_ as AbiEvent
+    if (!overloads) return abiEvent_
+    const selector = topics[0]
+    return (
+      [abiEvent_, ...overloads].find(
+        (item) => item.anonymous !== true && getSelector(item) === selector,
+      ) ?? abiEvent_
+    )
+  })()
 
   const isAnonymous = abiEvent.anonymous === true
   const argTopics = isAnonymous ? [...topics] : topics.slice(1)
@@ -549,23 +620,11 @@ export function decode(
         abiEvent,
         param: param as abitype.AbiParameter & { indexed: boolean },
       })
-    args[isUnnamed ? index : param.name || index] = (() => {
-      const t = param.type
-      if (
-        t === 'string' ||
-        t === 'bytes' ||
-        t === 'tuple' ||
-        arraySuffixRegex.test(t)
-      )
-        return topic
-      // Fast path: 32-byte primitive (`address`, `bool`, `uintN`,
-      // `intN`, `bytesN`). Reads the topic word directly without
-      // allocating a `Cursor` or running `Bytes.fromHex`.
-      const fast = decodePrimitiveTopic(t, topic, options)
-      if (fast) return fast[0]
-      const decoded = AbiParameters.decode([param], topic, options) || []
-      return decoded[0]
-    })()
+    args[isUnnamed ? index : param.name || index] = decodeTopic(
+      param,
+      topic,
+      options,
+    )
   }
 
   // Decode data (non-indexed args).
@@ -627,18 +686,27 @@ export declare namespace decode {
 
   type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
     IsNarrowable<abiEvent, AbiEvent> extends true
-      ? abiEvent['inputs'] extends readonly []
-        ? undefined
-        : internal.ParametersToPrimitiveTypes<
-            abiEvent['inputs'],
-            { EnableUnion: false; IndexedOnly: false; Required: true }
-          >
+      ? // distribute over the event and its overloads
+          | abiEvent
+          | (abiEvent['overloads'] extends readonly AbiEvent[]
+              ? abiEvent['overloads'][number]
+              : never) extends infer item extends AbiEvent
+        ? item extends AbiEvent
+          ? item['inputs'] extends readonly []
+            ? undefined
+            : internal.ParametersToPrimitiveTypes<
+                item['inputs'],
+                { EnableUnion: false; IndexedOnly: false; Required: true }
+              >
+          : never
+        : never
       : unknown
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
     | getSelector.ErrorType
     | DataMismatchError
+    | Hex.SizeOverflowError
     | SelectorTopicMismatchError
     | TopicsMismatchError
     | Errors.GlobalErrorType
@@ -684,8 +752,40 @@ export function decodeLog<const abi extends Abi.Abi | readonly unknown[]>(
   options?: decodeLog.Options,
 ): decodeLog.ReturnType<decodeLog.ExtractEvent<abi>> {
   const selector = log.topics[0]
+  const abiEvents = (abi as Abi.Abi).filter(
+    (item): item is AbiEvent => item.type === 'event',
+  )
+  // Anonymous events omit the signature topic, so they are never matched by
+  // `topics[0]`.
+  const named = abiEvents.filter((item) => item.anonymous !== true)
+
+  // Nothing in a log identifies an anonymous event, so any log with the same
+  // topic count fits it. Anonymous events are only considered when every
+  // event in the ABI is anonymous. For a mixed ABI, decode with the event
+  // itself through `AbiEvent.decode`.
+  const hasSelectorMatch =
+    selector !== undefined &&
+    named.some((item) => getSelector(item) === selector)
+  if (
+    !hasSelectorMatch &&
+    abiEvents.length > 0 &&
+    abiEvents.every((item) => item.anonymous === true)
+  ) {
+    const candidates = abiEvents.filter(
+      (item) => indexedCount(item) === log.topics.length,
+    )
+    if (candidates.length > 1)
+      throw new AnonymousEventAmbiguityError({ abiEvents: candidates })
+    const abiEvent = candidates[0] as decodeLog.ExtractEvent<abi> | undefined
+    if (abiEvent)
+      return {
+        event: abiEvent,
+        args: decode(abiEvent, log, options),
+      }
+  }
+
   if (!selector) throw new SelectorTopicNotFoundError()
-  const abiEvent = fromAbi(abi, selector) as decodeLog.ExtractEvent<abi>
+  const abiEvent = fromAbi(named, selector) as decodeLog.ExtractEvent<abi>
   return {
     event: abiEvent,
     args: decode(abiEvent, log, options),
@@ -706,6 +806,7 @@ export declare namespace decodeLog {
   }
 
   type ErrorType =
+    | AnonymousEventAmbiguityError
     | decode.ErrorType
     | fromAbi.ErrorType
     | SelectorTopicNotFoundError
@@ -780,13 +881,40 @@ export function extractLogs<
   const abiEvents = (abi as Abi.Abi).filter(
     (item): item is AbiEvent => item.type === 'event',
   )
+  // Nothing in a log identifies an anonymous event, so any log with the same
+  // topic count fits it. Anonymous events are only considered when requested:
+  // `eventName` names one, or every event in the ABI is anonymous. Otherwise a
+  // log from another contract is extracted as the anonymous event.
+  const anonymousEvents = (() => {
+    if (eventName)
+      return abiEvents.filter(
+        (item) => item.anonymous === true && eventName.includes(item.name),
+      )
+    if (abiEvents.every((item) => item.anonymous === true)) return abiEvents
+    return []
+  })()
   const out: extractLogs.ReturnType[] = []
   for (const log of logs) {
     const log_ = formatExtractLog(log)
     const selector = log_.topics[0]
-    if (!selector) continue
 
-    const items = abiEvents.filter((item) => getSelector(item) === selector)
+    const items = (() => {
+      // A signature match wins, so an anonymous event never claims a log
+      // whose signature is known.
+      const bySelector = selector
+        ? abiEvents.filter(
+            (item) => item.anonymous !== true && getSelector(item) === selector,
+          )
+        : []
+      if (bySelector.length > 0) return bySelector
+      // A dynamic ABI value can decode as a static type without throwing, so
+      // several anonymous events with the same topic count are not guessed.
+      const candidates = anonymousEvents.filter(
+        (item) => indexedCount(item) === log_.topics.length,
+      )
+      if (candidates.length === 1) return candidates
+      return []
+    })()
     if (items.length === 0) continue
 
     let event:
@@ -809,7 +937,9 @@ export function extractLogs<
       } catch {}
     }
 
-    if (!event && !strict) {
+    // An anonymous event that fails to decode is not identified, so the
+    // non-strict fallback only applies to a signature match.
+    if (!event && !strict && items[0]!.anonymous !== true) {
       const item = items[0]!
       try {
         event = {
@@ -820,7 +950,7 @@ export function extractLogs<
           event: item,
         }
       } catch {
-        const isUnnamed = item.inputs.some((x) => !('name' in x && x.name))
+        const isUnnamed = item.inputs.every((x) => !('name' in x && x.name))
         event = {
           args: isUnnamed ? [] : {},
           event: item,
@@ -940,26 +1070,31 @@ function decodeForExtract(
   const { data, topics } = log
   const { strict } = options
 
-  const selector = topics[0]
-  if (selector !== getSelector(abiEvent))
-    throw new SelectorTopicMismatchError({
-      abiEvent,
-      actual: selector,
-      expected: getSelector(abiEvent),
-    })
+  const isAnonymous = abiEvent.anonymous === true
+  if (!isAnonymous) {
+    const selector = topics[0]
+    if (selector !== getSelector(abiEvent))
+      throw new SelectorTopicMismatchError({
+        abiEvent,
+        actual: selector,
+        expected: getSelector(abiEvent),
+      })
+  }
 
   const { inputs } = abiEvent
-  const isUnnamed = inputs.some((x) => !('name' in x && x.name))
+  // Matches `decode`: positional when every input is unnamed, otherwise keyed
+  // by name, or by index for an unnamed input.
+  const isUnnamed = inputs.every((x) => !('name' in x && x.name))
   const args: any = isUnnamed ? [] : {}
 
-  const argTopics = topics.slice(1)
+  const argTopics = isAnonymous ? topics : topics.slice(1)
   const indexedInputs: [abitype.AbiEventParameter, number][] = []
-  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedInputs: [abitype.AbiEventParameter, number][] = []
   const missingIndexedInputs: [abitype.AbiEventParameter, number][] = []
   for (let i = 0; i < inputs.length; i++) {
     const input = inputs[i]!
     if ('indexed' in input && input.indexed) indexedInputs.push([input, i])
-    else nonIndexedInputs.push(input)
+    else nonIndexedInputs.push([input, i])
   }
 
   for (let i = 0; i < indexedInputs.length; i++) {
@@ -979,9 +1114,10 @@ function decodeForExtract(
     })
   }
 
-  const inputsToDecode = strict
+  const dataInputs = strict
     ? nonIndexedInputs
-    : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs]
+    : [...missingIndexedInputs, ...nonIndexedInputs]
+  const inputsToDecode = dataInputs.map(([param]) => param)
 
   if (inputsToDecode.length > 0) {
     if (data && data !== '0x') {
@@ -989,25 +1125,9 @@ function decodeForExtract(
         const decodedData = AbiParameters.decode(inputsToDecode, data, {
           checksumAddress: options.checksumAddress,
         })
-        if (decodedData) {
-          let dataIndex = 0
-          if (!strict) {
-            for (const [param, index] of missingIndexedInputs) {
-              args[isUnnamed ? index : param.name || index] =
-                decodedData[dataIndex++]
-            }
-          }
-          if (isUnnamed) {
-            for (let i = 0; i < inputs.length; i++)
-              if (args[i] === undefined && dataIndex < decodedData.length)
-                args[i] = decodedData[dataIndex++]
-          } else {
-            for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const input = nonIndexedInputs[i]!
-              args[input.name!] = decodedData[dataIndex++]
-            }
-          }
-        }
+        if (decodedData)
+          for (const [i, [param, index]] of dataInputs.entries())
+            args[isUnnamed ? index : param.name || index] = decodedData[i]
       } catch (err) {
         if (strict) {
           if (
@@ -1039,7 +1159,7 @@ function decodeForExtract(
 function decodeTopic(
   param: abitype.AbiEventParameter,
   topic: Hex.Hex,
-  options: decode.Options,
+  options: decode.Options = {},
 ) {
   const type = param.type
   if (
@@ -1049,8 +1169,15 @@ function decodeTopic(
     arraySuffixRegex.test(type)
   )
     return topic
+  // Fast path: 32-byte primitive (`address`, `bool`, `uintN`, `intN`,
+  // `bytesN`). Reads the topic word directly without allocating a `Cursor` or
+  // running `Bytes.fromHex`.
   const fast = decodePrimitiveTopic(type, topic, options)
   if (fast) return fast[0]
+  // A value topic is exactly one word; `AbiParameters.decode` would ignore
+  // the bytes past it.
+  if (topic.length > 66)
+    throw new Hex.SizeOverflowError({ givenSize: Hex.size(topic), maxSize: 32 })
   const decoded = AbiParameters.decode([param], topic, options) || []
   return decoded[0]
 }
@@ -1074,6 +1201,10 @@ function formatExtractLog<const log extends extractLogs.Log>(log: log) {
   }
 }
 
+function indexedCount(abiEvent: AbiEvent) {
+  return abiEvent.inputs.filter((input) => input.indexed).length
+}
+
 function includesArgs(
   abiEvent: AbiEvent,
   args: unknown,
@@ -1082,11 +1213,12 @@ function includesArgs(
 ) {
   try {
     if (!matchArgs) return true
-    // Topics hold the selector, then indexed inputs in order. Non-strict
-    // decoding reads indexed inputs without a topic from data.
+    // Topics hold the selector, then indexed inputs in order. Anonymous events
+    // have no selector topic. Non-strict decoding reads indexed inputs without
+    // a topic from data.
     const topicInputs = abiEvent.inputs
       .filter((input) => input.indexed)
-      .slice(0, topics.length - 1)
+      .slice(0, abiEvent.anonymous === true ? topics.length : topics.length - 1)
     assertMatchingArgs(abiEvent, args, matchArgs, topicInputs)
     return true
   } catch {
@@ -2017,5 +2149,84 @@ export class FilterTypeNotSupportedError extends Errors.BaseError {
   override readonly name = 'AbiEvent.FilterTypeNotSupportedError'
   constructor(type: string) {
     super(`Filter type "${type}" is not supported.`)
+  }
+}
+
+/**
+ * Thrown when a log fits more than one anonymous event in an ABI. An anonymous
+ * log has no selector topic, so anonymous events with the same number of
+ * indexed inputs cannot be told apart.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   {
+ *     anonymous: true,
+ *     inputs: [
+ *       { indexed: true, name: 'from', type: 'address' },
+ *       { name: 'value', type: 'uint256' }
+ *     ],
+ *     name: 'Count',
+ *     type: 'event'
+ *   },
+ *   {
+ *     anonymous: true,
+ *     inputs: [
+ *       { indexed: true, name: 'from', type: 'address' },
+ *       { name: 'note', type: 'string' }
+ *     ],
+ *     name: 'Message',
+ *     type: 'event'
+ *   }
+ * ])
+ *
+ * AbiEvent.decodeLog(abi, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
+ * })
+ * // @error: AbiEvent.AnonymousEventAmbiguityError: Found ambiguous anonymous events for the log.
+ * ```
+ *
+ * ### Solution
+ *
+ * Decode the log with the intended event.
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const count = AbiEvent.from({
+ *   anonymous: true,
+ *   inputs: [
+ *     { indexed: true, name: 'from', type: 'address' },
+ *     { name: 'value', type: 'uint256' }
+ *   ],
+ *   name: 'Count',
+ *   type: 'event'
+ * })
+ *
+ * AbiEvent.decode(count, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
+ * })
+ * ```
+ */
+export class AnonymousEventAmbiguityError extends Errors.BaseError {
+  override readonly name = 'AbiEvent.AnonymousEventAmbiguityError'
+
+  constructor({ abiEvents }: { abiEvents: readonly AbiEvent[] }) {
+    super('Found ambiguous anonymous events for the log.', {
+      metaMessages: [
+        ...abiEvents.map((abiEvent) => `- \`${format(abiEvent)}\``),
+        '',
+        'These events take the same number of indexed topics.',
+        'Decode the log with `AbiEvent.decode` and the intended event.',
+      ],
+    })
   }
 }

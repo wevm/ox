@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vp/test'
+import { describe, expect, onTestFinished, test, vi } from 'vp/test'
+import * as core_Hex from '../../../core/Hex.js'
 import * as core_SignatureEnvelope from '../../../tempo/SignatureEnvelope.js'
 import * as z_SignatureEnvelope from '../SignatureEnvelope.js'
 import * as z from 'zod/mini'
@@ -47,6 +48,78 @@ describe('SignatureEnvelope', () => {
     expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, p256)).toEqual(
       core_SignatureEnvelope.fromRpc(p256),
     )
+  })
+
+  test('rejects WebAuthn data above the maximum size', () => {
+    const webAuthn = {
+      pubKeyX: p256.pubKeyX,
+      pubKeyY: p256.pubKeyY,
+      r: p256.r,
+      s: p256.s,
+      type: 'webAuthn',
+    } as const
+    // 37 (authenticatorData) + 16 + length (clientDataJSON) bytes
+    const webauthnData = (length: number) =>
+      core_Hex.concat(
+        `0x${'00'.repeat(37)}`,
+        core_Hex.fromString(JSON.stringify({ challenge: 'a'.repeat(length) })),
+      )
+    const max = { ...webAuthn, webauthnData: webauthnData(1867) }
+    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, max)).toEqual(
+      core_SignatureEnvelope.fromRpc(max),
+    )
+    expect(
+      z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...webAuthn,
+        webauthnData: webauthnData(1868),
+      }).error?.issues,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "custom",
+          "message": "expected at most 1920 bytes",
+          "path": [
+            "webauthnData",
+          ],
+        },
+      ]
+    `)
+  })
+
+  test('decodes and parses WebAuthn data at most once', () => {
+    // Each opening brace starts an object that only fails to parse past its
+    // end, so a search that tries every split offset reads all of it each time.
+    const clientDataJSON = `${'{"a":'.repeat(313)}${'}'.repeat(313)}`
+    const webAuthn = {
+      pubKeyX: p256.pubKeyX,
+      pubKeyY: p256.pubKeyY,
+      r: p256.r,
+      s: p256.s,
+      type: 'webAuthn',
+      webauthnData: core_Hex.concat(
+        `0x${'00'.repeat(37)}`,
+        core_Hex.fromString(clientDataJSON),
+      ),
+    } as const
+
+    const decode = vi.spyOn(TextDecoder.prototype, 'decode')
+    const parse = vi.spyOn(JSON, 'parse')
+    onTestFinished(() => {
+      vi.restoreAllMocks()
+    })
+
+    expect(() =>
+      z.decode(z_SignatureEnvelope.SignatureEnvelope, webAuthn),
+    ).toThrow('Unable to parse WebAuthn metadata')
+    expect(
+      decode.mock.calls.reduce(
+        (size, [input]) => size + (input?.byteLength ?? 0),
+        0,
+      ),
+    ).toBeLessThanOrEqual(clientDataJSON.length)
+    expect(
+      parse.mock.calls.reduce((size, [text]) => size + text.length, 0),
+    ).toBeLessThanOrEqual(clientDataJSON.length)
   })
 
   test('decodes a recursive keychain envelope', () => {
@@ -140,10 +213,71 @@ describe('SignatureEnvelope', () => {
         ),
       ).toEqual(rpc)
   })
+
+  test('derives yParity from v when yParity is omitted', () => {
+    const { yParity: _, ...rest } = secp256k1
+    expect(
+      (
+        [
+          '0x0',
+          '0x1',
+          '0x1b',
+          '0x1c',
+          '0x25',
+          '0x26',
+          '0x1fffffffffffff',
+          '0x20000000000001',
+          '0x20000000000002',
+          '0xffffffffffffffff',
+        ] as const
+      ).map(
+        (v) =>
+          (
+            z.decode(z_SignatureEnvelope.SignatureEnvelope, {
+              ...rest,
+              v,
+            }) as core_SignatureEnvelope.Secp256k1
+          ).signature.yParity,
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+      ]
+    `)
+  })
+
+  test('prefers yParity over v', () => {
+    expect(
+      z.decode(z_SignatureEnvelope.SignatureEnvelope, {
+        ...secp256k1,
+        v: '0x1c',
+      }),
+    ).toEqual(core_SignatureEnvelope.fromRpc(secp256k1))
+  })
+
+  test('rejects secp256k1 envelopes without yParity or a supported v', () => {
+    const { yParity: _, ...rest } = secp256k1
+    for (const v of ['0x2', '0x1a', '0x1d', '0x22', '0x', undefined])
+      expect(
+        z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
+          ...rest,
+          ...(v ? { v } : {}),
+        } as never).success,
+      ).toMatchInlineSnapshot(`false`)
+  })
 })
 
 describe('Keychain', () => {
-  test('rejects V1 wrappers with nested configurable delegates', () => {
+  test('rejects keychain wrappers around keychain-wrapped configurable delegates', () => {
     const inner = {
       inner: envelope,
       type: 'keychain',
@@ -179,13 +313,13 @@ describe('Keychain', () => {
         ...value,
         version: 'v2',
       }).success,
-    ).toMatchInlineSnapshot(`true`)
+    ).toMatchInlineSnapshot(`false`)
     expect(
       z.safeDecode(z_SignatureEnvelope.SignatureEnvelope, {
         ...rpc,
         version: 'v2',
       }).success,
-    ).toMatchInlineSnapshot(`true`)
+    ).toMatchInlineSnapshot(`false`)
   })
 })
 

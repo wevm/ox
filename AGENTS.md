@@ -70,6 +70,7 @@
 - **Site pages** -- human guides live under `site/src/pages/`.
 - **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/wasm`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
 - **Check TSDoc when touching docs** -- run `pnpm docs:gen` after changing public comments or examples.
+- **No `{@link}` to error classes in descriptions** -- error classes share one generated `errors` page, so `{@link ox#Module.SomeError}` in a function description renders a link to a page that does not exist and `vocs build` fails on the dead link. Write the name in backticks instead. `pnpm docs:gen` does not catch this; only `pnpm docs:build` does.
 - **SEO descriptions are auto-derived** -- every generated docs page emits a `description` frontmatter (used for `<meta name="description">` and OG images), targeting 5-15 words. It is derived from the TSDoc summary (markdown stripped, first paragraph, clamped). Add an optional `@description` TSDoc block tag to a function/namespace/schema to override the auto-derived text with hand-written SEO copy. Hand-written site pages should set their own `description` frontmatter (or a `# Title [description]` heading).
 
 ## Type Conventions
@@ -133,7 +134,7 @@
 ## Learned Workspace Facts
 
 - **Source layout** -- source lives in `src/`; tests live under `src/**/_test`; docs live in `site`; shared test utilities live in `test`; vectors live in `vectors`; contracts live in `contracts`.
-- **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@11.13.1`.
+- **Node and pnpm** -- the repo expects Node.js `>=22` and `pnpm@12.16.1`.
 - **Generated exports** -- `scripts/exports:update.ts` derives `package.json#exports` from `src/`. It flattens `src/core/<Name>.ts` to root package subpaths and ignores test/bench/snapshot files.
 - **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/node`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/wasm`, and `site/src/pages/glossary` are generated.
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.

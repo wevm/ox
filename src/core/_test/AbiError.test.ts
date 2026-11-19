@@ -76,6 +76,37 @@ describe('decode', () => {
     expect(decoded).toEqual(1)
   })
 
+  test('behavior: with overloads, resolved by name', () => {
+    const abi = Abi.from([
+      'error Example()',
+      'error Example(uint256 amount)',
+      'error Example(string reason)',
+    ])
+    expect(
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.from('error Example(uint256 amount)'), [5n]),
+      ),
+    ).toEqual(5n)
+    expect(
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.from('error Example(string reason)'), [
+          'denied',
+        ]),
+      ),
+    ).toEqual('denied')
+    expect(
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.from('error Example()')),
+      ),
+    ).toEqual(undefined)
+  })
+
   test('error: invalid data', () => {
     const error = AbiError.from('error Example(uint256 a)')
     expect(() =>
@@ -83,6 +114,108 @@ describe('decode', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[AbiItem.InvalidSelectorSizeError: Selector size is invalid. Expected 4 bytes. Received 2 bytes ("0xaaa").]`,
     )
+  })
+
+  test('behavior: solidity `Panic`', () => {
+    const data =
+      '0x4e487b710000000000000000000000000000000000000000000000000000000000000011'
+    expect(AbiError.decode(AbiError.solidityPanic, data)).toMatchInlineSnapshot(
+      `17`,
+    )
+    expect(
+      AbiError.decode(Abi.from(['error Paused()']), 'Panic', data),
+    ).toMatchInlineSnapshot(`17`)
+    expect(
+      AbiError.decode(
+        AbiError.solidityPanic,
+        AbiError.encode(AbiError.solidityPanic, [17]),
+      ),
+    ).toMatchInlineSnapshot(`17`)
+  })
+
+  test('behavior: uppercase data', () => {
+    const error = AbiError.from('error Unauthorized(address account)')
+    expect(
+      AbiError.decode(
+        error,
+        '0x8E4A23D6000000000000000000000000D8DA6BF26964AF9D7EED9E03E53415D37AA96045',
+      ),
+    ).toMatchInlineSnapshot(`"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"`)
+  })
+
+  test('error: selector mismatch', () => {
+    const abi = Abi.from([
+      'error InsufficientAllowance(uint256 available, uint256 required)',
+      'error InsufficientBalance(uint256 available, uint256 required)',
+      'error Paused()',
+    ])
+    const data = AbiError.encode(
+      AbiError.fromAbi(abi, 'InsufficientAllowance'),
+      [1n, 2n],
+    )
+
+    expect(() =>
+      AbiError.decode(AbiError.fromAbi(abi, 'InsufficientBalance'), data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0xcf479181".
+
+      Error: error InsufficientBalance(uint256 available, uint256 required)
+      Selector: 0xcf479181]
+    `)
+    expect(() => AbiError.decode(abi, 'InsufficientBalance', data))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0xcf479181".
+
+      Error: error InsufficientBalance(uint256 available, uint256 required)
+      Selector: 0xcf479181]
+    `)
+    expect(() => AbiError.decode(abi, 'Paused', data))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0x9e87fac8".
+
+      Error: error Paused()
+      Selector: 0x9e87fac8]
+    `)
+    expect(() => AbiError.decode(AbiError.solidityError, data))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x2a1b2dd8" does not match the expected selector "0x08c379a0".
+
+      Error: error Error(string message)
+      Selector: 0x08c379a0]
+    `)
+  })
+
+  test('error: selector mismatch, with overloads', () => {
+    const abi = Abi.from([
+      'error Example()',
+      'error Example(uint256 amount)',
+      'error Other(uint256 amount)',
+    ])
+
+    expect(() =>
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.fromAbi(abi, 'Other'), [1n]),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x42d43c87" does not match the expected selector "0xb085b9a5".
+
+      Error: error Example()
+      Selector: 0xb085b9a5]
+    `)
+    expect(() =>
+      AbiError.decode(
+        abi,
+        'Example',
+        AbiError.encode(AbiError.solidityError, ['denied']),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiError.SelectorMismatchError: Selector "0x08c379a0" does not match the expected selector "0xb085b9a5".
+
+      Error: error Example()
+      Selector: 0xb085b9a5]
+    `)
   })
 
   describe('behavior: network', async () => {
@@ -293,7 +426,7 @@ describe('decode', () => {
       'error InvalidSignature(uint r, uint s, uint8 yParity)',
     ])
     const data =
-      '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+      '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
 
     // Test both overload patterns
     const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
@@ -309,7 +442,7 @@ describe('decode', () => {
       'error InvalidSignature(uint r, uint s, uint8 yParity)',
     ])
     const data =
-      '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+      '0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
 
     // Test both overload patterns with options
     const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
@@ -828,6 +961,17 @@ describe('fromAbi', () => {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
       "inputs": [],
       "name": "Foo",
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "Foo",
+          "type": "error",
+        },
+      ],
       "type": "error",
     }
   `)
@@ -841,6 +985,17 @@ describe('fromAbi', () => {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
       "inputs": [],
       "name": "Foo",
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "Foo",
+          "type": "error",
+        },
+      ],
       "type": "error",
     }
   `)
@@ -858,6 +1013,26 @@ describe('fromAbi', () => {
       "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
       "inputs": [],
       "name": "Mint",
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "Mint",
+          "type": "error",
+        },
+        {
+          "inputs": [
+            {
+              "type": "string",
+            },
+          ],
+          "name": "Mint",
+          "type": "error",
+        },
+      ],
       "type": "error",
     }
   `)
@@ -1139,6 +1314,7 @@ test('exports', () => {
       "solidityErrorSelector",
       "solidityPanic",
       "solidityPanicSelector",
+      "SelectorMismatchError",
     ]
   `)
 })

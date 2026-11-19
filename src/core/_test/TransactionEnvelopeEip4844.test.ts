@@ -203,6 +203,19 @@ describe('deserialize', () => {
   })
 
   describe('errors', () => {
+    test('tip above empty fee cap', () => {
+      const serialized = TxEnvelopeEip4844.serialize({
+        blobVersionedHashes,
+        chainId: 1,
+        maxPriorityFeePerGas: 1n,
+      })
+      expect(() =>
+        TxEnvelopeEip4844.deserialize(serialized),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TransactionEnvelope.TipAboveFeeCapError: The provided tip (\`maxPriorityFeePerGas\` = 0.000000001 gwei) cannot be higher than the fee cap (\`maxFeePerGas\` = 0 gwei).]`,
+      )
+    })
+
     test('invalid access list (invalid address)', () => {
       expect(() =>
         TxEnvelopeEip4844.deserialize(

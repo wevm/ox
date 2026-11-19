@@ -171,6 +171,42 @@ describe('KeyAuthorization', () => {
     ).toBe(false)
   })
 
+  test('rejects recipients without a selector', () => {
+    const address = '0x20c0000000000000000000000000000000000001'
+    const recipients = ['0x1111111111111111111111111111111111111111']
+    expect(
+      z.safeParse(z_KeyAuthorization.Scope, { address, recipients }).error
+        ?.issues,
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "custom",
+          "message": "recipients require a selector",
+          "path": [],
+        },
+      ]
+    `)
+    expect(
+      z.safeEncode(z_KeyAuthorization.KeyAuthorization, {
+        ...core_KeyAuthorization.fromRpc(rpc),
+        scopes: [{ address, recipients }],
+      } as never).success,
+    ).toBe(false)
+    expect(
+      [
+        { address },
+        { address, recipients: [] },
+        { address, recipients, selector: '0xa9059cbb' },
+      ].map((scope) => z.safeParse(z_KeyAuthorization.Scope, scope).success),
+    ).toMatchInlineSnapshot(`
+      [
+        true,
+        true,
+        true,
+      ]
+    `)
+  })
+
   test('rejects legacy signatures without a config', () => {
     const legacyRpc = {
       account: '0x1111111111111111111111111111111111111111',

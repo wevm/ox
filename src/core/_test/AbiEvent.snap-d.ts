@@ -291,6 +291,15 @@ describe('fromAbi', () => {
   readonly name: "Foo"
   readonly type: "event"
   readonly inputs: readonly []
+  readonly overloads: [
+    {
+      readonly name: "Foo"
+      readonly type: "event"
+      readonly inputs: readonly [
+        { readonly type: "uint256" }
+      ]
+    }
+  ]
 }`)
   })
 

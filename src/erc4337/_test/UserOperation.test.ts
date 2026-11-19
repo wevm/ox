@@ -1,4 +1,4 @@
-import { Hex, Signature } from 'ox'
+import { AbiParameters, Hash, Hex, Signature } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { describe, expect, test } from 'vp/test'
 
@@ -552,6 +552,64 @@ describe('hash', () => {
       )
     })
 
+    test('args: factory without factoryData', () => {
+      const userOperation = {
+        callData: '0x',
+        callGasLimit: 6942069n,
+        factory: '0x1234567890123456789012345678901234567890',
+        maxFeePerGas: 69420n,
+        maxPriorityFeePerGas: 69n,
+        nonce: 0n,
+        preVerificationGas: 6942069n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 6942069n,
+      } as const
+      const options = {
+        chainId: 1,
+        entryPointAddress: '0x1234567890123456789012345678901234567890',
+        entryPointVersion: '0.7',
+      } as const
+
+      // EntryPoint 0.7 `getUserOpHash` over the packed user operation.
+      const packed = UserOperation.toPacked(userOperation)
+      expect(packed.initCode).toBe(userOperation.factory)
+      const expected = Hash.keccak256(
+        AbiParameters.encode(AbiParameters.from('bytes32, address, uint256'), [
+          Hash.keccak256(
+            AbiParameters.encode(
+              AbiParameters.from(
+                'address, uint256, bytes32, bytes32, bytes32, uint256, bytes32, bytes32',
+              ),
+              [
+                packed.sender,
+                packed.nonce,
+                Hash.keccak256(packed.initCode),
+                Hash.keccak256(packed.callData),
+                packed.accountGasLimits,
+                packed.preVerificationGas,
+                packed.gasFees,
+                Hash.keccak256(packed.paymasterAndData),
+              ],
+            ),
+          ),
+          options.entryPointAddress,
+          BigInt(options.chainId),
+        ]),
+      )
+      expect(expected).toMatchInlineSnapshot(
+        `"0x3990ff4fd5d4f830db9a8a7b75c4c20107d60a58d3819caea8eab03d03fe6ae6"`,
+      )
+
+      expect(UserOperation.hash(userOperation, options)).toBe(expected)
+      expect(
+        UserOperation.hash({ ...userOperation, factoryData: '0x' }, options),
+      ).toBe(expected)
+      expect(
+        UserOperation.hash(UserOperation.fromPacked(packed), options),
+      ).toBe(expected)
+    })
+
     test('args: paymaster', () => {
       expect(
         UserOperation.hash(
@@ -912,6 +970,62 @@ describe('toPacked', () => {
       ).toMatchInlineSnapshot(`"0x004122e325a297439656"`)
     })
   })
+
+  describe('eip7702', () => {
+    const userOperation = {
+      authorization: {
+        address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+        chainId: 1,
+        nonce: 69n,
+        yParity: 0,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
+      callData: '0xdeadbeef',
+      callGasLimit: 6942069n,
+      factory: '0x7702',
+      factoryData: '0xcafebabe',
+      maxFeePerGas: 69420n,
+      maxPriorityFeePerGas: 69n,
+      nonce: 0n,
+      preVerificationGas: 6942069n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: 6942069n,
+    } as const satisfies UserOperation.UserOperation<'0.8', true>
+
+    test('default: keeps the EntryPoint `0x7702` initCode marker', () => {
+      const packed = UserOperation.toPacked(userOperation)
+      expect(packed).toMatchInlineSnapshot(`
+        {
+          "accountGasLimits": "0x0000000000000000000000000069ed750000000000000000000000000069ed75",
+          "callData": "0xdeadbeef",
+          "gasFees": "0x0000000000000000000000000000004500000000000000000000000000010f2c",
+          "initCode": "0x7702000000000000000000000000000000000000cafebabe",
+          "nonce": 0n,
+          "paymasterAndData": "0x",
+          "preVerificationGas": 6942069n,
+          "sender": "0x1234567890123456789012345678901234567890",
+          "signature": "0x",
+        }
+      `)
+      const { factory, factoryData } = UserOperation.fromPacked(packed)
+      expect({ factory, factoryData }).toMatchInlineSnapshot(`
+        {
+          "factory": "0x7702000000000000000000000000000000000000",
+          "factoryData": "0xcafebabe",
+        }
+      `)
+    })
+
+    test('options: forHash', () => {
+      expect(
+        UserOperation.toPacked(userOperation, { forHash: true }).initCode,
+      ).toMatchInlineSnapshot(
+        `"0x9f1fdab6458c5fc642fa0f4c5af7473c46837357cafebabe"`,
+      )
+    })
+  })
 })
 
 describe('toInitCode', () => {
@@ -965,55 +1079,96 @@ describe('toInitCode', () => {
     ).toBe('0x7702000000000000000000000000000000000000')
   })
 
-  test('behavior: EIP-7702 factory with authorization and no factoryData', () => {
+  test('options: forHash: EIP-7702 factory with authorization and no factoryData', () => {
+    expect(
+      UserOperation.toInitCode(
+        {
+          factory: '0x7702',
+          factoryData: undefined,
+          authorization: {
+            address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+            chainId: 1,
+            nonce: 69n,
+            yParity: 0,
+            r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+            s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          },
+        },
+        { forHash: true },
+      ),
+    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
+  })
+
+  test('options: forHash: EIP-7702 factory with authorization and factoryData', () => {
+    expect(
+      UserOperation.toInitCode(
+        {
+          factory: '0x7702',
+          factoryData: '0xdeadbeef',
+          authorization: {
+            address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+            chainId: 1,
+            nonce: 69n,
+            yParity: 0,
+            r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+            s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          },
+        },
+        { forHash: true },
+      ),
+    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
+  })
+
+  test('options: forHash: EIP-7702 factory (full form) with authorization and factoryData', () => {
+    expect(
+      UserOperation.toInitCode(
+        {
+          factory: '0x7702000000000000000000000000000000000000',
+          factoryData: '0xcafebabe',
+          authorization: {
+            address: '0x1234567890123456789012345678901234567890',
+            chainId: 1,
+            nonce: 42n,
+            yParity: 1,
+            r: '0x000000000000000000000000000000000000000000000000000000000000007b',
+            s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
+          },
+        },
+        { forHash: true },
+      ),
+    ).toBe('0x1234567890123456789012345678901234567890cafebabe')
+  })
+
+  test('behavior: EIP-7702 factory with authorization packs the 20-byte marker', () => {
+    const authorization = {
+      address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+      chainId: 1,
+      nonce: 69n,
+      yParity: 0,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+    } as const
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
         factoryData: undefined,
-        authorization: {
-          address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
-          chainId: 1,
-          nonce: 69n,
-          yParity: 0,
-          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-        },
+        authorization,
       }),
-    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
-  })
-
-  test('behavior: EIP-7702 factory with authorization and factoryData', () => {
+    ).toBe('0x7702000000000000000000000000000000000000')
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
         factoryData: '0xdeadbeef',
-        authorization: {
-          address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
-          chainId: 1,
-          nonce: 69n,
-          yParity: 0,
-          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-        },
+        authorization,
       }),
-    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
-  })
-
-  test('behavior: EIP-7702 factory (full form) with authorization and factoryData', () => {
+    ).toBe('0x7702000000000000000000000000000000000000deadbeef')
     expect(
       UserOperation.toInitCode({
         factory: '0x7702000000000000000000000000000000000000',
-        factoryData: '0xcafebabe',
-        authorization: {
-          address: '0x1234567890123456789012345678901234567890',
-          chainId: 1,
-          nonce: 42n,
-          yParity: 1,
-          r: '0x000000000000000000000000000000000000000000000000000000000000007b',
-          s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
-        },
+        factoryData: '0xdeadbeef',
+        authorization,
       }),
-    ).toBe('0x1234567890123456789012345678901234567890cafebabe')
+    ).toBe('0x7702000000000000000000000000000000000000deadbeef')
   })
 })
 

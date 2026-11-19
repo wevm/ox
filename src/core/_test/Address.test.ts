@@ -145,6 +145,47 @@ describe('Address.fromPublicKey', () => {
       ),
     ).toEqual('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
   })
+
+  test('error: compressed public key', () => {
+    const publicKey = PublicKey.from(
+      '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+    )
+
+    expect(() => Address.fromPublicKey(PublicKey.compress(publicKey) as never))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":3,"x":"0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+    expect(() =>
+      Address.fromPublicKey(
+        PublicKey.from(
+          '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+        ),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":3,"x":"0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+    expect(() =>
+      Address.fromPublicKey(
+        PublicKey.from(
+          '0x028318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+        ),
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":2,"x":"0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+  })
 })
 
 describe('Address.isEqual', () => {

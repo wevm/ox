@@ -20,6 +20,7 @@ import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as AccountConfig from './AccountConfig.js'
 import * as AttestedSigner from './AttestedSigner.js'
+import * as WebauthnData from './internal/webauthnData.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'
@@ -32,6 +33,12 @@ const serializedAttestedType = AttestedSigner.signatureType
 /** Order of the P256 group, which bounds attested signature `r` and `s`. */
 const p256Order =
   0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
+
+/**
+ * Maximum WebAuthn signature size in bytes, excluding the type identifier
+ * (Tempo's `MAX_WEBAUTHN_SIGNATURE_LENGTH`).
+ */
+const maxWebAuthnSize = 2048
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -122,7 +129,7 @@ export type GetType<
  *
  * - **keychain** (type `0x03` V1, `0x04` V2): Access key signature that wraps an inner signature
  *   (secp256k1, p256, or webAuthn). Format: type byte + user_address (20 bytes) + inner signature.
- *   V2 binds the signature to the user account via `keccak256(sigHash || userAddress)`.
+ *   V2 binds the signature to the user account via `keccak256(0x04 || sigHash || userAddress)`.
  *   The protocol validates the access key authorization via the AccountKeychain precompile.
  *
  * - **configurable** (type `0x05`): Configurable account signature carrying the account address,
@@ -229,8 +236,8 @@ export type AttestedRpc = {
  * Keychain signature version.
  *
  * - `'v1'`: Legacy format. Inner signature signs the raw `sig_hash` directly. Deprecated at T1C.
- * - `'v2'`: Inner signature signs `keccak256(sig_hash || user_address)`, binding the signature
- *   to the specific user account.
+ * - `'v2'`: Inner signature signs `keccak256(0x04 || sig_hash || user_address)`, binding the
+ *   signature to the specific user account.
  */
 export type KeychainVersion = 'v1' | 'v2'
 
@@ -242,7 +249,7 @@ export type Keychain<numberType = number> = {
   type: 'keychain'
   /** Root account address that this transaction is being executed for */
   userAddress: Address.Address
-  /** Keychain signature version. @default 'v1' */
+  /** Keychain signature version. @default 'v2' */
   version?: KeychainVersion | undefined
 }
 
@@ -355,7 +362,7 @@ export type Type = (typeof types)[number]
  * ```
  *
  * @param envelope - The signature envelope to assert.
- * @throws `CoercionError` if the envelope type cannot be determined.
+ * @throws `CoercionError` if the envelope type cannot be determined or is not supported.
  */
 export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
   const type = getType(envelope)
@@ -410,7 +417,6 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    assertKeychainVersion(keychain)
     assertKeychainInner(keychain)
     assert(keychain.inner)
     return
@@ -427,6 +433,8 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     assertAttested(attested)
     return
   }
+
+  throw new CoercionError({ envelope })
 }
 
 export declare namespace assert {
@@ -441,28 +449,24 @@ export declare namespace assert {
     | Errors.GlobalErrorType
 }
 
-function assertKeychainVersion(keychain: Keychain): void {
-  if (keychain.version !== 'v1') return
-  let inner = keychain.inner
-  while (getType(inner) === 'keychain') inner = (inner as Keychain).inner
-  if (getType(inner) === 'configurable')
+function assertKeychainInner(keychain: Keychain): void {
+  const type = getType(keychain.inner)
+  if (type === 'keychain')
+    throw new InvalidApprovalError({
+      reason: 'keychain signatures cannot wrap a keychain signature',
+    })
+  if (keychain.version === 'v1' && type === 'configurable')
     throw new InvalidApprovalError({
       reason: 'configurable access keys require keychain V2',
     })
-}
-
-// Rejects attested signatures inside keychain signatures, including as owner
-// approvals of a configurable delegate: a program key is not an access key.
-function assertKeychainInner(keychain: Keychain): void {
-  let inner = keychain.inner
-  while (getType(inner) === 'keychain') inner = (inner as Keychain).inner
-  const type = getType(inner)
+  // A program key is not an access key: reject attested signatures inside a
+  // keychain signature, including as owner approvals of a configurable delegate.
+  const signatures = (keychain.inner as Configurable).signatures
   if (
     type === 'attested' ||
     (type === 'configurable' &&
-      (inner as Configurable).signatures.some(
-        (signature) => getType(signature) === 'attested',
-      ))
+      Array.isArray(signatures) &&
+      signatures.some((signature) => signature.type === 'attested'))
   )
     throw new InvalidApprovalError({
       reason: 'attested signatures cannot sign as access keys',
@@ -788,9 +792,15 @@ function deserialize_(value: Serialized): SignatureEnvelope {
   if (typeId === serializedWebAuthnType) {
     // WebAuthn: variable (webauthnData) + 32 (r) + 32 (s) + 32 (pubKeyX) + 32 (pubKeyY)
     // Minimum: 128 bytes (at least some authenticator data + signature components)
+    // Maximum: 2048 bytes
     if (dataSize < 128)
       throw new InvalidSerializedError({
         reason: `Invalid WebAuthn signature envelope size: expected at least 128 bytes, got ${dataSize} bytes`,
+        serialized,
+      })
+    if (dataSize > maxWebAuthnSize)
+      throw new InvalidSerializedError({
+        reason: `Invalid WebAuthn signature envelope size: expected at most ${maxWebAuthnSize} bytes, got ${dataSize} bytes`,
         serialized,
       })
 
@@ -799,24 +809,8 @@ function deserialize_(value: Serialized): SignatureEnvelope {
 
     // Parse webauthnData into authenticatorData and clientDataJSON
     // According to the Rust code, it's authenticatorData || clientDataJSON
-    // We need to find the split point (minimum authenticatorData is 37 bytes)
-    let authenticatorData: Hex.Hex | undefined
-    let clientDataJSON: string | undefined
-
-    // Try to find the JSON start (clientDataJSON should start with '{')
-    for (let split = 37; split < webauthnDataSize; split++) {
-      const potentialJson = Hex.toString(Hex.slice(webauthnData, split))
-      if (potentialJson.startsWith('{') && potentialJson.endsWith('}')) {
-        try {
-          JSON.parse(potentialJson)
-          authenticatorData = Hex.slice(webauthnData, 0, split)
-          clientDataJSON = potentialJson
-          break
-        } catch {}
-      }
-    }
-
-    if (!authenticatorData || !clientDataJSON)
+    const metadata = WebauthnData.split(webauthnData)
+    if (!metadata)
       throw new InvalidSerializedError({
         reason:
           'Unable to parse WebAuthn metadata: could not extract valid authenticatorData and clientDataJSON',
@@ -829,10 +823,7 @@ function deserialize_(value: Serialized): SignatureEnvelope {
         x: Hex.slice(data, webauthnDataSize + 64, webauthnDataSize + 96),
         y: Hex.slice(data, webauthnDataSize + 96, webauthnDataSize + 128),
       },
-      metadata: {
-        authenticatorData,
-        clientDataJSON,
-      },
+      metadata,
       signature: {
         r: Hex.slice(data, webauthnDataSize, webauthnDataSize + 32),
         s: Hex.slice(data, webauthnDataSize + 32, webauthnDataSize + 64),
@@ -846,11 +837,22 @@ function deserialize_(value: Serialized): SignatureEnvelope {
     typeId === serializedKeychainV2Type
   ) {
     const userAddress = Hex.slice(data, 0, 20)
-    const inner = deserialize_(Hex.slice(data, 20))
+    const inner = Hex.slice(data, 20)
+    // Reject nested keychains before decoding their contents.
+    if (
+      Hex.size(inner) !== 65 &&
+      [serializedKeychainType, serializedKeychainV2Type].includes(
+        Hex.slice(inner, 0, 1),
+      )
+    )
+      throw new InvalidSerializedError({
+        reason: 'keychain signatures cannot wrap a keychain signature',
+        serialized,
+      })
 
     const envelope = {
       userAddress,
-      inner,
+      inner: deserialize_(inner),
       type: 'keychain',
       version: typeId === serializedKeychainV2Type ? 'v2' : 'v1',
     } satisfies Keychain
@@ -1316,24 +1318,16 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     const webauthnData = envelope.webauthnData
     const webauthnDataSize = Hex.size(webauthnData)
 
+    // The signature and public key take 128 bytes of the maximum size.
+    if (webauthnDataSize > maxWebAuthnSize - 128)
+      throw new InvalidSerializedError({
+        reason: `Invalid WebAuthn data size: expected at most ${maxWebAuthnSize - 128} bytes, got ${webauthnDataSize} bytes`,
+        serialized: webauthnData,
+      })
+
     // Parse webauthnData into authenticatorData and clientDataJSON
-    let authenticatorData: Hex.Hex | undefined
-    let clientDataJSON: string | undefined
-
-    // Try to find the JSON start (clientDataJSON should start with '{')
-    for (let split = 37; split < webauthnDataSize; split++) {
-      const potentialJson = Hex.toString(Hex.slice(webauthnData, split))
-      if (potentialJson.startsWith('{') && potentialJson.endsWith('}')) {
-        try {
-          JSON.parse(potentialJson)
-          authenticatorData = Hex.slice(webauthnData, 0, split)
-          clientDataJSON = potentialJson
-          break
-        } catch {}
-      }
-    }
-
-    if (!authenticatorData || !clientDataJSON)
+    const metadata = WebauthnData.split(webauthnData)
+    if (!metadata)
       throw new InvalidSerializedError({
         reason:
           'Unable to parse WebAuthn metadata: could not extract valid authenticatorData and clientDataJSON',
@@ -1341,10 +1335,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       })
 
     return {
-      metadata: {
-        authenticatorData,
-        clientDataJSON,
-      },
+      metadata,
       publicKey: {
         prefix: 4,
         x: Hex.padLeft(envelope.pubKeyX, 32),
@@ -1385,10 +1376,20 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     ('userAddress' in envelope && 'signature' in envelope)
   ) {
     const keychain = envelope as KeychainRpc
+    const { signature } = keychain
+    // Reject nested keychains before decoding their contents.
+    if (
+      typeof signature === 'object' &&
+      (signature.type === 'keychain' ||
+        ('userAddress' in signature && 'signature' in signature))
+    )
+      throw new InvalidApprovalError({
+        reason: 'keychain signatures cannot wrap a keychain signature',
+      })
     const result = {
       type: 'keychain',
       userAddress: keychain.userAddress,
-      inner: fromRpc(keychain.signature),
+      inner: fromRpc(signature),
       ...(keychain.keyId ? { keyId: keychain.keyId } : {}),
       ...(keychain.version ? { version: keychain.version } : {}),
     } satisfies Keychain
@@ -1762,7 +1763,7 @@ export function toRpc<const envelope extends toRpc.Input>(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
-    assertKeychainVersion(keychain)
+    assertKeychainInner(keychain)
     return {
       type: 'keychain',
       userAddress: keychain.userAddress,

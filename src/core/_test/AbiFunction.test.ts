@@ -91,6 +91,110 @@ describe('decodeData', () => {
       ),
     ).toEqual(['0xdeadbeef'])
   })
+
+  test('behavior: with overloads, resolved by name (one overload has zero inputs)', () => {
+    const abi = Abi.from([
+      {
+        inputs: [],
+        name: 'deposit',
+        outputs: [],
+        stateMutability: 'payable',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: 'assets', type: 'uint256' }],
+        name: 'deposit',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ])
+
+    const withArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [123n] })
+    const dataWithArgs = AbiFunction.encodeData(withArgs, [123n])
+    // Resolving by name alone (no args) must still disambiguate the
+    // zero-input overload from the one actually encoded in `data`.
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithArgs)).toEqual([123n])
+    expect(AbiFunction.decodeData(abi, dataWithArgs)).toEqual([123n])
+
+    const withoutArgs = AbiFunction.fromAbi(abi, 'deposit', { args: [] })
+    const dataWithoutArgs = AbiFunction.encodeData(withoutArgs)
+    expect(AbiFunction.decodeData(abi, 'deposit', dataWithoutArgs)).toEqual(
+      undefined,
+    )
+    expect(AbiFunction.decodeData(abi, dataWithoutArgs)).toEqual(undefined)
+  })
+
+  test('behavior: uppercase data', () => {
+    const approve = AbiFunction.from(
+      'function approve(address spender, uint256 amount)',
+    )
+    expect(
+      AbiFunction.decodeData(
+        approve,
+        '0x095EA7B3000000000000000000000000D8DA6BF26964AF9D7EED9E03E53415D37AA960450000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        1n,
+      ]
+    `)
+  })
+
+  test('error: selector mismatch', () => {
+    const abi = Abi.from([
+      'function approve(address spender, uint256 amount)',
+      'function pause()',
+      'function transfer(address to, uint256 amount)',
+    ])
+    const data = AbiFunction.encodeData(AbiFunction.fromAbi(abi, 'approve'), [
+      address.vitalik,
+      1n,
+    ])
+
+    expect(() =>
+      AbiFunction.decodeData(AbiFunction.fromAbi(abi, 'transfer'), data),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xa9059cbb".
+
+      Function: function transfer(address to, uint256 amount)
+      Selector: 0xa9059cbb]
+    `)
+    expect(() => AbiFunction.decodeData(abi, 'transfer', data))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0xa9059cbb".
+
+      Function: function transfer(address to, uint256 amount)
+      Selector: 0xa9059cbb]
+    `)
+    expect(() => AbiFunction.decodeData(abi, 'pause', data))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x095ea7b3" does not match the expected selector "0x8456cb59".
+
+      Function: function pause()
+      Selector: 0x8456cb59]
+    `)
+  })
+
+  test('error: selector mismatch, with overloads', () => {
+    const abi = Abi.from([
+      'function deposit()',
+      'function deposit(uint256 assets)',
+      'function withdraw(uint256 assets)',
+    ])
+    const data = AbiFunction.encodeData(AbiFunction.fromAbi(abi, 'withdraw'), [
+      1n,
+    ])
+
+    expect(() => AbiFunction.decodeData(abi, 'deposit', data))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [AbiFunction.SelectorMismatchError: Selector "0x2e1a7d4d" does not match the expected selector "0xd0e30db0".
+
+      Function: function deposit()
+      Selector: 0xd0e30db0]
+    `)
+  })
 })
 
 describe('decodeResult', () => {
@@ -218,13 +322,14 @@ describe('encodeData', () => {
     )
   })
 
-  test('behavior: malformed bytes compatibility', () => {
+  test('error: malformed bytes', () => {
     const abiFunction = AbiFunction.from('function foo(bytes)')
-    expect(
-      AbiFunction.encodeData(abiFunction, ['0xzz1']),
-    ).toMatchInlineSnapshot(
-      `"0x30c8d1da00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002zz10000000000000000000000000000000000000000000000000000000000000"`,
-    )
+    expect(() => AbiFunction.encodeData(abiFunction, ['0xzz11']))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidHexValueError: Value \`0xzz11\` is an invalid hex value.
+
+      Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+    `)
   })
 
   test('behavior: with overloads', () => {
@@ -707,15 +812,28 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
-      "inputs": [],
-      "name": "foo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+        "inputs": [],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('overloads: no args', () => {
@@ -726,15 +844,28 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
-      "inputs": [],
-      "name": "foo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+        "inputs": [],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('behavior: overloads: different lengths without abi order define effect', () => {
@@ -838,6 +969,30 @@ describe('fromAbi', () => {
       "inputs": [],
       "name": "mint",
       "outputs": [],
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "mint",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+        },
+        {
+          "inputs": [
+            {
+              "type": "string",
+            },
+          ],
+          "name": "mint",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+        },
+      ],
       "stateMutability": "nonpayable",
       "type": "function",
     }
@@ -1279,6 +1434,7 @@ test('exports', () => {
       "from",
       "fromAbi",
       "getSelector",
+      "SelectorMismatchError",
     ]
   `)
 })

@@ -224,9 +224,10 @@ export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
   if (typeof size === 'number') {
     internal_hex.assertSize(value, size)
-    // Right-pad the hex string before parsing to preserve odd-nibble
-    // semantics of the previous implementation.
-    return hexToBytes(internal_hex.pad(value, { dir: 'right', size }))
+    // An odd-length value gets its leading `0` before right-padding, so the
+    // padding lands after the value's bytes instead of between its nibbles.
+    const hex = value.length % 2 ? (`0x0${value.slice(2)}` as const) : value
+    return hexToBytes(internal_hex.pad(hex, { dir: 'right', size }))
   }
   return hexToBytes(value)
 }
@@ -744,9 +745,17 @@ export declare namespace trimRight {
  * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
 export function validate(value: unknown): value is Bytes {
+  // The checks `assert` makes, without building and catching an error.
+  if (!value || typeof value !== 'object') return false
+  // A revoked Proxy, or a trap or getter, can throw from these checks; that
+  // is invalid input too.
   try {
-    assert(value)
-    return true
+    if (value instanceof Uint8Array) return true
+    return (
+      'BYTES_PER_ELEMENT' in value &&
+      value.BYTES_PER_ELEMENT === 1 &&
+      value.constructor.name === 'Uint8Array'
+    )
   } catch {
     return false
   }

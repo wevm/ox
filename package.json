@@ -82,7 +82,7 @@
     "vp": "catalog:",
     "zile": "catalog:"
   },
-  "packageManager": "pnpm@11.13.1",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": ">=22"
   },
@@ -174,7 +174,7 @@
   "name": "ox",
   "description": "Ethereum Standard Library",
   "type": "module",
-  "version": "1.8.12",
+  "version": "1.8.18",
   "main": "./dist/index.js",
   "sideEffects": false,
   "license": "MIT",
@@ -206,7 +206,7 @@
     "wasm/vendor/mldsa-native/LICENSE"
   ],
   "dependencies": {
-    "@adraffy/ens-normalize": "^1.11.0",
+    "@adraffy/ens-normalize.ts": "^1.0.0",
     "@noble/ciphers": "^2.2.0",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
@@ -835,6 +835,11 @@
       "src": "./src/tempo/SignatureEnvelope.ts",
       "types": "./dist/tempo/SignatureEnvelope.d.ts",
       "default": "./dist/tempo/SignatureEnvelope.js"
+    },
+    "./tempo/SignaturePreAuthorized": {
+      "src": "./src/tempo/SignaturePreAuthorized.ts",
+      "types": "./dist/tempo/SignaturePreAuthorized.d.ts",
+      "default": "./dist/tempo/SignaturePreAuthorized.js"
     },
     "./tempo/Tick": {
       "src": "./src/tempo/Tick.ts",

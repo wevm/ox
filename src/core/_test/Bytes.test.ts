@@ -293,6 +293,21 @@ describe('fromHex', () => {
     )
   })
 
+  test('behavior: odd length with size', () => {
+    expect(Bytes.fromHex('0x1', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        1,
+        0,
+      ]
+    `)
+    expect(Bytes.fromHex('0xabc', { size: 2 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        10,
+        188,
+      ]
+    `)
+  })
+
   test('error: size overflow', () => {
     expect(() =>
       Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 8 }),
@@ -1354,6 +1369,39 @@ describe('toBigInt', () => {
         ]),
       ),
     ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
+  })
+
+  test('behavior: zero-padded values', () => {
+    for (const value of [
+      0n,
+      2n ** 48n - 1n,
+      2n ** 48n,
+      2n ** 64n - 1n,
+      2n ** 64n,
+      2n ** 72n + 1n,
+      2n ** 200n + 12345n,
+      2n ** 256n - 1n,
+    ])
+      for (const size of [32, 33, 40, 47])
+        expect(Bytes.toBigInt(Bytes.fromNumber(value, { size }))).toBe(value)
+  })
+
+  test('behavior: values wider than 64 bytes', () => {
+    const ones = new Uint8Array(65).fill(0xff)
+    expect(Bytes.toBigInt(ones)).toEqual((1n << 520n) - 1n)
+    expect(Bytes.toBigInt(ones, { signed: true })).toEqual(-1n)
+
+    const high = new Uint8Array(65)
+    high[0] = 0x80
+    expect(Bytes.toBigInt(high)).toEqual(1n << 519n)
+    expect(Bytes.toBigInt(high, { signed: true })).toEqual(-(1n << 519n))
+
+    // Leading zeros, read from an offset into a larger buffer.
+    const padded = new Uint8Array(101).fill(0x01).subarray(1)
+    padded.fill(0, 0, 20)
+    expect(Bytes.toBigInt(padded, { signed: true })).toEqual(
+      BigInt(`0x${'01'.repeat(80)}`),
+    )
   })
 
   test('args: size', () => {

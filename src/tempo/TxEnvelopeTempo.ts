@@ -184,6 +184,7 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   const {
     calls,
     chainId,
+    feePayerSignature,
     feeToken,
     maxFeePerGas,
     maxPriorityFeePerGas,
@@ -193,6 +194,18 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
 
   // Calls must not be empty
   if (!calls || calls.length === 0) throw new CallsEmptyError()
+
+  // validBefore and validAfter must be non-negative safe integers if set
+  for (const [name, value] of [
+    ['validBefore', validBefore],
+    ['validAfter', validAfter],
+  ] as const)
+    if (
+      value !== undefined &&
+      value !== null &&
+      !(Number.isSafeInteger(value) && value >= 0)
+    )
+      throw new InvalidValidityBoundError({ name, value })
 
   // validBefore must be greater than validAfter if both are set
   if (
@@ -215,7 +228,10 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   if (feeToken) Address.assert(feeToken, { strict: false })
 
   // Validate chain ID
-  if (chainId <= 0)
+  if (
+    typeof chainId !== 'undefined' &&
+    (!Number.isSafeInteger(chainId) || chainId <= 0)
+  )
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
 
   // Validate max fee per gas
@@ -225,21 +241,27 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
     })
 
   if (
-    maxPriorityFeePerGas &&
-    maxFeePerGas &&
+    typeof maxPriorityFeePerGas === 'bigint' &&
+    typeof maxFeePerGas === 'bigint' &&
     maxPriorityFeePerGas > maxFeePerGas
   )
     throw new TransactionEnvelope.TipAboveFeeCapError({
       maxFeePerGas,
       maxPriorityFeePerGas,
     })
+
+  // Validate fee payer signature
+  if (feePayerSignature)
+    Signature.assert(feePayerSignature, { recovered: true })
 }
 
 export declare namespace assert {
   type ErrorType =
     | Address.assert.ErrorType
     | CallsEmptyError
+    | InvalidValidityBoundError
     | InvalidValidityWindowError
+    | Signature.assert.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -346,6 +368,12 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if (Hex.validate(nonceKey))
     transaction.nonceKey = nonceKey === '0x' ? 0n : BigInt(nonceKey)
   if (Hex.validate(validBefore) && validBefore !== '0x')
@@ -721,6 +749,7 @@ export function serialize(
     // No fee payer involvement — omit from the envelope.
     if (!feePayerSignature) return '0x'
     // Fee payer has signed — encode the signature as an RLP tuple.
+    Signature.assert(feePayerSignature, { recovered: true })
     return Signature.toTuple(feePayerSignature)
   })()
 
@@ -1138,6 +1167,46 @@ export class CallsEmptyError extends Errors.BaseError {
   override readonly name = 'TxEnvelopeTempo.CallsEmptyError'
   constructor() {
     super('Calls list cannot be empty.')
+  }
+}
+
+/**
+ * Thrown when validBefore or validAfter is not a non-negative safe integer number.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * TxEnvelopeTempo.assert({
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
+ *   chainId: 1,
+ *   validBefore: -1
+ * })
+ * // @error: TxEnvelopeTempo.InvalidValidityBoundError: validBefore (-1) must be a non-negative safe integer number.
+ * ```
+ */
+export class InvalidValidityBoundError extends Errors.BaseError {
+  override readonly name = 'TxEnvelopeTempo.InvalidValidityBoundError'
+  constructor({
+    name,
+    value,
+  }: {
+    name: 'validAfter' | 'validBefore'
+    value: unknown
+  }) {
+    const value_ = (() => {
+      if (typeof value === 'bigint') return `${value}n`
+      if (typeof value === 'string') return `"${value}"`
+      return String(value)
+    })()
+    super(`${name} (${value_}) must be a non-negative safe integer number.`)
   }
 }
 

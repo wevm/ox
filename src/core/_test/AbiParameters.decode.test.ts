@@ -1,4 +1,4 @@
-import { AbiItem, AbiParameters, type Address, Bytes, type Hex } from 'ox'
+import { AbiItem, AbiParameters, Address, Bytes, Hex } from 'ox'
 import { assertType, describe, expect, test } from 'vp/test'
 
 import {
@@ -135,6 +135,17 @@ describe('static', () => {
       )
       assertType<readonly [Hex.Hex]>(result)
       expect(result).toEqual(['0x0123456789abcdef'])
+    })
+
+    test('error: non-zero padding', () => {
+      expect(() =>
+        AbiParameters.decode(
+          AbiParameters.from('bytes8'),
+          '0x0123456789abcdef000000000000000000000000000000000000000000000001',
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0123456789abcdef000000000000000000000000000000000000000000000001" (bytes32) does not match expected size (bytes8).]`,
+      )
     })
   })
 
@@ -1558,6 +1569,56 @@ test('data size too small', () => {
   `)
 })
 
+test('data size too small: fixed-size bytes', () => {
+  expect(
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef00000000000000000000000000000000000000000000000000000000',
+    ),
+  ).toMatchInlineSnapshot(`
+    [
+      1n,
+      "0xdeadbeef",
+    ]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('uint256, bytes4'),
+      '0x0000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 36 bytes is too small for given parameters.
+
+    Params: (uint256, bytes4)
+    Data:   0x0000000000000000000000000000000000000000000000000000000000000001deadbeef (36 bytes)]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[2]'),
+      '0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 36 bytes is too small for given parameters.
+
+    Params: (bytes4[2])
+    Data:   0xdeadbeef00000000000000000000000000000000000000000000000000000000cafebabe (36 bytes)]
+  `)
+
+  expect(() =>
+    AbiParameters.decode(
+      AbiParameters.from('bytes4[]'),
+      '0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef',
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 68 bytes is too small for given parameters.
+
+    Params: (bytes4[])
+    Data:   0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001deadbeef (68 bytes)]
+  `)
+})
+
 test('invalid type', () => {
   expect(() =>
     AbiParameters.decode(
@@ -1802,6 +1863,88 @@ test('recursive 2', () => {
   )
 })
 
+describe('read size', () => {
+  test('behavior: parameters sharing one tail', () => {
+    expect(
+      AbiParameters.decode(
+        AbiParameters.from('bytes, string, bytes'),
+        Hex.concat(
+          '0x0000000000000000000000000000000000000000000000000000000000000060', // ptr
+          '0x0000000000000000000000000000000000000000000000000000000000000060', // same ptr
+          '0x0000000000000000000000000000000000000000000000000000000000000060', // same ptr
+          '0x0000000000000000000000000000000000000000000000000000000000000004', // len=4
+          '0x7761676d00000000000000000000000000000000000000000000000000000000',
+        ),
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "0x7761676d",
+        "wagm",
+        "0x7761676d",
+      ]
+    `)
+  })
+
+  test('behavior: array elements sharing one tail', () => {
+    const length = 1_000
+    const tail = Hex.fromBytes(new Uint8Array(256).fill(0xab))
+    // Each element points at the tail that follows the offsets.
+    const offset = Hex.fromNumber(32 * length, { size: 32 })
+    const data = Hex.concat(
+      Hex.fromNumber(32, { size: 32 }), // ptr
+      Hex.fromNumber(length, { size: 32 }), // len
+      ...Array.from({ length }, () => offset),
+      Hex.fromNumber(256, { size: 32 }), // len of tail
+      tail,
+    )
+    const [value] = AbiParameters.decode(AbiParameters.from('bytes[]'), data)
+    expect(value).toEqual(Array.from({ length }, () => tail))
+  })
+
+  test('error: array elements sharing one large tail', () => {
+    // 33 elements point at one 64 KiB tail, so the decoded value would be
+    // 33 times the size of the data.
+    const length = 33
+    const tail = Hex.fromBytes(new Uint8Array(65_536).fill(0xab))
+    const data = Hex.concat(
+      Hex.fromNumber(32, { size: 32 }), // ptr
+      Hex.fromNumber(length, { size: 32 }), // len
+      ...Array.from({ length }, () =>
+        Hex.fromNumber(32 * length, { size: 32 }),
+      ),
+      Hex.fromNumber(65_536, { size: 32 }), // len of tail
+      tail,
+    )
+    expect(Hex.size(data)).toMatchInlineSnapshot(`66688`)
+    expect(() =>
+      AbiParameters.decode(AbiParameters.from('bytes[]'), data),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`395520\` bytes exceeded (read size: \`459264\` bytes).]`,
+    )
+  })
+
+  test('error: array elements with overlapping tails', () => {
+    // Each element starts 33 bytes after the previous one and runs to the end
+    // of the data.
+    const length = 512
+    const start = 64 + 32 * length
+    const data = new Uint8Array(start + 33 * length)
+    const view = new DataView(data.buffer)
+    view.setUint32(28, 32) // ptr
+    view.setUint32(60, length) // len
+    for (let i = 0; i < length; i++) {
+      const position = start + 33 * i
+      view.setUint32(64 + 32 * i + 28, position - 64)
+      view.setUint32(position + 28, data.length - position - 32)
+    }
+    expect(() =>
+      AbiParameters.decode(AbiParameters.from('bytes[]'), data),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`328832\` bytes exceeded (read size: \`332354\` bytes).]`,
+    )
+  })
+})
+
 describe('zero-width types', () => {
   test('zero-length fixed array', () => {
     expect(
@@ -1885,5 +2028,144 @@ describe('zero-width types', () => {
         ),
       ).toEqual(values)
     }
+  })
+})
+
+describe('integer range', () => {
+  test('uint8: max', () => {
+    expect(
+      AbiParameters.decode(
+        AbiParameters.from('uint8'),
+        '0x00000000000000000000000000000000000000000000000000000000000000ff',
+      ),
+    ).toEqual([255])
+  })
+
+  test('uint8: above max', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('uint8'),
+        '0x0000000000000000000000000000000000000000000000000000000000000100',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
+
+  test('int8: -1', () => {
+    expect(
+      AbiParameters.decode(
+        AbiParameters.from('int8'),
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+      ),
+    ).toEqual([-1])
+  })
+
+  test('int8: missing sign extension', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('int8'),
+        '0x0000000000000000000000000000000000000000000000000000000000000080',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+  })
+
+  test('int8: below min', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('int8'),
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`-129\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+    )
+  })
+
+  test('uint8[]: element above max', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('uint8[]'),
+        '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000100',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+    )
+  })
+
+  test('uint16: 2^64', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('uint16'),
+        '0x0000000000000000000000000000000000000000000000010000000000000000',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`18446744073709551616\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)]`,
+    )
+  })
+
+  test('every size: min and max round-trip, out of range throws', () => {
+    for (let size = 8; size <= 256; size += 8) {
+      for (const signed of [false, true]) {
+        const type = (signed ? 'int' : 'uint') + size
+        const parameters = AbiParameters.from(type)
+        const max = (1n << BigInt(signed ? size - 1 : size)) - 1n
+        const min = signed ? -max - 1n : 0n
+        const cast = (value: bigint) => (size > 48 ? value : Number(value))
+
+        for (const value of [min, max])
+          expect(
+            AbiParameters.decode(
+              parameters,
+              AbiParameters.encode(parameters, [cast(value)] as never),
+            ),
+          ).toEqual([cast(value)])
+
+        if (size === 256) continue
+        const word = (value: bigint) =>
+          Hex.fromNumber(BigInt.asUintN(256, value), { size: 32 })
+        expect(() => AbiParameters.decode(parameters, word(max + 1n))).toThrow(
+          Hex.IntegerOutOfRangeError,
+        )
+        if (signed)
+          expect(() =>
+            AbiParameters.decode(parameters, word(min - 1n)),
+          ).toThrow(Hex.IntegerOutOfRangeError)
+      }
+    }
+  })
+})
+
+describe('address padding', () => {
+  test('dirty high bytes', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('address'),
+        '0x00000000000000000000000114dc79964da2c08b23698b3d3cc7ca32193d9955',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0x00000000000000000000000114dc79964da2c08b23698b3d3cc7ca32193d9955" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('dirty first byte', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('address'),
+        '0xff000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d9955',
+      ),
+    ).toThrow(Address.InvalidAddressError)
+  })
+
+  test('address[2]: second element dirty', () => {
+    expect(() =>
+      AbiParameters.decode(
+        AbiParameters.from('address[2]'),
+        '0x00000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d99550000000000000000000000ff14dc79964da2c08b23698b3d3cc7ca32193d9955',
+      ),
+    ).toThrow(Address.InvalidAddressError)
   })
 })

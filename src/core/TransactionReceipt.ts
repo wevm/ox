@@ -266,9 +266,15 @@ export function fromRpc<const receipt extends Rpc | null>(
     effectiveGasPrice: BigInt(receipt.effectiveGasPrice ?? 0n),
     gasUsed: BigInt(receipt.gasUsed ?? 0n),
     logs: receipt.logs.map((log) => Log.fromRpc(log, { pending: false })),
-    status: fromRpcStatus[receipt.status],
+    // Own keys only: an inherited one such as `__proto__` or `toString` is
+    // not a status or type.
+    status: Object.hasOwn(fromRpcStatus, receipt.status)
+      ? fromRpcStatus[receipt.status]
+      : undefined,
     transactionIndex: Number(receipt.transactionIndex ?? 0),
-    type: (fromRpcType as any)[receipt.type] || receipt.type,
+    type: Object.hasOwn(fromRpcType, receipt.type)
+      ? fromRpcType[receipt.type as keyof typeof fromRpcType]
+      : receipt.type,
   } as never
 }
 

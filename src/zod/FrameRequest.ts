@@ -5,11 +5,10 @@ import * as z_Frame from './Frame.js'
 import * as z_Hex from './Hex.js'
 import * as z from 'zod/mini'
 
+const quantityRegex = /^0x(0|[1-9a-f][0-9a-f]*)$/
+
 const quantity = z_Hex.Hex.check(
-  z.refine(
-    (value) => /^0x(0|[1-9a-f][0-9a-f]*)$/.test(value),
-    'Invalid RPC quantity',
-  ),
+  z.refine((value) => quantityRegex.test(value), 'Invalid RPC quantity'),
 )
 
 const rpc = z

@@ -2,6 +2,7 @@ import type * as Abi from './Abi.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import { caches } from './internal/caches.js'
 import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import * as parseAbiItem from './internal/human-readable/parseAbiItem.js'
 import * as internal from './internal/abiItem.js'
@@ -314,14 +315,14 @@ export function fromAbi<
     } as never
 
   let matchedAbiItem: AbiItem | undefined
+  // Without `args`, a zero-input overload is the preferred pick, but the other
+  // overloads are still attached so callers can resolve by selector.
+  let zeroArgAbiItem: AbiItem | undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
-      if (!abiItem.inputs || abiItem.inputs.length === 0)
-        return {
-          ...abiItem,
-          ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-        } as never
+      if (!zeroArgAbiItem && (!abiItem.inputs || abiItem.inputs.length === 0))
+        zeroArgAbiItem = abiItem
       continue
     }
     if (!abiItem.inputs) continue
@@ -363,8 +364,9 @@ export function fromAbi<
 
   const abiItem = (() => {
     if (matchedAbiItem) return matchedAbiItem
-    const [abiItem, ...overloads] = abiItems
-    return { ...abiItem!, overloads }
+    const chosen = zeroArgAbiItem ?? abiItems[0]
+    const overloads = abiItems.filter((item) => item !== chosen)
+    return { ...chosen!, overloads }
   })()
 
   if (!abiItem) throw new NotFoundError({ name: name as string })
@@ -640,7 +642,23 @@ export function getSignatureHash(
   })()
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex.Hex
-  return Hash.keccak256(Hex.fromString(getSignature(abiItem)))
+  // Keyed by the item itself first, which skips formatting and normalizing the
+  // signature on every call. ABI items are treated as immutable here: an item
+  // mutated after it was hashed keeps its first hash.
+  if (typeof abiItem === 'object') {
+    const cached = caches.signatureHashByItem.get(abiItem)
+    if (cached) return cached
+  }
+  // Keyed by the normalized signature, so equal signatures share one hash
+  // regardless of how the ABI item was written.
+  const signature = getSignature(abiItem)
+  let hash = caches.signatureHash.get(signature)
+  if (!hash) {
+    hash = Hash.keccak256(Hex.fromString(signature))
+    caches.signatureHash.set(signature, hash)
+  }
+  if (typeof abiItem === 'object') caches.signatureHashByItem.set(abiItem, hash)
+  return hash
 }
 
 export declare namespace getSignatureHash {

@@ -15,6 +15,8 @@ import * as Json from './Json.js'
 /** Root type for a Hex string. */
 export type Hex = `0x${string}`
 
+const hexRegex = /^0x[0-9a-fA-F]*$/
+
 /**
  * Asserts if the given value is {@link ox#Hex.Hex}.
  *
@@ -38,7 +40,7 @@ export function assert(
   const { even = false, strict = false } = options
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
-    if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
+    if (!hexRegex.test(value)) throw new InvalidHexValueError(value)
   }
   if (!value.startsWith('0x')) throw new InvalidHexValueError(value)
   if (even && value.length % 2 !== 0) throw new InvalidLengthError(value as Hex)
@@ -80,9 +82,9 @@ export declare namespace assert {
 export function concat(...values: readonly Hex[]): Hex {
   if (values.length === 0) return '0x'
   if (values.length === 1) return values[0]!
-  if (values.length === 2)
-    return `0x${(values[0] as string).slice(2)}${(values[1] as string).slice(2)}` as Hex
-  return `0x${values.reduce((hex, value) => hex + value.replace('0x', ''), '')}`
+  let hex = '0x'
+  for (let i = 0; i < values.length; i++) hex += values[i]!.slice(2)
+  return hex as Hex
 }
 
 export declare namespace concat {
@@ -251,27 +253,29 @@ export function fromNumber(
 ): Hex {
   const { signed, size } = options
 
-  // Safe-integer unsigned fast path: skip BigInt conversion entirely.
+  // Unsigned fast path: a value fits `size` bytes exactly when its hex has at
+  // most `size * 2` digits, so the bound needs no BigInt arithmetic. Sizes
+  // that are not integers take the general path, which rejects them.
   if (
     !signed &&
-    typeof value === 'number' &&
-    value >= 0 &&
-    Number.isSafeInteger(value)
+    (typeof value === 'bigint'
+      ? value >= 0n
+      : value >= 0 && Number.isSafeInteger(value)) &&
+    (!size || Number.isInteger(size))
   ) {
-    if (size) {
-      const maxValue = 2n ** (BigInt(size) * 8n) - 1n
-      if (BigInt(value) > maxValue)
-        throw new IntegerOutOfRangeError({
-          max: `${maxValue}`,
-          min: '0',
-          signed: false,
-          size,
-          value: `${value}`,
-        })
-      const hex = `0x${value.toString(16)}` as Hex
-      return padLeft(hex, size)
+    const hex = value.toString(16)
+    if (!size) return `0x${hex}`
+    if (hex.length > size * 2) {
+      const suffix = typeof value === 'bigint' ? 'n' : ''
+      throw new IntegerOutOfRangeError({
+        max: `${2n ** (BigInt(size) * 8n) - 1n}${suffix}`,
+        min: `0${suffix}`,
+        signed,
+        size,
+        value: `${value}${suffix}`,
+      })
     }
-    return `0x${value.toString(16)}` as Hex
+    return `0x${hex.padStart(size * 2, '0')}`
   }
 
   const value_ = BigInt(value)
@@ -284,7 +288,9 @@ export function fromNumber(
     maxValue = BigInt(Number.MAX_SAFE_INTEGER)
   }
 
-  const minValue = typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
+  // Negative values need a `size` to encode as two's complement.
+  const minValue =
+    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''
@@ -608,14 +614,7 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
 
   const value = BigInt(hex)
   if (!signed) return value
-
-  const size = (hex.length - 2) / 2
-
-  const max_unsigned = (1n << (BigInt(size) * 8n)) - 1n
-  const max_signed = max_unsigned >> 1n
-
-  if (value <= max_signed) return value
-  return value - max_unsigned - 1n
+  return BigInt.asIntN(size(hex) * 8, value)
 }
 
 export declare namespace toBigInt {
@@ -691,6 +690,9 @@ export function toBytes(hex: Hex, options: toBytes.Options = {}): Uint8Array {
   let value = hex
   if (typeof size === 'number') {
     internal.assertSize(value, size)
+    // An odd-length value gets its leading `0` before right-padding, so the
+    // padding lands after the value's bytes instead of between its nibbles.
+    if (value.length % 2) value = `0x0${value.slice(2)}`
     value = padRight(value, size)
   }
   return hexToBytes(value)
@@ -824,12 +826,12 @@ export function validate(
   options: validate.Options = {},
 ): value is Hex {
   const { even = false, strict = false } = options
-  try {
-    assert(value, { even, strict })
-    return true
-  } catch {
-    return false
-  }
+  // The checks `assert` makes, without building and catching an error.
+  if (typeof value !== 'string') return false
+  if (strict && !hexRegex.test(value)) return false
+  if (!value.startsWith('0x')) return false
+  if (even && value.length % 2 !== 0) return false
+  return true
 }
 
 export declare namespace validate {

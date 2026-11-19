@@ -107,7 +107,7 @@ describe('fromRpc', () => {
     expect(() =>
       AccountSimulation.fromRpc({ ...rpc, config: noncanonical }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[AccountSimulation.InvalidSimulationError: Invalid account simulation: invalid config encoding.]`,
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: single byte \`0x00\` is wrapped in an explicit length prefix instead of being encoded as itself.]`,
     )
   })
 })

@@ -1,7 +1,8 @@
-import { Secp256k1, Signature } from 'ox'
+import { AbiConstructor, Hex, Secp256k1, Signature } from 'ox'
 import { SignatureErc6492 } from 'ox/erc6492'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assert', () => {
   test('default', () => {
@@ -157,5 +158,51 @@ describe('from: validates object inputs', () => {
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
     expect(SignatureErc6492.from(args)).toEqual(args)
+  })
+})
+
+describe('universalSignatureValidatorBytecode', () => {
+  const constructor = AbiConstructor.fromAbi(
+    SignatureErc6492.universalSignatureValidatorAbi,
+  )
+
+  function verify(args: readonly [Hex.Hex, Hex.Hex, Hex.Hex]) {
+    return anvilMainnet.request({
+      method: 'eth_call',
+      params: [
+        {
+          data: AbiConstructor.encode(constructor, {
+            args,
+            bytecode: SignatureErc6492.universalSignatureValidatorBytecode,
+          }),
+        },
+      ],
+    })
+  }
+
+  const hash = Hex.padLeft('0xdeadbeef', 32)
+
+  test('behavior: valid signature', async () => {
+    const signature = Secp256k1.sign({
+      payload: hash,
+      privateKey: accounts[0].privateKey,
+    })
+
+    expect(
+      await verify([accounts[0].address, hash, Signature.toHex(signature)]),
+    ).toMatchInlineSnapshot(`"0x01"`)
+  })
+
+  test('behavior: zero address with a signature that recovers to it', async () => {
+    // `r = 0` and `s = 0` with `v = 27`, which `ecrecover` maps to the zero address.
+    const signature = Hex.concat(Hex.fromNumber(0, { size: 64 }), '0x1b')
+
+    expect(
+      await verify([
+        '0x0000000000000000000000000000000000000000',
+        hash,
+        signature,
+      ]),
+    ).toMatchInlineSnapshot(`"0x00"`)
   })
 })

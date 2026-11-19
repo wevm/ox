@@ -276,6 +276,7 @@ export function encodePacked<
 export namespace encodePacked {
   export type ErrorType =
     | Hex.concat.ErrorType
+    | Hex.InvalidLengthError
     | LengthMismatchError
     | Errors.GlobalErrorType
 
@@ -302,7 +303,13 @@ export namespace encodePacked {
       ) as Address.Address
     }
     if (type === 'string') return Hex.fromString(value as string)
-    if (type === 'bytes') return value as Hex.Hex
+    if (type === 'bytes') {
+      const hex = value as Hex.Hex
+      // An unpaired nibble has no byte to belong to, so reject it instead of
+      // guessing which half of a byte it is.
+      if (hex.length % 2 !== 0) throw new Hex.InvalidLengthError(hex)
+      return hex
+    }
     if (type === 'bool')
       return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
 

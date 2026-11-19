@@ -407,9 +407,11 @@ export function fromRpc<
     transaction_.maxFeePerGas = BigInt(transaction.maxFeePerGas)
   if (transaction.maxPriorityFeePerGas)
     transaction_.maxPriorityFeePerGas = BigInt(transaction.maxPriorityFeePerGas)
+  // Own keys only: an inherited one such as `constructor` is not a type.
   if (transaction.type)
-    transaction_.type =
-      (fromRpcType as any)[transaction.type] ?? transaction.type
+    transaction_.type = Object.hasOwn(fromRpcType, transaction.type)
+      ? fromRpcType[transaction.type as keyof typeof fromRpcType]
+      : transaction.type
   if (signature)
     transaction_.v =
       transaction.type === '0x0' && typeof transaction.v !== 'undefined'

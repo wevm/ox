@@ -17,6 +17,7 @@ test('exports', () => {
       "DepthLimitExceededError",
       "ListBoundaryExceededError",
       "TrailingBytesError",
+      "NonCanonicalError",
     ]
   `)
 })
@@ -154,6 +155,70 @@ describe('Rlp.to', () => {
     expect(Rlp.toBytes(rlpBytes)).toStrictEqual(new Uint8Array([]))
     // bytes -> hex
     expect(Rlp.toHex(rlpBytes)).toEqual('0x')
+  })
+
+  test('behavior: hex leaves of a hex input', () => {
+    // Short and long leaves, nested, in short and long (> 4096 hex
+    // characters) inputs.
+    for (const length of [32, 4_096]) {
+      const value = [
+        '0x0a',
+        '0x',
+        `0x${'ab'.repeat(20)}`,
+        [[`0x${'cd'.repeat(length)}`], '0x7f', '0x80'],
+        `0x${'ef'.repeat(56)}`,
+      ] as const
+      const encoded = Rlp.fromHex(value as never)
+      expect(Rlp.toHex(encoded)).toEqual(value)
+      // Leaves are lowercase, as `Hex.fromBytes` writes them.
+      expect(Rlp.toHex(`0x${encoded.slice(2).toUpperCase()}`)).toEqual(value)
+    }
+  })
+
+  test('behavior: hex input decodes and fails like byte input', () => {
+    // Decoding to bytes always goes through `Bytes.fromHex` and the cursor,
+    // which short hex input to hex skips.
+    const toHex = (value: unknown): unknown =>
+      Array.isArray(value) ? value.map(toHex) : Hex.fromBytes(value as never)
+    const outcome = (fn: () => unknown) => {
+      try {
+        return { value: fn() }
+      } catch (error) {
+        return {
+          error: `${(error as Error).name}: ${(error as Error).message}`,
+        }
+      }
+    }
+    for (const value of [
+      '0x',
+      '0x00',
+      '0x7F',
+      '0x8180',
+      '0xC88363617483646F67',
+      '0xc0',
+      '0xzz',
+      '0x8',
+      '0x0\u0130',
+      '0x82',
+      '0x8201',
+      '0xb8',
+      '0xb801ff',
+      '0xb838',
+      '0xb90001',
+      '0xbc',
+      '0x8100',
+      '0x817f',
+      '0xc20102',
+      '0xc1c0c0',
+      '0xc3010203ff',
+      '0xc28201',
+      '0xff',
+      '0x0101',
+      `0x${'c1'.repeat(1_025)}`,
+    ] as const)
+      expect(outcome(() => Rlp.toHex(value as Hex.Hex))).toEqual(
+        outcome(() => toHex(Rlp.toBytes(value as Hex.Hex))),
+      )
   })
 
   describe('prefix < 0x80', () => {
@@ -545,5 +610,55 @@ describe('list boundary', () => {
     expect(() => Rlp.toHex('0xc182aabbff')).toThrowErrorMatchingInlineSnapshot(
       `[Rlp.ListBoundaryExceededError: RLP list items consumed \`3\` bytes but the list declared a length of \`1\`.]`,
     )
+  })
+})
+
+describe('non-canonical encoding', () => {
+  // RLP is a bijection: every value has exactly one valid encoding (Yellow
+  // Paper, Appendix B). A decoder that accepts alternate encodings of the
+  // same value breaks that bijection and enables hash/identity malleability.
+  test('single byte < 0x80 wrapped in a length-1 prefix', () => {
+    expect(() => Rlp.toHex('0x8100')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: single byte \`0x00\` is wrapped in an explicit length prefix instead of being encoded as itself.]`,
+    )
+    expect(() => Rlp.toHex('0x817f')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: single byte \`0x7f\` is wrapped in an explicit length prefix instead of being encoded as itself.]`,
+    )
+  })
+
+  test('single byte >= 0x80 correctly requires a length-1 prefix', () => {
+    expect(Rlp.toHex('0x8180')).toMatchInlineSnapshot(`"0x80"`)
+    expect(Rlp.toHex('0x8185')).toMatchInlineSnapshot(`"0x85"`)
+  })
+
+  test('long-form length that fits the short form', () => {
+    // `0xb8` = long-form 1-byte-length string prefix; `0x00` declares length 0,
+    // which must instead be encoded directly as the short-form `0x80`.
+    expect(() => Rlp.toHex('0xb800')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: length \`0\` fits in the short form and must not use a one-byte length prefix.]`,
+    )
+    // declares length 1 (`0x41`), which fits the short form (`0x41` directly).
+    expect(() => Rlp.toHex('0xb80141')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: length \`1\` fits in the short form and must not use a one-byte length prefix.]`,
+    )
+    // list variant: `0xf8` = long-form 1-byte-length list prefix, length 2.
+    expect(() => Rlp.toHex('0xf8020102')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: length \`2\` fits in the short form and must not use a one-byte length prefix.]`,
+    )
+  })
+
+  test('long-form length with a leading zero length-byte', () => {
+    // `0xb9` = long-form 2-byte-length string prefix; `0x0001` (leading zero)
+    // declares length 1, which fits in a single length-byte.
+    expect(() => Rlp.toHex('0xb9000141')).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.NonCanonicalError: RLP payload is not canonically encoded: length \`1\` fits in fewer length-bytes and must not use a two-byte length prefix.]`,
+    )
+  })
+
+  test('long-form lengths at exact byte-count boundaries still decode', () => {
+    const bytes56 = `0x${'ab'.repeat(56)}` as const
+    expect(Rlp.toHex(Rlp.fromHex(bytes56))).toEqual(bytes56)
+    const bytes256 = `0x${'cd'.repeat(256)}` as const
+    expect(Rlp.toHex(Rlp.fromHex(bytes256))).toEqual(bytes256)
   })
 })

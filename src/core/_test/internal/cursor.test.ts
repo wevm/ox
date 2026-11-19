@@ -611,6 +611,41 @@ test('remaining', () => {
   expect(cursor.remaining).toBe(410)
 })
 
+describe('readSizeLimit', () => {
+  test('default', () => {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
+    expect(cursor.readSizeLimit).toMatchInlineSnapshot(`262984`)
+
+    cursor.readBytes(420)
+    cursor.setPosition(0)
+    cursor.readUint32()
+    expect(cursor.readSize).toMatchInlineSnapshot(`424`)
+  })
+
+  test('behavior: reads past the limit', () => {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
+      recursiveReadLimit: 2,
+    })
+    expect(cursor.readSizeLimit).toMatchInlineSnapshot(`904`)
+
+    for (let i = 0; i < 2; i++) {
+      cursor.setPosition(i)
+      cursor.readBytes(420 - i)
+    }
+    cursor.setPosition(2)
+    expect(() => cursor.readBytes(418)).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.ReadSizeLimitExceededError: Read size limit of \`904\` bytes exceeded (read size: \`1257\` bytes).]`,
+    )
+  })
+
+  test('behavior: no recursiveReadLimit', () => {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
+      recursiveReadLimit: Number.POSITIVE_INFINITY,
+    })
+    expect(cursor.readSizeLimit).toMatchInlineSnapshot(`Infinity`)
+  })
+})
+
 describe('args: recursiveReadLimit', () => {
   test('default', () => {
     const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
@@ -644,6 +679,42 @@ describe('args: recursiveReadLimit', () => {
     cursor.setPosition(20)
     expect(() => cursor.readBytes(10)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `2` exceeded (recursive read count: `3`).]',
+    )
+  })
+
+  test('behavior: repeated reads at an unaligned position', () => {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
+      recursiveReadLimit: 2,
+    })
+
+    for (let i = 0; i < 3; i++) {
+      cursor.setPosition(37)
+      cursor.readBytes(10)
+    }
+    cursor.setPosition(37)
+    expect(() => cursor.readBytes(10)).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.RecursiveReadLimitExceededError: Recursive read limit of \`2\` exceeded (recursive read count: \`3\`).]`,
+    )
+  })
+
+  test('behavior: repeated reads past the length the data had at creation', () => {
+    const buffer = new (ArrayBuffer as any)(32, { maxByteLength: 4096 })
+    const bytes = new Uint8Array(buffer)
+    const cursor = Cursor.create(bytes, { recursiveReadLimit: 2 })
+
+    cursor.readBytes(32)
+    buffer.resize(4096)
+    for (let i = 0; i < 3; i++) {
+      cursor.setPosition(2048)
+      cursor.readBytes(32)
+    }
+    cursor.setPosition(2048)
+    expect(() => cursor.readBytes(32)).toThrowError(
+      'Recursive read limit of ' +
+        String.fromCharCode(96) +
+        '2' +
+        String.fromCharCode(96) +
+        ' exceeded',
     )
   })
 })

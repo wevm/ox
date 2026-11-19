@@ -36,6 +36,16 @@ describe('AbiError.decode', () => {
     expectTypeOf(decoded).toEqualTypeOf<number>()
   })
 
+  test('behavior: with overloads', () => {
+    const abi = Abi.from([
+      'error Example()',
+      'error Example(uint256 amount)',
+      'error Example(string reason)',
+    ])
+    const decoded = AbiError.decode(abi, 'Example', '0x')
+    expectTypeOf(decoded).toEqualTypeOf<bigint | string | undefined>()
+  })
+
   test('not narrowable', () => {
     const abiError = {} as AbiError.AbiError
     const decoded = AbiError.decode(abiError, '0x')

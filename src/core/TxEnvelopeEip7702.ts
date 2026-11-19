@@ -185,16 +185,29 @@ export function deserialize(
     Tx.bytesToBigIntOrUndefined(maxPriorityFeePerGas)
   if (maxPriorityFeePerGas_ !== undefined)
     transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+  if (
+    transaction.maxPriorityFeePerGas &&
+    typeof transaction.maxFeePerGas === 'undefined'
+  )
+    transaction.maxFeePerGas = 0n
   if ((accessList as unknown as readonly unknown[]).length !== 0)
     transaction.accessList = AccessList.fromTupleList(
       Tx.bytesTreeToHex(accessList as never) as never,
     )
   // Authorization list is preserved even when empty for round-trip parity
   // with the legacy `authorizationList !== '0x'` hex check.
-  if (Array.isArray(authorizationList))
+  if (Array.isArray(authorizationList)) {
+    // A transaction holds signed authorizations only.
+    for (const tuple of authorizationList)
+      if (!Array.isArray(tuple) || tuple.length !== 6)
+        throw new Authorization.InvalidError(
+          'Expected [chainId, address, nonce, yParity, r, s].',
+        )
     transaction.authorizationList = Authorization.fromTupleList(
       Tx.bytesTreeToHex(authorizationList as never) as never,
     )
+  }
 
   const signature =
     r && s && yParity
@@ -216,7 +229,7 @@ export function deserialize(
 }
 
 export declare namespace deserialize {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Authorization.InvalidError | Errors.GlobalErrorType
 }
 
 /**

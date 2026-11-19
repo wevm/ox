@@ -13,6 +13,23 @@ import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('fromRpc', () => {
+  test('behavior: unknown type named like an `Object.prototype` key', () => {
+    const transaction = Transaction.fromRpc({
+      blockHash: null,
+      blockNumber: null,
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      gas: '0x5208',
+      hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      input: '0x',
+      nonce: '0x0',
+      to: null,
+      transactionIndex: null,
+      type: 'constructor',
+      value: '0x0',
+    } as unknown as Transaction.Rpc)
+    expect(transaction.type).toMatchInlineSnapshot(`"constructor"`)
+  })
+
   describe('legacy', () => {
     test('default', () => {
       expect(

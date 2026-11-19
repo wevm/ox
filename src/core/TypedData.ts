@@ -5,6 +5,7 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import { caches } from './internal/caches.js'
 import type { Compute } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
@@ -160,13 +161,12 @@ export function assert<
           expectedSize: Number.parseInt(size, 10),
           givenSize: Hex.size(value as Hex.Hex),
         })
+      if (size && (value as Hex.Hex).length % 2 !== 0)
+        throw new Hex.InvalidLengthError(value as Hex.Hex)
     }
 
-    const struct = types[type]
-    if (struct) {
-      validateReference(type)
-      validateData(struct, value as Record<string, unknown>)
-    }
+    if (Object.hasOwn(types, type))
+      validateData(types[type]!, value as Record<string, unknown>)
   }
 
   const validateData = (
@@ -178,6 +178,12 @@ export function assert<
       validateValue(type, data[name], name)
     }
   }
+
+  // Validate struct types and their field types, including structs that are
+  // only referenced as array elements.
+  for (const type of Object.keys(types)) validateReference(type)
+  for (const struct of Object.values(types))
+    for (const field of struct ?? []) validateField(field.type, types)
 
   // Validate domain types.
   if (types.EIP712Domain && domain) {
@@ -204,6 +210,9 @@ export declare namespace assert {
     | InvalidArrayError
     | InvalidArrayLengthError
     | InvalidPrimaryTypeError
+    | InvalidStructTypeError
+    | InvalidTypeError
+    | Hex.InvalidLengthError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
@@ -402,6 +411,8 @@ export declare namespace encodeType {
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
  *
+ * A field is part of the schema when it is present on the domain (not `undefined` or `null`).
+ *
  * @example
  * ```ts twoslash
  * import { TypedData } from 'ox'
@@ -428,18 +439,14 @@ export function extractEip712DomainTypes(
   domain: Domain | undefined,
 ): Parameter[] {
   return [
-    typeof domain?.name === 'string' && { name: 'name', type: 'string' },
-    typeof domain?.version === 'string' && { name: 'version', type: 'string' },
-    (typeof domain?.chainId === 'number' ||
-      typeof domain?.chainId === 'bigint') && {
-      name: 'chainId',
-      type: 'uint256',
-    },
-    domain?.verifyingContract && {
+    domain?.name != null && { name: 'name', type: 'string' },
+    domain?.version != null && { name: 'version', type: 'string' },
+    domain?.chainId != null && { name: 'chainId', type: 'uint256' },
+    domain?.verifyingContract != null && {
       name: 'verifyingContract',
       type: 'address',
     },
-    domain?.salt && { name: 'salt', type: 'bytes32' },
+    domain?.salt != null && { name: 'salt', type: 'bytes32' },
   ].filter(Boolean) as Parameter[]
 }
 
@@ -808,7 +815,24 @@ export class InvalidStructTypeError extends Errors.BaseError {
 
   constructor({ type }: { type: string }) {
     super(`Struct type "${type}" is invalid.`, {
-      metaMessages: ['Struct type must not be a Solidity type.'],
+      metaMessages: [
+        'Struct type must contain only letters, digits, "_", "$" and ":", and must not be a Solidity type.',
+      ],
+    })
+  }
+}
+
+/** Thrown when a field type is not a valid EIP-712 type. */
+export class InvalidTypeError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidTypeError'
+
+  constructor({ type }: { type: string }) {
+    // Suggest the canonical type only for the `int`/`uint` aliases.
+    const isAlias = /^u?int(\[[0-9]*\])*$/.test(type)
+    super(`Type "${type}" is not a valid EIP-712 type.`, {
+      metaMessages: isAlias
+        ? [`Use "${type.replace(/^(u?int)/, '$&256')}" instead.`]
+        : undefined,
     })
   }
 }
@@ -891,6 +915,9 @@ export declare namespace encodeData {
     | Errors.GlobalErrorType
 }
 
+/** Longest encoded type, in characters, whose hash is kept in the cache. */
+const maxCachedTypeLength = 4_096
+
 /** @internal */
 export function hashType(value: {
   primaryType: string
@@ -900,8 +927,16 @@ export function hashType(value: {
   const { primaryType, types, typeHashes } = value
   const cached = typeHashes?.get(primaryType)
   if (cached) return cached
-  const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  const hash = Hash.keccak256(encodedHashType)
+  // Keyed by the encoded type, so equal struct definitions share one hash
+  // across calls, whichever object their types came from.
+  const type = encodeType({ primaryType, types })
+  let hash = caches.typeHash.get(type)
+  if (!hash) {
+    hash = Hash.keccak256(Hex.fromString(type))
+    // Only short encoded types are cached, so the cache's memory is bounded
+    // by its entry count rather than by the size of the types it was given.
+    if (type.length <= maxCachedTypeLength) caches.typeHash.set(type, hash)
+  }
   typeHashes?.set(primaryType, hash)
   return hash
 }
@@ -997,6 +1032,10 @@ export declare namespace encodeField {
     | Errors.GlobalErrorType
 }
 
+const arraySuffixRegex = /(\[[0-9]*\])+$/
+const structNameRegex = /^[A-Za-z0-9_$:]+$/
+const solidityTypeNameRegex = /^(u?int|bytes)[0-9]*$/
+
 /** @internal */
 export function findTypeDependencies(
   value: {
@@ -1006,9 +1045,7 @@ export function findTypeDependencies(
   results: Set<string> = new Set(),
 ): Set<string> {
   const { primaryType: primaryType_, types } = value
-  // `/^\w*/u` always matches, so `match` is never null.
-  const match = primaryType_.match(/^\w*/u)!
-  const primaryType = match[0]!
+  const primaryType = primaryType_.replace(arraySuffixRegex, '')
   if (results.has(primaryType) || types[primaryType] === undefined)
     return results
 
@@ -1025,15 +1062,40 @@ export declare namespace findTypeDependencies {
 }
 
 /** @internal */
-function validateReference(type: string) {
-  // Struct type must not be a Solidity type.
-  if (
+function validateField(type: string, types: TypedData) {
+  const baseType = type.replace(arraySuffixRegex, '')
+  if (baseType === 'int' || baseType === 'uint')
+    throw new InvalidTypeError({ type })
+  // A field type must be a struct defined in `types` or an EIP-712 atomic or
+  // dynamic type, so a type such as `uint7` or `bytes0` is not hashed.
+  if (!Object.hasOwn(types, baseType) && !isSolidityType(baseType))
+    throw new InvalidTypeError({ type })
+}
+
+/** @internal */
+function isSolidityType(type: string) {
+  return (
     type === 'address' ||
     type === 'bool' ||
     type === 'string' ||
-    type.startsWith('bytes') ||
-    type.startsWith('uint') ||
-    type.startsWith('int')
+    Solidity.bytesRegex.test(type) ||
+    Solidity.integerRegex.test(type)
+  )
+}
+
+/** @internal */
+function validateReference(type: string) {
+  // Struct type must contain only letters, digits, `_`, `$` and `:`, and must
+  // not be a Solidity type, so it cannot shadow a Solidity type or an array of
+  // one. A struct such as `intent` or `bytesInfo` is valid, while `uint7` or
+  // `bytes33` is rejected, since other implementations parse it as a Solidity
+  // type.
+  if (
+    !structNameRegex.test(type) ||
+    type === 'address' ||
+    type === 'bool' ||
+    type === 'string' ||
+    solidityTypeNameRegex.test(type)
   )
     throw new InvalidStructTypeError({ type })
 }
