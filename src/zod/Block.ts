@@ -135,6 +135,7 @@ function commonFields<
     parentBeaconBlockRoot: z.optional(z_Hex.Hex),
     parentHash: z_Hex.Hex,
     receiptsRoot: z_Hex.Hex,
+    requestsHash: z.optional(z_Hex.Hex),
     sealFields: z.optional(z.readonly(z.array(z_Hex.Hex))),
     sha3Uncles: z_Hex.Hex,
     size: uint,
