@@ -363,6 +363,54 @@ describe('createMessage', () => {
   `)
   })
 
+  test('behavior: uri with no path (authority only)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
+
+    expect(
+      Siwe.createMessage({ ...message, uri: 'https://example.com' }),
+    ).toMatchInlineSnapshot(`
+      "example.com wants you to sign in with your Ethereum account:
+      0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+      URI: https://example.com
+      Version: 1
+      Chain ID: 1
+      Nonce: foobarbaz
+      Issued At: 2023-02-01T00:00:00.000Z"
+    `)
+
+    vi.useRealTimers()
+  })
+
+  test('behavior: resources entry with no path (authority only)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
+
+    expect(
+      Siwe.createMessage({
+        ...message,
+        resources: ['https://example.com', 'https://example.com/foo'],
+      }),
+    ).toMatchInlineSnapshot(`
+      "example.com wants you to sign in with your Ethereum account:
+      0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+      URI: https://example.com/path
+      Version: 1
+      Chain ID: 1
+      Nonce: foobarbaz
+      Issued At: 2023-02-01T00:00:00.000Z
+      Resources:
+      - https://example.com
+      - https://example.com/foo"
+    `)
+
+    vi.useRealTimers()
+  })
+
   test('behavior: invalid version', () => {
     expect(() =>
       // @ts-expect-error
@@ -483,7 +531,7 @@ describe('createMessage', () => {
     - Every resource must be a RFC 3986 URI.
     - See https://www.rfc-editor.org/rfc/rfc3986
 
-    Provided value: https://example.com]
+    Provided value: foo]
   `)
   })
 
@@ -500,6 +548,10 @@ describe('createMessage', () => {
     // 63 octets: "xn--" plus 59 LDH characters.
     `example.xn--${'a'.repeat(59)}`,
     `example.${'a'.repeat(63)}`,
+    '[::cafe]',
+    '[::1]:3000',
+    '[2001:db8::1]:443',
+    '[v1.fe]',
   ])('valid domain `%s`', (domain) => {
     expect(
       Siwe.createMessage({
@@ -525,6 +577,14 @@ describe('createMessage', () => {
     // 64 octets: one past the maximum label length.
     `example.xn--${'a'.repeat(60)}`,
     `example.${'a'.repeat(64)}`,
+    '[::1',
+    '[zzz]',
+    '[::300.0.0.0]',
+    '[::1]:123456',
+    'user@[::1]',
+    '[::\t1]',
+    '[evil.com@[::1]',
+    '[a@[::1]',
   ])('invalid domain `%s`', (domain) => {
     expect(() =>
       Siwe.createMessage({
@@ -561,6 +621,83 @@ describe('isUri', () => {
     expect(Siwe.isUri('https://example.com/foo')).toMatchInlineSnapshot(
       `"https://example.com/foo"`,
     )
+  })
+
+  test('behavior: authority with empty path (bare origin)', () => {
+    expect(Siwe.isUri('https://example.com')).toMatchInlineSnapshot(
+      `"https://example.com"`,
+    )
+  })
+
+  test('behavior: authority with empty path and port', () => {
+    expect(Siwe.isUri('https://example.com:8080')).toMatchInlineSnapshot(
+      `"https://example.com:8080"`,
+    )
+  })
+
+  test('behavior: authority with empty path and query', () => {
+    expect(Siwe.isUri('https://example.com?a=1')).toMatchInlineSnapshot(
+      `"https://example.com?a=1"`,
+    )
+  })
+
+  test('behavior: authority with empty path and fragment', () => {
+    expect(Siwe.isUri('https://example.com#top')).toMatchInlineSnapshot(
+      `"https://example.com#top"`,
+    )
+  })
+
+  test('behavior: authority with empty path (non-http scheme)', () => {
+    expect(Siwe.isUri('ipfs://bafybeiabc')).toMatchInlineSnapshot(
+      `"ipfs://bafybeiabc"`,
+    )
+  })
+
+  test('behavior: authority variants with empty path', () => {
+    expect([
+      Siwe.isUri('https://[2001:db8::1]'),
+      Siwe.isUri('https://user:pass@example.com:8080'),
+      Siwe.isUri('foo://[v1.fe]'),
+    ]).toMatchInlineSnapshot(`
+      [
+        "https://[2001:db8::1]",
+        "https://user:pass@example.com:8080",
+        "foo://[v1.fe]",
+      ]
+    `)
+  })
+
+  test.each([
+    'https://example.com:bad',
+    'https://[:::]',
+    'https://user@@example.com',
+  ])('behavior: invalid authority with empty path `%s`', (uri) => {
+    expect(Siwe.isUri(uri)).toBe(false)
+  })
+
+  test('behavior: authority variants with path', () => {
+    expect([
+      Siwe.isUri('https://[2001:db8::1]/login'),
+      Siwe.isUri('https://user:pass@example.com:8080/login'),
+      Siwe.isUri('foo://[v1.fe]/p'),
+    ]).toMatchInlineSnapshot(`
+      [
+        "https://[2001:db8::1]/login",
+        "https://user:pass@example.com:8080/login",
+        "foo://[v1.fe]/p",
+      ]
+    `)
+  })
+
+  test.each([
+    // https://github.com/spruceid/siwe/blob/main/test/invalid_uris.json
+    'uri://[::0.0.0.256]/p/path',
+    'uri://[::300.0.0.0]/p/path',
+    'https://example.com:bad/login',
+    'https://[:::]/login',
+    'https://[::1/login',
+  ])('behavior: invalid authority with path `%s`', (uri) => {
+    expect(Siwe.isUri(uri)).toBe(false)
   })
 
   test('behavior: check for illegal characters', () => {
@@ -672,6 +809,22 @@ Nonce: foobarbaz
 Issued At: 2023-02-01T00:00:00.000Z`
     const parsed = Siwe.parseMessage(message)
     expect(parsed.domain).toMatchInlineSnapshot(`"example.com:8080"`)
+  })
+
+  test('behavior: ip literal domain', () => {
+    // https://github.com/spruceid/siwe/blob/main/test/parsing_positive.json
+    const message = `[::cafe] wants you to sign in with your Ethereum account:
+0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+
+
+URI: https://service.org/login
+Version: 1
+Chain ID: 1
+Nonce: 32891757
+Issued At: 2021-09-30T16:25:24.000Z`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.domain).toMatchInlineSnapshot(`"[::cafe]"`)
+    expect(Siwe.createMessage(parsed as Siwe.Message)).toBe(message)
   })
 
   test('behavior: with statement', () => {
