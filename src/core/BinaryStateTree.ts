@@ -274,6 +274,9 @@ function bitsToBytes(bits: number[]): Bytes.Bytes {
 /** @internal */
 function hash(bytes: Bytes.Bytes | undefined): Bytes.Bytes {
   if (!bytes) return new Uint8Array(32).fill(0)
-  if (!bytes.some((byte) => byte !== 0)) return new Uint8Array(32).fill(0)
+  // EIP-7864 only hashes the 64-byte zero input to zero. A zero-valued leaf
+  // still hashes.
+  if (bytes.length === 64 && !bytes.some((byte) => byte !== 0))
+    return new Uint8Array(32).fill(0)
   return engine.blake3(bytes)
 }
