@@ -68,7 +68,7 @@ describe('BlockOverrides', () => {
         "feeRecipient": "0x0000000000000000000000000000000000000000",
         "gasLimit": "0x3",
         "number": "0x4",
-        "prevRandao": "0x5",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000005",
         "time": "0x6",
         "withdrawals": [
           {
@@ -115,6 +115,41 @@ describe('BlockOverrides', () => {
         withdrawals: [{ address, amount: '0x7', index: 0, validatorIndex: 1 }],
       }),
     ).toEqual(expected)
+  })
+
+  test('encodes prevRandao as a 32-byte hash', () => {
+    const expected = {
+      prevRandao:
+        '0x0000000000000000000000000000000000000000000000000000000000000005',
+    } as const
+    expect(
+      z.encode(z_BlockOverrides.BlockOverrides, { prevRandao: 5n }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_BlockOverrides.BlockOverridesToRpc, { prevRandao: '0x5' }),
+    ).toEqual(expected)
+    expect(z.decode(z_BlockOverrides.BlockOverrides, expected)).toEqual({
+      prevRandao: 5n,
+    })
+  })
+
+  test('rejects prevRandao above 32 bytes', () => {
+    expect([
+      z.safeEncode(z_BlockOverrides.BlockOverrides, { prevRandao: 2n ** 256n })
+        .success,
+      z.safeEncode(z_BlockOverrides.BlockOverridesToRpc, {
+        prevRandao: 2n ** 256n,
+      }).success,
+      z.safeDecode(z_BlockOverrides.BlockOverrides, {
+        prevRandao: `0x01${'00'.repeat(32)}`,
+      }).success,
+    ]).toMatchInlineSnapshot(`
+      [
+        false,
+        false,
+        false,
+      ]
+    `)
   })
 
   test('rejects invalid nested withdrawals', () => {
