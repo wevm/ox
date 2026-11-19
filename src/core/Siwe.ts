@@ -29,6 +29,9 @@ const anchoredSuffixRegex = new RegExp(`^(?:${suffixRegex.source})$`)
 const siweDateTimeRegex =
   /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/
 
+// `parseMessage` reads the statement with `.`, which stops at these.
+const statementLineBreakRegex = /[\n\r\u2028\u2029]/
+
 // URI validation (see `isUri`).
 const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
 const uriInvalidEscapeRegex = /%[^0-9a-f]/i
@@ -239,11 +242,11 @@ export function createMessage(value: Message): string {
         ],
       })
     const statement = value.statement
-    if (statement?.includes('\n'))
+    if (statement && statementLineBreakRegex.test(statement))
       throw new InvalidMessageFieldError({
         field: 'statement',
         metaMessages: [
-          "- Statement must not include '\\n'.",
+          "- Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').",
           '',
           `Provided value: ${statement}`,
         ],
