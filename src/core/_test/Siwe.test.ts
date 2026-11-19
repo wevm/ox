@@ -430,6 +430,20 @@ describe('createMessage', () => {
   `)
   })
 
+  test('behavior: invalid scheme (comma)', () => {
+    expect(() => Siwe.createMessage({ ...message, scheme: 'ht,tps' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+    [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "scheme".
+
+    - Scheme must be an RFC 3986 URI scheme.
+    - See https://www.rfc-editor.org/rfc/rfc3986#section-3.1
+
+    Provided value: ht,tps]
+  `)
+    for (const scheme of ['https', 'a+b', 'a-b', 'a.b'])
+      expect(() => Siwe.createMessage({ ...message, scheme })).not.toThrow()
+  })
+
   test('behavior: invalid statement', () => {
     expect(() => Siwe.createMessage({ ...message, statement: 'foo\nbar' }))
       .toThrowErrorMatchingInlineSnapshot(`
@@ -671,6 +685,22 @@ Nonce: foobarbaz
 Issued At: 2023-02-01T00:00:00.000Z`
     const parsed = Siwe.parseMessage(message)
     expect(parsed.scheme).toMatchInlineSnapshot(`"https"`)
+  })
+
+  test('behavior: scheme with a comma', () => {
+    const message = `ht,tps://example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z`
+    expect(Siwe.parseMessage(message)).toEqual({})
+    for (const scheme of ['https', 'a+b', 'a-b', 'a.b'])
+      expect(Siwe.parseMessage(message.replace('ht,tps', scheme)).scheme).toBe(
+        scheme,
+      )
   })
 
   test('behavior: domain with port', () => {
