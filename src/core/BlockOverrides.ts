@@ -42,7 +42,8 @@ export type Rpc = BlockOverrides<Hex.Hex, Hex.Hex>
  *   feeRecipient: '0x0000000000000000000000000000000000000000',
  *   gasLimit: '0x4',
  *   number: '0x5',
- *   prevRandao: '0x6',
+ *   prevRandao:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000006',
  *   time: '0x1234567890',
  *   withdrawals: [
  *     {
@@ -134,7 +135,7 @@ export function toRpc(blockOverrides: BlockOverrides): Rpc {
       number: Hex.fromNumber(blockOverrides.number),
     }),
     ...(typeof blockOverrides.prevRandao === 'bigint' && {
-      prevRandao: Hex.fromNumber(blockOverrides.prevRandao),
+      prevRandao: Hex.fromNumber(blockOverrides.prevRandao, { size: 32 }),
     }),
     ...(typeof blockOverrides.time === 'bigint' && {
       time: Hex.fromNumber(blockOverrides.time),
