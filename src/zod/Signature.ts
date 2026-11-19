@@ -1,5 +1,6 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 import * as z_Hex from './Hex.js'
+import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
 import * as z from 'zod/mini'
 
@@ -39,7 +40,7 @@ export const SignatureToRpc = z.object({
 export const Legacy = z.object({
   r: z_Hex.Hex32,
   s: z_Hex.Hex32,
-  v: z_Uint.Uint8,
+  v: z_Number.Number,
 })
 
 /** Signature tuple schema. */
