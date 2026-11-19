@@ -408,7 +408,7 @@ export declare namespace extract {
  *   error, // [!code focus]
  *   [1n, 2n, 0] // [!code focus]
  * ) // [!code focus]
- * // @log: '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
+ * // @log: '0xe466f0a5000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000'
  * ```
  *
  * @example
@@ -751,7 +751,7 @@ export declare namespace fromAbi {
  * const selector = AbiError.getSelector(
  *   'error BadSignatureV(uint8 v)'
  * )
- * // @log: '0x6352211e'
+ * // @log: '0x1f003d0a'
  * ```
  *
  * @example
@@ -763,7 +763,7 @@ export declare namespace fromAbi {
  *   name: 'BadSignatureV',
  *   type: 'error'
  * })
- * // @log: '0x6352211e'
+ * // @log: '0x1f003d0a'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for.

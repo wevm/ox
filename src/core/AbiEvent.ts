@@ -1682,7 +1682,7 @@ export declare namespace fromAbi {
  * const selector = AbiEvent.getSelector(
  *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
- * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f556a2'
+ * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
  *
  * @example
@@ -1698,7 +1698,7 @@ export declare namespace fromAbi {
  *     { name: 'value', type: 'uint256' }
  *   ]
  * })
- * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f556a2'
+ * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
  *
  * @param abiItem - The ABI event to compute the selector for.
