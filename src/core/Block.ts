@@ -49,6 +49,8 @@ export type Block<
   parentHash: Hex.Hex
   /** Root of the this block’s receipts trie */
   receiptsRoot: Hex.Hex
+  /** EIP-7685 requests hash */
+  requestsHash?: Hex.Hex | undefined
   sealFields?: readonly Hex.Hex[] | undefined
   /** SHA3 of the uncles data in this block */
   sha3Uncles: Hex.Hex
@@ -174,6 +176,7 @@ export function toRpc<
     parentBeaconBlockRoot: block.parentBeaconBlockRoot,
     parentHash: block.parentHash,
     receiptsRoot: block.receiptsRoot,
+    requestsHash: block.requestsHash,
     sealFields: block.sealFields,
     sha3Uncles: block.sha3Uncles,
     size: Quantity.fromNumberish(block.size),
