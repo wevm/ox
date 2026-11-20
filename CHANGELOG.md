@@ -1,5 +1,33 @@
 # ox
 
+## 1.8.19
+
+### Patch Changes
+
+- [#693](https://github.com/wevm/ox/pull/693) [`d7b57e1`](https://github.com/wevm/ox/commit/d7b57e1f42aa3eef8c519abe5c80e575754bc01b) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed `Authorization.toRpc` (and so `TransactionRequest.toRpc`, `Transaction.toRpc` and the `eip7702Auth` of `UserOperation.toRpc`) to encode `r` and `s` as `uint256` quantities without leading zeros, which geth-based nodes require.
+
+- [#690](https://github.com/wevm/ox/pull/690) [`3f1730c`](https://github.com/wevm/ox/commit/3f1730c4bb3319f28e605cbddf5b45e1af47c6c9) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed `BinaryStateTree.merkelize` hashing a 32-byte zero value as an empty leaf, which did not match EIP-7864.
+
+- [#704](https://github.com/wevm/ox/pull/704) [`9c3280b`](https://github.com/wevm/ox/commit/9c3280b37f55caa53764f2a9d7a7976eb3cafbfb) Thanks [@jxom](https://github.com/jxom)! - Fixed `BlockOverrides.toRpc` and the zod `BlockOverrides` schemas to encode `prevRandao` as a 32-byte hash.
+
+- [#703](https://github.com/wevm/ox/pull/703) [`b31cd5d`](https://github.com/wevm/ox/commit/b31cd5d974756c608a2bd1413bcfa3292c5a795d) Thanks [@jxom](https://github.com/jxom)! - Added `requestsHash` (EIP-7685) to `Block.Block`, `Block.toRpc` and the `Block` zod schemas, so post-Prague blocks no longer lose it on a round trip.
+
+- [#712](https://github.com/wevm/ox/pull/712) [`a1641a2`](https://github.com/wevm/ox/commit/a1641a27086017074de855f042b0325ea4d5348e) Thanks [@HereForTheTechNFT](https://github.com/HereForTheTechNFT)! - Fixed `Siwe.validateMessage` to assume the `https` scheme when the message omits `scheme`, per EIP-4361.
+
+- [#705](https://github.com/wevm/ox/pull/705) [`061ebb0`](https://github.com/wevm/ox/commit/061ebb0b9ad8ef12df3aab3fa55fdc3ad5a92e9a) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` and `Siwe.parseMessage` to accept an IP literal `domain` with an optional port, such as `[::1]:3000`.
+
+- [#695](https://github.com/wevm/ox/pull/695) [`ccbb1af`](https://github.com/wevm/ox/commit/ccbb1af8374a8648b8950e0869de38c8c0de4959) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed `Siwe.isUri` to validate the authority of URIs that have a path, so `Siwe.createMessage` rejects a `uri` or resource such as `uri://[::300.0.0.0]/p` the same way it already rejected `uri://[::300.0.0.0]`.
+
+- [#705](https://github.com/wevm/ox/pull/705) [`061ebb0`](https://github.com/wevm/ox/commit/061ebb0b9ad8ef12df3aab3fa55fdc3ad5a92e9a) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` and `Siwe.parseMessage` accepting a comma in `scheme`.
+
+- [#705](https://github.com/wevm/ox/pull/705) [`061ebb0`](https://github.com/wevm/ox/commit/061ebb0b9ad8ef12df3aab3fa55fdc3ad5a92e9a) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` to throw `InvalidMessageFieldError` when `statement` contains a carriage return, `U+2028` or `U+2029`.
+
+- [#691](https://github.com/wevm/ox/pull/691) [`6b94083`](https://github.com/wevm/ox/commit/6b94083959ca0f72f7eb36c5ab003b6619abfdc7) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed `Transaction.toRpc` to encode a legacy transaction's `v` without the one-byte limit, so EIP-155 transactions whose `v` is above 255 (chain IDs from 110) no longer throw `Hex.IntegerOutOfRangeError`.
+
+- [#694](https://github.com/wevm/ox/pull/694) [`f0aaee7`](https://github.com/wevm/ox/commit/f0aaee7c7d78858f5381ee440e6377e872de8525) Thanks [@gomesalexandre](https://github.com/gomesalexandre)! - Fixed the `ox/zod` `Authorization.Signed` schemas (and so `Transaction.Eip7702`) to accept RPC `r` and `s` values below `2**248`, which nodes send without leading zeros, decoding them to 32-byte hex like `Authorization.fromRpc` and encoding them back to quantities.
+
+- [#701](https://github.com/wevm/ox/pull/701) [`4c70533`](https://github.com/wevm/ox/commit/4c70533519a6e4bc77f66967314ee5994ca8a531) Thanks [@Iamsohungrynow](https://github.com/Iamsohungrynow)! - Fixed the zod `Signature.Legacy` schema to accept EIP-155 `v` values above 255.
+
 ## 1.8.18
 
 ### Patch Changes
