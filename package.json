@@ -786,6 +786,11 @@
       "types": "./dist/tempo/AccountSimulation.d.ts",
       "default": "./dist/tempo/AccountSimulation.js"
     },
+    "./tempo/AttestedSigner": {
+      "src": "./src/tempo/AttestedSigner.ts",
+      "types": "./dist/tempo/AttestedSigner.d.ts",
+      "default": "./dist/tempo/AttestedSigner.js"
+    },
     "./tempo/AuthorizationTempo": {
       "src": "./src/tempo/AuthorizationTempo.ts",
       "types": "./dist/tempo/AuthorizationTempo.d.ts",
