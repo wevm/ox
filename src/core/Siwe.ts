@@ -498,7 +498,8 @@ export function validateMessage(value: validateMessage.Value): boolean {
 
   if (domain && message.domain !== domain) return false
   if (nonce && message.nonce !== nonce) return false
-  if (scheme && message.scheme !== scheme) return false
+  // EIP-4361: if `scheme` is not specified, HTTPS is assumed by default.
+  if (scheme && (message.scheme ?? 'https') !== scheme) return false
 
   // EIP-4361 requires `nonce = 8*( ALPHA / DIGIT )` and `version = "1"`.
   if (message.nonce !== undefined && !nonceRegex.test(message.nonce))
@@ -538,6 +539,7 @@ export declare namespace validateMessage {
     nonce?: string | undefined
     /**
      * [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-3.1) URI scheme to check against.
+     * If the message omits `scheme`, `https` is assumed ([EIP-4361](https://eips.ethereum.org/EIPS/eip-4361)).
      */
     scheme?: string | undefined
     /**
