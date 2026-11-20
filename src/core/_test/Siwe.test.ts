@@ -1333,6 +1333,11 @@ Issued At: 2023-02-01T00:00:00.000Z`)
     ).toBeFalsy()
   })
 
+  test('behavior: scheme defaults to https when omitted', () => {
+    expect(Siwe.validateMessage({ scheme: 'https', message })).toBeTruthy()
+    expect(Siwe.validateMessage({ scheme: 'http', message })).toBeFalsy()
+  })
+
   test('behavior: time is after expirationTime', () => {
     expect(
       Siwe.validateMessage({
