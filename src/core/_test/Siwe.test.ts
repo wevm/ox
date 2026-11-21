@@ -467,18 +467,16 @@ describe('createMessage', () => {
       Provided value: foo
       URI: https://evil.example]
     `)
-    expect(() =>
-      Siwe.createMessage({ ...message, statement: 'foo\u2028bar' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, statement: 'foo\u2028bar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
       [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
 
       - Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').
 
       Provided value: foo bar]
     `)
-    expect(() =>
-      Siwe.createMessage({ ...message, statement: 'foo\u2029bar' }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Siwe.createMessage({ ...message, statement: 'foo\u2029bar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
       [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
 
       - Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').
