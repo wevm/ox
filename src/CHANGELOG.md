@@ -1,5 +1,31 @@
 # ox
 
+## 0.14.69
+
+### Patch Changes
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Fixed `Authorization.toRpc` (and so `TransactionRequest.toRpc`, `Transaction.toRpc` and the `eip7702Auth` of `UserOperation.toRpc`) to encode `r` and `s` as `uint256` quantities without leading zeros, which geth-based nodes require.
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Fixed `BinaryStateTree.merkelize` hashing a 32-byte zero value as an empty leaf, which did not match EIP-7864.
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Fixed `BlockOverrides.toRpc` to encode `prevRandao` as a 32-byte hash.
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Added `requestsHash` (EIP-7685) to `Block.Block` and `Block.toRpc`, so post-Prague blocks no longer lose it on a round trip.
+
+- [#709](https://github.com/wevm/ox/pull/709) [`0cd7550`](https://github.com/wevm/ox/commit/0cd75504ae68fc4f8265cf5f2ca070c1243f4559) Thanks [@jxom](https://github.com/jxom)! - Accepted SIWE URIs with an authority and empty path.
+
+- [#713](https://github.com/wevm/ox/pull/713) [`c7f9873`](https://github.com/wevm/ox/commit/c7f98737ff3b1dee474a2844aedd61defe7de3cd) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.validateMessage` to assume the `https` scheme when the message omits `scheme`, per EIP-4361.
+
+- [#709](https://github.com/wevm/ox/pull/709) [`0cd7550`](https://github.com/wevm/ox/commit/0cd75504ae68fc4f8265cf5f2ca070c1243f4559) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` and `Siwe.parseMessage` to accept an IP literal `domain` with an optional port, such as `[::1]:3000`.
+
+- [#709](https://github.com/wevm/ox/pull/709) [`0cd7550`](https://github.com/wevm/ox/commit/0cd75504ae68fc4f8265cf5f2ca070c1243f4559) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.isUri` to validate the authority of URIs that have a path, so `Siwe.createMessage` rejects a `uri` or resource such as `uri://[::300.0.0.0]/p` the same way it already rejected `uri://[::300.0.0.0]`.
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` and `Siwe.parseMessage` accepting a comma in `scheme`.
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Fixed `Siwe.createMessage` to throw `InvalidMessageFieldError` when `statement` contains a carriage return, `U+2028` or `U+2029`.
+
+- [#706](https://github.com/wevm/ox/pull/706) [`ad49015`](https://github.com/wevm/ox/commit/ad490151b19b4bd233002022c7b8e92a65a4f7ee) Thanks [@jxom](https://github.com/jxom)! - Fixed `Transaction.toRpc` to encode a legacy transaction's `v` without the one-byte limit, so EIP-155 transactions whose `v` is above 255 (chain IDs from 110) no longer throw `Hex.IntegerOutOfRangeError`.
+
 ## 0.14.68
 
 ### Patch Changes
