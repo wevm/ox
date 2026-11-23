@@ -604,6 +604,15 @@ describe('decode', () => {
     expect(() => Cbor.decode(encoded)).toThrow(Cbor.UnsupportedTagError)
   })
 
+  test('truncated float throws', () => {
+    expect(() => Cbor.decode('0xfa0000')).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.PositionOutOfBoundsError: Position \`4\` is out of bounds (\`0 < position < 3\`).]`,
+    )
+    expect(() => Cbor.decode('0xa160fb')).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.PositionOutOfBoundsError: Position \`10\` is out of bounds (\`0 < position < 3\`).]`,
+    )
+  })
+
   test('invalid additional info throws', () => {
     // Additional info 28-30 are invalid
     const encoded = Hex.from([0x1c]) // 00011100 = major type 0, additional info 28
