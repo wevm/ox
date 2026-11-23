@@ -33,6 +33,9 @@ const serializedConfigurableType = '0x05'
  * (Tempo's `MAX_WEBAUTHN_SIGNATURE_LENGTH`).
  */
 const maxWebAuthnSize = 2048
+/** Half the secp256k1 curve order. Tempo rejects secp256k1 signatures with a higher s value. */
+const secp256k1HalfOrder =
+  0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0n
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -1707,6 +1710,7 @@ export function verify(
 
   if (envelope.type === 'secp256k1') {
     if (!address) return false
+    if (Hex.toBigInt(envelope.signature.s) > secp256k1HalfOrder) return false
     return ox_Secp256k1.verify({
       address,
       payload,
