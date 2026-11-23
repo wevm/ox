@@ -4,6 +4,9 @@ import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as TempoAddress from './TempoAddress.js'
 
+/** `address, bytes32`, written out so calls do not parse human-readable ABI. */
+const computeParameters = [{ type: 'address' }, { type: 'bytes32' }] as const
+
 const tip20Prefix = '0x20c0'
 
 export type TokenId = bigint
@@ -110,7 +113,7 @@ export function toAddress(
  */
 export function compute(value: compute.Value): bigint {
   const hash = Hash.keccak256(
-    AbiParameters.encode(AbiParameters.from('address, bytes32'), [
+    AbiParameters.encode(computeParameters, [
       TempoAddress.resolve(value.sender),
       value.salt,
     ]),

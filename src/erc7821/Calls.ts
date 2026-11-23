@@ -68,12 +68,22 @@ export declare namespace encode {
  */
 export function getAbiParameters(options: getAbiParameters.Options = {}) {
   const { opData } = options
-  return AbiParameters.from([
-    'struct Call { address target; uint256 value; bytes data; }',
-    'Call[] calls',
-    ...(opData ? ['bytes opData'] : []),
-  ])
+  if (opData) return [callsParameter, opDataParameter] as const
+  return [callsParameter] as const
 }
+
+// `struct Call { address target; uint256 value; bytes data; }`, `Call[] calls` and `bytes opData`,
+// written out so encoding and decoding do not parse human-readable ABI on every call.
+const callsParameter = {
+  type: 'tuple[]',
+  name: 'calls',
+  components: [
+    { type: 'address', name: 'target' },
+    { type: 'uint256', name: 'value' },
+    { type: 'bytes', name: 'data' },
+  ],
+} as const
+const opDataParameter = { type: 'bytes', name: 'opData' } as const
 
 export declare namespace getAbiParameters {
   type Options = {

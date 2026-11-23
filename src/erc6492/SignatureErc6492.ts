@@ -5,6 +5,13 @@ import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type * as Signature from '../core/Signature.js'
 
+/** `address, bytes, bytes`, written out so calls do not parse human-readable ABI. */
+const wrappedParameters = [
+  { type: 'address' },
+  { type: 'bytes' },
+  { type: 'bytes' },
+] as const
+
 /** Unwrapped ERC-6492 signature. */
 export type Unwrapped = {
   /** Calldata to pass to the target address for counterfactual verification. */
@@ -144,7 +151,6 @@ export declare namespace from {
   type ReturnType = Unwrapped
 
   type ErrorType =
-    | AbiParameters.from.ErrorType
     | AbiParameters.decode.ErrorType
     | Signature.fromHex.ErrorType
     | Errors.GlobalErrorType
@@ -166,17 +172,13 @@ export declare namespace from {
 export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
-  const [to, data, signature] = AbiParameters.decode(
-    AbiParameters.from('address, bytes, bytes'),
-    wrapped,
-  )
+  const [to, data, signature] = AbiParameters.decode(wrappedParameters, wrapped)
 
   return { data, signature, to }
 }
 
 export declare namespace unwrap {
   type ErrorType =
-    | AbiParameters.from.ErrorType
     | AbiParameters.decode.ErrorType
     | Signature.fromHex.ErrorType
     | Errors.GlobalErrorType
@@ -209,11 +211,7 @@ export function wrap(value: Unwrapped): Wrapped {
   const { data, signature, to } = value
 
   return Hex.concat(
-    AbiParameters.encode(AbiParameters.from('address, bytes, bytes'), [
-      to,
-      data,
-      signature,
-    ]),
+    AbiParameters.encode(wrappedParameters, [to, data, signature]),
     magicBytes,
   )
 }

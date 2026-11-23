@@ -4,6 +4,9 @@ import * as Hex from '../core/Hex.js'
 import { AbiParameters } from '../index.js'
 import * as Calls from './Calls.js'
 
+/** `bytes[]`, written out so calls do not parse human-readable ABI. */
+const bytesArrayParameters = [{ type: 'bytes[]' }] as const
+
 export type Batch = {
   calls: readonly Call[]
   opData?: Hex.Hex | undefined
@@ -103,7 +106,7 @@ export function decodeBatchOfBatchesData(
     throw new UnsupportedModeError({ mode: m, supported: ['batchOfBatches'] })
 
   const [encodedBatches] = AbiParameters.decode(
-    AbiParameters.from('bytes[]'),
+    bytesArrayParameters,
     executionData,
   ) as readonly [Hex.Hex[]]
 
@@ -168,7 +171,7 @@ export declare namespace decodeBatchOfBatchesData {
  * @returns The encoded data.
  */
 export function encodeBatchOfBatchesData(batches: readonly Batch[]) {
-  const b = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+  const b = AbiParameters.encode(bytesArrayParameters, [
     batches.map((b) => {
       const batch = b as Batch
       return Calls.encode(batch.calls, {
