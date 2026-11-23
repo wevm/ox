@@ -112,3 +112,23 @@ test('behavior: modules import each other, not an entry point', () => {
     )
   expect(offenders).toEqual([])
 })
+
+test('behavior: modules declare no runtime namespaces', () => {
+  // A namespace that holds values compiles to an IIFE at the top of its module,
+  // which bundlers cannot drop, so every bundle that imports anything from the
+  // module carries the namespace's code. `UserOperation.toTypedData.types` is
+  // public, so it stays.
+  const root = path.resolve(import.meta.dirname, '../..')
+  const offenders = fs
+    .globSync('**/*.ts', { cwd: root })
+    .filter(
+      (file) =>
+        !/(^|\/)_test\/|\.(test|test-d|snap-d|bench|bench-d)\.ts$/.test(file),
+    )
+    .filter((file) =>
+      /^(export )?namespace /m.test(
+        fs.readFileSync(path.join(root, file), 'utf8'),
+      ),
+    )
+  expect(offenders).toEqual(['erc4337/UserOperation.ts'])
+})
