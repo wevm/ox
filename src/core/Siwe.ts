@@ -23,7 +23,9 @@ export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
 
 // Matches `suffixRegex` from the start of the input to its end.
-const anchoredSuffixRegex = new RegExp(`^(?:${suffixRegex.source})$`)
+const anchoredSuffixRegex = /*#__PURE__*/ new RegExp(
+  `^(?:${suffixRegex.source})$`,
+)
 
 const siweDateTimeRegex =
   /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/

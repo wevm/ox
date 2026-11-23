@@ -396,5 +396,5 @@ async function deriveKey(
   }
 }
 
-const fromPrfDomain = Bytes.fromString('ox.aesGcm.fromPrf.v1')
-const fromSeedDomain = Bytes.fromString('ox.aesGcm.fromSeed.v1')
+const fromPrfDomain = /*#__PURE__*/ Bytes.fromString('ox.aesGcm.fromPrf.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString('ox.aesGcm.fromSeed.v1')

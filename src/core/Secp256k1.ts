@@ -733,5 +733,7 @@ export declare namespace InvalidSeedSizeError {
 /** Half the secp256k1 curve order, the largest `s` a low-s signature can have. */
 const halfOrder =
   0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0n
-const fromPrfDomain = Bytes.fromString('ox.secp256k1.fromPrf.v1')
-const fromSeedDomain = Bytes.fromString('ox.secp256k1.fromSeed.v1')
+const fromPrfDomain = /*#__PURE__*/ Bytes.fromString('ox.secp256k1.fromPrf.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString(
+  'ox.secp256k1.fromSeed.v1',
+)

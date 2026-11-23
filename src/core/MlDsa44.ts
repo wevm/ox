@@ -542,5 +542,5 @@ function toContextBytes(
   return bytes
 }
 
-const fromPrfDomain = Bytes.fromString('ox.mldsa44.fromPrf.v1')
-const fromSeedDomain = Bytes.fromString('ox.mldsa44.fromSeed.v1')
+const fromPrfDomain = /*#__PURE__*/ Bytes.fromString('ox.mldsa44.fromPrf.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString('ox.mldsa44.fromSeed.v1')
