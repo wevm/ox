@@ -33,7 +33,11 @@ export function getExports({
 
   for (const parentEntry of entries) {
     if (!parentEntry.isDirectory()) {
-      if (parentEntry.name.endsWith('test.ts')) continue
+      if (
+        parentEntry.name.endsWith('test.ts') ||
+        parentEntry.name.endsWith('.test-d.ts')
+      )
+        continue
       if (
         !parentEntry.name.endsWith('.ts') &&
         !parentEntry.name.endsWith('.json')
@@ -69,7 +73,8 @@ export function getExports({
       },
     )
     for (const entry of entries) {
-      if (entry.name.endsWith('test.ts')) continue
+      if (entry.name.endsWith('test.ts') || entry.name.endsWith('.test-d.ts'))
+        continue
       if (entry.isDirectory()) continue
 
       const isIndex = entry.name === 'index.ts'
