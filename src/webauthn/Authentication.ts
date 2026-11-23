@@ -645,11 +645,17 @@ export function verify(options: verify.Options): boolean {
     }
   }
 
-  // Parse clientDataJSON for validation.
-  const clientData = JSON.parse(clientDataJSON)
+  // Parse clientDataJSON for validation. Malformed JSON fails verification.
+  const clientData = (() => {
+    try {
+      return JSON.parse(clientDataJSON)
+    } catch {
+      return undefined
+    }
+  })()
 
   // Verify that response is for an authentication assertion.
-  if (clientData.type !== 'webauthn.get') return false
+  if (clientData?.type !== 'webauthn.get') return false
 
   // Validate the challenge in the clientDataJSON.
   if (

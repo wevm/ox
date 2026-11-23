@@ -902,6 +902,18 @@ describe('verify', () => {
     ).toThrow('Expected clientData.type "webauthn.create"')
   })
 
+  test('error: malformed clientDataJSON', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential()
+
+    for (const clientDataJSON of ['{"type":', 'null']) {
+      credential.clientDataJSON = new TextEncoder().encode(clientDataJSON)
+        .buffer as ArrayBuffer
+      expect(() =>
+        Registration.verify({ challenge, credential, origin, rpId }),
+      ).toThrowError(Registration.VerifyError)
+    }
+  })
+
   test('error: challenge mismatch', async () => {
     const { credential, origin, rpId } = await mockCreateCredential()
 
