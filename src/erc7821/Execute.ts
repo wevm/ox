@@ -11,8 +11,8 @@ export type Batch = {
 
 export type Call = Calls.Call
 
-/** Cached ABI parameters for the encoded `bytes[]` payload of batch-of-batches. */
-const batchesParameters = /*#__PURE__*/ AbiParameters.from('bytes[]')
+/** `bytes[]`, the encoded payload of batch-of-batches, written out so calls do not parse human-readable ABI. */
+const batchesParameters = [{ type: 'bytes[]' }] as const
 
 export const abiFunction = {
   type: 'function',

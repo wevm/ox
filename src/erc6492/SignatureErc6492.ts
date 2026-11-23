@@ -24,10 +24,12 @@ export type Wrapped = Hex.Hex
 export const magicBytes =
   '0x6492649264926492649264926492649264926492649264926492649264926492' as const
 
-/** Cached ABI parameters for ERC-6492 wrapped signature payloads. */
-const wrappedParameters = /*#__PURE__*/ AbiParameters.from(
-  'address, bytes, bytes',
-)
+/** `address, bytes, bytes`, the ERC-6492 wrapped signature payload, written out so calls do not parse human-readable ABI. */
+const wrappedParameters = [
+  { type: 'address' },
+  { type: 'bytes' },
+  { type: 'bytes' },
+] as const
 
 /**
  * Deployless ERC-6492 signature verification bytecode.
@@ -164,7 +166,6 @@ export declare namespace from {
   type ReturnType = Unwrapped
 
   type ErrorType =
-    | AbiParameters.from.ErrorType
     | AbiParameters.decode.ErrorType
     | Signature.fromHex.ErrorType
     | Errors.GlobalErrorType
@@ -195,7 +196,6 @@ export function unwrap(wrapped: Wrapped): Unwrapped {
 
 export declare namespace unwrap {
   type ErrorType =
-    | AbiParameters.from.ErrorType
     | AbiParameters.decode.ErrorType
     | Signature.fromHex.ErrorType
     | Errors.GlobalErrorType
