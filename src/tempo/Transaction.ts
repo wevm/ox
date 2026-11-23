@@ -333,13 +333,24 @@ export declare namespace fromRpc {
  * @param transaction - The transaction to convert.
  * @returns An RPC-formatted transaction.
  */
+export function toRpc(
+  transaction: toRpc.Input<false>,
+  options?: toRpc.Options<false>,
+): Rpc<false>
+// Overload for settled transactions first: inferring `pending` through the
+// transaction union costs about 5x the type instantiations of checking it.
 export function toRpc<pending extends boolean = false>(
   transaction: toRpc.Input<pending>,
-  _options?: toRpc.Options<pending>,
-): Rpc<pending> {
-  const rpc = ox_Transaction.toRpc(
-    transaction as ox_Transaction.Transaction<pending>,
-  ) as Rpc<pending>
+  options?: toRpc.Options<pending>,
+): Rpc<pending>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function toRpc(
+  transaction: toRpc.Input<boolean>,
+  _options?: toRpc.Options<boolean>,
+): Rpc<boolean> {
+  const rpc = ox_Transaction.toRpc<boolean>(
+    transaction as ox_Transaction.Transaction<boolean>,
+  ) as Rpc<boolean>
 
   if (transaction.type !== 'tempo') return rpc
 
@@ -381,7 +392,7 @@ export function toRpc<pending extends boolean = false>(
   if (transaction.validBefore !== undefined)
     rpc.validBefore = Quantity.fromNumberish(transaction.validBefore)
 
-  return rpc as Rpc<pending>
+  return rpc as Rpc<boolean>
 }
 
 export declare namespace toRpc {
