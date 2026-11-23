@@ -433,6 +433,14 @@ describe('list boundary', () => {
     )
   })
 
+  test('readList: list longer than the bytes', () => {
+    expect(() =>
+      Rlp.readList({ bytes: new Uint8Array(), position: 0 }, 1, 'Hex'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.PositionOutOfBoundsError: Position \`0\` is out of bounds (\`0 < position < 0\`).]`,
+    )
+  })
+
   test('item extends beyond list with trailing bytes', () => {
     expect(() => Rlp.toHex('0xc182aabbff')).toThrowErrorMatchingInlineSnapshot(
       `[Rlp.ListBoundaryExceededError: RLP list items consumed \`3\` bytes but the list declared a length of \`1\`.]`,
