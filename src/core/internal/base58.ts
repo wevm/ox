@@ -73,6 +73,7 @@ export const alphabetToInteger = /* __PURE__ */ Object.freeze<
 /** @internal */
 export function from(value: Hex.Hex | Bytes.Bytes) {
   const bytes = Bytes.from(value)
+  if (bytes.length === 0) return ''
 
   let integer = (() => {
     let hex = value
@@ -93,9 +94,9 @@ export function from(value: Hex.Hex | Bytes.Bytes) {
     }
   }
 
-  // Count leading zero bytes (all but the last byte) without copying.
+  // Each leading zero byte encodes as a leading '1'.
   let zeros = 0
-  while (zeros < bytes.length - 1 && bytes[zeros] === 0) zeros++
+  while (zeros < bytes.length && bytes[zeros] === 0) zeros++
 
   return '1'.repeat(zeros) + result
 }
