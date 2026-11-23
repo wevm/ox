@@ -13,6 +13,16 @@ describe('toAmount', () => {
       0n,
     )
   })
+
+  test('error: empty anchor', () => {
+    expect(() =>
+      EarnShares.toAmount({ engineShares: 0n, shareSupply: 0n }, 1n),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [EarnShares.InvalidAnchorError: Anchor \`{ engineShares: 0, shareSupply: 0 }\` is invalid.
+
+      Both sides must be positive. Read the anchor from the vault’s \`anchorEngineShares\` and \`anchorEarnShares\`; an empty vault’s anchor is not zero.]
+    `)
+  })
 })
 
 describe('toAmountUp', () => {
@@ -22,6 +32,16 @@ describe('toAmountUp', () => {
 
   test('behavior: exact conversions do not round up', () => {
     expect(EarnShares.toAmountUp(anchor, 3n)).toBe(2n)
+  })
+
+  test('error: empty anchor', () => {
+    expect(() =>
+      EarnShares.toAmountUp({ engineShares: 0n, shareSupply: 5n }, 1n),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [EarnShares.InvalidAnchorError: Anchor \`{ engineShares: 0, shareSupply: 5 }\` is invalid.
+
+      Both sides must be positive. Read the anchor from the vault’s \`anchorEngineShares\` and \`anchorEarnShares\`; an empty vault’s anchor is not zero.]
+    `)
   })
 })
 
@@ -34,6 +54,16 @@ describe('toVenueAmount', () => {
     expect(
       EarnShares.toVenueAmount({ engineShares: 1n, shareSupply: 1n }, 12_345n),
     ).toBe(12_345n)
+  })
+
+  test('error: empty anchor', () => {
+    expect(() =>
+      EarnShares.toVenueAmount({ engineShares: 5n, shareSupply: 0n }, 1n),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [EarnShares.InvalidAnchorError: Anchor \`{ engineShares: 5, shareSupply: 0 }\` is invalid.
+
+      Both sides must be positive. Read the anchor from the vault’s \`anchorEngineShares\` and \`anchorEarnShares\`; an empty vault’s anchor is not zero.]
+    `)
   })
 })
 

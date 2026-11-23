@@ -7,8 +7,10 @@ export const basisPointScale = 10_000
  * Tempo Earn `VaultAdapter` conversion anchor.
  *
  * The adapter prices vault shares against venue shares through this pair:
- * `engineShares` venue shares are worth `shareSupply` vault shares. It is initialised
- * 1:1 and restated on `contribute` and `migrateEngine`.
+ * `engineShares` venue shares are worth `shareSupply` vault shares. Read it from the
+ * vault's `anchorEngineShares` and `anchorEarnShares`, which are never zero: an empty
+ * vault's anchor is one whole venue share per whole vault share. It is restated on
+ * `contribute` and `migrateEngine`.
  *
  * These conversions are raw and fee-blind; they ignore pending fee dilution
  * and are unsuitable for user-facing value (use the adapter's `previewRedeem`).
@@ -39,13 +41,15 @@ export type Anchor = {
  * @param anchor - The conversion anchor.
  * @param venueShareAmount - Venue share amount, base units.
  * @returns Vault share amount, rounded down.
+ * @throws `InvalidAnchorError` when either side of the anchor is not positive.
  */
 export function toAmount(anchor: Anchor, venueShareAmount: bigint): bigint {
+  assertAnchor(anchor)
   return (venueShareAmount * anchor.shareSupply) / anchor.engineShares
 }
 
 export declare namespace toAmount {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidAnchorError | Errors.GlobalErrorType
 }
 
 /**
@@ -67,14 +71,16 @@ export declare namespace toAmount {
  * @param anchor - The conversion anchor.
  * @param venueShareAmount - Venue share amount, base units.
  * @returns Vault share amount, rounded up.
+ * @throws `InvalidAnchorError` when either side of the anchor is not positive.
  */
 export function toAmountUp(anchor: Anchor, venueShareAmount: bigint): bigint {
+  assertAnchor(anchor)
   const { engineShares, shareSupply } = anchor
   return (venueShareAmount * shareSupply + engineShares - 1n) / engineShares
 }
 
 export declare namespace toAmountUp {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidAnchorError | Errors.GlobalErrorType
 }
 
 /**
@@ -96,13 +102,15 @@ export declare namespace toAmountUp {
  * @param anchor - The conversion anchor.
  * @param shareAmount - Vault share amount, base units.
  * @returns Venue share amount, rounded down.
+ * @throws `InvalidAnchorError` when either side of the anchor is not positive.
  */
 export function toVenueAmount(anchor: Anchor, shareAmount: bigint): bigint {
+  assertAnchor(anchor)
   return (shareAmount * anchor.engineShares) / anchor.shareSupply
 }
 
 export declare namespace toVenueAmount {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidAnchorError | Errors.GlobalErrorType
 }
 
 /**
@@ -189,6 +197,36 @@ export declare namespace minimumOutput {
     | InvalidExpectedOutputError
     | InvalidSlippageError
     | Errors.GlobalErrorType
+}
+
+/** Throws when either side of an anchor is not positive, as the adapter never stores one. */
+function assertAnchor(anchor: Anchor) {
+  if (anchor.engineShares <= 0n || anchor.shareSupply <= 0n)
+    throw new InvalidAnchorError({ anchor })
+}
+
+/**
+ * Error thrown when an anchor's `engineShares` or `shareSupply` is not positive.
+ */
+export class InvalidAnchorError extends Errors.BaseError {
+  override readonly name = 'EarnShares.InvalidAnchorError'
+
+  constructor(options: InvalidAnchorError.Options) {
+    super(
+      `Anchor \`{ engineShares: ${options.anchor.engineShares}, shareSupply: ${options.anchor.shareSupply} }\` is invalid.`,
+      {
+        metaMessages: [
+          'Both sides must be positive. Read the anchor from the vault’s `anchorEngineShares` and `anchorEarnShares`; an empty vault’s anchor is not zero.',
+        ],
+      },
+    )
+  }
+}
+
+export declare namespace InvalidAnchorError {
+  export type Options = {
+    anchor: Anchor
+  }
 }
 
 /**
