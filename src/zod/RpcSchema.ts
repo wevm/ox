@@ -127,8 +127,10 @@ export const Eth = eth
 /** JSON-RPC method schemas for the `wallet_` namespace. */
 export const Wallet = wallet
 
+// A bare spread is a side effect to bundlers, which would then keep every
+// `eth_` and `wallet_` schema in any bundle that imports from this module.
 /** JSON-RPC method schemas for the `eth_` and `wallet_` namespaces. */
-export const Default = { ...eth, ...wallet }
+export const Default = /*#__PURE__*/ (() => ({ ...eth, ...wallet }))()
 
 const requestCache = new WeakMap<NamespaceLike, z.ZodMiniType>()
 
