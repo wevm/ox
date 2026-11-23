@@ -11,7 +11,7 @@ concurrency:
 jobs:
   issue-labeled:
     if: ${{ github.repository_owner == 'wevm' }}
-    uses: wevm/actions/.github/workflows/issue-labeled.yml@8963daf30237417f873c8e2f17e3bf9415e3a7b9
+    uses: wevm/actions/.github/workflows/issue-labeled.yml@ce3e8f4d50163a659a550102f4beb1c100cb2b8b
     with:
       needs-reproduction-body: |
         Hello @${{ github.event.issue.user.login }}. 
