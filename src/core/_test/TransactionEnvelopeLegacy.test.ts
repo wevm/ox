@@ -1124,6 +1124,16 @@ describe('serialize', () => {
       `)
     })
 
+    test('behavior: yParity without v', () => {
+      const { r, s, ...unsigned } = signed
+      for (const yParity of [0, 1])
+        expect(TxEnvelopeLegacy.serialize({ ...signed, yParity })).toBe(
+          TxEnvelopeLegacy.serialize(unsigned, {
+            signature: { r, s, yParity },
+          }),
+        )
+    })
+
     test('error: v encodes another chain', () => {
       expect(() =>
         TxEnvelopeLegacy.serialize({ ...signed, v: 40 }),
