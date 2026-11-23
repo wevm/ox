@@ -500,7 +500,9 @@ export declare namespace sign {
  */
 export function verify(options: verify.Options): boolean {
   const { hash, payload } = options
-  if (options.address)
+  if (options.address) {
+    // Recovery accepts high-s signatures, so reject them as `secp256k1.verify` does.
+    if (options.signature.s > halfOrder) return false
     return Address.isEqual(
       options.address,
       recoverAddress({
@@ -508,6 +510,7 @@ export function verify(options: verify.Options): boolean {
         signature: options.signature,
       }),
     )
+  }
   return secp256k1.verify(
     options.signature,
     Bytes.from(payload),
@@ -539,6 +542,10 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
+
+/** Half the secp256k1 curve order, the largest `s` a low-s signature can have. */
+const halfOrder =
+  0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0n
 
 /** Thrown when a seed contains fewer than 32 bytes. */
 export class InvalidSeedSizeError extends Errors.BaseError {
