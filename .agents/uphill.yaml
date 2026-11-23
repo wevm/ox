@@ -12,11 +12,19 @@ footprint:
   # Gzipped bytes a consumer bundles to import one export from its entry point, such as
   # `ox:Hex.fromNumber`, a namespace, such as `ox:Hex`, or the whole entry, such as `ox/tempo`.
   # rolldown bundles and minifies each import for the browser. Most members bundle under 4 kB and
-  # the p90 is 20 kB, which the curves set: a function that signs, verifies, or derives a key
+  # the p90 is 14 kB, which the curves set: a function that signs, verifies, or derives a key
   # bundles noble's curve. The first matching pattern applies.
   entry-size:
     target: 12kB
     targets:
+      # An error class needs only the base error and its message, about 0.7 kB, or about 1.1 kB
+      # when its message formats an ABI item. These ask for `Provider`'s errors without
+      # eventemitter3 (2.3 kB) and `SignatureErc8010`'s without the human-readable ABI parser
+      # (3.5 kB).
+      'ox:*.*Error': 1.2kB
+      'ox/erc*:*.*Error': 1.2kB
+      'ox/tempo:*.*Error': 1.2kB
+      'ox/webauthn:*.*Error': 1.2kB
       # The trusted setup is data: 400 kB of G1 and G2 points.
       ox/trusted-setups*: 410kB
       ox/wasm: 260kB
@@ -26,6 +34,12 @@ footprint:
       'ox/zod:z': 125kB
       ox/tempo: 65kB
       'ox/wasm:*': 130kB
+      # The `eth_` and `wallet_` schemas are data. The codecs and errors need none of them.
+      'ox/zod:z.RpcSchema': 26kB
+      'ox/zod:z.RpcSchema.Default': 26kB
+      'ox/zod:z.RpcSchema.Eth': 26kB
+      'ox/zod:z.RpcSchema.Wallet': 26kB
+      'ox/zod:z.RpcSchema.*': 4kB
       # Mnemonic re-exports every BIP-39 wordlist.
       '*:Mnemonic': 100kB
       'ox/zod*': 60kB
@@ -48,7 +62,6 @@ footprint:
       '*:Transaction*': 22kB
       '*:Ens*': 18kB
       'ox/erc*': 22kB
-      '*Error': 2kB
 
 speed:
   run: bun .agents/metrics/speed.ts
@@ -127,7 +140,10 @@ speed:
   # CPU time to import each entry point in a fresh Node process. An entry that loads only the
   # modules it uses imports in about 40 ms; the root and zod entries load everything.
   import-time:
-    target: 100ms
+    # Single-purpose entries import in 40 to 60 ms. 75 ms asks for the envelope entries
+    # (`ox/TxEnvelope*` and `ox/TransactionRequest`, 77 to 85 ms) to stop loading every envelope
+    # type, and for `ox/erc8010` (93 ms) to stop parsing ABI parameters at load.
+    target: 75ms
     targets:
       ox/zod*: 350ms
       ox: 250ms
