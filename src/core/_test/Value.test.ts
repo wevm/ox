@@ -330,6 +330,27 @@ describe('from', () => {
     )
   })
 
+  test('error: no digits', () => {
+    for (const value of ['', '.', '-', '-.'])
+      expect(() => Value.from(value)).toThrow(Value.InvalidDecimalNumberError)
+    expect(() => Value.from('-')).toThrowErrorMatchingInlineSnapshot(
+      `[Value.InvalidDecimalNumberError: Value \`-\` is not a valid decimal number.]`,
+    )
+  })
+
+  test('behavior: negative without integer digits', () => {
+    expect(Value.from('-.0')).toMatchInlineSnapshot('0n')
+    expect(Value.from('-.5')).toMatchInlineSnapshot('-1n')
+    expect(Value.from('-.5', 2)).toMatchInlineSnapshot('-50n')
+  })
+
+  test('error: invalid decimals', () => {
+    expect(() => Value.from('1', -1)).toThrowErrorMatchingInlineSnapshot(
+      `[Value.InvalidDecimalsError: Decimals \`-1\` is not a non-negative integer.]`,
+    )
+    expect(() => Value.from('1', 1.5)).toThrow(Value.InvalidDecimalsError)
+  })
+
   test('behavior: decimals < fraction length', () => {
     expect(Value.from('69.23521', 0)).toMatchInlineSnapshot('69n')
     expect(Value.from('69.56789', 0)).toMatchInlineSnapshot('70n')
@@ -672,6 +693,7 @@ test('exports', () => {
       "fromEther",
       "fromGwei",
       "InvalidDecimalNumberError",
+      "InvalidDecimalsError",
     ]
   `)
 })
