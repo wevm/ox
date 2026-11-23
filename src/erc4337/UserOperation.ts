@@ -1,6 +1,6 @@
 import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
-import type * as Authorization from '../core/Authorization.js'
+import * as Authorization from '../core/Authorization.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -56,7 +56,7 @@ export type Rpc<
 > = OneOf<
   | (entryPointVersion extends '0.6' ? V06<signed, Hex.Hex> : never)
   | (entryPointVersion extends '0.7' ? V07<signed, Hex.Hex> : never)
-  | (entryPointVersion extends '0.8' ? V08<signed, Hex.Hex, Hex.Hex> : never)
+  | (entryPointVersion extends '0.8' ? RpcV08<signed> : never)
 >
 
 /** Transaction Info. */
@@ -183,10 +183,11 @@ export type V08<
 } & (signed extends true ? { signature: Hex.Hex } : {})
 
 /** RPC User Operation on EntryPoint 0.8 */
-export type RpcV08<signed extends boolean = true> = V08<
-  signed,
-  Hex.Hex,
-  Hex.Hex
+export type RpcV08<signed extends boolean = true> = Compute<
+  Omit<V08<signed, Hex.Hex, Hex.Hex>, 'authorization'> & {
+    /** EIP-7702 authorization, under the name bundlers use (ERC-7769). */
+    eip7702Auth?: Authorization.Rpc | undefined
+  }
 >
 
 /**
@@ -330,8 +331,10 @@ export declare namespace from {
  * @returns An instantiated {@link ox#UserOperation.UserOperation}.
  */
 export function fromRpc(rpc: Rpc): UserOperation {
+  const { eip7702Auth, ...rest } = rpc
   return {
-    ...rpc,
+    ...rest,
+    ...(eip7702Auth && { authorization: Authorization.fromRpc(eip7702Auth) }),
     callGasLimit: BigInt(rpc.callGasLimit),
     maxFeePerGas: BigInt(rpc.maxFeePerGas),
     maxPriorityFeePerGas: BigInt(rpc.maxPriorityFeePerGas),
@@ -878,6 +881,8 @@ export function toRpc(userOperation: UserOperation): Rpc {
   if (userOperation.factory) rpc.factory = userOperation.factory
   if (userOperation.factoryData) rpc.factoryData = userOperation.factoryData
   if (userOperation.initCode) rpc.initCode = userOperation.initCode
+  if (userOperation.authorization)
+    rpc.eip7702Auth = Authorization.toRpc(userOperation.authorization)
   if (userOperation.paymaster) rpc.paymaster = userOperation.paymaster
   if (userOperation.paymasterAndData)
     rpc.paymasterAndData = userOperation.paymasterAndData
