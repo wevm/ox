@@ -29,6 +29,13 @@ import * as Hex from './Hex.js'
 export function toBytes(value: bigint | number): Bytes.Bytes {
   const n = BigInt(value)
   if (n < 0n) throw new NegativeValueError({ value: n })
+  if (n > 0xffffffffffffffffn)
+    throw new Hex.IntegerOutOfRangeError({
+      max: '18446744073709551615',
+      min: '0',
+      size: 8,
+      value: n.toString(),
+    })
   if (n <= 252n) return new Uint8Array([Number(n)])
   if (n <= 0xffffn) {
     const buf = new Uint8Array(3)
@@ -52,7 +59,10 @@ export function toBytes(value: bigint | number): Bytes.Bytes {
 }
 
 export declare namespace toBytes {
-  type ErrorType = NegativeValueError | Errors.GlobalErrorType
+  type ErrorType =
+    | NegativeValueError
+    | Hex.IntegerOutOfRangeError
+    | Errors.GlobalErrorType
 }
 
 /**

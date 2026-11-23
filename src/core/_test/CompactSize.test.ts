@@ -79,6 +79,15 @@ describe('toBytes', () => {
       `[CompactSize.NegativeValueError: CompactSize value must be non-negative, got -1.]`,
     )
   })
+
+  test('error: value above 64 bits', () => {
+    expect(CompactSize.toHex(2n ** 64n - 1n)).toBe('0xffffffffffffffffff')
+    expect(() =>
+      CompactSize.toBytes(2n ** 64n),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Hex.IntegerOutOfRangeError: Number \`18446744073709551616\` is not in safe 64-bit unsigned integer range (\`0\` to \`18446744073709551615\`)]`,
+    )
+  })
 })
 
 describe('toHex', () => {
