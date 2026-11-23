@@ -664,6 +664,26 @@ describe('verify', () => {
     ).toBe(true)
   })
 
+  test('behavior: rejects high-s signature', () => {
+    const payload = '0xdeadbeef'
+    const { r, s, yParity } = Secp256k1.sign({ payload, privateKey })
+    const publicKey = Secp256k1.getPublicKey({ privateKey })
+    const signature = {
+      r,
+      s: Hex.fromNumber(
+        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n -
+          Hex.toBigInt(s),
+        { size: 32 },
+      ),
+      yParity: yParity === 0 ? 1 : 0,
+    }
+
+    // The high-s twin still recovers the signer's address.
+    expect(Secp256k1.recoverAddress({ payload, signature })).toBe(address)
+    expect(Secp256k1.verify({ address, payload, signature })).toBe(false)
+    expect(Secp256k1.verify({ payload, publicKey, signature })).toBe(false)
+  })
+
   test('options: hash', () => {
     const payload = '0xdeadbeef'
     const { r, s } = Secp256k1.sign({ hash: true, payload, privateKey })

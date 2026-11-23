@@ -2,4 +2,4 @@
 'ox': patch
 ---
 
-Fixed `SignatureEnvelope.verify` in `ox/tempo` to reject secp256k1 signatures with a high `s` value, which Tempo does not accept.
+Fixed `Secp256k1.verify` to reject signatures with a high `s` value when verifying against an `address`, matching the `publicKey` path and fixing `SignatureEnvelope.verify` in `ox/tempo`.
