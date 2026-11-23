@@ -1,4 +1,5 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js'
+import { DER } from '@noble/curves/abstract/weierstrass.js'
+import { hexToBytes } from '@noble/curves/utils.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -6,6 +7,10 @@ import * as Quantity from './internal/quantity.js'
 import type { Compute, ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
+
+/** Order of the secp256k1 group, which bounds `r` and `s`. */
+const order =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
 
 /** Root type for an ECDSA signature. */
 export type Signature<
@@ -385,10 +390,10 @@ export declare namespace fromDerBytes {
  * @returns The {@link ox#Signature.Signature}.
  */
 export function fromDerHex(signature: Hex.Hex): Signature<false> {
-  const { r, s } = secp256k1.Signature.fromHex(
-    Hex.from(signature).slice(2),
-    'der',
-  )
+  // What noble's `Signature.fromHex(…, 'der')` does, without bundling the curve.
+  const { r, s } = DER.toSig(hexToBytes(Hex.from(signature).slice(2)))
+  assertScalar('r', r)
+  assertScalar('s', s)
   return {
     r: Hex.fromNumber(r, { size: 32 }),
     s: Hex.fromNumber(s, { size: 32 }),
@@ -752,8 +757,7 @@ export declare namespace toHex {
  * @returns The DER-encoded signature.
  */
 export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
-  const sig = new secp256k1.Signature(BigInt(signature.r), BigInt(signature.s))
-  return sig.toBytes('der')
+  return Bytes.fromHex(toDerHex(signature))
 }
 
 export declare namespace toDerBytes {
@@ -780,12 +784,28 @@ export declare namespace toDerBytes {
  * @returns The DER-encoded signature.
  */
 export function toDerHex(signature: Signature<boolean>): Hex.Hex {
-  const sig = new secp256k1.Signature(BigInt(signature.r), BigInt(signature.s))
-  return `0x${sig.toHex('der')}`
+  // What noble's `Signature.toHex('der')` does, without bundling the curve.
+  const r = BigInt(signature.r)
+  const s = BigInt(signature.s)
+  assertScalar('r', r)
+  assertScalar('s', s)
+  return `0x${DER.hexFromSig({ r, s })}`
 }
 
 export declare namespace toDerHex {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Throws what noble's `Signature` constructor throws for an `r` or `s` outside `1..n-1`.
+ *
+ * @internal
+ */
+function assertScalar(title: 'r' | 's', value: bigint) {
+  if (value <= 0n || value >= order)
+    throw new Error(
+      `invalid signature ${title}: out of range 1..Point.Fn.ORDER`,
+    )
 }
 
 /**

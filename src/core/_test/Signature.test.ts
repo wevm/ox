@@ -1,3 +1,4 @@
+import { secp256k1 } from '@noble/curves/secp256k1.js'
 import {
   Bytes,
   Hex,
@@ -402,6 +403,53 @@ describe('fromDerHex', () => {
         "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
       }
     `,
+    )
+  })
+})
+
+describe('fromDerHex', () => {
+  const n = secp256k1.Point.Fn.ORDER
+  const der = (r: bigint, s: bigint) =>
+    `0x${secp256k1.Signature.fromHex(
+      `${r.toString(16).padStart(64, '0')}${s.toString(16).padStart(64, '0')}`,
+      'compact',
+    ).toHex('der')}` as const
+
+  test('behavior: matches noble at the edges of the range', () => {
+    for (const [r, s] of [
+      [1n, 1n],
+      [n - 1n, n - 1n],
+      [0x80n, 0x7fn],
+      [2n ** 255n, 2n ** 247n + 1n],
+    ] as const) {
+      const hex = der(r, s)
+      const signature = {
+        r: Hex.fromNumber(r, { size: 32 }),
+        s: Hex.fromNumber(s, { size: 32 }),
+      }
+      expect(Signature.fromDerHex(hex)).toEqual(signature)
+      expect(Signature.toDerHex(signature)).toBe(hex)
+    }
+  })
+
+  test('error: r or s out of range', () => {
+    expect(() =>
+      Signature.toDerHex({ r: '0x0', s: '0x1' }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Error: invalid signature r: out of range 1..Point.Fn.ORDER]`,
+    )
+    expect(() =>
+      Signature.toDerHex({ r: '0x1', s: Hex.fromNumber(n) }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Error: invalid signature s: out of range 1..Point.Fn.ORDER]`,
+    )
+    // DER for r = n, s = 1.
+    expect(() =>
+      Signature.fromDerHex(
+        '0x3026022100fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141020101',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Error: invalid signature r: out of range 1..Point.Fn.ORDER]`,
     )
   })
 })
