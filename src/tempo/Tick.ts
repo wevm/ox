@@ -53,9 +53,8 @@ export type Tick = number
  * @throws `TickOutOfBoundsError` If tick is out of bounds.
  */
 export function toPrice(tick: toPrice.Tick): toPrice.ReturnType {
-  if (tick < minTick || tick > maxTick) {
+  if (!Number.isInteger(tick) || tick < minTick || tick > maxTick)
     throw new TickOutOfBoundsError({ tick })
-  }
   // Use integer arithmetic to avoid floating point errors
   const price = priceScale + tick
   const whole = Math.floor(price / priceScale)
