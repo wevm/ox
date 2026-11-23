@@ -27,6 +27,14 @@ test('fromAddress', () => {
   // tempo address input
   const tempoAddr = 'tempox0x20c0000000000000000000000000000000000001'
   expect(TokenId.fromAddress(tempoAddr)).toBe(1n)
+
+  // reads every byte after the 2-byte prefix, as `toAddress` writes them
+  expect(
+    TokenId.fromAddress('0x20c0000100000000000000000000000000000005'),
+  ).toBe(2n ** 128n + 5n)
+  expect(TokenId.fromAddress(TokenId.toAddress(2n ** 112n + 5n))).toBe(
+    2n ** 112n + 5n,
+  )
 })
 
 test('toAddress', () => {

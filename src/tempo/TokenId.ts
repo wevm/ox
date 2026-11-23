@@ -60,7 +60,8 @@ export function fromAddress(address: TempoAddress.Address): TokenId {
   const resolved = TempoAddress.resolve(address)
   if (!resolved.toLowerCase().startsWith(tip20Prefix))
     throw new Error('invalid tip20 address.')
-  return Hex.toBigInt(Hex.slice(resolved, tip20Prefix.length))
+  // The ID is everything after the 2-byte prefix, as `toAddress` writes it.
+  return Hex.toBigInt(Hex.slice(resolved, 2))
 }
 
 /**
