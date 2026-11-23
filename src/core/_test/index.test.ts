@@ -1,3 +1,5 @@
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { expect, test } from 'vp/test'
 import * as exports from '../../index.js'
 
@@ -89,4 +91,24 @@ test('exports', () => {
       "X25519",
     ]
   `)
+})
+
+test('behavior: modules import each other, not an entry point', () => {
+  // Importing a barrel such as `../index.js` loads every module it exports, and
+  // CommonJS bundles keep all of them.
+  const root = path.resolve(import.meta.dirname, '../..')
+  const offenders = fs
+    .globSync('**/*.ts', { cwd: root })
+    .filter(
+      (file) =>
+        !/(^|\/)_test\/|(^|\/)index(\.docs)?\.ts$|\.(test|test-d|snap-d|bench)\.ts$/.test(
+          file,
+        ),
+    )
+    .filter((file) =>
+      /^import (?!type )[^;]*from '(\.\.?\/)+index\.js'/m.test(
+        fs.readFileSync(path.join(root, file), 'utf8'),
+      ),
+    )
+  expect(offenders).toEqual([])
 })
