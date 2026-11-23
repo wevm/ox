@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.71
+
+### Patch Changes
+
+- [#717](https://github.com/wevm/ox/pull/717) [`7bf0883`](https://github.com/wevm/ox/commit/7bf0883b4fb1897a3d02bed1999c22d56464ba88) Thanks [@jxom](https://github.com/jxom)! - Fixed `Secp256k1.verify` to reject signatures with a high `s` value when verifying against an `address`, matching the `publicKey` path and fixing `SignatureEnvelope.verify` in `ox/tempo`.
+
 ## 0.14.70
 
 ### Patch Changes
