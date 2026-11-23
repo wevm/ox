@@ -1,0 +1,206 @@
+# ox's metrics. Each script fans out over every public export of the entry points in package.json,
+# and over every public function, so each export and function scores on its own. The scripts
+# measure the build that `pnpm build` writes to dist.
+
+# Install scripts stay off, so the contracts submodule and Forge are not needed: the speed script
+# records ox's tests, which use the committed contract artifacts and Anvil. The scripts keep their
+# own dependencies, such as rolldown, viem, and ethers, in .agents/metrics.
+setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/metrics'
+
+footprint:
+  run: bun .agents/metrics/footprint.ts
+  # Gzipped bytes a consumer bundles to import one export from its entry point, such as
+  # `ox:Hex.fromNumber`, a namespace, such as `ox:Hex`, or the whole entry, such as `ox/tempo`.
+  # rolldown bundles and minifies each import for the browser. Most members bundle under 4 kB and
+  # the p90 is 20 kB, which the curves set: a function that signs, verifies, or derives a key
+  # bundles noble's curve. The first matching pattern applies.
+  entry-size:
+    target: 12kB
+    targets:
+      # The trusted setup is data: 400 kB of G1 and G2 points.
+      ox/trusted-setups*: 410kB
+      ox/wasm: 260kB
+      ox: 215kB
+      ox/node: 120kB
+      ox/zod: 125kB
+      'ox/zod:z': 125kB
+      ox/tempo: 65kB
+      'ox/wasm:*': 130kB
+      # Mnemonic re-exports every BIP-39 wordlist.
+      '*:Mnemonic': 100kB
+      'ox/zod*': 60kB
+      '*:Bls*': 28kB
+      '*:Mnemonic.*': 26kB
+      '*:HdKey*': 26kB
+      '*:*fromMnemonic': 26kB
+      'ox/webauthn*': 28kB
+      '*:WebAuthn*': 22kB
+      '*:TransactionRequest*': 40kB
+      'ox/tempo*': 40kB
+      '*:Secp256k1*': 22kB
+      '*:P256*': 20kB
+      '*:Ed25519*': 20kB
+      '*:X25519*': 20kB
+      '*:MlDsa44*': 20kB
+      '*:Signature*': 22kB
+      '*:TransactionEnvelope*': 22kB
+      '*:TxEnvelope*': 22kB
+      '*:Transaction*': 22kB
+      '*:Ens*': 18kB
+      'ox/erc*': 22kB
+      '*Error': 2kB
+
+speed:
+  run: bun .agents/metrics/speed.ts
+  # Recording ox's core and Tempo unit tests takes about 3 minutes and replaying them about 3 at
+  # concurrency 4. The recording is cached until the tests or the build change.
+  timeout: 40m
+  # CPU time per call of each public function, replaying the arguments ox's tests call it with, in
+  # a fresh process per function. ox's caches are emptied before every call, so each call does a
+  # first call's work, and the note gives the time with them warm. Most calls take under 10 µs and
+  # the p90 is 115 µs, so the default is 100 µs. Cryptography whose cost is inherent has a target
+  # about 1.5 times its time today, since CPU time varies between runs. The first matching pattern
+  # applies.
+  call-time:
+    target: 100µs
+    targets:
+      # Key derivation whose cost is its iteration count: PBKDF2 at 262,144 rounds, WebCrypto
+      # PBKDF2 at 900,000 rounds for AES-GCM keys, BIP-39 seeds at 2,048 rounds, and scrypt.
+      'ox:Keystore.pbkdf2*': 500ms
+      'ox:AesGcm.getKey': 180ms
+      'ox:Keystore.toKey*': 50ms
+      '*:*fromMnemonic': 16ms
+      '*:Mnemonic.to*': 16ms
+      'ox:Keystore.scrypt*': 5ms
+      # BLS12-381 pairings and hashing to the curve.
+      '*:Bls.*': 45ms
+      '*:BlsPoint.*': 1.5ms
+      '*:MlDsa44.*': 8ms
+      # Ordering approvals recovers each signer once.
+      'ox/tempo:SignatureEnvelope.sortApprovals': 7ms
+      'ox/tempo:AccountOperation.selectApprovals': 7ms
+      # Public key recovery, verification and ECDH.
+      '*:*.recover*': 3.5ms
+      '*:*.verify': 3.5ms
+      '*:*.getSharedSecret': 3.5ms
+      'ox/tempo:SignatureEnvelope.extractPublicKey': 2.5ms
+      # Wrapping recovers the authorization's signer when `to` is missing.
+      'ox/erc8010:SignatureErc8010.wrap': 2ms
+      # Extended keys check their public key on the curve.
+      '*:HdKey.*': 1.1ms
+      '*:X25519.*': 1.1ms
+      '*:*.sign': 500µs
+      '*:*.getPublicKey': 500µs
+      '*:*.createKeyPair': 500µs
+      '*:Mnemonic.*': 350µs
+      'ox:Blobs.*': 400µs
+      'ox:BinaryStateTree.*': 400µs
+  # Heap bytes each call allocates. Most calls allocate under 2 kB and the p90 is 58 kB, so the
+  # default is 50 kB. The same cryptography has a target about 1.25 times its allocation today,
+  # which barely varies.
+  call-memory:
+    varies: true
+    target: 50kB
+    targets:
+      'ox:Keystore.pbkdf2*': 350MB
+      'ox:Keystore.toKey*': 5MB
+      '*:*fromMnemonic': 13MB
+      '*:Mnemonic.to*': 13MB
+      '*:Bls.*': 36MB
+      '*:BlsPoint.*': 1.5MB
+      '*:MlDsa44.*': 4MB
+      'ox/tempo:SignatureEnvelope.sortApprovals': 4.5MB
+      'ox/tempo:AccountOperation.selectApprovals': 4.5MB
+      '*:*.recover*': 2.3MB
+      '*:*.verify': 2.3MB
+      '*:*.getSharedSecret': 2.6MB
+      'ox/tempo:SignatureEnvelope.extractPublicKey': 1.5MB
+      'ox/erc8010:SignatureErc8010.wrap': 1.5MB
+      '*:HdKey.*': 1MB
+      '*:X25519.*': 1MB
+      '*:*.sign': 600kB
+      '*:*.getPublicKey': 600kB
+      '*:*.createKeyPair': 600kB
+      'ox:Keystore.scrypt*': 20MB
+      'ox:AesGcm.*': 200kB
+      'ox:Blobs.*': 2MB
+  # CPU time to import each entry point in a fresh Node process. An entry that loads only the
+  # modules it uses imports in about 40 ms; the root and zod entries load everything.
+  import-time:
+    target: 100ms
+    targets:
+      ox/zod*: 350ms
+      ox: 250ms
+      ox/tempo*: 200ms
+      ox/wasm*: 150ms
+      ox/node*: 150ms
+
+# How much of ox the speed bench reaches. It shares the speed script's run.
+coverage:
+  run: bun .agents/metrics/speed.ts
+  timeout: 40m
+  # Whether each public function has a recorded call the bench can replay. The note says why when
+  # it has none, such as a function every test calls with a closure.
+  benched: {}
+
+types:
+  run: bun .agents/metrics/types.ts
+  timeout: 15m
+  # Type instantiations to check one use of each public export, values and types, with namespace
+  # members counted as exports. A use is `typeof` the value, with `Parameters` and `ReturnType` for
+  # a function, or the type at its defaults, plus one level of properties. Each export is checked
+  # in its own program, minus a program that only imports its entry. Most exports cost under 200;
+  # RPC conversions and ABI utilities infer over unions of every transaction or ABI type.
+  instantiations:
+    target: 10000
+  # CPU time to check that use.
+  check-time: { target: 100ms }
+  # Heap bytes that check allocates.
+  check-memory: { target: 75MB, varies: true }
+
+# Type-checking cost at the call sites ox's tests write: one call per public function, the first
+# its own runtime tests make (else its type tests). Each call is copied into
+# `const $uphill = <call>` and checked in a fresh checker once its imports and fixtures resolve.
+# Instantiations are exact, so one run suffices.
+call-types:
+  run: bun .agents/metrics/types-calls.ts
+  timeout: 20m
+  # What a call should cost: 1,000 for a utility; 5,000 where it infers from an ABI; 10,000 where
+  # it infers from typed data, an RPC shape, or a schema namespace. The first match applies.
+  instantiations:
+    target: 1000
+    targets:
+      'ox/zod:*': 10000
+      '*:TypedData.*': 10000
+      '*.fromRpc': 10000
+      '*.toRpc': 10000
+      'ox:Provider.*': 10000
+      'ox:RpcRequest.*': 10000
+      'ox/erc4337:*': 10000
+      'ox:Abi*': 5000
+      '*TxEnvelope*': 5000
+      '*Transaction*': 5000
+
+# Whether each public function has a call in ox's tests that call-types measures; the note says
+# why not. It shares the call-types script's run.
+type-coverage:
+  run: bun .agents/metrics/types-calls.ts
+  timeout: 20m
+  type-benched: {}
+
+fuzz:
+  run: bun .agents/metrics/fuzz.ts
+  # About 3 minutes at UPHILL_CONCURRENCY=4; the limit leaves room for a loaded machine.
+  timeout: 20m
+  # Whether each public function has a fuzz harness that ran: structured properties (round trips,
+  # differentials against viem, ethers, noble, scure and micro-eth-signer, consistency) or boundary
+  # mutations of the arguments ox's tests pass it. The note lists the harnesses, or says why there
+  # is none.
+  fuzzed: {}
+  # Whether fuzzing found no failure: no undocumented TypeError, RangeError, or SyntaxError on an
+  # input that keeps the declared types, no stack overflow, hang, or runaway memory, and no broken
+  # round trip, differential, or consistency property. The note gives the minimized input.
+  fuzz-clean: {}
+  # Percent of the function's own source lines that ran under fuzzing (V8 precise coverage of
+  # dist).
+  fuzz-coverage: { target: 80, better: higher }
