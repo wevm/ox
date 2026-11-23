@@ -30,6 +30,8 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
+import { hot } from './hot.ts'
+
 const root = path.resolve(import.meta.dir, '../..')
 const here = import.meta.dir
 const metricsFile = process.env.UPHILL_METRICS
@@ -179,7 +181,7 @@ async function main() {
     reasons.set(category(reason), (reasons.get(category(reason)) ?? 0) + 1)
     lines.push(`benched ${quote(item.name)} fail note ${quote(reason)}`)
   }
-  fs.appendFileSync(metricsFile!, `${lines.join('\n')}\n`)
+  fs.appendFileSync(metricsFile!, `${[...lines, ...hot(lines)].join('\n')}\n`)
 
   const benched = [...results.values()].filter((result) => result.ok).length
   log(

@@ -32,6 +32,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { entries as listEntries } from './entries.ts'
+import { hot } from './hot.ts'
 import type {
   EntriesResult,
   Job,
@@ -275,7 +276,7 @@ for (const { name, package: owner } of functions) {
   )
   lines.push(`type-benched ${quote(name)} fail note ${quote(reason)}`)
 }
-fs.appendFileSync(metrics, `${lines.join('\n')}\n`)
+fs.appendFileSync(metrics, `${[...lines, ...hot(lines)].join('\n')}\n`)
 
 log(
   `measured ${reported.length} of ${functions.length} public functions; not measured: ${[

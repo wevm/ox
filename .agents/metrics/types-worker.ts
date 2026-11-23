@@ -22,11 +22,13 @@ import * as v8 from 'node:v8'
 
 import ts from 'typescript'
 
-import { consumerOptions, createHost } from './types-host.ts'
+import { consumerOptions, createHost, testOptions } from './types-host.ts'
 
 /** One file to check. */
 export type Job = {
   id: number
+  /** `export` checks a consumer with ox's options, `bench` an attest test with test/tsconfig.json. */
+  mode: 'export' | 'bench'
   file: string
   text: string
   /** Groups jobs that share a baseline. */
@@ -53,7 +55,11 @@ if (allocated() === undefined)
     `Node ${process.version} does not report total_allocated_bytes from v8.getHeapStatistics(); Node 26 does`,
   )
 
-const host = createHost(consumerOptions)
+const hosts = {
+  export: createHost(consumerOptions),
+  bench: createHost(testOptions),
+}
+const options = { export: consumerOptions, bench: testOptions }
 const templates = new Map<string, ts.Program>()
 const baselines = new Map<string, Cost>()
 
@@ -89,12 +95,13 @@ function baselineOf(job: Job): Cost {
 
 /** Checks one text in a fresh program that reuses the group's parsed files and resolutions. */
 function check(job: Job, text: string) {
+  const host = hosts[job.mode]
   let template = templates.get(job.group)
   if (!template) {
     host.setFile(job.file, job.baseline)
     template = ts.createProgram({
       rootNames: [job.file],
-      options: consumerOptions,
+      options: options[job.mode],
       host,
     })
     templates.set(job.group, template)
@@ -102,7 +109,7 @@ function check(job: Job, text: string) {
   host.setFile(job.file, text)
   const program = ts.createProgram({
     rootNames: [job.file],
-    options: consumerOptions,
+    options: options[job.mode],
     host,
     oldProgram: template,
   })
@@ -113,19 +120,22 @@ function check(job: Job, text: string) {
   // A consumer's forms resolve one exported alias at a time, in order, so each one's share of the
   // instantiations can explain the cost in a note. The check after them reuses what they resolved.
   const parts: Record<string, number> = {}
-  for (const statement of file.statements) {
-    if (!ts.isTypeAliasDeclaration(statement)) continue
-    if (
-      !statement.modifiers?.some(
-        (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
+  if (job.mode === 'export')
+    for (const statement of file.statements) {
+      if (!ts.isTypeAliasDeclaration(statement)) continue
+      if (
+        !statement.modifiers?.some(
+          (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
+        )
       )
-    )
-      continue
-    const before = program.getInstantiationCount()
-    checker.getTypeAtLocation(statement.type)
-    parts[statement.name.text] = program.getInstantiationCount() - before
-  }
+        continue
+      const before = program.getInstantiationCount()
+      checker.getTypeAtLocation(statement.type)
+      parts[statement.name.text] = program.getInstantiationCount() - before
+    }
   const diagnostics = program.getSemanticDiagnostics(file)
+  // attest also asks for declaration diagnostics.
+  if (job.mode === 'bench') program.getDeclarationDiagnostics(file)
   const cost = {
     cpu: cpuTime() - cpu,
     bytes: allocated() - bytes,

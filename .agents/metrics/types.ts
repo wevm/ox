@@ -1,6 +1,7 @@
 /**
  * Writes the type-checking cost of every public export of the entry points in package.json,
- * values and types.
+ * values and types, and of each test in the attest files, `src/**\/*.snap-d.ts` and
+ * `src/**\/*.bench-d.ts`.
  *
  * For each export, types-enumerate.ts writes a small consumer file that imports it and forces its
  * type to resolve; its comments say which forms each kind of export gets. A pool of Node workers
@@ -10,6 +11,11 @@
  * - `instantiations`: type instantiations, exact and repeatable.
  * - `check-time`: CPU time to check the consumer.
  * - `check-memory`: heap bytes the check allocates.
+ * - `bench-instantiations`: the instantiations attest counts for each attest test, the way
+ *   `attest.instantiations` does: the file with every `test()` removed is the baseline, and the
+ *   test's function is added back as a constant. A test that pins a count with
+ *   `attest.instantiations([count, 'instantiations'])` gets that count plus 20%, the threshold
+ *   attest enforces; the others pin type strings, so their lines carry no target.
  *
  * Node runs the TypeScript work, as it does for `tsc` and editors, and V8 counts allocated bytes,
  * which JavaScriptCore does not. The script checks the declarations `pnpm build` writes to dist.
@@ -22,7 +28,10 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
+import ts from 'typescript'
+
 import type { Item } from './types-enumerate.ts'
+import { hot } from './hot.ts'
 import { consumerFile, typesDir } from './types-host.ts'
 import type { Job, Result } from './types-worker.ts'
 
@@ -63,19 +72,25 @@ console.error(
 type Measured = {
   line: string
   job: Job
-  forms: Record<string, string>
+  forms?: Record<string, string> | undefined
+  /** The count an attest test pins with `attest.instantiations`. */
+  pinned?: number | undefined
+  /** What an attest test without a pinned count asserts instead, for its note. */
+  pins?: string | undefined
 }
 const measured: Measured[] = items.map((item) => ({
   line: item.item,
   forms: item.forms,
   job: {
     id: 0,
+    mode: 'export',
     file: consumerFile,
     text: item.text,
     group: item.group,
     baseline: baselines[item.group]!,
   },
 }))
+measured.push(...benches())
 for (const [id, entry] of measured.entries()) entry.job.id = id
 
 const concurrency = Math.max(
@@ -94,8 +109,14 @@ const costs: Record<string, number> = fs.existsSync(costsFile)
   : {}
 const order = (job: Job) =>
   costs[measured[job.id]!.line] ?? Number.POSITIVE_INFINITY
-const exportQueue = measured.map((entry) => entry.job)
+const exportQueue = measured
+  .filter((entry) => entry.job.mode === 'export')
+  .map((entry) => entry.job)
 exportQueue.sort((a, b) => order(b) - order(a) || a.id - b.id)
+// The attest tests import ox's sources rather than its declarations, so one worker parses those.
+const benchQueue = measured
+  .filter((entry) => entry.job.mode === 'bench')
+  .map((entry) => entry.job)
 console.error(`checking ${measured.length} consumers in ${concurrency} workers`)
 
 // Every worker warms up its JIT on the same few consumers before it measures anything, so the first
@@ -108,10 +129,14 @@ const warmup = items
   }))
 const results = new Map<number, Result>()
 const peaks: number[] = []
-await Promise.all(Array.from({ length: concurrency }, (_, index) => work()))
+await Promise.all(
+  Array.from({ length: concurrency }, (_, index) =>
+    work(index ? [] : benchQueue),
+  ),
+)
 
 const lines: string[] = []
-const exportsMeasured = measured
+const exportsMeasured = measured.filter((entry) => entry.job.mode === 'export')
 const cost = (entry: Measured) => {
   const result = results.get(entry.job.id)!
   return {
@@ -129,19 +154,31 @@ const costliest = new Set(
   ),
 )
 for (const entry of measured) {
-  const { line, job } = entry
+  const { line, job, pinned, pins } = entry
   const result = results.get(job.id)!
   const { instantiations, cpu, bytes } = cost(entry)
+  // A test without its siblings leaves imports unused, which attest sees as well.
   for (const error of result.errors)
-    console.error(`${line}: TS${error.code}: ${error.message}`)
-  const text = costliest.has(entry) ? note(result, entry.forms) : ''
+    if (job.mode === 'export' || ![6133, 6192, 6196, 6198].includes(error.code))
+      console.error(`${line}: TS${error.code}: ${error.message}`)
+  if (job.mode === 'bench') {
+    // attest's own threshold: a test fails 20% above its pinned count.
+    const target =
+      pinned === undefined ? '' : ` target ${Math.round(pinned * 1.2)}`
+    const text = pinned === undefined ? ` note ${quote(pins!)}` : ''
+    lines.push(
+      `bench-instantiations ${quote(line)} ${instantiations}${target}${text}`,
+    )
+    continue
+  }
+  const text = costliest.has(entry) ? note(result, entry.forms!) : ''
   lines.push(
     `instantiations ${quote(line)} ${instantiations}${text}`,
     `check-time ${quote(line)} ${cpu.toFixed(3)}ms${text}`,
     `check-memory ${quote(line)} ${size(bytes)}${text}`,
   )
 }
-fs.appendFileSync(metrics, `${lines.join('\n')}\n`)
+fs.appendFileSync(metrics, `${[...lines, ...hot(lines)].join('\n')}\n`)
 const next = Object.fromEntries(
   exportsMeasured.map((entry) => [entry.line, cost(entry).cpu]),
 )
@@ -228,6 +265,95 @@ function note(result: Result, forms: Record<string, string>): string {
     Object.entries(result.parts).toSorted((a, b) => b[1] - a[1])[0] ?? []
   if (!name || !count || !total || !forms[name]) return ''
   return ` note ${quote(`${Math.round((count / total) * 100)}% of instantiations come from ${forms[name]}`)}`
+}
+
+/**
+ * One job per test in the attest files, built the way attest counts instantiations: the file with
+ * every `bench()`, `it()` and `test()` call removed, at any depth, is the baseline, and the test's
+ * function is added back as a constant.
+ */
+function benches(): Measured[] {
+  const result: Measured[] = []
+  const names = ['bench', 'it', 'test']
+  const repeats = new Map<string, number>()
+  const files = [
+    ...new Bun.Glob('src/**/*.{snap,bench}-d.ts').scanSync(root),
+  ].sort()
+  for (const relative of files) {
+    const file = path.join(root, relative)
+    const text = fs.readFileSync(file, 'utf8')
+    const source = ts.createSourceFile(file, text, ts.ScriptTarget.ES2022, true)
+    const tests: ts.CallExpression[] = []
+    const visit = (node: ts.Node) => {
+      if (
+        ts.isCallExpression(node) &&
+        names.includes(node.expression.getText(source))
+      )
+        tests.push(node)
+      ts.forEachChild(node, visit)
+    }
+    visit(source)
+    let baseline = text
+    for (const call of tests)
+      baseline = baseline.replace(call.getFullText(source), '')
+    for (const call of tests) {
+      const name = call.arguments[0]
+      const body = call.arguments.find(
+        (node) => ts.isArrowFunction(node) || ts.isFunctionExpression(node),
+      )
+      if (!name || !ts.isStringLiteralLike(name) || !body) continue
+      const bodyText = body.getText(source)
+      const pinned = /attest\.instantiations\(\[\s*([\d_]+)/.exec(bodyText)?.[1]
+      const count = (pattern: RegExp, what: string) => {
+        const found = bodyText.match(pattern)?.length ?? 0
+        return found ? [`${found} ${what}${found === 1 ? '' : 's'}`] : []
+      }
+      const asserted = [
+        ...count(/\.snap\(/g, 'type string'),
+        ...count(/expectTypeOf\(/g, 'expectTypeOf assertion'),
+      ]
+      // Tests with the same name in the same `describe` get a number from the second on.
+      let line = [relative, ...describePath(call, source), name.text].join(
+        ' > ',
+      )
+      const repeat = (repeats.get(line) ?? 0) + 1
+      repeats.set(line, repeat)
+      if (repeat > 1) line += ` (${repeat})`
+      result.push({
+        line,
+        pinned:
+          pinned === undefined ? undefined : Number(pinned.replaceAll('_', '')),
+        pins: `pins ${asserted.join(' and ') || 'no types'}, not an instantiation count`,
+        job: {
+          id: 0,
+          mode: 'bench',
+          file: `${file}.nonexistent.ts`,
+          text: `${baseline}\nconst $attestIsolatedBench = ${body.getFullText(source)}`,
+          group: relative,
+          baseline,
+        },
+      })
+    }
+  }
+  return result
+}
+
+/** The names of the `describe` calls around a test, outermost first. */
+function describePath(node: ts.Node, source: ts.SourceFile): string[] {
+  const names: string[] = []
+  for (let current = node.parent; current; current = current.parent) {
+    if (
+      !ts.isCallExpression(current) ||
+      current.expression.getText(source) !== 'describe'
+    )
+      continue
+    const name = current.arguments[0]
+    if (name)
+      names.unshift(
+        ts.isStringLiteralLike(name) ? name.text : name.getText(source),
+      )
+  }
+  return names
 }
 
 /** Quotes an item or note for a metric line, escaping `"` and `\`. */
