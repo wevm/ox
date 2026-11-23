@@ -21,7 +21,7 @@ import {
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
-export const createChallenge = Uint8Array.from([
+export const createChallenge = /*#__PURE__*/ Uint8Array.from([
   105, 171, 180, 181, 160, 222, 75, 198, 42, 42, 32, 31, 141, 37, 186, 233,
 ])
 

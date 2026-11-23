@@ -497,4 +497,4 @@ export declare namespace InvalidSeedSizeError {
   }
 }
 
-const fromSeedDomain = Bytes.fromString('ox.p256.fromSeed.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString('ox.p256.fromSeed.v1')
