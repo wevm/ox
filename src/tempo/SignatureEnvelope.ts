@@ -1710,7 +1710,10 @@ export function verify(
 
   if (envelope.type === 'secp256k1') {
     if (!address) return false
-    if (Hex.toBigInt(envelope.signature.s) > secp256k1HalfOrder) return false
+    Signature.assert(envelope.signature)
+    const { s } = envelope.signature
+    if (!Hex.validate(s, { strict: true })) return false
+    if (Hex.toBigInt(s) > secp256k1HalfOrder) return false
     return ox_Secp256k1.verify({
       address,
       payload,

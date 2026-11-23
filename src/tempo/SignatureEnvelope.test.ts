@@ -2178,6 +2178,41 @@ describe('verify', () => {
       )
     })
 
+    test('behavior: returns false for non-hex s', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      const payload = '0xdeadbeef' as const
+      const signature = Secp256k1.sign({ payload, privateKey })
+      // An s without the 0x prefix that BigInt still reads, as a decimal number.
+      const envelope = {
+        signature: { ...signature, s: ('00' + '9'.repeat(64)) as never },
+        type: 'secp256k1',
+      } as const
+
+      expect(SignatureEnvelope.verify(envelope, { address, payload })).toBe(
+        false,
+      )
+    })
+
+    test('error: throws Signature.InvalidSError for malformed s', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      const payload = '0xdeadbeef' as const
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = {
+        signature: { ...signature, s: '0xgg' as never },
+        type: 'secp256k1',
+      } as const
+
+      expect(() =>
+        SignatureEnvelope.verify(envelope, { address, payload }),
+      ).toThrow(Signature.InvalidSError)
+    })
+
     test('behavior: returns false for wrong publicKey', () => {
       const privateKey = Secp256k1.randomPrivateKey()
       const wrongPrivateKey = Secp256k1.randomPrivateKey()
