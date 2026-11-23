@@ -1,4 +1,4 @@
-import { Hex, PublicKey, WebCryptoP256 } from 'ox'
+import { Hex, P256, PublicKey, WebCryptoP256 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
@@ -190,6 +190,21 @@ describe('verify', () => {
     const { r, s } = await WebCryptoP256.sign({ payload, privateKey })
     expect(
       await WebCryptoP256.verify({ publicKey, payload, signature: { r, s } }),
+    ).toBe(true)
+  })
+
+  test('behavior: signature with a leading zero byte', async () => {
+    const privateKey =
+      '0x81f0416b50de27cc34c7047c1a7d5869b69d154c68a88964af38912d17cefd0c'
+    const payload = '0x39'
+    const signature = P256.sign({ hash: true, payload, privateKey })
+    expect(Hex.fromNumber(signature.s, { size: 32 }).slice(0, 4)).toBe('0x00')
+    expect(
+      await WebCryptoP256.verify({
+        payload,
+        publicKey: P256.getPublicKey({ privateKey }),
+        signature,
+      }),
     ).toBe(true)
   })
 })
