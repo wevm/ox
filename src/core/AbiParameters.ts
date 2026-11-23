@@ -257,7 +257,10 @@ export declare namespace encode {
  */
 export function encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
->(types: packedAbiTypes, values: encodePacked.Values<packedAbiTypes>): Hex.Hex {
+>(
+  types: packedAbiTypes,
+  values: NoInfer<encodePacked.Values<packedAbiTypes>>,
+): Hex.Hex {
   if (types.length !== values.length)
     throw new LengthMismatchError({
       expectedLength: types.length as number,
@@ -280,13 +283,20 @@ export namespace encodePacked {
     | LengthMismatchError
     | Errors.GlobalErrorType
 
+  // Wide types (`readonly PackedAbiType[]`) resolve to `readonly unknown[]`
+  // without mapping every packed type, which TypeScript does to type the
+  // values of a generic call (about 100,000 type instantiations).
   export type Values<
     packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
-  > = {
-    [key in keyof packedAbiTypes]: packedAbiTypes[key] extends abitype.AbiType
-      ? abitype.AbiParameterToPrimitiveType<{ type: packedAbiTypes[key] }>
-      : unknown
-  }
+  > = packedAbiTypes extends unknown
+    ? readonly PackedAbiType[] extends packedAbiTypes
+      ? readonly unknown[]
+      : {
+          [key in keyof packedAbiTypes]: packedAbiTypes[key] extends abitype.AbiType
+            ? abitype.AbiParameterToPrimitiveType<{ type: packedAbiTypes[key] }>
+            : unknown
+        }
+    : never
 
   // eslint-disable-next-line jsdoc-js/require-jsdoc
   export function encode<const packedAbiType extends PackedAbiType | unknown>(

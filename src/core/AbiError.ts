@@ -6,6 +6,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
+import type * as AbiParameters_internal from './internal/abiParameters.js'
 import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable, IsNever } from './internal/types.js'
 
@@ -494,11 +495,11 @@ export function encode(
 export declare namespace encode {
   type Args<abiError extends AbiError = AbiError> =
     IsNarrowable<abiError, AbiError> extends true
-      ? abitype.AbiParametersToPrimitiveTypes<
+      ? AbiParameters_internal.ToPrimitiveTypes<
           abiError['inputs']
         > extends readonly []
         ? []
-        : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
+        : [AbiParameters_internal.ToPrimitiveTypes<abiError['inputs']>]
       : readonly unknown[]
 
   type ReturnType = Hex.Hex

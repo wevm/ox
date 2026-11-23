@@ -64,3 +64,34 @@ describe('decode', () => {
     }
   })
 })
+
+describe('encode', () => {
+  test('behavior: type instantiations', () => {
+    const parameters = [
+      { name: 'a', type: 'uint256' },
+      {
+        components: [
+          { name: 'x', type: 'address' },
+          { name: 'y', type: 'string' },
+        ],
+        name: 'b',
+        type: 'tuple',
+      },
+    ] as const
+    AbiParameters.encode(parameters, [
+      420n,
+      { x: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045', y: 'lol' },
+    ])
+    attest.instantiations([2103, 'instantiations'])
+  })
+})
+
+describe('encodePacked', () => {
+  test('behavior: type instantiations', () => {
+    AbiParameters.encodePacked(
+      ['address', 'string', 'uint256'],
+      ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world', 420n],
+    )
+    attest.instantiations([883, 'instantiations'])
+  })
+})
