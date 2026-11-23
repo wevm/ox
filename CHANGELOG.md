@@ -1,5 +1,11 @@
 # ox
 
+## 1.8.20
+
+### Patch Changes
+
+- [#710](https://github.com/wevm/ox/pull/710) [`93ba964`](https://github.com/wevm/ox/commit/93ba964e3f8cdcf9c2762db6f9bf0a92d677ff85) Thanks [@jxom](https://github.com/jxom)! - Fixed the internal ENS module importing the root `ox` barrel, which made `Ens` pull in every ox module for CommonJS consumers.
+
 ## 1.8.19
 
 ### Patch Changes
