@@ -2158,6 +2158,29 @@ describe('verify', () => {
         }),
       ).toBe(false)
     })
+
+    test('behavior: returns false for high-s signature', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(publicKey)
+      const payload = '0xdeadbeef' as const
+
+      const { r, s, yParity } = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        r,
+        s:
+          0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n -
+          s,
+        yParity: yParity === 0 ? 1 : 0,
+      })
+
+      expect(SignatureEnvelope.verify(envelope, { address, payload })).toBe(
+        false,
+      )
+      expect(SignatureEnvelope.verify(envelope, { payload, publicKey })).toBe(
+        false,
+      )
+    })
   })
 
   describe('p256', () => {
