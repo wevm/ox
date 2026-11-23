@@ -11,7 +11,7 @@ concurrency:
 jobs:
   lock-issue:
     if: ${{ github.repository_owner == 'wevm' }}
-    uses: wevm/actions/.github/workflows/lock-issue.yml@ce3e8f4d50163a659a550102f4beb1c100cb2b8b
+    uses: wevm/actions/.github/workflows/lock-issue.yml@e0e99cfdac7c74eadc3ee7281015c0bf0496d6ac
     with:
       issue-comment: |
         This issue has been locked since it has been closed for more than 14 days.
