@@ -27,10 +27,27 @@ export type Wrapped = Hex.Hex
 export const magicBytes =
   '0x8010801080108010801080108010801080108010801080108010801080108010' as const
 
-/** Suffix ABI parameters for the ERC-8010 wrapped signature. */
-export const suffixParameters = AbiParameters.from(
-  '(uint256 chainId, address delegation, uint256 nonce, uint8 yParity, uint256 r, uint256 s), address to, bytes data',
-)
+// Written out rather than parsed with `AbiParameters.from`, so importing this module does not run
+// (or bundle) the human-readable ABI parser.
+/**
+ * Suffix ABI parameters for the ERC-8010 wrapped signature:
+ * `(uint256 chainId, address delegation, uint256 nonce, uint8 yParity, uint256 r, uint256 s), address to, bytes data`.
+ */
+export const suffixParameters = [
+  {
+    type: 'tuple',
+    components: [
+      { type: 'uint256', name: 'chainId' },
+      { type: 'address', name: 'delegation' },
+      { type: 'uint256', name: 'nonce' },
+      { type: 'uint8', name: 'yParity' },
+      { type: 'uint256', name: 'r' },
+      { type: 'uint256', name: 's' },
+    ],
+  },
+  { type: 'address', name: 'to' },
+  { type: 'bytes', name: 'data' },
+] as const
 
 /**
  * Asserts that the wrapped signature is valid.
