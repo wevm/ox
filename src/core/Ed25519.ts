@@ -3,6 +3,7 @@ import {
   edwardsToMontgomeryPriv,
   edwardsToMontgomeryPub,
 } from '@noble/curves/ed25519'
+import { randomBytes } from '@noble/hashes/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -235,7 +236,8 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = ed25519.utils.randomPrivateKey()
+  // What noble's `utils.randomPrivateKey` does, without bundling the curve.
+  const bytes = randomBytes(32)
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }

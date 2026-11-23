@@ -1,4 +1,9 @@
+import {
+  getMinHashLength,
+  mapHashToField,
+} from '@noble/curves/abstract/modular'
 import { secp256r1 } from '@noble/curves/p256'
+import { randomBytes } from '@noble/hashes/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -10,6 +15,10 @@ import type * as Signature from './Signature.js'
 
 /** Re-export of noble/curves P256 utilities. */
 export const noble = secp256r1
+
+/** Order of the P256 group, which private keys are reduced into. */
+const order =
+  0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
 
 /**
  * Creates a new P256 ECDSA key pair consisting of a private key and its corresponding public key.
@@ -288,7 +297,8 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = secp256r1.utils.randomPrivateKey()
+  // What noble's `utils.randomPrivateKey` does, without bundling the curve.
+  const bytes = mapHashToField(randomBytes(getMinHashLength(order)), order)
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
