@@ -420,6 +420,15 @@ describe('toBigInt', () => {
     ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
   })
 
+  test('behavior: empty hex reads as zero', () => {
+    expect(Hex.toBigInt('0x')).toBe(0n)
+    expect(Hex.toBigInt('0x', { signed: true })).toBe(0n)
+    expect(Hex.toNumber('0x')).toBe(0)
+    expect(Hex.toNumber('0x', { signed: true })).toBe(0)
+    expect(Bytes.toBigInt(new Uint8Array())).toBe(0n)
+    expect(Bytes.toNumber(new Uint8Array(), { signed: true })).toBe(0)
+  })
+
   test('args: signed', () => {
     expect(Hex.toBigInt('0x20', { signed: true })).toBe(32n)
     expect(
@@ -714,9 +723,6 @@ describe('toNumber', () => {
       Hex.toNumber('0x20000000000001'),
     ).toThrowErrorMatchingInlineSnapshot(
       `[Hex.IntegerOutOfRangeError: Number \`9007199254740992\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
-    )
-    expect(() => Hex.toNumber('0x')).toThrowErrorMatchingInlineSnapshot(
-      `[Hex.IntegerOutOfRangeError: Number \`NaN\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)]`,
     )
     expect(() =>
       Hex.toNumber(`0x8${'0'.repeat(63)}`, { signed: true }),
