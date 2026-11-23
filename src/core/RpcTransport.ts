@@ -132,25 +132,22 @@ export function fromHttp<
 
             // Read the body within the timeout too, so a response that stalls
             // after its headers cannot hang the request.
-            const data = await (async () => {
-              if (
-                response.headers
-                  .get('Content-Type')
-                  ?.startsWith('application/json')
-              )
-                return response.json()
-              return response.text().then((data) => {
+            // Parse every body the same way whatever its `Content-Type`, so a
+            // malformed or non-object reply throws `MalformedResponseError`
+            // (or `HttpError` for a failed response) rather than a raw error.
+            const data = await response.text().then((text) => {
+              const data = (() => {
                 try {
-                  return JSON.parse(data || '{}')
-                } catch (_err) {
-                  if (response.ok)
-                    throw new MalformedResponseError({
-                      response: data,
-                    })
-                  return { error: data }
+                  return JSON.parse(text || '{}')
+                } catch {
+                  return undefined
                 }
-              })
-            })()
+              })()
+              if (typeof data === 'object' && data !== null) return data
+              if (response.ok)
+                throw new MalformedResponseError({ response: text })
+              return { error: text }
+            })
 
             return { data, response }
           },
