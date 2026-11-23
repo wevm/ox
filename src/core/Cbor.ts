@@ -945,6 +945,7 @@ namespace decodeCursor {
 
     // Float32
     if (additionalInfo === 26) {
+      cursor.assertPosition(cursor.position + 3)
       const value = cursor.dataView.getFloat32(cursor.position, false)
       cursor.position += 4
       return value
@@ -952,6 +953,7 @@ namespace decodeCursor {
 
     // Float64
     if (additionalInfo === 27) {
+      cursor.assertPosition(cursor.position + 7)
       const value = cursor.dataView.getFloat64(cursor.position, false)
       cursor.position += 8
       return value
