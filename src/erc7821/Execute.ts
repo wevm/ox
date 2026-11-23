@@ -111,22 +111,14 @@ export function decodeBatchOfBatchesData(
   ) as readonly [Hex.Hex[]]
 
   return encodedBatches.map((encodedBatch) => {
-    // Try decoding with opData first
-    try {
-      const decoded = Calls.decode(encodedBatch, { opData: true })
-      if (decoded.opData) {
-        return {
-          calls: decoded.calls,
-          opData: decoded.opData,
-        }
-      }
-      // If opData is undefined, return without it
-      return { calls: decoded.calls }
-    } catch {
-      // If decoding with opData fails, decode without it
-      const decoded = Calls.decode(encodedBatch, { opData: false })
-      return { calls: decoded.calls }
-    }
+    // `abi.encode(calls)` starts with the offset 0x20 and
+    // `abi.encode(calls, opData)` with 0x40, which is how ERC-7821 accounts
+    // tell them apart.
+    const withOpData = Hex.toBigInt(Hex.slice(encodedBatch, 0, 32)) >= 0x40n
+    const { calls, opData } = Calls.decode(encodedBatch, {
+      opData: withOpData,
+    })
+    return opData ? { calls, opData } : { calls }
   })
 }
 

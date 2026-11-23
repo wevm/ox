@@ -633,6 +633,15 @@ describe('decodeBatchOfBatchesData', () => {
     expect(result).toEqual(batches)
   })
 
+  test('behavior: batches with no calls', () => {
+    const batches = [{ calls: [] }, { calls: [], opData: '0xabcdef' }] as const
+
+    const encoded = Execute.encodeBatchOfBatchesData(batches)
+    const result = Execute.decodeBatchOfBatchesData(encoded)
+
+    expect(result).toEqual(batches)
+  })
+
   test('behavior: mixed batches with and without opData', () => {
     const batches = [
       {
