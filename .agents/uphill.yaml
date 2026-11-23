@@ -1,0 +1,731 @@
+# ox's metrics (0.x line). Each script fans out over every public export of ox's entry points, the
+# subpaths `scripts/utils/exports.ts` derives from src/ and prepublish writes to
+# src/package.json#exports, so each export and each public function scores on its own. The
+# metrics, defaults, item names and hot set are shared with ox's main branch, so a target pattern
+# means the same item on both. Items are named the way users import them (.agents/metrics/names.ts):
+# a member of a namespace as `<index entry>:<Namespace>.<member>`, such as `ox:Hex.fromString` or
+# `ox/tempo:SignatureEnvelope.sortApprovals`; a whole namespace as `ox:Hex`; a whole index entry by
+# its specifier, such as `ox` or `ox/tempo`. The per-module metrics (`tree-shaking`, `import-time`
+# and `import-memory`) name their items by the module entry, such as `ox/Hex`. The scripts measure
+# the build that `pnpm build` writes to src/_esm and src/_types.
+#
+# There is no latency category: viem's checks awaits of independent RPC reads, and ox's few async
+# functions (WebAuthn, WebCrypto, Keystore, AesGcm, RpcTransport) chain no independent requests.
+
+# Install scripts stay off (ox's postinstall builds contracts with Foundry, which no metric needs).
+# The scripts keep their own dependencies, such as rolldown and fast-check, in .agents/metrics.
+setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/metrics'
+
+footprint:
+  run: bun .agents/metrics/footprint.ts
+  # Gzipped bytes a consumer bundles to import one export the way users import it, such as
+  # `import { Hex } from 'ox'; export const $ = Hex.fromString` for `ox:Hex.fromString`, a whole
+  # namespace, such as `ox:Hex`, or a whole index entry, such as `ox/tempo`. rolldown bundles and
+  # minifies each import for the browser. Encoders, decoders and envelopes without a curve bundle 1
+  # to 9 kB, so the default is 10 kB, the same as on ox's main branch. Other targets sit where a
+  # known change puts each kind, such as constants without top-level side effects and helpers
+  # without a curve, or just above today's size where none is known. The first matching pattern
+  # applies.
+  entry-size:
+    target: 10kB
+    targets:
+      # An error class extends `BaseError` (about 0.7 kB) and adds a message.
+      '*:*.*Error': 1kB
+      # Whole barrels and namespaces that carry data.
+      ox: 220kB
+      ox/tempo: 65kB
+      'ox:Mnemonic': 100kB
+      ox/webauthn: 32kB
+      ox/erc8010: 30kB
+      # Modules whose functions sign, verify, recover or derive keys bundle a curve, and tempo's
+      # signature envelopes bundle secp256k1 and P-256.
+      'ox:Bls*': 25kB
+      'ox/tempo:*': 32kB
+      'ox/webauthn:*': 26kB
+      'ox:WebAuthnP256*': 20kB
+      'ox:WebCryptoP256*': 20kB
+      'ox:Secp256k1*': 25kB
+      'ox:P256*': 20kB
+      'ox:Ed25519*': 15kB
+      'ox:HdKey*': 25kB
+      'ox:Mnemonic*': 25kB
+      # ENS normalization bundles @adraffy/ens-normalize's tables.
+      'ox:Ens*': 30kB
+      # wrap recovers the authorization's signer.
+      'ox/erc8010:*': 25kB
+  # Whether each module entry, such as `ox/Hex`, has no top-level code a bundler must keep: a call
+  # without a `/*#__PURE__*/` annotation, a `2n ** 8n`, a runtime TypeScript namespace, or a static
+  # class field. Such code stays in every bundle that uses anything from the module, and in a
+  # bundle that imports the module for nothing when ox's `"sideEffects": false` is out of reach.
+  # The note names what stays.
+  tree-shaking: {}
+  # The parts of ox its users lean on most, listed in .agents/metrics/hot.ts, scored on their own:
+  # in entry-size, a few dozen items that miss their targets hide under its p90. Each target is a
+  # tenth of what the item bundles today, and no lower than 250 B, about what a function that throws
+  # no error bundles. Some tenths sit below what the work itself needs, such as keccak's or
+  # secp256k1's code, so the list scores its median, which reaches 90 once half the items bundle
+  # ten times less.
+  hot-entry-size:
+    target: 1kB
+    score: median
+    targets:
+      'ox:Hex.fromBytes': 250B # 1.2kB today
+      'ox:Hex.fromNumber': 250B # 1.3kB today
+      'ox:Hex.slice': 250B # 950B today
+      'ox:Hash.keccak256': 380B # 3.8kB today
+      'ox:Hex.size': 250B # 650B today
+      'ox:Bytes.fromString': 250B # 1kB today
+      'ox:Hex.concat': 250B # 690B today
+      'ox:Hex.toBigInt': 250B # 830B today
+      'ox:Signature.fromHex': 250B # 2.2kB today
+      'ox:Address.isEqual': 250B # 940B today
+      'ox:Signature.toHex': 250B # 2kB today
+      'ox:Hex.fromString': 250B # 1.2kB today
+      'ox:Hex.validate': 250B # 720B today
+      'ox:Bytes.from': 250B # 1.5kB today
+      'ox:Bytes.concat': 250B # 700B today
+      'ox:Hex.random': 250B # 1.2kB today
+      'ox:Hex.padLeft': 250B # 870B today
+      'ox:AbiParameters.encode': 710B # 7.1kB today
+      'ox:Bytes.fromNumber': 250B # 1.2kB today
+      'ox:Signature.from': 290B # 2.9kB today
+      'ox:Address.validate': 460B # 4.6kB today
+      'ox:PublicKey.toHex': 250B # 1.8kB today
+      'ox:Hex.toNumber': 250B # 1kB today
+      'ox:Json.stringify': 250B # 140B today
+      'ox:Address.fromPublicKey': 560B # 5.6kB today
+      'ox:Address.checksum': 460B # 4.6kB today
+      'ox/tempo:SignatureEnvelope.serialize': 840B # 8.4kB today
+      'ox:Hex.assert': 250B # 1.1kB today
+      'ox:AbiFunction.encodeData': 930B # 9.3kB today
+      'ox:Bytes.fromHex': 250B # 1.5kB today
+      'ox:AbiParameters.from': 340B # 3.4kB today
+      'ox:Bytes.random': 250B # 660B today
+      'ox/tempo:SignatureEnvelope.from': 2.6kB # 26kB today
+      'ox:Address.from': 470B # 4.7kB today
+      'ox/tempo:TxEnvelopeTempo.serialize': 3.2kB # 32kB today
+      'ox/tempo:KeyAuthorization.fromRpc': 1.3kB # 13kB today
+      'ox/tempo:TxEnvelopeTempo.deserialize': 3.2kB # 32kB today
+      'ox:AbiParameters.encodePacked': 610B # 6.1kB today
+      'ox:Secp256k1.getPublicKey': 1.7kB # 17kB today
+      'ox/tempo:SignatureEnvelope.extractAddress': 2kB # 20kB today
+      'ox:Rlp.fromHex': 250B # 2.2kB today
+      'ox:Rlp.toHex': 380B # 3.8kB today
+      'ox:AbiEvent.extractLogs': 1.2kB # 12kB today
+      'ox:AbiFunction.fromAbi': 700B # 7kB today
+      'ox:Abi.from': 390B # 3.9kB today
+      'ox:AbiFunction.decodeResult': 1kB # 10kB today
+      'ox:AbiParameters.decode': 800B # 8kB today
+      'ox:Value.format': 250B # 900B today
+      'ox:TypedData.getSignPayload': 920B # 9.2kB today
+      'ox:PersonalMessage.getSignPayload': 420B # 4.2kB today
+      'ox:Signature.toRpc': 250B # 1.4kB today
+      'ox:Signature.fromRpc': 250B # 1.1kB today
+      'ox:Signature.extract': 290B # 2.9kB today
+      'ox:Ens.normalize': 1.7kB # 17kB today
+      'ox/erc6492:SignatureErc6492.validate': 250B # 1.1kB today
+      'ox/erc8010:SignatureErc8010.validate': 460B # 4.6kB today
+      'ox/erc8010:SignatureErc8010.unwrap': 1.2kB # 12kB today
+      'ox:Base64.fromBytes': 250B # 1.1kB today
+      'ox:Base64.toBytes': 250B # 1.2kB today
+      'ox:Base64.toString': 250B # 1.4kB today
+      'ox:Hash.sha256': 400B # 4kB today
+      'ox:Bytes.toHex': 250B # 1.2kB today
+      'ox:WebCryptoP256.sign': 340B # 3.4kB today
+      'ox:WebCryptoP256.createKeyPair': 270B # 2.7kB today
+      'ox:Secp256k1.sign': 1.7kB # 17kB today
+      'ox:Secp256k1.recoverAddress': 2kB # 20kB today
+      'ox': 21kB # 210kB today
+      'ox/tempo': 6.1kB # 61kB today
+      'ox/erc4337': 1.6kB # 16kB today
+      'ox/erc6492': 1.5kB # 15kB today
+
+speed:
+  run: bun .agents/metrics/speed.ts
+  # Recording ox's tests takes about 75 s (more the first time anvil's fork cache fills), and each
+  # replay about 5.3 minutes at concurrency 2; `uphill` (5 rounds) takes about 27 minutes.
+  timeout: 60m
+  # CPU time per call of each public function, replaying the arguments ox's own tests call it
+  # with, in a fresh `node --single-threaded` process on src/_esm. ox's caches are emptied before
+  # every call, so each call does a first call's work while caching still works inside it, and
+  # the note gives the time with them warm. Three quarters of the calls take under 11 µs, so the
+  # default is 20 µs, the same as on ox's main branch. Cryptography and key derivation whose cost
+  # is noble's (or, for the KZG functions, the micro-eth-signer KZG that ox's tests inject) has a
+  # target about 1.5 times its time today on this branch, since CPU time varies by up to 1.5x
+  # between runs on this machine. Keccak-bound hashing (TypedData, ABI selectors, transaction
+  # hashes) keeps the default, so it shows as the opportunity it is. The first matching pattern
+  # applies.
+  call-time:
+    target: 20µs
+    targets:
+      'ox:Blobs.toProofs': 2.6s
+      'ox:Blobs.toCommitments': 1.8s
+      'ox:Blobs.toVersionedHashes': 1.8s
+      # 262,144 rounds of PBKDF2 by default, in noble or in WebCrypto.
+      'ox:Keystore.pbkdf2': 620ms
+      'ox:Keystore.pbkdf2Async': 60ms
+      # 900,000 rounds of WebCrypto PBKDF2.
+      'ox:AesGcm.getKey': 200ms
+      # Key derivation with scrypt, or PBKDF2 at the recorded call's rounds.
+      'ox:Keystore.*': 50ms
+      'ox:Bls.verify': 38ms
+      'ox:Bls.sign': 30ms
+      'ox:Bls*': 1.5ms
+      # BIP-39 derives the seed with 2,048 rounds of PBKDF2-HMAC-SHA512.
+      '*:*.fromMnemonic': 16ms
+      'ox:Mnemonic.to*': 17ms
+      'ox:Mnemonic.*': 200µs
+      # Each recovers every signer's public key once.
+      'ox/tempo:AccountOperation.selectApprovals': 8ms
+      'ox/tempo:SignatureEnvelope.sortApprovals': 7ms
+      'ox/tempo:SignatureEnvelope.*': 3.5ms
+      'ox/webauthn:Registration.verify': 3.7ms
+      '*:*.getSharedSecret': 4ms
+      '*:*.recover*': 3.4ms
+      '*:*.verify': 3.5ms
+      # Recovers the authorization's signer.
+      'ox/erc8010:SignatureErc8010.wrap': 2.8ms
+      'ox:X25519.*': 1.2ms
+      'ox:HdKey.*': 1.1ms
+      'ox:Blobs.*': 900µs
+      'ox:Secp256k1.*': 600µs
+      'ox:P256.*': 420µs
+      'ox:Ed25519.*': 450µs
+      'ox:WebCryptoP256.*': 150µs
+      'ox:BinaryStateTree.*': 320µs
+      # The recorded call converts a 128 kB blob.
+      'ox:Bytes.toHex': 250µs
+  # Heap bytes each call allocates, v8.GCProfiler minus a no-op loop. Three quarters of the calls
+  # allocate under 6 kB, so the default is 20 kB, the same as on ox's main branch. The same
+  # cryptography has a target about 1.25 times its allocation today, which barely varies (p95 of
+  # run-to-run ratio 1.01).
+  call-memory:
+    varies: true
+    target: 20kB
+    targets:
+      'ox:Blobs.toProofs': 1.6GB
+      'ox:Blobs.toCommitments': 1.1GB
+      'ox:Blobs.toVersionedHashes': 1.1GB
+      'ox:Keystore.pbkdf2': 300MB
+      'ox:Keystore.pbkdf2Async': 15kB
+      'ox:AesGcm.getKey': 25kB
+      'ox:Keystore.*': 5MB
+      'ox:Bls.verify': 28MB
+      'ox:Bls.sign': 20MB
+      'ox:Bls*': 800kB
+      '*:*.fromMnemonic': 12MB
+      'ox:Mnemonic.to*': 12.5MB
+      'ox:Mnemonic.*': 360kB
+      'ox/tempo:AccountOperation.selectApprovals': 4.2MB
+      'ox/tempo:SignatureEnvelope.sortApprovals': 3.9MB
+      'ox/tempo:SignatureEnvelope.*': 2.1MB
+      'ox/webauthn:Registration.verify': 2.2MB
+      '*:*.getSharedSecret': 2.6MB
+      '*:*.recover*': 2.2MB
+      '*:*.verify': 2.1MB
+      'ox/erc8010:SignatureErc8010.wrap': 1.3MB
+      'ox:X25519.*': 750kB
+      'ox:HdKey.*': 630kB
+      'ox:Blobs.*': 330kB
+      'ox:Secp256k1.*': 330kB
+      'ox:P256.*': 350kB
+      'ox:Ed25519.*': 370kB
+      'ox:BinaryStateTree.*': 450kB
+      'ox:Bytes.toHex': 330kB
+  # CPU time to import each entry point, barrels included, in a fresh Node process. Half the
+  # entries take under 28 ms and 90% under 63 ms; the default is 60 ms, the same as on ox's main
+  # branch. On this branch noble's BLS12-381 builds its curve when `ox/Bls` and `ox/BlsPoint` load.
+  import-time:
+    target: 60ms
+    targets:
+      ox: 230ms
+      ox/tempo*: 120ms
+      ox/Bls*: 100ms
+  # Heap bytes each entry point holds once imported. The default is 3.5 MB, above the 90th
+  # percentile today and the same as on ox's main branch.
+  import-memory:
+    target: 3.5MB
+    targets:
+      ox: 8MB
+      ox/tempo*: 6MB
+  # The hot items of .agents/metrics/hot.ts, scored on their own, each against a tenth of its
+  # time, memory or import cost today, and scored by the median, as hot-entry-size explains. Call
+  # times stop at 50 ns, where a call is too short to time, allocations at 64 B, imports at 2 ms,
+  # about what a module without imports takes, and import memory at 100 kB.
+  hot-call-time:
+    target: 2µs
+    score: median
+    targets:
+      'ox:Hex.fromBytes': 50ns # 23ns today
+      'ox:Hex.fromNumber': 50ns # 23ns today
+      'ox:Hex.slice': 50ns # 0.66ns today
+      'ox:Hash.keccak256': 720ns # 7.2µs today
+      'ox:Hex.size': 50ns # 0 today
+      'ox:Bytes.fromString': 51ns # 510ns today
+      'ox:Hex.concat': 50ns # 1.1ns today
+      'ox:Hex.toBigInt': 50ns # 9.8ns today
+      'ox:Signature.fromHex': 50ns # 0 today
+      'ox:Address.isEqual': 50ns # 260ns today
+      'ox:Signature.toHex': 50ns # 440ns today
+      'ox:Hex.fromString': 50ns # 340ns today
+      'ox:Hex.validate': 50ns # 0 today
+      'ox:Bytes.from': 50ns # 0 today
+      'ox:Bytes.concat': 50ns # 430ns today
+      'ox:Hex.random': 82ns # 820ns today
+      'ox:Hex.padLeft': 50ns # 35ns today
+      'ox:AbiParameters.encode': 87ns # 870ns today
+      'ox:Bytes.fromNumber': 50ns # 52ns today
+      'ox:Signature.from': 50ns # 300ns today
+      'ox:Address.validate': 50ns # 180ns today
+      'ox:PublicKey.toHex': 50ns # 10ns today
+      'ox:Hex.toNumber': 50ns # 1.4ns today
+      'ox:Json.stringify': 50ns # 270ns today
+      'ox:Address.fromPublicKey': 860ns # 8.6µs today
+      'ox:Address.checksum': 780ns # 7.8µs today
+      'ox/tempo:SignatureEnvelope.serialize': 50ns # 0 today
+      'ox:Hex.assert': 50ns # 0 today
+      'ox:AbiFunction.encodeData': 110ns # 1.1µs today
+      'ox:Bytes.fromHex': 50ns # 78ns today
+      'ox:AbiParameters.from': 50ns # 250ns today
+      'ox:Bytes.random': 87ns # 870ns today
+      'ox/tempo:SignatureEnvelope.from': 50ns # 50ns today
+      'ox:Address.from': 50ns # 190ns today
+      'ox/tempo:TxEnvelopeTempo.serialize': 150ns # 1.5µs today
+      'ox/tempo:KeyAuthorization.fromRpc': 400ns # 4µs today
+      'ox/tempo:TxEnvelopeTempo.deserialize': 140ns # 1.4µs today
+      'ox:AbiParameters.encodePacked': 50ns # 42ns today
+      'ox:Secp256k1.getPublicKey': 19µs # 190µs today
+      'ox/tempo:SignatureEnvelope.extractAddress': 50ns # 0 today
+      'ox:Rlp.fromHex': 59ns # 590ns today
+      'ox:Rlp.toHex': 50ns # 240ns today
+      'ox:AbiEvent.extractLogs': 940ns # 9.4µs today
+      'ox:AbiFunction.fromAbi': 880ns # 8.8µs today
+      'ox:Abi.from': 150ns # 1.5µs today
+      'ox:AbiFunction.decodeResult': 83ns # 830ns today
+      'ox:AbiParameters.decode': 79ns # 790ns today
+      'ox:Value.format': 50ns # 18ns today
+      'ox:TypedData.getSignPayload': 6.8µs # 68µs today
+      'ox:PersonalMessage.getSignPayload': 900ns # 9µs today
+      'ox:Signature.toRpc': 50ns # 0 today
+      'ox:Signature.fromRpc': 50ns # 300ns today
+      'ox:Signature.extract': 50ns # 230ns today
+      'ox:Ens.normalize': 320ns # 3.2µs today
+      'ox/erc6492:SignatureErc6492.validate': 260ns # 2.6µs today
+      'ox/erc8010:SignatureErc8010.validate': 240ns # 2.4µs today
+      'ox/erc8010:SignatureErc8010.unwrap': 2.1µs # 21µs today
+      'ox:Base64.fromBytes': 50ns # 230ns today
+      'ox:Base64.toBytes': 50ns # 59ns today
+      'ox:Base64.toString': 59ns # 590ns today
+      'ox:Hash.sha256': 75ns # 750ns today
+      'ox:Bytes.toHex': 210ns # 2.1µs today
+      'ox:WebCryptoP256.createKeyPair': 8.5µs # 85µs today
+      'ox:Secp256k1.sign': 33µs # 330µs today
+      'ox:Secp256k1.recoverAddress': 140µs # 1.4ms today
+  hot-call-memory:
+    varies: true
+    target: 2kB
+    score: median
+    targets:
+      'ox:Hex.fromBytes': 64B # 140B today
+      'ox:Hex.fromNumber': 64B # 100B today
+      'ox:Hex.slice': 64B # 140B today
+      'ox:Hash.keccak256': 120B # 1.2kB today
+      'ox:Hex.size': 64B # 0 today
+      'ox:Bytes.fromString': 64B # 260B today
+      'ox:Hex.concat': 64B # 130B today
+      'ox:Hex.toBigInt': 64B # 80B today
+      'ox:Signature.fromHex': 64B # 290B today
+      'ox:Address.isEqual': 64B # 130B today
+      'ox:Signature.toHex': 70B # 700B today
+      'ox:Hex.fromString': 64B # 330B today
+      'ox:Hex.validate': 64B # 0 today
+      'ox:Bytes.from': 64B # 220B today
+      'ox:Bytes.concat': 64B # 200B today
+      'ox:Hex.random': 64B # 360B today
+      'ox:Hex.padLeft': 64B # 290B today
+      'ox:AbiParameters.encode': 170B # 1.7kB today
+      'ox:Bytes.fromNumber': 64B # 470B today
+      'ox:Signature.from': 64B # 420B today
+      'ox:Address.validate': 64B # 56B today
+      'ox:PublicKey.toHex': 64B # 350B today
+      'ox:Hex.toNumber': 64B # 56B today
+      'ox:Json.stringify': 64B # 250B today
+      'ox:Address.fromPublicKey': 280B # 2.8kB today
+      'ox:Address.checksum': 200B # 2kB today
+      'ox/tempo:SignatureEnvelope.serialize': 64B # 570B today
+      'ox:Hex.assert': 64B # 0 today
+      'ox:AbiFunction.encodeData': 210B # 2.1kB today
+      'ox:Bytes.fromHex': 64B # 300B today
+      'ox:AbiParameters.from': 66B # 660B today
+      'ox:Bytes.random': 64B # 250B today
+      'ox/tempo:SignatureEnvelope.from': 64B # 380B today
+      'ox:Address.from': 64B # 56B today
+      'ox/tempo:TxEnvelopeTempo.serialize': 290B # 2.9kB today
+      'ox/tempo:KeyAuthorization.fromRpc': 730B # 7.3kB today
+      'ox/tempo:TxEnvelopeTempo.deserialize': 280B # 2.8kB today
+      'ox:AbiParameters.encodePacked': 64B # 180B today
+      'ox:Secp256k1.getPublicKey': 18kB # 180kB today
+      'ox/tempo:SignatureEnvelope.extractAddress': 64B # 0 today
+      'ox:Rlp.fromHex': 100B # 1kB today
+      'ox:Rlp.toHex': 71B # 710B today
+      'ox:AbiEvent.extractLogs': 650B # 6.5kB today
+      'ox:AbiFunction.fromAbi': 430B # 4.3kB today
+      'ox:Abi.from': 430B # 4.3kB today
+      'ox:AbiFunction.decodeResult': 140B # 1.4kB today
+      'ox:AbiParameters.decode': 130B # 1.3kB today
+      'ox:Value.format': 64B # 72B today
+      'ox:TypedData.getSignPayload': 3.1kB # 31kB today
+      'ox:PersonalMessage.getSignPayload': 250B # 2.5kB today
+      'ox:Signature.toRpc': 64B # 130B today
+      'ox:Signature.fromRpc': 83B # 830B today
+      'ox:Signature.extract': 64B # 460B today
+      'ox:Ens.normalize': 470B # 4.7kB today
+      'ox/erc6492:SignatureErc6492.validate': 160B # 1.6kB today
+      'ox/erc8010:SignatureErc8010.validate': 160B # 1.6kB today
+      'ox/erc8010:SignatureErc8010.unwrap': 1.4kB # 14kB today
+      'ox:Base64.fromBytes': 64B # 110B today
+      'ox:Base64.toBytes': 64B # 230B today
+      'ox:Base64.toString': 64B # 270B today
+      'ox:Hash.sha256': 150B # 1.5kB today
+      'ox:Bytes.toHex': 420B # 4.2kB today
+      'ox:WebCryptoP256.createKeyPair': 780B # 7.8kB today
+      'ox:Secp256k1.sign': 29kB # 290kB today
+      'ox:Secp256k1.recoverAddress': 120kB # 1.2MB today
+  hot-import-time:
+    target: 6ms
+    score: median
+    targets:
+      'ox': 23ms # 230ms today
+      'ox/tempo': 19ms # 190ms today
+      'ox/Hex': 2ms # 12ms today
+      'ox/Address': 2.8ms # 28ms today
+      'ox/Signature': 2.8ms # 28ms today
+      'ox/TypedData': 4.6ms # 46ms today
+      'ox/RpcResponse': 2ms # 1.4ms today
+      'ox/Secp256k1': 6.2ms # 62ms today
+      'ox/Provider': 2ms # 7ms today
+      'ox/AbiFunction': 4.7ms # 47ms today
+      'ox/AbiParameters': 4.3ms # 43ms today
+      'ox/Bytes': 2ms # 14ms today
+      'ox/Hash': 2.5ms # 25ms today
+      'ox/WebAuthnP256': 6.9ms # 69ms today
+      'ox/erc4337': 7ms # 70ms today
+      'ox/erc6492': 4.4ms # 44ms today
+  hot-import-memory:
+    target: 350kB
+    score: median
+    targets:
+      'ox': 750kB # 7.5MB today
+      'ox/tempo': 590kB # 5.9MB today
+      'ox/Hex': 100kB # 680kB today
+      'ox/Address': 120kB # 1.2MB today
+      'ox/Signature': 160kB # 1.6MB today
+      'ox/TypedData': 160kB # 1.6MB today
+      'ox/RpcResponse': 100kB # 280kB today
+      'ox/Secp256k1': 340kB # 3.4MB today
+      'ox/Provider': 100kB # 480kB today
+      'ox/AbiFunction': 160kB # 1.6MB today
+      'ox/AbiParameters': 150kB # 1.5MB today
+      'ox/Bytes': 100kB # 730kB today
+      'ox/Hash': 110kB # 1.1MB today
+      'ox/WebAuthnP256': 270kB # 2.7MB today
+      'ox/erc4337': 280kB # 2.8MB today
+      'ox/erc6492': 160kB # 1.6MB today
+
+# How much of ox the speed bench reaches. It shares the speed script's run.
+coverage:
+  run: bun .agents/metrics/speed.ts
+  timeout: 60m
+  # Whether each public function has a call the bench can replay: one that returned or resolved
+  # in ox's tests (or in .agents/metrics/speed-calls.test.ts) with arguments that rebuild in
+  # another process. The note says why not otherwise, such as "no test calls it" or "every
+  # recorded call passes a function".
+  benched: {}
+
+# Type-checking cost of every public export of ox's leaf entries, values and types, from
+# src/_types. Each export gets a consumer that imports it and forces its type to resolve: a
+# function's typeof, Parameters and ReturnType (generics at their constraints), a class's
+# ConstructorParameters and InstanceType, a type at its defaults or constraints, plus one level of
+# members. Each is checked in a fresh program with tsconfig.base.json's options, minus a baseline
+# that only imports the entry. It writes times, so Uphill runs it 5 times: about 2 minutes at
+# UPHILL_CONCURRENCY=1.
+types:
+  run: bun .agents/metrics/types.ts
+  timeout: 15m
+  # Instantiations to resolve the export, exact. p50 66, p90 1,018. ABI and typed-data types start
+  # near 12,000 because abitype's do (its TypedData alone costs 11,700), so they get 5,000. The
+  # same defaults as on ox's main branch.
+  instantiations:
+    target: 1000
+    targets:
+      'ox:Abi*': 5000
+      'ox:TypedData*': 5000
+      'ox/erc4337:UserOperation.toTypedData': 5000
+  # CPU time of that check. p50 1.3 ms, p90 5 ms.
+  check-time:
+    target: 5ms
+    targets:
+      'ox:Abi*': 25ms
+      'ox:TypedData*': 25ms
+      'ox/erc4337:UserOperation.toTypedData': 25ms
+  # Heap bytes that check allocates. p50 339 kB, p90 1.8 MB.
+  check-memory:
+    target: 2MB
+    varies: true
+    targets:
+      'ox:Abi*': 25MB
+      'ox:TypedData*': 25MB
+      'ox/erc4337:UserOperation.toTypedData': 25MB
+  # Instantiations attest counts for each test of the attest files (`*.snap-d.ts` and
+  # `*.bench-d.ts`; this branch has 7 of the first and none of the second), isolated the way
+  # attest.instantiations isolates a test, against ox's sources and tsconfig.json. The tests pin
+  # type strings, not counts, so each target is the first run's count plus 20%, attest's threshold,
+  # as on ox's main branch. New tests fall back to 20,000.
+  bench-instantiations:
+    target: 20000
+    targets:
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: named': 7058
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: unnamed': 5020
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: named + unnamed': 6371
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: named + unnamed (2)': 7138
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: named + unnamed (3)': 8424
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: string inputs': 3868
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: widened event': 2641
+      'src/core/_test/AbiEvent.snap-d.ts > decode > behavior: union event': 19086
+      'src/core/_test/AbiEvent.snap-d.ts > fromAbi > default': 3892
+      'src/core/_test/AbiEvent.snap-d.ts > fromAbi > behavior: unknown abi': 716
+      'src/core/_test/AbiEvent.snap-d.ts > fromAbi > behavior: name': 4615
+      'src/core/_test/AbiEvent.snap-d.ts > fromAbi > behavior: overloads': 9448
+      'src/core/_test/AbiEvent.snap-d.ts > fromAbi > behavior: overloads: no inputs or args': 10051
+      'src/core/_test/AbiEvent.snap-d.ts > fromAbi > behavior: widened name': 2856
+      'src/core/_test/AbiFunction.snap-d.ts > decodeData > default': 1499
+      'src/core/_test/AbiFunction.snap-d.ts > decodeData > behavior: with data': 14418
+      'src/core/_test/AbiFunction.snap-d.ts > decodeData > behavior: with overloads': 3680
+      'src/core/_test/AbiFunction.snap-d.ts > decodeData > behavior: with overloads, one with zero inputs': 9347
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > default': 17570
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > behavior: single output parameter': 4388
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > behavior: no output parameter': 2310
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > behavior: widened': 4243
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > options: as = Object': 19564
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > options: as = Object, behavior: single output parameter': 4855
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > options: as = Object, behavior: no output parameter': 2777
+      'src/core/_test/AbiFunction.snap-d.ts > decodeResult > behavior: abiItem union': 4483
+      'src/core/_test/AbiFunction.snap-d.ts > fromAbi > default': 3587
+      'src/core/_test/AbiFunction.snap-d.ts > fromAbi > behavior: unknown abi': 2021
+      'src/core/_test/AbiFunction.snap-d.ts > fromAbi > behavior: data': 15812
+      'src/core/_test/AbiFunction.snap-d.ts > fromAbi > behavior: overloads': 8216
+      'src/core/_test/AbiFunction.snap-d.ts > fromAbi > behavior: overloads: no inputs or args': 8765
+      'src/core/_test/AbiFunction.snap-d.ts > fromAbi > behavior: widened name': 3808
+      'src/core/_test/AbiItem.snap-d.ts > fromAbi > default': 2147
+      'src/core/_test/AbiItem.snap-d.ts > fromAbi > behavior: unknown abi': 2065
+      'src/core/_test/AbiItem.snap-d.ts > fromAbi > behavior: data': 16915
+      'src/core/_test/AbiItem.snap-d.ts > fromAbi > behavior: overloads': 8203
+      'src/core/_test/AbiItem.snap-d.ts > fromAbi > behavior: overloads: no inputs or args': 8752
+      'src/core/_test/AbiItem.snap-d.ts > fromAbi > behavior: widened name': 4164
+      'src/core/_test/AbiParameters.snap-d.ts > decode > default': 18504
+      'src/core/_test/AbiParameters.snap-d.ts > decode > options: as = Object': 18929
+      'src/core/_test/AbiParameters.snap-d.ts > decode > behavior: widened': 12214
+      'src/core/_test/Secp256k1.snap-d.ts > verify': 2196
+      'src/core/_test/Signature.snap-d.ts > default': 1116
+      'src/core/_test/Signature.snap-d.ts > behavior: unrecovered': 1111
+      'src/core/_test/Signature.snap-d.ts > behavior: legacy': 1115
+      'src/core/_test/Signature.snap-d.ts > behavior: rpc': 1124
+      'src/core/_test/Signature.snap-d.ts > behavior: rpc legacy': 1115
+      'src/core/_test/Signature.snap-d.ts > behavior: widened': 1012
+      'src/core/_test/Signature.snap-d.ts > behavior: widened, unrecovered': 994
+      'src/erc4337/_test/UserOperation.snap-d.ts > from > default': 2136
+      'src/erc4337/_test/UserOperation.snap-d.ts > from > options: signature': 2210
+  # The hot items of .agents/metrics/hot.ts, each against a tenth of its instantiations today and
+  # no fewer than 40, about what the cheapest function costs, since the forms above take that much.
+  # Instantiations have no floor in the work itself, so this list scores its p90 like the others.
+  hot-instantiations:
+    target: 100
+    targets:
+      'ox:Hex.fromBytes': 40 # 96 today
+      'ox:Hex.fromNumber': 40 # 95 today
+      'ox:Hex.slice': 40 # 86 today
+      'ox:Hash.keccak256': 40 # 220 today
+      'ox:Hex.size': 40 # 52 today
+      'ox:Bytes.fromString': 40 # 90 today
+      'ox:Hex.concat': 40 # 43 today
+      'ox:Hex.toBigInt': 40 # 74 today
+      'ox:Signature.fromHex': 40 # 82 today
+      'ox:Address.isEqual': 40 # 71 today
+      'ox:Signature.toHex': 40 # 110 today
+      'ox:Hex.fromString': 40 # 76 today
+      'ox:Hex.validate': 40 # 67 today
+      'ox:Bytes.from': 40 # 120 today
+      'ox:Bytes.concat': 40 # 57 today
+      'ox:Hex.random': 40 # 48 today
+      'ox:Hex.padLeft': 40 # 65 today
+      'ox:AbiParameters.encode': 40 # 250 today
+      'ox:Bytes.fromNumber': 40 # 92 today
+      'ox:Signature.from': 120 # 1200 today
+      'ox:Address.validate': 40 # 79 today
+      'ox:PublicKey.toHex': 40 # 140 today
+      'ox:Hex.toNumber': 40 # 74 today
+      'ox:Json.stringify': 40 # 67 today
+      'ox:Address.fromPublicKey': 40 # 110 today
+      'ox:Address.checksum': 40 # 51 today
+      'ox/tempo:SignatureEnvelope.serialize': 260 # 2600 today
+      'ox:Hex.assert': 40 # 58 today
+      'ox:AbiFunction.encodeData': 43 # 430 today
+      'ox:Bytes.fromHex': 40 # 94 today
+      'ox:AbiParameters.from': 100 # 1000 today
+      'ox:Bytes.random': 40 # 62 today
+      'ox/tempo:SignatureEnvelope.from': 440 # 4400 today
+      'ox:Address.from': 40 # 79 today
+      'ox/tempo:TxEnvelopeTempo.serialize': 290 # 2900 today
+      'ox/tempo:KeyAuthorization.fromRpc': 69 # 690 today
+      'ox/tempo:TxEnvelopeTempo.deserialize': 220 # 2200 today
+      'ox:AbiParameters.encodePacked': 40 # 190 today
+      'ox:Secp256k1.getPublicKey': 40 # 230 today
+      'ox/tempo:SignatureEnvelope.extractAddress': 74 # 740 today
+      'ox:Rlp.fromHex': 40 # 360 today
+      'ox:Rlp.toHex': 40 # 150 today
+      'ox:AbiEvent.extractLogs': 210 # 2100 today
+      'ox:AbiFunction.fromAbi': 440 # 4400 today
+      'ox:Abi.from': 52 # 520 today
+      'ox:AbiFunction.decodeResult': 40 # 200 today
+      'ox:AbiParameters.decode': 40 # 380 today
+      'ox:Value.format': 40 # 49 today
+      'ox:TypedData.getSignPayload': 1400 # 14000 today
+      'ox:PersonalMessage.getSignPayload': 40 # 84 today
+      'ox:Signature.toRpc': 40 # 180 today
+      'ox:Signature.fromRpc': 40 # 89 today
+      'ox:Signature.extract': 40 # 94 today
+      'ox:Ens.normalize': 40 # 42 today
+      'ox/erc6492:SignatureErc6492.validate': 40 # 61 today
+      'ox/erc8010:SignatureErc8010.validate': 40 # 130 today
+      'ox/erc8010:SignatureErc8010.unwrap': 40 # 120 today
+      'ox:Base64.fromBytes': 40 # 90 today
+      'ox:Base64.toBytes': 40 # 62 today
+      'ox:Base64.toString': 40 # 42 today
+      'ox:Hash.sha256': 40 # 220 today
+      'ox:Bytes.toHex': 40 # 96 today
+      'ox:WebCryptoP256.sign': 63 # 630 today
+      'ox:WebCryptoP256.createKeyPair': 51 # 510 today
+      'ox:Secp256k1.sign': 40 # 240 today
+      'ox:Secp256k1.recoverAddress': 40 # 75 today
+
+# Type-checking cost at the call sites ox's tests write: one call per public function, the first in
+# its module's own tests (in the describe named after it when there is one), else its type tests,
+# else any test. Each call is copied into `const $uphill = <call>` before its statement and checked
+# in a fresh checker once its imports, fixtures and the callee's signature are resolved, so the count
+# is inferring and checking the call, including the first use of the types it touches. Exact, so
+# one run suffices: about 30 s at UPHILL_CONCURRENCY=1.
+call-types:
+  run: bun .agents/metrics/types-calls.ts
+  timeout: 10m
+  # p50 11, p90 643. A call should cost under 1,000, and one that infers from an ABI or typed data
+  # under 5,000, as on ox's main branch. TypedData's non-generic helpers infer nothing, so they keep
+  # 1,000. The first match applies.
+  instantiations:
+    target: 1000
+    targets:
+      'ox:TypedData.hashType': 1000
+      'ox:TypedData.encodeType': 1000
+      'ox:TypedData.hashStruct': 1000
+      'ox:TypedData.*': 5000
+      'ox:Abi*': 5000
+      'ox/erc4337:UserOperation.*': 5000
+  # The hot items of .agents/metrics/hot.ts, each against a tenth of its call's instantiations
+  # today and no fewer than 10. More than half of the hot calls cost nothing, so this list scores
+  # its p90.
+  hot-instantiations:
+    target: 100
+    targets:
+      'ox:Hex.fromBytes': 10 # 0 today
+      'ox:Hex.fromNumber': 10 # 0 today
+      'ox:Hex.slice': 10 # 0 today
+      'ox:Hash.keccak256': 10 # 20 today
+      'ox:Hex.size': 10 # 0 today
+      'ox:Bytes.fromString': 10 # 0 today
+      'ox:Hex.concat': 10 # 0 today
+      'ox:Hex.toBigInt': 10 # 0 today
+      'ox:Signature.fromHex': 10 # 3 today
+      'ox:Address.isEqual': 10 # 0 today
+      'ox:Signature.toHex': 10 # 19 today
+      'ox:Hex.fromString': 10 # 0 today
+      'ox:Hex.validate': 10 # 0 today
+      'ox:Bytes.from': 10 # 3 today
+      'ox:Bytes.concat': 10 # 1 today
+      'ox:Hex.random': 10 # 0 today
+      'ox:Hex.padLeft': 10 # 0 today
+      'ox:AbiParameters.encode': 320 # 3200 today
+      'ox:Bytes.fromNumber': 10 # 0 today
+      'ox:Signature.from': 34 # 340 today
+      'ox:Address.validate': 10 # 0 today
+      'ox:PublicKey.toHex': 10 # 48 today
+      'ox:Hex.toNumber': 10 # 0 today
+      'ox:Json.stringify': 10 # 0 today
+      'ox:Address.fromPublicKey': 10 # 0 today
+      'ox:Address.checksum': 10 # 0 today
+      'ox/tempo:SignatureEnvelope.serialize': 160 # 1600 today
+      'ox:Hex.assert': 10 # 0 today
+      'ox:AbiFunction.encodeData': 10 # 72 today
+      'ox:Bytes.fromHex': 10 # 0 today
+      'ox:AbiParameters.from': 10 # 96 today
+      'ox:Bytes.random': 10 # 0 today
+      'ox/tempo:SignatureEnvelope.from': 120 # 1200 today
+      'ox:Address.from': 10 # 0 today
+      'ox/tempo:TxEnvelopeTempo.serialize': 34 # 340 today
+      'ox/tempo:KeyAuthorization.fromRpc': 10 # 0 today
+      'ox/tempo:TxEnvelopeTempo.deserialize': 10 # 12 today
+      'ox:AbiParameters.encodePacked': 10 # 19 today
+      'ox:Secp256k1.getPublicKey': 10 # 30 today
+      'ox/tempo:SignatureEnvelope.extractAddress': 10 # 38 today
+      'ox:Rlp.fromHex': 10 # 22 today
+      'ox:Rlp.toHex': 10 # 5 today
+      'ox:AbiEvent.extractLogs': 390 # 3900 today
+      'ox:AbiFunction.fromAbi': 48 # 480 today
+      'ox:Abi.from': 46 # 460 today
+      'ox:AbiFunction.decodeResult': 46 # 460 today
+      'ox:AbiParameters.decode': 10 # 31 today
+      'ox:Value.format': 10 # 0 today
+      'ox:TypedData.getSignPayload': 1400 # 14000 today
+      'ox:PersonalMessage.getSignPayload': 10 # 0 today
+      'ox:Signature.toRpc': 10 # 21 today
+      'ox:Signature.fromRpc': 10 # 3 today
+      'ox:Signature.extract': 10 # 100 today
+      'ox:Ens.normalize': 10 # 0 today
+      'ox/erc6492:SignatureErc6492.validate': 10 # 0 today
+      'ox/erc8010:SignatureErc8010.validate': 10 # 0 today
+      'ox/erc8010:SignatureErc8010.unwrap': 10 # 0 today
+      'ox:Base64.fromBytes': 10 # 0 today
+      'ox:Base64.toBytes': 10 # 0 today
+      'ox:Base64.toString': 10 # 0 today
+      'ox:Hash.sha256': 10 # 20 today
+      'ox:Bytes.toHex': 10 # 0 today
+      'ox:WebCryptoP256.sign': 10 # 76 today
+      'ox:WebCryptoP256.createKeyPair': 10 # 3 today
+      'ox:Secp256k1.sign': 10 # 39 today
+      'ox:Secp256k1.recoverAddress': 10 # 0 today
+
+# Whether each public function has a call in ox's tests that call-types measures; the note names
+# the test or says why not.
+type-coverage:
+  run: bun .agents/metrics/types-calls.ts
+  timeout: 10m
+  type-benched: {}
+
+fuzz:
+  run: bun .agents/metrics/fuzz.ts
+  # About 2.5 minutes at UPHILL_CONCURRENCY=2. The limit leaves room for a loaded machine and for
+  # workers stopped on a hang or runaway memory, each of which is rerun alone.
+  timeout: 15m
+  # Whether each public function had a harness that ran: structured properties (round trips,
+  # re-encoding of recorded values, differentials against viem, ethers, noble, @scure/base,
+  # @ethereumjs/rlp and micro-eth-signer, consistency) and boundary mutations of the arguments ox's
+  # tests pass it (fuzz-fixtures/corpus.json). The note lists the harnesses and their call counts.
+  fuzzed: {}
+  # Whether fuzzing found no failure: no TypeError, RangeError, SyntaxError or ReferenceError on an
+  # input that keeps the declared types, no stack overflow, hang or runaway memory, and no broken
+  # round trip, differential or consistency property. The note gives the minimized input.
+  fuzz-clean: {}
+  # Percent of the function's own source lines in src/_esm that ran under fuzzing (V8 precise
+  # coverage).
+  fuzz-coverage: { target: 90, better: higher }
+  # The hot items of .agents/metrics/hot.ts: every line of their own source should run under
+  # fuzzing.
+  hot-fuzz-coverage: { target: 100, better: higher }

@@ -24,3 +24,4 @@ site/pages/webauthn
 site/pages/glossary
 tsdoc-metadata.json
 *.timestamp*
+.uphill
