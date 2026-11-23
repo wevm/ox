@@ -14,6 +14,16 @@ export type TypedData = abitype.TypedData
 export type Domain = abitype.TypedDataDomain
 export type Parameter = abitype.TypedDataParameter
 
+/**
+ * Struct definitions by name, as `encodeType`, `hashStruct` and the helpers below them read them.
+ * Checking an argument against `TypedData` costs about 11,700 type instantiations; against this,
+ * a few dozen.
+ */
+type Types = Record<
+  string,
+  readonly { name: string; type: string }[] | undefined
+>
+
 // TODO: Make reusable for Viem?
 export type Definition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
@@ -368,7 +378,7 @@ export function encodeType(value: encodeType.Value): string {
 export declare namespace encodeType {
   type Value = {
     primaryType: string
-    types: TypedData
+    types: Types
   }
 
   type ErrorType = findTypeDependencies.ErrorType | Errors.GlobalErrorType
@@ -572,7 +582,7 @@ export declare namespace hashStruct {
     /** The primary type of the Typed Data struct. */
     primaryType: string
     /** The types of the Typed Data struct. */
-    types: TypedData
+    types: Types
   }
 
   type ErrorType =
@@ -786,7 +796,7 @@ export class InvalidTypeError extends Errors.BaseError {
 export function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string
-  types: TypedData
+  types: Types
 }): Hex.Hex {
   const { data, primaryType, types } = value
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
@@ -822,7 +832,7 @@ const typeHashCacheMaxLength = 4_096
 /** @internal */
 export function hashType(value: {
   primaryType: string
-  types: TypedData
+  types: Types
 }): Hex.Hex {
   const { primaryType, types } = value
   // Keyed by the encoded type, so equal struct definitions share one hash
@@ -848,7 +858,7 @@ export declare namespace hashType {
 
 /** @internal */
 export function encodeField(properties: {
-  types: TypedData
+  types: Types
   name: string
   type: string
   value: any
@@ -915,7 +925,7 @@ const solidityTypeNameRegex = /^(u?int|bytes)[0-9]*$/
 export function findTypeDependencies(
   value: {
     primaryType: string
-    types: TypedData
+    types: Types
   },
   results: Set<string> = new Set(),
 ): Set<string> {
