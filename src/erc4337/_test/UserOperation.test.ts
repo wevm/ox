@@ -1325,6 +1325,38 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('behavior: EntryPoint 0.6', () => {
+    expect(
+      UserOperation.toRpc({
+        callData: '0xdeadbeef',
+        callGasLimit: 300_000n,
+        initCode: '0xdeadbeef',
+        maxFeePerGas: 100_000n,
+        maxPriorityFeePerGas: 100_000n,
+        nonce: 0n,
+        paymasterAndData: '0x1234567890123456789012345678901234567890deadbeef',
+        preVerificationGas: 100_000n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 100_000n,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": "0x493e0",
+        "initCode": "0xdeadbeef",
+        "maxFeePerGas": "0x186a0",
+        "maxPriorityFeePerGas": "0x186a0",
+        "nonce": "0x0",
+        "paymasterAndData": "0x1234567890123456789012345678901234567890deadbeef",
+        "preVerificationGas": "0x186a0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x186a0",
+      }
+    `)
+  })
 })
 
 describe('toTypedData', () => {

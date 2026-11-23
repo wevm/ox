@@ -879,6 +879,8 @@ export function toRpc(userOperation: UserOperation): Rpc {
   if (userOperation.factoryData) rpc.factoryData = userOperation.factoryData
   if (userOperation.initCode) rpc.initCode = userOperation.initCode
   if (userOperation.paymaster) rpc.paymaster = userOperation.paymaster
+  if (userOperation.paymasterAndData)
+    rpc.paymasterAndData = userOperation.paymasterAndData
   if (userOperation.paymasterData)
     rpc.paymasterData = userOperation.paymasterData
   if (typeof userOperation.paymasterPostOpGasLimit === 'bigint')
