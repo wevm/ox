@@ -11,7 +11,7 @@ export const Owner = z.object({
 })
 
 /** Account configuration domain schema. */
-export const Config = z
+export const Config = /* @__PURE__ */ z
   .object({
     owners: z.readonly(z.array(Owner)),
     salt: z_Hex.Hex,
@@ -26,7 +26,7 @@ export const Config = z
   )
 
 /** Account configuration RPC schema. */
-export const Rpc = z
+export const Rpc = /* @__PURE__ */ z
   .object({
     owners: z.readonly(z.array(Owner)),
     salt: z_Hex.Hex,

@@ -5,11 +5,12 @@ import * as z from 'zod/mini'
 const hexRegex = /^0x[0-9a-fA-F]*$/
 
 /** Hex string schema. */
-export const Hex = z
+export const Hex = /* @__PURE__ */ z
   .templateLiteral([z.literal('0x'), z.string()])
   .check(z.refine((value) => hexRegex.test(value), 'expected hex'))
 
 /** Returns a byte-sized hex string schema. */
+// @__NO_SIDE_EFFECTS__
 export function sizedHex(size: number) {
   return Hex.check(
     z.refine(

@@ -66,6 +66,7 @@ export const TransactionReceiptToRpc = z.object(
   ),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

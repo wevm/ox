@@ -51,12 +51,12 @@ export const P256 = z.union([
 export const Decoded: z.ZodMiniType<
   core_FrameSignature.FrameSignature,
   core_FrameSignature.FrameSignature
-> = z
+> = /* @__PURE__ */ z
   .union([Arbitrary, Secp256k1, P256])
   .check(z.refine(core_FrameSignature.validate, 'Invalid frame signature'))
 
 /** RPC frame signature schema. */
-export const Rpc = z
+export const Rpc = /* @__PURE__ */ z
   .object({
     msg: z.optional(z_Hex.Hex),
     scheme: z.enum(['0x0', '0x1', '0x2']),

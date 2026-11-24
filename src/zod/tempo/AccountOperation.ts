@@ -6,6 +6,7 @@ import * as z_Hex from '../Hex.js'
 import * as z from 'zod/mini'
 import * as z_AccountConfig from './AccountConfig.js'
 
+// @__NO_SIDE_EFFECTS__
 function baseFields() {
   return {
     account: z_Address.Address,
@@ -33,7 +34,7 @@ const valid = z.refine((value) => {
 export const Base = z.object(baseFields())
 
 /** Account transaction approval operation schema. */
-export const TransactionOperation = z
+export const TransactionOperation = /* @__PURE__ */ z
   .object({
     ...baseFields(),
     expiresAt: z.optional(z.number()),
@@ -50,7 +51,7 @@ export const TransactionOperation = z
   .check(valid)
 
 /** Account key authorization approval operation schema. */
-export const KeyAuthorizationOperation = z
+export const KeyAuthorizationOperation = /* @__PURE__ */ z
   .object({
     ...baseFields(),
     keyAuthorization: z_Hex.Hex,

@@ -12,6 +12,7 @@ export const WithdrawalToRpc = z.object(
   fields(z_Uint.UintToRpc, z_Number.NumberToRpc),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   uint: uint,
   num: num,

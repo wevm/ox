@@ -22,6 +22,7 @@ export const StateOverridesToRpc = z.record(
   AccountOverridesToRpc,
 )
 
+// @__NO_SIDE_EFFECTS__
 function accountOverrides<uint extends z.ZodMiniType>(uint: uint) {
   const base = {
     balance: z.optional(uint),

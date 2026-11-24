@@ -33,6 +33,7 @@ export type Item<
  * })
  * ```
  */
+// @__NO_SIDE_EFFECTS__
 export function from<
   const method extends string,
   params extends z.ZodMiniType,

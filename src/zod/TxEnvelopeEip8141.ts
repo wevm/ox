@@ -8,14 +8,14 @@ import * as z_TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
 import * as z from 'zod/mini'
 
 /** Decoded EIP-8141 envelope schema. */
-export const Decoded = z
+export const Decoded = /* @__PURE__ */ z
   .object(
     fields(z.bigint(), z.union([z.number(), z.bigint()]), z_Frame.Decoded),
   )
   .check(z.refine(core_TxEnvelopeEip8141.validate, 'Invalid frame transaction'))
 
 /** RPC EIP-8141 envelope schema. */
-export const Rpc = z
+export const Rpc = /* @__PURE__ */ z
   .object({
     blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
     chainId: z_Hex.Hex,
@@ -82,6 +82,7 @@ export const serialized = z.codec(z_Hex.Hex, Decoded, {
   encode: core_TxEnvelopeEip8141.serialize,
 })
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

@@ -17,12 +17,13 @@ const Flags = z.union([
 ])
 
 /** Decoded frame schema. */
-export const Decoded: z.ZodMiniType<core_Frame.Frame, core_Frame.Frame> = z
-  .object(fields(z.bigint()))
-  .check(z.refine(core_Frame.validate, 'Invalid frame'))
+export const Decoded: z.ZodMiniType<core_Frame.Frame, core_Frame.Frame> =
+  /* @__PURE__ */ z
+    .object(fields(z.bigint()))
+    .check(z.refine(core_Frame.validate, 'Invalid frame'))
 
 /** RPC frame schema. */
-export const Rpc = z
+export const Rpc = /* @__PURE__ */ z
   .object({
     data: z_Hex.Hex,
     executionGas: z_Hex.Hex,
@@ -50,7 +51,7 @@ export const Frame = z.codec(Rpc, Decoded, {
 })
 
 /** Decoded frame schema accepting numberish budgets. */
-export const DecodedToRpc = z
+export const DecodedToRpc = /* @__PURE__ */ z
   .object(fields(z.union([z_Hex.Hex, z.bigint(), z.number()])))
   .check(
     z.refine((value) => {
@@ -69,6 +70,7 @@ export const FrameToRpc = z.codec(Rpc, DecodedToRpc, {
   encode: core_Frame.toRpc,
 })
 
+// @__NO_SIDE_EFFECTS__
 function fields<uint extends z.ZodMiniType>(uint: uint) {
   return {
     data: z.optional(z_Hex.Hex),

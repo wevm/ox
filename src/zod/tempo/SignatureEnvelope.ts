@@ -41,7 +41,7 @@ const Signature = z.object({
 })
 
 /** RPC secp256k1 signature envelope schema. */
-export const Secp256k1Rpc = z
+export const Secp256k1Rpc = /* @__PURE__ */ z
   .object({
     r: z_Hex.Hex,
     s: z_Hex.Hex,
@@ -90,7 +90,7 @@ export const WebAuthnRpc = z.object({
 export const PrimitiveRpc = z.union([Secp256k1Rpc, P256Rpc, WebAuthnRpc])
 
 /** RPC keychain signature envelope schema. */
-export const KeychainRpc = z
+export const KeychainRpc = /* @__PURE__ */ z
   .object({
     keyId: z.optional(z_Address.Address),
     // `signature` is recursive; type the getter concretely to break the cycle.
@@ -114,7 +114,7 @@ export const KeychainRpc = z
   )
 
 /** RPC configurable account signature envelope schema. */
-export const ConfigurableRpc = z_Hex.Hex.check(
+export const ConfigurableRpc = /* @__PURE__ */ z_Hex.Hex.check(
   z.refine((value) => {
     try {
       core_SignatureEnvelope.fromRpc(value)
@@ -163,7 +163,7 @@ export const WebAuthn = z.object({
 export const Primitive = z.union([Secp256k1, P256, WebAuthn])
 
 /** Keychain signature envelope schema. */
-export const Keychain = z
+export const Keychain = /* @__PURE__ */ z
   .object({
     // `inner` is recursive; type the getter concretely to break the cycle.
     inner: z.lazy(
@@ -183,7 +183,7 @@ export const Keychain = z
   )
 
 /** Configurable account signature envelope schema. */
-export const Configurable = z
+export const Configurable = /* @__PURE__ */ z
   .object({
     account: z_Address.Address,
     config: z_AccountConfig.Config,

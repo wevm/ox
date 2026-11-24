@@ -26,16 +26,18 @@ export const chainIdToRpc = z.codec(
   },
 )
 
-export const nonceKeysRpc = z.readonly(z.array(quantityHex(256))).check(
-  z.refine((keys) => {
-    try {
-      FrameNonce.fromRpc(keys)
-      return true
-    } catch {
-      return false
-    }
-  }, 'Invalid nonce keys'),
-)
+export const nonceKeysRpc = /* @__PURE__ */ z
+  .readonly(z.array(quantityHex(256)))
+  .check(
+    z.refine((keys) => {
+      try {
+        FrameNonce.fromRpc(keys)
+        return true
+      } catch {
+        return false
+      }
+    }, 'Invalid nonce keys'),
+  )
 
 export const nonceKeys = z.codec(
   nonceKeysRpc,

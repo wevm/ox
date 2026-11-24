@@ -81,6 +81,7 @@ export const Int248 = signedBigint(248)
 /** 256-bit signed integer decoded as `bigint` and encoded as hex. */
 export const Int256 = signedBigint(256)
 
+// @__NO_SIDE_EFFECTS__
 function signed(bits: SmallBits) {
   return z.codec(quantityHex(bits), intNumber(bits), {
     decode: (value) => globalThis.Number(decodeInteger(value, bits, true)),
@@ -89,6 +90,7 @@ function signed(bits: SmallBits) {
   })
 }
 
+// @__NO_SIDE_EFFECTS__
 function signedBigint(bits: number) {
   return z.codec(quantityHex(bits), intBigint(bits), {
     decode: (value) => decodeInteger(value, bits, true),

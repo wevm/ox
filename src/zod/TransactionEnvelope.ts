@@ -108,10 +108,11 @@ export const SignedToRpc = z.union([
 /** Serialized transaction envelope schema. */
 export const Serialized = z_Hex.Hex
 
-const yParity = z
+const yParity = /* @__PURE__ */ z
   .number()
   .check(z.refine((value) => value === 0 || value === 1, 'expected yParity'))
 
+// @__NO_SIDE_EFFECTS__
 function decodedSignedBaseFields<const type extends string>(
   type: z.ZodMiniLiteral<type>,
 ) {

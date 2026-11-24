@@ -24,7 +24,7 @@ export const Domain = z.object({
   signer: z.optional(z_Address.Address),
 })
 
-const Rpc_ = z
+const Rpc_ = /* @__PURE__ */ z
   .object({
     approvals: z.readonly(
       z

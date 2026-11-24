@@ -27,6 +27,7 @@ export const Pending = z.object({
   removed: z.boolean(),
 })
 
+// @__NO_SIDE_EFFECTS__
 function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   uint: uint,
   num: num,

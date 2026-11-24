@@ -34,7 +34,7 @@ const type = z.codec(z.string(), z.string(), {
 })
 
 /** Transaction request schema. */
-export const TransactionRequest = z
+export const TransactionRequest = /* @__PURE__ */ z
   .object(
     fields(
       z_Uint.Uint,
@@ -47,7 +47,7 @@ export const TransactionRequest = z
   .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
 /** Encode-only transaction request schema accepting numberish `toRpc` inputs. */
-export const TransactionRequestToRpc = z
+export const TransactionRequestToRpc = /* @__PURE__ */ z
   .object(
     fields(
       z_Uint.UintToRpc,
@@ -59,6 +59,7 @@ export const TransactionRequestToRpc = z
   )
   .check(z.refine(validNonce, 'Invalid keyed nonce'))
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

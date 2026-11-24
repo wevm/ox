@@ -89,6 +89,7 @@ export const PendingWithTransactions = z.object(
   ),
 )
 
+// @__NO_SIDE_EFFECTS__
 function blockFields<
   const transactions extends z.ZodMiniType,
   uint extends z.ZodMiniType,
@@ -103,6 +104,7 @@ function blockFields<
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function pendingBlockFields<
   const transactions extends z.ZodMiniType,
   uint extends z.ZodMiniType,

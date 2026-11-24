@@ -13,6 +13,7 @@ export const toRpc = {
   num: z_Number.NumberToRpc,
 } as const
 
+// @__NO_SIDE_EFFECTS__
 export function type<input extends string, output extends string>(
   input: input,
   output: output,
@@ -23,6 +24,7 @@ export function type<input extends string, output extends string>(
   })
 }
 
+// @__NO_SIDE_EFFECTS__
 export function baseFields<
   const schema extends z.ZodMiniType<string, string>,
   uint extends z.ZodMiniType,
@@ -45,6 +47,7 @@ export function baseFields<
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 export function signedBaseFields<
   const schema extends z.ZodMiniType<string, string>,
   uint extends z.ZodMiniType,

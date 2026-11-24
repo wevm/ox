@@ -34,6 +34,7 @@ export const Filter = filter(z_Uint.Uint)
 /** Encode-only filter schema accepting numberish `toRpc` inputs. */
 export const FilterToRpc = filter(z_Uint.UintToRpc)
 
+// @__NO_SIDE_EFFECTS__
 function filter<uint extends z.ZodMiniType>(uint: uint) {
   const blockNumber = z.union([uint, blockTag])
   const base = {

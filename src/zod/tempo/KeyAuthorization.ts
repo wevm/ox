@@ -63,7 +63,7 @@ export const TokenLimitToRpc = z.object({
 })
 
 /** Call scope schema. */
-export const Scope = z
+export const Scope = /* @__PURE__ */ z
   .object({
     address: z_Address.Address,
     recipients: z.optional(z.readonly(z.array(z_Address.Address))),

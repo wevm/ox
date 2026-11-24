@@ -77,6 +77,7 @@ export const TupleList = z.readonly(z.array(Tuple))
 /** Signed EIP-7702 authorization tuple list schema. */
 export const TupleListSigned = z.readonly(z.array(TupleSigned))
 
+// @__NO_SIDE_EFFECTS__
 function unsignedFields<num extends z.ZodMiniType, uint extends z.ZodMiniType>(
   num: num,
   uint: uint,
@@ -91,6 +92,7 @@ function unsignedFields<num extends z.ZodMiniType, uint extends z.ZodMiniType>(
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function signedFields<
   num extends z.ZodMiniType,
   uint extends z.ZodMiniType,

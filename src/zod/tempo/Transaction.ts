@@ -95,6 +95,7 @@ const nullableFields = [
  * node-null optionals and maps the `aaAuthorizationList` RPC field to
  * `authorizationList` (and back on encode).
  */
+// @__NO_SIDE_EFFECTS__
 function wire<schema extends z.ZodMiniType>(schema: schema) {
   return z.codec(z.looseObject({ type: z.literal('0x76') }), schema, {
     decode: (rpc) => {
@@ -151,6 +152,7 @@ export const PendingTempo = wire(
   }),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,
