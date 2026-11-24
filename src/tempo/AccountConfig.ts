@@ -29,7 +29,8 @@ export const maxVersion = 0xffffffffffffffffn
 export const signatureTypeByte = '0x05' as const
 
 /** Zero 32-byte salt (the default when no salt is provided). */
-export const zeroSalt = `0x${'00'.repeat(32)}` as const
+export const zeroSalt =
+  '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 /** Domain prefix for the configurable account address derivation. */
 const accountDomain = 'tempo:configurable-account:account'

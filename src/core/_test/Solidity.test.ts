@@ -116,9 +116,17 @@ describe('intRange', () => {
   test('signed 8-bit', () => {
     expect(Solidity.intRange(8, true)).toEqual({ min: -128n, max: 127n })
   })
-  test('matches existing constants', () => {
-    expect(Solidity.intRange(256, false).max).toBe(Solidity.maxUint256)
-    expect(Solidity.intRange(8, true).max).toBe(Solidity.maxInt8)
+  test('matches every constant', () => {
+    const constants = Solidity as unknown as Record<string, bigint>
+    for (let bits = 8; bits <= 256; bits += 8) {
+      expect(Solidity.intRange(bits, true)).toEqual({
+        max: constants[`maxInt${bits}`],
+        min: constants[`minInt${bits}`],
+      })
+      expect(Solidity.intRange(bits, false).max).toBe(
+        constants[`maxUint${bits}`],
+      )
+    }
   })
   test('rejects non-multiple-of-8 widths', () => {
     expect(() => Solidity.intRange(7, false)).toThrowError(
