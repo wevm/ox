@@ -4,11 +4,11 @@
 
 # Install scripts stay off, so the contracts submodule and Forge are not needed: the speed script
 # records ox's tests, which use the committed contract artifacts and Anvil. The scripts keep their
-# own dependencies, such as rolldown, viem, and ethers, in .agents/metrics.
-setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/metrics'
+# own dependencies, such as rolldown, viem, and ethers, in .agents/uphill.
+setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/uphill'
 
 footprint:
-  run: bun .agents/metrics/footprint.ts
+  run: bun .agents/uphill/footprint.ts
   # Gzipped bytes a consumer bundles to import one export from its entry point, such as
   # `ox:Hex.fromNumber`, a namespace, such as `ox:Hex`, or the whole entry, such as `ox/tempo`.
   # rolldown bundles and minifies each import for the browser. Most members bundle under 4 kB and
@@ -66,7 +66,7 @@ footprint:
   # bundle that imports the module for nothing once ox's `"sideEffects": false` is out of reach, as
   # when ox is inlined into another package's bundle. The note names what stays.
   tree-shaking: {}
-  # The parts of ox its users lean on most, listed in .agents/metrics/hot.ts, scored on their own,
+  # The parts of ox its users lean on most, listed in .agents/uphill/hot.ts, scored on their own,
   # since a few dozen items that miss their targets would hide under entry-size's p90. Each hot
   # target is what a comparable library already achieves: the item's value today times the best
   # ratio that ox 0.14, viem 2, ethers 6, or this branch with 0.x's BaseError fix shows for the same
@@ -148,7 +148,7 @@ footprint:
       'ox/erc6492': 15kB # today 15kB
 
 speed:
-  run: bun .agents/metrics/speed.ts
+  run: bun .agents/uphill/speed.ts
   # Recording ox's core and Tempo unit tests takes about 3 minutes and replaying them about 3 at
   # concurrency 4. The recording is cached until the tests or the build change.
   timeout: 40m
@@ -246,7 +246,7 @@ speed:
       ox/tempo*: 6MB
       ox/wasm*: 6MB
       ox/node*: 6MB
-  # The hot items of .agents/metrics/hot.ts against what a comparable library achieves, as
+  # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
   # hot-entry-size explains: each call against viem 2, ethers 6, and ox 0.14 called warm with the
   # same arguments, and each import against ox 0.14. Times and allocations allow 1.25×, and import
   # memory 1.1×, for noise between runs, and a call stops at 10 ns, where it is too short to time.
@@ -432,14 +432,14 @@ speed:
 
 # How much of ox the speed bench reaches. It shares the speed script's run.
 coverage:
-  run: bun .agents/metrics/speed.ts
+  run: bun .agents/uphill/speed.ts
   timeout: 40m
   # Whether each public function has a recorded call the bench can replay. The note says why when
   # it has none, such as a function every test calls with a closure.
   benched: {}
 
 types:
-  run: bun .agents/metrics/types.ts
+  run: bun .agents/uphill/types.ts
   timeout: 15m
   # Type instantiations to check one use of each public export, values and types, with namespace
   # members counted as exports. A use is `typeof` the value, with `Parameters` and `ReturnType` for
@@ -542,7 +542,7 @@ types:
       'src/erc4337/_test/UserOperation.snap-d.ts > from > default': 2639
       'src/erc4337/_test/UserOperation.snap-d.ts > from > options: signature': 2713
       'src/erc4337/_test/UserOperation.snap-d.ts > v0.9 > RPC round-trip': 8136
-  # The hot items of .agents/metrics/hot.ts against what a comparable library achieves, as
+  # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
   # hot-entry-size explains: the same export's instantiations in ox 0.14 or viem 2, checked with
   # this repo's TypeScript. Only six items have a lower target, and a p90 would hide them, so this
   # list scores its worst item.
@@ -622,7 +622,7 @@ types:
 # `const $uphill = <call>` and checked in a fresh checker once its imports and fixtures resolve.
 # Instantiations are exact, so one run suffices.
 call-types:
-  run: bun .agents/metrics/types-calls.ts
+  run: bun .agents/uphill/types-calls.ts
   timeout: 20m
   # p50 20, p90 805. A call should cost under 1,000, and one that infers from an ABI or typed data
   # under 5,000, as on ox's 0.x branch. TypedData's non-generic helpers infer nothing, so they keep
@@ -637,7 +637,7 @@ call-types:
       'ox:Abi*': 5000
       'ox/erc4337:UserOperation.*': 5000
       'ox/zod:*': 10000
-  # The hot items of .agents/metrics/hot.ts against what a comparable library achieves, as
+  # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
   # hot-entry-size explains: the same call written against ox 0.14 or viem 2. Only
   # AbiEvent.extractLogs has a lower target, so this list scores its worst item.
   hot-instantiations:
@@ -714,12 +714,12 @@ call-types:
 # Whether each public function has a call in ox's tests that call-types measures; the note says
 # why not. It shares the call-types script's run.
 type-coverage:
-  run: bun .agents/metrics/types-calls.ts
+  run: bun .agents/uphill/types-calls.ts
   timeout: 20m
   type-benched: {}
 
 fuzz:
-  run: bun .agents/metrics/fuzz.ts
+  run: bun .agents/uphill/fuzz.ts
   # About 3 minutes at UPHILL_CONCURRENCY=4; the limit leaves room for a loaded machine.
   timeout: 20m
   # Whether each public function has a fuzz harness that ran: structured properties (round trips,
@@ -734,6 +734,6 @@ fuzz:
   # Percent of the function's own source lines that ran under fuzzing (V8 precise coverage of
   # dist).
   fuzz-coverage: { target: 90, better: higher }
-  # The hot items of .agents/metrics/hot.ts: every line of their own source should run under
+  # The hot items of .agents/uphill/hot.ts: every line of their own source should run under
   # fuzzing.
   hot-fuzz-coverage: { target: 100, better: higher }

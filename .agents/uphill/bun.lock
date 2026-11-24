@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "ox-metrics",
+      "name": "ox-uphill",
       "dependencies": {
         "acorn": "^8.15.0",
         "magic-string": "^0.30.21",

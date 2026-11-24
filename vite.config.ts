@@ -37,7 +37,7 @@ export default defineConfig({
       'contracts/**',
       'contracts/generated.ts',
       'test/kzg/**',
-      '.agents/metrics/fuzz-fixtures/**',
+      '.agents/uphill/fuzz-fixtures/**',
       '**/tsconfig.json',
       '**/tsconfig.*.json',
       '**/package.json',
@@ -124,7 +124,7 @@ export default defineConfig({
       'contracts/generated.ts',
       'test/kzg/**',
       // Uphill's metric scripts log progress to stderr and run their own Vitest.
-      '.agents/metrics/**',
+      '.agents/uphill/**',
     ],
   },
   // `FC_NUM_RUNS` reaches the fuzz files through `import.meta.env`, so that the
