@@ -107,6 +107,18 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   if (size === 0) return hex_
 
+  // Up to 32 bytes of padding on a `0x`-prefixed value slice a literal of
+  // zeros instead of building a string.
+  if (hex_.charCodeAt(0) === 48 && hex_.charCodeAt(1) === 120) {
+    const missing = size * 2 - (hex_.length - 2)
+    if (missing >= 0 && missing <= zeros.length) {
+      const padding = zeros.slice(0, missing)
+      return (
+        dir === 'right' ? `${hex_}${padding}` : `0x${padding}${hex_.slice(2)}`
+      ) as Hex.Hex
+    }
+  }
+
   // Same result as `hex_.replace('0x', '')`, without a search when the prefix
   // is present.
   const hex = hex_.startsWith('0x') ? hex_.slice(2) : hex_.replace('0x', '')
@@ -119,6 +131,8 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex.Hex
 }
+
+const zeros = '0000000000000000000000000000000000000000000000000000000000000000'
 
 /** @internal */
 export declare namespace pad {
