@@ -6,7 +6,19 @@ import {
   tag as tempoConfigurableAccountsTag,
 } from './tempo/configurableAccounts.js'
 
+/**
+ * Per-property timeout for the fuzz project.
+ *
+ * `testTimeout` is sized for unit tests. A fuzz property runs `FC_NUM_RUNS`
+ * cases inside one `test`, so its wall time scales with that budget and with
+ * how slow the machine is.
+ */
+const fuzzTimeout = 120_000
+
 export default defineConfig({
+  // `FC_NUM_RUNS` reaches the fuzz files through `import.meta.env` (see
+  // `test/fuzz/numRuns.ts`).
+  envPrefix: ['VITE_', 'FC_'],
   test: {
     alias: {
       ox: join(__dirname, '../src'),
@@ -58,6 +70,22 @@ export default defineConfig({
             '!src/**/*.browser.test.ts',
           ],
           setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'fuzz',
+          // Gated behind `FUZZ=true` so the default `pnpm test` run doesn't
+          // pick up stochastic property tests. Run via `pnpm test:fuzz`.
+          include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
+          setupFiles: [
+            join(__dirname, './setup.ts'),
+            join(__dirname, './fuzz/setup.ts'),
+          ],
+          // A property is thousands of cases, not one, so the unit-test
+          // default does not apply. The job's own timeout is the real guard.
+          testTimeout: fuzzTimeout,
         },
       },
       {

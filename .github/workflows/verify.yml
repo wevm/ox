@@ -149,6 +149,26 @@ jobs:
   #         VITE_TEMPO_CREDENTIALS: ${{ secrets.VITE_TEMPO_CREDENTIALS }}
   #         VITE_TEMPO_ENV: ${{ matrix.tempo-env }}
 
+  fuzz:
+    name: Fuzz
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      # The workflow owns the budget: 2000 cases per property, as on main.
+      - name: Run fuzz tests
+        run: pnpm test:fuzz --bail=1
+        env:
+          FC_NUM_RUNS: 2000
+
   vectors:
     name: Vectors
     runs-on: ubuntu-latest

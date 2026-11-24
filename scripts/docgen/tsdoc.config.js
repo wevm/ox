@@ -4,7 +4,8 @@ import tseslint from 'typescript-eslint'
 
 export default {
   files: ['src/**/*.ts'],
-  ignores: ['src/_*/**'],
+  // Fuzz properties are tests, not documented API.
+  ignores: ['src/_*/**', 'src/**/*.fuzz.ts'],
   languageOptions: {
     parser: tseslint.parser,
     parserOptions: { sourceType: 'module' },
