@@ -884,6 +884,55 @@ export function properties(lib: Lib): Property[] {
       same('ox:Rlp.toHex', actual, expected, `Rlp.toHex(${hex})`)
     },
   })
+  add({
+    id: 'differential: RLP encoding of malformed hex leaves against ethers',
+    oracle: 'differential',
+    covers: ['ox:Rlp.from', 'ox:Rlp.fromHex'],
+    runs: 400,
+    // One malformed leaf beside a valid value: an even-length leaf with a non-hex digit, without
+    // its `0x` prefix, with an uppercase `0X`, or an empty string. ethers rejects each.
+    arb: fc
+      .tuple(
+        rlpArb,
+        hexOf(1, 33),
+        fc.nat(),
+        fc.constantFrom('g', 'z', 'x', ' ', '-'),
+        fc.integer({ min: 0, max: 3 }),
+        fc.boolean(),
+      )
+      .map(([value, leaf, at, digit, how, first]) => {
+        const body = leaf.slice(2)
+        const index = at % body.length
+        const bad =
+          how === 0
+            ? `0x${body.slice(0, index)}${digit}${body.slice(index + 1)}`
+            : how === 1
+              ? body
+              : how === 2
+                ? `0X${body}`
+                : ''
+        return first ? [bad, value] : [value, bad]
+      }),
+    check(value) {
+      if (attempt(() => ethers.encodeRlp(value as never)) !== undefined) return
+      for (const [name, as] of [
+        ['ox:Rlp.fromHex', 'Hex'],
+        ['ox:Rlp.from', 'Bytes'],
+      ] as const) {
+        let actual: unknown
+        try {
+          actual = fn('ox:Rlp.from')(value, { as })
+        } catch (error) {
+          if (!documented(error)) throw crash(name, error)
+          continue
+        }
+        throw new Failure(
+          `Rlp.from(${show(value)}, { as: '${as}' }) returned ${show(actual)} for a malformed leaf, which ethers rejects`,
+          { blame: [name], kind: 'accepted invalid input' },
+        )
+      }
+    },
+  })
 
   // -------------------------------------------------------------------------------------------
   // ABI.
