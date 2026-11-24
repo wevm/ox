@@ -476,6 +476,20 @@ describe('fromNumber', () => {
       ).toThrowErrorMatchingInlineSnapshot(
         `[TypeError: Cannot convert null to a BigInt]`,
       )
+      expect(
+        Array.from(Bytes.fromNumber(-(2 ** 47), { signed: true, size: 6 })),
+      ).toEqual([128, 0, 0, 0, 0, 0])
+      expect(
+        Array.from(Bytes.fromNumber(-(2n ** 47n), { signed: true, size: 6 })),
+      ).toEqual([128, 0, 0, 0, 0, 0])
+      expect(() =>
+        Bytes.fromNumber(-(2 ** 47) - 1, { signed: true, size: 6 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`-140737488355329\` is not in safe 48-bit signed integer range (\`-140737488355328\` to \`140737488355327\`)]`,
+      )
+      expect(
+        Array.from(Bytes.fromNumber(-(2 ** 47) - 1, { signed: true, size: 7 })),
+      ).toEqual([255, 127, 255, 255, 255, 255, 255])
       expect(Array.from(Bytes.fromNumber(2n ** 53n - 1n))).toEqual([
         0x1f, 255, 255, 255, 255, 255, 255,
       ])

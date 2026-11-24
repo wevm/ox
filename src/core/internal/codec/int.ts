@@ -105,19 +105,24 @@ export function bigIntToBytes(
 ): Uint8Array {
   const { signed, size } = options
 
-  // A non-negative safe integer is written without BigInt arithmetic, unless
-  // it might not fit in `size` bytes, which the general path reports.
+  // A safe integer is written without BigInt arithmetic, unless it might not
+  // fit in `size` bytes, which the general path reports. A negative one is
+  // written as its two's complement, a safe integer for a signed `size` of up to
+  // 6 bytes.
   const small =
     typeof value === 'number'
       ? value
-      : typeof value === 'bigint' && value >= 0n && value <= 0x1fffffffffffffn
+      : typeof value === 'bigint' &&
+          value >= -0x1fffffffffffffn &&
+          value <= 0x1fffffffffffffn
         ? Number(value)
-        : -1
+        : Number.NaN
   if (
-    small >= 0 &&
     Number.isSafeInteger(small) &&
     (size === undefined || (Number.isInteger(size) && size > 0)) &&
-    (!size || size >= 7 || small < 2 ** (size * 8 - (signed ? 1 : 0)))
+    (small >= 0
+      ? !size || size >= 7 || small < 2 ** (size * 8 - (signed ? 1 : 0))
+      : signed && size! <= 6 && small >= -(2 ** (size! * 8 - 1)))
   ) {
     let length = size
     if (length === undefined) {
@@ -125,12 +130,21 @@ export function bigIntToBytes(
       for (let v = small; v >= 256; v = Math.floor(v / 256)) length++
     }
     const out = new Uint8Array(length)
-    for (
-      let i = length - 1, v = small;
-      v > 0 && i >= 0;
-      i--, v = Math.floor(v / 256)
-    )
-      out[i] = v % 256
+    // Separate loops, so the common non-negative one stays on small integers.
+    if (small < 0)
+      for (
+        let i = length - 1, v = small + 2 ** (length * 8);
+        i >= 0;
+        i--, v = Math.floor(v / 256)
+      )
+        out[i] = v % 256
+    else
+      for (
+        let i = length - 1, v = small;
+        v > 0 && i >= 0;
+        i--, v = Math.floor(v / 256)
+      )
+        out[i] = v % 256
     return out
   }
 

@@ -579,6 +579,13 @@ export function properties(lib: Lib): Property[] {
           hex,
           'Hex.fromNumber of a number',
         )
+        // A safe integer takes Bytes.fromNumber's path without BigInt.
+        same(
+          'ox:Bytes.fromNumber',
+          toHex(call('ox:Bytes.fromNumber', Number(value), options)),
+          hex,
+          'Bytes.fromNumber of a number',
+        )
       }
     },
   })
