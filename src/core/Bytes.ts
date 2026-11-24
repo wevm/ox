@@ -576,8 +576,10 @@ export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
       for (; i < bytes.length; i++) value = value * 256 + bytes[i]!
       return BigInt(value)
     }
-    // A full word reads as four 64-bit halves, skipping the hex string.
-    if (bytes.length === 32 && bytes instanceof Uint8Array) {
+    // A word that is a view into a larger buffer reads as four 64-bit halves.
+    // (A fresh array of up to 64 bytes has no buffer yet, and V8 would first
+    // move it to one.)
+    if (bytes.length === 32 && bytes.byteOffset > 0) {
       const view = new DataView(bytes.buffer, bytes.byteOffset, 32)
       return (
         (view.getBigUint64(0) << 192n) |
@@ -585,6 +587,17 @@ export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
         (view.getBigUint64(16) << 64n) |
         view.getBigUint64(24)
       )
+    }
+    // A value of up to a word reads six bytes at a time.
+    if (bytes.length - i <= 32) {
+      let value = 0n
+      for (let end = i + ((bytes.length - i) % 6 || 6); i < bytes.length; ) {
+        let chunk = 0
+        for (; i < end; i++) chunk = chunk * 256 + bytes[i]!
+        value = (value << 48n) | BigInt(chunk)
+        end += 6
+      }
+      return value
     }
   }
   const hex = Hex.fromBytes(bytes, options)

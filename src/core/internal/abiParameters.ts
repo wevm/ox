@@ -145,9 +145,8 @@ export function decodeAddress(
         address: Hex.fromBytes(value),
         cause: new Address.InvalidInputError(),
       })
-  const wrap = (address: Hex.Hex) =>
-    checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
+  const address = `0x${Hex.fromBytes(value).slice(26)}` as const
+  return [checksum ? Address.checksum(address) : address, 32]
 }
 
 export declare namespace decodeAddress {

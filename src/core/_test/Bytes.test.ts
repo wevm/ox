@@ -1452,6 +1452,16 @@ describe('toBigInt', () => {
     ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
   })
 
+  test('behavior: every length of value', () => {
+    for (let length = 1; length <= 40; length++) {
+      // Leading zero bytes, then `length` significant bytes.
+      const bytes = new Uint8Array(length + 3)
+      for (let i = 3; i < bytes.length; i++) bytes[i] = (i * 151 + 7) & 0xff
+      bytes[3] ||= 1
+      expect(Bytes.toBigInt(bytes)).toBe(BigInt(Hex.fromBytes(bytes)))
+    }
+  })
+
   test('args: size', () => {
     expect(
       Bytes.toBigInt(Bytes.fromNumber(420n, { size: 32 }), {
