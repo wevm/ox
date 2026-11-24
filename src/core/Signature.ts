@@ -68,9 +68,9 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  */
 export function assert(
   signature: ExactPartial<Signature>,
-  options: assert.Options = {},
+  options?: assert.Options,
 ): asserts signature is Signature {
-  const { recovered } = options
+  const recovered = options?.recovered
   if (typeof signature.r === 'undefined')
     throw new MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
@@ -280,19 +280,19 @@ export function from<
     | Hex.Hex
     | Bytes.Bytes,
 ): from.ReturnType<signature> {
-  const signature_ = (() => {
-    if (typeof signature === 'string') return fromHex(signature)
-    if (signature instanceof Uint8Array) return fromBytes(signature)
-    if (typeof signature.r === 'string') return fromRpc(signature)
-    if (signature.v) return fromLegacy(signature)
-    return {
+  let signature_: ExactPartial<Signature>
+  if (typeof signature === 'string') signature_ = fromHex(signature)
+  else if (signature instanceof Uint8Array) signature_ = fromBytes(signature)
+  else if (typeof signature.r === 'string') signature_ = fromRpc(signature)
+  else if (signature.v) signature_ = fromLegacy(signature)
+  else
+    signature_ = {
       r: signature.r,
       s: signature.s,
       ...(typeof signature.yParity !== 'undefined'
         ? { yParity: signature.yParity }
         : {}),
     }
-  })()
   assert(signature_)
   return signature_ as never
 }
