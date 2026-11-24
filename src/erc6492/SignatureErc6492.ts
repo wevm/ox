@@ -24,6 +24,10 @@ export type Wrapped = Hex.Hex
 export const magicBytes =
   '0x6492649264926492649264926492649264926492649264926492649264926492' as const
 
+/** `magicBytes` without its `0x` prefix. */
+const magicDigits =
+  '6492649264926492649264926492649264926492649264926492649264926492'
+
 /** `address, bytes, bytes`, the ERC-6492 wrapped signature payload, written out so calls do not parse human-readable ABI. */
 const wrappedParameters = [
   { type: 'address' },
@@ -257,12 +261,17 @@ export declare namespace wrap {
  * @returns `true` if the wrapped signature is valid, `false` otherwise.
  */
 export function validate(wrapped: Wrapped): boolean {
-  try {
-    assert(wrapped)
-    return true
-  } catch {
-    return false
-  }
+  // The checks `assert` makes, without constructing an error to throw.
+  const value = wrapped as Unwrapped | Wrapped
+  if (typeof value === 'string')
+    return value.length >= 66 && value.slice(-64) === magicDigits
+  if (value === null || typeof value !== 'object') return false
+  const { data, signature, to } = value
+  return (
+    typeof to === 'string' &&
+    typeof data === 'string' &&
+    typeof signature === 'string'
+  )
 }
 
 export declare namespace validate {
