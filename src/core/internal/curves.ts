@@ -1,3 +1,5 @@
+import * as Hex from '../Hex.js'
+
 /**
  * Curve constants, inlined so that modules needing nothing but an order do not
  * pull a curve implementation into the bundle.
@@ -20,3 +22,15 @@ export const p256N =
 /** Order of the secp256k1 curve. @internal */
 export const secp256k1N =
   0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
+
+/**
+ * Reduces a uniform random seed of 48 bytes or more to a secret key in
+ * `1..order - 1`, as noble's `mapHashToField` does. Noble's measures the
+ * order's bit length with `toString(2)` three times per call, which costs
+ * more than the reduction.
+ *
+ * @internal
+ */
+export function mapToSecretKey(seed: Uint8Array, order: bigint): bigint {
+  return (BigInt(Hex.fromBytes(seed)) % (order - 1n)) + 1n
+}

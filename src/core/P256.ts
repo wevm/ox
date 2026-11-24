@@ -1,12 +1,9 @@
-import {
-  getMinHashLength,
-  mapHashToField,
-} from '@noble/curves/abstract/modular'
 import { secp256r1 } from '@noble/curves/p256'
 import { randomBytes } from '@noble/hashes/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import { mapToSecretKey } from './internal/curves.js'
 import * as Entropy from './internal/entropy.js'
 import * as keyDerivation from './internal/keyDerivation.js'
 import * as internal from './internal/mnemonic.js'
@@ -297,10 +294,11 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  // What noble's `utils.randomPrivateKey` does, without bundling the curve.
-  const bytes = mapHashToField(randomBytes(getMinHashLength(order)), order)
-  if (as === 'Hex') return Hex.fromBytes(bytes) as never
-  return bytes as never
+  // What noble's `utils.randomPrivateKey` does, without bundling the curve:
+  // 48 random bytes, its `getMinHashLength` for a 32-byte order, reduced.
+  const privateKey = mapToSecretKey(randomBytes(48), order)
+  if (as === 'Hex') return Hex.fromNumber(privateKey, { size: 32 }) as never
+  return Bytes.fromNumber(privateKey, { size: 32 }) as never
 }
 
 export declare namespace randomPrivateKey {
