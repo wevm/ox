@@ -861,7 +861,7 @@ export function extractLogs<
   strict extends boolean | undefined = true,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
-  logs: logs | readonly extractLogs.Log[],
+  logs: logs,
   options: extractLogs.Options<abi, eventName, strict> = {},
 ): extractLogs.ReturnType<
   extractLogs.ExtractEvent<abi, eventName>,
@@ -978,27 +978,35 @@ export declare namespace extractLogs {
     abi extends Abi.Abi | readonly unknown[],
     eventName extends EventName<abi> | readonly EventName<abi>[] | undefined =
       EventName<abi>,
-  > = (
-    eventName extends readonly (infer name)[]
-      ? name & EventName<abi>
-      : eventName extends EventName<abi>
-        ? eventName
-        : EventName<abi>
-  ) extends infer name extends EventName<abi>
-    ? abi extends Abi.Abi
+  > = [eventName] extends [undefined]
+    ? // Without a name, every event in the ABI, and only its events: abitype's
+      // filter, which `EventName<abi>` already instantiated for this ABI.
+      abi extends Abi.Abi
       ? Abi.Abi extends abi
         ? AbiEvent
-        : // Several names select by name alone, so the arguments that pick an
-          // overload are not computed.
-          IsUnion<name> extends true
-          ? {
-              [key in keyof abi]: abi[key] extends { name: name }
-                ? abi[key]
-                : never
-            }[number]
-          : AbiItem.fromAbi.ReturnType<abi, name, undefined, AbiEvent>
+        : abitype.ExtractAbiEvents<abi>
       : AbiEvent
-    : never
+    : (
+          eventName extends readonly (infer name)[]
+            ? name & EventName<abi>
+            : eventName extends EventName<abi>
+              ? eventName
+              : EventName<abi>
+        ) extends infer name extends EventName<abi>
+      ? abi extends Abi.Abi
+        ? Abi.Abi extends abi
+          ? AbiEvent
+          : // Several names select by name alone, so the arguments that pick an
+            // overload are not computed.
+            IsUnion<name> extends true
+            ? {
+                [key in keyof abi]: abi[key] extends { name: name }
+                  ? abi[key]
+                  : never
+              }[number]
+            : AbiItem.fromAbi.ReturnType<abi, name, undefined, AbiEvent>
+        : AbiEvent
+      : never
 
   type Args<abiEvent extends AbiEvent = AbiEvent> =
     IsNarrowable<abiEvent, AbiEvent> extends true
