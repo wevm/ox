@@ -7,6 +7,16 @@ import type { ExactPartial, RecursiveArray } from './internal/types.js'
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
 
+const hexRegex = /^0x[0-9a-fA-F]*$/
+
+/** Two hex digits for each byte value, for list and item prefixes. */
+const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
+  i.toString(16).padStart(2, '0'),
+)
+
+/** Longest input, in bytes, whose hex leaves are cut from it (see `to`). */
+const sourceMaxLength = 2_048
+
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
@@ -62,16 +72,22 @@ export function to<
 >(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
 
-  const bytes = (() => {
-    if (typeof value === 'string') {
-      if (value.length > 3 && value.length % 2 !== 0)
-        throw new Hex.InvalidLengthError(value)
-      return Bytes.fromHex(value)
-    }
-    return value as Bytes.Bytes
-  })()
+  let bytes: Bytes.Bytes
+  if (typeof value === 'string') {
+    if (value.length > 3 && value.length % 2 !== 0)
+      throw new Hex.InvalidLengthError(value)
+    bytes = Bytes.fromHex(value)
+  } else bytes = value as Bytes.Bytes
 
-  const state: State = { bytes, position: 0 }
+  // Hex leaves are cut from the input as lowercase hex, rather than copied out
+  // of `bytes` and encoded one by one. A long input decodes leaf by leaf, so
+  // small leaves do not keep it alive.
+  let source: string | undefined
+  if (to_ === 'Hex' && bytes.length <= sourceMaxLength)
+    if (typeof value !== 'string') source = Hex.fromBytes(bytes)
+    else if (value.length % 2 === 0) source = value.toLowerCase()
+
+  const state: DecodeState = { bytes, position: 0, source }
   const result = decodeRlpCursor(state, to_)
 
   // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
@@ -103,6 +119,9 @@ export declare namespace to {
  */
 type State = Pick<Cursor.Cursor, 'bytes' | 'position'>
 
+/** `State`, with the input as lowercase hex for hex leaves to be cut from. */
+type DecodeState = State & { source?: string | undefined }
+
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
   cursor: State,
@@ -126,18 +145,26 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
   if (prefix < 0xc0) {
     const length = readLength(cursor, prefix, 0x80)
     if (length > 0) assertPosition(bytes, cursor.position + length - 1)
-    const data = bytes.subarray(cursor.position, cursor.position + length)
+    const start = cursor.position
     cursor.position += length
     // A single byte below `0x80` must be its own encoding (no length
     // prefix); wrapping it in an explicit one-byte-length prefix is a
     // non-canonical alternate encoding of the same value (Yellow Paper,
     // Appendix B).
-    if (prefix >= 0x80 && length === 1 && data[0]! < 0x80)
+    if (prefix >= 0x80 && length === 1 && bytes[start]! < 0x80)
       throw new NonCanonicalError({
-        reason: `single byte \`0x${data[0]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
+        reason: `single byte \`0x${bytes[start]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
       })
+    if (to !== 'Hex')
+      return bytes.subarray(
+        start,
+        cursor.position,
+      ) as decodeRlpCursor.ReturnType<to>
+    const { source } = cursor as DecodeState
     return (
-      to === 'Hex' ? Hex.fromBytes(data) : data
+      source
+        ? `0x${source.slice(2 + start * 2, 2 + cursor.position * 2)}`
+        : Hex.fromBytes(bytes.subarray(start, cursor.position))
     ) as decodeRlpCursor.ReturnType<to>
   }
 
@@ -289,16 +316,9 @@ export function from<as extends 'Hex' | 'Bytes'>(
   options: from.Options<as>,
 ): from.ReturnType<as> {
   const { as } = options
-
-  // Two passes without a per-node closure tree: `measure` decodes leaves and
-  // records list body lengths in visit order, and `write` reads both back in
-  // the same order into a pre-sized buffer.
-  const ctx: EncodeContext = { bodies: [], leaves: [] }
-  const bytes = new Uint8Array(measure(value, ctx))
-  write(value, bytes, ctx, { body: 0, leaf: 0, offset: 0 })
-
-  if (as === 'Hex') return Hex.fromBytes(bytes) as from.ReturnType<as>
-  return bytes as from.ReturnType<as>
+  const hex = `0x${encode(value)}` as Hex.Hex
+  if (as === 'Hex') return hex as from.ReturnType<as>
+  return Bytes.fromHex(hex) as from.ReturnType<as>
 }
 
 export declare namespace from {
@@ -387,77 +407,69 @@ export declare namespace fromHex {
 // Internal
 /////////////////////////////////////////////////////////////////////////////////
 
-type EncodeContext = {
-  /** Body length of each list, in visit order. */
-  bodies: number[]
-  /** Bytes of each leaf, in visit order. */
-  leaves: Bytes.Bytes[]
-}
-
-function measure(
+/**
+ * The RLP encoding of `value` as hex without `0x`. Hex leaves are checked,
+ * lowercased and concatenated as strings, without decoding each one to bytes
+ * and the result back to hex.
+ */
+function encode(
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
-  ctx: EncodeContext,
-): number {
+): string {
   if (Array.isArray(value)) {
-    // Reserve this list's slot before its children's, in visit order.
-    const index = ctx.bodies.length
-    ctx.bodies.push(0)
-    let bodyLength = 0
-    for (let i = 0; i < value.length; i++) bodyLength += measure(value[i], ctx)
-    ctx.bodies[index] = bodyLength
-    if (bodyLength <= 55) return 1 + bodyLength
-    return 1 + getSizeOfLength(bodyLength) + bodyLength
+    let body = ''
+    for (let i = 0; i < value.length; i++) body += encode(value[i])
+    return prefix(body.length / 2, 0xc0) + body
   }
-
-  const bytes =
+  let hex = typeof value === 'string' ? hexLeaf(value) : undefined
+  // Bytes, and strings `hexLeaf` does not take, read as before: a string as
+  // `Bytes.fromHex` reads it, which throws on a character that is not hex.
+  hex ??= Hex.fromBytes(
     typeof value === 'string'
       ? Bytes.fromHex(value as Hex.Hex)
-      : (value as Bytes.Bytes)
-  ctx.leaves.push(bytes)
-  const sizeOfBytesLength = getSizeOfLength(bytes.length)
-  if (bytes.length === 1 && bytes[0]! < 0x80) return 1
-  if (bytes.length <= 55) return 1 + bytes.length
-  return 1 + sizeOfBytesLength + bytes.length
+      : (value as Bytes.Bytes),
+  ).slice(2)
+  // A single byte below `0x80` is its own encoding.
+  if (hex.length === 2 && hex < '80') return hex
+  return prefix(hex.length / 2, 0x80) + hex
 }
 
-function write(
-  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
-  out: Bytes.Bytes,
-  ctx: EncodeContext,
-  state: { body: number; leaf: number; offset: number },
-) {
-  if (Array.isArray(value)) {
-    writePrefix(out, state, 0xc0, ctx.bodies[state.body++]!)
-    for (let i = 0; i < value.length; i++) write(value[i], out, ctx, state)
-    return
+/**
+ * The bytes of a `0x`-prefixed hex string as lowercase hex without `0x`, with
+ * a leading zero for an odd number of digits. `undefined` for anything else.
+ */
+function hexLeaf(value: string): string | undefined {
+  // A regular expression checks a long leaf faster than a loop.
+  if (value.length > 66) {
+    if (!hexRegex.test(value)) return
+    const hex = value.length % 2 ? `0${value.slice(2)}` : value.slice(2)
+    return /[A-F]/.test(hex) ? hex.toLowerCase() : hex
   }
-
-  const bytes = ctx.leaves[state.leaf++]!
-  if (bytes.length === 1 && bytes[0]! < 0x80) {
-    out[state.offset++] = bytes[0]!
-    return
+  if (value.charCodeAt(0) !== 48 || value.charCodeAt(1) !== 120) return
+  let upper = false
+  for (let i = 2; i < value.length; i++) {
+    const code = value.charCodeAt(i)
+    // 0-9, A-F, a-f
+    if (
+      code < 48 ||
+      (code > 57 && code < 65) ||
+      (code > 70 && code < 97) ||
+      code > 102
+    )
+      return
+    if (code < 97 && code > 57) upper = true
   }
-  writePrefix(out, state, 0x80, bytes.length)
-  out.set(bytes, state.offset)
-  state.offset += bytes.length
+  const hex = value.length % 2 ? `0${value.slice(2)}` : value.slice(2)
+  return upper ? hex.toLowerCase() : hex
 }
 
-function writePrefix(
-  out: Bytes.Bytes,
-  state: { offset: number },
-  offset: number,
-  length: number,
-) {
-  if (length <= 55) {
-    out[state.offset++] = offset + length
-    return
-  }
+/** The prefix of an item of `length` bytes, as hex. */
+function prefix(length: number, offset: 0x80 | 0xc0): string {
+  if (length <= 55) return hexes[offset + length]!
   const size = getSizeOfLength(length)
-  out[state.offset++] = offset + 55 + size
-  // Big-endian length in `size` bytes.
-  for (let i = size - 1, n = length; i >= 0; i--, n = Math.floor(n / 256))
-    out[state.offset + i] = n % 256
-  state.offset += size
+  return (
+    (offset + 55 + size).toString(16) +
+    length.toString(16).padStart(size * 2, '0')
+  )
 }
 
 function getSizeOfLength(length: number) {

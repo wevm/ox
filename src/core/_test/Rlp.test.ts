@@ -497,3 +497,44 @@ describe('non-canonical encoding', () => {
     expect(Rlp.toHex(Rlp.fromHex(bytes256))).toEqual(bytes256)
   })
 })
+
+describe('hex leaves', () => {
+  test('encode like their bytes: any case, odd length, without `0x`', () => {
+    const leaves = [
+      '0xABcd',
+      '0x1',
+      '0x0',
+      '0x',
+      '0x7F',
+      '0x80',
+      'abcd',
+    ] as Hex.Hex[]
+    const bytes = leaves.map((leaf) => Bytes.fromHex(leaf))
+    expect(Rlp.fromHex([...leaves, [...leaves]])).toEqual(
+      Rlp.fromBytes([...bytes, [...bytes]], { as: 'Hex' }),
+    )
+    expect(Rlp.fromHex([...leaves, [...leaves]], { as: 'Bytes' })).toEqual(
+      Rlp.fromBytes([...bytes, [...bytes]]),
+    )
+    expect(() => Rlp.fromHex(['0x0g'])).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid byte sequence ("0g" in "0g").]`,
+    )
+  })
+
+  test('decode to lowercase hex, from hex or bytes', () => {
+    const encoded = Rlp.fromHex([
+      '0xabcdef',
+      ['0x', '0x7f'],
+      `0x${'ab'.repeat(60)}`,
+    ])
+    const expected = ['0xabcdef', ['0x', '0x7f'], `0x${'ab'.repeat(60)}`]
+    expect(Rlp.toHex(encoded)).toEqual(expected)
+    expect(
+      Rlp.toHex(encoded.toUpperCase().replace('0X', '0x') as Hex.Hex),
+    ).toEqual(expected)
+    expect(Rlp.toHex(Bytes.fromHex(encoded))).toEqual(expected)
+    // Longer than the inputs whose leaves are cut from the input string.
+    const long = `0x${'ab'.repeat(3000)}` as const
+    expect(Rlp.toHex(Rlp.fromHex([long, '0x01']))).toEqual([long, '0x01'])
+  })
+})
