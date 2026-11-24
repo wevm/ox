@@ -415,6 +415,8 @@ export declare namespace fromHex {
  * The RLP encoding of `value` as hex without `0x`. Hex leaves are checked,
  * lowercased and concatenated as strings, without decoding each one to bytes
  * and the result back to hex.
+ *
+ * @internal
  */
 function encode(
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
@@ -440,6 +442,8 @@ function encode(
 /**
  * The bytes of a `0x`-prefixed hex string as lowercase hex without `0x`, with
  * a leading zero for an odd number of digits. `undefined` for anything else.
+ *
+ * @internal
  */
 function hexLeaf(value: string): string | undefined {
   // A regular expression checks a long leaf faster than a loop.
@@ -466,7 +470,11 @@ function hexLeaf(value: string): string | undefined {
   return upper ? hex.toLowerCase() : hex
 }
 
-/** The prefix of an item of `length` bytes, as hex. */
+/**
+ * The prefix of an item of `length` bytes, as hex.
+ *
+ * @internal
+ */
 function prefix(length: number, offset: 0x80 | 0xc0): string {
   if (length <= 55) return hexes[offset + length]!
   const size = getSizeOfLength(length)

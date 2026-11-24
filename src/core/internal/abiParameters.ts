@@ -854,7 +854,11 @@ function getIntegerBounds(signed: boolean, size: number) {
   return bounds
 }
 
-/** Concatenates the encodings of static parameters. @internal */
+/**
+ * Concatenates the encodings of static parameters.
+ *
+ * @internal
+ */
 function concat(preparedParameters: readonly PreparedParameter[]): string {
   let encoded = ''
   for (let i = 0; i < preparedParameters.length; i++)
@@ -862,7 +866,11 @@ function concat(preparedParameters: readonly PreparedParameter[]): string {
   return encoded
 }
 
-/** A word: a non-negative value of up to 32 bytes as 64 hex digits. @internal */
+/**
+ * A word: a non-negative value of up to 32 bytes as 64 hex digits.
+ *
+ * @internal
+ */
 function word(value: number | bigint): string {
   const hex = value.toString(16)
   return zeros.slice(hex.length) + hex
