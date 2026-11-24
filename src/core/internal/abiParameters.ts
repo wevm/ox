@@ -189,10 +189,10 @@ export function decodeAddress(
         address: Hex.fromBytes(value),
         cause: new Address.InvalidInputError(),
       })
-  const wrap = (address: Hex.Hex) =>
-    checksum ? Address.checksum(address) : address
-  // A view, not a copy: it is hex-encoded at once and never escapes.
-  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
+  // Sliced from the word's hex: a view of a word of up to 64 bytes would make
+  // V8 move it to an ArrayBuffer first.
+  const address = `0x${Hex.fromBytes(value).slice(26)}` as const
+  return [checksum ? Address.checksum(address) : address, 32]
 }
 
 export declare namespace decodeAddress {

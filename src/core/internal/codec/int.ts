@@ -32,6 +32,18 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
     return BigInt(n)
   }
   if (len - i > shiftMaxBytes) return BigInt(bytesToHex(value))
+  // Up to a word of a fresh array of up to 64 bytes reads six bytes at a time:
+  // V8 keeps such an array on its heap and would move it to an ArrayBuffer for
+  // a DataView.
+  if (len <= 64 && value.byteOffset === 0 && len - i <= 32) {
+    let val = 0n
+    for (let end = i + ((len - i) % 6 || 6); i < len; end += 6) {
+      let chunk = 0
+      for (; i < end; i++) chunk = chunk * 256 + value[i]!
+      val = (val << 48n) | BigInt(chunk)
+    }
+    return val
+  }
 
   // Unsigned big-endian read using DataView for 8-byte chunks.
   let val = 0n
