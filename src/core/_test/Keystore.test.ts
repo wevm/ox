@@ -509,6 +509,14 @@ describe('pbkdf2Async', () => {
       )
     }
   })
+
+  test('error: iterations not a positive integer', async () => {
+    // WebCrypto would truncate 1.5 to 1 while the key records 1.5.
+    for (const iterations of [1.5, 0])
+      await expect(
+        Keystore.pbkdf2Async({ iterations, password: 'testpassword' }),
+      ).rejects.toThrow()
+  })
 })
 
 describe.skip('scrypt', () => {
