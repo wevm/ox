@@ -926,6 +926,21 @@ describe('fromString', () => {
     )
   })
 
+  test('behavior: encodes as TextEncoder does', () => {
+    const encoder = new TextEncoder()
+    for (const value of [
+      'hhello wo\ufffdd',
+      'ü€😀',
+      // Lone surrogates become U+FFFD.
+      '\ud800',
+      'a\udc00b',
+      '\ud83d\ud83d\ude00',
+      'x'.repeat(64),
+      `${'ü'.repeat(64)}😀`,
+    ])
+      expect(Bytes.fromString(value)).toEqual(encoder.encode(value))
+  })
+
   test('error: size overflow', () => {
     expect(() =>
       Bytes.fromString('Hello World!', { size: 8 }),

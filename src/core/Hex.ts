@@ -6,7 +6,6 @@ import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
 const decoder = /*#__PURE__*/ new TextDecoder()
-const encoder = /*#__PURE__*/ new TextEncoder()
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
@@ -366,7 +365,7 @@ export function fromString(
   value: string,
   options: fromString.Options = {},
 ): Hex {
-  return fromBytes(encoder.encode(value), options)
+  return fromBytes(internal_bytes.fromString(value), options)
 }
 
 export declare namespace fromString {

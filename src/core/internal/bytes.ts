@@ -1,6 +1,8 @@
 import * as Bytes from '../Bytes.js'
 import type * as Errors from '../Errors.js'
 
+const encoder = /*#__PURE__*/ new TextEncoder()
+
 /** @internal */
 export function assertSize(bytes: Bytes.Bytes, size_: number): void {
   if (Bytes.size(bytes) > size_)
@@ -139,4 +141,39 @@ export declare namespace trim {
   type ReturnType = Bytes.Bytes
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Encodes a string as UTF-8, as `TextEncoder` does. A short string without
+ * surrogates is encoded in a loop, which is several times faster than a call
+ * to `TextEncoder`.
+ *
+ * @internal
+ */
+export function fromString(value: string): Bytes.Bytes {
+  // `TextEncoder` also takes what is not a string, such as `undefined`.
+  if (typeof value !== 'string' || value.length > 64)
+    return encoder.encode(value)
+  let size = value.length
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i)
+    if (code < 0x80) continue
+    // Surrogates (four-byte characters and lone halves) are left to `TextEncoder`.
+    if ((code & 0xf800) === 0xd800) return encoder.encode(value)
+    size += code < 0x800 ? 1 : 2
+  }
+  const bytes = new Uint8Array(size)
+  for (let i = 0, j = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i)
+    if (code < 0x80) bytes[j++] = code
+    else {
+      if (code < 0x800) bytes[j++] = 0xc0 | (code >> 6)
+      else {
+        bytes[j++] = 0xe0 | (code >> 12)
+        bytes[j++] = 0x80 | ((code >> 6) & 0x3f)
+      }
+      bytes[j++] = 0x80 | (code & 0x3f)
+    }
+  }
+  return bytes
 }

@@ -6,7 +6,6 @@ import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
 
 const decoder = /*#__PURE__*/ new TextDecoder()
-const encoder = /*#__PURE__*/ new TextEncoder()
 
 /** Root type for a Bytes array. */
 export type Bytes = Uint8Array
@@ -330,7 +329,7 @@ export function fromString(
 ): Bytes {
   const { size } = options
 
-  const bytes = encoder.encode(value)
+  const bytes = internal.fromString(value)
   if (typeof size === 'number') {
     internal.assertSize(bytes, size)
     return padRight(bytes, size)
