@@ -291,6 +291,8 @@ export async function verify(options: verify.Options): Promise<boolean> {
 
   // Reject high-S signatures if lowS is enabled.
   if (lowS && signature.s > curveOrder / 2n) return false
+  // An `r` or `s` wider than 32 bytes is not a P256 signature.
+  if (signature.r >> 256n > 0n || signature.s >> 256n > 0n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',

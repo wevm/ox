@@ -225,6 +225,23 @@ describe('verify', () => {
       }),
     ).toBe(true)
   })
+
+  test('behavior: r or s wider than 32 bytes', async () => {
+    const payload = '0xdeadbeef'
+    const { r, s } = await WebCryptoP256.sign({ payload, privateKey })
+    for (const signature of [
+      { r: r + 2n ** 256n, s },
+      { r, s: s + 2n ** 256n },
+    ])
+      expect(
+        await WebCryptoP256.verify({
+          lowS: false,
+          publicKey,
+          payload,
+          signature,
+        }),
+      ).toBe(false)
+  })
 })
 
 test('exports', () => {
