@@ -1,4 +1,3 @@
-import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as internal_bytes from './internal/bytes.js'
@@ -371,7 +370,7 @@ export declare namespace fromString {
  * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function isEqual(hexA: Hex, hexB: Hex) {
-  return equalBytes(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
+  return Bytes.isEqual(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
 }
 
 export declare namespace isEqual {
