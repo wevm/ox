@@ -7,16 +7,16 @@ import * as z from 'zod/mini'
 /** Account config owner schema. */
 export const Owner = z.object({
   owner: z_Address.Address,
-  weight: z.number(),
+  weight: /* @__PURE__ */ z.number(),
 })
 
 /** Account configuration domain schema. */
-export const Config = z
+export const Config = /* @__PURE__ */ z
   .object({
-    owners: z.readonly(z.array(Owner)),
+    owners: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(Owner)),
     salt: z_Hex.Hex,
-    threshold: z.number(),
-    version: z.bigint(),
+    threshold: /* @__PURE__ */ z.number(),
+    version: /* @__PURE__ */ z.bigint(),
   })
   .check(
     z.refine(
@@ -26,11 +26,11 @@ export const Config = z
   )
 
 /** Account configuration RPC schema. */
-export const Rpc = z
+export const Rpc = /* @__PURE__ */ z
   .object({
-    owners: z.readonly(z.array(Owner)),
+    owners: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(Owner)),
     salt: z_Hex.Hex,
-    threshold: z.number(),
+    threshold: /* @__PURE__ */ z.number(),
     version: z_Hex.Hex,
   })
   .check(

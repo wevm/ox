@@ -208,9 +208,10 @@ export declare namespace getSharedSecret {
     publicKey: PublicKey.PublicKey<boolean>
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | PublicKey.toBytes.ErrorType
@@ -284,10 +285,11 @@ export declare namespace sign {
     privateKey: CryptoKey
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? Signature.Signature<false> : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: Signature.Signature<false>
+  }[as]
 
   type ErrorType = Bytes.fromArray.ErrorType | Errors.GlobalErrorType
 }

@@ -218,7 +218,10 @@ export default defineConfig({
           // doesn't pick up stochastic property tests. Run via
           // `pnpm test:fuzz`.
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
-          setupFiles: [join(root, 'test/setup.ts')],
+          setupFiles: [
+            join(root, 'test/setup.ts'),
+            join(root, 'test/fuzz/setup.ts'),
+          ],
           // A property is thousands of cases, not one, so the unit-test
           // default does not apply. The job's own timeout is the real guard.
           testTimeout: fuzzTimeout,
@@ -343,6 +346,7 @@ export default defineConfig({
             },
           },
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts', '!src/node/**'] : [],
+          setupFiles: [join(root, 'test/fuzz/setup.ts')],
           testTimeout: fuzzTimeout,
           browser: {
             enabled: true,

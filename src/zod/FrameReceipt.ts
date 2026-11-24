@@ -11,30 +11,30 @@ import * as z from 'zod/mini'
 
 const frameLog = z.object({
   address: z_Address.Address,
-  blockHash: z.optional(z_Hex.Hex),
-  blockNumber: z.optional(quantityHex()),
-  blockTimestamp: z.optional(quantityHex()),
+  blockHash: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  blockNumber: /* @__PURE__ */ z.optional(/* @__PURE__ */ quantityHex()),
+  blockTimestamp: /* @__PURE__ */ z.optional(/* @__PURE__ */ quantityHex()),
   data: z_Hex.Hex,
-  logIndex: z.optional(quantityHex()),
-  removed: z.optional(z.boolean()),
-  topics: z.array(z_Hex.Hex),
-  transactionHash: z.optional(z_Hex.Hex),
-  transactionIndex: z.optional(quantityHex()),
+  logIndex: /* @__PURE__ */ z.optional(/* @__PURE__ */ quantityHex()),
+  removed: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  topics: /* @__PURE__ */ z.array(z_Hex.Hex),
+  transactionHash: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  transactionIndex: /* @__PURE__ */ z.optional(/* @__PURE__ */ quantityHex()),
 })
 
 const frameReceiptRpc = z.object({
-  executionGasUsed: quantityHex(),
-  gasUsed: quantityHex(),
-  logs: z.readonly(z.array(frameLog)),
-  stateGasUsed: quantityHex(),
-  status: z.enum(['0x0', '0x1', '0x2']),
+  executionGasUsed: /* @__PURE__ */ quantityHex(),
+  gasUsed: /* @__PURE__ */ quantityHex(),
+  logs: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(frameLog)),
+  stateGasUsed: /* @__PURE__ */ quantityHex(),
+  status: /* @__PURE__ */ z.enum(['0x0', '0x1', '0x2']),
 })
 const frameReceiptDecoded = z.object({
-  executionGasUsed: uintBigint(),
-  gasUsed: uintBigint(),
-  logs: z.readonly(z.array(frameLog)),
-  stateGasUsed: uintBigint(),
-  status: z.enum(['reverted', 'success', 'skipped']),
+  executionGasUsed: /* @__PURE__ */ uintBigint(),
+  gasUsed: /* @__PURE__ */ uintBigint(),
+  logs: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(frameLog)),
+  stateGasUsed: /* @__PURE__ */ uintBigint(),
+  status: /* @__PURE__ */ z.enum(['reverted', 'success', 'skipped']),
 })
 
 /** Codec between RPC and decoded frame receipts. */
@@ -47,9 +47,9 @@ export const FrameReceipt = z.codec(frameReceiptRpc, frameReceiptDecoded, {
 export const FrameReceiptToRpc = z.codec(
   frameReceiptRpc,
   z.extend(frameReceiptDecoded, {
-    executionGasUsed: uintBigintNumberish(),
-    gasUsed: uintBigintNumberish(),
-    stateGasUsed: uintBigintNumberish(),
+    executionGasUsed: /* @__PURE__ */ uintBigintNumberish(),
+    gasUsed: /* @__PURE__ */ uintBigintNumberish(),
+    stateGasUsed: /* @__PURE__ */ uintBigintNumberish(),
   }),
   {
     decode: core_FrameReceipt.fromRpc,

@@ -14,7 +14,8 @@ import fs from 'fs-extra'
 // - `./src/<dir>/<sub>/<Name>.ts`    → `./<dir>/<sub>/<Name>`
 //
 // Files starting with `_`, `.`, or a lowercase letter are ignored, as are
-// `*.test.ts`, `*.test-d.ts`, `*.bench.ts`, `*.bench-d.ts`, and `*.snap-d.ts`.
+// `*.test.ts`, `*.test-d.ts`, `*.bench.ts`, `*.bench-d.ts`, `*.snap-d.ts`, and
+// `*.fuzz.ts`.
 // `internal/` directories are never exported.
 
 const srcPath = join(import.meta.dirname, '../src')
@@ -27,6 +28,7 @@ const ignoredSuffixes = [
   '.bench.ts',
   '.bench-d.ts',
   '.snap-d.ts',
+  '.fuzz.ts',
 ]
 
 function isExportable(file: string) {

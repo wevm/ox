@@ -12,33 +12,37 @@ const Capabilities = z.record(z.string(), z.any())
 const CapabilitiesMap = z.record(z_Hex.Hex, Capabilities)
 
 const AddEthereumChainParameters = z.object({
-  chainId: z.string(),
-  chainName: z.string(),
-  nativeCurrency: z.optional(
-    z.object({
-      name: z.string(),
-      symbol: z.string(),
-      decimals: z.number(),
+  chainId: /* @__PURE__ */ z.string(),
+  chainName: /* @__PURE__ */ z.string(),
+  nativeCurrency: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.object({
+      name: /* @__PURE__ */ z.string(),
+      symbol: /* @__PURE__ */ z.string(),
+      decimals: /* @__PURE__ */ z.number(),
     }),
   ),
-  rpcUrls: z.array(z.string()),
-  blockExplorerUrls: z.optional(z.array(z.string())),
-  iconUrls: z.optional(z.array(z.string())),
+  rpcUrls: /* @__PURE__ */ z.array(/* @__PURE__ */ z.string()),
+  blockExplorerUrls: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.array(/* @__PURE__ */ z.string()),
+  ),
+  iconUrls: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.array(/* @__PURE__ */ z.string()),
+  ),
 })
 
 const GetCallsStatusReturnType = z.object({
-  atomic: z.boolean(),
-  capabilities: z.optional(Capabilities),
+  atomic: /* @__PURE__ */ z.boolean(),
+  capabilities: /* @__PURE__ */ z.optional(Capabilities),
   chainId: z_Hex.Hex,
-  id: z.string(),
-  receipts: z.optional(
-    z.array(
-      z.object({
-        logs: z.array(
-          z.object({
+  id: /* @__PURE__ */ z.string(),
+  receipts: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.array(
+      /* @__PURE__ */ z.object({
+        logs: /* @__PURE__ */ z.array(
+          /* @__PURE__ */ z.object({
             address: z_Hex.Hex,
             data: z_Hex.Hex,
-            topics: z.array(z_Hex.Hex),
+            topics: /* @__PURE__ */ z.array(z_Hex.Hex),
           }),
         ),
         status: z_Hex.Hex,
@@ -49,153 +53,185 @@ const GetCallsStatusReturnType = z.object({
       }),
     ),
   ),
-  status: z.number(),
-  version: z.string(),
+  status: /* @__PURE__ */ z.number(),
+  version: /* @__PURE__ */ z.string(),
 })
 
 const Permission = z.object({
-  caveats: z.array(z.object({ type: z.string(), value: z.any() })),
-  date: z.number(),
-  id: z.string(),
-  invoker: z.string(),
-  parentCapability: z.string(),
+  caveats: /* @__PURE__ */ z.array(
+    /* @__PURE__ */ z.object({
+      type: /* @__PURE__ */ z.string(),
+      value: /* @__PURE__ */ z.any(),
+    }),
+  ),
+  date: /* @__PURE__ */ z.number(),
+  id: /* @__PURE__ */ z.string(),
+  invoker: /* @__PURE__ */ z.string(),
+  parentCapability: /* @__PURE__ */ z.string(),
 })
 
 const PermissionRequest = z.object({
-  eth_accounts: z.record(z.string(), z.any()),
+  eth_accounts: /* @__PURE__ */ z.record(
+    /* @__PURE__ */ z.string(),
+    /* @__PURE__ */ z.any(),
+  ),
 })
 
 const GrantPermissionsParameters = z.object({
-  signer: z.optional(
-    z.object({ type: z.string(), data: z.optional(z.unknown()) }),
-  ),
-  permissions: z.array(
-    z.object({
-      data: z.unknown(),
-      policies: z.array(z.object({ data: z.unknown(), type: z.string() })),
-      required: z.optional(z.boolean()),
-      type: z.string(),
+  signer: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.object({
+      type: /* @__PURE__ */ z.string(),
+      data: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.unknown()),
     }),
   ),
-  expiry: z.number(),
+  permissions: /* @__PURE__ */ z.array(
+    /* @__PURE__ */ z.object({
+      data: /* @__PURE__ */ z.unknown(),
+      policies: /* @__PURE__ */ z.array(
+        /* @__PURE__ */ z.object({
+          data: /* @__PURE__ */ z.unknown(),
+          type: /* @__PURE__ */ z.string(),
+        }),
+      ),
+      required: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+      type: /* @__PURE__ */ z.string(),
+    }),
+  ),
+  expiry: /* @__PURE__ */ z.number(),
 })
 
 const GrantPermissionsReturnType = z.object({
-  expiry: z.number(),
-  factory: z.optional(z_Hex.Hex),
-  factoryData: z.optional(z.string()),
-  grantedPermissions: z.array(
-    z.object({
-      data: z.unknown(),
-      policies: z.array(z.object({ data: z.unknown(), type: z.string() })),
-      required: z.optional(z.boolean()),
-      type: z.string(),
+  expiry: /* @__PURE__ */ z.number(),
+  factory: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  factoryData: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
+  grantedPermissions: /* @__PURE__ */ z.array(
+    /* @__PURE__ */ z.object({
+      data: /* @__PURE__ */ z.unknown(),
+      policies: /* @__PURE__ */ z.array(
+        /* @__PURE__ */ z.object({
+          data: /* @__PURE__ */ z.unknown(),
+          type: /* @__PURE__ */ z.string(),
+        }),
+      ),
+      required: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+      type: /* @__PURE__ */ z.string(),
     }),
   ),
-  permissionsContext: z.string(),
-  signerData: z.optional(
-    z.object({
-      userOpBuilder: z.optional(z_Hex.Hex),
-      submitToAddress: z.optional(z_Hex.Hex),
+  permissionsContext: /* @__PURE__ */ z.string(),
+  signerData: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.object({
+      userOpBuilder: /* @__PURE__ */ z.optional(z_Hex.Hex),
+      submitToAddress: /* @__PURE__ */ z.optional(z_Hex.Hex),
     }),
   ),
 })
 
 const SendCallsParameters = z.tuple([
-  z.object({
-    atomicRequired: z.boolean(),
-    calls: z.array(
-      z.object({
-        capabilities: z.optional(Capabilities),
-        to: z.optional(z_Address.Address),
-        data: z.optional(z_Hex.Hex),
-        value: z.optional(z_Hex.Hex),
+  /* @__PURE__ */ z.object({
+    atomicRequired: /* @__PURE__ */ z.boolean(),
+    calls: /* @__PURE__ */ z.array(
+      /* @__PURE__ */ z.object({
+        capabilities: /* @__PURE__ */ z.optional(Capabilities),
+        to: /* @__PURE__ */ z.optional(z_Address.Address),
+        data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+        value: /* @__PURE__ */ z.optional(z_Hex.Hex),
       }),
     ),
-    capabilities: z.optional(Capabilities),
-    chainId: z.optional(z_Hex.Hex),
-    id: z.optional(z.string()),
-    from: z.optional(z_Address.Address),
-    version: z.string(),
+    capabilities: /* @__PURE__ */ z.optional(Capabilities),
+    chainId: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    id: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
+    from: /* @__PURE__ */ z.optional(z_Address.Address),
+    version: /* @__PURE__ */ z.string(),
   }),
 ])
 
 const SendCallsReturnType = z.object({
-  capabilities: z.optional(Capabilities),
-  id: z.string(),
+  capabilities: /* @__PURE__ */ z.optional(Capabilities),
+  id: /* @__PURE__ */ z.string(),
 })
 
 const WatchAssetParameters = z.object({
-  type: z.literal('ERC20'),
-  options: z.object({
-    address: z.string(),
-    symbol: z.string(),
-    decimals: z.number(),
-    image: z.optional(z.string()),
+  type: /* @__PURE__ */ z.literal('ERC20'),
+  options: /* @__PURE__ */ z.object({
+    address: /* @__PURE__ */ z.string(),
+    symbol: /* @__PURE__ */ z.string(),
+    decimals: /* @__PURE__ */ z.number(),
+    image: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
   }),
 })
 
 export const eth_requestAccounts = from({
   method: 'eth_requestAccounts',
   params: NoParams,
-  returns: z.array(z_Address.Address),
+  returns: /* @__PURE__ */ z.array(z_Address.Address),
 })
 
 export const eth_sendRawTransaction = from({
   method: 'eth_sendRawTransaction',
-  params: z.tuple([z_Hex.Hex]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
   returns: z_Hex.Hex,
 })
 
 export const eth_sendRawTransactionSync = from({
   method: 'eth_sendRawTransactionSync',
-  params: z.union([z.tuple([z_Hex.Hex]), z.tuple([z_Hex.Hex, z.number()])]),
+  params: /* @__PURE__ */ z.union([
+    /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+    /* @__PURE__ */ z.tuple([z_Hex.Hex, /* @__PURE__ */ z.number()]),
+  ]),
   returns: z_TransactionReceipt.TransactionReceipt,
 })
 
 export const eth_sendTransaction = from({
   method: 'eth_sendTransaction',
-  params: z.tuple([z_TransactionRequest.TransactionRequest]),
+  params: /* @__PURE__ */ z.tuple([z_TransactionRequest.TransactionRequest]),
   returns: z_Hex.Hex,
 })
 
 export const eth_signTransaction = from({
   method: 'eth_signTransaction',
-  params: z.tuple([z_TransactionRequest.TransactionRequest]),
+  params: /* @__PURE__ */ z.tuple([z_TransactionRequest.TransactionRequest]),
   returns: z_Hex.Hex,
 })
 
 export const eth_signTypedData_v4 = from({
   method: 'eth_signTypedData_v4',
-  params: z.tuple([z_Address.Address, z.string()]),
+  params: /* @__PURE__ */ z.tuple([
+    z_Address.Address,
+    /* @__PURE__ */ z.string(),
+  ]),
   returns: z_Hex.Hex,
 })
 
 export const personal_sign = from({
   method: 'personal_sign',
-  params: z.tuple([z_Hex.Hex, z_Address.Address]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex, z_Address.Address]),
   returns: z_Hex.Hex,
 })
 
 export const wallet_addEthereumChain = from({
   method: 'wallet_addEthereumChain',
-  params: z.tuple([AddEthereumChainParameters]),
-  returns: z.null(),
+  params: /* @__PURE__ */ z.tuple([AddEthereumChainParameters]),
+  returns: /* @__PURE__ */ z.null(),
 })
 
 export const wallet_getCallsStatus = from({
   method: 'wallet_getCallsStatus',
-  params: z.optional(z.tuple([z.string()])),
+  params: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.tuple([/* @__PURE__ */ z.string()]),
+  ),
   returns: GetCallsStatusReturnType,
 })
 
 export const wallet_getCapabilities = from({
   method: 'wallet_getCapabilities',
-  params: z.optional(
-    z.union([
-      z.tuple([]),
-      z.tuple([z.optional(z_Address.Address)]),
-      z.tuple([z.optional(z_Address.Address), z.optional(z.array(z_Hex.Hex))]),
+  params: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.tuple([]),
+      /* @__PURE__ */ z.tuple([/* @__PURE__ */ z.optional(z_Address.Address)]),
+      /* @__PURE__ */ z.tuple([
+        /* @__PURE__ */ z.optional(z_Address.Address),
+        /* @__PURE__ */ z.optional(/* @__PURE__ */ z.array(z_Hex.Hex)),
+      ]),
     ]),
   ),
   returns: CapabilitiesMap,
@@ -204,25 +240,27 @@ export const wallet_getCapabilities = from({
 export const wallet_getPermissions = from({
   method: 'wallet_getPermissions',
   params: NoParams,
-  returns: z.array(Permission),
+  returns: /* @__PURE__ */ z.array(Permission),
 })
 
 export const wallet_grantPermissions = from({
   method: 'wallet_grantPermissions',
-  params: z.optional(z.tuple([GrantPermissionsParameters])),
+  params: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.tuple([GrantPermissionsParameters]),
+  ),
   returns: GrantPermissionsReturnType,
 })
 
 export const wallet_requestPermissions = from({
   method: 'wallet_requestPermissions',
-  params: z.tuple([PermissionRequest]),
-  returns: z.array(Permission),
+  params: /* @__PURE__ */ z.tuple([PermissionRequest]),
+  returns: /* @__PURE__ */ z.array(Permission),
 })
 
 export const wallet_revokePermissions = from({
   method: 'wallet_revokePermissions',
-  params: z.tuple([PermissionRequest]),
-  returns: z.null(),
+  params: /* @__PURE__ */ z.tuple([PermissionRequest]),
+  returns: /* @__PURE__ */ z.null(),
 })
 
 export const wallet_sendCalls = from({
@@ -233,18 +271,20 @@ export const wallet_sendCalls = from({
 
 export const wallet_showCallsStatus = from({
   method: 'wallet_showCallsStatus',
-  params: z.tuple([z.string()]),
-  returns: z.undefined(),
+  params: /* @__PURE__ */ z.tuple([/* @__PURE__ */ z.string()]),
+  returns: /* @__PURE__ */ z.undefined(),
 })
 
 export const wallet_switchEthereumChain = from({
   method: 'wallet_switchEthereumChain',
-  params: z.tuple([z.object({ chainId: z.string() })]),
-  returns: z.null(),
+  params: /* @__PURE__ */ z.tuple([
+    /* @__PURE__ */ z.object({ chainId: /* @__PURE__ */ z.string() }),
+  ]),
+  returns: /* @__PURE__ */ z.null(),
 })
 
 export const wallet_watchAsset = from({
   method: 'wallet_watchAsset',
-  params: z.tuple([WatchAssetParameters]),
-  returns: z.boolean(),
+  params: /* @__PURE__ */ z.tuple([WatchAssetParameters]),
+  returns: /* @__PURE__ */ z.boolean(),
 })

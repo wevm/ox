@@ -1,4 +1,4 @@
-import { Address, Authorization, Secp256k1 } from 'ox'
+import { AbiParameters, Address, Authorization, Secp256k1 } from 'ox'
 import { SignatureErc8010 } from 'ox/erc8010'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -18,6 +18,16 @@ const authorization = Authorization.from(authorization_unsigned, {
 
 const signature =
   '0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c'
+
+describe('suffixParameters', () => {
+  test('default', () => {
+    expect(SignatureErc8010.suffixParameters).toEqual(
+      AbiParameters.from(
+        '(uint256 chainId, address delegation, uint256 nonce, uint8 yParity, uint256 r, uint256 s), address to, bytes data',
+      ),
+    )
+  })
+})
 
 describe('assert', () => {
   test('default', () => {

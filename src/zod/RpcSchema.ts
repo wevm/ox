@@ -65,6 +65,7 @@ export function from<
 export function from<const namespace extends from.Namespace>(
   namespace: namespace,
 ): from.ReturnType<namespace>
+// @__NO_SIDE_EFFECTS__
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function from(
   input:

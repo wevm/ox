@@ -1,5 +1,6 @@
+import { ed25519 as noble } from '@noble/curves/ed25519.js'
 import { Bytes, Ed25519, Engine, Hex, Mnemonic, X25519 } from 'ox'
-import { describe, expect, test } from 'vp/test'
+import { describe, expect, test, vi } from 'vp/test'
 
 describe('createKeyPair', () => {
   test('default', () => {
@@ -271,6 +272,23 @@ describe('getPublicKey', () => {
 })
 
 describe('randomPrivateKey', () => {
+  test('behavior: same key as noble for the same random bytes', () => {
+    const getRandomValues = vi.spyOn(crypto, 'getRandomValues')
+    try {
+      for (const fill of [0x00, 0x01, 0x7f, 0xff]) {
+        getRandomValues.mockImplementation(
+          <array extends ArrayBufferView | null>(array: array) =>
+            (array as unknown as Uint8Array).fill(fill) as unknown as array,
+        )
+        expect(Ed25519.randomPrivateKey({ as: 'Bytes' })).toEqual(
+          noble.utils.randomSecretKey(),
+        )
+      }
+    } finally {
+      getRandomValues.mockRestore()
+    }
+  })
+
   test('default (Hex)', () => {
     const privateKey = Ed25519.randomPrivateKey()
     expect(typeof privateKey).toBe('string')

@@ -5,17 +5,17 @@ import * as z_Uint from './Uint.js'
 import * as z from 'zod/mini'
 
 const yParity = z.literal([0, 1])
-const yParityHex = z_Hex.Hex.check(
+const yParityHex = /* @__PURE__ */ z_Hex.Hex.check(
   z.refine(
     (value) => value === '0x0' || value === '0x1',
     'expected yParity hex',
   ),
 )
 
-const yParityUint = z_Uint.Uint8.check(
+const yParityUint = /* @__PURE__ */ z_Uint.Uint8.check(
   z.refine((value) => value === 0 || value === 1, 'expected yParity'),
 )
-const yParityUintToRpc = z_Uint.Uint8ToRpc.check(
+const yParityUintToRpc = /* @__PURE__ */ z_Uint.Uint8ToRpc.check(
   z.refine(
     (value) => value === 0 || value === 1 || value === '0x0' || value === '0x1',
     'expected yParity',

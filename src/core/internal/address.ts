@@ -48,32 +48,3 @@ export function classify(value: string): 0 | 1 | 2 {
 export function hasShape(value: string): boolean {
   return classify(value) !== 0
 }
-
-/**
- * Returns the canonical lowercase form of a shape-validated address, or the
- * input unchanged when it is already all-lowercase. Pre-condition: caller has
- * already verified the string is shape-valid via {@link hasShape} or
- * {@link classify}.
- *
- * @internal
- */
-export function lowercase(value: string): string {
-  let hasUpper = false
-  for (let i = 2; i < length; i++) {
-    const code = value.charCodeAt(i)
-    if (code >= A_UPPER && code <= F_UPPER) {
-      hasUpper = true
-      break
-    }
-  }
-  if (!hasUpper) return value
-
-  const out = new Uint16Array(length)
-  out[0] = ZERO
-  out[1] = X_LOWER
-  for (let i = 2; i < length; i++) {
-    const code = value.charCodeAt(i)
-    out[i] = code >= A_UPPER && code <= F_UPPER ? code + 32 : code
-  }
-  return String.fromCharCode.apply(null, out as unknown as number[])
-}

@@ -5,11 +5,16 @@ import * as z_Solidity from './Solidity.js'
 import * as z from 'zod/mini'
 
 export const Domain = z.object({
-  chainId: z.optional(z.union([z.number(), z.bigint()])),
-  name: z.optional(z_Solidity.Identifier),
-  salt: z.optional(z.string()),
-  verifyingContract: z.optional(z_Address.Address),
-  version: z.optional(z.string()),
+  chainId: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.number(),
+      /* @__PURE__ */ z.bigint(),
+    ]),
+  ),
+  name: /* @__PURE__ */ z.optional(z_Solidity.Identifier),
+  salt: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
+  verifyingContract: /* @__PURE__ */ z.optional(z_Address.Address),
+  version: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
 })
 
 export const Type = z.union([
@@ -23,7 +28,7 @@ export const Type = z.union([
 
 export const Parameter = z.object({
   name: z_Solidity.Identifier,
-  type: z.string(),
+  type: /* @__PURE__ */ z.string(),
 })
 
 const Raw = z.record(z_Solidity.Identifier, z.readonly(z.array(Parameter)))

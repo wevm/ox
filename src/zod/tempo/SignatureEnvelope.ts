@@ -10,19 +10,27 @@ import * as z from 'zod/mini'
 
 /** Signature envelope key type schema. */
 export const Type = z.union([
-  z.literal('secp256k1'),
-  z.literal('p256'),
-  z.literal('webAuthn'),
+  /* @__PURE__ */ z.literal('secp256k1'),
+  /* @__PURE__ */ z.literal('p256'),
+  /* @__PURE__ */ z.literal('webAuthn'),
 ])
 
 /** Keychain signature version schema. */
-export const KeychainVersion = z.union([z.literal('v1'), z.literal('v2')])
+export const KeychainVersion = z.union([
+  /* @__PURE__ */ z.literal('v1'),
+  /* @__PURE__ */ z.literal('v2'),
+])
 
 /** Uncompressed public key schema. */
 export const PublicKey = z.object({
-  prefix: z
+  prefix: /* @__PURE__ */ z
     .number()
-    .check(z.refine((value) => value === 4, 'expected uncompressed prefix')),
+    .check(
+      /* @__PURE__ */ z.refine(
+        (value) => value === 4,
+        'expected uncompressed prefix',
+      ),
+    ),
   x: z_Hex.Hex32,
   y: z_Hex.Hex32,
 })
@@ -30,9 +38,14 @@ export const PublicKey = z.object({
 const RecoveredSignature = z.object({
   r: z_Hex.Hex32,
   s: z_Hex.Hex32,
-  yParity: z
+  yParity: /* @__PURE__ */ z
     .number()
-    .check(z.refine((value) => value === 0 || value === 1, 'expected yParity')),
+    .check(
+      /* @__PURE__ */ z.refine(
+        (value) => value === 0 || value === 1,
+        'expected yParity',
+      ),
+    ),
 })
 
 const Signature = z.object({
@@ -41,13 +54,13 @@ const Signature = z.object({
 })
 
 /** RPC secp256k1 signature envelope schema. */
-export const Secp256k1Rpc = z
+export const Secp256k1Rpc = /* @__PURE__ */ z
   .object({
     r: z_Hex.Hex,
     s: z_Hex.Hex,
-    type: z.literal('secp256k1'),
-    v: z.optional(z_Hex.Hex),
-    yParity: z.optional(z_Hex.Hex),
+    type: /* @__PURE__ */ z.literal('secp256k1'),
+    v: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    yParity: /* @__PURE__ */ z.optional(z_Hex.Hex),
   })
   .check(
     z.refine((value) => {
@@ -62,12 +75,12 @@ export const Secp256k1Rpc = z
 
 /** RPC P256 signature envelope schema. */
 export const P256Rpc = z.object({
-  preHash: z.boolean(),
+  preHash: /* @__PURE__ */ z.boolean(),
   pubKeyX: z_Hex.Hex,
   pubKeyY: z_Hex.Hex,
   r: z_Hex.Hex,
   s: z_Hex.Hex,
-  type: z.literal('p256'),
+  type: /* @__PURE__ */ z.literal('p256'),
 })
 
 /** RPC WebAuthn signature envelope schema. */
@@ -76,10 +89,10 @@ export const WebAuthnRpc = z.object({
   pubKeyY: z_Hex.Hex,
   r: z_Hex.Hex,
   s: z_Hex.Hex,
-  type: z.literal('webAuthn'),
+  type: /* @__PURE__ */ z.literal('webAuthn'),
   // 2048-byte WebAuthn signature limit minus the 128-byte signature and public key.
-  webauthnData: z_Hex.Hex.check(
-    z.refine(
+  webauthnData: /* @__PURE__ */ z_Hex.Hex.check(
+    /* @__PURE__ */ z.refine(
       (value) => core_Hex.size(value) <= 1920,
       'expected at most 1920 bytes',
     ),
@@ -90,17 +103,17 @@ export const WebAuthnRpc = z.object({
 export const PrimitiveRpc = z.union([Secp256k1Rpc, P256Rpc, WebAuthnRpc])
 
 /** RPC keychain signature envelope schema. */
-export const KeychainRpc = z
+export const KeychainRpc = /* @__PURE__ */ z
   .object({
-    keyId: z.optional(z_Address.Address),
+    keyId: /* @__PURE__ */ z.optional(z_Address.Address),
     // `signature` is recursive; type the getter concretely to break the cycle.
-    signature: z.lazy(
+    signature: /* @__PURE__ */ z.lazy(
       (): z.ZodMiniType<core_SignatureEnvelope.SignatureEnvelopeRpc> =>
         Rpc as never,
     ),
-    type: z.literal('keychain'),
+    type: /* @__PURE__ */ z.literal('keychain'),
     userAddress: z_Address.Address,
-    version: z.optional(KeychainVersion),
+    version: /* @__PURE__ */ z.optional(KeychainVersion),
   })
   .check(
     z.refine((value) => {
@@ -114,7 +127,7 @@ export const KeychainRpc = z
   )
 
 /** RPC configurable account signature envelope schema. */
-export const ConfigurableRpc = z_Hex.Hex.check(
+export const ConfigurableRpc = /* @__PURE__ */ z_Hex.Hex.check(
   z.refine((value) => {
     try {
       core_SignatureEnvelope.fromRpc(value)
@@ -137,43 +150,43 @@ export const Rpc = z.union([
 /** secp256k1 signature envelope schema. */
 export const Secp256k1 = z.object({
   signature: RecoveredSignature,
-  type: z.literal('secp256k1'),
+  type: /* @__PURE__ */ z.literal('secp256k1'),
 })
 
 /** P256 signature envelope schema. */
 export const P256 = z.object({
-  prehash: z.boolean(),
+  prehash: /* @__PURE__ */ z.boolean(),
   publicKey: PublicKey,
   signature: Signature,
-  type: z.literal('p256'),
+  type: /* @__PURE__ */ z.literal('p256'),
 })
 
 /** WebAuthn signature envelope schema. */
 export const WebAuthn = z.object({
-  metadata: z.object({
+  metadata: /* @__PURE__ */ z.object({
     authenticatorData: z_Hex.Hex,
-    clientDataJSON: z.string(),
+    clientDataJSON: /* @__PURE__ */ z.string(),
   }),
   publicKey: PublicKey,
   signature: Signature,
-  type: z.literal('webAuthn'),
+  type: /* @__PURE__ */ z.literal('webAuthn'),
 })
 
 /** Primitive signature envelope schema. */
 export const Primitive = z.union([Secp256k1, P256, WebAuthn])
 
 /** Keychain signature envelope schema. */
-export const Keychain = z
+export const Keychain = /* @__PURE__ */ z
   .object({
     // `inner` is recursive; type the getter concretely to break the cycle.
-    inner: z.lazy(
+    inner: /* @__PURE__ */ z.lazy(
       (): z.ZodMiniType<core_SignatureEnvelope.SignatureEnvelope> =>
         Domain as never,
     ),
-    keyId: z.optional(z_Address.Address),
-    type: z.literal('keychain'),
+    keyId: /* @__PURE__ */ z.optional(z_Address.Address),
+    type: /* @__PURE__ */ z.literal('keychain'),
     userAddress: z_Address.Address,
-    version: z.optional(KeychainVersion),
+    version: /* @__PURE__ */ z.optional(KeychainVersion),
   })
   .check(
     z.refine(
@@ -183,16 +196,19 @@ export const Keychain = z
   )
 
 /** Configurable account signature envelope schema. */
-export const Configurable = z
+export const Configurable = /* @__PURE__ */ z
   .object({
     account: z_Address.Address,
     config: z_AccountConfig.Config,
-    signatures: z.readonly(
-      z
+    signatures: /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z
         .array(Primitive)
-        .check(z.minLength(1), z.maxLength(core_AccountConfig.maxSignatures)),
+        .check(
+          /* @__PURE__ */ z.minLength(1),
+          /* @__PURE__ */ z.maxLength(core_AccountConfig.maxSignatures),
+        ),
     ),
-    type: z.literal('configurable'),
+    type: /* @__PURE__ */ z.literal('configurable'),
   })
   // Keep invalid recursive approvals inside Zod's issue path.
   .check(

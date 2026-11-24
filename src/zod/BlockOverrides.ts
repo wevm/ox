@@ -32,6 +32,7 @@ export const BlockOverridesToRpc = z.object(
   fields(z_Uint.UintToRpc, PrevRandaoToRpc, z_Withdrawal.WithdrawalToRpc),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   prevRandao extends z.ZodMiniType,

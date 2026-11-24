@@ -8,31 +8,31 @@ import * as z_AccountConfig from './AccountConfig.js'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
 const PrimitiveApproval = z.strictObject({
-  keyData: z.optional(z_Hex.Hex),
-  keyType: z.optional(z_SignatureEnvelope.Type),
+  keyData: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyType: /* @__PURE__ */ z.optional(z_SignatureEnvelope.Type),
   owner: z_Address.Address,
 })
 
 /** Account simulation spec schema. */
 export const Domain = z.object({
-  approvals: z.readonly(
-    z
+  approvals: /* @__PURE__ */ z.readonly(
+    /* @__PURE__ */ z
       .array(PrimitiveApproval)
-      .check(z.maxLength(core_AccountConfig.maxSignatures)),
+      .check(/* @__PURE__ */ z.maxLength(core_AccountConfig.maxSignatures)),
   ),
   config: z_AccountConfig.Config,
-  signer: z.optional(z_Address.Address),
+  signer: /* @__PURE__ */ z.optional(z_Address.Address),
 })
 
-const Rpc_ = z
+const Rpc_ = /* @__PURE__ */ z
   .object({
-    approvals: z.readonly(
-      z
+    approvals: /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z
         .array(PrimitiveApproval)
-        .check(z.maxLength(core_AccountConfig.maxSignatures)),
+        .check(/* @__PURE__ */ z.maxLength(core_AccountConfig.maxSignatures)),
     ),
     config: z_Hex.Hex,
-    signer: z.optional(z_Address.Address),
+    signer: /* @__PURE__ */ z.optional(z_Address.Address),
   })
   .check(
     z.refine((value) => {

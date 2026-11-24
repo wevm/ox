@@ -28,44 +28,58 @@ const Block = z.union([
 /** Schema for the `tempo_simulateV1` JSON-RPC method. */
 export const tempo_simulateV1 = from({
   method: 'tempo_simulateV1',
-  params: z.tuple([
-    z.object({
-      blockStateCalls: z.readonly(
-        z.array(
-          z.object({
-            blockOverrides: z.optional(z_BlockOverrides.BlockOverrides),
-            calls: z.optional(
-              z.readonly(z.array(z_TransactionRequest.TransactionRequest)),
+  params: /* @__PURE__ */ z.tuple([
+    /* @__PURE__ */ z.object({
+      blockStateCalls: /* @__PURE__ */ z.readonly(
+        /* @__PURE__ */ z.array(
+          /* @__PURE__ */ z.object({
+            blockOverrides: /* @__PURE__ */ z.optional(
+              z_BlockOverrides.BlockOverrides,
             ),
-            stateOverrides: z.optional(z_StateOverrides.StateOverrides),
+            calls: /* @__PURE__ */ z.optional(
+              /* @__PURE__ */ z.readonly(
+                /* @__PURE__ */ z.array(
+                  z_TransactionRequest.TransactionRequest,
+                ),
+              ),
+            ),
+            stateOverrides: /* @__PURE__ */ z.optional(
+              z_StateOverrides.StateOverrides,
+            ),
           }),
         ),
       ),
-      returnFullTransactions: z.optional(z.boolean()),
-      traceTransfers: z.optional(z.boolean()),
-      validation: z.optional(z.boolean()),
+      returnFullTransactions: /* @__PURE__ */ z.optional(
+        /* @__PURE__ */ z.boolean(),
+      ),
+      traceTransfers: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+      validation: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
     }),
     BlockNumberOrTagOrIdentifier,
   ]),
-  returns: z.object({
-    blocks: z.readonly(
-      z.array(
-        z.intersection(
+  returns: /* @__PURE__ */ z.object({
+    blocks: /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z.array(
+        /* @__PURE__ */ z.intersection(
           Block,
-          z.object({
-            calls: z.optional(
-              z.readonly(
-                z.array(
-                  z.object({
-                    error: z.optional(
-                      z.object({
-                        code: z.number(),
-                        data: z.optional(z_Hex.Hex),
-                        message: z.string(),
+          /* @__PURE__ */ z.object({
+            calls: /* @__PURE__ */ z.optional(
+              /* @__PURE__ */ z.readonly(
+                /* @__PURE__ */ z.array(
+                  /* @__PURE__ */ z.object({
+                    error: /* @__PURE__ */ z.optional(
+                      /* @__PURE__ */ z.object({
+                        code: /* @__PURE__ */ z.number(),
+                        data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+                        message: /* @__PURE__ */ z.string(),
                       }),
                     ),
                     gasUsed: z_Hex.Hex,
-                    logs: z.optional(z.readonly(z.array(z_Log.Log))),
+                    logs: /* @__PURE__ */ z.optional(
+                      /* @__PURE__ */ z.readonly(
+                        /* @__PURE__ */ z.array(z_Log.Log),
+                      ),
+                    ),
                     returnData: z_Hex.Hex,
                     status: z_Hex.Hex,
                   }),
@@ -76,12 +90,12 @@ export const tempo_simulateV1 = from({
         ),
       ),
     ),
-    tokenMetadata: z.record(
+    tokenMetadata: /* @__PURE__ */ z.record(
       z_Hex.Hex,
-      z.object({
-        currency: z.string(),
-        name: z.string(),
-        symbol: z.string(),
+      /* @__PURE__ */ z.object({
+        currency: /* @__PURE__ */ z.string(),
+        name: /* @__PURE__ */ z.string(),
+        symbol: /* @__PURE__ */ z.string(),
       }),
     ),
   }),
@@ -93,10 +107,10 @@ export const Tempo = { tempo_simulateV1 }
 /** Schema for the `account_approveKeyAuthorization` JSON-RPC method. */
 export const account_approveKeyAuthorization = from({
   method: 'account_approveKeyAuthorization',
-  params: z.tuple([
-    z.union([
-      z.object({ keyAuthorization: z_KeyAuthorization.Rpc }),
-      z.object({ hash: z_Hex.Hex, signature: z_Hex.Hex }),
+  params: /* @__PURE__ */ z.tuple([
+    /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.object({ keyAuthorization: z_KeyAuthorization.Rpc }),
+      /* @__PURE__ */ z.object({ hash: z_Hex.Hex, signature: z_Hex.Hex }),
     ]),
   ]),
   returns: z_AccountOperation.KeyAuthorizationOperation,
@@ -105,29 +119,34 @@ export const account_approveKeyAuthorization = from({
 /** Schema for the `account_approveRawTransaction` JSON-RPC method. */
 export const account_approveRawTransaction = from({
   method: 'account_approveRawTransaction',
-  params: z.tuple([z_Hex.Hex]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
   returns: z_Hex.Hex,
 })
 
 /** Schema for the `account_approveRawTransactionSync` JSON-RPC method. */
 export const account_approveRawTransactionSync = from({
   method: 'account_approveRawTransactionSync',
-  params: z.tuple([z_Hex.Hex, z.optional(z.number())]),
+  params: /* @__PURE__ */ z.tuple([
+    z_Hex.Hex,
+    /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  ]),
   returns: z_AccountOperation.TransactionOperation,
 })
 
 /** Schema for the `account_getConfig` JSON-RPC method. */
 export const account_getConfig = from({
   method: 'account_getConfig',
-  params: z.tuple([z.object({ address: z_Address.Address })]),
-  returns: z.nullable(z_AccountConfig.Rpc),
+  params: /* @__PURE__ */ z.tuple([
+    /* @__PURE__ */ z.object({ address: z_Address.Address }),
+  ]),
+  returns: /* @__PURE__ */ z.nullable(z_AccountConfig.Rpc),
 })
 
 /** Schema for the `account_getOperation` JSON-RPC method. */
 export const account_getOperation = from({
   method: 'account_getOperation',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.nullable(z_AccountOperation.Operation),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.nullable(z_AccountOperation.Operation),
 })
 
 /** JSON-RPC method schemas for the `account_` namespace. */

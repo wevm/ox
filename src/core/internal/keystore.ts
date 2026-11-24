@@ -37,11 +37,39 @@ const pbkdf2Sha256Default: Complete<Keystore>['pbkdf2Sha256'] = (
   options,
 ) => pbkdf2_noble(sha256, password, salt, options)
 
-const pbkdf2Sha256AsyncDefault: Complete<Keystore>['pbkdf2Sha256Async'] = (
-  password,
-  salt,
-  options,
-) => pbkdf2Async_noble(sha256, password, salt, options)
+const pbkdf2Sha256AsyncDefault: Complete<Keystore>['pbkdf2Sha256Async'] =
+  async (password, salt, options) => {
+    // WebCrypto's native PBKDF2 is about 10x faster than noble's. It truncates
+    // a fractional iteration count, so only positive integer counts and lengths
+    // take it; noble rejects the others, as the sync default does. Fall back to
+    // noble where WebCrypto is missing or rejects the input.
+    const { c, dkLen } = options
+    if (
+      Number.isSafeInteger(c) &&
+      c > 0 &&
+      Number.isSafeInteger(dkLen) &&
+      dkLen > 0
+    )
+      try {
+        const { subtle } = globalThis.crypto
+        const key = await subtle.importKey('raw', password, 'PBKDF2', false, [
+          'deriveBits',
+        ])
+        return new Uint8Array(
+          await subtle.deriveBits(
+            {
+              hash: 'SHA-256',
+              iterations: c,
+              name: 'PBKDF2',
+              salt,
+            },
+            key,
+            dkLen * 8,
+          ),
+        )
+      } catch {}
+    return pbkdf2Async_noble(sha256, password, salt, options)
+  }
 
 const scryptDefault: Complete<Keystore>['scrypt'] = (password, salt, options) =>
   scrypt_noble(password, salt, options)

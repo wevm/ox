@@ -141,9 +141,10 @@ export declare namespace getAuthenticatorData {
     signCount?: number | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Bytes' ? Uint8Array : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    Bytes: Uint8Array
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Errors.GlobalErrorType
 }

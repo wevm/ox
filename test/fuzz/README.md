@@ -8,6 +8,7 @@ Property-based / fuzz harnesses for `ox`, built on
 
 ```
 test/fuzz/arbitraries/   # Shared, ox-specific fast-check arbitraries.
+test/fuzz/setup.ts       # Global fast-check config for the fuzz projects.
 test/engines.ts          # Shared `Engine` implementations (identity, sentinel).
 test/vectors/hashes/     # Published hash vectors, for non-differential checks.
 src/**/_test/*.fuzz.ts   # Co-located fuzz harnesses.
@@ -75,6 +76,11 @@ Do not rely on the seed alone -- seeds are not stable across
   errors are in a known set
   (e.g. `Cursor.PositionOutOfBoundsError`,
   `AbiParameters.DataSizeTooSmallError`).
+- **Lengths reach their `maxLength`.** fast-check otherwise keeps an
+  arbitrary with only a `maxLength` at size `'small'`, about 10 elements, so
+  `test/fuzz/setup.ts` sizes it to the stated maximum. A random length still
+  rarely lands on an encoding boundary (CBOR's 23/24, RLP's 55/56); pin those
+  with `fc.constantFrom` lengths.
 - **Avoid filter-heavy arbitraries.** Prefer compositional generators
   over `.filter(...)`; rejection-sampling wastes runs and skews
   distribution.

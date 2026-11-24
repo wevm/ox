@@ -1,4 +1,5 @@
 import { ed25519 } from '@noble/curves/ed25519.js'
+import { randomBytes } from '@noble/hashes/utils.js'
 import { type Complete, type Eddsa, overrides } from './engine.js'
 
 /**
@@ -13,8 +14,9 @@ import { type Complete, type Eddsa, overrides } from './engine.js'
 const getPublicKeyDefault: Complete<Eddsa>['getPublicKey'] = (privateKey) =>
   ed25519.getPublicKey(privateKey)
 
+// What noble's `utils.randomSecretKey` does, without bundling the curve.
 const randomSecretKeyDefault: Complete<Eddsa>['randomSecretKey'] = () =>
-  ed25519.utils.randomSecretKey()
+  randomBytes(32)
 
 const signDefault: Complete<Eddsa>['sign'] = (payload, privateKey) =>
   ed25519.sign(payload, privateKey)

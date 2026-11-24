@@ -32,6 +32,18 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
     return BigInt(n)
   }
   if (len - i > shiftMaxBytes) return BigInt(bytesToHex(value))
+  // Up to a word of a fresh array of up to 64 bytes reads six bytes at a time:
+  // V8 keeps such an array on its heap and would move it to an ArrayBuffer for
+  // a DataView.
+  if (len <= 64 && value.byteOffset === 0 && len - i <= 32) {
+    let val = 0n
+    for (let end = i + ((len - i) % 6 || 6); i < len; end += 6) {
+      let chunk = 0
+      for (; i < end; i++) chunk = chunk * 256 + value[i]!
+      val = (val << 48n) | BigInt(chunk)
+    }
+    return val
+  }
 
   // Unsigned big-endian read using DataView for 8-byte chunks.
   let val = 0n
@@ -93,6 +105,49 @@ export function bigIntToBytes(
 ): Uint8Array {
   const { signed, size } = options
 
+  // A safe integer is written without BigInt arithmetic, unless it might not
+  // fit in `size` bytes, which the general path reports. A negative one is
+  // written as its two's complement, a safe integer for a signed `size` of up to
+  // 6 bytes.
+  const small =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'bigint' &&
+          value >= -0x1fffffffffffffn &&
+          value <= 0x1fffffffffffffn
+        ? Number(value)
+        : Number.NaN
+  if (
+    Number.isSafeInteger(small) &&
+    (size === undefined || (Number.isInteger(size) && size > 0)) &&
+    (small >= 0
+      ? !size || size >= 7 || small < 2 ** (size * 8 - (signed ? 1 : 0))
+      : signed && size! <= 6 && small >= -(2 ** (size! * 8 - 1)))
+  ) {
+    let length = size
+    if (length === undefined) {
+      length = 1
+      for (let v = small; v >= 256; v = Math.floor(v / 256)) length++
+    }
+    const out = new Uint8Array(length)
+    // Separate loops, so the common non-negative one stays on small integers.
+    if (small < 0)
+      for (
+        let i = length - 1, v = small + 2 ** (length * 8);
+        i >= 0;
+        i--, v = Math.floor(v / 256)
+      )
+        out[i] = v % 256
+    else
+      for (
+        let i = length - 1, v = small;
+        v > 0 && i >= 0;
+        i--, v = Math.floor(v / 256)
+      )
+        out[i] = v % 256
+    return out
+  }
+
   // Range check (mirrors `Hex.fromNumber` semantics).
   let value_: bigint
   if (typeof value === 'bigint') value_ = value
@@ -141,12 +196,13 @@ export function bigIntToBytes(
   const minBytes = bigIntByteLength(n)
   const length = size ?? Math.max(minBytes, 1)
   const out = new Uint8Array(length)
-  // Right-aligned big-endian write.
+  // Right-aligned big-endian write, 32 bits per BigInt operation.
   let i = length - 1
   let rem = n
   while (rem > 0n && i >= 0) {
-    out[i--] = Number(rem & 0xffn)
-    rem >>= 8n
+    let word = Number(rem & 0xffffffffn)
+    rem >>= 32n
+    for (let k = 0; k < 4 && i >= 0; k++, word >>>= 8) out[i--] = word & 0xff
   }
   return out
 }
@@ -154,15 +210,9 @@ export function bigIntToBytes(
 /** @internal */
 export function bigIntByteLength(n: bigint): number {
   if (n === 0n) return 0
-  let v = n < 0n ? -n : n
-  // See `bigIntToBytes`: shifting a large value a byte at a time is quadratic.
-  if (v >> 512n) return (v.toString(16).length + 1) >> 1
-  let len = 0
-  while (v > 0n) {
-    len++
-    v >>= 8n
-  }
-  return len
+  // Shifting a byte off at a time copies the rest of the number each time;
+  // counting hex digits is one conversion.
+  return ((n < 0n ? -n : n).toString(16).length + 1) >> 1
 }
 
 /** Thrown when a value cannot be represented as a safe integer. */

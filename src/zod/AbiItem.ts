@@ -8,12 +8,12 @@ import * as z_AbiReceive from './AbiReceive.js'
 import * as z from 'zod/mini'
 
 export const Type = z.union([
-  z.literal('constructor'),
-  z.literal('event'),
-  z.literal('error'),
-  z.literal('fallback'),
-  z.literal('function'),
-  z.literal('receive'),
+  /* @__PURE__ */ z.literal('constructor'),
+  /* @__PURE__ */ z.literal('event'),
+  /* @__PURE__ */ z.literal('error'),
+  /* @__PURE__ */ z.literal('fallback'),
+  /* @__PURE__ */ z.literal('function'),
+  /* @__PURE__ */ z.literal('receive'),
 ])
 
 export const AbiItem = z.union([

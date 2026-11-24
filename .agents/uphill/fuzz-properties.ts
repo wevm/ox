@@ -579,6 +579,13 @@ export function properties(lib: Lib): Property[] {
           hex,
           'Hex.fromNumber of a number',
         )
+        // A safe integer takes Bytes.fromNumber's path without BigInt.
+        same(
+          'ox:Bytes.fromNumber',
+          toHex(call('ox:Bytes.fromNumber', Number(value), options)),
+          hex,
+          'Bytes.fromNumber of a number',
+        )
       }
     },
   })
@@ -882,6 +889,56 @@ export function properties(lib: Lib): Property[] {
           { blame: ['ox:Rlp.toHex'], kind: 'accepted invalid input' },
         )
       same('ox:Rlp.toHex', actual, expected, `Rlp.toHex(${hex})`)
+    },
+  })
+  add({
+    id: 'differential: RLP encoding of malformed hex leaves against ethers',
+    oracle: 'differential',
+    covers: ['ox:Rlp.from', 'ox:Rlp.fromHex'],
+    runs: 400,
+    // One malformed leaf beside a valid value: an even-length leaf with a non-hex digit, without
+    // its `0x` prefix, with an uppercase `0X`, or an empty string. ethers rejects each but the
+    // `0X` leaf, so the check skips those; `src/core/_test/Rlp.fuzz.ts` covers them.
+    arb: fc
+      .tuple(
+        rlpArb,
+        hexOf(1, 33),
+        fc.nat(),
+        fc.constantFrom('g', 'z', 'x', ' ', '-'),
+        fc.integer({ min: 0, max: 3 }),
+        fc.boolean(),
+      )
+      .map(([value, leaf, at, digit, how, first]) => {
+        const body = leaf.slice(2)
+        const index = at % body.length
+        const bad =
+          how === 0
+            ? `0x${body.slice(0, index)}${digit}${body.slice(index + 1)}`
+            : how === 1
+              ? body
+              : how === 2
+                ? `0X${body}`
+                : ''
+        return first ? [bad, value] : [value, bad]
+      }),
+    check(value) {
+      if (attempt(() => ethers.encodeRlp(value as never)) !== undefined) return
+      for (const [name, as] of [
+        ['ox:Rlp.fromHex', 'Hex'],
+        ['ox:Rlp.from', 'Bytes'],
+      ] as const) {
+        let actual: unknown
+        try {
+          actual = fn('ox:Rlp.from')(value, { as })
+        } catch (error) {
+          if (!documented(error)) throw crash(name, error)
+          continue
+        }
+        throw new Failure(
+          `Rlp.from(${show(value)}, { as: '${as}' }) returned ${show(actual)} for a malformed leaf, which ethers rejects`,
+          { blame: [name], kind: 'accepted invalid input' },
+        )
+      }
     },
   })
 

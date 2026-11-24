@@ -5,7 +5,7 @@ import * as z_Hex from '../Hex.js'
 import * as z from 'zod/mini'
 
 /** TIP-1022 virtual address schema. */
-export const VirtualAddress = z_Address.Address.check(
+export const VirtualAddress = /* @__PURE__ */ z_Address.Address.check(
   z.refine(
     (value) => core_VirtualAddress.validate(value),
     'expected virtual address',

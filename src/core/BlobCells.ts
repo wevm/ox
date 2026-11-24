@@ -348,8 +348,10 @@ export declare namespace toDataColumns {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Compute<
-    | (as extends 'Bytes' ? readonly DataColumn<Bytes.Bytes>[] : never)
-    | (as extends 'Hex' ? readonly DataColumn<Hex.Hex>[] : never)
+    {
+      Bytes: readonly DataColumn<Bytes.Bytes>[]
+      Hex: readonly DataColumn<Hex.Hex>[]
+    }[as]
   >
 
   type ErrorType =

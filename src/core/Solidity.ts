@@ -9,104 +9,124 @@ export const bytesRegex = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/
 export const integerRegex =
   /^(u?int)(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/
 
-export const maxInt8 = 2n ** (8n - 1n) - 1n
-export const maxInt16 = 2n ** (16n - 1n) - 1n
-export const maxInt24 = 2n ** (24n - 1n) - 1n
-export const maxInt32 = 2n ** (32n - 1n) - 1n
-export const maxInt40 = 2n ** (40n - 1n) - 1n
-export const maxInt48 = 2n ** (48n - 1n) - 1n
-export const maxInt56 = 2n ** (56n - 1n) - 1n
-export const maxInt64 = 2n ** (64n - 1n) - 1n
-export const maxInt72 = 2n ** (72n - 1n) - 1n
-export const maxInt80 = 2n ** (80n - 1n) - 1n
-export const maxInt88 = 2n ** (88n - 1n) - 1n
-export const maxInt96 = 2n ** (96n - 1n) - 1n
-export const maxInt104 = 2n ** (104n - 1n) - 1n
-export const maxInt112 = 2n ** (112n - 1n) - 1n
-export const maxInt120 = 2n ** (120n - 1n) - 1n
-export const maxInt128 = 2n ** (128n - 1n) - 1n
-export const maxInt136 = 2n ** (136n - 1n) - 1n
-export const maxInt144 = 2n ** (144n - 1n) - 1n
-export const maxInt152 = 2n ** (152n - 1n) - 1n
-export const maxInt160 = 2n ** (160n - 1n) - 1n
-export const maxInt168 = 2n ** (168n - 1n) - 1n
-export const maxInt176 = 2n ** (176n - 1n) - 1n
-export const maxInt184 = 2n ** (184n - 1n) - 1n
-export const maxInt192 = 2n ** (192n - 1n) - 1n
-export const maxInt200 = 2n ** (200n - 1n) - 1n
-export const maxInt208 = 2n ** (208n - 1n) - 1n
-export const maxInt216 = 2n ** (216n - 1n) - 1n
-export const maxInt224 = 2n ** (224n - 1n) - 1n
-export const maxInt232 = 2n ** (232n - 1n) - 1n
-export const maxInt240 = 2n ** (240n - 1n) - 1n
-export const maxInt248 = 2n ** (248n - 1n) - 1n
-export const maxInt256 = 2n ** (256n - 1n) - 1n
+export const maxInt8 = 0x7fn
+export const maxInt16 = 0x7fffn
+export const maxInt24 = 0x7fffffn
+export const maxInt32 = 0x7fffffffn
+export const maxInt40 = 0x7fffffffffn
+export const maxInt48 = 0x7fffffffffffn
+export const maxInt56 = 0x7fffffffffffffn
+export const maxInt64 = 0x7fffffffffffffffn
+export const maxInt72 = 0x7fffffffffffffffffn
+export const maxInt80 = 0x7fffffffffffffffffffn
+export const maxInt88 = 0x7fffffffffffffffffffffn
+export const maxInt96 = 0x7fffffffffffffffffffffffn
+export const maxInt104 = 0x7fffffffffffffffffffffffffn
+export const maxInt112 = 0x7fffffffffffffffffffffffffffn
+export const maxInt120 = 0x7fffffffffffffffffffffffffffffn
+export const maxInt128 = 0x7fffffffffffffffffffffffffffffffn
+export const maxInt136 = 0x7fffffffffffffffffffffffffffffffffn
+export const maxInt144 = 0x7fffffffffffffffffffffffffffffffffffn
+export const maxInt152 = 0x7fffffffffffffffffffffffffffffffffffffn
+export const maxInt160 = 0x7fffffffffffffffffffffffffffffffffffffffn
+export const maxInt168 = 0x7fffffffffffffffffffffffffffffffffffffffffn
+export const maxInt176 = 0x7fffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt184 = 0x7fffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt192 = 0x7fffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt200 = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt208 = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt216 =
+  0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt224 =
+  0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt232 =
+  0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt240 =
+  0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt248 =
+  0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxInt256 =
+  0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
 
-export const minInt8 = -(2n ** (8n - 1n))
-export const minInt16 = -(2n ** (16n - 1n))
-export const minInt24 = -(2n ** (24n - 1n))
-export const minInt32 = -(2n ** (32n - 1n))
-export const minInt40 = -(2n ** (40n - 1n))
-export const minInt48 = -(2n ** (48n - 1n))
-export const minInt56 = -(2n ** (56n - 1n))
-export const minInt64 = -(2n ** (64n - 1n))
-export const minInt72 = -(2n ** (72n - 1n))
-export const minInt80 = -(2n ** (80n - 1n))
-export const minInt88 = -(2n ** (88n - 1n))
-export const minInt96 = -(2n ** (96n - 1n))
-export const minInt104 = -(2n ** (104n - 1n))
-export const minInt112 = -(2n ** (112n - 1n))
-export const minInt120 = -(2n ** (120n - 1n))
-export const minInt128 = -(2n ** (128n - 1n))
-export const minInt136 = -(2n ** (136n - 1n))
-export const minInt144 = -(2n ** (144n - 1n))
-export const minInt152 = -(2n ** (152n - 1n))
-export const minInt160 = -(2n ** (160n - 1n))
-export const minInt168 = -(2n ** (168n - 1n))
-export const minInt176 = -(2n ** (176n - 1n))
-export const minInt184 = -(2n ** (184n - 1n))
-export const minInt192 = -(2n ** (192n - 1n))
-export const minInt200 = -(2n ** (200n - 1n))
-export const minInt208 = -(2n ** (208n - 1n))
-export const minInt216 = -(2n ** (216n - 1n))
-export const minInt224 = -(2n ** (224n - 1n))
-export const minInt232 = -(2n ** (232n - 1n))
-export const minInt240 = -(2n ** (240n - 1n))
-export const minInt248 = -(2n ** (248n - 1n))
-export const minInt256 = -(2n ** (256n - 1n))
+export const minInt8 = -0x80n
+export const minInt16 = -0x8000n
+export const minInt24 = -0x800000n
+export const minInt32 = -0x80000000n
+export const minInt40 = -0x8000000000n
+export const minInt48 = -0x800000000000n
+export const minInt56 = -0x80000000000000n
+export const minInt64 = -0x8000000000000000n
+export const minInt72 = -0x800000000000000000n
+export const minInt80 = -0x80000000000000000000n
+export const minInt88 = -0x8000000000000000000000n
+export const minInt96 = -0x800000000000000000000000n
+export const minInt104 = -0x80000000000000000000000000n
+export const minInt112 = -0x8000000000000000000000000000n
+export const minInt120 = -0x800000000000000000000000000000n
+export const minInt128 = -0x80000000000000000000000000000000n
+export const minInt136 = -0x8000000000000000000000000000000000n
+export const minInt144 = -0x800000000000000000000000000000000000n
+export const minInt152 = -0x80000000000000000000000000000000000000n
+export const minInt160 = -0x8000000000000000000000000000000000000000n
+export const minInt168 = -0x800000000000000000000000000000000000000000n
+export const minInt176 = -0x80000000000000000000000000000000000000000000n
+export const minInt184 = -0x8000000000000000000000000000000000000000000000n
+export const minInt192 = -0x800000000000000000000000000000000000000000000000n
+export const minInt200 = -0x80000000000000000000000000000000000000000000000000n
+export const minInt208 =
+  -0x8000000000000000000000000000000000000000000000000000n
+export const minInt216 =
+  -0x800000000000000000000000000000000000000000000000000000n
+export const minInt224 =
+  -0x80000000000000000000000000000000000000000000000000000000n
+export const minInt232 =
+  -0x8000000000000000000000000000000000000000000000000000000000n
+export const minInt240 =
+  -0x800000000000000000000000000000000000000000000000000000000000n
+export const minInt248 =
+  -0x80000000000000000000000000000000000000000000000000000000000000n
+export const minInt256 =
+  -0x8000000000000000000000000000000000000000000000000000000000000000n
 
-export const maxUint8 = 2n ** 8n - 1n
-export const maxUint16 = 2n ** 16n - 1n
-export const maxUint24 = 2n ** 24n - 1n
-export const maxUint32 = 2n ** 32n - 1n
-export const maxUint40 = 2n ** 40n - 1n
-export const maxUint48 = 2n ** 48n - 1n
-export const maxUint56 = 2n ** 56n - 1n
-export const maxUint64 = 2n ** 64n - 1n
-export const maxUint72 = 2n ** 72n - 1n
-export const maxUint80 = 2n ** 80n - 1n
-export const maxUint88 = 2n ** 88n - 1n
-export const maxUint96 = 2n ** 96n - 1n
-export const maxUint104 = 2n ** 104n - 1n
-export const maxUint112 = 2n ** 112n - 1n
-export const maxUint120 = 2n ** 120n - 1n
-export const maxUint128 = 2n ** 128n - 1n
-export const maxUint136 = 2n ** 136n - 1n
-export const maxUint144 = 2n ** 144n - 1n
-export const maxUint152 = 2n ** 152n - 1n
-export const maxUint160 = 2n ** 160n - 1n
-export const maxUint168 = 2n ** 168n - 1n
-export const maxUint176 = 2n ** 176n - 1n
-export const maxUint184 = 2n ** 184n - 1n
-export const maxUint192 = 2n ** 192n - 1n
-export const maxUint200 = 2n ** 200n - 1n
-export const maxUint208 = 2n ** 208n - 1n
-export const maxUint216 = 2n ** 216n - 1n
-export const maxUint224 = 2n ** 224n - 1n
-export const maxUint232 = 2n ** 232n - 1n
-export const maxUint240 = 2n ** 240n - 1n
-export const maxUint248 = 2n ** 248n - 1n
-export const maxUint256 = 2n ** 256n - 1n
+export const maxUint8 = 0xffn
+export const maxUint16 = 0xffffn
+export const maxUint24 = 0xffffffn
+export const maxUint32 = 0xffffffffn
+export const maxUint40 = 0xffffffffffn
+export const maxUint48 = 0xffffffffffffn
+export const maxUint56 = 0xffffffffffffffn
+export const maxUint64 = 0xffffffffffffffffn
+export const maxUint72 = 0xffffffffffffffffffn
+export const maxUint80 = 0xffffffffffffffffffffn
+export const maxUint88 = 0xffffffffffffffffffffffn
+export const maxUint96 = 0xffffffffffffffffffffffffn
+export const maxUint104 = 0xffffffffffffffffffffffffffn
+export const maxUint112 = 0xffffffffffffffffffffffffffffn
+export const maxUint120 = 0xffffffffffffffffffffffffffffffn
+export const maxUint128 = 0xffffffffffffffffffffffffffffffffn
+export const maxUint136 = 0xffffffffffffffffffffffffffffffffffn
+export const maxUint144 = 0xffffffffffffffffffffffffffffffffffffn
+export const maxUint152 = 0xffffffffffffffffffffffffffffffffffffffn
+export const maxUint160 = 0xffffffffffffffffffffffffffffffffffffffffn
+export const maxUint168 = 0xffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint176 = 0xffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint184 = 0xffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint192 = 0xffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint200 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint208 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint216 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint224 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint232 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint240 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint248 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+export const maxUint256 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
 
 /**
  * Returns the inclusive `[min, max]` range of values representable by a Solidity

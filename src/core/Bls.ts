@@ -258,9 +258,7 @@ export declare namespace createKeyPair {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes', size extends Size> = {
-    privateKey:
-      | (as extends 'Bytes' ? Bytes.Bytes : never)
-      | (as extends 'Hex' ? Hex.Hex : never)
+    privateKey: { Bytes: Bytes.Bytes; Hex: Hex.Hex }[as]
     publicKey: size extends 'short-key:long-sig' ? BlsPoint.G1 : BlsPoint.G2
   }
 
@@ -430,9 +428,10 @@ export declare namespace randomPrivateKey {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }

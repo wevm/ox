@@ -7,19 +7,21 @@ import * as z from 'zod/mini'
 
 const quantityRegex = /^0x(0|[1-9a-f][0-9a-f]*)$/
 
-const quantity = z_Hex.Hex.check(
+const quantity = /* @__PURE__ */ z_Hex.Hex.check(
   z.refine((value) => quantityRegex.test(value), 'Invalid RPC quantity'),
 )
 
-const rpc = z
+const rpc = /* @__PURE__ */ z
   .object({
-    data: z.optional(z_Hex.Hex),
-    executionGas: z.optional(quantity),
-    flags: z.optional(z_Hex.Hex),
+    data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    executionGas: /* @__PURE__ */ z.optional(quantity),
+    flags: /* @__PURE__ */ z.optional(z_Hex.Hex),
     mode: z_Hex.Hex,
-    stateGas: z.optional(quantity),
-    target: z.optional(z.nullable(z_Address.Address)),
-    value: z.optional(quantity),
+    stateGas: /* @__PURE__ */ z.optional(quantity),
+    target: /* @__PURE__ */ z.optional(
+      /* @__PURE__ */ z.nullable(z_Address.Address),
+    ),
+    value: /* @__PURE__ */ z.optional(quantity),
   })
   .check(
     z.refine((value) => {

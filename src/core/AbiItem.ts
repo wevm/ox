@@ -283,13 +283,13 @@ export function fromAbi<
   const { args = [], prepare = true } = (options ??
     {}) as unknown as fromAbi.Options
 
-  const isSelector = Hex.validate(name, { strict: false })
+  const isSelector = typeof name === 'string' && name.startsWith('0x')
 
   // Selector lookups are always unique on the ABI: precompute the
   // function/error 4-byte selector once and short-circuit via `find`
   // instead of building a full `filter` result we'd discard.
   if (isSelector) {
-    const selector = Hex.slice(name, 0, 4)
+    const selector = Hex.slice(name as Hex.Hex, 0, 4)
     const abiItem = (abi as Abi.Abi).find((abiItem) => {
       if (abiItem.type === 'function' || abiItem.type === 'error')
         return getSelector(abiItem) === selector
@@ -297,22 +297,26 @@ export function fromAbi<
       return false
     })
     if (!abiItem) throw new NotFoundError({ name: name as string })
-    return {
-      ...abiItem,
-      ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-    } as never
+    return (
+      prepare ? { ...abiItem, hash: getSignatureHash(abiItem) } : { ...abiItem }
+    ) as never
   }
 
-  const abiItems = (abi as Abi.Abi).filter(
-    (abiItem) => 'name' in abiItem && abiItem.name === name,
-  )
+  // Most names match one item: find it without collecting the matches, and
+  // collect them only when a second one turns up.
+  let first: AbiItem | undefined
+  let abiItems: AbiItem[] | undefined
+  for (const abiItem of abi as Abi.Abi) {
+    if (!('name' in abiItem) || abiItem.name !== name) continue
+    if (!first) first = abiItem
+    else (abiItems ??= [first]).push(abiItem)
+  }
 
-  if (abiItems.length === 0) throw new NotFoundError({ name: name as string })
-  if (abiItems.length === 1)
-    return {
-      ...abiItems[0],
-      ...(prepare ? { hash: getSignatureHash(abiItems[0]!) } : {}),
-    } as never
+  if (!first) throw new NotFoundError({ name: name as string })
+  if (!abiItems)
+    return (
+      prepare ? { ...first, hash: getSignatureHash(first) } : { ...first }
+    ) as never
 
   let matchedAbiItem: AbiItem | undefined
   // Without `args`, a zero-input overload is the preferred pick, but the other
@@ -370,10 +374,9 @@ export function fromAbi<
   })()
 
   if (!abiItem) throw new NotFoundError({ name: name as string })
-  return {
-    ...abiItem,
-    ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-  } as never
+  return (
+    prepare ? { ...abiItem, hash: getSignatureHash(abiItem) } : { ...abiItem }
+  ) as never
 }
 
 export declare namespace fromAbi {
@@ -384,15 +387,9 @@ export declare namespace fromAbi {
       internal.ExtractArgs<abi, name>,
     ///
     allArgs = internal.ExtractArgs<abi, name>,
-  > = {
-    /**
-     * Whether or not to prepare the extracted item (optimization for encoding performance).
-     * When `true`, the `hash` property is computed and included in the returned value.
-     *
-     * @default true
-     */
-    prepare?: boolean | undefined
-  } & UnionCompute<
+    // `prepare` is in each branch rather than intersected with them, which costs
+    // `Parameters<typeof AbiItem.fromAbi>` about 2,000 more type instantiations.
+  > = UnionCompute<
     readonly [] extends allArgs
       ? {
           args?:
@@ -404,12 +401,26 @@ export declare namespace fromAbi {
                   : never
                 : never)
             | undefined
+          /**
+           * Whether or not to prepare the extracted item (optimization for encoding performance).
+           * When `true`, the `hash` property is computed and included in the returned value.
+           *
+           * @default true
+           */
+          prepare?: boolean | undefined
         }
       : {
           args?:
             | allArgs // show all options
             | (internal.Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
             | undefined
+          /**
+           * Whether or not to prepare the extracted item (optimization for encoding performance).
+           * When `true`, the `hash` property is computed and included in the returned value.
+           *
+           * @default true
+           */
+          prepare?: boolean | undefined
         }
   >
 
@@ -484,18 +495,18 @@ export function getSelector<
 export function getSelector(abiItem: string | AbiItem): Hex.Hex
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSelector(
-  ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: string]
-    | [string | AbiItem]
+  abiOrItem: Abi.Abi | readonly unknown[] | string | AbiItem,
+  name?: string,
 ): Hex.Hex {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
-    }
-    return parameters[0] as string | AbiItem
-  })()
-  return Hex.slice(getSignatureHash(abiItem), 0, 4)
+  const abiItem = Array.isArray(abiOrItem)
+    ? fromAbi(abiOrItem, name!)
+    : (abiOrItem as string | AbiItem)
+  const hash = getSignatureHash(abiItem)
+  // What `Hex.slice(hash, 0, 4)` returns for a `0x`-prefixed hash of 4 bytes or
+  // more, without its intermediate copies.
+  return hash.length >= 10 && hash.startsWith('0x')
+    ? (hash.slice(0, 10) as Hex.Hex)
+    : Hex.slice(hash, 0, 4)
 }
 
 export declare namespace getSelector {
@@ -553,17 +564,12 @@ export function getSignature<
 export function getSignature(abiItem: string | AbiItem): string
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignature(
-  ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: string]
-    | [string | AbiItem]
+  abiOrItem: Abi.Abi | readonly unknown[] | string | AbiItem,
+  name?: string,
 ): string {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
-    }
-    return parameters[0] as string | AbiItem
-  })()
+  const abiItem = Array.isArray(abiOrItem)
+    ? fromAbi(abiOrItem, name!)
+    : (abiOrItem as string | AbiItem)
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return formatAbiItem.formatAbiItem(abiItem)
@@ -629,17 +635,12 @@ export function getSignatureHash<
 export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignatureHash(
-  ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: string]
-    | [string | AbiItem]
+  abiOrItem: Abi.Abi | readonly unknown[] | string | AbiItem,
+  name?: string,
 ): Hex.Hex {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
-    }
-    return parameters[0] as string | AbiItem
-  })()
+  const abiItem = Array.isArray(abiOrItem)
+    ? fromAbi(abiOrItem, name!)
+    : (abiOrItem as string | AbiItem)
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex.Hex
   // Keyed by the item itself first, which skips formatting and normalizing the
