@@ -40,6 +40,13 @@ test('fromAddress', () => {
   expect(() =>
     TokenId.fromAddress('0x20c000000000'),
   ).toThrowErrorMatchingInlineSnapshot(`[Error: invalid tip20 address.]`)
+  // nor is one a nibble short, or with a non-hex character
+  expect(() =>
+    TokenId.fromAddress('0x20c000000000000000000000000000000000001'),
+  ).toThrowErrorMatchingInlineSnapshot(`[Error: invalid tip20 address.]`)
+  expect(() =>
+    TokenId.fromAddress('0x20c0g00000000000000000000000000000000001'),
+  ).toThrowErrorMatchingInlineSnapshot(`[Error: invalid tip20 address.]`)
 })
 
 test('toAddress', () => {
