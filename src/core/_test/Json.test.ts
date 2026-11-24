@@ -70,6 +70,10 @@ describe('Json.canonicalize', () => {
       new Date(0),
       { toJSON: () => ({ a: 1 }) },
       [{ a: new Date(0) }],
+      // `toJSON` gets the key, the index in an array, or `''` at the root.
+      { a: { toJSON: (key: string) => key } },
+      [{ toJSON: (key: string) => key }],
+      { toJSON: (key: string) => key },
     ]
     for (const value of values)
       expect(Json.canonicalize(value)).toBe(JSON.stringify(value))

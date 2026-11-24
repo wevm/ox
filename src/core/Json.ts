@@ -33,11 +33,21 @@ const bigIntPattern = /^(?:[+-]?\d+|0[bB][01]+|0[oO][0-7]+|0[xX][\da-fA-F]+)?$/
  * @returns The canonical JSON string.
  */
 export function canonicalize(value: unknown): string {
+  return serialize(value, '')
+}
+
+export declare namespace canonicalize {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+// Serializes a value found under `key` (its index in an array, `''` at the root), which
+// `JSON.stringify` passes to `toJSON`.
+function serialize(value: unknown, key: string): string {
   // Like `JSON.stringify`, serialize what `toJSON` returns (e.g. for a `Date`).
   const json =
     typeof (value as { toJSON?: unknown } | null | undefined)?.toJSON ===
     'function'
-      ? (value as { toJSON(): unknown }).toJSON()
+      ? (value as { toJSON(key: string): unknown }).toJSON(key)
       : value
   if (json === null || typeof json === 'boolean' || typeof json === 'string')
     return JSON.stringify(json)
@@ -51,22 +61,18 @@ export function canonicalize(value: unknown): string {
   // Like `JSON.stringify`, write `null` for array items that have no JSON
   // form (`undefined`, functions, symbols) and omit such object members.
   if (Array.isArray(json))
-    return `[${json.map((item) => canonicalize(item) ?? 'null').join(',')}]`
+    return `[${json.map((item, index) => serialize(item, String(index)) ?? 'null').join(',')}]`
   if (typeof json === 'object') {
     const entries = Object.keys(json)
       .sort()
-      .reduce<string[]>((acc, key) => {
-        const v = canonicalize((json as Record<string, unknown>)[key])
-        if (v !== undefined) acc.push(`${JSON.stringify(key)}:${v}`)
+      .reduce<string[]>((acc, member) => {
+        const v = serialize((json as Record<string, unknown>)[member], member)
+        if (v !== undefined) acc.push(`${JSON.stringify(member)}:${v}`)
         return acc
       }, [])
     return `{${entries.join(',')}}`
   }
   return undefined as never
-}
-
-export declare namespace canonicalize {
-  type ErrorType = Errors.GlobalErrorType
 }
 
 /**
