@@ -126,6 +126,18 @@ export function bigIntToBytes(
       ? BigInt.asUintN((size ?? bigIntByteLength(-value_) + 1) * 8, value_)
       : value_
 
+  // Shifting a byte off at a time copies the rest of the number each time, so
+  // it is quadratic; past 64 bytes, reading the digits of `toString(16)` is
+  // linear. (A hex decoder would be faster still, but adds its tables to every
+  // bundle that encodes a number.)
+  if (n >> 512n) {
+    const hex = n.toString(16)
+    const out = new Uint8Array(size ?? (hex.length + 1) >> 1)
+    for (let i = hex.length, j = out.length - 1; i > 0; i -= 2, j--)
+      out[j] = Number.parseInt(hex.slice(Math.max(i - 2, 0), i), 16)
+    return out
+  }
+
   const minBytes = bigIntByteLength(n)
   const length = size ?? Math.max(minBytes, 1)
   const out = new Uint8Array(length)
@@ -142,8 +154,10 @@ export function bigIntToBytes(
 /** @internal */
 export function bigIntByteLength(n: bigint): number {
   if (n === 0n) return 0
-  let len = 0
   let v = n < 0n ? -n : n
+  // See `bigIntToBytes`: shifting a large value a byte at a time is quadratic.
+  if (v >> 512n) return (v.toString(16).length + 1) >> 1
+  let len = 0
   while (v > 0n) {
     len++
     v >>= 8n

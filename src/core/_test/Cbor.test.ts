@@ -519,6 +519,15 @@ describe('decode', () => {
     expect(() => Cbor.decode('0x123')).toThrow()
   })
 
+  test('error: truncated float', () => {
+    expect(() => Cbor.decode('0xfa0000')).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.PositionOutOfBoundsError: Position \`4\` is out of bounds (\`0 < position < 3\`).]`,
+    )
+    expect(() => Cbor.decode('0xfb54b249')).toThrowErrorMatchingInlineSnapshot(
+      `[Cursor.PositionOutOfBoundsError: Position \`8\` is out of bounds (\`0 < position < 4\`).]`,
+    )
+  })
+
   test('error: nesting deeper than the depth limit', () => {
     // `0x81` opens a one-element array.
     expect(

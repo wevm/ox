@@ -100,11 +100,23 @@ export type ToObject<
       >
     : unknown
 
-/** @internal */
+/**
+ * `AbiParametersToPrimitiveTypes`, but resolves wide parameters
+ * (`readonly AbiParameter[]`) to `readonly unknown[]` without walking every
+ * ABI type. TypeScript evaluates the wide case to type the values of a generic
+ * call (e.g. `AbiParameters.encode(parameters, [...])`), where it costs about
+ * 9,000 type instantiations. The result is the same.
+ *
+ * @internal
+ */
 export type ToPrimitiveTypes<
   abiParameters extends readonly AbiParameter[],
   abiParameterKind extends AbiParameterKind = AbiParameterKind,
-> = AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+> = abiParameters extends readonly AbiParameter[]
+  ? readonly AbiParameter[] extends abiParameters
+    ? readonly unknown[]
+    : AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+  : never
 
 /** @internal */
 export type Tuple = ParameterToPrimitiveType<TupleAbiParameter>

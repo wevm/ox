@@ -1325,6 +1325,33 @@ describe('verify', () => {
     ).toBeTruthy()
   })
 
+  test('behavior: malformed clientDataJSON', () => {
+    const verify = (clientDataJSON: string) =>
+      Authentication.verify({
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        metadata: {
+          authenticatorData:
+            '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+          challengeIndex: 23,
+          clientDataJSON,
+          typeIndex: 1,
+          userVerificationRequired: true,
+        },
+        publicKey: PublicKey.from({
+          prefix: 4,
+          x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+          y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
+        }),
+        signature: Signature.from({
+          r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+          s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
+        }),
+      })
+    expect(verify('{"type":"webauthn.get"')).toBe(false)
+    expect(verify('null')).toBe(false)
+  })
+
   test('behavior: invalid hash', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,

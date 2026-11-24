@@ -227,7 +227,6 @@ type Encodable = {
 }
 
 /** @internal */
-// biome-ignore lint/correctness/noUnusedVariables: _
 function getEncodable(value: unknown): Encodable {
   if (typeof value === 'undefined')
     return { length: 1, encode: (cursor) => cursor.pushUint8(0xf7) }
@@ -241,387 +240,383 @@ function getEncodable(value: unknown): Encodable {
       encode: (cursor) => cursor.pushUint8(value ? 0xf5 : 0xf4),
     }
 
-  if (typeof value === 'number') return getEncodable.number(value as number)
+  if (typeof value === 'number') return getEncodableNumber(value as number)
 
   if (typeof value === 'bigint') throw new UnsupportedBigIntError()
 
-  if (typeof value === 'string') return getEncodable.string(value as string)
+  if (typeof value === 'string') return getEncodableString(value as string)
 
-  if (Array.isArray(value)) return getEncodable.array(value)
+  if (Array.isArray(value)) return getEncodableArray(value)
 
-  if (value instanceof Uint8Array) return getEncodable.byteString(value)
+  if (value instanceof Uint8Array) return getEncodableByteString(value)
 
   if (value instanceof ArrayBuffer)
-    return getEncodable.byteString(new Uint8Array(value))
+    return getEncodableByteString(new Uint8Array(value))
 
   if (ArrayBuffer.isView(value))
-    return getEncodable.byteString(
+    return getEncodableByteString(
       new Uint8Array(value.buffer, value.byteOffset, value.byteLength),
     )
 
   if (value instanceof Map)
-    return getEncodable.map(value as Map<unknown, unknown>)
+    return getEncodableMap(value as Map<unknown, unknown>)
 
   if (typeof value === 'object')
-    return getEncodable.object(value as Record<string, unknown>)
+    return getEncodableObject(value as Record<string, unknown>)
 
   throw new UnexpectedTokenError({ token: String(value) })
 }
 
 /** @internal */
-namespace getEncodable {
-  /** @internal */
-  export function number(value: number): Encodable {
-    // Handle non-safe integers (floats, NaN, Infinity)
-    if (!Number.isSafeInteger(value)) {
-      // Use Float32 if the value can be represented without precision loss
-      // This creates smaller encodings when possible (5 bytes vs 9 bytes)
-      const float32 = Math.fround(value)
-      if (Number.isNaN(value) || value === float32)
-        return {
-          length: 5, // 1 byte prefix + 4 bytes float32
-          encode(cursor) {
-            cursor.pushUint8(0xfa)
-            cursor.dataView.setFloat32(cursor.position, value, false)
-            cursor.position += 4
-          },
-        }
+function getEncodableNumber(value: number): Encodable {
+  // Handle non-safe integers (floats, NaN, Infinity)
+  if (!Number.isSafeInteger(value)) {
+    // Use Float32 if the value can be represented without precision loss
+    // This creates smaller encodings when possible (5 bytes vs 9 bytes)
+    const float32 = Math.fround(value)
+    if (Number.isNaN(value) || value === float32)
       return {
-        length: 9, // 1 byte prefix + 8 bytes float64
+        length: 5, // 1 byte prefix + 4 bytes float32
         encode(cursor) {
-          cursor.pushUint8(0xfb)
-          cursor.dataView.setFloat64(cursor.position, value, false)
-          cursor.position += 8
+          cursor.pushUint8(0xfa)
+          cursor.dataView.setFloat32(cursor.position, value, false)
+          cursor.position += 4
         },
       }
+    return {
+      length: 9, // 1 byte prefix + 8 bytes float64
+      encode(cursor) {
+        cursor.pushUint8(0xfb)
+        cursor.dataView.setFloat64(cursor.position, value, false)
+        cursor.position += 8
+      },
     }
+  }
 
-    // Handle positive integers
-    if (value >= 0) {
-      if (value <= 0x17)
-        return { length: 1, encode: (cursor) => cursor.pushUint8(value) }
-      if (value <= 0xff)
-        return {
-          length: 2, // 1 byte prefix + 1 byte uint8
-          encode: (cursor) => {
-            cursor.pushUint8(0x18)
-            cursor.pushUint8(value)
-          },
-        }
-      if (value <= 0xffff)
-        return {
-          length: 3, // 1 byte prefix + 2 bytes uint16
-          encode: (cursor) => {
-            cursor.pushUint8(0x19)
-            cursor.pushUint16(value)
-          },
-        }
-      if (value <= 0xffffffff)
-        return {
-          length: 5, // 1 byte prefix + 4 bytes uint32
-          encode: (cursor) => {
-            cursor.pushUint8(0x1a)
-            cursor.pushUint32(value)
-          },
-        }
-      throw new NumberTooLargeError({ number: value.toString(10) })
-    }
-
-    // Handle negative integers
-    // CBOR encodes -n as (n-1)
-    const positiveNumber = -1 - value
-
-    if (value >= -24)
-      return {
-        length: 1,
-        encode: (cursor) => cursor.pushUint8(0x20 + positiveNumber),
-      }
-    if (positiveNumber <= 0xff)
+  // Handle positive integers
+  if (value >= 0) {
+    if (value <= 0x17)
+      return { length: 1, encode: (cursor) => cursor.pushUint8(value) }
+    if (value <= 0xff)
       return {
         length: 2, // 1 byte prefix + 1 byte uint8
         encode: (cursor) => {
-          cursor.pushUint8(0x38)
-          cursor.pushUint8(positiveNumber)
+          cursor.pushUint8(0x18)
+          cursor.pushUint8(value)
         },
       }
-    if (positiveNumber <= 0xffff)
+    if (value <= 0xffff)
       return {
         length: 3, // 1 byte prefix + 2 bytes uint16
         encode: (cursor) => {
-          cursor.pushUint8(0x39)
-          cursor.pushUint16(positiveNumber)
+          cursor.pushUint8(0x19)
+          cursor.pushUint16(value)
         },
       }
-    if (positiveNumber <= 0xffffffff)
+    if (value <= 0xffffffff)
       return {
         length: 5, // 1 byte prefix + 4 bytes uint32
         encode: (cursor) => {
-          cursor.pushUint8(0x3a)
-          cursor.pushUint32(positiveNumber)
+          cursor.pushUint8(0x1a)
+          cursor.pushUint32(value)
         },
       }
     throw new NumberTooLargeError({ number: value.toString(10) })
   }
 
-  /** @internal */
-  export function string(value: string): Encodable {
-    const encoded = Bytes.fromString(value)
-    const size = encoded.length
+  // Handle negative integers
+  // CBOR encodes -n as (n-1)
+  const positiveNumber = -1 - value
 
-    if (size <= 0x17)
-      return {
-        length: 1 + size, // 1 byte prefix + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x60 + size)
-          if (size > 0) cursor.pushBytes(encoded)
-        },
-      }
-    if (size <= 0xff)
-      return {
-        length: 2 + size, // 1 byte prefix + 1 byte uint8 + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x78)
-          cursor.pushUint8(size)
-          cursor.pushBytes(encoded)
-        },
-      }
-
-    if (size <= 0xffff)
-      return {
-        length: 3 + size, // 1 byte prefix + 2 bytes uint16 + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x79)
-          cursor.pushUint16(size)
-          cursor.pushBytes(encoded)
-        },
-      }
-
-    if (size <= 0xffffffff)
-      return {
-        length: 5 + size, // 1 byte prefix + 4 bytes uint32 + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x7a)
-          cursor.pushUint32(size)
-          cursor.pushBytes(encoded)
-        },
-      }
-
-    throw new StringTooLargeError({ size })
-  }
-
-  /** @internal */
-  export function array(value: unknown[]): Encodable {
-    const items = value.map((item) => getEncodable(item))
-    const bodyLength = items.reduce((acc, item) => acc + item.length, 0)
-    const size = value.length
-
-    if (size <= 0x17)
-      return {
-        length: 1 + bodyLength, // 1 byte prefix + body length
-        encode(cursor) {
-          cursor.pushUint8(0x80 + size)
-          for (const item of items) item.encode(cursor)
-        },
-      }
-    if (size <= 0xff)
-      return {
-        length: 2 + bodyLength, // 1 byte prefix + 1 byte uint8 + body length
-        encode(cursor) {
-          cursor.pushUint8(0x98)
-          cursor.pushUint8(size)
-          for (const item of items) item.encode(cursor)
-        },
-      }
-    if (size <= 0xffff)
-      return {
-        length: 3 + bodyLength, // 1 byte prefix + 2 bytes uint16 + body length
-        encode(cursor) {
-          cursor.pushUint8(0x99)
-          cursor.pushUint16(size)
-          for (const item of items) item.encode(cursor)
-        },
-      }
-    if (size <= 0xffffffff)
-      return {
-        length: 5 + bodyLength, // 1 byte prefix + 4 bytes uint32 + body length
-        encode(cursor) {
-          cursor.pushUint8(0x9a)
-          cursor.pushUint32(size)
-          for (const item of items) item.encode(cursor)
-        },
-      }
-    throw new ArrayTooLargeError({ size })
-  }
-
-  /** @internal */
-  export function byteString(value: Uint8Array): Encodable {
-    const size = value.byteLength
-
-    if (size <= 0x17)
-      return {
-        length: 1 + size, // 1 byte prefix + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x40 + size)
-          cursor.pushBytes(value)
-        },
-      }
-    if (size <= 0xff)
-      return {
-        length: 2 + size, // 1 byte prefix + 1 byte uint8 + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x58)
-          cursor.pushUint8(size)
-          cursor.pushBytes(value)
-        },
-      }
-    if (size <= 0xffff)
-      return {
-        length: 3 + size, // 1 byte prefix + 2 bytes uint16 + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x59)
-          cursor.pushUint16(size)
-          cursor.pushBytes(value)
-        },
-      }
-    if (size <= 0xffffffff)
-      return {
-        length: 5 + size, // 1 byte prefix + 4 bytes uint32 + size bytes
-        encode(cursor) {
-          cursor.pushUint8(0x5a)
-          cursor.pushUint32(size)
-          cursor.pushBytes(value)
-        },
-      }
-    throw new ByteStringTooLargeError({ size })
-  }
-
-  /** @internal */
-  export function object(value: Record<string, unknown>): Encodable {
-    const keys = Object.keys(value)
-    const entries = keys.map((key) => ({
-      key: getEncodable(key),
-      value: getEncodable(value[key]),
-    }))
-    const bodyLength = entries.reduce(
-      (acc, entry) => acc + entry.key.length + entry.value.length,
-      0,
-    )
-    const size = keys.length
-
-    if (size <= 0x17)
-      return {
-        length: 1 + bodyLength, // 1 byte prefix + body length
-        encode(cursor) {
-          cursor.pushUint8(0xa0 + size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    if (size <= 0xff)
-      return {
-        length: 2 + bodyLength, // 1 byte prefix + 1 byte uint8 + body length
-        encode(cursor) {
-          cursor.pushUint8(0xb8)
-          cursor.pushUint8(size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    if (size <= 0xffff)
-      return {
-        length: 3 + bodyLength, // 1 byte prefix + 2 bytes uint16 + body length
-        encode(cursor) {
-          cursor.pushUint8(0xb9)
-          cursor.pushUint16(size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    if (size <= 0xffffffff)
-      return {
-        length: 5 + bodyLength, // 1 byte prefix + 4 bytes uint32 + body length
-        encode(cursor) {
-          cursor.pushUint8(0xba)
-          cursor.pushUint32(size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    throw new ObjectTooLargeError({ size })
-  }
-
-  /** @internal */
-  export function map(value: Map<unknown, unknown>): Encodable {
-    const entries: { key: Encodable; value: Encodable }[] = []
-    for (const [k, v] of value)
-      entries.push({ key: getEncodable(k), value: getEncodable(v) })
-    const bodyLength = entries.reduce(
-      (acc, entry) => acc + entry.key.length + entry.value.length,
-      0,
-    )
-    const size = value.size
-
-    if (size <= 0x17)
-      return {
-        length: 1 + bodyLength,
-        encode(cursor) {
-          cursor.pushUint8(0xa0 + size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    if (size <= 0xff)
-      return {
-        length: 2 + bodyLength,
-        encode(cursor) {
-          cursor.pushUint8(0xb8)
-          cursor.pushUint8(size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    if (size <= 0xffff)
-      return {
-        length: 3 + bodyLength,
-        encode(cursor) {
-          cursor.pushUint8(0xb9)
-          cursor.pushUint16(size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    if (size <= 0xffffffff)
-      return {
-        length: 5 + bodyLength,
-        encode(cursor) {
-          cursor.pushUint8(0xba)
-          cursor.pushUint32(size)
-          for (const entry of entries) {
-            entry.key.encode(cursor)
-            entry.value.encode(cursor)
-          }
-        },
-      }
-    throw new ObjectTooLargeError({ size })
-  }
+  if (value >= -24)
+    return {
+      length: 1,
+      encode: (cursor) => cursor.pushUint8(0x20 + positiveNumber),
+    }
+  if (positiveNumber <= 0xff)
+    return {
+      length: 2, // 1 byte prefix + 1 byte uint8
+      encode: (cursor) => {
+        cursor.pushUint8(0x38)
+        cursor.pushUint8(positiveNumber)
+      },
+    }
+  if (positiveNumber <= 0xffff)
+    return {
+      length: 3, // 1 byte prefix + 2 bytes uint16
+      encode: (cursor) => {
+        cursor.pushUint8(0x39)
+        cursor.pushUint16(positiveNumber)
+      },
+    }
+  if (positiveNumber <= 0xffffffff)
+    return {
+      length: 5, // 1 byte prefix + 4 bytes uint32
+      encode: (cursor) => {
+        cursor.pushUint8(0x3a)
+        cursor.pushUint32(positiveNumber)
+      },
+    }
+  throw new NumberTooLargeError({ number: value.toString(10) })
 }
 
 /** @internal */
-// biome-ignore lint/correctness/noUnusedVariables: _
+function getEncodableString(value: string): Encodable {
+  const encoded = Bytes.fromString(value)
+  const size = encoded.length
+
+  if (size <= 0x17)
+    return {
+      length: 1 + size, // 1 byte prefix + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x60 + size)
+        if (size > 0) cursor.pushBytes(encoded)
+      },
+    }
+  if (size <= 0xff)
+    return {
+      length: 2 + size, // 1 byte prefix + 1 byte uint8 + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x78)
+        cursor.pushUint8(size)
+        cursor.pushBytes(encoded)
+      },
+    }
+
+  if (size <= 0xffff)
+    return {
+      length: 3 + size, // 1 byte prefix + 2 bytes uint16 + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x79)
+        cursor.pushUint16(size)
+        cursor.pushBytes(encoded)
+      },
+    }
+
+  if (size <= 0xffffffff)
+    return {
+      length: 5 + size, // 1 byte prefix + 4 bytes uint32 + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x7a)
+        cursor.pushUint32(size)
+        cursor.pushBytes(encoded)
+      },
+    }
+
+  throw new StringTooLargeError({ size })
+}
+
+/** @internal */
+function getEncodableArray(value: unknown[]): Encodable {
+  const items = value.map((item) => getEncodable(item))
+  const bodyLength = items.reduce((acc, item) => acc + item.length, 0)
+  const size = value.length
+
+  if (size <= 0x17)
+    return {
+      length: 1 + bodyLength, // 1 byte prefix + body length
+      encode(cursor) {
+        cursor.pushUint8(0x80 + size)
+        for (const item of items) item.encode(cursor)
+      },
+    }
+  if (size <= 0xff)
+    return {
+      length: 2 + bodyLength, // 1 byte prefix + 1 byte uint8 + body length
+      encode(cursor) {
+        cursor.pushUint8(0x98)
+        cursor.pushUint8(size)
+        for (const item of items) item.encode(cursor)
+      },
+    }
+  if (size <= 0xffff)
+    return {
+      length: 3 + bodyLength, // 1 byte prefix + 2 bytes uint16 + body length
+      encode(cursor) {
+        cursor.pushUint8(0x99)
+        cursor.pushUint16(size)
+        for (const item of items) item.encode(cursor)
+      },
+    }
+  if (size <= 0xffffffff)
+    return {
+      length: 5 + bodyLength, // 1 byte prefix + 4 bytes uint32 + body length
+      encode(cursor) {
+        cursor.pushUint8(0x9a)
+        cursor.pushUint32(size)
+        for (const item of items) item.encode(cursor)
+      },
+    }
+  throw new ArrayTooLargeError({ size })
+}
+
+/** @internal */
+function getEncodableByteString(value: Uint8Array): Encodable {
+  const size = value.byteLength
+
+  if (size <= 0x17)
+    return {
+      length: 1 + size, // 1 byte prefix + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x40 + size)
+        cursor.pushBytes(value)
+      },
+    }
+  if (size <= 0xff)
+    return {
+      length: 2 + size, // 1 byte prefix + 1 byte uint8 + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x58)
+        cursor.pushUint8(size)
+        cursor.pushBytes(value)
+      },
+    }
+  if (size <= 0xffff)
+    return {
+      length: 3 + size, // 1 byte prefix + 2 bytes uint16 + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x59)
+        cursor.pushUint16(size)
+        cursor.pushBytes(value)
+      },
+    }
+  if (size <= 0xffffffff)
+    return {
+      length: 5 + size, // 1 byte prefix + 4 bytes uint32 + size bytes
+      encode(cursor) {
+        cursor.pushUint8(0x5a)
+        cursor.pushUint32(size)
+        cursor.pushBytes(value)
+      },
+    }
+  throw new ByteStringTooLargeError({ size })
+}
+
+/** @internal */
+function getEncodableObject(value: Record<string, unknown>): Encodable {
+  const keys = Object.keys(value)
+  const entries = keys.map((key) => ({
+    key: getEncodable(key),
+    value: getEncodable(value[key]),
+  }))
+  const bodyLength = entries.reduce(
+    (acc, entry) => acc + entry.key.length + entry.value.length,
+    0,
+  )
+  const size = keys.length
+
+  if (size <= 0x17)
+    return {
+      length: 1 + bodyLength, // 1 byte prefix + body length
+      encode(cursor) {
+        cursor.pushUint8(0xa0 + size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  if (size <= 0xff)
+    return {
+      length: 2 + bodyLength, // 1 byte prefix + 1 byte uint8 + body length
+      encode(cursor) {
+        cursor.pushUint8(0xb8)
+        cursor.pushUint8(size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  if (size <= 0xffff)
+    return {
+      length: 3 + bodyLength, // 1 byte prefix + 2 bytes uint16 + body length
+      encode(cursor) {
+        cursor.pushUint8(0xb9)
+        cursor.pushUint16(size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  if (size <= 0xffffffff)
+    return {
+      length: 5 + bodyLength, // 1 byte prefix + 4 bytes uint32 + body length
+      encode(cursor) {
+        cursor.pushUint8(0xba)
+        cursor.pushUint32(size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  throw new ObjectTooLargeError({ size })
+}
+
+/** @internal */
+function getEncodableMap(value: Map<unknown, unknown>): Encodable {
+  const entries: { key: Encodable; value: Encodable }[] = []
+  for (const [k, v] of value)
+    entries.push({ key: getEncodable(k), value: getEncodable(v) })
+  const bodyLength = entries.reduce(
+    (acc, entry) => acc + entry.key.length + entry.value.length,
+    0,
+  )
+  const size = value.size
+
+  if (size <= 0x17)
+    return {
+      length: 1 + bodyLength,
+      encode(cursor) {
+        cursor.pushUint8(0xa0 + size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  if (size <= 0xff)
+    return {
+      length: 2 + bodyLength,
+      encode(cursor) {
+        cursor.pushUint8(0xb8)
+        cursor.pushUint8(size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  if (size <= 0xffff)
+    return {
+      length: 3 + bodyLength,
+      encode(cursor) {
+        cursor.pushUint8(0xb9)
+        cursor.pushUint16(size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  if (size <= 0xffffffff)
+    return {
+      length: 5 + bodyLength,
+      encode(cursor) {
+        cursor.pushUint8(0xba)
+        cursor.pushUint32(size)
+        for (const entry of entries) {
+          entry.key.encode(cursor)
+          entry.value.encode(cursor)
+        }
+      },
+    }
+  throw new ObjectTooLargeError({ size })
+}
+
+/** @internal */
 function decodeCursor(cursor: Cursor.Cursor, depth = 0): unknown {
   // Bounds recursion, so deeply nested data throws instead of overflowing the
   // stack.
@@ -635,27 +630,27 @@ function decodeCursor(cursor: Cursor.Cursor, depth = 0): unknown {
   switch (majorType) {
     // Major type 0: Unsigned integer
     case 0:
-      return decodeCursor.readUnsignedInteger(cursor, additionalInfo)
+      return readUnsignedInteger(cursor, additionalInfo)
 
     // Major type 1: Negative integer
     case 1:
-      return decodeCursor.readNegativeInteger(cursor, additionalInfo)
+      return readNegativeInteger(cursor, additionalInfo)
 
     // Major type 2: Byte string
     case 2:
-      return decodeCursor.readByteString(cursor, additionalInfo, depth)
+      return readByteString(cursor, additionalInfo, depth)
 
     // Major type 3: Text string
     case 3:
-      return decodeCursor.readTextString(cursor, additionalInfo, depth)
+      return readTextString(cursor, additionalInfo, depth)
 
     // Major type 4: Array
     case 4:
-      return decodeCursor.readArray(cursor, additionalInfo, depth)
+      return readArray(cursor, additionalInfo, depth)
 
     // Major type 5: Map
     case 5:
-      return decodeCursor.readMap(cursor, additionalInfo, depth)
+      return readMap(cursor, additionalInfo, depth)
 
     // Major type 6: Tagged data (not yet supported)
     case 6:
@@ -663,16 +658,15 @@ function decodeCursor(cursor: Cursor.Cursor, depth = 0): unknown {
 
     // Major type 7: Simple values and floats
     case 7:
-      return decodeCursor.readSimpleOrFloat(cursor, additionalInfo)
+      return readSimpleOrFloat(cursor, additionalInfo)
 
     default:
       throw new InvalidMajorTypeError({ majorType })
   }
 }
 
-/** @internal */
-namespace decodeCursor {
-  export type ErrorType =
+declare namespace decodeCursor {
+  type ErrorType =
     | readUnsignedInteger.ErrorType
     | readNegativeInteger.ErrorType
     | readByteString.ErrorType
@@ -684,210 +678,191 @@ namespace decodeCursor {
     | InvalidMajorTypeError
     | DepthLimitExceededError
     | Errors.GlobalErrorType
+}
 
-  /** @internal */
-  // biome-ignore lint/correctness/noUnusedVariables: _
-  function readLength(cursor: Cursor.Cursor, additionalInfo: number): number {
-    if (additionalInfo < 24) return additionalInfo
-    if (additionalInfo === 24) return cursor.readUint8()
-    if (additionalInfo === 25) return cursor.readUint16()
-    if (additionalInfo === 26) return cursor.readUint32()
-    if (additionalInfo === 27) throw new Unsupported64BitIntegerError()
-    throw new InvalidAdditionalInfoError({ additionalInfo })
-  }
+/** @internal */
+function readLength(cursor: Cursor.Cursor, additionalInfo: number): number {
+  if (additionalInfo < 24) return additionalInfo
+  if (additionalInfo === 24) return cursor.readUint8()
+  if (additionalInfo === 25) return cursor.readUint16()
+  if (additionalInfo === 26) return cursor.readUint32()
+  if (additionalInfo === 27) throw new Unsupported64BitIntegerError()
+  throw new InvalidAdditionalInfoError({ additionalInfo })
+}
 
-  /** @internal */
-  export declare namespace readLength {
-    type ErrorType =
-      | Unsupported64BitIntegerError
-      | InvalidAdditionalInfoError
-      | Errors.GlobalErrorType
-  }
+/** @internal */
+declare namespace readLength {
+  type ErrorType =
+    | Unsupported64BitIntegerError
+    | InvalidAdditionalInfoError
+    | Errors.GlobalErrorType
+}
 
-  /** @internal */
-  export function readUnsignedInteger(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-  ): number {
-    return readLength(cursor, additionalInfo)
-  }
+/** @internal */
+function readUnsignedInteger(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+): number {
+  return readLength(cursor, additionalInfo)
+}
 
-  /** @internal */
-  export declare namespace readUnsignedInteger {
-    type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
-  }
+/** @internal */
+declare namespace readUnsignedInteger {
+  type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+}
 
-  /** @internal */
-  export function readNegativeInteger(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-  ): number {
-    const value = readLength(cursor, additionalInfo)
-    return -1 - value
-  }
+/** @internal */
+function readNegativeInteger(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+): number {
+  const value = readLength(cursor, additionalInfo)
+  return -1 - value
+}
 
-  /** @internal */
-  export declare namespace readNegativeInteger {
-    type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
-  }
+/** @internal */
+declare namespace readNegativeInteger {
+  type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+}
 
-  /** @internal */
-  export function readByteString(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-    depth: number,
-  ): Bytes.Bytes {
-    // Indefinite-length byte string
-    if (additionalInfo === 31) {
-      const chunks: Bytes.Bytes[] = []
-      let totalLength = 0
+/** @internal */
+function readByteString(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+  depth: number,
+): Bytes.Bytes {
+  // Indefinite-length byte string
+  if (additionalInfo === 31) {
+    const chunks: Bytes.Bytes[] = []
+    let totalLength = 0
 
-      while (true) {
-        const byte = cursor.inspectUint8()
-        if (byte === 0xff) {
-          cursor.readUint8() // consume the break byte
-          break
-        }
-        const chunk = decodeCursor(cursor, depth + 1) as Bytes.Bytes
-        if (!(chunk instanceof Uint8Array))
-          throw new InvalidIndefiniteLengthChunkError({ type: 'byte string' })
-        chunks.push(chunk)
-        totalLength += chunk.length
+    while (true) {
+      const byte = cursor.inspectUint8()
+      if (byte === 0xff) {
+        cursor.readUint8() // consume the break byte
+        break
       }
-
-      // Concatenate chunks
-      const result = new Uint8Array(totalLength)
-      let offset = 0
-      for (const chunk of chunks) {
-        result.set(chunk, offset)
-        offset += chunk.length
-      }
-      return result
+      const chunk = decodeCursor(cursor, depth + 1) as Bytes.Bytes
+      if (!(chunk instanceof Uint8Array))
+        throw new InvalidIndefiniteLengthChunkError({ type: 'byte string' })
+      chunks.push(chunk)
+      totalLength += chunk.length
     }
 
-    const length = readLength(cursor, additionalInfo)
-    return cursor.readBytes(length)
+    // Concatenate chunks
+    const result = new Uint8Array(totalLength)
+    let offset = 0
+    for (const chunk of chunks) {
+      result.set(chunk, offset)
+      offset += chunk.length
+    }
+    return result
   }
 
-  /** @internal */
-  export declare namespace readByteString {
-    type ErrorType =
-      | readLength.ErrorType
-      | InvalidIndefiniteLengthChunkError
-      | Errors.GlobalErrorType
-  }
+  const length = readLength(cursor, additionalInfo)
+  return cursor.readBytes(length)
+}
 
-  /** @internal */
-  export function readTextString(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-    depth: number,
-  ): string {
-    // Indefinite-length text string
-    if (additionalInfo === 31) {
-      const chunks: string[] = []
+/** @internal */
+declare namespace readByteString {
+  type ErrorType =
+    | readLength.ErrorType
+    | InvalidIndefiniteLengthChunkError
+    | Errors.GlobalErrorType
+}
 
-      while (true) {
-        const byte = cursor.inspectUint8()
-        if (byte === 0xff) {
-          cursor.readUint8() // consume the break byte
-          break
-        }
-        const chunk = decodeCursor(cursor, depth + 1)
-        if (typeof chunk !== 'string')
-          throw new InvalidIndefiniteLengthChunkError({ type: 'text string' })
-        chunks.push(chunk)
+/** @internal */
+function readTextString(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+  depth: number,
+): string {
+  // Indefinite-length text string
+  if (additionalInfo === 31) {
+    const chunks: string[] = []
+
+    while (true) {
+      const byte = cursor.inspectUint8()
+      if (byte === 0xff) {
+        cursor.readUint8() // consume the break byte
+        break
       }
-
-      return chunks.join('')
+      const chunk = decodeCursor(cursor, depth + 1)
+      if (typeof chunk !== 'string')
+        throw new InvalidIndefiniteLengthChunkError({ type: 'text string' })
+      chunks.push(chunk)
     }
 
-    const length = readLength(cursor, additionalInfo)
-    const bytes = cursor.readBytes(length)
-    return Bytes.toString(bytes)
+    return chunks.join('')
   }
 
-  /** @internal */
-  export declare namespace readTextString {
-    type ErrorType =
-      | readLength.ErrorType
-      | Bytes.toString.ErrorType
-      | InvalidIndefiniteLengthChunkError
-      | Errors.GlobalErrorType
-  }
+  const length = readLength(cursor, additionalInfo)
+  const bytes = cursor.readBytes(length)
+  return Bytes.toString(bytes)
+}
 
-  /** @internal */
-  export function readArray(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-    depth: number,
-  ): unknown[] {
-    // Indefinite-length array
-    if (additionalInfo === 31) {
-      const result: unknown[] = []
+/** @internal */
+declare namespace readTextString {
+  type ErrorType =
+    | readLength.ErrorType
+    | Bytes.toString.ErrorType
+    | InvalidIndefiniteLengthChunkError
+    | Errors.GlobalErrorType
+}
 
-      while (true) {
-        const byte = cursor.inspectUint8()
-        if (byte === 0xff) {
-          cursor.readUint8() // consume the break byte
-          break
-        }
-        result.push(decodeCursor(cursor, depth + 1))
-      }
-
-      return result
-    }
-
-    const length = readLength(cursor, additionalInfo)
+/** @internal */
+function readArray(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+  depth: number,
+): unknown[] {
+  // Indefinite-length array
+  if (additionalInfo === 31) {
     const result: unknown[] = []
 
-    for (let i = 0; i < length; i++) {
+    while (true) {
+      const byte = cursor.inspectUint8()
+      if (byte === 0xff) {
+        cursor.readUint8() // consume the break byte
+        break
+      }
       result.push(decodeCursor(cursor, depth + 1))
     }
 
     return result
   }
 
-  /** @internal */
-  export declare namespace readArray {
-    type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+  const length = readLength(cursor, additionalInfo)
+  const result: unknown[] = []
+
+  for (let i = 0; i < length; i++) {
+    result.push(decodeCursor(cursor, depth + 1))
   }
 
-  /** @internal */
-  export function readMap(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-    depth: number,
-  ): Record<string, unknown> {
-    // Indefinite-length map
-    if (additionalInfo === 31) {
-      const result: Record<string, unknown> = {}
+  return result
+}
 
-      while (true) {
-        const byte = cursor.inspectUint8()
-        if (byte === 0xff) {
-          cursor.readUint8() // consume the break byte
-          break
-        }
-        const key = decodeCursor(cursor, depth + 1)
-        // Support both string and number keys (for COSE_Key with integer keys)
-        const keyStr =
-          typeof key === 'string'
-            ? key
-            : typeof key === 'number'
-              ? String(key)
-              : String(key)
-        const value = decodeCursor(cursor, depth + 1)
-        setEntry(result, keyStr, value)
-      }
+/** @internal */
+declare namespace readArray {
+  type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+}
 
-      return result
-    }
-
-    const length = readLength(cursor, additionalInfo)
+/** @internal */
+function readMap(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+  depth: number,
+): Record<string, unknown> {
+  // Indefinite-length map
+  if (additionalInfo === 31) {
     const result: Record<string, unknown> = {}
 
-    for (let i = 0; i < length; i++) {
+    while (true) {
+      const byte = cursor.inspectUint8()
+      if (byte === 0xff) {
+        cursor.readUint8() // consume the break byte
+        break
+      }
       const key = decodeCursor(cursor, depth + 1)
       // Support both string and number keys (for COSE_Key with integer keys)
       const keyStr =
@@ -903,107 +878,127 @@ namespace decodeCursor {
     return result
   }
 
-  /** @internal */
-  export declare namespace readMap {
-    type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+  const length = readLength(cursor, additionalInfo)
+  const result: Record<string, unknown> = {}
+
+  for (let i = 0; i < length; i++) {
+    const key = decodeCursor(cursor, depth + 1)
+    // Support both string and number keys (for COSE_Key with integer keys)
+    const keyStr =
+      typeof key === 'string'
+        ? key
+        : typeof key === 'number'
+          ? String(key)
+          : String(key)
+    const value = decodeCursor(cursor, depth + 1)
+    setEntry(result, keyStr, value)
   }
 
-  /** @internal */
-  function setEntry(
-    result: Record<string, unknown>,
-    key: string,
-    value: unknown,
-  ) {
-    // Define `__proto__` as an own property instead of assigning it, which
-    // would replace the prototype of `result` and drop the entry.
-    if (key === '__proto__')
-      Object.defineProperty(result, key, {
-        configurable: true,
-        enumerable: true,
-        value,
-        writable: true,
-      })
-    else result[key] = value
+  return result
+}
+
+/** @internal */
+declare namespace readMap {
+  type ErrorType = readLength.ErrorType | Errors.GlobalErrorType
+}
+
+/** @internal */
+function setEntry(
+  result: Record<string, unknown>,
+  key: string,
+  value: unknown,
+) {
+  // Define `__proto__` as an own property instead of assigning it, which
+  // would replace the prototype of `result` and drop the entry.
+  if (key === '__proto__')
+    Object.defineProperty(result, key, {
+      configurable: true,
+      enumerable: true,
+      value,
+      writable: true,
+    })
+  else result[key] = value
+}
+
+/** @internal */
+function readSimpleOrFloat(
+  cursor: Cursor.Cursor,
+  additionalInfo: number,
+): unknown {
+  // Simple values
+  if (additionalInfo === 20) return false
+  if (additionalInfo === 21) return true
+  if (additionalInfo === 22) return null
+  if (additionalInfo === 23) return undefined
+
+  // Float16 (half-precision)
+  if (additionalInfo === 25) {
+    const bits = cursor.readUint16()
+    return getFloat16(bits)
   }
 
-  /** @internal */
-  export function readSimpleOrFloat(
-    cursor: Cursor.Cursor,
-    additionalInfo: number,
-  ): unknown {
-    // Simple values
-    if (additionalInfo === 20) return false
-    if (additionalInfo === 21) return true
-    if (additionalInfo === 22) return null
-    if (additionalInfo === 23) return undefined
-
-    // Float16 (half-precision)
-    if (additionalInfo === 25) {
-      const bits = cursor.readUint16()
-      return getFloat16(bits)
-    }
-
-    // Float32
-    if (additionalInfo === 26) {
-      const value = cursor.dataView.getFloat32(cursor.position, false)
-      cursor.position += 4
-      return value
-    }
-
-    // Float64
-    if (additionalInfo === 27) {
-      const value = cursor.dataView.getFloat64(cursor.position, false)
-      cursor.position += 8
-      return value
-    }
-
-    // Simple value (additional byte)
-    if (additionalInfo === 24) {
-      const simpleValue = cursor.readUint8()
-      // Simple values 0-19 are assigned, 20-23 are in the initial byte
-      // 24-31 are reserved, 32-255 are unassigned
-      if (simpleValue < 32)
-        throw new InvalidSimpleValueError({ value: simpleValue })
-      // For now, treat unassigned simple values as undefined
-      return undefined
-    }
-
-    throw new InvalidAdditionalInfoError({ additionalInfo })
+  // Float32
+  if (additionalInfo === 26) {
+    cursor.assertPosition(cursor.position + 3)
+    const value = cursor.dataView.getFloat32(cursor.position, false)
+    cursor.position += 4
+    return value
   }
 
-  /** @internal */
-  export declare namespace readSimpleOrFloat {
-    type ErrorType =
-      | InvalidSimpleValueError
-      | InvalidAdditionalInfoError
-      | Errors.GlobalErrorType
+  // Float64
+  if (additionalInfo === 27) {
+    cursor.assertPosition(cursor.position + 7)
+    const value = cursor.dataView.getFloat64(cursor.position, false)
+    cursor.position += 8
+    return value
   }
 
-  /** @internal */
-  function getFloat16(bits: number): number {
-    // IEEE 754 half-precision (16-bit) float decoding
-    // Format: 1 sign bit, 5 exponent bits, 10 fraction bits
-    const sign = (bits >> 15) & 0x1
-    const exponent = (bits >> 10) & 0x1f
-    const fraction = bits & 0x3ff
+  // Simple value (additional byte)
+  if (additionalInfo === 24) {
+    const simpleValue = cursor.readUint8()
+    // Simple values 0-19 are assigned, 20-23 are in the initial byte
+    // 24-31 are reserved, 32-255 are unassigned
+    if (simpleValue < 32)
+      throw new InvalidSimpleValueError({ value: simpleValue })
+    // For now, treat unassigned simple values as undefined
+    return undefined
+  }
 
-    // Handle special cases
-    if (exponent === 0) {
-      // Subnormal numbers or zero
-      if (fraction === 0) return sign ? -0 : 0
-      // Subnormal: (-1)^sign × 2^(-14) × (0 + fraction/1024)
-      const value = 2 ** -14 * (fraction / 1024)
-      return sign ? -value : value
-    }
+  throw new InvalidAdditionalInfoError({ additionalInfo })
+}
 
-    if (exponent === 0x1f) {
-      // Infinity or NaN
-      if (fraction === 0) return sign ? -Infinity : Infinity
-      return NaN
-    }
+/** @internal */
+declare namespace readSimpleOrFloat {
+  type ErrorType =
+    | InvalidSimpleValueError
+    | InvalidAdditionalInfoError
+    | Errors.GlobalErrorType
+}
 
-    // Normal numbers: (-1)^sign × 2^(exponent-15) × (1 + fraction/1024)
-    const value = 2 ** (exponent - 15) * (1 + fraction / 1024)
+/** @internal */
+function getFloat16(bits: number): number {
+  // IEEE 754 half-precision (16-bit) float decoding
+  // Format: 1 sign bit, 5 exponent bits, 10 fraction bits
+  const sign = (bits >> 15) & 0x1
+  const exponent = (bits >> 10) & 0x1f
+  const fraction = bits & 0x3ff
+
+  // Handle special cases
+  if (exponent === 0) {
+    // Subnormal numbers or zero
+    if (fraction === 0) return sign ? -0 : 0
+    // Subnormal: (-1)^sign × 2^(-14) × (0 + fraction/1024)
+    const value = 2 ** -14 * (fraction / 1024)
     return sign ? -value : value
   }
+
+  if (exponent === 0x1f) {
+    // Infinity or NaN
+    if (fraction === 0) return sign ? -Infinity : Infinity
+    return NaN
+  }
+
+  // Normal numbers: (-1)^sign × 2^(exponent-15) × (1 + fraction/1024)
+  const value = 2 ** (exponent - 15) * (1 + fraction / 1024)
+  return sign ? -value : value
 }

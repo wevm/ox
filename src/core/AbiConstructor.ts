@@ -5,6 +5,7 @@ import * as AbiParameters from './AbiParameters.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiConstructor.js'
+import type * as AbiParameters_internal from './internal/abiParameters.js'
 import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable } from './internal/types.js'
 
@@ -24,7 +25,7 @@ type ExtractArgs<abiConstructor extends AbiConstructor | undefined> = [
 ] extends [never]
   ? readonly []
   : abiConstructor extends AbiConstructor
-    ? abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+    ? AbiParameters_internal.ToPrimitiveTypes<abiConstructor['inputs']>
     : readonly []
 
 /**
@@ -143,7 +144,7 @@ export declare namespace decode {
         : abiConstructor extends AbiConstructor
           ? abiConstructor['inputs']['length'] extends 0
             ? undefined
-            : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+            : AbiParameters_internal.ToPrimitiveTypes<abiConstructor['inputs']>
           : never)
     | (IsNarrowable<abiConstructor, AbiConstructor> extends true
         ? never

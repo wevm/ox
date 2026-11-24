@@ -517,6 +517,17 @@ describe('fromNumber', () => {
         '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
       )
     })
+
+    test('behavior: large sizes encode in linear time', () => {
+      const size = 1024 * 1024
+      const bytes = Bytes.fromNumber(-2, { size, signed: true })
+      expect(bytes.length).toBe(size)
+      expect(bytes.subarray(0, -1).every((byte) => byte === 0xff)).toBe(true)
+      expect(bytes[size - 1]).toBe(0xfe)
+      expect(Bytes.toBigInt(Bytes.fromNumber(2n ** 600n + 1n))).toBe(
+        2n ** 600n + 1n,
+      )
+    })
   })
 
   describe('bigints to bytes', () => {

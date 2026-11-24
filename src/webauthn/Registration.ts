@@ -566,11 +566,17 @@ export function verify(options: verify.Options): verify.ReturnType {
   // 1. Decode and validate clientDataJSON
   const clientDataJSONBytes = new Uint8Array(credential.clientDataJSON)
   const clientDataJSON = Bytes.toString(clientDataJSONBytes)
-  const clientData = JSON.parse(clientDataJSON)
+  const clientData = (() => {
+    try {
+      return JSON.parse(clientDataJSON)
+    } catch {
+      throw new VerifyError('clientDataJSON is not valid JSON')
+    }
+  })()
 
-  if (clientData.type !== 'webauthn.create')
+  if (clientData?.type !== 'webauthn.create')
     throw new VerifyError(
-      `Expected clientData.type "webauthn.create", got "${clientData.type}"`,
+      `Expected clientData.type "webauthn.create", got "${clientData?.type}"`,
     )
 
   // Validate challenge
