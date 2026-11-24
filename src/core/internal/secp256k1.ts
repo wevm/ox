@@ -1,4 +1,6 @@
+import { mapHashToField } from '@noble/curves/abstract/modular.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
+import { randomBytes } from '@noble/hashes/utils.js'
 import { type Complete, type Ecdsa, overrides } from './engine.js'
 
 /**
@@ -19,8 +21,16 @@ const getSharedSecretDefault: Complete<Ecdsa>['getSharedSecret'] = (
   publicKey,
 ) => secp256k1.getSharedSecret(privateKey, publicKey, true)
 
+/** Order of the secp256k1 group, which secret keys are reduced into. */
+const order =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
+
+/** `getMinHashLength(order)`, the random bytes a secret key is reduced from. */
+const seedLength = 48
+
+// What noble's `utils.randomSecretKey` does, without bundling the curve.
 const randomSecretKeyDefault: Complete<Ecdsa>['randomSecretKey'] = () =>
-  secp256k1.utils.randomSecretKey()
+  mapHashToField(randomBytes(seedLength), order)
 
 const recoverPublicKeyDefault: Complete<Ecdsa>['recoverPublicKey'] = (
   signature,

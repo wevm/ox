@@ -1,5 +1,6 @@
+import { p256 as noble } from '@noble/curves/nist.js'
 import { Bytes, Engine, Hex, Mnemonic, P256 } from 'ox'
-import { describe, expect, test } from 'vp/test'
+import { describe, expect, test, vi } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('getPublicKey', () => {
@@ -422,6 +423,23 @@ describe('getSharedSecret', () => {
 })
 
 describe('randomPrivateKey', () => {
+  test('behavior: same key as noble for the same random bytes', () => {
+    const getRandomValues = vi.spyOn(crypto, 'getRandomValues')
+    try {
+      for (const fill of [0x00, 0x01, 0x7f, 0xff]) {
+        getRandomValues.mockImplementation(
+          <array extends ArrayBufferView | null>(array: array) =>
+            (array as unknown as Uint8Array).fill(fill) as unknown as array,
+        )
+        expect(P256.randomPrivateKey({ as: 'Bytes' })).toEqual(
+          noble.utils.randomSecretKey(),
+        )
+      }
+    } finally {
+      getRandomValues.mockRestore()
+    }
+  })
+
   test('default', () => {
     const privateKey = P256.randomPrivateKey()
     expect(privateKey.length).toBe(66)
