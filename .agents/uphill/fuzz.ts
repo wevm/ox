@@ -357,7 +357,7 @@ function corpusFile() {
   if (!recordings.length) {
     if (process.env.FUZZ_CORPUS === 'refresh')
       throw new Error(
-        'There is no speed recording to snapshot. Run `bun .agents/metrics/speed.ts` first.',
+        'There is no speed recording to snapshot. Run `bun .agents/uphill/speed.ts` first.',
       )
     // Structured properties and hand-written seeds still run without recorded arguments.
     log(

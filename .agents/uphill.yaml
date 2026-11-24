@@ -2,7 +2,7 @@
 # subpaths `scripts/utils/exports.ts` derives from src/ and prepublish writes to
 # src/package.json#exports, so each export and each public function scores on its own. The
 # metrics, defaults, item names and hot set are shared with ox's main branch, so a target pattern
-# means the same item on both. Items are named the way users import them (.agents/metrics/names.ts):
+# means the same item on both. Items are named the way users import them (.agents/uphill/names.ts):
 # a member of a namespace as `<index entry>:<Namespace>.<member>`, such as `ox:Hex.fromString` or
 # `ox/tempo:SignatureEnvelope.sortApprovals`; a whole namespace as `ox:Hex`; a whole index entry by
 # its specifier, such as `ox` or `ox/tempo`. The per-module metrics (`tree-shaking`, `import-time`
@@ -13,11 +13,11 @@
 # functions (WebAuthn, WebCrypto, Keystore, AesGcm, RpcTransport) chain no independent requests.
 
 # Install scripts stay off (ox's postinstall builds contracts with Foundry, which no metric needs).
-# The scripts keep their own dependencies, such as rolldown and fast-check, in .agents/metrics.
-setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/metrics'
+# The scripts keep their own dependencies, such as rolldown and fast-check, in .agents/uphill.
+setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/uphill'
 
 footprint:
-  run: bun .agents/metrics/footprint.ts
+  run: bun .agents/uphill/footprint.ts
   # Gzipped bytes a consumer bundles to import one export the way users import it, such as
   # `import { Hex } from 'ox'; export const $ = Hex.fromString` for `ox:Hex.fromString`, a whole
   # namespace, such as `ox:Hex`, or a whole index entry, such as `ox/tempo`. rolldown bundles and
@@ -59,7 +59,7 @@ footprint:
   # bundle that imports the module for nothing when ox's `"sideEffects": false` is out of reach.
   # The note names what stays.
   tree-shaking: {}
-  # The parts of ox its users lean on most, listed in .agents/metrics/hot.ts, scored on their own:
+  # The parts of ox its users lean on most, listed in .agents/uphill/hot.ts, scored on their own:
   # in entry-size, a few dozen items that miss their targets hide under its p90. Each target is a
   # tenth of what the item bundles today, and no lower than 250 B, about what a function that throws
   # no error bundles. Some tenths sit below what the work itself needs, such as keccak's or
@@ -141,7 +141,7 @@ footprint:
       'ox/erc6492': 1.5kB # 15kB today
 
 speed:
-  run: bun .agents/metrics/speed.ts
+  run: bun .agents/uphill/speed.ts
   # Recording ox's tests takes about 75 s (more the first time anvil's fork cache fills), and each
   # replay about 5.3 minutes at concurrency 2; `uphill` (5 rounds) takes about 27 minutes.
   timeout: 60m
@@ -248,7 +248,7 @@ speed:
     targets:
       ox: 8MB
       ox/tempo*: 6MB
-  # The hot items of .agents/metrics/hot.ts, scored on their own, each against a tenth of its
+  # The hot items of .agents/uphill/hot.ts, scored on their own, each against a tenth of its
   # time, memory or import cost today, and scored by the median, as hot-entry-size explains. Call
   # times stop at 50 ns, where a call is too short to time, allocations at 64 B, imports at 2 ms,
   # about what a module without imports takes, and import memory at 100 kB.
@@ -434,10 +434,10 @@ speed:
 
 # How much of ox the speed bench reaches. It shares the speed script's run.
 coverage:
-  run: bun .agents/metrics/speed.ts
+  run: bun .agents/uphill/speed.ts
   timeout: 60m
   # Whether each public function has a call the bench can replay: one that returned or resolved
-  # in ox's tests (or in .agents/metrics/speed-calls.test.ts) with arguments that rebuild in
+  # in ox's tests (or in .agents/uphill/speed-calls.test.ts) with arguments that rebuild in
   # another process. The note says why not otherwise, such as "no test calls it" or "every
   # recorded call passes a function".
   benched: {}
@@ -453,7 +453,7 @@ coverage:
 # `v8.GCProfiler` instead gives 0.45 to 0.93 times V8's count, so check-memory would not compare
 # with its targets.
 types:
-  run: bun .agents/metrics/types.ts
+  run: bun .agents/uphill/types.ts
   timeout: 15m
   # Instantiations to resolve the export, exact. p50 66, p90 1,018. ABI and typed-data types start
   # near 12,000 because abitype's do (its TypedData alone costs 11,700), so they get 5,000. The
@@ -538,7 +538,7 @@ types:
       'src/core/_test/Signature.snap-d.ts > behavior: widened, unrecovered': 994
       'src/erc4337/_test/UserOperation.snap-d.ts > from > default': 2136
       'src/erc4337/_test/UserOperation.snap-d.ts > from > options: signature': 2210
-  # The hot items of .agents/metrics/hot.ts, each against a tenth of its instantiations today and
+  # The hot items of .agents/uphill/hot.ts, each against a tenth of its instantiations today and
   # no fewer than 40, about what the cheapest function costs, since the forms above take that much.
   # Instantiations have no floor in the work itself, so this list scores its p90 like the others.
   hot-instantiations:
@@ -618,7 +618,7 @@ types:
 # is inferring and checking the call, including the first use of the types it touches. Exact, so
 # one run suffices: about 30 s at UPHILL_CONCURRENCY=1.
 call-types:
-  run: bun .agents/metrics/types-calls.ts
+  run: bun .agents/uphill/types-calls.ts
   timeout: 10m
   # p50 11, p90 643. A call should cost under 1,000, and one that infers from an ABI or typed data
   # under 5,000, as on ox's main branch. TypedData's non-generic helpers infer nothing, so they keep
@@ -632,7 +632,7 @@ call-types:
       'ox:TypedData.*': 5000
       'ox:Abi*': 5000
       'ox/erc4337:UserOperation.*': 5000
-  # The hot items of .agents/metrics/hot.ts, each against a tenth of its call's instantiations
+  # The hot items of .agents/uphill/hot.ts, each against a tenth of its call's instantiations
   # today and no fewer than 10. More than half of the hot calls cost nothing, so this list scores
   # its p90.
   hot-instantiations:
@@ -708,12 +708,12 @@ call-types:
 # Whether each public function has a call in ox's tests that call-types measures; the note names
 # the test or says why not.
 type-coverage:
-  run: bun .agents/metrics/types-calls.ts
+  run: bun .agents/uphill/types-calls.ts
   timeout: 10m
   type-benched: {}
 
 fuzz:
-  run: bun .agents/metrics/fuzz.ts
+  run: bun .agents/uphill/fuzz.ts
   # About 2.5 minutes at UPHILL_CONCURRENCY=2. The limit leaves room for a loaded machine and for
   # workers stopped on a hang or runaway memory, each of which is rerun alone.
   timeout: 15m
@@ -729,6 +729,6 @@ fuzz:
   # Percent of the function's own source lines in src/_esm that ran under fuzzing (V8 precise
   # coverage).
   fuzz-coverage: { target: 90, better: higher }
-  # The hot items of .agents/metrics/hot.ts: every line of their own source should run under
+  # The hot items of .agents/uphill/hot.ts: every line of their own source should run under
   # fuzzing.
   hot-fuzz-coverage: { target: 100, better: higher }

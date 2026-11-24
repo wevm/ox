@@ -232,7 +232,7 @@
         "src/core/_test/AbiEvent.test.ts > assertArgs > error: provided args, but no actual event args",
         "src/core/_test/AbiEvent.test.ts > assertArgs > behavior: named + unnamed inputs",
         "src/core/_test/AbiEvent.test.ts > assertArgs > behavior: non-indexed `string` and `bytes`",
-        ".agents/metrics/speed-calls.test.ts > (module scope)"
+        ".agents/uphill/speed-calls.test.ts > (module scope)"
       ]
     },
     "ox/AbiEvent:fromAbi": {
@@ -2158,7 +2158,7 @@
         "src/erc4337/_test/UserOperation.test.ts > getSignPayload > default",
         "src/tempo/TokenRole.test.ts > serialize",
         "src/core/_test/Hash.test.ts > keccak256 > as: Hex",
-        ".agents/metrics/speed-calls.test.ts > (module scope)"
+        ".agents/uphill/speed-calls.test.ts > (module scope)"
       ]
     },
     "ox/Hash:ripemd160": {
@@ -2633,7 +2633,7 @@
       "seeds": [
         "[{\"blobToKzgCommitment\":{\"$call\":\"src/core/Kzg.ts#from\",\"$args\":[{\"blobToKzgCommitment\":{\"$ref\":\"test/kzg.ts#kzg.blobToKzgCommitment\"},\"computeBlobKzgProof\":{\"$ref\":\"test/kzg.ts#kzg.computeBlobKzgProof\"}}],\"$path\":[\"blobToKzgCommitment\"]},\"computeBlobKzgProof\":{\"$call\":\"src/core/Kzg.ts#from\",\"$args\":[{\"blobToKzgCommitment\":{\"$ref\":\"test/kzg.ts#kzg.blobToKzgCommitment\"},\"computeBlobKzgProof\":{\"$ref\":\"test/kzg.ts#kzg.computeBlobKzgProof\"}}],\"$path\":[\"computeBlobKzgProof\"]}}]"
       ],
-      "where": [".agents/metrics/speed-calls.test.ts > Kzg.from"]
+      "where": [".agents/uphill/speed-calls.test.ts > Kzg.from"]
     },
     "ox/Log:fromRpc": {
       "seeds": [
@@ -2844,7 +2844,7 @@
       "seeds": [
         "[{\"$call\":\"src/core/RpcTransport.ts#fromHttp\",\"$args\":[\"http://localhost:8545\"]}]"
       ],
-      "where": [".agents/metrics/speed-calls.test.ts > Provider.from"]
+      "where": [".agents/uphill/speed-calls.test.ts > Provider.from"]
     },
     "ox/Provider:parseError": {
       "seeds": [
@@ -3092,7 +3092,7 @@
     "ox/RpcRequest:createStore": {
       "seeds": ["[]", "[{\"id\":10}]"],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > Provider.from",
+        ".agents/uphill/speed-calls.test.ts > Provider.from",
         "src/core/_test/RpcRequest.test.ts > createStore > options: id"
       ]
     },
@@ -3150,7 +3150,7 @@
     },
     "ox/RpcSchema:from": {
       "seeds": ["[]"],
-      "where": [".agents/metrics/speed-calls.test.ts > RpcSchema.from"]
+      "where": [".agents/uphill/speed-calls.test.ts > RpcSchema.from"]
     },
     "ox/RpcTransport:fromHttp": {
       "seeds": [
@@ -3160,7 +3160,7 @@
         "[\"http://localhost:3001/2796\"]"
       ],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > Provider.from",
+        ".agents/uphill/speed-calls.test.ts > Provider.from",
         "src/core/_test/RpcTransport.test.ts > fromHttp > default",
         "src/core/_test/RpcTransport.test.ts > fromHttp > behavior: no timeout",
         "src/core/_test/TxEnvelopeEip8141.test.ts > (module scope)"
@@ -3502,7 +3502,7 @@
       "seeds": [
         "[{\"r\":{\"$b\":\"49782753348462494199823712700004552394425719014458918871452329774910450607807\"},\"s\":{\"$b\":\"33726695977844476214676913201140481102225469284307016937915595756355928419768\"},\"yParity\":1}]"
       ],
-      "where": [".agents/metrics/speed-calls.test.ts > Signature.toLegacy"]
+      "where": [".agents/uphill/speed-calls.test.ts > Signature.toLegacy"]
     },
     "ox/Signature:toRpc": {
       "seeds": [
@@ -3564,7 +3564,7 @@
       "seeds": ["[0]", "[1]"],
       "where": [
         "src/core/_test/Block.test.ts > fromRpc > behavior: network (with tx)",
-        ".agents/metrics/speed-calls.test.ts > Signature.toLegacy"
+        ".agents/uphill/speed-calls.test.ts > Signature.toLegacy"
       ]
     },
     "ox/Siwe:createMessage": {
@@ -3694,7 +3694,7 @@
         "src/core/_test/TransactionReceipt.test.ts > fromRpc > behavior: status named after an Object.prototype key",
         "src/core/_test/TransactionReceipt.test.ts > fromRpc > default",
         "src/core/_test/TransactionReceipt.test.ts > fromRpc > behavior: nullish values",
-        ".agents/metrics/speed-calls.test.ts > tempo TransactionReceipt"
+        ".agents/uphill/speed-calls.test.ts > tempo TransactionReceipt"
       ]
     },
     "ox/TransactionReceipt:toRpc": {
@@ -3710,7 +3710,7 @@
         "src/core/_test/TransactionReceipt.test.ts > frame receipts > preserves payer, statuses, logs, and large gas totals",
         "src/core/_test/TransactionReceipt.test.ts > toRpc > default",
         "src/core/_test/TransactionReceipt.test.ts > toRpc > behavior: nullish values",
-        ".agents/metrics/speed-calls.test.ts > tempo TransactionReceipt"
+        ".agents/uphill/speed-calls.test.ts > tempo TransactionReceipt"
       ]
     },
     "ox/TransactionRequest:fromRpc": {
@@ -4770,7 +4770,7 @@
         "[{\"createFn\":{\"$fn\":\"({createFn(_options) {\\n        return Promise.resolve({\\n          id: \\\"DxRcX5C6BRQ-q-CO7XEFwrnmKlk\\\",\\n          response: {\\n            attestationObject: new Uint8Array([\\n              163,\\n              99,\\n              102,\\n              109,\\n              116,\\n              100,\\n              110,\\n              111,\\n              110,\\n              101,\\n              103,\\n              97,\\n              116,\\n              116,\\n              83,\\n              116,\\n              109,\\n              116,\\n              160,\\n              104,\\n              97,\\n              117,\\n              116,\\n              104,\\n              68,\\n              97,\\n              116,\\n              97,\\n              88,\\n              152,\\n              73,\\n              150,\\n              13,\\n              229,\\n              136,\\n              14,\\n              140,\\n              104,\\n              116,\\n              52,\\n              23,\\n              15,\\n              100,\\n              118,\\n              96,\\n              91,\\n              143,\\n              228,\\n              174,\\n              185,\\n              162,\\n              134,\\n              50,\\n              199,\\n              153,\\n              92,\\n              243,\\n              186,\\n              131,\\n              29,\\n              151,\\n              99,\\n              93,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              20,\\n              15,\\n              20,\\n              92,\\n              95,\\n              144,\\n              186,\\n              5,\\n              20,\\n              62,\\n              171,\\n              224,\\n              142,\\n              237,\\n              113,\\n              5,\\n              194,\\n              185,\\n              230,\\n              42,\\n              89,\\n              165,\\n              1,\\n              2,\\n              3,\\n              38,\\n              32,\\n              1,\\n              33,\\n              88,\\n              32,\\n              98,\\n              163,\\n              23,\\n              104,\\n              212,\\n              79,\\n              94,\\n              255,\\n              34,\\n              47,\\n              141,\\n              112,\\n              196,\\n              203,\\n              97,\\n              171,\\n              210,\\n              132,\\n              11,\\n              39,\\n              214,\\n              23,\\n              167,\\n              254,\\n              141,\\n              17,\\n              183,\\n              45,\\n              213,\\n              232,\\n              111,\\n              193,\\n              34,\\n              88,\\n              32,\\n              102,\\n              17,\\n              186,\\n              227,\\n              241,\\n              226,\\n              205,\\n              56,\\n              228,\\n              5,\\n              21,\\n              55,\\n              118,\\n              167,\\n              220,\\n              182,\\n              153,\\n              91,\\n              130,\\n              84,\\n              161,\\n              65,\\n              110,\\n              173,\\n              16,\\n              42,\\n              9,\\n              108,\\n              176,\\n              216,\\n              6,\\n              24\\n            ]),\\n            getPublicKey() {\\n              throw new Error(\\\"Permission denied to access object\\\");\\n            }\\n          }\\n        });\\n      }}).createFn\"},\"name\":\"Example\"}]"
       ],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > WebAuthn credential creation",
+        ".agents/uphill/speed-calls.test.ts > WebAuthn credential creation",
         "src/core/_test/WebAuthnP256.test.ts > createCredential > behavior: firefox workaround"
       ]
     },
@@ -4829,7 +4829,7 @@
         "[{\"name\":\"Example\",\"challenge\":\"0xdeadbeef\",\"rp\":{\"id\":\"example.com\",\"name\":\"Test\"}}]"
       ],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > WebAuthn credential creation",
+        ".agents/uphill/speed-calls.test.ts > WebAuthn credential creation",
         "src/core/_test/WebAuthnP256.test.ts > getCredentialCreationOptions > args: user",
         "src/webauthn/_test/Registration.test.ts > serializeOptions > with excludeCredentials",
         "src/core/_test/WebAuthnP256.test.ts > createCredential > behavior: firefox workaround",
@@ -4847,7 +4847,7 @@
         "src/core/_test/WebAuthnP256.test.ts > getCredentialRequestOptions > default",
         "src/webauthn/_test/Authentication.test.ts > serializeOptions > with allowCredentials",
         "src/core/_test/WebAuthnP256.test.ts > getCredentialRequestOptions > options: credentialId",
-        ".agents/metrics/speed-calls.test.ts > WebAuthn signing"
+        ".agents/uphill/speed-calls.test.ts > WebAuthn signing"
       ]
     },
     "ox/WebAuthnP256:getSignPayload": {
@@ -4868,7 +4868,7 @@
       "seeds": [
         "[{\"challenge\":\"0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf\",\"getFn\":{\"$fn\":\"(() => Promise.resolve({\\n    id: \\\"m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs\\\",\\n    response: {\\n      authenticatorData: [\\n        73,\\n        150,\\n        13,\\n        229,\\n        136,\\n        14,\\n        140,\\n        104,\\n        116,\\n        52,\\n        23,\\n        15,\\n        100,\\n        118,\\n        96,\\n        91,\\n        143,\\n        228,\\n        174,\\n        185,\\n        162,\\n        134,\\n        50,\\n        199,\\n        153,\\n        92,\\n        243,\\n        186,\\n        131,\\n        29,\\n        151,\\n        99,\\n        5,\\n        0,\\n        0,\\n        0,\\n        0\\n      ],\\n      clientDataJSON: [\\n        123,\\n        34,\\n        116,\\n        121,\\n        112,\\n        101,\\n        34,\\n        58,\\n        34,\\n        119,\\n        101,\\n        98,\\n        97,\\n        117,\\n        116,\\n        104,\\n        110,\\n        46,\\n        103,\\n        101,\\n        116,\\n        34,\\n        44,\\n        34,\\n        99,\\n        104,\\n        97,\\n        108,\\n        108,\\n        101,\\n        110,\\n        103,\\n        101,\\n        34,\\n        58,\\n        34,\\n        57,\\n        106,\\n        69,\\n        70,\\n        105,\\n        106,\\n        117,\\n        104,\\n        69,\\n        87,\\n        114,\\n        77,\\n        52,\\n        83,\\n        79,\\n        87,\\n        45,\\n        116,\\n        67,\\n        104,\\n        74,\\n        98,\\n        85,\\n        69,\\n        72,\\n        69,\\n        80,\\n        52,\\n        52,\\n        86,\\n        99,\\n        106,\\n        99,\\n        74,\\n        45,\\n        66,\\n        113,\\n        111,\\n        49,\\n        102,\\n        84,\\n        77,\\n        56,\\n        34,\\n        44,\\n        34,\\n        111,\\n        114,\\n        105,\\n        103,\\n        105,\\n        110,\\n        34,\\n        58,\\n        34,\\n        104,\\n        116,\\n        116,\\n        112,\\n        58,\\n        47,\\n        47,\\n        108,\\n        111,\\n        99,\\n        97,\\n        108,\\n        104,\\n        111,\\n        115,\\n        116,\\n        58,\\n        53,\\n        49,\\n        55,\\n        51,\\n        34,\\n        44,\\n        34,\\n        99,\\n        114,\\n        111,\\n        115,\\n        115,\\n        79,\\n        114,\\n        105,\\n        103,\\n        105,\\n        110,\\n        34,\\n        58,\\n        102,\\n        97,\\n        108,\\n        115,\\n        101,\\n        125\\n      ],\\n      signature: [\\n        48,\\n        70,\\n        2,\\n        33,\\n        0,\\n        146,\\n        61,\\n        150,\\n        57,\\n        188,\\n        182,\\n        119,\\n        250,\\n        23,\\n        162,\\n        103,\\n        56,\\n        232,\\n        200,\\n        162,\\n        77,\\n        88,\\n        37,\\n        145,\\n        151,\\n        40,\\n        59,\\n        42,\\n        63,\\n        46,\\n        225,\\n        53,\\n        221,\\n        74,\\n        128,\\n        13,\\n        165,\\n        2,\\n        33,\\n        0,\\n        128,\\n        39,\\n        38,\\n        71,\\n        180,\\n        153,\\n        30,\\n        232,\\n        243,\\n        94,\\n        159,\\n        66,\\n        42,\\n        246,\\n        56,\\n        195,\\n        195,\\n        139,\\n        40,\\n        163,\\n        26,\\n        34,\\n        125,\\n        244,\\n        171,\\n        166,\\n        7,\\n        178,\\n        169,\\n        246,\\n        142,\\n        198\\n      ]\\n    }\\n  }))\"}}]"
       ],
-      "where": [".agents/metrics/speed-calls.test.ts > WebAuthn signing"]
+      "where": [".agents/uphill/speed-calls.test.ts > WebAuthn signing"]
     },
     "ox/WebAuthnP256:verify": {
       "seeds": [
@@ -6621,17 +6621,13 @@
       "seeds": [
         "[{\"blobGasPrice\":\"0x42069\",\"blobGasUsed\":\"0x1337\",\"blockHash\":\"0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b\",\"blockNumber\":\"0x12f296f\",\"contractAddress\":null,\"cumulativeGasUsed\":\"0x82515\",\"effectiveGasPrice\":\"0x21c2f6c09\",\"feePayer\":\"0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6\",\"feeToken\":\"0x20c0000000000000000000000000000000000001\",\"from\":\"0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6\",\"gasUsed\":\"0x2abba\",\"logs\":[],\"logsBloom\":\"0x00200000000000000000008080000000000000000040000000000000000000000000000000000000000000000000000022000000080000000000000000000000000000080000000000000008000000200000000000000000000200008020400000000000000000280000000000100000000000000000000000000010000000000000000000020000000000000020000000000001000000080000004000000000000000000000000000000000000000000000400000000000001000000000000000000002000000000000000020000000000000000000001000000000000000000000200000000000000000000000000000001000000000c00000000000000000\",\"status\":\"0x1\",\"to\":\"0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad\",\"transactionHash\":\"0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0\",\"transactionIndex\":\"0x2\",\"type\":\"0x2\"}]"
       ],
-      "where": [
-        ".agents/metrics/speed-calls.test.ts > tempo TransactionReceipt"
-      ]
+      "where": [".agents/uphill/speed-calls.test.ts > tempo TransactionReceipt"]
     },
     "ox/tempo/TransactionReceipt:toRpc": {
       "seeds": [
         "[{\"blobGasPrice\":{\"$b\":\"270441\"},\"blobGasUsed\":{\"$b\":\"4919\"},\"blockHash\":\"0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b\",\"blockNumber\":{\"$b\":\"19868015\"},\"contractAddress\":null,\"cumulativeGasUsed\":{\"$b\":\"533781\"},\"effectiveGasPrice\":{\"$b\":\"9062804489\"},\"feePayer\":\"0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6\",\"feeToken\":\"0x20c0000000000000000000000000000000000001\",\"from\":\"0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6\",\"gasUsed\":{\"$b\":\"175034\"},\"logs\":[],\"logsBloom\":\"0x00200000000000000000008080000000000000000040000000000000000000000000000000000000000000000000000022000000080000000000000000000000000000080000000000000008000000200000000000000000000200008020400000000000000000280000000000100000000000000000000000000010000000000000000000020000000000000020000000000001000000080000004000000000000000000000000000000000000000000000400000000000001000000000000000000002000000000000000020000000000000000000001000000000000000000000200000000000000000000000000000001000000000c00000000000000000\",\"status\":\"success\",\"to\":\"0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad\",\"transactionHash\":\"0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0\",\"transactionIndex\":2,\"type\":\"eip1559\"}]"
       ],
-      "where": [
-        ".agents/metrics/speed-calls.test.ts > tempo TransactionReceipt"
-      ]
+      "where": [".agents/uphill/speed-calls.test.ts > tempo TransactionReceipt"]
     },
     "ox/tempo/TransactionRequest:fromRpc": {
       "seeds": [
@@ -7013,7 +7009,7 @@
         "src/core/_test/WebAuthnP256.test.ts > getCredentialRequestOptions > default",
         "src/webauthn/_test/Authentication.test.ts > serializeOptions > with allowCredentials",
         "src/core/_test/WebAuthnP256.test.ts > getCredentialRequestOptions > options: credentialId",
-        ".agents/metrics/speed-calls.test.ts > WebAuthn signing"
+        ".agents/uphill/speed-calls.test.ts > WebAuthn signing"
       ]
     },
     "ox/webauthn/Authentication:getSignPayload": {
@@ -7056,7 +7052,7 @@
       "seeds": [
         "[{\"challenge\":\"0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf\",\"getFn\":{\"$fn\":\"(() => Promise.resolve({\\n    id: \\\"m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs\\\",\\n    response: {\\n      authenticatorData: [\\n        73,\\n        150,\\n        13,\\n        229,\\n        136,\\n        14,\\n        140,\\n        104,\\n        116,\\n        52,\\n        23,\\n        15,\\n        100,\\n        118,\\n        96,\\n        91,\\n        143,\\n        228,\\n        174,\\n        185,\\n        162,\\n        134,\\n        50,\\n        199,\\n        153,\\n        92,\\n        243,\\n        186,\\n        131,\\n        29,\\n        151,\\n        99,\\n        5,\\n        0,\\n        0,\\n        0,\\n        0\\n      ],\\n      clientDataJSON: [\\n        123,\\n        34,\\n        116,\\n        121,\\n        112,\\n        101,\\n        34,\\n        58,\\n        34,\\n        119,\\n        101,\\n        98,\\n        97,\\n        117,\\n        116,\\n        104,\\n        110,\\n        46,\\n        103,\\n        101,\\n        116,\\n        34,\\n        44,\\n        34,\\n        99,\\n        104,\\n        97,\\n        108,\\n        108,\\n        101,\\n        110,\\n        103,\\n        101,\\n        34,\\n        58,\\n        34,\\n        57,\\n        106,\\n        69,\\n        70,\\n        105,\\n        106,\\n        117,\\n        104,\\n        69,\\n        87,\\n        114,\\n        77,\\n        52,\\n        83,\\n        79,\\n        87,\\n        45,\\n        116,\\n        67,\\n        104,\\n        74,\\n        98,\\n        85,\\n        69,\\n        72,\\n        69,\\n        80,\\n        52,\\n        52,\\n        86,\\n        99,\\n        106,\\n        99,\\n        74,\\n        45,\\n        66,\\n        113,\\n        111,\\n        49,\\n        102,\\n        84,\\n        77,\\n        56,\\n        34,\\n        44,\\n        34,\\n        111,\\n        114,\\n        105,\\n        103,\\n        105,\\n        110,\\n        34,\\n        58,\\n        34,\\n        104,\\n        116,\\n        116,\\n        112,\\n        58,\\n        47,\\n        47,\\n        108,\\n        111,\\n        99,\\n        97,\\n        108,\\n        104,\\n        111,\\n        115,\\n        116,\\n        58,\\n        53,\\n        49,\\n        55,\\n        51,\\n        34,\\n        44,\\n        34,\\n        99,\\n        114,\\n        111,\\n        115,\\n        115,\\n        79,\\n        114,\\n        105,\\n        103,\\n        105,\\n        110,\\n        34,\\n        58,\\n        102,\\n        97,\\n        108,\\n        115,\\n        101,\\n        125\\n      ],\\n      signature: [\\n        48,\\n        70,\\n        2,\\n        33,\\n        0,\\n        146,\\n        61,\\n        150,\\n        57,\\n        188,\\n        182,\\n        119,\\n        250,\\n        23,\\n        162,\\n        103,\\n        56,\\n        232,\\n        200,\\n        162,\\n        77,\\n        88,\\n        37,\\n        145,\\n        151,\\n        40,\\n        59,\\n        42,\\n        63,\\n        46,\\n        225,\\n        53,\\n        221,\\n        74,\\n        128,\\n        13,\\n        165,\\n        2,\\n        33,\\n        0,\\n        128,\\n        39,\\n        38,\\n        71,\\n        180,\\n        153,\\n        30,\\n        232,\\n        243,\\n        94,\\n        159,\\n        66,\\n        42,\\n        246,\\n        56,\\n        195,\\n        195,\\n        139,\\n        40,\\n        163,\\n        26,\\n        34,\\n        125,\\n        244,\\n        171,\\n        166,\\n        7,\\n        178,\\n        169,\\n        246,\\n        142,\\n        198\\n      ]\\n    }\\n  }))\"}}]"
       ],
-      "where": [".agents/metrics/speed-calls.test.ts > WebAuthn signing"]
+      "where": [".agents/uphill/speed-calls.test.ts > WebAuthn signing"]
     },
     "ox/webauthn/Authentication:verify": {
       "seeds": [
@@ -7125,7 +7121,7 @@
         "[\"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000001\"]"
       ],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > Authenticator.getSignCount"
+        ".agents/uphill/speed-calls.test.ts > Authenticator.getSignCount"
       ]
     },
     "ox/webauthn/Credential:deserialize": {
@@ -7152,7 +7148,7 @@
         "[{\"createFn\":{\"$fn\":\"({createFn(_options) {\\n        return Promise.resolve({\\n          id: \\\"DxRcX5C6BRQ-q-CO7XEFwrnmKlk\\\",\\n          response: {\\n            attestationObject: new Uint8Array([\\n              163,\\n              99,\\n              102,\\n              109,\\n              116,\\n              100,\\n              110,\\n              111,\\n              110,\\n              101,\\n              103,\\n              97,\\n              116,\\n              116,\\n              83,\\n              116,\\n              109,\\n              116,\\n              160,\\n              104,\\n              97,\\n              117,\\n              116,\\n              104,\\n              68,\\n              97,\\n              116,\\n              97,\\n              88,\\n              152,\\n              73,\\n              150,\\n              13,\\n              229,\\n              136,\\n              14,\\n              140,\\n              104,\\n              116,\\n              52,\\n              23,\\n              15,\\n              100,\\n              118,\\n              96,\\n              91,\\n              143,\\n              228,\\n              174,\\n              185,\\n              162,\\n              134,\\n              50,\\n              199,\\n              153,\\n              92,\\n              243,\\n              186,\\n              131,\\n              29,\\n              151,\\n              99,\\n              93,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              0,\\n              20,\\n              15,\\n              20,\\n              92,\\n              95,\\n              144,\\n              186,\\n              5,\\n              20,\\n              62,\\n              171,\\n              224,\\n              142,\\n              237,\\n              113,\\n              5,\\n              194,\\n              185,\\n              230,\\n              42,\\n              89,\\n              165,\\n              1,\\n              2,\\n              3,\\n              38,\\n              32,\\n              1,\\n              33,\\n              88,\\n              32,\\n              98,\\n              163,\\n              23,\\n              104,\\n              212,\\n              79,\\n              94,\\n              255,\\n              34,\\n              47,\\n              141,\\n              112,\\n              196,\\n              203,\\n              97,\\n              171,\\n              210,\\n              132,\\n              11,\\n              39,\\n              214,\\n              23,\\n              167,\\n              254,\\n              141,\\n              17,\\n              183,\\n              45,\\n              213,\\n              232,\\n              111,\\n              193,\\n              34,\\n              88,\\n              32,\\n              102,\\n              17,\\n              186,\\n              227,\\n              241,\\n              226,\\n              205,\\n              56,\\n              228,\\n              5,\\n              21,\\n              55,\\n              118,\\n              167,\\n              220,\\n              182,\\n              153,\\n              91,\\n              130,\\n              84,\\n              161,\\n              65,\\n              110,\\n              173,\\n              16,\\n              42,\\n              9,\\n              108,\\n              176,\\n              216,\\n              6,\\n              24\\n            ]),\\n            getPublicKey() {\\n              throw new Error(\\\"Permission denied to access object\\\");\\n            }\\n          }\\n        });\\n      }}).createFn\"},\"name\":\"Example\"}]"
       ],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > WebAuthn credential creation",
+        ".agents/uphill/speed-calls.test.ts > WebAuthn credential creation",
         "src/core/_test/WebAuthnP256.test.ts > createCredential > behavior: firefox workaround"
       ]
     },
@@ -7187,7 +7183,7 @@
         "[{\"name\":\"Example\",\"challenge\":\"0xdeadbeef\",\"rp\":{\"id\":\"example.com\",\"name\":\"Test\"}}]"
       ],
       "where": [
-        ".agents/metrics/speed-calls.test.ts > WebAuthn credential creation",
+        ".agents/uphill/speed-calls.test.ts > WebAuthn credential creation",
         "src/core/_test/WebAuthnP256.test.ts > getCredentialCreationOptions > args: user",
         "src/webauthn/_test/Registration.test.ts > serializeOptions > with excludeCredentials",
         "src/core/_test/WebAuthnP256.test.ts > createCredential > behavior: firefox workaround",

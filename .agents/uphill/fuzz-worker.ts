@@ -423,7 +423,7 @@ async function buildCorpus() {
       2,
     )}\n`,
   )
-  // `biome check .agents/metrics` must pass, so the fixture is written in biome's layout.
+  // `biome check .agents/uphill` must pass, so the fixture is written in biome's layout.
   try {
     execFileSync(path.join(root, 'node_modules/.bin/biome'), [
       'format',

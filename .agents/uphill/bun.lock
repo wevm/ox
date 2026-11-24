@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "ox-metrics",
+      "name": "ox-uphill",
       "dependencies": {
         "acorn": "^8.15.0",
         "fast-check": "^4.3.0",
