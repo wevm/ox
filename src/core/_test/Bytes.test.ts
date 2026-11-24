@@ -441,6 +441,52 @@ describe('fromNumber', () => {
       )
     })
 
+    test('behavior: size and safe-integer boundaries', () => {
+      expect(Array.from(Bytes.fromNumber(255, { size: 1 }))).toEqual([255])
+      expect(() =>
+        Bytes.fromNumber(256, { size: 1 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+      )
+      expect(
+        Array.from(Bytes.fromNumber(127, { signed: true, size: 1 })),
+      ).toEqual([127])
+      expect(() =>
+        Bytes.fromNumber(128, { signed: true, size: 1 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+      )
+      expect(Array.from(Bytes.fromNumber(2 ** 48 - 1, { size: 6 }))).toEqual([
+        255, 255, 255, 255, 255, 255,
+      ])
+      expect(() =>
+        Bytes.fromNumber(2 ** 48, { size: 6 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`281474976710656\` is not in safe 48-bit unsigned integer range (\`0\` to \`281474976710655\`)]`,
+      )
+      // Neither a fractional size nor a value that is not a number takes the
+      // fast path.
+      expect(() =>
+        Bytes.fromNumber(5, { size: 1.5 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[RangeError: The number 1.5 cannot be converted to a BigInt because it is not an integer]`,
+      )
+      expect(() =>
+        Bytes.fromNumber(null as never),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TypeError: Cannot convert null to a BigInt]`,
+      )
+      expect(Array.from(Bytes.fromNumber(2n ** 53n - 1n))).toEqual([
+        0x1f, 255, 255, 255, 255, 255, 255,
+      ])
+      expect(Array.from(Bytes.fromNumber(2n ** 53n))).toEqual([
+        0x20, 0, 0, 0, 0, 0, 0,
+      ])
+      expect(Array.from(Bytes.fromNumber(2n ** 64n + 1n))).toEqual([
+        1, 0, 0, 0, 0, 0, 0, 0, 1,
+      ])
+    })
+
     test('args: signed', () => {
       expect(
         Bytes.fromNumber(32, { size: 1, signed: true }),

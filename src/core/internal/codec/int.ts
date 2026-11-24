@@ -93,6 +93,35 @@ export function bigIntToBytes(
 ): Uint8Array {
   const { signed, size } = options
 
+  // A non-negative safe integer is written without BigInt arithmetic, unless
+  // it might not fit in `size` bytes, which the general path reports.
+  const small =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'bigint' && value >= 0n && value <= 0x1fffffffffffffn
+        ? Number(value)
+        : -1
+  if (
+    small >= 0 &&
+    Number.isSafeInteger(small) &&
+    (size === undefined || (Number.isInteger(size) && size > 0)) &&
+    (!size || size >= 7 || small < 2 ** (size * 8 - (signed ? 1 : 0)))
+  ) {
+    let length = size
+    if (length === undefined) {
+      length = 1
+      for (let v = small; v >= 256; v = Math.floor(v / 256)) length++
+    }
+    const out = new Uint8Array(length)
+    for (
+      let i = length - 1, v = small;
+      v > 0 && i >= 0;
+      i--, v = Math.floor(v / 256)
+    )
+      out[i] = v % 256
+    return out
+  }
+
   // Range check (mirrors `Hex.fromNumber` semantics).
   let value_: bigint
   if (typeof value === 'bigint') value_ = value
@@ -141,12 +170,13 @@ export function bigIntToBytes(
   const minBytes = bigIntByteLength(n)
   const length = size ?? Math.max(minBytes, 1)
   const out = new Uint8Array(length)
-  // Right-aligned big-endian write.
+  // Right-aligned big-endian write, 32 bits per BigInt operation.
   let i = length - 1
   let rem = n
   while (rem > 0n && i >= 0) {
-    out[i--] = Number(rem & 0xffn)
-    rem >>= 8n
+    let word = Number(rem & 0xffffffffn)
+    rem >>= 32n
+    for (let k = 0; k < 4 && i >= 0; k++, word >>>= 8) out[i--] = word & 0xff
   }
   return out
 }
@@ -154,15 +184,9 @@ export function bigIntToBytes(
 /** @internal */
 export function bigIntByteLength(n: bigint): number {
   if (n === 0n) return 0
-  let v = n < 0n ? -n : n
-  // See `bigIntToBytes`: shifting a large value a byte at a time is quadratic.
-  if (v >> 512n) return (v.toString(16).length + 1) >> 1
-  let len = 0
-  while (v > 0n) {
-    len++
-    v >>= 8n
-  }
-  return len
+  // Shifting a byte off at a time copies the rest of the number each time;
+  // counting hex digits is one conversion.
+  return ((n < 0n ? -n : n).toString(16).length + 1) >> 1
 }
 
 /** Thrown when a value cannot be represented as a safe integer. */
