@@ -138,12 +138,20 @@ type State = {
   source?: string | undefined
 }
 
-/** The size of the input in bytes. */
+/**
+ * The size of the input in bytes.
+ *
+ * @internal
+ */
 function sizeOf(state: State): number {
   return state.bytes ? state.bytes.length : (state.source!.length - 2) / 2
 }
 
-/** The byte at `position`, from `bytes` or from two digits of `source`. */
+/**
+ * The byte at `position`, from `bytes` or from two digits of `source`.
+ *
+ * @internal
+ */
 function byteAt(state: State, position: number): number {
   if (state.bytes) return state.bytes[position]!
   const i = 2 + position * 2
