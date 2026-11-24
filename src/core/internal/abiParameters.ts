@@ -463,6 +463,33 @@ export declare namespace decodeString {
     | Errors.GlobalErrorType
 }
 
+/**
+ * Encodes `values` as `parameters`: `prefix` followed by the encoding's hex
+ * digits, so a caller with a prefix, such as a function selector, does not
+ * slice and copy the encoding to append it.
+ *
+ * @internal
+ */
+export function encodeParameters(
+  parameters: readonly AbiParameters.Parameter[],
+  values: readonly unknown[],
+  prefix: string,
+  checksumAddress = false,
+): Hex.Hex {
+  if (parameters.length !== values.length)
+    throw new AbiParameters.LengthMismatchError({
+      expectedLength: parameters.length,
+      givenLength: values.length,
+    })
+  return `${prefix}${encode(
+    prepareParameters({
+      checksumAddress,
+      parameters,
+      values: values as never,
+    }),
+  )}` as Hex.Hex
+}
+
 /** @internal */
 export function prepareParameters<
   const parameters extends AbiParameters.AbiParameters,
@@ -477,10 +504,12 @@ export function prepareParameters<
     ? ToPrimitiveTypes<parameters>
     : never
 }) {
-  const preparedParameters: PreparedParameter[] = []
+  const preparedParameters: PreparedParameter[] = new Array(parameters.length)
   for (let i = 0; i < parameters.length; i++)
-    preparedParameters.push(
-      prepareParameter(parameters[i]!, values[i], checksumAddress),
+    preparedParameters[i] = prepareParameter(
+      parameters[i]!,
+      values[i],
+      checksumAddress,
     )
   return preparedParameters
 }

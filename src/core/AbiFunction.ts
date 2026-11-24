@@ -6,7 +6,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiFunction.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
-import type * as AbiParameters_internal from './internal/abiParameters.js'
+import * as AbiParameters_internal from './internal/abiParameters.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `function` type. */
@@ -564,19 +564,10 @@ export function encodeData<const abiFunction extends AbiFunction>(
 ): Hex.Hex
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function encodeData(
-  ...parameters:
-    | [
-        abi: Abi.Abi | readonly unknown[],
-        name: Hex.Hex | string,
-        ...args: readonly unknown[],
-      ]
-    | [abiFunction: AbiFunction, ...args: readonly unknown[]]
+  abiOrFunction: Abi.Abi | readonly unknown[] | AbiFunction,
+  nameOrArgs?: Hex.Hex | string | readonly unknown[] | undefined,
+  args_?: readonly unknown[] | undefined,
 ) {
-  const [abiOrFunction, nameOrArgs, args_] = parameters as [
-    Abi.Abi | readonly unknown[] | AbiFunction,
-    Hex.Hex | string | readonly unknown[] | undefined,
-    readonly unknown[] | undefined,
-  ]
   const isAbi = Array.isArray(abiOrFunction)
   const abiFunction = isAbi
     ? fromAbi(abiOrFunction, nameOrArgs as string, { args: args_ })
@@ -594,7 +585,7 @@ export function encodeData(
 
   const selector = getSelector(item)
   if (args.length === 0) return selector
-  return `${selector}${AbiParameters.encode(item.inputs, args).slice(2)}`
+  return AbiParameters_internal.encodeParameters(item.inputs, args, selector)
 }
 
 export declare namespace encodeData {
