@@ -1,4 +1,4 @@
-import { test } from '@fast-check/vitest'
+import { fc, test } from '@fast-check/vitest'
 import { Base32, Base58, Base64 } from 'ox'
 import { describe, expect } from 'vp/test'
 
@@ -21,6 +21,25 @@ describe('Base58 round-trip', () => {
       expect(Base58.toBytes(Base58.fromBytes(bytes))).toEqual(bytes)
     },
   )
+})
+
+describe('Base64 strings', () => {
+  test.prop(
+    {
+      value: fc.oneof(
+        fc.string({ maxLength: 80, unit: 'grapheme' }),
+        fc.string({ maxLength: 80, unit: 'binary' }),
+      ),
+    },
+    { numRuns },
+  )('fromString encodes UTF-8, and toString decodes it back', ({ value }) => {
+    const encoded = Base64.fromString(value)
+    expect(encoded).toBe(Base64.fromBytes(new TextEncoder().encode(value)))
+    // A lone surrogate encodes as U+FFFD.
+    expect(Base64.toString(encoded)).toBe(
+      new TextDecoder().decode(new TextEncoder().encode(value)),
+    )
+  })
 })
 
 describe('Base64 round-trip', () => {
