@@ -72,27 +72,40 @@ export function to<
 >(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
 
-  let bytes: Bytes.Bytes
-  if (typeof value === 'string') {
-    if (value.length > 3 && value.length % 2 !== 0)
-      throw new Hex.InvalidLengthError(value)
-    bytes = Bytes.fromHex(value)
-  } else bytes = value as Bytes.Bytes
-
   // Hex leaves are cut from the input as lowercase hex, rather than copied out
-  // of `bytes` and encoded one by one. A long input decodes leaf by leaf, so
-  // small leaves do not keep it alive.
-  let source: string | undefined
-  if (to_ === 'Hex' && bytes.length <= sourceMaxLength)
-    if (typeof value !== 'string') source = Hex.fromBytes(bytes)
-    else if (value.length % 2 === 0) source = value.toLowerCase()
-
-  const state: DecodeState = { bytes, position: 0, source }
+  // of bytes and encoded one by one. Valid hex decoded to hex is read as hex,
+  // without decoding the whole input to bytes. A long input decodes leaf by
+  // leaf, so small leaves do not keep it alive.
+  let state: State
+  if (
+    typeof value === 'string' &&
+    to_ === 'Hex' &&
+    value.length % 2 === 0 &&
+    value.length <= 2 + sourceMaxLength * 2 &&
+    hexRegex.test(value)
+  )
+    state = { position: 0, source: value.toLowerCase() }
+  else {
+    let bytes: Bytes.Bytes
+    if (typeof value === 'string') {
+      if (value.length > 3 && value.length % 2 !== 0)
+        throw new Hex.InvalidLengthError(value)
+      bytes = Bytes.fromHex(value)
+    } else bytes = value as Bytes.Bytes
+    const source =
+      to_ === 'Hex' &&
+      typeof value !== 'string' &&
+      bytes.length <= sourceMaxLength
+        ? Hex.fromBytes(bytes)
+        : undefined
+    state = { bytes, position: 0, source }
+  }
   const result = decodeRlpCursor(state, to_)
 
   // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
-  if (state.position < bytes.length)
-    throw new TrailingBytesError({ count: bytes.length - state.position })
+  const size = sizeOf(state)
+  if (state.position < size)
+    throw new TrailingBytesError({ count: size - state.position })
 
   return result as to.ReturnType<to>
 }
@@ -113,15 +126,35 @@ export declare namespace to {
 }
 
 /**
- * Decoder position over the encoded bytes. A `Cursor` satisfies it, but the
- * decoder only reads `bytes` and moves `position`.
+ * Decoder position over the encoded input: its bytes, its lowercase hex for
+ * hex leaves to be cut from (`source`), or both. A `Cursor` satisfies it, but
+ * the decoder only reads `bytes` and moves `position`.
  *
  * @internal
  */
-type State = Pick<Cursor.Cursor, 'bytes' | 'position'>
+type State = {
+  bytes?: Bytes.Bytes | undefined
+  position: number
+  source?: string | undefined
+}
 
-/** `State`, with the input as lowercase hex for hex leaves to be cut from. */
-type DecodeState = State & { source?: string | undefined }
+/** The size of the input in bytes. */
+function sizeOf(state: State): number {
+  return state.bytes ? state.bytes.length : (state.source!.length - 2) / 2
+}
+
+/** The byte at `position`, from `bytes` or from two digits of `source`. */
+function byteAt(state: State, position: number): number {
+  if (state.bytes) return state.bytes[position]!
+  const i = 2 + position * 2
+  const high = state.source!.charCodeAt(i)
+  const low = state.source!.charCodeAt(i + 1)
+  // `source` is lowercase hex: `0`-`9` are 48-57 and `a`-`f` 97-102.
+  return (
+    ((high < 58 ? high - 48 : high - 87) << 4) |
+    (low < 58 ? low - 48 : low - 87)
+  )
+}
 
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
@@ -132,40 +165,41 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
   if (depth >= depthLimit)
     throw new DepthLimitExceededError({ limit: depthLimit })
 
-  const { bytes } = cursor
-  if (bytes.length === 0)
-    return (
-      to === 'Hex' ? Hex.fromBytes(bytes) : bytes
-    ) as decodeRlpCursor.ReturnType<to>
+  const { bytes, source } = cursor
+  const size = sizeOf(cursor)
+  if (size === 0)
+    return (to === 'Hex' ? '0x' : bytes) as decodeRlpCursor.ReturnType<to>
 
-  assertPosition(bytes, cursor.position)
-  const prefix = bytes[cursor.position]!
+  assertPosition(size, cursor.position)
+  const prefix = byteAt(cursor, cursor.position)
   if (prefix >= 0x80) cursor.position++
 
   // bytes
   if (prefix < 0xc0) {
     const length = readLength(cursor, prefix, 0x80)
-    if (length > 0) assertPosition(bytes, cursor.position + length - 1)
+    if (length > 0) assertPosition(size, cursor.position + length - 1)
     const start = cursor.position
     cursor.position += length
     // A single byte below `0x80` must be its own encoding (no length
     // prefix); wrapping it in an explicit one-byte-length prefix is a
     // non-canonical alternate encoding of the same value (Yellow Paper,
     // Appendix B).
-    if (prefix >= 0x80 && length === 1 && bytes[start]! < 0x80)
-      throw new NonCanonicalError({
-        reason: `single byte \`0x${bytes[start]!.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
-      })
+    if (prefix >= 0x80 && length === 1) {
+      const byte = byteAt(cursor, start)
+      if (byte < 0x80)
+        throw new NonCanonicalError({
+          reason: `single byte \`0x${byte.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
+        })
+    }
     if (to !== 'Hex')
-      return bytes.subarray(
+      return bytes!.subarray(
         start,
         cursor.position,
       ) as decodeRlpCursor.ReturnType<to>
-    const { source } = cursor as DecodeState
     return (
       source
         ? `0x${source.slice(2 + start * 2, 2 + cursor.position * 2)}`
-        : Hex.fromBytes(bytes.subarray(start, cursor.position))
+        : Hex.fromBytes(bytes!.subarray(start, cursor.position))
     ) as decodeRlpCursor.ReturnType<to>
   }
 
@@ -256,7 +290,7 @@ export function readList<to extends 'Hex' | 'Bytes'>(
   while (cursor.position - position < length) {
     // Every item takes at least one byte; without this check, empty bytes
     // (which `decodeRlpCursor` decodes without reading) would loop forever.
-    assertPosition(cursor.bytes, cursor.position)
+    assertPosition(sizeOf(cursor), cursor.position)
     value.push(decodeRlpCursor(cursor, to, depth))
   }
   // Items must consume exactly the declared list length.
@@ -276,20 +310,18 @@ export declare namespace readList {
     | Errors.GlobalErrorType
 }
 
-function assertPosition(bytes: Bytes.Bytes, position: number) {
-  if (position < 0 || position > bytes.length - 1)
-    throw new Cursor.PositionOutOfBoundsError({
-      length: bytes.length,
-      position,
-    })
+function assertPosition(length: number, position: number) {
+  if (position < 0 || position > length - 1)
+    throw new Cursor.PositionOutOfBoundsError({ length, position })
 }
 
 // Reads a big-endian unsigned integer of up to 4 bytes.
 function readUint(cursor: State, size: number) {
-  const { bytes, position } = cursor
-  assertPosition(bytes, position + size - 1)
+  const { position } = cursor
+  assertPosition(sizeOf(cursor), position + size - 1)
   let value = 0
-  for (let i = 0; i < size; i++) value = value * 256 + bytes[position + i]!
+  for (let i = 0; i < size; i++)
+    value = value * 256 + byteAt(cursor, position + i)
   cursor.position += size
   return value
 }
