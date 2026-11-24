@@ -144,7 +144,11 @@ type State = {
  * @internal
  */
 function sizeOf(state: State): number {
-  return state.bytes ? state.bytes.length : (state.source!.length - 2) / 2
+  // Checked against `undefined`, so a value that is not bytes, such as `0`,
+  // fails as an invalid prefix, as before, rather than reading `source`.
+  return state.bytes !== undefined
+    ? state.bytes.length
+    : (state.source!.length - 2) / 2
 }
 
 /**
@@ -153,7 +157,7 @@ function sizeOf(state: State): number {
  * @internal
  */
 function byteAt(state: State, position: number): number {
-  if (state.bytes) return state.bytes[position]!
+  if (state.bytes !== undefined) return state.bytes[position]!
   const i = 2 + position * 2
   const high = state.source!.charCodeAt(i)
   const low = state.source!.charCodeAt(i + 1)

@@ -340,6 +340,12 @@ describe('Rlp.to', () => {
   `,
     )
   })
+
+  test('error: value that is neither hex nor bytes', () => {
+    expect(() => Rlp.toHex(0 as never)).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid RLP prefix]`,
+    )
+  })
 })
 
 describe('decode depth limit', () => {
