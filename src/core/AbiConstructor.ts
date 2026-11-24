@@ -5,6 +5,7 @@ import * as AbiParameters from './AbiParameters.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiConstructor.js'
+import type * as AbiParameters_internal from './internal/abiParameters.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
@@ -106,7 +107,7 @@ export declare namespace decode {
   type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
     | (abiConstructor['inputs']['length'] extends 0
         ? undefined
-        : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>)
+        : AbiParameters_internal.ToPrimitiveTypes<abiConstructor['inputs']>)
     | (IsNarrowable<abiConstructor, AbiConstructor> extends true
         ? never
         : undefined)
@@ -229,9 +230,9 @@ export declare namespace encode {
   type Options<
     abiConstructor extends AbiConstructor = AbiConstructor,
     ///
-    args extends abitype.AbiParametersToPrimitiveTypes<
+    args extends AbiParameters_internal.ToPrimitiveTypes<
       abiConstructor['inputs']
-    > = abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>,
+    > = AbiParameters_internal.ToPrimitiveTypes<abiConstructor['inputs']>,
   > = {
     /** The bytecode of the contract. */
     bytecode: Hex.Hex

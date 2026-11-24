@@ -6,6 +6,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
+import type * as AbiParameters_internal from './internal/abiParameters.js'
 import type { IsNarrowable, IsNever } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `error` type. */
@@ -394,11 +395,11 @@ export declare namespace encode {
     abiError,
     AbiError
   > extends true
-    ? abitype.AbiParametersToPrimitiveTypes<
+    ? AbiParameters_internal.ToPrimitiveTypes<
         abiError['inputs']
       > extends readonly []
       ? []
-      : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
+      : [AbiParameters_internal.ToPrimitiveTypes<abiError['inputs']>]
     : readonly unknown[]
 
   type ReturnType = Hex.Hex

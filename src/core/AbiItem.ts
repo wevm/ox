@@ -429,15 +429,9 @@ export declare namespace fromAbi {
       | undefined = internal.ExtractArgs<abi, name>,
     ///
     allArgs = internal.ExtractArgs<abi, name>,
-  > = {
-    /**
-     * Whether or not to prepare the extracted item (optimization for encoding performance).
-     * When `true`, the `hash` property is computed and included in the returned value.
-     *
-     * @default true
-     */
-    prepare?: boolean | undefined
-  } & UnionCompute<
+    // `prepare` is in each branch rather than intersected with them, which costs
+    // `Parameters<typeof AbiItem.fromAbi>` about 2,000 more type instantiations.
+  > = UnionCompute<
     readonly [] extends allArgs
       ? {
           args?:
@@ -449,12 +443,26 @@ export declare namespace fromAbi {
                   : never
                 : never)
             | undefined
+          /**
+           * Whether or not to prepare the extracted item (optimization for encoding performance).
+           * When `true`, the `hash` property is computed and included in the returned value.
+           *
+           * @default true
+           */
+          prepare?: boolean | undefined
         }
       : {
           args?:
             | allArgs // show all options
             | (internal.Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
             | undefined
+          /**
+           * Whether or not to prepare the extracted item (optimization for encoding performance).
+           * When `true`, the `hash` property is computed and included in the returned value.
+           *
+           * @default true
+           */
+          prepare?: boolean | undefined
         }
   >
 
