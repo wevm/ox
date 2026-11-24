@@ -48,7 +48,7 @@ export declare namespace labelhash {
  * ```ts twoslash
  * import { Ens } from 'ox'
  * Ens.namehash('wevm.eth')
- * // @log: '0xf246651c1b9a6b141d19c2604e9a58f567973833990f830d882534a747801359'
+ * // @log: '0x08c85f2f4059e930c45a6aeff9dcd3bd95dc3c5c1cddef6a0626b31152248560'
  * ```
  *
  * @param name - ENS name.
@@ -98,12 +98,22 @@ export declare namespace namehash {
  * @returns Normalized ENS name.
  */
 export function normalize(name: string): string {
+  if (typeof name === 'string' && normalizedAscii.test(name)) return name
   return ensNormalize(name)
 }
 
 export declare namespace normalize {
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * Names that ENSIP-15 leaves unchanged without consulting its tables: labels
+ * of lowercase ASCII letters, digits, `$` and `-` after any leading
+ * underscores, none empty and none with `--` as its third and fourth
+ * characters, which ENSIP-15 reserves for label extensions.
+ */
+const normalizedAscii =
+  /^(?![^.]{2}--)(?=[^.])_*[a-z0-9$-]*(?:\.(?![^.]{2}--)(?=[^.])_*[a-z0-9$-]*)*$/
 
 /**
  * Converts a chain ID to an ENSIP-9 compliant coin type.

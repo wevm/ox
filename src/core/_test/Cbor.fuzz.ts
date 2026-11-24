@@ -64,6 +64,38 @@ describe('Cbor round-trip', () => {
       expect(normalize(decoded)).toEqual(normalize(value))
     },
   )
+
+  // The value arbitrary above caps containers at 4 items, so the header forms
+  // for 24+ items would otherwise go unexercised. Lengths sit on both sides of
+  // each form change, and the head is checked against RFC 8949 §3, not only by
+  // decoding, so a header bug the decoder shares still fails.
+  test.prop(
+    {
+      major: fc.constantFrom(2, 3, 4, 5),
+      size: fc.constantFrom(0, 23, 24, 255, 256),
+      seed: fc.uint8Array({ max: 0x17, maxLength: 256, minLength: 256 }),
+    },
+    { numRuns },
+  )('containers at length-header boundaries', ({ major, seed, size }) => {
+    const items = seed.subarray(0, size)
+    const value =
+      major === 2
+        ? items
+        : major === 3
+          ? String.fromCharCode(...items.map((b) => b + 0x30))
+          : major === 4
+            ? Array.from(items)
+            : Object.fromEntries(Array.from(items, (b, i) => [`k${i}`, b]))
+    const head =
+      size < 24
+        ? [(major << 5) | size]
+        : size < 256
+          ? [(major << 5) | 24, size]
+          : [(major << 5) | 25, size >> 8, size & 0xff]
+    const encoded = Cbor.encode(value, { as: 'Bytes' })
+    expect(Array.from(encoded.subarray(0, head.length))).toEqual(head)
+    expect(normalize(Cbor.decode(encoded))).toEqual(normalize(value))
+  })
 })
 
 /**

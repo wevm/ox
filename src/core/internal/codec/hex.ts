@@ -4,7 +4,7 @@ import * as Errors from '../../Errors.js'
 export type Hex = `0x${string}`
 
 /** @internal */
-const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
+export const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
 

@@ -18,12 +18,12 @@ const Type = z.codec(z.literal('0x76'), z.literal('tempo'), {
 const FeePayerSignature = z.object({
   r: z_Hex.Hex,
   s: z_Hex.Hex,
-  v: z.optional(z_Number.Number),
+  v: /* @__PURE__ */ z.optional(z_Number.Number),
   yParity: z_Number.Number,
 })
 
 /** Nullable RPC call field schema (the node serializes absent fields as `null`). */
-const NullableHex = z.optional(z.union([z_Hex.Hex, z.null()]))
+const NullableHex = z.optional(z.union([z_Hex.Hex, /* @__PURE__ */ z.null()]))
 
 /** Tempo transaction call schema (decodes the RPC `input` field to `data`). */
 const Call = z.codec(
@@ -34,9 +34,9 @@ const Call = z.codec(
     value: NullableHex,
   }),
   z.object({
-    data: z.optional(z_Hex.Hex),
-    to: z.optional(z_Hex.Hex),
-    value: z.optional(z_Uint.Uint),
+    data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    to: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    value: /* @__PURE__ */ z.optional(z_Uint.Uint),
   }),
   {
     decode: (value) => ({
@@ -61,9 +61,9 @@ const CallToRpc = z.codec(
     value: NullableHex,
   }),
   z.object({
-    data: z.optional(z_Hex.Hex),
-    to: z.optional(z_Hex.Hex),
-    value: z.optional(z_Uint.UintToRpc),
+    data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    to: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    value: /* @__PURE__ */ z.optional(z_Uint.UintToRpc),
   }),
   {
     decode: (value) => ({
@@ -95,6 +95,7 @@ const nullableFields = [
  * node-null optionals and maps the `aaAuthorizationList` RPC field to
  * `authorizationList` (and back on encode).
  */
+// @__NO_SIDE_EFFECTS__
 function wire<schema extends z.ZodMiniType>(schema: schema) {
   return z.codec(z.looseObject({ type: z.literal('0x76') }), schema, {
     decode: (rpc) => {
@@ -138,19 +139,20 @@ export const TempoToRpc = wire(
 /** Pending tempo transaction schema (type `0x76`, not yet included in a block). */
 export const PendingTempo = wire(
   z.object({
-    ...fields(
+    .../* @__PURE__ */ fields(
       z_Uint.Uint,
       z_Number.Number,
       Call,
       z_AuthorizationTempo.ListSigned,
     ),
-    blockHash: z.null(),
-    blockNumber: z.null(),
-    blockTimestamp: z.optional(z.null()),
-    transactionIndex: z.null(),
+    blockHash: /* @__PURE__ */ z.null(),
+    blockNumber: /* @__PURE__ */ z.null(),
+    blockTimestamp: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.null()),
+    transactionIndex: /* @__PURE__ */ z.null(),
   }),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

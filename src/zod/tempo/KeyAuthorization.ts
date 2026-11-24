@@ -12,63 +12,87 @@ import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 /** RPC token spending limit schema. */
 export const RpcTokenLimit = z.object({
   limit: z_Hex.Hex,
-  period: z.optional(z.nullable(z_Hex.Hex)),
+  period: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.nullable(z_Hex.Hex)),
   token: z_Address.Address,
 })
 
 /** RPC selector rule schema. */
 export const RpcSelectorRule = z.object({
-  recipients: z.optional(z.nullable(z.readonly(z.array(z_Address.Address)))),
+  recipients: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.nullable(
+      /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Address.Address)),
+    ),
+  ),
   selector: z_Hex.Hex,
 })
 
 /** RPC call scope schema. */
 export const RpcCallScope = z.object({
-  selectorRules: z.optional(z.nullable(z.readonly(z.array(RpcSelectorRule)))),
+  selectorRules: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.nullable(
+      /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(RpcSelectorRule)),
+    ),
+  ),
   target: z_Address.Address,
 })
 
 /** RPC key authorization schema. */
 export const Rpc = z.object({
-  account: z.optional(z.nullable(z_Address.Address)),
-  allowedCalls: z.optional(z.nullable(z.readonly(z.array(RpcCallScope)))),
+  account: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.nullable(z_Address.Address),
+  ),
+  allowedCalls: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.nullable(
+      /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(RpcCallScope)),
+    ),
+  ),
   chainId: z_Hex.Hex,
-  expiry: z.optional(z.nullable(z_Hex.Hex)),
-  isAdmin: z.optional(z.nullable(z.boolean())),
+  expiry: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.nullable(z_Hex.Hex)),
+  isAdmin: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.nullable(/* @__PURE__ */ z.boolean()),
+  ),
   keyId: z_Address.Address,
-  keyType: z.union([
+  keyType: /* @__PURE__ */ z.union([
     z_SignatureEnvelope.Type,
-    z.literal('configurableAccount'),
+    /* @__PURE__ */ z.literal('configurableAccount'),
   ]),
-  limits: z.optional(z.nullable(z.readonly(z.array(RpcTokenLimit)))),
-  signature: z.union([
+  limits: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.nullable(
+      /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(RpcTokenLimit)),
+    ),
+  ),
+  signature: /* @__PURE__ */ z.union([
     z_SignatureEnvelope.PrimitiveRpc,
     z_SignatureEnvelope.ConfigurableRpc,
     z_SignatureEnvelope.AttestedRpc,
   ]),
-  witness: z.optional(z.nullable(z_Hex.Hex)),
+  witness: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.nullable(z_Hex.Hex)),
 })
 
 /** Token spending limit schema. */
 export const TokenLimit = z.object({
-  limit: z.bigint(),
-  period: z.optional(z.number()),
+  limit: /* @__PURE__ */ z.bigint(),
+  period: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
   token: z_Address.Address,
 })
 
 /** Encode-only token spending limit schema accepting numberish `toRpc` inputs. */
 export const TokenLimitToRpc = z.object({
-  limit: uintBigintNumberish(),
-  period: z.optional(uintNumberNumberish()),
+  limit: /* @__PURE__ */ uintBigintNumberish(),
+  period: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintNumberNumberish()),
   token: z_Address.Address,
 })
 
 /** Call scope schema. */
-export const Scope = z
+export const Scope = /* @__PURE__ */ z
   .object({
     address: z_Address.Address,
-    recipients: z.optional(z.readonly(z.array(z_Address.Address))),
-    selector: z.optional(z.union([z_Hex.Hex, z.string()])),
+    recipients: /* @__PURE__ */ z.optional(
+      /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Address.Address)),
+    ),
+    selector: /* @__PURE__ */ z.optional(
+      /* @__PURE__ */ z.union([z_Hex.Hex, /* @__PURE__ */ z.string()]),
+    ),
   })
   .check(
     z.refine(
@@ -79,38 +103,47 @@ export const Scope = z
 
 const domainShape = {
   address: z_Address.Address,
-  chainId: z.bigint(),
-  expiry: z.optional(z.number()),
-  limits: z.optional(z.readonly(z.array(TokenLimit))),
-  scopes: z.optional(z.readonly(z.array(Scope))),
-  signature: z.union([
+  chainId: /* @__PURE__ */ z.bigint(),
+  expiry: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  limits: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(TokenLimit)),
+  ),
+  scopes: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(Scope)),
+  ),
+  signature: /* @__PURE__ */ z.union([
     z_SignatureEnvelope.Primitive,
     z_SignatureEnvelope.Configurable,
     z_SignatureEnvelope.Attested,
   ]),
-  type: z.union([z_SignatureEnvelope.Type, z.literal('configurable')]),
-  witness: z.optional(z_Hex.Hex),
+  type: /* @__PURE__ */ z.union([
+    z_SignatureEnvelope.Type,
+    /* @__PURE__ */ z.literal('configurable'),
+  ]),
+  witness: /* @__PURE__ */ z.optional(z_Hex.Hex),
 }
 
 /** Decoded key authorization schema. */
 export const Domain = z.object({
   ...domainShape,
-  account: z.optional(z_Address.Address),
-  isAdmin: z.optional(z.boolean()),
+  account: /* @__PURE__ */ z.optional(z_Address.Address),
+  isAdmin: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
 })
 
 const domainToRpcShape = {
   ...domainShape,
-  chainId: uintBigintNumberish(),
-  expiry: z.optional(uintNumberNumberish()),
-  limits: z.optional(z.readonly(z.array(TokenLimitToRpc))),
+  chainId: /* @__PURE__ */ uintBigintNumberish(),
+  expiry: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintNumberNumberish()),
+  limits: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(TokenLimitToRpc)),
+  ),
 }
 
 /** Encode-only decoded key authorization schema accepting numberish `toRpc` inputs. */
 export const DomainToRpc = z.object({
   ...domainToRpcShape,
-  account: z.optional(z_Address.Address),
-  isAdmin: z.optional(z.boolean()),
+  account: /* @__PURE__ */ z.optional(z_Address.Address),
+  isAdmin: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
 })
 
 /** Codec decoding an RPC key authorization into a signed key authorization. */

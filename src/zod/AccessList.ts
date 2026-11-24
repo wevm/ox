@@ -6,7 +6,7 @@ import * as z from 'zod/mini'
 /** Access list item schema. */
 export const Item = z.object({
   address: z_Address.Address,
-  storageKeys: z.readonly(z.array(z_Hex.Hex32)),
+  storageKeys: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex32)),
 })
 
 /** Access list schema. */
@@ -14,7 +14,10 @@ export const AccessList = z.readonly(z.array(Item))
 
 /** Access list tuple item schema. */
 export const ItemTuple = z.readonly(
-  z.tuple([z_Address.Address, z.readonly(z.array(z_Hex.Hex32))]),
+  z.tuple([
+    z_Address.Address,
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex32)),
+  ]),
 )
 
 /** Access list tuple schema. */

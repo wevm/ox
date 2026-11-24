@@ -3,7 +3,7 @@ import * as core_ZoneId from '../../tempo/ZoneId.js'
 import * as z from 'zod/mini'
 
 /** Zone id schema (non-negative integer). */
-export const ZoneId = z
+export const ZoneId = /* @__PURE__ */ z
   .number()
   .check(
     z.refine(

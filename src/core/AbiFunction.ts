@@ -649,29 +649,16 @@ export function encodeData<const abiFunction extends AbiFunction>(
 ): Hex.Hex
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encodeData(
-  ...parameters:
-    | [
-        abi: Abi.Abi | readonly unknown[],
-        name: Hex.Hex | string,
-        ...args: readonly unknown[],
-      ]
-    | [abiFunction: AbiFunction, ...args: readonly unknown[]]
+  abiOrFunction: Abi.Abi | readonly unknown[] | AbiFunction,
+  nameOrArgs?: Hex.Hex | string | readonly unknown[],
+  abiArgs?: readonly unknown[],
 ) {
-  const [abiFunction, args] = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name, args = []] = parameters as [
-        Abi.Abi | readonly unknown[],
-        Hex.Hex | string,
-        readonly unknown[] | undefined,
-      ]
-      return [fromAbi(abi, name, { args }), args]
-    }
-    const [abiFunction, args = []] = parameters as [
-      AbiFunction,
-      readonly unknown[] | undefined,
-    ]
-    return [abiFunction, args]
-  })()
+  const isAbi = Array.isArray(abiOrFunction)
+  const args_ = isAbi ? abiArgs : nameOrArgs
+  const args = (args_ === undefined ? [] : args_) as readonly unknown[]
+  const abiFunction = isAbi
+    ? fromAbi(abiOrFunction, nameOrArgs as Hex.Hex | string, { args })
+    : (abiOrFunction as AbiFunction)
 
   const { overloads } = abiFunction
 
@@ -693,14 +680,16 @@ export declare namespace encodeData {
   type Args<abiFunction extends AbiFunction = AbiFunction> =
     IsNarrowable<abiFunction, AbiFunction> extends true
       ?
-          | (abitype.AbiParametersToPrimitiveTypes<
-              abiFunction['inputs']
-            > extends readonly []
+          | (abiFunction['inputs'] extends readonly []
               ? []
-              : [abitype.AbiParametersToPrimitiveTypes<abiFunction['inputs']>])
+              : [
+                  AbiParameters_internal.ToPrimitiveTypes<
+                    abiFunction['inputs']
+                  >,
+                ])
           | (abiFunction['overloads'] extends readonly AbiFunction[]
               ? [
-                  abitype.AbiParametersToPrimitiveTypes<
+                  AbiParameters_internal.ToPrimitiveTypes<
                     abiFunction['overloads'][number]['inputs']
                   >,
                 ]

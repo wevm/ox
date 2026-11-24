@@ -8,26 +8,36 @@ import * as z_TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
 import * as z from 'zod/mini'
 
 /** Decoded EIP-8141 envelope schema. */
-export const Decoded = z
+export const Decoded = /* @__PURE__ */ z
   .object(
-    fields(z.bigint(), z.union([z.number(), z.bigint()]), z_Frame.Decoded),
+    fields(
+      z.bigint(),
+      z.union([/* @__PURE__ */ z.number(), /* @__PURE__ */ z.bigint()]),
+      z_Frame.Decoded,
+    ),
   )
   .check(z.refine(core_TxEnvelopeEip8141.validate, 'Invalid frame transaction'))
 
 /** RPC EIP-8141 envelope schema. */
-export const Rpc = z
+export const Rpc = /* @__PURE__ */ z
   .object({
-    blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
+    blobVersionedHashes: /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z.array(z_Hex.Hex),
+    ),
     chainId: z_Hex.Hex,
-    frames: z.readonly(z.array(z_Frame.Rpc)),
+    frames: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Frame.Rpc)),
     from: z_Address.Address,
     maxFeePerBlobGas: z_Hex.Hex,
     maxFeePerGas: z_Hex.Hex,
     maxPriorityFeePerGas: z_Hex.Hex,
     nonce: z_Hex.Hex,
-    nonceKeys: z.optional(z.readonly(z.array(z_Hex.Hex))),
-    signatures: z.readonly(z.array(z_FrameSignature.Rpc)),
-    type: z.literal('0x6'),
+    nonceKeys: /* @__PURE__ */ z.optional(
+      /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+    ),
+    signatures: /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z.array(z_FrameSignature.Rpc),
+    ),
+    type: /* @__PURE__ */ z.literal('0x6'),
   })
   .check(
     z.refine((value) => {
@@ -49,11 +59,19 @@ export const TxEnvelopeEip8141 = z.codec(Rpc, Decoded, {
 /** Encode-only EIP-8141 envelope codec accepting numberish values. */
 export const TxEnvelopeEip8141ToRpc = z.codec(
   Rpc,
-  z
+  /* @__PURE__ */ z
     .object(
       fields(
-        z.union([z_Hex.Hex, z.bigint(), z.number()]),
-        z.union([z_Hex.Hex, z.bigint(), z.number()]),
+        z.union([
+          z_Hex.Hex,
+          /* @__PURE__ */ z.bigint(),
+          /* @__PURE__ */ z.number(),
+        ]),
+        z.union([
+          z_Hex.Hex,
+          /* @__PURE__ */ z.bigint(),
+          /* @__PURE__ */ z.number(),
+        ]),
         z_Frame.DecodedToRpc,
       ),
     )
@@ -82,6 +100,7 @@ export const serialized = z.codec(z_Hex.Hex, Decoded, {
   encode: core_TxEnvelopeEip8141.serialize,
 })
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

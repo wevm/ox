@@ -2149,6 +2149,36 @@ describe('verify', () => {
       ).toBe(true)
     })
 
+    test('behavior: returns false for high-s signature', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(publicKey)
+      const payload = '0xdeadbeef' as const
+
+      const { r, s, yParity } = Secp256k1.sign({ payload, privateKey })
+      const highS = {
+        r,
+        s: Hex.fromNumber(
+          0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n -
+            Hex.toBigInt(s),
+          { size: 32 },
+        ),
+        yParity: yParity === 0 ? 1 : 0,
+      }
+      const envelope = SignatureEnvelope.from(highS)
+
+      // The high-s twin recovers the same address, but Tempo rejects it.
+      expect(Secp256k1.recoverAddress({ payload, signature: highS })).toBe(
+        address,
+      )
+      expect(SignatureEnvelope.verify(envelope, { address, payload })).toBe(
+        false,
+      )
+      expect(SignatureEnvelope.verify(envelope, { payload, publicKey })).toBe(
+        false,
+      )
+    })
+
     test('behavior: returns false for wrong publicKey', () => {
       const privateKey = Secp256k1.randomPrivateKey()
       const wrongPrivateKey = Secp256k1.randomPrivateKey()

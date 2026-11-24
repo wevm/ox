@@ -2,7 +2,10 @@
 import * as z_Solidity from './Solidity.js'
 import * as z from 'zod/mini'
 
-const Name = z.union([z.optional(z_Solidity.Identifier), z.literal('')])
+const Name = z.union([
+  /* @__PURE__ */ z.optional(z_Solidity.Identifier),
+  /* @__PURE__ */ z.literal(''),
+])
 const SimpleType = z.union([
   z_Solidity.Address,
   z_Solidity.Bool,
@@ -17,14 +20,14 @@ const TupleType = z.union([z_Solidity.Tuple, z_Solidity.ArrayWithTuple])
 export const AbiParameter = z.intersection(
   z.object({
     name: Name,
-    internalType: z.optional(z.string()),
+    internalType: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
   }),
   z.union([
-    z.object({ type: SimpleType }),
-    z.object({
+    /* @__PURE__ */ z.object({ type: SimpleType }),
+    /* @__PURE__ */ z.object({
       type: TupleType,
       get components() {
-        return z.readonly(z.array(AbiParameter))
+        return /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(AbiParameter))
       },
     }),
   ]),
@@ -32,5 +35,7 @@ export const AbiParameter = z.intersection(
 
 export const AbiEventParameter = z.intersection(
   AbiParameter,
-  z.object({ indexed: z.optional(z.boolean()) }),
+  z.object({
+    indexed: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  }),
 )

@@ -9,6 +9,7 @@ export const Bytes = z.codec(bytesHex(), bytesRaw(), {
 })
 
 /** Returns a byte-sized byte array schema encoded as hex. */
+// @__NO_SIDE_EFFECTS__
 export function sizedBytes(size: number) {
   return z.codec(z_Hex.sizedHex(size), bytesRaw(size), {
     decode: decodeHex,
@@ -19,6 +20,7 @@ export function sizedBytes(size: number) {
 /** 32-byte byte array schema encoded as hex. */
 export const Bytes32 = sizedBytes(32)
 
+// @__NO_SIDE_EFFECTS__
 function bytesRaw(size?: number) {
   return z
     .custom<Uint8Array>(
@@ -33,6 +35,7 @@ function bytesRaw(size?: number) {
     )
 }
 
+// @__NO_SIDE_EFFECTS__
 function bytesHex() {
   return z_Hex.Hex.check(
     z.refine(

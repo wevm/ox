@@ -4,21 +4,42 @@ import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 
-const channelIdParameters = AbiParameters.from(
-  'address, address, address, address, bytes32, address, bytes32, address, uint256',
-)
-const domainSeparatorParameters = AbiParameters.from(
-  'bytes32, bytes32, bytes32, uint256, address',
-)
-const voucherHashParameters = AbiParameters.from('bytes32, bytes32, uint96')
+// The ABI parameters are written out and the constant hashes precomputed, so importing this module
+// neither parses human-readable ABI (nor bundles the parser) nor hashes anything. Channel.test.ts
+// checks the hashes against EIP-712 hashing of the same domain and type.
+const channelIdParameters = [
+  { type: 'address' },
+  { type: 'address' },
+  { type: 'address' },
+  { type: 'address' },
+  { type: 'bytes32' },
+  { type: 'address' },
+  { type: 'bytes32' },
+  { type: 'address' },
+  { type: 'uint256' },
+] as const
+const domainSeparatorParameters = [
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+  { type: 'uint256' },
+  { type: 'address' },
+] as const
+const voucherHashParameters = [
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+  { type: 'uint96' },
+] as const
 
-const eip712DomainTypehash = Hash.keccak256(
-  Hex.fromString(
-    'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)',
-  ),
-)
-const nameHash = Hash.keccak256(Hex.fromString('TIP20 Channel Reserve'))
-const versionHash = Hash.keccak256(Hex.fromString('1'))
+// keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
+const eip712DomainTypehash =
+  '0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f'
+// keccak256('TIP20 Channel Reserve')
+const nameHash =
+  '0x131992c67b15deae2fea2ee6e0448ff6217787c4722ce1b46fba946132054433'
+// keccak256('1')
+const versionHash =
+  '0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6'
 const zeroAddress =
   '0x0000000000000000000000000000000000000000' as const satisfies Address.Address
 
@@ -36,9 +57,8 @@ export const closeGracePeriod = 900n
 /**
  * EIP-712 type hash for `Voucher(bytes32 channelId,uint96 cumulativeAmount)`.
  */
-export const voucherTypehash = Hash.keccak256(
-  Hex.fromString('Voucher(bytes32 channelId,uint96 cumulativeAmount)'),
-)
+export const voucherTypehash =
+  '0x4730b4b2fe8de522475e80e010877c5b58ad10eb07fd0436615ee123f743bbe8' as const satisfies Hex.Hex
 
 /**
  * TIP-20 channel descriptor.

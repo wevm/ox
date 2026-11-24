@@ -3,7 +3,9 @@ import * as z_AbiParameter from './AbiParameter.js'
 import * as z from 'zod/mini'
 
 export const AbiError = z.object({
-  type: z.literal('error'),
-  inputs: z.readonly(z.array(z_AbiParameter.AbiParameter)),
-  name: z.string(),
+  type: /* @__PURE__ */ z.literal('error'),
+  inputs: /* @__PURE__ */ z.readonly(
+    /* @__PURE__ */ z.array(z_AbiParameter.AbiParameter),
+  ),
+  name: /* @__PURE__ */ z.string(),
 })

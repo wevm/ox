@@ -2,27 +2,27 @@
 import * as z from 'zod/mini'
 
 const base = {
-  id: z.number(),
-  jsonrpc: z.literal('2.0'),
+  id: /* @__PURE__ */ z.number(),
+  jsonrpc: /* @__PURE__ */ z.literal('2.0'),
 }
 
 /** JSON-RPC error object schema. */
 export const ErrorObject = z.object({
-  code: z.number(),
-  message: z.string(),
-  data: z.optional(z.unknown()),
+  code: /* @__PURE__ */ z.number(),
+  message: /* @__PURE__ */ z.string(),
+  data: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.unknown()),
 })
 
 /** JSON-RPC response schema. */
 export const RpcResponse = z.union([
-  z.object({
+  /* @__PURE__ */ z.object({
     ...base,
-    result: z.unknown(),
-    error: z.optional(z.undefined()),
+    result: /* @__PURE__ */ z.unknown(),
+    error: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
   }),
-  z.object({
+  /* @__PURE__ */ z.object({
     ...base,
     error: ErrorObject,
-    result: z.optional(z.undefined()),
+    result: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
   }),
 ])

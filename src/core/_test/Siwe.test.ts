@@ -430,16 +430,59 @@ describe('createMessage', () => {
   `)
   })
 
+  test('behavior: invalid scheme (comma)', () => {
+    expect(() => Siwe.createMessage({ ...message, scheme: 'ht,tps' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+    [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "scheme".
+
+    - Scheme must be an RFC 3986 URI scheme.
+    - See https://www.rfc-editor.org/rfc/rfc3986#section-3.1
+
+    Provided value: ht,tps]
+  `)
+    for (const scheme of ['https', 'a+b', 'a-b', 'a.b'])
+      expect(() => Siwe.createMessage({ ...message, scheme })).not.toThrow()
+  })
+
   test('behavior: invalid statement', () => {
     expect(() => Siwe.createMessage({ ...message, statement: 'foo\nbar' }))
       .toThrowErrorMatchingInlineSnapshot(`
     [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
 
-    - Statement must not include '\\n'.
+    - Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').
 
     Provided value: foo
     bar]
   `)
+    expect(() =>
+      Siwe.createMessage({
+        ...message,
+        statement: 'foo\rURI: https://evil.example',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
+
+      - Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').
+
+      Provided value: foo
+      URI: https://evil.example]
+    `)
+    expect(() => Siwe.createMessage({ ...message, statement: 'foo\u2028bar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
+
+      - Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').
+
+      Provided value: foo bar]
+    `)
+    expect(() => Siwe.createMessage({ ...message, statement: 'foo\u2029bar' }))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
+
+      - Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').
+
+      Provided value: foo bar]
+    `)
   })
 
   test('behavior: invalid requestId', () => {
@@ -492,6 +535,10 @@ describe('createMessage', () => {
     // 63 octets: "xn--" plus 59 LDH characters.
     `example.xn--${'a'.repeat(59)}`,
     `example.${'a'.repeat(63)}`,
+    '[::cafe]',
+    '[::1]:3000',
+    '[2001:db8::1]:443',
+    '[v1.fe]',
   ])('valid domain `%s`', (domain) => {
     expect(
       Siwe.createMessage({
@@ -517,6 +564,14 @@ describe('createMessage', () => {
     // 64 octets: one past the maximum label length.
     `example.xn--${'a'.repeat(60)}`,
     `example.${'a'.repeat(64)}`,
+    '[::1',
+    '[zzz]',
+    '[::300.0.0.0]',
+    '[::1]:123456',
+    'user@[::1]',
+    '[::\t1]',
+    '[evil.com@[::1]',
+    '[a@[::1]',
   ])('invalid domain `%s`', (domain) => {
     expect(() =>
       Siwe.createMessage({
@@ -599,6 +654,31 @@ describe('isUri', () => {
     expect(Siwe.isUri(uri)).toMatchInlineSnapshot(`false`)
   })
 
+  test('behavior: authority variants with path', () => {
+    expect([
+      Siwe.isUri('https://[2001:db8::1]/login'),
+      Siwe.isUri('https://user:pass@example.com:8080/login'),
+      Siwe.isUri('foo://[v1.fe]/p'),
+    ]).toMatchInlineSnapshot(`
+      [
+        "https://[2001:db8::1]/login",
+        "https://user:pass@example.com:8080/login",
+        "foo://[v1.fe]/p",
+      ]
+    `)
+  })
+
+  test.each([
+    // https://github.com/spruceid/siwe/blob/main/test/invalid_uris.json
+    'uri://[::0.0.0.256]/p/path',
+    'uri://[::300.0.0.0]/p/path',
+    'https://example.com:bad/login',
+    'https://[:::]/login',
+    'https://[::1/login',
+  ])('behavior: invalid authority with path `%s`', (uri) => {
+    expect(Siwe.isUri(uri)).toMatchInlineSnapshot(`false`)
+  })
+
   test('behavior: check for illegal characters', () => {
     expect(Siwe.isUri('^')).toBeFalsy()
   })
@@ -673,6 +753,30 @@ Issued At: 2023-02-01T00:00:00.000Z`
     expect(parsed.scheme).toMatchInlineSnapshot(`"https"`)
   })
 
+  test('behavior: scheme with a comma', () => {
+    const message = `ht,tps://example.com wants you to sign in with your Ethereum account:
+0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+URI: https://example.com/path
+Version: 1
+Chain ID: 1
+Nonce: foobarbaz
+Issued At: 2023-02-01T00:00:00.000Z`
+    expect(Siwe.parseMessage(message)).toEqual({})
+    expect(
+      ['https', 'a+b', 'a-b', 'a.b'].map(
+        (scheme) => Siwe.parseMessage(message.replace('ht,tps', scheme)).scheme,
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "https",
+        "a+b",
+        "a-b",
+        "a.b",
+      ]
+    `)
+  })
+
   test('behavior: domain with port', () => {
     const message = `example.com:8080 wants you to sign in with your Ethereum account:
 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
@@ -684,6 +788,22 @@ Nonce: foobarbaz
 Issued At: 2023-02-01T00:00:00.000Z`
     const parsed = Siwe.parseMessage(message)
     expect(parsed.domain).toMatchInlineSnapshot(`"example.com:8080"`)
+  })
+
+  test('behavior: ip literal domain', () => {
+    // https://github.com/spruceid/siwe/blob/main/test/parsing_positive.json
+    const message = `[::cafe] wants you to sign in with your Ethereum account:
+0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+
+
+URI: https://service.org/login
+Version: 1
+Chain ID: 1
+Nonce: 32891757
+Issued At: 2021-09-30T16:25:24.000Z`
+    const parsed = Siwe.parseMessage(message)
+    expect(parsed.domain).toMatchInlineSnapshot(`"[::cafe]"`)
+    expect(Siwe.createMessage(parsed as Siwe.Message)).toBe(message)
   })
 
   test('behavior: with statement', () => {
@@ -1209,6 +1329,11 @@ Issued At: 2023-02-01T00:00:00.000Z`)
         },
       }),
     ).toBeFalsy()
+  })
+
+  test('behavior: scheme defaults to https when omitted', () => {
+    expect(Siwe.validateMessage({ scheme: 'https', message })).toBeTruthy()
+    expect(Siwe.validateMessage({ scheme: 'http', message })).toBeFalsy()
   })
 
   test('behavior: time is after expirationTime', () => {

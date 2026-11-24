@@ -4,21 +4,25 @@ import * as z_Solidity from './Solidity.js'
 import * as z from 'zod/mini'
 
 export const StateMutability = z.union([
-  z.literal('pure'),
-  z.literal('view'),
-  z.literal('nonpayable'),
-  z.literal('payable'),
+  /* @__PURE__ */ z.literal('pure'),
+  /* @__PURE__ */ z.literal('view'),
+  /* @__PURE__ */ z.literal('nonpayable'),
+  /* @__PURE__ */ z.literal('payable'),
 ])
 
 const Raw = z.object({
-  type: z.literal('function'),
-  constant: z.optional(z.boolean()),
-  gas: z.optional(z.number()),
-  inputs: z.readonly(z.array(z_AbiParameter.AbiParameter)),
+  type: /* @__PURE__ */ z.literal('function'),
+  constant: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  gas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  inputs: /* @__PURE__ */ z.readonly(
+    /* @__PURE__ */ z.array(z_AbiParameter.AbiParameter),
+  ),
   name: z_Solidity.Identifier,
-  outputs: z.readonly(z.array(z_AbiParameter.AbiParameter)),
-  payable: z.optional(z.boolean()),
-  stateMutability: z.optional(StateMutability),
+  outputs: /* @__PURE__ */ z.readonly(
+    /* @__PURE__ */ z.array(z_AbiParameter.AbiParameter),
+  ),
+  payable: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  stateMutability: /* @__PURE__ */ z.optional(StateMutability),
 })
 
 export const AbiFunction = z.pipe(

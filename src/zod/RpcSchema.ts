@@ -65,6 +65,7 @@ export function from<
 export function from<const namespace extends from.Namespace>(
   namespace: namespace,
 ): from.ReturnType<namespace>
+// @__NO_SIDE_EFFECTS__
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function from(
   input:
@@ -101,8 +102,25 @@ export declare namespace from {
 /** A namespace of JSON-RPC method schemas, keyed by method name. */
 export type Namespace = Record<string, Item>
 
+/**
+ * A method schema as the codecs read it: its schemas only need to be Zod
+ * schemas. Checking a namespace such as `RpcSchema.Eth` against `Namespace`
+ * compares every schema in it with `z.ZodMiniType` structurally, which costs
+ * about 45 times the type instantiations of checking it against this.
+ */
+type ItemLike = {
+  method: string
+  params: { _zod: unknown }
+  request: { _zod: unknown }
+  returns: { _zod: unknown }
+}
+
+/** A namespace as the codecs read it. See `ItemLike`. */
+type NamespaceLike = Record<string, ItemLike>
+
 /** Extracts the method names of a `RpcSchema.Namespace`. */
-export type MethodName<namespace extends Namespace> = keyof namespace & string
+export type MethodName<namespace extends NamespaceLike> = keyof namespace &
+  string
 
 /** JSON-RPC method schemas for the `eth_` namespace. */
 export const Eth = eth
@@ -110,13 +128,15 @@ export const Eth = eth
 /** JSON-RPC method schemas for the `wallet_` namespace. */
 export const Wallet = wallet
 
+// A bare spread is a side effect to bundlers, which would then keep every
+// `eth_` and `wallet_` schema in any bundle that imports from this module.
 /** JSON-RPC method schemas for the `eth_` and `wallet_` namespaces. */
-export const Default = { ...eth, ...wallet }
+export const Default = /*#__PURE__*/ (() => ({ ...eth, ...wallet }))()
 
-const requestCache = new WeakMap<Namespace, z.ZodMiniType>()
+const requestCache = new WeakMap<NamespaceLike, z.ZodMiniType>()
 
 // Builds (and caches) the discriminated-union request schema for a namespace.
-function requestSchema(namespace: Namespace): z.ZodMiniType {
+function requestSchema(namespace: NamespaceLike): z.ZodMiniType {
   const cached = requestCache.get(namespace)
   if (cached) return cached
   const schema = z.discriminatedUnion(
@@ -148,7 +168,7 @@ function requestSchema(namespace: Namespace): z.ZodMiniType {
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
 export function parseItem<
-  const namespace extends Namespace,
+  const namespace extends NamespaceLike,
   method extends MethodName<namespace>,
 >(namespace: namespace, method: method): namespace[method] {
   const item = namespace[method]
@@ -196,12 +216,12 @@ function resolveItem(args: readonly unknown[]): [item: Item, value: unknown] {
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
-export function decodeParams<const item extends Item>(
+export function decodeParams<const item extends ItemLike>(
   item: item,
   params: z.input<item['params']>,
 ): z.output<item['params']>
 export function decodeParams<
-  const namespace extends Namespace,
+  const namespace extends NamespaceLike,
   method extends MethodName<namespace>,
 >(
   namespace: namespace,
@@ -247,12 +267,12 @@ export function decodeParams(...args: readonly unknown[]): unknown {
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
-export function encodeParams<const item extends Item>(
+export function encodeParams<const item extends ItemLike>(
   item: item,
   params: z.output<item['params']>,
 ): z.input<item['params']>
 export function encodeParams<
-  const namespace extends Namespace,
+  const namespace extends NamespaceLike,
   method extends MethodName<namespace>,
 >(
   namespace: namespace,
@@ -298,12 +318,12 @@ export function encodeParams(...args: readonly unknown[]): unknown {
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
-export function decodeReturns<const item extends Item>(
+export function decodeReturns<const item extends ItemLike>(
   item: item,
   returns: z.input<item['returns']>,
 ): z.output<item['returns']>
 export function decodeReturns<
-  const namespace extends Namespace,
+  const namespace extends NamespaceLike,
   method extends MethodName<namespace>,
 >(
   namespace: namespace,
@@ -349,12 +369,12 @@ export function decodeReturns(...args: readonly unknown[]): unknown {
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
-export function encodeReturns<const item extends Item>(
+export function encodeReturns<const item extends ItemLike>(
   item: item,
   returns: z.output<item['returns']>,
 ): z.input<item['returns']>
 export function encodeReturns<
-  const namespace extends Namespace,
+  const namespace extends NamespaceLike,
   method extends MethodName<namespace>,
 >(
   namespace: namespace,
@@ -381,7 +401,7 @@ export function encodeReturns(...args: readonly unknown[]): unknown {
  * })
  * ```
  */
-export function decodeRequest<const namespace extends Namespace>(
+export function decodeRequest<const namespace extends NamespaceLike>(
   namespace: namespace,
   request: RequestInput<namespace>,
 ): RequestOutput<namespace> {
@@ -402,7 +422,7 @@ export function decodeRequest<const namespace extends Namespace>(
  * })
  * ```
  */
-export function encodeRequest<const namespace extends Namespace>(
+export function encodeRequest<const namespace extends NamespaceLike>(
   namespace: namespace,
   request: RequestOutput<namespace>,
 ): RequestInput<namespace> {
@@ -428,7 +448,7 @@ export function encodeRequest<const namespace extends Namespace>(
 export const parse = decodeRequest
 
 /** Wire (input) request envelope for a namespace. */
-export type RequestInput<namespace extends Namespace> = {
+export type RequestInput<namespace extends NamespaceLike> = {
   [method in MethodName<namespace>]: {
     method: namespace[method]['method']
     params: z.input<namespace[method]['params']>
@@ -436,7 +456,7 @@ export type RequestInput<namespace extends Namespace> = {
 }[MethodName<namespace>]
 
 /** Decoded (output) request envelope for a namespace. */
-export type RequestOutput<namespace extends Namespace> = {
+export type RequestOutput<namespace extends NamespaceLike> = {
   [method in MethodName<namespace>]: {
     method: namespace[method]['method']
     params: z.output<namespace[method]['params']>

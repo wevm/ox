@@ -92,6 +92,7 @@ export const Uint248 = unsignedBigint(248)
 /** 256-bit unsigned integer decoded as `bigint` and encoded as hex. */
 export const Uint256 = unsignedBigint(256)
 
+// @__NO_SIDE_EFFECTS__
 function unsigned(bits: SmallBits) {
   return z.codec(quantityHex(bits), uintNumber(bits), {
     decode: (value) => globalThis.Number(decodeInteger(value, bits, false)),
@@ -99,6 +100,7 @@ function unsigned(bits: SmallBits) {
   })
 }
 
+// @__NO_SIDE_EFFECTS__
 function unsignedToRpc(bits: SmallBits) {
   return z.codec(quantityHex(bits), uintNumberNumberish(bits), {
     decode: (value) => globalThis.Number(decodeInteger(value, bits, false)),
@@ -106,6 +108,7 @@ function unsignedToRpc(bits: SmallBits) {
   })
 }
 
+// @__NO_SIDE_EFFECTS__
 function unsignedBigint(bits: number) {
   return z.codec(quantityHex(bits), uintBigint(bits), {
     decode: (value) => decodeInteger(value, bits, false),

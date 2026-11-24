@@ -1,5 +1,6 @@
+import { secp256k1 as noble } from '@noble/curves/secp256k1.js'
 import { Address, Bytes, Engine, Hex, Mnemonic, PublicKey, Secp256k1 } from 'ox'
-import { describe, expect, test } from 'vp/test'
+import { describe, expect, test, vi } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('getPublicKey', () => {
@@ -454,6 +455,23 @@ describe('getSharedSecret', () => {
 })
 
 describe('randomPrivateKey', () => {
+  test('behavior: same key as noble for the same random bytes', () => {
+    const getRandomValues = vi.spyOn(crypto, 'getRandomValues')
+    try {
+      for (const fill of [0x00, 0x01, 0x7f, 0xff]) {
+        getRandomValues.mockImplementation(
+          <array extends ArrayBufferView | null>(array: array) =>
+            (array as unknown as Uint8Array).fill(fill) as unknown as array,
+        )
+        expect(Secp256k1.randomPrivateKey({ as: 'Bytes' })).toEqual(
+          noble.utils.randomSecretKey(),
+        )
+      }
+    } finally {
+      getRandomValues.mockRestore()
+    }
+  })
+
   test('default', () => {
     const privateKey = Secp256k1.randomPrivateKey()
     expect(privateKey.length).toBe(66)
@@ -662,6 +680,26 @@ describe('verify', () => {
     expect(
       Secp256k1.verify({ publicKey: compressed, payload, signature: { r, s } }),
     ).toBe(true)
+  })
+
+  test('behavior: rejects high-s signature', () => {
+    const payload = '0xdeadbeef'
+    const { r, s, yParity } = Secp256k1.sign({ payload, privateKey })
+    const publicKey = Secp256k1.getPublicKey({ privateKey })
+    const signature = {
+      r,
+      s: Hex.fromNumber(
+        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n -
+          Hex.toBigInt(s),
+        { size: 32 },
+      ),
+      yParity: yParity === 0 ? 1 : 0,
+    }
+
+    // The high-s twin still recovers the signer's address.
+    expect(Secp256k1.recoverAddress({ payload, signature })).toBe(address)
+    expect(Secp256k1.verify({ address, payload, signature })).toBe(false)
+    expect(Secp256k1.verify({ payload, publicKey, signature })).toBe(false)
   })
 
   test('options: hash', () => {

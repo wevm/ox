@@ -4,7 +4,10 @@ import type * as Errors from '../core/Errors.js'
 
 export * from '../core/Ed25519.js'
 
-const privateKeyPrefix = Buffer.from('302e020100300506032b657004220420', 'hex')
+const privateKeyPrefix = /*#__PURE__*/ Buffer.from(
+  '302e020100300506032b657004220420',
+  'hex',
+)
 
 /**
  * Creates a Node.js implementation of the [`Ed25519`](/api/Ed25519) engine

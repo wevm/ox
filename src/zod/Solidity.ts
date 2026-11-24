@@ -10,7 +10,7 @@ const arrayWithoutTupleRegex =
   /^(address|bool|function|string|bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?|u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?)(\[[0-9]{0,}\])+$/
 const arrayWithTupleRegex = /^tuple(\[[0-9]{0,}\])+$/
 
-export const Identifier = z
+export const Identifier = /* @__PURE__ */ z
   .string()
   .check(
     z.refine((value) => identifierRegex.test(value), 'expected identifier'),
@@ -18,7 +18,7 @@ export const Identifier = z
 
 export const Address = z.literal('address')
 export const Bool = z.literal('bool')
-export const Bytes = z
+export const Bytes = /* @__PURE__ */ z
   .string()
   .check(
     z.refine(
@@ -29,7 +29,7 @@ export const Bytes = z
 export const Function = z.literal('function')
 export const String = z.literal('string')
 export const Tuple = z.literal('tuple')
-export const Int = z
+export const Int = /* @__PURE__ */ z
   .string()
   .check(
     z.refine(
@@ -37,7 +37,7 @@ export const Int = z
       'expected Solidity integer type',
     ),
   )
-export const ArrayWithoutTuple = z
+export const ArrayWithoutTuple = /* @__PURE__ */ z
   .string()
   .check(
     z.refine(
@@ -46,7 +46,7 @@ export const ArrayWithoutTuple = z
       'expected Solidity array type',
     ),
   )
-export const ArrayWithTuple = z
+export const ArrayWithTuple = /* @__PURE__ */ z
   .string()
   .check(
     z.refine(

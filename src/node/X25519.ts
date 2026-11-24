@@ -4,8 +4,14 @@ import type * as Errors from '../core/Errors.js'
 
 export * from '../core/X25519.js'
 
-const privateKeyPrefix = Buffer.from('302e020100300506032b656e04220420', 'hex')
-const publicKeyPrefix = Buffer.from('302a300506032b656e032100', 'hex')
+const privateKeyPrefix = /*#__PURE__*/ Buffer.from(
+  '302e020100300506032b656e04220420',
+  'hex',
+)
+const publicKeyPrefix = /*#__PURE__*/ Buffer.from(
+  '302a300506032b656e032100',
+  'hex',
+)
 
 /**
  * Creates a Node.js implementation of the [`X25519`](/api/X25519) engine slot,

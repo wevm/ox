@@ -1,29 +1,32 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js'
+import { DER } from '@noble/curves/abstract/weierstrass.js'
+import { hexToBytes } from '@noble/curves/utils.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
-import type { Compute, ExactPartial, OneOf } from './internal/types.js'
+import type { ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
+
+/** Order of the secp256k1 group, which bounds `r` and `s`. */
+const order =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
 
 /** Root type for an ECDSA signature. */
 export type Signature<
   recovered extends boolean = true,
   numberType = number,
-> = Compute<
-  recovered extends true
-    ? {
-        r: Hex.Hex
-        s: Hex.Hex
-        yParity: numberType
-      }
-    : {
-        r: Hex.Hex
-        s: Hex.Hex
-        yParity?: numberType | undefined
-      }
->
+> = recovered extends true
+  ? {
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity: numberType
+    }
+  : {
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity?: numberType | undefined
+    }
 
 /** RPC-formatted ECDSA signature. `yParity` is hex-encoded. */
 export type Rpc<recovered extends boolean = true> = Signature<
@@ -65,9 +68,9 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  */
 export function assert(
   signature: ExactPartial<Signature>,
-  options: assert.Options = {},
+  options?: assert.Options,
 ): asserts signature is Signature {
-  const { recovered } = options
+  const recovered = options?.recovered
   if (typeof signature.r === 'undefined')
     throw new MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
@@ -77,20 +80,23 @@ export function assert(
     (signature.yParity === undefined || signature.yParity === null)
   )
     throw new MissingPropertiesError({ signature })
-  try {
-    const r = BigInt(signature.r)
-    if (r < 0n || r > Solidity.maxUint256)
+  // Up to 64 hex digits cannot exceed `maxUint256`; anything else is parsed.
+  if (!isShortHex(signature.r))
+    try {
+      const r = BigInt(signature.r)
+      if (r < 0n || r > Solidity.maxUint256)
+        throw new InvalidRError({ value: signature.r })
+    } catch {
       throw new InvalidRError({ value: signature.r })
-  } catch {
-    throw new InvalidRError({ value: signature.r })
-  }
-  try {
-    const s = BigInt(signature.s)
-    if (s < 0n || s > Solidity.maxUint256)
+    }
+  if (!isShortHex(signature.s))
+    try {
+      const s = BigInt(signature.s)
+      if (s < 0n || s > Solidity.maxUint256)
+        throw new InvalidSError({ value: signature.s })
+    } catch {
       throw new InvalidSError({ value: signature.s })
-  } catch {
-    throw new InvalidSError({ value: signature.s })
-  }
+    }
   if (
     signature.yParity !== undefined &&
     signature.yParity !== 0 &&
@@ -98,6 +104,19 @@ export function assert(
   )
     throw new InvalidYParityError({ value: signature.yParity })
 }
+
+// Whether a value is `0x` and 1 to 64 hex digits, a scalar that fits in 256 bits.
+function isShortHex(value: unknown): boolean {
+  // One regex test is faster than a loop over the digits.
+  return (
+    typeof value === 'string' &&
+    value.length > 2 &&
+    value.length <= 66 &&
+    shortHexRegex.test(value)
+  )
+}
+
+const shortHexRegex = /^0x[0-9a-fA-F]*$/
 
 export declare namespace assert {
   type Options = {
@@ -298,21 +317,23 @@ export function from<
     | Hex.Hex
     | Bytes.Bytes,
 ): from.ReturnType<signature> {
-  const signature_ = (() => {
-    if (typeof signature === 'string') return fromHex(signature)
-    if (signature instanceof Uint8Array) return fromBytes(signature)
+  let signature_: Signature<boolean>
+  if (typeof signature === 'string') signature_ = fromHex(signature)
+  else if (signature instanceof Uint8Array) signature_ = fromBytes(signature)
+  else {
     const sig = signature as Record<string, unknown>
-    if (typeof sig.v !== 'undefined')
-      return fromLegacy(sig as unknown as Legacy)
-    if (typeof sig.yParity === 'string') return fromRpc(sig as unknown as Rpc)
-    return {
-      r: sig.r as Hex.Hex,
-      s: sig.s as Hex.Hex,
-      ...(typeof sig.yParity !== 'undefined'
-        ? { yParity: sig.yParity as number }
-        : {}),
+    const { r, s, yParity } = sig as {
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity: unknown
     }
-  })()
+    if (typeof sig.v !== 'undefined')
+      signature_ = fromLegacy(sig as unknown as Legacy)
+    else if (typeof yParity === 'string')
+      signature_ = fromRpc(sig as unknown as Rpc)
+    else if (typeof yParity === 'undefined') signature_ = { r, s }
+    else signature_ = { r, s, yParity: yParity as number }
+  }
   assert(signature_ as ExactPartial<Signature>)
   // Pad after `assert` so that oversized r/s throw the typed `InvalidRError` /
   // `InvalidSError` rather than `SizeExceedsPaddingSizeError`.
@@ -385,10 +406,10 @@ export declare namespace fromDerBytes {
  * @returns The {@link ox#Signature.Signature}.
  */
 export function fromDerHex(signature: Hex.Hex): Signature<false> {
-  const { r, s } = secp256k1.Signature.fromHex(
-    Hex.from(signature).slice(2),
-    'der',
-  )
+  // What noble's `Signature.fromHex(…, 'der')` does, without bundling the curve.
+  const { r, s } = DER.toSig(hexToBytes(Hex.from(signature).slice(2)))
+  assertScalar('r', r)
+  assertScalar('s', s)
   return {
     r: Hex.fromNumber(r, { size: 32 }),
     s: Hex.fromNumber(s, { size: 32 }),
@@ -454,15 +475,12 @@ export function fromRpc(signature: {
   yParity?: Hex.Hex | undefined
   v?: Hex.Hex | undefined
 }): Signature {
-  const yParity = (() => {
-    const v = signature.v ? Number(signature.v) : undefined
-    let yParity = signature.yParity ? Number(signature.yParity) : undefined
-    if (typeof v === 'number' && typeof yParity !== 'number')
-      yParity = vToYParity(v)
-    if (typeof yParity !== 'number')
-      throw new InvalidYParityError({ value: signature.yParity })
-    return yParity
-  })()
+  const v = signature.v ? Number(signature.v) : undefined
+  let yParity = signature.yParity ? Number(signature.yParity) : undefined
+  if (typeof v === 'number' && typeof yParity !== 'number')
+    yParity = vToYParity(v)
+  if (typeof yParity !== 'number')
+    throw new InvalidYParityError({ value: signature.yParity })
 
   return {
     r: Hex.padLeft(signature.r, 32),
@@ -752,8 +770,7 @@ export declare namespace toHex {
  * @returns The DER-encoded signature.
  */
 export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
-  const sig = new secp256k1.Signature(BigInt(signature.r), BigInt(signature.s))
-  return sig.toBytes('der')
+  return Bytes.fromHex(toDerHex(signature))
 }
 
 export declare namespace toDerBytes {
@@ -780,12 +797,28 @@ export declare namespace toDerBytes {
  * @returns The DER-encoded signature.
  */
 export function toDerHex(signature: Signature<boolean>): Hex.Hex {
-  const sig = new secp256k1.Signature(BigInt(signature.r), BigInt(signature.s))
-  return `0x${sig.toHex('der')}`
+  // What noble's `Signature.toHex('der')` does, without bundling the curve.
+  const r = BigInt(signature.r)
+  const s = BigInt(signature.s)
+  assertScalar('r', r)
+  assertScalar('s', s)
+  return `0x${DER.hexFromSig({ r, s })}`
 }
 
 export declare namespace toDerHex {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Throws what noble's `Signature` constructor throws for an `r` or `s` outside `1..n-1`.
+ *
+ * @internal
+ */
+function assertScalar(title: 'r' | 's', value: bigint) {
+  if (value <= 0n || value >= order)
+    throw new Error(
+      `invalid signature ${title}: out of range 1..Point.Fn.ORDER`,
+    )
 }
 
 /**
@@ -845,8 +878,16 @@ export function toRpc(signature: toRpc.Input): Rpc {
 }
 
 export declare namespace toRpc {
-  /** Numberish input accepted by {@link ox#Signature.(toRpc:function)}. */
-  type Input = Signature<true, Hex.Hex | number>
+  /**
+   * Numberish input accepted by {@link ox#Signature.(toRpc:function)}: a
+   * recovered {@link ox#Signature.Signature} whose `yParity` is a number or a
+   * hex value, written out so it does not instantiate the conditional type.
+   */
+  type Input = {
+    r: Hex.Hex
+    s: Hex.Hex
+    yParity: Hex.Hex | number
+  }
 
   type ErrorType = Errors.GlobalErrorType
 }

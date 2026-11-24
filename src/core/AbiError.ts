@@ -6,6 +6,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
+import type * as AbiParameters_internal from './internal/abiParameters.js'
 import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable, IsNever } from './internal/types.js'
 
@@ -408,7 +409,7 @@ export declare namespace extract {
  *   error, // [!code focus]
  *   [1n, 2n, 0] // [!code focus]
  * ) // [!code focus]
- * // @log: '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
+ * // @log: '0xe466f0a5000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000'
  * ```
  *
  * @example
@@ -494,11 +495,11 @@ export function encode(
 export declare namespace encode {
   type Args<abiError extends AbiError = AbiError> =
     IsNarrowable<abiError, AbiError> extends true
-      ? abitype.AbiParametersToPrimitiveTypes<
+      ? AbiParameters_internal.ToPrimitiveTypes<
           abiError['inputs']
         > extends readonly []
         ? []
-        : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
+        : [AbiParameters_internal.ToPrimitiveTypes<abiError['inputs']>]
       : readonly unknown[]
 
   type ReturnType = Hex.Hex
@@ -751,7 +752,7 @@ export declare namespace fromAbi {
  * const selector = AbiError.getSelector(
  *   'error BadSignatureV(uint8 v)'
  * )
- * // @log: '0x6352211e'
+ * // @log: '0x1f003d0a'
  * ```
  *
  * @example
@@ -763,7 +764,7 @@ export declare namespace fromAbi {
  *   name: 'BadSignatureV',
  *   type: 'error'
  * })
- * // @log: '0x6352211e'
+ * // @log: '0x1f003d0a'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for.
@@ -790,29 +791,41 @@ export const panicReasons = {
   81: 'Attempted to call a zero-initialized variable of internal function type.',
 } as Record<number, string>
 
-export const solidityError = /*#__PURE__*/ from({
-  inputs: [
-    {
-      name: 'message',
-      type: 'string',
-    },
-  ],
+// `solidityError` and `solidityPanic` are literals rather than `from(...)`
+// calls, which would bundle the human-readable ABI parser into every bundle that
+// decodes or encodes an error. `hash` is the signature hash `from` prepares;
+// the declared types leave it out, as `from`'s return type does.
+const solidityErrorItem = {
+  hash: '0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa',
+  inputs: [{ name: 'message', type: 'string' }],
   name: 'Error',
   type: 'error',
-})
+} as const
+
+export const solidityError: {
+  readonly inputs: readonly [
+    { readonly name: 'message'; readonly type: 'string' },
+  ]
+  readonly name: 'Error'
+  readonly type: 'error'
+} = solidityErrorItem
 
 export const solidityErrorSelector = '0x08c379a0'
 
-export const solidityPanic = /*#__PURE__*/ from({
-  inputs: [
-    {
-      name: 'reason',
-      type: 'uint8',
-    },
-  ],
+const solidityPanicItem = {
+  hash: '0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc',
+  inputs: [{ name: 'reason', type: 'uint8' }],
   name: 'Panic',
   type: 'error',
-})
+} as const
+
+export const solidityPanic: {
+  readonly inputs: readonly [
+    { readonly name: 'reason'; readonly type: 'uint8' },
+  ]
+  readonly name: 'Panic'
+  readonly type: 'error'
+} = solidityPanicItem
 
 export const solidityPanicSelector = '0x4e487b71'
 

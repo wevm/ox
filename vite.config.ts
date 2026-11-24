@@ -37,6 +37,7 @@ export default defineConfig({
       'contracts/**',
       'contracts/generated.ts',
       'test/kzg/**',
+      '.agents/uphill/fuzz-fixtures/**',
       '**/tsconfig.json',
       '**/tsconfig.*.json',
       '**/package.json',
@@ -123,7 +124,13 @@ export default defineConfig({
     options: {
       typeAware: true,
     },
-    ignorePatterns: ['contracts/**', 'contracts/generated.ts', 'test/kzg/**'],
+    ignorePatterns: [
+      'contracts/**',
+      'contracts/generated.ts',
+      'test/kzg/**',
+      // Uphill's metric scripts log progress to stderr and run their own Vitest.
+      '.agents/uphill/**',
+    ],
   },
   // `FC_NUM_RUNS` reaches the fuzz files through `import.meta.env`, so that the
   // same properties run under Node and in a browser, where `process` is absent.
@@ -216,7 +223,10 @@ export default defineConfig({
           // doesn't pick up stochastic property tests. Run via
           // `pnpm test:fuzz`.
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
-          setupFiles: [join(root, 'test/setup.ts')],
+          setupFiles: [
+            join(root, 'test/setup.ts'),
+            join(root, 'test/fuzz/setup.ts'),
+          ],
           // A property is thousands of cases, not one, so the unit-test
           // default does not apply. The job's own timeout is the real guard.
           testTimeout: fuzzTimeout,
@@ -341,6 +351,7 @@ export default defineConfig({
             },
           },
           include: process.env.FUZZ ? ['src/**/*.fuzz.ts', '!src/node/**'] : [],
+          setupFiles: [join(root, 'test/fuzz/setup.ts')],
           testTimeout: fuzzTimeout,
           browser: {
             enabled: true,

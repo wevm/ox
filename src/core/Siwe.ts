@@ -13,21 +13,30 @@ export const localhostRegex = /^localhost(:[0-9]{1,5})?$/
 
 export const nonceRegex = /^[a-zA-Z0-9]{8,}$/
 
-export const schemeRegex = /^([a-zA-Z][a-zA-Z0-9+-.]*)$/
+export const schemeRegex = /^([a-zA-Z][a-zA-Z0-9+\-.]*)$/
 
-// https://regexr.com/80gdj
 export const prefixRegex =
-  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
+  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+\-.]*):\/\/)?(?<domain>(?:\[[^\]\s@[]+\]|[a-zA-Z0-9+-.]*)(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
 
 // https://regexr.com/80gf9
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
 
-// Matches `suffixRegex` from the start of the input to its end.
-const anchoredSuffixRegex = new RegExp(`^(?:${suffixRegex.source})$`)
+// `suffixRegex` anchored to the whole input. Written out rather than built from
+// `suffixRegex.source`, so bundlers can drop it; keep the two in sync.
+const anchoredSuffixRegex =
+  /^(?:(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?)$/
 
 const siweDateTimeRegex =
   /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[Tt]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/
+
+// `parseMessage` reads the statement with `.`, which stops at these.
+const statementLineBreakRegex = /[\n\r\u2028\u2029]/
+
+// An IP literal (IPv6 or IPvFuture) `domain` with an optional port. The
+// literal itself is checked by `isAuthority`. `@` and `[` are excluded so a
+// userinfo authority such as `[evil.com@[::1]` cannot pass as a literal.
+const domainIpLiteralRegex = /^\[[^\]\s@[]+\](?::[0-9]{1,5})?$/
 
 // URI validation (see `isUri`).
 const uriIllegalCharacterRegex = /[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i
@@ -185,7 +194,8 @@ export function createMessage(value: Message): string {
       !(
         domainRegex.test(domain) ||
         ipRegex.test(domain) ||
-        localhostRegex.test(domain)
+        localhostRegex.test(domain) ||
+        (domainIpLiteralRegex.test(domain) && isAuthority(domain))
       )
     )
       throw new InvalidMessageFieldError({
@@ -239,11 +249,11 @@ export function createMessage(value: Message): string {
         ],
       })
     const statement = value.statement
-    if (statement?.includes('\n'))
+    if (statement && statementLineBreakRegex.test(statement))
       throw new InvalidMessageFieldError({
         field: 'statement',
         metaMessages: [
-          "- Statement must not include '\\n'.",
+          "- Statement must not include a line break ('\\n', '\\r', '\\u2028' or '\\u2029').",
           '',
           `Provided value: ${statement}`,
         ],
@@ -359,7 +369,7 @@ export function isUri(value: string): false | string {
   // if authority is present, the path must be empty or begin with a /
   if (authority?.length) {
     if (!(path.length === 0 || path.startsWith('/'))) return false
-    if (path.length === 0 && !isAuthority(authority)) return false
+    if (!isAuthority(authority)) return false
   } else {
     // if authority is not present, the path must not start with //
     if (path.startsWith('//')) return false
@@ -524,7 +534,8 @@ export function validateMessage(value: validateMessage.Value): boolean {
 
   if (domain && message.domain !== domain) return false
   if (nonce && message.nonce !== nonce) return false
-  if (scheme && message.scheme !== scheme) return false
+  // EIP-4361: if `scheme` is not specified, HTTPS is assumed by default.
+  if (scheme && (message.scheme ?? 'https') !== scheme) return false
 
   // EIP-4361 requires `nonce = 8*( ALPHA / DIGIT )` and `version = "1"`.
   if (message.nonce !== undefined && !nonceRegex.test(message.nonce))
@@ -572,6 +583,7 @@ export declare namespace validateMessage {
     nonce?: string | undefined
     /**
      * [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-3.1) URI scheme to check against.
+     * If the message omits `scheme`, `https` is assumed ([EIP-4361](https://eips.ethereum.org/EIPS/eip-4361)).
      */
     scheme?: string | undefined
     /**

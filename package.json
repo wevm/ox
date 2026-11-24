@@ -1,8 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "build": "pnpm exports:update && zile && pnpm exports:internal-types",
-    "changeset:publish": "pnpm exports:update && zile publish:prepare && node --import tsx ./scripts/exports:internal-types.ts && changeset publish && zile publish:post",
+    "build": "pnpm exports:update && zile && pnpm exports:internal-types && pnpm dist:package",
+    "changeset:publish": "pnpm exports:update && zile publish:prepare && node --import tsx ./scripts/exports:internal-types.ts && node --import tsx ./scripts/dist:package.ts && changeset publish && zile publish:post",
     "changeset:version": "changeset version && pnpm version:update && pnpm check",
     "check": "vp check --fix",
     "check:examples": "zile examples:check --fix",
@@ -16,6 +16,7 @@
     "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.node.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.wasm.json --local && node --import tsx scripts/docgen/build.ts",
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
+    "dist:package": "node --import tsx ./scripts/dist:package.ts",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
     "exports:internal-types": "node --import tsx ./scripts/exports:internal-types.ts",
     "knip": "knip --production",
@@ -174,7 +175,7 @@
   "name": "ox",
   "description": "Ethereum Standard Library",
   "type": "module",
-  "version": "1.8.18",
+  "version": "1.8.21",
   "main": "./dist/index.js",
   "sideEffects": false,
   "license": "MIT",

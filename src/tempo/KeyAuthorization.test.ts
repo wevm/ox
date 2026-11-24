@@ -1427,6 +1427,19 @@ describe('deserialize', () => {
 
     expect(deserialized).toEqual(authorization)
   })
+
+  test('error: not an authorization list', () => {
+    // `[]`, a string, `[[…], [signature as a list]]`, and a list as the chain ID.
+    for (const serialized of [
+      '0xc0',
+      '0x820102',
+      '0xc6c3010203c180',
+      '0xc6c5c201020203',
+    ] as const)
+      expect(() => KeyAuthorization.deserialize(serialized)).toThrowError(
+        KeyAuthorization.InvalidSerializedError,
+      )
+  })
 })
 
 describe('hash', () => {

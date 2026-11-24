@@ -10,8 +10,7 @@ import * as Hex from './Hex.js'
  *
  * @internal
  */
-const erc191PrefixHex = /*#__PURE__*/ ('0x19' +
-  Hex.fromString('Ethereum Signed Message:\n').slice(2)) as Hex.Hex
+const erc191PrefixHex = '0x19457468657265756d205369676e6564204d6573736167653a0a'
 
 /**
  * Encodes a personal sign message in [ERC-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e): `0x19 ‖ "Ethereum Signed Message:\n" + message.length ‖ message`.

@@ -8,18 +8,22 @@ export type Call<bigintType = bigint> = {
   value?: bigintType | undefined
 }
 
-/** Cached ABI parameters for ERC-7821 calls without `opData`. */
-const callsParameters = /*#__PURE__*/ AbiParameters.from([
-  'struct Call { address target; uint256 value; bytes data; }',
-  'Call[] calls',
-])
-
-/** Cached ABI parameters for ERC-7821 calls with `opData`. */
-const callsWithOpDataParameters = /*#__PURE__*/ AbiParameters.from([
-  'struct Call { address target; uint256 value; bytes data; }',
-  'Call[] calls',
-  'bytes opData',
-])
+// `struct Call { address target; uint256 value; bytes data; }`, `Call[] calls` and `bytes opData`,
+// written out so neither importing this module nor calling it parses human-readable ABI.
+const callsParameter = {
+  type: 'tuple[]',
+  name: 'calls',
+  components: [
+    { type: 'address', name: 'target' },
+    { type: 'uint256', name: 'value' },
+    { type: 'bytes', name: 'data' },
+  ],
+} as const
+const callsParameters = [callsParameter] as const
+const callsWithOpDataParameters = [
+  callsParameter,
+  { type: 'bytes', name: 'opData' },
+] as const
 
 /**
  * Encodes a set of ERC-7821 calls.

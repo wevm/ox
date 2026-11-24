@@ -1,4 +1,5 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
+import * as core_Hex from '../core/Hex.js'
 import * as z_Address from './Address.js'
 import * as z_Hex from './Hex.js'
 import { quantityHex } from './internal/Integer.js'
@@ -9,6 +10,13 @@ import * as z from 'zod/mini'
 // EIP-7702 permits any `y_parity` below 2**8 in an authorization tuple, so
 // every authorization schema accepts an 8-bit `yParity`.
 const yParityHex = quantityHex(8)
+
+// `r` and `s` are `uint256` quantities over RPC, so accept them without
+// leading zeros and decode them to 32-byte hex like `Authorization.fromRpc`.
+const signatureScalar = z.codec(quantityHex(256), z_Hex.Hex32, {
+  decode: (value) => core_Hex.padLeft(value, 32),
+  encode: (value) => core_Hex.fromNumber(core_Hex.toBigInt(value)),
+})
 
 /** Unsigned EIP-7702 authorization schema. */
 export const Unsigned = z.object(unsignedFields(z_Number.Number, z_Uint.Uint))
@@ -69,6 +77,7 @@ export const TupleList = z.readonly(z.array(Tuple))
 /** Signed EIP-7702 authorization tuple list schema. */
 export const TupleListSigned = z.readonly(z.array(TupleSigned))
 
+// @__NO_SIDE_EFFECTS__
 function unsignedFields<num extends z.ZodMiniType, uint extends z.ZodMiniType>(
   num: num,
   uint: uint,
@@ -83,6 +92,7 @@ function unsignedFields<num extends z.ZodMiniType, uint extends z.ZodMiniType>(
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function signedFields<
   num extends z.ZodMiniType,
   uint extends z.ZodMiniType,
@@ -92,8 +102,8 @@ function signedFields<
     address: z_Address.Address,
     chainId: num,
     nonce: uint,
-    r: z_Hex.Hex32,
-    s: z_Hex.Hex32,
+    r: signatureScalar,
+    s: signatureScalar,
     yParity,
   }
 }

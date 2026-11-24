@@ -22,14 +22,15 @@ export const maxSignatures = 8
  */
 export const maxThreshold = 0xff
 
-/** Maximum version accepted by an account config. */
-export const maxVersion = 2n ** 64n - 1n
+/** Maximum version accepted by an account config (`2^64 - 1`). */
+export const maxVersion = 0xffffffffffffffffn
 
 /** Tempo signature type byte for configurable account signatures. */
 export const signatureTypeByte = '0x05' as const
 
 /** Zero 32-byte salt (the default when no salt is provided). */
-export const zeroSalt = `0x${'00'.repeat(32)}` as const
+export const zeroSalt =
+  '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 /** Domain prefix for the configurable account address derivation. */
 const accountDomain = 'tempo:configurable-account:account'

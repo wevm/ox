@@ -32,6 +32,7 @@ export const SignedToRpc = z.object(
   signedFields(toRpc.uint, toRpc.num, z_Authorization.ListSignedToRpc),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,
@@ -46,6 +47,7 @@ function fields<
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function signedFields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

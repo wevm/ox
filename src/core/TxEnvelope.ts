@@ -947,14 +947,18 @@ export class InvalidChainIdError extends Errors.BaseError {
  * // @error: Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList
  * ```
  */
-export class InvalidSerializedError extends Errors.BaseError {
+export class InvalidSerializedError extends Errors.BaseError<
+  Error | undefined
+> {
   override readonly name = 'TransactionEnvelope.InvalidSerializedError'
   constructor({
     attributes,
+    cause,
     serialized,
     type,
   }: {
     attributes: Record<string, unknown>
+    cause?: Error | undefined
     serialized: Hex.Hex
     type: string
   }) {
@@ -962,6 +966,7 @@ export class InvalidSerializedError extends Errors.BaseError {
       .map(([key, value]) => (typeof value === 'undefined' ? key : undefined))
       .filter(Boolean)
     super(`Invalid serialized transaction of type "${type}" was provided.`, {
+      cause,
       metaMessages: [
         `Serialized Transaction: "${serialized}"`,
         missing.length > 0 ? `Missing Attributes: ${missing.join(', ')}` : '',

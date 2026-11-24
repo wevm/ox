@@ -23,6 +23,7 @@ export const Signed = z.object(signedFields(strict.uint, strict.num))
 /** Encode-only signed EIP-1559 transaction envelope schema accepting numberish `toRpc` inputs. */
 export const SignedToRpc = z.object(signedFields(toRpc.uint, toRpc.num))
 
+// @__NO_SIDE_EFFECTS__
 function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   uint: uint,
   num: num,
@@ -35,6 +36,7 @@ function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function signedFields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   uint: uint,
   num: num,

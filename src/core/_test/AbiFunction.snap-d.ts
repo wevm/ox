@@ -58,13 +58,13 @@ describe('decodeData', () => {
         abiItem,
         '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
       ),
-    ).type.toString.snap('readonly [bigint] | readonly [`0x${string}`]')
+    ).type.toString.snap('readonly [`0x${string}`] | readonly [bigint]')
     attest(
       AbiFunction.decodeData(
         abiItem,
         '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
       ),
-    ).type.toString.snap('readonly [bigint] | readonly [`0x${string}`]')
+    ).type.toString.snap('readonly [`0x${string}`] | readonly [bigint]')
   })
 
   test('behavior: with overloads, one with zero inputs', () => {
@@ -168,6 +168,31 @@ describe('decodeResult', () => {
       )
       attest(result).type.toString.snap('string | bigint | boolean | undefined')
     }
+  })
+})
+
+describe('encodeResult', () => {
+  const abiItem = AbiFunction.from({
+    inputs: [],
+    name: 'test',
+    outputs: [
+      { name: 'a', type: 'uint256' },
+      {
+        components: [
+          { name: 'x', type: 'uint256' },
+          { name: 'y', type: 'string' },
+        ],
+        name: 'b',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  })
+
+  test('behavior: type instantiations', () => {
+    AbiFunction.encodeResult(abiItem, [420n, { x: 420n, y: 'lol' }])
+    attest.instantiations([260, 'instantiations'])
   })
 })
 

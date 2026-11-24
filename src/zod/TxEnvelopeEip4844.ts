@@ -14,9 +14,9 @@ const Type = type('0x3', 'eip4844')
 
 /** EIP-4844 sidecars schema. */
 export const Sidecars = z.object({
-  blobs: z.readonly(z.array(z_Hex.Hex)),
-  commitments: z.readonly(z.array(z_Hex.Hex)),
-  cellProofs: z.readonly(z.array(z_Hex.Hex)),
+  blobs: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  commitments: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  cellProofs: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
 })
 
 /** EIP-4844 transaction envelope schema. */
@@ -31,6 +31,7 @@ export const Signed = z.object(signedFields(strict.uint, strict.num))
 /** Encode-only signed EIP-4844 transaction envelope schema accepting numberish `toRpc` inputs. */
 export const SignedToRpc = z.object(signedFields(toRpc.uint, toRpc.num))
 
+// @__NO_SIDE_EFFECTS__
 function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   uint: uint,
   num: num,
@@ -46,6 +47,7 @@ function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function signedFields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
   uint: uint,
   num: num,

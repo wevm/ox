@@ -469,10 +469,21 @@ export declare namespace fromRpc {
  * @param transaction - The transaction to convert.
  * @returns An RPC-formatted transaction.
  */
+export function toRpc(
+  transaction: toRpc.Input<false>,
+  options?: toRpc.Options<false>,
+): Rpc<false>
+// Overload for settled transactions first: inferring `pending` through the
+// transaction union costs about 5x the type instantiations of checking it.
 export function toRpc<pending extends boolean = false>(
   transaction: toRpc.Input<pending>,
-  _options?: toRpc.Options<pending>,
-): Rpc<pending> {
+  options?: toRpc.Options<pending>,
+): Rpc<pending>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function toRpc(
+  transaction: toRpc.Input<boolean>,
+  _options?: toRpc.Options<boolean>,
+): Rpc<boolean> {
   const rpc = {} as Rpc<boolean>
 
   rpc.blockHash = transaction.blockHash
@@ -523,12 +534,16 @@ export function toRpc<pending extends boolean = false>(
     )
   if (typeof transaction.r === 'string') rpc.r = transaction.r
   if (typeof transaction.s === 'string') rpc.s = transaction.s
+  // Legacy EIP-155 `v` is unsized; typed transactions keep a single byte.
   if (transaction.v !== undefined)
-    rpc.v = Quantity.fromNumberish(transaction.v, { size: 1 })
+    rpc.v =
+      transaction.type === 'legacy'
+        ? Quantity.fromNumberish(transaction.v)
+        : Quantity.fromNumberish(transaction.v, { size: 1 })
   if (transaction.yParity !== undefined)
     rpc.yParity = Quantity.fromNumberish(transaction.yParity)
 
-  return rpc as Rpc<pending>
+  return rpc
 }
 
 export declare namespace toRpc {

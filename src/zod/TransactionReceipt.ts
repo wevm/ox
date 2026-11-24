@@ -37,8 +37,11 @@ const toRpcType = {
 
 /** Transaction receipt status schema. */
 export const Status = z.codec(
-  z.union([z.literal('0x0'), z.literal('0x1')]),
-  z.union([z.literal('reverted'), z.literal('success')]),
+  z.union([/* @__PURE__ */ z.literal('0x0'), /* @__PURE__ */ z.literal('0x1')]),
+  z.union([
+    /* @__PURE__ */ z.literal('reverted'),
+    /* @__PURE__ */ z.literal('success'),
+  ]),
   {
     decode: (value) => fromRpcStatus[value],
     encode: (value) => toRpcStatus[value],
@@ -66,6 +69,7 @@ export const TransactionReceiptToRpc = z.object(
   ),
 )
 
+// @__NO_SIDE_EFFECTS__
 function fields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

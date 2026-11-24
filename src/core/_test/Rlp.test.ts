@@ -1,4 +1,4 @@
-import { Bytes, Hex, Rlp } from 'ox'
+import { Bytes, type Errors, Hex, Rlp } from 'ox'
 import { describe, expect, test } from 'vp/test'
 
 test('exports', () => {
@@ -106,7 +106,11 @@ describe('Rlp.encodeTo', () => {
         writes++
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[BaseError: Invalid hex string \`0xzz\`.]`,
+      `
+      [Hex.InvalidHexValueError: Value \`0xzz\` is an invalid hex value.
+
+      Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+    `,
     )
     expect(writes).toMatchInlineSnapshot(`0`)
   })
@@ -139,6 +143,39 @@ describe('Rlp.encodeTo', () => {
     })
 
     expect(Bytes.concat(...chunks)).toEqual(expected)
+  })
+})
+
+describe('Rlp.from', () => {
+  test('behavior: rejects malformed hex leaves', () => {
+    // A bad digit in a long and in a single-byte leaf, a leaf without its
+    // `0x`, an empty leaf, and two bad leaves, of which the first in encoding
+    // order is reported.
+    const values = [
+      ['0x01', '0xgg11'],
+      '0xzz',
+      ['0x01', 'zz'],
+      [''],
+      [['0x1g'], '0X12'],
+    ]
+    const errors = (as: 'Hex' | 'Bytes') =>
+      values.map((value) => {
+        try {
+          return Rlp.from(value as Hex.Hex, { as })
+        } catch (error) {
+          return (error as Errors.BaseError).shortMessage
+        }
+      })
+    expect(errors('Hex')).toMatchInlineSnapshot(`
+      [
+        "Value \`0xgg11\` is an invalid hex value.",
+        "Value \`0xzz\` is an invalid hex value.",
+        "Value \`zz\` is an invalid hex value.",
+        "Value \`\` is an invalid hex value.",
+        "Value \`0x1g\` is an invalid hex value.",
+      ]
+    `)
+    expect(errors('Bytes')).toEqual(errors('Hex'))
   })
 })
 
@@ -502,6 +539,12 @@ describe('Rlp.to', () => {
         generateList(60_000),
       )
     })
+  })
+
+  test('error: neither hex nor bytes', () => {
+    expect(() => Rlp.toHex(0 as never)).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid RLP prefix]`,
+    )
   })
 
   test('error: invalid hex value', () => {

@@ -14,24 +14,24 @@ export const Number = z_Uint.Uint
 
 /** Block tag schema. */
 export const Tag = z.union([
-  z.literal('latest'),
-  z.literal('earliest'),
-  z.literal('pending'),
-  z.literal('safe'),
-  z.literal('finalized'),
+  /* @__PURE__ */ z.literal('latest'),
+  /* @__PURE__ */ z.literal('earliest'),
+  /* @__PURE__ */ z.literal('pending'),
+  /* @__PURE__ */ z.literal('safe'),
+  /* @__PURE__ */ z.literal('finalized'),
 ])
 
 /** Block identifier schema. */
 export const Identifier = z.union([
-  z.object({
+  /* @__PURE__ */ z.object({
     blockNumber: Number,
-    blockHash: z.optional(z.undefined()),
-    requireCanonical: z.optional(z.boolean()),
+    blockHash: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
+    requireCanonical: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
   }),
-  z.object({
+  /* @__PURE__ */ z.object({
     blockHash: Hash,
-    blockNumber: z.optional(z.undefined()),
-    requireCanonical: z.optional(z.boolean()),
+    blockNumber: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
+    requireCanonical: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
   }),
 ])
 
@@ -89,6 +89,7 @@ export const PendingWithTransactions = z.object(
   ),
 )
 
+// @__NO_SIDE_EFFECTS__
 function blockFields<
   const transactions extends z.ZodMiniType,
   uint extends z.ZodMiniType,
@@ -103,6 +104,7 @@ function blockFields<
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function pendingBlockFields<
   const transactions extends z.ZodMiniType,
   uint extends z.ZodMiniType,
@@ -135,6 +137,7 @@ function commonFields<
     parentBeaconBlockRoot: z.optional(z_Hex.Hex),
     parentHash: z_Hex.Hex,
     receiptsRoot: z_Hex.Hex,
+    requestsHash: z.optional(z_Hex.Hex),
     sealFields: z.optional(z.readonly(z.array(z_Hex.Hex))),
     sha3Uncles: z_Hex.Hex,
     size: uint,

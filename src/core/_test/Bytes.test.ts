@@ -441,6 +441,66 @@ describe('fromNumber', () => {
       )
     })
 
+    test('behavior: size and safe-integer boundaries', () => {
+      expect(Array.from(Bytes.fromNumber(255, { size: 1 }))).toEqual([255])
+      expect(() =>
+        Bytes.fromNumber(256, { size: 1 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)]`,
+      )
+      expect(
+        Array.from(Bytes.fromNumber(127, { signed: true, size: 1 })),
+      ).toEqual([127])
+      expect(() =>
+        Bytes.fromNumber(128, { signed: true, size: 1 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`128\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)]`,
+      )
+      expect(Array.from(Bytes.fromNumber(2 ** 48 - 1, { size: 6 }))).toEqual([
+        255, 255, 255, 255, 255, 255,
+      ])
+      expect(() =>
+        Bytes.fromNumber(2 ** 48, { size: 6 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`281474976710656\` is not in safe 48-bit unsigned integer range (\`0\` to \`281474976710655\`)]`,
+      )
+      // Neither a fractional size nor a value that is not a number takes the
+      // fast path.
+      expect(() =>
+        Bytes.fromNumber(5, { size: 1.5 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[RangeError: The number 1.5 cannot be converted to a BigInt because it is not an integer]`,
+      )
+      expect(() =>
+        Bytes.fromNumber(null as never),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[TypeError: Cannot convert null to a BigInt]`,
+      )
+      expect(
+        Array.from(Bytes.fromNumber(-(2 ** 47), { signed: true, size: 6 })),
+      ).toEqual([128, 0, 0, 0, 0, 0])
+      expect(
+        Array.from(Bytes.fromNumber(-(2n ** 47n), { signed: true, size: 6 })),
+      ).toEqual([128, 0, 0, 0, 0, 0])
+      expect(() =>
+        Bytes.fromNumber(-(2 ** 47) - 1, { signed: true, size: 6 }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Hex.IntegerOutOfRangeError: Number \`-140737488355329\` is not in safe 48-bit signed integer range (\`-140737488355328\` to \`140737488355327\`)]`,
+      )
+      expect(
+        Array.from(Bytes.fromNumber(-(2 ** 47) - 1, { signed: true, size: 7 })),
+      ).toEqual([255, 127, 255, 255, 255, 255, 255])
+      expect(Array.from(Bytes.fromNumber(2n ** 53n - 1n))).toEqual([
+        0x1f, 255, 255, 255, 255, 255, 255,
+      ])
+      expect(Array.from(Bytes.fromNumber(2n ** 53n))).toEqual([
+        0x20, 0, 0, 0, 0, 0, 0,
+      ])
+      expect(Array.from(Bytes.fromNumber(2n ** 64n + 1n))).toEqual([
+        1, 0, 0, 0, 0, 0, 0, 0, 1,
+      ])
+    })
+
     test('args: signed', () => {
       expect(
         Bytes.fromNumber(32, { size: 1, signed: true }),
@@ -515,6 +575,17 @@ describe('fromNumber', () => {
         Bytes.fromNumber(-32769, { size: 2, signed: true }),
       ).toThrowErrorMatchingInlineSnapshot(
         '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
+      )
+    })
+
+    test('behavior: large sizes encode in linear time', () => {
+      const size = 1024 * 1024
+      const bytes = Bytes.fromNumber(-2, { size, signed: true })
+      expect(bytes.length).toBe(size)
+      expect(bytes.subarray(0, -1).every((byte) => byte === 0xff)).toBe(true)
+      expect(bytes[size - 1]).toBe(0xfe)
+      expect(Bytes.toBigInt(Bytes.fromNumber(2n ** 600n + 1n))).toBe(
+        2n ** 600n + 1n,
       )
     })
   })
@@ -916,6 +987,21 @@ describe('fromString', () => {
         ]
       `,
     )
+  })
+
+  test('behavior: encodes as TextEncoder does', () => {
+    const encoder = new TextEncoder()
+    for (const value of [
+      'hhello wo\ufffdd',
+      'ü€😀',
+      // Lone surrogates become U+FFFD.
+      '\ud800',
+      'a\udc00b',
+      '\ud83d\ud83d\ude00',
+      'x'.repeat(64),
+      `${'ü'.repeat(64)}😀`,
+    ])
+      expect(Bytes.fromString(value)).toEqual(encoder.encode(value))
   })
 
   test('error: size overflow', () => {
@@ -1563,6 +1649,24 @@ describe('toString', () => {
         ]),
       ),
     ).toMatchInlineSnapshot(`"Hello World!"`)
+  })
+
+  test('behavior: decodes as TextDecoder does', () => {
+    const decoder = new TextDecoder()
+    for (const value of [
+      [104, 101, 108, 108, 111],
+      [104, 105],
+      [],
+      // A byte order mark, invalid and truncated sequences.
+      [0xef, 0xbb, 0xbf, 97],
+      [0xc0, 0xaf, 0xed, 0xa0, 0x80, 0xf4, 0x90, 0x80, 0x80, 0xe2, 0x82],
+      [0xf0, 0x9f, 0x98, 0x80],
+      Array.from({ length: 64 }, (_, i) => 65 + (i % 26)),
+      Array.from({ length: 65 }, (_, i) => 97 + (i % 26)),
+    ]) {
+      const bytes = Bytes.fromArray(value)
+      expect(Bytes.toString(bytes)).toBe(decoder.decode(bytes))
+    }
   })
 
   test('args: size', () => {

@@ -1,3 +1,5 @@
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { expect, test } from 'vp/test'
 import * as exports from '../../index.js'
 
@@ -89,4 +91,44 @@ test('exports', () => {
       "X25519",
     ]
   `)
+})
+
+test('behavior: modules import each other, not an entry point', () => {
+  // Importing a barrel such as `../index.js` loads every module it exports, and
+  // CommonJS bundles keep all of them.
+  const root = path.resolve(import.meta.dirname, '../..')
+  const offenders = fs
+    .globSync('**/*.ts', { cwd: root })
+    .filter(
+      (file) =>
+        !/(^|\/)_test\/|(^|\/)index(\.docs)?\.ts$|\.(test|test-d|snap-d|bench)\.ts$/.test(
+          file,
+        ),
+    )
+    .filter((file) =>
+      /^import (?!type )[^;]*from '(\.\.?\/)+index\.js'/m.test(
+        fs.readFileSync(path.join(root, file), 'utf8'),
+      ),
+    )
+  expect(offenders).toEqual([])
+})
+
+test('behavior: modules declare no runtime namespaces', () => {
+  // A namespace that holds values compiles to an IIFE at the top of its module,
+  // which bundlers cannot drop, so every bundle that imports anything from the
+  // module carries the namespace's code. `UserOperation.toTypedData.types` is
+  // public, so it stays.
+  const root = path.resolve(import.meta.dirname, '../..')
+  const offenders = fs
+    .globSync('**/*.ts', { cwd: root })
+    .filter(
+      (file) =>
+        !/(^|\/)_test\/|\.(test|test-d|snap-d|bench|bench-d)\.ts$/.test(file),
+    )
+    .filter((file) =>
+      /^(export )?namespace /m.test(
+        fs.readFileSync(path.join(root, file), 'utf8'),
+      ),
+    )
+  expect(offenders).toEqual(['erc4337/UserOperation.ts'])
 })

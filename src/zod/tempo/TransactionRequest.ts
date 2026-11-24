@@ -20,186 +20,248 @@ const fromRpcType = { '0x76': 'tempo' } as const
 const toRpcType = { tempo: '0x76' } as const
 
 const KeyType = z.union([
-  z.literal('secp256k1'),
-  z.literal('p256'),
-  z.literal('webAuthn'),
-  z.literal('configurable'),
+  /* @__PURE__ */ z.literal('secp256k1'),
+  /* @__PURE__ */ z.literal('p256'),
+  /* @__PURE__ */ z.literal('webAuthn'),
+  /* @__PURE__ */ z.literal('configurable'),
 ])
 
 // The node's wire format names the configurable account key type `configurableAccount`.
 const KeyTypeRpc = z.union([
-  z.literal('secp256k1'),
-  z.literal('p256'),
-  z.literal('webAuthn'),
-  z.literal('configurableAccount'),
+  /* @__PURE__ */ z.literal('secp256k1'),
+  /* @__PURE__ */ z.literal('p256'),
+  /* @__PURE__ */ z.literal('webAuthn'),
+  /* @__PURE__ */ z.literal('configurableAccount'),
 ])
 
 const SignatureRpc = z.object({
   r: z_Hex.Hex,
   s: z_Hex.Hex,
-  v: z.optional(z_Hex.Hex),
+  v: /* @__PURE__ */ z.optional(z_Hex.Hex),
   yParity: z_Hex.Hex,
 })
 
 const SignatureDecoded = z.object({
   r: z_Hex.Hex,
   s: z_Hex.Hex,
-  v: z.optional(z.number()),
-  yParity: z.number(),
+  v: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  yParity: /* @__PURE__ */ z.number(),
 })
 
 const CallRpc = z.object({
-  data: z.optional(z_Hex.Hex),
-  to: z.optional(z_Address.Address),
-  value: z.optional(z_Hex.Hex),
+  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  to: /* @__PURE__ */ z.optional(z_Address.Address),
+  value: /* @__PURE__ */ z.optional(z_Hex.Hex),
 })
 
 const Call = z.object({
-  data: z.optional(z_Hex.Hex),
-  to: z.optional(z_Address.Address),
-  value: z.optional(z.bigint()),
+  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  to: /* @__PURE__ */ z.optional(z_Address.Address),
+  value: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
 })
 
 const CallToRpc = z.object({
-  data: z.optional(z_Hex.Hex),
-  to: z.optional(z_Address.Address),
-  value: z.optional(uintBigintNumberish()),
+  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  to: /* @__PURE__ */ z.optional(z_Address.Address),
+  value: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintBigintNumberish()),
 })
 
 const Capabilities = z.record(z.string(), z.unknown())
 
 /** RPC tempo transaction request schema. */
 export const Rpc = z.object({
-  accessList: z.optional(z_AccessList.AccessList),
-  authorizationList: z.optional(z_AuthorizationTempo.ListRpc),
-  blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  calls: z.optional(z.readonly(z.array(CallRpc))),
-  capabilities: z.optional(Capabilities),
-  chainId: z.optional(z_Hex.Hex),
-  data: z.optional(z_Hex.Hex),
-  feePayer: z.optional(z.boolean()),
-  feePayerSignature: z.optional(z.union([SignatureRpc, z.null()])),
-  feeToken: z.optional(z_Hex.Hex),
-  from: z.optional(z_Address.Address),
-  gas: z.optional(z_Hex.Hex),
-  gasPrice: z.optional(z_Hex.Hex),
-  input: z.optional(z_Hex.Hex),
-  keyAuthorization: z.optional(z_KeyAuthorization.Rpc),
-  keyData: z.optional(z_Hex.Hex),
-  keyId: z.optional(z_Address.Address),
-  keyType: z.optional(KeyTypeRpc),
-  maxFeePerBlobGas: z.optional(z_Hex.Hex),
-  maxFeePerGas: z.optional(z_Hex.Hex),
-  maxPriorityFeePerGas: z.optional(z_Hex.Hex),
-  keyAuthorizationSimulation: z.optional(z_AccountSimulation.Rpc),
-  configurableAccountSimulation: z.optional(z_AccountSimulation.Rpc),
-  nonce: z.optional(z_Hex.Hex),
-  nonceKey: z.optional(z_Hex.Hex),
-  r: z.optional(z_Hex.Hex),
-  s: z.optional(z_Hex.Hex),
-  signature: z.optional(z_SignatureEnvelope.Rpc),
-  to: z.optional(z.union([z_Address.Address, z.null()])),
-  type: z.optional(z.string()),
-  v: z.optional(z_Hex.Hex),
-  validAfter: z.optional(z_Hex.Hex),
-  validBefore: z.optional(z_Hex.Hex),
-  value: z.optional(z_Hex.Hex),
-  yParity: z.optional(z_Hex.Hex),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  authorizationList: /* @__PURE__ */ z.optional(z_AuthorizationTempo.ListRpc),
+  blobVersionedHashes: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  ),
+  blobs: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  ),
+  calls: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(CallRpc)),
+  ),
+  capabilities: /* @__PURE__ */ z.optional(Capabilities),
+  chainId: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  feePayer: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  feePayerSignature: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([SignatureRpc, /* @__PURE__ */ z.null()]),
+  ),
+  feeToken: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  from: /* @__PURE__ */ z.optional(z_Address.Address),
+  gas: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  gasPrice: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  input: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyAuthorization: /* @__PURE__ */ z.optional(z_KeyAuthorization.Rpc),
+  keyData: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyId: /* @__PURE__ */ z.optional(z_Address.Address),
+  keyType: /* @__PURE__ */ z.optional(KeyTypeRpc),
+  maxFeePerBlobGas: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  maxFeePerGas: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  maxPriorityFeePerGas: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyAuthorizationSimulation: /* @__PURE__ */ z.optional(
+    z_AccountSimulation.Rpc,
+  ),
+  configurableAccountSimulation: /* @__PURE__ */ z.optional(
+    z_AccountSimulation.Rpc,
+  ),
+  nonce: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  nonceKey: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  r: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  s: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  signature: /* @__PURE__ */ z.optional(z_SignatureEnvelope.Rpc),
+  to: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([z_Address.Address, /* @__PURE__ */ z.null()]),
+  ),
+  type: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
+  v: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  validAfter: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  validBefore: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  value: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  yParity: /* @__PURE__ */ z.optional(z_Hex.Hex),
 })
 
 const AuthorizationSigned = z.object({
   address: z_Address.Address,
-  chainId: z.number(),
-  nonce: z.bigint(),
+  chainId: /* @__PURE__ */ z.number(),
+  nonce: /* @__PURE__ */ z.bigint(),
   signature: z_SignatureEnvelope.Domain,
 })
 
 const AuthorizationSignedToRpc = z.object({
   address: z_Address.Address,
-  chainId: uintNumberNumberish(),
-  nonce: uintBigintNumberish(),
+  chainId: /* @__PURE__ */ uintNumberNumberish(),
+  nonce: /* @__PURE__ */ uintBigintNumberish(),
   signature: z_SignatureEnvelope.Domain,
 })
 
 /** Decoded tempo transaction request schema. */
 export const Domain = z.object({
-  accessList: z.optional(z_AccessList.AccessList),
-  accountSimulation: z.optional(z_AccountSimulation.Domain),
-  authorizationList: z.optional(z.readonly(z.array(AuthorizationSigned))),
-  blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  calls: z.optional(z.readonly(z.array(Call))),
-  capabilities: z.optional(Capabilities),
-  chainId: z.optional(z.number()),
-  data: z.optional(z_Hex.Hex),
-  feePayer: z.optional(z.boolean()),
-  feePayerSignature: z.optional(z.union([SignatureDecoded, z.null()])),
-  feeToken: z.optional(z_Address.Address),
-  from: z.optional(z_Address.Address),
-  gas: z.optional(z.bigint()),
-  gasPrice: z.optional(z.bigint()),
-  input: z.optional(z_Hex.Hex),
-  keyAuthorization: z.optional(z_KeyAuthorization.Domain),
-  keyData: z.optional(z_Hex.Hex),
-  keyId: z.optional(z_Address.Address),
-  keyType: z.optional(KeyType),
-  maxFeePerBlobGas: z.optional(z.bigint()),
-  maxFeePerGas: z.optional(z.bigint()),
-  maxPriorityFeePerGas: z.optional(z.bigint()),
-  keyAuthorizationSimulation: z.optional(z_AccountSimulation.Domain),
-  nonce: z.optional(z.bigint()),
-  nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
-  r: z.optional(z_Hex.Hex),
-  s: z.optional(z_Hex.Hex),
-  signature: z.optional(z_SignatureEnvelope.Domain),
-  to: z.optional(z.union([z_Address.Address, z.null()])),
-  type: z.optional(z.string()),
-  v: z.optional(z.number()),
-  validAfter: z.optional(z.number()),
-  validBefore: z.optional(z.number()),
-  value: z.optional(z.bigint()),
-  yParity: z.optional(z.number()),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  accountSimulation: /* @__PURE__ */ z.optional(z_AccountSimulation.Domain),
+  authorizationList: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(AuthorizationSigned)),
+  ),
+  blobVersionedHashes: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  ),
+  blobs: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  ),
+  calls: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(Call)),
+  ),
+  capabilities: /* @__PURE__ */ z.optional(Capabilities),
+  chainId: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  feePayer: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  feePayerSignature: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([SignatureDecoded, /* @__PURE__ */ z.null()]),
+  ),
+  feeToken: /* @__PURE__ */ z.optional(z_Address.Address),
+  from: /* @__PURE__ */ z.optional(z_Address.Address),
+  gas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  gasPrice: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  input: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyAuthorization: /* @__PURE__ */ z.optional(z_KeyAuthorization.Domain),
+  keyData: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyId: /* @__PURE__ */ z.optional(z_Address.Address),
+  keyType: /* @__PURE__ */ z.optional(KeyType),
+  maxFeePerBlobGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  maxFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  maxPriorityFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  keyAuthorizationSimulation: /* @__PURE__ */ z.optional(
+    z_AccountSimulation.Domain,
+  ),
+  nonce: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  nonceKey: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.bigint(),
+      /* @__PURE__ */ z.literal('random'),
+    ]),
+  ),
+  r: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  s: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  signature: /* @__PURE__ */ z.optional(z_SignatureEnvelope.Domain),
+  to: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([z_Address.Address, /* @__PURE__ */ z.null()]),
+  ),
+  type: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
+  v: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  validAfter: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  validBefore: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  value: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  yParity: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
 })
 
 /** Encode-only decoded tempo transaction request schema accepting numberish `toRpc` inputs. */
 export const DomainToRpc = z.object({
-  accessList: z.optional(z_AccessList.AccessList),
-  accountSimulation: z.optional(z_AccountSimulation.Domain),
-  authorizationList: z.optional(z.readonly(z.array(AuthorizationSignedToRpc))),
-  blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  calls: z.optional(z.readonly(z.array(CallToRpc))),
-  capabilities: z.optional(Capabilities),
-  chainId: z.optional(uintNumberNumberish()),
-  data: z.optional(z_Hex.Hex),
-  feePayer: z.optional(z.boolean()),
-  feePayerSignature: z.optional(z.union([SignatureDecoded, z.null()])),
-  feeToken: z.optional(z_Address.Address),
-  from: z.optional(z_Address.Address),
-  gas: z.optional(uintBigintNumberish()),
-  gasPrice: z.optional(uintBigintNumberish()),
-  input: z.optional(z_Hex.Hex),
-  keyAuthorization: z.optional(z_KeyAuthorization.DomainToRpc),
-  keyData: z.optional(z_Hex.Hex),
-  keyId: z.optional(z_Address.Address),
-  keyType: z.optional(KeyType),
-  maxFeePerBlobGas: z.optional(uintBigintNumberish()),
-  maxFeePerGas: z.optional(uintBigintNumberish()),
-  maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
-  keyAuthorizationSimulation: z.optional(z_AccountSimulation.Domain),
-  nonce: z.optional(uintBigintNumberish()),
-  nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
-  r: z.optional(z_Hex.Hex),
-  s: z.optional(z_Hex.Hex),
-  signature: z.optional(z_SignatureEnvelope.Domain),
-  to: z.optional(z.union([z_Address.Address, z.null()])),
-  type: z.optional(z.string()),
-  v: z.optional(z.number()),
-  validAfter: z.optional(uintNumberNumberish()),
-  validBefore: z.optional(uintNumberNumberish()),
-  value: z.optional(uintBigintNumberish()),
-  yParity: z.optional(z.number()),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  accountSimulation: /* @__PURE__ */ z.optional(z_AccountSimulation.Domain),
+  authorizationList: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z.array(AuthorizationSignedToRpc),
+    ),
+  ),
+  blobVersionedHashes: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  ),
+  blobs: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  ),
+  calls: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(CallToRpc)),
+  ),
+  capabilities: /* @__PURE__ */ z.optional(Capabilities),
+  chainId: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintNumberNumberish()),
+  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  feePayer: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+  feePayerSignature: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([SignatureDecoded, /* @__PURE__ */ z.null()]),
+  ),
+  feeToken: /* @__PURE__ */ z.optional(z_Address.Address),
+  from: /* @__PURE__ */ z.optional(z_Address.Address),
+  gas: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintBigintNumberish()),
+  gasPrice: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintBigintNumberish()),
+  input: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyAuthorization: /* @__PURE__ */ z.optional(z_KeyAuthorization.DomainToRpc),
+  keyData: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  keyId: /* @__PURE__ */ z.optional(z_Address.Address),
+  keyType: /* @__PURE__ */ z.optional(KeyType),
+  maxFeePerBlobGas: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ uintBigintNumberish(),
+  ),
+  maxFeePerGas: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ uintBigintNumberish(),
+  ),
+  maxPriorityFeePerGas: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ uintBigintNumberish(),
+  ),
+  keyAuthorizationSimulation: /* @__PURE__ */ z.optional(
+    z_AccountSimulation.Domain,
+  ),
+  nonce: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintBigintNumberish()),
+  nonceKey: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([
+      /* @__PURE__ */ uintBigintNumberish(),
+      /* @__PURE__ */ z.literal('random'),
+    ]),
+  ),
+  r: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  s: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  signature: /* @__PURE__ */ z.optional(z_SignatureEnvelope.Domain),
+  to: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([z_Address.Address, /* @__PURE__ */ z.null()]),
+  ),
+  type: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.string()),
+  v: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  validAfter: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintNumberNumberish()),
+  validBefore: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ uintNumberNumberish(),
+  ),
+  value: /* @__PURE__ */ z.optional(/* @__PURE__ */ uintBigintNumberish()),
+  yParity: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
 })
 
 /** Codec decoding an RPC tempo transaction request into a transaction request. */

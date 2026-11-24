@@ -59,9 +59,7 @@ export declare namespace createKeyPair {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> = {
-    privateKey:
-      | (as extends 'Bytes' ? Bytes.Bytes : never)
-      | (as extends 'Hex' ? Hex.Hex : never)
+    privateKey: { Bytes: Bytes.Bytes; Hex: Hex.Hex }[as]
     publicKey: PublicKey.PublicKey
   }
 
@@ -170,9 +168,10 @@ export declare namespace fromSeed {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.from.ErrorType
@@ -217,10 +216,11 @@ export declare namespace getPublicKey {
     privateKey: Hex.Hex | Bytes.Bytes
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? PublicKey.PublicKey : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: PublicKey.PublicKey
+  }[as]
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -276,9 +276,10 @@ export declare namespace getSharedSecret {
     publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Hex.fromBytes.ErrorType
@@ -317,9 +318,10 @@ export declare namespace randomPrivateKey {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
@@ -374,10 +376,11 @@ export declare namespace recoverPublicKey {
     signature: Hex.Hex | Bytes.Bytes | Signature.Signature
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? PublicKey.PublicKey : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: PublicKey.PublicKey
+  }[as]
 
   type ErrorType =
     | PublicKey.from.ErrorType
@@ -450,10 +453,11 @@ export declare namespace sign {
     privateKey: Hex.Hex | Bytes.Bytes
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? Signature.Signature : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: Signature.Signature
+  }[as]
 
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
@@ -537,4 +541,4 @@ export declare namespace InvalidSeedSizeError {
   }
 }
 
-const fromSeedDomain = Bytes.fromString('ox.p256.fromSeed.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString('ox.p256.fromSeed.v1')

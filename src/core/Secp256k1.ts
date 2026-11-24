@@ -62,9 +62,7 @@ export declare namespace createKeyPair {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> = {
-    privateKey:
-      | (as extends 'Bytes' ? Bytes.Bytes : never)
-      | (as extends 'Hex' ? Hex.Hex : never)
+    privateKey: { Bytes: Bytes.Bytes; Hex: Hex.Hex }[as]
     publicKey: PublicKey.PublicKey
   }
 
@@ -129,9 +127,10 @@ export declare namespace fromPrf {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.concat.ErrorType
@@ -240,9 +239,10 @@ export declare namespace fromSeed {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.from.ErrorType
@@ -289,10 +289,11 @@ export declare namespace getPublicKey {
     privateKey: Hex.Hex | Bytes.Bytes
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? PublicKey.PublicKey : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: PublicKey.PublicKey
+  }[as]
 
   type ErrorType =
     | Hex.from.ErrorType
@@ -352,9 +353,10 @@ export declare namespace getSharedSecret {
     publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Hex.from.ErrorType
@@ -394,9 +396,10 @@ export declare namespace randomPrivateKey {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
@@ -500,10 +503,11 @@ export declare namespace recoverPublicKey {
     signature: Hex.Hex | Bytes.Bytes | Signature.Signature
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? PublicKey.PublicKey : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: PublicKey.PublicKey
+  }[as]
 
   type ErrorType =
     | PublicKey.from.ErrorType
@@ -576,10 +580,11 @@ export declare namespace sign {
     privateKey: Hex.Hex | Bytes.Bytes
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? Signature.Signature : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+    Object: Signature.Signature
+  }[as]
 
   type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
 }
@@ -632,7 +637,11 @@ export declare namespace sign {
  */
 export function verify(options: verify.Options): boolean {
   const { hash, payload } = options
-  if (options.address)
+  const sig = normalizeSignature(options.signature)
+  if (options.address) {
+    // Recovery accepts high-s signatures, so reject them as `engine.verify` does.
+    if (Bytes.toBigInt(toCompactBytes(sig).subarray(32)) > halfOrder)
+      return false
     return Address.isEqual(
       options.address,
       recoverAddress({
@@ -640,7 +649,7 @@ export function verify(options: verify.Options): boolean {
         signature: options.signature,
       }),
     )
-  const sig = normalizeSignature(options.signature)
+  }
   return engine.verify(
     toCompactBytes(sig),
     Bytes.from(payload),
@@ -726,5 +735,10 @@ export declare namespace InvalidSeedSizeError {
   }
 }
 
-const fromPrfDomain = Bytes.fromString('ox.secp256k1.fromPrf.v1')
-const fromSeedDomain = Bytes.fromString('ox.secp256k1.fromSeed.v1')
+/** Half the secp256k1 curve order, the largest `s` a low-s signature can have. */
+const halfOrder =
+  0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0n
+const fromPrfDomain = /*#__PURE__*/ Bytes.fromString('ox.secp256k1.fromPrf.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString(
+  'ox.secp256k1.fromSeed.v1',
+)

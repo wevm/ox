@@ -14,6 +14,16 @@ export type TypedData = abitype.TypedData
 export type Domain = abitype.TypedDataDomain
 export type Parameter = abitype.TypedDataParameter
 
+/**
+ * Struct definitions by name, as `encodeType`, `hashStruct` and the helpers below them read them.
+ * Checking an argument against `TypedData` costs about 11,700 type instantiations; against this,
+ * a few dozen.
+ */
+type Types = Record<
+  string,
+  readonly { name: string; type: string }[] | undefined
+>
+
 // TODO: Make reusable for Viem?
 export type Definition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
@@ -402,7 +412,7 @@ export function encodeType(value: encodeType.Value): string {
 export declare namespace encodeType {
   type Value = {
     primaryType: string
-    types: TypedData
+    types: Types
   }
 
   type ErrorType = findTypeDependencies.ErrorType | Errors.GlobalErrorType
@@ -534,7 +544,7 @@ export declare namespace getSignPayload {
  *       '0x0000000000000000000000000000000000000000'
  *   }
  * })
- * // @log: '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
+ * // @log: '0x2fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413'
  * ```
  *
  * @param value - The Typed Data domain and types.
@@ -593,7 +603,7 @@ export declare namespace hashDomain {
  *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
  *   }
  * })
- * // @log: '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
+ * // @log: '0x4305429dd165189369e3373e404dac11fa3bc66d93d5231b00198cb578d402e0'
  * ```
  *
  * @param value - The Typed Data struct to hash.
@@ -617,7 +627,7 @@ export declare namespace hashStruct {
     /** The primary type of the Typed Data struct. */
     primaryType: string
     /** The types of the Typed Data struct. */
-    types: TypedData
+    types: Types
     /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
     typeHashes?: Map<string, Hex.Hex> | undefined
   }
@@ -881,7 +891,7 @@ export class InvalidArrayLengthError extends Errors.BaseError {
 export function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string
-  types: TypedData
+  types: Types
   typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
   const { data, primaryType, types } = value
@@ -921,7 +931,7 @@ const maxCachedTypeLength = 4_096
 /** @internal */
 export function hashType(value: {
   primaryType: string
-  types: TypedData
+  types: Types
   typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
   const { primaryType, types, typeHashes } = value
@@ -952,7 +962,7 @@ export declare namespace hashType {
 
 /** @internal */
 export function encodeField(properties: {
-  types: TypedData
+  types: Types
   name: string
   type: string
   value: any
@@ -1040,7 +1050,7 @@ const solidityTypeNameRegex = /^(u?int|bytes)[0-9]*$/
 export function findTypeDependencies(
   value: {
     primaryType: string
-    types: TypedData
+    types: Types
   },
   results: Set<string> = new Set(),
 ): Set<string> {

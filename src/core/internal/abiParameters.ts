@@ -9,9 +9,9 @@ import * as Address from '../Address.js'
 import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
-import { bytesRegex, integerRegex } from '../Solidity.js'
+import { bytesRegex, integerRegex, maxInt256, maxUint256 } from '../Solidity.js'
 import { nibbleTable } from './codec/hex.js'
-import { encoder } from './codec/utf8.js'
+import * as utf8 from './codec/utf8.js'
 import type * as Cursor from './cursor.js'
 import type { Compute, IsNarrowable, UnionToIntersection } from './types.js'
 
@@ -62,15 +62,6 @@ type CompiledParameter =
       type?: string | undefined
     })
 
-type MeasureContext = {
-  checksumAddress: boolean
-}
-
-type WriteContext = {
-  bytes: Bytes.Bytes
-  view: DataView
-}
-
 /** @internal */
 export type ToObject<
   parameters extends readonly AbiParameter[],
@@ -100,11 +91,23 @@ export type ToObject<
       >
     : unknown
 
-/** @internal */
+/**
+ * `AbiParametersToPrimitiveTypes`, but resolves wide parameters
+ * (`readonly AbiParameter[]`) to `readonly unknown[]` without walking every
+ * ABI type. TypeScript evaluates the wide case to type the values of a generic
+ * call (e.g. `AbiParameters.encode(parameters, [...])`), where it costs about
+ * 9,000 type instantiations. The result is the same.
+ *
+ * @internal
+ */
 export type ToPrimitiveTypes<
   abiParameters extends readonly AbiParameter[],
   abiParameterKind extends AbiParameterKind = AbiParameterKind,
-> = AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+> = abiParameters extends readonly AbiParameter[]
+  ? readonly AbiParameter[] extends abiParameters
+    ? readonly unknown[]
+    : AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+  : never
 
 /** @internal */
 export type Tuple = ParameterToPrimitiveType<TupleAbiParameter>
@@ -181,10 +184,10 @@ export function decodeAddress(
         address: Hex.fromBytes(value),
         cause: new Address.InvalidInputError(),
       })
-  const wrap = (address: Hex.Hex) =>
-    checksum ? Address.checksum(address) : address
-  // A view, not a copy: it is hex-encoded at once and never escapes.
-  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
+  // Sliced from the word's hex: a view of a word of up to 64 bytes would make
+  // V8 move it to an ArrayBuffer first.
+  const address = `0x${Hex.fromBytes(value).slice(26)}` as const
+  return [checksum ? Address.checksum(address) : address, 32]
 }
 
 export declare namespace decodeAddress {
@@ -553,22 +556,11 @@ export function encodeParameters(
   // Compile the wire shape before walking values so recursive writes only
   // handle offsets and data.
   const compiled = compileParameters(parameters)
-  const context: MeasureContext = {
-    checksumAddress,
-  }
-  const size = measureParameters(compiled, values, context)
+  measureParameters(compiled, values, checksumAddress)
 
-  const prefixSize = prefix ? Hex.size(prefix) : 0
-  const bytes = new Uint8Array(prefixSize + size)
-  const writer: WriteContext = {
-    bytes,
-    view: new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength),
-  }
-
-  if (prefix) writeHex(writer, 0, prefix)
-  writeParameters(writer, prefixSize, compiled, values)
-
-  return Hex.fromBytes(bytes)
+  // The measure pass validated every value, so the encoding is built as one
+  // string of hex digits: no buffer to allocate, and no bytes to hex-encode.
+  return `${prefix ?? '0x'}${encodeList(compiled, values)}` as Hex.Hex
 }
 
 export declare namespace encodeParameters {
@@ -594,9 +586,10 @@ export declare namespace encodeParameters {
 function compileParameters(
   parameters: readonly AbiParameters.Parameter[],
 ): readonly CompiledParameter[] {
-  const compiled: CompiledParameter[] = []
+  // Sized up front: an empty array grows a 17-slot backing store on its first push.
+  const compiled: CompiledParameter[] = new Array(parameters.length)
   for (let i = 0; i < parameters.length; i++)
-    compiled.push(compileParameter(parameters[i]!))
+    compiled[i] = compileParameter(parameters[i]!)
   return compiled
 }
 
@@ -658,9 +651,18 @@ function compileParameter(
 
   if (parameter.type.startsWith('uint') || parameter.type.startsWith('int')) {
     const signed = parameter.type.startsWith('int')
-    const [, , size = '256'] = integerRegex.exec(parameter.type) ?? []
-    const size_ = Number(size)
-    const max = 2n ** (BigInt(size_) - (signed ? 1n : 0n)) - 1n
+    // `uint256` and `int256` are the common types: skip the regex and the
+    // BigInt arithmetic for them.
+    const size_ =
+      parameter.type === 'uint256' || parameter.type === 'int256'
+        ? 256
+        : Number((integerRegex.exec(parameter.type) ?? [])[2] ?? 256)
+    const max =
+      size_ === 256
+        ? signed
+          ? maxInt256
+          : maxUint256
+        : (1n << BigInt(signed ? size_ - 1 : size_)) - 1n
     return {
       dynamic: false,
       kind: 'integer',
@@ -706,7 +708,7 @@ function compileParameter(
 function measureParameters(
   parameters: readonly CompiledParameter[],
   values: readonly unknown[] | object,
-  context: MeasureContext,
+  checksumAddress: boolean,
 ): number {
   let size = getHeadSize(parameters)
   for (let i = 0; i < parameters.length; i++) {
@@ -714,7 +716,7 @@ function measureParameters(
     const parameterSize = measureParameter(
       parameter,
       getParameterValue(parameter, values, i),
-      context,
+      checksumAddress,
     )
     if (parameter.dynamic) size += parameterSize
   }
@@ -724,7 +726,7 @@ function measureParameters(
 function measureParameter(
   parameter: CompiledParameter,
   value: unknown,
-  context: MeasureContext,
+  checksumAddress: boolean,
 ): number {
   if (parameter.kind === 'array') {
     if (!Array.isArray(value)) throw new AbiParameters.InvalidArrayError(value)
@@ -739,18 +741,26 @@ function measureParameter(
     size +=
       value.length * (parameter.child.dynamic ? 32 : parameter.child.staticSize)
     for (let i = 0; i < value.length; i++) {
-      const childSize = measureParameter(parameter.child, value[i], context)
+      const childSize = measureParameter(
+        parameter.child,
+        value[i],
+        checksumAddress,
+      )
       if (parameter.child.dynamic) size += childSize
     }
     return size
   }
 
   if (parameter.kind === 'tuple')
-    return measureParameters(parameter.children, value as object, context)
+    return measureParameters(
+      parameter.children,
+      value as object,
+      checksumAddress,
+    )
 
   if (parameter.kind === 'address') {
     Address.assert(value as Address.Address, {
-      strict: context.checksumAddress,
+      strict: checksumAddress,
     })
     return 32
   }
@@ -842,108 +852,79 @@ function normalizeString(value: unknown): string {
   return `${value}`
 }
 
-function writeParameters(
-  context: WriteContext,
-  offset: number,
+function encodeList(
   parameters: readonly CompiledParameter[],
   values: readonly unknown[] | object,
-): number {
-  let head = offset
-  let tail = offset + getHeadSize(parameters)
+): string {
+  // The head holds each static parameter, and the offset of each dynamic one
+  // into the tail, which follows the head.
+  const headSize = getHeadSize(parameters)
+  let head = ''
+  let tail = ''
   for (let i = 0; i < parameters.length; i++) {
     const parameter = parameters[i]!
     const value = getParameterValue(parameter, values, i)
     if (parameter.dynamic) {
-      writeWord(context, head, tail - offset)
-      head += 32
-      tail = writeParameter(context, tail, parameter, value)
-    } else head = writeParameter(context, head, parameter, value)
+      head += word(headSize + tail.length / 2)
+      tail += encodeParameter(parameter, value)
+    } else head += encodeParameter(parameter, value)
   }
-  return Math.max(head, tail)
+  return head + tail
 }
 
-function writeParameter(
-  context: WriteContext,
-  offset: number,
-  parameter: CompiledParameter,
-  value: unknown,
-): number {
+function encodeParameter(parameter: CompiledParameter, value: unknown): string {
   if (parameter.kind === 'array') {
     const values = value as readonly unknown[]
-    let head = offset
-    if (parameter.length === null) {
-      writeWord(context, head, values.length)
-      head += 32
-    }
-
-    let tail =
-      head +
-      values.length *
-        (parameter.child.dynamic ? 32 : parameter.child.staticSize)
+    const { child } = parameter
+    const headSize = values.length * (child.dynamic ? 32 : child.staticSize)
+    let head = parameter.length === null ? word(values.length) : ''
+    let tail = ''
     for (let i = 0; i < values.length; i++) {
-      if (parameter.child.dynamic) {
-        writeWord(
-          context,
-          head,
-          tail - (parameter.length === null ? offset + 32 : offset),
-        )
-        head += 32
-        tail = writeParameter(context, tail, parameter.child, values[i])
-      } else head = writeParameter(context, head, parameter.child, values[i])
+      if (child.dynamic) {
+        head += word(headSize + tail.length / 2)
+        tail += encodeParameter(child, values[i])
+      } else head += encodeParameter(child, values[i])
     }
-    return Math.max(head, tail)
+    return head + tail
   }
 
   if (parameter.kind === 'tuple')
-    return writeParameters(context, offset, parameter.children, value as object)
+    return encodeList(parameter.children, value as object)
 
-  if (parameter.kind === 'address') {
-    writeHex(context, offset + 12, value as Hex.Hex)
-    return offset + 32
-  }
+  // The measure pass asserted the address, so `toLowerCase` only folds `A-F`,
+  // and returns the address as is when it has none.
+  if (parameter.kind === 'address')
+    return `000000000000000000000000${(value as string).toLowerCase().slice(2)}`
 
-  if (parameter.kind === 'boolean') {
-    context.bytes[offset + 31] = value ? 1 : 0
-    return offset + 32
-  }
+  if (parameter.kind === 'boolean') return value ? word(1) : word(0)
 
   if (parameter.kind === 'integer') {
-    writeWord(context, offset, value as number)
-    return offset + 32
+    // A value may also be a string or boolean, which `BigInt` converts.
+    let value_ = typeof value === 'number' ? value : BigInt(value as bigint)
+    if (value_ < 0) value_ = BigInt.asUintN(256, BigInt(value_))
+    return word(value_)
   }
 
   if (parameter.kind === 'bytes') {
-    const value_ = value as Hex.Hex
-    if (parameter.size === null) {
-      const size = Hex.size(value_)
-      writeWord(context, offset, size)
-      writeHex(context, offset + 32, value_)
-      return offset + 32 + Math.ceil(size / 32) * 32
-    }
-    writeHex(context, offset, value_)
-    return offset + 32
+    const digits_ = digits(value as Hex.Hex)
+    if (parameter.size === null)
+      return word(digits_.length / 2) + padRight(digits_)
+    return padRight(digits_)
   }
 
   if (parameter.kind === 'string') {
-    const value_ = normalizeString(value)
-    const size = getUtf8Size(value_)
-    writeWord(context, offset, size)
-    const { written } = encoder.encodeInto(
-      value_,
-      context.bytes.subarray(offset + 32, offset + 32 + size),
-    )
-    if (written !== size) throw new Error('Failed to encode string.')
-    return offset + 32 + Math.ceil(size / 32) * 32
+    const bytes = utf8.encode(normalizeString(value))
+    return word(bytes.length) + padRight(Hex.fromBytes(bytes).slice(2))
   }
 
-  return offset
+  return ''
 }
 
-function writeHex(
-  context: WriteContext,
-  offset: number,
-  value: Hex.Hex,
-): number {
+/**
+ * The lowercase hex digits of a hex string, without `0x`, as `Hex.fromBytes`
+ * would print its bytes.
+ */
+function digits(value: Hex.Hex): string {
   if (
     typeof value !== 'string' ||
     value.charCodeAt(0) !== 48 ||
@@ -951,54 +932,33 @@ function writeHex(
   )
     throw new Hex.InvalidHexValueError(value)
 
-  // Validate and write in one pass. A valid nibble is at most `0x0f`, so only
-  // the `0xff` sentinel sets bit 7; one check after the loop covers every
-  // character. `nibbleTable` only spans Latin-1, so a code unit above it reads
-  // `undefined` and is mapped to the sentinel.
-  const { bytes } = context
-  // A local reference: some module transforms turn every read of an imported
-  // binding into a property lookup, which would land in the hot loop.
+  // A valid nibble is at most `0x0f`, so only the `0xff` sentinel sets bit 7.
+  // `nibbleTable` only spans Latin-1, so a code unit above it reads `undefined`
+  // and is mapped to the sentinel.
   const table = nibbleTable
-  const length = value.length
   let invalid = 0
-  let i = 2
-  for (; i + 1 < length; i += 2) {
-    const hi = table[value.charCodeAt(i)] ?? 0xff
-    const lo = table[value.charCodeAt(i + 1)] ?? 0xff
-    invalid |= hi | lo
-    bytes[offset++] = (hi << 4) | lo
-  }
-  if (i < length) {
-    const hi = table[value.charCodeAt(i)] ?? 0xff
-    invalid |= hi
-    bytes[offset++] = hi << 4
+  let upper = false
+  for (let i = 2; i < value.length; i++) {
+    const code = value.charCodeAt(i)
+    invalid |= table[code] ?? 0xff
+    if (code < 97) upper ||= code > 64
   }
   if (invalid & 0x80) throw new Hex.InvalidHexValueError(value)
-  return offset
+  return upper ? value.slice(2).toLowerCase() : value.slice(2)
 }
 
-function writeWord(
-  context: WriteContext,
-  offset: number,
-  value: bigint | number,
-) {
-  let value_ = BigInt(value)
-  if (value_ < 0n) value_ = BigInt.asUintN(256, value_)
+const zeros = '0000000000000000000000000000000000000000000000000000000000000000'
 
-  // DataView avoids 32 BigInt shifts for the common word-sized case.
-  if (value_ <= 0xffff_ffff_ffff_ffffn) {
-    context.view.setBigUint64(offset + 24, value_)
-    return
-  }
+/** A 32-byte word holding an unsigned integer, as 64 hex digits. */
+function word(value: bigint | number): string {
+  const digits_ = value.toString(16)
+  return zeros.slice(digits_.length) + digits_
+}
 
-  const hex = value_.toString(16)
-  const table = nibbleTable
-  let cursor = offset + 32 - Math.ceil(hex.length / 2)
-  let i = hex.length % 2
-  if (i === 1) context.bytes[cursor++] = table[hex.charCodeAt(0)]!
-  for (; i < hex.length; i += 2)
-    context.bytes[cursor++] =
-      (table[hex.charCodeAt(i)]! << 4) | table[hex.charCodeAt(i + 1)]!
+/** Pads hex digits on the right to a whole number of 32-byte words. */
+function padRight(digits_: string): string {
+  const remainder = digits_.length % 64
+  return remainder === 0 ? digits_ : digits_ + zeros.slice(remainder)
 }
 
 /** @internal */

@@ -517,14 +517,17 @@ export declare namespace hash {
  * @returns An RPC-formatted Authorization.
  */
 export function toRpc(authorization: toRpc.Input): Rpc {
-  const { address, chainId, nonce, ...signature } = authorization
-  assertYParity(Number(signature.yParity))
+  const { address, chainId, nonce, r, s, yParity } = authorization
+  assertYParity(Number(yParity))
 
   return {
     address,
     chainId: Quantity.fromNumberish(chainId),
     nonce: Quantity.fromNumberish(nonce),
-    ...Signature.toRpc(signature),
+    // `r` and `s` are `uint256` quantities over RPC, so drop leading zeros.
+    r: Hex.fromNumber(BigInt(r)),
+    s: Hex.fromNumber(BigInt(s)),
+    yParity: Quantity.fromNumberish(yParity),
   }
 }
 

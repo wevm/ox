@@ -1,6 +1,6 @@
-import { test } from '@fast-check/vitest'
-import { AbiCoder, Interface, ParamType } from 'ethers'
-import { AbiFunction, AbiParameters } from 'ox'
+import { fc, test } from '@fast-check/vitest'
+import { AbiCoder, FunctionFragment, Interface, ParamType } from 'ethers'
+import { AbiFunction, AbiItem, AbiParameters } from 'ox'
 import { describe, expect } from 'vp/test'
 
 import { arbitraryAbiCase } from '../../../test/fuzz/arbitraries/abi.js'
@@ -78,6 +78,52 @@ describe('AbiFunction differential', () => {
   )('encodeData matches ethers Interface', ({ input }) => {
     expectFunction(input.parameters, input.values)
   })
+
+  test.prop(
+    {
+      decoys: fc.array(
+        fc
+          .stringMatching(/^[a-z][a-zA-Z0-9]{0,8}$/)
+          .filter((name) => name !== 'test'),
+        { maxLength: 4 },
+      ),
+      input: arbitraryAbiCase({
+        maxArrayLength: 3,
+        maxBytesLength: 64,
+        maxDepth: 3,
+        maxTupleArity: 3,
+        minFixedArrayLength: 0,
+      }),
+      position: fc.nat(),
+    },
+    { numRuns },
+  )(
+    'selectors match ethers, and encodeData by name from an ABI matches the item',
+    ({ decoys, input, position }) => {
+      const item: AbiFunction.AbiFunction = {
+        inputs: input.parameters,
+        name: 'test',
+        outputs: [],
+        stateMutability: 'pure',
+        type: 'function',
+      }
+      const selector = AbiFunction.getSelector(item)
+      expect(selector).toBe(FunctionFragment.from(item).selector)
+      expect(AbiItem.getSelector(item)).toBe(selector)
+      expect(AbiItem.getSignatureHash(item).slice(0, 10)).toBe(selector)
+      expect(AbiFunction.getSelector(AbiItem.getSignature(item))).toBe(selector)
+      // Decoys take the same arguments, so only the name tells them apart,
+      // and the item sits anywhere among them.
+      const abi: AbiFunction.AbiFunction[] = decoys.map((name) => ({
+        ...item,
+        name,
+      }))
+      abi.splice(position % (abi.length + 1), 0, item)
+      expect(AbiFunction.encodeData(abi, 'test', input.values as never)).toBe(
+        AbiFunction.encodeData(item, input.values as never),
+      )
+    },
+  )
 
   test('nested named dynamic values match ethers Interface', () => {
     expectFunction(

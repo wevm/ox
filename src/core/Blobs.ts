@@ -366,7 +366,7 @@ export declare namespace from {
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const data = Blobs.to(blobs, 'Bytes')
- * // @log: Uint8Array [ 13, 174, 190, 239 ]
+ * // @log: Uint8Array [ 222, 173, 190, 239 ]
  * ```
  *
  * @param blobs - The {@link ox#Blobs.Blobs} to transform.
@@ -465,7 +465,7 @@ export declare namespace toHex {
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const data = Blobs.toBytes(blobs) // [!code focus]
- * // @log: Uint8Array [ 13, 174, 190, 239 ]
+ * // @log: Uint8Array [ 222, 173, 190, 239 ]
  * ```
  */
 export function toBytes(

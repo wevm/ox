@@ -21,7 +21,7 @@ import {
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
-export const createChallenge = Uint8Array.from([
+export const createChallenge = /*#__PURE__*/ Uint8Array.from([
   105, 171, 180, 181, 160, 222, 75, 198, 42, 42, 32, 31, 141, 37, 186, 233,
 ])
 
@@ -566,11 +566,17 @@ export function verify(options: verify.Options): verify.ReturnType {
   // 1. Decode and validate clientDataJSON
   const clientDataJSONBytes = new Uint8Array(credential.clientDataJSON)
   const clientDataJSON = Bytes.toString(clientDataJSONBytes)
-  const clientData = JSON.parse(clientDataJSON)
+  const clientData = (() => {
+    try {
+      return JSON.parse(clientDataJSON)
+    } catch {
+      throw new VerifyError('clientDataJSON is not valid JSON')
+    }
+  })()
 
-  if (clientData.type !== 'webauthn.create')
+  if (clientData?.type !== 'webauthn.create')
     throw new VerifyError(
-      `Expected clientData.type "webauthn.create", got "${clientData.type}"`,
+      `Expected clientData.type "webauthn.create", got "${clientData?.type}"`,
     )
 
   // Validate challenge

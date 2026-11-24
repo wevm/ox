@@ -11,7 +11,7 @@ export const Unsigned = z.object({
   address: z_Address.Address,
   chainId: z_Number.Number,
   nonce: z_Uint.Uint,
-  signature: z.optional(z.undefined()),
+  signature: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
 })
 
 /** Encode-only unsigned AA authorization schema accepting numberish `toRpc` inputs. */
@@ -19,7 +19,7 @@ export const UnsignedToRpc = z.object({
   address: z_Address.Address,
   chainId: z_Number.NumberToRpc,
   nonce: z_Uint.UintToRpc,
-  signature: z.optional(z.undefined()),
+  signature: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
 })
 
 /** Signed AA authorization schema. */
@@ -41,8 +41,8 @@ export const SignedToRpc = z.object({
 /** Decoded signed AA authorization schema. */
 export const Domain = z.object({
   address: z_Address.Address,
-  chainId: z.number(),
-  nonce: z.bigint(),
+  chainId: /* @__PURE__ */ z.number(),
+  nonce: /* @__PURE__ */ z.bigint(),
   signature: z_SignatureEnvelope.Domain,
 })
 

@@ -165,6 +165,49 @@ describe('normalize', () => {
       `[Error: Invalid label "a_b_c"‎: underscore allowed only at start]`,
     )
   })
+
+  test('behavior: only a string takes the normal-form shortcut', () => {
+    expect(() => Ens.normalize(1 as never)).toThrowError()
+  })
+
+  test('behavior: lowercase ASCII names', () => {
+    // Names in normal form come back as they are; the ASCII names around them
+    // still fail as ENSIP-15 says.
+    const names = [
+      '_$a-1.eth',
+      '__.eth',
+      'a--b.eth',
+      'abc--d.eth',
+      '',
+      'ab--.eth',
+      '__--x.eth',
+      'wevm.',
+      'a..eth',
+      'a_.eth',
+    ]
+    expect(
+      names.map((name) => {
+        try {
+          return Ens.normalize(name)
+        } catch (error) {
+          return (error as Error).message
+        }
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        "_$a-1.eth",
+        "__.eth",
+        "a--b.eth",
+        "abc--d.eth",
+        "",
+        "Invalid label "ab--"‎: invalid label extension: "ab--"",
+        "Invalid label "__--x"‎: invalid label extension: "__--"",
+        "Invalid label ""‎: empty label",
+        "Invalid label ""‎: empty label",
+        "Invalid label "a_"‎: underscore allowed only at start",
+      ]
+    `)
+  })
 })
 
 describe('toCoinType', () => {

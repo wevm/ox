@@ -43,17 +43,17 @@ const Transaction = z.union([z_Transaction.Transaction, z_Transaction.Pending])
 
 /** Call request shape shared by `eth_call` / `eth_estimateGas`. */
 const Call = z.union([
-  z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
-  z.tuple([
+  /* @__PURE__ */ z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
+  /* @__PURE__ */ z.tuple([
     z_TransactionRequest.TransactionRequestToRpc,
     BlockNumberOrTagOrIdentifier,
   ]),
-  z.tuple([
+  /* @__PURE__ */ z.tuple([
     z_TransactionRequest.TransactionRequestToRpc,
     BlockNumberOrTagOrIdentifier,
     z_StateOverrides.StateOverrides,
   ]),
-  z.tuple([
+  /* @__PURE__ */ z.tuple([
     z_TransactionRequest.TransactionRequestToRpc,
     BlockNumberOrTagOrIdentifier,
     z_StateOverrides.StateOverrides,
@@ -64,7 +64,7 @@ const Call = z.union([
 export const eth_accounts = from({
   method: 'eth_accounts',
   params: NoParams,
-  returns: z.array(z_Address.Address),
+  returns: /* @__PURE__ */ z.array(z_Address.Address),
 })
 
 export const eth_blobBaseFee = from({
@@ -105,10 +105,13 @@ export const eth_estimateGas = from({
 
 export const eth_feeHistory = from({
   method: 'eth_feeHistory',
-  params: z.tuple([
+  params: /* @__PURE__ */ z.tuple([
     z_Hex.Hex,
     BlockNumberOrTag,
-    z.union([z.array(z.number()), z.undefined()]),
+    /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.array(/* @__PURE__ */ z.number()),
+      /* @__PURE__ */ z.undefined(),
+    ]),
   ]),
   returns: z_Fee.FeeHistory,
 })
@@ -121,63 +124,75 @@ export const eth_gasPrice = from({
 
 export const eth_getBalance = from({
   method: 'eth_getBalance',
-  params: z.tuple([z_Address.Address, BlockNumberOrTagOrIdentifier]),
+  params: /* @__PURE__ */ z.tuple([
+    z_Address.Address,
+    BlockNumberOrTagOrIdentifier,
+  ]),
   returns: z_Uint.Uint,
 })
 
 export const eth_getBlockByHash = from({
   method: 'eth_getBlockByHash',
-  params: z.tuple([z_Hex.Hex, z.boolean()]),
-  returns: z.nullable(Block),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex, /* @__PURE__ */ z.boolean()]),
+  returns: /* @__PURE__ */ z.nullable(Block),
 })
 
 export const eth_getBlockByNumber = from({
   method: 'eth_getBlockByNumber',
-  params: z.tuple([BlockNumberOrTag, z.boolean()]),
-  returns: z.nullable(Block),
+  params: /* @__PURE__ */ z.tuple([
+    BlockNumberOrTag,
+    /* @__PURE__ */ z.boolean(),
+  ]),
+  returns: /* @__PURE__ */ z.nullable(Block),
 })
 
 export const eth_getBlockTransactionCountByHash = from({
   method: 'eth_getBlockTransactionCountByHash',
-  params: z.tuple([z_Hex.Hex]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
   returns: z_Number.Number,
 })
 
 export const eth_getBlockTransactionCountByNumber = from({
   method: 'eth_getBlockTransactionCountByNumber',
-  params: z.tuple([BlockNumberOrTag]),
+  params: /* @__PURE__ */ z.tuple([BlockNumberOrTag]),
   returns: z_Number.Number,
 })
 
 export const eth_getCode = from({
   method: 'eth_getCode',
-  params: z.tuple([z_Address.Address, BlockNumberOrTagOrIdentifier]),
+  params: /* @__PURE__ */ z.tuple([
+    z_Address.Address,
+    BlockNumberOrTagOrIdentifier,
+  ]),
   returns: z_Hex.Hex,
 })
 
 export const eth_getFilterChanges = from({
   method: 'eth_getFilterChanges',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.union([z.array(z_Log.Log), z.array(z_Hex.Hex)]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.union([
+    /* @__PURE__ */ z.array(z_Log.Log),
+    /* @__PURE__ */ z.array(z_Hex.Hex),
+  ]),
 })
 
 export const eth_getFilterLogs = from({
   method: 'eth_getFilterLogs',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.array(z_Log.Log),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.array(z_Log.Log),
 })
 
 export const eth_getLogs = from({
   method: 'eth_getLogs',
-  params: z.tuple([z_Filter.Filter]),
-  returns: z.array(z_Log.Log),
+  params: /* @__PURE__ */ z.tuple([z_Filter.Filter]),
+  returns: /* @__PURE__ */ z.array(z_Log.Log),
 })
 
 export const eth_getProof = from({
   method: 'eth_getProof',
-  params: z.tuple([
+  params: /* @__PURE__ */ z.tuple([
     z_Address.Address,
-    z.array(z_Hex.Hex),
+    /* @__PURE__ */ z.array(z_Hex.Hex),
     BlockNumberOrTagOrIdentifier,
   ]),
   returns: z_AccountProof.AccountProof,
@@ -185,59 +200,63 @@ export const eth_getProof = from({
 
 export const eth_getRawTransactionByHash = from({
   method: 'eth_getRawTransactionByHash',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.nullable(z_Hex.Hex),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.nullable(z_Hex.Hex),
 })
 
 export const eth_getStorageAt = from({
   method: 'eth_getStorageAt',
-  params: z.tuple([z_Address.Address, z_Hex.Hex, BlockNumberOrTagOrIdentifier]),
+  params: /* @__PURE__ */ z.tuple([
+    z_Address.Address,
+    z_Hex.Hex,
+    BlockNumberOrTagOrIdentifier,
+  ]),
   returns: z_Hex.Hex,
 })
 
 export const eth_getTransactionByBlockHashAndIndex = from({
   method: 'eth_getTransactionByBlockHashAndIndex',
-  params: z.tuple([z_Hex.Hex, z_Hex.Hex]),
-  returns: z.nullable(Transaction),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex, z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.nullable(Transaction),
 })
 
 export const eth_getTransactionByBlockNumberAndIndex = from({
   method: 'eth_getTransactionByBlockNumberAndIndex',
-  params: z.tuple([BlockNumberOrTag, z_Hex.Hex]),
-  returns: z.nullable(Transaction),
+  params: /* @__PURE__ */ z.tuple([BlockNumberOrTag, z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.nullable(Transaction),
 })
 
 export const eth_getTransactionByHash = from({
   method: 'eth_getTransactionByHash',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.nullable(Transaction),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.nullable(Transaction),
 })
 
 export const eth_getTransactionCount = from({
   method: 'eth_getTransactionCount',
-  params: z.tuple([
+  params: /* @__PURE__ */ z.tuple([
     z_Address.Address,
     BlockNumberOrTagOrIdentifier,
-    z.optional(Frame.nonceKeysToRpc),
+    /* @__PURE__ */ z.optional(Frame.nonceKeysToRpc),
   ]),
   returns: z_Number.Number,
 })
 
 export const eth_getTransactionReceipt = from({
   method: 'eth_getTransactionReceipt',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.nullable(z_TransactionReceipt.TransactionReceipt),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.nullable(z_TransactionReceipt.TransactionReceipt),
 })
 
 export const eth_getUncleCountByBlockHash = from({
   method: 'eth_getUncleCountByBlockHash',
-  params: z.tuple([z_Hex.Hex]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
   returns: z_Number.Number,
 })
 
 export const eth_getUncleCountByBlockNumber = from({
   method: 'eth_getUncleCountByBlockNumber',
-  params: z.tuple([BlockNumberOrTag]),
+  params: /* @__PURE__ */ z.tuple([BlockNumberOrTag]),
   returns: z_Number.Number,
 })
 
@@ -255,7 +274,7 @@ export const eth_newBlockFilter = from({
 
 export const eth_newFilter = from({
   method: 'eth_newFilter',
-  params: z.tuple([z_Filter.Filter]),
+  params: /* @__PURE__ */ z.tuple([z_Filter.Filter]),
   returns: z_Hex.Hex,
 })
 
@@ -268,76 +287,89 @@ export const eth_newPendingTransactionFilter = from({
 export const eth_protocolVersion = from({
   method: 'eth_protocolVersion',
   params: NoParams,
-  returns: z.string(),
+  returns: /* @__PURE__ */ z.string(),
 })
 
 export const eth_requestAccounts = from({
   method: 'eth_requestAccounts',
   params: NoParams,
-  returns: z.array(z_Address.Address),
+  returns: /* @__PURE__ */ z.array(z_Address.Address),
 })
 
 export const eth_sendRawTransaction = from({
   method: 'eth_sendRawTransaction',
-  params: z.tuple([z_Hex.Hex]),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
   returns: z_Hex.Hex,
 })
 
 export const eth_sendRawTransactionSync = from({
   method: 'eth_sendRawTransactionSync',
-  params: z.union([z.tuple([z_Hex.Hex]), z.tuple([z_Hex.Hex, z.number()])]),
+  params: /* @__PURE__ */ z.union([
+    /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+    /* @__PURE__ */ z.tuple([z_Hex.Hex, /* @__PURE__ */ z.number()]),
+  ]),
   returns: z_TransactionReceipt.TransactionReceipt,
 })
 
 export const eth_sendTransaction = from({
   method: 'eth_sendTransaction',
-  params: z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
+  params: /* @__PURE__ */ z.tuple([
+    z_TransactionRequest.TransactionRequestToRpc,
+  ]),
   returns: z_Hex.Hex,
 })
 
 export const eth_simulateV1 = from({
   method: 'eth_simulateV1',
-  params: z.tuple([
-    z.object({
-      blockStateCalls: z.array(
-        z.object({
-          blockOverrides: z.optional(z_BlockOverrides.BlockOverrides),
-          calls: z.optional(
-            z.array(z_TransactionRequest.TransactionRequestToRpc),
+  params: /* @__PURE__ */ z.tuple([
+    /* @__PURE__ */ z.object({
+      blockStateCalls: /* @__PURE__ */ z.array(
+        /* @__PURE__ */ z.object({
+          blockOverrides: /* @__PURE__ */ z.optional(
+            z_BlockOverrides.BlockOverrides,
           ),
-          stateOverrides: z.optional(z_StateOverrides.StateOverrides),
+          calls: /* @__PURE__ */ z.optional(
+            /* @__PURE__ */ z.array(
+              z_TransactionRequest.TransactionRequestToRpc,
+            ),
+          ),
+          stateOverrides: /* @__PURE__ */ z.optional(
+            z_StateOverrides.StateOverrides,
+          ),
         }),
       ),
-      returnFullTransactions: z.optional(z.boolean()),
-      traceTransfers: z.optional(z.boolean()),
-      validation: z.optional(z.boolean()),
+      returnFullTransactions: /* @__PURE__ */ z.optional(
+        /* @__PURE__ */ z.boolean(),
+      ),
+      traceTransfers: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
+      validation: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
     }),
     BlockNumberOrTagOrIdentifier,
   ]),
-  returns: z.array(
-    z.intersection(
+  returns: /* @__PURE__ */ z.array(
+    /* @__PURE__ */ z.intersection(
       Block,
-      z.object({
-        calls: z.optional(
-          z.array(
-            z.object({
-              error: z.optional(
-                z.object({
-                  data: z.optional(z_Hex.Hex),
-                  code: z.number(),
-                  message: z.string(),
+      /* @__PURE__ */ z.object({
+        calls: /* @__PURE__ */ z.optional(
+          /* @__PURE__ */ z.array(
+            /* @__PURE__ */ z.object({
+              error: /* @__PURE__ */ z.optional(
+                /* @__PURE__ */ z.object({
+                  data: /* @__PURE__ */ z.optional(z_Hex.Hex),
+                  code: /* @__PURE__ */ z.number(),
+                  message: /* @__PURE__ */ z.string(),
                 }),
               ),
-              frameResults: z.optional(
-                z.readonly(
-                  z.array(
-                    z.intersection(
+              frameResults: /* @__PURE__ */ z.optional(
+                /* @__PURE__ */ z.readonly(
+                  /* @__PURE__ */ z.array(
+                    /* @__PURE__ */ z.intersection(
                       z_FrameReceipt.FrameReceipt,
-                      z.object({
-                        error: z.optional(
-                          z.object({
-                            code: z.number(),
-                            message: z.string(),
+                      /* @__PURE__ */ z.object({
+                        error: /* @__PURE__ */ z.optional(
+                          /* @__PURE__ */ z.object({
+                            code: /* @__PURE__ */ z.number(),
+                            message: /* @__PURE__ */ z.string(),
                           }),
                         ),
                         returnData: z_Hex.Hex,
@@ -346,8 +378,10 @@ export const eth_simulateV1 = from({
                   ),
                 ),
               ),
-              payer: z.optional(z_Address.Address),
-              logs: z.optional(z.array(z_Log.Log)),
+              payer: /* @__PURE__ */ z.optional(z_Address.Address),
+              logs: /* @__PURE__ */ z.optional(
+                /* @__PURE__ */ z.array(z_Log.Log),
+              ),
               gasUsed: z_Hex.Hex,
               returnData: z_Hex.Hex,
               status: z_Hex.Hex,
@@ -361,18 +395,23 @@ export const eth_simulateV1 = from({
 
 export const eth_signTransaction = from({
   method: 'eth_signTransaction',
-  params: z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
+  params: /* @__PURE__ */ z.tuple([
+    z_TransactionRequest.TransactionRequestToRpc,
+  ]),
   returns: z_Hex.Hex,
 })
 
 export const eth_signTypedData_v4 = from({
   method: 'eth_signTypedData_v4',
-  params: z.tuple([z_Address.Address, z.string()]),
+  params: /* @__PURE__ */ z.tuple([
+    z_Address.Address,
+    /* @__PURE__ */ z.string(),
+  ]),
   returns: z_Hex.Hex,
 })
 
 export const eth_uninstallFilter = from({
   method: 'eth_uninstallFilter',
-  params: z.tuple([z_Hex.Hex]),
-  returns: z.boolean(),
+  params: /* @__PURE__ */ z.tuple([z_Hex.Hex]),
+  returns: /* @__PURE__ */ z.boolean(),
 })

@@ -10,7 +10,7 @@ import type * as Types from '../webauthn/Types.js'
 
 export * from './WebAuthnP256.js'
 
-const defaultPrfInput = Bytes.fromString('ox.webauthn.prf.v1')
+const defaultPrfInput = /*#__PURE__*/ Bytes.fromString('ox.webauthn.prf.v1')
 
 /** Configuration for evaluating a WebAuthn credential-bound PRF. */
 export type Prf =

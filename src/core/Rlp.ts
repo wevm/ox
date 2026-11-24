@@ -2,17 +2,22 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal_bytes from './internal/bytes.js'
-import { assertHexBytes, nibbleTable } from './internal/codec/hex.js'
+import {
+  assertHexBytes,
+  bytesToHex,
+  hexes,
+  nibbleTable,
+} from './internal/codec/hex.js'
 import * as Cursor from './internal/cursor.js'
-import type { ExactPartial, RecursiveArray } from './internal/types.js'
+import type { RecursiveArray } from './internal/types.js'
 
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
 
 /**
  * Hex input length up to which decoded hex leaves are sliced from the input. A
- * sliced string keeps its whole parent alive, so this bounds what one kept leaf
- * can retain.
+ * sliced string keeps its whole parent alive, so past this length each leaf is
+ * copied into its own string, which bounds what one kept leaf can retain.
  */
 const sliceMaxLength = 4_096
 
@@ -53,7 +58,15 @@ export declare namespace toBytes {
  * @returns The decoded {@link ox#Hex.Hex} value.
  */
 export function toHex(value: Bytes.Bytes | Hex.Hex): RecursiveArray<Hex.Hex> {
-  return to(value, 'Hex')
+  // Hex output reads the input's hex form, so leaves are sliced from it instead
+  // of each being hex-encoded, and the byte cursor stays out of the bundle.
+  if (typeof value !== 'string') {
+    if (!(value instanceof Uint8Array))
+      throw new Errors.BaseError('Invalid RLP prefix')
+    return decodeHex(bytesToHex(value))
+  }
+  assertHexBytes(value)
+  return decodeHex(value.toLowerCase() as Hex.Hex)
 }
 
 export declare namespace toHex {
@@ -70,16 +83,7 @@ export function to<
   to extends 'Hex' | 'Bytes',
 >(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
-
-  // Hex in and out: read a short input straight from the string, skipping the
-  // byte copy. A long input pays a JavaScript scan to validate it, which costs
-  // more than `Bytes.fromHex`, and leaves sliced from it would keep it alive.
-  if (
-    typeof value === 'string' &&
-    to_ === 'Hex' &&
-    value.length <= sliceMaxLength
-  )
-    return decodeHex(value) as to.ReturnType<to>
+  if (to_ === 'Hex') return toHex(value) as to.ReturnType<to>
 
   const bytes =
     typeof value === 'string' ? Bytes.fromHex(value) : (value as Bytes.Bytes)
@@ -100,9 +104,10 @@ export function to<
 
 /** @internal */
 export declare namespace to {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (to extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
-    | (to extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    Bytes: RecursiveArray<Bytes.Bytes>
+    Hex: RecursiveArray<Hex.Hex>
+  }[to]
 
   type ErrorType =
     | Bytes.fromHex.ErrorType
@@ -255,6 +260,8 @@ export declare namespace readList {
 }
 
 type HexReader = {
+  /** Whether leaves are copied out of the input instead of sliced from it. */
+  copy: boolean
   /** Byte length of the input. */
   length: number
   /** Position in bytes. */
@@ -268,17 +275,17 @@ type HexReader = {
 }
 
 /**
- * Decodes a hex RLP value straight from its string, slicing leaves out of it.
- * Mirrors `Bytes.fromHex` followed by {@link decodeRlpCursor}, including the
+ * Decodes a valid, lowercase hex RLP value straight from its string, slicing
+ * leaves out of it. Mirrors {@link decodeRlpCursor} on its bytes, including the
  * cursor's bounds errors.
  *
  * @internal
  */
 function decodeHex(value: Hex.Hex): RecursiveArray<Hex.Hex> {
-  assertHexBytes(value)
   const length = (value.length - 2) / 2
   if (length === 0) return '0x'
   const reader: HexReader = {
+    copy: value.length > sliceMaxLength,
     length,
     position: 0,
     readUint8() {
@@ -293,7 +300,7 @@ function decodeHex(value: Hex.Hex): RecursiveArray<Hex.Hex> {
     readUint32() {
       return readHexUint(this, 4)
     },
-    source: value.toLowerCase(),
+    source: value,
   }
   const result = decodeHexItem(reader, 0)
   // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
@@ -324,7 +331,10 @@ function decodeHexItem(
       throw new NonCanonicalError({
         reason: `single byte \`0x${first.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
       })
-    return `0x${reader.source.slice(2 + start * 2, 2 + reader.position * 2)}`
+    const leaf = reader.source.slice(2 + start * 2, 2 + reader.position * 2)
+    // Joining copies the characters into a new string; a template literal
+    // would keep a reference to the sliced input.
+    return reader.copy ? (['0x', leaf].join('') as Hex.Hex) : `0x${leaf}`
   }
 
   // list
@@ -459,12 +469,16 @@ export function from<as extends 'Hex' | 'Bytes'>(
   // intermediate `Uint8Array` and round-tripping through `Hex.fromBytes`.
   // This is the dominant shape for transaction envelope serialize.
   if (as === 'Hex' && isAllHex(value)) {
-    const parts: string[] = []
+    const parts: string[] = ['0x']
     writeEncodedHex(parts, value as RecursiveArray<Hex.Hex>, {
       lengths: ctx.lengths,
       cursor: 0,
     })
-    return `0x${parts.join('')}` as from.ReturnType<as>
+    // Joining gives a flat string, which one regular-expression scan
+    // validates faster than a check of each leaf.
+    const hex = parts.join('')
+    if (!hexRegex.test(hex)) throw invalidNibble(findInvalidLeaf(value)!)
+    return hex as from.ReturnType<as>
   }
 
   const bytes = new Uint8Array(totalLength)
@@ -480,9 +494,10 @@ export declare namespace from {
     as: as | 'Hex' | 'Bytes'
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Cursor.create.ErrorType
@@ -520,9 +535,10 @@ export function fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
 }
 
 export declare namespace fromBytes {
-  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = ExactPartial<
-    from.Options<as>
-  >
+  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = {
+    /** The type to convert the RLP value to. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = from.ReturnType<as>
 
@@ -553,9 +569,10 @@ export function fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace fromHex {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = ExactPartial<
-    from.Options<as>
-  >
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** The type to convert the RLP value to. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = from.ReturnType<as>
 
@@ -812,6 +829,8 @@ function validateHexLeaf(hex: string): asserts hex is Hex.Hex {
  * @internal
  */
 function writeHexLeaf(bytes: Uint8Array, offset: number, hex: Hex.Hex): number {
+  if (hex.charCodeAt(0) !== 48 || hex.charCodeAt(1) !== 120)
+    throw invalidNibble(hex)
   const dataStart = 2
   let byteLen = (hex.length - 2) >> 1
   let highNibbleFromOddPad = false
@@ -829,16 +848,14 @@ function writeHexLeaf(bytes: Uint8Array, offset: number, hex: Hex.Hex): number {
 
   // Single-byte fast path: if the byte < 0x80, write it as-is (no prefix).
   if (byteLen === 1) {
-    let byte: number
-    if (highNibbleFromOddPad) {
-      byte = internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart)) ?? 0
-    } else {
-      const high =
-        internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart)) ?? 0
-      const low =
-        internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart + 1)) ?? 0
-      byte = (high << 4) | low
-    }
+    const high = highNibbleFromOddPad
+      ? 0
+      : internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart))
+    const low = internal_bytes.charCodeToBase16(
+      hex.charCodeAt(highNibbleFromOddPad ? dataStart : dataStart + 1),
+    )
+    if (high === undefined || low === undefined) throw invalidNibble(hex)
+    const byte = (high << 4) | low
     if (byte < 0x80) {
       bytes[offset] = byte
       return offset + 1
@@ -943,8 +960,14 @@ function writeEncodedHex(
     return
   }
 
-  // Hex leaf: even-pad odd-nibble inputs and skip the `0x` prefix.
+  // Hex leaf: even-pad odd-nibble inputs and skip the `0x` prefix. A leaf
+  // without the prefix writes an `x`, and an invalid digit is copied as is, so
+  // validation in `from` fails and reports the first invalid leaf in order.
   const hex = value as string
+  if (hex.charCodeAt(0) !== 48 || hex.charCodeAt(1) !== 120) {
+    parts.push('x')
+    return
+  }
   const odd = (hex.length & 1) === 1
   const body = odd ? `0${hex.slice(2)}` : hex.slice(2)
   const byteLen = body.length >> 1
@@ -974,9 +997,26 @@ function writeEncodedHex(
   parts.push(body)
 }
 
-const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
-  i.toString(16).padStart(2, '0'),
-)
+/**
+ * Returns the first leaf, in encoding order, that is not a valid hex string.
+ *
+ * @internal
+ */
+function findInvalidLeaf(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+): Hex.Hex | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const leaf = findInvalidLeaf(item)
+      if (leaf !== undefined) return leaf
+    }
+    return undefined
+  }
+  if (typeof value === 'string' && !hexRegex.test(value)) return value
+  return undefined
+}
+
+const hexRegex = /^0x[0-9a-fA-F]*$/
 
 /**
  * Returns the big-endian hex encoding of `value` in `size` bytes.
@@ -1016,8 +1056,8 @@ function writeBigEndian(
   return offset + size
 }
 
-function invalidNibble(hex: Hex.Hex): Errors.BaseError {
-  return new Errors.BaseError(`Invalid hex string \`${hex}\`.`)
+function invalidNibble(hex: Hex.Hex): Hex.InvalidHexValueError {
+  return new Hex.InvalidHexValueError(hex)
 }
 
 /** Thrown when an RLP value nests deeper than the decode depth limit. */

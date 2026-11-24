@@ -29,6 +29,7 @@ export function decodeInteger(
     : core_Hex.toBigInt(value)
 }
 
+// @__NO_SIDE_EFFECTS__
 export function quantityHex(bits?: number) {
   return z_Hex.Hex.check(
     z.refine(
@@ -40,6 +41,7 @@ export function quantityHex(bits?: number) {
   )
 }
 
+// @__NO_SIDE_EFFECTS__
 export function uintNumber(bits?: number) {
   if (bits === 32) return z.uint32('expected uint32')
   const max =
@@ -57,6 +59,7 @@ export function intNumber(bits: number) {
   return z.int(message).check(z.gte(min, message), z.lte(max, message))
 }
 
+// @__NO_SIDE_EFFECTS__
 export function uintBigint(bits?: number) {
   if (bits === 64) return z.uint64('expected uint64')
   if (bits === undefined)
@@ -75,11 +78,13 @@ export function intBigint(bits: number) {
 }
 
 /** Numberish output schema for unsized/bigint-width unsigned integers. */
+// @__NO_SIDE_EFFECTS__
 export function uintBigintNumberish(bits?: number) {
   return z.union([quantityHex(bits), uintBigint(bits), uintSafeNumber(bits)])
 }
 
 /** Numberish output schema for number-width unsigned integers. */
+// @__NO_SIDE_EFFECTS__
 export function uintNumberNumberish(bits?: SmallBits) {
   return z.union([quantityHex(bits), uintNumber(bits)])
 }

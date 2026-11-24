@@ -21,6 +21,7 @@ export const AccountProofToRpc = z.object(
   accountProofFields(z_Uint.UintToRpc, z_Number.NumberToRpc, StorageProofToRpc),
 )
 
+// @__NO_SIDE_EFFECTS__
 function storageProofFields<uint extends z.ZodMiniType>(uint: uint) {
   return {
     key: z_Hex.Hex,
@@ -29,6 +30,7 @@ function storageProofFields<uint extends z.ZodMiniType>(uint: uint) {
   }
 }
 
+// @__NO_SIDE_EFFECTS__
 function accountProofFields<
   uint extends z.ZodMiniType,
   num extends z.ZodMiniType,

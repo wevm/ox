@@ -1,4 +1,3 @@
-import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
 import { BytesSizeOverflowError } from './internal/codec/errors.js'
 import {
@@ -8,7 +7,7 @@ import {
   InvalidLengthError as InvalidLengthError_codec,
 } from './internal/codec/hex.js'
 import { IntegerOutOfRangeError as IntegerOutOfRangeError_codec } from './internal/codec/int.js'
-import { decoder, encoder } from './internal/codec/utf8.js'
+import * as utf8 from './internal/codec/utf8.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
@@ -353,7 +352,7 @@ export function fromString(
   value: string,
   options: fromString.Options = {},
 ): Hex {
-  return fromBytes(encoder.encode(value), options)
+  return fromBytes(utf8.encode(value), options)
 }
 
 export declare namespace fromString {
@@ -384,7 +383,12 @@ export declare namespace fromString {
  * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function isEqual(hexA: Hex, hexB: Hex) {
-  return equalBytes(hexToBytes(hexA), hexToBytes(hexB))
+  const a = hexToBytes(hexA)
+  const b = hexToBytes(hexB)
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!
+  return diff === 0
 }
 
 export declare namespace isEqual {
@@ -778,7 +782,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
   const { size } = options
 
   const bytes = hexToBytes(hex)
-  if (!size) return decoder.decode(bytes)
+  if (!size) return utf8.decode(bytes)
 
   // Match legacy semantics: assert against bytes length so the thrown class
   // matches `Bytes.SizeOverflowError` rather than `Hex.SizeOverflowError`.
@@ -788,7 +792,8 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
   // Trim trailing zero bytes when a `size` is given.
   let end = bytes.length
   while (end > 0 && bytes[end - 1] === 0) end--
-  return decoder.decode(bytes.subarray(0, end))
+  // A copy, not a view: a view of a short array costs more (see `utf8.decode`).
+  return utf8.decode(bytes.slice(0, end))
 }
 
 export declare namespace toString {

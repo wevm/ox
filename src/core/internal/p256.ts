@@ -1,4 +1,6 @@
 import { p256 } from '@noble/curves/nist.js'
+import { randomBytes } from '@noble/hashes/utils.js'
+import { mapToSecretKey } from './curves.js'
 import { type Complete, type Ecdsa, overrides } from './engine.js'
 
 /**
@@ -19,8 +21,16 @@ const getSharedSecretDefault: Complete<Ecdsa>['getSharedSecret'] = (
   publicKey,
 ) => p256.getSharedSecret(privateKey, publicKey, true)
 
+/** Order of the P-256 group, which secret keys are reduced into. */
+const order =
+  0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
+
+/** `getMinHashLength(order)`, the random bytes a secret key is reduced from. */
+const seedLength = 48
+
+// What noble's `utils.randomSecretKey` does, without bundling the curve.
 const randomSecretKeyDefault: Complete<Ecdsa>['randomSecretKey'] = () =>
-  p256.utils.randomSecretKey()
+  mapToSecretKey(randomBytes(seedLength), order)
 
 const recoverPublicKeyDefault: Complete<Ecdsa>['recoverPublicKey'] = (
   signature,

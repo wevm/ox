@@ -1029,6 +1029,17 @@ describe('serialize', () => {
       params: [serialized],
     })
 
+    await expect
+      .poll(
+        () =>
+          anvilMainnet.request({
+            method: 'eth_getTransactionReceipt',
+            params: [hash],
+          }),
+        { timeout: 30_000 },
+      )
+      .not.toBeNull()
+
     const tx = await anvilMainnet.request({
       method: 'eth_getTransactionByHash',
       params: [hash],
@@ -1059,6 +1070,7 @@ describe('serialize', () => {
 
     expect({
       ...receipt,
+      blobGasPrice: null,
       blockHash: null,
       blockNumber: null,
       blockTimestamp: null,
@@ -1075,7 +1087,7 @@ describe('serialize', () => {
       })),
     }).toMatchInlineSnapshot(`
       {
-        "blobGasPrice": "0x1",
+        "blobGasPrice": null,
         "blockHash": null,
         "blockNumber": null,
         "blockTimestamp": null,
@@ -1139,8 +1151,8 @@ describe('toRpc', () => {
             "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
             "chainId": "0x1",
             "nonce": "0x0",
-            "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
-            "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "r": "0x1",
+            "s": "0x2",
             "yParity": "0x0",
           },
         ],

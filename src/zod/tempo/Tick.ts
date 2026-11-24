@@ -3,7 +3,7 @@ import * as core_Tick from '../../tempo/Tick.js'
 import * as z from 'zod/mini'
 
 /** Tick schema (integer within `[minTick, maxTick]`). */
-export const Tick = z
+export const Tick = /* @__PURE__ */ z
   .number()
   .check(
     z.refine(
