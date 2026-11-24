@@ -1,4 +1,3 @@
-import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
 import type * as Hex from './Hex.js'
 import * as internal from './internal/bytes.js'
@@ -350,7 +349,27 @@ export declare namespace fromString {
  * @returns `true` if the two values are equal, otherwise `false`.
  */
 export function isEqual(bytesA: Bytes, bytesB: Bytes) {
-  return equalBytes(bytesA, bytesB)
+  // Compares every byte, as `@noble/curves`' `equalBytes` does, without
+  // loading it.
+  assertBytes(bytesA)
+  assertBytes(bytesB)
+  if (bytesA.length !== bytesB.length) return false
+  let diff = 0
+  for (let i = 0; i < bytesA.length; i++) diff |= bytesA[i]! ^ bytesB[i]!
+  return diff === 0
+}
+
+// Throws what `@noble/hashes`' `abytes` throws for a value that is not bytes.
+function assertBytes(value: unknown) {
+  if (
+    value instanceof Uint8Array ||
+    (ArrayBuffer.isView(value) &&
+      value.constructor.name === 'Uint8Array' &&
+      'BYTES_PER_ELEMENT' in value &&
+      value.BYTES_PER_ELEMENT === 1)
+  )
+    return
+  throw new TypeError(`expected Uint8Array, got type=${typeof value}`)
 }
 
 export declare namespace isEqual {

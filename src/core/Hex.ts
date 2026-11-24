@@ -1,4 +1,3 @@
-import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
 import { BytesSizeOverflowError } from './internal/codec/errors.js'
 import {
@@ -384,7 +383,12 @@ export declare namespace fromString {
  * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function isEqual(hexA: Hex, hexB: Hex) {
-  return equalBytes(hexToBytes(hexA), hexToBytes(hexB))
+  const a = hexToBytes(hexA)
+  const b = hexToBytes(hexB)
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!
+  return diff === 0
 }
 
 export declare namespace isEqual {
