@@ -693,9 +693,7 @@ export declare namespace encodeData {
   type Args<abiFunction extends AbiFunction = AbiFunction> =
     IsNarrowable<abiFunction, AbiFunction> extends true
       ?
-          | (AbiParameters_internal.ToPrimitiveTypes<
-              abiFunction['inputs']
-            > extends readonly []
+          | (abiFunction['inputs'] extends readonly []
               ? []
               : [
                   AbiParameters_internal.ToPrimitiveTypes<
