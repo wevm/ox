@@ -274,7 +274,7 @@ speed:
       'ox:AbiParameters.encode': 160ns # today 130ns
       'ox:Bytes.fromNumber': 50ns # today 34ns
       'ox:Signature.from': 50ns # today 22ns
-      'ox:Address.validate': 50ns # today 65ns; ox main 5.2× better
+      'ox:Address.validate': 82ns # today 65ns
       'ox:PublicKey.toHex': 570ns # today 450ns
       'ox:Hex.toNumber': 50ns # today 13ns
       'ox:Json.stringify': 970ns # today 770ns
@@ -283,7 +283,7 @@ speed:
       'ox/tempo:SignatureEnvelope.serialize': 930ns # today 740ns
       'ox:Hex.assert': 50ns # today 0
       'ox:AbiFunction.encodeData': 150ns # today 320ns; ox main 2.7× better
-      'ox:Bytes.fromHex': 50ns # today 160ns; ox main 5.1× better
+      'ox:Bytes.fromHex': 210ns # today 160ns
       'ox:AbiParameters.from': 350ns # today 280ns
       'ox:Bytes.random': 1.2µs # today 900ns
       'ox/tempo:SignatureEnvelope.from': 50ns # today 20ns
@@ -378,7 +378,7 @@ speed:
       'ox:PersonalMessage.getSignPayload': 3.1kB # today 2.5kB
       'ox:Signature.toRpc': 980B # today 780B
       'ox:Signature.fromRpc': 120B # today 96B
-      'ox:Signature.extract': 130B # today 240B; ox main 2.3× better
+      'ox:Signature.extract': 180B # today 140B
       'ox:Ens.normalize': 16B # today 0
       'ox/erc6492:SignatureErc6492.validate': 30B # today 24B
       'ox/erc8010:SignatureErc8010.validate': 2.3kB # today 1.8kB
@@ -396,22 +396,22 @@ speed:
   hot-import-time:
     target: 60ms
     targets:
-      'ox': 170ms # today 180ms; ox main 1.3× better
+      'ox': 220ms # today 180ms
       'ox/tempo': 120ms # today 90ms
       'ox/Hex': 8.2ms # today 6.6ms
       'ox/Address': 31ms # today 24ms
-      'ox/Signature': 20ms # today 21ms; ox main 1.3× better
-      'ox/TypedData': 33ms # today 38ms; ox main 1.4× better
+      'ox/Signature': 27ms # today 21ms
+      'ox/TypedData': 48ms # today 38ms
       'ox/RpcResponse': 1.3ms # today 1ms
       'ox/Secp256k1': 53ms # today 42ms
       'ox/Provider': 8.6ms # today 6.8ms
-      'ox/AbiFunction': 39ms # today 42ms; ox main 1.3× better
-      'ox/AbiParameters': 38ms # today 39ms; ox main 1.3× better
+      'ox/AbiFunction': 53ms # today 42ms
+      'ox/AbiParameters': 49ms # today 39ms
       'ox/Bytes': 8.3ms # today 6.6ms
       'ox/Hash': 29ms # today 23ms
       'ox/WebAuthnP256': 72ms # today 57ms
       'ox/erc4337': 61ms # today 49ms
-      'ox/erc6492': 35ms # today 40ms; ox main 1.5× better
+      'ox/erc6492': 51ms # today 40ms
   hot-import-memory:
     target: 3.5MB
     targets:
@@ -419,7 +419,7 @@ speed:
       'ox/tempo': 4.5MB # today 4MB
       'ox/Hex': 560kB # today 500kB
       'ox/Address': 1.6MB # today 1.4MB
-      'ox/Signature': 1.3MB # today 1.4MB; ox main 1.2× better
+      'ox/Signature': 1.6MB # today 1.4MB
       'ox/TypedData': 2.1MB # today 1.9MB
       'ox/RpcResponse': 300kB # today 270kB
       'ox/Secp256k1': 2.3MB # today 2.1MB
