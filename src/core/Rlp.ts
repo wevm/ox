@@ -2,7 +2,7 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Cursor from './internal/cursor.js'
-import type { ExactPartial, RecursiveArray } from './internal/types.js'
+import type { RecursiveArray } from './internal/types.js'
 
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
@@ -361,11 +361,16 @@ export function fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
 }
 
 export declare namespace fromBytes {
-  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = ExactPartial<
-    from.Options<as>
-  >
+  // `from.Options` and `from.ReturnType` written out, which costs `Parameters` and `ReturnType`
+  // a third fewer type instantiations than mapping and aliasing them.
+  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = {
+    /** The type to convert the RLP value to. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = from.ReturnType<as>
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = as extends 'Bytes'
+    ? Bytes.Bytes
+    : Hex.Hex
 
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
@@ -394,11 +399,16 @@ export function fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace fromHex {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = ExactPartial<
-    from.Options<as>
-  >
+  // `from.Options` and `from.ReturnType` written out, which costs `Parameters` and `ReturnType`
+  // a third fewer type instantiations than mapping and aliasing them.
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** The type to convert the RLP value to. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = from.ReturnType<as>
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = as extends 'Bytes'
+    ? Bytes.Bytes
+    : Hex.Hex
 
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }

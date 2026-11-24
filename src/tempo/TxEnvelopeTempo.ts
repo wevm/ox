@@ -276,7 +276,7 @@ export declare namespace assert {
  * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
-export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
+export function deserialize(serialized: Serialized): TxEnvelopeTempo {
   const transactionArray = Rlp.toHex(
     withoutSenderMarker(Hex.slice(serialized, 1)),
   )
