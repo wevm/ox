@@ -4,7 +4,7 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Quantity from './internal/quantity.js'
-import type { Compute, ExactPartial, OneOf } from './internal/types.js'
+import type { ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
 
@@ -16,19 +16,17 @@ const order =
 export type Signature<
   recovered extends boolean = true,
   numberType = number,
-> = Compute<
-  recovered extends true
-    ? {
-        r: Hex.Hex
-        s: Hex.Hex
-        yParity: numberType
-      }
-    : {
-        r: Hex.Hex
-        s: Hex.Hex
-        yParity?: numberType | undefined
-      }
->
+> = recovered extends true
+  ? {
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity: numberType
+    }
+  : {
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity?: numberType | undefined
+    }
 
 /** RPC-formatted ECDSA signature. `yParity` is hex-encoded. */
 export type Rpc<recovered extends boolean = true> = Signature<
@@ -865,8 +863,16 @@ export function toRpc(signature: toRpc.Input): Rpc {
 }
 
 export declare namespace toRpc {
-  /** Numberish input accepted by {@link ox#Signature.(toRpc:function)}. */
-  type Input = Signature<true, Hex.Hex | number>
+  /**
+   * Numberish input accepted by {@link ox#Signature.(toRpc:function)}: a
+   * recovered {@link ox#Signature.Signature} whose `yParity` is a number or a
+   * hex value, written out so it does not instantiate the conditional type.
+   */
+  type Input = {
+    r: Hex.Hex
+    s: Hex.Hex
+    yParity: Hex.Hex | number
+  }
 
   type ErrorType = Errors.GlobalErrorType
 }

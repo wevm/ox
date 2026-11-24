@@ -59,9 +59,10 @@ export declare namespace decrypt {
     as?: as | 'Bytes' | 'Hex' | undefined
   }
 
-  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.from.ErrorType
@@ -123,9 +124,10 @@ export declare namespace encrypt {
     as?: as | 'Bytes' | 'Hex' | undefined
   }
 
-  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.concat.ErrorType

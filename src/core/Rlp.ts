@@ -4,7 +4,7 @@ import * as Hex from './Hex.js'
 import * as internal_bytes from './internal/bytes.js'
 import { assertHexBytes, nibbleTable } from './internal/codec/hex.js'
 import * as Cursor from './internal/cursor.js'
-import type { ExactPartial, RecursiveArray } from './internal/types.js'
+import type { RecursiveArray } from './internal/types.js'
 
 /** Maximum nesting depth permitted when decoding an RLP value. */
 const depthLimit = 1_024
@@ -100,9 +100,10 @@ export function to<
 
 /** @internal */
 export declare namespace to {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (to extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
-    | (to extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    Bytes: RecursiveArray<Bytes.Bytes>
+    Hex: RecursiveArray<Hex.Hex>
+  }[to]
 
   type ErrorType =
     | Bytes.fromHex.ErrorType
@@ -480,9 +481,10 @@ export declare namespace from {
     as: as | 'Hex' | 'Bytes'
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Cursor.create.ErrorType
@@ -520,9 +522,10 @@ export function fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
 }
 
 export declare namespace fromBytes {
-  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = ExactPartial<
-    from.Options<as>
-  >
+  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = {
+    /** The type to convert the RLP value to. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = from.ReturnType<as>
 
@@ -553,9 +556,10 @@ export function fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace fromHex {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = ExactPartial<
-    from.Options<as>
-  >
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** The type to convert the RLP value to. */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = from.ReturnType<as>
 
