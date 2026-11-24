@@ -202,9 +202,7 @@ export function encode<
     parameters: parameters as readonly Parameter[],
     values: values as any,
   })
-  const data = internal.encode(preparedParameters)
-  if (data.length === 0) return '0x'
-  return data
+  return `0x${internal.encode(preparedParameters)}`
 }
 
 export declare namespace encode {
