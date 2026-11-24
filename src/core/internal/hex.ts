@@ -62,8 +62,16 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   if (size === 0) return hex_
 
-  const hex = hex_.slice(2)
   const target = size * 2
+  // Already the size: nothing to pad.
+  if (
+    hex_.length === target + 2 &&
+    hex_.charCodeAt(0) === 48 &&
+    hex_.charCodeAt(1) === 120
+  )
+    return hex_
+
+  const hex = hex_.slice(2)
   if (hex.length > target)
     throw new Hex.SizeExceedsPaddingSizeError({
       size: (hex.length + 1) >> 1,

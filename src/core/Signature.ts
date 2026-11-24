@@ -80,26 +80,50 @@ export function assert(
     (signature.yParity === undefined || signature.yParity === null)
   )
     throw new MissingPropertiesError({ signature })
-  try {
-    const r = BigInt(signature.r)
-    if (r < 0n || r > Solidity.maxUint256)
+  // Up to 64 hex digits cannot exceed `maxUint256`; anything else is parsed.
+  if (!isShortHex(signature.r))
+    try {
+      const r = BigInt(signature.r)
+      if (r < 0n || r > Solidity.maxUint256)
+        throw new InvalidRError({ value: signature.r })
+    } catch {
       throw new InvalidRError({ value: signature.r })
-  } catch {
-    throw new InvalidRError({ value: signature.r })
-  }
-  try {
-    const s = BigInt(signature.s)
-    if (s < 0n || s > Solidity.maxUint256)
+    }
+  if (!isShortHex(signature.s))
+    try {
+      const s = BigInt(signature.s)
+      if (s < 0n || s > Solidity.maxUint256)
+        throw new InvalidSError({ value: signature.s })
+    } catch {
       throw new InvalidSError({ value: signature.s })
-  } catch {
-    throw new InvalidSError({ value: signature.s })
-  }
+    }
   if (
     signature.yParity !== undefined &&
     signature.yParity !== 0 &&
     signature.yParity !== 1
   )
     throw new InvalidYParityError({ value: signature.yParity })
+}
+
+// Whether a value is `0x` and 1 to 64 hex digits, a scalar that fits in 256 bits.
+function isShortHex(value: unknown): boolean {
+  if (typeof value !== 'string') return false
+  const length = value.length
+  if (
+    length < 3 ||
+    length > 66 ||
+    value.charCodeAt(0) !== 48 ||
+    value.charCodeAt(1) !== 120
+  )
+    return false
+  for (let i = 2; i < length; i++) {
+    const code = value.charCodeAt(i)
+    if (code >= 48 && code <= 57) continue
+    const lower = code | 32
+    if (lower >= 97 && lower <= 102) continue
+    return false
+  }
+  return true
 }
 
 export declare namespace assert {
@@ -301,21 +325,23 @@ export function from<
     | Hex.Hex
     | Bytes.Bytes,
 ): from.ReturnType<signature> {
-  const signature_ = (() => {
-    if (typeof signature === 'string') return fromHex(signature)
-    if (signature instanceof Uint8Array) return fromBytes(signature)
+  let signature_: Signature<boolean>
+  if (typeof signature === 'string') signature_ = fromHex(signature)
+  else if (signature instanceof Uint8Array) signature_ = fromBytes(signature)
+  else {
     const sig = signature as Record<string, unknown>
-    if (typeof sig.v !== 'undefined')
-      return fromLegacy(sig as unknown as Legacy)
-    if (typeof sig.yParity === 'string') return fromRpc(sig as unknown as Rpc)
-    return {
-      r: sig.r as Hex.Hex,
-      s: sig.s as Hex.Hex,
-      ...(typeof sig.yParity !== 'undefined'
-        ? { yParity: sig.yParity as number }
-        : {}),
+    const { r, s, yParity } = sig as {
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity: unknown
     }
-  })()
+    if (typeof sig.v !== 'undefined')
+      signature_ = fromLegacy(sig as unknown as Legacy)
+    else if (typeof yParity === 'string')
+      signature_ = fromRpc(sig as unknown as Rpc)
+    else if (typeof yParity === 'undefined') signature_ = { r, s }
+    else signature_ = { r, s, yParity: yParity as number }
+  }
   assert(signature_ as ExactPartial<Signature>)
   // Pad after `assert` so that oversized r/s throw the typed `InvalidRError` /
   // `InvalidSError` rather than `SizeExceedsPaddingSizeError`.
