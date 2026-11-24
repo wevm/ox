@@ -303,6 +303,7 @@ export function toRpc<pending extends boolean = false>(
   transaction: Transaction<pending>,
   options?: toRpc.Options<pending>,
 ): Rpc<pending>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function toRpc(
   transaction: Transaction<boolean>,
   _options?: toRpc.Options<boolean>,

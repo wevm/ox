@@ -199,7 +199,7 @@ export declare namespace minimumOutput {
     | Errors.GlobalErrorType
 }
 
-/** Throws when either side of an anchor is not positive, as the adapter never stores one. */
+// Throws when either side of an anchor is not positive, as the adapter never stores one.
 function assertAnchor(anchor: Anchor) {
   if (anchor.engineShares <= 0n || anchor.shareSupply <= 0n)
     throw new InvalidAnchorError({ anchor })
