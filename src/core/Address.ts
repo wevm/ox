@@ -1,5 +1,4 @@
 import type { Address as abitype_Address } from 'abitype'
-import * as Bytes from './Bytes.js'
 import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
@@ -104,7 +103,10 @@ export function checksum(address: string): Address {
     }
   }
 
-  const hash = Hash.keccak256(Bytes.fromString(key.slice(2)), { as: 'Bytes' })
+  // The lowercase address is ASCII hex, one byte per character.
+  const bytes = new Uint8Array(40)
+  for (let i = 0; i < 40; i++) bytes[i] = key.charCodeAt(i + 2)
+  const hash = Hash.keccak256(bytes, { as: 'Bytes' })
 
   const out = new Uint16Array(42)
   out[0] = 48 // '0'
@@ -130,7 +132,6 @@ export declare namespace checksum {
   type ErrorType =
     | assert.ErrorType
     | Hash.keccak256.ErrorType
-    | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
 }
 

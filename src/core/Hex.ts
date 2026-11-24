@@ -8,7 +8,7 @@ import {
   InvalidLengthError as InvalidLengthError_codec,
 } from './internal/codec/hex.js'
 import { IntegerOutOfRangeError as IntegerOutOfRangeError_codec } from './internal/codec/int.js'
-import { decoder, encoder } from './internal/codec/utf8.js'
+import * as utf8 from './internal/codec/utf8.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
@@ -353,7 +353,7 @@ export function fromString(
   value: string,
   options: fromString.Options = {},
 ): Hex {
-  return fromBytes(encoder.encode(value), options)
+  return fromBytes(utf8.encode(value), options)
 }
 
 export declare namespace fromString {
@@ -778,7 +778,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
   const { size } = options
 
   const bytes = hexToBytes(hex)
-  if (!size) return decoder.decode(bytes)
+  if (!size) return utf8.decoder.decode(bytes)
 
   // Match legacy semantics: assert against bytes length so the thrown class
   // matches `Bytes.SizeOverflowError` rather than `Hex.SizeOverflowError`.
@@ -788,7 +788,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
   // Trim trailing zero bytes when a `size` is given.
   let end = bytes.length
   while (end > 0 && bytes[end - 1] === 0) end--
-  return decoder.decode(bytes.subarray(0, end))
+  return utf8.decoder.decode(bytes.subarray(0, end))
 }
 
 export declare namespace toString {

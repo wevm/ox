@@ -13,7 +13,7 @@ import {
   bytesToBigInt,
   bytesToSafeNumber,
 } from './internal/codec/int.js'
-import { decoder, encoder } from './internal/codec/utf8.js'
+import * as utf8 from './internal/codec/utf8.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
 
@@ -311,7 +311,7 @@ export function fromString(
 ): Bytes {
   const { size } = options
 
-  const bytes = encoder.encode(value)
+  const bytes = utf8.encode(value)
   if (typeof size === 'number') {
     internal.assertSize(bytes, size)
     return padRight(bytes, size)
@@ -668,7 +668,7 @@ export function toString(bytes: Bytes, options: toString.Options = {}): string {
     internal.assertSize(bytes_, size)
     bytes_ = trimRight(bytes_)
   }
-  return decoder.decode(bytes_)
+  return utf8.decoder.decode(bytes_)
 }
 
 export declare namespace toString {
