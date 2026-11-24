@@ -98,12 +98,22 @@ export declare namespace namehash {
  * @returns Normalized ENS name.
  */
 export function normalize(name: string): string {
+  if (typeof name === 'string' && normalizedAscii.test(name)) return name
   return ensNormalize(name)
 }
 
 export declare namespace normalize {
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * Names that ENSIP-15 leaves unchanged without consulting its tables: labels
+ * of lowercase ASCII letters, digits, `$` and `-` after any leading
+ * underscores, none empty and none with `--` as its third and fourth
+ * characters, which ENSIP-15 reserves for label extensions.
+ */
+const normalizedAscii =
+  /^(?![^.]{2}--)(?=[^.])_*[a-z0-9$-]*(?:\.(?![^.]{2}--)(?=[^.])_*[a-z0-9$-]*)*$/
 
 /**
  * Converts a chain ID to an ENSIP-9 compliant coin type.
