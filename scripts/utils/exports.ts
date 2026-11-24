@@ -35,7 +35,8 @@ export function getExports({
     if (!parentEntry.isDirectory()) {
       if (
         parentEntry.name.endsWith('test.ts') ||
-        parentEntry.name.endsWith('.test-d.ts')
+        parentEntry.name.endsWith('.test-d.ts') ||
+        parentEntry.name.endsWith('.fuzz.ts')
       )
         continue
       if (
@@ -73,7 +74,11 @@ export function getExports({
       },
     )
     for (const entry of entries) {
-      if (entry.name.endsWith('test.ts') || entry.name.endsWith('.test-d.ts'))
+      if (
+        entry.name.endsWith('test.ts') ||
+        entry.name.endsWith('.test-d.ts') ||
+        entry.name.endsWith('.fuzz.ts')
+      )
         continue
       if (entry.isDirectory()) continue
 
