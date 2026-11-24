@@ -687,7 +687,7 @@ export function toString(bytes: Bytes, options: toString.Options = {}): string {
     internal.assertSize(bytes_, size)
     bytes_ = trimRight(bytes_)
   }
-  return utf8.decoder.decode(bytes_)
+  return utf8.decode(bytes_)
 }
 
 export declare namespace toString {

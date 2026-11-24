@@ -10,6 +10,27 @@ export const encoder = /*#__PURE__*/ new TextEncoder()
 /** @internal */
 export const decoder = /*#__PURE__*/ new TextDecoder()
 
+const scratch = /*#__PURE__*/ new Uint8Array(/*#__PURE__*/ new ArrayBuffer(64))
+/** Views of the first `n` bytes of `scratch`, by `n`. */
+const scratchViews: Uint8Array[] = []
+
+/**
+ * Decodes UTF-8 bytes as `decoder.decode` does. V8 keeps typed arrays of up to
+ * 64 bytes on its heap, and `TextDecoder` would first move one to an
+ * `ArrayBuffer` of its own, which costs more than the decoding; a short value
+ * is copied to `scratch`, which has one, and decoded from there.
+ *
+ * @internal
+ */
+export function decode(bytes: Uint8Array): string {
+  if (!(bytes instanceof Uint8Array) || bytes.length > 64)
+    return decoder.decode(bytes)
+  scratch.set(bytes)
+  return decoder.decode(
+    (scratchViews[bytes.length] ??= scratch.subarray(0, bytes.length)),
+  )
+}
+
 /**
  * Encodes a string as UTF-8, as `encoder.encode` does (a lone surrogate
  * becomes U+FFFD). A short string is encoded in a loop, which is several times

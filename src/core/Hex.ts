@@ -782,7 +782,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
   const { size } = options
 
   const bytes = hexToBytes(hex)
-  if (!size) return utf8.decoder.decode(bytes)
+  if (!size) return utf8.decode(bytes)
 
   // Match legacy semantics: assert against bytes length so the thrown class
   // matches `Bytes.SizeOverflowError` rather than `Hex.SizeOverflowError`.
@@ -792,7 +792,8 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
   // Trim trailing zero bytes when a `size` is given.
   let end = bytes.length
   while (end > 0 && bytes[end - 1] === 0) end--
-  return utf8.decoder.decode(bytes.subarray(0, end))
+  // A copy, not a view: a view of a short array costs more (see `utf8.decode`).
+  return utf8.decode(bytes.slice(0, end))
 }
 
 export declare namespace toString {

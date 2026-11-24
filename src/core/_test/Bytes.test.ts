@@ -1637,6 +1637,24 @@ describe('toString', () => {
     ).toMatchInlineSnapshot(`"Hello World!"`)
   })
 
+  test('behavior: decodes as TextDecoder does', () => {
+    const decoder = new TextDecoder()
+    for (const value of [
+      [104, 101, 108, 108, 111],
+      [104, 105],
+      [],
+      // A byte order mark, invalid and truncated sequences.
+      [0xef, 0xbb, 0xbf, 97],
+      [0xc0, 0xaf, 0xed, 0xa0, 0x80, 0xf4, 0x90, 0x80, 0x80, 0xe2, 0x82],
+      [0xf0, 0x9f, 0x98, 0x80],
+      Array.from({ length: 64 }, (_, i) => 65 + (i % 26)),
+      Array.from({ length: 65 }, (_, i) => 97 + (i % 26)),
+    ]) {
+      const bytes = Bytes.fromArray(value)
+      expect(Bytes.toString(bytes)).toBe(decoder.decode(bytes))
+    }
+  })
+
   test('args: size', () => {
     expect(
       Bytes.toString(Bytes.fromString('wagmi', { size: 32 }), {
