@@ -1,7 +1,11 @@
 import * as Bytes from '../Bytes.js'
 import type * as Errors from '../Errors.js'
 
+const decoder = /*#__PURE__*/ new TextDecoder()
 const encoder = /*#__PURE__*/ new TextEncoder()
+const scratch = /*#__PURE__*/ new Uint8Array(new ArrayBuffer(64))
+/** Views of the first `n` bytes of `scratch`, by `n`. */
+const scratchViews: Uint8Array[] = []
 
 /** @internal */
 export function assertSize(bytes: Bytes.Bytes, size_: number): void {
@@ -176,4 +180,21 @@ export function fromString(value: string): Bytes.Bytes {
     }
   }
   return bytes
+}
+
+/**
+ * Decodes UTF-8 bytes with `TextDecoder`. V8 keeps typed arrays of up to 64
+ * bytes on its heap, and `TextDecoder` would first move one to an
+ * `ArrayBuffer` of its own, which costs several times the decoding; a short
+ * value is copied to `scratch`, which has one, and decoded from there.
+ *
+ * @internal
+ */
+export function toString(bytes: Bytes.Bytes): string {
+  if (!(bytes instanceof Uint8Array) || bytes.length > 64)
+    return decoder.decode(bytes)
+  scratch.set(bytes)
+  return decoder.decode(
+    (scratchViews[bytes.length] ??= scratch.subarray(0, bytes.length)),
+  )
 }

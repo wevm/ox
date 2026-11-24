@@ -4,8 +4,6 @@ import * as internal_bytes from './internal/bytes.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
-const decoder = /*#__PURE__*/ new TextDecoder()
-
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
@@ -747,7 +745,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
     internal_bytes.assertSize(bytes, size)
     bytes = Bytes.trimRight(bytes)
   }
-  return decoder.decode(bytes)
+  return internal_bytes.toString(bytes)
 }
 
 export declare namespace toString {

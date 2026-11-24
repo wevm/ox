@@ -4,8 +4,6 @@ import * as internal from './internal/bytes.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
 
-const decoder = /*#__PURE__*/ new TextDecoder()
-
 /** Root type for a Bytes array. */
 export type Bytes = Uint8Array
 
@@ -756,7 +754,7 @@ export function toString(bytes: Bytes, options: toString.Options = {}): string {
     internal.assertSize(bytes_, size)
     bytes_ = trimRight(bytes_)
   }
-  return decoder.decode(bytes_)
+  return internal.toString(bytes_)
 }
 
 export declare namespace toString {
