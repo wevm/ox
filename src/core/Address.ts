@@ -91,23 +91,25 @@ export function checksum(address: string): Address {
     if (cached !== undefined) return cached
   }
 
-  const hexAddress = key.substring(2)
   // The address is ASCII hex, one byte per character.
   const bytes = new Uint8Array(40)
-  for (let i = 0; i < 40; i++) bytes[i] = hexAddress.charCodeAt(i)
+  for (let i = 0; i < 40; i++) bytes[i] = key.charCodeAt(i + 2)
   const hash = Hash.keccak256(bytes, { as: 'Bytes' })
 
-  const characters = hexAddress.split('')
-  for (let i = 0; i < 40; i += 2) {
-    if (hash[i >> 1]! >> 4 >= 8 && characters[i]) {
-      characters[i] = characters[i]!.toUpperCase()
-    }
-    if ((hash[i >> 1]! & 0x0f) >= 8 && characters[i + 1]) {
-      characters[i + 1] = characters[i + 1]!.toUpperCase()
-    }
+  const characters = new Uint16Array(42)
+  characters[0] = 48 // '0'
+  characters[1] = 120 // 'x'
+  for (let i = 0; i < 40; i++) {
+    const code = bytes[i]!
+    const nibble = i & 1 ? hash[i >> 1]! & 0x0f : hash[i >> 1]! >> 4
+    // `a`-`f` (97-102) become `A`-`F` when their nibble of the hash is 8 or more.
+    characters[i + 2] = nibble >= 8 && code >= 97 ? code - 32 : code
   }
 
-  const result = `0x${characters.join('')}` as const
+  const result = String.fromCharCode.apply(
+    null,
+    characters as unknown as number[],
+  ) as Address
   Caches.checksum.set(key, result)
   return result
 }
