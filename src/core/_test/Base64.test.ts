@@ -59,6 +59,11 @@ describe('toBytes', () => {
       Bytes.fromString('hello wo�d'),
     )
   })
+
+  test('behavior: a value that is not a string throws', () => {
+    for (const value of [{}, [], 0])
+      expect(() => Base64.toBytes(value as never)).toThrow(TypeError)
+  })
 })
 
 describe('toHex', () => {

@@ -108,7 +108,12 @@ const staticCursor: Cursor = {
   inspectBytes(length, position_) {
     const position = position_ ?? this.position
     this.assertPosition(position + length - 1)
-    return this.bytes.subarray(position, position + length)
+    // V8 keeps typed arrays of up to 64 bytes on its heap, and a view of one
+    // first moves it to an ArrayBuffer of its own, which costs far more than
+    // copying the bytes.
+    return this.bytes.length <= 64
+      ? this.bytes.slice(position, position + length)
+      : this.bytes.subarray(position, position + length)
   },
   inspectUint8(position_) {
     const position = position_ ?? this.position

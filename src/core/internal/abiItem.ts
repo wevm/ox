@@ -5,7 +5,7 @@ import type * as AbiParameters from '../AbiParameters.js'
 import * as Address from '../Address.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
-import { getArrayComponents } from './abiParameters.js'
+import { getArrayComponents, type ToPrimitiveTypes } from './abiParameters.js'
 import type {
   Compute,
   IsNever,
@@ -18,7 +18,7 @@ import type {
 export type ExtractArgs<
   abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
   name extends AbiItem.Name<abi> = AbiItem.Name<abi>,
-> = abitype.AbiParametersToPrimitiveTypes<
+> = ToPrimitiveTypes<
   AbiItem.FromAbi<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
   'inputs'
 > extends infer args
@@ -80,10 +80,7 @@ export type TupleToUnion<
     readonly [] extends args
       ? readonly [] // fallback to `readonly []` if `args` has no value (e.g. `args` property not provided)
       : args
-  ) extends abitype.AbiParametersToPrimitiveTypes<
-    abiItems[k]['inputs'],
-    'inputs'
-  >
+  ) extends ToPrimitiveTypes<abiItems[k]['inputs'], 'inputs'>
     ? abiItems[k]
     : never
 }[number]

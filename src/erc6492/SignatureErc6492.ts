@@ -31,6 +31,10 @@ export type Wrapped = Hex.Hex
 export const magicBytes =
   '0x6492649264926492649264926492649264926492649264926492649264926492' as const
 
+/** `magicBytes` without its `0x` prefix. */
+const magicDigits =
+  '6492649264926492649264926492649264926492649264926492649264926492'
+
 /**
  * Deployless ERC-6492 signature verification bytecode.
  */
@@ -239,12 +243,13 @@ export declare namespace wrap {
  * @returns `true` if the wrapped signature is valid, `false` otherwise.
  */
 export function validate(wrapped: Wrapped): boolean {
-  try {
-    assert(wrapped)
-    return true
-  } catch {
-    return false
-  }
+  // `assert`'s check (`Hex.slice(wrapped, -32) === magicBytes`), without
+  // loading `Hex.slice` and its errors.
+  if (typeof wrapped !== 'string') return false
+  const digits = wrapped.startsWith('0x')
+    ? wrapped.slice(2)
+    : (wrapped as string).replace('0x', '')
+  return digits.slice(-64) === magicDigits
 }
 
 export declare namespace validate {

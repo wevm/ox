@@ -1,12 +1,8 @@
-import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/bytes.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
-
-const decoder = /*#__PURE__*/ new TextDecoder()
-const encoder = /*#__PURE__*/ new TextEncoder()
 
 /** Root type for a Bytes array. */
 export type Bytes = Uint8Array
@@ -210,6 +206,9 @@ export declare namespace fromBoolean {
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
+  // Without this, the first two characters would be read as `0x`.
+  if (value.charCodeAt(0) !== 48 || value.charCodeAt(1) !== 120)
+    throw new Errors.BaseError(`Hex value \`${value}\` must start with "0x".`)
   const { size } = options
   if (size) internal_hex.assertSize(value, size)
 
@@ -286,10 +285,37 @@ export declare namespace fromHex {
  */
 export function fromNumber(
   value: bigint | number,
-  options?: fromNumber.Options | undefined,
+  options: fromNumber.Options = {},
 ) {
-  const hex = Hex.fromNumber(value, options)
-  return fromHex(hex)
+  const { signed, size } = options
+  // A safe integer that fits `size` is written in base 256, without BigInt: a
+  // negative one as its two's complement, which is a safe integer for sizes
+  // of up to 6 bytes.
+  if (
+    typeof value === 'number' &&
+    Number.isSafeInteger(value) &&
+    (!size || (Number.isSafeInteger(size) && size > 0)) &&
+    (signed && size
+      ? size > 6
+        ? value >= 0
+        : value >= -(2 ** (size * 8 - 1)) && value < 2 ** (size * 8 - 1)
+      : value >= 0 && (!size || size > 6 || value < 2 ** (size * 8)))
+  ) {
+    let length = size || 1
+    if (!size) for (let v = value; v >= 256; v = Math.floor(v / 256)) length++
+    const bytes = new Uint8Array(length)
+    const unsigned = value < 0 ? value + 2 ** (size! * 8) : value
+    for (let i = length - 1, v = unsigned; v > 0; i--, v = Math.floor(v / 256))
+      bytes[i] = v % 256
+    return bytes
+  }
+  // Otherwise the digits `Hex.fromNumber` writes, as bytes, without decoding
+  // hex.
+  const hex = internal_hex.toUnsigned(value, signed, size).toString(16)
+  const bytes = new Uint8Array(size || (hex.length + 1) >> 1)
+  for (let i = bytes.length - 1, j = hex.length; j > 0; i--, j -= 2)
+    bytes[i] = Number.parseInt(hex.slice(Math.max(j - 2, 0), j), 16)
+  return bytes
 }
 
 export declare namespace fromNumber {
@@ -330,7 +356,7 @@ export function fromString(
 ): Bytes {
   const { size } = options
 
-  const bytes = encoder.encode(value)
+  const bytes = internal.fromString(value)
   if (typeof size === 'number') {
     internal.assertSize(bytes, size)
     return padRight(bytes, size)
@@ -369,7 +395,12 @@ export declare namespace fromString {
  * @returns `true` if the two values are equal, otherwise `false`.
  */
 export function isEqual(bytesA: Bytes, bytesB: Bytes) {
-  return equalBytes(bytesA, bytesB)
+  // Compares every byte, as `@noble/curves`' `equalBytes` does, without
+  // loading it.
+  if (bytesA.length !== bytesB.length) return false
+  let diff = 0
+  for (let i = 0; i < bytesA.length; i++) diff |= bytesA[i]! ^ bytesB[i]!
+  return diff === 0
 }
 
 export declare namespace isEqual {
@@ -548,8 +579,10 @@ export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
       for (; i < bytes.length; i++) value = value * 256 + bytes[i]!
       return BigInt(value)
     }
-    // A full word reads as four 64-bit halves, skipping the hex string.
-    if (bytes.length === 32 && bytes instanceof Uint8Array) {
+    // A word that is a view into a larger buffer reads as four 64-bit halves.
+    // (A fresh array of up to 64 bytes has no buffer yet, and V8 would first
+    // move it to one.)
+    if (bytes.length === 32 && bytes.byteOffset > 0) {
       const view = new DataView(bytes.buffer, bytes.byteOffset, 32)
       return (
         (view.getBigUint64(0) << 192n) |
@@ -557,6 +590,17 @@ export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
         (view.getBigUint64(16) << 64n) |
         view.getBigUint64(24)
       )
+    }
+    // A value of up to a word reads six bytes at a time.
+    if (bytes.length - i <= 32) {
+      let value = 0n
+      for (let end = i + ((bytes.length - i) % 6 || 6); i < bytes.length; ) {
+        let chunk = 0
+        for (; i < end; i++) chunk = chunk * 256 + bytes[i]!
+        value = (value << 48n) | BigInt(chunk)
+        end += 6
+      }
+      return value
     }
   }
   const hex = Hex.fromBytes(bytes, options)
@@ -715,7 +759,7 @@ export function toString(bytes: Bytes, options: toString.Options = {}): string {
     internal.assertSize(bytes_, size)
     bytes_ = trimRight(bytes_)
   }
-  return decoder.decode(bytes_)
+  return internal.toString(bytes_)
 }
 
 export declare namespace toString {

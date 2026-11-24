@@ -129,9 +129,10 @@ export declare namespace decrypt {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = InvalidKeySizeError | Errors.GlobalErrorType
 }
@@ -397,10 +398,7 @@ export declare namespace scrypt {
  * @returns Scrypt key.
  */
 export async function scryptAsync(options: scrypt.Options) {
-  const { iv, n = 262_144, password } = options
-
-  const p = 8
-  const r = 1
+  const { iv, n = 262_144, password, p = 8, r = 1 } = options
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(

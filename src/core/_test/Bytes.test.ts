@@ -1,4 +1,4 @@
-import { Bytes } from 'ox'
+import { Bytes, Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('assert', () => {
@@ -325,6 +325,18 @@ describe('fromHex', () => {
       Bytes.fromHex('0xabcdefgh'),
     ).toThrowErrorMatchingInlineSnapshot(
       `[BaseError: Invalid byte sequence ("gh" in "abcdefgh").]`,
+    )
+  })
+
+  test('error: no 0x prefix', () => {
+    for (const value of ['abcd', 'zz', '0XAB', '0', ''])
+      expect(() => Bytes.fromHex(value as Hex.Hex)).toThrowError(
+        'must start with "0x"',
+      )
+    expect(() =>
+      Bytes.fromHex('abcd' as Hex.Hex),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Hex value \`abcd\` must start with "0x".]`,
     )
   })
 })
@@ -822,6 +834,52 @@ describe('fromNumber', () => {
       )
     })
   })
+
+  test('behavior: writes the bytes of `Hex.fromNumber`', () => {
+    const values = [
+      0,
+      1,
+      255,
+      256,
+      65_535,
+      65_536,
+      2 ** 48 - 1,
+      2 ** 48,
+      2 ** 53 - 1,
+      2 ** 53,
+      -1,
+      -128,
+      -129,
+      255n,
+      256n,
+      -1n,
+      -128n,
+      -129n,
+      2n ** 64n,
+      2n ** 600n + 1n,
+    ]
+    const sizes = [undefined, 1, 2, 6, 7, 8, 32]
+    for (const value of values)
+      for (const size of sizes)
+        for (const signed of [undefined, true]) {
+          const options = size ? { size, signed } : { signed: undefined }
+          const expected = (() => {
+            try {
+              return Bytes.fromHex(Hex.fromNumber(value, options))
+            } catch (error) {
+              return (error as Error).message
+            }
+          })()
+          const actual = (() => {
+            try {
+              return Bytes.fromNumber(value, options)
+            } catch (error) {
+              return (error as Error).message
+            }
+          })()
+          expect(actual).toEqual(expected)
+        }
+  })
 })
 
 describe('fromString', () => {
@@ -924,6 +982,21 @@ describe('fromString', () => {
         ]
       `,
     )
+  })
+
+  test('behavior: encodes as TextEncoder does', () => {
+    const encoder = new TextEncoder()
+    for (const value of [
+      'hhello wo\ufffdd',
+      'ü€😀',
+      // Lone surrogates become U+FFFD.
+      '\ud800',
+      'a\udc00b',
+      '\ud83d\ud83d\ude00',
+      'x'.repeat(64),
+      `${'ü'.repeat(64)}😀`,
+    ])
+      expect(Bytes.fromString(value)).toEqual(encoder.encode(value))
   })
 
   test('error: size overflow', () => {
@@ -1391,6 +1464,16 @@ describe('toBigInt', () => {
     ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
   })
 
+  test('behavior: every length of value', () => {
+    for (let length = 1; length <= 40; length++) {
+      // Leading zero bytes, then `length` significant bytes.
+      const bytes = new Uint8Array(length + 3)
+      for (let i = 3; i < bytes.length; i++) bytes[i] = (i * 151 + 7) & 0xff
+      bytes[3] ||= 1
+      expect(Bytes.toBigInt(bytes)).toBe(BigInt(Hex.fromBytes(bytes)))
+    }
+  })
+
   test('args: size', () => {
     expect(
       Bytes.toBigInt(Bytes.fromNumber(420n, { size: 32 }), {
@@ -1550,6 +1633,24 @@ describe('toString', () => {
         ]),
       ),
     ).toMatchInlineSnapshot(`"Hello World!"`)
+  })
+
+  test('behavior: decodes as TextDecoder does', () => {
+    const decoder = new TextDecoder()
+    for (const value of [
+      [104, 101, 108, 108, 111],
+      [104, 105],
+      [],
+      // A byte order mark, invalid and truncated sequences.
+      [0xef, 0xbb, 0xbf, 97],
+      [0xc0, 0xaf, 0xed, 0xa0, 0x80, 0xf4, 0x90, 0x80, 0x80, 0xe2, 0x82],
+      [0xf0, 0x9f, 0x98, 0x80],
+      Array.from({ length: 64 }, (_, i) => 65 + (i % 26)),
+      Array.from({ length: 65 }, (_, i) => 97 + (i % 26)),
+    ]) {
+      const bytes = Bytes.fromArray(value)
+      expect(Bytes.toString(bytes)).toBe(decoder.decode(bytes))
+    }
   })
 
   test('args: size', () => {

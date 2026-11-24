@@ -49,7 +49,7 @@ export type List<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-> = Compute<readonly AuthorizationTempo<signed, bigintType, numberType>[]>
+> = readonly AuthorizationTempo<signed, bigintType, numberType>[]
 
 /** RPC representation of a list of AA Authorizations. */
 export type ListRpc = readonly Rpc[]

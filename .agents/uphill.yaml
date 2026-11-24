@@ -63,77 +63,77 @@ footprint:
   # The parts of ox its users lean on most, listed in .agents/uphill/hot.ts, scored on their own,
   # since a few dozen items that miss their targets would hide under entry-size's p90. Each hot
   # target is what a comparable library already achieves: the item's value today times the best
-  # ratio that the other ox branch, viem 2, ethers 6, or on main 0.x's BaseError fix shows for the
-  # same function, bundled, timed, or checked the same way. A lead under 10%, or one that saves less than
-  # 100 B, 10 ns, 64 B, 2 ms, 100 kB, or 50 instantiations, holds the item at its value today. The
-  # comment on each target names its reference.
+  # ratio that the other ox branch's latest build, viem 2, or ethers 6 shows for the same function,
+  # bundled, timed, or checked the same way. A lead under 10%, or one that saves less than 100 B,
+  # 10 ns, 64 B, 2 ms, 100 kB, or 50 instantiations, holds the item at its value today, and so do the
+  # exceptions in the shared spec's parity ledger. The comment on each target names its reference.
   hot-entry-size:
     target: 10kB
     targets:
-      'ox:Hex.fromBytes': 1.3kB # today 1.2kB
-      'ox:Hex.fromNumber': 1.5kB # today 1.4kB
-      'ox:Hex.slice': 1.1kB # today 1kB
-      'ox:Hash.keccak256': 3.5kB # today 3.5kB
+      'ox:Hex.fromBytes': 1.3kB # today 1.3kB
+      'ox:Hex.fromNumber': 1.3kB # today 1.5kB; viem 1.1× better
+      'ox:Hex.slice': 990B # today 990B
+      'ox:Hash.keccak256': 3.2kB # today 3.6kB; ethers 1.1× better
       'ox:Hex.size': 120B # today 120B
-      'ox:Bytes.fromString': 1.1kB # today 1.1kB
+      'ox:Bytes.fromString': 1.3kB # today 1.2kB
       'ox:Hex.concat': 170B # today 170B
-      'ox:Hex.toBigInt': 930B # today 920B
-      'ox:Signature.fromHex': 1.9kB # today 1.8kB
-      'ox:Address.isEqual': 1.1kB # today 1kB
-      'ox:Signature.toHex': 2.2kB # today 2.1kB
-      'ox:Hex.fromString': 1.3kB # today 1.3kB
+      'ox:Hex.toBigInt': 900B # today 890B
+      'ox:Signature.fromHex': 1.7kB # today 1.7kB
+      'ox:Address.isEqual': 980B # today 970B
+      'ox:Signature.toHex': 2kB # today 2kB
+      'ox:Hex.fromString': 1.5kB # today 1.5kB
       'ox:Hex.validate': 200B # today 200B
       'ox:Bytes.from': 1.3kB # today 1.2kB
       'ox:Bytes.concat': 160B # today 150B
-      'ox:Hex.random': 1.3kB # today 1.3kB
-      'ox:Hex.padLeft': 870B # today 990B; ox main 1.1× better
-      'ox:AbiParameters.encode': 6.8kB # today 6.8kB
-      'ox:Bytes.fromNumber': 1.2kB # today 1.8kB; ox main 1.5× better
-      'ox:Signature.from': 2.5kB # today 2.4kB
+      'ox:Hex.random': 1.4kB # today 1.3kB
+      'ox:Hex.padLeft': 1.1kB # today 1kB
+      'ox:AbiParameters.encode': 6.4kB # today 6.3kB
+      'ox:Bytes.fromNumber': 1.3kB # today 1.2kB
+      'ox:Signature.from': 2.2kB # today 2.1kB
       'ox:Address.validate': 3.8kB # today 4.2kB; ethers 1.1× better
-      'ox:PublicKey.toHex': 1.9kB # today 1.9kB
-      'ox:Hex.toNumber': 1.2kB # today 1.1kB
+      'ox:PublicKey.toHex': 2kB # today 1.9kB
+      'ox:Hex.toNumber': 1.1kB # today 1.1kB
       'ox:Json.stringify': 140B # today 140B
-      'ox:Address.fromPublicKey': 5.1kB # today 5.1kB
-      'ox:Address.checksum': 3.7kB # today 4.2kB; ethers 1.1× better
-      'ox/tempo:SignatureEnvelope.serialize': 7.4kB # today 7.4kB
+      'ox:Address.fromPublicKey': 5.1kB # today 5kB
+      'ox:Address.checksum': 4.2kB # today 4.2kB
+      'ox/tempo:SignatureEnvelope.serialize': 7.3kB # today 7.2kB
       'ox:Hex.assert': 1.2kB # today 1.1kB
-      'ox:AbiFunction.encodeData': 8.7kB # today 8.7kB
-      'ox:Bytes.fromHex': 1.2kB # today 1.2kB
+      'ox:AbiFunction.encodeData': 8.6kB # today 8.5kB
+      'ox:Bytes.fromHex': 1.3kB # today 1.2kB
       'ox:AbiParameters.from': 3.3kB # today 3.2kB
       'ox:Bytes.random': 110B # today 110B
       'ox/tempo:SignatureEnvelope.from': 23kB # today 23kB
-      'ox:Address.from': 4.3kB # today 4.2kB
+      'ox:Address.from': 4.2kB # today 4.2kB
       'ox/tempo:TxEnvelopeTempo.serialize': 30kB # today 30kB
       'ox/tempo:KeyAuthorization.fromRpc': 11kB # today 11kB
       'ox/tempo:TxEnvelopeTempo.deserialize': 30kB # today 30kB
-      'ox:AbiParameters.encodePacked': 5.7kB # today 5.6kB
+      'ox:AbiParameters.encodePacked': 5.5kB # today 5.5kB
       'ox:Secp256k1.getPublicKey': 15kB # today 14kB
-      'ox/tempo:SignatureEnvelope.extractAddress': 18kB # today 18kB
+      'ox/tempo:SignatureEnvelope.extractAddress': 18kB # today 17kB
       'ox:Rlp.fromHex': 1.4kB # today 2kB; ethers 1.4× better
-      'ox:Rlp.toHex': 1.7kB # today 2.5kB; ethers 1.5× better
-      'ox:AbiFunction.fromAbi': 6.6kB # today 6.5kB
+      'ox:Rlp.toHex': 1.7kB # today 2.7kB; ethers 1.6× better
+      'ox:AbiFunction.fromAbi': 6.7kB # today 6.6kB
       'ox:Abi.from': 3.7kB # today 3.6kB
-      'ox:AbiFunction.decodeResult': 9.5kB # today 9.4kB
-      'ox:AbiParameters.decode': 7.5kB # today 7.4kB
+      'ox:AbiFunction.decodeResult': 9.8kB # today 9.7kB
+      'ox:AbiParameters.decode': 7.6kB # today 7.5kB
       'ox:Value.format': 240B # today 240B
-      'ox:TypedData.getSignPayload': 7.2kB # today 8.3kB; ethers 1.2× better
-      'ox:PersonalMessage.getSignPayload': 3.7kB # today 3.6kB
-      'ox:Signature.toRpc': 1.5kB # today 1.5kB
-      'ox:Signature.fromRpc': 990B # today 980B
-      'ox:Signature.extract': 2.5kB # today 2.5kB
-      'ox:Ens.normalize': 17kB # today 25kB; ox main 1.5× better
-      'ox/erc6492:SignatureErc6492.validate': 920B # today 1.1kB; viem 1.2× better
-      'ox/erc8010:SignatureErc8010.validate': 1.8kB # today 1.7kB
-      'ox/erc8010:SignatureErc8010.unwrap': 8.8kB # today 8.8kB
-      'ox:Base64.fromBytes': 470B # today 470B
-      'ox:Base64.toBytes': 430B # today 420B
+      'ox:TypedData.getSignPayload': 7.2kB # today 8kB; ethers 1.1× better
+      'ox:PersonalMessage.getSignPayload': 3.9kB # today 3.8kB
+      'ox:Signature.toRpc': 1.6kB # today 1.6kB
+      'ox:Signature.fromRpc': 940B # today 940B
+      'ox:Signature.extract': 2.2kB # today 2.2kB
+      'ox:Ens.normalize': 16kB # today 26kB; ox main 1.6× better
+      'ox/erc6492:SignatureErc6492.validate': 140B # today 140B
+      'ox/erc8010:SignatureErc8010.validate': 1.6kB # today 1.5kB
+      'ox/erc8010:SignatureErc8010.unwrap': 8.8kB # today 8.7kB
+      'ox:Base64.fromBytes': 400B # today 400B
+      'ox:Base64.toBytes': 370B # today 370B
       'ox:Base64.toString': 1.4kB # today 1.3kB
-      'ox:Hash.sha256': 3.8kB # today 3.8kB
-      'ox:Bytes.toHex': 1.3kB # today 1.2kB
-      'ox:WebAuthnP256.getSignPayload': 8.9kB # today 8.8kB
-      'ox:WebCryptoP256.sign': 2.3kB # today 2.2kB
-      'ox:WebCryptoP256.createKeyPair': 2.5kB # today 2.4kB
+      'ox:Hash.sha256': 3.9kB # today 3.9kB
+      'ox:Bytes.toHex': 1.3kB # today 1.3kB
+      'ox:WebAuthnP256.getSignPayload': 7.9kB # today 7.9kB
+      'ox:WebCryptoP256.sign': 2.4kB # today 2.4kB
+      'ox:WebCryptoP256.createKeyPair': 2.6kB # today 2.5kB
       'ox:Secp256k1.sign': 14kB # today 14kB
       'ox:Secp256k1.recoverAddress': 18kB # today 17kB
       'ox': 210kB # today 200kB
@@ -254,72 +254,72 @@ speed:
   hot-call-time:
     target: 20µs
     targets:
-      'ox:Hex.fromBytes': 150ns # today 110ns
-      'ox:Hex.fromNumber': 140ns # today 110ns
-      'ox:Hex.slice': 50ns # today 15ns
-      'ox:Hash.keccak256': 8.1µs # today 6.4µs
+      'ox:Hex.fromBytes': 50ns # today 31ns
+      'ox:Hex.fromNumber': 50ns # today 33ns
+      'ox:Hex.slice': 50ns # today 18ns
+      'ox:Hash.keccak256': 7.5µs # today 7.6µs; ox main 1.3× better
       'ox:Hex.size': 50ns # today 0
-      'ox:Bytes.fromString': 97ns # today 320ns; viem 4.1× better
-      'ox:Hex.concat': 50ns # today 26ns
-      'ox:Hex.toBigInt': 50ns # today 4.2ns
-      'ox:Signature.fromHex': 58ns # today 290ns; ox main 6.3× better
-      'ox:Address.isEqual': 220ns # today 170ns
-      'ox:Signature.toHex': 130ns # today 370ns; ox main 3.4× better
-      'ox:Hex.fromString': 100ns # today 330ns; viem 4.1× better
+      'ox:Bytes.fromString': 100ns # today 80ns
+      'ox:Hex.concat': 50ns # today 31ns
+      'ox:Hex.toBigInt': 50ns # today 5ns
+      'ox:Signature.fromHex': 410ns # today 320ns
+      'ox:Address.isEqual': 260ns # today 200ns
+      'ox:Signature.toHex': 220ns # today 170ns
+      'ox:Hex.fromString': 160ns # today 120ns
       'ox:Hex.validate': 50ns # today 0
-      'ox:Bytes.from': 59ns # today 47ns
-      'ox:Bytes.concat': 440ns # today 350ns
-      'ox:Hex.random': 1.1µs # today 830ns
-      'ox:Hex.padLeft': 64ns # today 51ns
-      'ox:AbiParameters.encode': 200ns # today 500ns; viem 3.1× better
-      'ox:Bytes.fromNumber': 170ns # today 130ns
-      'ox:Signature.from': 50ns # today 17ns
-      'ox:Address.validate': 50ns # today 57ns; ox main 5.5× better
-      'ox:PublicKey.toHex': 500ns # today 400ns
-      'ox:Hex.toNumber': 50ns # today 11ns
-      'ox:Json.stringify': 860ns # today 680ns
-      'ox:Address.fromPublicKey': 10µs # today 7.9µs
-      'ox:Address.checksum': 11µs # today 8.4µs
-      'ox/tempo:SignatureEnvelope.serialize': 820ns # today 650ns
+      'ox:Bytes.from': 50ns # today 55ns; ox main 4.2× better
+      'ox:Bytes.concat': 500ns # today 400ns
+      'ox:Hex.random': 1.3µs # today 970ns
+      'ox:Hex.padLeft': 50ns # today 13ns
+      'ox:AbiParameters.encode': 160ns # today 130ns
+      'ox:Bytes.fromNumber': 50ns # today 34ns
+      'ox:Signature.from': 50ns # today 22ns
+      'ox:Address.validate': 82ns # today 65ns
+      'ox:PublicKey.toHex': 570ns # today 450ns
+      'ox:Hex.toNumber': 50ns # today 13ns
+      'ox:Json.stringify': 970ns # today 770ns
+      'ox:Address.fromPublicKey': 13µs # today 9.7µs
+      'ox:Address.checksum': 13µs # today 9.9µs
+      'ox/tempo:SignatureEnvelope.serialize': 930ns # today 740ns
       'ox:Hex.assert': 50ns # today 0
-      'ox:AbiFunction.encodeData': 500ns # today 910ns; viem 2.3× better
-      'ox:Bytes.fromHex': 160ns # today 130ns
-      'ox:AbiParameters.from': 300ns # today 230ns
-      'ox:Bytes.random': 920ns # today 730ns
-      'ox/tempo:SignatureEnvelope.from': 50ns # today 16ns
-      'ox:Address.from': 83ns # today 66ns
-      'ox/tempo:TxEnvelopeTempo.serialize': 2.1µs # today 1.7µs
-      'ox/tempo:KeyAuthorization.fromRpc': 470ns # today 380ns
-      'ox/tempo:TxEnvelopeTempo.deserialize': 2.8µs # today 2.2µs
-      'ox:AbiParameters.encodePacked': 50ns # today 34ns
-      'ox:Secp256k1.getPublicKey': 210µs # today 160µs
+      'ox:AbiFunction.encodeData': 150ns # today 320ns; ox main 2.7× better
+      'ox:Bytes.fromHex': 210ns # today 160ns
+      'ox:AbiParameters.from': 350ns # today 280ns
+      'ox:Bytes.random': 1.2µs # today 900ns
+      'ox/tempo:SignatureEnvelope.from': 50ns # today 20ns
+      'ox:Address.from': 87ns # today 69ns
+      'ox/tempo:TxEnvelopeTempo.serialize': 1.7µs # today 1.4µs
+      'ox/tempo:KeyAuthorization.fromRpc': 530ns # today 420ns
+      'ox/tempo:TxEnvelopeTempo.deserialize': 2.5µs # today 2µs
+      'ox:AbiParameters.encodePacked': 50ns # today 37ns
+      'ox:Secp256k1.getPublicKey': 240µs # today 190µs
       'ox/tempo:SignatureEnvelope.extractAddress': 50ns # today 0
-      'ox:Rlp.fromHex': 410ns # today 850ns; ox main 2.6× better
-      'ox:Rlp.toHex': 120ns # today 300ns; ox main 3.0× better
-      'ox:AbiFunction.fromAbi': 12µs # today 8.8µs
-      'ox:Abi.from': 2.3µs # today 1.8µs
-      'ox:AbiFunction.decodeResult': 2.2µs # today 1.7µs
-      'ox:AbiParameters.decode': 530ns # today 560ns; ox main 1.3× better
-      'ox:Value.format': 50ns # today 34ns
-      'ox:TypedData.getSignPayload': 88µs # today 70µs
-      'ox:PersonalMessage.getSignPayload': 7.2µs # today 7.6µs; ox main 1.3× better
-      'ox:Signature.toRpc': 50ns # today 160ns; ox main 30.8× better
-      'ox:Signature.fromRpc': 50ns # today 74ns; ox main 4.7× better
-      'ox:Signature.extract': 260ns # today 200ns
-      'ox:Ens.normalize': 1.3µs # today 1µs
-      'ox/erc6492:SignatureErc6492.validate': 4.4µs # today 3.5µs
-      'ox/erc8010:SignatureErc8010.validate': 4.4µs # today 3.5µs
-      'ox/erc8010:SignatureErc8010.unwrap': 4.7µs # today 3.7µs
-      'ox:Base64.fromBytes': 130ns # today 520ns; ox main 5.0× better
-      'ox:Base64.toBytes': 150ns # today 380ns; ox main 3.2× better
-      'ox:Base64.toString': 350ns # today 480ns; ox main 1.7× better
-      'ox:Hash.sha256': 1.5µs # today 1.2µs
-      'ox:Bytes.toHex': 170µs # today 130µs
-      'ox:WebAuthnP256.getSignPayload': 9.6µs # today 7.6µs
-      'ox:WebCryptoP256.sign': 41µs # today 33µs
-      'ox:WebCryptoP256.createKeyPair': 54µs # today 43µs
-      'ox:Secp256k1.sign': 250µs # today 200µs
-      'ox:Secp256k1.recoverAddress': 1.6ms # today 1.2ms
+      'ox:Rlp.fromHex': 490ns # today 390ns
+      'ox:Rlp.toHex': 50ns # today 58ns; ox main 1.9× better
+      'ox:AbiFunction.fromAbi': 13µs # today 10µs
+      'ox:Abi.from': 2.7µs # today 2.1µs
+      'ox:AbiFunction.decodeResult': 2.1µs # today 1.7µs
+      'ox:AbiParameters.decode': 540ns # today 420ns
+      'ox:Value.format': 50ns # today 36ns
+      'ox:TypedData.getSignPayload': 99µs # today 79µs
+      'ox:PersonalMessage.getSignPayload': 8.5µs # today 8.8µs; ox main 1.3× better
+      'ox:Signature.toRpc': 260ns # today 200ns
+      'ox:Signature.fromRpc': 110ns # today 85ns
+      'ox:Signature.extract': 280ns # today 220ns
+      'ox:Ens.normalize': 50ns # today 25ns
+      'ox/erc6492:SignatureErc6492.validate': 50ns # today 3.4ns
+      'ox/erc8010:SignatureErc8010.validate': 3.5µs # today 2.8µs
+      'ox/erc8010:SignatureErc8010.unwrap': 5.1µs # today 4µs
+      'ox:Base64.fromBytes': 140ns # today 110ns
+      'ox:Base64.toBytes': 96ns # today 77ns
+      'ox:Base64.toString': 230ns # today 180ns
+      'ox:Hash.sha256': 1.9µs # today 1.5µs
+      'ox:Bytes.toHex': 190µs # today 140µs
+      'ox:WebAuthnP256.getSignPayload': 9.1µs # today 7.2µs
+      'ox:WebCryptoP256.sign': 50µs # today 40µs
+      'ox:WebCryptoP256.createKeyPair': 60µs # today 47µs
+      'ox:Secp256k1.sign': 300µs # today 240µs
+      'ox:Secp256k1.recoverAddress': 1.9ms # today 1.5ms
   # Few hot calls allocate more than a comparable library, and a p90 would hide them, so this list
   # scores its worst item.
   hot-call-memory:
@@ -327,110 +327,110 @@ speed:
     target: 20kB
     score: max
     targets:
-      'ox:Hex.fromBytes': 480B # today 380B
-      'ox:Hex.fromNumber': 340B # today 270B
+      'ox:Hex.fromBytes': 170B # today 140B
+      'ox:Hex.fromNumber': 140B # today 110B
       'ox:Hex.slice': 170B # today 140B
       'ox:Hash.keccak256': 1.4kB # today 1.1kB
       'ox:Hex.size': 16B # today 0
-      'ox:Bytes.fromString': 320B # today 260B
+      'ox:Bytes.fromString': 360B # today 290B
       'ox:Hex.concat': 220B # today 180B
       'ox:Hex.toBigInt': 16B # today 0
-      'ox:Signature.fromHex': 360B # today 560B; ox main 1.9× better
+      'ox:Signature.fromHex': 660B # today 530B
       'ox:Address.isEqual': 160B # today 130B
-      'ox:Signature.toHex': 450B # today 940B; ox main 2.6× better
-      'ox:Hex.fromString': 410B # today 330B
+      'ox:Signature.toHex': 320B # today 260B
+      'ox:Hex.fromString': 450B # today 360B
       'ox:Hex.validate': 16B # today 0
       'ox:Bytes.from': 280B # today 220B
       'ox:Bytes.concat': 250B # today 200B
       'ox:Hex.random': 450B # today 360B
-      'ox:Hex.padLeft': 350B # today 280B
-      'ox:AbiParameters.encode': 700B # today 1.8kB; ox main 3.2× better
-      'ox:Bytes.fromNumber': 560B # today 450B
+      'ox:Hex.padLeft': 120B # today 96B
+      'ox:AbiParameters.encode': 550B # today 440B
+      'ox:Bytes.fromNumber': 280B # today 220B
       'ox:Signature.from': 250B # today 200B
       'ox:Address.validate': 70B # today 56B
       'ox:PublicKey.toHex': 1.3kB # today 990B
       'ox:Hex.toNumber': 16B # today 0
       'ox:Json.stringify': 670B # today 540B
       'ox:Address.fromPublicKey': 4.3kB # today 3.4kB
-      'ox:Address.checksum': 3.2kB # today 2.5kB
+      'ox:Address.checksum': 3.3kB # today 2.6kB
       'ox/tempo:SignatureEnvelope.serialize': 2.1kB # today 1.6kB
       'ox:Hex.assert': 16B # today 0
-      'ox:AbiFunction.encodeData': 1.5kB # today 3.3kB; ox main 2.7× better
+      'ox:AbiFunction.encodeData': 560B # today 1.1kB; ox main 2.6× better
       'ox:Bytes.fromHex': 380B # today 300B
       'ox:AbiParameters.from': 960B # today 770B
       'ox:Bytes.random': 310B # today 250B
       'ox/tempo:SignatureEnvelope.from': 270B # today 220B
       'ox:Address.from': 70B # today 56B
-      'ox/tempo:TxEnvelopeTempo.serialize': 6.4kB # today 5.1kB
-      'ox/tempo:KeyAuthorization.fromRpc': 1.2kB # today 940B
-      'ox/tempo:TxEnvelopeTempo.deserialize': 5kB # today 4kB
+      'ox/tempo:TxEnvelopeTempo.serialize': 3kB # today 2.4kB
+      'ox/tempo:KeyAuthorization.fromRpc': 1.1kB # today 840B
+      'ox/tempo:TxEnvelopeTempo.deserialize': 3.4kB # today 2.7kB
       'ox:AbiParameters.encodePacked': 300B # today 240B
-      'ox:Secp256k1.getPublicKey': 210kB # today 160kB
+      'ox:Secp256k1.getPublicKey': 200kB # today 160kB
       'ox/tempo:SignatureEnvelope.extractAddress': 16B # today 0
-      'ox:Rlp.fromHex': 2kB # today 3.7kB; ox main 2.3× better
-      'ox:Rlp.toHex': 440B # today 510B; ox main 1.5× better
-      'ox:AbiFunction.fromAbi': 5.8kB # today 4.6kB
+      'ox:Rlp.fromHex': 860B # today 690B
+      'ox:Rlp.toHex': 430B # today 340B
+      'ox:AbiFunction.fromAbi': 5.4kB # today 4.3kB
       'ox:Abi.from': 5.4kB # today 4.3kB
-      'ox:AbiFunction.decodeResult': 3.6kB # today 2.8kB
-      'ox:AbiParameters.decode': 1.5kB # today 1.2kB
+      'ox:AbiFunction.decodeResult': 3.6kB # today 2.9kB
+      'ox:AbiParameters.decode': 1.7kB # today 1.3kB
       'ox:Value.format': 90B # today 72B
-      'ox:TypedData.getSignPayload': 40kB # today 32kB
-      'ox:PersonalMessage.getSignPayload': 3.1kB # today 2.4kB
-      'ox:Signature.toRpc': 120B # today 780B; ox main 8.1× better
-      'ox:Signature.fromRpc': 240B # today 190B
-      'ox:Signature.extract': 420B # today 340B
-      'ox:Ens.normalize': 4.8kB # today 3.8kB
-      'ox/erc6492:SignatureErc6492.validate': 3kB # today 2.3kB
-      'ox/erc8010:SignatureErc8010.validate': 3kB # today 2.3kB
-      'ox/erc8010:SignatureErc8010.unwrap': 8.9kB # today 7kB
-      'ox:Base64.fromBytes': 340B # today 740B; ethers 2.7× better
-      'ox:Base64.toBytes': 340B # today 500B; ox main 1.8× better
-      'ox:Base64.toString': 420B # today 540B; ox main 1.6× better
-      'ox:Hash.sha256': 2.2kB # today 1.7kB
+      'ox:TypedData.getSignPayload': 36kB # today 28kB
+      'ox:PersonalMessage.getSignPayload': 3.1kB # today 2.5kB
+      'ox:Signature.toRpc': 980B # today 780B
+      'ox:Signature.fromRpc': 120B # today 96B
+      'ox:Signature.extract': 180B # today 140B
+      'ox:Ens.normalize': 16B # today 0
+      'ox/erc6492:SignatureErc6492.validate': 30B # today 24B
+      'ox/erc8010:SignatureErc8010.validate': 2.3kB # today 1.8kB
+      'ox/erc8010:SignatureErc8010.unwrap': 9.1kB # today 7.2kB
+      'ox:Base64.fromBytes': 140B # today 110B
+      'ox:Base64.toBytes': 290B # today 230B
+      'ox:Base64.toString': 340B # today 270B
+      'ox:Hash.sha256': 2.3kB # today 1.8kB
       'ox:Bytes.toHex': 330kB # today 260kB
-      'ox:WebAuthnP256.getSignPayload': 11kB # today 8.6kB
-      'ox:WebCryptoP256.sign': 6.3kB # today 5kB
+      'ox:WebAuthnP256.getSignPayload': 9.8kB # today 7.8kB
+      'ox:WebCryptoP256.sign': 6.5kB # today 5.2kB
       'ox:WebCryptoP256.createKeyPair': 9.3kB # today 7.4kB
-      'ox:Secp256k1.sign': 300kB # today 240kB
+      'ox:Secp256k1.sign': 310kB # today 240kB
       'ox:Secp256k1.recoverAddress': 1.4MB # today 1MB
   hot-import-time:
     target: 60ms
     targets:
-      'ox': 190ms # today 150ms
-      'ox/tempo': 92ms # today 73ms
-      'ox/Hex': 9.1ms # today 7.3ms
-      'ox/Address': 26ms # today 21ms
-      'ox/Signature': 23ms # today 18ms
-      'ox/TypedData': 41ms # today 33ms
-      'ox/RpcResponse': 1.1ms # today 860µs
-      'ox/Secp256k1': 46ms # today 36ms
-      'ox/Provider': 7ms # today 5.6ms
-      'ox/AbiFunction': 43ms # today 34ms
-      'ox/AbiParameters': 42ms # today 33ms
-      'ox/Bytes': 9.2ms # today 7.3ms
-      'ox/Hash': 25ms # today 19ms
-      'ox/WebAuthnP256': 59ms # today 46ms
-      'ox/erc4337': 51ms # today 40ms
-      'ox/erc6492': 41ms # today 33ms
+      'ox': 220ms # today 180ms
+      'ox/tempo': 120ms # today 90ms
+      'ox/Hex': 8.2ms # today 6.6ms
+      'ox/Address': 31ms # today 24ms
+      'ox/Signature': 27ms # today 21ms
+      'ox/TypedData': 48ms # today 38ms
+      'ox/RpcResponse': 1.3ms # today 1ms
+      'ox/Secp256k1': 53ms # today 42ms
+      'ox/Provider': 8.6ms # today 6.8ms
+      'ox/AbiFunction': 53ms # today 42ms
+      'ox/AbiParameters': 49ms # today 39ms
+      'ox/Bytes': 8.3ms # today 6.6ms
+      'ox/Hash': 29ms # today 23ms
+      'ox/WebAuthnP256': 72ms # today 57ms
+      'ox/erc4337': 61ms # today 49ms
+      'ox/erc6492': 51ms # today 40ms
   hot-import-memory:
     target: 3.5MB
     targets:
       'ox': 7.3MB # today 6.6MB
       'ox/tempo': 4.5MB # today 4MB
-      'ox/Hex': 700kB # today 630kB
-      'ox/Address': 1.4MB # today 1.4MB; ox main 1.2× better
+      'ox/Hex': 560kB # today 500kB
+      'ox/Address': 1.6MB # today 1.4MB
       'ox/Signature': 1.6MB # today 1.4MB
-      'ox/TypedData': 1.8MB # today 1.9MB; ox main 1.2× better
+      'ox/TypedData': 2.1MB # today 1.9MB
       'ox/RpcResponse': 300kB # today 270kB
       'ox/Secp256k1': 2.3MB # today 2.1MB
       'ox/Provider': 520kB # today 470kB
-      'ox/AbiFunction': 1.8MB # today 1.9MB; ox main 1.2× better
-      'ox/AbiParameters': 1.7MB # today 1.8MB; ox main 1.2× better
-      'ox/Bytes': 700kB # today 630kB
-      'ox/Hash': 1.3MB # today 1.4MB; ox main 1.2× better
-      'ox/WebAuthnP256': 2.2MB # today 2.5MB; ox main 1.2× better
+      'ox/AbiFunction': 2.1MB # today 1.9MB
+      'ox/AbiParameters': 2MB # today 1.8MB
+      'ox/Bytes': 560kB # today 500kB
+      'ox/Hash': 1.5MB # today 1.3MB
+      'ox/WebAuthnP256': 2.8MB # today 2.5MB
       'ox/erc4337': 2.8MB # today 2.5MB
-      'ox/erc6492': 1.7MB # today 1.9MB; ox main 1.2× better
+      'ox/erc6492': 2.1MB # today 1.8MB
 
 # How much of ox the speed bench reaches. It shares the speed script's run.
 coverage:
@@ -545,23 +545,23 @@ types:
       'ox:Hex.fromBytes': 110 # today 100
       'ox:Hex.fromNumber': 99 # today 99
       'ox:Hex.slice': 90 # today 90
-      'ox:Hash.keccak256': 230 # today 220
+      'ox:Hash.keccak256': 190 # today 190
       'ox:Hex.size': 56 # today 56
       'ox:Bytes.fromString': 97 # today 97
       'ox:Hex.concat': 49 # today 49
       'ox:Hex.toBigInt': 78 # today 78
-      'ox:Signature.fromHex': 86 # today 86
+      'ox:Signature.fromHex': 67 # today 67
       'ox:Address.isEqual': 75 # today 75
-      'ox:Signature.toHex': 120 # today 120
+      'ox:Signature.toHex': 76 # today 76
       'ox:Hex.fromString': 80 # today 80
       'ox:Hex.validate': 69 # today 69
       'ox:Bytes.from': 140 # today 130
       'ox:Bytes.concat': 66 # today 66
       'ox:Hex.random': 52 # today 52
       'ox:Hex.padLeft': 69 # today 69
-      'ox:AbiParameters.encode': 11000 # today 11000
+      'ox:AbiParameters.encode': 280 # today 270
       'ox:Bytes.fromNumber': 120 # today 120
-      'ox:Signature.from': 1200 # today 1400; ox main 1.1× better
+      'ox:Signature.from': 1000 # today 1100; ox main 1.1× better
       'ox:Address.validate': 83 # today 83
       'ox:PublicKey.toHex': 150 # today 140
       'ox:Hex.toNumber': 78 # today 78
@@ -570,44 +570,44 @@ types:
       'ox:Address.checksum': 55 # today 55
       'ox/tempo:SignatureEnvelope.serialize': 2600 # today 2500
       'ox:Hex.assert': 60 # today 60
-      'ox:AbiFunction.encodeData': 2600 # today 11000; viem 4.2× better
+      'ox:AbiFunction.encodeData': 490 # today 480
       'ox:Bytes.fromHex': 110 # today 100
       'ox:AbiParameters.from': 1300 # today 1200
       'ox:Bytes.random': 69 # today 69
-      'ox/tempo:SignatureEnvelope.from': 3700 # today 3600
+      'ox/tempo:SignatureEnvelope.from': 3600 # today 3500
       'ox:Address.from': 83 # today 83
-      'ox/tempo:TxEnvelopeTempo.serialize': 2800 # today 4200; ox main 1.5× better
-      'ox/tempo:KeyAuthorization.fromRpc': 680 # today 900; ox main 1.3× better
-      'ox/tempo:TxEnvelopeTempo.deserialize': 1500 # today 2800; ox main 1.8× better
+      'ox/tempo:TxEnvelopeTempo.serialize': 2900 # today 3500; ox main 1.2× better
+      'ox/tempo:KeyAuthorization.fromRpc': 680 # today 880; ox main 1.3× better
+      'ox/tempo:TxEnvelopeTempo.deserialize': 1800 # today 1800
       'ox:AbiParameters.encodePacked': 13000 # today 12000
       'ox:Secp256k1.getPublicKey': 93 # today 93
       'ox/tempo:SignatureEnvelope.extractAddress': 690 # today 680
-      'ox:Rlp.fromHex': 270 # today 380; viem 1.4× better
+      'ox:Rlp.fromHex': 260 # today 260
       'ox:Rlp.toHex': 180 # today 170
-      'ox:AbiFunction.fromAbi': 3700 # today 15000; viem 4.0× better
+      'ox:AbiFunction.fromAbi': 2100 # today 2100
       'ox:Abi.from': 550 # today 540
       'ox:AbiFunction.decodeResult': 210 # today 200
-      'ox:AbiParameters.decode': 11000 # today 10000
+      'ox:AbiParameters.decode': 400 # today 400
       'ox:Value.format': 53 # today 53
       'ox:TypedData.getSignPayload': 14000 # today 14000
       'ox:PersonalMessage.getSignPayload': 91 # today 91
-      'ox:Signature.toRpc': 140 # today 140
-      'ox:Signature.fromRpc': 93 # today 93
-      'ox:Signature.extract': 98 # today 98
+      'ox:Signature.toRpc': 94 # today 94
+      'ox:Signature.fromRpc': 74 # today 74
+      'ox:Signature.extract': 79 # today 79
       'ox:Ens.normalize': 46 # today 46
       'ox/erc6492:SignatureErc6492.validate': 65 # today 65
-      'ox/erc8010:SignatureErc8010.validate': 140 # today 140
-      'ox/erc8010:SignatureErc8010.unwrap': 130 # today 120
+      'ox/erc8010:SignatureErc8010.validate': 110 # today 110
+      'ox/erc8010:SignatureErc8010.unwrap': 95 # today 95
       'ox:Base64.fromBytes': 97 # today 97
       'ox:Base64.toBytes': 69 # today 69
       'ox:Base64.toString': 46 # today 46
-      'ox:Hash.sha256': 230 # today 220
+      'ox:Hash.sha256': 190 # today 190
       'ox:Bytes.toHex': 110 # today 100
       'ox:WebAuthnP256.getSignPayload': 82 # today 82
-      'ox:WebCryptoP256.sign': 190 # today 190
+      'ox:WebCryptoP256.sign': 170 # today 170
       'ox:WebCryptoP256.createKeyPair': 520 # today 520
-      'ox:Secp256k1.sign': 93 # today 93
-      'ox:Secp256k1.recoverAddress': 79 # today 79
+      'ox:Secp256k1.sign': 74 # today 74
+      'ox:Secp256k1.recoverAddress': 75 # today 75
 
 # Type-checking cost at the call sites ox's tests write: one call per public function, the first
 # its own runtime tests make (else its type tests). Each call is copied into
@@ -638,23 +638,23 @@ call-types:
       'ox:Hex.fromBytes': 10 # today 0
       'ox:Hex.fromNumber': 10 # today 0
       'ox:Hex.slice': 10 # today 0
-      'ox:Hash.keccak256': 20 # today 20
+      'ox:Hash.keccak256': 15 # today 15
       'ox:Hex.size': 10 # today 0
       'ox:Bytes.fromString': 10 # today 0
       'ox:Hex.concat': 10 # today 3
       'ox:Hex.toBigInt': 10 # today 0
-      'ox:Signature.fromHex': 10 # today 3
+      'ox:Signature.fromHex': 10 # today 0
       'ox:Address.isEqual': 10 # today 0
-      'ox:Signature.toHex': 19 # today 19
+      'ox:Signature.toHex': 10 # today 4
       'ox:Hex.fromString': 10 # today 0
       'ox:Hex.validate': 10 # today 0
       'ox:Bytes.from': 10 # today 9
       'ox:Bytes.concat': 10 # today 3
       'ox:Hex.random': 10 # today 0
       'ox:Hex.padLeft': 10 # today 0
-      'ox:AbiParameters.encode': 11000 # today 10000
+      'ox:AbiParameters.encode': 1400 # today 1300
       'ox:Bytes.fromNumber': 10 # today 0
-      'ox:Signature.from': 280 # today 280
+      'ox:Signature.from': 210 # today 200
       'ox:Address.validate': 10 # today 0
       'ox:PublicKey.toHex': 48 # today 48
       'ox:Hex.toNumber': 10 # today 0
@@ -663,29 +663,29 @@ call-types:
       'ox:Address.checksum': 10 # today 0
       'ox/tempo:SignatureEnvelope.serialize': 1300 # today 1200
       'ox:Hex.assert': 10 # today 0
-      'ox:AbiFunction.encodeData': 68 # today 68
+      'ox:AbiFunction.encodeData': 43 # today 43
       'ox:Bytes.fromHex': 10 # today 0
       'ox:AbiParameters.from': 130 # today 120
       'ox:Bytes.random': 10 # today 0
-      'ox/tempo:SignatureEnvelope.from': 65 # today 65
+      'ox/tempo:SignatureEnvelope.from': 62 # today 62
       'ox:Address.from': 10 # today 0
-      'ox/tempo:TxEnvelopeTempo.serialize': 540 # today 530
-      'ox/tempo:KeyAuthorization.fromRpc': 200 # today 200
-      'ox/tempo:TxEnvelopeTempo.deserialize': 12 # today 12
+      'ox/tempo:TxEnvelopeTempo.serialize': 530 # today 530
+      'ox/tempo:KeyAuthorization.fromRpc': 180 # today 180
+      'ox/tempo:TxEnvelopeTempo.deserialize': 10 # today 6
       'ox:AbiParameters.encodePacked': 13000 # today 13000
       'ox:Secp256k1.getPublicKey': 10 # today 4
-      'ox/tempo:SignatureEnvelope.extractAddress': 17 # today 17
-      'ox:Rlp.fromHex': 24 # today 24
+      'ox/tempo:SignatureEnvelope.extractAddress': 14 # today 14
+      'ox:Rlp.fromHex': 19 # today 19
       'ox:Rlp.toHex': 10 # today 7
       'ox:AbiFunction.fromAbi': 1300 # today 1300
       'ox:Abi.from': 500 # today 500
-      'ox:AbiFunction.decodeResult': 460 # today 460
+      'ox:AbiFunction.decodeResult': 470 # today 470
       'ox:AbiParameters.decode': 45 # today 45
       'ox:Value.format': 10 # today 0
       'ox:TypedData.getSignPayload': 15000 # today 14000
       'ox:PersonalMessage.getSignPayload': 10 # today 0
-      'ox:Signature.toRpc': 21 # today 21
-      'ox:Signature.fromRpc': 10 # today 3
+      'ox:Signature.toRpc': 10 # today 3
+      'ox:Signature.fromRpc': 10 # today 0
       'ox:Signature.extract': 110 # today 100
       'ox:Ens.normalize': 10 # today 0
       'ox/erc6492:SignatureErc6492.validate': 10 # today 0
@@ -694,12 +694,12 @@ call-types:
       'ox:Base64.fromBytes': 10 # today 0
       'ox:Base64.toBytes': 10 # today 0
       'ox:Base64.toString': 10 # today 0
-      'ox:Hash.sha256': 20 # today 20
+      'ox:Hash.sha256': 15 # today 15
       'ox:Bytes.toHex': 10 # today 0
       'ox:WebAuthnP256.getSignPayload': 10 # today 6
-      'ox:WebCryptoP256.sign': 10 # today 3
+      'ox:WebCryptoP256.sign': 10 # today 0
       'ox:WebCryptoP256.createKeyPair': 10 # today 3
-      'ox:Secp256k1.sign': 10 # today 4
+      'ox:Secp256k1.sign': 10 # today 1
       'ox:Secp256k1.recoverAddress': 10 # today 0
 
 # Whether each public function has a call in ox's tests that call-types measures; the note says

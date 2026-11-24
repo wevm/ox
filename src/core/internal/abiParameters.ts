@@ -10,6 +10,7 @@ import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
 import { integerRegex } from '../Solidity.js'
+import * as internal_address from './address.js'
 import type * as Cursor from './cursor.js'
 import type { Compute, IsNarrowable, UnionToIntersection } from './types.js'
 
@@ -19,8 +20,13 @@ export type ParameterToPrimitiveType<
   abiParameterKind extends AbiParameterKind = AbiParameterKind,
 > = AbiParameterToPrimitiveType<abiParameter, abiParameterKind>
 
-/** @internal */
-export type PreparedParameter = { dynamic: boolean; encoded: Hex.Hex }
+/**
+ * A parameter's ABI encoding, as hex digits without `0x`, so that encoding a
+ * list concatenates its parts without slicing a prefix off each.
+ *
+ * @internal
+ */
+export type PreparedParameter = { dynamic: boolean; encoded: string }
 
 /** @internal */
 export type ToObject<
@@ -50,11 +56,23 @@ export type ToObject<
     >
   : unknown
 
-/** @internal */
+/**
+ * `AbiParametersToPrimitiveTypes`, but resolves wide parameters
+ * (`readonly AbiParameter[]`) to `readonly unknown[]` without walking every
+ * ABI type. TypeScript evaluates the wide case to type the values of a generic
+ * call (e.g. `AbiParameters.encode(parameters, [...])`), where it costs about
+ * 9,000 type instantiations. The result is the same.
+ *
+ * @internal
+ */
 export type ToPrimitiveTypes<
   abiParameters extends readonly AbiParameter[],
   abiParameterKind extends AbiParameterKind = AbiParameterKind,
-> = AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+> = abiParameters extends readonly AbiParameter[]
+  ? readonly AbiParameter[] extends abiParameters
+    ? readonly unknown[]
+    : AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+  : never
 
 /** @internal */
 export type Tuple = ParameterToPrimitiveType<TupleAbiParameter>
@@ -127,9 +145,8 @@ export function decodeAddress(
         address: Hex.fromBytes(value),
         cause: new Address.InvalidInputError(),
       })
-  const wrap = (address: Hex.Hex) =>
-    checksum ? Address.checksum(address) : address
-  return [wrap(Hex.fromBytes(value.subarray(12))), 32]
+  const address = `0x${Hex.fromBytes(value).slice(26)}` as const
+  return [checksum ? Address.checksum(address) : address, 32]
 }
 
 export declare namespace decodeAddress {
@@ -446,6 +463,33 @@ export declare namespace decodeString {
     | Errors.GlobalErrorType
 }
 
+/**
+ * Encodes `values` as `parameters`: `prefix` followed by the encoding's hex
+ * digits, so a caller with a prefix, such as a function selector, does not
+ * slice and copy the encoding to append it.
+ *
+ * @internal
+ */
+export function encodeParameters(
+  parameters: readonly AbiParameters.Parameter[],
+  values: readonly unknown[],
+  prefix: string,
+  checksumAddress = false,
+): Hex.Hex {
+  if (parameters.length !== values.length)
+    throw new AbiParameters.LengthMismatchError({
+      expectedLength: parameters.length,
+      givenLength: values.length,
+    })
+  return `${prefix}${encode(
+    prepareParameters({
+      checksumAddress,
+      parameters,
+      values: values as never,
+    }),
+  )}` as Hex.Hex
+}
+
 /** @internal */
 export function prepareParameters<
   const parameters extends AbiParameters.AbiParameters,
@@ -460,16 +504,13 @@ export function prepareParameters<
     ? ToPrimitiveTypes<parameters>
     : never
 }) {
-  const preparedParameters: PreparedParameter[] = []
-  for (let i = 0; i < parameters.length; i++) {
-    preparedParameters.push(
-      prepareParameter({
-        checksumAddress,
-        parameter: parameters[i]!,
-        value: values[i],
-      }),
+  const preparedParameters: PreparedParameter[] = new Array(parameters.length)
+  for (let i = 0; i < parameters.length; i++)
+    preparedParameters[i] = prepareParameter(
+      parameters[i]!,
+      values[i],
+      checksumAddress,
     )
-  }
   return preparedParameters
 }
 
@@ -479,25 +520,15 @@ export declare namespace prepareParameters {
 }
 
 /** @internal */
-export function prepareParameter<
-  const parameter extends AbiParameters.Parameter,
->({
+export function prepareParameter(
+  parameter: AbiParameters.Parameter,
+  value: unknown,
   checksumAddress = false,
-  parameter: parameter_,
-  value,
-}: {
-  parameter: parameter
-  value: parameter extends AbiParameters.Parameter
-    ? ParameterToPrimitiveType<parameter>
-    : never
-  checksumAddress?: boolean | undefined
-}): PreparedParameter {
-  const parameter = parameter_ as AbiParameters.Parameter
-
+): PreparedParameter {
   const arrayComponents = getArrayComponents(parameter.type)
   if (arrayComponents) {
     const [length, type] = arrayComponents
-    return encodeArray(value, {
+    return encodeArray(value as never, {
       checksumAddress,
       length,
       parameter: {
@@ -507,32 +538,32 @@ export function prepareParameter<
     })
   }
   if (parameter.type === 'tuple') {
-    return encodeTuple(value as unknown as Tuple, {
+    return encodeTuple(value as Tuple, {
       checksumAddress,
       parameter: parameter as TupleAbiParameter,
     })
   }
   if (parameter.type === 'address') {
-    return encodeAddress(value as unknown as Hex.Hex, {
+    return encodeAddress(value as Hex.Hex, {
       checksum: checksumAddress,
     })
   }
   if (parameter.type === 'bool') {
-    return encodeBoolean(value as unknown as boolean)
+    return encodeBoolean(value as boolean)
   }
   if (parameter.type.startsWith('uint') || parameter.type.startsWith('int')) {
     const signed = parameter.type.startsWith('int')
-    const [, , size = '256'] = integerRegex.exec(parameter.type) ?? []
-    return encodeNumber(value as unknown as number, {
-      signed,
-      size: Number(size),
-    })
+    const size =
+      parameter.type === 'uint256' || parameter.type === 'int256'
+        ? 256
+        : Number((integerRegex.exec(parameter.type) ?? [])[2] ?? 256)
+    return encodeNumber(value as number, { signed, size })
   }
   if (parameter.type.startsWith('bytes')) {
-    return encodeBytes(value as unknown as Hex.Hex, { type: parameter.type })
+    return encodeBytes(value as Hex.Hex, { type: parameter.type })
   }
   if (parameter.type === 'string') {
-    return encodeString(value as unknown as string)
+    return encodeString(value as string)
   }
   throw new AbiParameters.InvalidTypeError(parameter.type)
 }
@@ -551,34 +582,25 @@ export declare namespace prepareParameter {
 }
 
 /** @internal */
-export function encode(preparedParameters: PreparedParameter[]): Hex.Hex {
-  // 1. Compute the size of the static part of the parameters.
+export function encode(preparedParameters: PreparedParameter[]): string {
+  // The static part holds each static parameter, and an offset into the
+  // dynamic part for each dynamic one.
   let staticSize = 0
   for (let i = 0; i < preparedParameters.length; i++) {
     const { dynamic, encoded } = preparedParameters[i]!
-    if (dynamic) staticSize += 32
-    else staticSize += Hex.size(encoded)
+    staticSize += dynamic ? 32 : encoded.length / 2
   }
 
-  // 2. Split the parameters into static and dynamic parts.
-  const staticParameters: Hex.Hex[] = []
-  const dynamicParameters: Hex.Hex[] = []
-  let dynamicSize = 0
+  let staticPart = ''
+  let dynamicPart = ''
   for (let i = 0; i < preparedParameters.length; i++) {
     const { dynamic, encoded } = preparedParameters[i]!
     if (dynamic) {
-      staticParameters.push(
-        Hex.fromNumber(staticSize + dynamicSize, { size: 32 }),
-      )
-      dynamicParameters.push(encoded)
-      dynamicSize += Hex.size(encoded)
-    } else {
-      staticParameters.push(encoded)
-    }
+      staticPart += word(staticSize + dynamicPart.length / 2)
+      dynamicPart += encoded
+    } else staticPart += encoded
   }
-
-  // 3. Concatenate static and dynamic parts.
-  return join(staticParameters, dynamicParameters)
+  return staticPart + dynamicPart
 }
 
 /** @internal */
@@ -596,10 +618,13 @@ export function encodeAddress(
   options: { checksum: boolean },
 ): PreparedParameter {
   const { checksum = false } = options
-  Address.assert(value, { strict: checksum })
+  // `Address.assert` throws for an invalid address, and checks a checksum.
+  const kind = internal_address.classify(value)
+  if (kind === 0 || (checksum && kind === 2))
+    Address.assert(value, { strict: checksum })
   return {
     dynamic: false,
-    encoded: Hex.padLeft(value.toLowerCase() as Hex.Hex),
+    encoded: `000000000000000000000000${kind === 2 ? value.slice(2).toLowerCase() : value.slice(2)}`,
   }
 }
 
@@ -637,31 +662,18 @@ export function encodeArray<const parameter extends AbiParameters.Parameter>(
   let dynamicChild = value.length === 0 && hasDynamicChild(parameter)
   const preparedParameters: PreparedParameter[] = []
   for (let i = 0; i < value.length; i++) {
-    const preparedParam = prepareParameter({
-      checksumAddress,
-      parameter,
-      value: value[i],
-    })
+    const preparedParam = prepareParameter(parameter, value[i], checksumAddress)
     if (preparedParam.dynamic) dynamicChild = true
     preparedParameters.push(preparedParam)
   }
 
   if (dynamic || dynamicChild) {
     const data = encode(preparedParameters)
-    if (dynamic) {
-      const length = Hex.fromNumber(preparedParameters.length, { size: 32 })
-      return {
-        dynamic: true,
-        encoded:
-          preparedParameters.length > 0 ? Hex.concat(length, data) : length,
-      }
-    }
-    if (dynamicChild) return { dynamic: true, encoded: data }
+    if (dynamic)
+      return { dynamic: true, encoded: word(preparedParameters.length) + data }
+    return { dynamic: true, encoded: data }
   }
-  return {
-    dynamic: false,
-    encoded: join(preparedParameters.map(({ encoded }) => encoded)),
-  }
+  return { dynamic: false, encoded: concat(preparedParameters) }
 }
 
 /** @internal */
@@ -695,7 +707,7 @@ export function encodeBytes(
       encoded: Hex.concat(
         Hex.padLeft(Hex.fromNumber(bytesSize, { size: 32 })),
         value_,
-      ),
+      ).slice(2),
     }
   }
   if (bytesSize !== Number.parseInt(parametersize, 10))
@@ -704,7 +716,7 @@ export function encodeBytes(
       value,
     })
   if (value.length % 2 !== 0) throw new Hex.InvalidLengthError(value)
-  return { dynamic: false, encoded: Hex.padRight(value) }
+  return { dynamic: false, encoded: Hex.padRight(value).slice(2) }
 }
 
 /** @internal */
@@ -724,7 +736,7 @@ export function encodeBoolean(value: boolean): PreparedParameter {
     throw new Errors.BaseError(
       `Invalid boolean value: "${value}" (type: ${typeof value}). Expected: \`true\` or \`false\`.`,
     )
-  return { dynamic: false, encoded: Hex.padLeft(Hex.fromBoolean(value)) }
+  return { dynamic: false, encoded: word(value ? 1 : 0) }
 }
 
 /** @internal */
@@ -751,12 +763,12 @@ export function encodeNumber(
         value: value.toString(),
       })
   }
+  // A word is 32 bytes, and a negative value its two's complement, whatever
+  // the type's size.
+  const value_ = BigInt(value)
   return {
     dynamic: false,
-    encoded: Hex.fromNumber(value, {
-      size: 32,
-      signed,
-    }),
+    encoded: word(value_ < 0n ? BigInt.asUintN(256, value_) : value_),
   }
 }
 
@@ -767,18 +779,12 @@ export declare namespace encodeNumber {
 
 /** @internal */
 export function encodeString(value: string): PreparedParameter {
-  const hexValue = Hex.fromString(value)
-  const partsLength = Math.ceil(Hex.size(hexValue) / 32)
-  const parts: Hex.Hex[] = []
-  for (let i = 0; i < partsLength; i++) {
-    parts.push(Hex.padRight(Hex.slice(hexValue, i * 32, (i + 1) * 32)))
-  }
+  // The length, then the UTF-8 bytes, padded to whole words.
+  const hex = Hex.fromString(value).slice(2)
   return {
     dynamic: true,
-    encoded: Hex.concat(
-      Hex.padRight(Hex.fromNumber(Hex.size(hexValue), { size: 32 })),
-      ...parts,
-    ),
+    encoded:
+      word(hex.length / 2) + hex.padEnd(Math.ceil(hex.length / 64) * 64, '0'),
   }
 }
 
@@ -811,19 +817,17 @@ export function encodeTuple<
   for (let i = 0; i < parameter.components.length; i++) {
     const param_ = parameter.components[i]!
     const index = Array.isArray(value) ? i : param_.name
-    const preparedParam = prepareParameter({
+    const preparedParam = prepareParameter(
+      param_,
+      (value as any)[index!],
       checksumAddress,
-      parameter: param_,
-      value: (value as any)[index!] as readonly unknown[],
-    })
+    )
     preparedParameters.push(preparedParam)
     if (preparedParam.dynamic) dynamic = true
   }
   return {
     dynamic,
-    encoded: dynamic
-      ? encode(preparedParameters)
-      : join(preparedParameters.map(({ encoded }) => encoded)),
+    encoded: dynamic ? encode(preparedParameters) : concat(preparedParameters),
   }
 }
 
@@ -880,17 +884,28 @@ function getIntegerBounds(signed: boolean, size: number) {
 }
 
 /**
- * Concatenates encoded parts with a single join, so that arrays of any length
- * avoid spreading into `Hex.concat`.
+ * Concatenates the encodings of static parameters.
  *
  * @internal
  */
-function join(...lists: readonly (readonly Hex.Hex[])[]): Hex.Hex {
-  const parts: string[] = []
-  for (const list of lists)
-    for (let i = 0; i < list.length; i++) parts.push(list[i]!.slice(2))
-  return `0x${parts.join('')}`
+function concat(preparedParameters: readonly PreparedParameter[]): string {
+  let encoded = ''
+  for (let i = 0; i < preparedParameters.length; i++)
+    encoded += preparedParameters[i]!.encoded
+  return encoded
 }
+
+/**
+ * A word: a non-negative value of up to 32 bytes as 64 hex digits.
+ *
+ * @internal
+ */
+function word(value: number | bigint): string {
+  const hex = value.toString(16)
+  return zeros.slice(hex.length) + hex
+}
+
+const zeros = '0000000000000000000000000000000000000000000000000000000000000000'
 
 /**
  * Reads an offset or length word as a number. Like `Bytes.toNumber` before it

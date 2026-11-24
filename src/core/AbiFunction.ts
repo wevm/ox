@@ -6,7 +6,7 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiFunction.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
-import type * as AbiParameters_internal from './internal/abiParameters.js'
+import * as AbiParameters_internal from './internal/abiParameters.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `function` type. */
@@ -564,26 +564,16 @@ export function encodeData<const abiFunction extends AbiFunction>(
 ): Hex.Hex
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function encodeData(
-  ...parameters:
-    | [
-        abi: Abi.Abi | readonly unknown[],
-        name: Hex.Hex | string,
-        ...args: readonly unknown[],
-      ]
-    | [abiFunction: AbiFunction, ...args: readonly unknown[]]
+  abiOrFunction: Abi.Abi | readonly unknown[] | AbiFunction,
+  nameOrArgs?: Hex.Hex | string | readonly unknown[] | undefined,
+  args_?: readonly unknown[] | undefined,
 ) {
-  const [abiFunction, args = []] = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name, args] = parameters as [
-        Abi.Abi | readonly unknown[],
-        Hex.Hex | string,
-        readonly unknown[],
-      ]
-      return [fromAbi(abi, name, { args }), args]
-    }
-    const [abiFunction, args] = parameters as [AbiFunction, readonly unknown[]]
-    return [abiFunction, args]
-  })()
+  const isAbi = Array.isArray(abiOrFunction)
+  const abiFunction = isAbi
+    ? fromAbi(abiOrFunction, nameOrArgs as string, { args: args_ })
+    : (abiOrFunction as AbiFunction)
+  const maybeArgs = (isAbi ? args_ : nameOrArgs) as any[] | undefined
+  const args = maybeArgs === undefined ? [] : maybeArgs
 
   const { overloads } = abiFunction
 
@@ -594,11 +584,8 @@ export function encodeData(
     : abiFunction
 
   const selector = getSelector(item)
-
-  const data =
-    args.length > 0 ? AbiParameters.encode(item.inputs, args) : undefined
-
-  return data ? Hex.concat(selector, data) : selector
+  if (args.length === 0) return selector
+  return AbiParameters_internal.encodeParameters(item.inputs, args, selector)
 }
 
 export declare namespace encodeData {
@@ -607,14 +594,12 @@ export declare namespace encodeData {
     AbiFunction
   > extends true
     ?
-        | (abitype.AbiParametersToPrimitiveTypes<
-            abiFunction['inputs']
-          > extends readonly []
+        | (abiFunction['inputs'] extends readonly []
             ? []
-            : [abitype.AbiParametersToPrimitiveTypes<abiFunction['inputs']>])
+            : [AbiParameters_internal.ToPrimitiveTypes<abiFunction['inputs']>])
         | (abiFunction['overloads'] extends readonly AbiFunction[]
             ? [
-                abitype.AbiParametersToPrimitiveTypes<
+                AbiParameters_internal.ToPrimitiveTypes<
                   abiFunction['overloads'][number]['inputs']
                 >,
               ]

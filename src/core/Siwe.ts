@@ -22,10 +22,10 @@ export const prefixRegex =
 export const suffixRegex =
   /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?/
 
-// Matches `suffixRegex` from the start of the input to its end.
-const anchoredSuffixRegex = /*#__PURE__*/ new RegExp(
-  `^(?:${suffixRegex.source})$`,
-)
+// `suffixRegex` anchored to the whole input. Written out rather than built from
+// `suffixRegex.source`, so bundlers can drop it; keep the two in sync.
+const anchoredSuffixRegex =
+  /^(?:(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.*))?(?:\nResources:(?<resources>(?:\n- .+)*))?)$/
 
 // An IP literal (IPv6 or IPvFuture) `domain` with an optional port. The
 // literal itself is checked by `isAuthority`. `@` and `[` are excluded so a

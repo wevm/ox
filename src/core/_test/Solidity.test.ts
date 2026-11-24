@@ -106,3 +106,12 @@ test('exports', () => {
     ]
   `)
 })
+
+test('integer bounds', () => {
+  const constants = Solidity as unknown as Record<string, bigint>
+  for (let bits = 8n; bits <= 256n; bits += 8n) {
+    expect(constants[`maxInt${bits}`]).toBe(2n ** (bits - 1n) - 1n)
+    expect(constants[`minInt${bits}`]).toBe(-(2n ** (bits - 1n)))
+    expect(constants[`maxUint${bits}`]).toBe(2n ** bits - 1n)
+  }
+})

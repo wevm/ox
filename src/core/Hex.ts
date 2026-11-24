@@ -1,12 +1,8 @@
-import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as internal_bytes from './internal/bytes.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
-
-const decoder = /*#__PURE__*/ new TextDecoder()
-const encoder = /*#__PURE__*/ new TextEncoder()
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
@@ -277,8 +273,11 @@ export function fromNumber(
     value >= 0 &&
     (!size || size > 6)
   ) {
-    const hex = `0x${value.toString(16)}` as Hex
-    return size ? padLeft(hex, size) : hex
+    const hex = value.toString(16)
+    if (!size) return `0x${hex}`
+    // A safe integer has at most 14 digits, so a whole `size` above 6 fits it.
+    if (Number.isSafeInteger(size)) return `0x${hex.padStart(size * 2, '0')}`
+    return padLeft(`0x${hex}`, size)
   }
 
   return fromNumberChecked(value, signed, size)
@@ -291,36 +290,8 @@ function fromNumberChecked(
   signed: boolean | undefined,
   size: number | undefined,
 ): Hex {
-  const value_ = BigInt(value)
-
-  let maxValue: bigint | number | undefined
-  if (size) {
-    if (signed) maxValue = (1n << (BigInt(size) * 8n - 1n)) - 1n
-    else maxValue = 2n ** (BigInt(size) * 8n) - 1n
-  } else if (typeof value === 'number') {
-    maxValue = BigInt(Number.MAX_SAFE_INTEGER)
-  }
-
-  // Negative values need a `size` to encode as two's complement.
-  const minValue =
-    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
-
-  if ((maxValue && value_ > maxValue) || value_ < minValue) {
-    const suffix = typeof value === 'bigint' ? 'n' : ''
-    throw new IntegerOutOfRangeError({
-      max: maxValue ? `${maxValue}${suffix}` : undefined,
-      min: `${minValue}${suffix}`,
-      signed,
-      size,
-      value: `${value}${suffix}`,
-    })
-  }
-
-  const stringValue = (
-    signed && value_ < 0 ? BigInt.asUintN(size! * 8, BigInt(value_)) : value_
-  ).toString(16)
-
-  const hex = `0x${stringValue}` as Hex
+  const hex =
+    `0x${internal.toUnsigned(value, signed, size).toString(16)}` as Hex
   if (size) return padLeft(hex, size) as Hex
   return hex
 }
@@ -366,7 +337,7 @@ export function fromString(
   value: string,
   options: fromString.Options = {},
 ): Hex {
-  return fromBytes(encoder.encode(value), options)
+  return fromBytes(internal_bytes.fromString(value), options)
 }
 
 export declare namespace fromString {
@@ -397,7 +368,7 @@ export declare namespace fromString {
  * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function isEqual(hexA: Hex, hexB: Hex) {
-  return equalBytes(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
+  return Bytes.isEqual(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
 }
 
 export declare namespace isEqual {
@@ -774,7 +745,7 @@ export function toString(hex: Hex, options: toString.Options = {}): string {
     internal_bytes.assertSize(bytes, size)
     bytes = Bytes.trimRight(bytes)
   }
-  return decoder.decode(bytes)
+  return internal_bytes.toString(bytes)
 }
 
 export declare namespace toString {

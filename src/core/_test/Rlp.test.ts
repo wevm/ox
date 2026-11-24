@@ -340,6 +340,12 @@ describe('Rlp.to', () => {
   `,
     )
   })
+
+  test('error: value that is neither hex nor bytes', () => {
+    expect(() => Rlp.toHex(0 as never)).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid RLP prefix]`,
+    )
+  })
 })
 
 describe('decode depth limit', () => {
@@ -495,5 +501,53 @@ describe('non-canonical encoding', () => {
     expect(Rlp.toHex(Rlp.fromHex(bytes56))).toEqual(bytes56)
     const bytes256 = `0x${'cd'.repeat(256)}` as const
     expect(Rlp.toHex(Rlp.fromHex(bytes256))).toEqual(bytes256)
+  })
+})
+
+describe('hex leaves', () => {
+  test('encode like their bytes: any case, odd length', () => {
+    const leaves = ['0xABcd', '0x1', '0x0', '0x', '0x7F', '0x80'] as Hex.Hex[]
+    const bytes = leaves.map((leaf) => Bytes.fromHex(leaf))
+    expect(Rlp.fromHex([...leaves, [...leaves]])).toEqual(
+      Rlp.fromBytes([...bytes, [...bytes]], { as: 'Hex' }),
+    )
+    expect(Rlp.fromHex([...leaves, [...leaves]], { as: 'Bytes' })).toEqual(
+      Rlp.fromBytes([...bytes, [...bytes]]),
+    )
+    expect(() => Rlp.fromHex(['0x0g'])).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid byte sequence ("0g" in "0g").]`,
+    )
+    expect(() =>
+      Rlp.fromHex(['0x01', 'abcd' as Hex.Hex]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Hex value \`abcd\` must start with "0x".]`,
+    )
+  })
+
+  test('a leaf that is neither hex nor bytes throws', () => {
+    // Encoded as an empty string, it would let a transaction with a mistyped
+    // `to` or `data` serialize and hash without one.
+    for (const leaf of [0, 1n, true, {}]) {
+      const value = ['0x01', [leaf]] as never
+      expect(() => Rlp.fromHex(value)).toThrow('Length is too large.')
+      expect(() => Rlp.fromBytes(value)).toThrow('Length is too large.')
+    }
+  })
+
+  test('decode to lowercase hex, from hex or bytes', () => {
+    const encoded = Rlp.fromHex([
+      '0xabcdef',
+      ['0x', '0x7f'],
+      `0x${'ab'.repeat(60)}`,
+    ])
+    const expected = ['0xabcdef', ['0x', '0x7f'], `0x${'ab'.repeat(60)}`]
+    expect(Rlp.toHex(encoded)).toEqual(expected)
+    expect(
+      Rlp.toHex(encoded.toUpperCase().replace('0X', '0x') as Hex.Hex),
+    ).toEqual(expected)
+    expect(Rlp.toHex(Bytes.fromHex(encoded))).toEqual(expected)
+    // Longer than the inputs whose leaves are cut from the input string.
+    const long = `0x${'ab'.repeat(3000)}` as const
+    expect(Rlp.toHex(Rlp.fromHex([long, '0x01']))).toEqual([long, '0x01'])
   })
 })

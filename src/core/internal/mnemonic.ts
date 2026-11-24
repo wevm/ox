@@ -11,9 +11,7 @@ export function toPrivateKey<as extends 'Bytes' | 'Hex' = 'Bytes'>(
     passphrase?: string | undefined
     path?: string | undefined
   } = {},
-):
-  | (as extends 'Bytes' ? Bytes.Bytes : never)
-  | (as extends 'Hex' ? Hex.Hex : never) {
+): { Bytes: Bytes.Bytes; Hex: Hex.Hex }[as] {
   const { path = "m/44'/60'/0'/0/0", passphrase } = options
   const privateKey = HDKey.fromMasterSeed(
     toSeed(mnemonic, { passphrase }),

@@ -854,14 +854,35 @@ export declare namespace getSignPayload {
  * @returns The {@link ox#KeyAuthorization.KeyAuthorization}.
  */
 export function deserialize(serialized: Hex.Hex): KeyAuthorization {
-  const tuple = Rlp.toHex(serialized) as unknown as Tuple
-  return fromTuple(tuple)
+  const tuple = Rlp.toHex(serialized)
+  // `[authorization, signature?]`, where the authorization is a list and the
+  // signature a string.
+  if (
+    !Array.isArray(tuple) ||
+    !Array.isArray(tuple[0]) ||
+    (tuple[1] !== undefined && typeof tuple[1] !== 'string')
+  )
+    throw new InvalidSerializedError(serialized)
+  try {
+    return fromTuple(tuple as unknown as Tuple)
+  } catch (error) {
+    // A field with the wrong RLP shape, such as a list where a quantity goes,
+    // fails inside `fromTuple` with a built-in error.
+    if (
+      error instanceof TypeError ||
+      error instanceof SyntaxError ||
+      error instanceof RangeError
+    )
+      throw new InvalidSerializedError(serialized, { cause: error })
+    throw error
+  }
 }
 
 export declare namespace deserialize {
   type ErrorType =
     | Rlp.toHex.ErrorType
     | fromTuple.ErrorType
+    | InvalidSerializedError
     | Errors.GlobalErrorType
 }
 
@@ -1243,6 +1264,17 @@ function assertSignature<bigintType, numberType>(
 
 function isAbsent(value: unknown): boolean {
   return value === undefined || value === '0x'
+}
+
+/** Thrown when serialized bytes are not an RLP `[authorization, signature?]` list. */
+export class InvalidSerializedError extends Error {
+  override readonly name = 'KeyAuthorization.InvalidSerializedError'
+  constructor(serialized: Hex.Hex, options: { cause?: unknown } = {}) {
+    super(
+      `Serialized key authorization \`${serialized}\` is not an RLP list of an authorization list and an optional signature.`,
+      options,
+    )
+  }
 }
 
 /** Thrown when a `witness` field is not exactly 32 bytes. */

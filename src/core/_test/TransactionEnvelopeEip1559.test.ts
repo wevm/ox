@@ -721,21 +721,25 @@ describe('serialize', () => {
 
     expect(hash).toBeDefined()
 
-    const response = await anvilMainnet.request({
-      method: 'eth_getTransactionReceipt',
-      params: [hash],
-    })
-
-    expect(response).toMatchObject({
-      contractAddress: null,
-      cumulativeGasUsed: '0x5208',
-      from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-      gasUsed: '0x5208',
-      logs: [],
-      status: '0x1',
-      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      type: '0x2',
-    })
+    await expect
+      .poll(
+        () =>
+          anvilMainnet.request({
+            method: 'eth_getTransactionReceipt',
+            params: [hash],
+          }),
+        { timeout: 30_000 },
+      )
+      .toMatchObject({
+        contractAddress: null,
+        cumulativeGasUsed: '0x5208',
+        from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        gasUsed: '0x5208',
+        logs: [],
+        status: '0x1',
+        to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+        type: '0x2',
+      })
   })
 })
 
@@ -809,6 +813,17 @@ describe('toRpc', () => {
     })
 
     expect(hash).toBeDefined()
+
+    await expect
+      .poll(
+        () =>
+          anvilMainnet.request({
+            method: 'eth_getTransactionReceipt',
+            params: [hash],
+          }),
+        { timeout: 30_000 },
+      )
+      .not.toBeNull()
 
     const tx = await anvilMainnet.request({
       method: 'eth_getTransactionByHash',

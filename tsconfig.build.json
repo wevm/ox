@@ -5,6 +5,7 @@
   "exclude": [
     "src/**/*.bench.ts",
     "src/**/*.bench-d.ts",
+    "src/**/*.fuzz.ts",
     "src/**/*.snap-d.ts",
     "src/**/*.test.ts",
     "src/**/*.test-d.ts"

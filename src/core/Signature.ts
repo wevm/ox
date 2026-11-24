@@ -3,7 +3,7 @@ import { DER } from '@noble/curves/abstract/weierstrass'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import type { Compute, ExactPartial, OneOf } from './internal/types.js'
+import type { ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
 
@@ -16,19 +16,17 @@ export type Signature<
   recovered extends boolean = true,
   bigintType = bigint,
   numberType = number,
-> = Compute<
-  recovered extends true
-    ? {
-        r: bigintType
-        s: bigintType
-        yParity: numberType
-      }
-    : {
-        r: bigintType
-        s: bigintType
-        yParity?: numberType | undefined
-      }
->
+> = recovered extends true
+  ? {
+      r: bigintType
+      s: bigintType
+      yParity: numberType
+    }
+  : {
+      r: bigintType
+      s: bigintType
+      yParity?: numberType | undefined
+    }
 
 /** RPC-formatted ECDSA signature. */
 export type Rpc<recovered extends boolean = true> = Signature<
@@ -70,9 +68,9 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  */
 export function assert(
   signature: ExactPartial<Signature>,
-  options: assert.Options = {},
+  options?: assert.Options,
 ): asserts signature is Signature {
-  const { recovered } = options
+  const recovered = options?.recovered
   if (typeof signature.r === 'undefined')
     throw new MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
@@ -149,29 +147,22 @@ export function fromHex(signature: Hex.Hex): Signature {
   if (signature.length !== 130 && signature.length !== 132)
     throw new InvalidSerializedSizeError({ signature })
 
-  const r = BigInt(Hex.slice(signature, 0, 32))
-  const s = BigInt(Hex.slice(signature, 32, 64))
+  // As `Hex.slice(signature, 0, 32)` and `Hex.slice(signature, 32, 64)`.
+  const body = signature.startsWith('0x')
+    ? signature.slice(2)
+    : signature.replace('0x', '')
+  const r = BigInt(`0x${body.slice(0, 64)}`)
+  const s = BigInt(`0x${body.slice(64, 128)}`)
 
-  const yParity = (() => {
-    const yParity = Number(`0x${signature.slice(130)}`)
-    if (Number.isNaN(yParity)) return undefined
-    try {
-      return vToYParity(yParity)
-    } catch {
-      throw new InvalidYParityError({ value: yParity })
-    }
-  })()
-
-  if (typeof yParity === 'undefined')
-    return {
-      r,
-      s,
-    } as never
-  return {
-    r,
-    s,
-    yParity,
-  } as never
+  const v = Number(`0x${signature.slice(130)}`)
+  if (Number.isNaN(v)) return { r, s } as never
+  let yParity: number
+  try {
+    yParity = vToYParity(v)
+  } catch {
+    throw new InvalidYParityError({ value: v })
+  }
+  return { r, s, yParity } as never
 }
 
 export declare namespace fromHex {
@@ -289,19 +280,19 @@ export function from<
     | Hex.Hex
     | Bytes.Bytes,
 ): from.ReturnType<signature> {
-  const signature_ = (() => {
-    if (typeof signature === 'string') return fromHex(signature)
-    if (signature instanceof Uint8Array) return fromBytes(signature)
-    if (typeof signature.r === 'string') return fromRpc(signature)
-    if (signature.v) return fromLegacy(signature)
-    return {
+  let signature_: ExactPartial<Signature>
+  if (typeof signature === 'string') signature_ = fromHex(signature)
+  else if (signature instanceof Uint8Array) signature_ = fromBytes(signature)
+  else if (typeof signature.r === 'string') signature_ = fromRpc(signature)
+  else if (signature.v) signature_ = fromLegacy(signature)
+  else
+    signature_ = {
       r: signature.r,
       s: signature.s,
       ...(typeof signature.yParity !== 'undefined'
         ? { yParity: signature.yParity }
         : {}),
     }
-  })()
   assert(signature_)
   return signature_ as never
 }
@@ -428,15 +419,11 @@ export function fromRpc(signature: {
   yParity?: Hex.Hex | undefined
   v?: Hex.Hex | undefined
 }): Signature {
-  const yParity = (() => {
-    const v = signature.v ? Number(signature.v) : undefined
-    let yParity = signature.yParity ? Number(signature.yParity) : undefined
-    if (typeof v === 'number' && typeof yParity !== 'number')
-      yParity = vToYParity(v)
-    if (typeof yParity !== 'number')
-      throw new InvalidYParityError({ value: signature.yParity })
-    return yParity
-  })()
+  let yParity = signature.yParity ? Number(signature.yParity) : undefined
+  if (signature.v && typeof yParity !== 'number')
+    yParity = vToYParity(Number(signature.v))
+  if (typeof yParity !== 'number')
+    throw new InvalidYParityError({ value: signature.yParity })
 
   return {
     r: BigInt(signature.r),
@@ -530,19 +517,10 @@ export declare namespace toBytes {
 export function toHex(signature: Signature<boolean>): Hex.Hex {
   assert(signature)
 
-  const r = signature.r
-  const s = signature.s
-
-  const signature_ = Hex.concat(
-    Hex.fromNumber(r, { size: 32 }),
-    Hex.fromNumber(s, { size: 32 }),
-    // If the signature is recovered, add the recovery byte to the signature.
-    typeof signature.yParity === 'number'
-      ? Hex.fromNumber(yParityToV(signature.yParity), { size: 1 })
-      : '0x',
-  )
-
-  return signature_
+  const hex = `0x${toWord(signature.r)}${toWord(signature.s)}` as const
+  // If the signature is recovered, add the recovery byte (`v`) to the signature.
+  if (typeof signature.yParity !== 'number') return hex
+  return `${hex}${signature.yParity === 0 ? '1b' : '1c'}`
 }
 
 export declare namespace toHex {
@@ -655,8 +633,8 @@ export declare namespace toLegacy {
 export function toRpc(signature: Signature): Rpc {
   const { r, s, yParity } = signature
   return {
-    r: Hex.fromNumber(r, { size: 32 }),
-    s: Hex.fromNumber(s, { size: 32 }),
+    r: `0x${toWord(r)}`,
+    s: `0x${toWord(s)}`,
     yParity: yParity === 0 ? '0x0' : '0x1',
   }
 }
@@ -787,6 +765,18 @@ export function yParityToV(yParity: number): number {
 
 export declare namespace yParityToV {
   type ErrorType = InvalidVError | Errors.GlobalErrorType
+}
+
+/**
+ * A value of up to 32 bytes as 64 hex digits, as `Hex.fromNumber(value, { size: 32 })`
+ * writes it without `0x`.
+ *
+ * @internal
+ */
+function toWord(value: bigint): string {
+  const hex = typeof value === 'bigint' && value >= 0n && value.toString(16)
+  if (hex && hex.length <= 64) return hex.padStart(64, '0')
+  return Hex.fromNumber(value, { size: 32 }).slice(2)
 }
 
 /** Thrown when the serialized signature is of an invalid size. */

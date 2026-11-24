@@ -18,6 +18,46 @@ export declare namespace assertSize {
     | Errors.GlobalErrorType
 }
 
+/**
+ * `value` checked against the range that `signed` and `size` give it, as the
+ * non-negative value whose digits `Hex.fromNumber` writes: two's complement
+ * when `value` is negative. `Bytes.fromNumber` writes the same digits as bytes.
+ *
+ * @internal
+ */
+export function toUnsigned(
+  value: number | bigint,
+  signed: boolean | undefined,
+  size: number | undefined,
+): bigint {
+  const value_ = BigInt(value)
+
+  let maxValue: bigint | number | undefined
+  if (size) {
+    if (signed) maxValue = (1n << (BigInt(size) * 8n - 1n)) - 1n
+    else maxValue = 2n ** (BigInt(size) * 8n) - 1n
+  } else if (typeof value === 'number') {
+    maxValue = BigInt(Number.MAX_SAFE_INTEGER)
+  }
+
+  // Negative values need a `size` to encode as two's complement.
+  const minValue =
+    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
+
+  if ((maxValue && value_ > maxValue) || value_ < minValue) {
+    const suffix = typeof value === 'bigint' ? 'n' : ''
+    throw new Hex.IntegerOutOfRangeError({
+      max: maxValue ? `${maxValue}${suffix}` : undefined,
+      min: `${minValue}${suffix}`,
+      signed,
+      size,
+      value: `${value}${suffix}`,
+    })
+  }
+
+  return signed && value_ < 0 ? BigInt.asUintN(size! * 8, value_) : value_
+}
+
 /** @internal */
 export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > Hex.size(value) - 1)
@@ -67,6 +107,18 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   if (size === 0) return hex_
 
+  // Up to 32 bytes of padding on a `0x`-prefixed value slice a literal of
+  // zeros instead of building a string.
+  if (hex_.charCodeAt(0) === 48 && hex_.charCodeAt(1) === 120) {
+    const missing = size * 2 - (hex_.length - 2)
+    if (missing >= 0 && missing <= zeros.length) {
+      const padding = zeros.slice(0, missing)
+      return (
+        dir === 'right' ? `${hex_}${padding}` : `0x${padding}${hex_.slice(2)}`
+      ) as Hex.Hex
+    }
+  }
+
   // Same result as `hex_.replace('0x', '')`, without a search when the prefix
   // is present.
   const hex = hex_.startsWith('0x') ? hex_.slice(2) : hex_.replace('0x', '')
@@ -79,6 +131,8 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex.Hex
 }
+
+const zeros = '0000000000000000000000000000000000000000000000000000000000000000'
 
 /** @internal */
 export declare namespace pad {

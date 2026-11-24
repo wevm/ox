@@ -276,166 +276,185 @@ export declare namespace assert {
  * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
-export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
-  const transactionArray = Rlp.toHex(
-    withoutSenderMarker(Hex.slice(serialized, 1)),
-  )
-
-  const [
-    chainId,
-    maxPriorityFeePerGas,
-    maxFeePerGas,
-    gas,
-    calls,
-    accessList,
-    nonceKey,
-    nonce,
-    validBefore,
-    validAfter,
-    feeToken,
-    feePayerSignatureOrSender,
-    authorizationList,
-    keyAuthorizationOrSignature,
-    maybeSignature,
-  ] = transactionArray as readonly Hex.Hex[]
-
-  const keyAuthorization = Array.isArray(keyAuthorizationOrSignature)
-    ? keyAuthorizationOrSignature
-    : undefined
-  const signature = keyAuthorization
-    ? maybeSignature
-    : keyAuthorizationOrSignature
-
-  if (
-    !(
-      transactionArray.length === 13 ||
-      transactionArray.length === 14 ||
-      transactionArray.length === 15
-    )
-  )
-    throw new TransactionEnvelope.InvalidSerializedError({
-      attributes: {
-        authorizationList,
-        chainId,
-        maxPriorityFeePerGas,
-        maxFeePerGas,
-        gas,
-        calls,
-        accessList,
-        keyAuthorization,
-        nonceKey,
-        nonce,
-        validBefore,
-        validAfter,
-        feeToken,
-        feePayerSignatureOrSender,
-        ...(transactionArray.length > 12
-          ? {
-              signature,
-            }
-          : {}),
-      },
-      serialized,
-      type,
-    })
-
-  let transaction = {
-    chainId: Number(chainId),
-    type,
-  } as TxEnvelopeTempo
-
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
-    transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
-    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
-  if (
-    transaction.maxPriorityFeePerGas &&
-    typeof transaction.maxFeePerGas === 'undefined'
-  )
-    transaction.maxFeePerGas = 0n
-  if (Hex.validate(nonceKey))
-    transaction.nonceKey = nonceKey === '0x' ? 0n : BigInt(nonceKey)
-  if (Hex.validate(validBefore) && validBefore !== '0x')
-    transaction.validBefore = Number(validBefore)
-  if (Hex.validate(validAfter) && validAfter !== '0x')
-    transaction.validAfter = Number(validAfter)
-  if (Hex.validate(feeToken) && feeToken !== '0x')
-    transaction.feeToken = feeToken
-
-  // Parse calls array
-  if (calls && calls !== '0x') {
-    const callsArray = calls as unknown as readonly Hex.Hex[][]
-    transaction.calls = callsArray.map((callTuple) => {
-      const [to, value, data] = callTuple
-      const call: Call = {}
-      if (to && to !== '0x') call.to = to
-      if (value && value !== '0x') call.value = BigInt(value)
-      if (data && data !== '0x') call.data = data
-      return call
-    })
-  }
-
-  if (accessList?.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as never)
-
-  if (authorizationList?.length !== 0 && authorizationList !== '0x')
-    transaction.authorizationList = AuthorizationTempo.fromTupleList(
-      authorizationList as never,
+export function deserialize(serialized: Serialized): TxEnvelopeTempo {
+  try {
+    const transactionArray = Rlp.toHex(
+      withoutSenderMarker(Hex.slice(serialized, 1)),
     )
 
-  if (
-    feePayerSignatureOrSender !== '0x' &&
-    feePayerSignatureOrSender !== undefined
-  ) {
-    // A fee payer signature is a tuple, while a sender is an address string.
-    const sender =
-      typeof feePayerSignatureOrSender === 'string' &&
-      Address.validate(feePayerSignatureOrSender)
-    if (feePayerSignatureOrSender === '0x00' || sender) {
-      transaction.feePayerSignature = null
-      if (sender) transaction.from = feePayerSignatureOrSender
-    } else
-      transaction.feePayerSignature = Signature.fromTuple(
-        feePayerSignatureOrSender as never,
+    const [
+      chainId,
+      maxPriorityFeePerGas,
+      maxFeePerGas,
+      gas,
+      calls,
+      accessList,
+      nonceKey,
+      nonce,
+      validBefore,
+      validAfter,
+      feeToken,
+      feePayerSignatureOrSender,
+      authorizationList,
+      keyAuthorizationOrSignature,
+      maybeSignature,
+    ] = transactionArray as readonly Hex.Hex[]
+
+    const keyAuthorization = Array.isArray(keyAuthorizationOrSignature)
+      ? keyAuthorizationOrSignature
+      : undefined
+    const signature = keyAuthorization
+      ? maybeSignature
+      : keyAuthorizationOrSignature
+
+    if (
+      !(
+        transactionArray.length === 13 ||
+        transactionArray.length === 14 ||
+        transactionArray.length === 15
       )
-  }
-
-  if (keyAuthorization)
-    transaction.keyAuthorization = KeyAuthorization.fromTuple(
-      keyAuthorization as never,
     )
+      throw new TransactionEnvelope.InvalidSerializedError({
+        attributes: {
+          authorizationList,
+          chainId,
+          maxPriorityFeePerGas,
+          maxFeePerGas,
+          gas,
+          calls,
+          accessList,
+          keyAuthorization,
+          nonceKey,
+          nonce,
+          validBefore,
+          validAfter,
+          feeToken,
+          feePayerSignatureOrSender,
+          ...(transactionArray.length > 12
+            ? {
+                signature,
+              }
+            : {}),
+        },
+        serialized,
+        type,
+      })
 
-  const signatureEnvelope = signature
-    ? SignatureEnvelope.deserialize(signature)
-    : undefined
-  if (signatureEnvelope)
-    transaction = {
-      ...transaction,
-      signature: signatureEnvelope,
+    let transaction = {
+      chainId: Number(chainId),
+      type,
+    } as TxEnvelopeTempo
+
+    if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
+    if (Hex.validate(nonce))
+      transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
+    if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
+      transaction.maxFeePerGas = BigInt(maxFeePerGas)
+    if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
+      transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+    // An empty `maxFeePerGas` encodes zero, so a tip above it is rejected.
+    if (
+      transaction.maxPriorityFeePerGas &&
+      typeof transaction.maxFeePerGas === 'undefined'
+    )
+      transaction.maxFeePerGas = 0n
+    if (Hex.validate(nonceKey))
+      transaction.nonceKey = nonceKey === '0x' ? 0n : BigInt(nonceKey)
+    if (Hex.validate(validBefore) && validBefore !== '0x')
+      transaction.validBefore = Number(validBefore)
+    if (Hex.validate(validAfter) && validAfter !== '0x')
+      transaction.validAfter = Number(validAfter)
+    if (Hex.validate(feeToken) && feeToken !== '0x')
+      transaction.feeToken = feeToken
+
+    // Parse calls array
+    if (calls && calls !== '0x') {
+      const callsArray = calls as unknown as readonly Hex.Hex[][]
+      transaction.calls = callsArray.map((callTuple) => {
+        const [to, value, data] = callTuple
+        const call: Call = {}
+        if (to && to !== '0x') call.to = to
+        if (value && value !== '0x') call.value = BigInt(value)
+        if (data && data !== '0x') call.data = data
+        return call
+      })
     }
 
-  // Recover sender address from the signature if not already set.
-  if (!transaction.from && signatureEnvelope) {
-    try {
-      transaction.from = SignatureEnvelope.extractAddress({
-        payload: getSignPayload(from(transaction)),
+    if (accessList?.length !== 0 && accessList !== '0x')
+      transaction.accessList = AccessList.fromTupleList(accessList as never)
+
+    if (authorizationList?.length !== 0 && authorizationList !== '0x')
+      transaction.authorizationList = AuthorizationTempo.fromTupleList(
+        authorizationList as never,
+      )
+
+    if (
+      feePayerSignatureOrSender !== '0x' &&
+      feePayerSignatureOrSender !== undefined
+    ) {
+      // A fee payer signature is a tuple, while a sender is an address string.
+      const sender =
+        typeof feePayerSignatureOrSender === 'string' &&
+        Address.validate(feePayerSignatureOrSender)
+      if (feePayerSignatureOrSender === '0x00' || sender) {
+        transaction.feePayerSignature = null
+        if (sender) transaction.from = feePayerSignatureOrSender
+      } else
+        transaction.feePayerSignature = Signature.fromTuple(
+          feePayerSignatureOrSender as never,
+        )
+    }
+
+    if (keyAuthorization)
+      transaction.keyAuthorization = KeyAuthorization.fromTuple(
+        keyAuthorization as never,
+      )
+
+    const signatureEnvelope = signature
+      ? SignatureEnvelope.deserialize(signature)
+      : undefined
+    if (signatureEnvelope)
+      transaction = {
+        ...transaction,
         signature: signatureEnvelope,
-        root: true,
+      }
+
+    // Recover sender address from the signature if not already set.
+    if (!transaction.from && signatureEnvelope) {
+      try {
+        transaction.from = SignatureEnvelope.extractAddress({
+          payload: getSignPayload(from(transaction)),
+          signature: signatureEnvelope,
+          root: true,
+        })
+      } catch {}
+    }
+
+    assert(transaction)
+
+    return transaction
+  } catch (error) {
+    // A field with the wrong RLP shape, such as a list where a quantity goes,
+    // fails with a built-in error.
+    if (
+      error instanceof TypeError ||
+      error instanceof SyntaxError ||
+      error instanceof RangeError
+    )
+      throw new TransactionEnvelope.InvalidSerializedError({
+        attributes: {},
+        cause: error,
+        serialized,
+        type,
       })
-    } catch {}
+    throw error
   }
-
-  assert(transaction)
-
-  return transaction
 }
 
 export declare namespace deserialize {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | TransactionEnvelope.InvalidSerializedError
+    | Errors.GlobalErrorType
 }
 
 /** Bytes after the RLP list in `rlp ‖ sender ‖ 0xfeefeefeefee`. */

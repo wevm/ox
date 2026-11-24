@@ -2,25 +2,28 @@ import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 
-const encoder = /*#__PURE__*/ new TextEncoder()
-const decoder = /*#__PURE__*/ new TextDecoder()
+const alphabet =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-const integerToCharacter = /*#__PURE__*/ Object.fromEntries(
-  Array.from(
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
-  ).map((a, i) => [i, a.charCodeAt(0)]),
-)
+// Character code to 6-bit value, for both alphabets. Any other character,
+// `=` included, reads as zero.
+const characterToInteger = /*#__PURE__*/ (() => {
+  const table = new Uint8Array(256)
+  for (let i = 0; i < 64; i++) table[alphabet.charCodeAt(i)] = i
+  table[45 /* - */] = 62
+  table[95 /* _ */] = 63
+  return table
+})()
 
-const characterToInteger = {
-  ...Object.fromEntries(
-    Array.from(
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
-    ).map((a, i) => [a.charCodeAt(0), i]),
-  ),
-  ['='.charCodeAt(0)]: 0,
-  ['-'.charCodeAt(0)]: 62,
-  ['_'.charCodeAt(0)]: 63,
-} as Record<number, number>
+// Taken from the prototype once, as `Hex.fromBytes` takes `toHex`.
+const nativeToBase64 = (
+  Uint8Array.prototype as {
+    toBase64?: (options: {
+      alphabet: 'base64' | 'base64url'
+      omitPadding: boolean
+    }) => string
+  }
+).toBase64
 
 /**
  * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
@@ -63,21 +66,26 @@ const characterToInteger = {
 export function fromBytes(value: Bytes.Bytes, options: fromBytes.Options = {}) {
   const { pad = true, url = false } = options
 
-  const encoded = new Uint8Array(Math.ceil(value.length / 3) * 4)
+  // Native `Uint8Array.prototype.toBase64` is several times faster. Empty
+  // values (including detached views) skip it, since it throws on those.
+  if (nativeToBase64 && value instanceof Uint8Array && value.length > 0)
+    return nativeToBase64.call(value, {
+      alphabet: url ? 'base64url' : 'base64',
+      omitPadding: !pad,
+    })
 
-  for (let i = 0, j = 0; j < value.length; i += 4, j += 3) {
-    const y = (value[j]! << 16) + (value[j + 1]! << 8) + (value[j + 2]! | 0)
-    encoded[i] = integerToCharacter[y >> 18]!
-    encoded[i + 1] = integerToCharacter[(y >> 12) & 0x3f]!
-    encoded[i + 2] = integerToCharacter[(y >> 6) & 0x3f]!
-    encoded[i + 3] = integerToCharacter[y & 0x3f]!
+  let base64 = ''
+  for (let j = 0; j < value.length; j += 3) {
+    const y = (value[j]! << 16) | (value[j + 1]! << 8) | value[j + 2]!
+    base64 +=
+      alphabet[y >> 18]! +
+      alphabet[(y >> 12) & 0x3f] +
+      alphabet[(y >> 6) & 0x3f] +
+      alphabet[y & 0x3f]
   }
 
   const k = value.length % 3
-  const end = Math.floor(value.length / 3) * 4 + (k && k + 1)
-  let base64 = decoder.decode(new Uint8Array(encoded.buffer, 0, end))
-  if (pad && k === 1) base64 += '=='
-  if (pad && k === 2) base64 += '='
+  if (k) base64 = base64.slice(0, k - 3) + (pad ? '=='.slice(k - 1) : '')
   if (url) base64 = base64.replaceAll('+', '-').replaceAll('/', '_')
   return base64
 }
@@ -238,26 +246,17 @@ export declare namespace fromString {
  * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
  */
 export function toBytes(value: string): Bytes.Bytes {
-  const base64 = value.replace(/=+$/, '')
+  let size = value.length
+  // Reads at least once, so a value that is not a string throws, as before.
+  while (value.charCodeAt(size - 1) === 61 /* = */) size--
 
-  const size = base64.length
-
-  const decoded = new Uint8Array(size + 3)
-  encoder.encodeInto(base64 + '===', decoded)
-
-  for (let i = 0, j = 0; i < base64.length; i += 4, j += 3) {
-    const x =
-      (characterToInteger[decoded[i]!]! << 18) +
-      (characterToInteger[decoded[i + 1]!]! << 12) +
-      (characterToInteger[decoded[i + 2]!]! << 6) +
-      characterToInteger[decoded[i + 3]!]!
-    decoded[j] = x >> 16
-    decoded[j + 1] = (x >> 8) & 0xff
-    decoded[j + 2] = x & 0xff
+  const decoded = new Uint8Array((size >> 2) * 3 + (size % 4 && (size % 4) - 1))
+  for (let i = 0, j = 0, bits = 0, x = 0; i < size; i++) {
+    x = (x << 6) | (characterToInteger[value.charCodeAt(i)] ?? 0)
+    bits += 6
+    if (bits >= 8) decoded[j++] = x >> (bits -= 8)
   }
-
-  const decodedSize = (size >> 2) * 3 + (size % 4 && (size % 4) - 1)
-  return new Uint8Array(decoded.buffer, 0, decodedSize)
+  return decoded
 }
 
 export declare namespace toBytes {

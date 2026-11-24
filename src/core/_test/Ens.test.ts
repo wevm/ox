@@ -152,6 +152,14 @@ describe('normalize', () => {
     )
   })
 
+  test('behavior: ascii names that are not normal', () => {
+    // Names the normalizer rejects, which a check for normal names must not pass.
+    for (const name of ['34--a.eth', 'ab--.eth', 'a..eth', 'eth.', 'a_b.eth'])
+      expect(() => Ens.normalize(name)).toThrowError()
+    expect(Ens.normalize('_$a-0.eth')).toBe('_$a-0.eth')
+    expect(Ens.normalize('--.eth')).toBe('--.eth')
+  })
+
   test('illegal placement: leading combining mark', () => {
     expect(() =>
       Ens.normalize('\u{303}.eth'),

@@ -1,12 +1,9 @@
-import {
-  getMinHashLength,
-  mapHashToField,
-} from '@noble/curves/abstract/modular'
 import { secp256r1 } from '@noble/curves/p256'
 import { randomBytes } from '@noble/hashes/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import { mapToSecretKey } from './internal/curves.js'
 import * as Entropy from './internal/entropy.js'
 import * as keyDerivation from './internal/keyDerivation.js'
 import * as internal from './internal/mnemonic.js'
@@ -56,9 +53,7 @@ export declare namespace createKeyPair {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> = {
-    privateKey:
-      | (as extends 'Bytes' ? Bytes.Bytes : never)
-      | (as extends 'Hex' ? Hex.Hex : never)
+    privateKey: { Bytes: Bytes.Bytes; Hex: Hex.Hex }[as]
     publicKey: PublicKey.PublicKey
   }
 
@@ -167,9 +162,10 @@ export declare namespace fromSeed {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.from.ErrorType
@@ -270,9 +266,10 @@ export declare namespace getSharedSecret {
     publicKey: PublicKey.PublicKey<boolean>
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Hex.fromBytes.ErrorType
@@ -297,10 +294,11 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  // What noble's `utils.randomPrivateKey` does, without bundling the curve.
-  const bytes = mapHashToField(randomBytes(getMinHashLength(order)), order)
-  if (as === 'Hex') return Hex.fromBytes(bytes) as never
-  return bytes as never
+  // What noble's `utils.randomPrivateKey` does, without bundling the curve:
+  // 48 random bytes, its `getMinHashLength` for a 32-byte order, reduced.
+  const privateKey = mapToSecretKey(randomBytes(48), order)
+  if (as === 'Hex') return Hex.fromNumber(privateKey, { size: 32 }) as never
+  return Bytes.fromNumber(privateKey, { size: 32 }) as never
 }
 
 export declare namespace randomPrivateKey {
@@ -312,9 +310,10 @@ export declare namespace randomPrivateKey {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }

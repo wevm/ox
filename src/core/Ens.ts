@@ -6,6 +6,14 @@ import * as Hex from './Hex.js'
 import * as internal from './internal/ens.js'
 
 /**
+ * Names that ENSIP-15 leaves unchanged and accepts: labels of lowercase ASCII
+ * letters, digits, `$` and `-` after any leading `_`, none empty, and none with
+ * `--` as its third and fourth characters.
+ */
+const normalizedRegex =
+  /^(?![^.]{2}--)_*[a-z0-9$-]+(?:\.(?![^.]{2}--)_*[a-z0-9$-]+)*$/
+
+/**
  * Hashes ENS label.
  *
  * Since ENS labels prohibit certain forbidden characters (e.g. underscore) and have other validation rules, you likely want to [normalize ENS labels](https://docs.ens.domains/contract-api-reference/name-processing#normalising-names) with [UTS-46 normalization](https://unicode.org/reports/tr46) before passing them to `labelhash`. You can use the built-in {@link ox#Ens.(normalize:function)} function for this.
@@ -96,6 +104,8 @@ export declare namespace namehash {
  * @returns Normalized ENS name.
  */
 export function normalize(name: string): string {
+  // A name that is already normal is returned without running the normalizer.
+  if (typeof name === 'string' && normalizedRegex.test(name)) return name
   return ens_normalize(name)
 }
 
