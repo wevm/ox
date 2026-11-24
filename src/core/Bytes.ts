@@ -288,22 +288,24 @@ export function fromNumber(
   options: fromNumber.Options = {},
 ) {
   const { signed, size } = options
-  // An unsigned safe integer that fits `size` is written in base 256, without
-  // BigInt.
+  // A safe integer that fits `size` is written in base 256, without BigInt: a
+  // negative one as its two's complement, which is a safe integer for sizes
+  // of up to 6 bytes.
   if (
     typeof value === 'number' &&
-    !signed &&
     Number.isSafeInteger(value) &&
-    value >= 0 &&
-    (!size ||
-      (Number.isSafeInteger(size) &&
-        size > 0 &&
-        (size > 6 || value < 2 ** (size * 8))))
+    (!size || (Number.isSafeInteger(size) && size > 0)) &&
+    (signed && size
+      ? size > 6
+        ? value >= 0
+        : value >= -(2 ** (size * 8 - 1)) && value < 2 ** (size * 8 - 1)
+      : value >= 0 && (!size || size > 6 || value < 2 ** (size * 8)))
   ) {
     let length = size || 1
     if (!size) for (let v = value; v >= 256; v = Math.floor(v / 256)) length++
     const bytes = new Uint8Array(length)
-    for (let i = length - 1, v = value; v > 0; i--, v = Math.floor(v / 256))
+    const unsigned = value < 0 ? value + 2 ** (size! * 8) : value
+    for (let i = length - 1, v = unsigned; v > 0; i--, v = Math.floor(v / 256))
       bytes[i] = v % 256
     return bytes
   }
