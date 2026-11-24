@@ -16,16 +16,18 @@ export type GlobalErrorType<name extends string = 'Error'> = Error & {
 export class BaseError<
   cause extends Error | undefined = undefined,
 > extends Error {
-  details: string
-  docs?: string | undefined
-  docsOrigin?: string | undefined
-  docsPath?: string | undefined
-  shortMessage: string
-  showVersion?: boolean | undefined
-  version?: string | undefined
+  // Declared, and set in the constructor, so the build (ES2021) does not
+  // emit an `Object.defineProperty` call for each field into every bundle.
+  declare details: string
+  declare docs?: string | undefined
+  declare docsOrigin?: string | undefined
+  declare docsPath?: string | undefined
+  declare shortMessage: string
+  declare showVersion?: boolean | undefined
+  declare version?: string | undefined
 
-  override cause: cause
-  override name = 'BaseError'
+  declare cause: cause
+  declare name: string
 
   // A getter, and defaults read in the constructor rather than installed on the prototype by a
   // static block, keep the class free of top-level side effects. Otherwise any bundle that
@@ -92,7 +94,8 @@ export class BaseError<
 
     super(message, options.cause ? { cause: options.cause } : undefined)
 
-    this.cause = options.cause as any
+    // In the order the fields were declared in, and `cause` enumerable, as
+    // class fields defined them.
     this.details = details
     this.docs = docs
     this.docsOrigin = docsBaseUrl
@@ -100,6 +103,13 @@ export class BaseError<
     this.shortMessage = shortMessage
     this.showVersion = showVersion
     this.version = version
+    Object.defineProperty(this, 'cause', {
+      configurable: true,
+      enumerable: true,
+      value: options.cause,
+      writable: true,
+    })
+    this.name = 'BaseError'
   }
 
   walk(): Error
