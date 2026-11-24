@@ -1,20 +1,32 @@
-# ox's metrics. Each script fans out over every public export of the entry points in package.json,
-# and over every public function, so each export and function scores on its own. The scripts
-# measure the build that `pnpm build` writes to dist.
+# ox's metrics. ox's main and 0.x branches share them: the same scripts in .agents/uphill, the same
+# metrics, defaults, item names and hot set, so a target pattern means the same item on both. Only
+# .agents/uphill/repo.ts, which says where the branch builds and which entry points it publishes,
+# the fuzz properties and corpus, the extra speed calls in speed-calls.test.ts, and the target maps
+# that each branch sets from its own measurements differ. Each script fans out over every public
+# export of every entry point, and over every public function, so each scores on its own. Items are
+# named the way users import them: a namespace member as `<index entry>:<Namespace>.<member>`, such
+# as `ox:Hex.fromString` or `ox/tempo:SignatureEnvelope.sortApprovals`; a whole namespace as
+# `ox:Hex`; a whole index entry by its specifier, such as `ox` or `ox/tempo`. The per-module metrics
+# (`tree-shaking`, `import-time` and `import-memory`) name their items by the module entry, such as
+# `ox/Hex`. The scripts measure the build that `pnpm build` writes.
+#
+# There is no latency category: ox's few async functions (WebAuthn, WebCrypto, Keystore, AesGcm,
+# RpcTransport) chain no independent requests.
 
-# Install scripts stay off, so the contracts submodule and Forge are not needed: the speed script
+# Install scripts stay off, so the contracts submodule and Foundry are not needed: the speed script
 # records ox's tests, which use the committed contract artifacts and Anvil. The scripts keep their
-# own dependencies, such as rolldown, viem, and ethers, in .agents/uphill.
+# own dependencies, such as rolldown, fast-check, viem and ethers, in .agents/uphill.
 setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/uphill'
 
 footprint:
   run: bun .agents/uphill/footprint.ts
-  # Gzipped bytes a consumer bundles to import one export from its entry point, such as
-  # `ox:Hex.fromNumber`, a namespace, such as `ox:Hex`, or the whole entry, such as `ox/tempo`.
-  # rolldown bundles and minifies each import for the browser. Most members bundle under 4 kB and
-  # the p90 is 14 kB, which the curves set: a function that signs, verifies, or derives a key
-  # bundles noble's curve. Encoders, decoders and envelopes without a curve bundle 1 to 9 kB, so
-  # the default is 10 kB, the same as on ox's 0.x branch. The first matching pattern applies.
+  # Gzipped bytes a consumer bundles to import one export the way users import it, such as
+  # `import { Hex } from 'ox'; export const $ = Hex.fromNumber` for `ox:Hex.fromNumber`, a whole
+  # namespace, such as `ox:Hex`, or a whole index entry, such as `ox/tempo`. rolldown bundles and
+  # minifies each import for the browser. A function that signs, verifies, or derives a key bundles
+  # noble's curve; encoders, decoders and envelopes without a curve bundle 1 to 9 kB, so the default
+  # is 10 kB. Each branch sets the targets below just above its own sizes for what has no known
+  # change, and at what a known change gives for the rest. The first matching pattern applies.
   entry-size:
     target: 10kB
     targets:
@@ -69,8 +81,8 @@ footprint:
   # The parts of ox its users lean on most, listed in .agents/uphill/hot.ts, scored on their own,
   # since a few dozen items that miss their targets would hide under entry-size's p90. Each hot
   # target is what a comparable library already achieves: the item's value today times the best
-  # ratio that ox 0.14, viem 2, ethers 6, or this branch with 0.x's BaseError fix shows for the same
-  # function, bundled, timed, or checked the same way. A lead under 10%, or one that saves less than
+  # ratio that the other ox branch, viem 2, ethers 6, or on main 0.x's BaseError fix shows for the
+  # same function, bundled, timed, or checked the same way. A lead under 10%, or one that saves less than
   # 100 B, 10 ns, 64 B, 2 ms, 100 kB, or 50 instantiations, holds the item at its value today. The
   # comment on each target names its reference.
   hot-entry-size:
@@ -149,16 +161,18 @@ footprint:
 
 speed:
   run: bun .agents/uphill/speed.ts
-  # Recording ox's core and Tempo unit tests takes about 3 minutes and replaying them about 3 at
-  # concurrency 4. The recording is cached until the tests or the build change.
-  timeout: 40m
+  # Recording ox's tests takes 1 to 3 minutes, and replaying them 3 to 6 minutes, depending on the
+  # branch and UPHILL_CONCURRENCY. The recording is cached until the tests or the build change.
+  timeout: 60m
   # CPU time per call of each public function, replaying the arguments ox's tests call it with, in
-  # a fresh process per function. ox's caches are emptied before every call, so each call does a
-  # first call's work, and the note gives the time with them warm. Three quarters of the calls take
-  # under 10 µs, so the default is 20 µs, the same as on ox's 0.x branch. Cryptography and key
-  # derivation whose cost is noble's has a target about 1.5 times its time today, since CPU time
-  # varies between runs. Keccak-bound hashing (typed data, ABI selectors, transaction hashes) keeps
-  # the default, so it shows as the opportunity it is. The first matching pattern applies.
+  # a fresh `node --single-threaded` process per function. ox's caches are emptied before every
+  # call, so each call does a first call's work while caching still works inside it, and the note
+  # gives the time with them warm. Three quarters of the calls take under 11 µs, so the default is
+  # 20 µs. Cryptography and key derivation whose cost is noble's (or, for 0.x's KZG functions, the
+  # micro-eth-signer KZG its tests inject) has a target about 1.5 times its time today on each
+  # branch, since CPU time varies by up to 1.5 times between runs. Keccak-bound hashing (typed data,
+  # ABI selectors, transaction hashes) keeps the default, so it shows as the opportunity it is. The
+  # first matching pattern applies.
   call-time:
     target: 20µs
     targets:
@@ -194,8 +208,8 @@ speed:
       'ox:Blobs.*': 400µs
       'ox:BinaryStateTree.*': 400µs
   # Heap bytes each call allocates. Three quarters of the calls allocate under 6 kB, so the default
-  # is 20 kB, the same as on ox's 0.x branch. The same cryptography has a target about 1.25 times
-  # its allocation today, which barely varies.
+  # is 20 kB. The same cryptography has a target about 1.25 times its allocation today on each
+  # branch, which barely varies.
   call-memory:
     varies: true
     target: 20kB
@@ -222,13 +236,9 @@ speed:
       'ox:Keystore.scrypt*': 20MB
       'ox:AesGcm.*': 200kB
       'ox:Blobs.*': 2MB
-  # CPU time to import each entry point in a fresh Node process. An entry that loads only the
-  # modules it uses imports in about 40 ms; the root and zod entries load everything.
+  # CPU time to import each entry point, index entries included, in a fresh Node process. The default
+  # is 60 ms; the root entry, and on main the zod and engine entries, load everything.
   import-time:
-    # Half the entries import in under 45 ms, against 28 ms on ox's 0.x branch. 60 ms, the default
-    # on both branches, asks for the envelope entries (`ox/TxEnvelope*` and
-    # `ox/TransactionRequest`, 77 to 85 ms) to stop loading every envelope type, and for
-    # `ox/erc8010` (93 ms) to stop parsing ABI parameters at load.
     target: 60ms
     targets:
       ox/zod*: 350ms
@@ -236,8 +246,8 @@ speed:
       ox/tempo*: 120ms
       ox/wasm*: 150ms
       ox/node*: 150ms
-  # Heap bytes each entry point holds once imported. The default is 3.5 MB, the same as on ox's
-  # 0.x branch; the root, zod and engine entries load everything.
+  # Heap bytes each entry point holds once imported. The default is 3.5 MB; the same entries load
+  # everything.
   import-memory:
     target: 3.5MB
     targets:
@@ -247,80 +257,81 @@ speed:
       ox/wasm*: 6MB
       ox/node*: 6MB
   # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
-  # hot-entry-size explains: each call against viem 2, ethers 6, and ox 0.14 called warm with the
-  # same arguments, and each import against ox 0.14. Times and allocations allow 1.25×, and import
+  # hot-entry-size explains: each call against viem 2, ethers 6, and the other ox branch called warm
+  # with the same arguments, and each import against the other ox branch. Times and allocations allow 1.25×, and import
   # memory 1.1×, for noise between runs, and a call stops at 10 ns, where it is too short to time.
   # Each branch replays its own tests' arguments, so the other branch's speed targets differ.
   hot-call-time:
     target: 20µs
     targets:
-      'ox:Hex.fromBytes': 23ns # today 18ns
-      'ox:Hex.fromNumber': 31ns # today 25ns
-      'ox:Hex.slice': 10ns # today 0
-      'ox:Hash.keccak256': 8.5µs # today 6.8µs
-      'ox:Hex.size': 10ns # today 0
-      'ox:Bytes.fromString': 88ns # today 280ns; viem 4.0× better
-      'ox:Hex.concat': 10ns # today 0
-      'ox:Hex.toBigInt': 21ns # today 16ns
-      'ox:Signature.fromHex': 20ns # today 16ns
-      'ox:Address.isEqual': 280ns # today 300ns; ox 0.14 1.3× better
-      'ox:Signature.toHex': 550ns # today 440ns
-      'ox:Hex.fromString': 140ns # today 340ns; viem 3.1× better
-      'ox:Hex.validate': 10ns # today 0
-      'ox:Bytes.from': 34ns # today 27ns
-      'ox:Bytes.concat': 390ns # today 310ns
-      'ox:Hex.random': 1.1µs # today 830ns
-      'ox:Hex.padLeft': 47ns # today 37ns
-      'ox:AbiParameters.encode': 810ns # today 930ns; viem 1.4× better
-      'ox:Bytes.fromNumber': 81ns # today 150ns; ox 0.14 2.3× better
-      'ox:Signature.from': 10ns # today 0
-      'ox:Address.validate': 98ns # today 78ns
-      'ox:PublicKey.toHex': 10ns # today 0
-      'ox:Hex.toNumber': 10ns # today 0.68ns
-      'ox:Json.stringify': 330ns # today 260ns
-      'ox:Address.fromPublicKey': 11µs # today 8.4µs
-      'ox:Address.checksum': 9.6µs # today 7.6µs
-      'ox/tempo:SignatureEnvelope.serialize': 19ns # today 15ns
-      'ox:Hex.assert': 10ns # today 0
-      'ox:AbiFunction.encodeData': 1.6µs # today 1.3µs
-      'ox:Bytes.fromHex': 51ns # today 54ns; ox 0.14 1.3× better
-      'ox:AbiParameters.from': 310ns # today 240ns
-      'ox:Bytes.random': 1.2µs # today 880ns
-      'ox/tempo:SignatureEnvelope.from': 10ns # today 0
-      'ox:Address.from': 85ns # today 95ns; ox 0.14 1.4× better
-      'ox/tempo:TxEnvelopeTempo.serialize': 1.9µs # today 1.5µs
-      'ox/tempo:KeyAuthorization.fromRpc': 4.9µs # today 3.9µs
-      'ox/tempo:TxEnvelopeTempo.deserialize': 1.9µs # today 1.5µs
-      'ox:AbiParameters.encodePacked': 10ns # today 0
-      'ox:Secp256k1.getPublicKey': 210µs # today 170µs
-      'ox/tempo:SignatureEnvelope.extractAddress': 10ns # today 0
-      'ox:Rlp.fromHex': 700ns # today 560ns
-      'ox:Rlp.toHex': 170ns # today 130ns
-      'ox:AbiEvent.extractLogs': 12µs # today 9.4µs
-      'ox:AbiFunction.fromAbi': 5.8µs # today 7.9µs; viem 1.7× better
-      'ox:Abi.from': 1.9µs # today 1.5µs
-      'ox:AbiFunction.decodeResult': 1.1µs # today 810ns
-      'ox:AbiParameters.decode': 1.1µs # today 830ns
-      'ox:Value.format': 10ns # today 0.42ns
-      'ox:TypedData.getSignPayload': 91µs # today 72µs
-      'ox:PersonalMessage.getSignPayload': 12µs # today 8.9µs
-      'ox:Signature.toRpc': 11ns # today 8.6ns
-      'ox:Signature.fromRpc': 360ns # today 280ns
-      'ox:Signature.extract': 10ns # today 0
-      'ox:Ens.normalize': 910ns # today 2.6µs; ox 0.14 3.6× better
-      'ox/erc6492:SignatureErc6492.validate': 1.8µs # today 2.3µs; ox 0.14 1.6× better
-      'ox/erc8010:SignatureErc8010.validate': 2.9µs # today 2.3µs
-      'ox/erc8010:SignatureErc8010.unwrap': 26µs # today 21µs
-      'ox:Base64.fromBytes': 300ns # today 230ns
-      'ox:Base64.toBytes': 160ns # today 130ns
-      'ox:Base64.toString': 630ns # today 500ns
-      'ox:Hash.sha256': 780ns # today 910ns; ox 0.14 1.4× better
-      'ox:Bytes.toHex': 2.8µs # today 2.2µs
-      'ox:WebCryptoP256.createKeyPair': 98µs # today 78µs
-      'ox:Secp256k1.sign': 400µs # today 320µs
-      'ox:Secp256k1.recoverAddress': 1.9ms # today 1.5ms
-  # Only four hot calls allocate more than a comparable library, and a p90 would hide them, so
-  # this list scores its worst item.
+      'ox:Hex.fromBytes': 50ns # today 31ns
+      'ox:Hex.fromNumber': 50ns # today 27ns
+      'ox:Hex.slice': 50ns # today 12ns
+      'ox:Hash.keccak256': 6.5µs # today 5.1µs
+      'ox:Hex.size': 50ns # today 0
+      'ox:Bytes.fromString': 91ns # today 290ns; viem 4.0× better
+      'ox:Hex.concat': 50ns # today 9.6ns
+      'ox:Hex.toBigInt': 50ns # today 26ns
+      'ox:Signature.fromHex': 50ns # today 37ns
+      'ox:Address.isEqual': 180ns # today 190ns; ox 0.14 1.3× better
+      'ox:Signature.toHex': 430ns # today 340ns
+      'ox:Hex.fromString': 130ns # today 330ns; viem 3.1× better
+      'ox:Hex.validate': 50ns # today 0
+      'ox:Bytes.from': 53ns # today 42ns
+      'ox:Bytes.concat': 430ns # today 340ns
+      'ox:Hex.random': 1.1µs # today 810ns
+      'ox:Hex.padLeft': 58ns # today 46ns
+      'ox:AbiParameters.encode': 660ns # today 750ns; viem 1.4× better
+      'ox:Bytes.fromNumber': 54ns # today 100ns; ox 0.14 2.3× better
+      'ox:Signature.from': 270ns # today 210ns
+      'ox:Address.validate': 83ns # today 66ns
+      'ox:PublicKey.toHex': 54ns # today 43ns
+      'ox:Hex.toNumber': 50ns # today 7.3ns
+      'ox:Json.stringify': 310ns # today 250ns
+      'ox:Address.fromPublicKey': 7.7µs # today 6.2µs
+      'ox:Address.checksum': 9.5µs # today 7.6µs
+      'ox/tempo:SignatureEnvelope.serialize': 82ns # today 65ns
+      'ox:Hex.assert': 50ns # today 0
+      'ox:AbiFunction.encodeData': 1.2µs # today 950ns
+      'ox:Bytes.fromHex': 120ns # today 130ns; ox 0.14 1.3× better
+      'ox:AbiParameters.from': 230ns # today 180ns
+      'ox:Bytes.random': 980ns # today 780ns
+      'ox/tempo:SignatureEnvelope.from': 50ns # today 31ns
+      'ox:Address.from': 64ns # today 72ns; ox 0.14 1.4× better
+      'ox/tempo:TxEnvelopeTempo.serialize': 1.8µs # today 1.4µs
+      'ox/tempo:KeyAuthorization.fromRpc': 4.7µs # today 3.7µs
+      'ox/tempo:TxEnvelopeTempo.deserialize': 1.6µs # today 1.2µs
+      'ox:AbiParameters.encodePacked': 50ns # today 16ns
+      'ox:Secp256k1.getPublicKey': 210µs # today 160µs
+      'ox/tempo:SignatureEnvelope.extractAddress': 50ns # today 0
+      'ox:Rlp.fromHex': 770ns # today 620ns
+      'ox:Rlp.toHex': 550ns # today 430ns
+      'ox:AbiEvent.extractLogs': 11µs # today 8.4µs
+      'ox:AbiFunction.fromAbi': 58ns # today 46ns
+      'ox:Abi.from': 2.1µs # today 1.6µs
+      'ox:AbiFunction.decodeResult': 660ns # today 530ns
+      'ox:AbiParameters.decode': 690ns # today 550ns
+      'ox:Value.format': 50ns # today 32ns
+      'ox:TypedData.getSignPayload': 76µs # today 60µs
+      'ox:PersonalMessage.getSignPayload': 8.4µs # today 6.7µs
+      'ox:Signature.toRpc': 50ns # today 11ns
+      'ox:Signature.fromRpc': 160ns # today 120ns
+      'ox:Signature.extract': 300ns # today 240ns
+      'ox:Ens.normalize': 770ns # today 2.2µs; ox 0.14 3.6× better
+      'ox/erc6492:SignatureErc6492.validate': 1.7µs # today 2.2µs; ox 0.14 1.6× better
+      'ox/erc8010:SignatureErc8010.validate': 2.8µs # today 2.2µs
+      'ox/erc8010:SignatureErc8010.unwrap': 24µs # today 19µs
+      'ox:Base64.fromBytes': 130ns # today 97ns
+      'ox:Base64.toBytes': 75ns # today 60ns
+      'ox:Base64.toString': 420ns # today 330ns
+      'ox:Hash.sha256': 800ns # today 930ns; ox 0.14 1.4× better
+      'ox:Bytes.toHex': 2.6µs # today 2µs
+      'ox:WebCryptoP256.sign': 42µs # today 33µs
+      'ox:WebCryptoP256.createKeyPair': 54µs # today 42µs
+      'ox:Secp256k1.sign': 270µs # today 210µs
+      'ox:Secp256k1.recoverAddress': 1.7ms # today 1.3ms
+  # Few hot calls allocate more than a comparable library, and a p90 would hide them, so this list
+  # scores its worst item.
   hot-call-memory:
     varies: true
     target: 20kB
@@ -354,7 +365,7 @@ speed:
       'ox:Address.checksum': 2.6kB # today 2kB
       'ox/tempo:SignatureEnvelope.serialize': 710B # today 570B
       'ox:Hex.assert': 16B # today 0
-      'ox:AbiFunction.encodeData': 2.6kB # today 2.1kB
+      'ox:AbiFunction.encodeData': 2.6kB # today 2kB
       'ox:Bytes.fromHex': 380B # today 300B
       'ox:AbiParameters.from': 830B # today 660B
       'ox:Bytes.random': 310B # today 250B
@@ -367,53 +378,54 @@ speed:
       'ox:Secp256k1.getPublicKey': 220kB # today 170kB
       'ox/tempo:SignatureEnvelope.extractAddress': 16B # today 0
       'ox:Rlp.fromHex': 1.4kB # today 1kB
-      'ox:Rlp.toHex': 890B # today 710B
+      'ox:Rlp.toHex': 1.9kB # today 1.5kB
       'ox:AbiEvent.extractLogs': 8.2kB # today 6.5kB
-      'ox:AbiFunction.fromAbi': 2kB # today 4.3kB; viem 2.6× better
-      'ox:Abi.from': 5.4kB # today 4.3kB
-      'ox:AbiFunction.decodeResult': 1.8kB # today 1.4kB
-      'ox:AbiParameters.decode': 1.7kB # today 1.3kB
+      'ox:AbiFunction.fromAbi': 190B # today 400B; viem 2.6× better
+      'ox:Abi.from': 5.3kB # today 4.2kB
+      'ox:AbiFunction.decodeResult': 1.7kB # today 1.3kB
+      'ox:AbiParameters.decode': 1.6kB # today 1.3kB
       'ox:Value.format': 90B # today 72B
-      'ox:TypedData.getSignPayload': 39kB # today 31kB
+      'ox:TypedData.getSignPayload': 38kB # today 30kB
       'ox:PersonalMessage.getSignPayload': 3.1kB # today 2.5kB
       'ox:Signature.toRpc': 160B # today 130B
       'ox:Signature.fromRpc': 1.1kB # today 830B
       'ox:Signature.extract': 420B # today 460B; ox 0.14 1.4× better
-      'ox:Ens.normalize': 5.9kB # today 4.7kB
+      'ox:Ens.normalize': 5.9kB # today 4.6kB
       'ox/erc6492:SignatureErc6492.validate': 2.1kB # today 1.6kB
       'ox/erc8010:SignatureErc8010.validate': 2.1kB # today 1.6kB
       'ox/erc8010:SignatureErc8010.unwrap': 18kB # today 14kB
       'ox:Base64.fromBytes': 140B # today 110B
       'ox:Base64.toBytes': 290B # today 230B
       'ox:Base64.toString': 340B # today 270B
-      'ox:Hash.sha256': 1.9kB # today 1.4kB
+      'ox:Hash.sha256': 1.8kB # today 1.4kB
       'ox:Bytes.toHex': 5.3kB # today 4.2kB
-      'ox:WebCryptoP256.createKeyPair': 9.8kB # today 7.8kB
-      'ox:Secp256k1.sign': 370kB # today 290kB
+      'ox:WebCryptoP256.sign': 8.5kB # today 6.8kB
+      'ox:WebCryptoP256.createKeyPair': 8.9kB # today 7.1kB
+      'ox:Secp256k1.sign': 350kB # today 270kB
       'ox:Secp256k1.recoverAddress': 1.5MB # today 1.2MB
   hot-import-time:
     target: 60ms
     targets:
-      'ox': 200ms # today 230ms; ox 0.14 1.5× better
+      'ox': 190ms # today 220ms; ox 0.14 1.5× better
       'ox/tempo': 110ms # today 180ms; ox 0.14 2.0× better
-      'ox/Hex': 8.6ms # today 12ms; ox 0.14 1.7× better
-      'ox/Address': 25ms # today 26ms; ox 0.14 1.3× better
-      'ox/Signature': 33ms # today 26ms
-      'ox/TypedData': 55ms # today 44ms
+      'ox/Hex': 8.9ms # today 12ms; ox 0.14 1.7× better
+      'ox/Address': 26ms # today 27ms; ox 0.14 1.3× better
+      'ox/Signature': 34ms # today 27ms
+      'ox/TypedData': 53ms # today 42ms
       'ox/RpcResponse': 1.8ms # today 1.4ms
       'ox/Secp256k1': 76ms # today 60ms
-      'ox/Provider': 8.6ms # today 6.8ms
-      'ox/AbiFunction': 57ms # today 46ms
-      'ox/AbiParameters': 52ms # today 41ms
-      'ox/Bytes': 9.1ms # today 14ms; ox 0.14 1.9× better
-      'ox/Hash': 30ms # today 24ms
-      'ox/WebAuthnP256': 86ms # today 68ms
-      'ox/erc4337': 55ms # today 67ms; ox 0.14 1.5× better
-      'ox/erc6492': 43ms # today 44ms; ox 0.14 1.3× better
+      'ox/Provider': 8.3ms # today 6.6ms
+      'ox/AbiFunction': 55ms # today 44ms
+      'ox/AbiParameters': 50ms # today 40ms
+      'ox/Bytes': 8.9ms # today 14ms; ox 0.14 1.9× better
+      'ox/Hash': 31ms # today 24ms
+      'ox/WebAuthnP256': 84ms # today 67ms
+      'ox/erc4337': 54ms # today 66ms; ox 0.14 1.5× better
+      'ox/erc6492': 41ms # today 41ms; ox 0.14 1.3× better
   hot-import-memory:
     target: 3.5MB
     targets:
-      'ox': 8.2MB # today 7.5MB
+      'ox': 8.2MB # today 7.4MB
       'ox/tempo': 5.5MB # today 5.9MB; ox 0.14 1.2× better
       'ox/Hex': 750kB # today 680kB
       'ox/Address': 1.4MB # today 1.2MB
@@ -433,11 +445,18 @@ speed:
 # How much of ox the speed bench reaches. It shares the speed script's run.
 coverage:
   run: bun .agents/uphill/speed.ts
-  timeout: 40m
-  # Whether each public function has a recorded call the bench can replay. The note says why when
-  # it has none, such as a function every test calls with a closure.
+  timeout: 60m
+  # Whether each public function has a call the bench can replay: one that returned or resolved in
+  # ox's tests (or in .agents/uphill/speed-calls.test.ts) with arguments that rebuild in another
+  # process. The note says why not otherwise, such as a function every test calls with a closure.
   benched: {}
 
+# Type-checking cost of every public export, values and types, from the built declarations. Each
+# export gets a consumer that imports it and forces its type to resolve, checked in a fresh program
+# with ox's compiler options, minus a baseline that only imports the entry. It writes times, so
+# Uphill runs it 5 times. It needs Node 26 or later, whose V8 reports the bytes a check allocates
+# (`total_allocated_bytes`); with an older `node` first on PATH, it runs its workers on
+# `npx --yes node@26`, which needs the network the first time.
 types:
   run: bun .agents/uphill/types.ts
   timeout: 15m
@@ -445,8 +464,7 @@ types:
   # members counted as exports. A use is `typeof` the value, with `Parameters` and `ReturnType` for
   # a function, or the type at its defaults, plus one level of properties. Each export is checked
   # in its own program, minus a program that only imports its entry. Most exports cost under 200;
-  # RPC conversions and ABI utilities infer over unions of every transaction or ABI type. The
-  # defaults are the same as on ox's 0.x branch.
+  # RPC conversions and ABI utilities infer over unions of every transaction or ABI type.
   instantiations:
     target: 1000
     targets:
@@ -475,9 +493,8 @@ types:
       'ox/erc4337:UserOperation.toTypedData': 25MB
   # Instantiations attest counts for each test of the attest files (`*.snap-d.ts` and
   # `*.bench-d.ts`), isolated the way `attest.instantiations` isolates a test, against ox's sources
-  # and test/tsconfig.json. Most tests pin type strings, not counts, and the human-readable ABI
-  # benches pin counts far above today's, so each target is this count plus 20%, attest's
-  # threshold, as on ox's 0.x branch. New tests fall back to 20,000.
+  # and the tsconfig its type tests use. Most tests pin type strings, not counts, so each target is
+  # the test's count plus 20%, attest's threshold. New tests fall back to 20,000.
   bench-instantiations:
     target: 20000
     targets:
@@ -543,9 +560,9 @@ types:
       'src/erc4337/_test/UserOperation.snap-d.ts > from > options: signature': 2713
       'src/erc4337/_test/UserOperation.snap-d.ts > v0.9 > RPC round-trip': 8136
   # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
-  # hot-entry-size explains: the same export's instantiations in ox 0.14 or viem 2, checked with
-  # this repo's TypeScript. Only six items have a lower target, and a p90 would hide them, so this
-  # list scores its worst item.
+  # hot-entry-size explains: the same export's instantiations in the other ox branch or viem 2,
+  # checked with this repo's TypeScript. Few items have a lower target, and a p90 would hide them,
+  # so this list scores its worst item.
   hot-instantiations:
     target: 1000
     score: max
@@ -624,9 +641,9 @@ types:
 call-types:
   run: bun .agents/uphill/types-calls.ts
   timeout: 20m
-  # p50 20, p90 805. A call should cost under 1,000, and one that infers from an ABI or typed data
-  # under 5,000, as on ox's 0.x branch. TypedData's non-generic helpers infer nothing, so they keep
-  # 1,000. A call on a zod schema namespace gets 10,000. The first match applies.
+  # A call should cost under 1,000, and one that infers from an ABI or typed data under 5,000.
+  # TypedData's non-generic helpers infer nothing, so they keep 1,000. On main, a call on a zod
+  # schema namespace gets 10,000. The first match applies.
   instantiations:
     target: 1000
     targets:
@@ -638,8 +655,8 @@ call-types:
       'ox/erc4337:UserOperation.*': 5000
       'ox/zod:*': 10000
   # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
-  # hot-entry-size explains: the same call written against ox 0.14 or viem 2. Only
-  # AbiEvent.extractLogs has a lower target, so this list scores its worst item.
+  # hot-entry-size explains: the same call written against the other ox branch or viem 2. Few items
+  # have a lower target, so this list scores its worst item.
   hot-instantiations:
     target: 1000
     score: max
@@ -661,33 +678,33 @@ call-types:
       'ox:Bytes.concat': 10 # today 1
       'ox:Hex.random': 10 # today 0
       'ox:Hex.padLeft': 10 # today 0
-      'ox:AbiParameters.encode': 3200 # today 3200
+      'ox:AbiParameters.encode': 1200 # today 1100
       'ox:Bytes.fromNumber': 10 # today 0
-      'ox:Signature.from': 340 # today 340
+      'ox:Signature.from': 260 # today 250
       'ox:Address.validate': 10 # today 0
       'ox:PublicKey.toHex': 48 # today 48
       'ox:Hex.toNumber': 10 # today 0
       'ox:Json.stringify': 10 # today 0
       'ox:Address.fromPublicKey': 10 # today 0
       'ox:Address.checksum': 10 # today 0
-      'ox/tempo:SignatureEnvelope.serialize': 1700 # today 1600
+      'ox/tempo:SignatureEnvelope.serialize': 1300 # today 1300
       'ox:Hex.assert': 10 # today 0
       'ox:AbiFunction.encodeData': 72 # today 72
       'ox:Bytes.fromHex': 10 # today 0
       'ox:AbiParameters.from': 96 # today 96
       'ox:Bytes.random': 10 # today 0
-      'ox/tempo:SignatureEnvelope.from': 1300 # today 1200
+      'ox/tempo:SignatureEnvelope.from': 330 # today 320
       'ox:Address.from': 10 # today 0
-      'ox/tempo:TxEnvelopeTempo.serialize': 340 # today 340
-      'ox/tempo:KeyAuthorization.fromRpc': 10 # today 0
+      'ox/tempo:TxEnvelopeTempo.serialize': 320 # today 310
+      'ox/tempo:KeyAuthorization.fromRpc': 190 # today 190
       'ox/tempo:TxEnvelopeTempo.deserialize': 12 # today 12
       'ox:AbiParameters.encodePacked': 19 # today 19
       'ox:Secp256k1.getPublicKey': 30 # today 30
       'ox/tempo:SignatureEnvelope.extractAddress': 38 # today 38
       'ox:Rlp.fromHex': 22 # today 22
       'ox:Rlp.toHex': 10 # today 5
-      'ox:AbiEvent.extractLogs': 1900 # today 3900; viem 2.0× better
-      'ox:AbiFunction.fromAbi': 480 # today 480
+      'ox:AbiEvent.extractLogs': 690 # today 1400; viem 2.0× better
+      'ox:AbiFunction.fromAbi': 1300 # today 1200
       'ox:Abi.from': 460 # today 460
       'ox:AbiFunction.decodeResult': 470 # today 460
       'ox:AbiParameters.decode': 31 # today 31
@@ -706,9 +723,9 @@ call-types:
       'ox:Base64.toString': 10 # today 0
       'ox:Hash.sha256': 20 # today 20
       'ox:Bytes.toHex': 10 # today 0
-      'ox:WebCryptoP256.sign': 76 # today 76
+      'ox:WebCryptoP256.sign': 30 # today 30
       'ox:WebCryptoP256.createKeyPair': 10 # today 3
-      'ox:Secp256k1.sign': 39 # today 39
+      'ox:Secp256k1.sign': 34 # today 34
       'ox:Secp256k1.recoverAddress': 10 # today 0
 
 # Whether each public function has a call in ox's tests that call-types measures; the note says
@@ -720,7 +737,8 @@ type-coverage:
 
 fuzz:
   run: bun .agents/uphill/fuzz.ts
-  # About 3 minutes at UPHILL_CONCURRENCY=4; the limit leaves room for a loaded machine.
+  # About 3 minutes at UPHILL_CONCURRENCY=2 to 4. The limit leaves room for a loaded machine and for
+  # workers stopped on a hang or runaway memory, each of which is rerun alone.
   timeout: 20m
   # Whether each public function has a fuzz harness that ran: structured properties (round trips,
   # differentials against viem, ethers, noble, scure and micro-eth-signer, consistency) or boundary
@@ -731,8 +749,8 @@ fuzz:
   # input that keeps the declared types, no stack overflow, hang, or runaway memory, and no broken
   # round trip, differential, or consistency property. The note gives the minimized input.
   fuzz-clean: {}
-  # Percent of the function's own source lines that ran under fuzzing (V8 precise coverage of
-  # dist).
+  # Percent of the function's own source lines in the build that ran under fuzzing (V8 precise
+  # coverage).
   fuzz-coverage: { target: 90, better: higher }
   # The hot items of .agents/uphill/hot.ts: every line of their own source should run under
   # fuzzing.

@@ -1,16 +1,29 @@
 /**
  * Vitest setup file for recording. It installs `globalThis.__uphillWrap`, which the transform in
- * `speed-vitest.config.ts` calls on every export of `src/**`, and writes what the wrapped functions
- * were called with to `$UPHILL_SPEED_RECORD_DIR/<pid>.jsonl` after each test file.
+ * `speed-vitest.config.ts` calls on every export of ox's modules in src/, and writes what the
+ * wrapped functions were called with to `$UPHILL_SPEED_RECORD_DIR/<pid>.jsonl` after each test
+ * file.
  *
- * A value a wrapped export returned remembers that call, so a later call that passes it, such as
- * a key pair from `WebCryptoP256.createKeyPair`, records the call that rebuilds it; an instance of
- * an exported class, such as an error, remembers its construction. Every value an export reaches,
- * such as a zod schema or a constant, remembers that path (see speed-codec.ts).
+ * Calls from test code and calls one ox function makes to another are both recorded, keyed by the
+ * module that defines the export (`src/core/Hex.ts#fromNumber`): ox's modules import each other by
+ * relative path, and each module's own bindings are the wrapped functions, so a call inside a
+ * module goes through the wrapper too. A function an exported namespace object or function holds
+ * records under its path from the export (`src/<file>.ts#<export>.<member>`). A call is direct
+ * when test code made it, and internal when it ran inside another wrapped call.
  *
- * Tests reach the local anvil the global setup starts. A request to any other host gets a "method
- * not found" error, so no test reaches the network and recordings repeat. It seeds `Math.random`
- * and `crypto.getRandomValues` per test file for the same reason.
+ * A value a wrapped export returned remembers that call, and so do the objects and functions at
+ * its own properties, so a later call that passes it, such as a `CryptoKey` from
+ * `WebCryptoP256.createKeyPair` or a KZG implementation from `Kzg.from`, records the call that
+ * rebuilds it; an instance of an exported class, such as an error, remembers its construction.
+ * Every value an export reaches, such as a zod schema or a constant, remembers that path (see
+ * speed-codec.ts), and so does every value a test helper module (`test/**`) exports, such as the
+ * KZG implementation ox's 0.x tests build, for arguments nothing else can carry.
+ *
+ * Tests reach the local anvil the global setup starts, and local servers the tests start. A
+ * request to any other host gets a JSON-RPC "method not found" error, so no test reaches the
+ * network and recordings repeat. It seeds `Math.random`, `crypto.getRandomValues`, and
+ * `crypto.randomUUID` per test file for the same reason. After each file it destroys the anvil
+ * instances the file used.
  *
  * @module
  */
@@ -20,7 +33,12 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterAll, afterEach, beforeEach, expect } from 'vitest'
 
-import { encode, type Origin, Unreplayable } from './speed-codec.ts'
+import {
+  encode,
+  maxEncodedLength,
+  type Origin,
+  Unreplayable,
+} from './speed-codec.ts'
 
 /** Argument sets encoded per function and test file, for calls made from test code. */
 const directBudget = 200
@@ -45,25 +63,33 @@ type Key = {
   ok: Map<string, Sample>
   okLength: number
 }
-/** A recorded call in progress. */
-type Frame = { depth: number; done: boolean }
 type State = {
   keys: Map<string, Key>
   file: string
   test: string
+  /** The anvil instances (`http://host:port/<pool id>`) this file reached. */
+  nodes: Set<string>
+  /** `fetch` before the recorder answered for the network. */
+  fetch: typeof fetch
   inTest: boolean
-  frames: AsyncLocalStorage<Frame>
+  /** How many wrapped calls the current one runs inside. */
+  depth: AsyncLocalStorage<number>
   proxies: WeakMap<object, Map<string, unknown>>
+  /** Every proxy the recorder made, so an export that re-exports another is not wrapped twice. */
+  wrapped: WeakSet<object>
   /** The calls that returned each object or function a wrapped export returned, outermost first. */
   produced: WeakMap<object, Origin[]>
   /** The export path of each value an export reaches. */
   refs: WeakMap<object, string>
+  /** The export path of each value a test helper module exports or reaches. */
+  fixtures: WeakMap<object, string>
 }
 
 const root = path.resolve(import.meta.dirname, '../..')
 const g = globalThis as typeof globalThis & {
   __uphillState?: State
   __uphillWrap?: (value: unknown, file: string, name: string) => unknown
+  __uphillFixture?: (value: unknown, file: string, name: string) => void
 }
 
 const state: State = (g.__uphillState ??= install())
@@ -89,13 +115,18 @@ afterEach(() => {
   state.inTest = false
 })
 
-afterAll(() => {
+afterAll(async () => {
   const dir = process.env.UPHILL_SPEED_RECORD_DIR
   if (dir && state.keys.size) {
     const keys: Record<string, unknown> = {}
     for (const [key, value] of state.keys)
       keys[key] = {
-        ...value,
+        calls: value.calls,
+        direct: value.direct,
+        unreplayable: value.unreplayable,
+        threw: value.threw,
+        error: value.error,
+        errorWhere: value.errorWhere,
         ok: [...value.ok].map(([args, sample]) => ({ args, ...sample })),
       }
     fs.appendFileSync(
@@ -104,6 +135,15 @@ afterAll(() => {
     )
   }
   state.keys = new Map()
+  // prool names an anvil instance by a pool id that each test file picks, and keeps every instance
+  // running until the run ends, so 20 files would leave 20 mainnet forks running. This hook runs
+  // after the file's own hooks.
+  await Promise.all(
+    [...state.nodes].map((node) =>
+      state.fetch(`${node}/destroy`).catch(() => undefined),
+    ),
+  )
+  state.nodes.clear()
 })
 
 function install(): State {
@@ -111,21 +151,34 @@ function install(): State {
     keys: new Map(),
     file: '',
     test: '',
+    nodes: new Set(),
+    fetch: globalThis.fetch,
     inTest: false,
-    frames: new AsyncLocalStorage<Frame>(),
+    depth: new AsyncLocalStorage<number>(),
     proxies: new WeakMap(),
+    wrapped: new WeakSet(),
     produced: new WeakMap(),
     refs: new WeakMap(),
+    fixtures: new WeakMap(),
   }
   g.__uphillWrap = (value, file, name) => {
     const key = `${file}#${name}`
-    if (value && typeof value === 'object') reach(value, key, 0)
+    if (value && typeof value === 'object') reach(value, key, 0, created.refs)
     return wrap(value, key)
   }
-  blockNetwork()
+  g.__uphillFixture = (value, file, name) =>
+    reach(value, `${file}#${name}`, 0, created.fixtures)
+  blockNetwork(created)
   return created
 
+  /**
+   * Wraps a function, a class, or a namespace object of functions. A value the recorder wrapped
+   * already, such as an export that re-exports another module's, is left as it is.
+   */
   function wrap(value: unknown, key: string): unknown {
+    if (!value || (typeof value !== 'function' && typeof value !== 'object'))
+      return value
+    if (created.wrapped.has(value)) return value
     if (typeof value === 'function') {
       // An instance of an exported class, such as an error, remembers its construction.
       if (isClass(value))
@@ -191,18 +244,24 @@ function install(): State {
     let proxy = byKey.get(key)
     if (!proxy) {
       byKey.set(key, (proxy = make()))
-      remember(value, key)
-      remember(proxy as object, key)
+      created.wrapped.add(proxy as object)
+      remember(value, key, created.refs)
+      remember(proxy as object, key, created.refs)
     }
     return proxy
   }
 
   /** Remembers the export path of an exported object and of the values its properties hold. */
-  function reach(value: unknown, key: string, depth: number) {
+  function reach(
+    value: unknown,
+    key: string,
+    depth: number,
+    paths: WeakMap<object, string>,
+  ) {
     if (!value || (typeof value !== 'object' && typeof value !== 'function'))
       return
     if (value instanceof Uint8Array) return
-    remember(value, key)
+    remember(value, key, paths)
     if (depth >= 3 || typeof value !== 'object' || Array.isArray(value)) return
     const proto = Object.getPrototypeOf(value)
     if (proto !== Object.prototype && proto !== null) return
@@ -214,19 +273,23 @@ function install(): State {
       } catch {
         continue
       }
-      reach(member, `${key}.${property}`, depth + 1)
+      reach(member, `${key}.${property}`, depth + 1, paths)
     }
   }
 
   /** Keeps the shortest path for a value reachable at several, so the choice does not depend on load order. */
-  function remember(value: object, key: string) {
-    const existing = created.refs.get(value)
+  function remember(
+    value: object,
+    key: string,
+    paths: WeakMap<object, string>,
+  ) {
+    const existing = paths.get(value)
     if (
       existing === undefined ||
       key.length < existing.length ||
       (key.length === existing.length && key < existing)
     )
-      created.refs.set(value, key)
+      paths.set(value, key)
   }
 
   function record(
@@ -252,12 +315,10 @@ function install(): State {
         }),
       )
     entry.calls++
-    const parent = current.frames.getStore()
-    const depth = parent?.depth ?? 0
+    const depth = current.depth.getStore() ?? 0
     // A call from test code, rather than from another ox function or a module's top level.
     const direct = depth === 0 && current.inTest
     if (direct) entry.direct++
-    const frame: Frame = { depth: depth + 1, done: false }
     let encoded: string | undefined
     if (
       direct
@@ -268,6 +329,7 @@ function install(): State {
         encoded = encode(args, {
           origin: (value) => current.produced.get(value),
           ref: (value) => created.refs.get(value),
+          fixture: (value) => created.fixtures.get(value),
           sources: true,
         })
       } catch (error) {
@@ -280,8 +342,6 @@ function install(): State {
       }
     const where = `${current.file} > ${current.test}`
     const settle = (ok: boolean, error?: unknown) => {
-      if (frame.done) return
-      frame.done = true
       if (encoded === undefined) return
       if (!ok) {
         entry.threw++
@@ -290,7 +350,9 @@ function install(): State {
             (error as { shortMessage?: string })?.shortMessage ??
               (error as Error)?.message ??
               error,
-          ).slice(0, 200)
+          )
+            .split('\n')[0]!
+            .slice(0, 200)
           entry.errorWhere = where
         }
         return
@@ -301,7 +363,8 @@ function install(): State {
         sample.direct ||= direct
       } else if (
         entry.ok.size < keptPerFile &&
-        entry.okLength + encoded.length <= keptLengthPerFile
+        entry.okLength + encoded.length <= keptLengthPerFile &&
+        encoded.length <= maxEncodedLength
       ) {
         entry.ok.set(encoded, { n: 1, direct, where })
         entry.okLength += encoded.length
@@ -309,20 +372,18 @@ function install(): State {
     }
     let result: unknown
     try {
-      result = current.frames.run(frame, () =>
+      result = current.depth.run(depth + 1, () =>
         Reflect.apply(target, self, args),
       )
     } catch (error) {
       settle(false, error)
       throw error
     }
-    const thenable =
-      !!result && typeof (result as Promise<unknown>).then === 'function'
-    if (!thenable) {
+    if (!isThenable(result)) {
       produce(result, { key, args })
       settle(true)
     } else
-      (result as Promise<unknown>).then(
+      result.then(
         (value) => {
           produce(value, { key, args, async: true })
           settle(true)
@@ -335,17 +396,36 @@ function install(): State {
   /**
    * Remembers where an object or function came from, so a later call that passes it can be
    * replayed by making this call again. A call that returns what an inner call returned settles
-   * after it, so the outermost call comes first.
+   * after it, so the outermost call comes first. The objects and functions at the value's own
+   * properties remember the call too, with their property, such as the `privateKey` of a key
+   * pair or the key function `Keystore.pbkdf2` returns first, unless a call returned them itself.
    */
   function produce(value: unknown, origin: Origin) {
-    if (
-      typeof value !== 'function' &&
-      (typeof value !== 'object' ||
-        value === null ||
-        Array.isArray(value) ||
-        value instanceof Uint8Array)
-    )
+    if (Array.isArray(value)) {
+      value.forEach((member, index) => {
+        if (isObject(member) && !created.produced.has(member))
+          add(member, { ...origin, path: [String(index)] })
+      })
       return
+    }
+    if (!isObject(value)) return
+    add(value, origin)
+    if (typeof value !== 'object') return
+    const proto = Object.getPrototypeOf(value)
+    if (proto !== Object.prototype && proto !== null) return
+    for (const property of Object.keys(value)) {
+      let member: unknown
+      try {
+        member = (value as Record<string, unknown>)[property]
+      } catch {
+        continue
+      }
+      if (!isObject(member) || created.produced.has(member)) continue
+      add(member, { ...origin, path: [property] })
+    }
+  }
+
+  function add(value: object, origin: Origin) {
     const origins = created.produced.get(value)
     if (!origins) created.produced.set(value, [origin])
     else if (
@@ -358,6 +438,25 @@ function install(): State {
   function unreplayable(entry: Key, reason: string) {
     entry.unreplayable[reason] = (entry.unreplayable[reason] ?? 0) + 1
   }
+}
+
+/** An object or function a later call could pass, other than bytes and arrays. */
+function isObject(value: unknown): value is object {
+  return (
+    typeof value === 'function' ||
+    (typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      !(value instanceof Uint8Array))
+  )
+}
+
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    !!value &&
+    (typeof value === 'object' || typeof value === 'function') &&
+    typeof (value as PromiseLike<unknown>).then === 'function'
+  )
 }
 
 function isClass(value: unknown) {
@@ -384,8 +483,9 @@ function isNamespace(value: unknown, depth = 0): value is object {
 }
 
 /**
- * Seeds `Math.random` and `crypto.getRandomValues` from the test file's path, so tests that make
- * random keys or inputs record the same arguments every time the source is recorded.
+ * Seeds `Math.random`, `crypto.getRandomValues`, and `crypto.randomUUID` from the test file's
+ * path, so tests that make random keys, inputs, or keystore ids record the same arguments every
+ * time the source is recorded. Keys WebCrypto generates stay random.
  */
 function seedRandomness(file: string) {
   let seed = 2166136261
@@ -413,17 +513,36 @@ function seedRandomness(file: string) {
       return array
     },
   })
+  Object.defineProperty(globalThis.crypto, 'randomUUID', {
+    configurable: true,
+    writable: true,
+    value: () => {
+      const hex = Array.from({ length: 32 }, () =>
+        ((next() * 16) | 0).toString(16),
+      ).join('')
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${(8 | (Number.parseInt(hex[16]!, 16) & 3)).toString(16)}${hex.slice(17, 20)}-${hex.slice(20)}`
+    },
+  })
 }
 
-/** Answers every request to a host other than this machine with a "method not found" error. */
-function blockNetwork() {
-  const { fetch } = globalThis
+/** The port of the anvil instance server the global setup starts (test/prool.ts). */
+const anvilPort = '8545'
+
+/**
+ * Answers every request to a host other than this machine with a JSON-RPC "method not found"
+ * error, and notes the anvil instances the file reaches.
+ */
+function blockNetwork(state: State) {
+  const { fetch } = state
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(
       typeof input === 'string' || input instanceof URL ? input : input.url,
     )
-    if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(url.hostname))
+    if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(url.hostname)) {
+      const id = url.pathname.match(/^\/(\d+)(\/|$)/)?.[1]
+      if (id && url.port === anvilPort) state.nodes.add(`${url.origin}/${id}`)
       return fetch(input, init)
+    }
     let id: unknown = 0
     try {
       id = JSON.parse(String(init?.body)).id ?? 0

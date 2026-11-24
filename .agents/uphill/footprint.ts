@@ -16,8 +16,8 @@
  *
  * The builds run in a pool of `UPHILL_CONCURRENCY` builds, or one per core.
  *
- * Entry points come from package.json in its order, and a value several entries reach, such as
- * `Hex` from `ox` and from `ox/Hex`, is measured once under the first. zod's own functions, which
+ * Entry points come from repo.ts in its order, and a value several entries reach, such as `Hex`
+ * from `ox` and from `ox/Hex`, is measured once under the first. zod's own functions, which
  * `ox/zod`'s `z` re-exports, are zod's and are left out.
  *
  * @module
@@ -29,24 +29,42 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { type OutputChunk, rolldown } from 'rolldown'
 
-import { entries } from './entries.ts'
 import { hot } from './hot.ts'
+import * as repo from './repo.ts'
 
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
 
 const started = performance.now()
-const root = path.resolve(import.meta.dir, '../..')
-const dist = path.join(root, 'dist/')
+const build = `${repo.build}/`
 const concurrency =
   Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism()
+const entries = repo.entries()
 
 // A consumer's bundler finds ox in its node_modules and resolves each subpath through the exports
-// map in package.json. Rolldown follows the link to the checkout, so ox's dependencies resolve
-// from ox's node_modules.
+// map. The scratch package carries the package.json ox publishes with an exports map of every
+// entry, and links the build and ox's node_modules. Rolldown follows the links to the checkout, so
+// ox's dependencies resolve from ox's node_modules.
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'footprint-'))
-fs.mkdirSync(path.join(scratch, 'node_modules'))
-fs.symlinkSync(root, path.join(scratch, 'node_modules/ox'))
+const ox = path.join(scratch, 'node_modules/ox')
+fs.mkdirSync(ox, { recursive: true })
+fs.symlinkSync(repo.build, path.join(ox, 'build'))
+fs.symlinkSync(
+  path.join(repo.root, 'node_modules'),
+  path.join(ox, 'node_modules'),
+)
+fs.writeFileSync(
+  path.join(ox, 'package.json'),
+  JSON.stringify({
+    ...JSON.parse(fs.readFileSync(repo.manifest, 'utf8')),
+    exports: Object.fromEntries(
+      entries.map((entry) => [
+        `.${entry.name.slice(2)}`,
+        `./build/${path.relative(repo.build, entry.file)}`,
+      ]),
+    ),
+  }),
+)
 
 type Job = {
   code: string
@@ -57,8 +75,15 @@ type Job = {
 }
 const jobs: Job[] = []
 const seen = new Set<unknown>()
-const zod = new Set<unknown>(Object.values(await import('zod/mini')))
-for (const entry of entries()) {
+/** The namespaces whose members the walk measured. */
+const walked = new Set<unknown>()
+// zod's own functions, which `ox/zod`'s `z` re-exports. A branch without `ox/zod` has no zod 4.
+const zod = new Set<unknown>(
+  entries.some((entry) => entry.name === 'ox/zod')
+    ? Object.values(await import('zod/mini'))
+    : [],
+)
+for (const entry of entries) {
   const module = await import(entry.file)
   if (!entry.index)
     jobs.push({
@@ -75,14 +100,20 @@ for (const entry of entries()) {
       item: entry.name,
       metric: 'entry-size',
     })
-  } else if (!seen.has(module)) {
+  } else {
+    // A module entry whose members an index walked, such as `ox/Hex` under `ox:Hex`, adds nothing:
+    // a constant would only repeat. One deeper than the walk goes, such as
+    // `ox/zod/tempo/AuthorizationTempo`, has its members measured here.
+    if (walked.has(module)) continue
     // A module entry that no index reaches, such as `ox/TxEnvelope`, is measured whole too.
-    seen.add(module)
-    jobs.push({
-      code: `export * from '${entry.name}'\n`,
-      item: entry.name,
-      metric: 'entry-size',
-    })
+    if (!seen.has(module)) {
+      seen.add(module)
+      jobs.push({
+        code: `export * from '${entry.name}'\n`,
+        item: entry.name,
+        metric: 'entry-size',
+      })
+    }
   }
   // A namespace, such as `Hex` or zod's `z.Abi`, is measured whole and then member by member.
   const walk = (top: string, members: string[], value: unknown) => {
@@ -98,9 +129,11 @@ for (const entry of entries()) {
       item,
       metric: 'entry-size',
     })
-    if (isModule(value) && members.length < 2)
+    if (isModule(value) && members.length < 2) {
+      walked.add(value)
       for (const [member, inner] of Object.entries(value))
         walk(top, [...members, member], inner)
+    }
   }
   for (const [name, value] of Object.entries(module)) walk(name, [], value)
 }
@@ -125,6 +158,7 @@ await Promise.all(
 fs.rmSync(scratch, { force: true, recursive: true })
 
 if (failure) {
+  // biome-ignore lint/suspicious/noConsole: a metric script reports failures on stderr
   console.error(`footprint: could not measure ${failure}`)
   process.exit(1)
 }
@@ -233,15 +267,18 @@ function rank(loaded: Set<OutputChunk>): (readonly [string, number])[] {
   return [...bytes].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
 }
 
-/** Returns the package a module belongs to, or the path of an ox module inside dist. */
+/** Returns the package a module belongs to, or the path of an ox module inside the build. */
 function owner(id: string): string {
-  const modules = id.lastIndexOf('/node_modules/')
+  const real = fs.existsSync(id) ? fs.realpathSync(id) : id
+  if (real.startsWith(build)) return real.slice(build.length)
+  const modules = real.lastIndexOf('/node_modules/')
   if (modules !== -1) {
-    const [scope, name] = id.slice(modules + '/node_modules/'.length).split('/')
+    const [scope, name] = real
+      .slice(modules + '/node_modules/'.length)
+      .split('/')
     return scope!.startsWith('@') ? `${scope}/${name}` : scope!
   }
-  if (id.startsWith(dist)) return id.slice(dist.length)
-  return id.replace('\0', '')
+  return real.replace('\0', '')
 }
 
 function isModule(value: unknown): value is Record<string, unknown> {

@@ -2,52 +2,97 @@
  * Node process that `speed.ts` starts for each piece of measured work, so measured code runs
  * under Node, as most of ox's users run it, and every function is measured in a fresh process.
  *
- * - `node speed-worker.ts enumerate <in.json> <out.json>` walks every entry point in
- *   package.json (see entries.ts), lists each distinct public function (namespace members), and
- *   maps each recorded key (`src/<file>.ts#<export path>`) to the public function it is.
+ * - `node speed-worker.ts enumerate <in.json> <out.json>` walks every entry point that `entries()`
+ *   in repo.ts lists (`ox`, then the other index entries, then the module entries), lists each
+ *   distinct public function (namespace members, such as `ox:Hex.fromNumber`), and maps each
+ *   recorded key (`src/<file>.ts#<export path>`) to the public function it is. A function several
+ *   names reach, such as `ox:HdKey.path` and `ox:Mnemonic.path`, is one function, named after the
+ *   first; `exports` lists every name with the function it is.
  * - `node --expose-gc --single-threaded speed-worker.ts bench <job.json> <out.json>` replays one
  *   function with its recorded arguments and measures CPU time and heap bytes per call.
  *
- * The network is blocked, so a replay that reaches for it fails instead of timing a request. For
- * the cold number, ox's caches (`Caches.clear()`) are emptied before every call; the reset also
- * runs in the loop whose time is subtracted.
+ * Every call, for the cold number, starts with ox's caches empty: `Caches.clear()` runs before each
+ * call that follows a write to them (see `trackCaches` in repo.ts), and for a function that writes
+ * to them, it also runs in the loop whose time is subtracted. The network is blocked, so a call
+ * that reaches for it fails instead of measuring a round trip.
  *
  * @module
  */
 
 import * as fs from 'node:fs'
 import * as inspector from 'node:inspector/promises'
-import { createRequire, syncBuiltinESMExports } from 'node:module'
+import {
+  createRequire,
+  registerHooks,
+  syncBuiltinESMExports,
+} from 'node:module'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import * as v8 from 'node:v8'
 
-import { entries as listEntries } from './entries.ts'
+import { built, entries, root, trackCaches } from './repo.ts'
 import { decode, encode, keys, type Rebuild } from './speed-codec.ts'
 
-const root = path.resolve(import.meta.dirname, '../..')
 const [mode, input, output] = process.argv.slice(2)
+/** Whether `loadTestHelpers` registered its hooks. */
+const hooked = { helpers: false }
 
 if (mode === 'enumerate') await enumerate()
 else if (mode === 'bench') await bench()
 else throw new Error(`Unknown mode: ${mode}`)
 process.exit(0)
 
-/** The value a recorded key, `src/<file>.ts#<export path>`, names in the build in dist. */
+/**
+ * The module a recorded key names: for `src/<file>.ts#<export path>` its build, and for a test
+ * helper, `test/<file>.ts#<export>`, the helper itself (see `loadTestHelpers`).
+ */
+function moduleOf(key: string) {
+  const file = key.slice(0, key.indexOf('#'))
+  if (!file.startsWith('test/')) return built(file)
+  loadTestHelpers()
+  return path.join(root, file)
+}
+
+/** The value a recorded key names, following an export path such as `noble.CURVE`. */
 async function resolve(key: string): Promise<unknown> {
-  const [file, exportPath] = key.split('#') as [string, string]
-  const built = path.join(
-    root,
-    'dist',
-    file.replace(/^src\//, '').replace(/\.ts$/, '.js'),
+  const exportPath = key.slice(key.indexOf('#') + 1)
+  let value: unknown = await import(pathToFileURL(moduleOf(key)).href).catch(
+    () => null,
   )
-  let value: unknown = await import(pathToFileURL(built).href).catch(() => null)
   for (const part of exportPath.split('.'))
     value =
       value && (typeof value === 'object' || typeof value === 'function')
         ? (value as Record<string, unknown>)[part]
         : undefined
   return value
+}
+
+/**
+ * Lets Node import ox's test helpers, such as test/kzg.ts, as vitest runs them: `ox` and its
+ * entry points resolve to their builds, as `entries()` lists them, and `__dirname` and
+ * `__filename` are defined.
+ */
+function loadTestHelpers() {
+  if (hooked.helpers) return
+  hooked.helpers = true
+  const builds = new Map(
+    entries().map((entry) => [entry.name, pathToFileURL(entry.file).href]),
+  )
+  const test = pathToFileURL(path.join(root, 'test')).href
+  registerHooks({
+    resolve(specifier, context, nextResolve) {
+      return nextResolve(builds.get(specifier) ?? specifier, context)
+    },
+    load(url, context, nextLoad) {
+      const result = nextLoad(url, context)
+      if (!url.startsWith(`${test}/`) || result.source === undefined)
+        return result
+      return {
+        ...result,
+        source: `const __dirname = import.meta.dirname, __filename = import.meta.filename;${String(result.source)}`,
+      }
+    },
+  })
 }
 
 async function enumerate() {
@@ -61,10 +106,13 @@ async function enumerate() {
     package?: string | undefined
   }
   const items: Item[] = []
+  // Every public function's name, in order, and the function it is: a function another name
+  // reaches too, such as `ox:Mnemonic.path`, is measured once, under its first name.
+  const names: { name: string; item: Item }[] = []
   const byFunction = new Map<unknown, Item>()
   const walked = new Set<unknown>()
   const counts = { functions: 0, errors: 0, classes: 0, values: 0, foreign: 0 }
-  const entries: { name: string; file: string }[] = []
+  const list: { name: string; file: string; barrel: boolean }[] = []
 
   const walk = (entry: string, name: string, value: unknown) => {
     if (typeof value === 'function') {
@@ -74,10 +122,14 @@ async function enumerate() {
         walked.add(value)
         return
       }
-      if (byFunction.has(value) || walked.has(value)) return
-      counts.functions++
+      const existing = byFunction.get(value)
+      if (existing) {
+        names.push({ name: `${entry}:${name}`, item: existing })
+        return
+      }
       const item = { name: `${entry}:${name}`, entry, keys: [] }
       items.push(item)
+      names.push({ name: item.name, item })
       byFunction.set(value, item)
       return
     }
@@ -92,8 +144,8 @@ async function enumerate() {
     if (value && typeof value === 'object') walked.add(value)
   }
 
-  for (const entry of listEntries()) {
-    entries.push({ name: entry.name, file: entry.file })
+  for (const entry of entries()) {
+    list.push({ name: entry.name, file: entry.file, barrel: entry.index })
     const module = await import(pathToFileURL(entry.file).href)
     if (walked.has(module)) continue
     walked.add(module)
@@ -133,9 +185,12 @@ async function enumerate() {
     if (item.package) {
       byFunction.delete(fn)
       counts.foreign++
-      counts.functions--
     }
   const own = items.filter((item) => !item.package)
+  const exports = names
+    .filter(({ item }) => !item.package)
+    .map(({ name, item }) => ({ name, item: item.name }))
+  counts.functions = exports.length
 
   const unmatched: string[] = []
   for (const key of keys) {
@@ -146,7 +201,7 @@ async function enumerate() {
 
   fs.writeFileSync(
     output!,
-    JSON.stringify({ items: own, counts, entries, unmatched }),
+    JSON.stringify({ items: own, exports, counts, entries: list, unmatched }),
   )
 }
 
@@ -157,6 +212,7 @@ type Job = {
   candidates: Candidate[]
   sampleMs: number
   samples: number
+  warmupMs: number
 }
 
 async function bench() {
@@ -165,9 +221,20 @@ async function bench() {
     fs.writeFileSync(output!, JSON.stringify({ name: job.name, ...result }))
   process.on('unhandledRejection', () => {})
   const network = blockNetwork()
-  const caches = await trackCaches()
+  // Writes to ox's caches mark a function whose warm time can differ, and the next call clears
+  // them only after one.
+  const caches = {
+    sets: 0,
+    dirty: false,
+    cold: true,
+    clear: await trackCaches(() => {
+      caches.sets++
+      caches.dirty = true
+    }),
+  }
 
-  // The function, and every export whose calls or paths rebuild values in the arguments.
+  // The function, and every export whose calls or paths rebuild values in the arguments, such as
+  // `WebCryptoP256.createKeyPair` for a `CryptoKey`.
   const exports = new Map<string, unknown>()
   for (const key of new Set([
     job.key,
@@ -197,9 +264,14 @@ async function bench() {
     ref: (key) => exports.get(key),
   }
 
-  // Every call starts with empty caches; caches still work within the call.
+  // Every call starts with empty caches, as a first call with its input does; caches still work
+  // within the call. `Caches.clear()` runs only after a call wrote to a cache, as clearing empty
+  // maps costs more than many of ox's functions do.
   const reset = () => {
-    if (caches.cold) caches.clear()
+    if (caches.cold && caches.dirty) {
+      caches.clear()
+      caches.dirty = false
+    }
   }
 
   // The first candidate that replays without throwing is the one measured.
@@ -207,39 +279,54 @@ async function bench() {
   let args: unknown[] = []
   let async = false
   let mutates = false
+  let window = false
   let failure: string | undefined
-  for (const candidate of job.candidates) {
+  for (let index = 0; index < job.candidates.length; index++) {
+    const candidate = job.candidates[index]!
     const origins = new Map<object, unknown>()
+    // The arguments' encoding before and after the call, which differ when the call changed them.
+    // A value rebuilt from a call, an export, or a source encodes as what rebuilt it.
+    const snapshot = () => {
+      try {
+        return encode(replay, { known: (value) => origins.get(value) })
+      } catch {
+        return undefined
+      }
+    }
     let replay: unknown[] = []
+    let before: string | undefined
     network.attempts = 0
     async = false
     try {
       replay = await decode(candidate.args, rebuild, origins)
-      reset()
+      before = snapshot()
+      caches.clear()
       caches.sets = 0
       const result = call(...replay)
       if (isThenable(result)) {
         async = true
-        await withTimeout(result, 5_000)
+        await withTimeout(result, 10_000)
       }
       // A call that recovers from the blocked network, say by retrying, measures the recovery.
       if (network.attempts) throw new Error('the network is disabled')
     } catch (error) {
+      // ox's WebAuthn defaults, such as the relying party, read the browser's `window`, which
+      // the tests stub; so does the replay, once one needs it.
+      if (!window && /window is not defined/.test(message(error))) {
+        window = true
+        ;(globalThis as { window?: unknown }).window = {
+          document: { title: 'My Website' },
+          location: { hostname: 'example.com', origin: 'https://example.com' },
+        }
+        index--
+        continue
+      }
       failure ??= reachedNetwork(error)
         ? `replay needs the network (args from ${candidate.where})`
         : `replay threw: ${message(error)} (args from ${candidate.where})`
       continue
     }
-    mutates = (() => {
-      try {
-        return (
-          encode(replay, { known: (value) => origins.get(value) }) !==
-          candidate.args
-        )
-      } catch {
-        return true
-      }
-    })()
+    mutates = before === undefined || snapshot() !== before
     chosen = candidate
     args = mutates ? [] : replay
     break
@@ -257,32 +344,41 @@ async function bench() {
     reset,
   )
   // Rebuilding the arguments of a function that mutates them costs time and memory, which a
-  // second loop that only rebuilds them measures, and which is subtracted.
-  const rebuilds = mutates
-    ? makeLoop(() => undefined, [], false, chosen.args, fresh, reset)
-    : undefined
-  // Subtracts only what measuring costs, the reset included. An async function's `await` stays
+  // second loop that only rebuilds them measures, and which is subtracted. Otherwise a loop that
+  // calls nothing measures what measuring costs. Both clear the caches every time when the
+  // function writes to them, as the measured loop then does. An async function's `await` stays
   // in, as its caller pays it.
-  const noop = makeLoop(() => undefined, args, false, undefined, fresh, reset)
+  const clear = () => {
+    if (caches.cold && cached) caches.clear()
+  }
+  const overhead = mutates
+    ? makeLoop(() => undefined, [], false, chosen.args, fresh, clear)
+    : makeLoop(() => undefined, args, false, undefined, fresh, clear)
+  const subtract = async (count: number) => {
+    const extra: number[] = []
+    for (let i = 0; i < 3; i++)
+      extra.push(((await time(overhead, count)).cpu * 1000) / count)
+    return median(extra)
+  }
 
-  const { count, times } = await measure(loop, job)
-  let ns = median(times)
-  const extra: number[] = []
-  for (let i = 0; i < 3; i++)
-    extra.push(((await time(rebuilds ?? noop, count)).cpu * 1000) / count)
-  ns = Math.max(0, ns - median(extra))
+  const { count, times } = await measure(loop, job, job.warmupMs * 1000)
+  const ns = Math.max(0, median(times) - (await subtract(count)))
 
   const bytes = Math.max(
     0,
-    (await allocated(loop, count)) - (await allocated(rebuilds ?? noop, count)),
+    (await allocated(loop, count)) - (await allocated(overhead, count)),
   )
   // The value is the cold-cache time; the note also gives the time once the caches hold the
   // input, as repeated calls with one input see.
   let warm: number | undefined
   if (cached) {
     caches.cold = false
-    warm = median((await measure(loop, job)).times)
-    warm = Math.max(0, warm - (median(times) - ns))
+    // The loop is warm by now.
+    const measured = await measure(loop, job, 0)
+    warm = Math.max(
+      0,
+      median(measured.times) - (await subtract(measured.count)),
+    )
   }
   write({
     ok: true,
@@ -293,6 +389,8 @@ async function bench() {
     count,
     async,
     mutates,
+    noops: chosen.args.includes('"$noop":1'),
+    window,
     cached,
     where: chosen.where,
     direct: chosen.direct,
@@ -303,12 +401,16 @@ type Loop = (count: number) => unknown
 
 /**
  * Grows the iteration count until one run of the loop takes about `sampleMs` of CPU time, and
- * keeps running it until three runs in a row agree within 15%, so V8 has compiled the function
- * and its callees before the `samples` timings (ns per call) are taken. With `--single-threaded`
- * V8 compiles on this thread, so early runs can take several times longer than later ones. A call
- * that waits takes wall time without CPU time, so a run is kept under half a second of wall time.
+ * keeps running it until three runs in a row agree within 15% and `warmup` µs of CPU time have
+ * gone into it, so V8 has compiled the function and its callees, and sized its young generation,
+ * before the `samples` timings (ns per call) are taken. With `--single-threaded` V8 compiles and
+ * collects on this thread, so early runs can take several times longer than later ones: without
+ * the warm-up, three runs of `Secp256k1.sign` agree after about 85 ms and its samples then range
+ * from 260 to 510 µs; after 300 ms they agree within 3% at 230 µs, as noble's own `sign` does. A
+ * call that waits, such as on a timer, takes wall time without CPU time, so a run is kept under
+ * half a second of wall time.
  */
-async function measure(loop: Loop, job: Job) {
+async function measure(loop: Loop, job: Job, warmup: number) {
   const target = job.sampleMs * 1000
   let count = 1
   let spent = 0
@@ -334,7 +436,12 @@ async function measure(loop: Loop, job: Job) {
     }
     perCall.push(cpu / count)
     const last = perCall.slice(-3)
-    if (last.length === 3 && Math.max(...last) / Math.min(...last) < 1.15) break
+    if (
+      last.length === 3 &&
+      Math.max(...last) / Math.min(...last) < 1.15 &&
+      spent >= warmup
+    )
+      break
     if (spent >= 1_500_000) break
     count = Math.min(most, Math.max(1, Math.round(target / median(last))))
   }
@@ -412,36 +519,6 @@ async function allocated(loop: Loop, count: number) {
   return median(samples)
 }
 
-/**
- * Tracks writes to ox's caches (the checksum, signature hash, and type hash caches), so a cold call
- * can start with all of them empty while they still work within the call: a call that checksums
- * one address twice computes it once, as a first call with that input does. `sets` counts writes,
- * which mark a function as cached.
- */
-async function trackCaches() {
-  const { caches: all } = await import(
-    pathToFileURL(path.join(root, 'dist/core/internal/caches.js')).href
-  )
-  const tracked = {
-    sets: 0,
-    cold: true,
-    clear: () => {
-      for (const cache of Object.values(all) as { clear(): void }[])
-        cache.clear()
-    },
-  }
-  for (const cache of Object.values(all) as {
-    set(key: unknown, value: unknown): unknown
-  }[]) {
-    const set = cache.set
-    cache.set = function (key: unknown, value: unknown) {
-      tracked.sets++
-      return set.call(this, key, value)
-    }
-  }
-  return tracked
-}
-
 /** A replayed call that reaches for the network throws instead. */
 function blockNetwork() {
   const network = { attempts: 0 }
@@ -455,8 +532,13 @@ function blockNetwork() {
       blocked()
     }
   }
-  const net = createRequire(import.meta.url)('node:net')
+  const require = createRequire(import.meta.url)
+  const net = require('node:net')
   net.connect = net.createConnection = blocked
+  for (const name of ['node:http', 'node:https']) {
+    const http = require(name)
+    http.request = http.get = blocked
+  }
   syncBuiltinESMExports()
   return network
 }

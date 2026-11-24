@@ -1,7 +1,6 @@
 /**
- * Writes the type-checking cost of every public export of the entry points in package.json,
- * values and types, and of each test in the attest files, `src/**\/*.snap-d.ts` and
- * `src/**\/*.bench-d.ts`.
+ * Writes the type-checking cost of every public export of ox's entry points (see repo.ts), values
+ * and types, and of each test in the attest files, `src/**\/*.snap-d.ts` and `src/**\/*.bench-d.ts`.
  *
  * For each export, types-enumerate.ts writes a small consumer file that imports it and forces its
  * type to resolve; its comments say which forms each kind of export gets. A pool of Node workers
@@ -18,8 +17,12 @@
  *   attest enforces; the others pin type strings, so their lines carry no target.
  *
  * Node runs the TypeScript work, as it does for `tsc` and editors, and V8 counts allocated bytes,
- * which JavaScriptCore does not. The script checks the declarations `pnpm build` writes to dist.
- * `UPHILL_CONCURRENCY` sets the pool size, which free memory caps.
+ * which JavaScriptCore does not. V8 reports them from Node 26 on, so the script runs `node` from
+ * PATH if it is Node 26 or later, and otherwise the Node 26 that `npx --yes node@26` installs.
+ *
+ * The script checks the declarations `pnpm build` writes (see repo.ts), or a copy of them that
+ * `UPHILL_TYPES_DIR` names. `UPHILL_CONCURRENCY` sets the pool size (default 2), which available
+ * memory caps.
  *
  * @module
  */
@@ -30,28 +33,35 @@ import * as path from 'node:path'
 
 import ts from 'typescript'
 
-import type { Item } from './types-enumerate.ts'
 import { hot } from './hot.ts'
-import { consumerFile, typesDir } from './types-host.ts'
+import { root } from './repo.ts'
+import type { Item } from './types-enumerate.ts'
+import {
+  availableMemory,
+  consumerFile,
+  nodeBinary,
+  typesDir,
+} from './types-host.ts'
 import type { Job, Result } from './types-worker.ts'
 
 /**
- * Each worker's V8 heap limit in MB. A check that needs more is checked again in a worker of its
- * own with `largeHeap`.
+ * Each worker's V8 heap limit in MB. The parsed declarations take about 300MB, and the sources the
+ * attest tests import about 300MB more. A check that needs more is checked again in a worker of its
+ * own with `largeHeap`, if 2.5GB are available for it.
  */
 const heap = 1536
-const largeHeap = 4096
-/** The resident memory one worker can reach, which caps the pool by free memory. */
+const largeHeap = 2048
+/** The resident memory one worker can reach, which caps the pool by available memory. */
 const workerBytes = 1.75e9
 
-const root = process.cwd()
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
 const here = import.meta.dir
+const node = nodeBinary()
 const started = performance.now()
 
 const enumerated = Bun.spawnSync(
-  ['node', path.join(here, 'types-enumerate.ts')],
+  [node, `--max-old-space-size=${heap}`, path.join(here, 'types-enumerate.ts')],
   { stderr: 'inherit' },
 )
 if (!enumerated.success) throw new Error('types-enumerate.ts failed')
@@ -65,7 +75,7 @@ const { found, topLevel, unique, namespaces, foreign, items, baselines } =
     items: Item[]
     baselines: Record<string, string>
   }
-console.error(
+log(
   `${typesDir}: ${found} exports across the entry points, ${topLevel} unique; ${namespaces} namespaces among ${unique} unique symbols expand into their members, and ${foreign} are zod's, leaving ${items.length} exports to measure`,
 )
 
@@ -96,8 +106,8 @@ for (const [id, entry] of measured.entries()) entry.job.id = id
 const concurrency = Math.max(
   1,
   Math.min(
-    Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism(),
-    Math.floor(os.freemem() / workerBytes),
+    Number(process.env.UPHILL_CONCURRENCY) || 2,
+    Math.floor(availableMemory() / workerBytes),
   ),
 )
 
@@ -117,7 +127,7 @@ exportQueue.sort((a, b) => order(b) - order(a) || a.id - b.id)
 const benchQueue = measured
   .filter((entry) => entry.job.mode === 'bench')
   .map((entry) => entry.job)
-console.error(`checking ${measured.length} consumers in ${concurrency} workers`)
+log(`checking ${measured.length} consumers in ${concurrency} workers`)
 
 // Every worker warms up its JIT on the same few consumers before it measures anything, so the first
 // jobs it measures are not slower than the rest.
@@ -129,6 +139,7 @@ const warmup = items
   }))
 const results = new Map<number, Result>()
 const peaks: number[] = []
+const skipped: string[] = []
 await Promise.all(
   Array.from({ length: concurrency }, (_, index) =>
     work(index ? [] : benchQueue),
@@ -136,7 +147,9 @@ await Promise.all(
 )
 
 const lines: string[] = []
-const exportsMeasured = measured.filter((entry) => entry.job.mode === 'export')
+const exportsMeasured = measured.filter(
+  (entry) => entry.job.mode === 'export' && results.has(entry.job.id),
+)
 const cost = (entry: Measured) => {
   const result = results.get(entry.job.id)!
   return {
@@ -150,17 +163,18 @@ const costliest = new Set(
   (['instantiations', 'cpu'] as const).flatMap((key) =>
     exportsMeasured
       .toSorted((a, b) => cost(b)[key] - cost(a)[key])
-      .slice(0, 15),
+      .slice(0, 25),
   ),
 )
 for (const entry of measured) {
   const { line, job, pinned, pins } = entry
-  const result = results.get(job.id)!
+  const result = results.get(job.id)
+  if (!result) continue
   const { instantiations, cpu, bytes } = cost(entry)
   // A test without its siblings leaves imports unused, which attest sees as well.
   for (const error of result.errors)
     if (job.mode === 'export' || ![6133, 6192, 6196, 6198].includes(error.code))
-      console.error(`${line}: TS${error.code}: ${error.message}`)
+      log(`${line}: TS${error.code}: ${error.message}`)
   if (job.mode === 'bench') {
     // attest's own threshold: a test fails 20% above its pinned count.
     const target =
@@ -184,35 +198,37 @@ const next = Object.fromEntries(
 )
 fs.writeFileSync(`${costsFile}.${process.pid}`, JSON.stringify(next))
 fs.renameSync(`${costsFile}.${process.pid}`, costsFile)
-console.error(
-  `checked ${measured.length} consumers in ${((performance.now() - started) / 1000).toFixed(1)}s with ${concurrency} workers; peak worker memory ${size(Math.max(...peaks))}`,
+if (skipped.length)
+  log(
+    `${skipped.length} consumers ran a worker out of memory and were not measured: ${skipped.join(', ')}`,
+  )
+log(
+  `checked ${results.size} consumers in ${((performance.now() - started) / 1000).toFixed(1)}s with ${concurrency} workers; peak worker memory ${size(Math.max(...peaks))}`,
 )
 
 /**
  * Runs one Node worker until the queues are empty: first its own jobs, then the shared export
- * queue. A worker that runs out of memory hands its job to a worker with a larger heap.
+ * queue. A worker that runs out of memory hands its job to a worker with a larger heap, once, if
+ * the machine has the memory for it; otherwise the job is left out. That worker skips the warm-up,
+ * so it only parses what the job needs.
  */
-async function work(own: Job[] = [], limit = heap): Promise<void> {
+async function work(own: Job[], limit = heap): Promise<void> {
   const worker = Bun.spawn(
-    [
-      'node',
-      `--max-old-space-size=${limit}`,
-      path.join(here, 'types-worker.ts'),
-    ],
+    [node, `--max-old-space-size=${limit}`, path.join(here, 'types-worker.ts')],
     {
       stdin: 'pipe',
       stdout: 'pipe',
       stderr: 'inherit',
     },
   )
-  const pending = [...warmup, ...warmup]
+  const pending = limit === heap ? [...warmup, ...warmup] : []
   let current: Job | undefined
   const send = () => {
     current =
       pending.shift() ??
       own.shift() ??
       (limit === heap ? exportQueue.shift() : undefined)
-    if (current) worker.stdin.write(`${JSON.stringify(current)}\n`)
+    if (current) worker.stdin.write(`${jsonLine(current)}\n`)
     else worker.stdin.end()
   }
   send()
@@ -235,7 +251,7 @@ async function work(own: Job[] = [], limit = heap): Promise<void> {
         if (result.id >= 0) {
           results.set(result.id, result)
           if (results.size % 500 === 0)
-            console.error(`${results.size} of ${measured.length} checked`)
+            log(`${results.size} of ${measured.length} checked`)
         }
         send()
       }
@@ -243,13 +259,21 @@ async function work(own: Job[] = [], limit = heap): Promise<void> {
   }
   const status = await worker.exited
   if (status === 0) return
-  if (!current || current.id < 0 || limit !== heap)
+  if (!current || current.id < 0)
     throw new Error(`a types worker exited with status ${status}`)
-  console.error(
-    `${measured[current.id]!.line} ran a worker out of memory; checking it with a ${largeHeap}MB heap`,
-  )
-  await work([current], largeHeap)
-  await work(own)
+  const line = measured[current.id]!.line
+  if (limit !== heap || availableMemory() < 2.5e9) {
+    log(
+      `${line} ran a worker out of memory at ${limit}MB and there is no room for a larger heap; leaving it out`,
+    )
+    skipped.push(line)
+  } else {
+    log(
+      `${line} ran a worker out of memory; checking it with a ${largeHeap}MB heap`,
+    )
+    await work([current], largeHeap)
+  }
+  if (limit === heap) await work(own)
 }
 
 /**
@@ -276,9 +300,10 @@ function benches(): Measured[] {
   const result: Measured[] = []
   const names = ['bench', 'it', 'test']
   const repeats = new Map<string, number>()
-  const files = [
-    ...new Bun.Glob('src/**/*.{snap,bench}-d.ts').scanSync(root),
-  ].sort()
+  // Build output and packages installed under src hold no tests of ox's own.
+  const files = [...new Bun.Glob('src/**/*.{snap,bench}-d.ts').scanSync(root)]
+    .filter((file) => !/(^|\/)(_esm|_cjs|_types|node_modules)\//.test(file))
+    .sort()
   for (const relative of files) {
     const file = path.join(root, relative)
     const text = fs.readFileSync(file, 'utf8')
@@ -356,6 +381,16 @@ function describePath(node: ts.Node, source: ts.SourceFile): string[] {
   return names
 }
 
+/**
+ * A job as one line of JSON. Node's readline also ends lines at U+2028 and U+2029, which
+ * `JSON.stringify` leaves as they are and test files can hold.
+ */
+function jsonLine(job: Job): string {
+  return JSON.stringify(job).replace(/[\u2028\u2029]/g, (char) =>
+    char === '\u2028' ? '\\u2028' : '\\u2029',
+  )
+}
+
 /** Quotes an item or note for a metric line, escaping `"` and `\`. */
 function quote(text: string): string {
   return `"${text.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
@@ -367,4 +402,8 @@ function size(bytes: number): string {
   if (bytes >= 1e6) return `${(bytes / 1e6).toFixed(2)}MB`
   if (bytes >= 1e3) return `${(bytes / 1e3).toFixed(1)}kB`
   return `${bytes}B`
+}
+
+function log(message: string) {
+  process.stderr.write(`${message}\n`)
 }

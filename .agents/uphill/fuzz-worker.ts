@@ -1,23 +1,29 @@
 /**
- * Node process that `fuzz.ts` starts. ox runs under Node here, from the build in dist.
+ * Node process that `fuzz.ts` starts. ox runs under Node here, as its users run it, from the build
+ * repo.ts names.
  *
- * - `node fuzz-worker.ts plan <corpus.json> <out.json>` walks every entry point in package.json
- *   as speed-worker.ts does, so each distinct public function (namespace members) has the same
- *   name, and lists the harnesses each one gets, or why it gets none.
+ * - `node fuzz-worker.ts plan <corpus.json> <out.json>` walks every entry point `entries()` in
+ *   repo.ts lists, as speed-worker.ts does, so each distinct public function (namespace members)
+ *   has the same name as in the other categories, and lists the harnesses each one gets, or why
+ *   it gets none, and the further names that reach a function, such as `ox:Mnemonic.path` for
+ *   `ox:HdKey.path`.
  * - `node fuzz-worker.ts fuzz <job.json> <out.jsonl>` fuzzes the job's functions in turn and
  *   appends one JSON line per function. With `trace` set, it writes each input to the trace file
  *   before calling, so the orchestrator can name the input that hung or exhausted memory.
  * - `node fuzz-worker.ts corpus <recording.json> <out.json>` snapshots the speed recording.
  *
  * A function's harnesses are the structured properties in fuzz-properties.ts that cover it (round
- * trips, differentials against viem, ethers, noble, scure, and micro-eth-signer, and consistency),
- * and boundary mutations of the arguments ox's tests passed it (fuzz-fixtures/corpus.json). V8
- * precise coverage, read through node:inspector after each function, gives the share of the
- * function's own lines that ran.
+ * trips, re-encoding of recorded values, differentials against the reference implementations
+ * this branch's devDependencies provide, and consistency), boundary mutations of the arguments
+ * ox's tests passed it (fuzz-fixtures/corpus.json), and boundary mutations of hand-written seeds.
+ * Properties, seeds and the corpus may name a function by any path the entries reach it by, such
+ * as `ox:Hex.fromNumber` or `ox/Hex:fromNumber`. V8 precise coverage, read through node:inspector
+ * after each function, gives the share of the function's own lines that ran.
  *
  * @module
  */
 
+import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as inspector from 'node:inspector/promises'
 import { createRequire, syncBuiltinESMExports } from 'node:module'
@@ -27,13 +33,10 @@ import { pathToFileURL } from 'node:url'
 import * as acorn from 'acorn'
 import fc from 'fast-check'
 
-import { entries as listEntries } from './entries.ts'
-
 import {
   type Crash,
   classify,
   clone,
-  decodeSeed,
   format,
   hash32,
   homogeneous,
@@ -41,6 +44,7 @@ import {
   keepsType,
   type Mutant,
   markOpaque,
+  markRebuilt,
   mutate,
   named,
   prng,
@@ -51,42 +55,31 @@ import {
   sizeOf,
 } from './fuzz-lib.ts'
 import {
+  budgets,
   Failure,
-  type Lib,
+  library,
+  mutations,
   type Property,
   properties,
   seeds,
 } from './fuzz-properties.ts'
+import * as repo from './repo.ts'
+import { decode, keys } from './speed-codec.ts'
 
-const root = path.resolve(import.meta.dirname, '../..')
 const [mode, ...rest] = process.argv.slice(2)
 
-/** Mutated calls per function with recorded arguments, unless `budgets` says otherwise. */
-const mutationsPerFunction = 500
-/** Fewer calls for functions whose every call costs milliseconds. */
-const budgets: [RegExp, number][] = [
-  [/Mnemonic\.to(Seed|HdKey|PrivateKey)|HdKey\.fromSeed|Keystore\./, 8],
-  // Mining a salt is unbounded work by design, so only the recorded calls run.
-  [/VirtualMaster\.mineSalt/, 0],
-  [/Kzg\.create$/, 4],
-  [/Blobs\.|BlobCells\.|Kzg\.|Setups\./, 12],
-  [/Bls\.|BlsPoint\.|MlDsa44\./, 30],
-  [
-    /\.(recover\w*|verify\w*|sign\w*|getPublicKey|createKeyPair\w*|getSharedSecret|derive\w*)$/,
-    60,
-  ],
-  [/WebCryptoP256|WebAuthnP256/, 30],
-]
 /** A promise that has not settled after this long is a hang. */
-const asyncTimeoutMs = 2_000
+const asyncTimeoutMs = 4_000
 /** A synchronous call that takes longer is a hang. */
-const slowCallMs = 2_000
+const slowCallMs = 3_000
 /**
- * Longer limits for work that is slow by design: key derivation whose cost is its iteration count,
- * proof-of-work salt mining, and loading the KZG trusted setup.
+ * Longer limits for work that is slow by design: key derivation whose cost is its iteration count
+ * (PBKDF2 runs 262,144 rounds unless told otherwise), proof-of-work salt mining, and loading the
+ * KZG trusted setup.
  */
 const slowFunctions: [RegExp, number][] = [
-  [/Keystore\.(pbkdf2|scrypt)\w*$/, 20_000],
+  [/Keystore\.(pbkdf2|scrypt|toKey|decrypt|encrypt)\w*$/, 20_000],
+  [/AesGcm\.(getKey|fromMnemonic|fromSeed)\w*$/, 20_000],
   [/VirtualMaster\.mineSalt\w*$/, 30_000],
   [/Kzg\.create$/, 30_000],
 ]
@@ -99,9 +92,6 @@ const minimizeAttempts = 150
 
 /** Built-in errors a function documents: `Json.parse` throws `JSON.parse`'s `SyntaxError`. */
 const documentedErrors = new Map([['ox:Json.parse', /^SyntaxError$/]])
-
-/** Functions that change global state, which the orchestrator runs alone. */
-export const isolated = new Set(['ox:Engine.install', 'ox:Engine.reset'])
 
 type Item = {
   name: string
@@ -143,9 +133,11 @@ export type FailureRecord = {
   site?: string | undefined
 }
 
-// ---------------------------------------------------------------------------------------------
-// Loading ox.
-
+/**
+ * ox's entry points in repo.ts's order, each distinct function named after the first entry that
+ * reaches it (`ox:Hex.fromNumber`, not `ox/Hex:fromNumber`), and `nameOf`, which maps any path the
+ * entries reach a function by to that name.
+ */
 async function loadEntries() {
   const modules: Record<string, Record<string, unknown>> = {}
   const items: Item[] = []
@@ -157,7 +149,8 @@ async function loadEntries() {
         walked.add(value)
         return
       }
-      if (byFunction.has(value) || walked.has(value)) return
+      if (walked.has(value)) return
+      if (byFunction.has(value)) return
       const item: Item = {
         name: `${entry}:${name}`,
         entry,
@@ -178,7 +171,7 @@ async function loadEntries() {
     }
     if (value && typeof value === 'object') walked.add(value)
   }
-  for (const entry of listEntries()) {
+  for (const entry of repo.entries()) {
     const module = await import(pathToFileURL(entry.file).href)
     modules[entry.name] = module
     if (walked.has(module)) continue
@@ -186,50 +179,53 @@ async function loadEntries() {
     for (const [key, value] of Object.entries(module))
       walk(entry.name, key, value, module)
   }
-  return { modules, items }
-}
-
-/** The library handle properties use: ox's entries and the references properties compare with. */
-async function loadLib(modules: Record<string, Record<string, unknown>>) {
-  const require = createRequire(path.join(root, 'package.json'))
-  const load = async (specifier: string) =>
-    import(pathToFileURL(require.resolve(specifier)).href)
-  const lib: Lib = {
-    ox: modules,
-    viem: await load('viem'),
-    viemAa: await load('viem/account-abstraction'),
-    ethers: await load('ethers'),
-    noble: {
-      secp256k1: await load('@noble/curves/secp256k1.js'),
-      nist: await load('@noble/curves/nist.js'),
-      ed25519: await load('@noble/curves/ed25519.js'),
-      sha3: await load('@noble/hashes/sha3.js'),
-      sha2: await load('@noble/hashes/sha2.js'),
-      legacy: await load('@noble/hashes/legacy.js'),
-      blake3: await load('@noble/hashes/blake3.js'),
-      hmac: await load('@noble/hashes/hmac.js'),
-    },
-    scure: {
-      bip32: await load('@scure/bip32'),
-      bip39: await load('@scure/bip39'),
-      english: await load('@scure/bip39/wordlists/english.js'),
-    },
-    micro: await load('micro-eth-signer'),
-    fc,
-    root,
+  const names = new Map<string, string | undefined>()
+  const nameOf = (key: string) => {
+    if (!names.has(key)) {
+      const colon = key.indexOf(':')
+      let value: unknown = modules[key.slice(0, colon)]
+      for (const part of key.slice(colon + 1).split('.'))
+        value =
+          value && (typeof value === 'object' || typeof value === 'function')
+            ? (value as Record<string, unknown>)[part]
+            : undefined
+      names.set(key, byFunction.get(value)?.name)
+    }
+    return names.get(key)
   }
-  return lib
+  return { modules, items, nameOf }
 }
 
-/** The value a recorded key (`src/<file>.ts#<export path>`) names in the build in dist. */
+/**
+ * The library handle properties use: ox's entries, fast-check, and the recorded arguments, to
+ * which fuzz-properties.ts's `library` adds the reference implementations.
+ */
+function loadLib(
+  modules: Record<string, Record<string, unknown>>,
+  recorded: Map<string, unknown[][]>,
+  nameOf: (key: string) => string | undefined,
+) {
+  return library({
+    ox: modules,
+    fc,
+    recorded: (name) => recorded.get(nameOf(name) ?? name) ?? [],
+    mutate(seed, pool, random, count) {
+      const mutant = mutate(seed, prng(random), shapesOf(pool), count)
+      return mutant.typed ? mutant.args : undefined
+    },
+    BaseError: (
+      modules['ox/Errors'] as { BaseError: new (...args: never[]) => Error }
+    ).BaseError,
+    root: repo.root,
+  })
+}
+
+/** The value a recorded key (`src/<file>.ts#<export path>`) names in the build. */
 async function resolveKey(key: string): Promise<unknown> {
   const [file, exportPath] = key.split('#') as [string, string]
-  const built = path.join(
-    root,
-    'dist',
-    file.replace(/^src\//, '').replace(/\.ts$/, '.js'),
+  let value: unknown = await import(pathToFileURL(repo.built(file)).href).catch(
+    () => null,
   )
-  let value: unknown = await import(pathToFileURL(built).href).catch(() => null)
   for (const part of exportPath.split('.'))
     value =
       value && (typeof value === 'object' || typeof value === 'function')
@@ -242,14 +238,32 @@ type Corpus = {
   functions: Record<string, { seeds: string[] }>
 }
 
-/** Rebuilds a function's recorded argument sets, skipping any that cannot be rebuilt. */
-async function seedsFor(corpus: Corpus, name: string) {
-  const texts = corpus.functions[name]?.seeds ?? []
+/**
+ * Each public function's recorded argument sets (speed-codec's text), under its name. A corpus
+ * recorded on another walk names functions otherwise, such as `ox/Hex:fromNumber`, and may list a
+ * function under two names; its sets are merged.
+ */
+function corpusSeeds(
+  corpus: Corpus,
+  nameOf: (key: string) => string | undefined,
+) {
+  const out = new Map<string, string[]>()
+  for (const [key, { seeds }] of Object.entries(corpus.functions)) {
+    const item = nameOf(key)
+    if (!item) continue
+    const texts = out.get(item) ?? []
+    for (const text of seeds) if (!texts.includes(text)) texts.push(text)
+    out.set(item, texts)
+  }
+  return out
+}
+
+/** Rebuilds recorded argument sets, skipping any that cannot be rebuilt. */
+async function seedsFor(texts: string[]) {
   const exports = new Map<string, unknown>()
   for (const text of texts)
-    for (const match of text.matchAll(/"\$(?:call|ref|await)":"([^"]+)"/g))
-      if (!exports.has(match[1]!))
-        exports.set(match[1]!, await resolveKey(match[1]!))
+    for (const key of keys(text))
+      if (!exports.has(key)) exports.set(key, await resolveKey(key))
   const rebuild = {
     ref: (key: string) => exports.get(key),
     call: (key: string, args: unknown[]) => {
@@ -257,38 +271,51 @@ async function seedsFor(corpus: Corpus, name: string) {
       if (typeof fn !== 'function') throw new Error(`${key} is not a function`)
       return fn(...args)
     },
-    awaited: (node: string) => awaited.get(node),
+    construct: (key: string, args: unknown[]) => {
+      const fn = exports.get(key)
+      if (typeof fn !== 'function') throw new Error(`${key} is not a class`)
+      return Reflect.construct(fn, args)
+    },
   }
-  // Values an async export resolved to, such as an `AesGcm.getKey` CryptoKey, are awaited here,
-  // since decoding is synchronous.
-  const awaited = new Map<string, unknown>()
-  const findAwaits = (value: unknown, out: Record<string, unknown>[]) => {
-    if (!value || typeof value !== 'object') return out
-    if (!Array.isArray(value) && '$await' in value)
-      out.push(value as Record<string, unknown>)
-    for (const item of Object.values(value)) findAwaits(item, out)
-    return out
-  }
-  for (const text of texts)
-    for (const node of findAwaits(JSON.parse(text), [])) {
-      const key = JSON.stringify(node)
-      if (awaited.has(key)) continue
-      try {
-        const args = decodeSeed(JSON.stringify(node.$args), rebuild)
-        awaited.set(key, await rebuild.call(node.$await as string, args))
-      } catch {}
-    }
   const seeds: unknown[][] = []
   for (const text of texts) {
     try {
-      seeds.push(decodeSeed(text, rebuild))
+      const origins = new Map<object, unknown>()
+      const args = await decode(text, rebuild, origins)
+      markRebuilt(origins)
+      seeds.push(args)
     } catch {}
   }
   return seeds
 }
 
-// ---------------------------------------------------------------------------------------------
-// corpus
+/** Hand-written argument sets by function name, from `seeds` in fuzz-properties.ts. */
+function writtenSeeds(
+  written: Record<string, unknown[][]>,
+  nameOf: (key: string) => string | undefined,
+) {
+  const out = new Map<string, unknown[][]>()
+  for (const [key, sets] of Object.entries(written)) {
+    const item = nameOf(key) ?? key
+    out.set(item, [...(out.get(item) ?? []), ...sets])
+  }
+  return out
+}
+
+/** The public functions a property covers, by name. */
+function coveredBy(
+  prop: Property,
+  nameOf: (key: string) => string | undefined,
+) {
+  return [
+    ...new Set(
+      prop.covers.flatMap((cover) => {
+        const item = nameOf(cover)
+        return item ? [item] : []
+      }),
+    ),
+  ]
+}
 
 /** Recorded argument sets kept per function, and the longest kept. */
 const seedsPerFunction = 10
@@ -296,8 +323,9 @@ const longestSeed = 40_000
 
 /**
  * `node fuzz-worker.ts corpus <recording.json> <out.json>` snapshots the speed category's
- * recording (the arguments ox's tests passed each export) into the fuzz corpus, keyed by public
- * function.
+ * recording (the arguments ox's tests passed each export, see speed-codec.ts) into the fuzz
+ * corpus, keyed by public function. The file stays within repo.ts's `fixtures.maxLength`, and is
+ * formatted with its `fixtures.format`.
  */
 async function buildCorpus() {
   const [recordingFile, output] = rest as [string, string]
@@ -325,8 +353,13 @@ async function buildCorpus() {
   for (const name of [...samples.keys()].sort()) {
     type Sample = { args: string; direct: boolean; n: number; where: string }
     const unique = new Map<string, Sample>()
+    // A recorded viem client (`$client`) cannot be rebuilt.
     for (const sample of samples.get(name)!)
-      if (sample.args.length <= longestSeed && !unique.has(sample.args))
+      if (
+        sample.args.length <= longestSeed &&
+        !sample.args.includes('"$client"') &&
+        !unique.has(sample.args)
+      )
         unique.set(sample.args, sample)
     // Calls from tests first, then calls other ox functions made; in each, spread over sizes.
     const pick = (group: Sample[], count: number) => {
@@ -356,6 +389,26 @@ async function buildCorpus() {
         where: chosen.map((sample) => sample.where),
       }
   }
+  // Over the limit, drop the longest seed of the function with the most until it fits.
+  const corpusSize = () =>
+    Object.values(functions).reduce(
+      (total, { seeds, where }) =>
+        total + seeds.join('').length * 1.2 + where.join('').length,
+      0,
+    )
+  while (corpusSize() > repo.fixtures.maxLength) {
+    const [name, entry] = Object.entries(functions).sort(
+      ([a, x], [b, y]) => y.seeds.length - x.seeds.length || (a < b ? -1 : 1),
+    )[0]!
+    if (entry.seeds.length <= 1) break
+    const longest = entry.seeds.reduce(
+      (best, seed, i) => (seed.length > entry.seeds[best]!.length ? i : best),
+      0,
+    )
+    entry.seeds.splice(longest, 1)
+    entry.where.splice(longest, 1)
+    functions[name] = entry
+  }
   fs.writeFileSync(
     output,
     `${JSON.stringify(
@@ -364,41 +417,47 @@ async function buildCorpus() {
         functions,
       },
       null,
-      1,
+      2,
     )}\n`,
   )
+  const [command, ...args] = repo.fixtures.format
+  if (command)
+    try {
+      execFileSync(path.resolve(repo.root, command), [...args, output], {
+        cwd: repo.root,
+      })
+    } catch {}
 }
-
-// ---------------------------------------------------------------------------------------------
-// plan
 
 async function plan() {
   const [corpusFile, output] = rest as [string, string]
   blockNetwork()
   const corpus = JSON.parse(fs.readFileSync(corpusFile, 'utf8')) as Corpus
-  const { modules, items } = await loadEntries()
-  const lib = await loadLib(modules)
+  const { modules, items, nameOf } = await loadEntries()
+  const texts = corpusSeeds(corpus, nameOf)
+  const recorded = new Map<string, unknown[][]>()
+  for (const item of items)
+    recorded.set(item.name, await seedsFor(texts.get(item.name) ?? []))
+  const lib = await loadLib(modules, recorded, nameOf)
   const props = properties(lib)
-  const known = new Set(items.map((item) => item.name))
   const unknownCovers = props.flatMap((prop) =>
     prop.covers
-      .filter((name) => !known.has(name))
+      .filter((name) => !nameOf(name))
       .map((name) => `${prop.id}: ${name}`),
   )
   const byName = new Map<string, Property[]>()
   for (const prop of props)
-    for (const name of prop.covers) {
+    for (const name of coveredBy(prop, nameOf)) {
       if (!byName.has(name)) byName.set(name, [])
       byName.get(name)!.push(prop)
     }
 
   const locations = await functionLocations(items)
-  const synthetic = seeds(lib)
+  const synthetic = writtenSeeds(seeds(lib), nameOf)
   const planned: Planned[] = []
   for (const item of items) {
     const seedCount =
-      (await seedsFor(corpus, item.name)).length +
-      (synthetic[item.name]?.length ?? 0)
+      recorded.get(item.name)!.length + (synthetic.get(item.name)?.length ?? 0)
     const own = byName.get(item.name) ?? []
     const location = locations.get(item.fn)
     item.package = location
@@ -412,11 +471,10 @@ async function plan() {
       package: item.package,
       properties: own.map((prop) => prop.id),
       seeds: seedCount,
-      // A recorded call to a function whose work is I/O only measures how fast the blocked
-      // request fails, so I/O rules out recorded calls.
-      reason: own.length
-        ? undefined
-        : (needsIo(item) ?? (seedCount ? undefined : whyNot(item))),
+      reason:
+        own.length || seedCount
+          ? undefined
+          : 'no recorded call to mutate and no structured harness',
       location,
     })
   }
@@ -432,26 +490,6 @@ async function plan() {
       unknownCovers,
     }),
   )
-}
-
-/** Why a function's work is a request or a browser API the fuzzer cannot give it, if it is. */
-function needsIo(item: Item) {
-  if (/:Provider\.from$|:RpcTransport\.fromHttp$/.test(item.name))
-    return undefined
-  if (
-    /WebAuthnP256\.(createCredential|sign)$|:(Registration|Authentication)\.(create|sign)$/.test(
-      item.name,
-    )
-  )
-    return 'needs a WebAuthn authenticator (navigator.credentials), which Node lacks'
-  return undefined
-}
-
-/** Why a function has neither a structured harness nor a recorded call to mutate. */
-function whyNot(item: Item) {
-  if (item.package)
-    return `${item.package}'s, re-exported, with no recorded call or ox-specific harness`
-  return 'no recorded call to mutate and no structured harness'
 }
 
 /** Each function's source location, from its `[[FunctionLocation]]`. */
@@ -491,9 +529,6 @@ async function functionLocations(items: Item[]) {
   return locations
 }
 
-// ---------------------------------------------------------------------------------------------
-// fuzz
-
 type Job = {
   items: string[]
   corpus: string
@@ -507,7 +542,11 @@ async function fuzz() {
   // A fuzzed call can leave a timer or promise that fails later; that is not the worker's error.
   process.on('unhandledRejection', () => {})
   blockNetwork()
-  const caches = await trackCaches()
+  // ox's caches, emptied before each function so runs do not depend on order.
+  const { clear: clearCaches } = (await import(
+    pathToFileURL(repo.built('src/core/Caches.ts')).href
+  )) as { clear: () => void }
+  stubWindow()
   const session = new inspector.Session()
   session.connect()
   await session.post('Profiler.enable')
@@ -517,10 +556,18 @@ async function fuzz() {
   })
 
   const corpus = JSON.parse(fs.readFileSync(job.corpus, 'utf8')) as Corpus
-  const { modules, items } = await loadEntries()
-  const lib = await loadLib(modules)
-  const props = properties(lib)
-  const synthetic = seeds(lib)
+  const { modules, items, nameOf } = await loadEntries()
+  // Recorded arguments are rebuilt up front: properties re-encode them too.
+  const texts = corpusSeeds(corpus, nameOf)
+  const recorded = new Map<string, unknown[][]>()
+  for (const name of job.items)
+    recorded.set(name, await seedsFor(texts.get(name) ?? []))
+  const lib = await loadLib(modules, recorded, nameOf)
+  const props = properties(lib).map((prop) => ({
+    prop,
+    covers: coveredBy(prop, nameOf),
+  }))
+  const synthetic = writtenSeeds(seeds(lib), nameOf)
   const byName = new Map(items.map((item) => [item.name, item]))
   const traceFd = job.trace ? fs.openSync(job.trace, 'w') : undefined
   await session.post('Profiler.takePreciseCoverage')
@@ -530,7 +577,7 @@ async function fuzz() {
     if (!item) throw new Error(`${name} is not a public function`)
     const started = performance.now()
     fs.appendFileSync(output, `${JSON.stringify({ start: name })}\n`)
-    for (const cache of caches) cache.clear()
+    clearCaches()
     // Code optimized in an earlier window stops counting once the counters reset, so a small
     // function an earlier function made hot would read as never run. Restarting precise coverage
     // deoptimizes everything, and every window starts counting from scratch.
@@ -559,16 +606,17 @@ async function fuzz() {
         result.failures.push(failure)
     }
 
-    for (const prop of props.filter((prop) => prop.covers.includes(name))) {
-      const runs = await runProperty(prop, name, add, traceFd)
+    for (const { prop, covers } of props) {
+      if (!covers.includes(name)) continue
+      const runs = await runProperty(prop, name, nameOf, add, traceFd)
       result.harnesses.push({ id: prop.id, oracle: prop.oracle, runs })
       result.calls += runs
     }
-    const recorded = await seedsFor(corpus, name)
-    if (recorded.length) {
-      const calls = await runCorpus(item, recorded, add, traceFd)
+    const own = recorded.get(name) ?? []
+    if (own.length) {
+      const calls = await runCorpus(item, own, add, traceFd)
       result.harnesses.push({
-        id: `corpus (${recorded.length} recorded argument sets)`,
+        id: `corpus (${own.length} recorded argument sets)`,
         oracle: 'crash',
         runs: calls,
       })
@@ -576,7 +624,7 @@ async function fuzz() {
     }
     // Hand-written seeds only count when they run as written: a wrong seed is the fuzzer's bug.
     const written: unknown[][] = []
-    for (const args of synthetic[name] ?? []) {
+    for (const args of synthetic.get(name) ?? []) {
       markOpaque(args)
       try {
         let value = item.fn.apply(item.self, clone(args))
@@ -617,6 +665,7 @@ async function fuzz() {
 async function runProperty(
   prop: Property,
   name: string,
+  nameOf: (key: string) => string | undefined,
   add: (failure: FailureRecord) => void,
   traceFd: number | undefined,
 ) {
@@ -643,7 +692,7 @@ async function runProperty(
   if (details.failed) {
     const error = details.errorInstance as unknown
     const blame = error instanceof Failure ? error.blame : undefined
-    if (!blame || blame.includes(name)) {
+    if (!blame || blame.some((entry) => nameOf(entry) === name)) {
       const failure = error instanceof Failure ? error : undefined
       add({
         oracle: prop.oracle,
@@ -672,8 +721,7 @@ async function runCorpus(
   traceFd: number | undefined,
 ) {
   const budget =
-    budgets.find(([pattern]) => pattern.test(item.name))?.[1] ??
-    mutationsPerFunction
+    budgets.find(([pattern]) => pattern.test(item.name))?.[1] ?? mutations
   const random = prng(hash32(item.name))
   const shapes = shapesOf(seeds)
   let calls = 0
@@ -728,6 +776,24 @@ async function runCorpus(
 }
 
 type Outcome = (Crash & { oracle: string }) | undefined
+
+/**
+ * ox's WebAuthn defaults read the page (`window.location.hostname`, `window.document.title`), and
+ * its recorded calls come from browser tests, so the worker stands in for a page at localhost.
+ * Credential prompts return nothing, as a user who dismisses them does.
+ */
+function stubWindow() {
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      document: { title: 'ox' },
+      location: { hostname: 'localhost', origin: 'http://localhost:5173' },
+      navigator: {
+        credentials: { create: async () => null, get: async () => null },
+      },
+    },
+  })
+}
 
 /** Calls the function once and returns the oracle failure, if any. */
 async function check(item: Item, mutant: Mutant): Promise<Outcome> {
@@ -799,6 +865,8 @@ function garbageOutput(args: unknown[], value: unknown): string | undefined {
     if (found || depth > 6) return
     if (typeof value === 'string') {
       if (inputs.has(value)) return
+      // A Bech32 string whose human-readable part is `0x` is not hex, and is not meant to be.
+      if (/^0x1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{6,}$/.test(value)) return
       if (/^0x/.test(value) && !/^0x[0-9a-fA-F]*$/.test(value))
         found = `returned ${format(value, 80)}${where ? ` at ${where}` : ''}, which is not hex`
       else if (/^(NaN|undefined|\[object Object\])$|0xNaN|0x-/.test(value))
@@ -926,9 +994,6 @@ function describe(item: Item, args: unknown[]) {
   const name = item.name.split(':')[1]
   return `${name}(${args.map((arg) => format(arg, 500)).join(', ')})`
 }
-
-// ---------------------------------------------------------------------------------------------
-// Coverage.
 
 type ScriptCoverage = {
   url: string
@@ -1081,17 +1146,6 @@ function upperBound(values: number[], target: number) {
     else high = middle
   }
   return low
-}
-
-// ---------------------------------------------------------------------------------------------
-// Process guards.
-
-/** ox's caches, emptied before each function so runs do not depend on order. */
-async function trackCaches() {
-  const { caches } = (await import(
-    pathToFileURL(path.join(root, 'dist/core/internal/caches.js')).href
-  )) as { caches: Record<string, { clear(): void }> }
-  return Object.values(caches)
 }
 
 /** A call that reaches for the network throws instead. */

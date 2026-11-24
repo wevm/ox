@@ -4,9 +4,12 @@
  * Node, so its program is gone before the workers start.
  *
  * An export that several entries re-export resolves to one symbol, measured once under the first
- * entry in package.json order. A namespace that an entry re-exports with `export * as` is how
- * its members are reached, so its members are listed in its place, such as
- * `ox:Hex.fromNumber` or `ox/tempo:TxEnvelopeTempo.TxEnvelopeTempo`.
+ * entry in repo.ts's order, which puts `ox` and the other index entries first. A namespace that an
+ * entry re-exports with `export * as` is how its members are reached, so its members are listed in
+ * its place, such as `ox:Hex.fromNumber` or `ox/tempo:TxEnvelopeTempo.TxEnvelopeTempo`.
+ *
+ * The types in a function's `declare namespace`, such as `Hex.fromString.Options`, are not separate
+ * exports: the function's own consumer reaches them through `Parameters` and `ReturnType`.
  *
  * @module
  */
@@ -38,7 +41,7 @@ export type Item = {
 const host = createHost(consumerOptions)
 host.setFile(consumerFile, 'export {}')
 const program = ts.createProgram({
-  rootNames: [consumerFile, ...entries.map(([, file]) => file)],
+  rootNames: [consumerFile, ...entries.map((entry) => entry.types)],
   options: consumerOptions,
   host,
 })
@@ -46,7 +49,7 @@ const checker = program.getTypeChecker()
 const consumer = program.getSourceFile(consumerFile)!
 const printer = ts.createPrinter({ removeComments: true })
 const entrySpecifiers = new Map(
-  entries.map(([specifier, file]) => [file, specifier]),
+  entries.map((entry) => [entry.types, entry.name]),
 )
 
 const seen = new Set<ts.Symbol>()
@@ -58,7 +61,7 @@ let found = 0
 let namespaces = 0
 let foreign = 0
 
-for (const [specifier, file] of entries) {
+for (const { name: specifier, types: file } of entries) {
   const source = program.getSourceFile(file)
   if (!source) throw new Error(`${file} is missing; run \`pnpm build\` first`)
   const module = checker.getSymbolAtLocation(source)
@@ -315,12 +318,13 @@ function typeArguments(symbol: ts.Symbol): { aliases: string[]; args: string } {
         // abitype's, gets the extension NodeNext needs.
         const entry = entrySpecifiers.get(`${specifier}.d.ts`)
         if (entry) return `import("${entry}")`
-        if (
-          !specifier.startsWith(typesDir) &&
-          !fs.existsSync(`${specifier}.d.ts`)
-        )
-          return match
-        return `import("${specifier}.js")`
+        if (fs.existsSync(`${specifier}.d.ts`))
+          return `import("${specifier}.js")`
+        if (fs.existsSync(`${specifier}/index.d.ts`))
+          return `import("${specifier}/index.js")`
+        return specifier.startsWith(typesDir)
+          ? `import("${specifier}.js")`
+          : match
       })
     return { text, unresolved }
   }

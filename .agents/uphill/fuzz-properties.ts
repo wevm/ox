@@ -8,10 +8,20 @@
  * Inputs are well-formed for the function's types (fast-check arbitraries), so any error a call
  * throws is a failure too, except where a check expects one of ox's documented errors.
  *
+ * `seeds` lists hand-written argument sets, which the worker mutates at the boundaries as it does
+ * recorded arguments. `library` loads the reference implementations, and `mutations` and
+ * `budgets` set how many boundary mutations each function gets, for this branch's dependencies
+ * and costs.
+ *
  * @module
  */
 
+import { createRequire } from 'node:module'
+import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
+
 import type fcModule from 'fast-check'
+
 import { deliberate } from './fuzz-lib.ts'
 
 type Fc = typeof fcModule
@@ -32,8 +42,71 @@ export type Lib = {
   scure: Record<string, Any>
   micro: Any
   fc: Fc
+  /** A function's recorded argument sets from the corpus (only for functions in this job). */
+  recorded: (name: string) => unknown[][]
+  /** A boundary mutation of a recorded argument set; `undefined` when it breaks the type. */
+  mutate: (
+    seed: unknown[],
+    pool: unknown[][],
+    random: number,
+    count: number,
+  ) => unknown[] | undefined
+  BaseError: new (...args: never[]) => Error
   root: string
 }
+
+/** What fuzz-worker.ts passes `library`: ox's entries, fast-check, and the recorded arguments. */
+export type Base = Pick<
+  Lib,
+  'BaseError' | 'fc' | 'mutate' | 'ox' | 'recorded' | 'root'
+>
+
+/** Adds the reference implementations the properties compare ox with to what the worker passes. */
+export async function library(base: Base): Promise<Lib> {
+  const require = createRequire(path.join(base.root, 'package.json'))
+  const load = async (specifier: string) =>
+    import(pathToFileURL(require.resolve(specifier)).href)
+  return {
+    ...base,
+    viem: await load('viem'),
+    viemAa: await load('viem/account-abstraction'),
+    ethers: await load('ethers'),
+    noble: {
+      secp256k1: await load('@noble/curves/secp256k1.js'),
+      nist: await load('@noble/curves/nist.js'),
+      ed25519: await load('@noble/curves/ed25519.js'),
+      sha3: await load('@noble/hashes/sha3.js'),
+      sha2: await load('@noble/hashes/sha2.js'),
+      legacy: await load('@noble/hashes/legacy.js'),
+      blake3: await load('@noble/hashes/blake3.js'),
+      hmac: await load('@noble/hashes/hmac.js'),
+    },
+    scure: {
+      bip32: await load('@scure/bip32'),
+      bip39: await load('@scure/bip39'),
+      english: await load('@scure/bip39/wordlists/english.js'),
+    },
+    micro: await load('micro-eth-signer'),
+  }
+}
+
+/** Mutated calls per function with recorded or hand-written arguments, unless `budgets` says otherwise. */
+export const mutations = 500
+
+/** Fewer calls for functions whose every call costs milliseconds; the first match applies. */
+export const budgets: [RegExp, number][] = [
+  [/Mnemonic\.to(Seed|HdKey|PrivateKey)|HdKey\.fromSeed|Keystore\./, 8],
+  // Mining a salt is unbounded work by design, so only the recorded calls run.
+  [/VirtualMaster\.mineSalt/, 0],
+  [/Kzg\.create$/, 4],
+  [/Blobs\.|BlobCells\.|Kzg\.|Setups\./, 12],
+  [/Bls\.|BlsPoint\.|MlDsa44\./, 30],
+  [
+    /\.(recover\w*|verify\w*|sign\w*|getPublicKey|createKeyPair\w*|getSharedSecret|derive\w*)$/,
+    60,
+  ],
+  [/WebCryptoP256|WebAuthnP256/, 30],
+]
 
 export type Property = {
   id: string

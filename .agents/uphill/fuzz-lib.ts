@@ -1,7 +1,8 @@
 /**
  * Shared pieces of the fuzz category: a seeded PRNG, the crash oracle's error classification, the
- * corpus decoder, the boundary mutator that turns a recorded argument set into new ones, the
- * minimizer, and the formatter that prints an input in a metric note.
+ * marking of values rebuilt from the corpus, the boundary mutator that turns a recorded argument
+ * set into new ones, the minimizer's type checks, and the formatter that prints an input in a
+ * metric note.
  *
  * Every mutation says whether it keeps the argument's TypeScript type. A hex string stays a
  * `0x${string}` (empty, odd-length, uppercase, or not hex at all), a bigint stays a bigint (zero,
@@ -15,6 +16,9 @@
  */
 
 import * as fs from 'node:fs'
+import * as path from 'node:path'
+
+import * as repo from './repo.ts'
 
 /** A seeded PRNG (mulberry32), so a function's inputs are the same on every run. */
 export function prng(seed: number) {
@@ -45,9 +49,6 @@ export function hash32(text: string) {
   return h >>> 0
 }
 
-// ---------------------------------------------------------------------------------------------
-// The crash oracle.
-
 /** Built-in errors that mean the code, not the input, went wrong. */
 const programmerErrors = new Set<unknown>([
   TypeError,
@@ -62,9 +63,9 @@ export type Crash = { kind: string; message: string; site?: string | undefined }
 
 /**
  * Whether a thrown value is a bug: anything not an `Error`, a stack overflow on a small input, or,
- * for an input that keeps the types, a built-in programmer error. ox's `BaseError`s, abitype's
- * and the dependencies' errors, and plain `Error`s (the generic `ErrorType` ox's error unions
- * list) are documented.
+ * for an input that keeps the types, a built-in programmer error. ox's `Errors.BaseError`s,
+ * abitype's and the dependencies' errors, and plain `Error`s (`Errors.GlobalErrorType`, which
+ * every ox `ErrorType` union lists) are documented.
  */
 export function classify(
   error: unknown,
@@ -83,12 +84,6 @@ export function classify(
   // A `throw new RangeError('"secretKey" expected Uint8Array of length 32')` is validation the
   // code (ox's or noble's) chose to do, with a message that names the problem.
   if (deliberate(error)) return undefined
-  // Browser-only defaults, such as WebAuthn's `rp.id = window.location.hostname`.
-  if (
-    error instanceof ReferenceError &&
-    /^(window|document|navigator) is not defined/.test(error.message)
-  )
-    return undefined
   // `BigInt('0xzz')`'s SyntaxError names the string, which is `0x${string}` but not hex.
   if (
     error instanceof SyntaxError &&
@@ -96,14 +91,28 @@ export function classify(
     numbersIn(args).invalidHex
   )
     return undefined
-  // RPC decoders and signature encoders call `BigInt` on quantities and scalars, so `0x` (which
-  // the spec does not allow for a quantity) throws `BigInt`'s SyntaxError. `Hex.toBigInt('0x')`
-  // is 0n. Whether the decoders should read `0x` as 0 or throw a typed error is a decision for the
-  // maintainers; drop this exemption once it is made.
+  // Empty hex as a number throws this SyntaxError from `BigInt('0x')`: ox's quantity decoders
+  // (`Hex.toBigInt`, every `fromRpc`, signature encoders) convert with `BigInt`, and `0x` is not a
+  // JSON-RPC quantity. Whether they should read `0x` as 0 or throw a typed error is a decision for
+  // the maintainers; viem's fuzzer exempts it for the same reason, and one property reports it
+  // once for `Hex.toBigInt`, instead of once per decoder.
   if (
     error instanceof SyntaxError &&
-    error.message === 'Cannot convert 0x to a BigInt' &&
-    !/\/Hex\.js:/.test(error.stack?.split('\n')[1] ?? '')
+    /^Cannot convert 0x to a BigInt$/.test(error.message)
+  )
+    return undefined
+  // JSON text the caller passed that is not JSON fails as `JSON.parse` fails.
+  if (
+    error instanceof SyntaxError &&
+    /JSON/.test(error.message) &&
+    stringsIn(args).some((text) => !parses(text))
+  )
+    return undefined
+  // RFC 8785 forbids non-finite numbers and bigints, and `Json.canonicalize` throws this
+  // TypeError for them on purpose (src/core/Json.ts).
+  if (
+    error instanceof TypeError &&
+    /^Cannot canonicalize (non-finite number|bigint)$/.test(error.message)
   )
     return undefined
   // A RangeError that names the bad number is the right error for it: a fraction or a non-finite
@@ -120,7 +129,7 @@ export function classify(
       return undefined
     if (
       huge &&
-      /Invalid (string|typed array|array) length|allocation failed|Invalid count value|Array buffer|out of memory|Invalid DataView|Maximum BigInt size|offset is out of bounds/i.test(
+      /Invalid (string|typed array|array) length|allocation failed|Invalid count value|Array buffer|out of memory|Invalid DataView|Maximum BigInt size/i.test(
         error.message,
       )
     )
@@ -132,6 +141,8 @@ export function classify(
       )
     )
       return undefined
+    // A NaN size or offset lands in `Uint8Array.prototype.set` as an offset.
+    if (huge && /offset is out of bounds/.test(error.message)) return undefined
   }
   return { kind: ctor.name, message, site: site(error) }
 }
@@ -197,7 +208,32 @@ function numbersIn(args: unknown[]) {
   return facts
 }
 
-/** The first stack frame in ox's build or a dependency, as `file:line`. */
+function stringsIn(value: unknown, depth = 0): string[] {
+  if (typeof value === 'string') return [value]
+  if (
+    depth > 8 ||
+    !value ||
+    typeof value !== 'object' ||
+    value instanceof Uint8Array
+  )
+    return []
+  return Object.values(value).flatMap((item) => stringsIn(item, depth + 1))
+}
+
+function parses(text: string) {
+  try {
+    JSON.parse(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * The first stack frame in ox's build or a dependency, as `file:line`: a dependency's file from
+ * its package name, such as `@noble/curves/utils.js`, and ox's from the checkout, such as
+ * `dist/core/Hex.js`.
+ */
 export function site(error: unknown): string | undefined {
   const stack = String((error as Error)?.stack ?? '')
   for (const line of stack.split('\n').slice(1)) {
@@ -210,7 +246,9 @@ export function site(error: unknown): string | undefined {
           /^.*\/node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?/,
           '',
         )
-      : file.replace(/^.*\/dist\//, 'dist/')
+      : file.startsWith(`${repo.root}/`)
+        ? path.relative(repo.root, file)
+        : file
     return `${relative}:${match[2]}`
   }
   return undefined
@@ -221,10 +259,7 @@ export function short(text: string, length = 160) {
   return line.length > length ? `${line.slice(0, length - 1)}…` : line
 }
 
-// ---------------------------------------------------------------------------------------------
-// Formatting inputs for notes.
-
-/** Values the formatter prints by name, such as a schema or a constant from ox's exports. */
+/** Values the formatter prints by name, such as an ABI or a key pair rebuilt from a recorded call. */
 export const named = new WeakMap<object, string>()
 
 /** A compact, JavaScript-like rendering of a value, cut at about `budget` characters. */
@@ -328,95 +363,27 @@ export function toHex(bytes: Uint8Array): string {
   return out
 }
 
-function fromHex(hex: string): Uint8Array {
-  const out = new Uint8Array(hex.length / 2)
-  for (let i = 0; i < out.length; i++)
-    out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16)
-  return out
-}
-
-// ---------------------------------------------------------------------------------------------
-// The corpus: argument sets ox's tests passed, in speed-codec's JSON format.
-
-export type Rebuild = {
-  ref: (key: string) => unknown
-  call: (key: string, args: unknown[]) => unknown
-  /** The value an async export resolved to, awaited beforehand and keyed by its encoded node. */
-  awaited?: ((node: string) => unknown) | undefined
-}
-
 /** Values rebuilt from an export or a call, which the mutator leaves alone. */
 export const opaque = new WeakSet<object>()
 
 /**
- * Rebuilds an argument set the speed recording wrote (see speed-codec.ts). Values that come from
- * ox's exports or calls, such as schemas and key pairs, are marked opaque and named.
+ * Marks the values speed-codec's `decode` rebuilt from an export, a call, or a source (its
+ * `origins` map) as opaque, and names them for notes, such as `fromHttp(…)`.
  */
-export function decodeSeed(text: string, rebuild: Rebuild): unknown[] {
-  const mark = (value: unknown, name: string) => {
-    if (value && (typeof value === 'object' || typeof value === 'function')) {
-      opaque.add(value)
-      if (!named.has(value)) named.set(value, name)
-    }
-    return value
+export function markRebuilt(origins: Map<object, unknown>) {
+  for (const [value, node] of origins) {
+    opaque.add(value)
+    if (named.has(value)) continue
+    const record = node as Record<string, unknown>
+    const key = record.$ref ?? record.$call ?? record.$await ?? record.$new
+    named.set(
+      value,
+      typeof key === 'string'
+        ? `${key.split('#')[1]}${'$ref' in record ? '' : '(…)'}`
+        : '[function]',
+    )
   }
-  const decodeValue = (value: unknown): unknown => {
-    if (value === null || typeof value !== 'object') return value
-    if (Array.isArray(value)) {
-      const out: unknown[] = []
-      for (let i = 0; i < value.length; i++) {
-        const item = value[i] as { hole?: number } | null
-        if (item && typeof item === 'object' && item.hole === 1)
-          out.length = i + 1
-        else out[i] = decodeValue(item)
-      }
-      return out
-    }
-    const record = value as Record<string, unknown>
-    if ('$u' in record) return undefined
-    if ('$b' in record) return BigInt(record.$b as string)
-    if ('$n' in record) return Number(record.$n)
-    if ('$u8' in record) return fromHex(record.$u8 as string)
-    if ('$ab' in record) return fromHex(record.$ab as string).buffer
-    if ('$map' in record)
-      return new Map(
-        (record.$map as [unknown, unknown][]).map(([key, item]) => [
-          decodeValue(key),
-          decodeValue(item),
-        ]),
-      )
-    if ('$d' in record) return new Date(record.$d as number)
-    if ('$ref' in record) {
-      const key = record.$ref as string
-      return mark(rebuild.ref(key), key.split('#')[1]!)
-    }
-    if ('$call' in record) {
-      const key = record.$call as string
-      const args = (record.$args as unknown[]).map(decodeValue)
-      return mark(rebuild.call(key, args), `${key.split('#')[1]}(…)`)
-    }
-    if ('$await' in record && rebuild.awaited) {
-      const key = record.$await as string
-      return mark(
-        rebuild.awaited(JSON.stringify(record)),
-        `${key.split('#')[1]}(…)`,
-      )
-    }
-    if ('$fn' in record)
-      return mark(Function(`return (${record.$fn as string})`)(), '[function]')
-    const source = ('$o' in record ? record.$o : record) as Record<
-      string,
-      unknown
-    >
-    const out: Record<string, unknown> = {}
-    for (const key of Object.keys(source)) out[key] = decodeValue(source[key])
-    return out
-  }
-  return (JSON.parse(text) as unknown[]).map(decodeValue)
 }
-
-// ---------------------------------------------------------------------------------------------
-// The boundary mutator.
 
 /** One mutated input: the arguments, whether they keep their types, and what changed. */
 export type Mutant = { args: unknown[]; typed: boolean; changes: string[] }
@@ -562,11 +529,16 @@ function freeText(text: string, key: string | number | undefined) {
     )
   )
     return false
+  // An identifier of any length, such as `approveExecutionAndPayment`, is a named value.
+  if (/^[A-Za-z_$][\w$]*$/.test(text)) return false
   return text.length > 24 || /[^\w\-[\](),]/.test(text)
 }
 
 /** Whether an array's elements share one shape, so it is a list rather than a tuple. */
 export function homogeneous(values: unknown[]) {
+  // A single array in an array is as likely a one-element tuple (`[authorization]`, with an
+  // optional signature after it) as a list of one tuple.
+  if (values.length === 1 && Array.isArray(values[0])) return false
   const shape = (value: unknown) =>
     value && typeof value === 'object' && !(value instanceof Uint8Array)
       ? `${Array.isArray(value) ? 'array' : 'object'}:${Array.isArray(value) ? '' : Object.keys(value).sort().join(',')}`
@@ -581,7 +553,7 @@ export function homogeneous(values: unknown[]) {
 
 /**
  * Lists the mutable slots of an argument set: every value reachable through plain arrays and
- * objects, minus opaque ones (values from ox's exports or calls).
+ * objects, minus opaque ones (values rebuilt from ox's exports or calls).
  */
 function slots(args: unknown[]): Slot[] {
   const out: Slot[] = []
@@ -654,11 +626,11 @@ function slots(args: unknown[]): Slot[] {
   return out
 }
 
-/** A path with array indices folded, so the objects of one parameter share optional fields. */
 /**
- * A position's key, such as `0.signature`. A field under an object with a string `type` carries
- * that variant (`0.signature@secp256k1`), so a secp256k1 signature, which needs `yParity`, is not
- * compared with a P-256 one, which has none.
+ * A position's key, with array indices folded so the objects of one parameter share optional
+ * fields, such as `0.signature`. A field under an object with a string `type` carries that variant
+ * (`0.signature@secp256k1`), so a secp256k1 signature, which needs `yParity`, is not compared with
+ * a P-256 one, which has none.
  */
 export function shapeKey(path: (string | number)[], root: unknown) {
   let container = root
@@ -692,14 +664,19 @@ const discriminators = new Set([
   'mode',
 ])
 
-/** An object's fields, sorted, with each discriminator's value: `chainId,nonce,type=eip1559`. */
+/**
+ * An object's fields, sorted, with each discriminator's value and each other field's kind:
+ * `chainId:number,nonce:bigint,type=eip1559`.
+ */
 function fieldsOf(value: Record<string, unknown>) {
+  // Field kinds tell apart shapes with the same names, such as an authorization with a numeric
+  // `chainId` and its RPC form with a hex one (which also needs a signature).
   return Object.keys(value)
     .filter((field) => value[field] !== undefined)
     .map((field) =>
       discriminators.has(field) && typeof value[field] === 'string'
         ? `${field}=${value[field]}`
-        : field,
+        : `${field}:${value[field] === null ? 'null' : typeof value[field]}`,
     )
     .sort()
     .join(',')
@@ -812,7 +789,7 @@ export function markOpaque(value: unknown, depth = 0) {
     markOpaque((value as Record<string, unknown>)[key], depth + 1)
 }
 
-/** A deep copy that keeps opaque values (chains, ABIs, accounts) by reference. */
+/** A deep copy that keeps opaque values (rebuilt exports, class instances) by reference. */
 export function clone<value>(value: value, depth = 0): value {
   if (!value || typeof value !== 'object' || opaque.has(value) || depth > 50)
     return value
@@ -857,8 +834,11 @@ export function mutate(
   const args = clone(seed)
   let typed = true
   const changes: string[] = []
+  // A slot given a wrong type stays as it is: a later edge value there (a number of 2^31 where
+  // bytes go) would allocate gigabytes for an input no caller can pass.
+  const wrong = new Set<string>()
   for (let round = 0; round < count; round++) {
-    const all = slots(args)
+    const all = slots(args).filter((slot) => !wrong.has(slot.path.join('.')))
     if (!all.length) break
     const slot = random.pick(all)
     const label = `arg${slot.path[0]}${slot.path
@@ -874,6 +854,7 @@ export function mutate(
       )
       slot.set(clone(next))
       typed = false
+      wrong.add(slot.path.join('.'))
       changes.push(`${label} = ${format(next, 40)} (wrong type)`)
       continue
     }
@@ -912,6 +893,36 @@ export function mutate(
         Math.abs(next) > 2 ** 20
       )
         next = Math.sign(next) * 2 ** 20
+      // Key derivation costs are work by design: PBKDF2's iterations (`c` in a keystore's
+      // `kdfparams`) and scrypt's `n`, `r` and `p` multiply the time and memory a derivation
+      // takes, whether in `kdfparams` or in options beside a `salt`. Cap each at 2^12, and scrypt's
+      // product at 2^20, about a second.
+      const parent = slot.path
+        .slice(0, -1)
+        .reduce<unknown>(
+          (value, part) => (value as Record<string | number, unknown>)[part],
+          args,
+        ) as Record<string, unknown>
+      if (
+        typeof key === 'string' &&
+        /^(c|n|r|p|dklen|iterations)$/.test(key) &&
+        (slot.path.includes('kdfparams') || 'salt' in parent) &&
+        Number.isFinite(next)
+      ) {
+        const others = /^[nrp]$/.test(key)
+          ? ['n', 'r', 'p']
+              .filter((other) => other !== key)
+              .reduce((product, other) => {
+                const cost = parent[other]
+                return typeof cost === 'number' && cost > 1
+                  ? product * cost
+                  : product
+              }, 1)
+          : 1
+        next =
+          Math.sign(next) *
+          Math.min(Math.abs(next), 2 ** 12, Math.floor(2 ** 20 / others))
+      }
       slot.set(next)
       changes.push(`${label} = ${format(next)}`)
     } else if (typeof value === 'boolean') {
@@ -960,11 +971,15 @@ export function mutate(
       changes.push(`${label} = ${format(next, 60)}`)
     } else if (Array.isArray(value)) {
       // Reordering, dropping, or repeating elements keeps a list's type, not a tuple's. An
-      // argument named `tuple` is one even when its elements look alike (`[yParity, r, s]`).
-      const tuple =
-        slot.path.length === 1 &&
-        /tuple/i.test(params[slot.path[0] as number] ?? '')
-      if (tuple || !homogeneous(value)) typed = false
+      // argument or field named `tuple` is one, whatever its elements look like
+      // (`[yParity, r, s]`).
+      const key =
+        slot.path.length > 1 ? slot.path.at(-1) : params[slot.path[0] as number]
+      if (
+        !homogeneous(value) ||
+        (typeof key === 'string' && /tuple/i.test(key))
+      )
+        typed = false
       const choice = random.int(6)
       if (choice === 0) {
         slot.set([])

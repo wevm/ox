@@ -2,27 +2,33 @@
  * Writes the type-checking cost of calling each public function the way ox's own tests call it,
  * and whether each public function has such a call.
  *
- * 1. Enumerate. `speed-worker.ts enumerate` lists the public functions the way the speed and
- *    coverage categories do: every function each entry point of package.json exports, namespace
- *    members included, such as `ox:AbiFunction.decodeResult`, named by the first entry in
- *    package.json order. A worker walks each name from its entry's source to the declaration it
- *    resolves to.
- * 2. Scan. Workers list the calls in every `*.test.ts`, `*.test-d.ts`, and `*.snap-d.ts` file under
- *    src whose callee resolves, through imports and re-exports, to one of those declarations.
- * 3. Measure. Each function gets one call: the first in its own runtime tests, such as
- *    AbiFunction.test.ts for `AbiFunction.decodeResult`, else in its own type tests, else in any
- *    test file. types-calls-worker.ts copies the call out of its statement and checks it in a
- *    fresh checker after resolving what it references from outside it, so imports and fixtures,
- *    such as a large ABI, do not count against it. Relating a fixture to the function's
- *    parameters does count: that is checking the call.
+ * 1. Enumerate. `types-calls-worker.ts functions` lists the public functions: every function each
+ *    entry point's build exports, namespace members included, such as
+ *    `ox:AbiFunction.decodeResult`, with each namespace named by the first entry that reaches it,
+ *    `ox` and the other index entries first (see repo.ts). A function that several namespaces
+ *    export, such as `ox:HdKey.path` and `ox:Mnemonic.path`, gets a line under each name. A worker
+ *    walks each name from its entry's source to the declaration it resolves to.
+ * 2. Scan. Workers list the calls in every `*.test.ts`, `*.test-d.ts` and `*.snap-d.ts` file under
+ *    src whose callee resolves, through imports and re-exports, to one of those declarations, such
+ *    as `Hex.fromString(...)` through `import { Hex } from 'ox'`.
+ * 3. Measure. Each function gets one call: the first in its own module's runtime tests, such as
+ *    src/core/_test/Hex.test.ts for `ox:Hex.fromString` (then its module's other runtime test
+ *    files, such as AbiParameters.encode.test.ts for `ox:AbiParameters.encode`), else in its own
+ *    type tests, else in any test file; within a file, the first in `describe('fromString')`.
+ *    types-calls-worker.ts copies the call, with any calls chained on its result, out of its
+ *    statement and checks it in a fresh checker after resolving what it references from outside
+ *    it, so imports and fixtures, such as a large ABI, do not count against it. Relating a fixture
+ *    to the function's parameters does count: that is checking the call. A call that picks up a
+ *    type error once copied out gives its place to the function's next call, up to five calls.
  *
  * - `instantiations`: type instantiations to check the call, exact and repeatable.
  * - `type-benched`: whether the function has a measured call, and why not when it has none.
  *
  * Check time and heap bytes are not written: the same call's time varies by a third between
- * checks, and a time or a varying size would make Uphill run this script five times.
- * `UPHILL_CONCURRENCY` sets the pool size (default `os.availableParallelism()`), which free memory
- * caps.
+ * checks, and a time or a varying size would make Uphill run this script five times, while
+ * instantiations are exact. The workers run on Node 26 or later, as types.ts's do (see
+ * `nodeBinary` in types-host.ts). `UPHILL_CONCURRENCY` sets the pool size (default 2), which
+ * available memory caps.
  *
  * @module
  */
@@ -31,70 +37,58 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import { entries as listEntries } from './entries.ts'
 import { hot } from './hot.ts'
+import { root } from './repo.ts'
 import type {
   EntriesResult,
+  FunctionsResult,
   Job,
   Measurement,
   MeasureResult,
   ScanResult,
   Site,
 } from './types-calls-worker.ts'
+import { availableMemory, nodeBinary } from './types-host.ts'
 
-/** Each worker's V8 heap limit in MB, and the larger one a job that runs out of it gets. */
+/**
+ * Each worker's V8 heap limit in MB, and the larger one a job that runs out of it gets, once, if
+ * 2.5GB are available. ox's parsed sources and test fixtures take about 500MB.
+ */
 const heap = 1536
-const largeHeap = 4096
-/** The resident memory one worker can reach, which caps the pool by free memory. */
+const largeHeap = 2048
+/** The resident memory one worker can reach, which caps the pool by available memory. */
 const workerBytes = 1.75e9
 /** Notes say where the instantiations come from for calls that cost at least this many. */
-const costly = 5000
+const costly = 2000
 /** Calls tried per function until one checks once copied out. */
 const tries = 5
 
-const root = process.cwd()
 const here = import.meta.dir
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
+const node = nodeBinary()
 const started = performance.now()
 
-// 1. The public functions, named as the speed and coverage categories name them.
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uphill-types-calls-'))
-const enumeration = (() => {
-  try {
-    fs.writeFileSync(path.join(tmp, 'keys.json'), JSON.stringify({ keys: [] }))
-    const result = Bun.spawnSync(
-      [
-        'node',
-        path.join(here, 'speed-worker.ts'),
-        'enumerate',
-        path.join(tmp, 'keys.json'),
-        path.join(tmp, 'enumeration.json'),
-      ],
-      { cwd: root, stderr: 'inherit' },
-    )
-    if (!result.success) throw new Error('enumerating public functions failed')
-    return JSON.parse(
-      fs.readFileSync(path.join(tmp, 'enumeration.json'), 'utf8'),
-    ) as {
-      items: { name: string; entry: string; package?: string | undefined }[]
-      entries: { name: string; file: string }[]
-    }
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true })
-  }
+// 1. The public functions.
+const { functions } = (() => {
+  const result = Bun.spawnSync(
+    [
+      node,
+      `--max-old-space-size=${heap}`,
+      path.join(here, 'types-calls-worker.ts'),
+      'functions',
+    ],
+    { cwd: root, stderr: 'inherit' },
+  )
+  if (!result.success) throw new Error('enumerating public functions failed')
+  return JSON.parse(result.stdout.toString()) as FunctionsResult
 })()
-const functions = enumeration.items
-const sources = new Map(
-  listEntries().map((entry) => [entry.name, entry.source]),
-)
-const entries = enumeration.entries.map(({ name }) => ({
-  name,
-  file: sources.get(name)!,
-}))
+const moduleOf = new Map(functions.map((item) => [item.name, item.module]))
+// Build output and packages installed under src hold no tests of ox's own.
 const testFiles = [
   ...new Bun.Glob('src/**/*.{test,test-d,snap-d}.ts').scanSync(root),
 ]
+  .filter((file) => !/(^|\/)(_esm|_cjs|_types|node_modules)\//.test(file))
   .sort()
   .map((file) => path.join(root, file))
 log(
@@ -105,13 +99,14 @@ log(
 const concurrency = Math.max(
   1,
   Math.min(
-    Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism(),
-    Math.floor(os.freemem() / workerBytes),
+    Number(process.env.UPHILL_CONCURRENCY) || 2,
+    Math.floor(availableMemory() / workerBytes),
   ),
 )
 const workers = Array.from({ length: concurrency }, () => startWorker(heap))
 let nextId = 0
-const declarations = new Map<string, string>()
+/** The public functions each declaration key is, since a declaration can have several names. */
+const declarations = new Map<string, string[]>()
 const sitesByFile = new Map<string, Site[]>()
 const texts = new Map<string, string>()
 let missing: string[] = []
@@ -120,13 +115,12 @@ await run([
     job: {
       kind: 'entries',
       id: nextId++,
-      entries,
       names: functions.map((item) => item.name),
     },
     done(result: EntriesResult) {
       for (const [name, keys] of Object.entries(result.declarations))
         for (const key of keys)
-          if (!declarations.has(key)) declarations.set(key, name)
+          declarations.set(key, [...(declarations.get(key) ?? []), name])
       missing = result.missing
     },
   },
@@ -149,33 +143,52 @@ let callCount = 0
 // In file order, since scans finish in any order.
 for (const file of [...sitesByFile.keys()].sort())
   for (const site of sitesByFile.get(file)!) {
-    const item = declarations.get(site.declaration)
-    if (!item) continue
+    const items = declarations.get(site.declaration)
+    if (!items) continue
     callCount++
-    const list = candidates.get(item) ?? []
-    list.push({ ...site, file, item })
-    candidates.set(item, list)
+    for (const item of items) {
+      const list = candidates.get(item) ?? []
+      list.push({ ...site, file, item })
+      candidates.set(item, list)
+    }
   }
 log(
   `found ${callCount} calls to ${candidates.size} public functions in ${((performance.now() - started) / 1000).toFixed(1)}s`,
 )
 
-// 3. Measure one call per function: the first in its own runtime tests, such as
-// readContract.test.ts for readContract, then in its own type tests, then in any other test file.
-// That is most often the test named `default`, the way its documentation calls it. A call that
-// fails to check once copied out gives its place to the function's next call, up to five calls.
+// 3. Measure one call per function: the first in its own module's runtime tests, such as Hex.test.ts
+// for `ox:Hex.fromString`, then in a runtime test file named after it, such as
+// AbiParameters.encode.test.ts for `ox:AbiParameters.encode`, then in its module's other runtime
+// tests, then in its type tests, then in any other test file. Within a file, calls in the
+// `describe` block named after the function come first, which is most often the test named
+// `default`, the way its documentation calls it. A call that fails to check once copied out gives
+// its place to the function's next call, up to five calls.
 const order = new Map<string, Candidate[]>()
 for (const [item, list] of candidates) {
-  const rank = (candidate: Candidate) => {
-    const declared = path
-      .basename(candidate.declaration.split(':')[0]!)
-      .replace(/(\.d)?\.ts$/, '')
-    const name = path.basename(candidate.file)
-    if (name === `${declared}.test.ts`) return 0
-    if (name === `${declared}.test-d.ts` || name === `${declared}.snap-d.ts`)
-      return 1
-    return 2
+  const module = moduleOf.get(item)!
+  // The function's own name, such as `fromString` for `ox:Hex.fromString`.
+  const name = item.slice(
+    Math.max(item.indexOf(':'), item.lastIndexOf('.')) + 1,
+  )
+  const fileRank = (file: string) => {
+    const base = path.basename(file)
+    if (base === `${module}.test.ts`) return 0
+    if (base === `${module}.${name}.test.ts`) return 1
+    if (base.startsWith(`${module}.`) && base.endsWith('.test.ts')) return 2
+    if (base === `${module}.test-d.ts` || base === `${module}.snap-d.ts`)
+      return 3
+    return 4
   }
+  // Within a file, calls in the `describe` block named after the function come first, such as
+  // `describe('toRpc')` rather than a `fromRpc` test that calls `toRpc` on its result.
+  const rank = (candidate: Candidate) =>
+    fileRank(candidate.file) * 2 +
+    (candidate.test
+      .split(' > ')
+      .slice(1, -1)
+      .some((block) => block === name || block.endsWith(`.${name}`))
+      ? 0
+      : 1)
   order.set(
     item,
     list
@@ -258,7 +271,7 @@ fs.renameSync(`${timesFile}.${process.pid}`, timesFile)
 const lines: string[] = []
 const reasons = new Map<string, number>()
 const reported: { item: string; value: number; note: string }[] = []
-for (const { name, package: owner } of functions) {
+for (const { name } of functions) {
   const measurement = measured.get(name)
   if (measurement) {
     const text = note(measurement)
@@ -269,11 +282,9 @@ for (const { name, package: owner } of functions) {
     reported.push({ item: name, value: measurement.instantiations, note: text })
     continue
   }
-  const reason = whyNot(name, owner)
-  reasons.set(
-    reason.split(/[:(]/)[0]!.trim(),
-    (reasons.get(reason.split(/[:(]/)[0]!.trim()) ?? 0) + 1,
-  )
+  const reason = whyNot(name)
+  const kind = reason.split(/[:(]/)[0]!.trim()
+  reasons.set(kind, (reasons.get(kind) ?? 0) + 1)
   lines.push(`type-benched ${quote(name)} fail note ${quote(reason)}`)
 }
 fs.appendFileSync(metrics, `${[...lines, ...hot(lines)].join('\n')}\n`)
@@ -295,7 +306,7 @@ log(
   `done in ${((performance.now() - started) / 1000).toFixed(1)}s with ${concurrency} workers; peak worker memory ${size(peak)}`,
 )
 
-/** Names a call's test, such as `src/core/_test/AbiFunction.test.ts > decodeResult > default`. */
+/** Names a call's test, such as `src/core/_test/Hex.test.ts > fromString > default (line 12)`. */
 function where(candidate: Candidate) {
   return `${candidate.test} (line ${candidate.line})`
 }
@@ -330,14 +341,11 @@ function note(measurement: Measurement & { candidate: Candidate }) {
 }
 
 /** Why a public function has no measured call. */
-function whyNot(name: string, owner: string | undefined) {
+function whyNot(name: string) {
   if (missing.includes(name))
     return 'no declaration names it, since it is built at run time'
   const all = candidates.get(name) ?? []
-  if (!all.length)
-    return owner
-      ? `no test calls it directly (it is ${owner}'s)`
-      : 'no test calls it directly'
+  if (!all.length) return 'no test calls it directly'
   const failed = rejected.get(name) ?? []
   if (failed.length) {
     const first = failed[0]!
@@ -356,7 +364,7 @@ function whyNot(name: string, owner: string | undefined) {
       ([reason, count]) =>
         `${count} ${count === 1 ? 'call' : 'calls'} ${reason}`,
     )
-    .join(', ')} (such as ${where(all[0]! as Candidate)})`
+    .join(', ')} (such as ${where(all[0]!)})`
 }
 
 /** Shortens a declared type for a note to its first 100 characters. */
@@ -367,7 +375,8 @@ function short(text: string) {
 
 /**
  * Runs jobs on the pool, each worker taking the next job as it finishes one. A worker that runs
- * out of memory is replaced, and its job runs again in a worker with a larger heap.
+ * out of memory is replaced, and its job runs again in a worker with a larger heap, once, if the
+ * machine has the memory for it; otherwise the job's calls are left out.
  */
 async function run(tasks: { job: Job; done: (result: never) => void }[]) {
   let next = 0
@@ -381,11 +390,19 @@ async function run(tasks: { job: Job; done: (result: never) => void }[]) {
         try {
           result = await workers[index]!.send(task.job)
         } catch (error) {
-          log(`${String(error)}; checking it again with a ${largeHeap}MB heap`)
           workers[index] = startWorker(heap)
+          if (availableMemory() < 2.5e9) {
+            log(`${String(error)}; no room for a larger heap, leaving it out`)
+            if (task.job.kind !== 'measure') throw error
+            continue
+          }
+          log(`${String(error)}; checking it again with a ${largeHeap}MB heap`)
           const large = startWorker(largeHeap)
-          result = await large.send(task.job)
-          await large.close()
+          try {
+            result = await large.send(task.job)
+          } finally {
+            await large.close()
+          }
         }
         task.done(result as never)
         if (task.job.kind === 'measure')
@@ -404,7 +421,7 @@ async function run(tasks: { job: Job; done: (result: never) => void }[]) {
 function startWorker(limit: number) {
   const child = Bun.spawn(
     [
-      'node',
+      node,
       `--max-old-space-size=${limit}`,
       path.join(here, 'types-calls-worker.ts'),
     ],
@@ -427,11 +444,7 @@ function startWorker(limit: number) {
   }
   return {
     async send(job: Job): Promise<unknown> {
-      // readline also ends a line at U+2028 and U+2029, which JSON leaves unescaped, and
-      // Siwe's tests contain them.
-      child.stdin.write(
-        `${JSON.stringify(job).replace(/[\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16)}`)}\n`,
-      )
+      child.stdin.write(`${jsonLine(job)}\n`)
       child.stdin.flush()
       const line = await readLine()
       if (line === undefined) {
@@ -449,6 +462,16 @@ function startWorker(limit: number) {
       return line ? (JSON.parse(line) as { peak: number }).peak : 0
     },
   }
+}
+
+/**
+ * A job as one line of JSON. Node's readline also ends lines at U+2028 and U+2029, which
+ * `JSON.stringify` leaves as they are and test files, such as Siwe's, hold.
+ */
+function jsonLine(job: Job): string {
+  return JSON.stringify(job).replace(/[\u2028\u2029]/g, (char) =>
+    char === '\u2028' ? '\\u2028' : '\\u2029',
+  )
 }
 
 /** Quotes an item or note for a metric line, escaping `"` and `\`. */

@@ -5,19 +5,27 @@
  * 1. Corpus. fuzz-fixtures/corpus.json holds up to ten argument sets per function that ox's own
  *    tests passed it, snapshotted from the speed category's recording
  *    (node_modules/.cache/uphill-speed), so runs do not depend on a recording that changes with
- *    every edit. `FUZZ_CORPUS=refresh` snapshots the newest recording again.
- * 2. Plan. `fuzz-worker.ts plan` walks every entry point of package.json, as speed-worker.ts does,
- *    so functions have the same names, and lists each one's harnesses: the structured properties
- *    in fuzz-properties.ts (round trips, differentials against viem, ethers, noble, scure, and
- *    micro-eth-signer, and consistency between ox functions) and boundary mutations of its
- *    recorded arguments (fuzz-lib.ts).
+ *    every edit. `FUZZ_CORPUS=refresh` snapshots the newest recording again. Without a corpus or
+ *    a recording, the run goes on with structured properties and hand-written seeds alone.
+ * 2. Plan. `fuzz-worker.ts plan` walks every entry point `entries()` in repo.ts lists, as
+ *    speed-worker.ts does, so functions have the same names as in the other categories, such as
+ *    `ox:Hex.fromString`, and lists each one's harnesses: the structured properties in
+ *    fuzz-properties.ts (round trips, re-encoding of recorded values, differentials against the
+ *    reference implementations this branch's devDependencies provide, such as viem, ethers, noble
+ *    and micro-eth-signer, and consistency between ox functions), boundary mutations of its
+ *    recorded arguments (fuzz-lib.ts), and hand-written seeds. A function several names reach is
+ *    one item, under the first, such as `ox:HdKey.path` for `ox:Mnemonic.path`. The network is
+ *    blocked, and WebAuthn
+ *    prompts go to a stand-in `window` whose credential calls return nothing.
  * 3. Fuzz. `fuzz-worker.ts fuzz` runs a fixed shard of functions in one Node process, with fixed
- *    seeds and run counts, so two runs write the same lines. Shards run `UPHILL_CONCURRENCY` at a
- *    time. A shard that hangs or grows past the memory limit is stopped, and its function is run
- *    again alone with tracing on, which names the input that did it.
+ *    seeds and run counts, so two runs write the same lines. Shards run `UPHILL_CONCURRENCY`
+ *    (default 2) at a time. A shard that hangs or grows past the memory limit is stopped, and its
+ *    function is run again alone with tracing on, which names the input that did it.
+ *    `FUZZ_ONLY=<regex>` fuzzes only the matching functions, for iterating on a harness.
  *
- * The crash oracle: ox's documented errors (`BaseError` and the plain errors its `ErrorType`
- * unions list) are fine; a TypeError, RangeError, SyntaxError, or ReferenceError on an input that
+ * The crash oracle: ox's documented errors (`Errors.BaseError` subclasses, the plain `Error` that
+ * `Errors.GlobalErrorType` stands for in its `ErrorType` unions, and validation the code throws on
+ * purpose) are fine; a TypeError, RangeError, SyntaxError, or ReferenceError on an input that
  * keeps the declared types, a stack overflow, a hang, or runaway memory is a failure.
  *
  * @module
@@ -28,14 +36,11 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { hot } from './hot.ts'
+import { root } from './repo.ts'
 
-const root = path.resolve(import.meta.dir, '../..')
 const here = import.meta.dir
 const metricsFile = process.env.UPHILL_METRICS
-const concurrency = Math.max(
-  1,
-  Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism(),
-)
+const concurrency = Math.max(1, Number(process.env.UPHILL_CONCURRENCY) || 2)
 const node = Bun.which('node')
 if (!node) throw new Error('node is not on PATH.')
 
@@ -108,13 +113,14 @@ async function main() {
     `Public functions: ${plan.items.length}; ${fuzzable.length} have a harness (${fuzzable.filter((item) => item.properties.length).length} with structured properties, ${fuzzable.filter((item) => item.seeds).length} with recorded or hand-written arguments); ${plan.properties.length} properties.`,
   )
 
-  // Fixed shards: sorted names dealt round-robin, isolated functions alone.
+  // Fixed shards: a module's functions share a shard, so costly setups (a KZG trusted setup,
+  // ethers' HD wallets) load once; modules go, largest first, to the shard with the fewest
+  // functions so far. Isolated functions run alone.
   const locations = Object.fromEntries(
     plan.items
       .filter((item) => item.location)
       .map((item) => [item.name, item.location!]),
   )
-  // `FUZZ_ONLY=<regex>` fuzzes only the matching functions, for iterating on a harness.
   const only = process.env.FUZZ_ONLY
     ? new RegExp(process.env.FUZZ_ONLY)
     : undefined
@@ -122,11 +128,24 @@ async function main() {
     .map((item) => item.name)
     .filter((name) => !only || only.test(name))
     .sort()
+  const byModule = new Map<string, string[]>()
+  for (const name of sorted) {
+    if (isolated.has(name)) continue
+    const module = moduleOf(name)
+    if (!byModule.has(module)) byModule.set(module, [])
+    byModule.get(module)!.push(name)
+  }
   const shards: string[][] = Array.from({ length: shardCount }, () => [])
-  let index = 0
-  for (const name of sorted)
-    if (isolated.has(name)) shards.push([name])
-    else shards[index++ % shardCount]!.push(name)
+  for (const [, names] of [...byModule].sort(
+    ([a, x], [b, y]) => y.length - x.length || (a < b ? -1 : 1),
+  )) {
+    const smallest = shards.reduce(
+      (best, shard, i) => (shard.length < shards[best]!.length ? i : best),
+      0,
+    )
+    shards[smallest]!.push(...names)
+  }
+  for (const name of sorted) if (isolated.has(name)) shards.push([name])
 
   const results = new Map<string, Result>()
   let peakRss = 0
@@ -206,9 +225,11 @@ async function main() {
       : []
     const done = lines.find((line) => line.name === name) as Result | undefined
     if (done && outcome.code === 0) return done // It only failed alongside other functions.
-    const last = fs.existsSync(trace)
-      ? fs.readFileSync(trace, 'utf8').split('\n').filter(Boolean).at(-1)
-      : undefined
+    // The trace has a line per call, so it counts the calls made before the worker stopped.
+    const traced = fs.existsSync(trace)
+      ? fs.readFileSync(trace, 'utf8').split('\n').filter(Boolean)
+      : []
+    const last = traced.at(-1)
     const input = last
       ? (JSON.parse(last) as {
           harness: string
@@ -225,7 +246,11 @@ async function main() {
     return {
       name,
       harnesses: [
-        { id: input?.harness ?? 'unknown', oracle: 'crash', runs: 0 },
+        {
+          id: input?.harness ?? 'unknown',
+          oracle: 'crash',
+          runs: traced.length,
+        },
       ],
       failures: [
         {
@@ -244,11 +269,10 @@ async function main() {
         },
       ],
       ms: 0,
-      calls: 0,
+      calls: traced.length,
     }
   }
 
-  // Metric lines.
   const lines: string[] = []
   const reasons = new Map<string, number>()
   const failing: { name: string; failure: FailureRecord }[] = []
@@ -257,48 +281,20 @@ async function main() {
   for (const item of plan.items) {
     const result = results.get(item.name)
     if (item.reason) {
-      const reason = item.reason
-      const category = reason.split(':')[0]!.replace(/, re-exported.*/, '')
+      const category = item.reason.split(':')[0]!.replace(/, re-exported.*/, '')
       reasons.set(category, (reasons.get(category) ?? 0) + 1)
-      lines.push(`fuzzed ${quote(item.name)} fail note ${quote(reason)}`)
-      continue
-    }
-    if (!result) {
+    } else if (!result) {
       if (only) continue
       throw new Error(`${item.name} has no result.`)
-    }
-    const ran = result.harnesses.filter((harness) => harness.runs > 0)
-    const summary = ran
-      .map((harness) => `${harness.id} ×${harness.runs}`)
-      .join('; ')
-    lines.push(
-      ran.length
-        ? `fuzzed ${quote(item.name)} pass note ${quote(summary)}`
-        : `fuzzed ${quote(item.name)} fail note ${quote('its harness made no calls')}`,
-    )
-    if (result.failures.length) {
+    } else {
       for (const failure of result.failures)
         failing.push({ name: item.name, failure })
-      const note = result.failures
-        .map(
-          (failure) =>
-            `${failure.oracle} (${failure.harness}): ${failure.kind}: ${failure.message}${failure.site ? ` at ${failure.site}` : ''}; input ${failure.input}`,
-        )
-        .join(' | ')
-      lines.push(
-        `fuzz-clean ${quote(item.name)} fail note ${quote(note.slice(0, 1500))}`,
-      )
-    } else if (ran.length)
-      lines.push(
-        `fuzz-clean ${quote(item.name)} pass note ${quote(`${result.calls} inputs`)}`,
-      )
-    if (result.coverage) {
-      coverageTotal += result.coverage.percent
-      coverageCount++
-      lines.push(
-        `fuzz-coverage ${quote(item.name)} ${result.coverage.percent} note ${quote(`${result.coverage.covered} of ${result.coverage.lines} lines of its own source ran`)}`,
-      )
+      if (result.coverage) {
+        coverageTotal += result.coverage.percent
+        coverageCount++
+      }
     }
+    lines.push(...linesOf(item, result))
   }
   if (metricsFile)
     fs.appendFileSync(metricsFile, `${[...lines, ...hot(lines)].join('\n')}\n`)
@@ -324,6 +320,50 @@ async function main() {
   )
 }
 
+/** A function's metric lines. */
+function linesOf(item: Planned, result: Result | undefined) {
+  const { name } = item
+  const note = (text: string) => quote(text)
+  if (item.reason)
+    return [`fuzzed ${quote(name)} fail note ${note(item.reason)}`]
+  const ran = result!.harnesses.filter((harness) => harness.runs > 0)
+  const summary = ran
+    .map((harness) => `${harness.id} ×${harness.runs}`)
+    .join('; ')
+  const lines = [
+    ran.length
+      ? `fuzzed ${quote(name)} pass note ${note(summary)}`
+      : `fuzzed ${quote(name)} fail note ${note('its harness made no calls')}`,
+  ]
+  if (result!.failures.length) {
+    const failures = result!.failures
+      .map(
+        (failure) =>
+          `${failure.oracle} (${failure.harness}): ${failure.kind}: ${failure.message}${failure.site ? ` at ${failure.site}` : ''}; input ${failure.input}`,
+      )
+      .join(' | ')
+    lines.push(
+      `fuzz-clean ${quote(name)} fail note ${note(failures.slice(0, 1500))}`,
+    )
+  } else if (ran.length)
+    lines.push(
+      `fuzz-clean ${quote(name)} pass note ${note(`${result!.calls} inputs`)}`,
+    )
+  const coverage = result!.coverage
+  if (coverage)
+    lines.push(
+      `fuzz-coverage ${quote(name)} ${coverage.percent} note ${note(`${coverage.covered} of ${coverage.lines} lines of its own source ran`)}`,
+    )
+  return lines
+}
+
+/** The module a function belongs to, such as `ox/Hex` for `ox:Hex.fromNumber`. */
+function moduleOf(name: string) {
+  const [entry, member] = name.split(':') as [string, string]
+  const dot = member.indexOf('.')
+  return dot < 0 ? entry : `${entry}/${member.slice(0, dot)}`
+}
+
 /** The corpus fixture, snapshotted from the newest speed recording when missing or asked for. */
 function corpusFile() {
   const file = path.join(here, 'fuzz-fixtures/corpus.json')
@@ -336,10 +376,19 @@ function corpusFile() {
         .map((name) => path.join(cacheDir, name))
         .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)
     : []
-  if (!recordings.length)
-    throw new Error(
-      'No corpus: fuzz-fixtures/corpus.json is missing and there is no speed recording to snapshot. Run `bun .agents/uphill/speed.ts` first.',
+  if (!recordings.length) {
+    if (process.env.FUZZ_CORPUS === 'refresh')
+      throw new Error(
+        'There is no speed recording to snapshot. Run `bun .agents/uphill/speed.ts` first.',
+      )
+    // Structured properties and hand-written seeds still run without recorded arguments.
+    log(
+      'No corpus: fuzz-fixtures/corpus.json is missing and there is no speed recording to snapshot; fuzzing without recorded arguments.',
     )
+    const empty = path.join(tmp, 'corpus.json')
+    fs.writeFileSync(empty, JSON.stringify({ source: 'none', functions: {} }))
+    return empty
+  }
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const result = Bun.spawnSync(
     [node!, path.join(here, 'fuzz-worker.ts'), 'corpus', recordings[0]!, file],

@@ -27,7 +27,7 @@ import { consumerOptions, createHost, testOptions } from './types-host.ts'
 /** One file to check. */
 export type Job = {
   id: number
-  /** `export` checks a consumer with ox's options, `bench` an attest test with test/tsconfig.json. */
+  /** `export` checks a consumer with ox's options, `bench` an attest test with the tests' options. */
   mode: 'export' | 'bench'
   file: string
   text: string
@@ -50,6 +50,7 @@ export type Result = Cost & {
 /** V8's heap statistics. Recent Node releases add `total_allocated_bytes`, which @types/node lacks. */
 type HeapStatistics = v8.HeapInfo & { total_allocated_bytes?: number }
 
+// types.ts starts the workers with Node 26 or later (see `nodeBinary` in types-host.ts).
 if (allocated() === undefined)
   throw new Error(
     `Node ${process.version} does not report total_allocated_bytes from v8.getHeapStatistics(); Node 26 does`,

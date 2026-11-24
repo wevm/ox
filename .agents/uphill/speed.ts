@@ -1,26 +1,32 @@
 /**
  * Writes ox's speed metrics: for every public function, the CPU time and heap bytes of one call
  * replaying the arguments ox's own tests call it with, and whether it could be benched; and for
- * every entry point, the CPU time to import it and the heap it holds afterwards.
+ * every entry point, barrels included, the CPU time to import it and the heap it holds afterwards.
  *
- * 1. Record. `speed-vitest.config.ts` runs ox's `core` and `tempo-unit` test files under vitest,
- *    with the global setup that starts anvil (forking mainnet), and wraps every export of
- *    `src/**` to record the arguments of each call and whether it returned or resolved. The
- *    recording is cached in node_modules/.cache/uphill-speed by a hash of src/, test/, the
- *    lockfile, and these scripts, and Uphill's five runs share one recording. Without Foundry the
- *    tests that need anvil fail at once, and fewer functions are benched.
- * 2. Enumerate. `speed-worker.ts enumerate` walks each entry point of package.json (in its order)
- *    and maps every recorded export to the public function it is. A function exported from
- *    several entries is measured once, under the first, such as `ox:Hex.fromNumber` for
- *    `ox/Hex`'s `fromNumber`.
+ * 1. Record. `speed-vitest.config.ts` runs ox's `core` and `tempo-unit` test projects, the unit
+ *    tests of `tmp_frames`, and `speed-calls.test.ts` under vitest, with the global setup that
+ *    starts anvil, and wraps every export of `src/**` to record the arguments of each call and
+ *    whether it returned or resolved. Anvil forks mainnet through `forkProxy`, which caches what
+ *    mainnet nodes answer and falls back across public nodes. The recording is cached in
+ *    node_modules/.cache/uphill-speed by a hash of src/, test/, the lockfile, the test config, and
+ *    the recorder's scripts, and Uphill's five runs share one recording; its format is described at
+ *    the top of speed-codec.ts. Without Foundry the tests that need anvil fail at once, and fewer
+ *    functions are benched.
+ * 2. Enumerate. `speed-worker.ts enumerate` walks each entry point `entries()` in repo.ts lists (in
+ *    its order) and maps every recorded export to the public function it is. A function exported
+ *    from several entries is measured once, under the first, such as `ox:Hex.fromNumber` for
+ *    `ox/Hex`'s `fromNumber`, and its other names, such as `ox:Mnemonic.path` for `ox:HdKey.path`,
+ *    are left out. Each entry point is named by its specifier.
  * 3. Replay. `speed-worker.ts bench` replays each function in a fresh Node process, sharded across
- *    `UPHILL_CONCURRENCY` processes at a time (default: `os.availableParallelism()`).
+ *    `UPHILL_CONCURRENCY` processes at a time (default: `os.availableParallelism()`). Import probes
+ *    run in the same pool.
  *
- * Measured code runs under Node with `--single-threaded`, so V8's garbage collection and compiler
- * work run on the main thread and `process.cpuUsage()` counts only what the call costs. ox's
- * caches are emptied before every call, so `Address.checksum` and the functions that call it
- * measure their full work, as a first call with an input does; the note gives the time with the
- * caches warm too. The network is blocked.
+ * Measured code runs from the build under Node with `--single-threaded`, so V8's garbage
+ * collection and compiler work run on the main thread and `process.cpuUsage()` counts only what
+ * the call costs. ox's caches are emptied with `Caches.clear()` before every call, so
+ * `Address.checksum` and the functions that call it measure their full work, as a first call with
+ * an input does (a call that checksums one address twice still computes it once); the note gives
+ * the time with the caches warm too. The network is blocked.
  *
  * @module
  */
@@ -31,8 +37,8 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { hot } from './hot.ts'
+import { root } from './repo.ts'
 
-const root = path.resolve(import.meta.dir, '../..')
 const here = import.meta.dir
 const metricsFile = process.env.UPHILL_METRICS
 if (!metricsFile) throw new Error('UPHILL_METRICS is not set.')
@@ -45,6 +51,8 @@ if (!node) throw new Error('node is not on PATH.')
 
 /** CPU time one timing sample takes. */
 const sampleMs = 20
+/** Least CPU time a function runs before its samples, so V8 has settled (see speed-worker.ts). */
+const warmupMs = 300
 /** Timing samples per function; their median is the value. */
 const samples = 5
 /** Fresh processes per entry point for import time and memory; their median is the value. */
@@ -57,7 +65,7 @@ const keptLengthPerFunction = 5_000_000
 /** A replay that takes longer is stopped and fails `benched`. */
 const jobTimeoutMs = 60_000
 /** Changes whenever the recording's format or meaning changes, which invalidates the cache. */
-const recordingVersion = 3
+const recordingVersion = 4
 
 type Sample = { args: string; n: number; direct: boolean; where: string }
 type Key = {
@@ -85,15 +93,18 @@ type Recording = {
   files: TestFile[]
   keys: Record<string, Key>
 }
-type Item = {
-  name: string
-  entry: string
-  keys: string[]
-}
+type Item = { name: string; entry: string; keys: string[] }
 type Enumeration = {
   items: Item[]
-  counts: Record<string, number>
-  entries: { name: string; file: string }[]
+  exports: { name: string; item: string }[]
+  counts: {
+    functions: number
+    errors: number
+    classes: number
+    values: number
+    foreign: number
+  }
+  entries: { name: string; file: string; barrel: boolean }[]
   unmatched: string[]
 }
 
@@ -110,8 +121,9 @@ async function main() {
 
   const enumeration = await enumerate(Object.keys(recording.keys))
   const { items } = enumeration
+  const { counts } = enumeration
   log(
-    `Public functions: ${items.length} distinct; ${enumeration.counts.errors} error classes, ${enumeration.counts.classes} other classes, and ${enumeration.counts.values} other values are not benched, nor are the ${enumeration.counts.foreign} functions ox re-exports from zod.`,
+    `Public functions: ${counts.functions} names in ${enumeration.entries.length} entry points, ${items.length} distinct; ${counts.errors} error classes, ${counts.classes} other classes, and ${counts.values} other values are not benched, nor are the ${counts.foreign} functions ox re-exports from its dependencies, such as zod.`,
   )
 
   const lines: string[] = []
@@ -119,7 +131,7 @@ async function main() {
   const jobs: { item: Item; candidates: Sample[] }[] = []
   for (const item of items) {
     const merged = mergeKeys(item.keys.map((key) => recording.keys[key]!))
-    if (!merged?.ok.length) failures.set(item.name, whyNot(merged, item))
+    if (!merged?.ok.length) failures.set(item.name, whyNot(merged))
     else jobs.push({ item, candidates: pick(merged.ok) })
   }
 
@@ -145,15 +157,17 @@ async function main() {
     const runs = imports.get(entry.name) ?? []
     if (runs.length < importRuns)
       throw new Error(`Importing ${entry.name} failed.`)
+    const note = entry.barrel ? ' note "barrel"' : ''
     lines.push(
-      `import-time ${quote(entry.name)} ${formatTime(median(runs.map((run) => run.cpu)) * 1000)}`,
-      `import-memory ${quote(entry.name)} ${formatSize(median(runs.map((run) => run.heap)))}`,
+      `import-time ${quote(entry.name)} ${formatTime(median(runs.map((run) => run.cpu)) * 1000)}${note}`,
+      `import-memory ${quote(entry.name)} ${formatSize(median(runs.map((run) => run.heap)))}${note}`,
     )
   }
 
   const reasons = new Map<string, number>()
-  for (const item of items) {
-    const result = results.get(item.name)
+  for (const { name, item } of enumeration.exports) {
+    if (name !== item) continue
+    const result = results.get(item)
     if (result?.ok) {
       const notes = [
         result.direct
@@ -163,34 +177,38 @@ async function main() {
       if (result.async) notes.push('awaited')
       if (result.cached)
         notes.push(
-          `LRU caches emptied before each call${result.warm === undefined ? '' : ` (${formatTime(result.warm)} with them warm)`}`,
+          `caches emptied before each call${result.warm === undefined ? '' : ` (${formatTime(result.warm)} with them warm)`}`,
         )
       if (result.mutates)
         notes.push('mutates its arguments, so they are rebuilt per call')
+      if (result.window)
+        notes.push('runs with a stub window, as the WebAuthn tests do')
+      if (result.noops)
+        notes.push(
+          "the test's event callbacks, such as onProgress, replay as no-ops",
+        )
       const note = quote(notes.join('; '))
       lines.push(
-        `call-time ${quote(item.name)} ${formatTime(result.ns)} note ${note}`,
-        `call-memory ${quote(item.name)} ${formatSize(result.bytes)} note ${note}`,
-        `benched ${quote(item.name)} pass note ${note}`,
+        `call-time ${quote(name)} ${formatTime(result.ns)} note ${note}`,
+        `call-memory ${quote(name)} ${formatSize(result.bytes)} note ${note}`,
+        `benched ${quote(name)} pass note ${note}`,
       )
       continue
     }
     const reason = result
       ? (result.error ?? 'replay failed')
-      : failures.get(item.name)!
+      : failures.get(item)!
     reasons.set(category(reason), (reasons.get(category(reason)) ?? 0) + 1)
-    lines.push(`benched ${quote(item.name)} fail note ${quote(reason)}`)
+    lines.push(`benched ${quote(name)} fail note ${quote(reason)}`)
   }
   fs.appendFileSync(metricsFile!, `${[...lines, ...hot(lines)].join('\n')}\n`)
 
   const benched = [...results.values()].filter((result) => result.ok).length
+  const missing = [...reasons]
+    .sort((a, b) => b[1] - a[1])
+    .map(([reason, count]) => `${count} ${reason}`)
   log(
-    `Benched ${benched} of ${items.length} public functions; not benched: ${[
-      ...reasons,
-    ]
-      .sort((a, b) => b[1] - a[1])
-      .map(([reason, count]) => `${count} ${reason}`)
-      .join(', ')}.`,
+    `Benched ${benched} of ${items.length} public functions${missing.length ? `; not benched: ${missing.join(', ')}` : ''}.`,
   )
   log(
     `Replayed ${jobs.length} functions and imported ${enumeration.entries.length} entry points ${importRuns} times in ${replaySeconds.toFixed(0)}s at concurrency ${concurrency}; ${((performance.now() - started) / 1000).toFixed(0)}s in all.`,
@@ -222,55 +240,49 @@ async function loadRecording(): Promise<Recording> {
   )
   const started = performance.now()
   const out = fs.openSync(logFile, 'w')
-  const reports: string[] = []
-  const record = async (
-    args: string[],
-    env: Record<string, string> = {},
-  ): Promise<void> => {
-    const report = path.join(tmp, `vitest-${reports.length}.json`)
-    const child = Bun.spawn(
-      [
-        node!,
-        // The machine is shared; a capped heap collects sooner instead of growing past 1GB.
-        '--max-old-space-size=1536',
-        'node_modules/vitest/dist/cli.js',
-        'run',
-        '--config',
-        path.join(here, 'speed-vitest.config.ts'),
-        '--reporter=dot',
-        '--reporter=json',
-        `--outputFile.json=${report}`,
-        ...args,
-      ],
-      {
-        cwd: root,
-        env: {
-          ...process.env,
-          // foundryup installs anvil here without putting it on PATH.
-          PATH: [process.env.PATH, path.join(os.homedir(), '.foundry/bin')]
-            .filter(Boolean)
-            .join(path.delimiter),
-          UPHILL_SPEED_RECORD_DIR: dir,
-          UPHILL_SPEED_RECORD_WORKERS: String(concurrency),
-          ...env,
-        },
-        stdout: out,
-        stderr: out,
+  const report = path.join(tmp, 'vitest.json')
+  const fork = forkProxy(path.join(cacheDir, 'fork-rpc.json'))
+  const child = Bun.spawn(
+    [
+      node!,
+      // The machine is shared; a capped heap collects sooner instead of growing past 1GB.
+      '--max-old-space-size=1536',
+      'node_modules/vitest/vitest.mjs',
+      'run',
+      '--config',
+      path.join(here, 'speed-vitest.config.ts'),
+      '--reporter=dot',
+      '--reporter=json',
+      `--outputFile.json=${report}`,
+    ],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        // foundryup installs anvil here without putting it on PATH.
+        PATH: [process.env.PATH, path.join(os.homedir(), '.foundry/bin')]
+          .filter(Boolean)
+          .join(path.delimiter),
+        // Snapshots a test lacks are not written into ox's test files.
+        CI: 'true',
+        VITE_ANVIL_FORK_URL: fork.url,
+        UPHILL_SPEED_RECORD_DIR: dir,
+        UPHILL_SPEED_RECORD_WORKERS: String(concurrency),
       },
-    )
-    await child.exited
-    if (!fs.existsSync(report)) {
-      fs.closeSync(out)
-      const tail = fs.readFileSync(logFile, 'utf8').split('\n').slice(-40)
-      process.stderr.write(`${tail.join('\n')}\n`)
-      throw new Error(
-        `Recording wrote no report (vitest exited with ${child.exitCode}).`,
-      )
-    }
-    reports.push(report)
-  }
-  await record([])
+      stdout: out,
+      stderr: out,
+    },
+  )
+  await child.exited
   fs.closeSync(out)
+  fork.stop()
+  if (!fs.existsSync(report)) {
+    const tail = fs.readFileSync(logFile, 'utf8').split('\n').slice(-40)
+    process.stderr.write(`${tail.join('\n')}\n`)
+    throw new Error(
+      `Recording wrote no report (vitest exited with ${child.exitCode}).`,
+    )
+  }
   const seconds = (performance.now() - started) / 1000
 
   const chunks = fs.readdirSync(dir).filter((file) => file.endsWith('.jsonl'))
@@ -302,8 +314,7 @@ async function loadRecording(): Promise<Recording> {
   lines.length = 0
   for (const value of Object.values(keys)) value.ok = trim(value.ok)
 
-  const files = reports
-    .flatMap(readReport)
+  const files = readReport(report)
     .map((result) => {
       const count = (status: string) =>
         result.assertionResults.filter((test) => test.status === status).length
@@ -325,11 +336,14 @@ async function loadRecording(): Promise<Recording> {
     seconds,
     concurrency,
     files,
-    keys,
+    keys: Object.fromEntries(
+      Object.entries(keys).sort(([a], [b]) => (a < b ? -1 : 1)),
+    ),
   }
   const partial = `${cacheFile}.${process.pid}`
   fs.writeFileSync(partial, JSON.stringify(recording))
   fs.renameSync(partial, cacheFile)
+  log(`Recorded to ${path.relative(root, cacheFile)}.`)
   // Keep the three newest recordings, so switching branches does not always re-record.
   const old = fs
     .readdirSync(cacheDir)
@@ -343,6 +357,113 @@ async function loadRecording(): Promise<Recording> {
   }
   summarizeRecording(recording)
   return recording
+}
+
+/**
+ * A JSON-RPC server for anvil to fork from, which answers each request from a cache of what
+ * mainnet nodes answered, kept in `file` across recordings, and asks upstream only for requests it
+ * has not seen. ox's tests fork mainnet at a fixed block, whose state never changes, so the cached
+ * answers stay right and recordings repeat. Upstream is `VITE_ANVIL_FORK_URL` or thirdweb, as in
+ * test/prool.ts, then other public archive nodes, each tried in turn, with backoff between rounds,
+ * when one is rate limited or lacks the state, so a public node's rate limit does not fail the
+ * tests that use anvil.
+ */
+function forkProxy(file: string) {
+  const upstreams = [
+    process.env.VITE_ANVIL_FORK_URL ?? 'https://1.rpc.thirdweb.com',
+    'https://eth.drpc.org',
+    'https://rpc.mevblocker.io',
+    'https://eth-mainnet.public.blastapi.io',
+  ]
+  type Answer = { result?: unknown; error?: { code?: number } | undefined }
+  const cache = new Map<string, Answer>(
+    fs.existsSync(file)
+      ? Object.entries(JSON.parse(fs.readFileSync(file, 'utf8')))
+      : [],
+  )
+  const pending = new Map<string, Promise<Answer>>()
+  const stats = { cached: 0, fetched: 0, failed: 0 }
+  const ask = async (method: string, params: unknown): Promise<Answer> => {
+    let last: Answer = { error: { code: -32603 } }
+    for (let round = 0; round < 4; round++) {
+      if (round) await Bun.sleep(500 * 2 ** round)
+      for (const upstream of upstreams) {
+        const body = await fetch(upstream, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+          signal: AbortSignal.timeout(10_000),
+        })
+          .then((response) => (response.ok ? response.json() : undefined))
+          .catch(() => undefined)
+        if (!body || typeof body !== 'object') continue
+        const { result, error } = body as Answer
+        if (error === undefined) return { result }
+        // "Method not found" is the answer, as when anvil asks whether upstream is anvil. Any
+        // other error, such as a rate limit or missing historical state, is one node's.
+        last = { error }
+        if (error.code === -32601) return last
+      }
+    }
+    return { ...last, failed: true } as Answer
+  }
+  const answer = (method: string, params: unknown) => {
+    const key = `${method}\0${JSON.stringify(params ?? [])}`
+    const cached = cache.get(key)
+    if (cached) {
+      stats.cached++
+      return cached
+    }
+    let promise = pending.get(key)
+    if (!promise) {
+      promise = ask(method, params).then(
+        ({ failed, ...value }: Answer & { failed?: boolean }) => {
+          pending.delete(key)
+          if (failed) stats.failed++
+          else {
+            cache.set(key, value)
+            stats.fetched++
+          }
+          return value
+        },
+      )
+      pending.set(key, promise)
+    }
+    return promise
+  }
+  type Request = { id?: unknown; method: string; params?: unknown }
+  const server = Bun.serve({
+    hostname: '127.0.0.1',
+    port: 0,
+    idleTimeout: 0,
+    async fetch(request) {
+      const body = (await request.json()) as Request | Request[]
+      const requests = Array.isArray(body) ? body : [body]
+      const responses = await Promise.all(
+        requests.map(async ({ id, method, params }) => ({
+          jsonrpc: '2.0',
+          id,
+          ...(await answer(method, params)),
+        })),
+      )
+      return Response.json(Array.isArray(body) ? responses : responses[0])
+    },
+  })
+  return {
+    url: `http://127.0.0.1:${server.port}`,
+    stop() {
+      server.stop(true)
+      log(
+        `Anvil's fork: ${stats.cached} requests answered from ${path.relative(root, file)}, ${stats.fetched} from mainnet nodes, ${stats.failed} failed.`,
+      )
+      if (!stats.fetched) return
+      fs.writeFileSync(
+        `${file}.${process.pid}`,
+        JSON.stringify(Object.fromEntries(cache)),
+      )
+      fs.renameSync(`${file}.${process.pid}`, file)
+    },
+  }
 }
 
 /** The test files of a vitest JSON report. */
@@ -371,22 +492,33 @@ function summarizeRecording(recording: Recording) {
   )
 }
 
-/** Hashes everything the recording depends on: the source, the tests, the lockfile, and the recorder. */
+/**
+ * Hashes everything the recording depends on: the source, the tests, the lockfile, the test config
+ * (the TypeScript files at the root, such as vite.config.ts, or test/vitest.config.ts), and the
+ * recorder.
+ */
 function hashInputs() {
   const files: string[] = []
   const visit = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const file = path.join(dir, entry.name)
-      if (/^(node_modules|_snap)$|\.tsbuildinfo$/.test(entry.name)) continue
+      if (
+        /^(_esm|_cjs|_types|_snap|node_modules)$|\.tsbuildinfo$/.test(
+          entry.name,
+        )
+      )
+        continue
       if (entry.isDirectory()) visit(file)
       else if (entry.isFile()) files.push(file)
     }
   }
   visit(path.join(root, 'src'))
   visit(path.join(root, 'test'))
+  for (const entry of fs.readdirSync(root, { withFileTypes: true }))
+    if (entry.isFile() && /^pnpm-lock\.yaml$|\.ts$/.test(entry.name))
+      files.push(path.join(root, entry.name))
   for (const file of [
-    'pnpm-lock.yaml',
-    'vite.config.ts',
+    '.agents/uphill/repo.ts',
     '.agents/uphill/speed-calls.test.ts',
     '.agents/uphill/speed-codec.ts',
     '.agents/uphill/speed-record-setup.ts',
@@ -429,6 +561,8 @@ type BenchResult = {
   bytes: number
   async: boolean
   mutates: boolean
+  noops?: boolean | undefined
+  window?: boolean | undefined
   cached: boolean
   where: string
   direct: boolean
@@ -452,6 +586,7 @@ async function benchProbe(
       })),
       sampleMs,
       samples,
+      warmupMs,
     }),
   )
   const result = await run(
@@ -459,6 +594,7 @@ async function benchProbe(
       node!,
       '--expose-gc',
       '--single-threaded',
+      '--max-old-space-size=512',
       path.join(here, 'speed-worker.ts'),
       'bench',
       input,
@@ -628,11 +764,13 @@ function pick(samples: Sample[]) {
 }
 
 /** Why a function has no call to replay, from what the recording saw. */
-function whyNot(key: Key | undefined, item: Item) {
+function whyNot(key: Key | undefined) {
   if (!key || key.calls === 0) return 'no test calls it'
   const reasons = Object.entries(key.unreplayable).sort(
     (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1),
   )
+  // The recording answers every request to a host other than this machine with "method not
+  // found", so a call that reached for one needs the network to succeed.
   const verb = key.error?.includes('uphill speed recording: no network')
     ? 'needs the network'
     : 'threw'

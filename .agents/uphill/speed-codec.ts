@@ -1,23 +1,74 @@
 /**
  * Encodes a call's arguments as JSON text that another process can rebuild, and rebuilds them.
- * Shared by the recorder, which runs inside vitest, and the bench and fuzz workers, which run under Node,
- * so both sides agree on what is replayable and on what an argument set looks like.
+ * Shared by the recorder, which runs inside vitest, and the bench and fuzz workers, which run under
+ * Node, so both sides agree on what is replayable and on what an argument set looks like.
  *
- * Replayable values are primitives (including `undefined`, `-0`, `NaN`, and infinities), bigints,
- * `Uint8Array`s (a `Buffer` rebuilds as a plain `Uint8Array`), `ArrayBuffer`s, `Date`s, `Map`s,
- * plain objects, and arrays.
- * Beyond those, in the order they are tried:
+ * ## The recording
  *
- * - A value an ox module exports, or reaches through an export's properties, such as a zod
- *   schema or a constant, encodes as that path, `{ $ref: key }`, and is rebuilt by importing it.
- * - A value a recorded call to an ox export returned from replayable arguments, such as a
- *   `BlsPoint` or a WebCrypto key pair, encodes as that call, `{ $call: key, $args }`, and is
- *   rebuilt by making the call again; a value an async export resolved to encodes as
- *   `{ $await: key, $args }`. An instance of an exported class, such as an ox error, encodes the
- *   same way as its construction, `{ $new: key, $args }`.
- * - A function whose source refers to nothing but its own parameters, locals, and standard
- *   globals, such as `(x) => x * 2n`, encodes as its source, `{ $fn }`. A function that closes
- *   over anything else, as test callbacks that push to an array do, is not replayable.
+ * `speed.ts` caches what ox's tests called each export with at
+ * `node_modules/.cache/uphill-speed/recording-<hash>.json`, where `<hash>` covers src/ (build
+ * output and snapshots excluded), test/, the lockfile, the TypeScript files at the root of the
+ * checkout, such as vite.config.ts, and the recorder's scripts. The file is one JSON object:
+ *
+ * ```ts
+ * type Recording = {
+ *   version: number // bumped whenever the format or its meaning changes
+ *   hash: string
+ *   createdAt: string // ISO time
+ *   seconds: number // how long recording took
+ *   concurrency: number // vitest workers
+ *   files: { file: string; status: string; passed: number; failed: number; skipped: number }[]
+ *   keys: Record<Key, {
+ *     calls: number // every recorded call, from tests and from other ox functions
+ *     direct: number // calls made by test code itself
+ *     unreplayable: Record<string, number> // calls whose arguments could not be encoded, by reason
+ *     threw: number // encoded calls that threw or rejected
+ *     error?: string // the first such error's message, and the test that saw it
+ *     errorWhere?: string
+ *     ok: {
+ *       args: string // the arguments, encoded as below; `decode(args, rebuild)` rebuilds them
+ *       n: number // how many recorded calls passed exactly these arguments
+ *       direct: boolean // at least one of them came from test code
+ *       where: string // the first test that made it: `<test file> > <describe> > <test>`
+ *     }[] // distinct calls that returned or resolved, most passed first, at most 48
+ *   }>
+ * }
+ * ```
+ *
+ * A `Key` is `<source file>#<export path>`, such as `src/core/Hex.ts#fromNumber` or
+ * `src/tempo/TxEnvelopeTempo.ts#serialize`: the module that defines the export, never a barrel,
+ * and for a function an exported namespace object or function holds, its path from the export.
+ * The build of that module is `built(<source file>)` in repo.ts, such as dist/core/Hex.js on main
+ * and src/_esm/core/Hex.js on 0.x. Every export of every module in src/ (tests excluded) is
+ * recorded, `internal/` modules included, as are calls one ox function makes to another.
+ *
+ * ## The encoding
+ *
+ * `args` is a JSON array with one element per argument. Plain JSON values stand for themselves,
+ * except an object whose own keys start with `$`, which is wrapped as `{ $o: object }`. Tagged
+ * objects stand for the rest:
+ *
+ * - `{ $u: 1 }` undefined (`{ $u: 1, hole: 1 }` an array hole), `{ $b: "123" }` a bigint,
+ *   `{ $n: "NaN" | "Infinity" | "-Infinity" | "-0" }` a number JSON cannot hold,
+ *   `{ $u8: "00ff" }` a `Uint8Array` (a `Buffer` rebuilds as a plain `Uint8Array`),
+ *   `{ $ta: "Uint16Array", $h: "0100" }` another typed array or a `DataView` (its bytes, in hex),
+ *   `{ $ab: "00ff" }` an `ArrayBuffer`, `{ $d: 1700000000000 }` a `Date`, and
+ *   `{ $map: [[key, value], ...] }` and `{ $set: [value, ...] }` a `Map` and a `Set`.
+ * - `{ $ref: key }` a value an ox module exports, or reaches through an export's properties, such
+ *   as a zod schema or a constant (`src/core/AbiError.ts#solidityError`,
+ *   `src/core/Secp256k1.ts#noble.CURVE`), rebuilt by importing it.
+ * - `{ $call: key, $args: [...] }` a value a recorded call to an ox export returned, such as a
+ *   provider or a KZG implementation, rebuilt by making the call again with `$args` (encoded the
+ *   same way); `{ $await: key, $args }` a value an async export resolved to, such as a
+ *   `WebCryptoP256.createKeyPair` key pair; `{ $new: key, $args }` an instance of an exported
+ *   class, such as an ox error. Any of the three may carry `$path: ["privateKey"]`, for a value
+ *   found at that property of what the call returned, such as the `CryptoKey` of a key pair.
+ * - `{ $ref: "test/kzg.ts#kzg" }` a value a test helper module (`test/**`, not a test file)
+ *   exports or reaches, such as the KZG implementation ox's 0.x tests build, used only for a value
+ *   none of the above can carry. The worker imports the helper with `ox` resolving to the build.
+ * - `{ $fn: "(x) => x * 2n" }` a function whose source refers to nothing but its own
+ *   parameters, locals, and standard globals, rebuilt from that source. `{ $noop: 1 }` an event
+ *   callback such as `onProgress`, whose result ox ignores, that closed over test state.
  *
  * Anything else makes the call unreplayable, and the error says why in words a reader of a
  * `benched` note understands, such as "passes a function".
@@ -46,14 +97,18 @@ export type Origin = {
   construct?: boolean | undefined
   /** The call returned a promise, and the value is what it resolved to. */
   async?: boolean | undefined
+  /** The value is at this property path of what the call returned. */
+  path?: readonly string[] | undefined
 }
 
 /** What the recorder knows about values the plain encoding cannot carry. */
 export type Hooks = {
   /** The recorded calls that returned a value, the one to try first first. */
   origin?: ((value: object) => readonly Origin[] | undefined) | undefined
-  /** The export path a value is reachable at, such as `src/chains/definitions/mainnet.ts#mainnet`. */
+  /** The export path a value is reachable at, such as `src/core/AbiError.ts#solidityError`. */
   ref?: ((value: object) => string | undefined) | undefined
+  /** The path a test helper module exports a value at, such as `test/kzg.ts#kzg`. */
+  fixture?: ((value: object) => string | undefined) | undefined
   /** The encoded form of a value `decode` rebuilt, so encoding it again yields the same text. */
   known?: ((value: object) => unknown) | undefined
   /** Whether a function that uses nothing but standard globals encodes as its source. */
@@ -119,10 +174,10 @@ export function keys(text: string): string[] {
 }
 
 /**
- * Rebuilds the arguments `encode` wrote. It is async because a value an async export resolved to
- * is rebuilt by awaiting the call again. `origins` learns the encoded
- * form of each value rebuilt from a call, an export, or a source, so encoding the
- * arguments again with `known: (value) => origins.get(value)` yields the same text.
+ * Rebuilds the arguments `encode` wrote. It is async because a value an async export resolved to,
+ * such as a key pair, is rebuilt by awaiting the call again. `origins` learns the encoded form of
+ * each value rebuilt from a call, an export, or a source, so encoding the arguments again with
+ * `known: (value) => origins.get(value)` yields the same text.
  */
 export async function decode(
   text: string,
@@ -143,6 +198,11 @@ export async function decode(
     for (const value of values) out.push(await decodeValue(value))
     return out
   }
+  const at = (value: unknown, path: unknown) => {
+    for (const property of (path as string[] | undefined) ?? [])
+      value = (value as Record<string, unknown>)[property]
+    return value
+  }
   const decodeValue = async (value: unknown): Promise<unknown> => {
     if (value === null || typeof value !== 'object') return value
     if (Array.isArray(value)) {
@@ -160,32 +220,43 @@ export async function decode(
       return remember(need().ref(record.$ref as string), record)
     if ('$call' in record) {
       const args = await decodeAll(record.$args as unknown[])
-      return remember(need().call(record.$call as string, args), record)
+      const result = need().call(record.$call as string, args)
+      return remember(at(result, record.$path), record)
     }
     if ('$await' in record) {
       const args = await decodeAll(record.$args as unknown[])
-      return remember(await need().call(record.$await as string, args), record)
+      const result = await need().call(record.$await as string, args)
+      return remember(at(result, record.$path), record)
     }
     if ('$new' in record) {
       const args = await decodeAll(record.$args as unknown[])
-      return remember(need().construct(record.$new as string, args), record)
+      const result = need().construct(record.$new as string, args)
+      return remember(at(result, record.$path), record)
     }
+    if ('$map' in record) {
+      const out = new Map()
+      for (const [key, item] of record.$map as [unknown, unknown][])
+        out.set(await decodeValue(key), await decodeValue(item))
+      return out
+    }
+    if ('$set' in record) {
+      const out = new Set()
+      for (const item of record.$set as unknown[])
+        out.add(await decodeValue(item))
+      return out
+    }
+    if ('$noop' in record) return remember(() => {}, record)
     if ('$fn' in record)
       return remember(
         new Function(`return (${record.$fn as string})`)(),
         record,
       )
-    if ('$map' in record) {
-      const entries: [unknown, unknown][] = []
-      for (const [key, item] of record.$map as [unknown, unknown][])
-        entries.push([await decodeValue(key), await decodeValue(item)])
-      return new Map(entries)
-    }
     if (
       '$u' in record ||
       '$b' in record ||
       '$n' in record ||
       '$u8' in record ||
+      '$ta' in record ||
       '$ab' in record ||
       '$d' in record
     )
@@ -202,7 +273,10 @@ export async function decode(
   return decodeAll(JSON.parse(text) as unknown[])
 }
 
-/** Rebuilds a plain value `encodePlain` wrote, such as JSON-RPC params or a result. */
+/**
+ * Rebuilds a plain value, such as one `encodePlain` wrote: one with no `$ref`, `$call`, `$await`,
+ * `$new`, `$fn`, or `$noop` in it.
+ */
 export function decodePlain(value: unknown): unknown {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) {
@@ -221,6 +295,12 @@ export function decodePlain(value: unknown): unknown {
   if ('$n' in record) return Number(record.$n)
   if ('$u8' in record) return fromHex(record.$u8 as string)
   if ('$ab' in record) return fromHex(record.$ab as string).buffer
+  if ('$ta' in record) {
+    type View = new (buffer: ArrayBuffer) => ArrayBufferView
+    const name = record.$ta as string
+    const Constructor = (globalThis as Record<string, unknown>)[name] as View
+    return new Constructor(fromHex(record.$h as string).buffer as ArrayBuffer)
+  }
   if ('$d' in record) return new Date(record.$d as number)
   if ('$map' in record)
     return new Map(
@@ -229,6 +309,8 @@ export function decodePlain(value: unknown): unknown {
         decodePlain(item),
       ]),
     )
+  if ('$set' in record)
+    return new Set((record.$set as unknown[]).map(decodePlain))
   const source = ('$o' in record ? record.$o : record) as Record<
     string,
     unknown
@@ -257,17 +339,12 @@ function encodeValue(value: unknown, context: Context): unknown {
   if (value === null) return null
   const object = value as object
   if (object instanceof Uint8Array) return { $u8: toHex(object) }
-  // WebAuthn credentials carry ArrayBuffers, and EIP-712 hashing takes a Map of type hashes.
+  if (ArrayBuffer.isView(object))
+    return { $ta: object.constructor.name, $h: toHex(object) }
+  // WebAuthn credentials carry ArrayBuffers.
   if (object instanceof ArrayBuffer)
     return { $ab: toHex(new Uint8Array(object)) }
   if (object instanceof Date) return { $d: object.getTime() }
-  if (object instanceof Map)
-    return {
-      $map: [...object].map(([key, item]) => [
-        encodeValue(key, context),
-        encodeValue(item, context),
-      ]),
-    }
   const { hooks } = context
   const known = hooks.known?.(object)
   if (known !== undefined) return known
@@ -277,8 +354,9 @@ function encodeValue(value: unknown, context: Context): unknown {
     return encodeStructure(object, context)
   } catch (error) {
     if (!(error instanceof Unreplayable)) throw error
-    // A value several calls returned tries the outermost call first. A call whose arguments cannot
-    // be encoded leaves the value's own reason, which says more than its call's.
+    // A value several calls returned tries the outermost call first. A call whose arguments
+    // cannot be encoded leaves the value's own reason, such as "passes a CryptoKey", which says
+    // more than its call's.
     const origins = hooks.origin?.(object) ?? []
     if (origins.length && context.depth <= 4 && !context.pending.has(object)) {
       context.depth++
@@ -287,15 +365,22 @@ function encodeValue(value: unknown, context: Context): unknown {
         for (const origin of origins)
           try {
             const args = origin.args.map((arg) => encodeValue(arg, context))
-            if (origin.construct) return { $new: origin.key, $args: args }
-            if (origin.async) return { $await: origin.key, $args: args }
-            return { $call: origin.key, $args: args }
+            const tag = origin.construct
+              ? '$new'
+              : origin.async
+                ? '$await'
+                : '$call'
+            return origin.path
+              ? { [tag]: origin.key, $args: args, $path: origin.path }
+              : { [tag]: origin.key, $args: args }
           } catch {}
       } finally {
         context.depth--
         context.pending.delete(object)
       }
     }
+    const fixture = hooks.fixture?.(object)
+    if (fixture !== undefined) return { $ref: fixture }
     if (typeof object === 'function' && hooks.sources) {
       const source = sourceOf(object)
       if (source !== undefined) return { $fn: source }
@@ -326,11 +411,26 @@ function encodeStructure(object: object, context: Context): unknown {
         )
       return out
     }
+    // EIP-712 hashing takes a Map of type hashes. A subclass, such as one of ox's caches, has
+    // behavior of its own, so it is an instance like any other.
+    if (proto === Map.prototype)
+      return {
+        $map: [...(object as Map<unknown, unknown>)].map(([key, item]) => [
+          encodeValue(key, context),
+          encodeValue(item, context),
+        ]),
+      }
+    if (proto === Set.prototype)
+      return {
+        $set: [...(object as Set<unknown>)].map((item) =>
+          encodeValue(item, context),
+        ),
+      }
     if (proto !== Object.prototype && proto !== null)
       throw new Unreplayable(`passes ${describeInstance(object)}`)
     const record = object as Record<string, unknown>
     if (typeof record.request === 'function')
-      throw new Unreplayable('passes a provider')
+      throw new Unreplayable('passes a provider or transport')
     const out: Record<string, unknown> = {}
     let escaped = false
     for (const key of Object.keys(record)) {
@@ -341,7 +441,19 @@ function encodeStructure(object: object, context: Context): unknown {
       } catch {
         throw new Unreplayable('passes an object with a throwing getter')
       }
-      out[key] = encodeValue(item, context)
+      try {
+        out[key] = encodeValue(item, context)
+      } catch (error) {
+        // ox ignores what an event callback such as `onProgress` returns, so one that closes over
+        // the test's state replays as a callback that does nothing.
+        if (
+          !(error instanceof Unreplayable) ||
+          typeof item !== 'function' ||
+          !/^on[A-Z]/.test(key)
+        )
+          throw error
+        out[key] = { $noop: 1 }
+      }
     }
     return escaped ? { $o: out } : out
   } finally {
@@ -513,15 +625,13 @@ function describeInstance(object: object): string {
   return `a ${name}`
 }
 
-function toHex(bytes: Uint8Array): string {
-  let out = ''
-  for (const byte of bytes) out += byte.toString(16).padStart(2, '0')
-  return out
+function toHex(bytes: ArrayBufferView): string {
+  return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString(
+    'hex',
+  )
 }
 
+/** A plain `Uint8Array`, not a `Buffer`, as ox's callers pass. */
 function fromHex(hex: string): Uint8Array {
-  const out = new Uint8Array(hex.length / 2)
-  for (let i = 0; i < out.length; i++)
-    out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16)
-  return out
+  return new Uint8Array(Buffer.from(hex, 'hex'))
 }
