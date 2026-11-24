@@ -504,6 +504,12 @@ describe('Rlp.to', () => {
     })
   })
 
+  test('error: neither hex nor bytes', () => {
+    expect(() => Rlp.toHex(0 as never)).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid RLP prefix]`,
+    )
+  })
+
   test('error: invalid hex value', () => {
     expect(() => Rlp.toHex('0x010')).toThrowErrorMatchingInlineSnapshot(
       `

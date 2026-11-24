@@ -2,7 +2,11 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal_bytes from './internal/bytes.js'
-import { assertHexBytes, nibbleTable } from './internal/codec/hex.js'
+import {
+  assertHexBytes,
+  bytesToHex,
+  nibbleTable,
+} from './internal/codec/hex.js'
 import * as Cursor from './internal/cursor.js'
 import type { RecursiveArray } from './internal/types.js'
 
@@ -11,8 +15,8 @@ const depthLimit = 1_024
 
 /**
  * Hex input length up to which decoded hex leaves are sliced from the input. A
- * sliced string keeps its whole parent alive, so this bounds what one kept leaf
- * can retain.
+ * sliced string keeps its whole parent alive, so past this length each leaf is
+ * copied into its own string, which bounds what one kept leaf can retain.
  */
 const sliceMaxLength = 4_096
 
@@ -53,7 +57,15 @@ export declare namespace toBytes {
  * @returns The decoded {@link ox#Hex.Hex} value.
  */
 export function toHex(value: Bytes.Bytes | Hex.Hex): RecursiveArray<Hex.Hex> {
-  return to(value, 'Hex')
+  // Hex output reads the input's hex form, so leaves are sliced from it instead
+  // of each being hex-encoded, and the byte cursor stays out of the bundle.
+  if (typeof value !== 'string') {
+    if (!(value instanceof Uint8Array))
+      throw new Errors.BaseError('Invalid RLP prefix')
+    return decodeHex(bytesToHex(value))
+  }
+  assertHexBytes(value)
+  return decodeHex(value.toLowerCase() as Hex.Hex)
 }
 
 export declare namespace toHex {
@@ -70,16 +82,7 @@ export function to<
   to extends 'Hex' | 'Bytes',
 >(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
-
-  // Hex in and out: read a short input straight from the string, skipping the
-  // byte copy. A long input pays a JavaScript scan to validate it, which costs
-  // more than `Bytes.fromHex`, and leaves sliced from it would keep it alive.
-  if (
-    typeof value === 'string' &&
-    to_ === 'Hex' &&
-    value.length <= sliceMaxLength
-  )
-    return decodeHex(value) as to.ReturnType<to>
+  if (to_ === 'Hex') return toHex(value) as to.ReturnType<to>
 
   const bytes =
     typeof value === 'string' ? Bytes.fromHex(value) : (value as Bytes.Bytes)
@@ -256,6 +259,8 @@ export declare namespace readList {
 }
 
 type HexReader = {
+  /** Whether leaves are copied out of the input instead of sliced from it. */
+  copy: boolean
   /** Byte length of the input. */
   length: number
   /** Position in bytes. */
@@ -269,17 +274,17 @@ type HexReader = {
 }
 
 /**
- * Decodes a hex RLP value straight from its string, slicing leaves out of it.
- * Mirrors `Bytes.fromHex` followed by {@link decodeRlpCursor}, including the
+ * Decodes a valid, lowercase hex RLP value straight from its string, slicing
+ * leaves out of it. Mirrors {@link decodeRlpCursor} on its bytes, including the
  * cursor's bounds errors.
  *
  * @internal
  */
 function decodeHex(value: Hex.Hex): RecursiveArray<Hex.Hex> {
-  assertHexBytes(value)
   const length = (value.length - 2) / 2
   if (length === 0) return '0x'
   const reader: HexReader = {
+    copy: value.length > sliceMaxLength,
     length,
     position: 0,
     readUint8() {
@@ -294,7 +299,7 @@ function decodeHex(value: Hex.Hex): RecursiveArray<Hex.Hex> {
     readUint32() {
       return readHexUint(this, 4)
     },
-    source: value.toLowerCase(),
+    source: value,
   }
   const result = decodeHexItem(reader, 0)
   // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
@@ -325,7 +330,10 @@ function decodeHexItem(
       throw new NonCanonicalError({
         reason: `single byte \`0x${first.toString(16).padStart(2, '0')}\` is wrapped in an explicit length prefix instead of being encoded as itself`,
       })
-    return `0x${reader.source.slice(2 + start * 2, 2 + reader.position * 2)}`
+    const leaf = reader.source.slice(2 + start * 2, 2 + reader.position * 2)
+    // Joining copies the characters into a new string; a template literal
+    // would keep a reference to the sliced input.
+    return reader.copy ? (['0x', leaf].join('') as Hex.Hex) : `0x${leaf}`
   }
 
   // list
