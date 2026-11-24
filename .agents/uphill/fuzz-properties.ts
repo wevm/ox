@@ -10,10 +10,18 @@
  * throws is a failure too, except where a check expects one of ox's documented errors.
  *
  * `seeds` lists hand-written argument sets for functions no property covers well, which the
- * worker mutates at the boundaries as it does recorded arguments.
+ * worker mutates at the boundaries as it does recorded arguments. `library` loads the reference
+ * implementations, and `mutations` and `budgets` set how many boundary mutations each function
+ * gets, for this branch's dependencies and costs. Functions go by their leaf entry, such as
+ * `ox/Hex:fromNumber`; the worker matches them to the names its lines use, such as
+ * `ox:Hex.fromNumber`, by identity.
  *
  * @module
  */
+
+import { createRequire } from 'node:module'
+import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import type fcModule from 'fast-check'
 
@@ -52,6 +60,91 @@ export type Lib = {
   BaseError: new (...args: never[]) => Error
   root: string
 }
+
+/** What fuzz-worker.ts passes `library`: ox's entries, fast-check, and the recorded arguments. */
+export type Base = Pick<
+  Lib,
+  'BaseError' | 'fc' | 'mutate' | 'ox' | 'recorded' | 'root'
+>
+
+/**
+ * Adds the independent implementations ox's devDependencies provide (viem, ethers, noble,
+ * @scure/base, @ethereumjs/rlp, micro-eth-signer) to what the worker passes. noble is loaded
+ * through `require`, a separate instance from the one ox's build imports.
+ */
+export async function library(base: Base): Promise<Lib> {
+  const fromRoot = createRequire(path.join(base.root, 'package.json'))
+  const fromSrc = createRequire(path.join(base.root, 'src/package.json'))
+  const fromMicro = createRequire(fromRoot.resolve('micro-eth-signer'))
+  const load = (specifier: string, require = fromRoot) =>
+    import(pathToFileURL(require.resolve(specifier)).href)
+  const noble = {
+    secp256k1: fromSrc('@noble/curves/secp256k1').secp256k1,
+    p256: fromSrc('@noble/curves/p256').p256,
+    ed25519: fromSrc('@noble/curves/ed25519'),
+    bls: fromSrc('@noble/curves/bls12-381').bls12_381,
+    sha3: fromSrc('@noble/hashes/sha3'),
+    sha2: fromSrc('@noble/hashes/sha2'),
+    legacy: fromSrc('@noble/hashes/legacy'),
+    blake3: fromSrc('@noble/hashes/blake3').blake3,
+    hmac: fromSrc('@noble/hashes/hmac').hmac,
+    pbkdf2: fromSrc('@noble/hashes/pbkdf2').pbkdf2,
+    scrypt: fromSrc('@noble/hashes/scrypt').scrypt,
+  }
+  let kzg: unknown
+  return {
+    ...base,
+    viem: await load('viem'),
+    viemSiwe: await load('viem/siwe'),
+    viemAa: await load('viem/account-abstraction'),
+    viemUtils: await load('viem/utils'),
+    ethers: await load('ethers'),
+    noble,
+    scure: fromMicro('@scure/base'),
+    bip32: fromSrc('@scure/bip32'),
+    ethereumjsRlp: await load('@ethereumjs/rlp'),
+    micro: {
+      ...(await load('micro-eth-signer')),
+      ...(await load('micro-eth-signer/rlp.js')),
+      typed: await load('micro-eth-signer/typed-data.js'),
+    },
+    get kzg() {
+      // The trusted setup costs about a second and tens of MB, so only Blobs properties load it.
+      if (!kzg) {
+        const { KZG } = fromRoot('micro-eth-signer/kzg.js')
+        const { trustedSetup } = fromRoot(
+          '@paulmillr/trusted-setups/fast-kzg.js',
+        )
+        kzg = new KZG(trustedSetup)
+      }
+      return kzg
+    },
+  }
+}
+
+/** Mutated calls per function with recorded or hand-written arguments, unless `budgets` says otherwise. */
+export const mutations = 400
+
+/** Fewer calls for functions whose every call costs milliseconds; the first match applies. */
+export const budgets: [RegExp, number][] = [
+  [/^ox:(Blobs|Kzg)\./, 6],
+  [
+    /^ox:(Mnemonic|HdKey)\.|^ox:(Secp256k1|P256|Ed25519|AesGcm)\.fromMnemonic$/,
+    10,
+  ],
+  // PBKDF2 runs 262,144 rounds unless told otherwise: seconds a call under coverage.
+  [/^ox:Keystore\.pbkdf2/, 3],
+  [/^ox:(Keystore|AesGcm)\./, 12],
+  [/^ox:(Bls|BlsPoint)\./, 12],
+  // Mining a salt is unbounded work by design (a mutant without `count` mines 2^32 salts), so only
+  // the recorded calls run.
+  [/^ox\/tempo:VirtualMaster\.mineSalt/, 0],
+  [/^ox:BinaryStateTree\./, 60],
+  [
+    /^ox:(Secp256k1|P256|Ed25519|X25519|WebCryptoP256|WebAuthnP256)\.|^ox\/webauthn:|[.:](verify|recover\w*|extractAddress|extractPublicKey)$/,
+    80,
+  ],
+]
 
 export type Property = {
   id: string

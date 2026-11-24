@@ -1,15 +1,18 @@
 /**
  * Vitest configuration that records what ox's own tests call each exported function with. It
- * reuses `test/vitest.config.ts`'s aliases (`ox` resolves to src/), setup files, and the `core`
- * project's global setup, which starts anvil through prool (forking mainnet), and adds a transform
- * that wraps every export of ox's public modules (`src/**`, test files and `internal/` modules
- * excluded) with `globalThis.__uphillWrap`, which `speed-record-setup.ts` installs.
+ * reuses the config ox's tests run with (`testConfig()` in repo.ts): its aliases, with `ox`
+ * resolving to the source, its setup files, and the `core` project's global setup, which starts
+ * anvil through prool (forking mainnet). It adds a transform that wraps every export of ox's
+ * modules in src/ (test files excluded, `internal/` modules included) with
+ * `globalThis.__uphillWrap`, which `speed-record-setup.ts` installs. Without anvil, the tests that
+ * need it fail at once and record less.
  *
- * Projects: `core` and `tempo-unit` as ox defines them; `frames-unit`, which runs
- * `TxEnvelopeEip8141.test.ts` from ox's `tmp_frames` project without its global setup, which
- * starts reth in Docker, so its unit tests record and the ones that need the node fail at once;
- * and `calls`, which runs `speed-calls.test.ts`, the calls for public functions no test calls. The
- * browser and Docker-based Tempo projects are left out.
+ * Projects: `core` and `tempo-unit` as ox defines them; `frames-unit`, which runs the tests in src/
+ * of ox's `tmp_frames` project (`TxEnvelopeEip8141.test.ts`) without its global setup, which
+ * starts a frames node in Docker, so its unit tests record and the ones that need the node fail at
+ * once; and `calls`, which runs `speed-calls.test.ts`, the calls for public functions no test
+ * calls in a way the bench can replay. The browser and fuzz projects, and the Tempo end-to-end
+ * tests, which need a Tempo node in Docker, are left out.
  *
  * `speed.ts` runs it with `UPHILL_SPEED_RECORD_DIR` set; no test file changes.
  *
@@ -22,7 +25,7 @@ import * as acorn from 'acorn'
 import MagicString from 'magic-string'
 import { defineConfig, type Plugin } from 'vitest/config'
 
-import base from '../../test/vitest.config.ts'
+import { testConfig } from './repo.ts'
 
 const root = path.resolve(import.meta.dirname, '../..')
 const setup = path.join(import.meta.dirname, 'speed-record-setup.ts')
@@ -36,47 +39,52 @@ type Project = {
     globalSetup?: string[]
   }
 }
+type Base = {
+  envPrefix?: string | string[]
+  test?: {
+    alias?: Record<string, string>
+    projects?: unknown[]
+    resolveSnapshotPath?: (path: string, extension: string) => string
+  }
+}
+const base = (await testConfig()) as Base
 const projects = (base.test?.projects ?? []) as Project[]
 const ox = (name: string) => {
   const project = projects.find((project) => project.test?.name === name)?.test
-  if (!project) throw new Error(`test/vitest.config.ts has no ${name} project.`)
+  if (!project) throw new Error(`ox's vitest config has no ${name} project.`)
   return project
 }
 const core = ox('core')
 const tempo = ox('tempo-unit')
 const frames = ox('tmp_frames')
-const {
-  alias,
-  hookTimeout,
-  testTimeout,
-  passWithNoTests,
-  resolveSnapshotPath,
-} = base.test ?? {}
 
 export default defineConfig({
   root,
   plugins: [record()],
+  envPrefix: base.envPrefix,
   test: {
     alias: [
-      // `ox` resolves through src/package.json's `module` to the build in src/_esm, which the
-      // transform does not wrap, so it resolves to the source instead. Subpaths such as
+      // On 0.x, `ox` resolves through src/package.json's `module` to the build in src/_esm, which
+      // the transform does not wrap, so it resolves to the source instead. Subpaths such as
       // `ox/tempo` are directories of src/ without a package.json, so they reach the source.
       { find: /^ox$/, replacement: path.join(root, 'src/index.ts') },
-      ...Object.entries(alias ?? {}).map(([find, replacement]) => ({
+      ...Object.entries(base.test?.alias ?? {}).map(([find, replacement]) => ({
         find,
         replacement,
       })),
     ],
-    hookTimeout,
-    testTimeout,
-    passWithNoTests,
-    resolveSnapshotPath,
+    resolveSnapshotPath: base.test?.resolveSnapshotPath,
+    passWithNoTests: true,
+    // Wrapped calls run slower than ox's own timeouts allow for.
+    hookTimeout: 60_000,
+    testTimeout: 60_000,
     // A failing test records the calls it made before failing; retrying it only wastes time.
     retry: 0,
     pool: 'forks',
     maxWorkers: workers,
-    // The machine is shared, and a capped heap collects sooner instead of growing.
-    execArgv: ['--max-old-space-size=768'],
+    // A worker whose heap grows unchecked can get the whole run killed for memory on a shared
+    // machine; a capped heap collects sooner. Logs of passing tests are not kept either.
+    execArgv: ['--max-old-space-size=1280'],
     silent: 'passed-only',
     // Every test file runs in a fresh module graph, so one file's leftovers do not fill the
     // worker's heap, and the setup file seeds randomness for each file.
@@ -114,7 +122,7 @@ export default defineConfig({
         test: {
           name: 'calls',
           include: ['.agents/uphill/speed-calls.test.ts'],
-          setupFiles: [setup],
+          setupFiles: [setup, ...(core.setupFiles ?? [])],
         },
       },
     ],
@@ -138,7 +146,7 @@ function record(): Plugin {
         return fixtures(code, id)
       if (!id.startsWith(`${root}/src/`) || !id.endsWith('.ts')) return
       if (
-        /\/(_esm|_cjs|_types|internal)\/|\.(test|test-d|snap-d|bench|bench-d)\.ts$/.test(
+        /\/(_test|_snap|_esm|_cjs|_types)\/|\.(test|test-d|bench|bench-d|snap-d|fuzz|conformance)\.ts$/.test(
           id,
         )
       )
@@ -153,6 +161,7 @@ function record(): Plugin {
       const imports = new Set<string>()
       const exports: [local: string, exported: string][] = []
       const relet = new Set<Node>()
+      let reexports = 0
 
       for (const node of program.body) {
         if (node.type === 'ImportDeclaration')
@@ -174,11 +183,38 @@ function record(): Plugin {
             if (declarator.id!.type === 'Identifier')
               exports.push([declarator.id!.name!, declarator.id!.name!])
           if (declaration.kind === 'const') relet.add(declaration)
-        } else if (!node.source)
-          // `export { a, b as c }` of local bindings. A re-export from another module, such as
-          // Mnemonic's `export { path } from './HdKey.js'`, is that module's export, already
-          // wrapped there.
+        } else if (node.source) {
+          // A re-export from another module, such as Mnemonic's `export { path } from
+          // './HdKey.js'`, is that module's export, already wrapped there. A re-export from a
+          // dependency, such as zod's functions from `ox/zod` or a bip39 wordlist, becomes a
+          // local binding, so calls and values through ox's entry points record under this module.
+          const source = String(node.source.value)
+          if (source.startsWith('.') || source.startsWith('/')) continue
+          const locals: string[] = []
+          const specifiers = node.specifiers!.filter(
+            (specifier) =>
+              specifier.local!.type === 'Identifier' &&
+              specifier.exported!.type === 'Identifier',
+          )
+          if (
+            !specifiers.length ||
+            specifiers.length !== node.specifiers!.length
+          )
+            continue
+          const imported = specifiers.map((specifier) => {
+            const local = `__uphill_reexport_${reexports++}`
+            locals.push(`${specifier.exported!.name} = ${local}`)
+            exports.push([specifier.exported!.name!, specifier.exported!.name!])
+            return `${specifier.local!.name} as ${local}`
+          })
+          output.overwrite(
+            node.start,
+            node.end,
+            `import { ${imported.join(', ')} } from ${JSON.stringify(source)};\nexport let ${locals.join(', ')};`,
+          )
+        } else
           for (const specifier of node.specifiers!) {
+            // `export { a, b as c }` of local bindings.
             if (specifier.local!.type !== 'Identifier') continue
             exports.push([
               specifier.local!.name!,
@@ -205,7 +241,7 @@ function record(): Plugin {
       return {
         code: output.toString(),
         // Line-level maps: the transform appends to modules and changes nothing in place but
-        // `const` to `let`.
+        // `const` to `let` and dependency re-exports to local bindings.
         map: output.generateMap({ source: id }),
       }
     },

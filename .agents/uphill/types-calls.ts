@@ -2,30 +2,33 @@
  * Writes the type-checking cost of calling each public function the way ox's own tests call it,
  * and whether each public function has such a call.
  *
- * 1. Enumerate. `types-calls-worker.ts functions` lists the public functions the way the speed and
- *    coverage categories do: every function-valued export of each leaf entry's build in src/_esm
- *    that is not a class, named by its leaf entry, such as `ox/Hex:fromString`. A worker walks
- *    each name from its entry's source to the declaration it resolves to. Lines name each function
- *    the way users import it, such as `ox:Hex.fromString` (see names.ts).
+ * 1. Enumerate. `types-calls-worker.ts functions` lists the public functions: every function each
+ *    entry point's build exports, namespace members included, such as
+ *    `ox:AbiFunction.decodeResult`, with each namespace named by the first entry that reaches it,
+ *    `ox` and the other index entries first (see repo.ts). A function that several namespaces
+ *    export, such as `ox:HdKey.path` and `ox:Mnemonic.path`, gets a line under each name. A worker
+ *    walks each name from its entry's source to the declaration it resolves to.
  * 2. Scan. Workers list the calls in every `*.test.ts`, `*.test-d.ts` and `*.snap-d.ts` file under
  *    src whose callee resolves, through imports and re-exports, to one of those declarations, such
  *    as `Hex.fromString(...)` through `import { Hex } from 'ox'`.
  * 3. Measure. Each function gets one call: the first in its own module's runtime tests, such as
- *    src/core/_test/Hex.test.ts for `ox/Hex:fromString` (then its module's other runtime test
- *    files, such as AbiParameters.encode.test.ts for `ox/AbiParameters:encode`), else in its own
+ *    src/core/_test/Hex.test.ts for `ox:Hex.fromString` (then its module's other runtime test
+ *    files, such as AbiParameters.encode.test.ts for `ox:AbiParameters.encode`), else in its own
  *    type tests, else in any test file; within a file, the first in `describe('fromString')`.
- *    types-calls-worker.ts copies the call out of its statement and checks it in a fresh checker
- *    after resolving what it references from outside it, so imports and fixtures, such as a large
- *    ABI, do not count against it. Relating a fixture to the function's parameters does count:
- *    that is checking the call. A call that picks up a type error once copied out gives its place
- *    to the function's next call, up to five calls.
+ *    types-calls-worker.ts copies the call, with any calls chained on its result, out of its
+ *    statement and checks it in a fresh checker after resolving what it references from outside
+ *    it, so imports and fixtures, such as a large ABI, do not count against it. Relating a fixture
+ *    to the function's parameters does count: that is checking the call. A call that picks up a
+ *    type error once copied out gives its place to the function's next call, up to five calls.
  *
  * - `instantiations`: type instantiations to check the call, exact and repeatable.
  * - `type-benched`: whether the function has a measured call, and why not when it has none.
  *
- * Check time and heap bytes are not written: a time or a varying size would make Uphill run this
- * script five times, and instantiations are exact. `UPHILL_CONCURRENCY` sets the pool size
- * (default 2), which available memory caps.
+ * Check time and heap bytes are not written: the same call's time varies by a third between
+ * checks, and a time or a varying size would make Uphill run this script five times, while
+ * instantiations are exact. The workers run on Node 26 or later, as types.ts's do (see
+ * `nodeBinary` in types-host.ts). `UPHILL_CONCURRENCY` sets the pool size (default 2), which
+ * available memory caps.
  *
  * @module
  */
@@ -33,8 +36,9 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+
 import { hot } from './hot.ts'
-import { rename } from './names.ts'
+import { root } from './repo.ts'
 import type {
   EntriesResult,
   FunctionsResult,
@@ -44,7 +48,7 @@ import type {
   ScanResult,
   Site,
 } from './types-calls-worker.ts'
-import { availableMemory } from './types-host.ts'
+import { availableMemory, nodeBinary } from './types-host.ts'
 
 /**
  * Each worker's V8 heap limit in MB, and the larger one a job that runs out of it gets, once, if
@@ -59,17 +63,17 @@ const costly = 2000
 /** Calls tried per function until one checks once copied out. */
 const tries = 5
 
-const root = process.cwd()
 const here = import.meta.dir
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
+const node = nodeBinary()
 const started = performance.now()
 
-// 1. The public functions, named as the speed and coverage categories name them.
-const enumeration = (() => {
+// 1. The public functions.
+const { functions } = (() => {
   const result = Bun.spawnSync(
     [
-      'node',
+      node,
       `--max-old-space-size=${heap}`,
       path.join(here, 'types-calls-worker.ts'),
       'functions',
@@ -79,10 +83,8 @@ const enumeration = (() => {
   if (!result.success) throw new Error('enumerating public functions failed')
   return JSON.parse(result.stdout.toString()) as FunctionsResult
 })()
-const functions = enumeration.functions
-const moduleOf = new Map(
-  functions.map((item) => [item.name, item.entry.split('/').at(-1)!]),
-)
+const moduleOf = new Map(functions.map((item) => [item.name, item.module]))
+// Build output and packages installed under src hold no tests of ox's own.
 const testFiles = [
   ...new Bun.Glob('src/**/*.{test,test-d,snap-d}.ts').scanSync(root),
 ]
@@ -113,7 +115,6 @@ await run([
     job: {
       kind: 'entries',
       id: nextId++,
-      entries: enumeration.entries,
       names: functions.map((item) => item.name),
     },
     done(result: EntriesResult) {
@@ -156,16 +157,19 @@ log(
 )
 
 // 3. Measure one call per function: the first in its own module's runtime tests, such as Hex.test.ts
-// for ox/Hex, then in a runtime test file named after it, such as AbiParameters.encode.test.ts for
-// ox/AbiParameters:encode, then in its module's other runtime tests, then in its type tests, then in
-// any other test file. Within a file, calls in the `describe` block named after the function come
-// first, which is most often the test named `default`, the way its documentation calls it. A call
-// that fails to check once copied out gives its place to the function's next call, up to five
-// calls.
+// for `ox:Hex.fromString`, then in a runtime test file named after it, such as
+// AbiParameters.encode.test.ts for `ox:AbiParameters.encode`, then in its module's other runtime
+// tests, then in its type tests, then in any other test file. Within a file, calls in the
+// `describe` block named after the function come first, which is most often the test named
+// `default`, the way its documentation calls it. A call that fails to check once copied out gives
+// its place to the function's next call, up to five calls.
 const order = new Map<string, Candidate[]>()
 for (const [item, list] of candidates) {
   const module = moduleOf.get(item)!
-  const name = item.slice(item.indexOf(':') + 1)
+  // The function's own name, such as `fromString` for `ox:Hex.fromString`.
+  const name = item.slice(
+    Math.max(item.indexOf(':'), item.lastIndexOf('.')) + 1,
+  )
   const fileRank = (file: string) => {
     const base = path.basename(file)
     if (base === `${module}.test.ts`) return 0
@@ -238,6 +242,7 @@ for (let round = 1; ; round++) {
           site,
           start: candidate.start,
           end: candidate.end,
+          outer: candidate.outer,
           anchor: candidate.anchor,
         })),
       },
@@ -267,22 +272,20 @@ const lines: string[] = []
 const reasons = new Map<string, number>()
 const reported: { item: string; value: number; note: string }[] = []
 for (const { name } of functions) {
-  // Lines name each function the way users import it, such as `ox:Hex.fromString` (see names.ts).
-  const item = rename(name)
   const measurement = measured.get(name)
   if (measurement) {
     const text = note(measurement)
     lines.push(
-      `instantiations ${quote(item)} ${measurement.instantiations} note ${quote(text)}`,
-      `type-benched ${quote(item)} pass note ${quote(where(measurement.candidate))}`,
+      `instantiations ${quote(name)} ${measurement.instantiations} note ${quote(text)}`,
+      `type-benched ${quote(name)} pass note ${quote(where(measurement.candidate))}`,
     )
-    reported.push({ item, value: measurement.instantiations, note: text })
+    reported.push({ item: name, value: measurement.instantiations, note: text })
     continue
   }
   const reason = whyNot(name)
   const kind = reason.split(/[:(]/)[0]!.trim()
   reasons.set(kind, (reasons.get(kind) ?? 0) + 1)
-  lines.push(`type-benched ${quote(item)} fail note ${quote(reason)}`)
+  lines.push(`type-benched ${quote(name)} fail note ${quote(reason)}`)
 }
 fs.appendFileSync(metrics, `${[...lines, ...hot(lines)].join('\n')}\n`)
 
@@ -312,18 +315,23 @@ function where(candidate: Candidate) {
 function note(measurement: Measurement & { candidate: Candidate }) {
   const { candidate, parts, instantiations, signature } = measurement
   const text = [where(candidate)]
+  if (candidate.chain)
+    text.push(`with ${candidate.chain} chained on its result`)
   if (instantiations < costly) return text.join('; ')
   const share = (count: number) =>
     `${Math.min(100, Math.round((count / instantiations) * 100))}%`
+  const declared = (parameters: string[]) => short(`(${parameters.join(', ')})`)
   const [count, description] = (
     [
       [
         parts.call,
-        `inferring its type arguments and checking its arguments against ${short(`(${signature.parameters.join(', ')})`)}`,
+        `inferring its type arguments and checking its arguments against ${declared(signature.parameters)}`,
       ],
       [
         parts.result,
-        `its return type${signature.returns ? `, declared as ${short(signature.returns)}` : ''}`,
+        candidate.chain
+          ? 'its return type and the calls chained on it'
+          : `its return type${signature.returns ? `, declared as ${short(signature.returns)}` : ''}`,
       ],
       [parts.awaited, 'awaiting its result'],
     ] as const
@@ -413,7 +421,7 @@ async function run(tasks: { job: Job; done: (result: never) => void }[]) {
 function startWorker(limit: number) {
   const child = Bun.spawn(
     [
-      'node',
+      node,
       `--max-old-space-size=${limit}`,
       path.join(here, 'types-calls-worker.ts'),
     ],
@@ -458,7 +466,7 @@ function startWorker(limit: number) {
 
 /**
  * A job as one line of JSON. Node's readline also ends lines at U+2028 and U+2029, which
- * `JSON.stringify` leaves as they are and test files can hold.
+ * `JSON.stringify` leaves as they are and test files, such as Siwe's, hold.
  */
 function jsonLine(job: Job): string {
   return JSON.stringify(job).replace(/[\u2028\u2029]/g, (char) =>

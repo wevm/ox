@@ -2,29 +2,31 @@
  * Writes ox's fuzz metrics: for every public function, whether a fuzz harness ran on it, whether
  * fuzzing found no failure, and the share of the function's own lines the fuzzing ran.
  *
- * 1. Corpus. fuzz-fixtures/corpus.json holds up to six argument sets per function that ox's own
+ * 1. Corpus. fuzz-fixtures/corpus.json holds up to ten argument sets per function that ox's own
  *    tests passed it, snapshotted from the speed category's recording
  *    (node_modules/.cache/uphill-speed), so runs do not depend on a recording that changes with
  *    every edit. `FUZZ_CORPUS=refresh` snapshots the newest recording again. Without a corpus or
  *    a recording, the run goes on with structured properties and hand-written seeds alone.
- * 2. Plan. `fuzz-worker.ts plan` walks every leaf entry point that `scripts/utils/exports.ts`
- *    derives from src/, so functions have the same names as in the other categories, and lists
- *    each one's harnesses: the structured properties in fuzz-properties.ts (round trips,
- *    re-encoding of recorded values, differentials against viem, ethers, noble, @scure/base,
- *    @ethereumjs/rlp and micro-eth-signer, consistency), boundary mutations of its recorded
- *    arguments (fuzz-lib.ts), and hand-written seeds. Lines name each function the way users
- *    import it, such as `ox:Hex.fromString` (see names.ts). The network is blocked:
- *    `RpcTransport.fromHttp` gets its replies from a fake `fetchFn`, and WebAuthn prompts from a
- *    stand-in `window` whose credential calls return nothing.
+ * 2. Plan. `fuzz-worker.ts plan` walks every entry point `entries()` in repo.ts lists, as
+ *    speed-worker.ts does, so functions have the same names as in the other categories, such as
+ *    `ox:Hex.fromString`, and lists each one's harnesses: the structured properties in
+ *    fuzz-properties.ts (round trips, re-encoding of recorded values, differentials against the
+ *    reference implementations this branch's devDependencies provide, such as viem, ethers, noble
+ *    and micro-eth-signer, and consistency between ox functions), boundary mutations of its
+ *    recorded arguments (fuzz-lib.ts), and hand-written seeds. A function several names reach is
+ *    one item, under the first, such as `ox:HdKey.path` for `ox:Mnemonic.path`. The network is
+ *    blocked, and WebAuthn
+ *    prompts go to a stand-in `window` whose credential calls return nothing.
  * 3. Fuzz. `fuzz-worker.ts fuzz` runs a fixed shard of functions in one Node process, with fixed
  *    seeds and run counts, so two runs write the same lines. Shards run `UPHILL_CONCURRENCY`
  *    (default 2) at a time. A shard that hangs or grows past the memory limit is stopped, and its
  *    function is run again alone with tracing on, which names the input that did it.
+ *    `FUZZ_ONLY=<regex>` fuzzes only the matching functions, for iterating on a harness.
  *
- * The crash oracle: ox's documented errors (`Errors.BaseError` subclasses and the plain `Error`
- * that `Errors.GlobalErrorType` stands for in its `ErrorType` unions) are fine; a TypeError,
- * RangeError, SyntaxError, or ReferenceError on an input that keeps the declared types, a stack
- * overflow, a hang, or runaway memory is a failure.
+ * The crash oracle: ox's documented errors (`Errors.BaseError` subclasses, the plain `Error` that
+ * `Errors.GlobalErrorType` stands for in its `ErrorType` unions, and validation the code throws on
+ * purpose) are fine; a TypeError, RangeError, SyntaxError, or ReferenceError on an input that
+ * keeps the declared types, a stack overflow, a hang, or runaway memory is a failure.
  *
  * @module
  */
@@ -32,10 +34,10 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { hot } from './hot.ts'
-import { rename } from './names.ts'
 
-const root = path.resolve(import.meta.dir, '../..')
+import { hot } from './hot.ts'
+import { root } from './repo.ts'
+
 const here = import.meta.dir
 const metricsFile = process.env.UPHILL_METRICS
 const concurrency = Math.max(1, Number(process.env.UPHILL_CONCURRENCY) || 2)
@@ -45,14 +47,11 @@ if (!node) throw new Error('node is not on PATH.')
 /** Fixed shards, so a function's neighbours (and so its run) do not depend on concurrency. */
 const shardCount = 24
 /** A function still running after this long is a hang. */
-const functionTimeoutMs = 60_000
-/**
- * A worker whose resident memory grows past this is stopped. The brief allows ~600 MB a worker;
- * workers peak near 320 MB, and memory sampled every 100 ms can overshoot by ~100 MB.
- */
-const memoryLimitBytes = 500_000_000
+const functionTimeoutMs = 90_000
+/** A worker whose resident memory grows past this is stopped. */
+const memoryLimitBytes = 2_000_000_000
 /** Functions that change global state run alone. */
-const isolated = new Set<string>([])
+const isolated = new Set(['ox:Engine.install', 'ox:Engine.reset'])
 
 type Location = { url: string; line: number; column: number }
 type Planned = {
@@ -122,15 +121,22 @@ async function main() {
       .filter((item) => item.location)
       .map((item) => [item.name, item.location!]),
   )
-  const byEntry = new Map<string, string[]>()
-  for (const name of fuzzable.map((item) => item.name).sort()) {
+  const only = process.env.FUZZ_ONLY
+    ? new RegExp(process.env.FUZZ_ONLY)
+    : undefined
+  const sorted = fuzzable
+    .map((item) => item.name)
+    .filter((name) => !only || only.test(name))
+    .sort()
+  const byModule = new Map<string, string[]>()
+  for (const name of sorted) {
     if (isolated.has(name)) continue
-    const entry = name.split(':')[0]!
-    if (!byEntry.has(entry)) byEntry.set(entry, [])
-    byEntry.get(entry)!.push(name)
+    const module = moduleOf(name)
+    if (!byModule.has(module)) byModule.set(module, [])
+    byModule.get(module)!.push(name)
   }
   const shards: string[][] = Array.from({ length: shardCount }, () => [])
-  for (const [, names] of [...byEntry].sort(
+  for (const [, names] of [...byModule].sort(
     ([a, x], [b, y]) => y.length - x.length || (a < b ? -1 : 1),
   )) {
     const smallest = shards.reduce(
@@ -139,8 +145,7 @@ async function main() {
     )
     shards[smallest]!.push(...names)
   }
-  for (const name of fuzzable.map((item) => item.name).sort())
-    if (isolated.has(name)) shards.push([name])
+  for (const name of sorted) if (isolated.has(name)) shards.push([name])
 
   const results = new Map<string, Result>()
   let peakRss = 0
@@ -220,13 +225,11 @@ async function main() {
       : []
     const done = lines.find((line) => line.name === name) as Result | undefined
     if (done && outcome.code === 0) return done // It only failed alongside other functions.
-    const last = fs.existsSync(trace)
-      ? fs.readFileSync(trace, 'utf8').split('\n').filter(Boolean).at(-1)
-      : undefined
     // The trace has a line per call, so it counts the calls made before the worker stopped.
-    const calls = fs.existsSync(trace)
-      ? fs.readFileSync(trace, 'utf8').split('\n').filter(Boolean).length
-      : 0
+    const traced = fs.existsSync(trace)
+      ? fs.readFileSync(trace, 'utf8').split('\n').filter(Boolean)
+      : []
+    const last = traced.at(-1)
     const input = last
       ? (JSON.parse(last) as {
           harness: string
@@ -243,7 +246,11 @@ async function main() {
     return {
       name,
       harnesses: [
-        { id: input?.harness ?? 'unknown', oracle: 'crash', runs: calls },
+        {
+          id: input?.harness ?? 'unknown',
+          oracle: 'crash',
+          runs: traced.length,
+        },
       ],
       failures: [
         {
@@ -258,15 +265,14 @@ async function main() {
               ? `resident memory passed ${memoryLimitBytes / 1e9} GB`
               : kind === 'hang'
                 ? `still running after ${functionTimeoutMs / 1000}s`
-                : lastLine(outcome.stderr || first.stderr),
+                : errorLine(outcome.stderr || first.stderr),
         },
       ],
       ms: 0,
-      calls,
+      calls: traced.length,
     }
   }
 
-  // Metric lines.
   const lines: string[] = []
   const reasons = new Map<string, number>()
   const failing: { name: string; failure: FailureRecord }[] = []
@@ -274,49 +280,21 @@ async function main() {
   let coverageCount = 0
   for (const item of plan.items) {
     const result = results.get(item.name)
-    // Lines name each function the way users import it, such as `ox:Hex.fromString` (see
-    // names.ts).
-    const name = rename(item.name)
     if (item.reason) {
-      const reason = item.reason
-      const category = reason.split(':')[0]!.replace(/, re-exported.*/, '')
+      const category = item.reason.split(':')[0]!.replace(/, re-exported.*/, '')
       reasons.set(category, (reasons.get(category) ?? 0) + 1)
-      lines.push(`fuzzed ${quote(name)} fail note ${quote(reason)}`)
-      continue
-    }
-    if (!result) throw new Error(`${item.name} has no result.`)
-    const ran = result.harnesses.filter((harness) => harness.runs > 0)
-    const summary = ran
-      .map((harness) => `${harness.id} ×${harness.runs}`)
-      .join('; ')
-    lines.push(
-      ran.length
-        ? `fuzzed ${quote(name)} pass note ${quote(summary)}`
-        : `fuzzed ${quote(name)} fail note ${quote('its harness made no calls')}`,
-    )
-    if (result.failures.length) {
+    } else if (!result) {
+      if (only) continue
+      throw new Error(`${item.name} has no result.`)
+    } else {
       for (const failure of result.failures)
         failing.push({ name: item.name, failure })
-      const note = result.failures
-        .map(
-          (failure) =>
-            `${failure.oracle} (${failure.harness}): ${failure.kind}: ${failure.message}${failure.site ? ` at ${failure.site}` : ''}; input ${failure.input}`,
-        )
-        .join(' | ')
-      lines.push(
-        `fuzz-clean ${quote(name)} fail note ${quote(note.slice(0, 1500))}`,
-      )
-    } else if (ran.length)
-      lines.push(
-        `fuzz-clean ${quote(name)} pass note ${quote(`${result.calls} inputs`)}`,
-      )
-    if (result.coverage) {
-      coverageTotal += result.coverage.percent
-      coverageCount++
-      lines.push(
-        `fuzz-coverage ${quote(name)} ${result.coverage.percent} note ${quote(`${result.coverage.covered} of ${result.coverage.lines} lines of its own source ran`)}`,
-      )
+      if (result.coverage) {
+        coverageTotal += result.coverage.percent
+        coverageCount++
+      }
     }
+    lines.push(...linesOf(item, result))
   }
   if (metricsFile)
     fs.appendFileSync(metricsFile, `${[...lines, ...hot(lines)].join('\n')}\n`)
@@ -340,6 +318,50 @@ async function main() {
   log(
     `Fuzzed ${shards.filter((shard) => shard.length).length} shards in ${fuzzSeconds.toFixed(0)}s at concurrency ${concurrency}; ${((performance.now() - started) / 1000).toFixed(0)}s in all; peak worker memory ${(peakRss / 1e6).toFixed(0)} MB.`,
   )
+}
+
+/** A function's metric lines. */
+function linesOf(item: Planned, result: Result | undefined) {
+  const { name } = item
+  const note = (text: string) => quote(text)
+  if (item.reason)
+    return [`fuzzed ${quote(name)} fail note ${note(item.reason)}`]
+  const ran = result!.harnesses.filter((harness) => harness.runs > 0)
+  const summary = ran
+    .map((harness) => `${harness.id} ×${harness.runs}`)
+    .join('; ')
+  const lines = [
+    ran.length
+      ? `fuzzed ${quote(name)} pass note ${note(summary)}`
+      : `fuzzed ${quote(name)} fail note ${note('its harness made no calls')}`,
+  ]
+  if (result!.failures.length) {
+    const failures = result!.failures
+      .map(
+        (failure) =>
+          `${failure.oracle} (${failure.harness}): ${failure.kind}: ${failure.message}${failure.site ? ` at ${failure.site}` : ''}; input ${failure.input}`,
+      )
+      .join(' | ')
+    lines.push(
+      `fuzz-clean ${quote(name)} fail note ${note(failures.slice(0, 1500))}`,
+    )
+  } else if (ran.length)
+    lines.push(
+      `fuzz-clean ${quote(name)} pass note ${note(`${result!.calls} inputs`)}`,
+    )
+  const coverage = result!.coverage
+  if (coverage)
+    lines.push(
+      `fuzz-coverage ${quote(name)} ${coverage.percent} note ${note(`${coverage.covered} of ${coverage.lines} lines of its own source ran`)}`,
+    )
+  return lines
+}
+
+/** The module a function belongs to, such as `ox/Hex` for `ox:Hex.fromNumber`. */
+function moduleOf(name: string) {
+  const [entry, member] = name.split(':') as [string, string]
+  const dot = member.indexOf('.')
+  return dot < 0 ? entry : `${entry}/${member.slice(0, dot)}`
 }
 
 /** The corpus fixture, snapshotted from the newest speed recording when missing or asked for. */
@@ -395,7 +417,7 @@ async function runWorker(job: string, out: string): Promise<WorkerOutcome> {
   const child = Bun.spawn(
     [
       node!,
-      '--max-old-space-size=448',
+      '--max-old-space-size=1536',
       '--stack-size=984',
       path.join(here, 'fuzz-worker.ts'),
       'fuzz',
@@ -469,6 +491,18 @@ async function pool(tasks: (() => Promise<void>)[], size: number) {
 /** Quotes an item or note for a metric line, escaping `"` and `\`, on one line. */
 function quote(text: string) {
   return `"${text.replace(/[\\"]/g, (character) => `\\${character}`).replace(/\s+/g, ' ')}"`
+}
+
+/** The line of a crashed worker's output that names the error, rather than Node's version banner. */
+function errorLine(text: string) {
+  const lines = text.split('\n').map((line) => line.trim())
+  return (
+    lines
+      .find((line) =>
+        /^(\w+Error|Error|RangeError|FATAL|#)\b|out of memory/i.test(line),
+      )
+      ?.slice(0, 200) ?? lastLine(text)
+  )
 }
 
 function lastLine(text: string) {

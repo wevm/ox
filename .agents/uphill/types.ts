@@ -1,6 +1,6 @@
 /**
- * Writes the type-checking cost of every public export of ox's leaf entry points, values and
- * types, and of each test in the attest files, `src/**\/*.snap-d.ts` and `src/**\/*.bench-d.ts`.
+ * Writes the type-checking cost of every public export of ox's entry points (see repo.ts), values
+ * and types, and of each test in the attest files, `src/**\/*.snap-d.ts` and `src/**\/*.bench-d.ts`.
  *
  * For each export, types-enumerate.ts writes a small consumer file that imports it and forces its
  * type to resolve; its comments say which forms each kind of export gets. A pool of Node workers
@@ -10,16 +10,19 @@
  * - `instantiations`: type instantiations, exact and repeatable.
  * - `check-time`: CPU time to check the consumer.
  * - `check-memory`: heap bytes the check allocates.
- * - `bench-instantiations`: the instantiations attest counts for each snapshot test, the way
- *   `attest.instantiations` would: the file with every `test()` removed is the baseline, and the
- *   test's function is added back as a constant. ox's snapshot tests pin type strings, not counts,
- *   so these lines carry no target; a test that pins a count with
+ * - `bench-instantiations`: the instantiations attest counts for each attest test, the way
+ *   `attest.instantiations` does: the file with every `test()` removed is the baseline, and the
+ *   test's function is added back as a constant. A test that pins a count with
  *   `attest.instantiations([count, 'instantiations'])` gets that count plus 20%, the threshold
- *   attest enforces.
+ *   attest enforces; the others pin type strings, so their lines carry no target.
  *
  * Node runs the TypeScript work, as it does for `tsc` and editors, and V8 counts allocated bytes,
- * which JavaScriptCore does not. `UPHILL_TYPES_DIR` points the script at a copy of `src/_types`.
- * `UPHILL_CONCURRENCY` sets the pool size (default 2), which available memory caps.
+ * which JavaScriptCore does not. V8 reports them from Node 26 on, so the script runs `node` from
+ * PATH if it is Node 26 or later, and otherwise the Node 26 that `npx --yes node@26` installs.
+ *
+ * The script checks the declarations `pnpm build` writes (see repo.ts), or a copy of them that
+ * `UPHILL_TYPES_DIR` names. `UPHILL_CONCURRENCY` sets the pool size (default 2), which available
+ * memory caps.
  *
  * @module
  */
@@ -29,56 +32,64 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import ts from 'typescript'
+
 import { hot } from './hot.ts'
-import { rename } from './names.ts'
+import { root } from './repo.ts'
 import type { Item } from './types-enumerate.ts'
-import { availableMemory, consumerFile, typesDir } from './types-host.ts'
+import {
+  availableMemory,
+  consumerFile,
+  nodeBinary,
+  typesDir,
+} from './types-host.ts'
 import type { Job, Result } from './types-worker.ts'
 
 /**
- * Each worker's V8 heap limit in MB. The parsed declarations take about 300MB and the sources the
- * snapshot tests import about 300MB more. A check that needs more is checked again in a worker of
- * its own with `largeHeap`, if 2.5GB are available for it.
+ * Each worker's V8 heap limit in MB. The parsed declarations take about 300MB, and the sources the
+ * attest tests import about 300MB more. A check that needs more is checked again in a worker of its
+ * own with `largeHeap`, if 2.5GB are available for it.
  */
 const heap = 1536
 const largeHeap = 2048
 /** The resident memory one worker can reach, which caps the pool by available memory. */
 const workerBytes = 1.75e9
 
-const root = process.cwd()
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
 const here = import.meta.dir
+const node = nodeBinary()
 const started = performance.now()
 
 const enumerated = Bun.spawnSync(
-  ['node', '--max-old-space-size=1536', path.join(here, 'types-enumerate.ts')],
+  [node, `--max-old-space-size=${heap}`, path.join(here, 'types-enumerate.ts')],
   { stderr: 'inherit' },
 )
 if (!enumerated.success) throw new Error('types-enumerate.ts failed')
-const { found, duplicates, items, baselines } = JSON.parse(
-  enumerated.stdout.toString(),
-) as {
-  found: number
-  duplicates: number
-  items: Item[]
-  baselines: Record<string, string>
-}
+const { found, topLevel, unique, namespaces, foreign, items, baselines } =
+  JSON.parse(enumerated.stdout.toString()) as {
+    found: number
+    topLevel: number
+    unique: number
+    namespaces: number
+    foreign: number
+    items: Item[]
+    baselines: Record<string, string>
+  }
 log(
-  `${typesDir}: ${found} exports across the entry points; skipping the barrels' leaf namespaces and ${duplicates} re-exports of a symbol an earlier entry exports leaves ${items.length} exports to measure`,
+  `${typesDir}: ${found} exports across the entry points, ${topLevel} unique; ${namespaces} namespaces among ${unique} unique symbols expand into their members, and ${foreign} are zod's, leaving ${items.length} exports to measure`,
 )
 
 type Measured = {
   line: string
   job: Job
+  forms?: Record<string, string> | undefined
+  /** The count an attest test pins with `attest.instantiations`. */
   pinned?: number | undefined
-  /** What a snapshot test without a pinned count asserts instead, for its note. */
+  /** What an attest test without a pinned count asserts instead, for its note. */
   pins?: string | undefined
-  forms?: Record<string, string>
 }
-// Lines name each export the way users import it, such as `ox:Hex.fromString` (see names.ts).
 const measured: Measured[] = items.map((item) => ({
-  line: rename(item.item),
+  line: item.item,
   forms: item.forms,
   job: {
     id: 0,
@@ -112,7 +123,7 @@ const exportQueue = measured
   .filter((entry) => entry.job.mode === 'export')
   .map((entry) => entry.job)
 exportQueue.sort((a, b) => order(b) - order(a) || a.id - b.id)
-// The snapshot tests import ox's sources rather than its declarations, so one worker parses those.
+// The attest tests import ox's sources rather than its declarations, so one worker parses those.
 const benchQueue = measured
   .filter((entry) => entry.job.mode === 'bench')
   .map((entry) => entry.job)
@@ -165,7 +176,7 @@ for (const entry of measured) {
     if (job.mode === 'export' || ![6133, 6192, 6196, 6198].includes(error.code))
       log(`${line}: TS${error.code}: ${error.message}`)
   if (job.mode === 'bench') {
-    // attest's own threshold: a bench fails 20% above its pinned count.
+    // attest's own threshold: a test fails 20% above its pinned count.
     const target =
       pinned === undefined ? '' : ` target ${Math.round(pinned * 1.2)}`
     const text = pinned === undefined ? ` note ${quote(pins!)}` : ''
@@ -198,15 +209,12 @@ log(
 /**
  * Runs one Node worker until the queues are empty: first its own jobs, then the shared export
  * queue. A worker that runs out of memory hands its job to a worker with a larger heap, once, if
- * the machine has the memory for it; otherwise the job is left out.
+ * the machine has the memory for it; otherwise the job is left out. That worker skips the warm-up,
+ * so it only parses what the job needs.
  */
 async function work(own: Job[], limit = heap): Promise<void> {
   const worker = Bun.spawn(
-    [
-      'node',
-      `--max-old-space-size=${limit}`,
-      path.join(here, 'types-worker.ts'),
-    ],
+    [node, `--max-old-space-size=${limit}`, path.join(here, 'types-worker.ts')],
     {
       stdin: 'pipe',
       stdout: 'pipe',
@@ -284,19 +292,19 @@ function note(result: Result, forms: Record<string, string>): string {
 }
 
 /**
- * One job per test in the attest files, built the way attest counts instantiations: the
- * file with every `bench()`, `it()` and `test()` call removed, at any depth, is the baseline, and
- * the test's function is added back as a constant.
+ * One job per test in the attest files, built the way attest counts instantiations: the file with
+ * every `bench()`, `it()` and `test()` call removed, at any depth, is the baseline, and the test's
+ * function is added back as a constant.
  */
 function benches(): Measured[] {
   const result: Measured[] = []
   const names = ['bench', 'it', 'test']
   const repeats = new Map<string, number>()
-  for (const relative of [
-    ...new Bun.Glob('src/**/*.{snap,bench}-d.ts').scanSync(root),
-  ]
+  // Build output and packages installed under src hold no tests of ox's own.
+  const files = [...new Bun.Glob('src/**/*.{snap,bench}-d.ts').scanSync(root)]
     .filter((file) => !/(^|\/)(_esm|_cjs|_types|node_modules)\//.test(file))
-    .sort()) {
+    .sort()
+  for (const relative of files) {
     const file = path.join(root, relative)
     const text = fs.readFileSync(file, 'utf8')
     const source = ts.createSourceFile(file, text, ts.ScriptTarget.ES2022, true)
@@ -320,7 +328,7 @@ function benches(): Measured[] {
       )
       if (!name || !ts.isStringLiteralLike(name) || !body) continue
       const bodyText = body.getText(source)
-      const pinned = /attest\.instantiations\(\[\s*(\d+)/.exec(bodyText)?.[1]
+      const pinned = /attest\.instantiations\(\[\s*([\d_]+)/.exec(bodyText)?.[1]
       const count = (pattern: RegExp, what: string) => {
         const found = bodyText.match(pattern)?.length ?? 0
         return found ? [`${found} ${what}${found === 1 ? '' : 's'}`] : []
@@ -338,7 +346,8 @@ function benches(): Measured[] {
       if (repeat > 1) line += ` (${repeat})`
       result.push({
         line,
-        pinned: pinned === undefined ? undefined : Number(pinned),
+        pinned:
+          pinned === undefined ? undefined : Number(pinned.replaceAll('_', '')),
         pins: `pins ${asserted.join(' and ') || 'no types'}, not an instantiation count`,
         job: {
           id: 0,

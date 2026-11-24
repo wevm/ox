@@ -1,20 +1,24 @@
 /**
- * Writes what each public export of ox costs a consumer, and whether each entry point tree-shakes
- * away entirely when nothing is used from it.
+ * Writes what each public export costs a consumer, and whether each module tree-shakes away when
+ * nothing is used from it.
  *
- * - `entry-size`: the gzipped size of the bundle rolldown builds for one use of an export, the way
- *   users import it: `import { Hex } from 'ox'; export const $ = Hex.fromString` for every
- *   runtime export of every leaf module, `export { Hex } from 'ox'` for each whole module, and
- *   `export * from 'ox/tempo'` for each barrel. Items are named the same way, such as
- *   `ox:Hex.fromString`, `ox:Hex` and `ox/tempo` (see names.ts). Rolldown tree-shakes and
- *   minifies each import for the browser, as a consumer's bundler would.
- * - `tree-shaking`: for every leaf entry, whether `import '<entry>'` bundles to nothing when the
- *   bundler ignores ox's `"sideEffects": false`, as it does once ox is inlined into another
- *   package's bundle. Top-level code a bundler cannot prove pure, such as a call without a
- *   `\/*#__PURE__*\/` annotation, fails the check, and stays in every bundle that uses anything from
- *   that module, even with the flag. The note names the modules that keep code.
+ * - `entry-size`: the gzipped size of the bundle rolldown builds for one use of an export, such as
+ *   `import { Hex } from 'ox'; export const $ = Hex.fromNumber`, for every runtime member of every
+ *   namespace each entry point exports, for each whole namespace (`export { Hex } from 'ox'`), and
+ *   for each whole entry point (`export * from 'ox/tempo'`). Rolldown tree-shakes and minifies each
+ *   import for the browser, as a consumer's bundler would.
+ * - `tree-shaking`: for every module entry, such as `ox/Hex`, whether `import 'ox/Hex'` bundles to
+ *   nothing when the bundler ignores ox's `"sideEffects": false`, as it does once ox is inlined
+ *   into another package's bundle. Top-level code a bundler cannot prove pure, such as a call
+ *   without a `\/*#__PURE__*\/` annotation, a `2n ** 8n`, a runtime TypeScript namespace, or a
+ *   static class field, fails the check, and stays in every bundle that uses anything from that
+ *   module, even with the flag. The note names the modules that keep code.
  *
  * The builds run in a pool of `UPHILL_CONCURRENCY` builds, or one per core.
+ *
+ * Entry points come from repo.ts in its order, and a value several entries reach, such as `Hex`
+ * from `ox` and from `ox/Hex`, is measured once under the first. zod's own functions, which
+ * `ox/zod`'s `z` re-exports, are zod's and are left out.
  *
  * @module
  */
@@ -24,92 +28,114 @@ import { isBuiltin } from 'node:module'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { type OutputChunk, rolldown } from 'rolldown'
-import { getExports } from '../../scripts/utils/exports.js'
+
 import { hot } from './hot.ts'
-import { rename } from './names.ts'
+import * as repo from './repo.ts'
 
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
 
 const started = performance.now()
-const root = process.cwd()
-const esm = path.join(root, 'src/_esm/')
+const build = `${repo.build}/`
 const concurrency =
   Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism()
-
-// The exports map prepublish writes to src/package.json. `*.test-d` subpaths are type tests that
-// getExports does not skip, and `index.docs` exists only for the docs generator.
-const entries = Object.entries(getExports().dist).filter(
-  (entry): entry is [string, { import: string }] =>
-    typeof entry[1] !== 'string' &&
-    !entry[0].endsWith('.test-d') &&
-    entry[0] !== './index.docs',
-)
+const entries = repo.entries()
 
 // A consumer's bundler finds ox in its node_modules and resolves each subpath through the exports
-// map. The scratch package carries that map with src/package.json's other fields, and links the
-// build and ox's node_modules, so ox's dependencies resolve as they do for a consumer.
+// map. The scratch package carries the package.json ox publishes with an exports map of every
+// entry, and links the build and ox's node_modules. Rolldown follows the links to the checkout, so
+// ox's dependencies resolve from ox's node_modules.
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'footprint-'))
 const ox = path.join(scratch, 'node_modules/ox')
 fs.mkdirSync(ox, { recursive: true })
-fs.symlinkSync(path.join(root, 'src/_esm'), path.join(ox, '_esm'))
-fs.symlinkSync(path.join(root, 'node_modules'), path.join(ox, 'node_modules'))
-const pkg = await Bun.file(path.join(root, 'src/package.json')).json()
+fs.symlinkSync(repo.build, path.join(ox, 'build'))
+fs.symlinkSync(
+  path.join(repo.root, 'node_modules'),
+  path.join(ox, 'node_modules'),
+)
 fs.writeFileSync(
   path.join(ox, 'package.json'),
   JSON.stringify({
-    ...pkg,
+    ...JSON.parse(fs.readFileSync(repo.manifest, 'utf8')),
     exports: Object.fromEntries(
-      entries.map(([subpath, target]) => [subpath, { import: target.import }]),
+      entries.map((entry) => [
+        `.${entry.name.slice(2)}`,
+        `./build/${path.relative(repo.build, entry.file)}`,
+      ]),
     ),
   }),
 )
 
-type Job = { code: string; item: string; metric: 'entry-size' | 'tree-shaking' }
+type Job = {
+  code: string
+  /** The built module the tree-shaking check treats as having side effects. */
+  file?: string | undefined
+  item: string
+  metric: 'entry-size' | 'tree-shaking'
+}
 const jobs: Job[] = []
-for (const [subpath, target] of entries) {
-  const entry = `ox${subpath.slice(1)}`
-  const module = await import(path.join(root, 'src', target.import))
-  // A barrel only re-exports leaf modules as namespaces, whose exports are measured through it
-  // below, so it is measured as a whole.
-  const barrel = Object.values(module).every(
-    (value) =>
-      typeof value === 'object' &&
-      value !== null &&
-      Object.prototype.toString.call(value) === '[object Module]',
-  )
-  if (barrel) {
+const seen = new Set<unknown>()
+/** The namespaces whose members the walk measured. */
+const walked = new Set<unknown>()
+// zod's own functions, which `ox/zod`'s `z` re-exports. A branch without `ox/zod` has no zod 4.
+const zod = new Set<unknown>(
+  entries.some((entry) => entry.name === 'ox/zod')
+    ? Object.values(await import('zod/mini'))
+    : [],
+)
+for (const entry of entries) {
+  const module = await import(entry.file)
+  if (!entry.index)
     jobs.push({
-      code: `export * from '${entry}'\n`,
-      item: entry,
+      code: `import '${entry.name}'\n`,
+      file: fs.realpathSync(entry.file),
+      item: entry.name,
+      metric: 'tree-shaking',
+    })
+  if (entry.index) {
+    // A whole entry is named by its bare specifier, so a target pattern such as `ox/tempo:*`
+    // matches its exports and not the entry itself.
+    jobs.push({
+      code: `export * from '${entry.name}'\n`,
+      item: entry.name,
       metric: 'entry-size',
     })
-    continue
+  } else {
+    // A module entry whose members an index walked, such as `ox/Hex` under `ox:Hex`, adds nothing:
+    // a constant would only repeat. One deeper than the walk goes, such as
+    // `ox/zod/tempo/AuthorizationTempo`, has its members measured here.
+    if (walked.has(module)) continue
+    // A module entry that no index reaches, such as `ox/TxEnvelope`, is measured whole too.
+    if (!seen.has(module)) {
+      seen.add(module)
+      jobs.push({
+        code: `export * from '${entry.name}'\n`,
+        item: entry.name,
+        metric: 'entry-size',
+      })
+    }
   }
-  jobs.push({
-    code: `import '${entry}'\n`,
-    item: entry,
-    metric: 'tree-shaking',
-  })
-  // A module no barrel re-exports is measured from its own entry.
-  const namespace = rename(entry)
-  const [index, name] =
-    namespace === entry ? [entry] : (namespace.split(':') as [string, string])
-  jobs.push({
-    code: name
-      ? `export { ${name} } from '${index}'\n`
-      : `export * from '${entry}'\n`,
-    item: namespace,
-    metric: 'entry-size',
-  })
-  for (const member of Object.keys(module))
+  // A namespace, such as `Hex` or zod's `z.Abi`, is measured whole and then member by member.
+  const walk = (top: string, members: string[], value: unknown) => {
+    const isObject =
+      (!!value && typeof value === 'object') || typeof value === 'function'
+    if (isObject && (seen.has(value) || zod.has(value))) return
+    if (isObject) seen.add(value)
+    const item = `${entry.name}:${[top, ...members].join('.')}`
     jobs.push({
-      code: name
-        ? `import { ${name} } from '${index}'\nexport const $ = ${name}.${member}\n`
-        : `export { ${member} } from '${entry}'\n`,
-      item: name ? `${namespace}.${member}` : `${entry}:${member}`,
+      code: members.length
+        ? `import { ${top} } from '${entry.name}'\nexport const $ = ${[top, ...members].join('.')}\n`
+        : `export { ${top} } from '${entry.name}'\n`,
+      item,
       metric: 'entry-size',
     })
+    if (isModule(value) && members.length < 2) {
+      walked.add(value)
+      for (const [member, inner] of Object.entries(value))
+        walk(top, [...members, member], inner)
+    }
+  }
+  for (const [name, value] of Object.entries(module)) walk(name, [], value)
 }
 
 // Each worker takes the next job until none are left, or until a build fails.
@@ -146,8 +172,8 @@ console.log(
 async function measure(index: number, job: Job): Promise<string> {
   const input = path.join(scratch, `${index}.js`)
   fs.writeFileSync(input, job.code)
-  // Dropping JSDoc comments leaves the minified code unchanged, and keeps comments out of each
-  // module's rendered bytes, which rank what the bundle holds.
+  // Dropping JSDoc and the `// <module path>` comments leaves the minified code unchanged, and keeps
+  // comments out of each module's rendered bytes, which rank what the bundle holds.
   const bundle = await rolldown({
     input,
     platform: 'browser',
@@ -157,9 +183,9 @@ async function measure(index: number, job: Job): Promise<string> {
     // does when a consumer uses anything from it, and keeps only its top-level statements that
     // could have an effect. Property reads and unknown globals count as pure, so declaring a class
     // that extends `Errors.BaseError` passes, and a call or a `2n ** 8n` does not.
-    ...(job.metric === 'tree-shaking'
+    ...(job.file
       ? {
-          plugins: [included(job.item)],
+          plugins: [sideEffects(job.file)],
           treeshake: {
             propertyReadSideEffects: false as const,
             unknownGlobalSideEffects: false,
@@ -183,26 +209,27 @@ async function measure(index: number, job: Job): Promise<string> {
     for (const id of chunk.imports) {
       const imported = chunks.get(id)
       if (imported) load(imported)
+      // Node built-ins, which `ox/node` imports, are left to the runtime. Any other import left in
+      // the output is a module rolldown could not find.
       else if (!isBuiltin(id)) throw new Error(`could not resolve "${id}"`)
     }
   }
   load(output.output[0])
 
+  let size = 0
+  for (const chunk of loaded) size += Bun.gzipSync(chunk.code).length
+
   if (job.metric === 'tree-shaking') {
     const kept = rank(loaded)
     if (kept.length === 0) return `tree-shaking ${quote(job.item)} pass`
-    let size = 0
-    for (const chunk of loaded) size += Bun.gzipSync(chunk.code).length
     const top = kept.slice(0, 3).map(([name, bytes]) => `${name} ${bytes} B`)
     return `tree-shaking ${quote(job.item)} fail note ${quote(`keeps ${size} B gzipped: ${top.join(', ')}`)}`
   }
 
-  let size = 0
-  for (const chunk of loaded) size += Bun.gzipSync(chunk.code).length
   const line = `entry-size ${quote(job.item)} ${size}B`
-  if (size <= 5000) return line
+  if (size <= 3000) return line
 
-  // Above 5 kB, name the three packages or ox modules that render the most bytes, so a reader
+  // Above 3 kB, name the three packages or ox modules that render the most bytes, so a reader
   // knows what to cut first.
   const ranked = rank(loaded)
   const total = ranked.reduce((sum, [, bytes]) => sum + bytes, 0)
@@ -214,17 +241,10 @@ async function measure(index: number, job: Job): Promise<string> {
   return `${line} note ${quote(`most bytes: ${top.join(', ')}`)}`
 }
 
-/** A rolldown plugin that marks the module an entry resolves to as having side effects. */
-function included(entry: string) {
-  const file = fs.realpathSync(
-    path.join(
-      root,
-      'src',
-      entries.find(([subpath]) => `ox${subpath.slice(1)}` === entry)![1].import,
-    ),
-  )
+/** A rolldown plugin that marks one built module as having side effects. */
+function sideEffects(file: string) {
   return {
-    name: 'included',
+    name: 'side-effects',
     load(id: string) {
       if (id === file)
         return { code: fs.readFileSync(id, 'utf8'), moduleSideEffects: true }
@@ -239,7 +259,7 @@ function rank(loaded: Set<OutputChunk>): (readonly [string, number])[] {
   for (const chunk of loaded)
     for (const [id, module] of Object.entries(chunk.modules)) {
       if (module.renderedLength === 0) continue
-      // The consumer module only re-exports or imports.
+      // The consumer module only imports or re-exports.
       if (id.startsWith(scratch) && !id.includes('/node_modules/')) continue
       const name = owner(id)
       bytes.set(name, (bytes.get(name) ?? 0) + module.renderedLength)
@@ -247,10 +267,10 @@ function rank(loaded: Set<OutputChunk>): (readonly [string, number])[] {
   return [...bytes].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
 }
 
-/** Returns the package a module belongs to, or the path of an ox module inside src/_esm. */
+/** Returns the package a module belongs to, or the path of an ox module inside the build. */
 function owner(id: string): string {
   const real = fs.existsSync(id) ? fs.realpathSync(id) : id
-  if (real.startsWith(esm)) return real.slice(esm.length)
+  if (real.startsWith(build)) return real.slice(build.length)
   const modules = real.lastIndexOf('/node_modules/')
   if (modules !== -1) {
     const [scope, name] = real
@@ -259,6 +279,14 @@ function owner(id: string): string {
     return scope!.startsWith('@') ? `${scope}/${name}` : scope!
   }
   return real.replace('\0', '')
+}
+
+function isModule(value: unknown): value is Record<string, unknown> {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    Object.prototype.toString.call(value) === '[object Module]'
+  )
 }
 
 /** Quotes an item or note for a metric line. */

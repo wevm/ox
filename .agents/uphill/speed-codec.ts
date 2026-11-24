@@ -1,13 +1,14 @@
 /**
  * Encodes a call's arguments as JSON text that another process can rebuild, and rebuilds them.
- * Shared by the recorder, which runs inside vitest, and the bench worker, which runs under Node,
- * so both sides agree on what is replayable and on what an argument set looks like.
+ * Shared by the recorder, which runs inside vitest, and the bench and fuzz workers, which run under
+ * Node, so both sides agree on what is replayable and on what an argument set looks like.
  *
  * ## The recording
  *
  * `speed.ts` caches what ox's tests called each export with at
  * `node_modules/.cache/uphill-speed/recording-<hash>.json`, where `<hash>` covers src/ (build
- * output excluded), test/, pnpm-lock.yaml, and the recorder's scripts. The file is one JSON object:
+ * output and snapshots excluded), test/, the lockfile, the TypeScript files at the root of the
+ * checkout, such as vite.config.ts, and the recorder's scripts. The file is one JSON object:
  *
  * ```ts
  * type Recording = {
@@ -34,11 +35,12 @@
  * }
  * ```
  *
- * A `Key` is `<source file>#<export>`, such as `src/core/Hex.ts#fromNumber` or
- * `src/tempo/TxEnvelopeTempo.ts#serialize`: the module that defines the export, never a barrel.
- * The build of that module is `src/_esm/<file without src/>.js`. Every export of a public module
- * (`src/<dir>/<Capitalized>.ts`) is recorded, including calls one ox function makes to another;
- * modules under `internal/` are not wrapped.
+ * A `Key` is `<source file>#<export path>`, such as `src/core/Hex.ts#fromNumber` or
+ * `src/tempo/TxEnvelopeTempo.ts#serialize`: the module that defines the export, never a barrel,
+ * and for a function an exported namespace object or function holds, its path from the export.
+ * The build of that module is `built(<source file>)` in repo.ts, such as dist/core/Hex.js on main
+ * and src/_esm/core/Hex.js on 0.x. Every export of every module in src/ (tests excluded) is
+ * recorded, `internal/` modules included, as are calls one ox function makes to another.
  *
  * ## The encoding
  *
@@ -52,9 +54,9 @@
  *   `{ $ta: "Uint16Array", $h: "0100" }` another typed array or a `DataView` (its bytes, in hex),
  *   `{ $ab: "00ff" }` an `ArrayBuffer`, `{ $d: 1700000000000 }` a `Date`, and
  *   `{ $map: [[key, value], ...] }` and `{ $set: [value, ...] }` a `Map` and a `Set`.
- * - `{ $ref: key }` a value an ox module exports, or reaches through an export's properties
- *   (`src/core/AbiError.ts#solidityError`, `src/core/Secp256k1.ts#noble.CURVE`), rebuilt by
- *   importing it.
+ * - `{ $ref: key }` a value an ox module exports, or reaches through an export's properties, such
+ *   as a zod schema or a constant (`src/core/AbiError.ts#solidityError`,
+ *   `src/core/Secp256k1.ts#noble.CURVE`), rebuilt by importing it.
  * - `{ $call: key, $args: [...] }` a value a recorded call to an ox export returned, such as a
  *   provider or a KZG implementation, rebuilt by making the call again with `$args` (encoded the
  *   same way); `{ $await: key, $args }` a value an async export resolved to, such as a
@@ -62,8 +64,8 @@
  *   class, such as an ox error. Any of the three may carry `$path: ["privateKey"]`, for a value
  *   found at that property of what the call returned, such as the `CryptoKey` of a key pair.
  * - `{ $ref: "test/kzg.ts#kzg" }` a value a test helper module (`test/**`, not a test file)
- *   exports or reaches, such as the KZG implementation ox's tests build, used only for a value
- *   none of the above can carry. The worker imports the helper with `ox` resolving to src/_esm.
+ *   exports or reaches, such as the KZG implementation ox's 0.x tests build, used only for a value
+ *   none of the above can carry. The worker imports the helper with `ox` resolving to the build.
  * - `{ $fn: "(x) => x * 2n" }` a function whose source refers to nothing but its own
  *   parameters, locals, and standard globals, rebuilt from that source. `{ $noop: 1 }` an event
  *   callback such as `onProgress`, whose result ox ignores, that closed over test state.
@@ -146,6 +148,18 @@ export function encode(args: readonly unknown[], hooks: Hooks = {}): string {
   if (text.length > maxEncodedLength)
     throw new Unreplayable('passes arguments over 1.2MB')
   return text
+}
+
+/** Encodes one plain value, such as JSON-RPC params or a result, as JSON text. */
+export function encodePlain(value: unknown): string {
+  return JSON.stringify(
+    encodeValue(value, {
+      seen: new Set(),
+      depth: 0,
+      hooks: {},
+      pending: new Set(),
+    }),
+  )
 }
 
 /** The export keys `decode` needs to rebuild values, so their modules can load first. */
@@ -259,7 +273,10 @@ export async function decode(
   return decodeAll(JSON.parse(text) as unknown[])
 }
 
-/** Rebuilds a plain value: one with no `$ref`, `$call`, `$await`, `$new`, `$fn`, or `$noop` in it. */
+/**
+ * Rebuilds a plain value, such as one `encodePlain` wrote: one with no `$ref`, `$call`, `$await`,
+ * `$new`, `$fn`, or `$noop` in it.
+ */
 export function decodePlain(value: unknown): unknown {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) {
@@ -279,12 +296,10 @@ export function decodePlain(value: unknown): unknown {
   if ('$u8' in record) return fromHex(record.$u8 as string)
   if ('$ab' in record) return fromHex(record.$ab as string).buffer
   if ('$ta' in record) {
-    const View = (globalThis as Record<string, unknown>)[
-      record.$ta as string
-    ] as new (
-      buffer: ArrayBuffer,
-    ) => ArrayBufferView
-    return new View(fromHex(record.$h as string).buffer as ArrayBuffer)
+    type View = new (buffer: ArrayBuffer) => ArrayBufferView
+    const name = record.$ta as string
+    const Constructor = (globalThis as Record<string, unknown>)[name] as View
+    return new Constructor(fromHex(record.$h as string).buffer as ArrayBuffer)
   }
   if ('$d' in record) return new Date(record.$d as number)
   if ('$map' in record)
@@ -326,6 +341,7 @@ function encodeValue(value: unknown, context: Context): unknown {
   if (object instanceof Uint8Array) return { $u8: toHex(object) }
   if (ArrayBuffer.isView(object))
     return { $ta: object.constructor.name, $h: toHex(object) }
+  // WebAuthn credentials carry ArrayBuffers.
   if (object instanceof ArrayBuffer)
     return { $ab: toHex(new Uint8Array(object)) }
   if (object instanceof Date) return { $d: object.getTime() }
@@ -395,6 +411,8 @@ function encodeStructure(object: object, context: Context): unknown {
         )
       return out
     }
+    // EIP-712 hashing takes a Map of type hashes. A subclass, such as one of ox's caches, has
+    // behavior of its own, so it is an instance like any other.
     if (proto === Map.prototype)
       return {
         $map: [...(object as Map<unknown, unknown>)].map(([key, item]) => [

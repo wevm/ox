@@ -5,28 +5,28 @@
  *
  * 1. Record. `speed-vitest.config.ts` runs ox's `core` and `tempo-unit` test projects, the unit
  *    tests of `tmp_frames`, and `speed-calls.test.ts` under vitest, with the global setup that
- *    starts anvil, and wraps every export of ox's public modules to record the arguments of each
- *    call and whether it returned or resolved. Anvil forks mainnet through `forkProxy`, which
- *    caches what mainnet nodes answer and falls back across public nodes. The recording is cached
- *    in node_modules/.cache/uphill-speed by a hash of src/, test/, the lockfile, and the recorder's
- *    scripts, and Uphill's five runs share one recording; its format is described at the top of
- *    speed-codec.ts. Without anvil the tests that need it fail at once, and fewer functions are
- *    benched.
- * 2. Enumerate. `speed-worker.ts enumerate` walks each leaf entry point `getExports()` lists (in
+ *    starts anvil, and wraps every export of `src/**` to record the arguments of each call and
+ *    whether it returned or resolved. Anvil forks mainnet through `forkProxy`, which caches what
+ *    mainnet nodes answer and falls back across public nodes. The recording is cached in
+ *    node_modules/.cache/uphill-speed by a hash of src/, test/, the lockfile, the test config, and
+ *    the recorder's scripts, and Uphill's five runs share one recording; its format is described at
+ *    the top of speed-codec.ts. Without Foundry the tests that need anvil fail at once, and fewer
+ *    functions are benched.
+ * 2. Enumerate. `speed-worker.ts enumerate` walks each entry point `entries()` in repo.ts lists (in
  *    its order) and maps every recorded export to the public function it is. A function exported
- *    from several entries, such as `ox/HdKey:path` and `ox/Mnemonic:path`, is measured once,
- *    under the first, and the others repeat its values with a note naming it. Lines name each
- *    function the way users import it, such as `ox:HdKey.path` (see names.ts), and each entry
- *    point by its specifier.
+ *    from several entries is measured once, under the first, such as `ox:Hex.fromNumber` for
+ *    `ox/Hex`'s `fromNumber`, and its other names, such as `ox:Mnemonic.path` for `ox:HdKey.path`,
+ *    are left out. Each entry point is named by its specifier.
  * 3. Replay. `speed-worker.ts bench` replays each function in a fresh Node process, sharded across
- *    `UPHILL_CONCURRENCY` processes at a time (default 2). Import probes run in the same pool.
+ *    `UPHILL_CONCURRENCY` processes at a time (default: `os.availableParallelism()`). Import probes
+ *    run in the same pool.
  *
- * Measured code runs from src/_esm under Node with `--single-threaded`, so V8's garbage collection
- * and compiler work run on the main thread and `process.cpuUsage()` counts only what the call
- * costs. ox's caches are emptied with `Caches.clear()` before every call, so `Address.checksum` and
- * the functions that call it measure their full work, as a first call with an input does (a call
- * that checksums one address twice still computes it once); the note gives the time with the
- * caches warm too.
+ * Measured code runs from the build under Node with `--single-threaded`, so V8's garbage
+ * collection and compiler work run on the main thread and `process.cpuUsage()` counts only what
+ * the call costs. ox's caches are emptied with `Caches.clear()` before every call, so
+ * `Address.checksum` and the functions that call it measure their full work, as a first call with
+ * an input does (a call that checksums one address twice still computes it once); the note gives
+ * the time with the caches warm too. The network is blocked.
  *
  * @module
  */
@@ -35,14 +35,17 @@ import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { hot } from './hot.ts'
-import { rename } from './names.ts'
 
-const root = path.resolve(import.meta.dir, '../..')
+import { hot } from './hot.ts'
+import { root } from './repo.ts'
+
 const here = import.meta.dir
 const metricsFile = process.env.UPHILL_METRICS
 if (!metricsFile) throw new Error('UPHILL_METRICS is not set.')
-const concurrency = Math.max(1, Number(process.env.UPHILL_CONCURRENCY) || 2)
+const concurrency = Math.max(
+  1,
+  Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism(),
+)
 const node = Bun.which('node')
 if (!node) throw new Error('node is not on PATH.')
 
@@ -62,7 +65,7 @@ const keptLengthPerFunction = 5_000_000
 /** A replay that takes longer is stopped and fails `benched`. */
 const jobTimeoutMs = 60_000
 /** Changes whenever the recording's format or meaning changes, which invalidates the cache. */
-const recordingVersion = 1
+const recordingVersion = 4
 
 type Sample = { args: string; n: number; direct: boolean; where: string }
 type Key = {
@@ -94,7 +97,13 @@ type Item = { name: string; entry: string; keys: string[] }
 type Enumeration = {
   items: Item[]
   exports: { name: string; item: string }[]
-  counts: { functions: number; classes: number; values: number }
+  counts: {
+    functions: number
+    errors: number
+    classes: number
+    values: number
+    foreign: number
+  }
   entries: { name: string; file: string; barrel: boolean }[]
   unmatched: string[]
 }
@@ -112,8 +121,9 @@ async function main() {
 
   const enumeration = await enumerate(Object.keys(recording.keys))
   const { items } = enumeration
+  const { counts } = enumeration
   log(
-    `Public functions: ${enumeration.counts.functions} exported by ${enumeration.entries.filter((entry) => !entry.barrel).length} leaf entries, ${items.length} distinct; ${enumeration.counts.classes} classes and ${enumeration.counts.values} other values are not benched.`,
+    `Public functions: ${counts.functions} names in ${enumeration.entries.length} entry points, ${items.length} distinct; ${counts.errors} error classes, ${counts.classes} other classes, and ${counts.values} other values are not benched, nor are the ${counts.foreign} functions ox re-exports from its dependencies, such as zod.`,
   )
 
   const lines: string[] = []
@@ -155,13 +165,11 @@ async function main() {
   }
 
   const reasons = new Map<string, number>()
-  for (const { name: leaf, item } of enumeration.exports) {
+  for (const { name, item } of enumeration.exports) {
+    if (name !== item) continue
     const result = results.get(item)
-    const name = rename(leaf)
-    const same = leaf === item ? [] : [`the same function as ${rename(item)}`]
     if (result?.ok) {
       const notes = [
-        ...same,
         result.direct
           ? `args from ${result.where}`
           : `args from a call another ox function made in ${result.where}`,
@@ -190,11 +198,8 @@ async function main() {
     const reason = result
       ? (result.error ?? 'replay failed')
       : failures.get(item)!
-    if (leaf === item)
-      reasons.set(category(reason), (reasons.get(category(reason)) ?? 0) + 1)
-    lines.push(
-      `benched ${quote(name)} fail note ${quote([...same, reason].join('; '))}`,
-    )
+    reasons.set(category(reason), (reasons.get(category(reason)) ?? 0) + 1)
+    lines.push(`benched ${quote(name)} fail note ${quote(reason)}`)
   }
   fs.appendFileSync(metricsFile!, `${[...lines, ...hot(lines)].join('\n')}\n`)
 
@@ -240,8 +245,8 @@ async function loadRecording(): Promise<Recording> {
   const child = Bun.spawn(
     [
       node!,
-      // The machine is shared; a capped heap collects sooner instead of growing.
-      '--max-old-space-size=1024',
+      // The machine is shared; a capped heap collects sooner instead of growing past 1GB.
+      '--max-old-space-size=1536',
       'node_modules/vitest/vitest.mjs',
       'run',
       '--config',
@@ -283,7 +288,8 @@ async function loadRecording(): Promise<Recording> {
   const chunks = fs.readdirSync(dir).filter((file) => file.endsWith('.jsonl'))
   if (!chunks.length) throw new Error('Recording wrote nothing.')
 
-  // Merged in test file order, whichever worker ran each file, and trimmed as they grow.
+  // Merged in test file order, whichever worker ran each file, and trimmed as they grow, since
+  // the samples of actions carry their JSON-RPC exchanges.
   const lines = chunks
     .flatMap((chunk) =>
       fs.readFileSync(path.join(dir, chunk), 'utf8').split('\n'),
@@ -486,13 +492,21 @@ function summarizeRecording(recording: Recording) {
   )
 }
 
-/** Hashes everything the recording depends on: the source, the tests, the lockfile, and the recorder. */
+/**
+ * Hashes everything the recording depends on: the source, the tests, the lockfile, the test config
+ * (the TypeScript files at the root, such as vite.config.ts, or test/vitest.config.ts), and the
+ * recorder.
+ */
 function hashInputs() {
   const files: string[] = []
   const visit = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const file = path.join(dir, entry.name)
-      if (/^(_esm|_cjs|_types|node_modules)$|\.tsbuildinfo$/.test(entry.name))
+      if (
+        /^(_esm|_cjs|_types|_snap|node_modules)$|\.tsbuildinfo$/.test(
+          entry.name,
+        )
+      )
         continue
       if (entry.isDirectory()) visit(file)
       else if (entry.isFile()) files.push(file)
@@ -500,8 +514,11 @@ function hashInputs() {
   }
   visit(path.join(root, 'src'))
   visit(path.join(root, 'test'))
+  for (const entry of fs.readdirSync(root, { withFileTypes: true }))
+    if (entry.isFile() && /^pnpm-lock\.yaml$|\.ts$/.test(entry.name))
+      files.push(path.join(root, entry.name))
   for (const file of [
-    'pnpm-lock.yaml',
+    '.agents/uphill/repo.ts',
     '.agents/uphill/speed-calls.test.ts',
     '.agents/uphill/speed-codec.ts',
     '.agents/uphill/speed-record-setup.ts',

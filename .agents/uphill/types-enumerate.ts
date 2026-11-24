@@ -1,15 +1,14 @@
 /**
- * Lists every public export of each leaf entry's declarations with the TypeScript checker, and
+ * Lists every public export of each entry point's declarations with the TypeScript checker, and
  * writes the consumer file that measures each one as JSON on standard output. types.ts runs it in
  * Node, so its program is gone before the workers start.
  *
- * Exports are named `<leaf entry>:<name>`, such as `ox/Hex:fromString`. Barrels such as `ox` and
- * `ox/tempo` only re-export leaf modules as namespaces (`export * as Hex from './core/Hex.js'`),
- * so a barrel's namespaces are measured under their leaf entries; anything else a barrel exports,
- * such as `ox:Register`, is measured under the barrel. An export that several entries re-export
- * resolves to one symbol, measured once under the first entry in `getExports()` order.
+ * An export that several entries re-export resolves to one symbol, measured once under the first
+ * entry in repo.ts's order, which puts `ox` and the other index entries first. A namespace that an
+ * entry re-exports with `export * as` is how its members are reached, so its members are listed in
+ * its place, such as `ox:Hex.fromNumber` or `ox/tempo:TxEnvelopeTempo.TxEnvelopeTempo`.
  *
- * The types a function's `declare namespace`, such as `Hex.fromString.Options`, are not separate
+ * The types in a function's `declare namespace`, such as `Hex.fromString.Options`, are not separate
  * exports: the function's own consumer reaches them through `Parameters` and `ReturnType`.
  *
  * @module
@@ -25,6 +24,7 @@ import {
   consumerOptions,
   createHost,
   entries,
+  typesDir,
 } from './types-host.ts'
 
 /**
@@ -51,24 +51,17 @@ const printer = ts.createPrinter({ removeComments: true })
 const entrySpecifiers = new Map(
   entries.map((entry) => [entry.types, entry.name]),
 )
-const leafFiles = new Set(
-  entries.filter((entry) => !entry.barrel).map((entry) => entry.types),
-)
 
 const seen = new Set<ts.Symbol>()
+// The unique symbols the entries export at their top level, before namespaces are expanded.
+const topLevel = new Set<ts.Symbol>()
 const items: Item[] = []
 const baselines: Record<string, string> = {}
 let found = 0
 let namespaces = 0
-let duplicates = 0
+let foreign = 0
 
-// Leaves first, so a symbol that a barrel also reaches keeps its leaf name; lines keep
-// `getExports()` order, since barrels only add names that no leaf exports.
-for (const entry of [
-  ...entries.filter((entry) => !entry.barrel),
-  ...entries.filter((entry) => entry.barrel),
-]) {
-  const { name: specifier, types: file } = entry
+for (const { name: specifier, types: file } of entries) {
   const source = program.getSourceFile(file)
   if (!source) throw new Error(`${file} is missing; run \`pnpm build\` first`)
   const module = checker.getSymbolAtLocation(source)
@@ -76,6 +69,12 @@ for (const entry of [
   if (!module) continue
   const exports = checker.getExportsOfModule(module)
   found += exports.length
+  for (const symbol of exports)
+    topLevel.add(
+      symbol.flags & ts.SymbolFlags.Alias
+        ? checker.getAliasedSymbol(symbol)
+        : symbol,
+    )
   if (exports[0])
     // The baseline imports the entry and nothing else. Importing any name resolves the entry's
     // export table, which every consumer of the entry pays as well.
@@ -92,12 +91,25 @@ for (const entry of [
       symbol.flags & ts.SymbolFlags.Alias
         ? checker.getAliasedSymbol(symbol)
         : symbol
-    const module = target.declarations?.find(ts.isSourceFile)
-    if (target.flags & ts.SymbolFlags.ValueModule && module) {
-      // A leaf module that a barrel re-exports is measured under its own entry.
-      if (leafFiles.has(module.fileName)) continue
-      if (seen.has(target)) continue
-      seen.add(target)
+    if (seen.has(target)) continue
+    seen.add(target)
+    // zod's own functions and types, which `ox/zod`'s `z` re-exports, are zod's to measure.
+    if (
+      target.declarations?.length &&
+      target.declarations.every((declaration) =>
+        /\/node_modules\/(\.pnpm\/[^/]+\/node_modules\/)?zod\//.test(
+          declaration.getSourceFile().fileName,
+        ),
+      )
+    ) {
+      foreign++
+      continue
+    }
+    const name = member ? `${top}.${member}` : top
+    if (
+      target.flags & ts.SymbolFlags.ValueModule &&
+      target.declarations?.some(ts.isSourceFile)
+    ) {
       namespaces++
       for (const child of checker.getExportsOfModule(target))
         queue.push({
@@ -107,12 +119,6 @@ for (const entry of [
         })
       continue
     }
-    if (seen.has(target)) {
-      duplicates++
-      continue
-    }
-    seen.add(target)
-    const name = member ? `${top}.${member}` : top
     const consumer = consumerText(
       target,
       specifier,
@@ -128,14 +134,14 @@ for (const entry of [
       })
   }
 }
-const order = new Map(entries.map((entry, index) => [entry.name, index]))
-items.sort((a, b) => order.get(a.group)! - order.get(b.group)!)
 
 process.stdout.write(
   JSON.stringify({
     found,
-    duplicates,
+    topLevel: topLevel.size,
+    unique: seen.size,
     namespaces,
+    foreign,
     items,
     baselines,
   }),
@@ -307,16 +313,18 @@ function typeArguments(symbol: ts.Symbol): { aliases: string[]; args: string } {
       .replace(/\s+/g, ' ')
       .replace(/import\("([^"]+)"\)/g, (match, specifier: string) => {
         if (!path.isAbsolute(specifier)) return match
-        // An entry's own types file is imported by its package specifier, so it resolves the way
-        // the consumer's own import does. Anything else, such as abitype's declarations, gets the
-        // extension NodeNext needs.
+        // An entry's own declarations are imported by its package specifier, so they resolve the
+        // way the consumer's own import does. Anything else, ox's or a dependency's such as
+        // abitype's, gets the extension NodeNext needs.
         const entry = entrySpecifiers.get(`${specifier}.d.ts`)
         if (entry) return `import("${entry}")`
         if (fs.existsSync(`${specifier}.d.ts`))
           return `import("${specifier}.js")`
         if (fs.existsSync(`${specifier}/index.d.ts`))
           return `import("${specifier}/index.js")`
-        return match
+        return specifier.startsWith(typesDir)
+          ? `import("${specifier}.js")`
+          : match
       })
     return { text, unresolved }
   }

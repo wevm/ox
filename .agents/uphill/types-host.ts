@@ -7,75 +7,45 @@
  * @module
  */
 
+import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import ts from 'typescript'
 
-import { getExports } from '../../scripts/utils/exports.ts'
+import {
+  consumerFile,
+  consumerTsconfig,
+  declarations,
+  entries as listEntries,
+  root,
+  testTsconfig,
+} from './repo.ts'
 
-/** The ox checkout, which the helpers run from. */
-export const root = process.cwd()
+export { consumerFile }
 
-/** The built declarations: `src/_types`, or a copy that `UPHILL_TYPES_DIR` names. */
+/** The declarations `pnpm build` writes, or a copy of them that `UPHILL_TYPES_DIR` names. */
 export const typesDir = path.resolve(
-  process.env.UPHILL_TYPES_DIR ?? path.join(root, 'src/_types'),
+  process.env.UPHILL_TYPES_DIR ?? declarations,
 )
-const defaultTypesDir = path.join(root, 'src/_types')
-
-/** One entry point of the published package. */
-export type Entry = {
-  /** The specifier a consumer imports, such as `ox`, `ox/Hex` or `ox/tempo/TxEnvelopeTempo`. */
-  name: string
-  /** Its declarations in `typesDir`. */
-  types: string
-  /** Its source file, such as `src/core/Hex.ts`. */
-  source: string
-  /** Its build, such as `src/_esm/core/Hex.js`. */
-  esm: string
-  /**
-   * Whether it only re-exports leaf modules as namespaces, such as `ox` and `ox/tempo`. A barrel's
-   * namespaces are measured under their leaf entries.
-   */
-  barrel: boolean
-}
 
 /**
- * Each entry point, in `getExports().dist` order: the subpaths prepublish writes to
- * src/package.json#exports, without `./package.json`, `./index.docs`, and the `*.test-d` files
- * that getExports does not skip.
+ * Each entry point, `ox` first, then the other index entries, then the module entries, with its
+ * declarations in `typesDir`.
  */
-export const entries: Entry[] = (() => {
-  const { dist, src } = getExports()
-  return Object.entries(dist).flatMap(([key, value]) => {
-    if (typeof value === 'string') return []
-    if (key === './index.docs' || key.endsWith('.test-d')) return []
-    return [
-      {
-        name: key === '.' ? 'ox' : `ox/${key.slice(2)}`,
-        types: path.join(typesDir, path.relative('./_types', value.types)),
-        source: path.join(root, 'src', src[key]!),
-        esm: path.join(root, 'src', value.import),
-        barrel: value.types.endsWith('/index.d.ts'),
-      },
-    ]
-  })
-})()
+export const entries = listEntries().map((entry) => ({
+  ...entry,
+  types: path.join(typesDir, path.relative(declarations, entry.types)),
+}))
 const entryFiles = new Map(entries.map((entry) => [entry.name, entry.types]))
 
 /**
- * The virtual consumer file. It sits in `src/`, the published package, so the dependencies that
- * declarations name, such as `abitype` and `@noble/curves`, resolve to the copies ox ships with.
- */
-export const consumerFile = path.join(root, 'src/__uphill_types_consumer__.mts')
-
-/**
- * ox's compiler options from tsconfig.base.json, without the ones that only drive ox's own build:
- * emit and incremental state. What stays shapes how a consumer's types resolve: `strict`,
+ * ox's compiler options, without the ones that only drive ox's own build: emit, incremental state,
+ * and unused-name checks. What stays shapes how a consumer's types resolve: `strict`,
  * `exactOptionalPropertyTypes`, NodeNext resolution, ES2022 and DOM libs, `@types/node`, and
  * `skipLibCheck`.
  */
-export const consumerOptions = options('tsconfig.base.json')
+export const consumerOptions = options(consumerTsconfig)
 for (const key of [
   'composite',
   'declaration',
@@ -85,18 +55,21 @@ for (const key of [
   'rootDir',
   'sourceMap',
   'tsBuildInfoFile',
+  'noUnusedLocals',
+  'noUnusedParameters',
 ])
   delete consumerOptions[key]
 
 /**
- * The options ox's tests and attest snapshots check with: the root tsconfig.json, whose `paths`
- * point `ox` and its barrels at the sources. attest reads the same file.
+ * The options ox's type tests check with, whose `paths` point `ox` and its entries at the sources.
+ * attest reads the same file.
  */
-export const testOptions = options('tsconfig.json')
+export const testOptions = options(testTsconfig)
+for (const key of ['noUnusedLocals', 'noUnusedParameters'])
+  delete testOptions[key]
 
 /** Parses a tsconfig file, without emit. */
-function options(file: string): ts.CompilerOptions {
-  const configPath = path.join(root, file)
+function options(configPath: string): ts.CompilerOptions {
   const config = ts.readConfigFile(configPath, ts.sys.readFile)
   if (config.error)
     throw new Error(
@@ -161,7 +134,7 @@ export function createHost(options: ts.CompilerOptions): Host {
     ) {
       return literals.map((literal) => {
         // The consumer imports each entry point by its package specifier, which maps straight to
-        // the entry's types file, so a copy in `UPHILL_TYPES_DIR` replaces `src/_types`.
+        // the entry's declarations, so a copy in `UPHILL_TYPES_DIR` replaces the build's.
         const entry =
           containingFile === consumerFile && entryFiles.get(literal.text)
         if (entry)
@@ -187,20 +160,16 @@ export function createHost(options: ts.CompilerOptions): Host {
           mode,
         )
         // A copy of the declarations outside the checkout has no node_modules beside it, so its
-        // dependencies resolve from where `src/_types` would import them.
+        // dependencies resolve from where the build's declarations would import them.
         if (
           resolved.resolvedModule ||
-          typesDir === defaultTypesDir ||
+          typesDir === declarations ||
           !containingFile.startsWith(typesDir)
         )
           return resolved
-        const original = path.join(
-          defaultTypesDir,
-          path.relative(typesDir, containingFile),
-        )
         return ts.resolveModuleName(
           literal.text,
-          original,
+          path.join(declarations, path.relative(typesDir, containingFile)),
           options,
           host,
           cache,
@@ -219,4 +188,39 @@ export function availableMemory(): number {
     fs.readFileSync('/proc/meminfo', 'utf8'),
   )
   return match ? Number(match[1]) * 1024 : 0
+}
+
+/**
+ * The Node binary that runs the helpers: `node` from PATH if it is Node 26 or later, else the Node
+ * 26 that `npx --yes node@26` installs. The workers count the bytes a check allocates with V8's
+ * `total_allocated_bytes`, which `v8.getHeapStatistics()` reports from Node 26 on.
+ */
+export function nodeBinary(): string {
+  const probe = ['-p', 'process.versions.node + "\\n" + process.execPath']
+  const found: string[] = []
+  for (const command of [['node'], ['npx', '--yes', 'node@26']]) {
+    const [version, binary] = (() => {
+      try {
+        return execFileSync(command[0]!, [...command.slice(1), ...probe], {
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'ignore'],
+        })
+          .trim()
+          .split('\n')
+          .slice(-2)
+      } catch {
+        return []
+      }
+    })()
+    found.push(
+      `${command.join(' ')} ${version ? `is Node ${version}` : 'failed'}`,
+    )
+    if (version && binary && Number(version.split('.')[0]) >= 26) {
+      if (found.length > 1) process.stderr.write(`${found.join('; ')}\n`)
+      return binary
+    }
+  }
+  throw new Error(
+    `The types metrics need Node 26 or later, whose V8 reports the bytes a check allocates, but ${found.join(' and ')}. Put Node 26 first on PATH.`,
+  )
 }

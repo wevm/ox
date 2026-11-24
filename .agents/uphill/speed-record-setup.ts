@@ -1,22 +1,23 @@
 /**
  * Vitest setup file for recording. It installs `globalThis.__uphillWrap`, which the transform in
- * `speed-vitest.config.ts` calls on every export of ox's public modules, and writes what the
+ * `speed-vitest.config.ts` calls on every export of ox's modules in src/, and writes what the
  * wrapped functions were called with to `$UPHILL_SPEED_RECORD_DIR/<pid>.jsonl` after each test
  * file.
  *
  * Calls from test code and calls one ox function makes to another are both recorded, keyed by the
  * module that defines the export (`src/core/Hex.ts#fromNumber`): ox's modules import each other by
  * relative path, and each module's own bindings are the wrapped functions, so a call inside a
- * module goes through the wrapper too. A call is direct when test code made it, and internal when
- * it ran inside another wrapped call.
+ * module goes through the wrapper too. A function an exported namespace object or function holds
+ * records under its path from the export (`src/<file>.ts#<export>.<member>`). A call is direct
+ * when test code made it, and internal when it ran inside another wrapped call.
  *
  * A value a wrapped export returned remembers that call, and so do the objects and functions at
  * its own properties, so a later call that passes it, such as a `CryptoKey` from
  * `WebCryptoP256.createKeyPair` or a KZG implementation from `Kzg.from`, records the call that
  * rebuilds it; an instance of an exported class, such as an error, remembers its construction.
- * Every value an export reaches remembers that path (see speed-codec.ts), and so does every value
- * a test helper module (`test/**`) exports, such as the KZG implementation ox's tests build, for
- * arguments nothing else can carry.
+ * Every value an export reaches, such as a zod schema or a constant, remembers that path (see
+ * speed-codec.ts), and so does every value a test helper module (`test/**`) exports, such as the
+ * KZG implementation ox's 0.x tests build, for arguments nothing else can carry.
  *
  * Tests reach the local anvil the global setup starts, and local servers the tests start. A
  * request to any other host gets a JSON-RPC "method not found" error, so no test reaches the
@@ -170,35 +171,71 @@ function install(): State {
   blockNetwork(created)
   return created
 
-  /** Wraps a function or class; ox exports no namespace objects of its own functions. */
+  /**
+   * Wraps a function, a class, or a namespace object of functions. A value the recorder wrapped
+   * already, such as an export that re-exports another module's, is left as it is.
+   */
   function wrap(value: unknown, key: string): unknown {
-    if (typeof value !== 'function' || created.wrapped.has(value)) return value
-    // An instance of an exported class, such as an error, remembers its construction.
-    if (isClass(value))
-      return cached(value, key, () => {
-        const proxy: object = new Proxy(value, {
-          construct: (target, args, newTarget) => {
-            const direct = newTarget === proxy
-            const instance = Reflect.construct(
-              target,
-              args,
-              direct ? target : newTarget,
-            )
-            if (direct && !created.produced.has(instance))
-              created.produced.set(instance, [{ key, args, construct: true }])
-            return instance
-          },
+    if (!value || (typeof value !== 'function' && typeof value !== 'object'))
+      return value
+    if (created.wrapped.has(value)) return value
+    if (typeof value === 'function') {
+      // An instance of an exported class, such as an error, remembers its construction.
+      if (isClass(value))
+        return cached(value, key, () => {
+          const proxy: object = new Proxy(value, {
+            construct: (target, args, newTarget) => {
+              const direct = newTarget === proxy
+              const instance = Reflect.construct(
+                target,
+                args,
+                direct ? target : newTarget,
+              )
+              if (direct && !created.produced.has(instance))
+                created.produced.set(instance, [{ key, args, construct: true }])
+              return instance
+            },
+          })
+          return proxy
         })
-        return proxy
-      })
-    return cached(
-      value,
-      key,
-      () =>
-        new Proxy(value, {
-          apply: (target, self, args) => record(key, target, self, args),
-        }),
-    )
+      return cached(
+        value,
+        key,
+        () =>
+          new Proxy(value, {
+            apply: (target, self, args) => record(key, target, self, args),
+            get: (target, property, receiver) => {
+              const member = Reflect.get(target, property, receiver)
+              if (
+                typeof property === 'string' &&
+                property !== 'prototype' &&
+                typeof member === 'function' &&
+                Object.hasOwn(target, property)
+              )
+                return wrap(member, `${key}.${property}`)
+              return member
+            },
+          }),
+      )
+    }
+    if (isNamespace(value))
+      return cached(
+        value,
+        key,
+        () =>
+          new Proxy(value, {
+            get: (target, property, receiver) => {
+              const member = Reflect.get(target, property, receiver)
+              if (
+                typeof property === 'string' &&
+                Object.hasOwn(target, property)
+              )
+                return wrap(member, `${key}.${property}`)
+              return member
+            },
+          }),
+      )
+    return value
   }
 
   function cached(value: object, key: string, make: () => unknown) {
@@ -424,6 +461,25 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
 
 function isClass(value: unknown) {
   return /^class[\s{]/.test(Function.prototype.toString.call(value))
+}
+
+/** A module namespace, or a plain object whose values are all functions or namespaces. */
+function isNamespace(value: unknown, depth = 0): value is object {
+  if (!value || typeof value !== 'object' || depth > 3) return false
+  if (Object.prototype.toString.call(value) === '[object Module]') return true
+  const proto = Object.getPrototypeOf(value)
+  if (proto !== Object.prototype && proto !== null) return false
+  try {
+    const values = Object.values(value)
+    return (
+      values.length > 0 &&
+      values.every(
+        (item) => typeof item === 'function' || isNamespace(item, depth + 1),
+      )
+    )
+  } catch {
+    return false
+  }
 }
 
 /**

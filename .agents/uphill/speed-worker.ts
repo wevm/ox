@@ -1,24 +1,26 @@
 /**
  * Node process that `speed.ts` starts for each piece of measured work, so measured code runs
- * under Node, as ox's users run it, and every function is measured in a fresh process.
+ * under Node, as most of ox's users run it, and every function is measured in a fresh process.
  *
- * - `node speed-worker.ts enumerate <in.json> <out.json>` walks every leaf entry point that
- *   `getExports()` in scripts/utils/exports.ts lists (in its order), lists each distinct public
- *   function, and maps each recorded key (`src/<file>.ts#<export>`) to the public function it is.
- *   Barrels, such as `ox` and `ox/tempo`, only re-export leaf modules as namespaces, so they are
- *   listed as entry points only.
+ * - `node speed-worker.ts enumerate <in.json> <out.json>` walks every entry point that `entries()`
+ *   in repo.ts lists (`ox`, then the other index entries, then the module entries), lists each
+ *   distinct public function (namespace members, such as `ox:Hex.fromNumber`), and maps each
+ *   recorded key (`src/<file>.ts#<export path>`) to the public function it is. A function several
+ *   names reach, such as `ox:HdKey.path` and `ox:Mnemonic.path`, is one function, named after the
+ *   first; `exports` lists every name with the function it is.
  * - `node --expose-gc --single-threaded speed-worker.ts bench <job.json> <out.json>` replays one
  *   function with its recorded arguments and measures CPU time and heap bytes per call.
  *
  * Every call, for the cold number, starts with ox's caches empty: `Caches.clear()` runs before each
- * call that follows a write to them, and for a function that writes to them, it also runs in the
- * loop whose time is subtracted. The network is blocked, so a call that reaches for it fails
- * instead of measuring a round trip.
+ * call that follows a write to them (see `trackCaches` in repo.ts), and for a function that writes
+ * to them, it also runs in the loop whose time is subtracted. The network is blocked, so a call
+ * that reaches for it fails instead of measuring a round trip.
  *
  * @module
  */
 
 import * as fs from 'node:fs'
+import * as inspector from 'node:inspector/promises'
 import {
   createRequire,
   registerHooks,
@@ -28,10 +30,9 @@ import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import * as v8 from 'node:v8'
 
-import { getExports } from '../../scripts/utils/exports.ts'
+import { built, entries, root, trackCaches } from './repo.ts'
 import { decode, encode, keys, type Rebuild } from './speed-codec.ts'
 
-const root = path.resolve(import.meta.dirname, '../..')
 const [mode, input, output] = process.argv.slice(2)
 /** Whether `loadTestHelpers` registered its hooks. */
 const hooked = { helpers: false }
@@ -42,26 +43,20 @@ else throw new Error(`Unknown mode: ${mode}`)
 process.exit(0)
 
 /**
- * The module a recorded key names: for `src/<file>.ts#<export>` its build in src/_esm, and for a
- * test helper, `test/<file>.ts#<export>`, the helper itself (see `loadTestHelpers`).
+ * The module a recorded key names: for `src/<file>.ts#<export path>` its build, and for a test
+ * helper, `test/<file>.ts#<export>`, the helper itself (see `loadTestHelpers`).
  */
-function esmFile(key: string) {
+function moduleOf(key: string) {
   const file = key.slice(0, key.indexOf('#'))
-  if (file.startsWith('test/')) {
-    loadTestHelpers()
-    return path.join(root, file)
-  }
-  return path.join(
-    root,
-    'src/_esm',
-    file.replace(/^src\//, '').replace(/\.ts$/, '.js'),
-  )
+  if (!file.startsWith('test/')) return built(file)
+  loadTestHelpers()
+  return path.join(root, file)
 }
 
 /** The value a recorded key names, following an export path such as `noble.CURVE`. */
 async function resolve(key: string): Promise<unknown> {
   const exportPath = key.slice(key.indexOf('#') + 1)
-  let value: unknown = await import(pathToFileURL(esmFile(key)).href).catch(
+  let value: unknown = await import(pathToFileURL(moduleOf(key)).href).catch(
     () => null,
   )
   for (const part of exportPath.split('.'))
@@ -74,22 +69,19 @@ async function resolve(key: string): Promise<unknown> {
 
 /**
  * Lets Node import ox's test helpers, such as test/kzg.ts, as vitest runs them: `ox` and its
- * subpaths resolve to the build in src/_esm, and `__dirname` and `__filename` are defined.
+ * entry points resolve to their builds, as `entries()` lists them, and `__dirname` and
+ * `__filename` are defined.
  */
 function loadTestHelpers() {
   if (hooked.helpers) return
   hooked.helpers = true
+  const builds = new Map(
+    entries().map((entry) => [entry.name, pathToFileURL(entry.file).href]),
+  )
   const test = pathToFileURL(path.join(root, 'test')).href
   registerHooks({
     resolve(specifier, context, nextResolve) {
-      if (specifier === 'ox' || specifier.startsWith('ox/'))
-        return nextResolve(
-          pathToFileURL(
-            path.join(root, 'src/_esm', specifier.slice(3), 'index.js'),
-          ).href,
-          context,
-        )
-      return nextResolve(specifier, context)
+      return nextResolve(builds.get(specifier) ?? specifier, context)
     },
     load(url, context, nextLoad) {
       const result = nextLoad(url, context)
@@ -103,71 +95,102 @@ function loadTestHelpers() {
   })
 }
 
-/**
- * The entry points that packages see, in `getExports()` order, without `./package.json`,
- * `./index.docs`, and the `*.test-d` files `getExports()` lists by mistake.
- */
-function entryPoints() {
-  const { dist, src } = getExports()
-  const entries: {
-    name: string
-    file: string
-    barrel: boolean
-  }[] = []
-  for (const [entry, target] of Object.entries(dist)) {
-    if (typeof target === 'string') continue
-    if (/(^|\/)index\.docs$|\.test-d$/.test(entry)) continue
-    entries.push({
-      name: entry === '.' ? 'ox' : `ox/${entry.slice(2)}`,
-      file: path.join(root, 'src', target.import),
-      barrel: /(^|\/)index\.ts$/.test(src[entry] ?? ''),
-    })
-  }
-  return entries
-}
-
 async function enumerate() {
   const { keys } = JSON.parse(fs.readFileSync(input!, 'utf8')) as {
     keys: string[]
   }
-  type Item = { name: string; entry: string; keys: string[] }
+  type Item = {
+    name: string
+    entry: string
+    keys: string[]
+    package?: string | undefined
+  }
   const items: Item[] = []
-  // Every public function's name, in order, and the item that measures it: a function another
-  // entry exports too, such as `ox/Mnemonic:path`, is measured once, under its first name.
-  const exports: { name: string; item: string }[] = []
+  // Every public function's name, in order, and the function it is: a function another name
+  // reaches too, such as `ox:Mnemonic.path`, is measured once, under its first name.
+  const names: { name: string; item: Item }[] = []
   const byFunction = new Map<unknown, Item>()
-  const seen = new Set<unknown>()
-  const counts = { functions: 0, classes: 0, values: 0 }
-  const entries = entryPoints()
+  const walked = new Set<unknown>()
+  const counts = { functions: 0, errors: 0, classes: 0, values: 0, foreign: 0 }
+  const list: { name: string; file: string; barrel: boolean }[] = []
 
-  for (const entry of entries) {
-    if (entry.barrel) continue
-    const module = await import(pathToFileURL(entry.file).href)
-    for (const [name, value] of Object.entries(module)) {
+  const walk = (entry: string, name: string, value: unknown) => {
+    if (typeof value === 'function') {
+      if (isClass(value)) {
+        if (!walked.has(value))
+          counts[value.prototype instanceof Error ? 'errors' : 'classes']++
+        walked.add(value)
+        return
+      }
       const existing = byFunction.get(value)
       if (existing) {
-        counts.functions++
-        exports.push({ name: `${entry.name}:${name}`, item: existing.name })
-        continue
+        names.push({ name: `${entry}:${name}`, item: existing })
+        return
       }
-      if (seen.has(value)) continue
-      if (value && (typeof value === 'object' || typeof value === 'function'))
-        seen.add(value)
-      if (typeof value !== 'function') counts.values++
-      else if (isClass(value)) counts.classes++
-      else {
-        counts.functions++
-        const item = {
-          name: `${entry.name}:${name}`,
-          entry: entry.name,
-          keys: [],
-        }
-        items.push(item)
-        exports.push({ name: item.name, item: item.name })
-        byFunction.set(value, item)
-      }
+      const item = { name: `${entry}:${name}`, entry, keys: [] }
+      items.push(item)
+      names.push({ name: item.name, item })
+      byFunction.set(value, item)
+      return
     }
+    if (isNamespace(value)) {
+      if (walked.has(value)) return
+      walked.add(value)
+      for (const [key, member] of Object.entries(value))
+        walk(entry, name ? `${name}.${key}` : key, member)
+      return
+    }
+    if (!walked.has(value)) counts.values++
+    if (value && typeof value === 'object') walked.add(value)
   }
+
+  for (const entry of entries()) {
+    list.push({ name: entry.name, file: entry.file, barrel: entry.index })
+    const module = await import(pathToFileURL(entry.file).href)
+    if (walked.has(module)) continue
+    walked.add(module)
+    for (const [name, value] of Object.entries(module))
+      walk(entry.name, name, value)
+  }
+
+  // Names the dependency, such as zod, that defines each function, and leaves those out: they are
+  // re-exported for convenience, and benching them measures the dependency.
+  const session = new inspector.Session()
+  session.connect()
+  const scripts = new Map<string, string>()
+  session.on('Debugger.scriptParsed', ({ params }) =>
+    scripts.set(params.scriptId, params.url),
+  )
+  await session.post('Debugger.enable')
+  const probe = globalThis as { __uphillProbe?: unknown }
+  for (const [fn, item] of byFunction) {
+    probe.__uphillProbe = fn
+    const { result } = await session.post('Runtime.evaluate', {
+      expression: 'globalThis.__uphillProbe',
+    })
+    const { internalProperties } = await session.post('Runtime.getProperties', {
+      objectId: result.objectId!,
+    })
+    const location = internalProperties?.find(
+      (property) => property.name === '[[FunctionLocation]]',
+    )?.value?.value as { scriptId: string } | undefined
+    const url = location ? scripts.get(location.scriptId) : undefined
+    // A built-in, such as `Error.captureStackTrace` that zod re-exports, has no location.
+    item.package = url
+      ? url.match(/.*\/node_modules\/((?:@[^/]+\/)?[^/]+)\//)?.[1]
+      : 'built-in'
+  }
+  session.disconnect()
+  for (const [fn, item] of [...byFunction])
+    if (item.package) {
+      byFunction.delete(fn)
+      counts.foreign++
+    }
+  const own = items.filter((item) => !item.package)
+  const exports = names
+    .filter(({ item }) => !item.package)
+    .map(({ name, item }) => ({ name, item: item.name }))
+  counts.functions = exports.length
 
   const unmatched: string[] = []
   for (const key of keys) {
@@ -178,7 +201,7 @@ async function enumerate() {
 
   fs.writeFileSync(
     output!,
-    JSON.stringify({ items, exports, counts, entries, unmatched }),
+    JSON.stringify({ items: own, exports, counts, entries: list, unmatched }),
   )
 }
 
@@ -198,7 +221,17 @@ async function bench() {
     fs.writeFileSync(output!, JSON.stringify({ name: job.name, ...result }))
   process.on('unhandledRejection', () => {})
   const network = blockNetwork()
-  const caches = await trackCaches()
+  // Writes to ox's caches mark a function whose warm time can differ, and the next call clears
+  // them only after one.
+  const caches = {
+    sets: 0,
+    dirty: false,
+    cold: true,
+    clear: await trackCaches(() => {
+      caches.sets++
+      caches.dirty = true
+    }),
+  }
 
   // The function, and every export whose calls or paths rebuild values in the arguments, such as
   // `WebCryptoP256.createKeyPair` for a `CryptoKey`.
@@ -208,9 +241,15 @@ async function bench() {
     ...job.candidates.flatMap((candidate) => keys(candidate.args)),
   ]))
     exports.set(key, await resolve(key))
-  const call = exports.get(job.key) as (...args: unknown[]) => unknown
+  let call = exports.get(job.key) as (...args: unknown[]) => unknown
   if (typeof call !== 'function')
     return write({ ok: false, error: `${job.key} is not a function` })
+  // A method that uses `this` is called on its object, as the test called it.
+  if (
+    job.key.slice(job.key.indexOf('#')).includes('.') &&
+    /\bthis\b/.test(Function.prototype.toString.call(call))
+  )
+    call = call.bind(await resolve(job.key.slice(0, job.key.lastIndexOf('.'))))
   const rebuild: Rebuild = {
     call: (key, args) => {
       const fn = exports.get(key)
@@ -480,32 +519,6 @@ async function allocated(loop: Loop, count: number) {
   return median(samples)
 }
 
-/**
- * `Caches.clear()` from the build, and a count of writes to ox's LRU caches (`getAddress`'s
- * checksums, signature and type hashes), which marks a function whose warm time can differ.
- */
-async function trackCaches() {
-  const { clear } = await import(
-    pathToFileURL(path.join(root, 'src/_esm/core/Caches.js')).href
-  )
-  const { LruMap } = await import(
-    pathToFileURL(path.join(root, 'src/_esm/core/internal/lru.js')).href
-  )
-  const caches = {
-    sets: 0,
-    dirty: false,
-    cold: true,
-    clear: clear as () => void,
-  }
-  const set = LruMap.prototype.set
-  LruMap.prototype.set = function (key: unknown, value: unknown) {
-    caches.sets++
-    caches.dirty = true
-    return set.call(this, key, value)
-  }
-  return caches
-}
-
 /** A replayed call that reaches for the network throws instead. */
 function blockNetwork() {
   const network = { attempts: 0 }
@@ -553,6 +566,21 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
 
 function isClass(value: unknown) {
   return /^class[\s{]/.test(Function.prototype.toString.call(value))
+}
+
+/** A module namespace, or a plain object whose values are all functions or namespaces. */
+function isNamespace(value: unknown, depth = 0): value is object {
+  if (!value || typeof value !== 'object' || depth > 3) return false
+  if (Object.prototype.toString.call(value) === '[object Module]') return true
+  const proto = Object.getPrototypeOf(value)
+  if (proto !== Object.prototype && proto !== null) return false
+  const values = Object.values(value)
+  return (
+    values.length > 0 &&
+    values.every(
+      (item) => typeof item === 'function' || isNamespace(item, depth + 1),
+    )
+  )
 }
 
 /** Whether an error, or an error it wraps, is `blockNetwork`'s. */

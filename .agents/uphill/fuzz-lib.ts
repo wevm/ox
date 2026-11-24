@@ -1,7 +1,8 @@
 /**
  * Shared pieces of the fuzz category: a seeded PRNG, the crash oracle's error classification, the
- * corpus decoder, the boundary mutator that turns a recorded argument set into new ones, the
- * minimizer, and the formatter that prints an input in a metric note.
+ * marking of values rebuilt from the corpus, the boundary mutator that turns a recorded argument
+ * set into new ones, the minimizer's type checks, and the formatter that prints an input in a
+ * metric note.
  *
  * Every mutation says whether it keeps the argument's TypeScript type. A hex string stays a
  * `0x${string}` (empty, odd-length, uppercase, or not hex at all), a bigint stays a bigint (zero,
@@ -13,6 +14,11 @@
  *
  * @module
  */
+
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+
+import * as repo from './repo.ts'
 
 /** A seeded PRNG (mulberry32), so a function's inputs are the same on every run. */
 export function prng(seed: number) {
@@ -58,8 +64,8 @@ export type Crash = { kind: string; message: string; site?: string | undefined }
 /**
  * Whether a thrown value is a bug: anything not an `Error`, a stack overflow on a small input, or,
  * for an input that keeps the types, a built-in programmer error. ox's `Errors.BaseError`s,
- * abitype's and noble's errors, and plain `Error`s (`Errors.GlobalErrorType`, which every ox
- * `ErrorType` union lists) are documented.
+ * abitype's and the dependencies' errors, and plain `Error`s (`Errors.GlobalErrorType`, which
+ * every ox `ErrorType` union lists) are documented.
  */
 export function classify(
   error: unknown,
@@ -75,6 +81,9 @@ export function classify(
       : undefined
   const ctor = Object.getPrototypeOf(error)?.constructor
   if (!typed || !programmerErrors.has(ctor)) return undefined
+  // A `throw new RangeError('"secretKey" expected Uint8Array of length 32')` is validation the
+  // code (ox's or noble's) chose to do, with a message that names the problem.
+  if (deliberate(error)) return undefined
   // `BigInt('0xzz')`'s SyntaxError names the string, which is `0x${string}` but not hex.
   if (
     error instanceof SyntaxError &&
@@ -83,9 +92,10 @@ export function classify(
   )
     return undefined
   // Empty hex as a number throws this SyntaxError from `BigInt('0x')`: ox's quantity decoders
-  // (`Hex.toBigInt`, every `fromRpc`) convert with `BigInt`, and `0x` is not a JSON-RPC quantity.
-  // viem's fuzzer exempts it for the same reason; one property reports it once for
-  // `Hex.toBigInt`, instead of once per decoder.
+  // (`Hex.toBigInt`, every `fromRpc`, signature encoders) convert with `BigInt`, and `0x` is not a
+  // JSON-RPC quantity. Whether they should read `0x` as 0 or throw a typed error is a decision for
+  // the maintainers; viem's fuzzer exempts it for the same reason, and one property reports it
+  // once for `Hex.toBigInt`, instead of once per decoder.
   if (
     error instanceof SyntaxError &&
     /^Cannot convert 0x to a BigInt$/.test(error.message)
@@ -135,6 +145,34 @@ export function classify(
     if (huge && /offset is out of bounds/.test(error.message)) return undefined
   }
   return { kind: ctor.name, message, site: site(error) }
+}
+
+const sourceLines = new Map<string, string[]>()
+
+/** Whether the error's first frame outside the harness is a `throw new …Error(` statement. */
+export function deliberate(error: Error) {
+  for (const line of String(error.stack ?? '')
+    .split('\n')
+    .slice(1)) {
+    const match = line.match(/\(?(?:file:\/\/)?([^\s()]+):(\d+):\d+\)?$/)
+    if (!match) continue
+    const file = match[1]!
+    if (/fuzz-|node:|fast-check/.test(file)) continue
+    if (!sourceLines.has(file))
+      sourceLines.set(
+        file,
+        (() => {
+          try {
+            return fs.readFileSync(file, 'utf8').split('\n')
+          } catch {
+            return []
+          }
+        })(),
+      )
+    const source = sourceLines.get(file)![Number(match[2]) - 1] ?? ''
+    return /\bthrow\s+new\s+\w*Error\b/.test(source)
+  }
+  return false
 }
 
 /** Whether an input holds a non-integer number, or a number of 2^24 or more (or not finite). */
@@ -191,7 +229,11 @@ function parses(text: string) {
   }
 }
 
-/** The first stack frame in ox's build or a dependency, as `file:line`. */
+/**
+ * The first stack frame in ox's build or a dependency, as `file:line`: a dependency's file from
+ * its package name, such as `@noble/curves/utils.js`, and ox's from the checkout, such as
+ * `dist/core/Hex.js`.
+ */
 export function site(error: unknown): string | undefined {
   const stack = String((error as Error)?.stack ?? '')
   for (const line of stack.split('\n').slice(1)) {
@@ -199,9 +241,14 @@ export function site(error: unknown): string | undefined {
     if (!match) continue
     const file = match[1]!
     if (/fuzz-|node:|fast-check/.test(file)) continue
-    const relative = file
-      .replace(/^.*\/src\/_esm\//, 'src/_esm/')
-      .replace(/^.*\/node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?/, '')
+    const relative = file.includes('/node_modules/')
+      ? file.replace(
+          /^.*\/node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?/,
+          '',
+        )
+      : file.startsWith(`${repo.root}/`)
+        ? path.relative(repo.root, file)
+        : file
     return `${relative}:${match[2]}`
   }
   return undefined
@@ -328,12 +375,10 @@ export function markRebuilt(origins: Map<object, unknown>) {
     opaque.add(value)
     if (named.has(value)) continue
     const record = node as Record<string, unknown>
-    const key = (record.$ref ?? record.$call ?? record.$await ?? record.$new) as
-      | string
-      | undefined
+    const key = record.$ref ?? record.$call ?? record.$await ?? record.$new
     named.set(
       value,
-      key
+      typeof key === 'string'
         ? `${key.split('#')[1]}${'$ref' in record ? '' : '(…)'}`
         : '[function]',
     )
@@ -428,7 +473,25 @@ const stringEdges = [
 function hexVariants(hex: string, random: Prng): string[] {
   const body = hex.slice(2)
   const filler = random.pick(['00', 'ff', '7f', '80', '01'])
+  // Byte edits at a random position reach a decoder's inner length and type fields, which edits
+  // at the ends do not.
+  const at = 2 * random.int(Math.max(1, body.length >> 1))
+  const byte = random.pick([
+    '00',
+    'ff',
+    '7f',
+    '80',
+    '81',
+    'b8',
+    'c0',
+    'f8',
+    '01',
+  ])
   return [
+    `0x${body.slice(0, at)}`,
+    `0x${body.slice(0, at)}${byte}${body.slice(at + 2)}`,
+    `0x${body.slice(0, at)}${body.slice(at + 2)}`,
+    `0x${body.slice(0, at)}${byte}${body.slice(at)}`,
     '0x',
     '0x0',
     '0x00',
@@ -461,7 +524,7 @@ function freeText(text: string, key: string | number | undefined) {
   // `stateMutability` are literal unions, not free text.
   if (
     typeof key === 'string' &&
-    /^(type|internalType|stateMutability|primaryType|kind|blockTag|to|dir|unit|mode|version)$/.test(
+    /^(type|internalType|stateMutability|primaryType|kind|blockTag|to|dir|unit|mode|version|flags)$/.test(
       key,
     )
   )
@@ -506,8 +569,10 @@ function slots(args: unknown[]): Slot[] {
     const slot: Slot = { path, value, get, set, remove }
     out.push(slot)
     if (depth > 8 || !value || typeof value !== 'object') return
+    // A frozen value, such as a BIP-39 wordlist, is a constant: replace it whole or not at all.
     if (
       opaque.has(value) ||
+      Object.isFrozen(value) ||
       value instanceof Uint8Array ||
       value instanceof Date
     )
@@ -561,9 +626,30 @@ function slots(args: unknown[]): Slot[] {
   return out
 }
 
-/** A path with array indices folded, so the objects of one parameter share optional fields. */
-export function shapeKey(path: (string | number)[]) {
-  return path.map((part) => (typeof part === 'number' ? '#' : part)).join('.')
+/**
+ * A position's key, with array indices folded so the objects of one parameter share optional
+ * fields, such as `0.signature`. A field under an object with a string `type` carries that variant
+ * (`0.signature@secp256k1`), so a secp256k1 signature, which needs `yParity`, is not compared with
+ * a P-256 one, which has none.
+ */
+export function shapeKey(path: (string | number)[], root: unknown) {
+  let container = root
+  return path
+    .map((part) => {
+      const variant =
+        container &&
+        typeof container === 'object' &&
+        !Array.isArray(container) &&
+        typeof (container as { type?: unknown }).type === 'string'
+          ? `@${(container as { type: string }).type}`
+          : ''
+      container =
+        container && typeof container === 'object'
+          ? (container as Record<string | number, unknown>)[part]
+          : undefined
+      return typeof part === 'number' ? '#' : `${part}${variant}`
+    })
+    .join('.')
 }
 
 /** The field sets recorded objects carried at each position, such as `0.authorization`. */
@@ -578,7 +664,10 @@ const discriminators = new Set([
   'mode',
 ])
 
-/** An object's fields, sorted, with each discriminator's value: `chainId,nonce,type=eip1559`. */
+/**
+ * An object's fields, sorted, with each discriminator's value and each other field's kind:
+ * `chainId:number,nonce:bigint,type=eip1559`.
+ */
 function fieldsOf(value: Record<string, unknown>) {
   // Field kinds tell apart shapes with the same names, such as an authorization with a numeric
   // `chainId` and its RPC form with a hex one (which also needs a signature).
@@ -612,16 +701,19 @@ export function shapesOf(seeds: unknown[][]): Shapes {
       })
       return
     }
-    const key = shapeKey(path)
+    const key = shapeKey(path, root)
     if (!out.has(key)) out.set(key, new Set())
     out.get(key)!.add(fieldsOf(value as Record<string, unknown>))
     for (const [field, item] of Object.entries(value))
       visit(item, [...path, field], depth + 1)
   }
-  for (const seed of seeds)
+  let root: unknown
+  for (const seed of seeds) {
+    root = seed
     seed.forEach((arg, i) => {
       visit(arg, [i], 0)
     })
+  }
   return out
 }
 
@@ -646,7 +738,7 @@ export function keepsType(
       ))
   )
     return false
-  return shapes.get(shapeKey(path))?.has(fieldsOf(record)) ?? false
+  return shapes.get(shapeKey(path, args))?.has(fieldsOf(record)) ?? false
 }
 
 const solidityType =
@@ -801,16 +893,36 @@ export function mutate(
         Math.abs(next) > 2 ** 20
       )
         next = Math.sign(next) * 2 ** 20
-      // Key derivation costs are work by design: PBKDF2's `c` and scrypt's `n`, `r` and `p`
-      // multiply the time and memory a derivation takes. Cap them at 2^12.
+      // Key derivation costs are work by design: PBKDF2's iterations (`c` in a keystore's
+      // `kdfparams`) and scrypt's `n`, `r` and `p` multiply the time and memory a derivation
+      // takes, whether in `kdfparams` or in options beside a `salt`. Cap each at 2^12, and scrypt's
+      // product at 2^20, about a second.
+      const parent = slot.path
+        .slice(0, -1)
+        .reduce<unknown>(
+          (value, part) => (value as Record<string | number, unknown>)[part],
+          args,
+        ) as Record<string, unknown>
       if (
-        slot.path.includes('kdfparams') &&
         typeof key === 'string' &&
-        /^(c|n|r|p|dklen)$/.test(key) &&
-        Number.isFinite(next) &&
-        Math.abs(next) > 2 ** 12
-      )
-        next = Math.sign(next) * 2 ** 12
+        /^(c|n|r|p|dklen|iterations)$/.test(key) &&
+        (slot.path.includes('kdfparams') || 'salt' in parent) &&
+        Number.isFinite(next)
+      ) {
+        const others = /^[nrp]$/.test(key)
+          ? ['n', 'r', 'p']
+              .filter((other) => other !== key)
+              .reduce((product, other) => {
+                const cost = parent[other]
+                return typeof cost === 'number' && cost > 1
+                  ? product * cost
+                  : product
+              }, 1)
+          : 1
+        next =
+          Math.sign(next) *
+          Math.min(Math.abs(next), 2 ** 12, Math.floor(2 ** 20 / others))
+      }
       slot.set(next)
       changes.push(`${label} = ${format(next)}`)
     } else if (typeof value === 'boolean') {
@@ -859,12 +971,13 @@ export function mutate(
       changes.push(`${label} = ${format(next, 60)}`)
     } else if (Array.isArray(value)) {
       // Reordering, dropping, or repeating elements keeps a list's type, not a tuple's. An
-      // argument or field named `tuple` is one, whatever its elements look like.
+      // argument or field named `tuple` is one, whatever its elements look like
+      // (`[yParity, r, s]`).
       const key =
         slot.path.length > 1 ? slot.path.at(-1) : params[slot.path[0] as number]
       if (
         !homogeneous(value) ||
-        (typeof key === 'string' && /tuple$/i.test(key))
+        (typeof key === 'string' && /tuple/i.test(key))
       )
         typed = false
       const choice = random.int(6)
@@ -872,7 +985,8 @@ export function mutate(
         slot.set([])
         changes.push(`${label} = []`)
       } else if (choice === 1 && value.length) {
-        const copy = clone(value)
+        // A shallow copy: the list may be an opaque or frozen constant, such as a wordlist.
+        const copy = [...value]
         copy.splice(random.int(copy.length), 1)
         slot.set(copy)
         changes.push(`${label}: dropped an element`)

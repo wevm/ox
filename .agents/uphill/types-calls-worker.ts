@@ -4,10 +4,13 @@
  * one job per line on standard input; each result goes back as one line on standard output.
  *
  * - `node types-calls-worker.ts functions` lists the public functions instead, and exits: every
- *   function-valued export of each leaf entry's build in src/_esm that is not a class, named
- *   `<leaf entry>:<name>`, such as `ox/Hex:fromString`.
- * - `entries` walks each public function's name from its entry point's source to the declaration
- *   it resolves to.
+ *   function each entry point's build exports, namespace members included, such as
+ *   `ox:AbiFunction.decodeResult`. A namespace is named by the first entry that reaches it, `ox`
+ *   and the other index entries first (see repo.ts), and a function that several namespaces export
+ *   under the first, such as `ox:HdKey.path` for `ox:Mnemonic.path`. Classes are left out, and so are
+ *   the functions a dependency defines, such as zod's that `ox/zod` re-exports.
+ * - `entries` walks each public function's name, such as `ox/tempo:TxEnvelopeTempo.serialize`, from
+ *   its entry point's source to the declaration it resolves to.
  * - `scan` lists the calls in one test file whose callee resolves, through imports and re-exports,
  *   to a declaration, with what measuring each one needs.
  * - `measure` checks chosen calls of one test file. Each call is copied into a declaration of its
@@ -16,42 +19,38 @@
  *   first resolves everything the call references from outside it: the imports, the test's
  *   fixtures such as an ABI, and the callee's declared signature. Then it checks the call alone and
  *   counts the instantiations that cost, in three parts: resolving the call (inferring its type
- *   arguments and checking its arguments), its return type, and awaiting the result.
+ *   arguments and checking its arguments), its return type with any calls chained on it, and
+ *   awaiting the result.
  *
- * Programs use the root tsconfig.json, the options ox's tests type-check with, so `ox` and its
- * barrels resolve to the sources.
+ * Programs use the options ox's type tests check with (see repo.ts), so `ox` and its entries
+ * resolve to the sources.
  *
  * @module
  */
 
 import * as fs from 'node:fs'
+import * as inspector from 'node:inspector/promises'
 import * as path from 'node:path'
 import * as readline from 'node:readline'
-import * as url from 'node:url'
+import { pathToFileURL } from 'node:url'
 
 import ts from 'typescript'
 
-import {
-  entries as allEntries,
-  createHost,
-  root,
-  testOptions,
-} from './types-host.ts'
+import { root } from './repo.ts'
+import { entries as allEntries, createHost, testOptions } from './types-host.ts'
 
-/** One public function, and the leaf entry that names it. */
-export type PublicFunction = { name: string; entry: string }
-/** What `functions` writes: the public functions, and each leaf entry's name and source file. */
-export type FunctionsResult = {
-  functions: PublicFunction[]
-  entries: { name: string; file: string }[]
-}
+/**
+ * One public function, and the module its namespace is, such as `Hex` for `ox:Hex.fromString`,
+ * which its own tests are named after.
+ */
+export type PublicFunction = { name: string; module: string }
+/** What `functions` writes. */
+export type FunctionsResult = { functions: PublicFunction[] }
 
 /** Walks public functions' names to the declarations they resolve to. */
 export type EntriesJob = {
   kind: 'entries'
   id: number
-  /** Each leaf entry's name and source file, in `getExports()` order. */
-  entries: { name: string; file: string }[]
   names: string[]
 }
 export type EntriesResult = {
@@ -73,10 +72,14 @@ export type Site = {
   /** The call's span. */
   start: number
   end: number
+  /** The span measured: the call, and any calls chained on its result, such as `.extend(...)`. */
+  outer: number
   /** Where the copy of the call goes: the full start of the statement that holds it. */
   anchor: number
   /** Why the call cannot be measured, if it cannot. */
   skip?: string | undefined
+  /** The calls chained on its result, for notes. */
+  chain?: string | undefined
 }
 /** The sites, and the text they were found in, which `measure` copies calls from. */
 export type ScanResult = {
@@ -93,12 +96,18 @@ export type MeasureJob = {
   file: string
   /** The text the scan found the sites in, even if the file has changed on disk since. */
   text: string
-  sites: { site: number; start: number; end: number; anchor: number }[]
+  sites: {
+    site: number
+    start: number
+    end: number
+    outer: number
+    anchor: number
+  }[]
 }
 export type Measurement = {
   site: number
   instantiations: number
-  /** Instantiations of each part: resolving the call, its return type, awaiting it. */
+  /** Instantiations of each part: resolving the call, its return type and chain, awaiting it. */
   parts: { call: number; result: number; awaited: number }
   /** Instantiations the warm-up spent on what the call references, which do not count. */
   warm: number
@@ -114,11 +123,13 @@ export type Job = EntriesJob | ScanJob | MeasureJob
 const copyName = '$uphill'
 /** Diagnostics that the copy causes by itself, such as never reading `$uphill`. */
 const ignoredCodes = new Set([6133, 6192, 6196, 6198, 6385, 6387, 80007])
+/** A promise's methods, which a chain stops at without resolving the call's type to see. */
+const promiseMethods = new Set(['then', 'catch', 'finally'])
 /** Calls whose callee is one of these name the test, not a function under test. */
 const testFunctions = new Set(['describe', 'test', 'it', 'bench', 'suite'])
 /**
- * Statements that call one of these, from a test's own API, never declare or narrow anything a
- * later call needs, so the file a call is checked in leaves them out.
+ * A test's own API. A call to it is not a function under test, and a statement that calls it never
+ * declares or narrows anything a later call needs, so the file a call is checked in leaves it out.
  */
 const testApi = new Set([
   ...testFunctions,
@@ -134,21 +145,7 @@ const testApi = new Set([
 ])
 
 if (process.argv[2] === 'functions') {
-  const leaves = allEntries.filter((entry) => !entry.barrel)
-  const functions: PublicFunction[] = []
-  for (const entry of leaves) {
-    const module = await import(url.pathToFileURL(entry.esm).href)
-    for (const [name, value] of Object.entries(module)) {
-      if (typeof value !== 'function') continue
-      if (/^class[\s{]/.test(Function.prototype.toString.call(value))) continue
-      functions.push({ name: `${entry.name}:${name}`, entry: entry.name })
-    }
-  }
-  const result: FunctionsResult = {
-    functions,
-    entries: leaves.map((entry) => ({ name: entry.name, file: entry.source })),
-  }
-  process.stdout.write(JSON.stringify(result))
+  process.stdout.write(JSON.stringify(await functions()))
   process.exit(0)
 }
 
@@ -171,16 +168,109 @@ process.stdout.write(
   `${JSON.stringify({ peak: process.resourceUsage().maxRSS * 1024 })}\n`,
 )
 
+/**
+ * Walks every entry point's build: `ox` first, then the other index entries, then the module
+ * entries. A namespace, or a plain object of functions, is walked into once, under the first entry
+ * that reaches it, so its functions are named after that entry; a function that several namespaces
+ * export is listed once, under the first.
+ */
+async function functions(): Promise<FunctionsResult> {
+  const modules = new Map<object, string>()
+  const loaded: [entry: string, module: object][] = []
+  for (const entry of allEntries) {
+    const module = await import(pathToFileURL(entry.file).href)
+    loaded.push([entry.name, module])
+    if (!entry.index) modules.set(module, path.basename(entry.source, '.ts'))
+  }
+  const found: [fn: unknown, item: PublicFunction][] = []
+  const listed = new Set<unknown>()
+  const walked = new Set<unknown>()
+  const walk = (
+    entry: string,
+    module: string,
+    name: string,
+    value: unknown,
+  ) => {
+    if (typeof value === 'function') {
+      if (
+        !listed.has(value) &&
+        !/^class[\s{]/.test(Function.prototype.toString.call(value))
+      )
+        found.push([value, { name: `${entry}:${name}`, module }])
+      listed.add(value)
+      return
+    }
+    if (!isNamespace(value) || walked.has(value)) return
+    walked.add(value)
+    for (const [key, member] of Object.entries(value))
+      walk(
+        entry,
+        modules.get(member as object) ?? module,
+        name ? `${name}.${key}` : key,
+        member,
+      )
+  }
+  for (const [entry, module] of loaded)
+    walk(entry, modules.get(module) ?? 'index', '', module)
+
+  // A function a dependency defines, such as one of zod's that `ox/zod` re-exports, is the
+  // dependency's to measure. Its location says where it comes from.
+  const session = new inspector.Session()
+  session.connect()
+  const scripts = new Map<string, string>()
+  session.on('Debugger.scriptParsed', ({ params }) =>
+    scripts.set(params.scriptId, params.url),
+  )
+  await session.post('Debugger.enable')
+  const probe = globalThis as { __uphillProbe?: unknown }
+  const own = new Map<unknown, boolean>()
+  for (const [fn] of found) {
+    if (own.has(fn)) continue
+    probe.__uphillProbe = fn
+    const { result: value } = await session.post('Runtime.evaluate', {
+      expression: 'globalThis.__uphillProbe',
+    })
+    const { internalProperties } = await session.post('Runtime.getProperties', {
+      objectId: value.objectId!,
+    })
+    const location = internalProperties?.find(
+      (property) => property.name === '[[FunctionLocation]]',
+    )?.value?.value as { scriptId: string } | undefined
+    const url = location && scripts.get(location.scriptId)
+    // A built-in, such as `Error.captureStackTrace` that zod re-exports, has no location.
+    own.set(fn, !!url && !url.includes('/node_modules/'))
+  }
+  session.disconnect()
+  return {
+    functions: found.filter(([fn]) => own.get(fn)).map(([, item]) => item),
+  }
+}
+
+/** A module namespace, or a plain object whose values are all functions or namespaces. */
+function isNamespace(value: unknown, depth = 0): value is object {
+  if (!value || typeof value !== 'object' || depth > 3) return false
+  if (Object.prototype.toString.call(value) === '[object Module]') return true
+  const proto = Object.getPrototypeOf(value)
+  if (proto !== Object.prototype && proto !== null) return false
+  const values = Object.values(value)
+  return (
+    values.length > 0 &&
+    values.every(
+      (item) => typeof item === 'function' || isNamespace(item, depth + 1),
+    )
+  )
+}
+
 function entries(job: EntriesJob): EntriesResult {
   const program = ts.createProgram({
-    rootNames: job.entries.map((entry) => entry.file),
+    rootNames: allEntries.map((entry) => entry.source),
     options: testOptions,
     host,
   })
   const checker = program.getTypeChecker()
   const modules = new Map<string, ts.Symbol>()
-  for (const entry of job.entries) {
-    const source = program.getSourceFile(entry.file)
+  for (const entry of allEntries) {
+    const source = program.getSourceFile(entry.source)
     const symbol = source && checker.getSymbolAtLocation(source)
     if (symbol) modules.set(entry.name, symbol)
   }
@@ -188,12 +278,11 @@ function entries(job: EntriesJob): EntriesResult {
   const missing: string[] = []
   for (const name of job.names) {
     const colon = name.indexOf(':')
-    const module = modules.get(name.slice(0, colon))
-    const symbol =
-      module &&
-      checker
-        .getExportsOfModule(module)
-        .find((child) => child.name === name.slice(colon + 1))
+    let symbol = modules.get(name.slice(0, colon))
+    for (const part of name.slice(colon + 1).split('.')) {
+      if (!symbol) break
+      symbol = member(checker, symbol, part)
+    }
     const keys = symbol ? declarationKeys(checker, symbol) : []
     if (keys.length) declarations[name] = keys
     else missing.push(name)
@@ -201,9 +290,45 @@ function entries(job: EntriesJob): EntriesResult {
   return { id: job.id, declarations, missing }
 }
 
+/** A module's export, a namespace's member, or a value's property, by name. */
+function member(checker: ts.TypeChecker, symbol: ts.Symbol, name: string) {
+  const target = resolveAlias(checker, symbol)
+  if (target.flags & ts.SymbolFlags.Module) {
+    const exported = checker
+      .getExportsOfModule(target)
+      .find((child) => child.name === name)
+    if (exported) return exported
+  }
+  if (!(target.flags & ts.SymbolFlags.Value)) return undefined
+  const property = checker.getPropertyOfType(
+    checker.getTypeOfSymbol(target),
+    name,
+  )
+  if (property) return property
+  // A value declared with a wider type, such as `errorResolvers: Resolvers = { ... }`, still
+  // names its literal's properties.
+  const declaration = target.valueDeclaration
+  if (
+    declaration &&
+    ts.isVariableDeclaration(declaration) &&
+    declaration.initializer &&
+    ts.isObjectLiteralExpression(declaration.initializer)
+  )
+    for (const element of declaration.initializer.properties)
+      if (
+        element.name &&
+        (ts.isIdentifier(element.name) ||
+          ts.isStringLiteralLike(element.name)) &&
+        element.name.text === name
+      )
+        return checker.getSymbolAtLocation(element.name)
+  return undefined
+}
+
 /**
- * The keys of the declarations a symbol resolves to. A variable that only names another function,
- * as in `const send = transfer`, resolves to that function too, since a test can call either.
+ * The keys of the declarations a symbol resolves to. A property or variable that only names
+ * another function, as in `{ transfer }` or `const send = transfer`, resolves to that function too,
+ * since a test can call either.
  */
 function declarationKeys(checker: ts.TypeChecker, symbol: ts.Symbol): string[] {
   const keys = new Set<string>()
@@ -215,19 +340,20 @@ function declarationKeys(checker: ts.TypeChecker, symbol: ts.Symbol): string[] {
     const declaration = target.valueDeclaration ?? target.declarations?.[0]
     if (!declaration) return
     keys.add(declarationKey(declaration))
+    let name: ts.Node | undefined
+    if (ts.isShorthandPropertyAssignment(declaration))
+      return visit(checker.getShorthandAssignmentValueSymbol(declaration))
     if (
-      ts.isVariableDeclaration(declaration) &&
+      (ts.isPropertyAssignment(declaration) ||
+        ts.isVariableDeclaration(declaration)) &&
       declaration.initializer &&
       (ts.isIdentifier(declaration.initializer) ||
         ts.isPropertyAccessExpression(declaration.initializer))
     )
-      visit(
-        checker.getSymbolAtLocation(
-          ts.isIdentifier(declaration.initializer)
-            ? declaration.initializer
-            : declaration.initializer.name,
-        ),
-      )
+      name = ts.isIdentifier(declaration.initializer)
+        ? declaration.initializer
+        : declaration.initializer.name
+    if (name) visit(checker.getSymbolAtLocation(name))
   }
   visit(symbol)
   return [...keys]
@@ -312,8 +438,8 @@ function scan(job: ScanJob): ScanResult {
     if (testApi.has(rootName.text)) return
     const rootSymbol = checker.getSymbolAtLocation(rootName)
     // A property path is followed only from an import, such as a namespace, which needs no
-    // checking to resolve. A method of a local value, such as `provider.request`, is not a public
-    // function.
+    // checking to resolve. A method of a local value, such as `provider.request`, belongs to that
+    // value, not to the function that made it.
     if (
       rootName !== callee &&
       !(rootSymbol && rootSymbol.flags & ts.SymbolFlags.Alias)
@@ -335,22 +461,59 @@ function scan(job: ScanJob): ScanResult {
     )
       return
 
-    const statement = anchorOf(call)
+    // Calls chained on the result to methods ox declares, such as `Provider.from(...).request(...)`,
+    // use the result's own API, so they count with the call. A promise's `.then` or a string's
+    // `.slice` does not.
+    let outer: ts.Expression = call
+    const chained: string[] = []
+    for (;;) {
+      let access: ts.Node = outer
+      const names: string[] = []
+      while (
+        ts.isPropertyAccessExpression(access.parent) &&
+        access.parent.expression === access
+      ) {
+        access = access.parent
+        names.push((access as ts.PropertyAccessExpression).name.text)
+      }
+      if (
+        access === outer ||
+        !ts.isCallExpression(access.parent) ||
+        access.parent.expression !== access ||
+        promiseMethods.has(names.at(-1)!)
+      )
+        break
+      const method = checker.getSymbolAtLocation(
+        (access as ts.PropertyAccessExpression).name,
+      )
+      const declared = method?.declarations?.[0]?.getSourceFile().fileName
+      if (
+        !declared?.startsWith(path.join(root, 'src/')) ||
+        declared.endsWith('.d.ts')
+      )
+        break
+      outer = access.parent
+      chained.push(`.${names.join('.')}(…)`)
+    }
+
+    const statement = anchorOf(outer)
     const start = call.getStart(source)
     const line = source.getLineAndCharacterOfPosition(start).line
-    const endLine = source.getLineAndCharacterOfPosition(call.end).line
+    const endLine = source.getLineAndCharacterOfPosition(outer.end).line
     let skip: string | undefined
     for (let index = line; index <= endLine && !skip; index++)
       if (covered.has(index)) skip = 'under @ts-expect-error'
-    skip ??= statement ? hoistable(call, statement) : 'outside any statement'
+    skip ??= statement ? hoistable(outer, statement) : 'outside any statement'
     return {
       declaration: declarationKey(declaration),
       test: [relative, ...testPath(call)].join(' > '),
       line: line + 1,
       start,
       end: call.end,
+      outer: outer.end,
       anchor: statement?.pos ?? 0,
       skip,
+      chain: chained.length ? chained.join('') : undefined,
     }
   }
 
@@ -501,30 +664,41 @@ function measure(job: MeasureJob): MeasureResult {
   for (const site of job.sites) {
     const call = findCall(source, site.start, site.end)
     if (!call) throw new Error(`no call at ${site.start} in ${job.file}`)
-    measurements.push({
-      site: site.site,
-      ...check(base, site, copy(source, call)),
-    })
+    let outer: ts.Node = call
+    while (outer.end < site.outer) outer = outer.parent
+    const measured = check(base, site, copy(source, call, outer))
+    measurements.push({ site: site.site, ...measured })
   }
   host.setFile(job.file, source.text)
   return { id: job.id, measurements }
 }
 
 /** The text of a measured call, and the declarations of the calls in its arguments. */
-type Copy = { hoisted: string[]; text: string }
+type Copy = { hoisted: string[]; text: string; callLength: number }
 
 /**
- * Copies a call. A call in its arguments, such as `AbiFunction.from('function f()')` or
- * `Hex.fromString('hello')`, is a fixture written inline, so it moves into a declaration of its
- * own, `const $uphill0 = ...`, which the warm-up resolves like any other fixture. A call inside a
- * callback stays, since it may name the callback's parameters.
+ * Copies a call, with any calls chained on it up to `outer`. A call in its arguments, such as
+ * `AbiFunction.from('function f()')` or `Hex.fromString('hello')`, is a fixture written inline, so
+ * it moves into a declaration of its own, `const $uphill0 = ...`, which the warm-up resolves like
+ * any other fixture. A call inside a callback stays, since it may name the callback's parameters.
  */
-function copy(source: ts.SourceFile, call: ts.CallExpression): Copy {
+function copy(
+  source: ts.SourceFile,
+  call: ts.CallExpression,
+  outer: ts.Node,
+): Copy {
   const replacements: { start: number; end: number; text: string }[] = []
   const hoisted: string[] = []
+  // The spine: the call, and the calls chained on it, whose callees stay as written.
+  const spine = new Set<ts.Node>()
+  for (let node: ts.Node = call; node !== outer.parent; node = node.parent)
+    spine.add(node)
   const visit = (node: ts.Node) => {
     if (ts.isFunctionLike(node) || ts.isClassLike(node)) return
-    if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+    const nested =
+      !spine.has(node) &&
+      (ts.isCallExpression(node) || ts.isNewExpression(node))
+    if (nested) {
       const target = ts.isAwaitExpression(node.parent) ? node.parent : node
       const name = `${copyName}${hoisted.length}`
       hoisted.push(`const ${name} = ${target.getText(source)};`)
@@ -537,14 +711,27 @@ function copy(source: ts.SourceFile, call: ts.CallExpression): Copy {
     }
     ts.forEachChild(node, visit)
   }
-  for (const argument of call.arguments) visit(argument)
-  let text = ''
-  let at = call.getStart(source)
-  for (const replacement of replacements) {
-    text += source.text.slice(at, replacement.start) + replacement.text
-    at = replacement.end
+  for (const node of spine)
+    if (ts.isCallExpression(node))
+      for (const argument of node.arguments) visit(argument)
+  const render = (start: number, end: number) => {
+    let text = ''
+    let at = start
+    for (const replacement of replacements.toSorted(
+      (a, b) => a.start - b.start,
+    )) {
+      if (replacement.start < start || replacement.end > end) continue
+      text += source.text.slice(at, replacement.start) + replacement.text
+      at = replacement.end
+    }
+    return text + source.text.slice(at, end)
   }
-  return { hoisted, text: text + source.text.slice(at, call.end) }
+  const start = call.getStart(source)
+  return {
+    hoisted,
+    text: render(start, outer.end),
+    callLength: render(start, call.end).length,
+  }
 }
 
 /**
@@ -560,7 +747,7 @@ function copy(source: ts.SourceFile, call: ts.CallExpression): Copy {
  * Leaving them out also leaves out noise from the test API: in the whole file, narrowing a
  * reference in the copy walks the control flow back over the `describe(...)` and `test(...)`
  * statements before it, and resolves vitest's types to see whether each is an assertion
- * function, which added 33 to 131 instantiations to 33 of the 563 calls on the first run.
+ * function, which added 33 to 131 instantiations to 33 of the 563 calls on 0.x's first run.
  */
 function check(
   base: ts.Program,
@@ -585,7 +772,7 @@ function check(
   const statement = findStatement(source, site.anchor + before.length + 1)
   const declaration = statement.declarationList.declarations[0]!
   const outer = declaration.initializer!
-  const call = findCall(outer, callStart, callStart + copied.text.length)
+  const call = findCall(outer, callStart, callStart + copied.callLength)
   if (!call) throw new Error(`no copy of the call at ${callStart} in ${file}`)
 
   // Warm up: what the call references from outside it, and the callee's declared signature.
