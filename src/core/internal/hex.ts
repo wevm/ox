@@ -63,13 +63,23 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
   if (size === 0) return hex_
 
   const target = size * 2
-  // Already the size: nothing to pad.
-  if (
-    hex_.length === target + 2 &&
-    hex_.charCodeAt(0) === 48 &&
-    hex_.charCodeAt(1) === 120
-  )
-    return hex_
+  if (typeof hex_ === 'string') {
+    const prefixed = hex_.charCodeAt(0) === 48 && hex_.charCodeAt(1) === 120
+    // Already the size: nothing to pad.
+    if (prefixed && hex_.length === target + 2) return hex_
+    // Up to 32 bytes of padding slice a literal instead of building a string.
+    // The digits after `0x` are counted without slicing them off.
+    const length = Math.max(0, hex_.length - 2)
+    const missing = target - length
+    if (length <= target && missing <= zeros.length) {
+      const padding = zeros.slice(0, missing)
+      if (dir !== 'right') return `0x${padding}${hex_.slice(2)}` as Hex.Hex
+      // A `0x`-prefixed value is extended as is.
+      return (
+        prefixed ? `${hex_}${padding}` : `0x${hex_.slice(2)}${padding}`
+      ) as Hex.Hex
+    }
+  }
 
   const hex = hex_.slice(2)
   if (hex.length > target)
@@ -81,6 +91,8 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   return `0x${dir === 'right' ? hex.padEnd(target, '0') : hex.padStart(target, '0')}` as Hex.Hex
 }
+
+const zeros = '0000000000000000000000000000000000000000000000000000000000000000'
 
 /** @internal */
 export declare namespace pad {
