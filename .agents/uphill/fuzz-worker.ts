@@ -68,6 +68,13 @@ import { decode, keys } from './speed-codec.ts'
 
 const [mode, ...rest] = process.argv.slice(2)
 
+// An arbitrary given only a `maxLength` stays at size 'small', about 10 elements, so long-input
+// branches (UTF-8 past 64 bytes, CBOR lengths of 24 and up) would never run. Size to the maximum.
+fc.configureGlobal({
+  ...fc.readConfigureGlobal(),
+  defaultSizeToMaxWhenMaxSpecified: true,
+})
+
 /** A promise that has not settled after this long is a hang. */
 const asyncTimeoutMs = 4_000
 /** A synchronous call that takes longer is a hang. */
