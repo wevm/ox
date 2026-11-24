@@ -68,9 +68,9 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  */
 export function assert(
   signature: ExactPartial<Signature>,
-  options: assert.Options = {},
+  options?: assert.Options,
 ): asserts signature is Signature {
-  const { recovered } = options
+  const recovered = options?.recovered
   if (typeof signature.r === 'undefined')
     throw new MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
@@ -107,24 +107,16 @@ export function assert(
 
 // Whether a value is `0x` and 1 to 64 hex digits, a scalar that fits in 256 bits.
 function isShortHex(value: unknown): boolean {
-  if (typeof value !== 'string') return false
-  const length = value.length
-  if (
-    length < 3 ||
-    length > 66 ||
-    value.charCodeAt(0) !== 48 ||
-    value.charCodeAt(1) !== 120
+  // One regex test is faster than a loop over the digits.
+  return (
+    typeof value === 'string' &&
+    value.length > 2 &&
+    value.length <= 66 &&
+    shortHexRegex.test(value)
   )
-    return false
-  for (let i = 2; i < length; i++) {
-    const code = value.charCodeAt(i)
-    if (code >= 48 && code <= 57) continue
-    const lower = code | 32
-    if (lower >= 97 && lower <= 102) continue
-    return false
-  }
-  return true
 }
+
+const shortHexRegex = /^0x[0-9a-fA-F]*$/
 
 export declare namespace assert {
   type Options = {
@@ -483,15 +475,12 @@ export function fromRpc(signature: {
   yParity?: Hex.Hex | undefined
   v?: Hex.Hex | undefined
 }): Signature {
-  const yParity = (() => {
-    const v = signature.v ? Number(signature.v) : undefined
-    let yParity = signature.yParity ? Number(signature.yParity) : undefined
-    if (typeof v === 'number' && typeof yParity !== 'number')
-      yParity = vToYParity(v)
-    if (typeof yParity !== 'number')
-      throw new InvalidYParityError({ value: signature.yParity })
-    return yParity
-  })()
+  const v = signature.v ? Number(signature.v) : undefined
+  let yParity = signature.yParity ? Number(signature.yParity) : undefined
+  if (typeof v === 'number' && typeof yParity !== 'number')
+    yParity = vToYParity(v)
+  if (typeof yParity !== 'number')
+    throw new InvalidYParityError({ value: signature.yParity })
 
   return {
     r: Hex.padLeft(signature.r, 32),
