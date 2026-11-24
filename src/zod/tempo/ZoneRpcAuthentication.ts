@@ -15,22 +15,22 @@ export const Serialized = z_Hex.Hex
 
 /** Unsigned Zone RPC authentication token schema. */
 export const Unsigned = z.object({
-  chainId: z.number(),
-  expiresAt: z.number(),
-  issuedAt: z.number(),
-  signature: z.optional(z.undefined()),
+  chainId: /* @__PURE__ */ z.number(),
+  expiresAt: /* @__PURE__ */ z.number(),
+  issuedAt: /* @__PURE__ */ z.number(),
+  signature: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
   version: Version,
-  zoneId: z.number(),
+  zoneId: /* @__PURE__ */ z.number(),
 })
 
 /** Signed Zone RPC authentication token schema. */
 export const Signed = z.object({
-  chainId: z.number(),
-  expiresAt: z.number(),
-  issuedAt: z.number(),
+  chainId: /* @__PURE__ */ z.number(),
+  expiresAt: /* @__PURE__ */ z.number(),
+  issuedAt: /* @__PURE__ */ z.number(),
   signature: z_SignatureEnvelope.Domain,
   version: Version,
-  zoneId: z.number(),
+  zoneId: /* @__PURE__ */ z.number(),
 })
 
 /** Zone RPC authentication token schema. */

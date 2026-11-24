@@ -14,24 +14,24 @@ export const Number = z_Uint.Uint
 
 /** Block tag schema. */
 export const Tag = z.union([
-  z.literal('latest'),
-  z.literal('earliest'),
-  z.literal('pending'),
-  z.literal('safe'),
-  z.literal('finalized'),
+  /* @__PURE__ */ z.literal('latest'),
+  /* @__PURE__ */ z.literal('earliest'),
+  /* @__PURE__ */ z.literal('pending'),
+  /* @__PURE__ */ z.literal('safe'),
+  /* @__PURE__ */ z.literal('finalized'),
 ])
 
 /** Block identifier schema. */
 export const Identifier = z.union([
-  z.object({
+  /* @__PURE__ */ z.object({
     blockNumber: Number,
-    blockHash: z.optional(z.undefined()),
-    requireCanonical: z.optional(z.boolean()),
+    blockHash: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
+    requireCanonical: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
   }),
-  z.object({
+  /* @__PURE__ */ z.object({
     blockHash: Hash,
-    blockNumber: z.optional(z.undefined()),
-    requireCanonical: z.optional(z.boolean()),
+    blockNumber: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
+    requireCanonical: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.boolean()),
   }),
 ])
 

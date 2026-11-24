@@ -36,27 +36,30 @@ export const Base = z.object(baseFields())
 /** Account transaction approval operation schema. */
 export const TransactionOperation = /* @__PURE__ */ z
   .object({
-    ...baseFields(),
-    expiresAt: z.optional(z.number()),
-    status: z.union([
-      z.literal('pending'),
-      z.literal('submitting'),
-      z.literal('success'),
+    .../* @__PURE__ */ baseFields(),
+    expiresAt: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+    status: /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.literal('pending'),
+      /* @__PURE__ */ z.literal('submitting'),
+      /* @__PURE__ */ z.literal('success'),
     ]),
-    submissionId: z.optional(z_Hash.Hash),
+    submissionId: /* @__PURE__ */ z.optional(z_Hash.Hash),
     transaction: z_Hex.Hex,
-    transactionHash: z.optional(z_Hash.Hash),
-    type: z.literal('transaction'),
+    transactionHash: /* @__PURE__ */ z.optional(z_Hash.Hash),
+    type: /* @__PURE__ */ z.literal('transaction'),
   })
   .check(valid)
 
 /** Account key authorization approval operation schema. */
 export const KeyAuthorizationOperation = /* @__PURE__ */ z
   .object({
-    ...baseFields(),
+    .../* @__PURE__ */ baseFields(),
     keyAuthorization: z_Hex.Hex,
-    status: z.union([z.literal('pending'), z.literal('success')]),
-    type: z.literal('keyAuthorization'),
+    status: /* @__PURE__ */ z.union([
+      /* @__PURE__ */ z.literal('pending'),
+      /* @__PURE__ */ z.literal('success'),
+    ]),
+    type: /* @__PURE__ */ z.literal('keyAuthorization'),
   })
   .check(valid)
 

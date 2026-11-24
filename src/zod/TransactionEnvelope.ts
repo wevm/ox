@@ -71,8 +71,8 @@ export const TransactionEnvelopeToRpc = z.union([
 
 /** Signed transaction envelope schema. */
 export const Signed = z.union([
-  z_TxEnvelopeEip8141.TxEnvelopeEip8141.check(
-    z.refine(
+  /* @__PURE__ */ z_TxEnvelopeEip8141.TxEnvelopeEip8141.check(
+    /* @__PURE__ */ z.refine(
       (value) =>
         (value.signatures ?? []).every((entry) =>
           core_FrameSignature.validate(entry, { signed: true }),
@@ -89,8 +89,8 @@ export const Signed = z.union([
 
 /** Encode-only signed transaction envelope schema accepting numberish `toRpc` inputs. */
 export const SignedToRpc = z.union([
-  z_TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc.check(
-    z.refine(
+  /* @__PURE__ */ z_TxEnvelopeEip8141.TxEnvelopeEip8141ToRpc.check(
+    /* @__PURE__ */ z.refine(
       (value) =>
         (value.signatures ?? []).every((entry) =>
           core_FrameSignature.validate(entry, { signed: true }),
@@ -135,54 +135,68 @@ function decodedSignedBaseFields<const type extends string>(
 
 const DecodedAuthorization = z.object({
   address: z_Address.Address,
-  chainId: z.number(),
-  nonce: z.bigint(),
+  chainId: /* @__PURE__ */ z.number(),
+  nonce: /* @__PURE__ */ z.bigint(),
   r: z_Hex.Hex32,
   s: z_Hex.Hex32,
   yParity,
 })
 
 const SignedLegacyDecoded = z.object({
-  ...decodedSignedBaseFields(z.literal('legacy')),
-  chainId: z.optional(z.number()),
-  gasPrice: z.optional(z.bigint()),
+  .../* @__PURE__ */ decodedSignedBaseFields(
+    /* @__PURE__ */ z.literal('legacy'),
+  ),
+  chainId: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
+  gasPrice: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
 })
 
 const SignedEip2930Decoded = z.object({
-  ...decodedSignedBaseFields(z.literal('eip2930')),
-  accessList: z.optional(z_AccessList.AccessList),
-  gasPrice: z.optional(z.bigint()),
+  .../* @__PURE__ */ decodedSignedBaseFields(
+    /* @__PURE__ */ z.literal('eip2930'),
+  ),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  gasPrice: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
 })
 
 const SignedEip1559Decoded = z.object({
-  ...decodedSignedBaseFields(z.literal('eip1559')),
-  accessList: z.optional(z_AccessList.AccessList),
-  maxFeePerGas: z.optional(z.bigint()),
-  maxPriorityFeePerGas: z.optional(z.bigint()),
+  .../* @__PURE__ */ decodedSignedBaseFields(
+    /* @__PURE__ */ z.literal('eip1559'),
+  ),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  maxFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  maxPriorityFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
 })
 
 const SignedEip4844Decoded = z.object({
-  ...decodedSignedBaseFields(z.literal('eip4844')),
-  accessList: z.optional(z_AccessList.AccessList),
-  blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
-  maxFeePerBlobGas: z.optional(z.bigint()),
-  maxFeePerGas: z.optional(z.bigint()),
-  maxPriorityFeePerGas: z.optional(z.bigint()),
-  sidecars: z.optional(z_TxEnvelopeEip4844.Sidecars),
+  .../* @__PURE__ */ decodedSignedBaseFields(
+    /* @__PURE__ */ z.literal('eip4844'),
+  ),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  blobVersionedHashes: /* @__PURE__ */ z.readonly(
+    /* @__PURE__ */ z.array(z_Hex.Hex),
+  ),
+  maxFeePerBlobGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  maxFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  maxPriorityFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  sidecars: /* @__PURE__ */ z.optional(z_TxEnvelopeEip4844.Sidecars),
 })
 
 const SignedEip7702Decoded = z.object({
-  ...decodedSignedBaseFields(z.literal('eip7702')),
-  accessList: z.optional(z_AccessList.AccessList),
-  authorizationList: z.readonly(z.array(DecodedAuthorization)),
-  maxFeePerGas: z.optional(z.bigint()),
-  maxPriorityFeePerGas: z.optional(z.bigint()),
+  .../* @__PURE__ */ decodedSignedBaseFields(
+    /* @__PURE__ */ z.literal('eip7702'),
+  ),
+  accessList: /* @__PURE__ */ z.optional(z_AccessList.AccessList),
+  authorizationList: /* @__PURE__ */ z.readonly(
+    /* @__PURE__ */ z.array(DecodedAuthorization),
+  ),
+  maxFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
+  maxPriorityFeePerGas: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.bigint()),
 })
 
 /** Decoded signed transaction envelope schema. */
 export const SignedDecoded = z.union([
-  z_TxEnvelopeEip8141.Decoded.check(
-    z.refine(
+  /* @__PURE__ */ z_TxEnvelopeEip8141.Decoded.check(
+    /* @__PURE__ */ z.refine(
       (value) =>
         (value.signatures ?? []).every((entry) =>
           core_FrameSignature.validate(entry, { signed: true }),

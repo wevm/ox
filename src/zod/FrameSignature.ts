@@ -4,46 +4,67 @@ import * as z_Address from './Address.js'
 import * as z_Hex from './Hex.js'
 import * as z from 'zod/mini'
 
-const publicKey = z.object({ prefix: z.number(), x: z_Hex.Hex, y: z_Hex.Hex })
+const publicKey = z.object({
+  prefix: /* @__PURE__ */ z.number(),
+  x: z_Hex.Hex,
+  y: z_Hex.Hex,
+})
 const signature = z.object({
   r: z_Hex.Hex,
   s: z_Hex.Hex,
-  yParity: z.optional(z.number()),
+  yParity: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.number()),
 })
 
 /** Contract-defined frame signature schema. */
 export const Arbitrary = z.object({
-  payload: z.optional(z_Hex.Hex),
-  scheme: z.union([z.literal(0), z.literal('arbitrary')]),
+  payload: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  scheme: /* @__PURE__ */ z.union([
+    /* @__PURE__ */ z.literal(0),
+    /* @__PURE__ */ z.literal('arbitrary'),
+  ]),
   signature: z_Hex.Hex,
-  signer: z.optional(z.undefined()),
+  signer: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.undefined()),
 })
 
 /** secp256k1 frame signature schema. */
 export const Secp256k1 = z.object({
-  payload: z.optional(z_Hex.Hex),
-  scheme: z.union([z.literal(1), z.literal('secp256k1')]),
-  signature: z.optional(
-    z.union([
+  payload: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  scheme: /* @__PURE__ */ z.union([
+    /* @__PURE__ */ z.literal(1),
+    /* @__PURE__ */ z.literal('secp256k1'),
+  ]),
+  signature: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.union([
       z_Hex.Hex,
-      z.object({ r: z_Hex.Hex, s: z_Hex.Hex, yParity: z.number() }),
+      /* @__PURE__ */ z.object({
+        r: z_Hex.Hex,
+        s: z_Hex.Hex,
+        yParity: /* @__PURE__ */ z.number(),
+      }),
     ]),
   ),
-  signer: z.optional(z_Address.Address),
+  signer: /* @__PURE__ */ z.optional(z_Address.Address),
 })
 
 const p256 = {
-  payload: z.optional(z_Hex.Hex),
-  scheme: z.union([z.literal(2), z.literal('p256')]),
-  signer: z.optional(z_Address.Address),
+  payload: /* @__PURE__ */ z.optional(z_Hex.Hex),
+  scheme: /* @__PURE__ */ z.union([
+    /* @__PURE__ */ z.literal(2),
+    /* @__PURE__ */ z.literal('p256'),
+  ]),
+  signer: /* @__PURE__ */ z.optional(z_Address.Address),
 }
 /** P-256 frame signature schema, including unsigned placeholders. */
 export const P256 = z.union([
-  z.object({ ...p256, publicKey, signature: z.union([z_Hex.Hex, signature]) }),
-  z.object({
+  /* @__PURE__ */ z.object({
     ...p256,
-    publicKey: z.optional(publicKey),
-    signature: z.optional(z.literal('0x')),
+    publicKey,
+    signature: /* @__PURE__ */ z.union([z_Hex.Hex, signature]),
+  }),
+  /* @__PURE__ */ z.object({
+    ...p256,
+    publicKey: /* @__PURE__ */ z.optional(publicKey),
+    signature: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.literal('0x')),
   }),
 ])
 
@@ -58,10 +79,15 @@ export const Decoded: z.ZodMiniType<
 /** RPC frame signature schema. */
 export const Rpc = /* @__PURE__ */ z
   .object({
-    msg: z.optional(z_Hex.Hex),
-    scheme: z.enum(['0x0', '0x1', '0x2']),
-    signature: z.optional(z_Hex.Hex),
-    signer: z.optional(z.union([z.literal('0x'), z_Address.Address])),
+    msg: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    scheme: /* @__PURE__ */ z.enum(['0x0', '0x1', '0x2']),
+    signature: /* @__PURE__ */ z.optional(z_Hex.Hex),
+    signer: /* @__PURE__ */ z.optional(
+      /* @__PURE__ */ z.union([
+        /* @__PURE__ */ z.literal('0x'),
+        z_Address.Address,
+      ]),
+    ),
   })
   .check(
     z.refine((value) => {

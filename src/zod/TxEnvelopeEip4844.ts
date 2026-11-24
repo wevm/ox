@@ -14,9 +14,9 @@ const Type = type('0x3', 'eip4844')
 
 /** EIP-4844 sidecars schema. */
 export const Sidecars = z.object({
-  blobs: z.readonly(z.array(z_Hex.Hex)),
-  commitments: z.readonly(z.array(z_Hex.Hex)),
-  cellProofs: z.readonly(z.array(z_Hex.Hex)),
+  blobs: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  commitments: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
+  cellProofs: /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Hex.Hex)),
 })
 
 /** EIP-4844 transaction envelope schema. */

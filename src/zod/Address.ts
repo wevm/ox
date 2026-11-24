@@ -5,5 +5,8 @@ const addressRegex = /^0x[0-9a-fA-F]{40}$/
 
 /** Address schema. */
 export const Address = /* @__PURE__ */ z
-  .templateLiteral([z.literal('0x'), z.string()])
+  .templateLiteral([
+    /* @__PURE__ */ z.literal('0x'),
+    /* @__PURE__ */ z.string(),
+  ])
   .check(z.refine((value) => addressRegex.test(value), 'expected address'))

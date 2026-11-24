@@ -150,10 +150,15 @@ const Eip8141Type = type('0x6', 'eip8141')
 /** EIP-8141 transaction schema. */
 export const Eip8141 = /* @__PURE__ */ z
   .object({
-    ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame, nonceKeys),
+    .../* @__PURE__ */ eip8141Fields(
+      z_Uint.Uint,
+      chainId,
+      z_Frame.Frame,
+      nonceKeys,
+    ),
     blockHash: z_Hex.Hex,
     blockNumber: z_Uint.Uint,
-    blockTimestamp: z.optional(z_Uint.Uint),
+    blockTimestamp: /* @__PURE__ */ z.optional(z_Uint.Uint),
     transactionIndex: z_Number.Number,
   })
   .check(z.refine(validNonce, 'Invalid keyed nonce'))
@@ -161,7 +166,7 @@ export const Eip8141 = /* @__PURE__ */ z
 /** Encode-only EIP-8141 transaction schema accepting numberish values. */
 export const Eip8141ToRpc = /* @__PURE__ */ z
   .object({
-    ...eip8141Fields(
+    .../* @__PURE__ */ eip8141Fields(
       z_Uint.UintToRpc,
       chainIdToRpc,
       z_Frame.FrameToRpc,
@@ -169,7 +174,7 @@ export const Eip8141ToRpc = /* @__PURE__ */ z
     ),
     blockHash: z_Hex.Hex,
     blockNumber: z_Uint.UintToRpc,
-    blockTimestamp: z.optional(z_Uint.UintToRpc),
+    blockTimestamp: /* @__PURE__ */ z.optional(z_Uint.UintToRpc),
     transactionIndex: z_Number.NumberToRpc,
   })
   .check(z.refine(validNonce, 'Invalid keyed nonce'))
@@ -177,11 +182,16 @@ export const Eip8141ToRpc = /* @__PURE__ */ z
 /** Pending EIP-8141 transaction schema. */
 export const PendingEip8141 = /* @__PURE__ */ z
   .object({
-    ...eip8141Fields(z_Uint.Uint, chainId, z_Frame.Frame, nonceKeys),
-    blockHash: z.null(),
-    blockNumber: z.null(),
-    blockTimestamp: z.optional(z.null()),
-    transactionIndex: z.null(),
+    .../* @__PURE__ */ eip8141Fields(
+      z_Uint.Uint,
+      chainId,
+      z_Frame.Frame,
+      nonceKeys,
+    ),
+    blockHash: /* @__PURE__ */ z.null(),
+    blockNumber: /* @__PURE__ */ z.null(),
+    blockTimestamp: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.null()),
+    transactionIndex: /* @__PURE__ */ z.null(),
   })
   .check(z.refine(validNonce, 'Invalid keyed nonce'))
 

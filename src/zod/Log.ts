@@ -16,15 +16,15 @@ export const LogToRpc = z.object(fields(z_Uint.UintToRpc, z_Number.NumberToRpc))
 /** Pending log schema. */
 export const Pending = z.object({
   address: z_Address.Address,
-  blockHash: z.null(),
-  blockNumber: z.null(),
-  blockTimestamp: z.optional(z.null()),
+  blockHash: /* @__PURE__ */ z.null(),
+  blockNumber: /* @__PURE__ */ z.null(),
+  blockTimestamp: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.null()),
   data: z_Hex.Hex,
-  logIndex: z.null(),
+  logIndex: /* @__PURE__ */ z.null(),
   topics,
-  transactionHash: z.null(),
-  transactionIndex: z.null(),
-  removed: z.boolean(),
+  transactionHash: /* @__PURE__ */ z.null(),
+  transactionIndex: /* @__PURE__ */ z.null(),
+  removed: /* @__PURE__ */ z.boolean(),
 })
 
 // @__NO_SIDE_EFFECTS__

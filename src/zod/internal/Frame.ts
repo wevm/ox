@@ -7,11 +7,13 @@ import * as z from 'zod/mini'
 
 export const chainId = z.codec(
   quantityHex(),
-  z.union([uintNumber(), uintBigint()]),
+  z.union([/* @__PURE__ */ uintNumber(), /* @__PURE__ */ uintBigint()]),
   {
     decode(value) {
-      const id = Hex.toBigInt(value)
-      return id <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(id) : id
+      const id = /* @__PURE__ */ Hex.toBigInt(value)
+      return id <= /* @__PURE__ */ BigInt(Number.MAX_SAFE_INTEGER)
+        ? /* @__PURE__ */ Number(id)
+        : id
     },
     encode: (value) => Hex.fromNumber(value),
   },
@@ -19,7 +21,11 @@ export const chainId = z.codec(
 
 export const chainIdToRpc = z.codec(
   quantityHex(),
-  z.union([quantityHex(), uintNumber(), uintBigint()]),
+  z.union([
+    /* @__PURE__ */ quantityHex(),
+    /* @__PURE__ */ uintNumber(),
+    /* @__PURE__ */ uintBigint(),
+  ]),
   {
     decode: (value) => z.decode(chainId, value),
     encode: (value) => Quantity.fromNumberish(value),
@@ -51,7 +57,13 @@ export const nonceKeys = z.codec(
 export const nonceKeysToRpc = z.codec(
   nonceKeysRpc,
   z.readonly(
-    z.array(z.union([quantityHex(256), uintBigint(256), uintNumber()])),
+    z.array(
+      z.union([
+        /* @__PURE__ */ quantityHex(256),
+        /* @__PURE__ */ uintBigint(256),
+        /* @__PURE__ */ uintNumber(),
+      ]),
+    ),
   ),
   {
     decode: (keys) => FrameNonce.fromRpc(keys),

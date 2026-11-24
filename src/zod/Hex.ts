@@ -6,7 +6,10 @@ const hexRegex = /^0x[0-9a-fA-F]*$/
 
 /** Hex string schema. */
 export const Hex = /* @__PURE__ */ z
-  .templateLiteral([z.literal('0x'), z.string()])
+  .templateLiteral([
+    /* @__PURE__ */ z.literal('0x'),
+    /* @__PURE__ */ z.string(),
+  ])
   .check(z.refine((value) => hexRegex.test(value), 'expected hex'))
 
 /** Returns a byte-sized hex string schema. */

@@ -4,10 +4,13 @@ import * as z_Address from './Address.js'
 import * as z_Hex from './Hex.js'
 import * as z from 'zod/mini'
 
-const Mode = z.union([z.number(), z.enum(['default', 'sender', 'verify'])])
+const Mode = z.union([
+  /* @__PURE__ */ z.number(),
+  /* @__PURE__ */ z.enum(['default', 'sender', 'verify']),
+])
 const Flags = z.union([
-  z.number(),
-  z.enum([
+  /* @__PURE__ */ z.number(),
+  /* @__PURE__ */ z.enum([
     'approveExecution',
     'approveExecutionAndPayment',
     'approvePayment',
@@ -30,7 +33,9 @@ export const Rpc = /* @__PURE__ */ z
     flags: z_Hex.Hex,
     mode: z_Hex.Hex,
     stateGas: z_Hex.Hex,
-    target: z.optional(z.nullable(z_Address.Address)),
+    target: /* @__PURE__ */ z.optional(
+      /* @__PURE__ */ z.nullable(z_Address.Address),
+    ),
     value: z_Hex.Hex,
   })
   .check(
@@ -52,7 +57,15 @@ export const Frame = z.codec(Rpc, Decoded, {
 
 /** Decoded frame schema accepting numberish budgets. */
 export const DecodedToRpc = /* @__PURE__ */ z
-  .object(fields(z.union([z_Hex.Hex, z.bigint(), z.number()])))
+  .object(
+    fields(
+      z.union([
+        z_Hex.Hex,
+        /* @__PURE__ */ z.bigint(),
+        /* @__PURE__ */ z.number(),
+      ]),
+    ),
+  )
   .check(
     z.refine((value) => {
       try {

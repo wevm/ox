@@ -2,6 +2,6 @@
 import * as z from 'zod/mini'
 
 export const AbiReceive = z.object({
-  type: z.literal('receive'),
-  stateMutability: z.literal('payable'),
+  type: /* @__PURE__ */ z.literal('receive'),
+  stateMutability: /* @__PURE__ */ z.literal('payable'),
 })
