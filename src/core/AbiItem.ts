@@ -283,13 +283,13 @@ export function fromAbi<
   const { args = [], prepare = true } = (options ??
     {}) as unknown as fromAbi.Options
 
-  const isSelector = Hex.validate(name, { strict: false })
+  const isSelector = typeof name === 'string' && name.startsWith('0x')
 
   // Selector lookups are always unique on the ABI: precompute the
   // function/error 4-byte selector once and short-circuit via `find`
   // instead of building a full `filter` result we'd discard.
   if (isSelector) {
-    const selector = Hex.slice(name, 0, 4)
+    const selector = Hex.slice(name as Hex.Hex, 0, 4)
     const abiItem = (abi as Abi.Abi).find((abiItem) => {
       if (abiItem.type === 'function' || abiItem.type === 'error')
         return getSelector(abiItem) === selector
@@ -297,22 +297,26 @@ export function fromAbi<
       return false
     })
     if (!abiItem) throw new NotFoundError({ name: name as string })
-    return {
-      ...abiItem,
-      ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-    } as never
+    return (
+      prepare ? { ...abiItem, hash: getSignatureHash(abiItem) } : { ...abiItem }
+    ) as never
   }
 
-  const abiItems = (abi as Abi.Abi).filter(
-    (abiItem) => 'name' in abiItem && abiItem.name === name,
-  )
+  // Most names match one item: find it without collecting the matches, and
+  // collect them only when a second one turns up.
+  let first: AbiItem | undefined
+  let abiItems: AbiItem[] | undefined
+  for (const abiItem of abi as Abi.Abi) {
+    if (!('name' in abiItem) || abiItem.name !== name) continue
+    if (!first) first = abiItem
+    else (abiItems ??= [first]).push(abiItem)
+  }
 
-  if (abiItems.length === 0) throw new NotFoundError({ name: name as string })
-  if (abiItems.length === 1)
-    return {
-      ...abiItems[0],
-      ...(prepare ? { hash: getSignatureHash(abiItems[0]!) } : {}),
-    } as never
+  if (!first) throw new NotFoundError({ name: name as string })
+  if (!abiItems)
+    return (
+      prepare ? { ...first, hash: getSignatureHash(first) } : { ...first }
+    ) as never
 
   let matchedAbiItem: AbiItem | undefined
   // Without `args`, a zero-input overload is the preferred pick, but the other
@@ -370,10 +374,9 @@ export function fromAbi<
   })()
 
   if (!abiItem) throw new NotFoundError({ name: name as string })
-  return {
-    ...abiItem,
-    ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-  } as never
+  return (
+    prepare ? { ...abiItem, hash: getSignatureHash(abiItem) } : { ...abiItem }
+  ) as never
 }
 
 export declare namespace fromAbi {
