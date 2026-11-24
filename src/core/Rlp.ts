@@ -467,13 +467,18 @@ function encode(
     return prefix(body.length / 2, 0xc0) + body
   }
   let hex = typeof value === 'string' ? hexLeaf(value) : undefined
-  // Bytes, and strings `hexLeaf` does not take, read as before: a string as
-  // `Bytes.fromHex` reads it, which throws on a character that is not hex.
-  hex ??= Hex.fromBytes(
-    typeof value === 'string'
-      ? Bytes.fromHex(value as Hex.Hex)
-      : (value as Bytes.Bytes),
-  ).slice(2)
+  if (hex === undefined) {
+    // Bytes, and strings `hexLeaf` does not take, read as before: a string as
+    // `Bytes.fromHex` reads it, which throws on a character that is not hex.
+    const bytes =
+      typeof value === 'string'
+        ? Bytes.fromHex(value as Hex.Hex)
+        : (value as Bytes.Bytes)
+    // A leaf that is neither hex nor bytes, such as a number, has no length
+    // and throws here, as before, instead of encoding as an empty string.
+    getSizeOfLength(bytes.length)
+    hex = Hex.fromBytes(bytes).slice(2)
+  }
   // A single byte below `0x80` is its own encoding.
   if (hex.length === 2 && hex < '80') return hex
   return prefix(hex.length / 2, 0x80) + hex

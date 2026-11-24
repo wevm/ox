@@ -518,6 +518,16 @@ describe('hex leaves', () => {
     )
   })
 
+  test('a leaf that is neither hex nor bytes throws', () => {
+    // Encoded as an empty string, it would let a transaction with a mistyped
+    // `to` or `data` serialize and hash without one.
+    for (const leaf of [0, 1n, true, {}]) {
+      const value = ['0x01', [leaf]] as never
+      expect(() => Rlp.fromHex(value)).toThrow('Length is too large.')
+      expect(() => Rlp.fromBytes(value)).toThrow('Length is too large.')
+    }
+  })
+
   test('decode to lowercase hex, from hex or bytes', () => {
     const encoded = Rlp.fromHex([
       '0xabcdef',

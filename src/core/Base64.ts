@@ -247,7 +247,8 @@ export declare namespace fromString {
  */
 export function toBytes(value: string): Bytes.Bytes {
   let size = value.length
-  while (size > 0 && value.charCodeAt(size - 1) === 61 /* = */) size--
+  // Reads at least once, so a value that is not a string throws, as before.
+  while (value.charCodeAt(size - 1) === 61 /* = */) size--
 
   const decoded = new Uint8Array((size >> 2) * 3 + (size % 4 && (size % 4) - 1))
   for (let i = 0, j = 0, bits = 0, x = 0; i < size; i++) {
