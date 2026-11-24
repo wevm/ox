@@ -454,6 +454,70 @@ export function properties(lib: Lib): Property[] {
       },
     })
     add({
+      id: 'differential: safe integers to hex and bytes, as numbers and as bigints (against viem)',
+      oracle: 'differential',
+      covers: ['ox/Bytes:fromNumber', 'ox/Hex:fromNumber'],
+      runs: 300,
+      arb: fc
+        .record({
+          size: optional(fc.integer({ min: 1, max: 32 })),
+          signed: fc.boolean(),
+        })
+        .chain(({ size, signed: signed_ }) => {
+          const signed = signed_ && size !== undefined
+          const bits = Math.min((size ?? 7) * 8, 53)
+          return fc.record({
+            size: fc.constant(size),
+            signed: fc.constant(signed),
+            // Numbers in range for the size, any safe integer, and the edges.
+            value: fc.oneof(
+              (signed ? int(bits) : uint(bits)).map(Number),
+              fc.maxSafeInteger(),
+              fc.constantFrom(
+                0,
+                1,
+                -1,
+                2 ** 31,
+                -(2 ** 31),
+                Number.MAX_SAFE_INTEGER,
+                Number.MIN_SAFE_INTEGER,
+              ),
+            ),
+          })
+        }),
+      check({ value, size, signed }) {
+        // A safe integer encodes the same as a number (without BigInt for
+        // most sizes) and as a bigint, or is rejected as both.
+        const options = { size, signed }
+        const bytes = tolerant('ox/Bytes:fromNumber', value, options)
+        same(
+          'ox/Bytes:fromNumber',
+          bytes,
+          tolerant('ox/Bytes:fromNumber', BigInt(value), options),
+          `Bytes.fromNumber(${value}) against Bytes.fromNumber(${value}n)`,
+        )
+        const hex = tolerant('ox/Hex:fromNumber', value, options)
+        same(
+          'ox/Hex:fromNumber',
+          hex,
+          tolerant('ox/Hex:fromNumber', BigInt(value), options),
+          `Hex.fromNumber(${value}) against Hex.fromNumber(${value}n)`,
+        )
+        vote(
+          'ox/Bytes:fromNumber',
+          bytes?.value,
+          { viem: attempt(() => viem.numberToBytes(value, options)) },
+          'Bytes.fromNumber',
+        )
+        vote(
+          'ox/Hex:fromNumber',
+          hex?.value,
+          { viem: attempt(() => viem.numberToHex(value, options)) },
+          'Hex.fromNumber',
+        )
+      },
+    })
+    add({
       id: 'consistency: empty hex and bytes read as zero or are rejected alike',
       oracle: 'consistency',
       covers: [
