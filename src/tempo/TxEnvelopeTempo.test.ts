@@ -5,6 +5,7 @@ import {
   P256,
   Rlp,
   Secp256k1,
+  TransactionEnvelope,
   Value,
   WebAuthnP256,
 } from 'ox'
@@ -871,6 +872,40 @@ describe('deserialize', () => {
       )
     })
 
+    test('invalid transaction (calls or authorization not a list)', () => {
+      const serialize = (calls: unknown, authorizationList: unknown) =>
+        `0x76${Rlp.fromHex([
+          '0x01', // chainId
+          '0x01', // maxPriorityFeePerGas
+          '0x01', // maxFeePerGas
+          '0x01', // gas
+          calls as never,
+          '0x', // accessList
+          '0x', // nonceKey
+          '0x', // nonce
+          '0x', // validBefore
+          '0x', // validAfter
+          '0x', // feeToken
+          '0x', // feePayerSignature
+          authorizationList as never,
+        ]).slice(2)}` as const
+      const call = [address, '0x', '0x']
+      for (const [calls, authorizationList] of [
+        ['0x7f', []], // calls is a string
+        [['0x7f'], []], // a call is a string
+        [[call], '0x01'], // authorizationList is a string
+        [[call], [['0x01']]], // an authorization is missing fields
+      ] as const)
+        expect(() =>
+          TxEnvelopeTempo.deserialize(serialize(calls, authorizationList)),
+        ).toThrowError(TransactionEnvelope.InvalidSerializedError)
+
+      // An empty authorization list may also be the empty string.
+      expect(
+        TxEnvelopeTempo.deserialize(serialize([call], '0x')).calls,
+      ).toEqual([{ to: address }])
+    })
+
     test('invalid transaction (too many fields with signature)', () => {
       expect(() =>
         TxEnvelopeTempo.deserialize(
@@ -903,6 +938,51 @@ describe('deserialize', () => {
         [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
 
         Serialized Transaction: "0x76ec01010101d8d7940000000000000000000000000000000000000000008080000080808080c0c0821234825678"]
+      `)
+    })
+
+    test('invalid transaction (malformed field)', () => {
+      // An authorization tuple with missing fields.
+      expect(() =>
+        TxEnvelopeTempo.deserialize('0x76d101808080c4c3808080c08080808080c001'),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
+
+        Serialized Transaction: "0x76d101808080c4c3808080c08080808080c001"
+
+        Details: Cannot convert undefined to a BigInt]
+      `)
+      // A list where a call's value goes.
+      expect(() =>
+        TxEnvelopeTempo.deserialize(
+          `0x76${Rlp.fromHex([
+            Hex.fromNumber(1), // chainId
+            Hex.fromNumber(1), // maxPriorityFeePerGas
+            Hex.fromNumber(1), // maxFeePerGas
+            Hex.fromNumber(1), // gas
+            [
+              [
+                '0x0000000000000000000000000000000000000000',
+                ['0x01', '0x02'],
+                '0x',
+              ],
+            ], // calls
+            '0x', // accessList
+            Hex.fromNumber(0), // nonceKey
+            Hex.fromNumber(0), // nonce
+            '0x', // validBefore
+            '0x', // validAfter
+            '0x', // feeToken
+            '0x', // feePayerSignature
+            [], // authorizationList
+          ]).slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
+
+        Serialized Transaction: "0x76e701010101dad9940000000000000000000000000000000000000000c201028080000080808080c0"
+
+        Details: Cannot convert 0x01,0x02 to a BigInt]
       `)
     })
   })
