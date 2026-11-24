@@ -99,9 +99,10 @@ export function to<
 
 /** @internal */
 export declare namespace to {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (to extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
-    | (to extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    Bytes: RecursiveArray<Bytes.Bytes>
+    Hex: RecursiveArray<Hex.Hex>
+  }[to]
 
   type ErrorType =
     | Bytes.fromHex.ErrorType
@@ -327,9 +328,10 @@ export declare namespace from {
     as: as | 'Hex' | 'Bytes'
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Hex.fromBytes.ErrorType
@@ -361,16 +363,12 @@ export function fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
 }
 
 export declare namespace fromBytes {
-  // `from.Options` and `from.ReturnType` written out, which costs `Parameters` and `ReturnType`
-  // a third fewer type instantiations than mapping and aliasing them.
   type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = {
     /** The type to convert the RLP value to. */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = as extends 'Bytes'
-    ? Bytes.Bytes
-    : Hex.Hex
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = from.ReturnType<as>
 
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
@@ -399,16 +397,12 @@ export function fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace fromHex {
-  // `from.Options` and `from.ReturnType` written out, which costs `Parameters` and `ReturnType`
-  // a third fewer type instantiations than mapping and aliasing them.
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** The type to convert the RLP value to. */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = as extends 'Bytes'
-    ? Bytes.Bytes
-    : Hex.Hex
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = from.ReturnType<as>
 
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }

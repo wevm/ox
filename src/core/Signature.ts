@@ -3,7 +3,7 @@ import { DER } from '@noble/curves/abstract/weierstrass'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import type { Compute, ExactPartial, OneOf } from './internal/types.js'
+import type { ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
 
@@ -16,19 +16,17 @@ export type Signature<
   recovered extends boolean = true,
   bigintType = bigint,
   numberType = number,
-> = Compute<
-  recovered extends true
-    ? {
-        r: bigintType
-        s: bigintType
-        yParity: numberType
-      }
-    : {
-        r: bigintType
-        s: bigintType
-        yParity?: numberType | undefined
-      }
->
+> = recovered extends true
+  ? {
+      r: bigintType
+      s: bigintType
+      yParity: numberType
+    }
+  : {
+      r: bigintType
+      s: bigintType
+      yParity?: numberType | undefined
+    }
 
 /** RPC-formatted ECDSA signature. */
 export type Rpc<recovered extends boolean = true> = Signature<

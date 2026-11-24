@@ -56,9 +56,7 @@ export declare namespace createKeyPair {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> = {
-    privateKey:
-      | (as extends 'Bytes' ? Bytes.Bytes : never)
-      | (as extends 'Hex' ? Hex.Hex : never)
+    privateKey: { Bytes: Bytes.Bytes; Hex: Hex.Hex }[as]
     publicKey: PublicKey.PublicKey
   }
 
@@ -167,9 +165,10 @@ export declare namespace fromSeed {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Bytes.from.ErrorType
@@ -270,9 +269,10 @@ export declare namespace getSharedSecret {
     publicKey: PublicKey.PublicKey<boolean>
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType =
     | Hex.fromBytes.ErrorType
@@ -312,9 +312,10 @@ export declare namespace randomPrivateKey {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }

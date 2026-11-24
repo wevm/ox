@@ -154,9 +154,10 @@ export declare namespace toPrivateKey {
     passphrase?: string | undefined
   }
 
-  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -195,9 +196,10 @@ export declare namespace toSeed {
     passphrase?: string | undefined
   }
 
-  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = Errors.GlobalErrorType
 }

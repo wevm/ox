@@ -129,9 +129,10 @@ export declare namespace decrypt {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    Bytes: Bytes.Bytes
+    Hex: Hex.Hex
+  }[as]
 
   type ErrorType = InvalidKeySizeError | Errors.GlobalErrorType
 }
