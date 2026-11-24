@@ -327,6 +327,18 @@ describe('fromHex', () => {
       `[BaseError: Invalid byte sequence ("gh" in "abcdefgh").]`,
     )
   })
+
+  test('error: no 0x prefix', () => {
+    for (const value of ['abcd', 'zz', '0XAB', '0', ''])
+      expect(() => Bytes.fromHex(value as Hex.Hex)).toThrowError(
+        'must start with "0x"',
+      )
+    expect(() =>
+      Bytes.fromHex('abcd' as Hex.Hex),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Hex value \`abcd\` must start with "0x".]`,
+    )
+  })
 })
 
 describe('fromNumber', () => {

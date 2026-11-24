@@ -1735,6 +1735,38 @@ export function properties(lib: Lib): Property[] {
       },
     })
     add({
+      id: 'differential: RLP encoding of malformed hex leaves (against ethers)',
+      oracle: 'differential',
+      covers: ['ox/Rlp:fromHex', 'ox/Rlp:from'],
+      runs: 200,
+      arb: fc
+        .tuple(
+          rlpArb,
+          // Leaves without `0x`, with an uppercase `0X`, or with a character
+          // that is not hex. (ox reads an odd number of digits on purpose.)
+          fc.constantFrom('zz', 'abcd', '0', '', 'x0', '0X01', '0xzz', '0x1g'),
+          fc.boolean(),
+        )
+        .map(
+          ([value, leaf, first]): Rlp =>
+            first ? [leaf, value] : [value, [leaf]],
+        ),
+      check(value) {
+        if (attempt(() => ethers.encodeRlp(value)) !== undefined) return
+        rejects(
+          'ox/Rlp:fromHex',
+          `a malformed hex leaf in ${show(value)}`,
+          value,
+        )
+        rejects(
+          'ox/Rlp:from',
+          `a malformed hex leaf in ${show(value)}`,
+          value,
+          { as: 'Hex' },
+        )
+      },
+    })
+    add({
       id: 'round trip: RLP through a cursor',
       oracle: 'round trip',
       covers: [

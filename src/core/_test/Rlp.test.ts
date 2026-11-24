@@ -499,16 +499,8 @@ describe('non-canonical encoding', () => {
 })
 
 describe('hex leaves', () => {
-  test('encode like their bytes: any case, odd length, without `0x`', () => {
-    const leaves = [
-      '0xABcd',
-      '0x1',
-      '0x0',
-      '0x',
-      '0x7F',
-      '0x80',
-      'abcd',
-    ] as Hex.Hex[]
+  test('encode like their bytes: any case, odd length', () => {
+    const leaves = ['0xABcd', '0x1', '0x0', '0x', '0x7F', '0x80'] as Hex.Hex[]
     const bytes = leaves.map((leaf) => Bytes.fromHex(leaf))
     expect(Rlp.fromHex([...leaves, [...leaves]])).toEqual(
       Rlp.fromBytes([...bytes, [...bytes]], { as: 'Hex' }),
@@ -518,6 +510,11 @@ describe('hex leaves', () => {
     )
     expect(() => Rlp.fromHex(['0x0g'])).toThrowErrorMatchingInlineSnapshot(
       `[BaseError: Invalid byte sequence ("0g" in "0g").]`,
+    )
+    expect(() =>
+      Rlp.fromHex(['0x01', 'abcd' as Hex.Hex]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Hex value \`abcd\` must start with "0x".]`,
     )
   })
 

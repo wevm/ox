@@ -206,6 +206,9 @@ export declare namespace fromBoolean {
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
+  // Without this, the first two characters would be read as `0x`.
+  if (value.charCodeAt(0) !== 48 || value.charCodeAt(1) !== 120)
+    throw new Errors.BaseError(`Hex value \`${value}\` must start with "0x".`)
   const { size } = options
   if (size) internal_hex.assertSize(value, size)
 
