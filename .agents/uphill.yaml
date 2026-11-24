@@ -448,7 +448,10 @@ coverage:
 # ConstructorParameters and InstanceType, a type at its defaults or constraints, plus one level of
 # members. Each is checked in a fresh program with tsconfig.base.json's options, minus a baseline
 # that only imports the entry. It writes times, so Uphill runs it 5 times: about 2 minutes at
-# UPHILL_CONCURRENCY=1.
+# UPHILL_CONCURRENCY=1. It needs Node 26 or later on PATH, whose V8 reports the bytes a check
+# allocates (`total_allocated_bytes`); on earlier Node the workers stop and say so. Counting with
+# `v8.GCProfiler` instead gives 0.45 to 0.93 times V8's count, so check-memory would not compare
+# with its targets.
 types:
   run: bun .agents/metrics/types.ts
   timeout: 15m
