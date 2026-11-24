@@ -1,4 +1,4 @@
-import { Bytes } from 'ox'
+import { Bytes, Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('assert', () => {
@@ -821,6 +821,52 @@ describe('fromNumber', () => {
         '[Hex.IntegerOutOfRangeError: Number `-170141183460469231731687303715884105729n` is not in safe 128-bit signed integer range (`-170141183460469231731687303715884105728n` to `170141183460469231731687303715884105727n`)]',
       )
     })
+  })
+
+  test('behavior: writes the bytes of `Hex.fromNumber`', () => {
+    const values = [
+      0,
+      1,
+      255,
+      256,
+      65_535,
+      65_536,
+      2 ** 48 - 1,
+      2 ** 48,
+      2 ** 53 - 1,
+      2 ** 53,
+      -1,
+      -128,
+      -129,
+      255n,
+      256n,
+      -1n,
+      -128n,
+      -129n,
+      2n ** 64n,
+      2n ** 600n + 1n,
+    ]
+    const sizes = [undefined, 1, 2, 6, 7, 8, 32]
+    for (const value of values)
+      for (const size of sizes)
+        for (const signed of [undefined, true]) {
+          const options = size ? { size, signed } : { signed: undefined }
+          const expected = (() => {
+            try {
+              return Bytes.fromHex(Hex.fromNumber(value, options))
+            } catch (error) {
+              return (error as Error).message
+            }
+          })()
+          const actual = (() => {
+            try {
+              return Bytes.fromNumber(value, options)
+            } catch (error) {
+              return (error as Error).message
+            }
+          })()
+          expect(actual).toEqual(expected)
+        }
   })
 })
 

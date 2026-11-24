@@ -285,10 +285,35 @@ export declare namespace fromHex {
  */
 export function fromNumber(
   value: bigint | number,
-  options?: fromNumber.Options | undefined,
+  options: fromNumber.Options = {},
 ) {
-  const hex = Hex.fromNumber(value, options)
-  return fromHex(hex)
+  const { signed, size } = options
+  // An unsigned safe integer that fits `size` is written in base 256, without
+  // BigInt.
+  if (
+    typeof value === 'number' &&
+    !signed &&
+    Number.isSafeInteger(value) &&
+    value >= 0 &&
+    (!size ||
+      (Number.isSafeInteger(size) &&
+        size > 0 &&
+        (size > 6 || value < 2 ** (size * 8))))
+  ) {
+    let length = size || 1
+    if (!size) for (let v = value; v >= 256; v = Math.floor(v / 256)) length++
+    const bytes = new Uint8Array(length)
+    for (let i = length - 1, v = value; v > 0; i--, v = Math.floor(v / 256))
+      bytes[i] = v % 256
+    return bytes
+  }
+  // Otherwise the digits `Hex.fromNumber` writes, as bytes, without decoding
+  // hex.
+  const hex = internal_hex.toUnsigned(value, signed, size).toString(16)
+  const bytes = new Uint8Array(size || (hex.length + 1) >> 1)
+  for (let i = bytes.length - 1, j = hex.length; j > 0; i--, j -= 2)
+    bytes[i] = Number.parseInt(hex.slice(Math.max(j - 2, 0), j), 16)
+  return bytes
 }
 
 export declare namespace fromNumber {

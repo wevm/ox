@@ -18,6 +18,46 @@ export declare namespace assertSize {
     | Errors.GlobalErrorType
 }
 
+/**
+ * `value` checked against the range that `signed` and `size` give it, as the
+ * non-negative value whose digits `Hex.fromNumber` writes: two's complement
+ * when `value` is negative. `Bytes.fromNumber` writes the same digits as bytes.
+ *
+ * @internal
+ */
+export function toUnsigned(
+  value: number | bigint,
+  signed: boolean | undefined,
+  size: number | undefined,
+): bigint {
+  const value_ = BigInt(value)
+
+  let maxValue: bigint | number | undefined
+  if (size) {
+    if (signed) maxValue = (1n << (BigInt(size) * 8n - 1n)) - 1n
+    else maxValue = 2n ** (BigInt(size) * 8n) - 1n
+  } else if (typeof value === 'number') {
+    maxValue = BigInt(Number.MAX_SAFE_INTEGER)
+  }
+
+  // Negative values need a `size` to encode as two's complement.
+  const minValue =
+    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
+
+  if ((maxValue && value_ > maxValue) || value_ < minValue) {
+    const suffix = typeof value === 'bigint' ? 'n' : ''
+    throw new Hex.IntegerOutOfRangeError({
+      max: maxValue ? `${maxValue}${suffix}` : undefined,
+      min: `${minValue}${suffix}`,
+      signed,
+      size,
+      value: `${value}${suffix}`,
+    })
+  }
+
+  return signed && value_ < 0 ? BigInt.asUintN(size! * 8, value_) : value_
+}
+
 /** @internal */
 export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > Hex.size(value) - 1)

@@ -276,8 +276,11 @@ export function fromNumber(
     value >= 0 &&
     (!size || size > 6)
   ) {
-    const hex = `0x${value.toString(16)}` as Hex
-    return size ? padLeft(hex, size) : hex
+    const hex = value.toString(16)
+    if (!size) return `0x${hex}`
+    // A safe integer has at most 14 digits, so a whole `size` above 6 fits it.
+    if (Number.isSafeInteger(size)) return `0x${hex.padStart(size * 2, '0')}`
+    return padLeft(`0x${hex}`, size)
   }
 
   return fromNumberChecked(value, signed, size)
@@ -290,36 +293,8 @@ function fromNumberChecked(
   signed: boolean | undefined,
   size: number | undefined,
 ): Hex {
-  const value_ = BigInt(value)
-
-  let maxValue: bigint | number | undefined
-  if (size) {
-    if (signed) maxValue = (1n << (BigInt(size) * 8n - 1n)) - 1n
-    else maxValue = 2n ** (BigInt(size) * 8n) - 1n
-  } else if (typeof value === 'number') {
-    maxValue = BigInt(Number.MAX_SAFE_INTEGER)
-  }
-
-  // Negative values need a `size` to encode as two's complement.
-  const minValue =
-    size && typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
-
-  if ((maxValue && value_ > maxValue) || value_ < minValue) {
-    const suffix = typeof value === 'bigint' ? 'n' : ''
-    throw new IntegerOutOfRangeError({
-      max: maxValue ? `${maxValue}${suffix}` : undefined,
-      min: `${minValue}${suffix}`,
-      signed,
-      size,
-      value: `${value}${suffix}`,
-    })
-  }
-
-  const stringValue = (
-    signed && value_ < 0 ? BigInt.asUintN(size! * 8, BigInt(value_)) : value_
-  ).toString(16)
-
-  const hex = `0x${stringValue}` as Hex
+  const hex =
+    `0x${internal.toUnsigned(value, signed, size).toString(16)}` as Hex
   if (size) return padLeft(hex, size) as Hex
   return hex
 }
