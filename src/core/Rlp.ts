@@ -5,6 +5,7 @@ import * as internal_bytes from './internal/bytes.js'
 import {
   assertHexBytes,
   bytesToHex,
+  hexes,
   nibbleTable,
 } from './internal/codec/hex.js'
 import * as Cursor from './internal/cursor.js'
@@ -468,12 +469,16 @@ export function from<as extends 'Hex' | 'Bytes'>(
   // intermediate `Uint8Array` and round-tripping through `Hex.fromBytes`.
   // This is the dominant shape for transaction envelope serialize.
   if (as === 'Hex' && isAllHex(value)) {
-    const parts: string[] = []
+    const parts: string[] = ['0x']
     writeEncodedHex(parts, value as RecursiveArray<Hex.Hex>, {
       lengths: ctx.lengths,
       cursor: 0,
     })
-    return `0x${parts.join('')}` as from.ReturnType<as>
+    // Joining gives a flat string, which one regular-expression scan
+    // validates faster than a check of each leaf.
+    const hex = parts.join('')
+    if (!hexRegex.test(hex)) throw invalidNibble(findInvalidLeaf(value)!)
+    return hex as from.ReturnType<as>
   }
 
   const bytes = new Uint8Array(totalLength)
@@ -824,6 +829,8 @@ function validateHexLeaf(hex: string): asserts hex is Hex.Hex {
  * @internal
  */
 function writeHexLeaf(bytes: Uint8Array, offset: number, hex: Hex.Hex): number {
+  if (hex.charCodeAt(0) !== 48 || hex.charCodeAt(1) !== 120)
+    throw invalidNibble(hex)
   const dataStart = 2
   let byteLen = (hex.length - 2) >> 1
   let highNibbleFromOddPad = false
@@ -841,16 +848,14 @@ function writeHexLeaf(bytes: Uint8Array, offset: number, hex: Hex.Hex): number {
 
   // Single-byte fast path: if the byte < 0x80, write it as-is (no prefix).
   if (byteLen === 1) {
-    let byte: number
-    if (highNibbleFromOddPad) {
-      byte = internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart)) ?? 0
-    } else {
-      const high =
-        internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart)) ?? 0
-      const low =
-        internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart + 1)) ?? 0
-      byte = (high << 4) | low
-    }
+    const high = highNibbleFromOddPad
+      ? 0
+      : internal_bytes.charCodeToBase16(hex.charCodeAt(dataStart))
+    const low = internal_bytes.charCodeToBase16(
+      hex.charCodeAt(highNibbleFromOddPad ? dataStart : dataStart + 1),
+    )
+    if (high === undefined || low === undefined) throw invalidNibble(hex)
+    const byte = (high << 4) | low
     if (byte < 0x80) {
       bytes[offset] = byte
       return offset + 1
@@ -955,8 +960,14 @@ function writeEncodedHex(
     return
   }
 
-  // Hex leaf: even-pad odd-nibble inputs and skip the `0x` prefix.
+  // Hex leaf: even-pad odd-nibble inputs and skip the `0x` prefix. A leaf
+  // without the prefix writes an `x`, and an invalid digit is copied as is, so
+  // validation in `from` fails and reports the first invalid leaf in order.
   const hex = value as string
+  if (hex.charCodeAt(0) !== 48 || hex.charCodeAt(1) !== 120) {
+    parts.push('x')
+    return
+  }
   const odd = (hex.length & 1) === 1
   const body = odd ? `0${hex.slice(2)}` : hex.slice(2)
   const byteLen = body.length >> 1
@@ -986,9 +997,26 @@ function writeEncodedHex(
   parts.push(body)
 }
 
-const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
-  i.toString(16).padStart(2, '0'),
-)
+/**
+ * Returns the first leaf, in encoding order, that is not a valid hex string.
+ *
+ * @internal
+ */
+function findInvalidLeaf(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+): Hex.Hex | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const leaf = findInvalidLeaf(item)
+      if (leaf !== undefined) return leaf
+    }
+    return undefined
+  }
+  if (typeof value === 'string' && !hexRegex.test(value)) return value
+  return undefined
+}
+
+const hexRegex = /^0x[0-9a-fA-F]*$/
 
 /**
  * Returns the big-endian hex encoding of `value` in `size` bytes.
@@ -1028,8 +1056,8 @@ function writeBigEndian(
   return offset + size
 }
 
-function invalidNibble(hex: Hex.Hex): Errors.BaseError {
-  return new Errors.BaseError(`Invalid hex string \`${hex}\`.`)
+function invalidNibble(hex: Hex.Hex): Hex.InvalidHexValueError {
+  return new Hex.InvalidHexValueError(hex)
 }
 
 /** Thrown when an RLP value nests deeper than the decode depth limit. */
