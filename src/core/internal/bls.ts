@@ -1,6 +1,6 @@
-import { mapHashToField } from '@noble/curves/abstract/modular.js'
 import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 import { randomBytes } from '@noble/hashes/utils.js'
+import { mapToSecretKey } from './curves.js'
 import { type Bls, type Complete, overrides } from './engine.js'
 
 /**
@@ -44,7 +44,7 @@ const seedLength = 48
 
 // What noble's `utils.randomSecretKey` does, without bundling the curve.
 const randomSecretKeyDefault: Complete<Bls>['randomSecretKey'] = () =>
-  mapHashToField(randomBytes(seedLength), order)
+  mapToSecretKey(randomBytes(seedLength), order)
 
 const signDefault: Complete<Bls>['sign'] = (payload, privateKey, options) => {
   const { dst, group } = options
