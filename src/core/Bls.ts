@@ -1,5 +1,10 @@
+import {
+  getMinHashLength,
+  mapHashToField,
+} from '@noble/curves/abstract/modular'
 import type { ProjPointType } from '@noble/curves/abstract/weierstrass'
 import { bls12_381 as bls } from '@noble/curves/bls12-381'
+import { randomBytes } from '@noble/hashes/utils'
 
 import type * as BlsPoint from './BlsPoint.js'
 import * as Bytes from './Bytes.js'
@@ -11,6 +16,10 @@ export type Size = 'short-key:long-sig' | 'long-key:short-sig'
 
 /** Re-export of noble/curves BLS12-381 utilities. */
 export const noble = bls
+
+/** Order of the BLS12-381 group, which private keys are reduced into. */
+const order =
+  0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n
 
 /**
  * Aggregates a set of BLS points that are either on the G1 or G2 curves (ie. public keys or signatures).
@@ -373,7 +382,8 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = bls.utils.randomPrivateKey()
+  // What noble's `utils.randomPrivateKey` does, without bundling the curve.
+  const bytes = mapHashToField(randomBytes(getMinHashLength(order)), order)
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }

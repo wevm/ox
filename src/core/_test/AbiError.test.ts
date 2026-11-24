@@ -1145,6 +1145,25 @@ describe('getSelector', () => {
   })
 })
 
+describe('solidityError', () => {
+  test('default: equals what `from` returns', () => {
+    expect(AbiError.solidityError).toEqual(
+      AbiError.from('error Error(string message)'),
+    )
+    expect(AbiError.solidityErrorSelector).toBe(
+      AbiError.getSelector(AbiError.solidityError),
+    )
+  })
+})
+
+describe('solidityPanic', () => {
+  test('default: equals what `from` returns', () => {
+    expect(AbiError.solidityPanic).toEqual(
+      AbiError.from('error Panic(uint8 reason)'),
+    )
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(AbiError)).toMatchInlineSnapshot(`
     [

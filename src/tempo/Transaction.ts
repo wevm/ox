@@ -293,13 +293,24 @@ export declare namespace fromRpc {
  * @param transaction - The transaction to convert.
  * @returns An RPC-formatted transaction.
  */
+export function toRpc(
+  transaction: Transaction<false>,
+  options?: toRpc.Options<false>,
+): Rpc<false>
+// Overload for settled transactions first: inferring `pending` through the
+// transaction union costs about 5x the type instantiations of checking it.
 export function toRpc<pending extends boolean = false>(
   transaction: Transaction<pending>,
-  _options?: toRpc.Options<pending>,
-): Rpc<pending> {
+  options?: toRpc.Options<pending>,
+): Rpc<pending>
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function toRpc(
+  transaction: Transaction<boolean>,
+  _options?: toRpc.Options<boolean>,
+): Rpc<boolean> {
   const rpc = ox_Transaction.toRpc(
-    transaction as ox_Transaction.Transaction<pending>,
-  ) as Rpc<pending>
+    transaction as ox_Transaction.Transaction<boolean>,
+  ) as Rpc<boolean>
 
   rpc.type = Object.hasOwn(toRpcType, transaction.type)
     ? toRpcType[transaction.type as keyof typeof toRpcType]
@@ -335,7 +346,7 @@ export function toRpc<pending extends boolean = false>(
   if (typeof transaction.validBefore === 'number')
     rpc.validBefore = Hex.fromNumber(transaction.validBefore)
 
-  return rpc as Rpc<pending>
+  return rpc as Rpc<boolean>
 }
 
 export declare namespace toRpc {

@@ -265,8 +265,10 @@ export declare namespace fromPublicKey {
  * @returns Whether the addresses are equal.
  */
 export function isEqual(addressA: Address, addressB: Address): boolean {
-  assert(addressA, { strict: false })
-  assert(addressB, { strict: false })
+  // Checks the format as `assert` does without `strict`, without bundling `checksum`'s keccak.
+  for (const address of [addressA, addressB])
+    if (internal.classify(address) === 0)
+      throw new InvalidAddressError({ address, cause: new InvalidInputError() })
   return addressA.toLowerCase() === addressB.toLowerCase()
 }
 

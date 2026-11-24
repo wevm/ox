@@ -9,7 +9,8 @@ export const exponents = {
   ether: 18,
 } as const
 
-const decimalNumberRegex = /^(-?)([0-9]*)\.?([0-9]*)$/
+// At least one digit, so `''`, `'.'` and `'-'` are not numbers.
+const decimalNumberRegex = /^-?(?:[0-9]+\.?[0-9]*|\.[0-9]+)$/
 
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
@@ -115,11 +116,14 @@ export declare namespace formatGwei {
 export function from(value: string, decimals = 0) {
   if (!decimalNumberRegex.test(value))
     throw new InvalidDecimalNumberError({ value })
+  if (!Number.isSafeInteger(decimals) || decimals < 0)
+    throw new InvalidDecimalsError({ decimals })
 
   let [integer = '', fraction = '0'] = value.split('.')
 
   const negative = integer.startsWith('-')
-  if (negative) integer = integer.slice(1)
+  // A value such as `-.0` has no integer digits.
+  if (negative) integer = integer.slice(1) || '0'
 
   // trim trailing zeros.
   fraction = trimTrailingZeros(fraction)
@@ -155,7 +159,10 @@ export function from(value: string, decimals = 0) {
 }
 
 export declare namespace from {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidDecimalNumberError
+    | InvalidDecimalsError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -234,5 +241,13 @@ export class InvalidDecimalNumberError extends Errors.BaseError {
   override readonly name = 'Value.InvalidDecimalNumberError'
   constructor({ value }: { value: string }) {
     super(`Value \`${value}\` is not a valid decimal number.`)
+  }
+}
+
+/** Thrown when a number of decimals is not a non-negative integer. */
+export class InvalidDecimalsError extends Errors.BaseError {
+  override readonly name = 'Value.InvalidDecimalsError'
+  constructor({ decimals }: { decimals: number }) {
+    super(`Decimals \`${decimals}\` is not a non-negative integer.`)
   }
 }

@@ -1,5 +1,6 @@
+import { bls12_381 as noble } from '@noble/curves/bls12-381'
 import { Bls, Hex } from 'ox'
-import { describe, expect, it, test } from 'vitest'
+import { describe, expect, it, test, vi } from 'vitest'
 
 const privateKey =
   '0x527f85c60ed7402247da21f1835cea651d0954fc15b7288f096d3608400cb6ac'
@@ -151,6 +152,23 @@ describe('getPublicKey', () => {
 })
 
 describe('randomPrivateKey', () => {
+  it('behavior: same key as noble for the same random bytes', () => {
+    const getRandomValues = vi.spyOn(crypto, 'getRandomValues')
+    try {
+      for (const fill of [0x00, 0x01, 0x7f, 0xff]) {
+        getRandomValues.mockImplementation(
+          <array extends ArrayBufferView | null>(array: array) =>
+            (array as unknown as Uint8Array).fill(fill) as unknown as array,
+        )
+        expect(Bls.randomPrivateKey({ as: 'Bytes' })).toEqual(
+          noble.utils.randomPrivateKey(),
+        )
+      }
+    } finally {
+      getRandomValues.mockRestore()
+    }
+  })
+
   it('default', () => {
     const privateKey = Bls.randomPrivateKey()
     expect(privateKey).toBeDefined()

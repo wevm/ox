@@ -225,8 +225,12 @@ export function readList<to extends 'Hex' | 'Bytes'>(
 ) {
   const position = cursor.position
   const value: decodeRlpCursor.ReturnType<to>[] = []
-  while (cursor.position - position < length)
+  while (cursor.position - position < length) {
+    // Every item takes at least one byte; without this check, empty bytes
+    // (which `decodeRlpCursor` decodes without reading) would loop forever.
+    assertPosition(cursor.bytes, cursor.position)
     value.push(decodeRlpCursor(cursor, to, depth))
+  }
   // Items must consume exactly the declared list length.
   if (cursor.position - position !== length)
     throw new ListBoundaryExceededError({

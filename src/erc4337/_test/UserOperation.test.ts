@@ -1325,6 +1325,72 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('behavior: EntryPoint 0.8 authorization', () => {
+    const userOperation = UserOperation.from({
+      authorization: {
+        address: '0x1234567890123456789012345678901234567890',
+        chainId: 1,
+        nonce: 69n,
+        r: 1n,
+        s: 2n,
+        yParity: 1,
+      },
+      callData: '0xdeadbeef',
+      callGasLimit: 300_000n,
+      maxFeePerGas: 100_000n,
+      maxPriorityFeePerGas: 100_000n,
+      nonce: 0n,
+      preVerificationGas: 100_000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: 100_000n,
+    })
+    const rpc = UserOperation.toRpc(userOperation)
+    expect(rpc.eip7702Auth).toMatchInlineSnapshot(`
+      {
+        "address": "0x1234567890123456789012345678901234567890",
+        "chainId": "0x1",
+        "nonce": "0x45",
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": "0x1",
+      }
+    `)
+    expect(UserOperation.fromRpc(rpc)).toEqual(userOperation)
+  })
+
+  test('behavior: EntryPoint 0.6', () => {
+    expect(
+      UserOperation.toRpc({
+        callData: '0xdeadbeef',
+        callGasLimit: 300_000n,
+        initCode: '0xdeadbeef',
+        maxFeePerGas: 100_000n,
+        maxPriorityFeePerGas: 100_000n,
+        nonce: 0n,
+        paymasterAndData: '0x1234567890123456789012345678901234567890deadbeef',
+        preVerificationGas: 100_000n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 100_000n,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": "0x493e0",
+        "initCode": "0xdeadbeef",
+        "maxFeePerGas": "0x186a0",
+        "maxPriorityFeePerGas": "0x186a0",
+        "nonce": "0x0",
+        "paymasterAndData": "0x1234567890123456789012345678901234567890deadbeef",
+        "preVerificationGas": "0x186a0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x186a0",
+      }
+    `)
+  })
 })
 
 describe('toTypedData', () => {

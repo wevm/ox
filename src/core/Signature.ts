@@ -1,10 +1,15 @@
-import { secp256k1 } from '@noble/curves/secp256k1'
+import { aInRange } from '@noble/curves/abstract/utils'
+import { DER } from '@noble/curves/abstract/weierstrass'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Compute, ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
+
+/** Order of the secp256k1 group, which bounds `r` and `s`. */
+const order =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
 
 /** Root type for an ECDSA signature. */
 export type Signature<
@@ -363,7 +368,10 @@ export declare namespace fromDerBytes {
  * @returns The {@link ox#Signature.Signature}.
  */
 export function fromDerHex(signature: Hex.Hex): Signature<false> {
-  const { r, s } = secp256k1.Signature.fromDER(Hex.from(signature).slice(2))
+  // What noble's `Signature.fromDER` does, without bundling the curve.
+  const { r, s } = DER.toSig(Hex.from(signature).slice(2))
+  aInRange('r', r, 1n, order)
+  aInRange('s', s, 1n, order)
   return { r, s }
 }
 
@@ -564,8 +572,7 @@ export declare namespace toHex {
  * @returns The DER-encoded signature.
  */
 export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
-  const sig = new secp256k1.Signature(signature.r, signature.s)
-  return sig.toDERRawBytes()
+  return Bytes.fromHex(toDerHex(signature))
 }
 
 export declare namespace toDerBytes {
@@ -592,8 +599,10 @@ export declare namespace toDerBytes {
  * @returns The DER-encoded signature.
  */
 export function toDerHex(signature: Signature<boolean>): Hex.Hex {
-  const sig = new secp256k1.Signature(signature.r, signature.s)
-  return `0x${sig.toDERHex()}`
+  // What noble's `Signature.toDERHex` does, without bundling the curve.
+  aInRange('r', signature.r, 1n, order)
+  aInRange('s', signature.s, 1n, order)
+  return `0x${DER.hexFromSig(signature)}`
 }
 
 export declare namespace toDerHex {

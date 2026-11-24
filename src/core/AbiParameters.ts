@@ -243,7 +243,9 @@ export declare namespace encode {
  * @returns The encoded packed data.
  */
 export function encodePacked<
-  const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
+  // Not `readonly PackedAbiType[]`: checking `Values` against that union costs about 8x the type
+  // instantiations of the whole call.
+  const packedAbiTypes extends readonly unknown[],
 >(types: packedAbiTypes, values: encodePacked.Values<packedAbiTypes>): Hex.Hex {
   if (types.length !== values.length)
     throw new LengthMismatchError({
@@ -252,88 +254,91 @@ export function encodePacked<
     })
 
   const data: Hex.Hex[] = []
-  for (let i = 0; i < (types as unknown[]).length; i++) {
+  for (let i = 0; i < types.length; i++) {
     const type = types[i]
     const value = values[i]
-    data.push(encodePacked.encode(type, value))
+    data.push(encodePackedValue(type, value))
   }
   return Hex.concat(...data)
 }
 
-export namespace encodePacked {
+export declare namespace encodePacked {
   export type ErrorType =
     | Hex.concat.ErrorType
     | Hex.InvalidLengthError
     | LengthMismatchError
     | Errors.GlobalErrorType
 
-  export type Values<
-    packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
-  > = {
+  export type Values<packedAbiTypes extends readonly unknown[]> = {
     [key in keyof packedAbiTypes]: packedAbiTypes[key] extends abitype.AbiType
       ? abitype.AbiParameterToPrimitiveType<{ type: packedAbiTypes[key] }>
       : unknown
   }
+}
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  export function encode<const packedAbiType extends PackedAbiType | unknown>(
-    type: packedAbiType,
-    value: Values<[packedAbiType]>[0],
-    isArray = false,
-  ): Hex.Hex {
-    if (type === 'address') {
-      const address = value as Address.Address
-      Address.assert(address)
-      return Hex.padLeft(
-        address.toLowerCase() as Hex.Hex,
-        isArray ? 32 : 0,
-      ) as Address.Address
-    }
-    if (type === 'string') return Hex.fromString(value as string)
-    if (type === 'bytes') {
-      const hex = value as Hex.Hex
-      // An unpaired nibble has no byte to belong to, so reject it instead of
-      // guessing which half of a byte it is.
-      if (hex.length % 2 !== 0) throw new Hex.InvalidLengthError(hex)
-      return hex
-    }
-    if (type === 'bool')
-      return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
-
-    const intMatch = (type as string).match(Solidity.integerRegex)
-    if (intMatch) {
-      const [_type, baseType, bits = '256'] = intMatch
-      const size = Number.parseInt(bits, 10) / 8
-      return Hex.fromNumber(value as number, {
-        size: isArray ? 32 : size,
-        signed: baseType === 'int',
-      })
-    }
-
-    const bytesMatch = (type as string).match(Solidity.bytesRegex)
-    if (bytesMatch) {
-      const [_type, size] = bytesMatch
-      if (Number.parseInt(size!, 10) !== ((value as Hex.Hex).length - 2) / 2)
-        throw new BytesSizeMismatchError({
-          expectedSize: Number.parseInt(size!, 10),
-          value: value as Hex.Hex,
-        })
-      return Hex.padRight(value as Hex.Hex, isArray ? 32 : 0) as Hex.Hex
-    }
-
-    const arrayMatch = (type as string).match(Solidity.arrayRegex)
-    if (arrayMatch && Array.isArray(value)) {
-      const [_type, childType] = arrayMatch
-      const data: Hex.Hex[] = []
-      for (let i = 0; i < value.length; i++) {
-        data.push(encode(childType, value[i], true))
-      }
-      if (data.length === 0) return '0x'
-      return Hex.concat(...data)
-    }
-
-    throw new InvalidTypeError(type as string)
+/**
+ * Packs one value. A plain function rather than a member of the `encodePacked` namespace, which
+ * TypeScript compiles to a top-level IIFE that every bundle importing `AbiParameters` keeps.
+ *
+ * @internal
+ */
+function encodePackedValue(
+  type: unknown,
+  value: unknown,
+  isArray = false,
+): Hex.Hex {
+  if (type === 'address') {
+    const address = value as Address.Address
+    Address.assert(address)
+    return Hex.padLeft(
+      address.toLowerCase() as Hex.Hex,
+      isArray ? 32 : 0,
+    ) as Address.Address
   }
+  if (type === 'string') return Hex.fromString(value as string)
+  if (type === 'bytes') {
+    const hex = value as Hex.Hex
+    // An unpaired nibble has no byte to belong to, so reject it instead of
+    // guessing which half of a byte it is.
+    if (hex.length % 2 !== 0) throw new Hex.InvalidLengthError(hex)
+    return hex
+  }
+  if (type === 'bool')
+    return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
+
+  const intMatch = (type as string).match(Solidity.integerRegex)
+  if (intMatch) {
+    const [_type, baseType, bits = '256'] = intMatch
+    const size = Number.parseInt(bits, 10) / 8
+    return Hex.fromNumber(value as number, {
+      size: isArray ? 32 : size,
+      signed: baseType === 'int',
+    })
+  }
+
+  const bytesMatch = (type as string).match(Solidity.bytesRegex)
+  if (bytesMatch) {
+    const [_type, size] = bytesMatch
+    if (Number.parseInt(size!, 10) !== ((value as Hex.Hex).length - 2) / 2)
+      throw new BytesSizeMismatchError({
+        expectedSize: Number.parseInt(size!, 10),
+        value: value as Hex.Hex,
+      })
+    return Hex.padRight(value as Hex.Hex, isArray ? 32 : 0) as Hex.Hex
+  }
+
+  const arrayMatch = (type as string).match(Solidity.arrayRegex)
+  if (arrayMatch && Array.isArray(value)) {
+    const [_type, childType] = arrayMatch
+    const data: Hex.Hex[] = []
+    for (let i = 0; i < value.length; i++) {
+      data.push(encodePackedValue(childType, value[i], true))
+    }
+    if (data.length === 0) return '0x'
+    return Hex.concat(...data)
+  }
+
+  throw new InvalidTypeError(type as string)
 }
 
 /**

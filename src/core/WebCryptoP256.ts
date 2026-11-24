@@ -1,10 +1,13 @@
-import { p256 } from '@noble/curves/p256'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
+
+/** The order of P-256, written out so that signing and verifying do not bundle noble's curve. */
+const curveOrder =
+  0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
 
 /**
  * Generates an ECDSA P256 key pair that includes:
@@ -245,7 +248,7 @@ export async function sign(
   const signature_bytes = Bytes.fromArray(new Uint8Array(signature))
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
-  if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s
+  if (s > curveOrder / 2n) s = curveOrder - s
   return { r, s }
 }
 
@@ -286,7 +289,7 @@ export async function verify(options: verify.Options): Promise<boolean> {
   const { lowS = true, payload, signature } = options
 
   // Reject high-S signatures if lowS is enabled.
-  if (lowS && signature.s > p256.CURVE.n / 2n) return false
+  if (lowS && signature.s > curveOrder / 2n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
@@ -302,7 +305,10 @@ export async function verify(options: verify.Options): Promise<boolean> {
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes.concat(Bytes.fromNumber(signature.r), Bytes.fromNumber(signature.s)),
+    Bytes.concat(
+      Bytes.fromNumber(signature.r, { size: 32 }),
+      Bytes.fromNumber(signature.s, { size: 32 }),
+    ),
     Bytes.from(payload),
   )
 }

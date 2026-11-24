@@ -1,5 +1,7 @@
 // Vectors from https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 
+import { pbkdf2 } from '@noble/hashes/pbkdf2'
+import { sha256 } from '@noble/hashes/sha2'
 import { Bytes, Hex, Keystore } from 'ox'
 import { describe, expect, test } from 'vitest'
 
@@ -487,6 +489,33 @@ describe('pbkdf2Async', () => {
         "key": null,
       }
     `)
+  })
+
+  test('behavior: matches pbkdf2', async () => {
+    // Compares with noble, which `Keystore.pbkdf2` derives with, rather than calling
+    // `Keystore.pbkdf2`, so the speed bench keeps measuring its default-rounds call.
+    const salt =
+      '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd'
+    for (const password of ['', 'pässwörd 🔑']) {
+      const [key] = await Keystore.pbkdf2Async({
+        iterations: 2,
+        password,
+        salt,
+      })
+      expect(key()).toBe(
+        Hex.fromBytes(
+          pbkdf2(sha256, password, Bytes.fromHex(salt), { c: 2, dkLen: 32 }),
+        ),
+      )
+    }
+  })
+
+  test('error: iterations not a positive integer', async () => {
+    // WebCrypto would truncate 1.5 to 1 while the key records 1.5.
+    for (const iterations of [1.5, 0])
+      await expect(
+        Keystore.pbkdf2Async({ iterations, password: 'testpassword' }),
+      ).rejects.toThrow()
   })
 })
 

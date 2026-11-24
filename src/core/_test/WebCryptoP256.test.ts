@@ -1,4 +1,5 @@
-import { Hex, PublicKey, WebCryptoP256 } from 'ox'
+import { p256 } from '@noble/curves/p256'
+import { Hex, P256, PublicKey, WebCryptoP256 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
@@ -182,6 +183,23 @@ describe('sign', () => {
     expect(signature.r).toBeDefined()
     expect(signature.s).toBeDefined()
   })
+
+  test('behavior: normalizes s to the lower half of the curve order', async () => {
+    // WebCrypto picks a random nonce, so about half of these need normalizing.
+    for (let i = 0; i < 16; i++) {
+      const payload = Hex.fromNumber(i, { size: 32 })
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      expect(signature.s <= p256.CURVE.n / 2n).toBe(true)
+      expect(
+        await WebCryptoP256.verify({
+          lowS: false,
+          payload,
+          publicKey,
+          signature,
+        }),
+      ).toBe(true)
+    }
+  })
 })
 
 describe('verify', () => {
@@ -190,6 +208,21 @@ describe('verify', () => {
     const { r, s } = await WebCryptoP256.sign({ payload, privateKey })
     expect(
       await WebCryptoP256.verify({ publicKey, payload, signature: { r, s } }),
+    ).toBe(true)
+  })
+
+  test('behavior: signature with a leading zero byte', async () => {
+    const privateKey =
+      '0x81f0416b50de27cc34c7047c1a7d5869b69d154c68a88964af38912d17cefd0c'
+    const payload = '0x39'
+    const signature = P256.sign({ hash: true, payload, privateKey })
+    expect(Hex.fromNumber(signature.s, { size: 32 }).slice(0, 4)).toBe('0x00')
+    expect(
+      await WebCryptoP256.verify({
+        payload,
+        publicKey: P256.getPublicKey({ privateKey }),
+        signature,
+      }),
     ).toBe(true)
   })
 })

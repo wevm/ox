@@ -136,8 +136,9 @@ export function toHex(value: string): Hex.Hex {
   }
   if (chunkBase > 1) integer = integer * BigInt(chunkBase) + BigInt(chunk)
 
-  if (!pad) return `0x${integer.toString(16)}` as Hex.Hex
-  return `0x${'0'.repeat(pad * 2)}${integer.toString(16)}` as Hex.Hex
+  // Each leading '1' decodes to a zero byte, and the rest to whole bytes.
+  const hex = integer === 0n ? '' : integer.toString(16)
+  return `0x${'00'.repeat(pad)}${hex.length % 2 ? '0' : ''}${hex}` as Hex.Hex
 }
 
 export declare namespace toHex {

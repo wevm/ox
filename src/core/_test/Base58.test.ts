@@ -11,6 +11,22 @@ describe('fromBytes', () => {
       ),
     ).toBe('2NEpo7TZRRrLZSi2U')
   })
+
+  test('behavior: empty and zero bytes', () => {
+    expect([
+      Base58.fromBytes(new Uint8Array([])),
+      Base58.fromBytes(new Uint8Array([0])),
+      Base58.fromBytes(new Uint8Array([0, 0])),
+      Base58.fromBytes(new Uint8Array([0, 1])),
+    ]).toMatchInlineSnapshot(`
+      [
+        "",
+        "1",
+        "11",
+        "12",
+      ]
+    `)
+  })
 })
 
 describe('fromHex', () => {
@@ -56,6 +72,24 @@ describe('toHex', () => {
     expect(() => Base58.toHex('233QC4I')).toThrowErrorMatchingInlineSnapshot(
       '[Error: invalid base58 character: I]',
     )
+  })
+
+  test('behavior: whole bytes', () => {
+    expect([
+      Base58.toHex(''),
+      Base58.toHex('1'),
+      Base58.toHex('11'),
+      Base58.toHex('G'),
+      Base58.toHex('5T'),
+    ]).toMatchInlineSnapshot(`
+      [
+        "0x",
+        "0x00",
+        "0x0000",
+        "0x0f",
+        "0x0102",
+      ]
+    `)
   })
 })
 

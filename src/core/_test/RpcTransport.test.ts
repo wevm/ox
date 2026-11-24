@@ -267,6 +267,23 @@ describe('fromHttp', () => {
   `)
   })
 
+  test('behavior: malformed json response', async () => {
+    for (const body of ['oops', 'null']) {
+      const server = await createHttpServer((_, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        res.end(body)
+      })
+
+      const transport = RpcTransport.fromHttp(server.url)
+
+      await expect(() =>
+        transport.request({ method: 'eth_accounts' }),
+      ).rejects.toThrow(RpcTransport.MalformedResponseError)
+
+      await server.close()
+    }
+  })
+
   test('behavior: timeout still fires when caller supplies signal', async () => {
     const server = await createHttpServer(async (_, res) => {
       await setTimeout(200)

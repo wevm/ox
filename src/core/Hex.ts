@@ -616,7 +616,8 @@ export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
 
   if (options.size) internal.assertSize(hex, options.size)
 
-  const value = BigInt(hex)
+  // Empty hex reads as zero, as an empty byte string does in RLP.
+  const value = hex === '0x' ? 0n : BigInt(hex)
   if (!signed) return value
   return BigInt.asIntN(size(hex) * 8, value)
 }
@@ -721,7 +722,10 @@ export declare namespace toBytes {
  */
 export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
   const { signed, size } = options
-  const value = !signed && !size ? Number(hex) : Number(toBigInt(hex, options))
+  const value =
+    !signed && !size && hex !== '0x'
+      ? Number(hex)
+      : Number(toBigInt(hex, options))
   if (!Number.isSafeInteger(value))
     throw new IntegerOutOfRangeError({
       max: `${Number.MAX_SAFE_INTEGER}`,

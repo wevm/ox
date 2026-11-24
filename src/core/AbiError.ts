@@ -740,29 +740,39 @@ export const panicReasons = {
   81: 'Attempted to call a zero-initialized variable of internal function type.',
 } as Record<number, string>
 
-export const solidityError = /*#__PURE__*/ from({
-  inputs: [
-    {
-      name: 'message',
-      type: 'string',
-    },
-  ],
+type SolidityError = {
+  readonly inputs: readonly [
+    { readonly name: 'message'; readonly type: 'string' },
+  ]
+  readonly name: 'Error'
+  readonly type: 'error'
+}
+// Written out with the signature hash `from` adds, and typed as `from` returns it, so using it
+// neither parses nor hashes anything (nor bundles the parser and keccak).
+export const solidityError = {
+  hash: '0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa',
+  inputs: [{ name: 'message', type: 'string' }],
   name: 'Error',
   type: 'error',
-})
+} as SolidityError
 
 export const solidityErrorSelector = '0x08c379a0'
 
-export const solidityPanic = /*#__PURE__*/ from({
-  inputs: [
-    {
-      name: 'reason',
-      type: 'uint8',
-    },
-  ],
+type SolidityPanic = {
+  readonly inputs: readonly [
+    { readonly name: 'reason'; readonly type: 'uint8' },
+  ]
+  readonly name: 'Panic'
+  readonly type: 'error'
+}
+// Written out like `solidityError`. The hash is of `Panic(uint8)`, as `from` computes it, not the
+// `Panic(uint256)` selector: `uint8` makes the code decode as a number.
+export const solidityPanic = {
+  hash: '0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc',
+  inputs: [{ name: 'reason', type: 'uint8' }],
   name: 'Panic',
   type: 'error',
-})
+} as SolidityPanic
 
 export const solidityPanicSelector = '0x4e487b71'
 

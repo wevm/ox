@@ -27,20 +27,22 @@ export class BaseError<
   override cause: cause
   override name = 'BaseError'
 
-  static defaultStaticOptions = {
-    docsOrigin: 'https://oxlib.sh',
-    showVersion: false,
-    version: `ox@${getVersion()}`,
-  } satisfies BaseError.GlobalOptions
+  // A getter, and defaults read in the constructor rather than installed on the prototype by a
+  // static block, keep the class free of top-level side effects. Otherwise any bundle that
+  // reaches a module declaring an error class keeps `BaseError` and that module's unused error
+  // classes.
+  static get defaultStaticOptions() {
+    return {
+      docsOrigin: 'https://oxlib.sh',
+      showVersion: false,
+      version: `ox@${getVersion()}`,
+    } satisfies BaseError.GlobalOptions
+  }
 
   static setStaticOptions(options: BaseError.GlobalOptions) {
     BaseError.prototype.docsOrigin = options.docsOrigin
     BaseError.prototype.showVersion = options.showVersion
     BaseError.prototype.version = options.version
-  }
-
-  static {
-    BaseError.setStaticOptions(BaseError.defaultStaticOptions)
   }
 
   constructor(shortMessage: string, options: BaseError.Options<cause> = {}) {
@@ -64,12 +66,14 @@ export class BaseError<
       return options.docsPath
     })()
 
-    const docsBaseUrl = options.docsOrigin ?? BaseError.prototype.docsOrigin
+    const docsBaseUrl =
+      options.docsOrigin ?? BaseError.prototype.docsOrigin ?? 'https://oxlib.sh'
     const docs = `${docsBaseUrl}${docsPath ?? ''}`
     const showVersion = Boolean(
       options.version ?? BaseError.prototype.showVersion,
     )
-    const version = options.version ?? BaseError.prototype.version
+    const version =
+      options.version ?? BaseError.prototype.version ?? `ox@${getVersion()}`
 
     const message = [
       shortMessage || 'An error occurred.',

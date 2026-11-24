@@ -286,10 +286,34 @@ export async function pbkdf2Async(options: pbkdf2.Options) {
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
-    await pbkdf2Async_noble(sha256, password, salt, {
-      c: iterations,
-      dkLen: 32,
-    }),
+    await (async () => {
+      // WebCrypto's native PBKDF2 is about 10x faster than noble's. It
+      // truncates a fractional iteration count, so only a positive integer
+      // count takes it; noble rejects the others, as `pbkdf2` does. Fall back
+      // to noble where WebCrypto is missing or rejects the input.
+      if (Number.isSafeInteger(iterations) && iterations > 0)
+        try {
+          const { subtle } = globalThis.crypto
+          const baseKey = await subtle.importKey(
+            'raw',
+            Bytes.fromString(password),
+            'PBKDF2',
+            false,
+            ['deriveBits'],
+          )
+          return new Uint8Array(
+            await subtle.deriveBits(
+              { hash: 'SHA-256', iterations, name: 'PBKDF2', salt },
+              baseKey,
+              256,
+            ),
+          )
+        } catch {}
+      return pbkdf2Async_noble(sha256, password, salt, {
+        c: iterations,
+        dkLen: 32,
+      })
+    })(),
   )
 
   return defineKey(() => key, {

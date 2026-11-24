@@ -22,8 +22,8 @@ export const maxSignatures = 8
  */
 export const maxThreshold = 0xff
 
-/** Maximum version accepted by an account config. */
-export const maxVersion = 2n ** 64n - 1n
+/** Maximum version accepted by an account config (`2^64 - 1`). */
+export const maxVersion = 0xffffffffffffffffn
 
 /** Tempo signature type byte for configurable account signatures. */
 export const signatureTypeByte = '0x05' as const

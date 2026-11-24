@@ -41,6 +41,12 @@ describe('toPrice', () => {
     expect(() => Tick.toPrice(3000)).toThrow(Tick.TickOutOfBoundsError)
   })
 
+  test('throws error when tick is not an integer', () => {
+    expect(() => Tick.toPrice(0.5)).toThrow(Tick.TickOutOfBoundsError)
+    expect(() => Tick.toPrice(-0.25)).toThrow(Tick.TickOutOfBoundsError)
+    expect(() => Tick.toPrice(Number.NaN)).toThrow(Tick.TickOutOfBoundsError)
+  })
+
   test('handles edge cases near bounds', () => {
     expect(() => Tick.toPrice(-2000)).not.toThrow()
     expect(() => Tick.toPrice(2000)).not.toThrow()

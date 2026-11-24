@@ -1,8 +1,11 @@
 import * as AbiFunction from '../core/AbiFunction.js'
+import * as AbiParameters from '../core/AbiParameters.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import { AbiParameters } from '../index.js'
 import * as Calls from './Calls.js'
+
+/** `bytes[]`, written out so calls do not parse human-readable ABI. */
+const bytesArrayParameters = [{ type: 'bytes[]' }] as const
 
 export type Batch = {
   calls: readonly Call[]
@@ -103,27 +106,19 @@ export function decodeBatchOfBatchesData(
     throw new UnsupportedModeError({ mode: m, supported: ['batchOfBatches'] })
 
   const [encodedBatches] = AbiParameters.decode(
-    AbiParameters.from('bytes[]'),
+    bytesArrayParameters,
     executionData,
   ) as readonly [Hex.Hex[]]
 
   return encodedBatches.map((encodedBatch) => {
-    // Try decoding with opData first
-    try {
-      const decoded = Calls.decode(encodedBatch, { opData: true })
-      if (decoded.opData) {
-        return {
-          calls: decoded.calls,
-          opData: decoded.opData,
-        }
-      }
-      // If opData is undefined, return without it
-      return { calls: decoded.calls }
-    } catch {
-      // If decoding with opData fails, decode without it
-      const decoded = Calls.decode(encodedBatch, { opData: false })
-      return { calls: decoded.calls }
-    }
+    // `abi.encode(calls)` starts with the offset 0x20 and
+    // `abi.encode(calls, opData)` with 0x40, which is how ERC-7821 accounts
+    // tell them apart.
+    const withOpData = Hex.toBigInt(Hex.slice(encodedBatch, 0, 32)) >= 0x40n
+    const { calls, opData } = Calls.decode(encodedBatch, {
+      opData: withOpData,
+    })
+    return opData ? { calls, opData } : { calls }
   })
 }
 
@@ -168,7 +163,7 @@ export declare namespace decodeBatchOfBatchesData {
  * @returns The encoded data.
  */
 export function encodeBatchOfBatchesData(batches: readonly Batch[]) {
-  const b = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+  const b = AbiParameters.encode(bytesArrayParameters, [
     batches.map((b) => {
       const batch = b as Batch
       return Calls.encode(batch.calls, {

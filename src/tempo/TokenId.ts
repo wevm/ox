@@ -4,6 +4,9 @@ import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as TempoAddress from './TempoAddress.js'
 
+/** `address, bytes32`, written out so calls do not parse human-readable ABI. */
+const computeParameters = [{ type: 'address' }, { type: 'bytes32' }] as const
+
 const tip20Prefix = '0x20c0'
 
 export type TokenId = bigint
@@ -57,7 +60,8 @@ export function fromAddress(address: TempoAddress.Address): TokenId {
   const resolved = TempoAddress.resolve(address)
   if (!resolved.toLowerCase().startsWith(tip20Prefix))
     throw new Error('invalid tip20 address.')
-  return Hex.toBigInt(Hex.slice(resolved, tip20Prefix.length))
+  // The ID is everything after the 2-byte prefix, as `toAddress` writes it.
+  return Hex.toBigInt(Hex.slice(resolved, 2))
 }
 
 /**
@@ -110,7 +114,7 @@ export function toAddress(
  */
 export function compute(value: compute.Value): bigint {
   const hash = Hash.keccak256(
-    AbiParameters.encode(AbiParameters.from('address, bytes32'), [
+    AbiParameters.encode(computeParameters, [
       TempoAddress.resolve(value.sender),
       value.salt,
     ]),

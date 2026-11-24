@@ -527,7 +527,8 @@ export function serialize(
     return {
       r: envelope.r,
       s: envelope.s,
-      v: envelope.v!,
+      // `v` is deprecated, so fall back to `yParity`.
+      v: envelope.v ?? Signature.yParityToV(envelope.yParity!),
     }
   })()
 

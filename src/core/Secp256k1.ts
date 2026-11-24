@@ -1,4 +1,9 @@
+import {
+  getMinHashLength,
+  mapHashToField,
+} from '@noble/curves/abstract/modular'
 import { secp256k1 } from '@noble/curves/secp256k1'
+import { randomBytes } from '@noble/hashes/utils'
 import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
@@ -14,6 +19,10 @@ import type * as Signature from './Signature.js'
 
 /** Re-export of noble/curves secp256k1 utilities. */
 export const noble = secp256k1
+
+/** Order of the secp256k1 group, which private keys are reduced into. */
+const order =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
 
 /**
  * Creates a new secp256k1 ECDSA key pair consisting of a private key and its corresponding public key.
@@ -288,7 +297,8 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = secp256k1.utils.randomPrivateKey()
+  // What noble's `utils.randomPrivateKey` does, without bundling the curve.
+  const bytes = mapHashToField(randomBytes(getMinHashLength(order)), order)
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -566,4 +576,6 @@ export declare namespace InvalidSeedSizeError {
   }
 }
 
-const fromSeedDomain = Bytes.fromString('ox.secp256k1.fromSeed.v1')
+const fromSeedDomain = /*#__PURE__*/ Bytes.fromString(
+  'ox.secp256k1.fromSeed.v1',
+)

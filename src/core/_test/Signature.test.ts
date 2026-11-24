@@ -1,3 +1,4 @@
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { Bytes, Signature, Solidity, TxEnvelopeEip1559 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
@@ -364,6 +365,48 @@ describe('fromDerHex', () => {
       "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     }
   `,
+    )
+  })
+})
+
+describe('fromDerHex', () => {
+  const n = secp256k1.CURVE.n
+  const der = (r: bigint, s: bigint) =>
+    `0x${secp256k1.Signature.fromCompact(
+      `${r.toString(16).padStart(64, '0')}${s.toString(16).padStart(64, '0')}`,
+    ).toDERHex()}` as const
+
+  test('behavior: matches noble at the edges of the range', () => {
+    for (const [r, s] of [
+      [1n, 1n],
+      [n - 1n, n - 1n],
+      [0x80n, 0x7fn],
+      [2n ** 255n, 2n ** 247n + 1n],
+    ] as const) {
+      const hex = der(r, s)
+      expect(Signature.fromDerHex(hex)).toEqual({ r, s })
+      expect(Signature.toDerHex({ r, s })).toBe(hex)
+    }
+  })
+
+  test('error: r or s out of range', () => {
+    expect(() =>
+      Signature.toDerHex({ r: 0n, s: 1n }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Error: expected valid r: 1 <= n < 115792089237316195423570985008687907852837564279074904382605163141518161494337, got 0]`,
+    )
+    expect(() =>
+      Signature.toDerHex({ r: 1n, s: n }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Error: expected valid s: 1 <= n < 115792089237316195423570985008687907852837564279074904382605163141518161494337, got 115792089237316195423570985008687907852837564279074904382605163141518161494337]`,
+    )
+    // DER for r = n, s = 1.
+    expect(() =>
+      Signature.fromDerHex(
+        '0x3026022100fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141020101',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Error: expected valid r: 1 <= n < 115792089237316195423570985008687907852837564279074904382605163141518161494337, got 115792089237316195423570985008687907852837564279074904382605163141518161494337]`,
     )
   })
 })

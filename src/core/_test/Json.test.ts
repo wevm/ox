@@ -62,6 +62,23 @@ describe('Json.canonicalize', () => {
     )
   })
 
+  test('behavior: values without a JSON form, and `toJSON`', () => {
+    // Keys are already sorted, so `JSON.stringify` writes the canonical form.
+    const values = [
+      [1, undefined, () => 1, Symbol('x')],
+      { a: () => 1, b: Symbol('x'), c: 1 },
+      new Date(0),
+      { toJSON: () => ({ a: 1 }) },
+      [{ a: new Date(0) }],
+      // `toJSON` gets the key, the index in an array, or `''` at the root.
+      { a: { toJSON: (key: string) => key } },
+      [{ toJSON: (key: string) => key }],
+      { toJSON: (key: string) => key },
+    ]
+    for (const value of values)
+      expect(Json.canonicalize(value)).toBe(JSON.stringify(value))
+  })
+
   test('rfc 8785: sorting', () => {
     // Test from RFC 8785 Section 3.2.3
     // Verifies that keys are sorted by UTF-16 code unit value

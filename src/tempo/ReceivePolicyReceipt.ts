@@ -71,10 +71,25 @@ const parameters = [
   },
 ] as const
 
-/** @internal `TransferBlocked` event emitted by the `ReceivePolicyGuard`. */
-const transferBlocked = AbiEvent.from(
-  'event TransferBlocked(address indexed token, address indexed receiver, uint64 indexed blockedNonce, uint256 amount, uint8 receiptVersion, bytes receipt)',
-)
+/**
+ * @internal `TransferBlocked` event emitted by the `ReceivePolicyGuard`:
+ * `event TransferBlocked(address indexed token, address indexed receiver, uint64 indexed blockedNonce, uint256 amount, uint8 receiptVersion, bytes receipt)`.
+ * Written out with its selector, as `AbiEvent.from` returns it, so importing this module neither
+ * parses human-readable ABI (nor bundles the parser) nor hashes anything.
+ */
+const transferBlocked = {
+  name: 'TransferBlocked',
+  type: 'event',
+  inputs: [
+    { type: 'address', name: 'token', indexed: true },
+    { type: 'address', name: 'receiver', indexed: true },
+    { type: 'uint64', name: 'blockedNonce', indexed: true },
+    { type: 'uint256', name: 'amount' },
+    { type: 'uint8', name: 'receiptVersion' },
+    { type: 'bytes', name: 'receipt' },
+  ],
+  hash: '0x361d86e46fd139dc3eac4148f16b53597f0f8ddd9aba772aae0034bda5531b1c',
+} as const
 
 /**
  * Decodes a {@link ox#ReceivePolicyReceipt.ReceivePolicyReceipt} (ABI-encoded

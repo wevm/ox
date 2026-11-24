@@ -1,5 +1,6 @@
+import { secp256k1 as noble } from '@noble/curves/secp256k1'
 import { Address, Bytes, Hex, Mnemonic, PublicKey, Secp256k1 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('getPublicKey', () => {
@@ -333,6 +334,23 @@ describe('getSharedSecret', () => {
 })
 
 describe('randomPrivateKey', () => {
+  test('behavior: same key as noble for the same random bytes', () => {
+    const getRandomValues = vi.spyOn(crypto, 'getRandomValues')
+    try {
+      for (const fill of [0x00, 0x01, 0x7f, 0xff]) {
+        getRandomValues.mockImplementation(
+          <array extends ArrayBufferView | null>(array: array) =>
+            (array as unknown as Uint8Array).fill(fill) as unknown as array,
+        )
+        expect(Secp256k1.randomPrivateKey({ as: 'Bytes' })).toEqual(
+          noble.utils.randomPrivateKey(),
+        )
+      }
+    } finally {
+      getRandomValues.mockRestore()
+    }
+  })
+
   test('default', () => {
     const privateKey = Secp256k1.randomPrivateKey()
     expect(privateKey.length).toBe(66)
