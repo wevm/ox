@@ -94,7 +94,7 @@ export function checksum(address: string): Address {
   // Secondary lookup keyed by the canonical lowercase form so that mixed-case
   // spellings of the same address share an entry instead of competing for two
   // slots in a bounded cache.
-  const key = internal.lowercase(address)
+  const key = address.toLowerCase()
   if (key !== address) {
     const cached = Caches.checksum.get(key)
     if (cached !== undefined) {

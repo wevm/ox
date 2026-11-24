@@ -10,7 +10,6 @@ import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
 import { bytesRegex, integerRegex, maxInt256, maxUint256 } from '../Solidity.js'
-import * as internal_address from './address.js'
 import { nibbleTable } from './codec/hex.js'
 import * as utf8 from './codec/utf8.js'
 import type * as Cursor from './cursor.js'
@@ -62,10 +61,6 @@ type CompiledParameter =
       kind: 'address' | 'boolean' | 'invalid' | 'string'
       type?: string | undefined
     })
-
-type MeasureContext = {
-  checksumAddress: boolean
-}
 
 /** @internal */
 export type ToObject<
@@ -561,10 +556,7 @@ export function encodeParameters(
   // Compile the wire shape before walking values so recursive writes only
   // handle offsets and data.
   const compiled = compileParameters(parameters)
-  const context: MeasureContext = {
-    checksumAddress,
-  }
-  measureParameters(compiled, values, context)
+  measureParameters(compiled, values, checksumAddress)
 
   // The measure pass validated every value, so the encoding is built as one
   // string of hex digits: no buffer to allocate, and no bytes to hex-encode.
@@ -594,9 +586,10 @@ export declare namespace encodeParameters {
 function compileParameters(
   parameters: readonly AbiParameters.Parameter[],
 ): readonly CompiledParameter[] {
-  const compiled: CompiledParameter[] = []
+  // Sized up front: an empty array grows a 17-slot backing store on its first push.
+  const compiled: CompiledParameter[] = new Array(parameters.length)
   for (let i = 0; i < parameters.length; i++)
-    compiled.push(compileParameter(parameters[i]!))
+    compiled[i] = compileParameter(parameters[i]!)
   return compiled
 }
 
@@ -715,7 +708,7 @@ function compileParameter(
 function measureParameters(
   parameters: readonly CompiledParameter[],
   values: readonly unknown[] | object,
-  context: MeasureContext,
+  checksumAddress: boolean,
 ): number {
   let size = getHeadSize(parameters)
   for (let i = 0; i < parameters.length; i++) {
@@ -723,7 +716,7 @@ function measureParameters(
     const parameterSize = measureParameter(
       parameter,
       getParameterValue(parameter, values, i),
-      context,
+      checksumAddress,
     )
     if (parameter.dynamic) size += parameterSize
   }
@@ -733,7 +726,7 @@ function measureParameters(
 function measureParameter(
   parameter: CompiledParameter,
   value: unknown,
-  context: MeasureContext,
+  checksumAddress: boolean,
 ): number {
   if (parameter.kind === 'array') {
     if (!Array.isArray(value)) throw new AbiParameters.InvalidArrayError(value)
@@ -748,18 +741,26 @@ function measureParameter(
     size +=
       value.length * (parameter.child.dynamic ? 32 : parameter.child.staticSize)
     for (let i = 0; i < value.length; i++) {
-      const childSize = measureParameter(parameter.child, value[i], context)
+      const childSize = measureParameter(
+        parameter.child,
+        value[i],
+        checksumAddress,
+      )
       if (parameter.child.dynamic) size += childSize
     }
     return size
   }
 
   if (parameter.kind === 'tuple')
-    return measureParameters(parameter.children, value as object, context)
+    return measureParameters(
+      parameter.children,
+      value as object,
+      checksumAddress,
+    )
 
   if (parameter.kind === 'address') {
     Address.assert(value as Address.Address, {
-      strict: context.checksumAddress,
+      strict: checksumAddress,
     })
     return 32
   }
@@ -890,9 +891,10 @@ function encodeParameter(parameter: CompiledParameter, value: unknown): string {
   if (parameter.kind === 'tuple')
     return encodeList(parameter.children, value as object)
 
-  // The measure pass asserted the address.
+  // The measure pass asserted the address, so `toLowerCase` only folds `A-F`,
+  // and returns the address as is when it has none.
   if (parameter.kind === 'address')
-    return `000000000000000000000000${internal_address.lowercase(value as string).slice(2)}`
+    return `000000000000000000000000${(value as string).toLowerCase().slice(2)}`
 
   if (parameter.kind === 'boolean') return value ? word(1) : word(0)
 

@@ -495,18 +495,18 @@ export function getSelector<
 export function getSelector(abiItem: string | AbiItem): Hex.Hex
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSelector(
-  ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: string]
-    | [string | AbiItem]
+  abiOrItem: Abi.Abi | readonly unknown[] | string | AbiItem,
+  name?: string,
 ): Hex.Hex {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
-    }
-    return parameters[0] as string | AbiItem
-  })()
-  return Hex.slice(getSignatureHash(abiItem), 0, 4)
+  const abiItem = Array.isArray(abiOrItem)
+    ? fromAbi(abiOrItem, name!)
+    : (abiOrItem as string | AbiItem)
+  const hash = getSignatureHash(abiItem)
+  // What `Hex.slice(hash, 0, 4)` returns for a `0x`-prefixed hash of 4 bytes or
+  // more, without its intermediate copies.
+  return hash.length >= 10 && hash.startsWith('0x')
+    ? (hash.slice(0, 10) as Hex.Hex)
+    : Hex.slice(hash, 0, 4)
 }
 
 export declare namespace getSelector {
@@ -564,17 +564,12 @@ export function getSignature<
 export function getSignature(abiItem: string | AbiItem): string
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignature(
-  ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: string]
-    | [string | AbiItem]
+  abiOrItem: Abi.Abi | readonly unknown[] | string | AbiItem,
+  name?: string,
 ): string {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
-    }
-    return parameters[0] as string | AbiItem
-  })()
+  const abiItem = Array.isArray(abiOrItem)
+    ? fromAbi(abiOrItem, name!)
+    : (abiOrItem as string | AbiItem)
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return formatAbiItem.formatAbiItem(abiItem)
@@ -640,17 +635,12 @@ export function getSignatureHash<
 export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex
 // eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignatureHash(
-  ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: string]
-    | [string | AbiItem]
+  abiOrItem: Abi.Abi | readonly unknown[] | string | AbiItem,
+  name?: string,
 ): Hex.Hex {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
-    }
-    return parameters[0] as string | AbiItem
-  })()
+  const abiItem = Array.isArray(abiOrItem)
+    ? fromAbi(abiOrItem, name!)
+    : (abiOrItem as string | AbiItem)
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex.Hex
   // Keyed by the item itself first, which skips formatting and normalizing the
