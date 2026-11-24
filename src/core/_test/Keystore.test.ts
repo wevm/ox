@@ -284,6 +284,31 @@ describe('encrypt/decrypt', () => {
     expect(decrypted).toEqual(secret)
   })
 
+  test('behavior: scrypt with r and p (decrypt as toKeyAsync)', async () => {
+    // geth and ethers write scrypt keystores with r = 8 and p = 1.
+    const options = {
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      r: 8,
+      p: 1,
+    } as const
+    const [key, opts] = Keystore.scrypt(options)
+    const [keyAsync, optsAsync] = await Keystore.scryptAsync(options)
+    expect(keyAsync()).toBe(key())
+    expect(optsAsync).toEqual(opts)
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+    const encrypted = Keystore.encrypt(secret, key, opts)
+    expect(encrypted.crypto.kdfparams).toMatchObject({ r: 8, p: 1 })
+    const key2 = await Keystore.toKeyAsync(encrypted, {
+      password: 'testpassword',
+    })
+    expect(Keystore.decrypt(encrypted, key2)).toEqual(secret)
+  })
+
   test('behavior: scrypt (key as hex)', async () => {
     const [key, opts] = Keystore.scrypt({
       iv: '0x83dbcc02d8ccb40e466191a123791e0e',
