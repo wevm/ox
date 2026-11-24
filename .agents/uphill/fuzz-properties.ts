@@ -897,7 +897,8 @@ export function properties(lib: Lib): Property[] {
     covers: ['ox:Rlp.from', 'ox:Rlp.fromHex'],
     runs: 400,
     // One malformed leaf beside a valid value: an even-length leaf with a non-hex digit, without
-    // its `0x` prefix, with an uppercase `0X`, or an empty string. ethers rejects each.
+    // its `0x` prefix, with an uppercase `0X`, or an empty string. ethers rejects each but the
+    // `0X` leaf, so the check skips those; `src/core/_test/Rlp.fuzz.ts` covers them.
     arb: fc
       .tuple(
         rlpArb,
