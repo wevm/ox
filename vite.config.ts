@@ -38,6 +38,8 @@ export default defineConfig({
       'contracts/generated.ts',
       'test/kzg/**',
       '.agents/uphill/fuzz-fixtures/**',
+      // `uphill --update` writes it.
+      '.agents/uphill.baseline.yaml',
       '**/tsconfig.json',
       '**/tsconfig.*.json',
       '**/package.json',
