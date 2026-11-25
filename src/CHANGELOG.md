@@ -1,5 +1,148 @@
 # ox
 
+## 0.15.0
+
+### Minor Changes
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - `Bytes.fromHex` (and so `Rlp.fromHex`, `Rlp.toHex` and every function that reads hex through it) now throws for a value that does not start with `0x`, including an uppercase `0X` prefix, as ox 1.x does, instead of reading its first two characters as the prefix. For example, `Rlp.fromHex('abcd')` returned `0x81cd`, and `Rlp.fromHex('0XAB')` returned `0x81ab`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** Removed `AbiParameters.encodePacked.encode`, a runtime namespace member that kept `encodePacked` (with `Address.assert` and keccak) in every bundle importing `AbiParameters`. `AbiParameters.format`, for example, drops from 5.9 kB to about 1.3 kB gzipped.
+
+  ```diff
+  - AbiParameters.encodePacked.encode('uint8', 1)
+  + AbiParameters.encodePacked(['uint8'], [1])
+  ```
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Improved type-checking of `AbiParameters.encodePacked` by about 8x (106,000 to 13,000 instantiations for a call) by constraining `types` to `readonly unknown[]` instead of a union that includes `PackedAbiType[]`. Values are still typed from the types, but `types` no longer autocompletes.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toBigInt`, `Hex.toNumber`, `Bytes.toBigInt` and `Bytes.toNumber` throwing a `SyntaxError` (or a `NaN` range error) for empty input; empty hex and bytes now read as zero.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Improved type-checking of `TypedData.encodeType`, `hashStruct`, `hashType`, `encodeData`, `encodeField` and `findTypeDependencies` by about 700x (11,700 to 17 instantiations for a call): their `types` parameter is a plain record of `{ name, type }` lists instead of abitype's `TypedData`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - **Breaking (`ox/erc4337`):** `UserOperation.toRpc` dropped an EntryPoint 0.8 `authorization`; it now writes it as `eip7702Auth`, the field bundlers read (ERC-7769), and `UserOperation.fromRpc` reads it back. `UserOperation.RpcV08` has `eip7702Auth` in place of `authorization`.
+
+  ```diff
+   const rpc: UserOperation.RpcV08 = {
+     // ...
+  -  authorization: { address, chainId: '0x1', nonce: '0x0', r, s, yParity: '0x0' },
+  +  eip7702Auth: { address, chainId: '0x1', nonce: '0x0', r, s, yParity: '0x0' },
+   }
+  ```
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** `Value.from` (and `fromEther`, `fromGwei`) now throws `Value.InvalidDecimalNumberError` for input without digits (`""`, `"."`, `"-"`, `"-."`), which returned `0n` or threw a `SyntaxError` before, and `Value.InvalidDecimalsError` for negative or non-integer `decimals`. A negative value without integer digits, such as `"-.0"`, now parses instead of throwing a `SyntaxError`.
+
+### Patch Changes
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `AbiParameters.decode` (and the ABI decoders built on it) faster for short data: the decoder copies words out of data of up to 64 bytes instead of taking views of it, which made V8 move the data to an `ArrayBuffer` first, and `Bytes.toBigInt` reads a fresh word without one. `AbiParameters.decode` of one word runs about 1.6x faster; the output and errors are unchanged.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `AbiFunction.encodeData` faster and leaner: it writes the parameters' encoding straight after the selector instead of slicing and copying a `0x`-prefixed encoding, `AbiItem.getSelector` and `AbiItem.getSignatureHash` no longer allocate a closure and an arguments array per call, and the ABI encoder sizes its list of parameters up front. `encodeData` of an `(address, uint256)` call goes from about 300 to 170 ns and from 1.1 kB to 360 B allocated.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `AbiParameters.encode` build its output as one string of hex digits, instead of creating, slicing and concatenating a `0x` string per word. `AbiParameters.encode` runs about 4x faster with a quarter of the memory, and `AbiFunction.encodeData` about 3x faster; the output and errors are unchanged.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Wrote `AbiError.solidityError` and `AbiError.solidityPanic` out as literals with the signature hashes `AbiError.from` adds, instead of calling `AbiError.from` at module load, so using either no longer bundles the ABI parser and keccak (9.7 kB to 155 B gzipped).
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `AbiItem.fromAbi` (and `AbiFunction.fromAbi`, `AbiError.fromAbi`, `AbiEvent.fromAbi`) find a unique match without collecting the matches into an array first.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Reduced the type instantiations of the ABI modules' generic signatures. Wide parameters (`readonly AbiParameter[]`) now resolve to `readonly unknown[]` without mapping every ABI type, and `AbiItem.fromAbi.Options` puts `prepare` in each of its branches instead of intersecting it with them. `Parameters<typeof AbiFunction.encodeData>` drops from about 10,800 instantiations to 500, `AbiParameters.encode` from 10,600 to 300, and `AbiFunction.fromAbi` and `AbiItem.fromAbi` from about 14,600 to 2,100. The types are unchanged.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Address.checksum` build the checksummed address from character codes instead of splitting, uppercasing and joining an array of characters.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Made `Address.isEqual` check its inputs without bundling `Address.checksum` and keccak, which makes its bundle about 4x smaller.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Errors.BaseError` set its fields in its constructor instead of declaring them as class fields, which the ES2021 build compiled to an `Object.defineProperty` call each. Bundles that include an error shrink by about 30 bytes (gzip); errors keep the same properties in the same order.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Removed the top-level side effects of `Errors.BaseError` (its static initialization block), so bundles no longer keep `BaseError` and a module's unused error classes whenever they import anything from that module. `Errors.BaseError.defaultStaticOptions` is now a getter.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Base58` encoding of empty input and all-zero bytes, and `Base58.toHex` returning odd-length hex for values whose first byte is below `0x10`.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Base64.fromBytes` encode with `Uint8Array.prototype.toBase64` where the runtime has it (about 5x faster on Node 26), and `Base64.toBytes` decode without `TextEncoder` and a regular expression (about 6x faster). Valid input decodes as before. A character outside the Base64 alphabets now decodes as zero bits wherever it appears; before, one at the end of a group of four zeroed the group's three bytes, and a non-ASCII character counted once per UTF-8 byte.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Bytes.fromNumber` write its bytes directly instead of encoding the number as hex with `Hex.fromNumber` and decoding that: an unsigned safe integer that fits its `size` is written without BigInt arithmetic (about 2.5x faster with half the memory), and bundles that only encode numbers to bytes are about 30% smaller. A fractional `size` now throws for numbers as it already did for bigints. `Hex.fromNumber` pads a sized number in one step, with less memory.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Bytes.fromNumber` write signed safe integers of up to 6 bytes (and non-negative ones of any size) without BigInt, as it already did for unsigned ones: `Bytes.fromNumber(-32, { size: 1, signed: true })` goes from about 140 to 36 ns.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `ox/Cbor` tree-shakable: its internal encoders and decoders are plain functions instead of members of TypeScript namespaces, which compiled to top-level IIFEs that every bundle importing `Cbor` kept.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Cbor.decode` throwing a `RangeError` instead of `Cursor.PositionOutOfBoundsError` on a truncated float.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Reduced the type instantiations of `Signature` and of the `as`-dependent return types (`Hash`, `Secp256k1`, `P256`, `Ed25519`, `Bls`, `Rlp`, `Cbor` and others) by looking each one up by `as` instead of unioning conditional types, without changing the resolved types. `Signature.from` drops from about 1,360 instantiations to 1,140.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `CompactSize.toBytes` and `CompactSize.toHex` silently wrapping values above 2^64 - 1; they now throw `Hex.IntegerOutOfRangeError`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Made `EarnShares.toAmount`, `EarnShares.toAmountUp` and `EarnShares.toVenueAmount` throw `EarnShares.InvalidAnchorError` for an anchor with a zero side, such as an empty vault's `engineShares` and `shareSupply`, instead of a `RangeError` from dividing by zero.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Ens.normalize` return a name that is already normalized (labels of lowercase ASCII letters, digits, `# ox and `-`after any leading`\_`) without running the ENSIP-15 normalizer, which is about 50x faster for such names. Other names are normalized as before.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Wrote the ABI parameters that `SignatureErc6492.wrap`/`unwrap`, `Execute` batch-of-batches encoding and decoding, `Calls.encode`/`decode`/`getAbiParameters` and `TokenId.compute` used out as JSON instead of parsing human-readable ABI on every call. `Calls.getAbiParameters` now also declares its real return type (a `tuple[]` with its components, and `opData` when requested) instead of `[{ type: 'Call[]' }]`.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `SignatureErc6492.validate` compare the magic suffix directly instead of calling `Hex.slice` inside a `try`, so a bundle that only validates no longer includes `Hex.slice`, its errors or `BaseError` (about 1 kB down to 140 B gzipped). The result is unchanged.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `erc7821/Execute` importing the root `ox` barrel, which made importing `ox/erc7821` evaluate every ox module (and pull all of ox into CommonJS bundles).
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Wrote `SignatureErc8010.suffixParameters` out as JSON ABI parameters instead of parsing a human-readable signature at import, so importing anything from `ox/erc8010` no longer runs or bundles the ABI parser.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Execute.decodeBatchOfBatchesData` inventing an `opData` for a batch with no calls; it now reads the encoding's first offset, as ERC-7821 accounts do.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Removed the nine `ox/tempo/*.test-d` subpath exports, which pointed at type-test files the package does not ship.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Improved `Hex.padLeft`, `Hex.padRight` and sized hex encoding (`Hex.fromBytes`, `Hex.fromString`, `Hex.fromNumber` with `size`) performance: padding a `0x`-prefixed value by up to 32 bytes slices a literal of zeros instead of building one (`padLeft` 60 → 11 ns, `padRight` 66 → 7 ns).
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Bytes.isEqual` and `Hex.isEqual` compare bytes inline instead of importing `@noble/curves`' `equalBytes`, so importing `ox/Hex` or `ox/Bytes` no longer loads `@noble/curves` and `@noble/hashes` (about 120 kB less heap and 1 ms less CPU per import).
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Json.canonicalize` writing invalid JSON for `undefined`, functions and symbols in arrays and objects, and ignoring `toJSON` (e.g. for a `Date`); it now follows `JSON.stringify`.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Fixed `KeyAuthorization.deserialize` throwing a `TypeError` or `SyntaxError` for RLP that is not shaped like a key authorization; it now throws `KeyAuthorization.InvalidSerializedError`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Improved `Keystore.pbkdf2Async` performance by about 10x by deriving with WebCrypto, falling back to noble where WebCrypto is unavailable.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Fixed `Keystore.scryptAsync` ignoring its `r` and `p` options: it always derived with `r: 1, p: 8`, and recorded those in the keystore. So `Keystore.toKeyAsync` derived the wrong key for a scrypt keystore written with other parameters, such as geth's and ethers' (`r: 8, p: 1`), where `Keystore.toKey` derived the right one.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Wrote the `Solidity` integer bounds, `AccountConfig.zeroSalt` and an internal `Siwe` regex out as literals, so bundlers drop `ox/Solidity`, `ox/Siwe` and `ox/tempo/AccountConfig` when they are unused, and bundles that import `Solidity` no longer keep its 96 bounds.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Marked module-level constants in `Secp256k1`, `P256`, `Ed25519`, `AesGcm`, `Siwe`, `webauthn/Registration`, `trusted-setups/Paths` and `tempo/AccountConfig` as pure, so bundlers drop them when they are unused.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Made `Secp256k1.randomPrivateKey`, `P256.randomPrivateKey`, `Bls.randomPrivateKey` and `Ed25519.randomPrivateKey` generate keys without bundling their curve, with the same output as noble's `utils.randomPrivateKey` for the same random bytes.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Improved `Secp256k1.randomPrivateKey`, `P256.randomPrivateKey` and `Bls.randomPrivateKey` performance: the 48 random bytes are reduced to a key directly instead of through noble's `mapHashToField`, which measures the curve order with `toString(2)` three times per call (about 3.2 → 1.3 µs). The keys are the same function of the random bytes.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Rlp.fromHex` and `Rlp.toHex` work on hex strings instead of converting every leaf to bytes and back: `Rlp.toHex` cuts leaves out of the input, and `Rlp.fromHex` concatenates them. Short inputs decode about 10x faster and encode about 2x faster with a fifth of the memory; the output and errors are unchanged.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Rlp.readList` looping forever on empty bytes.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Reduced the type instantiations of `Rlp.fromHex` and `Rlp.fromBytes` (about a third fewer) by writing out their `Options` and `ReturnType`, and of `TxEnvelopeTempo.deserialize` (about a third fewer) by dropping a redundant `Compute` from its return type and from `AuthorizationTempo.List`. The types are unchanged.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Rlp.toHex` (and the transaction envelopes' `deserialize`, which call it) faster on hex input: valid hex is decoded straight from the string instead of being decoded to bytes first. A 175-byte EIP-1559 transaction decodes in about 0.9 µs instead of 1.6 µs. The output and errors are unchanged.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `RpcTransport.fromHttp` throwing a raw `SyntaxError` or `TypeError` for a malformed or non-object JSON reply; it now throws `RpcTransport.MalformedResponseError` (or `RpcTransport.HttpError` for a failed response).
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Signature.from`, `Signature.extract` and `Signature.assert` allocate less: `assert` no longer creates a default options object per call and `from` no longer creates a closure. `Signature.extract` of an RPC signature goes from 240 to 144 B allocated.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Made `Signature.fromDerHex`, `Signature.fromDerBytes`, `Signature.toDerHex` and `Signature.toDerBytes` encode and decode DER without bundling the secp256k1 curve, with the same range checks and errors.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Signature.toHex` about 2.5x faster with a quarter of the memory, and `Signature.toRpc`, `Signature.fromHex` and `Signature.fromRpc` slightly faster, by writing and reading `r` and `s` as hex words directly.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Precomputed the constant hashes in `Channel` and wrote its and `ReceivePolicyReceipt`'s ABI items out as JSON, so importing either module no longer hashes or parses ABI at load, and their constants no longer bundle the ABI parser.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Fixed `TxEnvelopeTempo.deserialize` throwing a `TypeError` or `SyntaxError` for a field with the wrong RLP shape, such as an authorization with missing fields, `calls` that is not a list, or a list where a call's value goes; it now throws `TransactionEnvelope.InvalidSerializedError` with the original error as its cause.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `Tick.toPrice` accepting non-integer ticks and returning malformed prices; it now throws `Tick.TickOutOfBoundsError`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `TokenId.fromAddress` dropping the high bytes of token IDs above 2^112, so it reads back what `TokenId.toAddress` writes. It now throws `invalid tip20 address.` for an address that is not 40 hex digits, instead of reading whatever follows the prefix as the ID.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Improved type-checking of `Transaction.toRpc` (core and tempo) for settled transactions by about 5x with an overload that skips inferring `pending`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `TxEnvelopeLegacy.serialize` and `TxEnvelopeLegacy.hash` throwing for a signed envelope that has `yParity` but no (deprecated) `v`.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `UserOperation.toRpc` dropping `paymasterAndData` from EntryPoint 0.6 User Operations.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Bytes.toString`, `Hex.toString` and `Base64.toString` decode values of up to 64 bytes from a reused buffer. V8 keeps typed arrays that small on its heap, and `TextDecoder` first moved each one to an `ArrayBuffer` of its own; `Base64.toString` and `Hex.toString` on short values run about 2-3x faster. The output is unchanged.
+
+- [#726](https://github.com/wevm/ox/pull/726) [`e238adb`](https://github.com/wevm/ox/commit/e238adbb041126d2c5b6d7e0e50223f88f9c3c8a) Thanks [@jxom](https://github.com/jxom)! - Made `Bytes.fromString` and `Hex.fromString` encode strings of up to 64 characters in JavaScript instead of calling `TextEncoder`, which is about 3-4x faster for short strings. The output is unchanged, including U+FFFD for lone surrogates. `Address.checksum` no longer bundles a UTF-8 encoder.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Made `WebCryptoP256.sign` and `WebCryptoP256.verify` normalize and check `s` against P-256's order without bundling noble's curve, which makes their bundles about 7x smaller.
+
+- [#722](https://github.com/wevm/ox/pull/722) [`538df0d`](https://github.com/wevm/ox/commit/538df0dca10f0433d6f1977bfd978c85e12b9400) Thanks [@jxom](https://github.com/jxom)! - Fixed `WebCryptoP256.verify` rejecting valid signatures whose `r` or `s` has a leading zero byte (about 1 in 128). An `r` or `s` wider than 32 bytes still returns `false`.
+
 ## 0.14.71
 
 ### Patch Changes
