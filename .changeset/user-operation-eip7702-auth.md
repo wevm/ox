@@ -1,5 +1,5 @@
 ---
-"ox": patch
+"ox": minor
 ---
 
 **Breaking (`ox/erc4337`):** `UserOperation.toRpc` dropped an EntryPoint 0.8 `authorization`; it now writes it as `eip7702Auth`, the field bundlers read (ERC-7769), and `UserOperation.fromRpc` reads it back. `UserOperation.RpcV08` has `eip7702Auth` in place of `authorization`.
