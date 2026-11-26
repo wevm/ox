@@ -1,5 +1,5 @@
 /**
- * Repeats the lines about the library's hot items, which `hot` in `.agents/typescript.ts`
+ * Repeats the lines about the library's hot items, which `hot` in `local/config.ts`
  * lists, as `hot-<metric>` lines. The `hot-*` metrics score these items on their own, so the
  * project can give them tighter targets: in a full list, a few dozen items that miss their targets
  * hide under the p90 that the list scores.

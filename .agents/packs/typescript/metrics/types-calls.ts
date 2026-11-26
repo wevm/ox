@@ -9,7 +9,7 @@
  *    `lib:Number.round`, gets a line under each name. A worker walks each name from its entry's
  *    source to the declaration it resolves to.
  * 2. Scan. Workers list the calls in every test file (`callTypes.tests` in
- *    `.agents/typescript.ts`, or vitest's runtime and type tests) whose callee resolves,
+ *    `local/config.ts`, or vitest's runtime and type tests) whose callee resolves,
  *    through imports and re-exports, to one of those declarations in the sources, such as
  *    `Math.add(...)` through `import { Math } from 'lib'`.
  * 3. Measure. Each function gets one call: the first in its own module's runtime tests, such as

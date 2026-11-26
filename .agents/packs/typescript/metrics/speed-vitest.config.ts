@@ -8,7 +8,7 @@
  * installs.
  *
  * Projects: every project of the config that does not run in a browser, or the config's one test
- * config, unless `speed.projects` in `.agents/typescript.ts` picks and adjusts them. That
+ * config, unless `speed.projects` in `local/config.ts` picks and adjusts them. That
  * hook can drop a global setup that starts a server the recording cannot reach, narrow a
  * project's test files, and add test files of its own, such as calls for public functions no test
  * calls in a way the bench can replay.

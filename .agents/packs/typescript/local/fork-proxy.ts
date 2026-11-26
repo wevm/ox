@@ -1,6 +1,6 @@
 /**
  * The mainnet fork proxy that anvil forks from while the typescript pack's speed script
- * records ox's tests. `speed.environment` in ../typescript.ts starts it.
+ * records ox's tests. `speed.environment` in config.ts starts it.
  *
  * @module
  */
@@ -8,7 +8,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-const root = path.resolve(import.meta.dirname, '../..')
+const root = path.resolve(import.meta.dirname, '../../../..')
 
 /**
  * A JSON-RPC server for anvil to fork from, which answers each request from a cache of what

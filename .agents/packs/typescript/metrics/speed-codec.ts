@@ -9,7 +9,7 @@
  * `node_modules/.cache/uphill-typescript-speed/recording-<hash>.json`, where `<hash>`
  * covers the sources (build output and snapshots excluded), the test directories, the lockfile,
  * the configuration files at the root of the checkout, such as vitest.config.ts, the project's
- * `.agents/typescript.ts`, and the recorder's scripts. The file is one JSON object:
+ * `local/config.ts`, and the recorder's scripts. The file is one JSON object:
  *
  * ```ts
  * type Recording = {

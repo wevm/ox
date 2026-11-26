@@ -37,11 +37,8 @@ export default defineConfig({
       'contracts/**',
       'contracts/generated.ts',
       'test/kzg/**',
-      // Vendored by `uphill add`, and checked against its pinned commit by `uphill audit`.
+      // Vendored by `uphill add`, with ox's inputs in its `local/`.
       '.agents/packs/**',
-      // ox's helpers for the pack's metric scripts log progress to stderr and run their own Vitest.
-      '.agents/typescript/**',
-      '.agents/typescript/fuzz-corpus.json',
       // `uphill --update` writes it.
       '.agents/uphill.baseline.yaml',
       '**/tsconfig.json',
@@ -129,10 +126,8 @@ export default defineConfig({
       'contracts/**',
       'contracts/generated.ts',
       'test/kzg/**',
-      // Vendored by `uphill add`, and checked against its pinned commit by `uphill audit`.
+      // Vendored by `uphill add`, with ox's inputs in its `local/`.
       '.agents/packs/**',
-      // ox's helpers for the pack's metric scripts log progress to stderr and run their own Vitest.
-      '.agents/typescript/**',
     ],
   },
   // `FC_NUM_RUNS` reaches the fuzz files through `import.meta.env`, so that the

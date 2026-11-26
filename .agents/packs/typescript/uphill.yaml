@@ -10,7 +10,8 @@
 # The library categories, from `footprint` on, read the build and the entry points of package.json
 # `exports`, so build the package first, and set `setup` to build each checkout that `--compare`
 # creates. Without an ES module entry point, as in an application, their metrics skip. The project
-# sets its own inputs in `.agents/typescript.ts`, whose type is `Config` in metrics/library.ts.
+# sets its own inputs in the vendored pack's `local/config.ts`, whose type is `Config` in
+# metrics/library.ts.
 # Items are named the way users import them: a namespace member as `<entry>:<Namespace>.<member>`,
 # such as `lib:Math.add`, a whole namespace as `lib:Math`, and an index entry by its specifier.
 
@@ -153,7 +154,7 @@ footprint:
   # cannot prove pure, such as a call without a `/*#__PURE__*/` annotation, a runtime TypeScript
   # namespace, or a static class field, fails the check.
   tree-shaking: {}
-  # `entry-size` of the hot items that `hot` in `.agents/typescript.ts` lists.
+  # `entry-size` of the hot items that `hot` in `local/config.ts` lists.
   hot-entry-size: {}
 
 speed:

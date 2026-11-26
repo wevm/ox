@@ -22,11 +22,11 @@ Each metric also has a `hot-*` copy for the items the project lists in `hot`, so
 
 ## Project Inputs
 
-`.agents/typescript.ts` holds the project's inputs. Its default export has the type `Config` in [metrics/library.ts](metrics/library.ts), and every key is optional.
+`local/config.ts` in the vendored pack, `.agents/packs/typescript/local/config.ts`, holds the project's inputs. `uphill update` keeps `local/` and `uphill audit` skips it, so the files the inputs name live there too. Its default export has the type `Config` in [metrics/library.ts](metrics/library.ts), and every key is optional.
 
 ```ts
-// .agents/typescript.ts
-import type { Config } from './packs/typescript/metrics/library.ts'
+// .agents/packs/typescript/local/config.ts
+import type { Config } from '../metrics/library.ts'
 
 export default {
   // Exports that only feed tooling.
@@ -34,7 +34,7 @@ export default {
   // The parts of the library its users call most.
   hot: ['lib:Math.add', 'lib/Math'],
   // The structured fuzz properties, beside the boundary mutations of recorded arguments.
-  fuzz: { properties: '.agents/typescript/fuzz-properties.ts' },
+  fuzz: { properties: '.agents/packs/typescript/local/fuzz-properties.ts' },
 } satisfies Config
 ```
 

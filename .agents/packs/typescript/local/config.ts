@@ -7,9 +7,9 @@
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import type { Config } from './packs/typescript/metrics/library.ts'
+import type { Config } from '../metrics/library.ts'
 
-const build = path.resolve(import.meta.dirname, '../dist')
+const build = path.resolve(import.meta.dirname, '../../../../dist')
 
 export default {
   // Calls `onWrite` on every write to one of ox's caches in the build, and returns `Caches.clear`.
@@ -43,7 +43,7 @@ export default {
     freeOutput: ['ox:Bech32m.encode'],
     isolated: ['ox:Engine.install', 'ox:Engine.reset'],
     // Round trips, differentials against viem, ethers, noble, scure and micro-eth-signer, and seeds.
-    properties: '.agents/typescript/fuzz-properties.ts',
+    properties: '.agents/packs/typescript/local/fuzz-properties.ts',
     // Key derivation whose cost is its iteration count (PBKDF2 runs 262,144 rounds unless told
     // otherwise), proof-of-work salt mining, and loading the KZG trusted setup.
     slow: [
@@ -149,7 +149,7 @@ export default {
     // Anvil forks mainnet through a proxy that caches what mainnet nodes answer and falls back
     // across public nodes. foundryup installs anvil in ~/.foundry/bin without putting it on PATH.
     async environment(cache) {
-      const { forkProxy } = await import('./typescript/fork-proxy.ts')
+      const { forkProxy } = await import('./fork-proxy.ts')
       const fork = forkProxy(path.join(cache, 'fork-rpc.json'))
       return {
         env: {
@@ -180,7 +180,7 @@ export default {
       // Destroys the anvil instances each test file used.
       const anvil = path.join(
         import.meta.dirname,
-        'typescript/speed-anvil-setup.ts',
+        'speed-anvil-setup.ts',
       )
       return [
         {
@@ -203,7 +203,7 @@ export default {
         },
         {
           name: 'calls',
-          include: ['.agents/typescript/speed-calls.test.ts'],
+          include: ['.agents/packs/typescript/local/speed-calls.test.ts'],
           setupFiles: [anvil, ...list(core.setupFiles)],
         },
       ]

@@ -3,7 +3,7 @@
  * whether fuzzing found no failure, and the share of the function's own lines the fuzzing ran.
  *
  * 1. Corpus. The corpus file (`fuzz.corpus`, by default
- *    .agents/typescript/fuzz-corpus.json) holds up to ten argument sets per function that
+ *    local/fuzz-corpus.json) holds up to ten argument sets per function that
  *    the project's own tests passed it, snapshotted from the speed category's recording, so runs
  *    do not depend on a recording that changes with every edit. `FUZZ_CORPUS=refresh` snapshots
  *    the newest recording again. Without a corpus or a recording, the run goes on with structured
@@ -381,7 +381,7 @@ function moduleOf(name: string) {
 function corpusFile() {
   const file = path.resolve(
     library.root,
-    library.config.fuzz?.corpus ?? '.agents/typescript/fuzz-corpus.json',
+    library.config.fuzz?.corpus ?? path.join(library.local, 'fuzz-corpus.json'),
   )
   if (fs.existsSync(file) && process.env.FUZZ_CORPUS !== 'refresh') return file
   const found = fs.existsSync(recordings)

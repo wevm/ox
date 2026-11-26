@@ -13,7 +13,7 @@
  *   function with its recorded arguments and measures CPU time and heap bytes per call.
  *
  * Every call, for the cold number, starts with the library's caches empty, when the project
- * provides `caches` in `.agents/typescript.ts`: the function it returns runs before each
+ * provides `caches` in `local/config.ts`: the function it returns runs before each
  * call that follows a write to them, and for a function that writes to them, it also runs in the
  * loop whose time is subtracted. The network is blocked, so a call that reaches for it fails
  * instead of measuring a round trip.

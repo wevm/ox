@@ -5,12 +5,12 @@
  * afterwards.
  *
  * 1. Record. `speed-vitest.config.ts` runs the projects of the project's vitest config, or those
- *    `speed.projects` in `.agents/typescript.ts` picks, and wraps every export of the
+ *    `speed.projects` in `local/config.ts` picks, and wraps every export of the
  *    sources to record the arguments of each call and whether it returned or resolved.
  *    `speed.environment` can prepare what the tests reach, such as a local node. The recording is
  *    cached in node_modules/.cache/uphill-typescript-speed by a hash of the sources, the
  *    test directories, the lockfile, the configuration files at the root, the project's
- *    `.agents/typescript.ts`, and the recorder's scripts, and Uphill's five runs share one
+ *    `local/config.ts`, and the recorder's scripts, and Uphill's five runs share one
  *    recording. Its format is described at the top of speed-codec.ts. Without a vitest config,
  *    nothing is recorded, and the call metrics and `benched` write `skip` lines.
  * 2. Enumerate. `speed-worker.ts enumerate` walks each entry point `entries()` in library.ts lists
@@ -438,7 +438,7 @@ function summarizeRecording(recording: Recording) {
 /**
  * Hashes everything the recording depends on: the sources, the test directories, the lockfile,
  * the configuration files at the root, such as vitest.config.ts, the project's
- * `.agents/typescript.ts` and `.agents/typescript/`, and the recorder.
+ * `local/` with its `config.ts`, and the recorder.
  */
 function hashInputs() {
   const files: string[] = []
@@ -458,8 +458,8 @@ function hashInputs() {
     }
   }
   visit(library.sources)
-  for (const dir of ['test', 'tests', '__tests__', '.agents/typescript'])
-    visit(path.join(root, dir))
+  for (const dir of ['test', 'tests', '__tests__']) visit(path.join(root, dir))
+  visit(library.local)
   for (const entry of fs.readdirSync(root, { withFileTypes: true }))
     if (
       entry.isFile() &&

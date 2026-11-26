@@ -27,7 +27,7 @@ import {
   deliberate,
   Failure,
   type Property,
-} from '../packs/typescript/metrics/fuzz-lib.ts'
+} from '../metrics/fuzz-lib.ts'
 
 type Fc = typeof fcModule
 type Arbitrary<value = unknown> = fcModule.Arbitrary<value>
