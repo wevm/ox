@@ -1,0 +1,35 @@
+# Each library metric's default `target`. `uphill --update` adds each accepted size, count, or
+# check as its `baseline`, beside the target it scored against. A project sets targets for its own
+# items in its own baseline file.
+
+footprint:
+  # Encoders and decoders bundle 1 to 9 kB, and cryptography more.
+  entry-size: { target: 10kB }
+  hot-entry-size: { target: 10kB }
+
+speed:
+  # Three quarters of the calls in a typical library take under 11 µs and allocate under 6 kB.
+  call-time: { target: 20µs }
+  call-memory: { target: 20kB }
+  import-time: { target: 60ms }
+  import-memory: { target: 3.5MB }
+  hot-call-time: { target: 20µs }
+  hot-call-memory: { target: 20kB }
+  hot-import-time: { target: 60ms }
+  hot-import-memory: { target: 3.5MB }
+
+types:
+  # Most exports cost under 200 instantiations, p50 1 ms and p90 4 ms to check.
+  instantiations: { target: 1000 }
+  check-time: { target: 5ms }
+  check-memory: { target: 2MB }
+  bench-instantiations: { target: 20000 }
+  hot-instantiations: { target: 1000 }
+
+call-types:
+  instantiations: { target: 1000 }
+  hot-instantiations: { target: 1000 }
+
+fuzz:
+  fuzz-coverage: { target: 90 }
+  hot-fuzz-coverage: { target: 100 }

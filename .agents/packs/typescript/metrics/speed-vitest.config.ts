@@ -1,137 +1,191 @@
 /**
- * Vitest configuration that records what ox's own tests call each exported function with. It
- * reuses the config ox's tests run with (`testConfig()` in repo.ts): its aliases, with `ox`
- * resolving to the source, its setup files, and the `core` project's global setup, which starts
- * anvil through prool (forking mainnet). It adds a transform that wraps every export of ox's
- * modules in src/ (test files excluded, `internal/` modules included) with
- * `globalThis.__uphillWrap`, which `speed-record-setup.ts` installs. Without anvil, the tests that
- * need it fail at once and record less.
+ * Vitest configuration that records what the library's own tests call each exported function
+ * with. It reuses the project's vitest config, whose path `speed.ts` passes in
+ * `UPHILL_SPEED_TEST_CONFIG`: its test options and aliases, with the package name resolving to the
+ * root entry's source, and its projects with their setup files and global setup. It adds a
+ * transform that wraps every export of the library's modules in the sources (test files excluded,
+ * `internal/` modules included) with `globalThis.__uphillWrap`, which `speed-record-setup.ts`
+ * installs.
  *
- * Projects: `core` and `tempo-unit` as ox defines them; `frames-unit`, which runs the tests in src/
- * of ox's `tmp_frames` project (`TxEnvelopeEip8141.test.ts`) without its global setup, which
- * starts a frames node in Docker, so its unit tests record and the ones that need the node fail at
- * once; and `calls`, which runs `speed-calls.test.ts`, the calls for public functions no test
- * calls in a way the bench can replay. The browser and fuzz projects, and the Tempo end-to-end
- * tests, which need a Tempo node in Docker, are left out.
+ * Projects: every project of the config that does not run in a browser, or the config's one test
+ * config, unless `speed.projects` in `.agents/typescript.ts` picks and adjusts them. That
+ * hook can drop a global setup that starts a server the recording cannot reach, narrow a
+ * project's test files, and add test files of its own, such as calls for public functions no test
+ * calls in a way the bench can replay.
  *
- * `speed.ts` runs it with `UPHILL_SPEED_RECORD_DIR` set; no test file changes.
+ * `speed.ts` runs it with `UPHILL_SPEED_RECORD_DIR` set. No test file changes.
  *
  * @module
  */
 
 import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import * as acorn from 'acorn'
 import MagicString from 'magic-string'
-import { defineConfig, type Plugin } from 'vitest/config'
+import type { Plugin } from 'vitest/config'
 
-import { testConfig } from './repo.ts'
+import * as library from './library.ts'
 
-const root = path.resolve(import.meta.dirname, '../..')
+const root = library.root
 const setup = path.join(import.meta.dirname, 'speed-record-setup.ts')
 const workers = Number(process.env.UPHILL_SPEED_RECORD_WORKERS) || 2
+const configFile = process.env.UPHILL_SPEED_TEST_CONFIG
+if (!configFile) throw new Error('UPHILL_SPEED_TEST_CONFIG is not set.')
 
-type Project = {
-  test?: {
-    name?: string
-    include?: string[]
-    setupFiles?: string[]
-    globalSetup?: string[]
-  }
+type Test = library.SpeedProject & {
+  alias?: Record<string, string> | { find: string | RegExp }[] | undefined
+  projects?: unknown[] | undefined
 }
+
 type Base = {
-  envPrefix?: string | string[]
-  test?: {
-    alias?: Record<string, string>
-    projects?: unknown[]
-    resolveSnapshotPath?: (path: string, extension: string) => string
-  }
+  envPrefix?: string | string[] | undefined
+  plugins?: unknown[] | undefined
+  resolve?: unknown
+  test?: Test | undefined
 }
-const base = (await testConfig()) as Base
-const projects = (base.test?.projects ?? []) as Project[]
-const ox = (name: string) => {
-  const project = projects.find((project) => project.test?.name === name)?.test
-  if (!project) throw new Error(`ox's vitest config has no ${name} project.`)
-  return project
-}
-const core = ox('core')
-const tempo = ox('tempo-unit')
-const frames = ox('tmp_frames')
 
-export default defineConfig({
+// The config may export a function of the command and mode, or a promise.
+const base = await (async (): Promise<Base> => {
+  const module = (await import(pathToFileURL(configFile).href)) as {
+    default: unknown
+  }
+  const exported = await module.default
+  return typeof exported === 'function'
+    ? await exported({ command: 'serve', mode: 'test' })
+    : (exported as Base)
+})()
+
+const list = (value: string | string[] | undefined) =>
+  value === undefined ? [] : [value].flat()
+
+// Each project extends the root options, which merge arrays, so the test files and setup files
+// stay on the projects.
+const {
+  browser,
+  exclude,
+  globalSetup,
+  include,
+  projects: listed,
+  setupFiles,
+  ...options
+} = base.test ?? {}
+const found = listed
+  ? listed.flatMap((project) => {
+      if (!project || typeof project !== 'object' || !('test' in project))
+        return []
+      const test = (project as { test: library.SpeedProject }).test
+      return [
+        {
+          ...test,
+          exclude:
+            exclude || test.exclude
+              ? [...(exclude ?? []), ...(test.exclude ?? [])]
+              : undefined,
+          globalSetup: [...list(globalSetup), ...list(test.globalSetup)],
+          setupFiles: [...list(setupFiles), ...list(test.setupFiles)],
+        },
+      ]
+    })
+  : [
+      {
+        browser,
+        environment: options.environment,
+        exclude,
+        globalSetup,
+        include,
+        name: 'tests',
+        setupFiles,
+      },
+    ]
+
+const projects =
+  library.config.speed?.projects?.(found) ??
+  found.filter((project) => !project.browser?.enabled)
+
+const alias = options.alias ?? {}
+const entry = library.entries().find((entry) => entry.name === library.name)
+const build = `${library.build}/`
+const sources = `${library.sources}/`
+
+export default {
   root,
-  plugins: [record()],
+  plugins: [...(base.plugins ?? []), project(), record()],
   envPrefix: base.envPrefix,
+  resolve: base.resolve,
   test: {
+    ...options,
     alias: [
-      // On 0.x, `ox` resolves through src/package.json's `module` to the build in src/_esm, which
-      // the transform does not wrap, so it resolves to the source instead. Subpaths such as
-      // `ox/tempo` are directories of src/ without a package.json, so they reach the source.
-      { find: /^ox$/, replacement: path.join(root, 'src/index.ts') },
-      ...Object.entries(base.test?.alias ?? {}).map(([find, replacement]) => ({
-        find,
-        replacement,
-      })),
+      // The package name can resolve through package.json to the build, which the transform does
+      // not wrap, so it resolves to the root entry's source instead.
+      ...(entry
+        ? [
+            {
+              find: new RegExp(
+                `^${library.name.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}$`,
+              ),
+              replacement: entry.source,
+            },
+          ]
+        : []),
+      ...(Array.isArray(alias)
+        ? alias
+        : Object.entries(alias).map(([find, replacement]) => ({
+            find,
+            replacement,
+          }))),
     ],
-    resolveSnapshotPath: base.test?.resolveSnapshotPath,
     passWithNoTests: true,
-    // Wrapped calls run slower than ox's own timeouts allow for.
+    // Wrapped calls run slower than the project's own timeouts allow for.
     hookTimeout: 60_000,
     testTimeout: 60_000,
-    // A failing test records the calls it made before failing; retrying it only wastes time.
+    // A failing test records the calls it made before failing. Retrying it only wastes time.
     retry: 0,
     pool: 'forks',
     maxWorkers: workers,
     // A worker whose heap grows unchecked can get the whole run killed for memory on a shared
-    // machine; a capped heap collects sooner. Logs of passing tests are not kept either.
+    // machine, and a capped heap collects sooner. Logs of passing tests are not kept either.
     execArgv: ['--max-old-space-size=1280'],
     silent: 'passed-only',
     // Every test file runs in a fresh module graph, so one file's leftovers do not fill the
     // worker's heap, and the setup file seeds randomness for each file.
     isolate: true,
-    projects: [
-      {
-        extends: true,
-        test: {
-          name: 'core',
-          include: core.include,
-          globalSetup: core.globalSetup,
-          setupFiles: [setup, ...(core.setupFiles ?? [])],
-        },
+    projects: projects.map((project) => ({
+      extends: true,
+      test: {
+        name: project.name,
+        include: project.include,
+        exclude: project.exclude,
+        environment: project.environment,
+        globalSetup: list(project.globalSetup),
+        setupFiles: [setup, ...list(project.setupFiles)],
       },
-      {
-        extends: true,
-        test: {
-          name: 'tempo-unit',
-          include: tempo.include,
-          setupFiles: [setup, ...(tempo.setupFiles ?? [])],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'frames-unit',
-          include: (frames.include ?? []).filter((file) =>
-            file.startsWith('src/'),
-          ),
-          setupFiles: [setup],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'calls',
-          include: ['.agents/uphill/speed-calls.test.ts'],
-          setupFiles: [setup, ...(core.setupFiles ?? [])],
-        },
-      },
-    ],
+    })),
   },
-})
+}
 
 /**
- * Wraps each export of an ox module once the module has run, and hands each export of a test
- * helper module (`test/**`) to `globalThis.__uphillFixture`, which remembers its path.
+ * Resolves `vitest` in the recorder's files from the project, since the pack can live outside the
+ * project, and the setup file must share the vitest instance that runs it.
+ */
+function project(): Plugin {
+  return {
+    name: 'uphill-speed-project',
+    enforce: 'pre',
+    resolveId(id, importer) {
+      if (id !== 'vitest' || !importer?.startsWith(`${import.meta.dirname}/`))
+        return
+      return this.resolve(id, path.join(root, 'package.json'), {
+        skipSelf: true,
+      })
+    },
+  }
+}
+
+/**
+ * Wraps each export of a library module once the module has run, and hands each export of a test
+ * helper module (a module outside the sources that is not a test file) to
+ * `globalThis.__uphillFixture`, which remembers its path.
  */
 function record(): Plugin {
   return {
@@ -139,14 +193,16 @@ function record(): Plugin {
     enforce: 'post',
     transform(code, id) {
       if (
-        id.startsWith(`${root}/test/`) &&
-        id.endsWith('.ts') &&
-        !id.endsWith('.test.ts')
+        !id.endsWith('.ts') ||
+        !id.startsWith(`${root}/`) ||
+        id.startsWith(build) ||
+        id.includes('/node_modules/')
       )
-        return fixtures(code, id)
-      if (!id.startsWith(`${root}/src/`) || !id.endsWith('.ts')) return
+        return
+      if (!id.startsWith(sources))
+        return /\.(test|spec)\.ts$/.test(id) ? undefined : fixtures(code, id)
       if (
-        /\/(_test|_snap|_esm|_cjs|_types)\/|\.(test|test-d|bench|bench-d|snap-d|fuzz|conformance)\.ts$/.test(
+        /\/(_test|_snap|_esm|_cjs|_types)\/|\.(test|spec|test-d|bench|bench-d|snap-d|fuzz|conformance)\.ts$/.test(
           id,
         )
       )
@@ -184,10 +240,10 @@ function record(): Plugin {
               exports.push([declarator.id!.name!, declarator.id!.name!])
           if (declaration.kind === 'const') relet.add(declaration)
         } else if (node.source) {
-          // A re-export from another module, such as Mnemonic's `export { path } from
-          // './HdKey.js'`, is that module's export, already wrapped there. A re-export from a
-          // dependency, such as zod's functions from `ox/zod` or a bip39 wordlist, becomes a
-          // local binding, so calls and values through ox's entry points record under this module.
+          // A re-export from another module, such as `export { add } from './Math.js'`, is that
+          // module's export, already wrapped there. A re-export from a dependency, such as a
+          // schema library's functions or a wordlist, becomes a local binding, so calls and values
+          // through the library's entry points record under this module.
           const source = String(node.source.value)
           if (source.startsWith('.') || source.startsWith('/')) continue
           const locals: string[] = []

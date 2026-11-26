@@ -1,32 +1,32 @@
 /**
- * Writes ox's fuzz metrics: for every public function, whether a fuzz harness ran on it, whether
- * fuzzing found no failure, and the share of the function's own lines the fuzzing ran.
+ * Writes the library's fuzz metrics: for every public function, whether a fuzz harness ran on it,
+ * whether fuzzing found no failure, and the share of the function's own lines the fuzzing ran.
  *
- * 1. Corpus. fuzz-fixtures/corpus.json holds up to ten argument sets per function that ox's own
- *    tests passed it, snapshotted from the speed category's recording
- *    (node_modules/.cache/uphill-speed), so runs do not depend on a recording that changes with
- *    every edit. `FUZZ_CORPUS=refresh` snapshots the newest recording again. Without a corpus or
- *    a recording, the run goes on with structured properties and hand-written seeds alone.
- * 2. Plan. `fuzz-worker.ts plan` walks every entry point `entries()` in repo.ts lists, as
+ * 1. Corpus. The corpus file (`fuzz.corpus`, by default
+ *    .agents/typescript/fuzz-corpus.json) holds up to ten argument sets per function that
+ *    the project's own tests passed it, snapshotted from the speed category's recording, so runs
+ *    do not depend on a recording that changes with every edit. `FUZZ_CORPUS=refresh` snapshots
+ *    the newest recording again. Without a corpus or a recording, the run goes on with structured
+ *    properties and hand-written seeds alone.
+ * 2. Plan. `fuzz-worker.ts plan` walks every entry point `entries()` in library.ts lists, as
  *    speed-worker.ts does, so functions have the same names as in the other categories, such as
- *    `ox:Hex.fromString`, and lists each one's harnesses: the structured properties in
- *    fuzz-properties.ts (round trips, re-encoding of recorded values, differentials against the
- *    reference implementations this branch's devDependencies provide, such as viem, ethers, noble
- *    and micro-eth-signer, and consistency between ox functions), boundary mutations of its
- *    recorded arguments (fuzz-lib.ts), and hand-written seeds. A function several names reach is
- *    one item, under the first, such as `ox:HdKey.path` for `ox:Mnemonic.path`. The network is
- *    blocked, and WebAuthn
- *    prompts go to a stand-in `window` whose credential calls return nothing.
+ *    `lib:Math.add`, and lists each one's harnesses: the structured properties in the project's
+ *    properties module (`fuzz.properties`), such as round trips, re-encoding of recorded values,
+ *    differentials against reference implementations, and consistency between the library's
+ *    functions, boundary mutations of its recorded arguments (fuzz-lib.ts), and hand-written
+ *    seeds. A function several names reach is one item, under the first, such as `lib:Array.sum`
+ *    for `lib:Math.sum`. The network is blocked, and WebAuthn prompts go to a stand-in `window`
+ *    whose credential calls return nothing.
  * 3. Fuzz. `fuzz-worker.ts fuzz` runs a fixed shard of functions in one Node process, with fixed
  *    seeds and run counts, so two runs write the same lines. Shards run `UPHILL_CONCURRENCY`
  *    (default 2) at a time. A shard that hangs or grows past the memory limit is stopped, and its
  *    function is run again alone with tracing on, which names the input that did it.
  *    `FUZZ_ONLY=<regex>` fuzzes only the matching functions, for iterating on a harness.
  *
- * The crash oracle: ox's documented errors (`Errors.BaseError` subclasses, the plain `Error` that
- * `Errors.GlobalErrorType` stands for in its `ErrorType` unions, and validation the code throws on
- * purpose) are fine; a TypeError, RangeError, SyntaxError, or ReferenceError on an input that
- * keeps the declared types, a stack overflow, a hang, or runaway memory is a failure.
+ * The crash oracle: documented errors (the library's error classes, plain `Error`s, the built-in
+ * errors `fuzz.documentedErrors` lists, and validation the code throws on purpose) are fine; a
+ * TypeError, RangeError, SyntaxError, or ReferenceError on an input that keeps the declared types,
+ * a stack overflow, a hang, or runaway memory is a failure.
  *
  * @module
  */
@@ -35,8 +35,13 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import { hot } from './hot.ts'
-import { root } from './repo.ts'
+import * as hot from './hot.ts'
+import * as library from './library.ts'
+
+if (
+  library.skip(['fuzzed', 'fuzz-clean', 'fuzz-coverage', 'hot-fuzz-coverage'])
+)
+  process.exit(0)
 
 const here = import.meta.dir
 const metricsFile = process.env.UPHILL_METRICS
@@ -51,7 +56,12 @@ const functionTimeoutMs = 90_000
 /** A worker whose resident memory grows past this is stopped. */
 const memoryLimitBytes = 2_000_000_000
 /** Functions that change global state run alone. */
-const isolated = new Set(['ox:Engine.install', 'ox:Engine.reset'])
+const isolated = new Set(library.config.fuzz?.isolated ?? [])
+/** Where speed.ts keeps its recordings, which the corpus snapshots. */
+const recordings = path.join(
+  library.root,
+  'node_modules/.cache/uphill-typescript-speed',
+)
 
 type Location = { url: string; line: number; column: number }
 type Planned = {
@@ -113,9 +123,9 @@ async function main() {
     `Public functions: ${plan.items.length}; ${fuzzable.length} have a harness (${fuzzable.filter((item) => item.properties.length).length} with structured properties, ${fuzzable.filter((item) => item.seeds).length} with recorded or hand-written arguments); ${plan.properties.length} properties.`,
   )
 
-  // Fixed shards: a module's functions share a shard, so costly setups (a KZG trusted setup,
-  // ethers' HD wallets) load once; modules go, largest first, to the shard with the fewest
-  // functions so far. Isolated functions run alone.
+  // Fixed shards: a module's functions share a shard, so costly setups (a trusted setup, a
+  // reference implementation's wallets) load once; modules go, largest first, to the shard with
+  // the fewest functions so far. Isolated functions run alone.
   const locations = Object.fromEntries(
     plan.items
       .filter((item) => item.location)
@@ -297,7 +307,10 @@ async function main() {
     lines.push(...linesOf(item, result))
   }
   if (metricsFile)
-    fs.appendFileSync(metricsFile, `${[...lines, ...hot(lines)].join('\n')}\n`)
+    fs.appendFileSync(
+      metricsFile,
+      `${[...lines, ...hot.hot(lines)].join('\n')}\n`,
+    )
   else console.log(lines.join('\n'))
 
   log(
@@ -357,7 +370,7 @@ function linesOf(item: Planned, result: Result | undefined) {
   return lines
 }
 
-/** The module a function belongs to, such as `ox/Hex` for `ox:Hex.fromNumber`. */
+/** The module a function belongs to, such as `lib/Math` for `lib:Math.add`. */
 function moduleOf(name: string) {
   const [entry, member] = name.split(':') as [string, string]
   const dot = member.indexOf('.')
@@ -366,24 +379,26 @@ function moduleOf(name: string) {
 
 /** The corpus fixture, snapshotted from the newest speed recording when missing or asked for. */
 function corpusFile() {
-  const file = path.join(here, 'fuzz-fixtures/corpus.json')
+  const file = path.resolve(
+    library.root,
+    library.config.fuzz?.corpus ?? '.agents/typescript/fuzz-corpus.json',
+  )
   if (fs.existsSync(file) && process.env.FUZZ_CORPUS !== 'refresh') return file
-  const cacheDir = path.join(root, 'node_modules/.cache/uphill-speed')
-  const recordings = fs.existsSync(cacheDir)
+  const found = fs.existsSync(recordings)
     ? fs
-        .readdirSync(cacheDir)
+        .readdirSync(recordings)
         .filter((name) => /^recording-[0-9a-f]+\.json$/.test(name))
-        .map((name) => path.join(cacheDir, name))
+        .map((name) => path.join(recordings, name))
         .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)
     : []
-  if (!recordings.length) {
+  if (!found.length) {
     if (process.env.FUZZ_CORPUS === 'refresh')
       throw new Error(
-        'There is no speed recording to snapshot. Run `bun .agents/uphill/speed.ts` first.',
+        'There is no speed recording to snapshot. Run speed.ts first.',
       )
     // Structured properties and hand-written seeds still run without recorded arguments.
     log(
-      'No corpus: fuzz-fixtures/corpus.json is missing and there is no speed recording to snapshot; fuzzing without recorded arguments.',
+      `No corpus: ${path.relative(library.root, file)} is missing and there is no speed recording to snapshot; fuzzing without recorded arguments.`,
     )
     const empty = path.join(tmp, 'corpus.json')
     fs.writeFileSync(empty, JSON.stringify({ source: 'none', functions: {} }))
@@ -391,14 +406,14 @@ function corpusFile() {
   }
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const result = Bun.spawnSync(
-    [node!, path.join(here, 'fuzz-worker.ts'), 'corpus', recordings[0]!, file],
+    [node!, path.join(here, 'fuzz-worker.ts'), 'corpus', found[0]!, file],
     {
-      cwd: root,
+      cwd: library.root,
       stderr: 'inherit',
     },
   )
   if (result.exitCode !== 0) throw new Error('Snapshotting the corpus failed.')
-  log(`Snapshotted the corpus from ${path.relative(root, recordings[0]!)}.`)
+  log(`Snapshotted the corpus from ${path.relative(library.root, found[0]!)}.`)
   return file
 }
 
@@ -424,7 +439,7 @@ async function runWorker(job: string, out: string): Promise<WorkerOutcome> {
       job,
       out,
     ],
-    { cwd: root, stdout: 'ignore', stderr: 'pipe' },
+    { cwd: library.root, stdout: 'ignore', stderr: 'pipe' },
   )
   let killed: WorkerOutcome['killed']
   let peakRss = 0
@@ -465,7 +480,7 @@ function residentBytes(pid: number) {
 
 async function run(command: string[], timeoutMs: number) {
   const child = Bun.spawn(command, {
-    cwd: root,
+    cwd: library.root,
     stdout: 'pipe',
     stderr: 'pipe',
   })

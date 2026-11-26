@@ -1,32 +1,33 @@
 /**
- * Writes ox's speed metrics: for every public function, the CPU time and heap bytes of one call
- * replaying the arguments ox's own tests call it with, and whether it could be benched; and for
- * every entry point, barrels included, the CPU time to import it and the heap it holds afterwards.
+ * Writes the speed metrics: for every public function, the CPU time and heap bytes of one call
+ * replaying the arguments the library's own tests call it with, and whether it could be benched,
+ * and for every entry point, barrels included, the CPU time to import it and the heap it holds
+ * afterwards.
  *
- * 1. Record. `speed-vitest.config.ts` runs ox's `core` and `tempo-unit` test projects, the unit
- *    tests of `tmp_frames`, and `speed-calls.test.ts` under vitest, with the global setup that
- *    starts anvil, and wraps every export of `src/**` to record the arguments of each call and
- *    whether it returned or resolved. Anvil forks mainnet through `forkProxy`, which caches what
- *    mainnet nodes answer and falls back across public nodes. The recording is cached in
- *    node_modules/.cache/uphill-speed by a hash of src/, test/, the lockfile, the test config, and
- *    the recorder's scripts, and Uphill's five runs share one recording; its format is described at
- *    the top of speed-codec.ts. Without Foundry the tests that need anvil fail at once, and fewer
- *    functions are benched.
- * 2. Enumerate. `speed-worker.ts enumerate` walks each entry point `entries()` in repo.ts lists (in
- *    its order) and maps every recorded export to the public function it is. A function exported
- *    from several entries is measured once, under the first, such as `ox:Hex.fromNumber` for
- *    `ox/Hex`'s `fromNumber`, and its other names, such as `ox:Mnemonic.path` for `ox:HdKey.path`,
- *    are left out. Each entry point is named by its specifier.
+ * 1. Record. `speed-vitest.config.ts` runs the projects of the project's vitest config, or those
+ *    `speed.projects` in `.agents/typescript.ts` picks, and wraps every export of the
+ *    sources to record the arguments of each call and whether it returned or resolved.
+ *    `speed.environment` can prepare what the tests reach, such as a local node. The recording is
+ *    cached in node_modules/.cache/uphill-typescript-speed by a hash of the sources, the
+ *    test directories, the lockfile, the configuration files at the root, the project's
+ *    `.agents/typescript.ts`, and the recorder's scripts, and Uphill's five runs share one
+ *    recording. Its format is described at the top of speed-codec.ts. Without a vitest config,
+ *    nothing is recorded, and the call metrics and `benched` write `skip` lines.
+ * 2. Enumerate. `speed-worker.ts enumerate` walks each entry point `entries()` in library.ts lists
+ *    (in its order) and maps every recorded export to the public function it is. A function
+ *    exported from several entries is measured once, under the first, such as `lib:Math.add` for
+ *    `lib/Math`'s `add`, and its other names, such as `lib:Calc.add` for the same function, are
+ *    left out. Each entry point is named by its specifier.
  * 3. Replay. `speed-worker.ts bench` replays each function in a fresh Node process, sharded across
  *    `UPHILL_CONCURRENCY` processes at a time (default: `os.availableParallelism()`). Import probes
  *    run in the same pool.
  *
  * Measured code runs from the build under Node with `--single-threaded`, so V8's garbage
  * collection and compiler work run on the main thread and `process.cpuUsage()` counts only what
- * the call costs. ox's caches are emptied with `Caches.clear()` before every call, so
- * `Address.checksum` and the functions that call it measure their full work, as a first call with
- * an input does (a call that checksums one address twice still computes it once); the note gives
- * the time with the caches warm too. The network is blocked.
+ * the call costs. When the project provides `caches`, the library's caches are emptied before
+ * every call, so a memoized function measures its full work, as a first call with an input does
+ * (a call that computes one input twice still computes it once). The note gives the time with the
+ * caches warm too. The network is blocked.
  *
  * @module
  */
@@ -37,9 +38,25 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { hot } from './hot.ts'
-import { root } from './repo.ts'
+import * as library from './library.ts'
+
+if (
+  library.skip([
+    'call-time',
+    'call-memory',
+    'import-time',
+    'import-memory',
+    'hot-call-time',
+    'hot-call-memory',
+    'hot-import-time',
+    'hot-import-memory',
+    'benched',
+  ])
+)
+  process.exit(0)
 
 const here = import.meta.dir
+const root = library.root
 const metricsFile = process.env.UPHILL_METRICS
 if (!metricsFile) throw new Error('UPHILL_METRICS is not set.')
 const concurrency = Math.max(
@@ -117,19 +134,24 @@ try {
 
 async function main() {
   const started = performance.now()
-  const recording = await loadRecording()
+  const testConfig = findTestConfig()
+  const recording = testConfig ? await loadRecording(testConfig) : undefined
+  if (!testConfig)
+    log(
+      'Found no vitest config with vitest installed, so no calls are recorded and only imports are measured.',
+    )
 
-  const enumeration = await enumerate(Object.keys(recording.keys))
+  const enumeration = await enumerate(Object.keys(recording?.keys ?? {}))
   const { items } = enumeration
   const { counts } = enumeration
   log(
-    `Public functions: ${counts.functions} names in ${enumeration.entries.length} entry points, ${items.length} distinct; ${counts.errors} error classes, ${counts.classes} other classes, and ${counts.values} other values are not benched, nor are the ${counts.foreign} functions ox re-exports from its dependencies, such as zod.`,
+    `Public functions: ${counts.functions} names in ${enumeration.entries.length} entry points, ${items.length} distinct; ${counts.errors} error classes, ${counts.classes} other classes, and ${counts.values} other values are not benched, nor are the ${counts.foreign} functions the library re-exports from its dependencies.`,
   )
 
   const lines: string[] = []
   const failures = new Map<string, string>()
   const jobs: { item: Item; candidates: Sample[] }[] = []
-  for (const item of items) {
+  for (const item of recording ? items : []) {
     const merged = mergeKeys(item.keys.map((key) => recording.keys[key]!))
     if (!merged?.ok.length) failures.set(item.name, whyNot(merged))
     else jobs.push({ item, candidates: pick(merged.ok) })
@@ -164,15 +186,27 @@ async function main() {
     )
   }
 
+  if (!recording) {
+    const note = quote(
+      'no vitest config was found, so no test calls are recorded to replay',
+    )
+    for (const metric of ['call-time', 'call-memory'])
+      lines.push(
+        `${metric} skip note ${note}`,
+        `hot-${metric} skip note ${note}`,
+      )
+    lines.push(`benched skip note ${note}`)
+  }
+
   const reasons = new Map<string, number>()
-  for (const { name, item } of enumeration.exports) {
+  for (const { name, item } of recording ? enumeration.exports : []) {
     if (name !== item) continue
     const result = results.get(item)
     if (result?.ok) {
       const notes = [
         result.direct
           ? `args from ${result.where}`
-          : `args from a call another ox function made in ${result.where}`,
+          : `args from a call another ${library.name} function made in ${result.where}`,
       ]
       if (result.async) notes.push('awaited')
       if (result.cached)
@@ -182,7 +216,7 @@ async function main() {
       if (result.mutates)
         notes.push('mutates its arguments, so they are rebuilt per call')
       if (result.window)
-        notes.push('runs with a stub window, as the WebAuthn tests do')
+        notes.push('runs with a stub window, as browser tests do')
       if (result.noops)
         notes.push(
           "the test's event callbacks, such as onProgress, replay as no-ops",
@@ -215,10 +249,28 @@ async function main() {
   )
 }
 
+/**
+ * The project's vitest config, such as vitest.config.ts or vite.config.ts, or nothing when it has
+ * none or vitest is not installed.
+ */
+function findTestConfig() {
+  if (!fs.existsSync(path.join(root, 'node_modules/vitest/vitest.mjs')))
+    return undefined
+  for (const name of ['vitest', 'vite'])
+    for (const extension of ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs']) {
+      const file = path.join(root, `${name}.config.${extension}`)
+      if (fs.existsSync(file)) return file
+    }
+  return undefined
+}
+
 /** Loads the cached recording for the current source, or records and caches it. */
-async function loadRecording(): Promise<Recording> {
+async function loadRecording(testConfig: string): Promise<Recording> {
   const hash = hashInputs()
-  const cacheDir = path.join(root, 'node_modules/.cache/uphill-speed')
+  const cacheDir = path.join(
+    root,
+    'node_modules/.cache/uphill-typescript-speed',
+  )
   const cacheFile = path.join(cacheDir, `recording-${hash}.json`)
   if (fs.existsSync(cacheFile)) {
     const recording = JSON.parse(
@@ -236,12 +288,13 @@ async function loadRecording(): Promise<Recording> {
   fs.mkdirSync(dir)
   const logFile = path.join(cacheDir, `recording-${hash}.log`)
   log(
-    `Recording calls from ox's tests (vitest, ${concurrency} workers); log in ${path.relative(root, logFile)}.`,
+    `Recording calls from the library's tests (vitest, ${concurrency} workers); log in ${path.relative(root, logFile)}.`,
   )
   const started = performance.now()
   const out = fs.openSync(logFile, 'w')
   const report = path.join(tmp, 'vitest.json')
-  const fork = forkProxy(path.join(cacheDir, 'fork-rpc.json'))
+  const environment =
+    (await library.config.speed?.environment?.(cacheDir)) ?? {}
   const child = Bun.spawn(
     [
       node!,
@@ -259,15 +312,12 @@ async function loadRecording(): Promise<Recording> {
       cwd: root,
       env: {
         ...process.env,
-        // foundryup installs anvil here without putting it on PATH.
-        PATH: [process.env.PATH, path.join(os.homedir(), '.foundry/bin')]
-          .filter(Boolean)
-          .join(path.delimiter),
-        // Snapshots a test lacks are not written into ox's test files.
+        ...environment.env,
+        // Snapshots a test lacks are not written into the project's test files.
         CI: 'true',
-        VITE_ANVIL_FORK_URL: fork.url,
         UPHILL_SPEED_RECORD_DIR: dir,
         UPHILL_SPEED_RECORD_WORKERS: String(concurrency),
+        UPHILL_SPEED_TEST_CONFIG: testConfig,
       },
       stdout: out,
       stderr: out,
@@ -275,7 +325,7 @@ async function loadRecording(): Promise<Recording> {
   )
   await child.exited
   fs.closeSync(out)
-  fork.stop()
+  environment.stop?.()
   if (!fs.existsSync(report)) {
     const tail = fs.readFileSync(logFile, 'utf8').split('\n').slice(-40)
     process.stderr.write(`${tail.join('\n')}\n`)
@@ -359,113 +409,6 @@ async function loadRecording(): Promise<Recording> {
   return recording
 }
 
-/**
- * A JSON-RPC server for anvil to fork from, which answers each request from a cache of what
- * mainnet nodes answered, kept in `file` across recordings, and asks upstream only for requests it
- * has not seen. ox's tests fork mainnet at a fixed block, whose state never changes, so the cached
- * answers stay right and recordings repeat. Upstream is `VITE_ANVIL_FORK_URL` or thirdweb, as in
- * test/prool.ts, then other public archive nodes, each tried in turn, with backoff between rounds,
- * when one is rate limited or lacks the state, so a public node's rate limit does not fail the
- * tests that use anvil.
- */
-function forkProxy(file: string) {
-  const upstreams = [
-    process.env.VITE_ANVIL_FORK_URL ?? 'https://1.rpc.thirdweb.com',
-    'https://eth.drpc.org',
-    'https://rpc.mevblocker.io',
-    'https://eth-mainnet.public.blastapi.io',
-  ]
-  type Answer = { result?: unknown; error?: { code?: number } | undefined }
-  const cache = new Map<string, Answer>(
-    fs.existsSync(file)
-      ? Object.entries(JSON.parse(fs.readFileSync(file, 'utf8')))
-      : [],
-  )
-  const pending = new Map<string, Promise<Answer>>()
-  const stats = { cached: 0, fetched: 0, failed: 0 }
-  const ask = async (method: string, params: unknown): Promise<Answer> => {
-    let last: Answer = { error: { code: -32603 } }
-    for (let round = 0; round < 4; round++) {
-      if (round) await Bun.sleep(500 * 2 ** round)
-      for (const upstream of upstreams) {
-        const body = await fetch(upstream, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-          signal: AbortSignal.timeout(10_000),
-        })
-          .then((response) => (response.ok ? response.json() : undefined))
-          .catch(() => undefined)
-        if (!body || typeof body !== 'object') continue
-        const { result, error } = body as Answer
-        if (error === undefined) return { result }
-        // "Method not found" is the answer, as when anvil asks whether upstream is anvil. Any
-        // other error, such as a rate limit or missing historical state, is one node's.
-        last = { error }
-        if (error.code === -32601) return last
-      }
-    }
-    return { ...last, failed: true } as Answer
-  }
-  const answer = (method: string, params: unknown) => {
-    const key = `${method}\0${JSON.stringify(params ?? [])}`
-    const cached = cache.get(key)
-    if (cached) {
-      stats.cached++
-      return cached
-    }
-    let promise = pending.get(key)
-    if (!promise) {
-      promise = ask(method, params).then(
-        ({ failed, ...value }: Answer & { failed?: boolean }) => {
-          pending.delete(key)
-          if (failed) stats.failed++
-          else {
-            cache.set(key, value)
-            stats.fetched++
-          }
-          return value
-        },
-      )
-      pending.set(key, promise)
-    }
-    return promise
-  }
-  type Request = { id?: unknown; method: string; params?: unknown }
-  const server = Bun.serve({
-    hostname: '127.0.0.1',
-    port: 0,
-    idleTimeout: 0,
-    async fetch(request) {
-      const body = (await request.json()) as Request | Request[]
-      const requests = Array.isArray(body) ? body : [body]
-      const responses = await Promise.all(
-        requests.map(async ({ id, method, params }) => ({
-          jsonrpc: '2.0',
-          id,
-          ...(await answer(method, params)),
-        })),
-      )
-      return Response.json(Array.isArray(body) ? responses : responses[0])
-    },
-  })
-  return {
-    url: `http://127.0.0.1:${server.port}`,
-    stop() {
-      server.stop(true)
-      log(
-        `Anvil's fork: ${stats.cached} requests answered from ${path.relative(root, file)}, ${stats.fetched} from mainnet nodes, ${stats.failed} failed.`,
-      )
-      if (!stats.fetched) return
-      fs.writeFileSync(
-        `${file}.${process.pid}`,
-        JSON.stringify(Object.fromEntries(cache)),
-      )
-      fs.renameSync(`${file}.${process.pid}`, file)
-    },
-  }
-}
-
 /** The test files of a vitest JSON report. */
 function readReport(report: string) {
   return (
@@ -493,16 +436,18 @@ function summarizeRecording(recording: Recording) {
 }
 
 /**
- * Hashes everything the recording depends on: the source, the tests, the lockfile, the test config
- * (the TypeScript files at the root, such as vite.config.ts, or test/vitest.config.ts), and the
- * recorder.
+ * Hashes everything the recording depends on: the sources, the test directories, the lockfile,
+ * the configuration files at the root, such as vitest.config.ts, the project's
+ * `.agents/typescript.ts` and `.agents/typescript/`, and the recorder.
  */
 function hashInputs() {
   const files: string[] = []
   const visit = (dir: string) => {
+    if (!fs.existsSync(dir)) return
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const file = path.join(dir, entry.name)
       if (
+        file === library.build ||
         /^(_esm|_cjs|_types|_snap|node_modules)$|\.tsbuildinfo$/.test(
           entry.name,
         )
@@ -512,20 +457,20 @@ function hashInputs() {
       else if (entry.isFile()) files.push(file)
     }
   }
-  visit(path.join(root, 'src'))
-  visit(path.join(root, 'test'))
+  visit(library.sources)
+  for (const dir of ['test', 'tests', '__tests__', '.agents/typescript'])
+    visit(path.join(root, dir))
   for (const entry of fs.readdirSync(root, { withFileTypes: true }))
-    if (entry.isFile() && /^pnpm-lock\.yaml$|\.ts$/.test(entry.name))
+    if (
+      entry.isFile() &&
+      /^(pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?)$|\.[cm]?[jt]s$/.test(
+        entry.name,
+      )
+    )
       files.push(path.join(root, entry.name))
-  for (const file of [
-    '.agents/uphill/repo.ts',
-    '.agents/uphill/speed-calls.test.ts',
-    '.agents/uphill/speed-codec.ts',
-    '.agents/uphill/speed-record-setup.ts',
-    '.agents/uphill/speed-vitest.config.ts',
-  ])
-    if (fs.existsSync(path.join(root, file))) files.push(path.join(root, file))
+  if (fs.existsSync(library.configFile)) files.push(library.configFile)
   files.sort()
+
   const hash = crypto.createHash('sha256')
   hash.update(
     `${recordingVersion}\0${Bun.spawnSync([node!, '--version']).stdout}`,
@@ -533,6 +478,16 @@ function hashInputs() {
   for (const file of files) {
     hash.update(`${path.relative(root, file)}\0`)
     hash.update(fs.readFileSync(file))
+    hash.update('\0')
+  }
+  for (const file of [
+    'library.ts',
+    'speed-codec.ts',
+    'speed-record-setup.ts',
+    'speed-vitest.config.ts',
+  ]) {
+    hash.update(`${file}\0`)
+    hash.update(fs.readFileSync(path.join(here, file)))
     hash.update('\0')
   }
   return hash.digest('hex').slice(0, 16)
@@ -742,7 +697,7 @@ function trim(samples: Sample[]) {
 }
 
 /**
- * Orders the argument sets to try: calls from test code before calls from other ox functions,
+ * Orders the argument sets to try: calls from test code before calls from other library functions,
  * and in each group the median-sized set first, so neither an empty edge case nor a stress input
  * stands for the function. The same recording always yields the same order.
  */

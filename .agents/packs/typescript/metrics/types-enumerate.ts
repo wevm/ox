@@ -4,11 +4,11 @@
  * Node, so its program is gone before the workers start.
  *
  * An export that several entries re-export resolves to one symbol, measured once under the first
- * entry in repo.ts's order, which puts `ox` and the other index entries first. A namespace that an
- * entry re-exports with `export * as` is how its members are reached, so its members are listed in
- * its place, such as `ox:Hex.fromNumber` or `ox/tempo:TxEnvelopeTempo.TxEnvelopeTempo`.
+ * entry in library.ts's order, which puts the root entry and the other index entries first. A
+ * namespace that an entry re-exports with `export * as` is how its members are reached, so its
+ * members are listed in its place, such as `lib:Math.add` or `lib/extra:Vector.Vector`.
  *
- * The types in a function's `declare namespace`, such as `Hex.fromString.Options`, are not separate
+ * The types in a function's `declare namespace`, such as `Math.add.Options`, are not separate
  * exports: the function's own consumer reaches them through `Parameters` and `ReturnType`.
  *
  * @module
@@ -17,13 +17,15 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import ts from 'typescript'
+import type * as TS from 'typescript'
 
+import * as library from './library.ts'
 import {
   consumerFile,
   consumerOptions,
   createHost,
   entries,
+  ts,
   typesDir,
 } from './types-host.ts'
 
@@ -52,20 +54,31 @@ const entrySpecifiers = new Map(
   entries.map((entry) => [entry.types, entry.name]),
 )
 
-const seen = new Set<ts.Symbol>()
+const seen = new Set<TS.Symbol>()
 // The unique symbols the entries export at their top level, before namespaces are expanded.
-const topLevel = new Set<ts.Symbol>()
+const topLevel = new Set<TS.Symbol>()
 const items: Item[] = []
 const baselines: Record<string, string> = {}
+// The directories of the packages that `reexports` names, such as `dep` for `dep/mini`, in the
+// project's node_modules or in a pnpm store inside it.
+const reexported = (library.config.reexports ?? []).map((specifier) => {
+  const name = specifier
+    .split('/')
+    .slice(0, specifier.startsWith('@') ? 2 : 1)
+    .join('/')
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`/node_modules/(\\.pnpm/[^/]+/node_modules/)?${name}/`)
+})
+
 let found = 0
 let namespaces = 0
 let foreign = 0
 
 for (const { name: specifier, types: file } of entries) {
   const source = program.getSourceFile(file)
-  if (!source) throw new Error(`${file} is missing; run \`pnpm build\` first`)
+  if (!source) throw new Error(`${file} is missing; build the library first`)
   const module = checker.getSymbolAtLocation(source)
-  // An entry with no exports, such as `ox/window`, only augments globals.
+  // An entry with no exports, such as `lib/globals`, only augments globals.
   if (!module) continue
   const exports = checker.getExportsOfModule(module)
   found += exports.length
@@ -93,12 +106,13 @@ for (const { name: specifier, types: file } of entries) {
         : symbol
     if (seen.has(target)) continue
     seen.add(target)
-    // zod's own functions and types, which `ox/zod`'s `z` re-exports, are zod's to measure.
+    // The functions and types of a dependency that an entry re-exports are the dependency's to
+    // measure.
     if (
       target.declarations?.length &&
       target.declarations.every((declaration) =>
-        /\/node_modules\/(\.pnpm\/[^/]+\/node_modules\/)?zod\//.test(
-          declaration.getSourceFile().fileName,
+        reexported.some((pattern) =>
+          pattern.test(declaration.getSourceFile().fileName),
         ),
       )
     ) {
@@ -163,7 +177,7 @@ process.stdout.write(
  * - A type: the type with its defaults, or with its constraints where a parameter has no default.
  */
 function consumerText(
-  symbol: ts.Symbol,
+  symbol: TS.Symbol,
   specifier: string,
   top: string,
   ref: string,
@@ -243,9 +257,9 @@ function declared(text: string | undefined): string {
  * checker prints each constraint relative to the consumer, with `import()` types for names it
  * does not import.
  */
-function typeArguments(symbol: ts.Symbol): { aliases: string[]; args: string } {
+function typeArguments(symbol: TS.Symbol): { aliases: string[]; args: string } {
   const declaration = symbol.declarations?.find(
-    (node): node is ts.TypeAliasDeclaration | ts.InterfaceDeclaration =>
+    (node): node is TS.TypeAliasDeclaration | TS.InterfaceDeclaration =>
       (ts.isTypeAliasDeclaration(node) || ts.isInterfaceDeclaration(node)) &&
       !!node.typeParameters,
   )
@@ -284,7 +298,7 @@ function typeArguments(symbol: ts.Symbol): { aliases: string[]; args: string } {
   }
 
   /** Prints a type in the consumer, replacing the type parameters that `rename` maps. */
-  function print(type: ts.Type, rename: (name: string) => string | undefined) {
+  function print(type: TS.Type, rename: (name: string) => string | undefined) {
     const node = checker.typeToTypeNode(
       type,
       consumer,
@@ -292,7 +306,7 @@ function typeArguments(symbol: ts.Symbol): { aliases: string[]; args: string } {
     )
     if (!node) return undefined
     let unresolved = false
-    const visit = (child: ts.Node): ts.Node => {
+    const visit = (child: TS.Node): TS.Node => {
       if (
         ts.isTypeReferenceNode(child) &&
         ts.isIdentifier(child.typeName) &&
@@ -314,8 +328,8 @@ function typeArguments(symbol: ts.Symbol): { aliases: string[]; args: string } {
       .replace(/import\("([^"]+)"\)/g, (match, specifier: string) => {
         if (!path.isAbsolute(specifier)) return match
         // An entry's own declarations are imported by its package specifier, so they resolve the
-        // way the consumer's own import does. Anything else, ox's or a dependency's such as
-        // abitype's, gets the extension NodeNext needs.
+        // way the consumer's own import does. Anything else, the library's own or a dependency's,
+        // gets the extension NodeNext needs.
         const entry = entrySpecifiers.get(`${specifier}.d.ts`)
         if (entry) return `import("${entry}")`
         if (fs.existsSync(`${specifier}.d.ts`))
