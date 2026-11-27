@@ -22,6 +22,8 @@ export type Block<
   baseFeePerGas?: bigintType | undefined
   /** Total used blob gas by all transactions in this block */
   blobGasUsed?: bigintType | undefined
+  /** Hash of the block-level access list ([EIP-7928](https://eips.ethereum.org/EIPS/eip-7928)) */
+  blockAccessListHash?: Hex.Hex | undefined
   /** Difficulty for this block */
   difficulty?: bigintType | undefined
   /** Excess blob gas */
@@ -56,6 +58,8 @@ export type Block<
   sha3Uncles: Hex.Hex
   /** Size of this block in bytes */
   size: bigintType
+  /** Beacon chain slot number of this block ([EIP-7843](https://eips.ethereum.org/EIPS/eip-7843)) */
+  slotNumber?: bigintType | undefined
   /** Root of this block’s final state trie */
   stateRoot: Hex.Hex
   /** Unix timestamp of when this block was collated */
@@ -160,6 +164,7 @@ export function toRpc<
   return {
     baseFeePerGas: Quantity.fromNumberishOptional(block.baseFeePerGas),
     blobGasUsed: Quantity.fromNumberishOptional(block.blobGasUsed),
+    blockAccessListHash: block.blockAccessListHash,
     excessBlobGas: Quantity.fromNumberishOptional(block.excessBlobGas),
     extraData: block.extraData,
     difficulty: Quantity.fromNumberishOptional(block.difficulty),
@@ -180,6 +185,7 @@ export function toRpc<
     sealFields: block.sealFields,
     sha3Uncles: block.sha3Uncles,
     size: Quantity.fromNumberish(block.size),
+    slotNumber: Quantity.fromNumberishOptional(block.slotNumber),
     stateRoot: block.stateRoot,
     timestamp: Quantity.fromNumberish(block.timestamp),
     totalDifficulty: Quantity.fromNumberishOptional(block.totalDifficulty),
@@ -299,6 +305,7 @@ export function fromRpc<
     gasUsed: BigInt(block.gasUsed ?? 0n),
     number: block.number ? BigInt(block.number) : null,
     size: BigInt(block.size ?? 0n),
+    ...(block.slotNumber ? { slotNumber: BigInt(block.slotNumber) } : {}),
     stateRoot: block.stateRoot,
     timestamp: BigInt(block.timestamp ?? 0n),
     totalDifficulty: Quantity.toBigInt(block.totalDifficulty),

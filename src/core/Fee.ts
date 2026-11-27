@@ -4,10 +4,17 @@ import type { Compute, OneOf } from './internal/types.js'
 
 export type FeeHistory<bigintType = bigint> = Compute<{
   /**
+   * An array of block base fees per blob gas (in wei). This includes the next block after
+   * the newest of the returned range, because this value can be derived from the newest block.
+   * Zeroes are returned for pre-EIP-4844 blocks. */
+  baseFeePerBlobGas?: readonly bigintType[] | undefined
+  /**
    * An array of block base fees per gas (in wei). This includes the next block after
    * the newest of the returned range, because this value can be derived from the newest block.
    * Zeroes are returned for pre-EIP-1559 blocks. */
   baseFeePerGas: bigintType[]
+  /** An array of block blob gas used ratios. These are calculated as the ratio of blobGasUsed and the max blob gas per block. */
+  blobGasUsedRatio?: readonly number[] | undefined
   /** An array of block gas used ratios. These are calculated as the ratio of gasUsed and gasLimit. */
   gasUsedRatio: number[]
   /** Lowest number block of the returned range. */
@@ -77,8 +84,13 @@ export type FeeValuesType = 'legacy' | 'eip1559' | 'eip4844'
  * @returns An instantiated {@link ox#Fee.FeeHistory}.
  */
 export function fromHistoryRpc(history: FeeHistoryRpc): FeeHistory {
+  const { baseFeePerBlobGas, blobGasUsedRatio } = history
   return {
+    ...(baseFeePerBlobGas
+      ? { baseFeePerBlobGas: baseFeePerBlobGas.map((value) => BigInt(value)) }
+      : {}),
     baseFeePerGas: history.baseFeePerGas.map((value) => BigInt(value)),
+    ...(blobGasUsedRatio ? { blobGasUsedRatio } : {}),
     gasUsedRatio: history.gasUsedRatio,
     oldestBlock: BigInt(history.oldestBlock),
     ...(history.reward
@@ -114,8 +126,17 @@ export declare namespace fromHistoryRpc {
  * @returns An RPC fee history.
  */
 export function toHistoryRpc(history: FeeHistory): FeeHistoryRpc {
+  const { baseFeePerBlobGas, blobGasUsedRatio } = history
   return {
+    ...(baseFeePerBlobGas
+      ? {
+          baseFeePerBlobGas: baseFeePerBlobGas.map((value) =>
+            Hex.fromNumber(value),
+          ),
+        }
+      : {}),
     baseFeePerGas: history.baseFeePerGas.map((value) => Hex.fromNumber(value)),
+    ...(blobGasUsedRatio ? { blobGasUsedRatio } : {}),
     gasUsedRatio: history.gasUsedRatio,
     oldestBlock: Hex.fromNumber(history.oldestBlock),
     ...(history.reward

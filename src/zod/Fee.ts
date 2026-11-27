@@ -4,7 +4,15 @@ import * as z from 'zod/mini'
 
 /** RPC fee history schema decoded to a fee history. */
 export const FeeHistory = z.object({
+  baseFeePerBlobGas: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(/* @__PURE__ */ z.array(z_Uint.Uint)),
+  ),
   baseFeePerGas: /* @__PURE__ */ z.array(z_Uint.Uint),
+  blobGasUsedRatio: /* @__PURE__ */ z.optional(
+    /* @__PURE__ */ z.readonly(
+      /* @__PURE__ */ z.array(/* @__PURE__ */ z.number()),
+    ),
+  ),
   gasUsedRatio: /* @__PURE__ */ z.array(/* @__PURE__ */ z.number()),
   oldestBlock: z_Uint.Uint,
   reward: /* @__PURE__ */ z.optional(
