@@ -28,6 +28,7 @@ footprint:
   # is 10 kB. Each branch sets the targets below just above its own sizes for what has no known
   # change, and at what a known change gives for the rest. The first matching pattern applies.
   entry-size:
+    description: Keep the gzipped bundle small for a consumer that imports one export. Do not pull unrelated modules or packages into an export.
     target: 10kB
     targets:
       # An error class extends `BaseError` (about 0.7 kB) and adds a message. 1 kB asks for the
@@ -77,7 +78,8 @@ footprint:
   # class field. Such code stays in every bundle that uses anything from the module, and in a
   # bundle that imports the module for nothing once ox's `"sideEffects": false` is out of reach, as
   # when ox is inlined into another package's bundle. The note names what stays.
-  tree-shaking: {}
+  tree-shaking:
+    description: Make each entry point bundle to nothing when unused. Annotate top-level calls with `/*#__PURE__*/`, and avoid runtime TypeScript namespaces and static class fields.
   # The parts of ox its users lean on most, listed in .agents/uphill/hot.ts, scored on their own,
   # since a few dozen items that miss their targets would hide under entry-size's p90. Each hot
   # target is what a comparable library already achieves: the item's value today times the best
@@ -174,6 +176,7 @@ speed:
   # ABI selectors, transaction hashes) keeps the default, so it shows as the opportunity it is. The
   # first matching pattern applies.
   call-time:
+    description: Keep each public function fast per call, with cold and warm caches.
     target: 20µs
     targets:
       # Key derivation whose cost is its iteration count: PBKDF2 at 262,144 rounds, WebCrypto
@@ -211,6 +214,7 @@ speed:
   # is 20 kB. The same cryptography has a target about 1.25 times its allocation today on each
   # branch, which barely varies.
   call-memory:
+    description: Keep the heap bytes that each call of a public function allocates small.
     varies: true
     target: 20kB
     targets:
@@ -239,6 +243,7 @@ speed:
   # CPU time to import each entry point, index entries included, in a fresh Node process. The default
   # is 60 ms; the root entry, and on main the zod and engine entries, load everything.
   import-time:
+    description: Keep each entry point fast to import. Avoid work at module scope.
     target: 60ms
     targets:
       ox/zod*: 350ms
@@ -249,6 +254,7 @@ speed:
   # Heap bytes each entry point holds once imported. The default is 3.5 MB; the same entries load
   # everything.
   import-memory:
+    description: Keep the heap that each entry point holds once imported small.
     target: 3.5MB
     targets:
       ox/zod*: 25MB
@@ -449,7 +455,8 @@ coverage:
   # Whether each public function has a call the bench can replay: one that returned or resolved in
   # ox's tests (or in .agents/uphill/speed-calls.test.ts) with arguments that rebuild in another
   # process. The note says why not otherwise, such as a function every test calls with a closure.
-  benched: {}
+  benched:
+    description: Call each public function in the tests with arguments that rebuild in another process, such as plain data. Make sure the call returns or resolves.
 
 # Type-checking cost of every public export, values and types, from the built declarations. Each
 # export gets a consumer that imports it and forces its type to resolve, checked in a fresh program
@@ -466,6 +473,7 @@ types:
   # in its own program, minus a program that only imports its entry. Most exports cost under 200;
   # RPC conversions and ABI utilities infer over unions of every transaction or ABI type.
   instantiations:
+    description: Keep each public export cheap to type-check. Avoid types that need many instantiations to resolve.
     target: 1000
     targets:
       # Any zod schema's type starts near 2,000 instantiations of zod's own types.
@@ -476,6 +484,7 @@ types:
       'ox/erc4337:UserOperation.toTypedData': 5000
   # CPU time to check that use. p50 1 ms, p90 4 ms outside zod.
   check-time:
+    description: Keep each public export fast to type-check.
     target: 5ms
     targets:
       'ox/zod:*': 15ms
@@ -484,6 +493,7 @@ types:
       'ox/erc4337:UserOperation.toTypedData': 25ms
   # Heap bytes that check allocates. p90 1.1 MB outside zod.
   check-memory:
+    description: Keep the heap bytes that type-checking each public export allocates small.
     target: 2MB
     varies: true
     targets:
@@ -645,6 +655,7 @@ call-types:
   # TypedData's non-generic helpers infer nothing, so they keep 1,000. On main, a call on a zod
   # schema namespace gets 10,000. The first match applies.
   instantiations:
+    description: Keep each public function cheap to type-check at the call sites that the tests write.
     target: 1000
     targets:
       'ox:TypedData.hashType': 1000
@@ -733,7 +744,8 @@ call-types:
 type-coverage:
   run: bun .agents/uphill/types-calls.ts
   timeout: 20m
-  type-benched: {}
+  type-benched:
+    description: Call each public function in the runtime or type tests. Make sure the imports and fixtures of that call resolve.
 
 fuzz:
   run: bun .agents/uphill/fuzz.ts
@@ -744,14 +756,42 @@ fuzz:
   # differentials against viem, ethers, noble, scure and micro-eth-signer, consistency) or boundary
   # mutations of the arguments ox's tests pass it. The note lists the harnesses, or says why there
   # is none.
-  fuzzed: {}
+  fuzzed:
+    description: Make sure each public function has a fuzz harness that runs.
   # Whether fuzzing found no failure: no undocumented TypeError, RangeError, or SyntaxError on an
   # input that keeps the declared types, no stack overflow, hang, or runaway memory, and no broken
   # round trip, differential, or consistency property. The note gives the minimized input.
-  fuzz-clean: {}
+  fuzz-clean:
+    description: Handle every input that keeps the declared types. Throw no undocumented TypeError, RangeError, or SyntaxError, and avoid stack overflows, hangs, and runaway memory. Keep each structured fuzz property true.
   # Percent of the function's own source lines in the build that ran under fuzzing (V8 precise
   # coverage).
-  fuzz-coverage: { target: 90, better: higher }
+  fuzz-coverage:
+    description: Make every line of a public function's own source reachable by fuzzing.
+    target: 90
+    better: higher
   # The hot items of .agents/uphill/hot.ts: every line of their own source should run under
   # fuzzing.
   hot-fuzz-coverage: { target: 100, better: higher }
+
+# ox measures its own library categories above, so it takes only the typescript pack's convention
+# categories. `uphill rules --write` writes each metric's `description`, the packs' included, to
+# .agents/uphill/rules.md, which AGENTS.md loads. The `hot-*` and `bench-instantiations` metrics
+# have none, since their per-item targets would fill the rules file.
+packs:
+  - {
+      pack: wevm/uphill/packs/typescript@f71fba4d199409cbc8bf00d713dab4b24d91b980,
+      categories:
+        [
+          correctness,
+          style,
+          architecture,
+          documentation,
+          testing,
+          configuration,
+        ],
+      install: true,
+    } # main
+  - {
+      pack: wevm/uphill/packs/git@f71fba4d199409cbc8bf00d713dab4b24d91b980,
+      install: true,
+    } # main
