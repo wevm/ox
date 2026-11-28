@@ -35,7 +35,7 @@ Uphill writes these rules from each metric's `description`. Write code that meet
 ## Fuzz
 
 - Make sure each public function has a fuzz harness that runs.
-- Handle every input that keeps the declared types. Throw no undocumented TypeError, RangeError, or SyntaxError, and avoid stack overflows, hangs, and runaway memory. Keep each property in .agents/uphill/fuzz-properties.ts true.
+- Handle every input that keeps the declared types. Throw no undocumented TypeError, RangeError, or SyntaxError, and avoid stack overflows, hangs, and runaway memory. Keep each structured fuzz property true.
 - Make every line of a public function's own source reachable by fuzzing. At least 90.
 
 ## Correctness

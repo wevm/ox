@@ -762,7 +762,7 @@ fuzz:
   # input that keeps the declared types, no stack overflow, hang, or runaway memory, and no broken
   # round trip, differential, or consistency property. The note gives the minimized input.
   fuzz-clean:
-    description: Handle every input that keeps the declared types. Throw no undocumented TypeError, RangeError, or SyntaxError, and avoid stack overflows, hangs, and runaway memory. Keep each property in .agents/uphill/fuzz-properties.ts true.
+    description: Handle every input that keeps the declared types. Throw no undocumented TypeError, RangeError, or SyntaxError, and avoid stack overflows, hangs, and runaway memory. Keep each structured fuzz property true.
   # Percent of the function's own source lines in the build that ran under fuzzing (V8 precise
   # coverage).
   fuzz-coverage:
