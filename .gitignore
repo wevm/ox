@@ -46,5 +46,5 @@ wasm/.build
 # it.
 bench/native/target
 
-# Uphill reports (`.agents/uphill.yaml`).
+# Uphill reports (`.agents/uphill/uphill.yaml`).
 .uphill

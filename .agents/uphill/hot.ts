@@ -1,6 +1,6 @@
 /**
  * The parts of ox its users lean on most. Each metric script repeats its lines about these items
- * as `hot-<metric>` lines, so `.agents/uphill.yaml` can give them targets ten times below what they
+ * as `hot-<metric>` lines, so `.agents/uphill/uphill.yaml` can give them targets ten times below what they
  * cost today, scored on their own: in the full lists, a few dozen items that miss their targets
  * hide under the p90 that each list scores.
  *
@@ -108,7 +108,7 @@ export const items: ReadonlySet<string> = new Set([
   'ox/erc6492',
 ])
 
-/** The metrics whose hot lines `.agents/uphill.yaml` scores. */
+/** The metrics whose hot lines `.agents/uphill/uphill.yaml` scores. */
 const metrics = new Set([
   'entry-size',
   'call-time',

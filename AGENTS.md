@@ -1,34 +1,25 @@
 # ox -- Agent Guidelines
 
+Follow the [Uphill rules](.agents/uphill/rules.md), which `uphill rules --write` rewrites from each metric's description: @.agents/uphill/rules.md
+
 > **Update after learnings or mistakes** -- when a correction, new convention, or hard-won lesson emerges during development, append it to the relevant section of this file immediately. AGENTS.md is the source of truth for project conventions and should grow as the project does.
 
 ## TypeScript Conventions
 
-- **Exact optional properties** -- `exactOptionalPropertyTypes` is enabled in tsconfig. Optional properties must include `| undefined` in their type if they can be assigned `undefined` (e.g. `foo?: string | undefined`, not `foo?: string`).
-- **No unchecked indexed reads** -- `noUncheckedIndexedAccess` is enabled. Narrow indexed reads before use, or make the invariant obvious with the smallest possible assertion.
-- **`readonly` arrays** -- use `readonly T[]` for array types in type definitions.
+These refine the [Uphill rules](.agents/uphill/rules.md), which hold the rest, such as compiler options, `any`, enums, `type` over `interface`, `readonly` arrays, import extensions, option bags, function namespaces, error names, and section dividers.
+
+- **Optional and indexed types** -- under `exactOptionalPropertyTypes`, include `| undefined` in an optional property's type when it can be assigned `undefined` (e.g. `foo?: string | undefined`). Under `noUncheckedIndexedAccess`, narrow indexed reads before use, or make the invariant obvious with the smallest possible assertion.
 - **Existing `readonly` properties are fine** -- ox has DOM-shaped WebAuthn types, type snapshots, and inference-heavy literals that intentionally preserve `readonly` properties. Do not churn them just to satisfy a style preference.
-- **`type` over `interface` by default** -- use `type` for project-owned shapes. Ambient declarations and DOM-shaped compatibility types may use `interface`.
-- **`.js` extensions** -- all relative source imports include `.js` for ESM compatibility.
+- **`interface` exceptions** -- ambient declarations and DOM-shaped compatibility types may use `interface`.
 - **Follow local import style** -- ox uses both namespace imports and named internal imports. Match the surrounding file instead of mass-converting import lists.
 - **Zod import aliases** -- import `zod/mini` as `z`, and import zod module namespaces as `z_<Module>` (for example, `import * as z_Hex from '../Hex.js'`).
-- **Classes for errors only** -- all other APIs use functions and plain data.
-- **Errors live next to the code that throws them** -- module-specific failure classes live inside the module that owns the failure mode. Place each error class near the bottom of the module so the public functions and types are what the reader sees first. Set `name` to the namespaced form (`'Hex.InvalidHexValueError'`, `'SignatureEnvelope.VerificationError'`, etc.).
-- **No enums** -- use union types or `as const` objects for fixed sets.
-- **camelCase constants** -- prefer `camelCase` for local constants unless the surrounding file already uses protocol-style uppercase names for numeric constants.
+- **Errors live next to the code that throws them** -- module-specific failure classes live inside the module that owns the failure mode. Place each error class near the bottom of the module so the public functions and types are what the reader sees first.
+- **Protocol-style constants** -- keep uppercase names for numeric constants when the surrounding file already uses protocol-style uppercase names.
 - **`const` generic modifier** -- use to preserve literal types for full inference.
-- **Options default `= {}`** -- use `options: Options = {}` not `options?: Options`.
-- **Namespace params and return types** -- place function parameter, return, and error types in a `declare namespace` matching the function name (e.g. `from.Options`, `serialize.ErrorType`). Do not lift the params type to a sibling export unless the surrounding module already has a shared type.
-- **`options` over `args`** -- use `options` for typed option bags. Use domain nouns only when the parameter is not an options bag.
 - **Minimal variable names** -- prefer short, obvious names. Use `options` not `serializeOptions`, `fn` not `callbackFunction`, etc. Context makes meaning clear.
 - **No redundant type annotations** -- if the return type of a function already covers it, do not annotate intermediate variables. Let the return type do the work.
-- **No inline object types on locals** -- when a local variable needs an explicit object-type annotation, declare a named `type` on the line directly above and reference it.
-- **Return directly** -- do not declare a variable just to return it. Use `return { ... }` unless the variable is needed for reuse or readability.
-- **IIFE expressions for fallible local derivations** -- when a local needs `try`/`catch` to parse or normalize a value, prefer an IIFE expression over `let value: T` followed by assignment inside `try`.
 - **Skip braces for single-statement blocks** -- omit `{}` for single-statement `if`, `for`, etc., when the surrounding file follows that style.
-- **No section separator comments** -- do not use `// ---` or `// ===` divider comments. Let JSDoc and whitespace provide structure.
-- **Static imports by default** -- use static `import` declarations. Dynamic imports are reserved for real runtime boundaries already present in ox, such as worker or WASM loading.
-- **Minimize `as any`** -- avoid new `as any` where a safer assertion is practical, but do not mass-rewrite existing crypto, tuple, and inference glue that already relies on it.
+- **Existing `as any` glue** -- do not mass-rewrite existing crypto, tuple, and inference glue that already relies on it.
 - **Destructure when accessing multiple properties** -- prefer `const { a, b } = options` over repeated `options.a`, `options.b`.
 - **Read from `options.x` when normalizing a single field** -- when transforming exactly one option into a local of the same name, read it directly from `options` instead of destructuring and inventing a second name.
 - **Hex helpers over ad hoc conversion** -- use ox helpers like `Hex.fromNumber`, `Hex.toBytes`, `Bytes.fromHex`, `Value.fromGwei`, etc. instead of open-coded conversions.
@@ -47,7 +38,7 @@
 ## API Conventions
 
 - **Construct Ox objects through module APIs** -- use constructors such as `TxEnvelopeEip8141.from`, `Frame.from`, and `FrameSignature.from` in examples and test setup. Use plain nested objects when the enclosing constructor validates them and encoding supplies omitted-field defaults. Use raw objects when testing raw input handling or invalid values.
-- **Stateless module APIs** -- public APIs are module namespaces full of functions and types. Do not introduce stateful classes for normal library behavior.
+- **Stateless module APIs** -- public APIs are module namespaces full of functions and types.
 - **Public export checks** -- update `src/core/_test/index.test.ts` when adding a root module export, and run `pnpm zile examples:check` for new JSDoc examples.
 - **Public entrypoint docs** -- when adding a public module or export, update `src/index.ts` with the module export and TSDoc block.
 - **Package exports are generated** -- run `pnpm exports:update` only when intentionally adding, removing, or renaming public subpath exports.
@@ -63,7 +54,6 @@
 
 ## Documentation Conventions
 
-- **TSDoc on public exports** -- every exported public function, type, and constant gets a TSDoc comment. Type properties get TSDoc when they are part of the public surface.
 - **Doc-driven API changes** -- write or update the TSDoc before or alongside the implementation, not as an afterthought.
 - **Examples should be small** -- public examples should show the minimum useful shape and avoid unrelated setup.
 - **Source docs first** -- public API documentation usually belongs in TSDoc near the exported source.
@@ -93,7 +83,7 @@
 - **Target the relevant project** -- prefer `pnpm test --project core --bail=1`, `pnpm test --project browser --bail=1`, or `pnpm test --project tempo-unit --project tempo --bail=1` over the full matrix while iterating.
 - **Colocate tests** -- unit tests live beside their modules in `src/**/_test/*.test.ts`.
 - **Wrap function exports in `describe`** -- every test file targets one or more exported functions; each function gets its own `describe('functionName', () => { ... })` block.
-- **Inline snapshots over direct assertions** -- prefer `toMatchInlineSnapshot()` over `.toBe()`, `.toEqual()`, etc. for stable return values. Use `toThrowErrorMatchingInlineSnapshot()` for error assertions.
+- **Inline error snapshots** -- use `toThrowErrorMatchingInlineSnapshot()` for error assertions.
 - **Snapshot whole objects, omit nondeterministic properties** -- destructure out nondeterministic fields and snapshot the rest, rather than cherry-picking individual fields to assert.
 - **Browser tests use browser suffixes** -- browser-specific behavior uses `*.browser.test.ts` and the `browser` Vitest project.
 - **Fuzz tests stay gated** -- fuzz harnesses use `*.fuzz.ts` and run through `pnpm test:fuzz`; default `pnpm test` should not pick them up.
@@ -108,6 +98,7 @@
 - **Reusable workflow concurrency identity** -- use a literal identity instead of `github.workflow` in a called workflow's concurrency group. GitHub resolves `github.workflow` to the caller, which can self-cancel when the groups match.
 - **Types** -- run `pnpm check:types` after TypeScript changes.
 - **Repo checks** -- run `pnpm check:repo` when package metadata or workspace shape changes.
+- **Uphill files** -- `.agents/uphill/` holds the Uphill configuration, its baseline file, the metric scripts, and the generated `rules.md`. After changing a metric's `description` or target, run `uphill rules --write`; `uphill check` fails while `rules.md` is out of date.
 - **Docs dev server** -- use `pnpm docs:dev` for documentation UI work.
 - **`pnpm check` mutates** -- it runs `vp check --fix`. Use it only when intentionally applying lint/format fixes.
 - **Format workflow edits before release** -- `pnpm changeset:version` runs `pnpm check`, so unformatted workflow YAML enters the release commit and its push is rejected by `GITHUB_TOKEN`. Run `pnpm exec vp fmt .github/workflows/<file>.yml` when editing workflows.
@@ -123,12 +114,10 @@
 
 - **Changesets only for public behavior** -- add or update a changeset when a change affects public API or existing behavior.
 - **Update existing changesets first** -- if the branch already has a changeset for the same area, update it instead of adding a duplicate.
-- **One sentence, past tense** -- changeset entries are a single sentence written in past tense.
 - **Breaking changes include migration shape** -- major changes include a `diff` fence showing the before/after migration shape.
 
 ## Git Conventions
 
-- **Conventional commits** -- use `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:` prefixes. Scope is optional (e.g. `feat(abi): add tuple formatter`).
 - **Preserve dirty work** -- do not revert, clean, or overwrite existing local changes unless explicitly asked.
 
 ## Learned Workspace Facts
