@@ -1,5 +1,19 @@
 # ox
 
+## 0.15.1
+
+### Patch Changes
+
+- [#730](https://github.com/wevm/ox/pull/730) [`d542947`](https://github.com/wevm/ox/commit/d542947577b9a52a7c7290772cf1ac00a01143e1) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiParameters.decode` to throw when a static parameter head after a dynamic parameter is missing, instead of reading an earlier word as its value.
+
+- [#730](https://github.com/wevm/ox/pull/730) [`d542947`](https://github.com/wevm/ox/commit/d542947577b9a52a7c7290772cf1ac00a01143e1) Thanks [@jxom](https://github.com/jxom)! - Added `blockAccessListHash` (EIP-7928) and `slotNumber` (EIP-7843) to `Block.Block`, `Block.fromRpc`, and `Block.toRpc`.
+
+- [#730](https://github.com/wevm/ox/pull/730) [`d542947`](https://github.com/wevm/ox/commit/d542947577b9a52a7c7290772cf1ac00a01143e1) Thanks [@jxom](https://github.com/jxom)! - Added `baseFeePerBlobGas` and `blobGasUsedRatio` to `Fee.FeeHistory`.
+
+- [#730](https://github.com/wevm/ox/pull/730) [`d542947`](https://github.com/wevm/ox/commit/d542947577b9a52a7c7290772cf1ac00a01143e1) Thanks [@jxom](https://github.com/jxom)! - Fixed `PersonalMessage.encode` to throw `Hex.InvalidLengthError` for odd-length hex instead of returning a misaligned message.
+
+- [#730](https://github.com/wevm/ox/pull/730) [`d542947`](https://github.com/wevm/ox/commit/d542947577b9a52a7c7290772cf1ac00a01143e1) Thanks [@jxom](https://github.com/jxom)! - Fixed `Hex.toString`, `Bytes.toString`, and `AbiParameters.decode` to keep a leading U+FEFF in decoded strings instead of dropping it as a byte order mark.
+
 ## 0.15.0
 
 ### Minor Changes
