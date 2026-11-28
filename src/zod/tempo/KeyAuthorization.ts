@@ -64,6 +64,7 @@ export const Rpc = z.object({
   signature: /* @__PURE__ */ z.union([
     z_SignatureEnvelope.PrimitiveRpc,
     z_SignatureEnvelope.ConfigurableRpc,
+    z_SignatureEnvelope.AttestedRpc,
   ]),
   witness: /* @__PURE__ */ z.optional(/* @__PURE__ */ z.nullable(z_Hex.Hex)),
 })
@@ -113,6 +114,7 @@ const domainShape = {
   signature: /* @__PURE__ */ z.union([
     z_SignatureEnvelope.Primitive,
     z_SignatureEnvelope.Configurable,
+    z_SignatureEnvelope.Attested,
   ]),
   type: /* @__PURE__ */ z.union([
     z_SignatureEnvelope.Type,

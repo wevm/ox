@@ -61,7 +61,12 @@ export default defineConfig({
       'jsdoc/check-tag-names': [
         'error',
         {
-          definedTags: ['category', 'entrypointCategory', 'remarks'],
+          definedTags: [
+            'category',
+            'entrypointCategory',
+            'experimental',
+            'remarks',
+          ],
         },
       ],
       'jsdoc/empty-tags': 'error',
