@@ -1,29 +1,28 @@
 /**
  * Vitest setup file for recording. It installs `globalThis.__uphillWrap`, which the transform in
- * `speed-vitest.config.ts` calls on every export of ox's modules in src/, and writes what the
- * wrapped functions were called with to `$UPHILL_SPEED_RECORD_DIR/<pid>.jsonl` after each test
- * file.
+ * `speed-vitest.config.ts` calls on every export of the library's modules in the sources, and
+ * writes what the wrapped functions were called with to `$UPHILL_SPEED_RECORD_DIR/<pid>.jsonl`
+ * after each test file.
  *
- * Calls from test code and calls one ox function makes to another are both recorded, keyed by the
- * module that defines the export (`src/core/Hex.ts#fromNumber`): ox's modules import each other by
- * relative path, and each module's own bindings are the wrapped functions, so a call inside a
- * module goes through the wrapper too. A function an exported namespace object or function holds
- * records under its path from the export (`src/<file>.ts#<export>.<member>`). A call is direct
- * when test code made it, and internal when it ran inside another wrapped call.
+ * Calls from test code and calls one library function makes to another are both recorded, keyed
+ * by the module that defines the export (`src/Math.ts#add`): the library's modules import each
+ * other by relative path, and each module's own bindings are the wrapped functions, so a call
+ * inside a module goes through the wrapper too. A function an exported namespace object or
+ * function holds records under its path from the export (`src/<file>.ts#<export>.<member>`). A
+ * call is direct when test code made it, and internal when it ran inside another wrapped call.
  *
  * A value a wrapped export returned remembers that call, and so do the objects and functions at
- * its own properties, so a later call that passes it, such as a `CryptoKey` from
- * `WebCryptoP256.createKeyPair` or a KZG implementation from `Kzg.from`, records the call that
- * rebuilds it; an instance of an exported class, such as an error, remembers its construction.
- * Every value an export reaches, such as a zod schema or a constant, remembers that path (see
- * speed-codec.ts), and so does every value a test helper module (`test/**`) exports, such as the
- * KZG implementation ox's 0.x tests build, for arguments nothing else can carry.
+ * its own properties, so a later call that passes it, such as a `CryptoKey` from a key pair
+ * function or an implementation object from a factory, records the call that rebuilds it. An
+ * instance of an exported class, such as an error, remembers its construction. Every value an
+ * export reaches, such as a schema or a constant, remembers that path (see speed-codec.ts), and so
+ * does every value a test helper module (outside the sources, not a test file) exports, for
+ * arguments nothing else can carry.
  *
- * Tests reach the local anvil the global setup starts, and local servers the tests start. A
- * request to any other host gets a JSON-RPC "method not found" error, so no test reaches the
- * network and recordings repeat. It seeds `Math.random`, `crypto.getRandomValues`, and
- * `crypto.randomUUID` per test file for the same reason. After each file it destroys the anvil
- * instances the file used.
+ * Tests reach this machine, such as servers a global setup or the tests start. A request to any
+ * other host gets a JSON-RPC "method not found" error, so no test reaches the network and
+ * recordings repeat. It seeds `Math.random`, `crypto.getRandomValues`, and `crypto.randomUUID` per
+ * test file for the same reason.
  *
  * @module
  */
@@ -42,7 +41,7 @@ import {
 
 /** Argument sets encoded per function and test file, for calls made from test code. */
 const directBudget = 200
-/** Argument sets encoded per function and test file, for calls made by other ox functions. */
+/** Argument sets encoded per function and test file, for calls made by other library functions. */
 const internalBudget = 20
 /** Distinct successful argument sets kept per function and test file, and their total length. */
 const keptPerFile = 12
@@ -67,10 +66,6 @@ type State = {
   keys: Map<string, Key>
   file: string
   test: string
-  /** The anvil instances (`http://host:port/<pool id>`) this file reached. */
-  nodes: Set<string>
-  /** `fetch` before the recorder answered for the network. */
-  fetch: typeof fetch
   inTest: boolean
   /** How many wrapped calls the current one runs inside. */
   depth: AsyncLocalStorage<number>
@@ -85,7 +80,7 @@ type State = {
   fixtures: WeakMap<object, string>
 }
 
-const root = path.resolve(import.meta.dirname, '../..')
+const root = process.cwd()
 const g = globalThis as typeof globalThis & {
   __uphillState?: State
   __uphillWrap?: (value: unknown, file: string, name: string) => unknown
@@ -115,7 +110,7 @@ afterEach(() => {
   state.inTest = false
 })
 
-afterAll(async () => {
+afterAll(() => {
   const dir = process.env.UPHILL_SPEED_RECORD_DIR
   if (dir && state.keys.size) {
     const keys: Record<string, unknown> = {}
@@ -135,15 +130,6 @@ afterAll(async () => {
     )
   }
   state.keys = new Map()
-  // prool names an anvil instance by a pool id that each test file picks, and keeps every instance
-  // running until the run ends, so 20 files would leave 20 mainnet forks running. This hook runs
-  // after the file's own hooks.
-  await Promise.all(
-    [...state.nodes].map((node) =>
-      state.fetch(`${node}/destroy`).catch(() => undefined),
-    ),
-  )
-  state.nodes.clear()
 })
 
 function install(): State {
@@ -151,8 +137,6 @@ function install(): State {
     keys: new Map(),
     file: '',
     test: '',
-    nodes: new Set(),
-    fetch: globalThis.fetch,
     inTest: false,
     depth: new AsyncLocalStorage<number>(),
     proxies: new WeakMap(),
@@ -168,7 +152,7 @@ function install(): State {
   }
   g.__uphillFixture = (value, file, name) =>
     reach(value, `${file}#${name}`, 0, created.fixtures)
-  blockNetwork(created)
+  blockNetwork()
   return created
 
   /**
@@ -316,7 +300,7 @@ function install(): State {
       )
     entry.calls++
     const depth = current.depth.getStore() ?? 0
-    // A call from test code, rather than from another ox function or a module's top level.
+    // A call from test code, rather than from another library function or a module's top level.
     const direct = depth === 0 && current.inTest
     if (direct) entry.direct++
     let encoded: string | undefined
@@ -525,24 +509,15 @@ function seedRandomness(file: string) {
   })
 }
 
-/** The port of the anvil instance server the global setup starts (test/prool.ts). */
-const anvilPort = '8545'
-
-/**
- * Answers every request to a host other than this machine with a JSON-RPC "method not found"
- * error, and notes the anvil instances the file reaches.
- */
-function blockNetwork(state: State) {
-  const { fetch } = state
+/** Answers every request to a host other than this machine with a JSON-RPC "method not found" error. */
+function blockNetwork() {
+  const { fetch } = globalThis
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(
       typeof input === 'string' || input instanceof URL ? input : input.url,
     )
-    if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(url.hostname)) {
-      const id = url.pathname.match(/^\/(\d+)(\/|$)/)?.[1]
-      if (id && url.port === anvilPort) state.nodes.add(`${url.origin}/${id}`)
+    if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(url.hostname))
       return fetch(input, init)
-    }
     let id: unknown = 0
     try {
       id = JSON.parse(String(init?.body)).id ?? 0

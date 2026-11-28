@@ -1,8 +1,8 @@
 /**
- * Shared pieces of the fuzz category: a seeded PRNG, the crash oracle's error classification, the
- * marking of values rebuilt from the corpus, the boundary mutator that turns a recorded argument
- * set into new ones, the minimizer's type checks, and the formatter that prints an input in a
- * metric note.
+ * Shared pieces of the fuzz category: the contract of a project's properties module, a seeded
+ * PRNG, the crash oracle's error classification, the marking of values rebuilt from the corpus,
+ * the boundary mutator that turns a recorded argument set into new ones, the minimizer's type
+ * checks, and the formatter that prints an input in a metric note.
  *
  * Every mutation says whether it keeps the argument's TypeScript type. A hex string stays a
  * `0x${string}` (empty, odd-length, uppercase, or not hex at all), a bigint stays a bigint (zero,
@@ -18,7 +18,84 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import * as repo from './repo.ts'
+import type fc from 'fast-check'
+
+import * as library from './library.ts'
+
+// Each property's check reads the shape its own arbitrary makes, which a shared type cannot name.
+type Any = any
+
+/**
+ * What the worker passes the properties module's `library`: the library's entry modules,
+ * fast-check, and the recorded arguments.
+ */
+export type Base = {
+  /** The documented error base class that `fuzz.baseError` names, or `Error`. */
+  BaseError: new (...args: never[]) => Error
+  /** fast-check. */
+  fc: typeof fc
+  /** The library's entry modules by specifier, such as `lib` or `lib/Math`. */
+  modules: Record<string, Record<string, unknown>>
+  /** A boundary mutation of a recorded argument set, or `undefined` when it breaks the type. */
+  mutate: (
+    seed: unknown[],
+    pool: unknown[][],
+    random: number,
+    count: number,
+  ) => unknown[] | undefined
+  /** A function's recorded argument sets from the corpus (only for functions in this job). */
+  recorded: (name: string) => unknown[][]
+  /** The project root. */
+  root: string
+}
+
+/** A property's failure, with the functions at fault when the check can tell. */
+export class Failure extends Error {
+  blame?: string[] | undefined
+  kind: string
+  site?: string | undefined
+  constructor(
+    message: string,
+    options: {
+      blame?: string[] | undefined
+      kind?: string
+      site?: string | undefined
+    } = {},
+  ) {
+    super(message)
+    this.blame = options.blame
+    this.kind = options.kind ?? 'mismatch'
+    this.site = options.site
+  }
+}
+
+/**
+ * The module that `fuzz.properties` names. Every export is optional: without the module, each
+ * function gets only boundary mutations of its recorded arguments.
+ */
+export type Properties = {
+  /** Fewer mutated calls for functions whose names match, for costly calls. The first match applies. */
+  budgets?: [RegExp, number][] | undefined
+  /** Adds what the properties need, such as reference implementations, to what the worker passes. */
+  library?: ((base: Base) => Promise<Base> | Base) | undefined
+  /** Mutated calls per function with recorded or hand-written arguments. Defaults to 500. */
+  mutations?: number | undefined
+  /** The structured properties, such as round trips and differentials. */
+  properties?: ((lib: Any) => Property[]) | undefined
+  /** Hand-written argument sets by function name, which the worker mutates as it does recorded ones. */
+  seeds?: ((lib: Any) => Record<string, unknown[][]>) | undefined
+}
+
+/** One structured property: an arbitrary, a check, and the public functions it exercises. */
+export type Property = {
+  arb: fc.Arbitrary<unknown>
+  async?: boolean | undefined
+  check: (input: Any) => void | Promise<void>
+  covers: string[]
+  id: string
+  oracle: 'round trip' | 'differential' | 'consistency' | 'crash'
+  runs: number
+}
 
 /** A seeded PRNG (mulberry32), so a function's inputs are the same on every run. */
 export function prng(seed: number) {
@@ -63,9 +140,8 @@ export type Crash = { kind: string; message: string; site?: string | undefined }
 
 /**
  * Whether a thrown value is a bug: anything not an `Error`, a stack overflow on a small input, or,
- * for an input that keeps the types, a built-in programmer error. ox's `Errors.BaseError`s,
- * abitype's and the dependencies' errors, and plain `Error`s (`Errors.GlobalErrorType`, which
- * every ox `ErrorType` union lists) are documented.
+ * for an input that keeps the types, a built-in programmer error. The library's own error classes,
+ * its dependencies' errors, and plain `Error`s are documented.
  */
 export function classify(
   error: unknown,
@@ -82,7 +158,7 @@ export function classify(
   const ctor = Object.getPrototypeOf(error)?.constructor
   if (!typed || !programmerErrors.has(ctor)) return undefined
   // A `throw new RangeError('"secretKey" expected Uint8Array of length 32')` is validation the
-  // code (ox's or noble's) chose to do, with a message that names the problem.
+  // code (the library's or a dependency's) chose to do, with a message that names the problem.
   if (deliberate(error)) return undefined
   // `BigInt('0xzz')`'s SyntaxError names the string, which is `0x${string}` but not hex.
   if (
@@ -91,11 +167,10 @@ export function classify(
     numbersIn(args).invalidHex
   )
     return undefined
-  // Empty hex as a number throws this SyntaxError from `BigInt('0x')`: ox's quantity decoders
-  // (`Hex.toBigInt`, every `fromRpc`, signature encoders) convert with `BigInt`, and `0x` is not a
-  // JSON-RPC quantity. Whether they should read `0x` as 0 or throw a typed error is a decision for
-  // the maintainers; viem's fuzzer exempts it for the same reason, and one property reports it
-  // once for `Hex.toBigInt`, instead of once per decoder.
+  // Empty hex as a number throws this SyntaxError from `BigInt('0x')`: quantity decoders convert
+  // with `BigInt`, and `0x` is not a JSON-RPC quantity. Whether they read `0x` as 0 or throw a
+  // typed error is a decision for the maintainers, and a structured property can report it once,
+  // instead of once per decoder.
   if (
     error instanceof SyntaxError &&
     /^Cannot convert 0x to a BigInt$/.test(error.message)
@@ -108,15 +183,15 @@ export function classify(
     stringsIn(args).some((text) => !parses(text))
   )
     return undefined
-  // RFC 8785 forbids non-finite numbers and bigints, and `Json.canonicalize` throws this
-  // TypeError for them on purpose (src/core/Json.ts).
+  // RFC 8785 forbids non-finite numbers and bigints, and a canonical JSON encoder can throw this
+  // TypeError for them on purpose.
   if (
     error instanceof TypeError &&
     /^Cannot canonicalize (non-finite number|bigint)$/.test(error.message)
   )
     return undefined
   // A RangeError that names the bad number is the right error for it: a fraction or a non-finite
-  // number where ox needs an integer, a size so large that allocating it fails, or a negative
+  // number where the code needs an integer, a size so large that allocating it fails, or a negative
   // length.
   if (error instanceof RangeError) {
     const { fraction, huge, negative } = numbersIn(args)
@@ -230,9 +305,9 @@ function parses(text: string) {
 }
 
 /**
- * The first stack frame in ox's build or a dependency, as `file:line`: a dependency's file from
- * its package name, such as `@noble/curves/utils.js`, and ox's from the checkout, such as
- * `dist/core/Hex.js`.
+ * The first stack frame in the library's build or a dependency, as `file:line`: a dependency's
+ * file from its package name, such as `dep/utils.js`, and the library's from the checkout, such as
+ * `dist/Math.js`.
  */
 export function site(error: unknown): string | undefined {
   const stack = String((error as Error)?.stack ?? '')
@@ -246,8 +321,8 @@ export function site(error: unknown): string | undefined {
           /^.*\/node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?/,
           '',
         )
-      : file.startsWith(`${repo.root}/`)
-        ? path.relative(repo.root, file)
+      : file.startsWith(`${library.root}/`)
+        ? path.relative(library.root, file)
         : file
     return `${relative}:${match[2]}`
   }
@@ -542,7 +617,7 @@ export function homogeneous(values: unknown[]) {
   const shape = (value: unknown) =>
     value && typeof value === 'object' && !(value instanceof Uint8Array)
       ? `${Array.isArray(value) ? 'array' : 'object'}:${Array.isArray(value) ? '' : Object.keys(value).sort().join(',')}`
-      : typeof value === 'string' && /^0x/.test(value)
+      : typeof value === 'string' && value.startsWith('0x')
         ? `hex:${value.length}`
         : // Literal strings, such as ABI types, make a tuple: `['uint256', 'bool']`.
           typeof value === 'string' && !freeText(value, undefined)
@@ -553,7 +628,7 @@ export function homogeneous(values: unknown[]) {
 
 /**
  * Lists the mutable slots of an argument set: every value reachable through plain arrays and
- * objects, minus opaque ones (values rebuilt from ox's exports or calls).
+ * objects, minus opaque ones (values rebuilt from the library's exports or calls).
  */
 function slots(args: unknown[]): Slot[] {
   const out: Slot[] = []
@@ -929,7 +1004,7 @@ export function mutate(
       slot.set(!value)
       changes.push(`${label} = ${!value}`)
     } else if (typeof value === 'string') {
-      if (/^0x/.test(value)) {
+      if (value.startsWith('0x')) {
         const next = random.pick(hexVariants(value, random))
         slot.set(next)
         changes.push(`${label} = ${format(next, 60)}`)

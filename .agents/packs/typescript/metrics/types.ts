@@ -1,26 +1,28 @@
 /**
- * Writes the type-checking cost of every public export of ox's entry points (see repo.ts), values
- * and types, and of each test in the attest files, `src/**\/*.snap-d.ts` and `src/**\/*.bench-d.ts`.
+ * Writes the type-checking cost of every public export of the library's entry points (see
+ * library.ts), values and types, and of each test in the type-test files that `types.benches`
+ * matches.
  *
  * For each export, types-enumerate.ts writes a small consumer file that imports it and forces its
  * type to resolve; its comments say which forms each kind of export gets. A pool of Node workers
- * (types-worker.ts) checks each consumer in a fresh `ts.Program` with ox's compiler options and
- * subtracts a baseline that only imports the entry point:
+ * (types-worker.ts) checks each consumer in a fresh `ts.Program` with the library's compiler
+ * options and subtracts a baseline that only imports the entry point:
  *
  * - `instantiations`: type instantiations, exact and repeatable.
  * - `check-time`: CPU time to check the consumer.
  * - `check-memory`: heap bytes the check allocates.
- * - `bench-instantiations`: the instantiations attest counts for each attest test, the way
- *   `attest.instantiations` does: the file with every `test()` removed is the baseline, and the
- *   test's function is added back as a constant. A test that pins a count with
- *   `attest.instantiations([count, 'instantiations'])` gets that count plus 20%, the threshold
- *   attest enforces; the others pin type strings, so their lines carry no target.
+ * - `bench-instantiations`: the instantiations of each type test, counted the way its runner's
+ *   `.instantiations` assertion counts them: the file with every `test()` removed is the baseline,
+ *   and the test's function is added back as a constant. A test that pins a count with
+ *   `.instantiations([count, 'instantiations'])` gets that count plus 20%, the threshold the runner
+ *   enforces; the others pin type strings, so their lines carry no target. Without
+ *   `types.benches`, the metric is skipped.
  *
  * Node runs the TypeScript work, as it does for `tsc` and editors, and V8 counts allocated bytes,
  * which JavaScriptCore does not. V8 reports them from Node 26 on, so the script runs `node` from
  * PATH if it is Node 26 or later, and otherwise the Node 26 that `npx --yes node@26` installs.
  *
- * The script checks the declarations `pnpm build` writes (see repo.ts), or a copy of them that
+ * The script checks the declarations the build writes (see library.ts), or a copy of them that
  * `UPHILL_TYPES_DIR` names. `UPHILL_CONCURRENCY` sets the pool size (default 2), which available
  * memory caps.
  *
@@ -31,22 +33,23 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import ts from 'typescript'
+import type * as TS from 'typescript'
 
 import { hot } from './hot.ts'
-import { root } from './repo.ts'
+import * as library from './library.ts'
 import type { Item } from './types-enumerate.ts'
 import {
   availableMemory,
   consumerFile,
   nodeBinary,
+  ts,
   typesDir,
 } from './types-host.ts'
 import type { Job, Result } from './types-worker.ts'
 
 /**
- * Each worker's V8 heap limit in MB. The parsed declarations take about 300MB, and the sources the
- * attest tests import about 300MB more. A check that needs more is checked again in a worker of its
+ * Each worker's V8 heap limit in MB. Large parsed declarations take about 300MB, and the sources
+ * the type tests import about 300MB more. A check that needs more is checked again in a worker of its
  * own with `largeHeap`, if 2.5GB are available for it.
  */
 const heap = 1536
@@ -56,6 +59,21 @@ const workerBytes = 1.75e9
 
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
+if (
+  library.skip([
+    'instantiations',
+    'check-time',
+    'check-memory',
+    'bench-instantiations',
+    'hot-instantiations',
+  ])
+)
+  process.exit(0)
+if (!ts)
+  throw new Error(
+    'The types metrics need the JavaScript API of the typescript package.',
+  )
+
 const here = import.meta.dir
 const node = nodeBinary()
 const started = performance.now()
@@ -76,16 +94,16 @@ const { found, topLevel, unique, namespaces, foreign, items, baselines } =
     baselines: Record<string, string>
   }
 log(
-  `${typesDir}: ${found} exports across the entry points, ${topLevel} unique; ${namespaces} namespaces among ${unique} unique symbols expand into their members, and ${foreign} are zod's, leaving ${items.length} exports to measure`,
+  `${typesDir}: ${found} exports across the entry points, ${topLevel} unique; ${namespaces} namespaces among ${unique} unique symbols expand into their members, and ${foreign} belong to re-exported dependencies, leaving ${items.length} exports to measure`,
 )
 
 type Measured = {
   line: string
   job: Job
   forms?: Record<string, string> | undefined
-  /** The count an attest test pins with `attest.instantiations`. */
+  /** The count a type test pins with `.instantiations`. */
   pinned?: number | undefined
-  /** What an attest test without a pinned count asserts instead, for its note. */
+  /** What a type test without a pinned count asserts instead, for its note. */
   pins?: string | undefined
 }
 const measured: Measured[] = items.map((item) => ({
@@ -100,7 +118,9 @@ const measured: Measured[] = items.map((item) => ({
     baseline: baselines[item.group]!,
   },
 }))
-measured.push(...benches())
+const benchPattern = library.config.types?.benches
+const benchJobs = benchPattern ? benches(benchPattern) : []
+measured.push(...benchJobs)
 for (const [id, entry] of measured.entries()) entry.job.id = id
 
 const concurrency = Math.max(
@@ -113,7 +133,10 @@ const concurrency = Math.max(
 
 // The costliest checks start first, so the slowest one does not run alone at the end. The last
 // run's CPU times order the queue; they only decide the order, never a value.
-const costsFile = path.join(os.tmpdir(), 'uphill-ox-types-costs.json')
+const costsFile = path.join(
+  os.tmpdir(),
+  `uphill-types-costs-${library.name.replace(/[^\w.-]/g, '_')}.json`,
+)
 const costs: Record<string, number> = fs.existsSync(costsFile)
   ? JSON.parse(fs.readFileSync(costsFile, 'utf8'))
   : {}
@@ -123,7 +146,8 @@ const exportQueue = measured
   .filter((entry) => entry.job.mode === 'export')
   .map((entry) => entry.job)
 exportQueue.sort((a, b) => order(b) - order(a) || a.id - b.id)
-// The attest tests import ox's sources rather than its declarations, so one worker parses those.
+// The type tests import the library's sources rather than its declarations, so one worker parses
+// those.
 const benchQueue = measured
   .filter((entry) => entry.job.mode === 'bench')
   .map((entry) => entry.job)
@@ -171,12 +195,12 @@ for (const entry of measured) {
   const result = results.get(job.id)
   if (!result) continue
   const { instantiations, cpu, bytes } = cost(entry)
-  // A test without its siblings leaves imports unused, which attest sees as well.
+  // A test without its siblings leaves imports unused, which its runner sees as well.
   for (const error of result.errors)
     if (job.mode === 'export' || ![6133, 6192, 6196, 6198].includes(error.code))
       log(`${line}: TS${error.code}: ${error.message}`)
   if (job.mode === 'bench') {
-    // attest's own threshold: a test fails 20% above its pinned count.
+    // The runner's own threshold: a test fails 20% above its pinned count.
     const target =
       pinned === undefined ? '' : ` target ${Math.round(pinned * 1.2)}`
     const text = pinned === undefined ? ` note ${quote(pins!)}` : ''
@@ -192,6 +216,13 @@ for (const entry of measured) {
     `check-memory ${quote(line)} ${size(bytes)}${text}`,
   )
 }
+if (!benchJobs.length) {
+  const reason = benchPattern
+    ? `no type tests in ${benchPattern}`
+    : 'no type-test files: types.benches is not set'
+  lines.push(`bench-instantiations skip note ${quote(reason)}`)
+}
+
 fs.appendFileSync(metrics, `${[...lines, ...hot(lines)].join('\n')}\n`)
 const next = Object.fromEntries(
   exportsMeasured.map((entry) => [entry.line, cost(entry).cpu]),
@@ -292,24 +323,29 @@ function note(result: Result, forms: Record<string, string>): string {
 }
 
 /**
- * One job per test in the attest files, built the way attest counts instantiations: the file with
- * every `bench()`, `it()` and `test()` call removed, at any depth, is the baseline, and the test's
- * function is added back as a constant.
+ * One job per test in the type-test files, built the way the runner counts instantiations: the
+ * file with every `bench()`, `it()` and `test()` call removed, at any depth, is the baseline, and
+ * the test's function is added back as a constant.
  */
-function benches(): Measured[] {
+function benches(pattern: string): Measured[] {
   const result: Measured[] = []
   const names = ['bench', 'it', 'test']
   const repeats = new Map<string, number>()
-  // Build output and packages installed under src hold no tests of ox's own.
-  const files = [...new Bun.Glob('src/**/*.{snap,bench}-d.ts').scanSync(root)]
-    .filter((file) => !/(^|\/)(_esm|_cjs|_types|node_modules)\//.test(file))
+  // Build output and installed packages hold no tests of the library's own.
+  const build = `${path.relative(library.root, library.build)}/`
+  const files = [...new Bun.Glob(pattern).scanSync(library.root)]
+    .filter(
+      (file) =>
+        !/(^|\/)node_modules\//.test(file) &&
+        (build === '/' || !file.startsWith(build)),
+    )
     .sort()
   for (const relative of files) {
-    const file = path.join(root, relative)
+    const file = path.join(library.root, relative)
     const text = fs.readFileSync(file, 'utf8')
     const source = ts.createSourceFile(file, text, ts.ScriptTarget.ES2022, true)
-    const tests: ts.CallExpression[] = []
-    const visit = (node: ts.Node) => {
+    const tests: TS.CallExpression[] = []
+    const visit = (node: TS.Node) => {
       if (
         ts.isCallExpression(node) &&
         names.includes(node.expression.getText(source))
@@ -328,7 +364,7 @@ function benches(): Measured[] {
       )
       if (!name || !ts.isStringLiteralLike(name) || !body) continue
       const bodyText = body.getText(source)
-      const pinned = /attest\.instantiations\(\[\s*([\d_]+)/.exec(bodyText)?.[1]
+      const pinned = /\.instantiations\(\[\s*([\d_]+)/.exec(bodyText)?.[1]
       const count = (pattern: RegExp, what: string) => {
         const found = bodyText.match(pattern)?.length ?? 0
         return found ? [`${found} ${what}${found === 1 ? '' : 's'}`] : []
@@ -353,7 +389,7 @@ function benches(): Measured[] {
           id: 0,
           mode: 'bench',
           file: `${file}.nonexistent.ts`,
-          text: `${baseline}\nconst $attestIsolatedBench = ${body.getFullText(source)}`,
+          text: `${baseline}\nconst $isolatedBench = ${body.getFullText(source)}`,
           group: relative,
           baseline,
         },
@@ -364,7 +400,7 @@ function benches(): Measured[] {
 }
 
 /** The names of the `describe` calls around a test, outermost first. */
-function describePath(node: ts.Node, source: ts.SourceFile): string[] {
+function describePath(node: TS.Node, source: TS.SourceFile): string[] {
   const names: string[] = []
   for (let current = node.parent; current; current = current.parent) {
     if (

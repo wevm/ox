@@ -1,51 +1,74 @@
 /**
- * The entry points, compiler options and caching CompilerHost that the types helpers share. Each
- * consumer file is checked in a fresh `ts.Program` with a fresh checker, but every program reuses
- * the parsed `SourceFile`s of `lib.*.d.ts`, the declarations and their dependencies, and one module
- * resolution cache, so a program only redoes checking, not parsing. Node runs these helpers.
+ * The TypeScript, entry points, compiler options and caching CompilerHost that the types helpers
+ * share. Each consumer file is checked in a fresh `ts.Program` with a fresh checker, but every
+ * program reuses the parsed `SourceFile`s of `lib.*.d.ts`, the declarations and their
+ * dependencies, and one module resolution cache, so a program only redoes checking, not parsing.
+ * Node runs these helpers.
  *
  * @module
  */
 
 import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
+import { createRequire } from 'node:module'
 import * as path from 'node:path'
 
-import ts from 'typescript'
+import type * as TS from 'typescript'
 
-import {
-  consumerFile,
-  consumerTsconfig,
-  declarations,
-  entries as listEntries,
-  root,
-  testTsconfig,
-} from './repo.ts'
+import * as library from './library.ts'
 
-export { consumerFile }
+/**
+ * The project's own TypeScript, resolved from the root, so the checks count what the library's
+ * compiler counts rather than what another version would. A compiler without the JavaScript API,
+ * such as a native port, cannot build programs, so the pack's own TypeScript stands in for it. It
+ * is `undefined` when neither has the API.
+ */
+export const ts = (() => {
+  for (const from of [library.manifest, import.meta.filename]) {
+    try {
+      const loaded = createRequire(from)('typescript') as typeof TS
+      if (loaded.createProgram) return loaded
+    } catch {}
+  }
+  return undefined as unknown as typeof TS
+})()
 
-/** The declarations `pnpm build` writes, or a copy of them that `UPHILL_TYPES_DIR` names. */
+/**
+ * The types metrics' virtual consumer file, where the dependencies that the declarations name
+ * resolve to the copies the library installs.
+ */
+export const consumerFile = path.join(
+  library.root,
+  '__uphill_types_consumer__.mts',
+)
+
+/** The declarations the build writes, or a copy of them that `UPHILL_TYPES_DIR` names. */
 export const typesDir = path.resolve(
-  process.env.UPHILL_TYPES_DIR ?? declarations,
+  process.env.UPHILL_TYPES_DIR ?? library.declarations,
 )
 
 /**
- * Each entry point, `ox` first, then the other index entries, then the module entries, with its
- * declarations in `typesDir`.
+ * Each entry point, the root entry first, then the other index entries, then the module entries,
+ * with its declarations in `typesDir`.
  */
-export const entries = listEntries().map((entry) => ({
+export const entries = library.entries().map((entry) => ({
   ...entry,
-  types: path.join(typesDir, path.relative(declarations, entry.types)),
+  types: path.join(typesDir, path.relative(library.declarations, entry.types)),
 }))
 const entryFiles = new Map(entries.map((entry) => [entry.name, entry.types]))
 
 /**
- * ox's compiler options, without the ones that only drive ox's own build: emit, incremental state,
- * and unused-name checks. What stays shapes how a consumer's types resolve: `strict`,
- * `exactOptionalPropertyTypes`, NodeNext resolution, ES2022 and DOM libs, `@types/node`, and
- * `skipLibCheck`.
+ * The library's compiler options from `types.consumerTsconfig`, without the ones that only drive
+ * its own build: emit, incremental state, and unused-name checks. What stays shapes how a
+ * consumer's types resolve, such as `strict`, `exactOptionalPropertyTypes`, module resolution,
+ * libs, `types`, and `skipLibCheck`.
  */
-export const consumerOptions = options(consumerTsconfig)
+export const consumerOptions = options(
+  path.join(
+    library.root,
+    library.config.types?.consumerTsconfig ?? 'tsconfig.json',
+  ),
+)
 for (const key of [
   'composite',
   'declaration',
@@ -61,15 +84,22 @@ for (const key of [
   delete consumerOptions[key]
 
 /**
- * The options ox's type tests check with, whose `paths` point `ox` and its entries at the sources.
- * attest reads the same file.
+ * The options the library's type tests check with, from `types.testTsconfig`, whose `paths` can
+ * point the package and its entries at the sources.
  */
-export const testOptions = options(testTsconfig)
+export const testOptions = options(
+  path.join(
+    library.root,
+    library.config.types?.testTsconfig ?? 'tsconfig.json',
+  ),
+)
 for (const key of ['noUnusedLocals', 'noUnusedParameters'])
   delete testOptions[key]
 
 /** Parses a tsconfig file, without emit. */
-function options(configPath: string): ts.CompilerOptions {
+function options(configPath: string): TS.CompilerOptions {
+  if (!ts || !fs.existsSync(configPath)) return {}
+
   const config = ts.readConfigFile(configPath, ts.sys.readFile)
   if (config.error)
     throw new Error(
@@ -86,16 +116,20 @@ function options(configPath: string): ts.CompilerOptions {
 }
 
 /** One host per option set. All of them share the parsed files. */
-export type Host = ts.CompilerHost & {
+export type Host = TS.CompilerHost & {
   /** Sets the text of a virtual file, which programs read instead of the disk. */
   setFile(fileName: string, text: string): void
 }
 
-const sourceFiles = new Map<string, ts.SourceFile>()
+const sourceFiles = new Map<string, TS.SourceFile>()
 
-export function createHost(options: ts.CompilerOptions): Host {
+export function createHost(options: TS.CompilerOptions): Host {
   const base = ts.createCompilerHost(options)
-  const cache = ts.createModuleResolutionCache(root, (name) => name, options)
+  const cache = ts.createModuleResolutionCache(
+    library.root,
+    (name) => name,
+    options,
+  )
   const virtual = new Map<string, string>()
   const exists = new Map<string, boolean>()
   const host: Host = {
@@ -163,13 +197,16 @@ export function createHost(options: ts.CompilerOptions): Host {
         // dependencies resolve from where the build's declarations would import them.
         if (
           resolved.resolvedModule ||
-          typesDir === declarations ||
+          typesDir === library.declarations ||
           !containingFile.startsWith(typesDir)
         )
           return resolved
         return ts.resolveModuleName(
           literal.text,
-          path.join(declarations, path.relative(typesDir, containingFile)),
+          path.join(
+            library.declarations,
+            path.relative(typesDir, containingFile),
+          ),
           options,
           host,
           cache,

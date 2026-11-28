@@ -20,14 +20,14 @@ import * as fs from 'node:fs'
 import * as readline from 'node:readline'
 import * as v8 from 'node:v8'
 
-import ts from 'typescript'
+import type * as TS from 'typescript'
 
-import { consumerOptions, createHost, testOptions } from './types-host.ts'
+import { consumerOptions, createHost, testOptions, ts } from './types-host.ts'
 
 /** One file to check. */
 export type Job = {
   id: number
-  /** `export` checks a consumer with ox's options, `bench` an attest test with the tests' options. */
+  /** `export` checks a consumer with the consumer options, `bench` a type test with the tests' options. */
   mode: 'export' | 'bench'
   file: string
   text: string
@@ -61,7 +61,7 @@ const hosts = {
   bench: createHost(testOptions),
 }
 const options = { export: consumerOptions, bench: testOptions }
-const templates = new Map<string, ts.Program>()
+const templates = new Map<string, TS.Program>()
 const baselines = new Map<string, Cost>()
 
 const lines = readline.createInterface({ input: process.stdin })
@@ -135,7 +135,7 @@ function check(job: Job, text: string) {
       parts[statement.name.text] = program.getInstantiationCount() - before
     }
   const diagnostics = program.getSemanticDiagnostics(file)
-  // attest also asks for declaration diagnostics.
+  // The type-test runner also asks for declaration diagnostics.
   if (job.mode === 'bench') program.getDeclarationDiagnostics(file)
   const cost = {
     cpu: cpuTime() - cpu,

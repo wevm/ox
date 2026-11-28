@@ -1,29 +1,31 @@
 /**
- * Checks call sites from ox's tests, one fresh `ts.Program` and checker per measured call, and
- * reports what each call cost the checker. types-calls.ts starts a pool of these in Node and sends
- * one job per line on standard input; each result goes back as one line on standard output.
+ * Checks call sites from the library's tests, one fresh `TS.Program` and checker per measured
+ * call, and reports what each call cost the checker. types-calls.ts starts a pool of these in Node
+ * and sends one job per line on standard input; each result goes back as one line on standard
+ * output.
  *
  * - `node types-calls-worker.ts functions` lists the public functions instead, and exits: every
  *   function each entry point's build exports, namespace members included, such as
- *   `ox:AbiFunction.decodeResult`. A namespace is named by the first entry that reaches it, `ox`
- *   and the other index entries first (see repo.ts), and a function that several namespaces export
- *   under the first, such as `ox:HdKey.path` for `ox:Mnemonic.path`. Classes are left out, and so are
- *   the functions a dependency defines, such as zod's that `ox/zod` re-exports.
- * - `entries` walks each public function's name, such as `ox/tempo:TxEnvelopeTempo.serialize`, from
- *   its entry point's source to the declaration it resolves to.
+ *   `lib:Math.add`. A namespace is named by the first entry that reaches it, `lib` and the other
+ *   index entries first (see library.ts), and a function that several namespaces export under the
+ *   first, such as `lib:Math.round` for `lib:Number.round`. Classes are left out, and so are the
+ *   functions a dependency defines, such as a dependency's schema builders that `lib/schema`
+ *   re-exports.
+ * - `entries` walks each public function's name, such as `lib/Math:Vector.add`, from its entry
+ *   point's source to the declaration it resolves to.
  * - `scan` lists the calls in one test file whose callee resolves, through imports and re-exports,
  *   to a declaration, with what measuring each one needs.
  * - `measure` checks chosen calls of one test file. Each call is copied into a declaration of its
  *   own, `const $uphill = <call>`, just before the statement that holds it, so it is checked
- *   without the context around it, as `const result = Hex.fromString(...)` is. A fresh checker
- *   first resolves everything the call references from outside it: the imports, the test's
- *   fixtures such as an ABI, and the callee's declared signature. Then it checks the call alone and
- *   counts the instantiations that cost, in three parts: resolving the call (inferring its type
- *   arguments and checking its arguments), its return type with any calls chained on it, and
- *   awaiting the result.
+ *   without the context around it, as `const result = Math.add(...)` is. A fresh checker first
+ *   resolves everything the call references from outside it: the imports, the test's fixtures such
+ *   as a schema, and the callee's declared signature. Then it checks the call alone and counts the
+ *   instantiations that cost, in three parts: resolving the call (inferring its type arguments and
+ *   checking its arguments), its return type with any calls chained on it, and awaiting the result.
  *
- * Programs use the options ox's type tests check with (see repo.ts), so `ox` and its entries
- * resolve to the sources.
+ * Programs use the options the library's type tests check with (`testOptions` in types-host.ts),
+ * whose `paths` point `lib` and its entries at the sources. Options without `paths` get one per
+ * entry.
  *
  * @module
  */
@@ -34,13 +36,15 @@ import * as path from 'node:path'
 import * as readline from 'node:readline'
 import { pathToFileURL } from 'node:url'
 
-import ts from 'typescript'
+import type * as TS from 'typescript'
 
-import { root } from './repo.ts'
-import { entries as allEntries, createHost, testOptions } from './types-host.ts'
+import * as library from './library.ts'
+import * as typesHost from './types-host.ts'
+
+const ts = typesHost.ts
 
 /**
- * One public function, and the module its namespace is, such as `Hex` for `ox:Hex.fromString`,
+ * One public function, and the module its namespace is, such as `Math` for `lib:Math.add`,
  * which its own tests are named after.
  */
 export type PublicFunction = { name: string; module: string }
@@ -66,7 +70,7 @@ export type ScanJob = { kind: 'scan'; id: number; file: string }
 export type Site = {
   /** The callee's declaration key: its file, relative to the checkout, and position. */
   declaration: string
-  /** The test that holds the call, such as `src/core/_test/Hex.test.ts > fromString > default`. */
+  /** The test that holds the call, such as `src/Math.test.ts > add > default`. */
   test: string
   line: number
   /** The call's span. */
@@ -128,15 +132,16 @@ const promiseMethods = new Set(['then', 'catch', 'finally'])
 /** Calls whose callee is one of these name the test, not a function under test. */
 const testFunctions = new Set(['describe', 'test', 'it', 'bench', 'suite'])
 /**
- * A test's own API. A call to it is not a function under test, and a statement that calls it never
- * declares or narrows anything a later call needs, so the file a call is checked in leaves it out.
+ * A test's own API, with the project's own assertions (`callTypes.assertions`). A call to it is not
+ * a function under test, and a statement that calls it never declares or narrows anything a later
+ * call needs, so the file a call is checked in leaves it out.
  */
 const testApi = new Set([
   ...testFunctions,
+  ...(library.config.callTypes?.assertions ?? []),
   'expect',
   'expectTypeOf',
   'assertType',
-  'attest',
   'beforeAll',
   'beforeEach',
   'afterAll',
@@ -149,8 +154,21 @@ if (process.argv[2] === 'functions') {
   process.exit(0)
 }
 
-const host = createHost(testOptions)
-const templates = new Map<string, ts.Program>()
+/**
+ * The type tests' options. Without `paths` in them, each entry's specifier, such as `lib/Math`,
+ * maps to its source, as a vitest alias would, so a test's calls resolve to the declarations the
+ * public functions resolve to rather than to the build's.
+ */
+const testOptions: TS.CompilerOptions = {
+  ...typesHost.testOptions,
+  paths:
+    typesHost.testOptions.paths ??
+    Object.fromEntries(
+      typesHost.entries.map((entry) => [entry.name, [entry.source]]),
+    ),
+}
+const host = typesHost.createHost(testOptions)
+const templates = new Map<string, TS.Program>()
 
 const lines = readline.createInterface({ input: process.stdin })
 for await (const line of lines) {
@@ -169,7 +187,7 @@ process.stdout.write(
 )
 
 /**
- * Walks every entry point's build: `ox` first, then the other index entries, then the module
+ * Walks every entry point's build: `lib` first, then the other index entries, then the module
  * entries. A namespace, or a plain object of functions, is walked into once, under the first entry
  * that reaches it, so its functions are named after that entry; a function that several namespaces
  * export is listed once, under the first.
@@ -177,10 +195,14 @@ process.stdout.write(
 async function functions(): Promise<FunctionsResult> {
   const modules = new Map<object, string>()
   const loaded: [entry: string, module: object][] = []
-  for (const entry of allEntries) {
+  for (const entry of typesHost.entries) {
     const module = await import(pathToFileURL(entry.file).href)
     loaded.push([entry.name, module])
-    if (!entry.index) modules.set(module, path.basename(entry.source, '.ts'))
+    if (!entry.index)
+      modules.set(
+        module,
+        path.basename(entry.source).replace(/\.[cm]?[jt]sx?$/, ''),
+      )
   }
   const found: [fn: unknown, item: PublicFunction][] = []
   const listed = new Set<unknown>()
@@ -213,7 +235,7 @@ async function functions(): Promise<FunctionsResult> {
   for (const [entry, module] of loaded)
     walk(entry, modules.get(module) ?? 'index', '', module)
 
-  // A function a dependency defines, such as one of zod's that `ox/zod` re-exports, is the
+  // A function a dependency defines, such as one that `lib/schema` re-exports, is the
   // dependency's to measure. Its location says where it comes from.
   const session = new inspector.Session()
   session.connect()
@@ -237,7 +259,7 @@ async function functions(): Promise<FunctionsResult> {
       (property) => property.name === '[[FunctionLocation]]',
     )?.value?.value as { scriptId: string } | undefined
     const url = location && scripts.get(location.scriptId)
-    // A built-in, such as `Error.captureStackTrace` that zod re-exports, has no location.
+    // A built-in, such as `Error.captureStackTrace` that a dependency re-exports, has no location.
     own.set(fn, !!url && !url.includes('/node_modules/'))
   }
   session.disconnect()
@@ -263,13 +285,13 @@ function isNamespace(value: unknown, depth = 0): value is object {
 
 function entries(job: EntriesJob): EntriesResult {
   const program = ts.createProgram({
-    rootNames: allEntries.map((entry) => entry.source),
+    rootNames: typesHost.entries.map((entry) => entry.source),
     options: testOptions,
     host,
   })
   const checker = program.getTypeChecker()
-  const modules = new Map<string, ts.Symbol>()
-  for (const entry of allEntries) {
+  const modules = new Map<string, TS.Symbol>()
+  for (const entry of typesHost.entries) {
     const source = program.getSourceFile(entry.source)
     const symbol = source && checker.getSymbolAtLocation(source)
     if (symbol) modules.set(entry.name, symbol)
@@ -291,7 +313,7 @@ function entries(job: EntriesJob): EntriesResult {
 }
 
 /** A module's export, a namespace's member, or a value's property, by name. */
-function member(checker: ts.TypeChecker, symbol: ts.Symbol, name: string) {
+function member(checker: TS.TypeChecker, symbol: TS.Symbol, name: string) {
   const target = resolveAlias(checker, symbol)
   if (target.flags & ts.SymbolFlags.Module) {
     const exported = checker
@@ -330,17 +352,17 @@ function member(checker: ts.TypeChecker, symbol: ts.Symbol, name: string) {
  * another function, as in `{ transfer }` or `const send = transfer`, resolves to that function too,
  * since a test can call either.
  */
-function declarationKeys(checker: ts.TypeChecker, symbol: ts.Symbol): string[] {
+function declarationKeys(checker: TS.TypeChecker, symbol: TS.Symbol): string[] {
   const keys = new Set<string>()
-  const seen = new Set<ts.Symbol>()
-  const visit = (current: ts.Symbol | undefined) => {
+  const seen = new Set<TS.Symbol>()
+  const visit = (current: TS.Symbol | undefined) => {
     if (!current || seen.has(current)) return
     seen.add(current)
     const target = resolveAlias(checker, current)
     const declaration = target.valueDeclaration ?? target.declarations?.[0]
     if (!declaration) return
     keys.add(declarationKey(declaration))
-    let name: ts.Node | undefined
+    let name: TS.Node | undefined
     if (ts.isShorthandPropertyAssignment(declaration))
       return visit(checker.getShorthandAssignmentValueSymbol(declaration))
     if (
@@ -359,11 +381,11 @@ function declarationKeys(checker: ts.TypeChecker, symbol: ts.Symbol): string[] {
   return [...keys]
 }
 
-function declarationKey(declaration: ts.Node): string {
-  return `${path.relative(root, declaration.getSourceFile().fileName)}:${declaration.pos}`
+function declarationKey(declaration: TS.Node): string {
+  return `${path.relative(library.root, declaration.getSourceFile().fileName)}:${declaration.pos}`
 }
 
-function resolveAlias(checker: ts.TypeChecker, symbol: ts.Symbol): ts.Symbol {
+function resolveAlias(checker: TS.TypeChecker, symbol: TS.Symbol): TS.Symbol {
   return symbol.flags & ts.SymbolFlags.Alias
     ? checker.getAliasedSymbol(symbol)
     : symbol
@@ -373,7 +395,7 @@ function resolveAlias(checker: ts.TypeChecker, symbol: ts.Symbol): ts.Symbol {
  * The program for a test file as it is on disk, which each measured program reuses. It never gets a
  * checker of its own.
  */
-function template(file: string, text: string): ts.Program {
+function template(file: string, text: string): TS.Program {
   let program = templates.get(file)
   templates.delete(file)
   if (program?.getSourceFile(file)?.text === text) {
@@ -410,15 +432,15 @@ function scan(job: ScanJob): ScanResult {
   // Lines under a comment directive, such as `@ts-expect-error`, hold a deliberate type error.
   const covered = new Set<number>()
   for (const directive of (
-    source as unknown as { commentDirectives?: { range: ts.TextRange }[] }
+    source as unknown as { commentDirectives?: { range: TS.TextRange }[] }
   ).commentDirectives ?? [])
     covered.add(
       source.getLineAndCharacterOfPosition(directive.range.end).line + 1,
     )
-  const relative = path.relative(root, job.file)
+  const relative = path.relative(library.root, job.file)
   const sites: Site[] = []
 
-  const visit = (node: ts.Node) => {
+  const visit = (node: TS.Node) => {
     if (ts.isCallExpression(node)) {
       const site = siteOf(node)
       if (site) sites.push(site)
@@ -428,10 +450,10 @@ function scan(job: ScanJob): ScanResult {
   visit(source)
   return { id: job.id, file: job.file, text, sites }
 
-  function siteOf(call: ts.CallExpression): Site | undefined {
+  function siteOf(call: TS.CallExpression): Site | undefined {
     const callee = call.expression
-    // A callee is a name, or a property path from a name, such as `Hex.fromString`.
-    let rootName: ts.Expression = callee
+    // A callee is a name, or a property path from a name, such as `Math.add`.
+    let rootName: TS.Expression = callee
     while (ts.isPropertyAccessExpression(rootName))
       rootName = rootName.expression
     if (!ts.isIdentifier(rootName)) return
@@ -453,28 +475,28 @@ function scan(job: ScanJob): ScanResult {
     const declaration = target.valueDeclaration ?? target.declarations?.[0]
     if (!declaration) return
     const declared = declaration.getSourceFile().fileName
-    // Only ox's own sources declare public functions.
+    // Only the library's own sources declare public functions.
     if (
       declared === job.file ||
-      !declared.startsWith(path.join(root, 'src/')) ||
+      !declared.startsWith(library.sources + path.sep) ||
       declared.includes('/node_modules/')
     )
       return
 
-    // Calls chained on the result to methods ox declares, such as `Provider.from(...).request(...)`,
-    // use the result's own API, so they count with the call. A promise's `.then` or a string's
+    // Calls chained on the result to methods the sources declare, such as
+    // `Client.from(...).request(...)`, use the result's own API, so they count with the call. A promise's `.then` or a string's
     // `.slice` does not.
-    let outer: ts.Expression = call
+    let outer: TS.Expression = call
     const chained: string[] = []
     for (;;) {
-      let access: ts.Node = outer
+      let access: TS.Node = outer
       const names: string[] = []
       while (
         ts.isPropertyAccessExpression(access.parent) &&
         access.parent.expression === access
       ) {
         access = access.parent
-        names.push((access as ts.PropertyAccessExpression).name.text)
+        names.push((access as TS.PropertyAccessExpression).name.text)
       }
       if (
         access === outer ||
@@ -484,11 +506,11 @@ function scan(job: ScanJob): ScanResult {
       )
         break
       const method = checker.getSymbolAtLocation(
-        (access as ts.PropertyAccessExpression).name,
+        (access as TS.PropertyAccessExpression).name,
       )
       const declared = method?.declarations?.[0]?.getSourceFile().fileName
       if (
-        !declared?.startsWith(path.join(root, 'src/')) ||
+        !declared?.startsWith(library.sources + path.sep) ||
         declared.endsWith('.d.ts')
       )
         break
@@ -522,22 +544,22 @@ function scan(job: ScanJob): ScanResult {
    * itself declares, such as a callback's parameter, or uses `this`, `super`, `arguments`, or an
    * `await` that the statement's function does not allow.
    */
-  function hoistable(node: ts.Expression, statement: ts.Statement) {
+  function hoistable(node: TS.Expression, statement: TS.Statement) {
     let reason: string | undefined
-    const inside = (target: ts.Node, container: ts.Node) =>
+    const inside = (target: TS.Node, container: TS.Node) =>
       target.getSourceFile() === source &&
       target.pos >= container.pos &&
       target.end <= container.end
     // Modules allow `await` at their top level.
-    let container: ts.Node | undefined = statement.parent
+    let container: TS.Node | undefined = statement.parent
     while (container && !ts.isFunctionLike(container))
       container = container.parent
     const asyncAllowed =
       !container ||
       !!ts
-        .getModifiers(container as ts.HasModifiers)
+        .getModifiers(container as TS.HasModifiers)
         ?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword)
-    const visit = (child: ts.Node, nested: boolean) => {
+    const visit = (child: TS.Node, nested: boolean) => {
       if (reason) return
       if (
         child.kind === ts.SyntaxKind.ThisKeyword ||
@@ -567,11 +589,11 @@ function scan(job: ScanJob): ScanResult {
   }
 
   /** The names of the `describe` and `test` calls around a node, outermost first. */
-  function testPath(node: ts.Node): string[] {
+  function testPath(node: TS.Node): string[] {
     const names: string[] = []
     for (let current = node.parent; current; current = current.parent) {
       if (!ts.isCallExpression(current)) continue
-      let callee: ts.Expression = current.expression
+      let callee: TS.Expression = current.expression
       // `test.each(cases)('name', ...)` and `describe.skip('name', ...)` name tests too.
       if (ts.isCallExpression(callee)) callee = callee.expression
       while (ts.isPropertyAccessExpression(callee)) callee = callee.expression
@@ -583,7 +605,7 @@ function scan(job: ScanJob): ScanResult {
     return names
   }
 
-  function isReference(node: ts.Identifier) {
+  function isReference(node: TS.Identifier) {
     const parent = node.parent
     if (ts.isPropertyAccessExpression(parent) && parent.name === node)
       return false
@@ -607,20 +629,20 @@ function scan(job: ScanJob): ScanResult {
 }
 
 /** The statement in a statement list that holds a node, before which its copy goes. */
-function anchorOf(node: ts.Node): ts.Statement | undefined {
+function anchorOf(node: TS.Node): TS.Statement | undefined {
   for (let current = node.parent; current; current = current.parent)
     if (isStatement(current) && hasStatements(current.parent)) return current
   return undefined
 }
 
 function hasStatements(
-  node: ts.Node,
+  node: TS.Node,
 ): node is
-  | ts.Block
-  | ts.SourceFile
-  | ts.ModuleBlock
-  | ts.CaseClause
-  | ts.DefaultClause {
+  | TS.Block
+  | TS.SourceFile
+  | TS.ModuleBlock
+  | TS.CaseClause
+  | TS.DefaultClause {
   return (
     ts.isBlock(node) ||
     ts.isSourceFile(node) ||
@@ -629,7 +651,7 @@ function hasStatements(
   )
 }
 
-function isStatement(node: ts.Node): node is ts.Statement {
+function isStatement(node: TS.Node): node is TS.Statement {
   return (
     ts.isExpressionStatement(node) ||
     ts.isVariableStatement(node) ||
@@ -664,7 +686,7 @@ function measure(job: MeasureJob): MeasureResult {
   for (const site of job.sites) {
     const call = findCall(source, site.start, site.end)
     if (!call) throw new Error(`no call at ${site.start} in ${job.file}`)
-    let outer: ts.Node = call
+    let outer: TS.Node = call
     while (outer.end < site.outer) outer = outer.parent
     const measured = check(base, site, copy(source, call, outer))
     measurements.push({ site: site.site, ...measured })
@@ -678,22 +700,22 @@ type Copy = { hoisted: string[]; text: string; callLength: number }
 
 /**
  * Copies a call, with any calls chained on it up to `outer`. A call in its arguments, such as
- * `AbiFunction.from('function f()')` or `Hex.fromString('hello')`, is a fixture written inline, so
+ * `Schema.from('{ a: number }')` or `Math.parse('1')`, is a fixture written inline, so
  * it moves into a declaration of its own, `const $uphill0 = ...`, which the warm-up resolves like
  * any other fixture. A call inside a callback stays, since it may name the callback's parameters.
  */
 function copy(
-  source: ts.SourceFile,
-  call: ts.CallExpression,
-  outer: ts.Node,
+  source: TS.SourceFile,
+  call: TS.CallExpression,
+  outer: TS.Node,
 ): Copy {
   const replacements: { start: number; end: number; text: string }[] = []
   const hoisted: string[] = []
   // The spine: the call, and the calls chained on it, whose callees stay as written.
-  const spine = new Set<ts.Node>()
-  for (let node: ts.Node = call; node !== outer.parent; node = node.parent)
+  const spine = new Set<TS.Node>()
+  for (let node: TS.Node = call; node !== outer.parent; node = node.parent)
     spine.add(node)
-  const visit = (node: ts.Node) => {
+  const visit = (node: TS.Node) => {
     if (ts.isFunctionLike(node) || ts.isClassLike(node)) return
     const nested =
       !spine.has(node) &&
@@ -747,10 +769,10 @@ function copy(
  * Leaving them out also leaves out noise from the test API: in the whole file, narrowing a
  * reference in the copy walks the control flow back over the `describe(...)` and `test(...)`
  * statements before it, and resolves vitest's types to see whether each is an assertion
- * function, which added 33 to 131 instantiations to 33 of the 563 calls on 0.x's first run.
+ * function, which added 33 to 131 instantiations to 33 of 563 calls in one library's tests.
  */
 function check(
-  base: ts.Program,
+  base: TS.Program,
   site: MeasureJob['sites'][number],
   copied: Copy,
 ): Omit<Measurement, 'site'> {
@@ -828,8 +850,8 @@ function check(
 function reduce(file: string, text: string, position: number): string {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
   const copy = findStatement(source, position)
-  const blank: ts.Statement[] = []
-  for (let node: ts.Node = copy; node.parent; node = node.parent) {
+  const blank: TS.Statement[] = []
+  for (let node: TS.Node = copy; node.parent; node = node.parent) {
     const parent = node.parent
     if (!hasStatements(parent)) continue
     for (const statement of parent.statements) {
@@ -844,7 +866,7 @@ function reduce(file: string, text: string, position: number): string {
       if (chars[index] !== '\n' && chars[index] !== '\r') chars[index] = ' '
   return chars.join('')
 
-  function hoisted(statement: ts.Statement) {
+  function hoisted(statement: TS.Statement) {
     return (
       ts.isImportDeclaration(statement) ||
       ts.isImportEqualsDeclaration(statement) ||
@@ -858,9 +880,9 @@ function reduce(file: string, text: string, position: number): string {
     )
   }
 
-  function callsTestApi(statement: ts.Statement) {
+  function callsTestApi(statement: TS.Statement) {
     if (!ts.isExpressionStatement(statement)) return false
-    let node: ts.Expression = statement.expression
+    let node: TS.Expression = statement.expression
     if (ts.isAwaitExpression(node)) node = node.expression
     for (;;) {
       if (ts.isCallExpression(node) || ts.isPropertyAccessExpression(node))
@@ -871,9 +893,9 @@ function reduce(file: string, text: string, position: number): string {
   }
 }
 
-function findStatement(source: ts.SourceFile, position: number) {
-  let found: ts.VariableStatement | undefined
-  const visit = (node: ts.Node) => {
+function findStatement(source: TS.SourceFile, position: number) {
+  let found: TS.VariableStatement | undefined
+  const visit = (node: TS.Node) => {
     if (found || node.end < position || node.pos > position) return
     if (
       ts.isVariableStatement(node) &&
@@ -888,9 +910,9 @@ function findStatement(source: ts.SourceFile, position: number) {
   return found
 }
 
-function findCall(node: ts.Node, start: number, end: number) {
-  let found: ts.CallExpression | undefined
-  const visit = (child: ts.Node) => {
+function findCall(node: TS.Node, start: number, end: number) {
+  let found: TS.CallExpression | undefined
+  const visit = (child: TS.Node) => {
     if (found || child.end < end || child.pos > start) return
     if (
       ts.isCallExpression(child) &&
@@ -906,12 +928,12 @@ function findCall(node: ts.Node, start: number, end: number) {
 
 /**
  * Resolves the declared type of every symbol that a node references from outside it: imports,
- * fixtures such as an ABI, and type aliases its type arguments name. Each one's type is what
+ * fixtures such as a schema, and type aliases its type arguments name. Each one's type is what
  * checking the call would read, so the call's own count leaves it out.
  */
-function warm(checker: ts.TypeChecker, node: ts.Node) {
-  const seen = new Set<ts.Symbol>()
-  const visit = (child: ts.Node) => {
+function warm(checker: TS.TypeChecker, node: TS.Node) {
+  const seen = new Set<TS.Symbol>()
+  const visit = (child: TS.Node) => {
     if (ts.isIdentifier(child)) {
       const parent = child.parent
       const skip =
@@ -956,7 +978,7 @@ function warm(checker: ts.TypeChecker, node: ts.Node) {
  * Resolves the callee's declared type and each of its signatures: parameter types, return type,
  * and type parameters' constraints and defaults, as importing and naming it would.
  */
-function warmCallee(checker: ts.TypeChecker, call: ts.CallExpression) {
+function warmCallee(checker: TS.TypeChecker, call: TS.CallExpression) {
   const type = checker.getTypeAtLocation(call.expression)
   for (const signature of checker.getSignaturesOfType(
     type,
@@ -974,7 +996,7 @@ function warmCallee(checker: ts.TypeChecker, call: ts.CallExpression) {
 
 /** The declared parameters and return type of the signature a call resolved to, for notes. */
 function describe(
-  signature: ts.Signature | undefined,
+  signature: TS.Signature | undefined,
 ): Measurement['signature'] {
   const declaration = signature?.getDeclaration()
   if (!declaration) return { parameters: [], returns: '' }

@@ -1,0 +1,249 @@
+# TypeScript conventions in tracked .ts, .tsx, .cts and .mts files, including declarations, and
+# what a published library costs the projects that use it. Source archives without Git use
+# matching files outside the excluded output and dependency directories. Each source file is an
+# item. Syntax checks skip files that OXC cannot parse.
+
+# With `install: true`, the pack installs oxlint, oxfmt, oxc-parser, the TypeScript binding API,
+# rolldown, fast-check, acorn, and magic-string from its lockfile. The project's compiler, linter,
+# formatter, and vitest check its own conventions and run its tests.
+
+# The library categories, from `footprint` on, read the build and the entry points of package.json
+# `exports`, so build the package first, and set `setup` to build each checkout that `--compare`
+# creates. Without an ES module entry point, as in an application, their metrics skip. The project
+# sets its own inputs in the vendored pack's `local/config.ts`, whose type is `Config` in
+# metrics/library.ts.
+# Items are named the way users import them: a namespace member as `<entry>:<Namespace>.<member>`,
+# such as `lib:Math.add`, a whole namespace as `lib:Math`, and an index entry by its specifier.
+
+# Every convention category reads the lines of this one script, which runs once.
+run: bun metrics/typescript.ts
+
+correctness:
+  # Checks files listed by the project's tsc or tsgo, including referenced projects. Files
+  # outside its programs skip. Diagnostics without a measured source file use the config as item.
+  type-errors: {}
+  # Whether tsconfig.json sets `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`,
+  # and `verbatimModuleSyntax`, which the conventions treat as design constraints.
+  compiler-options: {}
+  # Whether each file avoids `any`, by oxlint's `typescript/no-explicit-any`.
+  explicit-any: {}
+  # Whether the project's linter, with its own configuration, reports nothing in each file. The
+  # linter is `bun lint` when bunfig.toml has a `[lint]` section or a script runs it, or else the
+  # first of ESLint, Biome, oxlint, and Vite Plus in package.json. Without one, the pack's oxlint runs.
+  lint: {}
+  # Whether each file avoids `Math.random()`, by oxlint's `eslint/no-restricted-properties`. Use
+  # `crypto.getRandomValues()`.
+  math-random: {}
+  # Whether files under `src/` log nothing through `console`, by oxlint's `eslint/no-console`.
+  console-calls: {}
+
+style:
+  # Whether the project's formatter, with its own configuration, leaves each file unchanged. The
+  # formatter is `bun fmt` when bunfig.toml has a `[fmt]` section or a script runs it, or else the
+  # first of Prettier, Biome, dprint, oxfmt, and Vite Plus in package.json. Without one, the pack's
+  # oxfmt runs.
+  formatted: {}
+  # Whether each file avoids enums. Use unions or `as const` objects.
+  enums: {}
+  # Whether each file declares shapes with `type`, by oxlint's
+  # `typescript/consistent-type-definitions`.
+  interfaces: {}
+  # Whether array annotations are readonly, except where tracked code directly mutates the
+  # binding or a function's result. Mutations in downstream packages are not visible.
+  mutable-arrays: {}
+  # Whether imports name their file extension, by oxlint's `import/extensions`, so the source stays
+  # valid under NodeNext.
+  import-extensions: {}
+  # Whether type-only imports and exports say `type`. oxlint checks imports. The TypeScript
+  # checker resolves named exports. An unresolved export skips unless another violation is known.
+  type-imports: {}
+  # Whether module constants are camelCase, not UPPER_CASE.
+  uppercase-constants: {}
+  # Whether option bags default in the signature (`options: fn.Options = {}`), not `options?`.
+  optional-options: {}
+  # Whether option bags are named `options`, not `args`, `opts`, or `params`.
+  option-names: {}
+  # Whether functions take at most two positional parameters, a receiver and then options, by
+  # oxlint's `eslint/max-params`.
+  positional-parameters: {}
+  # Whether functions take parameters whole and destructure them in the body.
+  destructured-parameters: {}
+  # Whether each file avoids nested ternaries, by oxlint's `eslint/no-nested-ternary`. Use an IIFE
+  # with early returns.
+  nested-ternaries: {}
+  # Whether local variables have no inline object types. Name the type above the use.
+  inline-object-types: {}
+  # Whether a function's types live in its namespace (`create.Options`), not beside it
+  # (`CreateOptions`).
+  function-namespaces: {}
+  # Whether values are returned directly, not bound and returned on the next line.
+  immediate-returns: {}
+  # Whether a fallible value comes from an IIFE, not a `let` assigned across `try` and `catch`.
+  let-across-try: {}
+  # Whether each file has no section-divider comments, such as `// ----`.
+  section-dividers: {}
+
+architecture:
+  # Whether no module imports itself through a cycle, by oxlint's `import/no-cycle`.
+  import-cycles: {}
+  # Whether module-shaped files, such as `./Store.js`, are imported as namespaces
+  # (`import * as Store`) instead of by name. Types and components may be named.
+  namespace-imports: {}
+  # Whether Node built-ins are imported as namespaces (`import * as fs from 'node:fs'`).
+  node-imports: {}
+  # Whether modules are re-exported as namespaces (`export * as Store`), not flattened into a
+  # barrel with `export *` or `export { … } from`.
+  flat-reexports: {}
+  # Whether imports are static. A dynamic import marks a real runtime or bundle boundary.
+  dynamic-imports: {}
+  # Whether each file avoids imports for their side effects, such as `import './register.js'`, by
+  # oxlint's `import/no-unassigned-import`.
+  side-effect-imports: {}
+  # Whether classes are limited to errors and framework entrypoints. Use functions and plain data.
+  classes: {}
+  # Whether each error class sets a namespaced `name`, such as `'Config.InvalidError'`.
+  error-names: {}
+  # Whether `this` appears only in classes. Factories close over their state.
+  this-outside-classes: {}
+  # Whether module scope holds only constants: no `let`, and no empty `Map` or `Set` caches.
+  module-state: {}
+
+documentation:
+  # Whether each file starts with a TSDoc `@module` comment that describes its responsibility.
+  module-docs: {}
+  # Whether every export has TSDoc. Overloads share the first signature's comment.
+  export-docs: {}
+  # Whether every property of an exported type has TSDoc.
+  property-docs: {}
+
+testing:
+  # Whether each test file uses real implementations: no `vi.mock`, `vi.fn`, fake timers, stubbed
+  # globals, or mocking packages. oxlint's restricted-method and restricted-import rules report them.
+  mocks: {}
+  # Whether each test file asserts with inline snapshots, not `toBe` or `toEqual`.
+  inline-snapshots: {}
+  # Whether the project keeps no snapshot files. Snapshots are inline.
+  snapshot-files: {}
+  # Whether tests wait for observable conditions, not `setTimeout` or `Bun.sleep`. oxlint's
+  # restricted-global and restricted-property rules report them.
+  sleeps: {}
+  # Whether each module has one test file, not `Module.context.test.ts` files.
+  split-test-files: {}
+
+configuration:
+  # Whether the project has no JavaScript source files. Configuration files are exempt.
+  javascript-files: {}
+  # Whether each named, non-private package declares sideEffects as a boolean or file-pattern list.
+  side-effects: {}
+  # Whether each package.json in a pnpm workspace references its versions with `catalog:`.
+  catalog-versions: {}
+  # Whether scripts run TypeScript directly, not through `tsx` or `ts-node`.
+  script-runners: {}
+  # Whether the dependencies and scripts of each package.json are in alphabetical order.
+  sorted-keys: {}
+
+footprint:
+  run: bun metrics/footprint.ts
+  # Gzipped bytes a consumer bundles to import one export the way users import it, such as
+  # `import { Math } from 'lib'; export const $ = Math.add` for `lib:Math.add`, a whole namespace,
+  # or a whole index entry. rolldown bundles and minifies each import for the browser. Above 3 kB,
+  # the note names the three packages or modules that render the most bytes.
+  entry-size: {}
+  # Whether `import 'lib/Math'` bundles to nothing when the bundler ignores `"sideEffects": false`,
+  # as it does once the library is inlined into another package's bundle. Top-level code a bundler
+  # cannot prove pure, such as a call without a `/*#__PURE__*/` annotation, a runtime TypeScript
+  # namespace, or a static class field, fails the check.
+  tree-shaking: {}
+  # `entry-size` of the hot items that `hot` in `local/config.ts` lists.
+  hot-entry-size: {}
+
+speed:
+  run: bun metrics/speed.ts
+  # The recording replays the project's vitest tests once, and is cached until the sources, the
+  # tests, or the lockfile change.
+  timeout: 60m
+  # CPU time per call of each public function, replaying the arguments the project's tests call it
+  # with, in a fresh `node --single-threaded` process per function. The library's caches, when
+  # `caches` empties them, are empty before every call, and the note gives the time with them warm.
+  call-time: {}
+  # Heap bytes each call allocates.
+  call-memory: { varies: true }
+  # CPU time to import each entry point, index entries included, in a fresh Node process.
+  import-time: {}
+  # Heap bytes each entry point holds once imported.
+  import-memory: {}
+  # The same four metrics for the hot items. Few hot calls allocate more than they should, and a
+  # p90 would hide them, so that list scores its worst item.
+  hot-call-time: {}
+  hot-call-memory: { varies: true, score: max }
+  hot-import-time: {}
+  hot-import-memory: {}
+
+# How much of the library the speed bench reaches. It shares the speed script's run.
+coverage:
+  run: bun metrics/speed.ts
+  timeout: 60m
+  # Whether each public function has a call the bench can replay: one that returned or resolved in
+  # the project's tests with arguments that rebuild in another process. The note says why not
+  # otherwise, such as a function every test calls with a closure.
+  benched: {}
+
+# Type-checking cost of every public export, values and types, from the built declarations. Each
+# export gets a consumer that imports it and forces its type to resolve, checked in a fresh program
+# with the library's compiler options, minus a baseline that only imports the entry. It needs Node
+# 26 or later, whose V8 reports the bytes a check allocates. With an older `node` first on PATH, it
+# runs its workers on `npx --yes node@26`, which needs the network the first time.
+types:
+  run: bun metrics/types.ts
+  timeout: 15m
+  # Type instantiations to check one use of each public export, with namespace members counted as
+  # exports. A use is `typeof` the value, with `Parameters` and `ReturnType` for a function, or the
+  # type at its defaults, plus one level of properties.
+  instantiations: {}
+  # CPU time to check that use.
+  check-time: {}
+  # Heap bytes that check allocates.
+  check-memory: { varies: true }
+  # Instantiations of each test in the type-test files that `types.benches` names, with the
+  # test's function added back to the file without its tests. A test that pins a count gets that
+  # count plus 20% as its target.
+  bench-instantiations: {}
+  # `instantiations` of the hot items. Few items have a lower target, so this list scores its
+  # worst item.
+  hot-instantiations: { score: max }
+
+# Type-checking cost at the call sites the project's tests write: one call per public function, the
+# first its own runtime tests make, else its type tests. Each call is copied into
+# `const $uphill = <call>` and checked in a fresh checker once its imports and fixtures resolve.
+# Instantiations are exact, so one run suffices.
+call-types:
+  run: bun metrics/types-calls.ts
+  timeout: 20m
+  # Instantiations of that call.
+  instantiations: {}
+  # `instantiations` of the hot items, scored by the worst item.
+  hot-instantiations: { score: max }
+
+# Whether each public function has a call in the project's tests that call-types measures. The note
+# says why not. It shares the call-types script's run.
+type-coverage:
+  run: bun metrics/types-calls.ts
+  timeout: 20m
+  type-benched: {}
+
+# Fuzzing of every public function: boundary mutations of the arguments the project's tests pass it,
+# from a corpus the speed recording fills, and the structured properties of `fuzz.properties`.
+fuzz:
+  run: bun metrics/fuzz.ts
+  timeout: 20m
+  # Whether each public function has a fuzz harness that ran. The note lists the harnesses, or says
+  # why there is none.
+  fuzzed: {}
+  # Whether fuzzing found no failure: no undocumented TypeError, RangeError, or SyntaxError on an
+  # input that keeps the declared types, no stack overflow, hang, or runaway memory, and no broken
+  # property. The note gives the minimized input.
+  fuzz-clean: {}
+  # Percent of the function's own source lines in the build that ran under fuzzing.
+  fuzz-coverage: { better: higher }
+  # `fuzz-coverage` of the hot items: every line of their own source should run.
+  hot-fuzz-coverage: { better: higher }

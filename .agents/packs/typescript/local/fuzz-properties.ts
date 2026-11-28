@@ -22,7 +22,12 @@ import { pathToFileURL } from 'node:url'
 
 import type fcModule from 'fast-check'
 
-import { deliberate } from './fuzz-lib.ts'
+import {
+  type Base as PackBase,
+  deliberate,
+  Failure,
+  type Property,
+} from '../metrics/fuzz-lib.ts'
 
 type Fc = typeof fcModule
 type Arbitrary<value = unknown> = fcModule.Arbitrary<value>
@@ -56,10 +61,7 @@ export type Lib = {
 }
 
 /** What fuzz-worker.ts passes `library`: ox's entries, fast-check, and the recorded arguments. */
-export type Base = Pick<
-  Lib,
-  'BaseError' | 'fc' | 'mutate' | 'ox' | 'recorded' | 'root'
->
+export type Base = PackBase
 
 /** Adds the reference implementations the properties compare ox with to what the worker passes. */
 export async function library(base: Base): Promise<Lib> {
@@ -68,6 +70,7 @@ export async function library(base: Base): Promise<Lib> {
     import(pathToFileURL(require.resolve(specifier)).href)
   return {
     ...base,
+    ox: base.modules,
     viem: await load('viem'),
     viemAa: await load('viem/account-abstraction'),
     ethers: await load('ethers'),
@@ -107,36 +110,6 @@ export const budgets: [RegExp, number][] = [
   ],
   [/WebCryptoP256|WebAuthnP256/, 30],
 ]
-
-export type Property = {
-  id: string
-  oracle: 'round trip' | 'differential' | 'consistency' | 'crash'
-  covers: string[]
-  runs: number
-  async?: boolean | undefined
-  arb: Arbitrary
-  check: (input: Any) => void | Promise<void>
-}
-
-/** A property's failure, with the functions at fault when the check can tell. */
-export class Failure extends Error {
-  blame?: string[] | undefined
-  kind: string
-  site?: string | undefined
-  constructor(
-    message: string,
-    options: {
-      blame?: string[] | undefined
-      kind?: string
-      site?: string | undefined
-    } = {},
-  ) {
-    super(message)
-    this.blame = options.blame
-    this.kind = options.kind ?? 'mismatch'
-    this.site = options.site
-  }
-}
 
 const secp256k1N =
   0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n

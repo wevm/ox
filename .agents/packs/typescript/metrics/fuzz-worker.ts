@@ -1,24 +1,24 @@
 /**
- * Node process that `fuzz.ts` starts. ox runs under Node here, as its users run it, from the build
- * repo.ts names.
+ * Node process that `fuzz.ts` starts. The library runs under Node here, as its users run it, from
+ * the build library.ts names.
  *
  * - `node fuzz-worker.ts plan <corpus.json> <out.json>` walks every entry point `entries()` in
- *   repo.ts lists, as speed-worker.ts does, so each distinct public function (namespace members)
- *   has the same name as in the other categories, and lists the harnesses each one gets, or why
- *   it gets none, and the further names that reach a function, such as `ox:Mnemonic.path` for
- *   `ox:HdKey.path`.
+ *   library.ts lists, as speed-worker.ts does, so each distinct public function (namespace
+ *   members) has the same name as in the other categories, and lists the harnesses each one gets,
+ *   or why it gets none, and the further names that reach a function, such as `lib:Math.sum` for
+ *   `lib:Array.sum`.
  * - `node fuzz-worker.ts fuzz <job.json> <out.jsonl>` fuzzes the job's functions in turn and
  *   appends one JSON line per function. With `trace` set, it writes each input to the trace file
  *   before calling, so the orchestrator can name the input that hung or exhausted memory.
  * - `node fuzz-worker.ts corpus <recording.json> <out.json>` snapshots the speed recording.
  *
- * A function's harnesses are the structured properties in fuzz-properties.ts that cover it (round
- * trips, re-encoding of recorded values, differentials against the reference implementations
- * this branch's devDependencies provide, and consistency), boundary mutations of the arguments
- * ox's tests passed it (fuzz-fixtures/corpus.json), and boundary mutations of hand-written seeds.
- * Properties, seeds and the corpus may name a function by any path the entries reach it by, such
- * as `ox:Hex.fromNumber` or `ox/Hex:fromNumber`. V8 precise coverage, read through node:inspector
- * after each function, gives the share of the function's own lines that ran.
+ * A function's harnesses are the structured properties in the project's properties module
+ * (`fuzz.properties`) that cover it, such as round trips, re-encoding of recorded values,
+ * differentials against reference implementations, and consistency, boundary mutations of the
+ * arguments the project's tests passed it (the corpus), and boundary mutations of hand-written
+ * seeds. Properties, seeds and the corpus may name a function by any path the entries reach it by,
+ * such as `lib:Math.add` or `lib/Math:add`. V8 precise coverage, read through node:inspector after
+ * each function, gives the share of the function's own lines that ran.
  *
  * @module
  */
@@ -34,9 +34,11 @@ import * as acorn from 'acorn'
 import fc from 'fast-check'
 
 import {
+  type Base,
   type Crash,
   classify,
   clone,
+  Failure,
   format,
   hash32,
   homogeneous,
@@ -47,6 +49,8 @@ import {
   markRebuilt,
   mutate,
   named,
+  type Properties,
+  type Property,
   prng,
   type Shapes,
   shapesOf,
@@ -54,19 +58,23 @@ import {
   site,
   sizeOf,
 } from './fuzz-lib.ts'
-import {
-  budgets,
-  Failure,
-  library,
-  mutations,
-  type Property,
-  properties,
-  seeds,
-} from './fuzz-properties.ts'
-import * as repo from './repo.ts'
+import * as library from './library.ts'
 import { decode, keys } from './speed-codec.ts'
 
 const [mode, ...rest] = process.argv.slice(2)
+
+const config = library.config.fuzz ?? {}
+
+/** The project's properties module, or none. */
+const project: Properties = config.properties
+  ? await import(
+      pathToFileURL(path.resolve(library.root, config.properties)).href
+    )
+  : {}
+const budgets = project.budgets ?? []
+const mutations = project.mutations ?? 500
+const properties = project.properties ?? (() => [])
+const seeds = project.seeds ?? (() => ({}))
 
 // An arbitrary given only a `maxLength` stays at size 'small', about 10 elements, so long-input
 // branches (UTF-8 past 64 bytes, CBOR lengths of 24 and up) would never run. Size to the maximum.
@@ -80,25 +88,18 @@ const asyncTimeoutMs = 4_000
 /** A synchronous call that takes longer is a hang. */
 const slowCallMs = 3_000
 /**
- * Longer limits for work that is slow by design: key derivation whose cost is its iteration count
- * (PBKDF2 runs 262,144 rounds unless told otherwise), proof-of-work salt mining, and loading the
- * KZG trusted setup.
+ * Longer limits for work that is slow by design, such as key derivation whose cost is its
+ * iteration count, from `fuzz.slow`.
  */
-const slowFunctions: [RegExp, number][] = [
-  [/Keystore\.(pbkdf2|scrypt|toKey|decrypt|encrypt)\w*$/, 20_000],
-  [/AesGcm\.(getKey|fromMnemonic|fromSeed)\w*$/, 20_000],
-  [/VirtualMaster\.mineSalt\w*$/, 30_000],
-  [/Kzg\.create$/, 30_000],
-]
 const limitOf = (name: string) =>
-  slowFunctions.find(([pattern]) => pattern.test(name))?.[1]
+  config.slow?.find(([pattern]) => pattern.test(name))?.[1]
 /** Distinct failures kept per function. */
 const failuresPerFunction = 3
 /** Attempts the minimizer makes per failure. */
 const minimizeAttempts = 150
 
-/** Built-in errors a function documents: `Json.parse` throws `JSON.parse`'s `SyntaxError`. */
-const documentedErrors = new Map([['ox:Json.parse', /^SyntaxError$/]])
+/** Built-in errors a function documents, from `fuzz.documentedErrors`. */
+const documentedErrors = new Map(Object.entries(config.documentedErrors ?? {}))
 
 type Item = {
   name: string
@@ -141,9 +142,9 @@ export type FailureRecord = {
 }
 
 /**
- * ox's entry points in repo.ts's order, each distinct function named after the first entry that
- * reaches it (`ox:Hex.fromNumber`, not `ox/Hex:fromNumber`), and `nameOf`, which maps any path the
- * entries reach a function by to that name.
+ * The library's entry points in library.ts's order, each distinct function named after the first
+ * entry that reaches it (`lib:Math.add`, not `lib/Math:add`), and `nameOf`, which maps any path
+ * the entries reach a function by to that name.
  */
 async function loadEntries() {
   const modules: Record<string, Record<string, unknown>> = {}
@@ -178,7 +179,7 @@ async function loadEntries() {
     }
     if (value && typeof value === 'object') walked.add(value)
   }
-  for (const entry of repo.entries()) {
+  for (const entry of library.entries()) {
     const module = await import(pathToFileURL(entry.file).href)
     modules[entry.name] = module
     if (walked.has(module)) continue
@@ -204,35 +205,46 @@ async function loadEntries() {
 }
 
 /**
- * The library handle properties use: ox's entries, fast-check, and the recorded arguments, to
- * which fuzz-properties.ts's `library` adds the reference implementations.
+ * The library handle properties use: the library's entries, fast-check, and the recorded
+ * arguments, to which the properties module's `library` adds what its properties need, such as
+ * reference implementations.
  */
-function loadLib(
+async function loadLib(
   modules: Record<string, Record<string, unknown>>,
   recorded: Map<string, unknown[][]>,
   nameOf: (key: string) => string | undefined,
 ) {
-  return library({
-    ox: modules,
+  const base: Base = {
+    BaseError: (() => {
+      if (!config.baseError) return Error
+
+      // `nameOf` names functions only, and the walk skips classes, so resolve the path here.
+      const colon = config.baseError.indexOf(':')
+      let value: unknown = modules[config.baseError.slice(0, colon)]
+      for (const part of config.baseError.slice(colon + 1).split('.'))
+        value = (value as Record<string, unknown> | undefined)?.[part]
+      if (typeof value !== 'function')
+        throw new Error(`fuzz.baseError: ${config.baseError} is not a class.`)
+      return value as Base['BaseError']
+    })(),
     fc,
-    recorded: (name) => recorded.get(nameOf(name) ?? name) ?? [],
+    modules,
     mutate(seed, pool, random, count) {
       const mutant = mutate(seed, prng(random), shapesOf(pool), count)
       return mutant.typed ? mutant.args : undefined
     },
-    BaseError: (
-      modules['ox/Errors'] as { BaseError: new (...args: never[]) => Error }
-    ).BaseError,
-    root: repo.root,
-  })
+    recorded: (name) => recorded.get(nameOf(name) ?? name) ?? [],
+    root: library.root,
+  }
+  return project.library ? project.library(base) : base
 }
 
 /** The value a recorded key (`src/<file>.ts#<export path>`) names in the build. */
 async function resolveKey(key: string): Promise<unknown> {
   const [file, exportPath] = key.split('#') as [string, string]
-  let value: unknown = await import(pathToFileURL(repo.built(file)).href).catch(
-    () => null,
-  )
+  let value: unknown = await import(
+    pathToFileURL(library.built(file)).href
+  ).catch(() => null)
   for (const part of exportPath.split('.'))
     value =
       value && (typeof value === 'object' || typeof value === 'function')
@@ -247,7 +259,7 @@ type Corpus = {
 
 /**
  * Each public function's recorded argument sets (speed-codec's text), under its name. A corpus
- * recorded on another walk names functions otherwise, such as `ox/Hex:fromNumber`, and may list a
+ * recorded on another walk names functions otherwise, such as `lib/Math:add`, and may list a
  * function under two names; its sets are merged.
  */
 function corpusSeeds(
@@ -296,7 +308,7 @@ async function seedsFor(texts: string[]) {
   return seeds
 }
 
-/** Hand-written argument sets by function name, from `seeds` in fuzz-properties.ts. */
+/** Hand-written argument sets by function name, from the properties module's `seeds`. */
 function writtenSeeds(
   written: Record<string, unknown[][]>,
   nameOf: (key: string) => string | undefined,
@@ -330,9 +342,9 @@ const longestSeed = 40_000
 
 /**
  * `node fuzz-worker.ts corpus <recording.json> <out.json>` snapshots the speed category's
- * recording (the arguments ox's tests passed each export, see speed-codec.ts) into the fuzz
- * corpus, keyed by public function. The file stays within repo.ts's `fixtures.maxLength`, and is
- * formatted with its `fixtures.format`.
+ * recording (the arguments the project's tests passed each export, see speed-codec.ts) into the
+ * fuzz corpus, keyed by public function. The file stays within `fuzz.maxLength` characters, and
+ * is formatted with the `fuzz.format` command.
  */
 async function buildCorpus() {
   const [recordingFile, output] = rest as [string, string]
@@ -360,7 +372,7 @@ async function buildCorpus() {
   for (const name of [...samples.keys()].sort()) {
     type Sample = { args: string; direct: boolean; n: number; where: string }
     const unique = new Map<string, Sample>()
-    // A recorded viem client (`$client`) cannot be rebuilt.
+    // A recorded client (`$client`) cannot be rebuilt.
     for (const sample of samples.get(name)!)
       if (
         sample.args.length <= longestSeed &&
@@ -368,7 +380,7 @@ async function buildCorpus() {
         !unique.has(sample.args)
       )
         unique.set(sample.args, sample)
-    // Calls from tests first, then calls other ox functions made; in each, spread over sizes.
+    // Calls from tests first, then calls other library functions made; in each, spread over sizes.
     const pick = (group: Sample[], count: number) => {
       const sorted = group.sort(
         (a, b) => a.args.length - b.args.length || (a.args < b.args ? -1 : 1),
@@ -403,7 +415,7 @@ async function buildCorpus() {
         total + seeds.join('').length * 1.2 + where.join('').length,
       0,
     )
-  while (corpusSize() > repo.fixtures.maxLength) {
+  while (corpusSize() > (config.maxLength ?? Number.POSITIVE_INFINITY)) {
     const [name, entry] = Object.entries(functions).sort(
       ([a, x], [b, y]) => y.seeds.length - x.seeds.length || (a < b ? -1 : 1),
     )[0]!
@@ -427,11 +439,11 @@ async function buildCorpus() {
       2,
     )}\n`,
   )
-  const [command, ...args] = repo.fixtures.format
+  const [command, ...args] = config.format ?? []
   if (command)
     try {
-      execFileSync(path.resolve(repo.root, command), [...args, output], {
-        cwd: repo.root,
+      execFileSync(path.resolve(library.root, command), [...args, output], {
+        cwd: library.root,
       })
     } catch {}
 }
@@ -470,8 +482,8 @@ async function plan() {
     item.package = location
       ? location.url.match(/.*\/node_modules\/((?:@[^/]+\/)?[^/]+)\//)?.[1]
       : 'built-in'
-    // zod's own functions, which `ox/zod` re-exports, are zod's to fuzz, as speed-worker.ts leaves
-    // them out of the bench.
+    // A dependency's own functions, which an entry re-exports, are the dependency's to fuzz, as
+    // speed-worker.ts leaves them out of the bench.
     if (item.package) continue
     planned.push({
       name: item.name,
@@ -549,10 +561,8 @@ async function fuzz() {
   // A fuzzed call can leave a timer or promise that fails later; that is not the worker's error.
   process.on('unhandledRejection', () => {})
   blockNetwork()
-  // ox's caches, emptied before each function so runs do not depend on order.
-  const { clear: clearCaches } = (await import(
-    pathToFileURL(repo.built('src/core/Caches.ts')).href
-  )) as { clear: () => void }
+  // The library's caches, emptied before each function so runs do not depend on order.
+  const clearCaches = (await library.config.caches?.(() => {})) ?? (() => {})
   stubWindow()
   const session = new inspector.Session()
   session.connect()
@@ -785,15 +795,16 @@ async function runCorpus(
 type Outcome = (Crash & { oracle: string }) | undefined
 
 /**
- * ox's WebAuthn defaults read the page (`window.location.hostname`, `window.document.title`), and
- * its recorded calls come from browser tests, so the worker stands in for a page at localhost.
- * Credential prompts return nothing, as a user who dismisses them does.
+ * WebAuthn defaults can read the page (`window.location.hostname`, `window.document.title`), and
+ * recorded calls can come from browser tests, so the worker stands in for a page at localhost
+ * whose title is the package name. Credential prompts return nothing, as a user who dismisses them
+ * does.
  */
 function stubWindow() {
   Object.defineProperty(globalThis, 'window', {
     configurable: true,
     value: {
-      document: { title: 'ox' },
+      document: { title: library.name },
       location: { hostname: 'localhost', origin: 'http://localhost:5173' },
       navigator: {
         credentials: { create: async () => null, get: async () => null },
@@ -832,8 +843,9 @@ async function check(item: Item, mutant: Mutant): Promise<Outcome> {
       kind: 'hang',
       message: `took ${(elapsed / 1000).toFixed(1)}s on a ${size}-character input`,
     }
-  // A Bech32m string starts with its human-readable part, which can be `0x`.
-  if (mutant.typed && !/:Bech32m\.encode$/.test(item.name)) {
+  // An encoder whose output starts with a prefix the caller picks, such as a Bech32m
+  // human-readable part, can return `0x` strings that are not hex.
+  if (mutant.typed && !config.freeOutput?.includes(item.name)) {
     const bad = garbageOutput(mutant.args, value)
     if (bad) return { oracle: 'output', kind: 'invalid output', message: bad }
   }
@@ -851,7 +863,7 @@ function garbageOutput(args: unknown[], value: unknown): string | undefined {
     if (depth > 8) return
     if (typeof value === 'string') {
       inputs.add(value)
-      if (/^0x/.test(value) && !/^0x[0-9a-fA-F]*$/.test(value))
+      if (value.startsWith('0x') && !/^0x[0-9a-fA-F]*$/.test(value))
         invalidInput = true
       if (/NaN|undefined|\[object Object\]|Infinity/.test(value))
         invalidInput = true
@@ -874,7 +886,7 @@ function garbageOutput(args: unknown[], value: unknown): string | undefined {
       if (inputs.has(value)) return
       // A Bech32 string whose human-readable part is `0x` is not hex, and is not meant to be.
       if (/^0x1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{6,}$/.test(value)) return
-      if (/^0x/.test(value) && !/^0x[0-9a-fA-F]*$/.test(value))
+      if (value.startsWith('0x') && !/^0x[0-9a-fA-F]*$/.test(value))
         found = `returned ${format(value, 80)}${where ? ` at ${where}` : ''}, which is not hex`
       else if (/^(NaN|undefined|\[object Object\])$|0xNaN|0x-/.test(value))
         found = `returned ${format(value, 80)}${where ? ` at ${where}` : ''}`
@@ -961,12 +973,16 @@ function* simpler(args: unknown[], shapes: Shapes): Generator<unknown[]> {
     if (typeof value === 'bigint' && value > 1n) variants.push(1n, value >> 8n)
     if (typeof value === 'number' && Number.isInteger(value) && value > 1)
       variants.push(1, Math.floor(value / 256))
-    if (typeof value === 'string' && /^0x/.test(value) && value.length > 4)
+    if (typeof value === 'string' && value.startsWith('0x') && value.length > 4)
       variants.push(
         value.slice(0, Math.max(2, value.length >> 1)),
         `0x${value.slice(4)}`,
       )
-    if (typeof value === 'string' && !/^0x/.test(value) && value.length > 24)
+    if (
+      typeof value === 'string' &&
+      !value.startsWith('0x') &&
+      value.length > 24
+    )
       variants.push(value.slice(0, value.length >> 1))
     if (value instanceof Uint8Array && value.length > 1)
       variants.push(value.slice(0, value.length >> 1))

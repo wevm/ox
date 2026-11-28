@@ -3,22 +3,22 @@
  * nothing is used from it.
  *
  * - `entry-size`: the gzipped size of the bundle rolldown builds for one use of an export, such as
- *   `import { Hex } from 'ox'; export const $ = Hex.fromNumber`, for every runtime member of every
- *   namespace each entry point exports, for each whole namespace (`export { Hex } from 'ox'`), and
- *   for each whole entry point (`export * from 'ox/tempo'`). Rolldown tree-shakes and minifies each
- *   import for the browser, as a consumer's bundler would.
- * - `tree-shaking`: for every module entry, such as `ox/Hex`, whether `import 'ox/Hex'` bundles to
- *   nothing when the bundler ignores ox's `"sideEffects": false`, as it does once ox is inlined
- *   into another package's bundle. Top-level code a bundler cannot prove pure, such as a call
- *   without a `\/*#__PURE__*\/` annotation, a `2n ** 8n`, a runtime TypeScript namespace, or a
- *   static class field, fails the check, and stays in every bundle that uses anything from that
- *   module, even with the flag. The note names the modules that keep code.
+ *   `import { Math } from 'lib'; export const $ = Math.add`, for every runtime member of every
+ *   namespace each entry point exports, for each whole namespace (`export { Math } from 'lib'`),
+ *   and for each whole entry point (`export * from 'lib/extra'`). Rolldown tree-shakes and
+ *   minifies each import for the browser, as a consumer's bundler would.
+ * - `tree-shaking`: for every module entry, such as `lib/Math`, whether `import 'lib/Math'`
+ *   bundles to nothing when the bundler ignores the library's `"sideEffects": false`, as it does
+ *   once the library is inlined into another package's bundle. Top-level code a bundler cannot
+ *   prove pure, such as a call without a `\/*#__PURE__*\/` annotation, a `2n ** 8n`, a runtime
+ *   TypeScript namespace, or a static class field, fails the check, and stays in every bundle that
+ *   uses anything from that module, even with the flag. The note names the modules that keep code.
  *
  * The builds run in a pool of `UPHILL_CONCURRENCY` builds, or one per core.
  *
- * Entry points come from repo.ts in its order, and a value several entries reach, such as `Hex`
- * from `ox` and from `ox/Hex`, is measured once under the first. zod's own functions, which
- * `ox/zod`'s `z` re-exports, are zod's and are left out.
+ * Entry points come from library.ts in its order, and a value several entries reach, such as
+ * `Math` from `lib` and from `lib/Math`, is measured once under the first. The values of the
+ * dependencies that `reexports` lists belong to those dependencies and are left out.
  *
  * @module
  */
@@ -30,37 +30,40 @@ import * as path from 'node:path'
 import { type OutputChunk, rolldown } from 'rolldown'
 
 import { hot } from './hot.ts'
-import * as repo from './repo.ts'
+import * as library from './library.ts'
+
+if (library.skip(['entry-size', 'tree-shaking', 'hot-entry-size']))
+  process.exit(0)
 
 const metrics = process.env.UPHILL_METRICS
 if (!metrics) throw new Error('UPHILL_METRICS is not set')
 
 const started = performance.now()
-const build = `${repo.build}/`
+const build = `${library.build}/`
 const concurrency =
   Number(process.env.UPHILL_CONCURRENCY) || os.availableParallelism()
-const entries = repo.entries()
+const entries = library.entries()
 
-// A consumer's bundler finds ox in its node_modules and resolves each subpath through the exports
-// map. The scratch package carries the package.json ox publishes with an exports map of every
-// entry, and links the build and ox's node_modules. Rolldown follows the links to the checkout, so
-// ox's dependencies resolve from ox's node_modules.
+// A consumer's bundler finds the library in its node_modules and resolves each subpath through the
+// exports map. The scratch package carries the library's package.json with an exports map of every
+// entry, and links the build and the library's node_modules. Rolldown follows the links to the
+// checkout, so the library's dependencies resolve from its own node_modules.
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'footprint-'))
-const ox = path.join(scratch, 'node_modules/ox')
-fs.mkdirSync(ox, { recursive: true })
-fs.symlinkSync(repo.build, path.join(ox, 'build'))
+const scratchPackage = path.join(scratch, 'node_modules', library.name)
+fs.mkdirSync(scratchPackage, { recursive: true })
+fs.symlinkSync(library.build, path.join(scratchPackage, 'build'))
 fs.symlinkSync(
-  path.join(repo.root, 'node_modules'),
-  path.join(ox, 'node_modules'),
+  path.join(library.root, 'node_modules'),
+  path.join(scratchPackage, 'node_modules'),
 )
 fs.writeFileSync(
-  path.join(ox, 'package.json'),
+  path.join(scratchPackage, 'package.json'),
   JSON.stringify({
-    ...JSON.parse(fs.readFileSync(repo.manifest, 'utf8')),
+    ...JSON.parse(fs.readFileSync(library.manifest, 'utf8')),
     exports: Object.fromEntries(
       entries.map((entry) => [
-        `.${entry.name.slice(2)}`,
-        `./build/${path.relative(repo.build, entry.file)}`,
+        `.${entry.name.slice(library.name.length)}`,
+        `./build/${path.relative(library.build, entry.file)}`,
       ]),
     ),
   }),
@@ -77,12 +80,14 @@ const jobs: Job[] = []
 const seen = new Set<unknown>()
 /** The namespaces whose members the walk measured. */
 const walked = new Set<unknown>()
-// zod's own functions, which `ox/zod`'s `z` re-exports. A branch without `ox/zod` has no zod 4.
-const zod = new Set<unknown>(
-  entries.some((entry) => entry.name === 'ox/zod')
-    ? Object.values(await import('zod/mini'))
-    : [],
-)
+// The values of the dependencies that an entry re-exports, which belong to those dependencies. Each
+// resolves from the root, as the build's own imports of it do.
+const reexported = new Set<unknown>()
+for (const specifier of library.config.reexports ?? [])
+  for (const value of Object.values(
+    await import(Bun.resolveSync(specifier, library.root)),
+  ))
+    reexported.add(value)
 for (const entry of entries) {
   const module = await import(entry.file)
   if (!entry.index)
@@ -93,7 +98,7 @@ for (const entry of entries) {
       metric: 'tree-shaking',
     })
   if (entry.index) {
-    // A whole entry is named by its bare specifier, so a target pattern such as `ox/tempo:*`
+    // A whole entry is named by its bare specifier, so a target pattern such as `lib/extra:*`
     // matches its exports and not the entry itself.
     jobs.push({
       code: `export * from '${entry.name}'\n`,
@@ -101,11 +106,11 @@ for (const entry of entries) {
       metric: 'entry-size',
     })
   } else {
-    // A module entry whose members an index walked, such as `ox/Hex` under `ox:Hex`, adds nothing:
-    // a constant would only repeat. One deeper than the walk goes, such as
-    // `ox/zod/tempo/AuthorizationTempo`, has its members measured here.
+    // A module entry whose members an index walked, such as `lib/Math` under `lib:Math`, adds
+    // nothing: a constant would only repeat. One deeper than the walk goes, such as
+    // `lib/extra/a/Math` under `lib/extra:a.Math`, has its members measured here.
     if (walked.has(module)) continue
-    // A module entry that no index reaches, such as `ox/TxEnvelope`, is measured whole too.
+    // A module entry that no index reaches, such as `lib/Internal`, is measured whole too.
     if (!seen.has(module)) {
       seen.add(module)
       jobs.push({
@@ -115,11 +120,11 @@ for (const entry of entries) {
       })
     }
   }
-  // A namespace, such as `Hex` or zod's `z.Abi`, is measured whole and then member by member.
+  // A namespace, such as `Math` or a nested `a.Math`, is measured whole and then member by member.
   const walk = (top: string, members: string[], value: unknown) => {
     const isObject =
       (!!value && typeof value === 'object') || typeof value === 'function'
-    if (isObject && (seen.has(value) || zod.has(value))) return
+    if (isObject && (seen.has(value) || reexported.has(value))) return
     if (isObject) seen.add(value)
     const item = `${entry.name}:${[top, ...members].join('.')}`
     jobs.push({
@@ -162,6 +167,10 @@ if (failure) {
   console.error(`footprint: could not measure ${failure}`)
   process.exit(1)
 }
+
+// Only module entries, such as `lib/Math`, have a tree-shaking check.
+if (!jobs.some((job) => job.metric === 'tree-shaking'))
+  lines.push('tree-shaking skip note "no module entry points, only indexes"')
 
 fs.appendFileSync(metrics, `${[...lines, ...hot(lines)].join('\n')}\n`)
 console.log(
@@ -209,8 +218,8 @@ async function measure(index: number, job: Job): Promise<string> {
     for (const id of chunk.imports) {
       const imported = chunks.get(id)
       if (imported) load(imported)
-      // Node built-ins, which `ox/node` imports, are left to the runtime. Any other import left in
-      // the output is a module rolldown could not find.
+      // Node built-ins, which a Node entry imports, are left to the runtime. Any other import left
+      // in the output is a module rolldown could not find.
       else if (!isBuiltin(id)) throw new Error(`could not resolve "${id}"`)
     }
   }
@@ -229,7 +238,7 @@ async function measure(index: number, job: Job): Promise<string> {
   const line = `entry-size ${quote(job.item)} ${size}B`
   if (size <= 3000) return line
 
-  // Above 3 kB, name the three packages or ox modules that render the most bytes, so a reader
+  // Above 3 kB, name the three packages or library modules that render the most bytes, so a reader
   // knows what to cut first.
   const ranked = rank(loaded)
   const total = ranked.reduce((sum, [, bytes]) => sum + bytes, 0)
@@ -253,7 +262,7 @@ function sideEffects(file: string) {
   }
 }
 
-/** Ranks the packages and ox modules of a bundle by the minified bytes they render. */
+/** Ranks the packages and library modules of a bundle by the minified bytes they render. */
 function rank(loaded: Set<OutputChunk>): (readonly [string, number])[] {
   const bytes = new Map<string, number>()
   for (const chunk of loaded)
@@ -267,7 +276,7 @@ function rank(loaded: Set<OutputChunk>): (readonly [string, number])[] {
   return [...bytes].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
 }
 
-/** Returns the package a module belongs to, or the path of an ox module inside the build. */
+/** Returns the package a module belongs to, or the path of a library module inside the build. */
 function owner(id: string): string {
   const real = fs.existsSync(id) ? fs.realpathSync(id) : id
   if (real.startsWith(build)) return real.slice(build.length)

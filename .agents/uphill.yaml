@@ -1,25 +1,25 @@
-# ox's metrics. ox's main and 0.x branches share them: the same scripts in .agents/uphill, the same
-# metrics, defaults, item names and hot set, so a target pattern means the same item on both. Only
-# .agents/uphill/repo.ts, which says where the branch builds and which entry points it publishes,
-# the fuzz properties and corpus, the extra speed calls in speed-calls.test.ts, and the target maps
-# that each branch sets from its own measurements differ. Each script fans out over every public
-# export of every entry point, and over every public function, so each scores on its own. Items are
-# named the way users import them: a namespace member as `<index entry>:<Namespace>.<member>`, such
-# as `ox:Hex.fromString` or `ox/tempo:SignatureEnvelope.sortApprovals`; a whole namespace as
-# `ox:Hex`; a whole index entry by its specifier, such as `ox` or `ox/tempo`. The per-module metrics
-# (`tree-shaking`, `import-time` and `import-memory`) name their items by the module entry, such as
-# `ox/Hex`. The scripts measure the build that `pnpm build` writes.
+# ox's metrics, measured by Uphill's typescript pack (vendored in .agents/packs/typescript, listed
+# under `packs` below). This file only sets ox's targets and explains them. ox's inputs to the pack
+# live in the pack's local/ directory, which `uphill update` keeps: local/config.ts holds the hot
+# items, the cache clearing, the test projects and Anvil fork the speed bench records, the fuzz
+# properties and corpus, and the tsconfig paths the types metrics check with. Each script fans out
+# over every public export of every entry point, and over every public function, so each scores on
+# its own. Items are named the way users import them: a namespace member as
+# `<index entry>:<Namespace>.<member>`, such as `ox:Hex.fromString` or
+# `ox/tempo:SignatureEnvelope.sortApprovals`; a whole namespace as `ox:Hex`; a whole index entry by
+# its specifier, such as `ox` or `ox/tempo`. The per-module metrics (`tree-shaking`, `import-time`
+# and `import-memory`) name their items by the module entry, such as `ox/Hex`. The scripts measure
+# the build that `pnpm build` writes.
 #
 # There is no latency category: ox's few async functions (WebAuthn, WebCrypto, Keystore, AesGcm,
 # RpcTransport) chain no independent requests.
 
 # Install scripts stay off, so the contracts submodule and Foundry are not needed: the speed script
-# records ox's tests, which use the committed contract artifacts and Anvil. The scripts keep their
-# own dependencies, such as rolldown, fast-check, viem and ethers, in .agents/uphill.
-setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build && bun install --cwd .agents/uphill'
+# records ox's tests, which use the committed contract artifacts and Anvil. The pack installs its
+# own dependencies from its lockfile.
+setup: 'pnpm install --frozen-lockfile --ignore-scripts && pnpm build'
 
 footprint:
-  run: bun .agents/uphill/footprint.ts
   # Gzipped bytes a consumer bundles to import one export the way users import it, such as
   # `import { Hex } from 'ox'; export const $ = Hex.fromNumber` for `ox:Hex.fromNumber`, a whole
   # namespace, such as `ox:Hex`, or a whole index entry, such as `ox/tempo`. rolldown bundles and
@@ -78,8 +78,8 @@ footprint:
   # bundle that imports the module for nothing once ox's `"sideEffects": false` is out of reach, as
   # when ox is inlined into another package's bundle. The note names what stays.
   tree-shaking: {}
-  # The parts of ox its users lean on most, listed in .agents/uphill/hot.ts, scored on their own,
-  # since a few dozen items that miss their targets would hide under entry-size's p90. Each hot
+  # The parts of ox its users lean on most, listed under `hot` in local/config.ts, scored on their
+  # own, since a few dozen items that miss their targets would hide under entry-size's p90. Each hot
   # target is what a comparable library already achieves: the item's value today times the best
   # ratio that the other ox branch's latest build, viem 2, or ethers 6 shows for the same function,
   # bundled, timed, or checked the same way. A lead under 10%, or one that saves less than 100 B,
@@ -160,10 +160,9 @@ footprint:
       'ox/erc6492': 13kB # today 12kB
 
 speed:
-  run: bun .agents/uphill/speed.ts
   # Recording ox's tests takes 1 to 3 minutes, and replaying them 3 to 6 minutes, depending on the
   # branch and UPHILL_CONCURRENCY. The recording is cached until the tests or the build change.
-  timeout: 60m
+
   # CPU time per call of each public function, replaying the arguments ox's tests call it with, in
   # a fresh `node --single-threaded` process per function. ox's caches are emptied before every
   # call, so each call does a first call's work while caching still works inside it, and the note
@@ -256,7 +255,7 @@ speed:
       ox/tempo*: 6MB
       ox/wasm*: 6MB
       ox/node*: 6MB
-  # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
+  # The hot items in local/config.ts against what a comparable library achieves, as
   # hot-entry-size explains: each call against viem 2, ethers 6, and the other ox branch called warm
   # with the same arguments, and each import against the other ox branch. Times and allocations allow 1.25×, and import
   # memory 1.1×, for noise between runs, and a call stops at 10 ns, where it is too short to time.
@@ -444,10 +443,8 @@ speed:
 
 # How much of ox the speed bench reaches. It shares the speed script's run.
 coverage:
-  run: bun .agents/uphill/speed.ts
-  timeout: 60m
   # Whether each public function has a call the bench can replay: one that returned or resolved in
-  # ox's tests (or in .agents/uphill/speed-calls.test.ts) with arguments that rebuild in another
+  # ox's tests (or in local/speed-calls.test.ts) with arguments that rebuild in another
   # process. The note says why not otherwise, such as a function every test calls with a closure.
   benched: {}
 
@@ -458,8 +455,6 @@ coverage:
 # (`total_allocated_bytes`); with an older `node` first on PATH, it runs its workers on
 # `npx --yes node@26`, which needs the network the first time.
 types:
-  run: bun .agents/uphill/types.ts
-  timeout: 15m
   # Type instantiations to check one use of each public export, values and types, with namespace
   # members counted as exports. A use is `typeof` the value, with `Parameters` and `ReturnType` for
   # a function, or the type at its defaults, plus one level of properties. Each export is checked
@@ -559,7 +554,7 @@ types:
       'src/erc4337/_test/UserOperation.snap-d.ts > from > default': 2639
       'src/erc4337/_test/UserOperation.snap-d.ts > from > options: signature': 2713
       'src/erc4337/_test/UserOperation.snap-d.ts > v0.9 > RPC round-trip': 8136
-  # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
+  # The hot items in local/config.ts against what a comparable library achieves, as
   # hot-entry-size explains: the same export's instantiations in the other ox branch or viem 2,
   # checked with this repo's TypeScript. Few items have a lower target, and a p90 would hide them,
   # so this list scores its worst item.
@@ -639,8 +634,6 @@ types:
 # `const $uphill = <call>` and checked in a fresh checker once its imports and fixtures resolve.
 # Instantiations are exact, so one run suffices.
 call-types:
-  run: bun .agents/uphill/types-calls.ts
-  timeout: 20m
   # A call should cost under 1,000, and one that infers from an ABI or typed data under 5,000.
   # TypedData's non-generic helpers infer nothing, so they keep 1,000. On main, a call on a zod
   # schema namespace gets 10,000. The first match applies.
@@ -654,7 +647,7 @@ call-types:
       'ox:Abi*': 5000
       'ox/erc4337:UserOperation.*': 5000
       'ox/zod:*': 10000
-  # The hot items of .agents/uphill/hot.ts against what a comparable library achieves, as
+  # The hot items in local/config.ts against what a comparable library achieves, as
   # hot-entry-size explains: the same call written against the other ox branch or viem 2. Few items
   # have a lower target, so this list scores its worst item.
   hot-instantiations:
@@ -731,15 +724,12 @@ call-types:
 # Whether each public function has a call in ox's tests that call-types measures; the note says
 # why not. It shares the call-types script's run.
 type-coverage:
-  run: bun .agents/uphill/types-calls.ts
-  timeout: 20m
   type-benched: {}
 
 fuzz:
-  run: bun .agents/uphill/fuzz.ts
-  # About 3 minutes at UPHILL_CONCURRENCY=2 to 4. The limit leaves room for a loaded machine and for
-  # workers stopped on a hang or runaway memory, each of which is rerun alone.
-  timeout: 20m
+  # About 3 minutes at UPHILL_CONCURRENCY=2 to 4. Workers stopped on a hang or runaway memory are
+  # rerun alone.
+
   # Whether each public function has a fuzz harness that ran: structured properties (round trips,
   # differentials against viem, ethers, noble, scure and micro-eth-signer, consistency) or boundary
   # mutations of the arguments ox's tests pass it. The note lists the harnesses, or says why there
@@ -752,6 +742,14 @@ fuzz:
   # Percent of the function's own source lines in the build that ran under fuzzing (V8 precise
   # coverage).
   fuzz-coverage: { target: 90, better: higher }
-  # The hot items of .agents/uphill/hot.ts: every line of their own source should run under
+  # The hot items in local/config.ts: every line of their own source should run under
   # fuzzing.
   hot-fuzz-coverage: { target: 100, better: higher }
+
+# The pack's library categories. Its convention categories are left out, since ox's own checks
+# (`pnpm check`, `pnpm check:types`) enforce its conventions.
+packs:
+  - pack: wevm/uphill/packs/typescript@7a2f0f10e05dfbf2744a104154cddbd10832e207 # main
+    categories:
+      [footprint, speed, coverage, types, call-types, type-coverage, fuzz]
+    install: true

@@ -1,20 +1,22 @@
 /**
  * Node process that `speed.ts` starts for each piece of measured work, so measured code runs
- * under Node, as most of ox's users run it, and every function is measured in a fresh process.
+ * under Node, as most of the library's users run it, and every function is measured in a fresh
+ * process.
  *
  * - `node speed-worker.ts enumerate <in.json> <out.json>` walks every entry point that `entries()`
- *   in repo.ts lists (`ox`, then the other index entries, then the module entries), lists each
- *   distinct public function (namespace members, such as `ox:Hex.fromNumber`), and maps each
+ *   in library.ts lists (the root entry, then the other index entries, then the module entries),
+ *   lists each distinct public function (namespace members, such as `lib:Math.add`), and maps each
  *   recorded key (`src/<file>.ts#<export path>`) to the public function it is. A function several
- *   names reach, such as `ox:HdKey.path` and `ox:Mnemonic.path`, is one function, named after the
- *   first; `exports` lists every name with the function it is.
+ *   names reach, such as `lib:Math.add` and `lib:Calc.add`, is one function, named after the
+ *   first. `exports` lists every name with the function it is.
  * - `node --expose-gc --single-threaded speed-worker.ts bench <job.json> <out.json>` replays one
  *   function with its recorded arguments and measures CPU time and heap bytes per call.
  *
- * Every call, for the cold number, starts with ox's caches empty: `Caches.clear()` runs before each
- * call that follows a write to them (see `trackCaches` in repo.ts), and for a function that writes
- * to them, it also runs in the loop whose time is subtracted. The network is blocked, so a call
- * that reaches for it fails instead of measuring a round trip.
+ * Every call, for the cold number, starts with the library's caches empty, when the project
+ * provides `caches` in `local/config.ts`: the function it returns runs before each
+ * call that follows a write to them, and for a function that writes to them, it also runs in the
+ * loop whose time is subtracted. The network is blocked, so a call that reaches for it fails
+ * instead of measuring a round trip.
  *
  * @module
  */
@@ -30,7 +32,7 @@ import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import * as v8 from 'node:v8'
 
-import { built, entries, root, trackCaches } from './repo.ts'
+import * as library from './library.ts'
 import { decode, encode, keys, type Rebuild } from './speed-codec.ts'
 
 const [mode, input, output] = process.argv.slice(2)
@@ -44,16 +46,17 @@ process.exit(0)
 
 /**
  * The module a recorded key names: for `src/<file>.ts#<export path>` its build, and for a test
- * helper, `test/<file>.ts#<export>`, the helper itself (see `loadTestHelpers`).
+ * helper outside the sources, such as `test/<file>.ts#<export>`, the helper itself (see
+ * `loadTestHelpers`).
  */
 function moduleOf(key: string) {
-  const file = key.slice(0, key.indexOf('#'))
-  if (!file.startsWith('test/')) return built(file)
+  const file = path.join(library.root, key.slice(0, key.indexOf('#')))
+  if (file.startsWith(`${library.sources}/`)) return library.built(file)
   loadTestHelpers()
-  return path.join(root, file)
+  return file
 }
 
-/** The value a recorded key names, following an export path such as `noble.CURVE`. */
+/** The value a recorded key names, following an export path such as `curve.CURVE`. */
 async function resolve(key: string): Promise<unknown> {
   const exportPath = key.slice(key.indexOf('#') + 1)
   let value: unknown = await import(pathToFileURL(moduleOf(key)).href).catch(
@@ -68,28 +71,42 @@ async function resolve(key: string): Promise<unknown> {
 }
 
 /**
- * Lets Node import ox's test helpers, such as test/kzg.ts, as vitest runs them: `ox` and its
- * entry points resolve to their builds, as `entries()` lists them, and `__dirname` and
- * `__filename` are defined.
+ * Lets Node import the library's test helpers, such as test/fixtures.ts, as vitest runs them: the
+ * package name and its entry points resolve to their builds, as `entries()` lists them, and
+ * `__dirname` and `__filename` are defined in a helper that uses them without declaring them.
  */
 function loadTestHelpers() {
   if (hooked.helpers) return
   hooked.helpers = true
   const builds = new Map(
-    entries().map((entry) => [entry.name, pathToFileURL(entry.file).href]),
+    library
+      .entries()
+      .map((entry) => [entry.name, pathToFileURL(entry.file).href]),
   )
-  const test = pathToFileURL(path.join(root, 'test')).href
+  const root = pathToFileURL(library.root).href
+  const build = pathToFileURL(library.build).href
   registerHooks({
     resolve(specifier, context, nextResolve) {
       return nextResolve(builds.get(specifier) ?? specifier, context)
     },
     load(url, context, nextLoad) {
       const result = nextLoad(url, context)
-      if (!url.startsWith(`${test}/`) || result.source === undefined)
+      if (
+        !url.startsWith(`${root}/`) ||
+        url.startsWith(`${build}/`) ||
+        url.includes('/node_modules/') ||
+        result.source === undefined
+      )
+        return result
+      const source = String(result.source)
+      if (
+        !/\b__(dirname|filename)\b/.test(source) ||
+        /\b(const|let|var)\s+__(dirname|filename)\b/.test(source)
+      )
         return result
       return {
         ...result,
-        source: `const __dirname = import.meta.dirname, __filename = import.meta.filename;${String(result.source)}`,
+        source: `const __dirname = import.meta.dirname, __filename = import.meta.filename;${source}`,
       }
     },
   })
@@ -107,7 +124,7 @@ async function enumerate() {
   }
   const items: Item[] = []
   // Every public function's name, in order, and the function it is: a function another name
-  // reaches too, such as `ox:Mnemonic.path`, is measured once, under its first name.
+  // reaches too, such as `lib:Calc.add`, is measured once, under its first name.
   const names: { name: string; item: Item }[] = []
   const byFunction = new Map<unknown, Item>()
   const walked = new Set<unknown>()
@@ -144,7 +161,7 @@ async function enumerate() {
     if (value && typeof value === 'object') walked.add(value)
   }
 
-  for (const entry of entries()) {
+  for (const entry of library.entries()) {
     list.push({ name: entry.name, file: entry.file, barrel: entry.index })
     const module = await import(pathToFileURL(entry.file).href)
     if (walked.has(module)) continue
@@ -153,8 +170,8 @@ async function enumerate() {
       walk(entry.name, name, value)
   }
 
-  // Names the dependency, such as zod, that defines each function, and leaves those out: they are
-  // re-exported for convenience, and benching them measures the dependency.
+  // Names the dependency in node_modules that defines each function, and leaves those out: they
+  // are re-exported for convenience, and benching them measures the dependency.
   const session = new inspector.Session()
   session.connect()
   const scripts = new Map<string, string>()
@@ -175,13 +192,13 @@ async function enumerate() {
       (property) => property.name === '[[FunctionLocation]]',
     )?.value?.value as { scriptId: string } | undefined
     const url = location ? scripts.get(location.scriptId) : undefined
-    // A built-in, such as `Error.captureStackTrace` that zod re-exports, has no location.
+    // A built-in, such as a re-exported `Error.captureStackTrace`, has no location.
     item.package = url
       ? url.match(/.*\/node_modules\/((?:@[^/]+\/)?[^/]+)\//)?.[1]
       : 'built-in'
   }
   session.disconnect()
-  for (const [fn, item] of [...byFunction])
+  for (const [fn, item] of byFunction)
     if (item.package) {
       byFunction.delete(fn)
       counts.foreign++
@@ -221,20 +238,21 @@ async function bench() {
     fs.writeFileSync(output!, JSON.stringify({ name: job.name, ...result }))
   process.on('unhandledRejection', () => {})
   const network = blockNetwork()
-  // Writes to ox's caches mark a function whose warm time can differ, and the next call clears
-  // them only after one.
+  // Writes to the library's caches mark a function whose warm time can differ, and the next call
+  // clears them only after one. Without `caches`, nothing is cleared and no write is seen.
+  const track = library.config.caches ?? (async () => () => {})
   const caches = {
     sets: 0,
     dirty: false,
     cold: true,
-    clear: await trackCaches(() => {
+    clear: await track(() => {
       caches.sets++
       caches.dirty = true
     }),
   }
 
   // The function, and every export whose calls or paths rebuild values in the arguments, such as
-  // `WebCryptoP256.createKeyPair` for a `CryptoKey`.
+  // a key pair function for a `CryptoKey`.
   const exports = new Map<string, unknown>()
   for (const key of new Set([
     job.key,
@@ -265,8 +283,8 @@ async function bench() {
   }
 
   // Every call starts with empty caches, as a first call with its input does; caches still work
-  // within the call. `Caches.clear()` runs only after a call wrote to a cache, as clearing empty
-  // maps costs more than many of ox's functions do.
+  // within the call. The clear function runs only after a call wrote to a cache, as clearing empty
+  // maps costs more than many small functions do.
   const reset = () => {
     if (caches.cold && caches.dirty) {
       caches.clear()
@@ -310,8 +328,8 @@ async function bench() {
       // A call that recovers from the blocked network, say by retrying, measures the recovery.
       if (network.attempts) throw new Error('the network is disabled')
     } catch (error) {
-      // ox's WebAuthn defaults, such as the relying party, read the browser's `window`, which
-      // the tests stub; so does the replay, once one needs it.
+      // Defaults such as a WebAuthn relying party can read the browser's `window`, which the
+      // tests stub. So does the replay, once one needs it.
       if (!window && /window is not defined/.test(message(error))) {
         window = true
         ;(globalThis as { window?: unknown }).window = {
@@ -405,8 +423,9 @@ type Loop = (count: number) => unknown
  * gone into it, so V8 has compiled the function and its callees, and sized its young generation,
  * before the `samples` timings (ns per call) are taken. With `--single-threaded` V8 compiles and
  * collects on this thread, so early runs can take several times longer than later ones: without
- * the warm-up, three runs of `Secp256k1.sign` agree after about 85 ms and its samples then range
- * from 260 to 510 µs; after 300 ms they agree within 3% at 230 µs, as noble's own `sign` does. A
+ * the warm-up, three runs of a secp256k1 signing function agree after about 85 ms and its samples
+ * then range from 260 to 510 µs. After 300 ms they agree within 3% at 230 µs, as the curve
+ * implementation's own `sign` does. A
  * call that waits, such as on a timer, takes wall time without CPU time, so a run is kept under
  * half a second of wall time.
  */

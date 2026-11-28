@@ -5,10 +5,11 @@
  *
  * ## The recording
  *
- * `speed.ts` caches what ox's tests called each export with at
- * `node_modules/.cache/uphill-speed/recording-<hash>.json`, where `<hash>` covers src/ (build
- * output and snapshots excluded), test/, the lockfile, the TypeScript files at the root of the
- * checkout, such as vite.config.ts, and the recorder's scripts. The file is one JSON object:
+ * `speed.ts` caches what the library's tests called each export with at
+ * `node_modules/.cache/uphill-typescript-speed/recording-<hash>.json`, where `<hash>`
+ * covers the sources (build output and snapshots excluded), the test directories, the lockfile,
+ * the configuration files at the root of the checkout, such as vitest.config.ts, the project's
+ * `local/config.ts`, and the recorder's scripts. The file is one JSON object:
  *
  * ```ts
  * type Recording = {
@@ -19,7 +20,7 @@
  *   concurrency: number // vitest workers
  *   files: { file: string; status: string; passed: number; failed: number; skipped: number }[]
  *   keys: Record<Key, {
- *     calls: number // every recorded call, from tests and from other ox functions
+ *     calls: number // every recorded call, from tests and from other library functions
  *     direct: number // calls made by test code itself
  *     unreplayable: Record<string, number> // calls whose arguments could not be encoded, by reason
  *     threw: number // encoded calls that threw or rejected
@@ -35,12 +36,12 @@
  * }
  * ```
  *
- * A `Key` is `<source file>#<export path>`, such as `src/core/Hex.ts#fromNumber` or
- * `src/tempo/TxEnvelopeTempo.ts#serialize`: the module that defines the export, never a barrel,
- * and for a function an exported namespace object or function holds, its path from the export.
- * The build of that module is `built(<source file>)` in repo.ts, such as dist/core/Hex.js on main
- * and src/_esm/core/Hex.js on 0.x. Every export of every module in src/ (tests excluded) is
- * recorded, `internal/` modules included, as are calls one ox function makes to another.
+ * A `Key` is `<source file>#<export path>`, such as `src/Math.ts#add` or
+ * `src/format/Date.ts#format`: the module that defines the export, never a barrel, and for a
+ * function an exported namespace object or function holds, its path from the export. The build
+ * of that module is `built(<source file>)` in library.ts, such as dist/Math.js. Every export of
+ * every module in the sources (tests excluded) is recorded, `internal/` modules included, as are
+ * calls one library function makes to another.
  *
  * ## The encoding
  *
@@ -54,21 +55,22 @@
  *   `{ $ta: "Uint16Array", $h: "0100" }` another typed array or a `DataView` (its bytes, in hex),
  *   `{ $ab: "00ff" }` an `ArrayBuffer`, `{ $d: 1700000000000 }` a `Date`, and
  *   `{ $map: [[key, value], ...] }` and `{ $set: [value, ...] }` a `Map` and a `Set`.
- * - `{ $ref: key }` a value an ox module exports, or reaches through an export's properties, such
- *   as a zod schema or a constant (`src/core/AbiError.ts#solidityError`,
- *   `src/core/Secp256k1.ts#noble.CURVE`), rebuilt by importing it.
- * - `{ $call: key, $args: [...] }` a value a recorded call to an ox export returned, such as a
- *   provider or a KZG implementation, rebuilt by making the call again with `$args` (encoded the
- *   same way); `{ $await: key, $args }` a value an async export resolved to, such as a
- *   `WebCryptoP256.createKeyPair` key pair; `{ $new: key, $args }` an instance of an exported
- *   class, such as an ox error. Any of the three may carry `$path: ["privateKey"]`, for a value
- *   found at that property of what the call returned, such as the `CryptoKey` of a key pair.
- * - `{ $ref: "test/kzg.ts#kzg" }` a value a test helper module (`test/**`, not a test file)
- *   exports or reaches, such as the KZG implementation ox's 0.x tests build, used only for a value
- *   none of the above can carry. The worker imports the helper with `ox` resolving to the build.
+ * - `{ $ref: key }` a value a library module exports, or reaches through an export's properties,
+ *   such as a schema or a constant (`src/Math.ts#constants`, `src/Curve.ts#curve.CURVE`), rebuilt
+ *   by importing it.
+ * - `{ $call: key, $args: [...] }` a value a recorded call to a library export returned, such as a
+ *   provider or an implementation object, rebuilt by making the call again with `$args` (encoded
+ *   the same way); `{ $await: key, $args }` a value an async export resolved to, such as a
+ *   WebCrypto key pair; `{ $new: key, $args }` an instance of an exported class, such as one of
+ *   the library's errors. Any of the three may carry `$path: ["privateKey"]`, for a value found at
+ *   that property of what the call returned, such as the `CryptoKey` of a key pair.
+ * - `{ $ref: "test/fixtures.ts#client" }` a value a test helper module (outside the sources, not
+ *   a test file) exports or reaches, such as an implementation object the tests build, used only
+ *   for a value none of the above can carry. The worker imports the helper with the package name
+ *   resolving to the build.
  * - `{ $fn: "(x) => x * 2n" }` a function whose source refers to nothing but its own
  *   parameters, locals, and standard globals, rebuilt from that source. `{ $noop: 1 }` an event
- *   callback such as `onProgress`, whose result ox ignores, that closed over test state.
+ *   callback such as `onProgress`, whose result the library ignores, that closed over test state.
  *
  * Anything else makes the call unreplayable, and the error says why in words a reader of a
  * `benched` note understands, such as "passes a function".
@@ -105,9 +107,9 @@ export type Origin = {
 export type Hooks = {
   /** The recorded calls that returned a value, the one to try first first. */
   origin?: ((value: object) => readonly Origin[] | undefined) | undefined
-  /** The export path a value is reachable at, such as `src/core/AbiError.ts#solidityError`. */
+  /** The export path a value is reachable at, such as `src/Math.ts#constants`. */
   ref?: ((value: object) => string | undefined) | undefined
-  /** The path a test helper module exports a value at, such as `test/kzg.ts#kzg`. */
+  /** The path a test helper module exports a value at, such as `test/fixtures.ts#client`. */
   fixture?: ((value: object) => string | undefined) | undefined
   /** The encoded form of a value `decode` rebuilt, so encoding it again yields the same text. */
   known?: ((value: object) => unknown) | undefined
@@ -411,8 +413,8 @@ function encodeStructure(object: object, context: Context): unknown {
         )
       return out
     }
-    // EIP-712 hashing takes a Map of type hashes. A subclass, such as one of ox's caches, has
-    // behavior of its own, so it is an instance like any other.
+    // A function can take a plain Map, such as a Map of type hashes. A subclass, such as a cache,
+    // has behavior of its own, so it is an instance like any other.
     if (proto === Map.prototype)
       return {
         $map: [...(object as Map<unknown, unknown>)].map(([key, item]) => [
@@ -444,7 +446,7 @@ function encodeStructure(object: object, context: Context): unknown {
       try {
         out[key] = encodeValue(item, context)
       } catch (error) {
-        // ox ignores what an event callback such as `onProgress` returns, so one that closes over
+        // The library ignores what an event callback such as `onProgress` returns, so one that closes over
         // the test's state replays as a callback that does nothing.
         if (
           !(error instanceof Unreplayable) ||
@@ -631,7 +633,7 @@ function toHex(bytes: ArrayBufferView): string {
   )
 }
 
-/** A plain `Uint8Array`, not a `Buffer`, as ox's callers pass. */
+/** A plain `Uint8Array`, not a `Buffer`, as the library's callers pass. */
 function fromHex(hex: string): Uint8Array {
   return new Uint8Array(Buffer.from(hex, 'hex'))
 }
