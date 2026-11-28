@@ -5,7 +5,9 @@ import * as z from 'zod/mini'
 describe('Fee', () => {
   test('decodes and encodes fee history', () => {
     const history: z.input<typeof z_Fee.FeeHistory> = {
+      baseFeePerBlobGas: ['0x4'],
       baseFeePerGas: ['0x1', '0x2'],
+      blobGasUsedRatio: [0.25],
       gasUsedRatio: [0.5, 0.6],
       oldestBlock: '0x10',
       reward: [['0x3']],
@@ -13,9 +15,15 @@ describe('Fee', () => {
 
     expect(z.decode(z_Fee.FeeHistory, history)).toMatchInlineSnapshot(`
       {
+        "baseFeePerBlobGas": [
+          4n,
+        ],
         "baseFeePerGas": [
           1n,
           2n,
+        ],
+        "blobGasUsedRatio": [
+          0.25,
         ],
         "gasUsedRatio": [
           0.5,
@@ -31,16 +39,24 @@ describe('Fee', () => {
     `)
     expect(
       z.encode(z_Fee.FeeHistory, {
+        baseFeePerBlobGas: [4n],
         baseFeePerGas: [1n, 2n],
+        blobGasUsedRatio: [0.25],
         gasUsedRatio: [0.5, 0.6],
         oldestBlock: 16n,
         reward: [[3n]],
       }),
     ).toMatchInlineSnapshot(`
       {
+        "baseFeePerBlobGas": [
+          "0x4",
+        ],
         "baseFeePerGas": [
           "0x1",
           "0x2",
+        ],
+        "blobGasUsedRatio": [
+          0.25,
         ],
         "gasUsedRatio": [
           0.5,

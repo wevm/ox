@@ -27,6 +27,15 @@ test('Block schemas preserve decoded and encoded types', () => {
   expectTypeOf<z.input<typeof z_Block.Block>['requestsHash']>().toEqualTypeOf<
     core_Block.Rpc<false>['requestsHash']
   >()
+  expectTypeOf<
+    z.output<typeof z_Block.Block>['blockAccessListHash']
+  >().toEqualTypeOf<core_Block.Block['blockAccessListHash']>()
+  expectTypeOf<z.output<typeof z_Block.Block>['slotNumber']>().toEqualTypeOf<
+    core_Block.Block['slotNumber']
+  >()
+  expectTypeOf<z.input<typeof z_Block.Block>['slotNumber']>().toEqualTypeOf<
+    core_Block.Rpc<false>['slotNumber']
+  >()
   expectTypeOf<z.output<typeof z_Block.WithTransactions>>().toMatchTypeOf<
     core_Block.Block<true>
   >()

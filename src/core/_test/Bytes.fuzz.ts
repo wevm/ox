@@ -92,7 +92,9 @@ describe('Bytes and Hex strings', () => {
       // padded.
       if (options.size && value.endsWith('\0')) return
       // A lone surrogate encodes as U+FFFD.
-      const decoded = new TextDecoder().decode(new TextEncoder().encode(value))
+      const decoded = new TextDecoder('utf-8', { ignoreBOM: true }).decode(
+        new TextEncoder().encode(value),
+      )
       expect(Hex.toString(hex, options)).toBe(decoded)
       expect(Bytes.toString(Bytes.fromString(value, options), options)).toBe(
         decoded,
@@ -112,7 +114,7 @@ describe('Bytes and Hex strings', () => {
     },
     { numRuns },
   )('toString decodes any bytes as TextDecoder does', ({ bytes }) => {
-    const expected = new TextDecoder().decode(bytes)
+    const expected = new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes)
     expect(Bytes.toString(bytes)).toBe(expected)
     expect(Hex.toString(Hex.fromBytes(bytes))).toBe(expected)
   })

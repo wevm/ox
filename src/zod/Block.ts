@@ -127,6 +127,7 @@ function commonFields<
   return {
     baseFeePerGas: z.optional(uint),
     blobGasUsed: z.optional(uint),
+    blockAccessListHash: z.optional(z_Hex.Hex),
     difficulty: z.optional(uint),
     excessBlobGas: z.optional(uint),
     extraData: z.optional(z_Hex.Hex),
@@ -141,6 +142,7 @@ function commonFields<
     sealFields: z.optional(z.readonly(z.array(z_Hex.Hex))),
     sha3Uncles: z_Hex.Hex,
     size: uint,
+    slotNumber: z.optional(uint),
     stateRoot: z_Hex.Hex,
     timestamp: uint,
     totalDifficulty: z.optional(uint),

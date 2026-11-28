@@ -18,6 +18,37 @@ describe('fromHistoryRpc / toHistoryRpc', () => {
     expect(Fee.toHistoryRpc(Fee.fromHistoryRpc(rpc))).toEqual(rpc)
   })
 
+  test('behavior: blob gas fields', () => {
+    const rpc = {
+      baseFeePerBlobGas: ['0x1', '0x2'] as `0x${string}`[],
+      baseFeePerGas: ['0x1', '0x2'] as `0x${string}`[],
+      blobGasUsedRatio: [0.6666666666666666],
+      gasUsedRatio: [0.5],
+      oldestBlock: '0x10' as `0x${string}`,
+    }
+
+    expect(Fee.fromHistoryRpc(rpc)).toMatchInlineSnapshot(`
+      {
+        "baseFeePerBlobGas": [
+          1n,
+          2n,
+        ],
+        "baseFeePerGas": [
+          1n,
+          2n,
+        ],
+        "blobGasUsedRatio": [
+          0.6666666666666666,
+        ],
+        "gasUsedRatio": [
+          0.5,
+        ],
+        "oldestBlock": 16n,
+      }
+    `)
+    expect(Fee.toHistoryRpc(Fee.fromHistoryRpc(rpc))).toEqual(rpc)
+  })
+
   test('omits `reward` when not present', () => {
     expect(
       Fee.fromHistoryRpc({

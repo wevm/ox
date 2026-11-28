@@ -7,8 +7,15 @@
  */
 export const encoder = /*#__PURE__*/ new TextEncoder()
 
-/** @internal */
-export const decoder = /*#__PURE__*/ new TextDecoder()
+/**
+ * Keeps a leading U+FEFF, which is part of the decoded string rather than a
+ * byte order mark.
+ *
+ * @internal
+ */
+export const decoder = /*#__PURE__*/ new TextDecoder('utf-8', {
+  ignoreBOM: true,
+})
 
 const scratch = /*#__PURE__*/ new Uint8Array(/*#__PURE__*/ new ArrayBuffer(64))
 /** Views of the first `n` bytes of `scratch`, by `n`. */

@@ -11,6 +11,7 @@ const s = `0x${'44'.repeat(32)}` as const
 const blockRpc = {
   baseFeePerGas: '0x1',
   blobGasUsed: '0x2',
+  blockAccessListHash: hash2,
   difficulty: '0x3',
   excessBlobGas: '0x4',
   extraData: '0x',
@@ -29,6 +30,7 @@ const blockRpc = {
   sealFields: [hash, '0x0000000000000000'],
   sha3Uncles: hash,
   size: '0x8',
+  slotNumber: '0xe',
   stateRoot: hash,
   timestamp: '0x9',
   totalDifficulty: '0xa',
@@ -47,6 +49,7 @@ describe('Block', () => {
       {
         "baseFeePerGas": 1n,
         "blobGasUsed": 2n,
+        "blockAccessListHash": "0x2222222222222222222222222222222222222222222222222222222222222222",
         "difficulty": 3n,
         "excessBlobGas": 4n,
         "extraData": "0x",
@@ -68,6 +71,7 @@ describe('Block', () => {
         ],
         "sha3Uncles": "0x1111111111111111111111111111111111111111111111111111111111111111",
         "size": 8n,
+        "slotNumber": 14n,
         "stateRoot": "0x1111111111111111111111111111111111111111111111111111111111111111",
         "timestamp": 9n,
         "totalDifficulty": 10n,

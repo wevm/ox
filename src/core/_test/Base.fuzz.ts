@@ -37,7 +37,9 @@ describe('Base64 strings', () => {
     expect(encoded).toBe(Base64.fromBytes(new TextEncoder().encode(value)))
     // A lone surrogate encodes as U+FFFD.
     expect(Base64.toString(encoded)).toBe(
-      new TextDecoder().decode(new TextEncoder().encode(value)),
+      new TextDecoder('utf-8', { ignoreBOM: true }).decode(
+        new TextEncoder().encode(value),
+      ),
     )
   })
 })

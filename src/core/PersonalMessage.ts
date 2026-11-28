@@ -30,6 +30,9 @@ const erc191PrefixHex = '0x19457468657265756d205369676e6564204d6573736167653a0a'
  * @returns The encoded personal sign message.
  */
 export function encode(data: Hex.Hex | Bytes.Bytes): Hex.Hex {
+  // An odd-length hex message has no whole-byte encoding to prefix.
+  if (typeof data === 'string' && data.length % 2)
+    throw new Hex.InvalidLengthError(data)
   const message = Hex.from(data)
   return Hex.concat(
     // Personal Sign Format: `0x19 ‖ "Ethereum Signed Message:\n" ‖ message.length ‖ message`
@@ -41,6 +44,7 @@ export function encode(data: Hex.Hex | Bytes.Bytes): Hex.Hex {
 
 export declare namespace encode {
   type ErrorType =
+    | Hex.InvalidLengthError
     | Hex.concat.ErrorType
     | Hex.from.ErrorType
     | Hex.fromString.ErrorType
