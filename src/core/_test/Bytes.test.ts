@@ -1635,8 +1635,15 @@ describe('toString', () => {
     ).toMatchInlineSnapshot(`"Hello World!"`)
   })
 
+  test('behavior: keeps a leading U+FEFF', () => {
+    // A snapshot would render U+FEFF invisibly.
+    expect(Bytes.toString(Bytes.fromArray([0xef, 0xbb, 0xbf, 104, 105]))).toBe(
+      '\uFEFFhi',
+    )
+  })
+
   test('behavior: decodes as TextDecoder does', () => {
-    const decoder = new TextDecoder()
+    const decoder = new TextDecoder('utf-8', { ignoreBOM: true })
     for (const value of [
       [104, 101, 108, 108, 111],
       [104, 105],

@@ -64,7 +64,8 @@ describe('Bytes UTF-8', () => {
       try {
         expect(Bytes.fromString(value)).toEqual(ethers.toUtf8Bytes(value))
       } catch {} // ethers throws on lone surrogates; TextEncoder replaces them.
-      const wellFormed = new TextDecoder().decode(encoded) === value
+      const wellFormed =
+        new TextDecoder('utf-8', { ignoreBOM: true }).decode(encoded) === value
       if (!wellFormed) return
       expect(Bytes.toString(encoded)).toBe(value)
       expect(Hex.toString(Hex.fromBytes(encoded))).toBe(value)
@@ -74,7 +75,9 @@ describe('Bytes UTF-8', () => {
   test.prop({ bytes: fc.uint8Array({ maxLength: 100 }) }, { numRuns })(
     'toString decodes any bytes as TextDecoder does, short or long',
     ({ bytes }) => {
-      const expected = new TextDecoder().decode(bytes)
+      const expected = new TextDecoder('utf-8', { ignoreBOM: true }).decode(
+        bytes,
+      )
       expect(Bytes.toString(bytes)).toBe(expected)
       expect(Hex.toString(Hex.fromBytes(bytes))).toBe(expected)
       // A view into a larger buffer decodes the same.

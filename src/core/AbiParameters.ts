@@ -96,9 +96,10 @@ export function decode(
   const values: any = as === 'Array' ? [] : {}
   for (let i = 0; i < parameters.length; ++i) {
     const param = parameters[i] as Parameter
-    // Zero-width types (e.g. `uint256[0]`, empty tuples) at the end of the
-    // data consume no bytes, so the cursor may already be exhausted.
-    if (consumed < bytes.length) cursor.setPosition(consumed)
+    // Always restore the head position after a dynamic read. Zero-width
+    // types (e.g. `uint256[0]`, empty tuples) may start at the end of the
+    // data; nonempty reads validate their own bounds.
+    cursor.position = consumed
     const [data, consumed_] = internal.decodeParameter(cursor, param, {
       checksumAddress,
       staticPosition: 0,

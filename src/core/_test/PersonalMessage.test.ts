@@ -15,6 +15,16 @@ describe('encode', () => {
       `"0x19457468657265756d205369676e6564204d6573736167653a0a313168656c6c6f20776f726c64"`,
     )
   })
+
+  test('error: odd-length hex', () => {
+    expect(() =>
+      PersonalMessage.encode('0x123'),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.InvalidLengthError: Hex value \`"0x123"\` is an odd length (3 nibbles).
+
+      It must be an even length.]
+    `)
+  })
 })
 
 describe('getSignPayload', () => {
