@@ -19,6 +19,7 @@ import * as Signature from '../core/Signature.js'
 import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as AccountConfig from './AccountConfig.js'
+import * as AttestedSigner from './AttestedSigner.js'
 import * as WebauthnData from './internal/webauthnData.js'
 
 /** Signature type identifiers for encoding/decoding */
@@ -27,6 +28,11 @@ const serializedWebAuthnType = '0x02'
 const serializedKeychainType = '0x03'
 const serializedKeychainV2Type = '0x04'
 const serializedConfigurableType = '0x05'
+const serializedAttestedType = AttestedSigner.signatureType
+
+/** Order of the P256 group, which bounds attested signature `r` and `s`. */
+const p256Order =
+  0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
 
 /**
  * Maximum WebAuthn signature size in bytes, excluding the type identifier
@@ -51,26 +57,36 @@ type SignatureEnvelopeKey =
   | 'inner'
   | 'keyId'
   | 'metadata'
+  | 'policyId'
   | 'prehash'
+  | 'programKey'
   | 'publicKey'
   | 'signature'
   | 'signatures'
+  | 'slot'
   | 'type'
   | 'userAddress'
+  | 'userTag'
+  | 'validUntil'
   | 'version'
 
 type SignatureEnvelopeRpcKey =
   | 'keyId'
   | 'metadata'
+  | 'policyId'
   | 'preHash'
+  | 'programKey'
   | 'pubKeyX'
   | 'pubKeyY'
   | 'r'
   | 's'
   | 'signature'
+  | 'slot'
   | 'type'
   | 'userAddress'
+  | 'userTag'
   | 'v'
+  | 'validUntil'
   | 'version'
   | 'webauthnData'
   | 'yParity'
@@ -99,34 +115,40 @@ export type GetType<
   : envelope extends { type: infer T extends Type }
     ? T
     : envelope extends {
-          prehash: boolean
-          publicKey: PublicKey.PublicKey
-          signature: { r: bigint; s: bigint }
+          policyId: `0x${string}`
+          programKey: PublicKey.PublicKey
+          userTag: `0x${string}`
         }
-      ? 'p256'
+      ? 'attested'
       : envelope extends {
-            metadata: any
+            prehash: boolean
             publicKey: PublicKey.PublicKey
             signature: { r: bigint; s: bigint }
           }
-        ? 'webAuthn'
-        : envelope extends { r: bigint; s: bigint; yParity: number }
-          ? 'secp256k1'
-          : envelope extends {
-                signature: { r: bigint; s: bigint; yParity: number }
-              }
+        ? 'p256'
+        : envelope extends {
+              metadata: any
+              publicKey: PublicKey.PublicKey
+              signature: { r: bigint; s: bigint }
+            }
+          ? 'webAuthn'
+          : envelope extends { r: bigint; s: bigint; yParity: number }
             ? 'secp256k1'
             : envelope extends {
-                  userAddress: Address.Address
+                  signature: { r: bigint; s: bigint; yParity: number }
                 }
-              ? 'keychain'
+              ? 'secp256k1'
               : envelope extends {
-                    account: Address.Address
-                    config: AccountConfig.Input
-                    signatures: any
+                    userAddress: Address.Address
                   }
-                ? 'configurable'
-                : never
+                ? 'keychain'
+                : envelope extends {
+                      account: Address.Address
+                      config: AccountConfig.Input
+                      signatures: any
+                    }
+                  ? 'configurable'
+                  : never
 
 /**
  * Represents a signature envelope that can contain different signature types.
@@ -152,6 +174,11 @@ export type GetType<
  * - **configurable** (type `0x05`): Configurable account signature carrying the account address,
  *   its complete current configuration, and primitive owner approvals over the version-bound digest.
  *
+ * - **attested** (type `0x06`, experimental): Signature by a program key that the Attested Key
+ *   Registry holds as current, for the address derived from a policy ID and a user tag
+ *   ([TIP-1160](https://tips.sh/1160)). Accepted as a transaction signature, a key authorization
+ *   signature, and a configurable account owner approval. Rejected inside keychain signatures.
+ *
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<bigintType = bigint, numberType = number> =
@@ -163,13 +190,14 @@ export type SignatureEnvelope<bigintType = bigint, numberType = number> =
       SignatureEnvelopeKey
     >
   | EnvelopeOneOf<Configurable<bigintType, numberType>, SignatureEnvelopeKey>
+  | EnvelopeOneOf<Attested<bigintType, numberType>, SignatureEnvelopeKey>
 
 /**
  * RPC-formatted signature envelope.
  */
 export type SignatureEnvelopeRpc =
   | EnvelopeOneOf<
-      Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc,
+      Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc | AttestedRpc,
       SignatureEnvelopeRpcKey
     >
   | ConfigurableRpc
@@ -183,6 +211,72 @@ export type Primitive<bigintType = bigint, numberType = number> = OneOf<
 
 /** RPC-formatted primitive signature envelope. */
 export type PrimitiveRpc = OneOf<Secp256k1Rpc | P256Rpc | WebAuthnRpc>
+
+/**
+ * Signature envelope that can approve as a configurable account owner: a
+ * primitive signature, or an attested signature.
+ */
+export type OwnerApproval<bigintType = bigint, numberType = number> = OneOf<
+  | Secp256k1<bigintType, numberType>
+  | P256<bigintType, numberType>
+  | WebAuthn<bigintType, numberType>
+  | Attested<bigintType, numberType>
+>
+
+/** RPC-formatted signature envelope that can approve as a configurable account owner. */
+export type OwnerApprovalRpc = OneOf<
+  Secp256k1Rpc | P256Rpc | WebAuthnRpc | AttestedRpc
+>
+
+/**
+ * Attested signature (type `0x06`).
+ *
+ * A program key, held by attested code and registered in the Attested Key
+ * Registry, signs {@link ox#AttestedSigner.(getSignPayload:function)} of the
+ * context digest for the address {@link ox#AttestedSigner.(getAddress:function)}
+ * derives from `policyId` and `userTag`. The node also checks that the registry
+ * holds the program key as current in `slot` and that `validUntil` is within
+ * {@link ox#AttestedSigner.maxValidityWindow} seconds of the block timestamp.
+ *
+ * [TIP-1160](https://tips.sh/1160)
+ *
+ * @experimental
+ */
+export type Attested<bigintType = bigint, numberType = number> = {
+  /** Attested Key Registry policy that registered the program key. */
+  policyId: Hex.Hex
+  /** Uncompressed P256 program key that signed. */
+  programKey: PublicKey.PublicKey
+  /** ECDSA P256 signature over the attested sign payload, with a low `s`. */
+  signature: Signature.Signature<false, bigintType, numberType>
+  /** Key slot of the policy that holds the program key. */
+  slot: numberType
+  type: 'attested'
+  /** Tag of the user whose address the signature signs for. */
+  userTag: Hex.Hex
+  /** Last block timestamp, in seconds, at which the signature is valid. */
+  validUntil: numberType
+}
+
+/**
+ * RPC-formatted attested signature, as the node serializes it (untagged).
+ *
+ * @experimental
+ */
+export type AttestedRpc = {
+  /** Attested Key Registry policy that registered the program key. */
+  policyId: Hex.Hex
+  /** Program key, `x ‖ y`. */
+  programKey: Hex.Hex
+  /** Signature, `r ‖ s`. */
+  signature: Hex.Hex
+  /** Key slot of the policy that holds the program key. */
+  slot: number
+  /** Tag of the user whose address the signature signs for. */
+  userTag: Hex.Hex
+  /** Last block timestamp, in seconds, at which the signature is valid. */
+  validUntil: number
+}
 
 /**
  * Keychain signature version.
@@ -225,8 +319,8 @@ export type Configurable<bigintType = bigint, numberType = number> = {
   account: Address.Address
   /** Complete current configuration, included in every signature. */
   config: AccountConfig.Config<bigintType, numberType>
-  /** Primitive owner approvals in ascending recovered-address order. */
-  signatures: readonly Primitive<bigintType, numberType>[]
+  /** Primitive or attested owner approvals in ascending recovered-address order. */
+  signatures: readonly OwnerApproval<bigintType, numberType>[]
   type: 'configurable'
 }
 
@@ -380,6 +474,12 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     return
   }
 
+  if (type === 'attested') {
+    const attested = envelope as Attested
+    assertAttested(attested)
+    return
+  }
+
   throw new CoercionError({ envelope })
 }
 
@@ -387,6 +487,7 @@ export declare namespace assert {
   type ErrorType =
     | CoercionError
     | InvalidApprovalError
+    | InvalidAttestedError
     | MissingPropertiesError
     | AccountConfig.assert.ErrorType
     | AccountConfig.getAddress.ErrorType
@@ -404,6 +505,66 @@ function assertKeychainInner(keychain: Keychain): void {
     throw new InvalidApprovalError({
       reason: 'configurable access keys require keychain V2',
     })
+  // A program key is not an access key: reject attested signatures inside a
+  // keychain signature, including as owner approvals of a configurable delegate.
+  const signatures = (keychain.inner as Configurable).signatures
+  if (
+    type === 'attested' ||
+    (type === 'configurable' &&
+      Array.isArray(signatures) &&
+      signatures.some((signature) => signature.type === 'attested'))
+  )
+    throw new InvalidApprovalError({
+      reason: 'attested signatures cannot sign as access keys',
+    })
+}
+
+function assertAttested(envelope: Attested): void {
+  const { policyId, programKey, signature, slot, userTag, validUntil } =
+    envelope
+  const missing: string[] = []
+  if (typeof policyId !== 'string') missing.push('policyId')
+  if (typeof userTag !== 'string') missing.push('userTag')
+  if (typeof slot !== 'number') missing.push('slot')
+  if (typeof validUntil !== 'number') missing.push('validUntil')
+  if (typeof signature?.r !== 'bigint') missing.push('signature.r')
+  if (typeof signature?.s !== 'bigint') missing.push('signature.s')
+  if (!programKey) missing.push('programKey')
+  else {
+    if (typeof programKey.x !== 'bigint') missing.push('programKey.x')
+    if (typeof programKey.y !== 'bigint') missing.push('programKey.y')
+  }
+  if (missing.length > 0)
+    throw new MissingPropertiesError({ envelope, missing, type: 'attested' })
+
+  if (!Hex.validate(policyId) || Hex.size(policyId) !== 32)
+    throw new InvalidAttestedError({ reason: 'policyId must be 32 bytes' })
+  if (!Hex.validate(userTag) || Hex.size(userTag) !== 32)
+    throw new InvalidAttestedError({ reason: 'userTag must be 32 bytes' })
+  if (!Number.isInteger(slot) || slot < 0 || slot >= AttestedSigner.keySlots)
+    throw new InvalidAttestedError({
+      reason: `slot must be an integer below ${AttestedSigner.keySlots}`,
+    })
+  if (!Number.isSafeInteger(validUntil) || validUntil < 0)
+    throw new InvalidAttestedError({
+      reason: 'validUntil must be a uint64',
+    })
+  if (
+    programKey.x < 0n ||
+    programKey.x >= 2n ** 256n ||
+    (programKey.y as bigint) < 0n ||
+    (programKey.y as bigint) >= 2n ** 256n
+  )
+    throw new InvalidAttestedError({
+      reason: 'programKey must be an uncompressed P256 public key',
+    })
+  const { r, s } = signature
+  if (r <= 0n || r >= p256Order || s <= 0n || s >= p256Order)
+    throw new InvalidAttestedError({
+      reason: 'signature r and s must be in [1, n - 1]',
+    })
+  if (s > p256Order / 2n)
+    throw new InvalidAttestedError({ reason: 'signature s must be low' })
 }
 
 function assertConfigurable(envelope: Configurable): void {
@@ -449,7 +610,7 @@ function assertConfigurable(envelope: Configurable): void {
     const type = getType(inner as SignatureEnvelope)
     if (type === 'keychain' || type === 'configurable')
       throw new InvalidApprovalError({
-        reason: 'owner approvals must be primitive signatures',
+        reason: 'owner approvals must be primitive or attested signatures',
       })
     assert(inner)
 
@@ -466,6 +627,9 @@ function assertConfigurable(envelope: Configurable): void {
  * - **secp256k1**: Recovers the address from the payload via `ecrecover`.
  * - **p256** / **webAuthn**: Derives the address from the embedded public key.
  * - **keychain**: Extracts from the inner signature (or returns `userAddress` if `user` is `true`).
+ * - **configurable**: Returns the configurable account.
+ * - **attested**: Derives the address from the policy ID and user tag, without verifying the
+ *   signature or the registry state.
  *
  * @example
  * ```ts twoslash
@@ -496,6 +660,8 @@ export function extractAddress(
   // Configurable signatures have no single signer; the recovered sender is the
   // derived configurable account address.
   if (signature.type === 'configurable') return signature.account
+  // An attested signature signs for the address its policy and user tag derive.
+  if (signature.type === 'attested') return AttestedSigner.getAddress(signature)
   return Address.fromPublicKey(extractPublicKey(options))
 }
 
@@ -513,6 +679,7 @@ export declare namespace extractAddress {
 
   type ErrorType =
     | Address.fromPublicKey.ErrorType
+    | AttestedSigner.getAddress.ErrorType
     | extractPublicKey.ErrorType
     | Errors.GlobalErrorType
 }
@@ -559,6 +726,9 @@ export function extractPublicKey(
     case 'keychain':
       return extractPublicKey({ payload, signature: signature.inner })
     case 'configurable':
+    // An attested signature's address derives from its policy and user tag, not
+    // from its program key; derive it via `extractAddress`.
+    case 'attested':
       // A configurable signature aggregates multiple owner approvals and has no
       // single public key; recover the configurable account via `extractAddress`.
       throw new CoercionError({ envelope: signature })
@@ -590,6 +760,8 @@ export declare namespace extractPublicKey {
  * - Type `0x02` + variable: WebAuthn signature (webauthnData, r, s, pubKeyX, pubKeyY)
  * - Type `0x03` + 20 bytes + inner: Keychain V1 signature (userAddress + inner signature)
  * - Type `0x04` + 20 bytes + inner: Keychain V2 signature (userAddress + inner signature)
+ * - Type `0x05` + RLP: Configurable account signature (account, config, owner approvals)
+ * - Type `0x06` + RLP: Attested signature (policyId, userTag, slot, programKey, validUntil, signature)
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -773,23 +945,105 @@ function deserialize_(value: Serialized): SignatureEnvelope {
         // Reject recursive envelopes before decoding their contents.
         if (
           Hex.size(signature) !== 65 &&
-          !['0x01', '0x02'].includes(Hex.slice(signature, 0, 1))
+          ![
+            serializedP256Type,
+            serializedWebAuthnType,
+            serializedAttestedType,
+          ].includes(Hex.slice(signature, 0, 1))
         )
           throw new InvalidSerializedError({
-            reason: 'owner approvals must be primitive signatures',
+            reason: 'owner approvals must be primitive or attested signatures',
             serialized,
           })
-        return deserialize(signature) as Primitive
+        return deserialize(signature) as OwnerApproval
       }),
     } satisfies Configurable
     assertConfigurable(envelope)
     return envelope
   }
 
+  if (typeId === serializedAttestedType)
+    return deserializeAttested(serialized, data)
+
   throw new InvalidSerializedError({
-    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), ${serializedKeychainV2Type} (Keychain V2), or ${serializedConfigurableType} (Configurable)`,
+    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), ${serializedKeychainV2Type} (Keychain V2), ${serializedConfigurableType} (Configurable), or ${serializedAttestedType} (Attested)`,
     serialized,
   })
+}
+
+// Decodes `0x06 ‖ rlp([policyId, userTag, slot, programKey, validUntil, signature])`
+// as the node does: canonical RLP with exactly six fields and no trailing bytes,
+// fixed-size byte fields, canonical integers, a slot below the slot count, and
+// `r` and `s` in range with a low `s`. The node checks that the program key is
+// on the curve when it verifies the signature.
+function deserializeAttested(serialized: Hex.Hex, data: Hex.Hex): Attested {
+  const invalid = (reason: string) =>
+    new InvalidSerializedError({
+      reason: `invalid attested signature: ${reason}`,
+      serialized,
+    })
+  if (Hex.size(serialized) > AttestedSigner.maxSignatureSize)
+    throw invalid(`exceeds ${AttestedSigner.maxSignatureSize} bytes`)
+  const decoded = (() => {
+    try {
+      return Rlp.toHex(data)
+    } catch {
+      throw invalid('malformed RLP')
+    }
+  })()
+  if (!Array.isArray(decoded) || decoded.length !== 6)
+    throw invalid('expected a list of exactly six fields')
+  if (decoded.some((field) => typeof field !== 'string'))
+    throw invalid('fields must be byte strings')
+  // Re-encoding rejects non-minimal lengths and single bytes encoded as strings.
+  if (Rlp.fromHex(decoded).toLowerCase() !== data.toLowerCase())
+    throw invalid('non-canonical RLP')
+  const [policyId, userTag, slot, programKey, validUntil, signature] =
+    decoded as readonly Hex.Hex[] as [
+      Hex.Hex,
+      Hex.Hex,
+      Hex.Hex,
+      Hex.Hex,
+      Hex.Hex,
+      Hex.Hex,
+    ]
+  if (Hex.size(policyId) !== 32) throw invalid('policyId must be 32 bytes')
+  if (Hex.size(userTag) !== 32) throw invalid('userTag must be 32 bytes')
+  if (Hex.size(programKey) !== 64) throw invalid('programKey must be 64 bytes')
+  if (Hex.size(signature) !== 64) throw invalid('signature must be 64 bytes')
+  for (const [name, value, size] of [
+    ['slot', slot, 1],
+    ['validUntil', validUntil, 8],
+  ] as const)
+    if (
+      Hex.size(value) > size ||
+      (Hex.size(value) > 0 && Hex.slice(value, 0, 1) === '0x00')
+    )
+      throw invalid(`${name} must be a canonical uint${size * 8}`)
+
+  const envelope = {
+    policyId,
+    programKey: {
+      prefix: 4,
+      x: Hex.toBigInt(Hex.slice(programKey, 0, 32)),
+      y: Hex.toBigInt(Hex.slice(programKey, 32, 64)),
+    },
+    signature: {
+      r: Hex.toBigInt(Hex.slice(signature, 0, 32)),
+      s: Hex.toBigInt(Hex.slice(signature, 32, 64)),
+    },
+    slot: slot === '0x' ? 0 : Hex.toNumber(slot),
+    type: 'attested',
+    userTag,
+    validUntil: validUntil === '0x' ? 0 : Hex.toNumber(validUntil),
+  } satisfies Attested
+  try {
+    assertAttested(envelope)
+  } catch (error) {
+    if (error instanceof InvalidAttestedError) throw invalid(error.reason)
+    throw error
+  }
+  return envelope
 }
 
 /**
@@ -1119,6 +1373,28 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     }
   }
 
+  if ('policyId' in envelope && 'programKey' in envelope) {
+    const attested = envelope as AttestedRpc
+    const result = {
+      policyId: attested.policyId,
+      programKey: {
+        prefix: 4,
+        x: Hex.toBigInt(Hex.slice(attested.programKey, 0, 32)),
+        y: Hex.toBigInt(Hex.slice(attested.programKey, 32, 64)),
+      },
+      signature: {
+        r: Hex.toBigInt(Hex.slice(attested.signature, 0, 32)),
+        s: Hex.toBigInt(Hex.slice(attested.signature, 32, 64)),
+      },
+      slot: Number(attested.slot),
+      type: 'attested',
+      userTag: attested.userTag,
+      validUntil: Number(attested.validUntil),
+    } satisfies Attested
+    assert(result)
+    return result
+  }
+
   if (
     envelope.type === 'keychain' ||
     ('userAddress' in envelope && 'signature' in envelope)
@@ -1172,7 +1448,7 @@ export declare namespace fromRpc {
  * ```
  *
  * @param envelope - The signature envelope to inspect.
- * @returns The signature type ('secp256k1', 'p256', or 'webAuthn').
+ * @returns The signature type ('secp256k1', 'p256', 'webAuthn', 'keychain', 'configurable', or 'attested').
  * @throws `CoercionError` if the envelope type cannot be determined.
  */
 export function getType<
@@ -1185,6 +1461,14 @@ export function getType<
     throw new CoercionError({ envelope })
 
   if ('type' in envelope && envelope.type) return envelope.type as never
+
+  // Detect Attested signature (before secp256k1: its signature may carry a `yParity`)
+  if (
+    'policyId' in envelope &&
+    'userTag' in envelope &&
+    'programKey' in envelope
+  )
+    return 'attested' as never
 
   // Detect secp256k1 signature (backwards compatibility: also support flat structure)
   if (
@@ -1242,6 +1526,7 @@ export function getType<
  * - Keychain V1: `0x03` + userAddress (20) + inner signature (recursive)
  * - Keychain V2: `0x04` + userAddress (20) + inner signature (recursive)
  * - Configurable: `0x05` + RLP `[account, config, signatures]`
+ * - Attested: `0x06` + RLP `[policyId, userTag, slot, programKey, validUntil, signature]`
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -1336,6 +1621,31 @@ export function serialize(
     )
   }
 
+  if (type === 'attested') {
+    const attested = envelope as Attested
+    assert(attested)
+    const { policyId, programKey, signature, slot, userTag, validUntil } =
+      attested
+    return Hex.concat(
+      serializedAttestedType,
+      Rlp.fromHex([
+        policyId,
+        userTag,
+        slot === 0 ? '0x' : Hex.fromNumber(slot),
+        Hex.concat(
+          Hex.fromNumber(programKey.x, { size: 32 }),
+          Hex.fromNumber(programKey.y as bigint, { size: 32 }),
+        ),
+        validUntil === 0 ? '0x' : Hex.fromNumber(validUntil),
+        Hex.concat(
+          Hex.fromNumber(signature.r, { size: 32 }),
+          Hex.fromNumber(signature.s, { size: 32 }),
+        ),
+      ]),
+      options.magic ? magicBytes : '0x',
+    )
+  }
+
   throw new CoercionError({ envelope })
 }
 
@@ -1382,7 +1692,7 @@ export declare namespace serialize {
  */
 export function sortApprovals(
   value: sortApprovals.Value,
-): readonly Primitive[] {
+): readonly OwnerApproval[] {
   const { signatures } = value
   const digest = AccountConfig.getSignPayload(value)
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
@@ -1398,8 +1708,8 @@ export function sortApprovals(
 
 export declare namespace sortApprovals {
   type Value = AccountConfig.getSignPayload.Value & {
-    /** Primitive owner approvals to order. */
-    signatures: readonly Primitive[]
+    /** Primitive or attested owner approvals to order. */
+    signatures: readonly OwnerApproval[]
   }
 
   type ErrorType =
@@ -1481,6 +1791,26 @@ export function toRpc<const envelope extends toRpc.Input>(
   if (type === 'configurable')
     return Hex.slice(serialize(envelope as Configurable), 1) as never
 
+  if (type === 'attested') {
+    const attested = envelope as Attested
+    const { policyId, programKey, signature, slot, userTag, validUntil } =
+      attested
+    return {
+      policyId,
+      programKey: Hex.concat(
+        Hex.fromNumber(programKey.x, { size: 32 }),
+        Hex.fromNumber(programKey.y as bigint, { size: 32 }),
+      ),
+      signature: Hex.concat(
+        Hex.fromNumber(signature.r, { size: 32 }),
+        Hex.fromNumber(signature.s, { size: 32 }),
+      ),
+      slot,
+      userTag,
+      validUntil,
+    } satisfies AttestedRpc as never
+  }
+
   throw new CoercionError({ envelope })
 }
 
@@ -1500,7 +1830,9 @@ export declare namespace toRpc {
             ? KeychainRpc
             : GetType<envelope> extends 'configurable'
               ? ConfigurableRpc
-              : SignatureEnvelopeRpc
+              : GetType<envelope> extends 'attested'
+                ? AttestedRpc
+                : SignatureEnvelopeRpc
 
   type ErrorType =
     | assert.ErrorType
@@ -1547,7 +1879,12 @@ export declare namespace validate {
 /**
  * Verifies a signature envelope against a digest/payload.
  *
- * Supports `secp256k1`, `p256`, and `webAuthn` signature types.
+ * Supports `secp256k1`, `p256`, `webAuthn`, and `attested` signature types.
+ *
+ * An `attested` signature verifies when its policy ID and user tag derive the
+ * expected address and its program key signed the attested sign payload. The
+ * node additionally checks the Attested Key Registry and `validUntil` against
+ * block state, which this function cannot.
  *
  * :::warning
  * `keychain` signatures are not supported and will throw an error.
@@ -1694,6 +2031,25 @@ export function verify(
     })
   }
 
+  if (envelope.type === 'attested') {
+    if (!Address.isEqual(AttestedSigner.getAddress(envelope), address))
+      return false
+    try {
+      assert(envelope)
+    } catch {
+      return false
+    }
+    try {
+      return ox_P256.verify({
+        payload: AttestedSigner.getSignPayload({ ...envelope, payload }),
+        publicKey: envelope.programKey,
+        signature: envelope.signature,
+      })
+    } catch {
+      return false
+    }
+  }
+
   throw new VerificationError(
     `Unable to verify signature envelope of type "${envelope.type}".`,
   )
@@ -1739,7 +2095,7 @@ export class MissingPropertiesError extends Errors.BaseError {
   }: {
     envelope: unknown
     missing: string[]
-    type: Type | 'keychain' | 'configurable'
+    type: Type | 'keychain' | 'configurable' | 'attested'
   }) {
     super(
       `Signature envelope of type "${type}" is missing required properties: ${missing.map((m) => `\`${m}\``).join(', ')}.\n\nProvided: ${Json.stringify(envelope)}`,
@@ -1772,6 +2128,20 @@ export class InvalidApprovalError extends Errors.BaseError {
   override readonly name = 'SignatureEnvelope.InvalidApprovalError'
   constructor({ reason }: { reason: string }) {
     super(`Invalid owner approval: ${reason}.`)
+  }
+}
+
+/**
+ * Error thrown when an attested signature's fields are out of range.
+ *
+ * @experimental
+ */
+export class InvalidAttestedError extends Errors.BaseError {
+  override readonly name = 'SignatureEnvelope.InvalidAttestedError'
+  readonly reason: string
+  constructor({ reason }: { reason: string }) {
+    super(`Invalid attested signature: ${reason}.`)
+    this.reason = reason
   }
 }
 

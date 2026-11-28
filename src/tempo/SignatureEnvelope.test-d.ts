@@ -38,3 +38,22 @@ test('requires config and primitive approvals', () => {
   }
   expectTypeOf(rpc).toEqualTypeOf<Hex.Hex>()
 })
+
+const attested = SignatureEnvelope.from({
+  policyId: `0x${'aa'.repeat(32)}`,
+  programKey: { prefix: 4, x: 1n, y: 2n },
+  signature: { r: 1n, s: 2n, yParity: 0 },
+  slot: 1,
+  userTag: `0x${'bb'.repeat(32)}`,
+  validUntil: 1_800_000_600,
+})
+
+test('infers attested signatures', () => {
+  expectTypeOf<
+    SignatureEnvelope.GetType<typeof attested>
+  >().toEqualTypeOf<'attested'>()
+  expectTypeOf(attested.type).toEqualTypeOf<'attested'>()
+  expectTypeOf(
+    SignatureEnvelope.toRpc(attested),
+  ).toEqualTypeOf<SignatureEnvelope.AttestedRpc>()
+})
