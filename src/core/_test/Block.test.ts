@@ -530,6 +530,7 @@ describe('toRpc', () => {
       {
         "baseFeePerGas": "0x0",
         "blobGasUsed": "0x1",
+        "blockAccessListHash": undefined,
         "difficulty": "0x2d3a678cddba9b",
         "excessBlobGas": "0x2",
         "extraData": "0x",
@@ -551,6 +552,7 @@ describe('toRpc', () => {
         ],
         "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
         "size": "0x208",
+        "slotNumber": undefined,
         "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "timestamp": "0x63198f6f",
         "totalDifficulty": "0x1",
@@ -640,6 +642,7 @@ describe('toRpc', () => {
       {
         "baseFeePerGas": undefined,
         "blobGasUsed": undefined,
+        "blockAccessListHash": undefined,
         "difficulty": undefined,
         "excessBlobGas": undefined,
         "extraData": "0x",
@@ -661,6 +664,7 @@ describe('toRpc', () => {
         ],
         "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
         "size": "0x0",
+        "slotNumber": undefined,
         "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "timestamp": "0x0",
         "totalDifficulty": undefined,
@@ -725,6 +729,50 @@ describe('toRpc', () => {
         '0xaeb0321b253d63f458b83a49fedbb1af38821135acd64df5c3c41841ec4cbdc7',
     } as const
     expect(Block.toRpc(Block.fromRpc(rpc)).requestsHash).toBe(rpc.requestsHash)
+  })
+
+  test('behavior: blockAccessListHash and slotNumber', () => {
+    const rpc = {
+      blockAccessListHash:
+        '0xe2deb3f76d4651ab26db12814e05561156d8fe0b83576dcf8244d9ecbf9e4585',
+      gasLimit: '0x1c9c380',
+      gasUsed: '0x0',
+      hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+      logsBloom: '0x00',
+      miner: '0x0000000000000000000000000000000000000000',
+      mixHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      nonce: '0x0000000000000000',
+      number: '0x1',
+      parentHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      receiptsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      sha3Uncles:
+        '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+      size: '0x208',
+      slotNumber: '0xb1fcec',
+      stateRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      timestamp: '0x63198f6f',
+      totalDifficulty: '0x0',
+      transactions: [],
+      transactionsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      uncles: [],
+    } as const
+
+    const { blockAccessListHash, slotNumber } = Block.fromRpc(rpc)
+
+    expect({ blockAccessListHash, slotNumber }).toMatchInlineSnapshot(`
+      {
+        "blockAccessListHash": "0xe2deb3f76d4651ab26db12814e05561156d8fe0b83576dcf8244d9ecbf9e4585",
+        "slotNumber": 11664620n,
+      }
+    `)
+    expect(JSON.parse(JSON.stringify(Block.toRpc(Block.fromRpc(rpc))))).toEqual(
+      rpc,
+    )
   })
 })
 

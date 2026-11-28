@@ -742,6 +742,11 @@ describe('toString', () => {
     )
   })
 
+  test('behavior: keeps a leading U+FEFF', () => {
+    // A snapshot would render U+FEFF invisibly.
+    expect(Hex.toString('0xefbbbf68656c6c6f')).toBe('\uFEFFhello')
+  })
+
   test('args: size', () => {
     expect(
       Hex.toString(Hex.fromString('wagmi', { size: 32 }), {

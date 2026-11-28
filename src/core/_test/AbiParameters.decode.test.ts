@@ -444,6 +444,17 @@ describe('dynamic', () => {
       expect(result).toEqual([''])
     })
 
+    test('leading U+FEFF', () => {
+      const data = AbiParameters.encode(AbiParameters.from('string'), [
+        '\uFEFFhello',
+      ])
+
+      // A snapshot would render U+FEFF invisibly.
+      expect(AbiParameters.decode(AbiParameters.from('string'), data)).toEqual([
+        '\uFEFFhello',
+      ])
+    })
+
     test('default', () => {
       expect(
         AbiParameters.decode(
@@ -1900,6 +1911,37 @@ describe('zero-width types', () => {
         ),
       ).toEqual(values)
     }
+  })
+})
+
+describe('missing static head after a dynamic parameter', () => {
+  test('default', () => {
+    const word = (value: number) => value.toString(16).padStart(64, '0')
+    const data = `0x${word(3)}${word(0x77)}${word(0)}` as const
+
+    const errors = (['string', 'bytes'] as const).map((type) => {
+      try {
+        AbiParameters.decode(
+          [
+            { type: 'uint256' },
+            { type: 'uint256' },
+            { type },
+            { type: 'uint256' },
+          ],
+          data,
+        )
+        return undefined
+      } catch (error) {
+        return (error as Error).message
+      }
+    })
+
+    expect(errors).toMatchInlineSnapshot(`
+      [
+        "Position \`127\` is out of bounds (\`0 < position < 96\`).",
+        "Position \`127\` is out of bounds (\`0 < position < 96\`).",
+      ]
+    `)
   })
 })
 
