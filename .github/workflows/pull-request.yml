@@ -8,6 +8,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  uphill:
+    name: Uphill
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: 'recursive'
+
+      # Foundry supplies the anvil that the speed script's recording of ox's tests starts.
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      # The metric scripts are TypeScript run by Bun.
+      - name: Install Bun
+        uses: wevm/actions/vendor/oven-sh/setup-bun/v2.2.0@b518cf981b50a4c745a8b7335fc693f34b108a75
+        with:
+          bun-version: 1.4.4
+
+      # The scripts measure the build. `setup` in .agents/uphill/uphill.yaml prepares the base
+      # branch's worktree the same way.
+      - name: Build
+        run: pnpm build && bun install --cwd .agents/uphill
+
+      # Compares the pull request with its base branch and keeps one comment with the report.
+      - name: Run Uphill
+        uses: wevm/uphill@f71fba4d199409cbc8bf00d713dab4b24d91b980 # main
+        env:
+          VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
+        with:
+          version: 0.0.11
+
   verify:
     name: Verify
     uses: ./.github/workflows/verify.yml
